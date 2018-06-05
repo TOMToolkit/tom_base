@@ -1,0 +1,3 @@
+django
+django-bootstrap4
+https://github.com/TOMToolkit/tom_targets/archive/master.zip
