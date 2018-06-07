@@ -29,10 +29,10 @@ class Target(models.Model):
     ephemeris_epoch_err = models.FloatField(null=True, blank=True, verbose_name='Ephemeris Epoch Error', help_text='Days')
 
     def __str__(self):
-        return self.id
+        return self.identifier
 
     def get_absolute_url(self):
-        return reverse('targets:detail', kwargs={'pk': self.id})
+        return reverse('targets:detail', kwargs={'pk': self.identifier})
 
 class TargetList(models.Model):
     name = models.CharField(max_length=200, help_text='The name of the target list.')
