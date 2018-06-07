@@ -3,11 +3,17 @@ from django.urls import reverse
 
 
 class Target(models.Model):
+    TARGET_TYPES = (
+        ('SIDEREAL', 'Sidereal'),
+        ('NON_SIDEREAL', 'Non Sidereal')
+    )
+
     identifier = models.CharField(max_length=100, help_text='The identifier for this object, e.g. Kelt-16b.')
     name = models.CharField(max_length=100, default='', help_text='The name of this target e.g. Barnard\'s star.')
     designation = models.CharField(max_length=100, default='', help_text='Designation of this target.')
     created = models.DateTimeField(auto_now_add=True, help_text='The time which this target was created in the TOM database.')
     modified = models.DateTimeField(auto_now=True, help_text='The time which this target was changed in the TOM database.')
+    type = models.CharField(max_length=20, choices=TARGET_TYPES)
     ra = models.FloatField(null=True, blank=True, verbose_name='Right Ascension', help_text='Right Ascension, in degrees.')
     dec = models.FloatField(null=True, blank=True, verbose_name='Declination', help_text='Declination, in degrees.')
     epoch = models.FloatField(null=True, blank=True, verbose_name='Epoch of Elements', help_text='Julian Years. Max 2100.')
@@ -27,6 +33,9 @@ class Target(models.Model):
     ephemeris_period_err = models.FloatField(null=True, blank=True, verbose_name='Ephemeris Period Error', help_text='Days')
     ephemeris_epoch = models.FloatField(null=True, blank=True, verbose_name='Ephemeris Epoch', help_text='Days')
     ephemeris_epoch_err = models.FloatField(null=True, blank=True, verbose_name='Ephemeris Epoch Error', help_text='Days')
+
+    class Meta:
+        ordering = ('id',)
 
     def __str__(self):
         return self.identifier
