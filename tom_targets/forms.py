@@ -1,4 +1,4 @@
-from django.forms
+from django.forms import ModelForm
 from .models import Target
 
 class SiderealTargetCreateForm(ModelForm):
