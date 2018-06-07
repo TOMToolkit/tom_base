@@ -131,12 +131,15 @@ except ImportError:
 
 
 # Target Type Fields
+SIDEREAL = 'SIDEREAL'
+NON_SIDEREAL = 'NON_SIDEREAL'
+
+TARGET_TYPES = {SIDEREAL: 'Sidereal', NON_SIDEREAL: 'Non-sidereal'}
+DEFAULT_TARGET_TYPE = SIDEREAL
 
 GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'designation']
-
 SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + ['ra', 'dec', 'epoch', 'pm_ra', 
     'pm_dec', 'galactic_lng', 'galactic_lat', 'distance', 'distance_err']
-
 NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + ['mean_anomaly', 'arg_of_perihelion',
     'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
     'ephemeris_period', 'ephemeris_period_err', 'ephemeris_epoch', 

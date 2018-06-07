@@ -3,6 +3,7 @@ from django.views.generic.detail import DetailView
 from django_filters.views import FilterView
 from django.views.generic.list import ListView
 from django.urls import reverse
+from django.conf import settings
 
 from .models import Target, TargetList
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm
@@ -18,19 +19,18 @@ class TargetListView(FilterView):
 class TargetCreate(CreateView):
     model = Target
     fields = '__all__'
-    success_url = reverse('targets:list')
 
     def get_context_data(self, **kwargs):
         context = super(TargetCreate, self).get_context_data(**kwargs)
-        context['type_choices'] = ['sidereal', 'non_sidereal']
+        context['type_choices'] = settings.TARGET_TYPES
         return context
 
     def get_form_class(self):
-        if self.request.GET['type'] == 'sidereal':
+        target_type = self.request.GET.get('type', settings.DEFAULT_TARGET_TYPE).lower()
+        if target_type == 'sidereal':
             return SiderealTargetCreateForm
-        elif self.request.GET['type'] ==  'non_sidereal':
+        elif target_type ==  'non_sidereal':
             return NonSiderealTargetCreateForm
-        return self.form_class
 
 
 class TargetUpdate(UpdateView):
