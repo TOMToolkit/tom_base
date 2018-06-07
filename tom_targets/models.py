@@ -34,6 +34,9 @@ class Target(models.Model):
     ephemeris_epoch = models.FloatField(null=True, blank=True, verbose_name='Ephemeris Epoch', help_text='Days')
     ephemeris_epoch_err = models.FloatField(null=True, blank=True, verbose_name='Ephemeris Epoch Error', help_text='Days')
 
+    class Meta:
+        ordering = ('id',)
+
     def __str__(self):
         return self.identifier
 

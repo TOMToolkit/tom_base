@@ -1,20 +1,34 @@
 {% extends 'base.html' %}
 {% load bootstrap4 %}
 {% block content %}
-{% bootstrap_pagination page_obj extra=request.GET.urlencode %}
-<table class="table">
-  <thead><tr><th>ID</th><th>Name</th><th>Designation</th><th>Type</th></tr></thead>
-  <tbody>
-    {% for target in object_list %}
-    <tr>
-      <td><a href="{% url 'targets:detail' target.id %}" title="{{ target.id }}">{{ target.id }}</a></td>
-      <td>{{ target.name }}</td>
-      <td>{{ target.designation }}</td>
-      <td>{{ target.get_type_display }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+<div class="row">
+  <div class="col-md-10">
+    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+    <table class="table">
+      <thead><tr><th>ID</th><th>Name</th><th>Designation</th><th>Type</th></tr></thead>
+      <tbody>
+        {% for target in object_list %}
+        <tr>
+          <td><a href="{% url 'targets:detail' target.id %}" title="{{ target.identifier }}">{{ target.identifier }}</a></td>
+          <td>{{ target.name }}</td>
+          <td>{{ target.designation }}</td>
+          <td>{{ target.get_type_display }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+  </div>
+  <div class="col-md-2">
+    <form action="" method="get" class="form">
+      {% bootstrap_form filter.form %}
+      {% buttons %}
+        <button type="submit" class="btn btn-primary">
+          Filter
+        </button>
+        <a href="{% url 'targets:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
+      {% endbuttons %}
+    </form>
+  </div>
+</div>
 {% endblock %}
-
