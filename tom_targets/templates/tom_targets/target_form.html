@@ -2,7 +2,7 @@
 {% load bootstrap4 %}
 {% block content %}
 <ul class="nav">
-  {% for k, v in type_choices.items %}
+  {% for k, v in type_choices %}
     <li class="nav-item">
       <a class="nav-link active" href="{% url 'targets:create' %}?type={{ k }}">{{ v }}</a>
     </li>

@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.conf import settings
 
 class Target(models.Model):
-    TYPE_CHOICES = settings.TARGET_TYPES.items()
+    TYPE_CHOICES = settings.TARGET_TYPES
 
     identifier = models.CharField(max_length=100, help_text='The identifier for this object, e.g. Kelt-16b.')
     name = models.CharField(max_length=100, default='', help_text='The name of this target e.g. Barnard\'s star.')
