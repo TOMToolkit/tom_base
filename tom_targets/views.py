@@ -3,7 +3,6 @@ from django.views.generic.detail import DetailView
 from django_filters.views import FilterView
 
 from .models import Target
-from .filters import TargetFilter
 
 
 class TargetListView(FilterView):
