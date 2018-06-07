@@ -3,7 +3,7 @@ from django.urls import reverse
 
 
 class Target(models.Model):
-    identifier = models.CharField(primary_key=True, max_length=100, help_text='The identifier for this object, e.g. Kelt-16b.')
+    identifier = models.CharField(max_length=100, help_text='The identifier for this object, e.g. Kelt-16b.')
     name = models.CharField(max_length=100, default='', help_text='The name of this target e.g. Barnard\'s star.')
     designation = models.CharField(max_length=100, default='', help_text='Designation of this target.')
     created = models.DateTimeField(auto_now_add=True, help_text='The time which this target was created in the TOM database.')
@@ -32,7 +32,7 @@ class Target(models.Model):
         return self.identifier
 
     def get_absolute_url(self):
-        return reverse('targets:detail', kwargs={'pk': self.identifier})
+        return reverse('targets:detail', kwargs={'pk': self.id})
 
 class TargetList(models.Model):
     name = models.CharField(max_length=200, help_text='The name of the target list.')
