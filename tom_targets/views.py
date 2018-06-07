@@ -5,7 +5,8 @@ from django.views.generic.list import ListView
 from .models import Target, TargetList
 
 
-class TargetList(ListView):
+class TargetListView(ListView):
+    paginate_by = 25
     model = Target
 
 
