@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<table class="table">
+  <thead><tr><th>ID</th><th>Name</th><th>Designation</th></tr></thead>
+  <tbody>
+    {% for target in object_list %}
+    <tr>
+      <td><a href="{% url 'targets:detail' target.id %}" title="{{ target.id }}">{{ target.id }}</a></td>
+      <td>{{ target.name }}</td>
+      <td>{{ target.designation }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
