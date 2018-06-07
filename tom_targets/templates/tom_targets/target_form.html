@@ -1,6 +1,13 @@
 {% extends 'base.html' %}
 {% load bootstrap4 %}
 {% block content %}
+<ul class="nav">
+  {% for type in type_choices %}
+    <li class="nav-item">
+      <a class="nav-link active" href="{% url 'targets:create' %}?type={{type}}">{{ type }}</a>
+    </li>
+  {% endfor %}
+</ul>
 <form action="{% url 'targets:create' %}" method="post" class="form">
   {% csrf_token %}
   {% bootstrap_form form %}

@@ -128,3 +128,16 @@ try:
     from local_settings import * # noqa
 except ImportError:
     pass
+
+
+# Target Type Fields
+
+GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'designation']
+
+SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + ['ra', 'dec', 'epoch', 'pm_ra', 
+    'pm_dec', 'galactic_lng', 'galactic_lat', 'distance', 'distance_err']
+
+NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + ['mean_anomaly', 'arg_of_perihelion',
+    'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
+    'ephemeris_period', 'ephemeris_period_err', 'ephemeris_epoch', 
+    'ephemeris_epoch_err']

@@ -3,13 +3,16 @@ from django.urls import reverse
 
 
 class Target(models.Model):
-    TARGET_TYPES = (
-        ('SIDEREAL', 'Sidereal'),
-        ('NON_SIDEREAL', 'Non Sidereal')
+    SIDEREAL = 'sidereal'
+    NON_SIDEREAL = 'non-sidereal'
+    TYPE_CHOICES = (
+        (SIDEREAL, 'Sidereal'),
+        (NON_SIDEREAL, 'Non-sidereal')
     )
 
     identifier = models.CharField(max_length=100, help_text='The identifier for this object, e.g. Kelt-16b.')
     name = models.CharField(max_length=100, default='', help_text='The name of this target e.g. Barnard\'s star.')
+    type = models.CharField(max_length=100, choices=TYPE_CHOICES, default='Sidereal', verbose_name='Type', help_text='The type of this target.')
     designation = models.CharField(max_length=100, default='', help_text='Designation of this target.')
     created = models.DateTimeField(auto_now_add=True, help_text='The time which this target was created in the TOM database.')
     modified = models.DateTimeField(auto_now=True, help_text='The time which this target was changed in the TOM database.')
