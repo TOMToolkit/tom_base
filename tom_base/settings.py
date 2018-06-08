@@ -37,11 +37,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'django_extensions',
+    'django_comments',
     'bootstrap4',
     'django_filters',
     'tom_targets',
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -61,6 +65,9 @@ TEMPLATES = [
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
+            'libraries': {
+                'tom_tags': 'tom_base.template_tags'
+            },
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
@@ -124,6 +131,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
+
+TOM_SETTINGS = {
+    # Enable to allow users to create free-form comments on targets and observations.
+    'COMMENTS_ENABLED': True
+}
+
 try:
     from local_settings import * # noqa
 except ImportError:
@@ -144,3 +157,4 @@ NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + ['mean_anomaly', 'arg_of_perihelion
     'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
     'ephemeris_period', 'ephemeris_period_err', 'ephemeris_epoch',
     'ephemeris_epoch_err']
+
