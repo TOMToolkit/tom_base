@@ -20,6 +20,13 @@ class TargetCreate(CreateView):
     model = Target
     fields = '__all__'
 
+    def form_valid(self, form):
+        target_type = self.request.POST.get('type', settings.DEFAULT_TARGET_TYPE)
+        self.object = form.save(commit=False)
+        self.object.type = target_type
+        self.object.save()
+        return super(self).form_valid(form)
+
     def get_context_data(self, **kwargs):
         context = super(TargetCreate, self).get_context_data(**kwargs)
         context['type_choices'] = settings.TARGET_TYPES
@@ -49,5 +56,8 @@ class TargetDetail(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(TargetDetail, self).get_context_data(**kwargs)
-        context['display_fields'] = settings.SIDEREAL_FIELDS
+        display_values = self.object.get_fields_for_type()
+        context['detail_values'] = {}
+        for k, v in display_values.items():
+            context['detail_values'][v] = getattr(self.object, k, '')
         return context

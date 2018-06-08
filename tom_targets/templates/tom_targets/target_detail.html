@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-{% for field in display_fields %}
-<p>{{ field }}: {{ object }}</p>
+{% for key, value in detail_values.items %}
+<p>{{ key }}: {{ value }}</p>
 {% endfor %}
 {% endblock %}
