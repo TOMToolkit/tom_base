@@ -2,7 +2,7 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
 from django_filters.views import FilterView
 from django.views.generic.list import ListView
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.conf import settings
 
 from .models import Target, TargetList
@@ -26,10 +26,10 @@ class TargetCreate(CreateView):
         return context
 
     def get_form_class(self):
-        target_type = self.request.GET.get('type', settings.DEFAULT_TARGET_TYPE).lower()
-        if target_type == 'sidereal':
+        target_type = self.request.GET.get('type', settings.DEFAULT_TARGET_TYPE)
+        if target_type == settings.SIDEREAL:
             return SiderealTargetCreateForm
-        elif target_type ==  'non_sidereal':
+        elif target_type ==  settings.NON_SIDEREAL:
             return NonSiderealTargetCreateForm
 
 
@@ -39,8 +39,15 @@ class TargetUpdate(UpdateView):
 
 
 class TargetDelete(DeleteView):
+    success_url = reverse_lazy('targets:list')
     model = Target
 
 
 class TargetDetail(DetailView):
     model = Target
+    fields = '__all__'
+
+    def get_context_data(self, **kwargs):
+        context = super(TargetDetail, self).get_context_data(**kwargs)
+        context['display_fields'] = settings.SIDEREAL_FIELDS
+        return context
