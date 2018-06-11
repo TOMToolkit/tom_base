@@ -20,12 +20,13 @@ class TargetCreate(CreateView):
     model = Target
     fields = '__all__'
 
-    def form_valid(self, form):
-        target_type = self.request.POST.get('type', settings.DEFAULT_TARGET_TYPE)
-        self.object = form.save(commit=False)
-        self.object.type = target_type
-        self.object.save()
-        return super(self).form_valid(form)
+    # def form_valid(self, form):
+    #     #target_type = self.request.POST.get('type', settings.DEFAULT_TARGET_TYPE)
+    #     print(self.request.POST)
+    #     self.object = form.save(commit=False)
+    #     #self.object.type = target_type
+    #     self.object.save()
+    #     return super(CreateView, self).form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super(TargetCreate, self).get_context_data(**kwargs)
@@ -34,9 +35,12 @@ class TargetCreate(CreateView):
 
     def get_form_class(self):
         target_type = self.request.GET.get('type', settings.DEFAULT_TARGET_TYPE)
+        print(target_type)
         if target_type == settings.SIDEREAL:
+            print('s')
             return SiderealTargetCreateForm
-        elif target_type ==  settings.NON_SIDEREAL:
+        elif target_type == settings.NON_SIDEREAL:
+            print('ns')
             return NonSiderealTargetCreateForm
 
 

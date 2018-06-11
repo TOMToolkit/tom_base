@@ -1,1 +1,4 @@
 django-filter
+django
+django-bootstrap4
+django-extensions

@@ -1,4 +1,5 @@
 from django.db import models
+from django import forms
 from django.urls import reverse
 from django.conf import settings
 
@@ -53,7 +54,7 @@ from django.conf import settings
 
 #     def get_absolute_url(self):
 #         return reverse('targets:detail', kwargs={'pk': self.id})
-        
+
 
 
 class Target(models.Model):
@@ -97,7 +98,6 @@ class Target(models.Model):
     def get_fields_for_type(self):
         field_map = {}
         fields_for_type = settings.GLOBAL_TARGET_FIELDS
-        print(self.type)
         if self.type == settings.SIDEREAL:
             fields_for_type = settings.SIDEREAL_FIELDS
         elif self.type == settings.NON_SIDEREAL:
