@@ -1,4 +1,5 @@
 # TOM Toolkit - Base Project
+[![Build Status](https://travis-ci.org/TOMToolkit/tom_base.svg?branch=master)](https://travis-ci.org/TOMToolkit/tom_base)
 
 This is the starting point for all new TOMs. This project provides
 a base TOM with much of the functionality provided by the TOM Toolkit
