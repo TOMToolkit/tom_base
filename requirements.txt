@@ -2,3 +2,4 @@ django
 django-bootstrap4
 django-extensions
 django-filter
+factory_boy
