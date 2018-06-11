@@ -5,7 +5,7 @@ from django.views.generic.list import ListView
 from django.urls import reverse, reverse_lazy
 from django.conf import settings
 
-from .models import Target, TargetList
+from .models import Target
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm
 
 
