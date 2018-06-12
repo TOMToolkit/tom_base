@@ -137,7 +137,7 @@ NON_SIDEREAL = 'NON_SIDEREAL'
 TARGET_TYPES = ((SIDEREAL, 'Sidereal'), (NON_SIDEREAL, 'Non-sidereal'))
 DEFAULT_TARGET_TYPE = SIDEREAL
 
-GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'designation']
+GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'designation', 'type']
 SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + ['ra', 'dec', 'epoch', 'pm_ra',
     'pm_dec', 'galactic_lng', 'galactic_lat', 'distance', 'distance_err']
 NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + ['mean_anomaly', 'arg_of_perihelion',

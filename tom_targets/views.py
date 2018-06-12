@@ -19,14 +19,7 @@ class TargetListView(FilterView):
 class TargetCreate(CreateView):
     model = Target
     fields = '__all__'
-
-    # def form_valid(self, form):
-    #     #target_type = self.request.POST.get('type', settings.DEFAULT_TARGET_TYPE)
-    #     print(self.request.POST)
-    #     self.object = form.save(commit=False)
-    #     #self.object.type = target_type
-    #     self.object.save()
-    #     return super(CreateView, self).form_valid(form)
+    initial = {'type': settings.DEFAULT_TARGET_TYPE}
 
     def get_context_data(self, **kwargs):
         context = super(TargetCreate, self).get_context_data(**kwargs)
@@ -34,13 +27,16 @@ class TargetCreate(CreateView):
         return context
 
     def get_form_class(self):
-        target_type = self.request.GET.get('type', settings.DEFAULT_TARGET_TYPE)
-        print(target_type)
+        target_type = settings.DEFAULT_TARGET_TYPE
+        if self.request.GET and self.request.GET['type']:
+            target_type = self.request.GET.get('type', settings.DEFAULT_TARGET_TYPE)
+        elif self.request.POST and self.request.POST['type']:
+            target_type = self.request.POST.get('type', settings.DEFAULT_TARGET_TYPE)
         if target_type == settings.SIDEREAL:
-            print('s')
+            self.initial['type'] = settings.SIDEREAL
             return SiderealTargetCreateForm
         elif target_type == settings.NON_SIDEREAL:
-            print('ns')
+            self.initial['type'] = settings.NON_SIDEREAL
             return NonSiderealTargetCreateForm
 
 
