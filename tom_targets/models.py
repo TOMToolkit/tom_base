@@ -2,6 +2,7 @@ from django.db import models
 from django import forms
 from django.urls import reverse
 from django.conf import settings
+from django.forms.models import model_to_dict
 
 
 class Target(models.Model):
@@ -42,16 +43,15 @@ class Target(models.Model):
     def get_absolute_url(self):
         return reverse('targets:detail', kwargs={'pk': self.id})
 
-    def get_fields_for_type(self):
-        field_map = {}
-        fields_for_type = settings.GLOBAL_TARGET_FIELDS
+    def as_dict(self):
         if self.type == settings.SIDEREAL:
             fields_for_type = settings.SIDEREAL_FIELDS
         elif self.type == settings.NON_SIDEREAL:
             fields_for_type = settings.NON_SIDEREAL_FIELDS
-        for field in fields_for_type:
-            field_map[field] = Target._meta.get_field(field).verbose_name
-        return field_map
+        else:
+            fields_for_type = settings.GLOBAL_TARGET_FIELDS
+
+        return model_to_dict(self, fields=fields_for_type)
 
 
 class TargetList(models.Model):

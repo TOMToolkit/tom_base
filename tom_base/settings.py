@@ -160,4 +160,3 @@ NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + ['mean_anomaly', 'arg_of_perihelion
     'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
     'ephemeris_period', 'ephemeris_period_err', 'ephemeris_epoch',
     'ephemeris_epoch_err']
-
