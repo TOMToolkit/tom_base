@@ -1,16 +1,19 @@
 from django.db import models
+from django import forms
 from django.urls import reverse
 from django.conf import settings
+from django.forms.models import model_to_dict
+
 
 class Target(models.Model):
     TYPE_CHOICES = settings.TARGET_TYPES
 
-    identifier = models.CharField(max_length=100, help_text='The identifier for this object, e.g. Kelt-16b.')
-    name = models.CharField(max_length=100, default='', help_text='The name of this target e.g. Barnard\'s star.')
-    type = models.CharField(max_length=100, choices=TYPE_CHOICES, default='SIDEREAL', verbose_name='Type', help_text='The type of this target.')
-    designation = models.CharField(max_length=100, default='', help_text='Designation of this target.')
-    created = models.DateTimeField(auto_now_add=True, help_text='The time which this target was created in the TOM database.')
-    modified = models.DateTimeField(auto_now=True, help_text='The time which this target was changed in the TOM database.')
+    identifier = models.CharField(max_length=100, verbose_name='Identifier', help_text='The identifier for this object, e.g. Kelt-16b.')
+    name = models.CharField(max_length=100, default='', verbose_name='Name', help_text='The name of this target e.g. Barnard\'s star.')
+    type = models.CharField(max_length=100, choices=TYPE_CHOICES, verbose_name='Target Type', help_text='The type of this target.')
+    designation = models.CharField(max_length=100, default='', verbose_name='Designation', help_text='Designation of this target.')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='Time Created', help_text='The time which this target was created in the TOM database.')
+    modified = models.DateTimeField(auto_now=True, verbose_name='Last Modified', help_text='The time which this target was changed in the TOM database.')
     ra = models.FloatField(null=True, blank=True, verbose_name='Right Ascension', help_text='Right Ascension, in degrees.')
     dec = models.FloatField(null=True, blank=True, verbose_name='Declination', help_text='Declination, in degrees.')
     epoch = models.FloatField(null=True, blank=True, verbose_name='Epoch of Elements', help_text='Julian Years. Max 2100.')
@@ -39,6 +42,17 @@ class Target(models.Model):
 
     def get_absolute_url(self):
         return reverse('targets:detail', kwargs={'pk': self.id})
+
+    def as_dict(self):
+        if self.type == settings.SIDEREAL:
+            fields_for_type = settings.SIDEREAL_FIELDS
+        elif self.type == settings.NON_SIDEREAL:
+            fields_for_type = settings.NON_SIDEREAL_FIELDS
+        else:
+            fields_for_type = settings.GLOBAL_TARGET_FIELDS
+
+        return model_to_dict(self, fields=fields_for_type)
+
 
 class TargetList(models.Model):
     name = models.CharField(max_length=200, help_text='The name of the target list.')

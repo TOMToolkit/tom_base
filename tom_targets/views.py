@@ -18,6 +18,7 @@ class TargetListView(FilterView):
 class TargetCreate(CreateView):
     model = Target
     fields = '__all__'
+    initial = {'type': settings.DEFAULT_TARGET_TYPE}
 
     def get_context_data(self, **kwargs):
         context = super(TargetCreate, self).get_context_data(**kwargs)
@@ -25,10 +26,16 @@ class TargetCreate(CreateView):
         return context
 
     def get_form_class(self):
-        target_type = self.request.GET.get('type', settings.DEFAULT_TARGET_TYPE).lower()
-        if target_type == 'sidereal':
+        target_type = settings.DEFAULT_TARGET_TYPE
+        if self.request.GET:
+            target_type = self.request.GET.get('type', target_type)
+        elif self.request.POST:
+            target_type = self.request.POST.get('type', target_type)
+        if target_type == settings.SIDEREAL:
+            self.initial['type'] = settings.SIDEREAL
             return SiderealTargetCreateForm
-        elif target_type == 'non_sidereal':
+        elif target_type == settings.NON_SIDEREAL:
+            self.initial['type'] = settings.NON_SIDEREAL
             return NonSiderealTargetCreateForm
 
 
@@ -44,3 +51,4 @@ class TargetDelete(DeleteView):
 
 class TargetDetail(DetailView):
     model = Target
+    fields = '__all__'
