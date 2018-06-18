@@ -17,10 +17,13 @@ from django.contrib import admin
 from django.urls import path
 from django.urls import include
 from django.views.generic import TemplateView
+from django.contrib.auth.views import LoginView, LogoutView
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='index.html'), name='home'),
     path('targets/', include('tom_targets.urls', namespace='targets')),
     path('comments/', include('django_comments.urls')),
+    path('login/', LoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
     path('admin/', admin.site.urls),
 ]
