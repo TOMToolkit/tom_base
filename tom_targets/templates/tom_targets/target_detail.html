@@ -1,4 +1,11 @@
 {% extends 'base.html' %}
+{% load comments bootstrap4 tom_tags %}
 {% block content %}
-{{ object.identifier }}
+  {{ object.identifier }}
+  {% tom_setting 'COMMENTS_ENABLED' as comments_enabled %}
+  {% if user.is_authenticated and comments_enabled %}
+    {% render_comment_list for object %}
+    {% url 'targets:detail' object.id as next %}
+    {% render_comment_form for object %}
+  {% endif %}
 {% endblock %}
