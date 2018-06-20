@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load tom_tags %}
+{% load targets_extras tom_tags %}
 {% block content %}
 <div class="row">
   <div class="col-md-8">
@@ -18,5 +18,6 @@
       {% recent_comments %}
     </div>
   </div>
+  {% recent_targets %}
 </div>
 {% endblock %}
