@@ -4,3 +4,6 @@ body {
 .content {
   padding: 3rem 1.5rem;
 }
+.navbar-brand > img {
+    max-height: 25px;
+}
