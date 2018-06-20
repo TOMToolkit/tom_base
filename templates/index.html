@@ -1,9 +1,17 @@
 {% extends 'base.html' %}
+{% load targets_extras %}
 {% block content %}
-<h2 class="text-center">Congratulations! Welcome to your new TOM.</h2>
-<p class="text-center">
-  You can customize this page by editing the
-  <code>templates/index.html</code> file or by editing your
-  project's <code>urls.py</code>.
-</p>
+<div class="row">
+  <div class="col-md-8">
+    <h2 class="text-center">Congratulations! Welcome to your new TOM.</h2>
+    <p class="text-center">
+      You can customize this page by editing the
+      <code>templates/index.html</code> file or by editing your
+      project's <code>urls.py</code>.
+    </p>
+  </div>
+  <div class="col-md-4">
+    {% recent_targets %}
+  </div>
+</div>
 {% endblock %}
