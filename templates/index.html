@@ -3,8 +3,8 @@
 {% block content %}
 <div class="row">
   <div class="col-md-8">
-    <h2 class="text-center">Congratulations! Welcome to your new TOM.</h2>
-    <p class="text-center">
+    <h2>Congratulations! Welcome to your new TOM.</h2>
+    <p>
       You can customize this page by editing the
       <code>templates/index.html</code> file or by editing your
       project's <code>urls.py</code>.
@@ -17,7 +17,8 @@
       </div>
       {% recent_comments %}
     </div>
+    <br/>
+    {% recent_targets %}
   </div>
-  {% recent_targets %}
 </div>
 {% endblock %}

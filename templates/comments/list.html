@@ -11,7 +11,7 @@
         {% endif %}
         {{ comment.submit_date|date }}
       </small>
-      <p>{{ comment.comment|truncatewords:30 }}</p>
+      <p class="mr-1">{{ comment.comment|truncatewords:30 }}</p>
     </div>
   </li>
   {% endfor %}
