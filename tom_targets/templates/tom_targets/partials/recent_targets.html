@@ -1,22 +1,17 @@
-<div class="card">
-  <div class="card-header">Recent Targets</div>
-  <div class="card-body">
-    <table class="table">
-      <thead><tr><th>ID</th><th>Created</th></tr></thead>
-      <tbody>
-        {% for target in targets %}
-        <tr>
-          <td>
-            <a href="{% url 'targets:detail' target.id %}" title="Detail for {{ target.identifier }}">
-              {{ target.identifier }}
-            </a>
-          </td>
-          <td>
-            {{ target.created|date }}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+<table class="table">
+  <thead><tr><th>ID</th><th>Created</th></tr></thead>
+  <tbody>
+    {% for target in targets %}
+    <tr>
+      <td>
+        <a href="{% url 'targets:detail' target.id %}" title="Detail for {{ target.identifier }}">
+          {{ target.identifier }}
+        </a>
+      </td>
+      <td>
+        {{ target.created|date }}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

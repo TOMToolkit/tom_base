@@ -10,7 +10,7 @@
     {% bootstrap_css %}
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
-    <title>TOM Toolkit - Base</title>
+    <title>TOM Toolkit | {% block title %}{% endblock %}</title>
   </head>
   <body>
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
