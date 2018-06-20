@@ -1,0 +1,18 @@
+{% load gravatar %}
+<ul class="list-unstyled">
+  {% for comment in comment_list %}
+  <li class="media ml-2 mt-1">
+    <img class="mr-3 rounded-circle img-fluid avatar" src="{% gravatar_url comment.user.email 50 %}" alt="{{ comment.user.email }}">
+    <div class="media-body">
+      <small class="mt-0 mb-1">
+        {{ comment.user.first_name }} {{ comment.user.last_name }}
+        {% if not object %}
+        on <a href="{{ comment.content_object.get_absolute_url }}">{{ comment.content_object.identifier }}</a>
+        {% endif %}
+        {{ comment.submit_date|date }}
+      </small>
+      <p>{{ comment.comment|truncatewords:30 }}</p>
+    </div>
+  </li>
+  {% endfor %}
+</ul>

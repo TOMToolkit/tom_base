@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django_comments',
     'bootstrap4',
     'django_filters',
+    'django_gravatar',
     'tom_targets',
 ]
 
