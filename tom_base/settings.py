@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django_filters',
     'django_gravatar',
     'tom_targets',
+    'tom_catalogs',
 ]
 
 SITE_ID = 1

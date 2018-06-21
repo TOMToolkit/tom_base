@@ -1,11 +1,46 @@
+from django.conf import settings
+from importlib import import_module
+
+from tom_targets.models import Target
+
+DEFAULT_HARVESTER_CLASSES = [
+    'tom_catalogs.harvesters.simbad.SimbadHarvester',
+    'tom_catalogs.harvesters.ned.NEDHarvester'
+]
+
+try:
+    TOM_HARVESTER_CLASSES = settings.TOM_HARVESTER_CLASSES
+except AttributeError:
+    TOM_HARVESTER_CLASSES = DEFAULT_HARVESTER_CLASSES
+
+
+class MissingDataException(Exception):
+    pass
+
+
+class EmptyResultException(Exception):
+    pass
+
+
 class AbstractHarvester(object):
     name = 'ABSTRACT_HARVESTER'
-
-    def __init__(self, *args, **kwargs):
-        self.catalog_data = {}
+    catalog_data = {}
 
     def query(self, term):
-        self.term = term
+        raise NotImplementedError
 
     def to_target(self):
-        raise NotImplementedError
+        if not self.catalog_data:
+            raise MissingDataException('No catalog data. Did you call query()?')
+        else:
+            return Target()
+
+
+def get_service_classes():
+    service_choices = {}
+    for service in TOM_HARVESTER_CLASSES:
+        mod_name, class_name = service.rsplit('.', 1)
+        mod = import_module(mod_name)
+        clazz = getattr(mod, class_name)
+        service_choices[clazz.name] = clazz
+    return service_choices
