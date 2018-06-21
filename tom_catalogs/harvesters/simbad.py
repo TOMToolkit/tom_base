@@ -26,5 +26,5 @@ class SimbadHarvester(AbstractHarvester):
         target.pm_ra = result.get('PMRA')
         target.pm_dec = result.get('PMDEC')
         target.distance = result.get('Distance_distance')
-        target.identifier = str(result.get('ID', '')).split(',')[0]
+        target.identifier = result.get('ID', b'').decode('UTF-8').split(',')[0]
         return target
