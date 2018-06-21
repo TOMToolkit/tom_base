@@ -1,9 +1,48 @@
 {% extends 'base.html' %}
+{% load static targets_extras tom_tags %}
+{% block title %}Home{% endblock %}
 {% block content %}
-<h2 class="text-center">Congratulations! Welcome to your new TOM.</h2>
-<p class="text-center">
-  You can customize this page by editing the
-  <code>templates/index.html</code> file or by editing your
-  project's <code>urls.py</code>.
-</p>
+<div class="row">
+  <div class="col-md-8">
+    <h2 class="text-center">Congratulations! Welcome to your new TOM.</h2>
+    <p class="text-center"><img src="{% static 'img/logo-text.png' %}" class="img-fluid mx-auto"></p>
+    <h3>Next steps</h3>
+    <ul>
+      <li>
+        Check out the <a href="https://tomtoolkit.github.io" title="TOM Toolkit home page">TOM Toolkit homepage</a>
+        for the latest news, downloads and documentation.
+      </li>
+      <li>
+        <a href="{% url 'targets:create' %}" title="Create Target">Add your first target</a>.
+      </li>
+      <li>
+        Check out some <a href="">example code</a>.
+      </li>
+      <li>
+        Customize this page by editing the
+        <code>templates/index.html</code> file or by editing your
+        project's <code>urls.py</code>.
+      </li>
+    </ul>
+    <h3>Other Resources</h3>
+    <ul>
+      <li>The official <a href="https://www.djangoproject.com/">Django documentation</a>.</li>
+      <li>The official <a href="http://www.astropy.org/">Astropy documentation</a>.</li>
+    </ul>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        Latest Comments
+      </div>
+      {% recent_comments %}
+    </div>
+    <br/>
+    <div class="card">
+      <div class="card-header">
+        Latest Targets
+      </div>
+      {% recent_targets %}
+  </div>
+</div>
 {% endblock %}
