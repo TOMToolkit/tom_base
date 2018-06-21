@@ -1,7 +1,7 @@
 from astroquery.ned import Ned
 from astroquery.exceptions import RemoteServiceError
 
-from tom_catalogs.harvester import AbstractHarvester, EmptyResultException
+from tom_catalogs.harvester import AbstractHarvester
 
 
 class NEDHarvester(AbstractHarvester):
@@ -11,7 +11,7 @@ class NEDHarvester(AbstractHarvester):
         try:
             self.catalog_data = Ned.query_object(term)
         except RemoteServiceError:
-            raise EmptyResultException
+            self.catalog_data = {}
 
     def to_target(self):
         target = super().to_target()

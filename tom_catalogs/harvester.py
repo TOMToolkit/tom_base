@@ -18,10 +18,6 @@ class MissingDataException(Exception):
     pass
 
 
-class EmptyResultException(Exception):
-    pass
-
-
 class AbstractHarvester(object):
     name = 'ABSTRACT_HARVESTER'
     catalog_data = {}
