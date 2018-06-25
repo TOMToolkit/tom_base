@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% load bootstrap4 %}
 {% block content %}
-<ul class="nav">
+<ul class="nav nav-tabs">
   {% for k, v in type_choices %}
     <li class="nav-item">
-      <a class="nav-link active" href="{% url 'targets:create' %}?type={{ k }}">{{ v }}</a>
+      <a class="nav-link {% if form.type.initial == k %} active {% endif %}" href="{% url 'targets:create' %}?type={{ k }}">{{ v }}</a>
     </li>
   {% endfor %}
 </ul>
