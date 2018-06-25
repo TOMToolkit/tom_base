@@ -5,7 +5,8 @@ from tom_targets.models import Target
 
 DEFAULT_HARVESTER_CLASSES = [
     'tom_catalogs.harvesters.simbad.SimbadHarvester',
-    'tom_catalogs.harvesters.ned.NEDHarvester'
+    'tom_catalogs.harvesters.ned.NEDHarvester',
+    'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
 ]
 
 try:
@@ -36,7 +37,10 @@ def get_service_classes():
     service_choices = {}
     for service in TOM_HARVESTER_CLASSES:
         mod_name, class_name = service.rsplit('.', 1)
-        mod = import_module(mod_name)
-        clazz = getattr(mod, class_name)
+        try:
+            mod = import_module(mod_name)
+            clazz = getattr(mod, class_name)
+        except (ImportError, AttributeError):
+            raise ImportError('Could not import {}. Did you provide the correct path?'.format(service))
         service_choices[clazz.name] = clazz
     return service_choices
