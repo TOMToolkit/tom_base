@@ -4,10 +4,12 @@ from tom_alerts.alerts import GenericAlert
 from dateutil.parser import parse
 from django import forms
 
+from tom_alerts.alerts import GenericQueryForm
+
 MARS_URL = 'https://mars.lco.global'
 
 
-class MARSQueryForm(forms.Form):
+class MARSQueryForm(GenericQueryForm):
     time_lower = forms.DateField(required=False)
     time_upper = forms.DateField(required=False)
     jd_lower = forms.FloatField(required=False)

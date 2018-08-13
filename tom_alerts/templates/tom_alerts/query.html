@@ -2,5 +2,12 @@
 {% load bootstrap4 %}
 {% block title %}Query a Broker{% endblock %}
 {% block content %}
-{% bootstrap_form form %}
+<form method="POST" action="{% url 'alerts:query' %}">
+  {% csrf_token %}
+  {% bootstrap_form form %}
+  {% buttons %}
+  <input type="hidden" name="broker" value="{{ request.GET.broker }}">
+  <input type="submit" class="btn btn-primary" value="Save Query">
+  {% endbuttons %}
+</form>
 {% endblock %}
