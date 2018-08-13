@@ -16,6 +16,7 @@ class NEDHarvester(AbstractHarvester):
     def to_target(self):
         target = super().to_target()
         target.type = 'SIDEREAL'
+        target.identifier = self.catalog_data['Object Name'][0]
         target.ra = self.catalog_data['RA(deg)'][0]
         target.dec = self.catalog_data['DEC(deg)'][0]
         return target

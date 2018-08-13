@@ -14,7 +14,7 @@ class JPLHorizonsHarvester(AbstractHarvester):
         try:
             obj = Horizons(id=term, location=location, epochs=epochs)
             self.catalog_data = obj.elements()
-        except ValueError:
+        except (ValueError, IOError):
             self.catalog_data = {}
 
     def to_target(self):
