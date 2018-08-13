@@ -18,7 +18,9 @@ class TargetListView(FilterView):
 class TargetCreate(CreateView):
     model = Target
     fields = '__all__'
-    initial = {'type': settings.DEFAULT_TARGET_TYPE}
+
+    def get_initial(self):
+        return {'type': settings.DEFAULT_TARGET_TYPE, **dict(self.request.GET.items())}
 
     def get_context_data(self, **kwargs):
         context = super(TargetCreate, self).get_context_data(**kwargs)
