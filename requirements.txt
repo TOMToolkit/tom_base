@@ -6,3 +6,4 @@ factory_boy
 django-filter
 django-contrib-comments
 django-gravatar2
+astroquery
