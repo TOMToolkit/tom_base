@@ -3,7 +3,14 @@
 {% block content %}
 <div class="row">
   <div class="col-md-10">
-    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+    <div class="row">
+      <div class="col-md-6">
+        {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+      </div>
+      <div class="col-md-6">
+        <a href="{% url 'targets:create' %}" class="btn btn-primary float-right" title="Add Target">Add a target</a>
+      </div>
+    </div>
     <table class="table">
       <thead><tr><th>ID</th><th>Name</th><th>Designation</th><th>Type</th></tr></thead>
       <tbody>
