@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'django_comments',
     'bootstrap4',
+    'crispy_forms',
     'django_filters',
     'django_gravatar',
     'tom_targets',
@@ -79,6 +80,8 @@ TEMPLATES = [
         },
     },
 ]
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 WSGI_APPLICATION = 'tom_base.wsgi.application'
 

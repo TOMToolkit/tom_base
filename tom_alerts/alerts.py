@@ -3,6 +3,8 @@ from django import forms
 from importlib import import_module
 from datetime import datetime
 from dataclasses import dataclass
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 import json
 
 from tom_alerts.models import BrokerQuery
@@ -43,8 +45,15 @@ class GenericAlert:
 
 class GenericQueryForm(forms.Form):
     query_name = forms.CharField(required=True)
+    broker = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
 
     field_order = ['query_name']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_action = 'alerts:query'
+        self.helper.add_input(Submit('submit', 'Submit'))
 
     def serialize_parameters(self):
         return json.dumps(self.cleaned_data)

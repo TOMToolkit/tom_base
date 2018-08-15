@@ -20,6 +20,12 @@ class BrokerQueryView(FormView):
         except KeyError:
             raise ValueError('Could not a find a broker with that name. Did you add it to TOM_ALERT_CLASSES?')
 
+    def get_initial(self):
+        initial = super().get_initial()
+        if self.request.method == 'GET':
+            initial['broker'] = self.request.GET['broker']
+        return initial
+
     def form_valid(self, form):
         bk = form.save()
         return redirect('/')
