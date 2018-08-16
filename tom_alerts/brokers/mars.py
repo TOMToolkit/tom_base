@@ -50,6 +50,7 @@ class MARSQueryForm(GenericQueryForm):
                 <p>Please see <a href="https://mars.lco.global/help">MARS help</a>
                 for a detailed description of available filters.</p>
             '''),
+            self.common_layout,
             Fieldset(
                 'Time based filters',
                 Div(
@@ -96,8 +97,8 @@ class MARSQueryForm(GenericQueryForm):
                         'magpsf__gte',
                         'magap__gte',
                         'distnr__gte',
-                        'delta_mag__gte',
-                        'delta_mag_ref__gte',
+                        'deltamaglatest__gte',
+                        'deltamagref__gte',
                         'classtar__gte',
                         css_class='col'
                     ),
@@ -105,8 +106,8 @@ class MARSQueryForm(GenericQueryForm):
                         'magpsf__lte',
                         'magap__lte',
                         'distnr__lte',
-                        'delta_mag__lte',
-                        'delta_mag_ref__lte',
+                        'deltamaglatest__lte',
+                        'deltamagref__lte',
                         'classtar__lte',
                         css_class='col'
                     ),

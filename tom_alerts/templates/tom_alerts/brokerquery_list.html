@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Query List{% endblock %}
+{% block content %}
+<table class="table table-striped">
+  <thead><tr><th>Name</th><th>Broker</th><th>Created</th></tr></thead>
+  <tbody>
+    {% for query in object_list %}
+    <tr>
+      <td><a href="{% url 'tom_alerts:update' query.id %}" title="Update {{ query.name }}">{{ query.name }}</a></td>
+      <td>{{ query.broker }}</td>
+      <td>{{ query.created }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

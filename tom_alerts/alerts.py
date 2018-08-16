@@ -4,7 +4,7 @@ from importlib import import_module
 from datetime import datetime
 from dataclasses import dataclass
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from crispy_forms.layout import Submit, Layout
 import json
 
 from tom_alerts.models import BrokerQuery
@@ -33,6 +33,14 @@ def get_service_classes():
     return service_choices
 
 
+def get_service_class(name):
+    available_classes = get_service_classes()
+    try:
+        return available_classes[name]
+    except KeyError:
+        raise ValueError('Could not a find a broker with that name. Did you add it to TOM_ALERT_CLASSES?')
+
+
 @dataclass
 class GenericAlert:
     timestamp: datetime
@@ -47,20 +55,22 @@ class GenericQueryForm(forms.Form):
     query_name = forms.CharField(required=True)
     broker = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
 
-    field_order = ['query_name']
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_action = 'alerts:query'
         self.helper.add_input(Submit('submit', 'Submit'))
+        self.common_layout = Layout('query_name', 'broker')
 
     def serialize_parameters(self):
         return json.dumps(self.cleaned_data)
 
-    def save(self):
-        bk = BrokerQuery()
-        bk.query_name = self.cleaned_data['query_name']
-        bk.parameters = self.serialize_parameters()
-        bk.save()
-        return bk
+    def save(self, query_id=None):
+        if query_id:
+            query = BrokerQuery.objects.get(id=query_id)
+        else:
+            query = BrokerQuery()
+        query.name = self.cleaned_data['query_name']
+        query.broker = self.cleaned_data['broker']
+        query.parameters = self.serialize_parameters()
+        query.save()
+        return query
