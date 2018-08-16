@@ -147,11 +147,11 @@ class MARSBroker(object):
 
     @classmethod
     def fetch_alert(clazz, id):
-        url = f'{MARS_URL}/{id}/'
+        url = f'{MARS_URL}/{id}/?format=json'
         response = requests.get(url)
         response.raise_for_status()
         parsed = response.json()
-        return clazz.to_generic_alert(parsed)
+        return parsed
 
     @classmethod
     def to_generic_alert(clazz, mars_alert):
@@ -161,6 +161,7 @@ class MARSBroker(object):
         return GenericAlert(
             timestamp=timestamp,
             url=url,
+            id=mars_alert['lco_id'],
             name=mars_alert['objectId'],
             ra=mars_alert['candidate']['ra'],
             dec=mars_alert['candidate']['dec'],

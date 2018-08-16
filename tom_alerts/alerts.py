@@ -44,6 +44,7 @@ def get_service_class(name):
 @dataclass
 class GenericAlert:
     timestamp: datetime
+    id: int
     name: str
     ra: float
     dec: float

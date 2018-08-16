@@ -1,5 +1,5 @@
 from django.views.generic.edit import FormView
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, View
 from tom_alerts.alerts import get_service_class
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
@@ -80,3 +80,13 @@ class RunQueryView(TemplateView):
         context['alerts'] = broker_class.fetch_alerts(query.parameters_as_dict)
         context['query'] = query
         return context
+
+
+class CreateTargetFromAlertView(View):
+    def post(self, *args, **kwargs):
+        broker_name = self.request.POST['broker']
+        alert_id = self.request.POST['alert_id']
+        broker_class = get_service_class(broker_name)
+        alert = broker_class.fetch_alert(alert_id)
+        print(alert)
+        return redirect(reverse('tom_alerts:list'))
