@@ -126,17 +126,23 @@ class MARSBroker(object):
     form = MARSQueryForm
 
     @classmethod
-    def fetch_alerts(clazz, page, **kwargs):
-        args = urlencode(kwargs)
-        url = f'{MARS_URL}/?page={page}&format=json&{args}'
+    def clean_parameters(clazz, parameters):
+        return {k: v for k, v in parameters.items() if v and k != 'page'}
+
+    @classmethod
+    def fetch_alerts(clazz, parameters):
+        if not parameters.get('page'):
+            parameters['page'] = 1
+        args = urlencode(clazz.clean_parameters(parameters))
+        url = '{0}/?page={1}&format=json&{2}'.format(MARS_URL, parameters['page'], args)
         alerts = []
         response = requests.get(url)
         response.raise_for_status()
         parsed = response.json()
         alerts = parsed['results']
-        if parsed['has_next']:
-            page += 1
-            alerts += clazz.fetch_alerts(page, kwargs)
+        if parsed['has_next'] and parameters['page'] < 10:
+            parameters['page'] += 1
+            alerts += clazz.fetch_alerts(parameters)
         return [clazz.to_generic_alert(alert) for alert in alerts]
 
     @classmethod
@@ -149,13 +155,15 @@ class MARSBroker(object):
 
     @classmethod
     def to_generic_alert(clazz, mars_alert):
-        timestamp = parse(mars_alert['wall_time'])
+        timestamp = parse(mars_alert['candidate']['wall_time'])
+        url = '{0}/{1}/'.format(MARS_URL, mars_alert['lco_id'])
 
         return GenericAlert(
-                timetamp=timestamp,
-                source=clazz.name,
-                ra=mars_alert['ra'],
-                dec=mars_alert['dec'],
-                mag=mars_alert['magpsf'],
-                score=mars_alert['rb']
+            timestamp=timestamp,
+            url=url,
+            name=mars_alert['objectId'],
+            ra=mars_alert['candidate']['ra'],
+            dec=mars_alert['candidate']['dec'],
+            mag=mars_alert['candidate']['magpsf'],
+            score=mars_alert['candidate']['rb']
         )

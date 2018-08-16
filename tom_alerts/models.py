@@ -14,4 +14,4 @@ class BrokerQuery(models.Model):
         return json.loads(self.parameters)
 
     def __str__(self):
-        return self.query_name
+        return self.name

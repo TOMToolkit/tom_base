@@ -38,17 +38,18 @@ def get_service_class(name):
     try:
         return available_classes[name]
     except KeyError:
-        raise ValueError('Could not a find a broker with that name. Did you add it to TOM_ALERT_CLASSES?')
+        raise ImportError('Could not a find a broker with that name. Did you add it to TOM_ALERT_CLASSES?')
 
 
 @dataclass
 class GenericAlert:
     timestamp: datetime
-    source: str
+    name: str
     ra: float
     dec: float
     mag: float
     score: float
+    url: str
 
 
 class GenericQueryForm(forms.Form):

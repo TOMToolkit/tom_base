@@ -1,6 +1,7 @@
 from django.views.generic.edit import FormView
+from django.views.generic.base import TemplateView
 from tom_alerts.alerts import get_service_class
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
 from django.views.generic.list import ListView
 
@@ -65,5 +66,17 @@ class BrokerQueryUpdateView(FormView):
         return redirect(reverse('tom_alerts:list'))
 
 
-class BrokerQueryListview(ListView):
+class BrokerQueryListView(ListView):
     model = BrokerQuery
+
+
+class RunQueryView(TemplateView):
+    template_name = 'tom_alerts/query_result.html'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data()
+        query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
+        broker_class = get_service_class(query.broker)
+        context['alerts'] = broker_class.fetch_alerts(query.parameters_as_dict)
+        context['query'] = query
+        return context
