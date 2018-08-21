@@ -14,13 +14,13 @@ DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.mars.MARSBroker',
 ]
 
-try:
-    TOM_ALERT_CLASSES = settings.TOM_ALERT_CLASSES
-except AttributeError:
-    TOM_ALERT_CLASSES = DEFAULT_ALERT_CLASSES
-
 
 def get_service_classes():
+    try:
+        TOM_ALERT_CLASSES = settings.TOM_ALERT_CLASSES
+    except AttributeError:
+        TOM_ALERT_CLASSES = DEFAULT_ALERT_CLASSES
+
     service_choices = {}
     for service in TOM_ALERT_CLASSES:
         mod_name, class_name = service.rsplit('.', 1)

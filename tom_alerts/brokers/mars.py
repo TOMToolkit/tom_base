@@ -144,7 +144,7 @@ class MARSBroker(object):
         if parsed['has_next'] and parameters['page'] < 10:
             parameters['page'] += 1
             alerts += clazz.fetch_alerts(parameters)
-        return [clazz.to_generic_alert(alert) for alert in alerts]
+        return alerts
 
     @classmethod
     def fetch_alert(clazz, id):
@@ -155,17 +155,16 @@ class MARSBroker(object):
         return parsed
 
     @classmethod
-    def to_target(clazz, alert_id):
-        full_alert = clazz.fetch_alert(alert_id)
+    def to_target(clazz, alert):
         return Target(
-            identifier=full_alert['lco_id'],
-            name=full_alert['objectId'],
+            identifier=alert['lco_id'],
+            name=alert['objectId'],
             type='SIDEREAL',
             designation='MARS',
-            ra=full_alert['candidate']['ra'],
-            dec=full_alert['candidate']['dec'],
-            galactic_lng=full_alert['candidate']['l'],
-            galactic_lat=full_alert['candidate']['b'],
+            ra=alert['candidate']['ra'],
+            dec=alert['candidate']['dec'],
+            galactic_lng=alert['candidate']['l'],
+            galactic_lat=alert['candidate']['b'],
         )
 
     @classmethod

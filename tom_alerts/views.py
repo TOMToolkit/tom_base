@@ -44,7 +44,7 @@ class BrokerQueryUpdateView(FormView):
     template_name = 'tom_alerts/query_form.html'
 
     def get_object(self):
-        return BrokerQuery.objects.get(pk=self.kwargs['id'])
+        return BrokerQuery.objects.get(pk=self.kwargs['pk'])
 
     def get_form_class(self):
         self.object = self.get_object()
@@ -52,7 +52,7 @@ class BrokerQueryUpdateView(FormView):
 
     def get_form(self):
         form = super().get_form()
-        form.helper.form_action = reverse('tom_alerts:update', kwargs={'id': self.object.id})
+        form.helper.form_action = reverse('tom_alerts:update', kwargs={'pk': self.object.id})
         return form
 
     def get_initial(self):
@@ -77,7 +77,8 @@ class RunQueryView(TemplateView):
         context = super().get_context_data()
         query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
         broker_class = get_service_class(query.broker)
-        context['alerts'] = broker_class.fetch_alerts(query.parameters_as_dict)
+        alerts = broker_class.fetch_alerts(query.parameters_as_dict)
+        context['alerts'] = [broker_class.to_generic_alert(alert) for alert in alerts]
         context['query'] = query
         return context
 
@@ -87,6 +88,7 @@ class CreateTargetFromAlertView(View):
         broker_name = self.request.POST['broker']
         alert_id = self.request.POST['alert_id']
         broker_class = get_service_class(broker_name)
-        target = broker_class.to_target(alert_id)
+        alert = broker_class.fetch_alert(alert_id)
+        target = broker_class.to_target(alert)
         target.save()
         return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
