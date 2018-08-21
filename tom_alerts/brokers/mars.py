@@ -6,6 +6,7 @@ from django import forms
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 
 from tom_alerts.alerts import GenericQueryForm
+from tom_targets.models import Target
 
 MARS_URL = 'https://mars.lco.global'
 
@@ -154,17 +155,31 @@ class MARSBroker(object):
         return parsed
 
     @classmethod
-    def to_generic_alert(clazz, mars_alert):
-        timestamp = parse(mars_alert['candidate']['wall_time'])
-        url = '{0}/{1}/'.format(MARS_URL, mars_alert['lco_id'])
+    def to_target(clazz, alert_id):
+        full_alert = clazz.fetch_alert(alert_id)
+        return Target(
+            identifier=full_alert['lco_id'],
+            name=full_alert['objectId'],
+            type='SIDEREAL',
+            designation='MARS',
+            ra=full_alert['candidate']['ra'],
+            dec=full_alert['candidate']['dec'],
+            galactic_lng=full_alert['candidate']['l'],
+            galactic_lat=full_alert['candidate']['b'],
+        )
+
+    @classmethod
+    def to_generic_alert(clazz, alert):
+        timestamp = parse(alert['candidate']['wall_time'])
+        url = '{0}/{1}/'.format(MARS_URL, alert['lco_id'])
 
         return GenericAlert(
             timestamp=timestamp,
             url=url,
-            id=mars_alert['lco_id'],
-            name=mars_alert['objectId'],
-            ra=mars_alert['candidate']['ra'],
-            dec=mars_alert['candidate']['dec'],
-            mag=mars_alert['candidate']['magpsf'],
-            score=mars_alert['candidate']['rb']
+            id=alert['lco_id'],
+            name=alert['objectId'],
+            ra=alert['candidate']['ra'],
+            dec=alert['candidate']['dec'],
+            mag=alert['candidate']['magpsf'],
+            score=alert['candidate']['rb']
         )

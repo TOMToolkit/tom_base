@@ -87,6 +87,6 @@ class CreateTargetFromAlertView(View):
         broker_name = self.request.POST['broker']
         alert_id = self.request.POST['alert_id']
         broker_class = get_service_class(broker_name)
-        alert = broker_class.fetch_alert(alert_id)
-        print(alert)
-        return redirect(reverse('tom_alerts:list'))
+        target = broker_class.to_target(alert_id)
+        target.save()
+        return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
