@@ -1,6 +1,6 @@
 from django.views.generic.edit import FormView
 from django.views.generic.base import TemplateView, View
-from tom_alerts.alerts import get_service_class
+from tom_alerts.alerts import get_service_class, get_service_classes
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
 from django.views.generic.list import ListView
@@ -68,6 +68,11 @@ class BrokerQueryUpdateView(FormView):
 
 class BrokerQueryListView(ListView):
     model = BrokerQuery
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['installed_brokers'] = get_service_classes()
+        return context
 
 
 class RunQueryView(TemplateView):
