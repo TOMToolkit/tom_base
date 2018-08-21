@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+{% block title %} Lookup Object {% endblock %}
+{% block content %}
+<form action="{% url 'tom_catalogs:query' %}" method="POST">
+  {% csrf_token %}
+  {% bootstrap_form form %}
+  {% buttons %}
+  <input type="submit" class="btn btn-primary" value="search">
+  {% endbuttons %}
+</form>
+{% endblock %}

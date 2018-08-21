@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django_gravatar',
     'tom_targets',
     'tom_alerts',
+    'tom_catalogs',
 ]
 
 SITE_ID = 1

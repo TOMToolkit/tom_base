@@ -24,6 +24,7 @@ urlpatterns = [
     path('targets/', include('tom_targets.urls', namespace='targets')),
     path('alerts/', include('tom_alerts.urls', namespace='alerts')),
     path('comments/', include('django_comments.urls')),
+    path('catalogs/', include('tom_catalogs.urls')),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('admin/', admin.site.urls),

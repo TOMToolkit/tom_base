@@ -8,3 +8,4 @@ django-contrib-comments
 django-gravatar2
 django-crispy-forms
 requests
+astroquery
