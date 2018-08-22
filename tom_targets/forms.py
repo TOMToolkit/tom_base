@@ -1,7 +1,7 @@
 from django.forms import ModelForm
 from django import forms
 from django.conf import settings
-from .models import Target
+from .models import Target, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS
 
 
 class TargetForm(ModelForm):
@@ -14,9 +14,9 @@ class TargetForm(ModelForm):
 
 class SiderealTargetCreateForm(TargetForm):
     class Meta(TargetForm.Meta):
-        fields = settings.SIDEREAL_FIELDS
+        fields = SIDEREAL_FIELDS
 
 
 class NonSiderealTargetCreateForm(TargetForm):
     class Meta(TargetForm.Meta):
-        fields = settings.NON_SIDEREAL_FIELDS
+        fields = NON_SIDEREAL_FIELDS

@@ -1,0 +1,9 @@
+include README.md
+recursive-include tom_common/templates *
+recursive-include tom_common/static *
+recursive-include tom_alerts/templates *
+recursive-include tom_alerts/static *
+recursive-include tom_catalogs/templates *
+recursive-include tom_catalogs/static *
+recursive-include tom_targets/templates *
+recursive-include tom_targets/static *

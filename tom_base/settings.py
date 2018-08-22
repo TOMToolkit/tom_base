@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django_extensions',
+    'tom_common',
     'django_comments',
     'bootstrap4',
     'crispy_forms',
@@ -61,17 +62,14 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'tom_base.urls'
+ROOT_URLCONF = 'tom_common.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
-            'libraries': {
-                'tom_tags': 'tom_base.template_tags'
-            },
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
@@ -138,31 +136,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-
-
-TOM_SETTINGS = {
-    # Enable to allow users to create free-form comments on targets and observations.
-    'COMMENTS_ENABLED': True
-}
 
 try:
     from local_settings import * # noqa
 except ImportError:
     pass
-
-
-# Target Type Fields
-SIDEREAL = 'SIDEREAL'
-NON_SIDEREAL = 'NON_SIDEREAL'
-
-TARGET_TYPES = ((SIDEREAL, 'Sidereal'), (NON_SIDEREAL, 'Non-sidereal'))
-DEFAULT_TARGET_TYPE = SIDEREAL
-
-GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'designation', 'type']
-SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + ['ra', 'dec', 'epoch', 'pm_ra',
-    'pm_dec', 'galactic_lng', 'galactic_lat', 'distance', 'distance_err']
-NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + ['mean_anomaly', 'arg_of_perihelion',
-    'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
-    'ephemeris_period', 'ephemeris_period_err', 'ephemeris_epoch',
-    'ephemeris_epoch_err']

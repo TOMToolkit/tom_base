@@ -5,12 +5,29 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 
 
+GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'designation', 'type']
+
+SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
+    'ra', 'dec', 'epoch', 'pm_ra', 'pm_dec',
+    'galactic_lng', 'galactic_lat', 'distance', 'distance_err'
+]
+
+NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
+    'mean_anomaly', 'arg_of_perihelion',
+    'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
+    'ephemeris_period', 'ephemeris_period_err', 'ephemeris_epoch',
+    'ephemeris_epoch_err'
+]
+
+
 class Target(models.Model):
-    TYPE_CHOICES = settings.TARGET_TYPES
+    SIDEREAL = 'SIDEREAL'
+    NON_SIDEREAL = 'NON_SIDEREAL'
+    TARGET_TYPES = ((SIDEREAL, 'Sidereal'), (NON_SIDEREAL, 'Non-sidereal'))
 
     identifier = models.CharField(max_length=100, verbose_name='Identifier', help_text='The identifier for this object, e.g. Kelt-16b.')
     name = models.CharField(max_length=100, default='', verbose_name='Name', help_text='The name of this target e.g. Barnard\'s star.')
-    type = models.CharField(max_length=100, choices=TYPE_CHOICES, verbose_name='Target Type', help_text='The type of this target.')
+    type = models.CharField(max_length=100, choices=TARGET_TYPES, verbose_name='Target Type', help_text='The type of this target.')
     designation = models.CharField(max_length=100, default='', verbose_name='Designation', help_text='Designation of this target.')
     created = models.DateTimeField(auto_now_add=True, verbose_name='Time Created', help_text='The time which this target was created in the TOM database.')
     modified = models.DateTimeField(auto_now=True, verbose_name='Last Modified', help_text='The time which this target was changed in the TOM database.')
@@ -44,12 +61,12 @@ class Target(models.Model):
         return reverse('targets:detail', kwargs={'pk': self.id})
 
     def as_dict(self):
-        if self.type == settings.SIDEREAL:
-            fields_for_type = settings.SIDEREAL_FIELDS
-        elif self.type == settings.NON_SIDEREAL:
-            fields_for_type = settings.NON_SIDEREAL_FIELDS
+        if self.type == self.SIDEREAL:
+            fields_for_type = SIDEREAL_FIELDS
+        elif self.type == self.NON_SIDEREAL:
+            fields_for_type = NON_SIDEREAL_FIELDS
         else:
-            fields_for_type = settings.GLOBAL_TARGET_FIELDS
+            fields_for_type = GLOBAL_TARGET_FIELDS
 
         return model_to_dict(self, fields=fields_for_type)
 
