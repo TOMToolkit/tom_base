@@ -31,7 +31,6 @@ setup(
         'django-bootstrap4',
         'django-extensions',
         'django-filter',
-        'django-filter',
         'django-contrib-comments',
         'django-gravatar2',
         'django-crispy-forms',
