@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Query List{% endblock %}
+{% block content %}
+<p>
+  Create a new query using:
+  {% for broker in installed_brokers %}
+  <a href="{% url 'tom_alerts:create' %}?broker={{ broker }}" title="{{ broker }}">{{ broker }}</a>
+  {% endfor %}
+</p>
+<table class="table table-striped">
+  <thead><tr><th>Name</th><th>Broker</th><th>Created</th><th>Run</th></tr></thead>
+  <tbody>
+    {% for query in object_list %}
+    <tr>
+      <td><a href="{% url 'tom_alerts:update' query.id %}" title="Update {{ query.name }}">{{ query.name }}</a></td>
+      <td>{{ query.broker }}</td>
+      <td>{{ query.created }}</td>
+      <td><a href="{% url 'tom_alerts:run' query.id %}" title="Run query" class="btn btn-primary">Run</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

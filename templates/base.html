@@ -29,6 +29,9 @@
           <li class="nav-item {% if request.resolver_match.namespace == 'targets' %}active{% endif %}">
             <a class="nav-link" href="{% url 'targets:list' %}">Targets</a>
           </li>
+          <li class="nav-item {% if request.resolver_match.namespace == 'alerts' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'alerts:list' %}">Alerts</a>
+          </li>
         </ul>
         {% if user.is_authenticated %}
           <a class="btn btn-outline-success" title="logout" href="{% url 'logout' %}">Logout</a>
@@ -39,7 +42,7 @@
     </nav>
 
     <main role="main" class="container">
-
+      {% bootstrap_messages %}
       <div class="content">
         {% block content %}
         {% endblock %}

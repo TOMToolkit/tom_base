@@ -6,8 +6,6 @@ factory_boy
 django-filter
 django-contrib-comments
 django-gravatar2
-<<<<<<< HEAD
+django-crispy-forms
+requests
 astroquery
-=======
-astroquery
->>>>>>> 5cc8a9ececd391aeb569ed65e908172ee81c3ed2
