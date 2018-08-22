@@ -19,25 +19,31 @@ class TargetCreate(CreateView):
     model = Target
     fields = '__all__'
 
+    def get_default_target_type(self):
+        try:
+            return settings.DEFAULT_TARGET_TYPE
+        except AttributeError:
+            return Target.SIDEREAL
+
     def get_initial(self):
-        return {'type': settings.DEFAULT_TARGET_TYPE, **dict(self.request.GET.items())}
+        return {'type': self.get_default_target_type(), **dict(self.request.GET.items())}
 
     def get_context_data(self, **kwargs):
         context = super(TargetCreate, self).get_context_data(**kwargs)
-        context['type_choices'] = settings.TARGET_TYPES
+        context['type_choices'] = Target.TARGET_TYPES
         return context
 
     def get_form_class(self):
-        target_type = settings.DEFAULT_TARGET_TYPE
+        target_type = self.get_default_target_type()
         if self.request.GET:
             target_type = self.request.GET.get('type', target_type)
         elif self.request.POST:
             target_type = self.request.POST.get('type', target_type)
-        if target_type == settings.SIDEREAL:
-            self.initial['type'] = settings.SIDEREAL
+        if target_type == Target.SIDEREAL:
+            self.initial['type'] = Target.SIDEREAL
             return SiderealTargetCreateForm
-        elif target_type == settings.NON_SIDEREAL:
-            self.initial['type'] = settings.NON_SIDEREAL
+        elif target_type == Target.NON_SIDEREAL:
+            self.initial['type'] = Target.NON_SIDEREAL
             return NonSiderealTargetCreateForm
 
 

@@ -6,8 +6,11 @@ register = template.Library()
 
 
 @register.simple_tag
-def tom_setting(name):
-    return settings.TOM_SETTINGS.get(name)
+def comments_enabled():
+    try:
+        return settings.COMMENTS_ENABLED
+    except AttributeError:
+        return True
 
 
 @register.simple_tag

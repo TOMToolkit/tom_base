@@ -8,15 +8,15 @@
 
     <!-- Bootstrap CSS -->
     {% bootstrap_css %}
-    <link rel="stylesheet" href="{% static 'css/main.css' %}">
-    <link rel="icon" type="image/png" href="{% static 'img/favicon-32x32.png' %}" sizes="32x32" />
-    <link rel="icon" type="image/png" href="{% static 'img/favicon-16x16.png' %}" sizes="16x16" />
+    <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'tom_common/img/favicon-32x32.png' %}" sizes="32x32" />
+    <link rel="icon" type="image/png" href="{% static 'tom_common/img/favicon-16x16.png' %}" sizes="16x16" />
 
     <title>TOM Toolkit | {% block title %}{% endblock %}</title>
   </head>
   <body>
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-      <a class="navbar-brand" href="/"><img src="{% static 'img/icon.png' %}" class="img-fluid"/> TOM Toolkit</a>
+      <a class="navbar-brand" href="/"><img src="{% static 'tom_common/img/icon.png' %}" class="img-fluid"/> TOM Toolkit</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
