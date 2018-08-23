@@ -34,6 +34,7 @@ setup(
         'django-contrib-comments',
         'django-gravatar2',
         'django-crispy-forms',
+        'python-dateutil',
         'requests',
         'astroquery',
     ],
