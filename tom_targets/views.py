@@ -12,7 +12,7 @@ class TargetListView(FilterView):
     template_name = 'tom_targets/target_list.html'
     paginate_by = 25
     model = Target
-    filter_fields = ['type', 'identifier', 'name', 'designation']
+    filterset_fields = ['type', 'identifier', 'name', 'designation']
 
 
 class TargetCreate(CreateView):
