@@ -1,8 +1,8 @@
-from django.views.generic.edit import FormView
+from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.base import TemplateView, View
 from tom_alerts.alerts import get_service_class, get_service_classes
 from django.shortcuts import redirect, get_object_or_404
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 import django_filters
 
 from tom_alerts.models import BrokerQuery
@@ -84,6 +84,11 @@ class BrokerQueryListView(django_filters.views.FilterView):
         context = super().get_context_data(*args, **kwargs)
         context['installed_brokers'] = get_service_classes()
         return context
+
+
+class BrokerQueryDeleteView(DeleteView):
+    model = BrokerQuery
+    success_url = reverse_lazy('tom_alerts:list')
 
 
 class RunQueryView(TemplateView):
