@@ -146,6 +146,16 @@ class TestBrokerViews(TestCase):
         self.assertContains(response, broker_query.name)
         self.assertNotContains(response, not_found.name)
 
+    def test_delete_query(self):
+        broker_query = BrokerQuery.objects.create(
+            name='find hoth',
+            broker='TEST',
+            parameters='{"name": "Hoth"}',
+        )
+        self.assertTrue(BrokerQuery.objects.filter(name='find hoth').exists())
+        self.client.post(reverse('tom_alerts:delete', kwargs={'pk': broker_query.id}))
+        self.assertFalse(BrokerQuery.objects.filter(name='find hoth').exists())
+
     def test_run_query(self):
         broker_query = BrokerQuery.objects.create(
             name='find hoth',
