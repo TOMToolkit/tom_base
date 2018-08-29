@@ -3,7 +3,7 @@ from django.views.generic.base import TemplateView, View
 from tom_alerts.alerts import get_service_class, get_service_classes
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
-from django.views.generic.list import ListView
+import django_filters
 
 from tom_alerts.models import BrokerQuery
 
@@ -66,8 +66,19 @@ class BrokerQueryUpdateView(FormView):
         return redirect(reverse('tom_alerts:list'))
 
 
-class BrokerQueryListView(ListView):
+class BrokerQueryFilter(django_filters.FilterSet):
+    broker = django_filters.ChoiceFilter(choices=[(k, k) for k in get_service_classes().keys()])
+    name = django_filters.CharFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = BrokerQuery
+        fields = ['broker', 'name']
+
+
+class BrokerQueryListView(django_filters.views.FilterView):
     model = BrokerQuery
+    template_name = 'tom_alerts/brokerquery_list.html'
+    filterset_class = BrokerQueryFilter
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

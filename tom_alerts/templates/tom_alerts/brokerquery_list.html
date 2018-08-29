@@ -1,23 +1,39 @@
 {% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
 {% block title %}Query List{% endblock %}
 {% block content %}
-<p>
-  Create a new query using:
-  {% for broker in installed_brokers %}
-  <a href="{% url 'tom_alerts:create' %}?broker={{ broker }}" title="{{ broker }}">{{ broker }}</a>
-  {% endfor %}
-</p>
-<table class="table table-striped">
-  <thead><tr><th>Name</th><th>Broker</th><th>Created</th><th>Run</th></tr></thead>
-  <tbody>
-    {% for query in object_list %}
-    <tr>
-      <td><a href="{% url 'tom_alerts:update' query.id %}" title="Update {{ query.name }}">{{ query.name }}</a></td>
-      <td>{{ query.broker }}</td>
-      <td>{{ query.created }}</td>
-      <td><a href="{% url 'tom_alerts:run' query.id %}" title="Run query" class="btn btn-primary">Run</a></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="row">
+  <div class="col-md-10">
+    <p>
+      Create a new query using:
+      {% for broker in installed_brokers %}
+      <a href="{% url 'tom_alerts:create' %}?broker={{ broker }}" title="{{ broker }}">{{ broker }}</a>
+      {% endfor %}
+    </p>
+    <table class="table table-striped">
+      <thead><tr><th>Name</th><th>Broker</th><th>Created</th><th>Run</th></tr></thead>
+      <tbody>
+        {% for query in filter.qs %}
+        <tr>
+          <td><a href="{% url 'tom_alerts:update' query.id %}" title="Update {{ query.name }}">{{ query.name }}</a></td>
+          <td>{{ query.broker }}</td>
+          <td>{{ query.created }}</td>
+          <td><a href="{% url 'tom_alerts:run' query.id %}" title="Run query" class="btn btn-primary">Run</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-2">
+    <form action="" method="get" class="form">
+      {% bootstrap_form filter.form %}
+      {% buttons %}
+        <button type="submit" class="btn btn-primary">
+          Filter
+        </button>
+        <a href="{% url 'tom_alerts:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
+      {% endbuttons %}
+    </form>
+  </div>
+</div>
 {% endblock %}

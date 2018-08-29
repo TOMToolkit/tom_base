@@ -131,6 +131,21 @@ class TestBrokerViews(TestCase):
         self.assertEqual(BrokerQuery.objects.count(), 1)
         self.assertEqual(BrokerQuery.objects.first().name, query_data['query_name'])
 
+    def test_filter_queries(self):
+        broker_query = BrokerQuery.objects.create(
+            name='Is it dust?',
+            broker='TEST',
+            parameters='{"name": "Alderaan"}',
+        )
+        not_found = BrokerQuery.objects.create(
+            name='find hoth',
+            broker='TEST',
+            parameters='{"name": "Hoth"}',
+        )
+        response = self.client.get(reverse('tom_alerts:list') + '?name=dust')
+        self.assertContains(response, broker_query.name)
+        self.assertNotContains(response, not_found.name)
+
     def test_run_query(self):
         broker_query = BrokerQuery.objects.create(
             name='find hoth',
