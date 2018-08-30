@@ -19,13 +19,19 @@ from django.urls import include
 from django.views.generic import TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
 
+from tom_common.views import UserListView, TOMPasswordChangeView, UserCreateView, UserDeleteView
+
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'), name='home'),
     path('targets/', include('tom_targets.urls', namespace='targets')),
     path('alerts/', include('tom_alerts.urls', namespace='alerts')),
     path('comments/', include('django_comments.urls')),
     path('catalogs/', include('tom_catalogs.urls')),
-    path('login/', LoginView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'),
+    path('users/', UserListView.as_view(), name='user-list'),
+    path('users/<int:pk>/changepassword/', TOMPasswordChangeView.as_view(), name='admin-user-change-password'),
+    path('users/create/', UserCreateView.as_view(), name='user-create'),
+    path('users/<int:pk>/delete', UserDeleteView.as_view(), name='user-delete'),
+    path('accounts/login/', LoginView.as_view(), name='login'),
+    path('accounts/logout/', LogoutView.as_view(), name='logout'),
     path('admin/', admin.site.urls),
 ]

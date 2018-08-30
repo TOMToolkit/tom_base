@@ -1,0 +1,13 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
+{% block content %}
+<form action="{% url 'user-create' %}" method="POST">
+{% csrf_token %}
+{% bootstrap_form form %}
+{% buttons %}
+  <button type="submit" class="btn btn-primary">
+    Create User
+  </button>
+{% endbuttons %}
+</form>
+{% endblock %}
