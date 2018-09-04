@@ -22,7 +22,7 @@ class UserDeleteView(DeleteView):
         return super().dispatch(*args, **kwargs)
 
 
-class TOMPasswordChangeView(FormView):
+class UserPasswordChangeView(FormView):
     template_name = 'tom_common/change_user_password.html'
     success_url = reverse_lazy('user-list')
     form_class = ChangeUserPasswordForm
