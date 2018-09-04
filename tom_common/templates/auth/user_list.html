@@ -3,7 +3,9 @@
 {% block content %}
 <div class="row">
   <div class="col-md-10">
+    {% if request.user.is_superuser %}
     <a href="{% url 'user-create' %}" title="Create User" class="btn btn-outline-primary">Add User</a>
+    {% endif %}
     <table class="table table-striped">
       <thead>
         <tr>
