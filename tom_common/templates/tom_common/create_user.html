@@ -1,12 +1,20 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 %}
 {% block content %}
+{% if object %}
+<form action="{% url 'account-update' %}" method="POST">
+{% else %}
 <form action="{% url 'user-create' %}" method="POST">
+{% endif %}
 {% csrf_token %}
 {% bootstrap_form form %}
 {% buttons %}
   <button type="submit" class="btn btn-primary">
+    {% if object %}
+    Update
+    {% else %}
     Create User
+    {% endif %}
   </button>
 {% endbuttons %}
 </form>

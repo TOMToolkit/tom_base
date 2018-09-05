@@ -36,10 +36,18 @@
             <a class="nav-link" href="{% url 'user-list' %}">Users</a>
           </li>
         </ul>
+        <ul class="navbar-nav ml-auto">
         {% if user.is_authenticated %}
-          <a class="btn btn-outline-success" title="logout" href="{% url 'logout' %}">Logout</a>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'account-update' %}">{{ user.first_name }} {{ user.last_name }}</a>
+          </li>
+          <li>
+            <a class="btn btn-outline-success" title="logout" href="{% url 'logout' %}">Logout</a>
+          </li>
         {% else %}
-          <a class="btn btn-outline-success" title="logout" href="{% url 'login' %}">Login</a>
+          <li class="nav-item">
+            <a class="btn btn-outline-success" title="logout" href="{% url 'login' %}">Login</a>
+          </li>
         {% endif %}
       </div>
     </nav>

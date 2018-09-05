@@ -19,7 +19,7 @@ from django.urls import include
 from django.views.generic import TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
 
-from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView
+from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'), name='home'),
@@ -33,5 +33,6 @@ urlpatterns = [
     path('users/<int:pk>/delete', UserDeleteView.as_view(), name='user-delete'),
     path('accounts/login/', LoginView.as_view(), name='login'),
     path('accounts/logout/', LogoutView.as_view(), name='logout'),
+    path('accounts/update/', UserUpdateView.as_view(), name='account-update'),
     path('admin/', admin.site.urls),
 ]

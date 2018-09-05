@@ -51,3 +51,19 @@ class TestUserManagement(TestCase):
 
         response = self.client.get(reverse('user-delete', kwargs={'pk': user.id}))
         self.assertEqual(response.status_code, 302)
+
+    def test_user_can_update_self(self):
+        user = User.objects.create(username='luke', password='forc3')
+        self.client.force_login(user)
+        user_data = {
+            'username': 'luke',
+            'first_name': 'Luke',
+            'last_name': 'Skywalker',
+            'email': 'luke@example.com',
+            'password1': 'forc34eva!',
+            'password2': 'forc34eva!',
+        }
+        response = self.client.post(reverse('account-update'), data=user_data, follow=True)
+        self.assertContains(response, 'Profile updated')
+        user.refresh_from_db()
+        self.assertEqual(user.first_name, 'Luke')

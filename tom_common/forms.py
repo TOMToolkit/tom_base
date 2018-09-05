@@ -12,3 +12,12 @@ class CustomUserCreationForm(UserCreationForm):
         model = User
         fields = ('username', 'first_name', 'last_name', 'email')
         field_classes = {'username': UsernameField}
+
+    def save(self, commit=True):
+        user = super(forms.ModelForm, self).save(commit=False)
+        if self.cleaned_data['password1']:
+            user.set_password(self.cleaned_data["password1"])
+        if commit:
+            user.save()
+
+        return user

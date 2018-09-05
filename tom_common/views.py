@@ -1,10 +1,12 @@
 from django.views.generic.list import ListView
-from django.views.generic.edit import FormView, DeleteView
+from django.views.generic.edit import FormView, DeleteView, UpdateView, CreateView
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import update_session_auth_hash
 from django.utils.decorators import method_decorator
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib import messages
+from django.shortcuts import redirect
 
 from tom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm
 
@@ -39,7 +41,7 @@ class UserPasswordChangeView(FormView):
         return super().form_valid(form)
 
 
-class UserCreateView(FormView):
+class UserCreateView(CreateView):
     template_name = 'tom_common/create_user.html'
     success_url = reverse_lazy('user-list')
     form_class = CustomUserCreationForm
@@ -48,6 +50,24 @@ class UserCreateView(FormView):
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
 
+
+class UserUpdateView(UpdateView):
+    model = User
+    template_name = 'tom_common/create_user.html'
+    form_class = CustomUserCreationForm
+    success_url = reverse_lazy('account-update')
+
+    def get_form(self):
+        form = super().get_form()
+        form.fields['password1'].required = False
+        form.fields['password2'].required = False
+        return form
+
+    def get_object(self, **kwargs):
+        return self.request.user
+
     def form_valid(self, form):
-        form.save(commit=True)
-        return super().form_valid(form)
+        super().form_valid(form)
+        update_session_auth_hash(self.request, self.object)
+        messages.success(self.request, 'Profile updated')
+        return redirect(self.get_success_url())
