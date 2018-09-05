@@ -71,6 +71,12 @@ class Target(models.Model):
         return model_to_dict(self, fields=fields_for_type)
 
 
+class TargetExtra(models.Model):
+    target = models.ForeignKey(Target, on_delete=models.CASCADE)
+    key = models.CharField(max_length=200)
+    value = models.TextField()
+
+
 class TargetList(models.Model):
     name = models.CharField(max_length=200, help_text='The name of the target list.')
     targets = models.ManyToManyField(Target)

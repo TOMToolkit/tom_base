@@ -8,9 +8,14 @@
     </li>
   {% endfor %}
 </ul>
-<form action="{% url 'targets:create' %}" method="post" class="form">
+  {% if object %}
+  <form action="{% url 'targets:update' pk=object.id %}" method="post" class="form">
+  {% else %}
+  <form action="{% url 'targets:create' %}" method="post" class="form">
+  {% endif %}
   {% csrf_token %}
   {% bootstrap_form form %}
+  {% bootstrap_formset extra_form %}
   {% buttons %}
     <button type="submit" class="btn btn-primary">
       Submit

@@ -1,7 +1,7 @@
 from django.forms import ModelForm
 from django import forms
-from django.conf import settings
-from .models import Target, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS
+from .models import Target, TargetExtra, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS
+from django.forms.models import inlineformset_factory
 
 
 class TargetForm(ModelForm):
@@ -20,3 +20,6 @@ class SiderealTargetCreateForm(TargetForm):
 class NonSiderealTargetCreateForm(TargetForm):
     class Meta(TargetForm.Meta):
         fields = NON_SIDEREAL_FIELDS
+
+
+TargetExtraFormset = inlineformset_factory(Target, TargetExtra, fields=('key', 'value'))
