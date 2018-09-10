@@ -1,12 +1,15 @@
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
+from django.views.generic import TemplateView
 from django_filters.views import FilterView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.shortcuts import redirect
 from django.conf import settings
+from django.contrib import messages
 
 from .models import Target
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
+from .import_targets import import_targets
 
 
 class TargetListView(FilterView):
@@ -82,3 +85,15 @@ class TargetDelete(DeleteView):
 class TargetDetail(DetailView):
     model = Target
     fields = '__all__'
+
+
+class TargetImport(TemplateView):
+    template_name = 'tom_targets/target_import.html'
+
+    def post(self, request):
+        csv_file = request.FILES['target_csv']
+        result = import_targets(csv_file)
+        messages.success(request, 'Targets created: {}'.format(len(result['targets'])))
+        for error in result['errors']:
+            messages.warning(request, error)
+        return redirect(reverse('tom_targets:list'))
