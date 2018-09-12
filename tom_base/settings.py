@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'tom_targets',
     'tom_alerts',
     'tom_catalogs',
+    'tom_observations',
 ]
 
 SITE_ID = 1
@@ -136,6 +137,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+FACILITIES = {
+    'LCO': {
+        'api_key': '',
+        'proposals': ['', ]
+    }
+}
 
 try:
     from local_settings import * # noqa

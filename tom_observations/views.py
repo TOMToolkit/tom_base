@@ -1,0 +1,54 @@
+from django.views.generic.edit import FormView
+from tom_observations.facility import get_service_class
+from django.urls import reverse
+from django.shortcuts import redirect
+
+from .models import ObservationRecord
+from tom_targets.models import Target
+
+
+class ObservationCreateView(FormView):
+    template_name = 'tom_observations/observation_form.html'
+
+    def get_target_id(self):
+        if self.request.method == 'GET':
+            return self.request.GET.get('target_id')
+        elif self.request.method == 'POST':
+            return self.request.POST.get('target_id')
+
+    def get_target(self):
+        return Target.objects.get(pk=self.get_target_id())
+
+    def get_facility_class(self):
+        return get_service_class(self.kwargs['facility'])
+
+    def get_form_class(self):
+        return self.get_facility_class().form
+
+    def get_form(self):
+        form = super().get_form()
+        form.helper.form_action = reverse('tom_observations:create', kwargs=self.kwargs)
+        return form
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if not self.get_target_id():
+            raise Exception('Must provide target_id')
+        initial['target_id'] = self.get_target_id()
+        initial['facility'] = self.kwargs['facility']
+        return initial
+
+    def form_valid(self, form):
+        # Submit the observation
+        facility = self.get_facility_class()
+        target = self.get_target()
+        observation_id = facility.submit_observation(form, target)
+
+        # Create Observation record
+        ObservationRecord.objects.create(
+            target=target,
+            facility=facility.name,
+            parameters=form.serialize_parameters(),
+            observation_id=observation_id
+        )
+        return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
