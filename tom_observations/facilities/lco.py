@@ -16,21 +16,27 @@ except AttributeError as e:
 PORTAL_URL = 'http://valhalladev.lco.gtn'
 
 
-def flatten_error_dict(error_dict):
-    errors = []
+def flatten_error_dict(form, error_dict):
+    non_field_errors = []
     for k, v in error_dict.items():
         if type(v) == list:
             for i in v:
                 if type(i) == str:
-                    errors.append('{}: {}'.format(k, i))
+                    if k in form.fields:
+                        form.add_error(k, i)
+                    else:
+                        non_field_errors.append('{}: {}'.format(k, i))
                 if type(i) == dict:
-                    errors.append(flatten_error_dict(i))
+                    non_field_errors.append(flatten_error_dict(form, i))
         elif type(v) == str:
-            errors.append('{}: {}'.format(k, v))
+            if k in form.fields:
+                form.add_error(k, v)
+            else:
+                non_field_errors.append('{}: {}'.format(k, v))
         elif type(v) == dict:
-            errors.append(flatten_error_dict(v))
+            non_field_errors.append(flatten_error_dict(form, v))
 
-    return errors
+    return non_field_errors
 
 
 class LCOObservationForm(GenericObservationForm):
@@ -58,7 +64,7 @@ class LCOObservationForm(GenericObservationForm):
         super().is_valid()
         errors = LCOFacility.validate_observation(self.observation_payload)
         if errors:
-            self.add_error(None, flatten_error_dict(errors))
+            self.add_error(None, flatten_error_dict(self, errors))
         return not errors
 
     @property
