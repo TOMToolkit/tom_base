@@ -39,25 +39,20 @@ class LCOObservationForm(GenericObservationForm):
 
     def is_valid(self):
         super().is_valid()
-        target = Target.objects.get(pk=self.cleaned_data['target_id'])
-        errors = LCOFacility.validate_observation(self, target)
+        errors = LCOFacility.validate_observation(self.observation_payload)
         if errors:
             self.add_error(None, str(errors))
         return not errors
 
-
-class LCOFacility:
-    name = 'LCO'
-    form = LCOObservationForm
-
-    @classmethod
-    def form_to_request(clz, form, target):
+    @property
+    def observation_payload(self):
+        target = Target.objects.get(pk=self.cleaned_data['target_id'])
         return {
-            "group_id": form.cleaned_data['group_id'],
-            "proposal": form.cleaned_data['proposal'],
-            "ipp_value": form.cleaned_data['ipp_value'],
+            "group_id": self.cleaned_data['group_id'],
+            "proposal": self.cleaned_data['proposal'],
+            "ipp_value": self.cleaned_data['ipp_value'],
             "operator": "SINGLE",
-            "observation_type": form.cleaned_data['observation_type'],
+            "observation_type": self.cleaned_data['observation_type'],
             "requests": [
                 {
                     "target": {
@@ -79,34 +74,38 @@ class LCOFacility:
                     "molecules": [
                         {
                             "type": "EXPOSE",
-                            "instrument_name": form.cleaned_data['instrument_name'],
-                            "filter": form.cleaned_data['filter'],
-                            "exposure_count": form.cleaned_data['exposure_count'],
-                            "exposure_time": form.cleaned_data['exposure_time']
+                            "instrument_name": self.cleaned_data['instrument_name'],
+                            "filter": self.cleaned_data['filter'],
+                            "exposure_count": self.cleaned_data['exposure_count'],
+                            "exposure_time": self.cleaned_data['exposure_time']
                         }
                     ],
                     "windows": [
                         {
-                            "start": form.cleaned_data['start'],
-                            "end": form.cleaned_data['end']
+                            "start": self.cleaned_data['start'],
+                            "end": self.cleaned_data['end']
                         }
                     ],
                     "location": {
                         "telescope_class": "1m0"
                     },
                     "constraints": {
-                        "max_airmass": form.cleaned_data['max_airmass'],
+                        "max_airmass": self.cleaned_data['max_airmass'],
                     }
                 }
             ]
         }
 
+
+class LCOFacility:
+    name = 'LCO'
+    form = LCOObservationForm
+
     @classmethod
-    def submit_observation(clz, form, target):
-        serialized_request = clz.form_to_request(form, target)
+    def submit_observation(clz, observation_payload):
         response = requests.post(
             PORTAL_URL + '/api/userrequests/',
-            json=serialized_request,
+            json=observation_payload,
             headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
         )
         print(response.content)
@@ -114,13 +113,16 @@ class LCOFacility:
         return response.json()['id']
 
     @classmethod
-    def validate_observation(clz, form, target):
-        serialized_request = clz.form_to_request(form, target)
+    def validate_observation(clz, observation_payload):
         response = requests.post(
             PORTAL_URL + '/api/userrequests/validate/',
-            json=serialized_request,
+            json=observation_payload,
             headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
         )
         print(response.content)
         response.raise_for_status()
         return response.json()['errors']
+
+    @classmethod
+    def get_observation_url(clz, observation_id):
+        return PORTAL_URL + '/userrequests/' + observation_id

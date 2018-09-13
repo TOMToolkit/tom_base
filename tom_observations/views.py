@@ -19,8 +19,11 @@ class ObservationCreateView(FormView):
     def get_target(self):
         return Target.objects.get(pk=self.get_target_id())
 
+    def get_facility(self):
+        return self.kwargs['facility']
+
     def get_facility_class(self):
-        return get_service_class(self.kwargs['facility'])
+        return get_service_class(self.get_facility())
 
     def get_form_class(self):
         return self.get_facility_class().form
@@ -35,14 +38,14 @@ class ObservationCreateView(FormView):
         if not self.get_target_id():
             raise Exception('Must provide target_id')
         initial['target_id'] = self.get_target_id()
-        initial['facility'] = self.kwargs['facility']
+        initial['facility'] = self.get_facility()
         return initial
 
     def form_valid(self, form):
         # Submit the observation
         facility = self.get_facility_class()
         target = self.get_target()
-        observation_id = facility.submit_observation(form, target)
+        observation_id = facility.submit_observation(form.observation_payload)
 
         # Create Observation record
         ObservationRecord.objects.create(

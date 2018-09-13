@@ -14,6 +14,15 @@
   <div class="col-md-6">
     <a href="{% url 'tom_targets:update' pk=object.id %}" title="Update target" class="btn btn-primary">Update Target</a>
     <a href="{% url 'tom_targets:delete' pk=object.id %}" title="Delete target" class="btn btn-warning">Delete Target</a>
+    <h5>Observations</h5>
+    {% for observation in object.observationrecord_set.all %}
+    <ul>
+      <li>Facility: {{ observation.facility }}</li>
+      <li>Observation Id: {{ observation.observation_id }}</li>
+      <li>Created: {{ observation.created }}</li>
+      <li>Link: <a href="{{ observation.url }}" target="_blank">View</a></li>
+    </ul>
+    {% endfor %}
     <h5>Comments</h5>
     {% comments_enabled as comments_are_enabled %}
       {% if user.is_authenticated and comments_are_enabled %}
