@@ -1,9 +1,9 @@
 import requests
-
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django import forms
 from dateutil.parser import parse
+from crispy_forms.layout import Layout, Div, Fieldset, HTML
 
 from tom_observations.facility import GenericObservationForm
 from tom_targets.models import Target
@@ -77,6 +77,23 @@ class LCOObservationForm(GenericObservationForm):
     exposure_time = forms.FloatField(min_value=0.1)
     max_airmass = forms.FloatField()
     observation_type = forms.ChoiceField(choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response')))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            self.common_layout,
+            Div(
+                Div(
+                    'group_id', 'proposal', 'ipp_value', 'observation_type', 'start', 'end',
+                    css_class='col'
+                ),
+                Div(
+                    'filter', 'instrument_name', 'exposure_count', 'exposure_time', 'max_airmass',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            )
+        )
 
     def clean_start(self):
         start = self.cleaned_data['start']
