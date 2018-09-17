@@ -141,7 +141,6 @@ STATIC_URL = '/static/'
 FACILITIES = {
     'LCO': {
         'api_key': '',
-        'proposals': ['', ]
     }
 }
 

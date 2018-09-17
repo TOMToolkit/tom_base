@@ -39,18 +39,44 @@ def flatten_error_dict(form, error_dict):
     return non_field_errors
 
 
+def get_instruments():
+    response = requests.get(
+        PORTAL_URL + '/api/instruments/',
+        headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def instrument_choices():
+    return [(k, k) for k in get_instruments()]
+
+
+def filter_choices():
+    return set([(f, f) for ins in get_instruments().values() for f in ins['filters']])
+
+
+def proposal_choices():
+    response = requests.get(
+        PORTAL_URL + '/api/profile/',
+        headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+    )
+    response.raise_for_status()
+    return [(p['id'], p['title']) for p in response.json()['proposals']]
+
+
 class LCOObservationForm(GenericObservationForm):
     group_id = forms.CharField()
-    proposal = forms.CharField()
+    proposal = forms.ChoiceField(choices=proposal_choices)
     ipp_value = forms.FloatField()
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
-    filter = forms.CharField()
-    instrument_name = forms.CharField()
+    filter = forms.ChoiceField(choices=filter_choices)
+    instrument_name = forms.ChoiceField(choices=instrument_choices)
     exposure_count = forms.IntegerField(min_value=1)
     exposure_time = forms.FloatField(min_value=0.1)
     max_airmass = forms.FloatField()
-    observation_type = forms.CharField()
+    observation_type = forms.ChoiceField(choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response')))
 
     def clean_start(self):
         start = self.cleaned_data['start']
@@ -66,6 +92,12 @@ class LCOObservationForm(GenericObservationForm):
         if errors:
             self.add_error(None, flatten_error_dict(self, errors))
         return not errors
+
+    def instrument_to_type(self, instrument_name):
+        if any(x in instrument_name for x in ['FLOYDS', 'NRES']):
+            return 'SPECTRUM'
+        else:
+            return 'EXPOSE'
 
     @property
     def observation_payload(self):
@@ -96,9 +128,10 @@ class LCOObservationForm(GenericObservationForm):
                     },
                     "molecules": [
                         {
-                            "type": "EXPOSE",
+                            "type": self.instrument_to_type(self.cleaned_data['instrument_name']),
                             "instrument_name": self.cleaned_data['instrument_name'],
                             "filter": self.cleaned_data['filter'],
+                            "spectra_slit": self.cleaned_data['filter'],
                             "exposure_count": self.cleaned_data['exposure_count'],
                             "exposure_time": self.cleaned_data['exposure_time']
                         }
@@ -131,7 +164,6 @@ class LCOFacility:
             json=observation_payload,
             headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
         )
-        print(response.content)
         response.raise_for_status()
         return response.json()['id']
 
@@ -142,7 +174,6 @@ class LCOFacility:
             json=observation_payload,
             headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
         )
-        print(response.content)
         response.raise_for_status()
         return response.json()['errors']
 

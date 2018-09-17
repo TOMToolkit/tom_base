@@ -10,6 +10,7 @@ from django.contrib import messages
 from .models import Target
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from .import_targets import import_targets
+from tom_observations.facility import get_service_classes
 
 
 class TargetListView(FilterView):
@@ -83,6 +84,11 @@ class TargetDelete(DeleteView):
 
 
 class TargetDetail(DetailView):
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['facilities'] = get_service_classes()
+        return context
+
     model = Target
     fields = '__all__'
 

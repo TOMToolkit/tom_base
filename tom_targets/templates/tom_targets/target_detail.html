@@ -14,6 +14,12 @@
   <div class="col-md-6">
     <a href="{% url 'tom_targets:update' pk=object.id %}" title="Update target" class="btn btn-primary">Update Target</a>
     <a href="{% url 'tom_targets:delete' pk=object.id %}" title="Delete target" class="btn btn-warning">Delete Target</a>
+    <h5>Observe this target via:</h5>
+    <ul>
+      {% for facility in facilities%}
+      <li><a href="{% url 'tom_observations:create' facility=facility %}?target_id={{ object.id }}">{{ facility }}</a></li>
+      {% endfor %}
+    </ul>
     <h5>Observations</h5>
     {% for observation in object.observationrecord_set.all %}
     <ul>
