@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.shortcuts import redirect
 
 from .models import ObservationRecord
+from .forms import ManualObservationForm
 from tom_targets.models import Target
 
 
@@ -55,3 +56,34 @@ class ObservationCreateView(FormView):
             observation_id=observation_id
         )
         return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
+
+
+class ManualObservationCreateView(FormView):
+    template_name = 'tom_observations/observation_form_manual.html'
+    form_class = ManualObservationForm
+
+    def get_target_id(self):
+        if self.request.method == 'GET':
+            return self.request.GET.get('target_id')
+        elif self.request.method == 'POST':
+            return self.request.POST.get('target_id')
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if not self.get_target_id():
+            raise Exception('Must provide target_id')
+        initial['target_id'] = self.get_target_id()
+        return initial
+
+    def get_target(self):
+        return Target.objects.get(pk=self.get_target_id())
+
+    def form_valid(self, form):
+        ObservationRecord.objects.create(
+            target=self.get_target(),
+            facility=form.cleaned_data['facility'],
+            parameters={},
+            observation_id=form.cleaned_data['observation_id']
+        )
+        return redirect(reverse('tom_targets:detail', kwargs={'pk': self.get_target().id}))
+
