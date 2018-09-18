@@ -182,7 +182,7 @@ class LCOFacility:
             headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
         )
         response.raise_for_status()
-        return response.json()['id']
+        return [r['id'] for r in response.json()['requests']]
 
     @classmethod
     def validate_observation(clz, observation_payload):
@@ -196,4 +196,4 @@ class LCOFacility:
 
     @classmethod
     def get_observation_url(clz, observation_id):
-        return PORTAL_URL + '/userrequests/' + observation_id
+        return PORTAL_URL + '/requests/' + observation_id

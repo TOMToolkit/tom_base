@@ -46,15 +46,16 @@ class ObservationCreateView(FormView):
         # Submit the observation
         facility = self.get_facility_class()
         target = self.get_target()
-        observation_id = facility.submit_observation(form.observation_payload)
+        observation_ids = facility.submit_observation(form.observation_payload)
 
-        # Create Observation record
-        ObservationRecord.objects.create(
-            target=target,
-            facility=facility.name,
-            parameters=form.serialize_parameters(),
-            observation_id=observation_id
-        )
+        for observation_id in observation_ids:
+            # Create Observation record
+            ObservationRecord.objects.create(
+                target=target,
+                facility=facility.name,
+                parameters=form.serialize_parameters(),
+                observation_id=observation_id
+            )
         return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
 
 
