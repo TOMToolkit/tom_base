@@ -24,3 +24,24 @@ class ObservationRecord(models.Model):
 
     def __str__(self):
         return '{0} @ {1}'.format(self.target, self.facility)
+
+
+def data_product_path(instance, filename):
+    # Uploads go to MEDIA_ROOT
+    if instance.observation_record:
+        return '{0}/{1}/{2}'.format(instance.target.identifier, instance.observation_record.facility, filename)
+    else:
+        return '{0}/none/{1}'.format(instance.target.identifier, filename)
+
+
+class DataProduct(models.Model):
+    product_id = models.CharField(max_length=2000, unique=True)
+    target = models.ForeignKey(Target, on_delete=models.CASCADE)
+    observation_record = models.ForeignKey(ObservationRecord, null=True, default=None, on_delete=models.CASCADE)
+    data = models.FileField(upload_to=data_product_path, null=True, default=None)
+    extra_data = models.TextField(blank=True, default='')
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-created',)

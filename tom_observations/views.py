@@ -2,8 +2,9 @@ from django.views.generic.edit import FormView
 from tom_observations.facility import get_service_class
 from django.urls import reverse
 from django.shortcuts import redirect
+from django_filters.views import FilterView
 
-from .models import ObservationRecord
+from .models import ObservationRecord, DataProduct
 from .forms import ManualObservationForm
 from tom_targets.models import Target
 
@@ -88,3 +89,9 @@ class ManualObservationCreateView(FormView):
         )
         return redirect(reverse('tom_targets:detail', kwargs={'pk': self.get_target().id}))
 
+
+class DataProductListView(FilterView):
+    model = DataProduct
+    template_name = 'tom_observations/dataproduct_list.html'
+    paginate_by = 25
+    filterset_fields = ['target__identifier', 'observation_record__facility']
