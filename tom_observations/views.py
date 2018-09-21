@@ -1,9 +1,13 @@
+from io import StringIO
+
 from django.views.generic.edit import FormView
 from django_filters.views import FilterView
 from tom_observations.facility import get_service_class, get_service_classes
 from django.urls import reverse
 from django.shortcuts import redirect
 from django_filters.views import FilterView
+from django.core.management import call_command
+from django.contrib import messages
 
 from .models import ObservationRecord, DataProduct
 from .forms import ManualObservationForm
@@ -15,6 +19,15 @@ class ObservationListView(FilterView):
     paginate_by = 100
     model = ObservationRecord
     filterset_fields = ['observation_id', 'target_id', 'facility', 'status']
+
+    def get(self, request, *args, **kwargs):
+        update_status = request.GET.get('update_status', False)
+        if update_status:
+            out = StringIO()
+            call_command('updatestatus', stdout=out)
+            messages.info(request, out.getvalue())
+            return redirect(reverse('tom_observations:list'))
+        return super().get(request, *args, **kwargs)
 
 
 class ObservationCreateView(FormView):

@@ -1,3 +1,5 @@
+from io import StringIO
+
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
@@ -6,11 +8,13 @@ from django.urls import reverse_lazy, reverse
 from django.shortcuts import redirect
 from django.conf import settings
 from django.contrib import messages
+from django.core.management import call_command
 
 from .models import Target
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from .import_targets import import_targets
 from tom_observations.facility import get_service_classes
+from tom_observations.models import ObservationRecord
 
 
 class TargetListView(FilterView):
@@ -88,6 +92,16 @@ class TargetDetail(DetailView):
         context = super().get_context_data(*args, **kwargs)
         context['facilities'] = get_service_classes()
         return context
+
+    def get(self, request, *args, **kwargs):
+        update_status = request.GET.get('update_status', False)
+        if update_status:
+            target_id = kwargs.get('pk', None)
+            out = StringIO()
+            call_command('updatestatus', target_id=target_id, stdout=out)
+            messages.info(request, out.getvalue())
+            return redirect(reverse('tom_targets:detail', args=(target_id,)))
+        return super().get(request, *args, **kwargs)
 
     model = Target
     fields = '__all__'
