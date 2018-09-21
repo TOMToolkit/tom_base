@@ -18,6 +18,8 @@ from django.urls import path
 from django.urls import include
 from django.views.generic import TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
+from django.conf import settings
+from django.conf.urls.static import static
 
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
 
@@ -36,4 +38,6 @@ urlpatterns = [
     path('accounts/logout/', LogoutView.as_view(), name='logout'),
     path('accounts/update/', UserUpdateView.as_view(), name='account-update'),
     path('admin/', admin.site.urls),
-]
+    # The static helper below only works in development see
+    # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
+ ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

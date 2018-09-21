@@ -4,8 +4,10 @@ from django.core.exceptions import ImproperlyConfigured
 from django import forms
 from dateutil.parser import parse
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
+from django.core.files.base import ContentFile
 
 from tom_observations.facility import GenericObservationForm
+from tom_observations.models import DataProduct
 from tom_targets.models import Target
 
 try:
@@ -206,3 +208,39 @@ class LCOFacility:
         )
         response.raise_for_status()
         return [(r['id'], r['state']) for r in response.json()['results']]
+
+    @classmethod
+    def data_products(clz, observation_record):
+        products = []
+        for frame in clz._archive_frames(observation_record.observation_id):
+            try:
+                products.append(DataProduct.objects.get(product_id=frame['id']))
+            except DataProduct.DoesNotExist:
+                dp = DataProduct(
+                    product_id=frame['id'],
+                    target=observation_record.target,
+                    observation_record=observation_record,
+                )
+
+                frame_data = requests.get(frame['url']).content
+                dfile = ContentFile(frame_data)
+                dp.data.save(frame['filename'], dfile)
+                dp.save()
+                products.append(dp)
+        return products
+
+    @classmethod
+    def _archive_frames(clz, observation_id):
+        # todo save this key somewhere
+        response = requests.get(
+            PORTAL_URL + '/api/profile/',
+            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+        )
+        archive_token = response.json()['tokens']['archive']
+
+        response = requests.get(
+            'https://archive-api.lco.global/frames/?REQNUM={0}'.format(observation_id),
+            headers={'Authorization': 'Bearer {0}'.format(archive_token)}
+        )
+        response.raise_for_status()
+        return response.json()['results']

@@ -3,6 +3,7 @@ scratch/
 
 # Media files
 media/
+data/
 
 # Development database
 *.sqlite3
