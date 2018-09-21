@@ -9,13 +9,23 @@ class Command(BaseCommand):
     help = 'Updates the status of each observation requests in the TOM'
 
     def handle(self, *args, **options):
-        for facility_class in facility.get_service_classes():
-            clazz = facility.get_service_class(facility_class)
-            requests = clazz.get_observation_status()
-            for observing_request in requests:
+        failed_records = {}
+        for facility_name in facility.get_service_classes():
+            failed_records[facility_name] = []
+            clazz = facility.get_service_class(facility_name)
+            records_for_facility = ObservationRecord.objects.filter(facility=facility_name).exclude(status__in=clazz.get_terminal_observing_states())
+            for record in records_for_facility:
                 try:
-                    record = ObservationRecord.objects.get(observation_id=observing_request[0])
-                    record.status = observing_request[1]
-                    record.save()
-                except ObjectDoesNotExist:
-                    pass
+                    clazz.update_observing_status(record.observation_id)
+                except Exception as e:
+                    failed_records[facility_name].append((record.observation_id, str(e)))
+        success = True
+        for facility_name, errors in failed_records.items():
+            if len(errors) > 0:
+                success = False
+                break
+        if success:
+            print("Update completed successfully")
+        else:
+            print('Update completed with errors: ')
+            print(failed_records)

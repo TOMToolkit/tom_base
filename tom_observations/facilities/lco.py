@@ -1,13 +1,13 @@
 import requests
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django import forms
 from dateutil.parser import parse
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from django.core.files.base import ContentFile
 
 from tom_observations.facility import GenericObservationForm
-from tom_observations.models import DataProduct
+from tom_observations.models import DataProduct, ObservationRecord
 from tom_targets.models import Target
 
 try:
@@ -16,6 +16,7 @@ except AttributeError as e:
     raise ImproperlyConfigured('Could not load LCO settings: {}'.format(e))
 
 PORTAL_URL = 'http://valhalladev.lco.gtn'
+TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
 
 
 def flatten_error_dict(form, error_dict):
@@ -201,13 +202,26 @@ class LCOFacility:
         return PORTAL_URL + '/requests/' + observation_id
 
     @classmethod
-    def get_observation_status(clz, observation_id=''):
+    def get_terminal_observing_states(clz):
+        return TERMINAL_OBSERVING_STATES
+
+    @classmethod
+    def get_observation_status(clz, observation_id):
         response = requests.get(
             PORTAL_URL + '/api/requests/{0}'.format(observation_id),
             headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
         )
         response.raise_for_status()
-        return [(r['id'], r['state']) for r in response.json()['results']]
+        return response.json()['state']
+
+    @classmethod
+    def update_observing_status(clz, observation_id):
+        try:
+            record = ObservationRecord.objects.get(observation_id=observation_id)
+            record.status = clz.get_observation_status(observation_id)
+            record.save()
+        except ObjectDoesNotExist:
+            raise Exception('No record exists for that observation id')
 
     @classmethod
     def data_products(clz, observation_record):
