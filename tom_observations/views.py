@@ -1,9 +1,10 @@
 from django.views.generic.edit import FormView
+from django.views.generic import View
 from django_filters.views import FilterView
-from tom_observations.facility import get_service_class, get_service_classes
+from django.views.generic.detail import DetailView
+from tom_observations.facility import get_service_class
 from django.urls import reverse
 from django.shortcuts import redirect
-from django_filters.views import FilterView
 
 from .models import ObservationRecord, DataProduct
 from .forms import ManualObservationForm
@@ -96,6 +97,27 @@ class ManualObservationCreateView(FormView):
             observation_id=form.cleaned_data['observation_id']
         )
         return redirect(reverse('tom_targets:detail', kwargs={'pk': self.get_target().id}))
+
+
+class ObservationRecordDetailView(DetailView):
+    model = ObservationRecord
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['data_products'] = get_service_class(self.object.facility).data_products(self.object)
+        return context
+
+
+class DataProductSaveView(View):
+    def post(self, request, *args, **kwargs):
+        service_class = get_service_class(request.POST['facility'])
+        observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])
+        product_id = request.POST['product_id']
+        if product_id == 'ALL':
+            service_class.download_all(observation_record)
+        else:
+            service_class.save_data_product(observation_record, product_id)
+        return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
 
 
 class DataProductListView(FilterView):

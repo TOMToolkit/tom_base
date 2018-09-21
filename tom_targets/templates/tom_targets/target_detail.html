@@ -20,14 +20,14 @@
       <li><a href="{% url 'tom_observations:create' facility=facility %}?target_id={{ object.id }}">{{ facility }}</a></li>
       {% endfor %}
     </ul>
-    <h5>Total Data Products: {{ object.dataproduct_set.count }}</h5>
+    <h5>Total Saved Data Products: {{ object.dataproduct_set.count }}</h5>
     <h5>Observations</h5>
     {% for observation in object.observationrecord_set.all %}
     <ul>
       <li>Facility: {{ observation.facility }}</li>
       <li>Observation Id: {{ observation.observation_id }}</li>
       <li>Created: {{ observation.created }}</li>
-      <li>Data Products: {{ observation.dataproduct_set.count }}</li>
+      <li>Saved Data Products: {{ observation.dataproduct_set.count }}</li>
       <li>Link: <a href="{{ observation.url }}" target="_blank">View</a></li>
     </ul>
     {% endfor %}

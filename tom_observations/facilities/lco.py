@@ -224,23 +224,45 @@ class LCOFacility:
             raise Exception('No record exists for that observation id')
 
     @classmethod
+    def save_data_product(clz, observation_record, product_id):
+        response = requests.get(
+            PORTAL_URL + '/api/profile/',
+            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+        )
+        archive_token = response.json()['tokens']['archive']
+
+        response = requests.get(
+            'https://archive-api.lco.global/frames/{0}/'.format(product_id),
+            headers={'Authorization': 'Bearer {0}'.format(archive_token)}
+        )
+        response.raise_for_status()
+        frame = response.json()
+        dp = DataProduct(
+            product_id=frame['id'],
+            target=observation_record.target,
+            observation_record=observation_record,
+        )
+
+        frame_data = requests.get(frame['url']).content
+        dfile = ContentFile(frame_data)
+        dp.data.save(frame['filename'], dfile)
+        dp.save()
+        return dp
+
+    @classmethod
     def data_products(clz, observation_record):
-        products = []
+        products = {'saved': [], 'unsaved': []}
         for frame in clz._archive_frames(observation_record.observation_id):
             try:
-                products.append(DataProduct.objects.get(product_id=frame['id']))
+                dp = DataProduct.objects.get(product_id=frame['id'])
+                products['saved'].append(dp)
             except DataProduct.DoesNotExist:
-                dp = DataProduct(
-                    product_id=frame['id'],
-                    target=observation_record.target,
-                    observation_record=observation_record,
-                )
-
-                frame_data = requests.get(frame['url']).content
-                dfile = ContentFile(frame_data)
-                dp.data.save(frame['filename'], dfile)
-                dp.save()
-                products.append(dp)
+                products['unsaved'].append({
+                    'id': frame['id'],
+                    'filename': frame['filename'],
+                    'created': frame['DATE_OBS'],
+                    'url': frame['url']
+                })
         return products
 
     @classmethod
