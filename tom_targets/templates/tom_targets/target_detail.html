@@ -22,6 +22,7 @@
     </ul>
     <h5>Total Saved Data Products: {{ object.dataproduct_set.count }}</h5>
     <h5>Observations</h5>
+    <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations</a>
     {% for observation in object.observationrecord_set.all %}
     <ul>
       <li>Facility: {{ observation.facility }}</li>

@@ -7,6 +7,11 @@
       <div class="col-md-6">
         {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
       </div>
+      <div class="col-md-6">
+        <span class="float-right">
+        <a href="{% url 'tom_observations:list' %}?update_status=True" class="btn btn-primary" title="Update status of all incomplete observations--please be patient!">Update Observations</a>
+        </span>
+      </div>
     </div>
     <table class="table">
       <thead><tr><th>Id</th><th>Observation ID</th><th>Target</th><th>Facility</th><th>Status</th></tr></thead>
