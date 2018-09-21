@@ -1,11 +1,19 @@
 from django.views.generic.edit import FormView
-from tom_observations.facility import get_service_class
+from django_filters.views import FilterView
+from tom_observations.facility import get_service_class, get_service_classes
 from django.urls import reverse
 from django.shortcuts import redirect
 
 from .models import ObservationRecord
 from .forms import ManualObservationForm
 from tom_targets.models import Target
+
+
+class ObservationListView(FilterView):
+    template_name = 'tom_observations/observation_list.html'
+    paginate_by = 100
+    model = ObservationRecord
+    filterset_fields = ['observation_id', 'target_id', 'facility', 'status']
 
 
 class ObservationCreateView(FormView):

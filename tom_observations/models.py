@@ -10,6 +10,7 @@ class ObservationRecord(models.Model):
     facility = models.CharField(max_length=50)
     parameters = models.TextField()
     observation_id = models.CharField(max_length=2000)
+    status = models.CharField(max_length=200)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 

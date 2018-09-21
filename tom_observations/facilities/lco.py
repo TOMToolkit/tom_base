@@ -197,3 +197,12 @@ class LCOFacility:
     @classmethod
     def get_observation_url(clz, observation_id):
         return PORTAL_URL + '/requests/' + observation_id
+
+    @classmethod
+    def get_observation_status(clz, observation_id=''):
+        response = requests.get(
+            PORTAL_URL + '/api/requests/{0}'.format(observation_id),
+            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+        )
+        response.raise_for_status()
+        return [(r['id'], r['state']) for r in response.json()['results']]
