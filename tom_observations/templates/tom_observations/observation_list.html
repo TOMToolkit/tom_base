@@ -14,7 +14,7 @@
       </div>
     </div>
     <table class="table">
-      <thead><tr><th>Id</th><th>Observation ID</th><th>Target</th><th>Facility</th><th>Status</th></tr></thead>
+      <thead><tr><th>Id</th><th>Observation ID</th><th>Target</th><th>Facility</th><th>Status</th><th>Saved Data</th><th>Download All</th></tr></thead>
       <tbody>
         {% for observation in filter.qs %}
         <tr>
@@ -23,6 +23,17 @@
           <td><a href="{% url 'tom_targets:detail' observation.target.id %}" title="{{ observation.target.id }}">{{ observation.target.name }}</a></td>
           <td>{{ observation.facility }}</td>
           <td>{{ observation.status }}</td>
+          <td>{{ observation.dataproduct_set.count }}</td>
+          <td>
+            {% if observation.status == 'COMPLETED' %}
+            <form method="POST" action="{% url 'tom_observations:data-save' observation.id %}">
+              {% csrf_token %}
+              <input type="hidden" value="ALL" name="product_id">
+              <input type="hidden" value="{{ observation.facility }}" name="facility">
+              <input type="submit" value="Save" class="btn btn-primary">
+            </form>
+            {% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>

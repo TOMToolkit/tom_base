@@ -46,3 +46,6 @@ class DataProduct(models.Model):
 
     class Meta:
         ordering = ('-created',)
+
+    def __str__(self):
+        return self.data.name

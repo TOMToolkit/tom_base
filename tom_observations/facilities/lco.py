@@ -224,30 +224,42 @@ class LCOFacility:
             raise Exception('No record exists for that observation id')
 
     @classmethod
-    def save_data_product(clz, observation_record, product_id):
+    def save_data_products(clz, observation_record, product_id=None):
+        products = []
         response = requests.get(
             PORTAL_URL + '/api/profile/',
             headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
         )
         archive_token = response.json()['tokens']['archive']
 
-        response = requests.get(
-            'https://archive-api.lco.global/frames/{0}/'.format(product_id),
-            headers={'Authorization': 'Bearer {0}'.format(archive_token)}
-        )
-        response.raise_for_status()
-        frame = response.json()
-        dp = DataProduct(
-            product_id=frame['id'],
-            target=observation_record.target,
-            observation_record=observation_record,
-        )
+        if product_id:
+            response = requests.get(
+                'https://archive-api.lco.global/frames/{0}/'.format(product_id),
+                headers={'Authorization': 'Bearer {0}'.format(archive_token)}
+            )
+            response.raise_for_status()
+            frames = [response.json()]
+        else:
+            response = requests.get(
+                'https://archive-api.lco.global/frames/?REQNUM={0}'.format(observation_record.observation_id),
+                headers={'Authorization': 'Bearer {0}'.format(archive_token)}
+            )
+            response.raise_for_status()
+            frames = response.json()['results']
 
-        frame_data = requests.get(frame['url']).content
-        dfile = ContentFile(frame_data)
-        dp.data.save(frame['filename'], dfile)
-        dp.save()
-        return dp
+        for frame in frames:
+            dp, created = DataProduct.objects.get_or_create(
+                product_id=frame['id'],
+                target=observation_record.target,
+                observation_record=observation_record,
+            )
+            if created:
+                frame_data = requests.get(frame['url']).content
+                dfile = ContentFile(frame_data)
+                dp.data.save(frame['filename'], dfile)
+                dp.save()
+            products.append(dp)
+        return products
 
     @classmethod
     def data_products(clz, observation_record):

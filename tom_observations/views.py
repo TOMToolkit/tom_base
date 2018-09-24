@@ -1,6 +1,7 @@
 from io import StringIO
 
 from django.views.generic.edit import FormView
+from django.views.generic.edit import DeleteView
 from django.views.generic import View
 from django_filters.views import FilterView
 from django.views.generic.detail import DetailView
@@ -127,10 +128,21 @@ class DataProductSaveView(View):
         observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])
         product_id = request.POST['product_id']
         if product_id == 'ALL':
-            service_class.download_all(observation_record)
+            service_class.save_data_products(observation_record)
         else:
-            service_class.save_data_product(observation_record, product_id)
+            service_class.save_data_products(observation_record, product_id)
         return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
+
+
+class DataProductDeleteView(DeleteView):
+    model = DataProduct
+
+    def get_success_url(self):
+        return reverse('tom_observations:detail', kwargs={'pk': self.object.observation_record.id})
+
+    def delete(self, request, *args, **kwargs):
+        self.get_object().data.delete()
+        return super().delete(request, *args, **kwargs)
 
 
 class DataProductListView(FilterView):

@@ -2,38 +2,44 @@
 {% load comments bootstrap4 tom_common_extras %}
 {% block content %}
 <div class="row">
-  <div class="col-md-6">
-    <h3>Target {{ object.identifier }}</h3>
-    {% for key, value in object.as_dict.items %}
-    <p>{% verbose_name object key %}: {{ value }}</p>
-    {% endfor %}
+  <div class="col-md-4">
+    <h3>{{ object.identifier }}</h3>
+    <a href="{% url 'tom_targets:update' pk=object.id %}" title="Update target" class="btn btn-primary">Update Target</a>
+    <a href="{% url 'tom_targets:delete' pk=object.id %}" title="Delete target" class="btn btn-warning">Delete Target</a>
+    <dl class="row">
+      {% for key, value in object.as_dict.items %}
+      <dt class="col-sm-6">{% verbose_name object key %}</dt>
+      <dd class="col-sm-6">{{ value }}</dd>
+      {% endfor %}
+    </dl>
     {% for target_extra in object.targetextra_set.all %}
     <p>{{ target_extra.key }}: {{ target_extra.value }}</p>
     {% endfor %}
   </div>
-  <div class="col-md-6">
-    <a href="{% url 'tom_targets:update' pk=object.id %}" title="Update target" class="btn btn-primary">Update Target</a>
-    <a href="{% url 'tom_targets:delete' pk=object.id %}" title="Delete target" class="btn btn-warning">Delete Target</a>
-    <h5>Observe this target via:</h5>
-    <ul>
-      {% for facility in facilities%}
-      <li><a href="{% url 'tom_observations:create' facility=facility %}?target_id={{ object.id }}">{{ facility }}</a></li>
-      {% endfor %}
-    </ul>
-    <h5>Total Saved Data Products: {{ object.dataproduct_set.count }}</h5>
-    <h5>Observations</h5>
-    <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations</a>
-    {% for observation in object.observationrecord_set.all %}
-    <ul>
-      <li>Facility: {{ observation.facility }}</li>
-      <li>Observation Id: {{ observation.observation_id }}</li>
-      <li>Created: {{ observation.created }}</li>
-      <li>Saved Data Products: {{ observation.dataproduct_set.count }}</li>
-      <li>Link: <a href="{{ observation.url }}" target="_blank">View</a></li>
-    </ul>
+  <div class="col-md-8">
+    <h4>Observe</h4>
+    {% for facility in facilities%}
+    <a href="{% url 'tom_observations:create' facility=facility %}?target_id={{ object.id }}" class="btn btn-outline-primary">{{ facility }}</a>
     {% endfor %}
-    <h5>Comments</h5>
+    <hr/>
+    <h4>Observations</h4>
+    <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations Status</a>
+    <table class="table table-striped">
+      <thead><tr><th>Facility</th><th>Created</th><th>Status</th><th>Saved data</th><th>View</th></tr></thead>
+      <tbody>
+      {% for observation in object.observationrecord_set.all %}
+        <tr>
+          <td>{{ observation.facility }}</td>
+          <td>{{ observation.created }}</td>
+          <td>{{ observation.status }}</td>
+          <td>{{ observation.dataproduct_set.count }}</td>
+          <td><a href="{% url 'tom_observations:detail' observation.id %}">View</a></td>
+        </tr>
+      {% endfor %}
+    </table>
     {% comments_enabled as comments_are_enabled %}
+    <hr/>
+    <h5>Comments</h5>
       {% if user.is_authenticated and comments_are_enabled %}
         {% render_comment_list for object %}
         {% url 'targets:detail' object.id as next %}
