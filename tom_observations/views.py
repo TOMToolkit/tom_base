@@ -1,18 +1,18 @@
 from io import StringIO
 
-from django.views.generic.edit import FormView
-from django.views.generic.edit import DeleteView
+from django.views.generic.edit import FormView, DeleteView, CreateView
+from django.views.generic.list import ListView
 from django.views.generic import View
 from django_filters.views import FilterView
 from django.views.generic.detail import DetailView
 from tom_observations.facility import get_service_class
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.shortcuts import redirect
 from django.core.management import call_command
 from django.contrib import messages
 
-from .models import ObservationRecord, DataProduct
-from .forms import ManualObservationForm
+from .models import ObservationRecord, DataProduct, DataProductGroup
+from .forms import ManualObservationForm, AddProductToGroupForm
 from tom_targets.models import Target
 
 
@@ -151,3 +151,29 @@ class DataProductListView(FilterView):
     template_name = 'tom_observations/dataproduct_list.html'
     paginate_by = 25
     filterset_fields = ['target__identifier', 'observation_record__facility']
+
+
+class DataProductGroupDetailView(DetailView):
+    model = DataProductGroup
+
+
+class DataProductGroupListView(ListView):
+    model = DataProductGroup
+
+
+class DataProductGroupCreateView(CreateView):
+    model = DataProductGroup
+    success_url = reverse_lazy('tom_observations:data-group-list')
+    fields = ['name']
+
+
+class DataProductAddToGroupView(FormView):
+    form_class = AddProductToGroupForm
+    template_name = 'tom_observations/add_product_to_group.html'
+
+    def form_valid(self, form):
+        group = DataProductGroup.objects.get(pk=form.cleaned_data['group'].id)
+        product = DataProduct.objects.get(pk=self.kwargs['product_id'])
+        group.dataproduct_set.add(product)
+        group.save()
+        return redirect(reverse('tom_observations:data-group-detail', kwargs={'pk': group.id}))

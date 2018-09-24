@@ -1,6 +1,7 @@
 from django import forms
 
 from tom_observations.facility import get_service_classes
+from tom_observations.models import DataProductGroup
 
 
 def facility_choices():
@@ -11,3 +12,7 @@ class ManualObservationForm(forms.Form):
     target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
     facility = forms.ChoiceField(choices=facility_choices)
     observation_id = forms.CharField()
+
+
+class AddProductToGroupForm(forms.Form):
+    group = forms.ModelChoiceField(DataProductGroup.objects.all())

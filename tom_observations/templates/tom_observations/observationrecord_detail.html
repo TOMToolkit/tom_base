@@ -13,6 +13,7 @@
       <th>Created</th>
       <th>Download</th>
       <th>Delete</th>
+      <th>Group</th>
     </tr>
   </thead>
   <tbody>
@@ -23,6 +24,7 @@
       <td>{{ product.created }}</td>
       <td><a href="{{ product.data.url }}">Download</a></td>
       <td><a href="{% url 'tom_observations:data-delete' product.id %}" class="btn btn-danger">Delete</a></td>
+      <td><a href="{% url 'tom_observations:add-product-to-group' product.id %}" class="btn btn-primary">Add</a></td>
     </tr>
     {% endfor %}
   </tbody>

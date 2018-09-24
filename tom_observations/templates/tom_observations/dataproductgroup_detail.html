@@ -1,0 +1,10 @@
+{% extends 'tom_common/base.html' %}
+{% block title %} Data Product Group {{ object.name }} {% endblock %}
+{% block content %}
+<h3>{{ object.name }}</h3>
+<ul>
+  {% for product in object.dataproduct_set.all %}
+  <li><a href="{{ product.data.url }}">{{ product.data.name }}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}
