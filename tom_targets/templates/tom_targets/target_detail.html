@@ -12,9 +12,12 @@
       <dd class="col-sm-6">{{ value }}</dd>
       {% endfor %}
     </dl>
+    <dl class="row">
     {% for target_extra in object.targetextra_set.all %}
-    <p>{{ target_extra.key }}: {{ target_extra.value }}</p>
+      <dt class="col-sm-6">{{ target_extra.key }}</dt>
+      <dd class="col-sm-6">{{ target_extra.value }}</dd>
     {% endfor %}
+    </dl>
   </div>
   <div class="col-md-8">
     <h4>Observe</h4>
