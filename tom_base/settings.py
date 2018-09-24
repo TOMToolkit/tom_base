@@ -142,6 +142,7 @@ MEDIA_URL = '/data/'
 
 FACILITIES = {
     'LCO': {
+        'portal_url': 'https://observe.lco.global',
         'api_key': '',
     }
 }

@@ -15,7 +15,7 @@ try:
 except AttributeError as e:
     raise ImproperlyConfigured('Could not load LCO settings: {}'.format(e))
 
-PORTAL_URL = 'http://valhalladev.lco.gtn'
+PORTAL_URL = LCO_SETTINGS['portal_url']
 TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
 
 
@@ -163,7 +163,7 @@ class LCOObservationForm(GenericObservationForm):
                         }
                     ],
                     "location": {
-                        "telescope_class": "1m0"
+                        "telescope_class": self.cleaned_data['instrument_name'][:3].lower()
                     },
                     "constraints": {
                         "max_airmass": self.cleaned_data['max_airmass'],
