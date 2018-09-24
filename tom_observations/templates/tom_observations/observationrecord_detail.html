@@ -1,0 +1,65 @@
+{% extends 'tom_common/base.html' %}
+{% block title %} Observation record: {{ object.id }} {% endblock %}
+{% block content %}
+<h2>{{ object }}</h2>
+<p><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
+<p><strong>Status:</strong> {{ object.status }}</p>
+<h4>Saved Data Products</h4>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th>Filename</th>
+      <th>Created</th>
+      <th>Download</th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for product in data_products.saved %}
+    <tr>
+      <td>{{ product.id }}</td>
+      <td>{{ product.data.name }}</td>
+      <td>{{ product.created }}</td>
+      <td><a href="{{ product.data.url }}">Download</a></td>
+      <td><a href="{% url 'tom_observations:data-delete' product.id %}" class="btn btn-danger">Delete</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<h4>Unsaved data products</h4>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Created</th>
+      <th>Filename</th>
+      <th>URL</th>
+      <th>Save</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for product in data_products.unsaved %}
+    <tr>
+      <td>{{ product.created }}</td>
+      <td>{{ product.filename }}</td>
+      <td><a href="{{ product.url }}">Download</a></td>
+      <td>
+        <form method="POST" action="{% url 'tom_observations:data-save' object.id %}">
+          {% csrf_token %}
+          <input type="hidden" value="{{ product.id }}" name="product_id">
+          <input type="hidden" value="{{ object.facility }}" name="facility">
+          <input type="submit" value="Save" class="btn btn-primary">
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<h4>Request Parameters</h4>
+<dl class="row">
+  {% for k,v in object.parameters_as_dict.items %}
+  <dt class="col-sm-6">{{ k }}</dt>
+  <dd class="col-sm-6">{{ v }}</dt>
+  {% endfor %}
+</dl>
+{% endblock %}

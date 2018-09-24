@@ -2,20 +2,47 @@
 {% load comments bootstrap4 tom_common_extras %}
 {% block content %}
 <div class="row">
-  <div class="col-md-6">
-    <h3>Target {{ object.identifier }}</h3>
-    {% for key, value in object.as_dict.items %}
-    <p>{% verbose_name object key %}: {{ value }}</p>
-    {% endfor %}
-    {% for target_extra in object.targetextra_set.all %}
-    <p>{{ target_extra.key }}: {{ target_extra.value }}</p>
-    {% endfor %}
-  </div>
-  <div class="col-md-6">
+  <div class="col-md-4">
+    <h3>{{ object.identifier }}</h3>
     <a href="{% url 'tom_targets:update' pk=object.id %}" title="Update target" class="btn btn-primary">Update Target</a>
     <a href="{% url 'tom_targets:delete' pk=object.id %}" title="Delete target" class="btn btn-warning">Delete Target</a>
-    <h5>Comments</h5>
+    <dl class="row">
+      {% for key, value in object.as_dict.items %}
+      <dt class="col-sm-6">{% verbose_name object key %}</dt>
+      <dd class="col-sm-6">{{ value }}</dd>
+      {% endfor %}
+    </dl>
+    <dl class="row">
+    {% for target_extra in object.targetextra_set.all %}
+      <dt class="col-sm-6">{{ target_extra.key }}</dt>
+      <dd class="col-sm-6">{{ target_extra.value }}</dd>
+    {% endfor %}
+    </dl>
+  </div>
+  <div class="col-md-8">
+    <h4>Observe</h4>
+    {% for facility in facilities%}
+    <a href="{% url 'tom_observations:create' facility=facility %}?target_id={{ object.id }}" class="btn btn-outline-primary">{{ facility }}</a>
+    {% endfor %}
+    <hr/>
+    <h4>Observations</h4>
+    <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations Status</a>
+    <table class="table table-striped">
+      <thead><tr><th>Facility</th><th>Created</th><th>Status</th><th>Saved data</th><th>View</th></tr></thead>
+      <tbody>
+      {% for observation in object.observationrecord_set.all %}
+        <tr>
+          <td>{{ observation.facility }}</td>
+          <td>{{ observation.created }}</td>
+          <td>{{ observation.status }}</td>
+          <td>{{ observation.dataproduct_set.count }}</td>
+          <td><a href="{% url 'tom_observations:detail' observation.id %}">View</a></td>
+        </tr>
+      {% endfor %}
+    </table>
     {% comments_enabled as comments_are_enabled %}
+    <hr/>
+    <h5>Comments</h5>
       {% if user.is_authenticated and comments_are_enabled %}
         {% render_comment_list for object %}
         {% url 'targets:detail' object.id as next %}

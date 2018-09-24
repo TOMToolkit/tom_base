@@ -1,0 +1,7 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 crispy_forms_tags %}
+{% block title %}Submit Observation{% endblock %}
+{% block content %}
+<h3>Submit an observation to {{ form.facility.value }}</h3>
+{% crispy form %}
+{% endblock %}

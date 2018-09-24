@@ -32,6 +32,9 @@
           <li class="nav-item {% if request.resolver_match.namespace == 'alerts' %}active{% endif %}">
             <a class="nav-link" href="{% url 'alerts:list' %}">Alerts</a>
           </li>
+          <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
+              <a class="nav-link" href="{% url 'tom_observations:list' %}">Observations</a>
+            </li>
           <li class="nav-item {% if 'user' in request.resolver_match.url_name %}active{% endif %}">
             <a class="nav-link" href="{% url 'user-list' %}">Users</a>
           </li>

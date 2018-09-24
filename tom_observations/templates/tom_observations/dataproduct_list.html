@@ -1,5 +1,6 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 %}
+{% block title %} Data Product List {% endblock %}
 {% block content %}
 <div class="row">
   <div class="col-md-10">
@@ -9,20 +10,19 @@
       </div>
       <div class="col-md-6">
         <span class="float-right">
-        <a href="{% url 'targets:create' %}" class="btn btn-primary" title="Add Target">Add a target</a>
-        <a href="{% url 'targets:import' %}" class="btn btn-primary" title="Import Targets">Import Targets</a>
+          <p> Something here </p>
         </span>
       </div>
     </div>
     <table class="table">
-      <thead><tr><th>ID</th><th>Name</th><th>Designation</th><th>Type</th></tr></thead>
+      <thead><tr><th>Time</th><th>Target</th><th>Observation</th><th>Data</th></tr></thead>
       <tbody>
-        {% for target in filter.qs %}
+        {% for product in filter.qs %}
         <tr>
-          <td><a href="{% url 'targets:detail' target.id %}" title="{{ target.identifier }}">{{ target.identifier }}</a></td>
-          <td>{{ target.name }}</td>
-          <td>{{ target.designation }}</td>
-          <td>{{ target.get_type_display }}</td>
+          <td>{{ product.created }}</td>
+          <td>{{ product.target.identifier }}</td>
+          <td>{{ product.observation_record }}</td>
+          <td><a href="{{ product.data.url }}">Download</a></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -36,7 +36,7 @@
         <button type="submit" class="btn btn-primary">
           Filter
         </button>
-        <a href="{% url 'targets:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
+        <a href="{% url 'tom_observations:data-list' %}" class="btn btn-secondary" title="Reset">Reset</a>
       {% endbuttons %}
     </form>
   </div>

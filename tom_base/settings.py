@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'tom_targets',
     'tom_alerts',
     'tom_catalogs',
+    'tom_observations',
 ]
 
 SITE_ID = 1
@@ -136,6 +137,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
+MEDIA_URL = '/data/'
+
+FACILITIES = {
+    'LCO': {
+        'portal_url': 'https://observe.lco.global',
+        'api_key': '',
+    }
+}
 
 try:
     from local_settings import * # noqa
