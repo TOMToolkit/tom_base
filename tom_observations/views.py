@@ -1,18 +1,18 @@
 from io import StringIO
 
-from django.views.generic.edit import FormView
-from django.views.generic.edit import DeleteView
+from django.views.generic.edit import FormView, DeleteView, CreateView
+from django.views.generic.list import ListView
 from django.views.generic import View
 from django_filters.views import FilterView
 from django.views.generic.detail import DetailView
 from tom_observations.facility import get_service_class
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.shortcuts import redirect
 from django.core.management import call_command
 from django.contrib import messages
 
-from .models import ObservationRecord, DataProduct
-from .forms import ManualObservationForm
+from .models import ObservationRecord, DataProduct, DataProductGroup
+from .forms import ManualObservationForm, AddProductToGroupForm
 from tom_targets.models import Target
 
 
@@ -118,6 +118,7 @@ class ObservationRecordDetailView(DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context['form'] = AddProductToGroupForm()
         context['data_products'] = get_service_class(self.object.facility).data_products(self.object)
         return context
 
@@ -128,9 +129,10 @@ class DataProductSaveView(View):
         observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])
         product_id = request.POST['product_id']
         if product_id == 'ALL':
-            service_class.save_data_products(observation_record)
+            products = service_class.save_data_products(observation_record)
         else:
-            service_class.save_data_products(observation_record, product_id)
+            products = service_class.save_data_products(observation_record, product_id)
+        messages.success(request, 'Successfully saved: {0}'.format('\n'.join([str(p) for p in products])))
         return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
 
 
@@ -150,3 +152,40 @@ class DataProductListView(FilterView):
     template_name = 'tom_observations/dataproduct_list.html'
     paginate_by = 25
     filterset_fields = ['target__identifier', 'observation_record__facility']
+
+
+class DataProductGroupDetailView(DetailView):
+    model = DataProductGroup
+
+    def post(self, request, *args, **kwargs):
+        group = self.get_object()
+        for product in request.POST.getlist('products'):
+            group.dataproduct_set.remove(DataProduct.objects.get(pk=product))
+        group.save()
+        return redirect(reverse('tom_observations:data-group-detail', kwargs={'pk': group.id}))
+
+
+class DataProductGroupListView(ListView):
+    model = DataProductGroup
+
+
+class DataProductGroupCreateView(CreateView):
+    model = DataProductGroup
+    success_url = reverse_lazy('tom_observations:data-group-list')
+    fields = ['name']
+
+
+class DataProductGroupDeleteView(DeleteView):
+    success_url = reverse_lazy('tom_observations:data-group-list')
+    model = DataProductGroup
+
+
+class GroupDataView(FormView):
+    form_class = AddProductToGroupForm
+    template_name = 'tom_observations/add_product_to_group.html'
+
+    def form_valid(self, form):
+        group = form.cleaned_data['group']
+        group.dataproduct_set.add(*form.cleaned_data['products'])
+        group.save()
+        return redirect(reverse('tom_observations:data-group-detail', kwargs={'pk': group.id}))

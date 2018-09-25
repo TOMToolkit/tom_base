@@ -1,0 +1,12 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
+{% block title %}Add product to group{% endblock %}
+{% block content %}
+<form method="POST">
+  {% csrf_token %}
+  {% bootstrap_form form %}
+  {% buttons %}
+  <input type="submit" class="btn btn-primary" value="Add">
+  {% endbuttons %}
+</form>
+{% endblock %}
