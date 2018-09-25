@@ -1,0 +1,20 @@
+{% extends 'tom_common/base.html' %}
+{% block title %} Data Product Group {{ object.name }} {% endblock %}
+{% block content %}
+<h3>{{ object.name }}</h3>
+<form method="POST">
+  {% csrf_token %}
+  <table class="table table-striped">
+    <thead><tr><th>File</th><th>Remove</th></tr></thead>
+    <tbody>
+      {% for product in object.dataproduct_set.all %}
+      <tr>
+        <td><a href="{{ product.data.url }}">{{ product.data.name }}</a></td>
+        <td><input type="checkbox" name="products" id="product{{ product.id }}" value="{{ product.id }}"></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <input type="submit" value="Remove selected" class="btn btn-danger float-right">
+</form>
+{% endblock %}
