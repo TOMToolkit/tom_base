@@ -10,7 +10,7 @@
       <td><a href="{% url 'tom_observations:data-group-detail' group.id %}">{{ group.name }}</a></td>
       <td>{{ group.dataproduct_set.count }}</td>
       <td>{{ group.created }}</td>
-      <td><a href="" class="btn btn-warning">Delete</a></td>
+      <td><a href="{% url 'tom_observations:data-group-delete' group.id %}" class="btn btn-warning">Delete</a></td>
     </tr>
     {% endfor %}
   </tbody>

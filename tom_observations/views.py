@@ -118,6 +118,7 @@ class ObservationRecordDetailView(DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context['form'] = AddProductToGroupForm()
         context['data_products'] = get_service_class(self.object.facility).data_products(self.object)
         return context
 
@@ -156,6 +157,13 @@ class DataProductListView(FilterView):
 class DataProductGroupDetailView(DetailView):
     model = DataProductGroup
 
+    def post(self, request, *args, **kwargs):
+        group = self.get_object()
+        for product in request.POST.getlist('products'):
+            group.dataproduct_set.remove(DataProduct.objects.get(pk=product))
+        group.save()
+        return redirect(reverse('tom_observations:data-group-detail', kwargs={'pk': group.id}))
+
 
 class DataProductGroupListView(ListView):
     model = DataProductGroup
@@ -167,13 +175,17 @@ class DataProductGroupCreateView(CreateView):
     fields = ['name']
 
 
-class DataProductAddToGroupView(FormView):
+class DataProductGroupDeleteView(DeleteView):
+    success_url = reverse_lazy('tom_observations:data-group-list')
+    model = DataProductGroup
+
+
+class GroupDataView(FormView):
     form_class = AddProductToGroupForm
     template_name = 'tom_observations/add_product_to_group.html'
 
     def form_valid(self, form):
-        group = DataProductGroup.objects.get(pk=form.cleaned_data['group'].id)
-        product = DataProduct.objects.get(pk=self.kwargs['product_id'])
-        group.dataproduct_set.add(product)
+        group = form.cleaned_data['group']
+        group.dataproduct_set.add(*form.cleaned_data['products'])
         group.save()
         return redirect(reverse('tom_observations:data-group-detail', kwargs={'pk': group.id}))
