@@ -1,4 +1,5 @@
 from io import StringIO
+from datetime import datetime, timedelta, timezone
 
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
@@ -91,6 +92,7 @@ class TargetDetail(DetailView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['facilities'] = get_service_classes()
+        self.object.get_visibility(datetime.now(timezone.utc), datetime.now(timezone.utc) + timedelta(minutes=60), 10)
         return context
 
     def get(self, request, *args, **kwargs):
