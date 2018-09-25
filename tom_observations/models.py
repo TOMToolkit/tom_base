@@ -35,12 +35,25 @@ def data_product_path(instance, filename):
         return '{0}/none/{1}'.format(instance.target.identifier, filename)
 
 
+class DataProductGroup(models.Model):
+    name = models.CharField(max_length=200)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-created',)
+
+    def __str__(self):
+        return self.name
+
+
 class DataProduct(models.Model):
     product_id = models.CharField(max_length=2000, unique=True)
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     observation_record = models.ForeignKey(ObservationRecord, null=True, default=None, on_delete=models.CASCADE)
     data = models.FileField(upload_to=data_product_path, null=True, default=None)
     extra_data = models.TextField(blank=True, default='')
+    group = models.ManyToManyField(DataProductGroup)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
