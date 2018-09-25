@@ -1,6 +1,7 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 %}
 {% block content %}
+<a href="{% url 'tom_catalogs:query' %}" class="btn btn-primary float-right">Import from catalog</a>
 <ul class="nav nav-tabs">
   {% for k, v in type_choices %}
     <li class="nav-item">
@@ -15,6 +16,7 @@
   {% endif %}
   {% csrf_token %}
   {% bootstrap_form form %}
+  <p>Extra Data</p>
   {% bootstrap_formset extra_form %}
   {% buttons %}
     <button type="submit" class="btn btn-primary">
