@@ -15,13 +15,15 @@
       </div>
     </div>
     <table class="table">
-      <thead><tr><th>ID</th><th>Name</th><th>Type</th></tr></thead>
+      <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Observations</th><th>Saved Data</th></tr></thead>
       <tbody>
         {% for target in filter.qs %}
         <tr>
           <td><a href="{% url 'targets:detail' target.id %}" title="{{ target.identifier }}">{{ target.identifier }}</a></td>
           <td>{{ target.name }}</td>
           <td>{{ target.get_type_display }}</td>
+          <td>{{ target.observationrecord_set.count }}</td>
+          <td>{{ target.dataproduct_set.count }}</td>
         </tr>
         {% endfor %}
       </tbody>
