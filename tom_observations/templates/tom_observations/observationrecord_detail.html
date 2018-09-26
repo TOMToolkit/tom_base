@@ -44,34 +44,49 @@
     </tbody>
   </table>
 </form>
-<h4>Unsaved data products</h4>
-<table class="table table-striped">
-  <thead>
-    <tr>
-      <th>Created</th>
-      <th>Filename</th>
-      <th>URL</th>
-      <th>Save</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for product in data_products.unsaved %}
-    <tr>
-      <td>{{ product.created }}</td>
-      <td>{{ product.filename }}</td>
-      <td><a href="{{ product.url }}">Download</a></td>
-      <td>
-        <form method="POST" action="{% url 'tom_observations:data-save' object.id %}">
-          {% csrf_token %}
-          <input type="hidden" value="{{ product.id }}" name="product_id">
-          <input type="hidden" value="{{ object.facility }}" name="facility">
-          <input type="submit" value="Save" class="btn btn-primary">
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+
+<form method="POST" action="{% url 'tom_observations:data-save' object.id %}">
+  {% csrf_token %}
+  <input type="hidden" value="{{ object.facility }}" name="facility">
+  <input type="hidden" value="ALL" name="products">
+  <input type="submit" value="Save All" class="btn btn-primary float-right">
+</form>
+<form method="POST" action="{% url 'tom_observations:data-save' object.id %}">
+  {% csrf_token %}
+  <input type="hidden" value="{{ object.facility }}" name="facility">
+  <div class="row">
+    <div class="col-md-9">
+      <h4>Unsaved data products</h4>
+    </div>
+    <div class="col-md-1">
+    </div>
+    <div class="col-md-2">
+      <input type="submit" value="Save Selected" class="btn btn-primary">
+    </div>
+  </div>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Created</th>
+        <th>Filename</th>
+        <th>URL</th>
+        <th>Save</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in data_products.unsaved %}
+      <tr>
+        <td>{{ product.created }}</td>
+        <td>{{ product.filename }}</td>
+        <td><a href="{{ product.url }}">Download</a></td>
+        <td>
+          <input type="checkbox" name="products" id="product{{ product.id }}" value="{{ product.id }}">
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</form>
 <h4>Request Parameters</h4>
 <dl class="row">
   {% for k,v in object.parameters_as_dict.items %}

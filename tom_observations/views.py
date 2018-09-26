@@ -127,12 +127,15 @@ class DataProductSaveView(View):
     def post(self, request, *args, **kwargs):
         service_class = get_service_class(request.POST['facility'])
         observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])
-        product_id = request.POST['product_id']
-        if product_id == 'ALL':
+        products = request.POST.getlist('products')
+        print(products)
+        if products[0] == 'ALL':
             products = service_class.save_data_products(observation_record)
+            messages.success(request, 'Saved all available data products')
         else:
-            products = service_class.save_data_products(observation_record, product_id)
-        messages.success(request, 'Successfully saved: {0}'.format('\n'.join([str(p) for p in products])))
+            for product in products:
+                products = service_class.save_data_products(observation_record, product)
+                messages.success(request, 'Successfully saved: {0}'.format('\n'.join([str(p) for p in products])))
         return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
 
 
