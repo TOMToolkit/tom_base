@@ -128,7 +128,6 @@ class DataProductSaveView(View):
         service_class = get_service_class(request.POST['facility'])
         observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])
         products = request.POST.getlist('products')
-        print(products)
         if products[0] == 'ALL':
             products = service_class.save_data_products(observation_record)
             messages.success(request, 'Saved all available data products')

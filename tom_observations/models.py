@@ -14,6 +14,9 @@ class ObservationRecord(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ('-created',)
+
     @property
     def parameters_as_dict(self):
         return json.loads(self.parameters)
