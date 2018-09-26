@@ -15,13 +15,12 @@
       </div>
     </div>
     <table class="table">
-      <thead><tr><th>ID</th><th>Name</th><th>Designation</th><th>Type</th></tr></thead>
+      <thead><tr><th>ID</th><th>Name</th><th>Type</th></tr></thead>
       <tbody>
         {% for target in filter.qs %}
         <tr>
           <td><a href="{% url 'targets:detail' target.id %}" title="{{ target.identifier }}">{{ target.identifier }}</a></td>
           <td>{{ target.name }}</td>
-          <td>{{ target.designation }}</td>
           <td>{{ target.get_type_display }}</td>
         </tr>
         {% endfor %}

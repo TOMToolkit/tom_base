@@ -160,7 +160,6 @@ class MARSBroker(object):
             identifier=alert['lco_id'],
             name=alert['objectId'],
             type='SIDEREAL',
-            designation='MARS',
             ra=alert['candidate']['ra'],
             dec=alert['candidate']['dec'],
             galactic_lng=alert['candidate']['l'],

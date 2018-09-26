@@ -2,7 +2,7 @@
 {% load bootstrap4 %}
 {% block content %}
 <p>Upload a .csv to import targets in bulk. CSV columns must match target attributes.
-Ex: identifier,designation,name,ra,dec
+Ex: identifier,name,ra,dec
 </p>
 <form method="POST" action="{% url 'tom_targets:import' %}" enctype="multipart/form-data">
   {% csrf_token %}

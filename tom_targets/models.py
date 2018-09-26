@@ -5,7 +5,7 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 
 
-GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'designation', 'type']
+GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'type']
 
 SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'ra', 'dec', 'epoch', 'pm_ra', 'pm_dec',
@@ -28,7 +28,6 @@ class Target(models.Model):
     identifier = models.CharField(max_length=100, verbose_name='Identifier', help_text='The identifier for this object, e.g. Kelt-16b.')
     name = models.CharField(max_length=100, default='', verbose_name='Name', help_text='The name of this target e.g. Barnard\'s star.')
     type = models.CharField(max_length=100, choices=TARGET_TYPES, verbose_name='Target Type', help_text='The type of this target.')
-    designation = models.CharField(max_length=100, default='', verbose_name='Designation', help_text='Designation of this target.')
     created = models.DateTimeField(auto_now_add=True, verbose_name='Time Created', help_text='The time which this target was created in the TOM database.')
     modified = models.DateTimeField(auto_now=True, verbose_name='Last Modified', help_text='The time which this target was changed in the TOM database.')
     ra = models.FloatField(null=True, blank=True, verbose_name='Right Ascension', help_text='Right Ascension, in degrees.')
