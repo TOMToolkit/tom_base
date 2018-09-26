@@ -19,6 +19,9 @@ NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'ephemeris_epoch_err'
 ]
 
+REQUIRED_SIDEREAL_FIELDS = ['ra', 'dec']
+REQUIRED_NON_SIDEREAL_FIELDS = NON_SIDEREAL_FIELDS
+
 
 class Target(models.Model):
     SIDEREAL = 'SIDEREAL'
