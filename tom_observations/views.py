@@ -119,7 +119,8 @@ class ObservationRecordDetailView(DetailView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['form'] = AddProductToGroupForm()
-        context['data_products'] = get_service_class(self.object.facility).data_products(self.object)
+        service_class = get_service_class(self.object.facility)
+        context['data_products'] = service_class.data_products(self.object, request=self.request)
         return context
 
 
@@ -129,11 +130,11 @@ class DataProductSaveView(View):
         observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])
         products = request.POST.getlist('products')
         if products[0] == 'ALL':
-            products = service_class.save_data_products(observation_record)
+            products = service_class.save_data_products(observation_record, request=self.request)
             messages.success(request, 'Saved all available data products')
         else:
             for product in products:
-                products = service_class.save_data_products(observation_record, product)
+                products = service_class.save_data_products(observation_record, product, request=self.request)
                 messages.success(request, 'Successfully saved: {0}'.format('\n'.join([str(p) for p in products])))
         return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
 

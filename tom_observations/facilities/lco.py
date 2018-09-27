@@ -3,7 +3,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django import forms
 from dateutil.parser import parse
-from crispy_forms.layout import Layout, Div, Fieldset, HTML
+from crispy_forms.layout import Layout, Div
 from django.core.files.base import ContentFile
 
 from tom_observations.facility import GenericObservationForm
@@ -224,28 +224,25 @@ class LCOFacility:
             raise Exception('No record exists for that observation id')
 
     @classmethod
-    def save_data_products(clz, observation_record, product_id=None):
-        products = []
-        response = requests.get(
-            PORTAL_URL + '/api/profile/',
-            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
-        )
-        archive_token = response.json()['tokens']['archive']
-
-        if product_id:
-            response = requests.get(
-                'https://archive-api.lco.global/frames/{0}/'.format(product_id),
-                headers={'Authorization': 'Bearer {0}'.format(archive_token)}
-            )
-            response.raise_for_status()
-            frames = [response.json()]
+    def _get_archive_token(clz, request):
+        if request and request.session.get('LCO_ARCHIVE_TOKEN'):
+            print('using session token')
+            return request.session['LCO_ARCHIVE_TOKEN']
         else:
             response = requests.get(
-                'https://archive-api.lco.global/frames/?REQNUM={0}'.format(observation_record.observation_id),
-                headers={'Authorization': 'Bearer {0}'.format(archive_token)}
+                PORTAL_URL + '/api/profile/',
+                headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
             )
-            response.raise_for_status()
-            frames = response.json()['results']
+            archive_token = response.json()['tokens']['archive']
+            if request:
+                request.session['LCO_ARCHIVE_TOKEN'] = archive_token
+
+            return archive_token
+
+    @classmethod
+    def save_data_products(clz, observation_record, product_id=None, request=None):
+        products = []
+        frames = clz._archive_frames(observation_record.observation_id, product_id, request)
 
         for frame in frames:
             dp, created = DataProduct.objects.get_or_create(
@@ -262,9 +259,9 @@ class LCOFacility:
         return products
 
     @classmethod
-    def data_products(clz, observation_record):
+    def data_products(clz, observation_record, request=None):
         products = {'saved': [], 'unsaved': []}
-        for frame in clz._archive_frames(observation_record.observation_id):
+        for frame in clz._archive_frames(observation_record.observation_id, request=request):
             try:
                 dp = DataProduct.objects.get(product_id=frame['id'])
                 products['saved'].append(dp)
@@ -278,17 +275,23 @@ class LCOFacility:
         return products
 
     @classmethod
-    def _archive_frames(clz, observation_id):
+    def _archive_frames(clz, observation_id, product_id=None, request=None):
         # todo save this key somewhere
-        response = requests.get(
-            PORTAL_URL + '/api/profile/',
-            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
-        )
-        archive_token = response.json()['tokens']['archive']
+        archive_token = clz._get_archive_token(request)
+        frames = []
+        if product_id:
+            response = requests.get(
+                'https://archive-api.lco.global/frames/{0}/'.format(product_id),
+                headers={'Authorization': 'Bearer {0}'.format(archive_token)}
+            )
+            response.raise_for_status()
+            frames = [response.json()]
+        else:
+            response = requests.get(
+                'https://archive-api.lco.global/frames/?REQNUM={0}'.format(observation_id),
+                headers={'Authorization': 'Bearer {0}'.format(archive_token)}
+            )
+            response.raise_for_status()
+            frames = response.json()['results']
 
-        response = requests.get(
-            'https://archive-api.lco.global/frames/?REQNUM={0}'.format(observation_id),
-            headers={'Authorization': 'Bearer {0}'.format(archive_token)}
-        )
-        response.raise_for_status()
-        return response.json()['results']
+        return frames
