@@ -13,6 +13,7 @@ from django.core.management import call_command
 from .models import Target
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from .import_targets import import_targets
+from .filters import TargetFilter
 from tom_observations.facility import get_service_classes
 
 
@@ -20,7 +21,7 @@ class TargetListView(FilterView):
     template_name = 'tom_targets/target_list.html'
     paginate_by = 25
     model = Target
-    filterset_fields = ['type', 'identifier', 'name']
+    filterset_class = TargetFilter
 
 
 class TargetCreate(CreateView):
