@@ -226,7 +226,6 @@ class LCOFacility:
     @classmethod
     def _get_archive_token(clz, request):
         if request and request.session.get('LCO_ARCHIVE_TOKEN'):
-            print('using session token')
             return request.session['LCO_ARCHIVE_TOKEN']
         else:
             response = requests.get(
