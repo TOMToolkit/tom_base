@@ -1,6 +1,6 @@
 import requests
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from django import forms
 from dateutil.parser import parse
 from crispy_forms.layout import Layout, Div
