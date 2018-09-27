@@ -12,8 +12,11 @@ from tom_targets.models import Target
 
 try:
     LCO_SETTINGS = settings.FACILITIES['LCO']
-except AttributeError as e:
-    raise ImproperlyConfigured('Could not load LCO settings: {}'.format(e))
+except AttributeError:
+    LCO_SETTINGS = {
+        'portal_url': 'https://observe.lco.global',
+        'api_key': '',
+    }
 
 PORTAL_URL = LCO_SETTINGS['portal_url']
 TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
