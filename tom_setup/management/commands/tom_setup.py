@@ -101,7 +101,9 @@ class Command(BaseCommand):
         call_command('createsuperuser')
 
     def complete(self):
-        self.exit(self.style.SUCCESS('Setup complete! Run ./manage migrate && ./manage.py runserver to start your TOM.'))
+        self.exit(
+            self.style.SUCCESS('Setup complete! Run ./manage migrate && ./manage.py runserver to start your TOM.')
+        )
 
     def handle(self, *args, **options):
         self.context['CREATE_DATE'] = timezone.now()
