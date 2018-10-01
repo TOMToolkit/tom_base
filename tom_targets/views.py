@@ -20,6 +20,7 @@ from tom_observations.facility import get_service_classes
 class TargetListView(FilterView):
     template_name = 'tom_targets/target_list.html'
     paginate_by = 25
+    strict = False
     model = Target
     filterset_class = TargetFilter
 
