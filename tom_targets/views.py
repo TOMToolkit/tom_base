@@ -30,7 +30,7 @@ class TargetCreate(CreateView):
 
     def get_default_target_type(self):
         try:
-            return settings.DEFAULT_TARGET_TYPE
+            return settings.TARGET_TYPE
         except AttributeError:
             return Target.SIDEREAL
 

@@ -15,21 +15,38 @@
       </div>
     </div>
     <table class="table">
-      <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Observations</th><th>Saved Data</th></tr></thead>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Type</th>
+          {% if request.GET.type == 'SIDEREAL' %}
+          <th>RA</th><th>Dec</th>
+          {% endif %}
+          <th>Observations</th>
+          <th>Saved Data</th>
+        </tr>
+      </thead>
       <tbody>
         {% for target in filter.qs %}
         <tr>
           <td><a href="{% url 'targets:detail' target.id %}" title="{{ target.identifier }}">{{ target.identifier }}</a></td>
           <td>{{ target.name }}</td>
           <td>{{ target.get_type_display }}</td>
+          {% if request.GET.type == 'SIDEREAL' %}
+            <td>{{ target.ra }}</td>
+            <td>{{ target.dec }}</td>
+          {% endif %}
           <td>{{ target.observationrecord_set.count }}</td>
           <td>{{ target.dataproduct_set.count }}</td>
+
         </tr>
         {% endfor %}
       </tbody>
     </table>
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
   </div>
+  {{ filter.fields }}
   <div class="col-md-2">
     <form action="" method="get" class="form">
       {% bootstrap_form filter.form %}

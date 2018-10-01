@@ -27,7 +27,7 @@ class Command(BaseCommand):
 
     def welcome_banner(self):
         welcome_text = (
-            'Welcome to the tom_setup helper script. This will help you get started with a new tom.\n'
+            'Welcome to the tom_setup helper script. This will help you get started with a new TOM.\n'
             'DO NOT RUN THIS SCRIPT ON AN EXISTING TOM. It will override any custom settings you may '
             'already have.\n'
         )
@@ -68,10 +68,10 @@ class Command(BaseCommand):
         self.ok()
 
     def get_target_type(self):
-        prompt = 'Which target type will your project use? {}'.format(self.style.WARNING('[SIDEREAL/NONSIDEREAL] '))
+        prompt = 'Which target type will your project use? {}'.format(self.style.WARNING('[SIDEREAL/NON_SIDEREAL] '))
         target_type = input(prompt).upper()
-        if target_type not in ['SIDEREAL', 'NONSIDEREAL']:
-            self.stdout.write('Error: invalid type {} valid types are SIDEREAL, NONSIDEREAL'.format(target_type))
+        if target_type not in ['SIDEREAL', 'NON_SIDEREAL']:
+            self.stdout.write('Error: invalid type {} valid types are SIDEREAL, NON_SIDEREAL'.format(target_type))
             self.get_target_type()
         self.context['TARGET_TYPE'] = target_type
 

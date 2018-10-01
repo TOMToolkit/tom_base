@@ -140,6 +140,7 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/data/'
 
+TARGET_TYPE = 'NON_SIDEREAL'
 FACILITIES = {
     'LCO': {
         'portal_url': 'https://observe.lco.global',
