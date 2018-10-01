@@ -8,3 +8,5 @@ recursive-include tom_catalogs/static *
 recursive-include tom_targets/templates *
 recursive-include tom_targets/static *
 recursive-include tom_setup/templates *
+recursive-include tom_observations/static *
+recursive-include tom_observations/templates *
