@@ -37,8 +37,8 @@ setup(
         'python-dateutil',
         'requests',
         'astroquery',
-        'skyfield',
         'plotly'
+        'astroplan'
     ],
     extras_require={
         'test': ['factory_boy']

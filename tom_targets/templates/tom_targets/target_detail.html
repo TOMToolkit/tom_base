@@ -25,6 +25,15 @@
     <a href="{% url 'tom_observations:create' facility=facility %}?target_id={{ object.id }}" class="btn btn-outline-primary">{{ facility }}</a>
     {% endfor %}
     <hr/>
+    <h4>Plan</h4>
+    <form action="{% url 'targets:plan' pk=target.id %}" method="post" class="form">
+      {% csrf_token %}
+      {% bootstrap_form form %}
+      {% buttons %}
+      <input type="submit" class="btn btn-primary" value="Plan">
+      {% endbuttons %}
+    </form>
+    <hr/>
     <h4>Observations</h4>
     <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations Status</a>
     <table class="table table-striped">

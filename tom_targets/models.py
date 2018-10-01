@@ -4,8 +4,12 @@ from django.urls import reverse
 from django.conf import settings
 from django.forms.models import model_to_dict
 
-from skyfield.api import Topos, load, Star, utc
-from skyfield.elementslib import OsculatingElements
+from astroplan import Observer, FixedTarget
+from astropy.coordinates import EarthLocation, SkyCoord
+from astropy.time import Time
+import plotly
+from plotly import offline, io
+import plotly.graph_objs as go
 from datetime import datetime, timezone, timedelta
 
 from tom_observations import facility
@@ -79,40 +83,29 @@ class Target(models.Model):
         return model_to_dict(self, fields=fields_for_type)
 
     def get_object_instance_for_type(self):
-        if type == self.SIDEREAL:
-            return Star(ra_hours=self.ra,
-                        dec_degrees=self.dec,
-                        ra_mas_per_year=self.pm_ra,
-                        dec_mas_per_year=self.pm_dec,
-                        epoch=self.epoch,
-                        parallax_mas=self.parallax)
-        elif type == self.NON_SIDEREAL:
-            return OsculatingElements(eccentricity=self.eccentricity,
-                                    inclination=self.inclination,
-                                    longitude_of_ascending_node=self.lng_asc_node
-            )
+        if self.type == self.SIDEREAL:
+            # TODO: ensure support for sexagesimal coordinates
+            return FixedTarget(coord=SkyCoord(self.ra, self.dec, unit='deg'))
+        elif self.type == self.NON_SIDEREAL:
+            raise Exception
 
     def get_visibility(self, start_time, end_time, interval):
-        planets = load('de421.bsp')
-        ts = load.timescale()
+        visibility = {}
+        body = FixedTarget(coord=SkyCoord(self.ra, self.dec, unit='deg'))
         for observing_facility in facility.get_service_classes():
             sites = facility.get_service_class(observing_facility).get_observing_sites()
             for site, site_details in sites.items():
-                observing_site = planets['earth'] + Topos(site_details.get('latitude'), site_details.get('longitude'))
+                positions = [[],[]]
+                observer = Observer(location=EarthLocation.from_geodetic(site_details.get('longitude'), site_details.get('latitude'), site_details.get('elevation')))
                 #TODO: allow for other object types
                 #TODO: add weather support
                 #TODO: add parallax support
                 #TODO: ensure all fields have defaults to avoid exceptions--parallax may not be necessary
-                target_object = self.get_object_instance_for_type()
-                time_range = ts.utc([start_time + timedelta(minutes=i) for i in range(0, 60, interval)])
-                astrometric_position = observing_site.at(time_range).observe(target_object)
-                apparent_position = astrometric_position.apparent()
-                alt, az, distance = apparent_position.altaz()
-                print(alt)
-                print(az)
-                print(distance)
-                print()
-        pass
+                # TODO: only plot airmass when sunup
+                positions[0] = [datetime.fromtimestamp(time) for time in range(int(round(start_time.timestamp())), int(round(end_time.timestamp())), interval*60)]
+                positions[1] = observer.altaz(Time(positions[0], format='datetime'), body).alt.to_string(decimal=True)
+                visibility[site] = positions
+        offline.plot([go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()], show_link=False, filename='{}.html'.format(self.name))
 
 
 class TargetExtra(models.Model):

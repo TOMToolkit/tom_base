@@ -1,9 +1,9 @@
 from io import StringIO
 from datetime import datetime, timedelta, timezone
 
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.views.generic.detail import DetailView
-from django.views.generic import TemplateView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView, FormMixin
+from django.views.generic.detail import DetailView, SingleObjectMixin
+from django.views.generic import TemplateView, View
 from django_filters.views import FilterView
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import redirect
@@ -12,7 +12,7 @@ from django.contrib import messages
 from django.core.management import call_command
 
 from .models import Target
-from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
+from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetVisibilityForm
 from .import_targets import import_targets
 from tom_observations.facility import get_service_classes
 from tom_observations.models import ObservationRecord
@@ -88,11 +88,14 @@ class TargetDelete(DeleteView):
     model = Target
 
 
-class TargetDetail(DetailView):
+class TargetDisplay(DetailView):
+    model = Target
+    fields = '__all__'
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['facilities'] = get_service_classes()
-        self.object.get_visibility(datetime.now(timezone.utc), datetime.now(timezone.utc) + timedelta(minutes=60), 10)
+        context['form'] = TargetVisibilityForm()
         return context
 
     def get(self, request, *args, **kwargs):
@@ -105,8 +108,43 @@ class TargetDetail(DetailView):
             return redirect(reverse('tom_targets:detail', args=(target_id,)))
         return super().get(request, *args, **kwargs)
 
+
+class TargetObservationPlan(SingleObjectMixin, FormView):
+    template_name = 'tom_targets/target_detail.html'
+    form_class = TargetVisibilityForm
     model = Target
-    fields = '__all__'
+
+    def get_success_url(self):
+        return reverse('tom_targets:detail', kwargs={'pk': self.object.pk})
+
+    def post(self, request, *args, **kwargs):
+        print('post')
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
+
+    def form_invalid(self, form):
+        print('form invalid')
+        print(errors)
+        return super().form_invalid(form)
+
+    def form_valid(self, form):
+        print('form valid')
+        print(form.cleaned_data)
+        print(self.request)
+        start_time = form.cleaned_data['start_time']
+        end_time = form.cleaned_data['end_time']
+        self.object.get_visibility(start_time, end_time, 10)
+        return super().form_valid(form)
+
+
+class TargetDetail(View):
+    def get(self, request, *args, **kwargs):
+        view = TargetDisplay.as_view()
+        return view(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        view = TargetObservationPlan.as_view()
+        return view(request, *args, **kwargs)
 
 
 class TargetImport(TemplateView):

@@ -17,7 +17,44 @@ except AttributeError as e:
 
 PORTAL_URL = LCO_SETTINGS['portal_url']
 TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
-
+SITES = {
+    'Siding Spring': {
+        'sitecode': 'coj',
+        'latitude': -31.272,
+        'longitude': 149.07,
+        'elevation': 1116
+    },
+    'Sutherland': {
+        'sitecode': 'cpt',
+        'latitude': -32.38,
+        'longitude': 20.81,
+        'elevation': 1804
+    },
+    'Teide': {
+        'sitecode': 'tfn',
+        'latitude': 20.3,
+        'longitude': -16.511,
+        'elevation': 2390
+    },
+    'Cerro Tololo': {
+        'sitecode': 'lsc',
+        'latitude': -30.167,
+        'longitude': -70.804,
+        'elevation': 2198
+    },
+    'McDonald': {
+        'sitecode': 'elp',
+        'latitude': 30.679,
+        'longitude': -104.015,
+        'elevation': 2027
+    },
+    'Haleakala': {
+        'sitecode': 'ogg',
+        'latitude': 20.706,
+        'longitude': -156.258,
+        'elevation': 3065
+    }
+}
 
 def flatten_error_dict(form, error_dict):
     non_field_errors = []
@@ -206,6 +243,10 @@ class LCOFacility:
         return TERMINAL_OBSERVING_STATES
 
     @classmethod
+    def get_observing_sites(clz):
+        return SITES
+
+    @classmethod
     def get_observation_status(clz, observation_id):
         response = requests.get(
             PORTAL_URL + '/api/requests/{0}'.format(observation_id),
@@ -215,7 +256,7 @@ class LCOFacility:
         return response.json()['state']
 
     @classmethod
-    def update_observing_status(clz, observation_id):
+    def update_observation_status(clz, observation_id):
         try:
             record = ObservationRecord.objects.get(observation_id=observation_id)
             record.status = clz.get_observation_status(observation_id)
