@@ -10,11 +10,12 @@
       </div>
     </div>
     <table class="table">
-      <thead><tr><th>Downloaded</th><th>Target</th><th>Observation</th><th>Groups</th><th>Data</th></tr></thead>
+      <thead><tr><th>Downloaded</th><th>Filename</th><th>Target</th><th>Observation</th><th>Groups</th><th>Data</th></tr></thead>
       <tbody>
-        {% for product in filter.qs %}
+        {% for product in object_list %}
         <tr>
           <td>{{ product.created }}</td>
+          <td>{{ product.data.name }}</th>
           <td><a href="{% url 'tom_targets:detail' product.target.id %}">{{ product.target.identifier }}</a></td>
           <td><a href="{% url 'tom_observations:detail' product.observation_record.id %}">{{ product.observation_record }}</a></td>
           <td>

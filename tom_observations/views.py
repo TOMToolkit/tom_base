@@ -18,9 +18,10 @@ from tom_targets.models import Target
 
 class ObservationListView(FilterView):
     template_name = 'tom_observations/observation_list.html'
-    paginate_by = 100
+    paginate_by = 25
     model = ObservationRecord
     filterset_fields = ['observation_id', 'target_id', 'facility', 'status']
+    strict = False
 
     def get(self, request, *args, **kwargs):
         update_status = request.GET.get('update_status', False)
@@ -155,6 +156,7 @@ class DataProductListView(FilterView):
     template_name = 'tom_observations/dataproduct_list.html'
     paginate_by = 25
     filterset_fields = ['target__name', 'observation_record__facility']
+    strict = False
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
