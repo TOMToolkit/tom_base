@@ -37,6 +37,7 @@ setup(
         'python-dateutil',
         'requests',
         'astroquery',
+        'astropy',
         'plotly',
         'pyephem'
     ],

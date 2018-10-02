@@ -10,6 +10,8 @@ import ephem
 import plotly
 from plotly import offline, io
 import plotly.graph_objs as go
+from astropy.coordinates import Angle
+from astropy import units
 from datetime import datetime, timezone, timedelta
 
 from tom_observations import facility
@@ -107,16 +109,17 @@ class Target(models.Model):
             for site, site_details in sites.items():
                 positions = [[],[]]
                 observer = ephem.Observer()
-                observer.lon = dd_to_dms(site_details.get('longitude'))
-                observer.lat = dd_to_dms(site_details.get('latitude'))
+                observer.lon = Angle(str(site_details.get('longitude')) + 'd').to_string(unit=units.degree, sep=':')
+                observer.lat = Angle(str(site_details.get('latitude')) + 'd').to_string(unit=units.degree, sep=':')
                 observer.elevation = site_details.get('elevation')
-                for time in range(int(round(start_time.timestamp())), int(round(end_time.timestamp())), interval*10):
+                for time in range(int(round(start_time.timestamp())), int(round(end_time.timestamp())), interval*20):
                     observer.date = datetime.fromtimestamp(time)
                     positions[0].append(datetime.fromtimestamp(time))
                     body.compute(observer)
-                    alt = dms_to_dd(str(body.alt))
+                    alt = Angle(str(body.alt) + ' degrees').degree
                     airmass = calculate_airmass(alt) if alt >= 0 else None
                     positions[1].append(alt if alt >= 0 else None)
+                    # positions[1].append(airmass)
                 visibility[site] = positions
         offline.plot([go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()], show_link=False, filename='{}.html'.format(self.name))
 
