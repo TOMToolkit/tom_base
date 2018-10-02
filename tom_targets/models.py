@@ -15,7 +15,7 @@ from astropy import units
 from datetime import datetime, timezone, timedelta
 
 from tom_observations import facility
-from .utils import dd_to_dms, dms_to_dd, calculate_airmass, calculate_zenith
+from .utils import calculate_airmass, calculate_zenith
 
 
 GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'designation', 'type']
@@ -119,7 +119,7 @@ class Target(models.Model):
                     alt = Angle(str(body.alt) + ' degrees').degree
                     airmass = calculate_airmass(alt) if alt >= 0 else None
                     positions[1].append(alt if alt >= 0 else None)
-                    # positions[1].append(airmass)
+                    # positions[1].append(airmass) if airmass <= airmass_limit else None
                 visibility[site] = positions
         offline.plot([go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()], show_link=False, filename='{}.html'.format(self.name))
 
