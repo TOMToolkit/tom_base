@@ -35,6 +35,13 @@
             {% endif %}
           </td>
         </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            No observations yet. You might want to create an observation from one of
+            <a href="{% url 'tom_targets:list' %}">your saved targets</a>.
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>

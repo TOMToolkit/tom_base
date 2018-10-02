@@ -21,6 +21,12 @@
           <td><a href="{% url 'tom_alerts:run' query.id %}" title="Run query" class="btn btn-primary">Run</a></td>
           <td><a href="{% url 'tom_alerts:delete' query.id %}" title="Delete query" class="btn btn-danger">Delete</a></td>
         </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5">
+            No saved queries yet, Try creating a query from one of the alert brokers listed above.
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>

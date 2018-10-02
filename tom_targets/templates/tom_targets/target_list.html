@@ -39,7 +39,13 @@
           {% endif %}
           <td>{{ target.observationrecord_set.count }}</td>
           <td>{{ target.dataproduct_set.count }}</td>
-
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5">
+            No targets yet. You might want to <a href="{% url 'tom_targets:create' %}">create a target manually</a>
+            or <a href="{% url 'tom_alerts:list' %}">import one from an alert broker</a>.
+          </td>
         </tr>
         {% endfor %}
       </tbody>

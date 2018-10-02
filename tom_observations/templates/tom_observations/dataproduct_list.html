@@ -25,6 +25,13 @@
           </td>
           <td><a href="{{ product.data.url }}" class="btn btn-success">⬇</a></td>
         </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            No data yet. You might want to save some data products from your
+            <a href="{% url 'tom_observations:list' %}">completed observations</a>.
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
