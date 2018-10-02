@@ -90,7 +90,7 @@ class Command(BaseCommand):
         if not os.path.exists(settings_location):
             msg = 'Could not determine settings.py location. Writing settings.py out to {}. Please copy file to \
                    the proper location after script finishes.'.format(settings_location)
-            self.stdout.write(self.style.MAJOR(msg))
+            self.stdout.write(self.style.WARNING(msg))
         with open(settings_location, 'w') as settings_file:
             settings_file.write(rendered)
 
