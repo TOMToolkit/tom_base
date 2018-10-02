@@ -185,7 +185,7 @@ class LCOFacility:
         response = requests.post(
             PORTAL_URL + '/api/userrequests/',
             json=observation_payload,
-            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+            headers=clz._portal_headers()
         )
         response.raise_for_status()
         return [r['id'] for r in response.json()['requests']]
@@ -195,7 +195,7 @@ class LCOFacility:
         response = requests.post(
             PORTAL_URL + '/api/userrequests/validate/',
             json=observation_payload,
-            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+            headers=clz._portal_headers()
         )
         response.raise_for_status()
         return response.json()['errors']
@@ -212,7 +212,7 @@ class LCOFacility:
     def get_observation_status(clz, observation_id):
         response = requests.get(
             PORTAL_URL + '/api/requests/{0}'.format(observation_id),
-            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+            headers=clz._portal_headers()
         )
         response.raise_for_status()
         return response.json()['state']
@@ -227,19 +227,29 @@ class LCOFacility:
             raise Exception('No record exists for that observation id')
 
     @classmethod
-    def _get_archive_token(clz, request):
+    def _portal_headers(clz):
+        if LCO_SETTINGS.get('api_key'):
+            return {'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+        else:
+            return {}
+
+    @classmethod
+    def _archive_headers(clz, request):
         if request and request.session.get('LCO_ARCHIVE_TOKEN'):
-            return request.session['LCO_ARCHIVE_TOKEN']
+            archive_token = request.session['LCO_ARCHIVE_TOKEN']
         else:
             response = requests.get(
                 PORTAL_URL + '/api/profile/',
                 headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
             )
-            archive_token = response.json()['tokens']['archive']
-            if request:
+            archive_token = response.json().get('tokens', {}).get('archive')
+            if request and archive_token:
                 request.session['LCO_ARCHIVE_TOKEN'] = archive_token
 
-            return archive_token
+        if archive_token:
+            return {'Authorization': 'Bearer {0}'.format(archive_token)}
+        else:
+            return {}
 
     @classmethod
     def save_data_products(clz, observation_record, product_id=None, request=None):
@@ -279,19 +289,18 @@ class LCOFacility:
     @classmethod
     def _archive_frames(clz, observation_id, product_id=None, request=None):
         # todo save this key somewhere
-        archive_token = clz._get_archive_token(request)
         frames = []
         if product_id:
             response = requests.get(
                 'https://archive-api.lco.global/frames/{0}/'.format(product_id),
-                headers={'Authorization': 'Bearer {0}'.format(archive_token)}
+                headers=clz._archive_headers(request)
             )
             response.raise_for_status()
             frames = [response.json()]
         else:
             response = requests.get(
                 'https://archive-api.lco.global/frames/?REQNUM={0}'.format(observation_id),
-                headers={'Authorization': 'Bearer {0}'.format(archive_token)}
+                headers=clz._archive_headers(request)
             )
             response.raise_for_status()
             frames = response.json()['results']
