@@ -1,18 +1,19 @@
+import math
+
 from django.db import models
 from django import forms
 from django.urls import reverse
 from django.conf import settings
 from django.forms.models import model_to_dict
 
-from astroplan import Observer, FixedTarget
-from astropy.coordinates import EarthLocation, SkyCoord
-from astropy.time import Time
+import ephem
 import plotly
 from plotly import offline, io
 import plotly.graph_objs as go
 from datetime import datetime, timezone, timedelta
 
 from tom_observations import facility
+from .utils import dd_to_dms, dms_to_dd, calculate_airmass, calculate_zenith
 
 
 GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'designation', 'type']
@@ -85,25 +86,37 @@ class Target(models.Model):
     def get_object_instance_for_type(self):
         if self.type == self.SIDEREAL:
             # TODO: ensure support for sexagesimal coordinates
-            return FixedTarget(coord=SkyCoord(self.ra, self.dec, unit='deg'))
+            #return FixedTarget(coord=SkyCoord(self.ra, self.dec, unit='deg'))
+            return ephem.FixedBody(_ra=self.ra, _dec=self.dec, _epoch=self.epoch)
         elif self.type == self.NON_SIDEREAL:
-            raise Exception
+            return ephem.EllipticalBody(_inc=self.inclination,
+                                _0m=self.lng_asc_node,
+                                _M=self.mean_anomaly,
+                                _epoch=self.epoch,
+                                _e=self.eccentricity)
 
-    def get_visibility(self, start_time, end_time, interval):
+    # TODO: add weather support
+    # TODO: ensure all fields have defaults to avoid exceptions--parallax may not be necessary
+    # TODO: verify non-sidereal functionality
+    # TODO: only plot airmass when sunup
+    def get_visibility(self, start_time, end_time, interval, airmass_limit=None):
         visibility = {}
-        body = FixedTarget(coord=SkyCoord(self.ra, self.dec, unit='deg'))
+        body = self.get_object_instance_for_type()
         for observing_facility in facility.get_service_classes():
             sites = facility.get_service_class(observing_facility).get_observing_sites()
             for site, site_details in sites.items():
                 positions = [[],[]]
-                observer = Observer(location=EarthLocation.from_geodetic(site_details.get('longitude'), site_details.get('latitude'), site_details.get('elevation')))
-                #TODO: allow for other object types
-                #TODO: add weather support
-                #TODO: add parallax support
-                #TODO: ensure all fields have defaults to avoid exceptions--parallax may not be necessary
-                # TODO: only plot airmass when sunup
-                positions[0] = [datetime.fromtimestamp(time) for time in range(int(round(start_time.timestamp())), int(round(end_time.timestamp())), interval*60)]
-                positions[1] = observer.altaz(Time(positions[0], format='datetime'), body).alt.to_string(decimal=True)
+                observer = ephem.Observer()
+                observer.lon = dd_to_dms(site_details.get('longitude'))
+                observer.lat = dd_to_dms(site_details.get('latitude'))
+                observer.elevation = site_details.get('elevation')
+                for time in range(int(round(start_time.timestamp())), int(round(end_time.timestamp())), interval*10):
+                    observer.date = datetime.fromtimestamp(time)
+                    positions[0].append(datetime.fromtimestamp(time))
+                    body.compute(observer)
+                    alt = dms_to_dd(str(body.alt))
+                    airmass = calculate_airmass(alt) if alt >= 0 else None
+                    positions[1].append(alt if alt >= 0 else None)
                 visibility[site] = positions
         offline.plot([go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()], show_link=False, filename='{}.html'.format(self.name))
 

@@ -118,19 +118,13 @@ class TargetObservationPlan(SingleObjectMixin, FormView):
         return reverse('tom_targets:detail', kwargs={'pk': self.object.pk})
 
     def post(self, request, *args, **kwargs):
-        print('post')
         self.object = self.get_object()
         return super().post(request, *args, **kwargs)
 
     def form_invalid(self, form):
-        print('form invalid')
-        print(errors)
         return super().form_invalid(form)
 
     def form_valid(self, form):
-        print('form valid')
-        print(form.cleaned_data)
-        print(self.request)
         start_time = form.cleaned_data['start_time']
         end_time = form.cleaned_data['end_time']
         self.object.get_visibility(start_time, end_time, 10)
