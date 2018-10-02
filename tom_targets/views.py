@@ -127,7 +127,7 @@ class TargetObservationPlan(SingleObjectMixin, FormView):
     def form_valid(self, form):
         start_time = form.cleaned_data['start_time']
         end_time = form.cleaned_data['end_time']
-        airmass_limit = form.cleaned_data['airmass_limit']
+        airmass_limit = form.cleaned_data['airmass']
         self.object.get_visibility(start_time, end_time, 10, airmass_limit)
         return super().form_valid(form)
 
