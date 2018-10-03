@@ -3,8 +3,11 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django import forms
 from dateutil.parser import parse
-from crispy_forms.layout import Layout, Div
+from datetime import datetime
+from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from django.core.files.base import ContentFile
+
+import ephem
 
 from tom_observations.facility import GenericObservationForm
 from tom_observations.models import DataProduct, ObservationRecord
@@ -257,6 +260,7 @@ class LCOFacility:
         )
         response.raise_for_status()
         return response.json()['state']
+
 
     @classmethod
     def update_observation_status(clz, observation_id):

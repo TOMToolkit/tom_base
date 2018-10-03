@@ -10,7 +10,7 @@ import ephem
 import plotly
 from plotly import offline, io
 import plotly.graph_objs as go
-from astropy.coordinates import Angle
+from astropy.coordinates import Angle, AltAz
 from astropy import units
 from datetime import datetime, timezone, timedelta
 
@@ -119,11 +119,20 @@ class Target(models.Model):
                     positions[0].append(datetime.fromtimestamp(time))
                     body.compute(observer)
                     alt = Angle(str(body.alt) + ' degrees').degree
+                    altaz = AltAz
                     airmass = calculate_airmass(alt) if alt >= 0 else None
-                    positions[1].append(alt if alt >= 0 else None)
-                    # positions[1].append(airmass) if airmass <= airmass_limit else None
+                    #positions[1].append(alt if alt >= 0 else None)
+                    positions[1].append(airmass)
+                    #positions[1].append(airmass) if not airmass_limit or airmass <= airmass_limit) else None
                 visibility[site] = positions
-        offline.plot([go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()], show_link=False, filename='{}.html'.format(self.name))
+        data = [go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()]
+        layout = go.Layout(
+            yaxis=dict(
+                autorange='reversed'
+            )
+        )
+        fig = go.Figure(data=data, layout=layout)
+        offline.plot(fig, show_link=False, filename='{}.html'.format(self.name))
 
 
 class TargetExtra(models.Model):
