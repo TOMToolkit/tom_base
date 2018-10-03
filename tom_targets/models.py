@@ -121,16 +121,17 @@ class Target(models.Model):
                     alt = Angle(str(body.alt) + ' degrees').degree
                     altaz = AltAz
                     airmass = calculate_airmass(alt) if alt >= 0 else None
-                    #positions[1].append(alt if alt >= 0 else None)
-                    positions[1].append(airmass)
+                    positions[1].append(alt if alt >= 0 else None)
+                    #positions[1].append(airmass)
                     #positions[1].append(airmass) if not airmass_limit or airmass <= airmass_limit) else None
                 visibility[site] = positions
         data = [go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()]
-        layout = go.Layout(
-            yaxis=dict(
-                autorange='reversed'
-            )
-        )
+        # layout = go.Layout(
+        #     yaxis=dict(
+        #         autorange='reversed'
+        #     )
+        # )
+        layout = go.Layout()
         fig = go.Figure(data=data, layout=layout)
         offline.plot(fig, show_link=False, filename='{}.html'.format(self.name))
 
