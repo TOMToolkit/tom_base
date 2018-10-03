@@ -3,9 +3,11 @@ from django.views.generic.edit import FormView, DeleteView, UpdateView, CreateVi
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import update_session_auth_hash
+from django_comments.models import Comment
 from django.utils.decorators import method_decorator
 from django.urls import reverse_lazy, reverse
 from django.contrib import messages
+from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 
 from tom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm
@@ -71,3 +73,14 @@ class UserUpdateView(UpdateView):
         update_session_auth_hash(self.request, self.object)
         messages.success(self.request, 'Profile updated')
         return redirect(self.get_success_url())
+
+
+class CommentDeleteView(DeleteView):
+    model = Comment
+
+    def delete(self, request, *args, **kwargs):
+        if request.user == self.get_object().user or request.user.is_superuser:
+            self.success_url = self.get_object().get_absolute_url()
+            return super().delete(request, *args, **kwargs)
+        else:
+            return HttpResponseForbidden('Not authorized')

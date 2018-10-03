@@ -8,7 +8,6 @@ class SiderealTargetFactory(factory.django.DjangoModelFactory):
         model = Target
 
     identifier = factory.Faker('pystr')
-    designation = factory.Faker('pystr')
     name = factory.Faker('pystr')
     ra = factory.Faker('pyfloat')
     dec = factory.Faker('pyfloat')
@@ -22,7 +21,6 @@ class NonSiderealTargetFactory(factory.django.DjangoModelFactory):
         model = Target
 
     identifier = factory.Faker('pystr')
-    designation = factory.Faker('pystr')
     name = factory.Faker('pystr')
     mean_anomaly = factory.Faker('pyfloat')
     arg_of_perihelion = factory.Faker('pyfloat')

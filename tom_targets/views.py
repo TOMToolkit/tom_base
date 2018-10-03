@@ -14,15 +14,16 @@ from django.core.management import call_command
 from .models import Target
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetVisibilityForm
 from .import_targets import import_targets
+from .filters import TargetFilter
 from tom_observations.facility import get_service_classes
-from tom_observations.models import ObservationRecord
 
 
 class TargetListView(FilterView):
     template_name = 'tom_targets/target_list.html'
     paginate_by = 25
+    strict = False
     model = Target
-    filterset_fields = ['type', 'identifier', 'name', 'designation']
+    filterset_class = TargetFilter
 
 
 class TargetCreate(CreateView):
@@ -31,7 +32,7 @@ class TargetCreate(CreateView):
 
     def get_default_target_type(self):
         try:
-            return settings.DEFAULT_TARGET_TYPE
+            return settings.TARGET_TYPE
         except AttributeError:
             return Target.SIDEREAL
 

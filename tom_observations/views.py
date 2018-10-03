@@ -18,9 +18,10 @@ from tom_targets.models import Target
 
 class ObservationListView(FilterView):
     template_name = 'tom_observations/observation_list.html'
-    paginate_by = 100
+    paginate_by = 25
     model = ObservationRecord
     filterset_fields = ['observation_id', 'target_id', 'facility', 'status']
+    strict = False
 
     def get(self, request, *args, **kwargs):
         update_status = request.GET.get('update_status', False)
@@ -119,7 +120,8 @@ class ObservationRecordDetailView(DetailView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['form'] = AddProductToGroupForm()
-        context['data_products'] = get_service_class(self.object.facility).data_products(self.object)
+        service_class = get_service_class(self.object.facility)
+        context['data_products'] = service_class.data_products(self.object, request=self.request)
         return context
 
 
@@ -127,12 +129,14 @@ class DataProductSaveView(View):
     def post(self, request, *args, **kwargs):
         service_class = get_service_class(request.POST['facility'])
         observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])
-        product_id = request.POST['product_id']
-        if product_id == 'ALL':
-            products = service_class.save_data_products(observation_record)
+        products = request.POST.getlist('products')
+        if products[0] == 'ALL':
+            products = service_class.save_data_products(observation_record, request=self.request)
+            messages.success(request, 'Saved all available data products')
         else:
-            products = service_class.save_data_products(observation_record, product_id)
-        messages.success(request, 'Successfully saved: {0}'.format('\n'.join([str(p) for p in products])))
+            for product in products:
+                products = service_class.save_data_products(observation_record, product, request=self.request)
+                messages.success(request, 'Successfully saved: {0}'.format('\n'.join([str(p) for p in products])))
         return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
 
 
@@ -151,7 +155,13 @@ class DataProductListView(FilterView):
     model = DataProduct
     template_name = 'tom_observations/dataproduct_list.html'
     paginate_by = 25
-    filterset_fields = ['target__identifier', 'observation_record__facility']
+    filterset_fields = ['target__name', 'observation_record__facility']
+    strict = False
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['product_groups'] = DataProductGroup.objects.all()
+        return context
 
 
 class DataProductGroupDetailView(DetailView):

@@ -10,6 +10,9 @@
         on <a href="{{ comment.content_object.get_absolute_url }}">{{ comment.content_object.identifier }}</a>
         {% endif %}
         {{ comment.submit_date|date }}
+        {% if comment.user == user or user.is_superuser %}
+          <a href="{% url 'comment-delete' comment.id %}" class="btn btn-sm btn-danger float-right">✖</a>
+        {% endif %}
       </small>
       <p class="mr-1">{{ comment.comment|truncatewords:30 }}</p>
     </div>

@@ -28,11 +28,18 @@
             {% if observation.status == 'COMPLETED' %}
             <form method="POST" action="{% url 'tom_observations:data-save' observation.id %}">
               {% csrf_token %}
-              <input type="hidden" value="ALL" name="product_id">
+              <input type="hidden" value="ALL" name="products">
               <input type="hidden" value="{{ observation.facility }}" name="facility">
               <input type="submit" value="Save" class="btn btn-primary">
             </form>
             {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            No observations yet. You might want to create an observation from one of
+            <a href="{% url 'tom_targets:list' %}">your saved targets</a>.
           </td>
         </tr>
         {% endfor %}

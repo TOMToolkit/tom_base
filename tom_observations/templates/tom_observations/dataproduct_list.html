@@ -3,33 +3,41 @@
 {% block title %} Data Product List {% endblock %}
 {% block content %}
 <div class="row">
-  <div class="col-md-10">
+  <div class="col-md-9">
     <div class="row">
-      <div class="col-md-6">
+      <div class="col-md-12">
         {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
-      </div>
-      <div class="col-md-6">
-        <span class="float-right">
-          <p> Something here </p>
-        </span>
       </div>
     </div>
     <table class="table">
-      <thead><tr><th>Time</th><th>Target</th><th>Observation</th><th>Data</th></tr></thead>
+      <thead><tr><th>Downloaded</th><th>Filename</th><th>Target</th><th>Observation</th><th>Groups</th><th>Data</th></tr></thead>
       <tbody>
-        {% for product in filter.qs %}
+        {% for product in object_list %}
         <tr>
           <td>{{ product.created }}</td>
-          <td>{{ product.target.identifier }}</td>
-          <td>{{ product.observation_record }}</td>
-          <td><a href="{{ product.data.url }}">Download</a></td>
+          <td>{{ product.data.name }}</th>
+          <td><a href="{% url 'tom_targets:detail' product.target.id %}">{{ product.target.identifier }}</a></td>
+          <td><a href="{% url 'tom_observations:detail' product.observation_record.id %}">{{ product.observation_record }}</a></td>
+          <td>
+            {% for group in product.group.all %}
+            <a href="{% url 'tom_observations:data-group-detail' group.id %}">{{ group.name }}</a>
+            {% endfor %}
+          </td>
+          <td><a href="{{ product.data.url }}" class="btn btn-success">⬇</a></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            No data yet. You might want to save some data products from your
+            <a href="{% url 'tom_observations:list' %}">completed observations</a>.
+          </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
   </div>
-  <div class="col-md-2">
+  <div class="col-md-3">
     <form action="" method="get" class="form">
       {% bootstrap_form filter.form %}
       {% buttons %}
@@ -39,6 +47,14 @@
         <a href="{% url 'tom_observations:data-list' %}" class="btn btn-secondary" title="Reset">Reset</a>
       {% endbuttons %}
     </form>
+    <h5>Data Groups</h5>
+    {% for group in product_groups %}
+    <p>
+      <a href="{% url 'tom_observations:data-group-detail' group.id %}">{{ group.name }}</a><br/>
+      <span class="text-muted">Products: {{ group.dataproduct_set.count }}</span>
+    </p>
+    {% endfor %}
+    <a href="{% url 'tom_observations:data-group-list' %}">Manage groups</a>
   </div>
 </div>
 {% endblock %}

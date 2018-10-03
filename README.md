@@ -6,21 +6,38 @@ a base TOM with much of the functionality provided by the TOM Toolkit
 enabled by default. If you are looking to start a new TOM this is where
 you start.
 
-## Included Functionality
+## Module Descriptions
 
-* Observation Targets ([tom_targets](https://github.com/TOMToolkit/tom_targets/))
-* LCO Observatory Support ([tom_lco](https://github.com/TOMToolkit/tom_lco))
-* SALT Observatory Support ([tom_lco](https://github.com/TOMToolkit/tom_salt))
-* MPC Catalog Access ([tom_mpc](https://github.com/TOMToolkit/tom_mpc))
-* JPL Horizons Catalog Access ([tom_jplhorizons](https://github.com/TOMToolkit/tom_jplhorizons))
-* ExoFOP Catalog Access ([tom_exofop](https://github.com/TOMToolkit/tom_exofop))
+### TOM Targets
+Provides the target storage and import capabilities of the TOM.
+
+### Tom Alerts
+A gerneric module for working with astronomical alert streams. Transforms alerts
+into targets in the TOM Targets module.
+
+Implementations:
+* LCO
+
+### TOM Catalogs
+Provides online catalog searching and the ability to import TOM Targets from
+search results.
+
+Implementations:
+* SIMBAD
+* JPL Horizons
+* NED
+
+### TOM Observations
+A framework for submitting observations and retrieving data products from
+astronomical observatories.
+
+Implementations:
+* LCO
+
+### TOM Common
+Common functions and utilities shared by other modules.
 
 ## Quickstart
 
-    pip install -r requirements.txt
-    ./manage.py migrate
-    ./manage.py runserver
-
-Read the [full documentation](https://tomtoolkit.github.io)
-
-
+Please read the
+[Getting Started guide](https://tomtoolkit.github.io/docs/getting_started)

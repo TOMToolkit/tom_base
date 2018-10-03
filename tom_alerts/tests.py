@@ -73,7 +73,6 @@ class TestBroker:
             identifier=alert['id'],
             name=alert['name'],
             type='SIDEREAL',
-            designation='TEST ALERT',
             ra=alert['ra'],
             dec=alert['dec'],
         )
