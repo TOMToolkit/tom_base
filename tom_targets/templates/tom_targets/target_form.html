@@ -1,5 +1,6 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 %}
+{% block title %}New target{% endblock %}
 {% block content %}
 {% if not object %}
 <a href="{% url 'tom_catalogs:query' %}" class="btn btn-primary float-right">Search online sources</a>

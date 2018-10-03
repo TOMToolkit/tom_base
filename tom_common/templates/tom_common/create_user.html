@@ -1,5 +1,6 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 %}
+{% block title %}Create user{% endblock %}
 {% block content %}
 {% if object %}
 <form action="{% url 'account-update' %}" method="POST">
