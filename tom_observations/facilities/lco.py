@@ -3,14 +3,17 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django import forms
 from dateutil.parser import parse
-from datetime import datetime
+from datetime import datetime, timedelta
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from django.core.files.base import ContentFile
 
 import ephem
+from astropy.coordinates import Angle
+from astropy import units
 
 from tom_observations.facility import GenericObservationForm
 from tom_observations.models import DataProduct, ObservationRecord
+from tom_observations.rise_set import RiseSetTree, RiseSetPair
 from tom_targets.models import Target
 
 try:
@@ -253,6 +256,31 @@ class LCOFacility:
         return SITES
 
     @classmethod
+    def get_observer_for_site(clz, site):
+        observer = ephem.Observer()
+        observer.lon = Angle(str(SITES[site].get('longitude')) + 'd').to_string(unit=units.degree, sep=':')
+        observer.lat = Angle(str(SITES[site].get('latitude')) + 'd').to_string(unit=units.degree, sep=':')
+        observer.elevation = SITES[site].get('elevation')
+        return observer
+
+    # TODO: modify for loop to a while loop that shifts start time to the next_setting of previous iteration
+    @classmethod
+    def get_rise_set(clz, observer, target, start_time, end_time):
+        observer.date = start_time
+        rise_set = RiseSetTree()
+        previous_setting = datetime.strptime(str(ephem.date(observer.previous_setting(target))), '%Y/%m/%d %H:%M:%S')
+        previous_rising = datetime.strptime(str(ephem.date(observer.previous_rising(target))), '%Y/%m/%d %H:%M:%S')
+        if previous_rising > previous_setting:
+            next_setting = datetime.strptime(str(ephem.date(observer.next_setting(target))), '%Y/%m/%d %H:%M:%S')
+            rise_set.add_rise_set_pair(RiseSetPair(previous_rising, next_setting))
+            start_time = datetime.strptime(str(ephem.date(next_setting)), '%Y/%m/%d %H:%M:%S') + timedelta(seconds=1)
+        for time in range(int(round(start_time.timestamp())), int(round(end_time.timestamp())), 60*60*24):
+            observer.date = datetime.fromtimestamp(time)
+            next_rising = datetime.strptime(str(ephem.date(observer.next_rising(target))), '%Y/%m/%d %H:%M:%S')
+            next_setting = datetime.strptime(str(ephem.date(observer.next_setting(target))), '%Y/%m/%d %H:%M:%S')
+        return rise_set
+
+    @classmethod
     def get_observation_status(clz, observation_id):
         response = requests.get(
             PORTAL_URL + '/api/requests/{0}'.format(observation_id),
@@ -260,7 +288,6 @@ class LCOFacility:
         )
         response.raise_for_status()
         return response.json()['state']
-
 
     @classmethod
     def update_observation_status(clz, observation_id):

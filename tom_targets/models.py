@@ -28,8 +28,8 @@ SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
 NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'mean_anomaly', 'arg_of_perihelion',
     'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
-    'ephemeris_period', 'ephemeris_period_err', 'ephemeris_epoch',
-    'ephemeris_epoch_err'
+    'eccentricity', 'ephemeris_period', 'ephemeris_period_err',
+    'ephemeris_epoch', 'ephemeris_epoch_err'
 ]
 
 REQUIRED_SIDEREAL_FIELDS = ['ra', 'dec']
@@ -87,10 +87,9 @@ class Target(models.Model):
 
         return model_to_dict(self, fields=fields_for_type)
 
-    def get_object_instance_for_type(self):
+    def get_pyephem_instance_for_type(self):
         if self.type == self.SIDEREAL:
             # TODO: ensure support for sexagesimal coordinates
-            #return FixedTarget(coord=SkyCoord(self.ra, self.dec, unit='deg'))
             return ephem.FixedBody(_ra=self.ra, _dec=self.dec, _epoch=self.epoch)
         elif self.type == self.NON_SIDEREAL:
             return ephem.EllipticalBody(_inc=self.inclination,
@@ -98,23 +97,25 @@ class Target(models.Model):
                                 _M=self.mean_anomaly,
                                 _epoch=self.epoch,
                                 _e=self.eccentricity)
+        else:
+            raise Exception("Object type is unsupported for visibility calculations")
 
-    # TODO: add weather support
     # TODO: ensure all fields have defaults to avoid exceptions--parallax may not be necessary
     # TODO: verify non-sidereal functionality
-    # TODO: only plot airmass when sunup
-    def get_visibility(self, start_time, end_time, interval, airmass_limit=None):
+    def get_visibility(self, start_time, end_time, interval, airmass_limit=10):
         visibility = {}
-        body = self.get_object_instance_for_type()
+        body = self.get_pyephem_instance_for_type()
+        sun = ephem.Sun()
         for observing_facility in facility.get_service_classes():
-            sites = facility.get_service_class(observing_facility).get_observing_sites()
+            observing_facility_class = facility.get_service_class(observing_facility)
+            sites = observing_facility_class.get_observing_sites()
             for site, site_details in sites.items():
                 positions = [[],[]]
-                observer = ephem.Observer()
-                observer.lon = Angle(str(site_details.get('longitude')) + 'd').to_string(unit=units.degree, sep=':')
-                observer.lat = Angle(str(site_details.get('latitude')) + 'd').to_string(unit=units.degree, sep=':')
-                observer.elevation = site_details.get('elevation')
-                for time in range(int(round(start_time.timestamp())), int(round(end_time.timestamp())), interval*20):
+                observer = observing_facility_class.get_observer_for_site(site)
+                rise_sets = observing_facility_class.get_rise_set(observer, sun, start_time, end_time)
+                for time in range(math.floor(start_time.timestamp()), math.floor(end_time.timestamp()), interval*20):
+                    rise_set_for_sun = rise_sets.get_last_rise(datetime.fromtimestamp(time))
+                    sunup = not rise_set_for_sun or datetime.fromtimestamp(time) < rise_set_for_sun.set
                     observer.date = datetime.fromtimestamp(time)
                     positions[0].append(datetime.fromtimestamp(time))
                     body.compute(observer)
@@ -122,7 +123,8 @@ class Target(models.Model):
                     az = Angle(str(body.az) + ' degrees')
                     altaz = AltAz(alt=alt.to_string(unit=units.rad), az=az.to_string(unit=units.rad))
                     airmass = altaz.secz
-                    positions[1].append(airmass.value if airmass.value > 1 and airmass.value <= 5 and (airmass_limit is None or airmass.value <= airmass_limit) else None)
+                    # positions[1].append(alt.value)
+                    positions[1].append(airmass.value if (airmass.value > 1 and airmass.value <= airmass_limit) and not sunup else None)
                 visibility[site] = positions
         data = [go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()]
         return offline.plot(go.Figure(data=data), output_type='div', show_link=False)
