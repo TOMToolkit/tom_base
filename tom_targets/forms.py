@@ -37,7 +37,7 @@ class NonSiderealTargetCreateForm(TargetForm):
 class TargetVisibilityForm(Form):
     start_time = forms.DateTimeField(required=True, label='Start Time', widget=forms.TextInput(attrs={'type': 'date'}))
     end_time = forms.DateTimeField(required=True, label='End Time', widget=forms.TextInput(attrs={'type': 'date'}))
-    airmass = forms.IntegerField(required=False, label='Maximum Airmass')
+    airmass = forms.DecimalField(required=False, label='Maximum Airmass')
 
 
 TargetExtraFormset = inlineformset_factory(Target, TargetExtra, fields=('key', 'value'))

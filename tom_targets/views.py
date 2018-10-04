@@ -7,6 +7,7 @@ from django.views.generic import TemplateView, View
 from django_filters.views import FilterView
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import redirect
+from django.http import HttpResponse
 from django.conf import settings
 from django.contrib import messages
 from django.core.management import call_command
@@ -129,8 +130,8 @@ class TargetObservationPlan(SingleObjectMixin, FormView):
         start_time = form.cleaned_data['start_time']
         end_time = form.cleaned_data['end_time']
         airmass_limit = form.cleaned_data['airmass']
-        self.object.get_visibility(start_time, end_time, 10, airmass_limit)
-        return super().form_valid(form)
+        visibility_graph = self.object.get_visibility(start_time, end_time, 10, airmass_limit)
+        return HttpResponse(visibility_graph)
 
 
 class TargetDetail(View):

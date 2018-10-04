@@ -118,22 +118,14 @@ class Target(models.Model):
                     observer.date = datetime.fromtimestamp(time)
                     positions[0].append(datetime.fromtimestamp(time))
                     body.compute(observer)
-                    alt = Angle(str(body.alt) + ' degrees').degree
-                    altaz = AltAz
-                    airmass = calculate_airmass(alt) if alt >= 0 else None
-                    positions[1].append(alt if alt >= 0 else None)
-                    #positions[1].append(airmass)
-                    #positions[1].append(airmass) if not airmass_limit or airmass <= airmass_limit) else None
+                    alt = Angle(str(body.alt) + ' degrees')
+                    az = Angle(str(body.az) + ' degrees')
+                    altaz = AltAz(alt=alt.to_string(unit=units.rad), az=az.to_string(unit=units.rad))
+                    airmass = altaz.secz
+                    positions[1].append(airmass.value if airmass.value > 1 and airmass.value <= 5 and (airmass_limit is None or airmass.value <= airmass_limit) else None)
+                    # positions[1].append(az.value)
                 visibility[site] = positions
-        data = [go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()]
-        # layout = go.Layout(
-        #     yaxis=dict(
-        #         autorange='reversed'
-        #     )
-        # )
-        layout = go.Layout()
-        fig = go.Figure(data=data, layout=layout)
-        offline.plot(fig, show_link=False, filename='{}.html'.format(self.name))
+        return offline.plot([go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()])
 
 
 class TargetExtra(models.Model):
