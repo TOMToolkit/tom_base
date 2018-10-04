@@ -11,6 +11,7 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.contrib import messages
 from django.core.management import call_command
+from dateutil.parser import parse
 
 from .models import Target
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetVisibilityForm
@@ -90,14 +91,22 @@ class TargetDelete(DeleteView):
     model = Target
 
 
-class TargetDisplay(DetailView):
+class TargetDetail(DetailView):
     model = Target
-    fields = '__all__'
+
+    def get_airmass_plot(self):
+        start_time = parse(self.request.GET['start_time'])
+        end_time = parse(self.request.GET['end_time'])
+        airmass_limit = float(self.request.GET['airmass'])
+        visibility_graph = self.object.get_visibility(start_time, end_time, 10, airmass_limit)
+        return visibility_graph
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['facilities'] = get_service_classes()
         context['form'] = TargetVisibilityForm()
+        if all(self.request.GET.get(x) for x in ['start_time', 'end_time', 'airmass']):
+            context['visibility_graph'] = self.get_airmass_plot()
         return context
 
     def get(self, request, *args, **kwargs):
@@ -109,39 +118,6 @@ class TargetDisplay(DetailView):
             messages.info(request, out.getvalue())
             return redirect(reverse('tom_targets:detail', args=(target_id,)))
         return super().get(request, *args, **kwargs)
-
-
-class TargetObservationPlan(SingleObjectMixin, FormView):
-    template_name = 'tom_targets/target_detail.html'
-    form_class = TargetVisibilityForm
-    model = Target
-
-    def get_success_url(self):
-        return reverse('tom_targets:detail', kwargs={'pk': self.object.pk})
-
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        return super().post(request, *args, **kwargs)
-
-    def form_invalid(self, form):
-        return super().form_invalid(form)
-
-    def form_valid(self, form):
-        start_time = form.cleaned_data['start_time']
-        end_time = form.cleaned_data['end_time']
-        airmass_limit = form.cleaned_data['airmass']
-        visibility_graph = self.object.get_visibility(start_time, end_time, 10, airmass_limit)
-        return HttpResponse(visibility_graph)
-
-
-class TargetDetail(View):
-    def get(self, request, *args, **kwargs):
-        view = TargetDisplay.as_view()
-        return view(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        view = TargetObservationPlan.as_view()
-        return view(request, *args, **kwargs)
 
 
 class TargetImport(TemplateView):
