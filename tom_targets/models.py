@@ -125,7 +125,7 @@ class Target(models.Model):
                     positions[1].append(airmass.value if airmass.value > 1 and airmass.value <= 5 and (airmass_limit is None or airmass.value <= airmass_limit) else None)
                 visibility[site] = positions
         data = [go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()]
-        return offline.plot(go.Figure(data=data), output_type='div', auto_open=True, show_link=False)
+        return offline.plot(go.Figure(data=data), output_type='div', show_link=False)
 
 
 class TargetExtra(models.Model):
