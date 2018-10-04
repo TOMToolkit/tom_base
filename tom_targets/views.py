@@ -97,7 +97,10 @@ class TargetDetail(DetailView):
     def get_airmass_plot(self):
         start_time = parse(self.request.GET['start_time'])
         end_time = parse(self.request.GET['end_time'])
-        airmass_limit = float(self.request.GET['airmass'])
+        if self.request.GET.get('airmass'):
+            airmass_limit = float(self.request.GET['airmass'])
+        else:
+            airmass_limit = None
         visibility_graph = self.object.get_visibility(start_time, end_time, 10, airmass_limit)
         return visibility_graph
 
@@ -105,7 +108,7 @@ class TargetDetail(DetailView):
         context = super().get_context_data(*args, **kwargs)
         context['facilities'] = get_service_classes()
         context['form'] = TargetVisibilityForm()
-        if all(self.request.GET.get(x) for x in ['start_time', 'end_time', 'airmass']):
+        if all(self.request.GET.get(x) for x in ['start_time', 'end_time']):
             context['visibility_graph'] = self.get_airmass_plot()
         return context
 
