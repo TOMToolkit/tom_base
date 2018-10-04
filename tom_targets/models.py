@@ -123,9 +123,9 @@ class Target(models.Model):
                     altaz = AltAz(alt=alt.to_string(unit=units.rad), az=az.to_string(unit=units.rad))
                     airmass = altaz.secz
                     positions[1].append(airmass.value if airmass.value > 1 and airmass.value <= 5 and (airmass_limit is None or airmass.value <= airmass_limit) else None)
-                    # positions[1].append(az.value)
                 visibility[site] = positions
-        return offline.plot([go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()])
+        data = [go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()]
+        return offline.plot(go.Figure(data=data), output_type='div', auto_open=True, show_link=False)
 
 
 class TargetExtra(models.Model):
