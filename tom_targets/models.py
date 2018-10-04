@@ -15,7 +15,7 @@ from astropy import units
 from datetime import datetime, timezone, timedelta
 
 from tom_observations import facility
-from .utils import calculate_airmass, calculate_zenith
+from tom_observations.utils import get_rise_set
 
 
 GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'type']
@@ -112,7 +112,7 @@ class Target(models.Model):
             for site, site_details in sites.items():
                 positions = [[],[]]
                 observer = observing_facility_class.get_observer_for_site(site)
-                rise_sets = observing_facility_class.get_rise_set(observer, sun, start_time, end_time)
+                rise_sets = get_rise_set(observer, sun, start_time, end_time)
                 for time in range(math.floor(start_time.timestamp()), math.floor(end_time.timestamp()), interval*20):
                     rise_set_for_sun = rise_sets.get_last_rise(datetime.fromtimestamp(time))
                     sunup = not rise_set_for_sun or datetime.fromtimestamp(time) < rise_set_for_sun.set

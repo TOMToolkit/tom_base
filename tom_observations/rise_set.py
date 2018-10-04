@@ -5,7 +5,7 @@ class RiseSetPair:
         self.rise = rise_val
         self.set = set_val
 
-# Binary search tree to store rise set
+# Binary search tree to store rise set values
 class RiseSetTree:
     def __init__(self):
         self.root = None
