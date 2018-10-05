@@ -8,8 +8,6 @@ from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from django.core.files.base import ContentFile
 
 import ephem
-from astropy.coordinates import Angle
-from astropy import units
 
 from tom_observations.facility import GenericObservationForm
 from tom_observations.models import DataProduct, ObservationRecord
@@ -257,8 +255,8 @@ class LCOFacility:
     @classmethod
     def get_observer_for_site(clz, site):
         observer = ephem.Observer()
-        observer.lon = Angle(str(SITES[site].get('longitude')) + 'd').to_string(unit=units.degree, sep=':')
-        observer.lat = Angle(str(SITES[site].get('latitude')) + 'd').to_string(unit=units.degree, sep=':')
+        observer.lon = ephem.degrees(str(SITES[site].get('longitude')))
+        observer.lat = ephem.degrees(str(SITES[site].get('latitude')))
         observer.elevation = SITES[site].get('elevation')
         return observer
 

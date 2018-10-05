@@ -89,14 +89,22 @@ class Target(models.Model):
 
     def get_pyephem_instance_for_type(self):
         if self.type == self.SIDEREAL:
-            # TODO: ensure support for sexagesimal coordinates
-            return ephem.FixedBody(_ra=self.ra, _dec=self.dec, _epoch=self.epoch)
-        elif self.type == self.NON_SIDEREAL:
-            return ephem.EllipticalBody(_inc=self.inclination,
-                                _0m=self.lng_asc_node,
-                                _M=self.mean_anomaly,
-                                _epoch=self.epoch,
-                                _e=self.eccentricity)
+            # TODO: add support for sexagesimal coordinates
+            ra = Angle(str(self.ra) + 'd').to_string(unit=units.hourangle, sep=':')
+            dec = Angle(str(self.dec) + 'd').to_string(unit=units.degree, sep=':')
+            body = ephem.FixedBody()
+            body._ra = ra
+            body._dec = dec
+            body._epoch = self.epoch
+            return body
+        # elif self.type == self.NON_SIDEREAL:
+        #     body = ephem.EllipticalBody()
+        #     body._inc = self.inclination
+        #     body._Om = self.lng_asc_node
+        #     body._M = self.mean_anomaly
+        #     body._epoch = self.ephemeris_epoch
+        #     body._e = self.eccentricity
+        #     return body
         else:
             raise Exception("Object type is unsupported for visibility calculations")
 
@@ -113,17 +121,16 @@ class Target(models.Model):
                 positions = [[],[]]
                 observer = observing_facility_class.get_observer_for_site(site)
                 rise_sets = get_rise_set(observer, sun, start_time, end_time)
-                for time in range(math.floor(start_time.timestamp()), math.floor(end_time.timestamp()), interval*20):
+                for time in range(math.floor(start_time.timestamp()), math.floor(end_time.timestamp()), interval*60):
                     rise_set_for_sun = rise_sets.get_last_rise(datetime.fromtimestamp(time))
-                    sunup = not rise_set_for_sun or datetime.fromtimestamp(time) < rise_set_for_sun.set
+                    sunup = datetime.fromtimestamp(time) < rise_set_for_sun.set if rise_set_for_sun else False
                     observer.date = datetime.fromtimestamp(time)
-                    positions[0].append(datetime.fromtimestamp(time))
                     body.compute(observer)
                     alt = Angle(str(body.alt) + ' degrees')
                     az = Angle(str(body.az) + ' degrees')
                     altaz = AltAz(alt=alt.to_string(unit=units.rad), az=az.to_string(unit=units.rad))
                     airmass = altaz.secz
-                    # positions[1].append(alt.value)
+                    positions[0].append(datetime.fromtimestamp(time))
                     positions[1].append(airmass.value if (airmass.value > 1 and airmass.value <= airmass_limit) and not sunup else None)
                 visibility[site] = positions
         data = [go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()]
