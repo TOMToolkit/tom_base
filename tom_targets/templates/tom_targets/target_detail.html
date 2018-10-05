@@ -44,10 +44,12 @@
     {% comments_enabled as comments_are_enabled %}
     <hr/>
     <h5>Comments</h5>
-      {% if user.is_authenticated and comments_are_enabled %}
+      {% if comments_are_enabled %}
         {% render_comment_list for object %}
         {% url 'targets:detail' object.id as next %}
-        {% render_comment_form for object %}
+        {% if user.is_authenticated %}
+          {% render_comment_form for object %}
+        {% endif %}
       {% endif %}
   </div>
 </div>

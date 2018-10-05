@@ -1,5 +1,5 @@
 from io import StringIO
-
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
 from django.views.generic import TemplateView
@@ -25,7 +25,7 @@ class TargetListView(FilterView):
     filterset_class = TargetFilter
 
 
-class TargetCreate(CreateView):
+class TargetCreate(LoginRequiredMixin, CreateView):
     model = Target
     fields = '__all__'
 
@@ -66,7 +66,7 @@ class TargetCreate(CreateView):
         return redirect(self.get_success_url())
 
 
-class TargetUpdate(UpdateView):
+class TargetUpdate(LoginRequiredMixin, UpdateView):
     model = Target
     fields = '__all__'
 
@@ -83,7 +83,7 @@ class TargetUpdate(UpdateView):
         return redirect(self.get_success_url())
 
 
-class TargetDelete(DeleteView):
+class TargetDelete(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('targets:list')
     model = Target
 
@@ -97,6 +97,8 @@ class TargetDetail(DetailView):
     def get(self, request, *args, **kwargs):
         update_status = request.GET.get('update_status', False)
         if update_status:
+            if not request.user.is_authenticated:
+                return redirect(reverse('login'))
             target_id = kwargs.get('pk', None)
             out = StringIO()
             call_command('updatestatus', target_id=target_id, stdout=out)
@@ -108,7 +110,7 @@ class TargetDetail(DetailView):
     fields = '__all__'
 
 
-class TargetImport(TemplateView):
+class TargetImport(LoginRequiredMixin, TemplateView):
     template_name = 'tom_targets/target_import.html'
 
     def post(self, request):
