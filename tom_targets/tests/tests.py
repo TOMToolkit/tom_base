@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from django.conf import settings
+from django.contrib.auth.models import User
 
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory
 from tom_targets.models import Target
@@ -8,6 +9,8 @@ from tom_targets.models import Target
 
 class TestTargetDetail(TestCase):
     def setUp(self):
+        user = User.objects.create(username='testuser')
+        self.client.force_login(user)
         self.st = SiderealTargetFactory.create()
         self.nst = NonSiderealTargetFactory.create()
 
