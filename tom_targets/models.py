@@ -1,8 +1,22 @@
+import math
+
 from django.db import models
 from django import forms
 from django.urls import reverse
 from django.conf import settings
 from django.forms.models import model_to_dict
+
+import ephem
+import plotly
+from plotly import offline, io
+import plotly.graph_objs as go
+from astropy.coordinates import Angle, AltAz
+from astropy import units
+from astropy.time import Time
+from datetime import datetime, timezone, timedelta
+
+from tom_observations import facility
+from tom_observations.utils import get_rise_set
 
 
 GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'type']
@@ -15,12 +29,16 @@ SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
 NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'mean_anomaly', 'arg_of_perihelion',
     'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
-    'ephemeris_period', 'ephemeris_period_err', 'ephemeris_epoch',
-    'ephemeris_epoch_err'
+    'eccentricity', 'ephemeris_period', 'ephemeris_period_err',
+    'ephemeris_epoch', 'ephemeris_epoch_err'
 ]
 
 REQUIRED_SIDEREAL_FIELDS = ['ra', 'dec']
 REQUIRED_NON_SIDEREAL_FIELDS = NON_SIDEREAL_FIELDS
+
+DEFAULT_VALUES = {
+    'epoch': '2000'
+}
 
 
 class Target(models.Model):
@@ -36,6 +54,7 @@ class Target(models.Model):
     ra = models.FloatField(null=True, blank=True, verbose_name='Right Ascension', help_text='Right Ascension, in degrees.')
     dec = models.FloatField(null=True, blank=True, verbose_name='Declination', help_text='Declination, in degrees.')
     epoch = models.FloatField(null=True, blank=True, verbose_name='Epoch of Elements', help_text='Julian Years. Max 2100.')
+    parallax = models.FloatField(null=True, blank=True, verbose_name='Parallax', help_text='Parallax, in milliarcseconds.')
     pm_ra = models.FloatField(null=True, blank=True, verbose_name='Proper Motion (RA)', help_text='Proper Motion: RA. Milliarsec/year.')
     pm_dec = models.FloatField(null=True, blank=True, verbose_name='Proper Motion (Declination)', help_text='Proper Motion: Dec. Milliarsec/year.')
     galactic_lng = models.FloatField(null=True, blank=True, verbose_name='Galactic Longitude', help_text='Galactic Longitude in degrees.')
@@ -44,6 +63,7 @@ class Target(models.Model):
     distance_err = models.FloatField(null=True, blank=True, verbose_name='Distance Error', help_text='Parsecs.')
     mean_anomaly = models.FloatField(null=True, blank=True, verbose_name='Mean Anomaly', help_text='Angle in degrees.')
     arg_of_perihelion = models.FloatField(null=True, blank=True, verbose_name='Argument of Perihelion', help_text='Argument of Perhihelion. J2000. Degrees.')
+    eccentricity = models.FloatField(null=True, blank=True, verbose_name='Eccentricity', help_text='Eccentricity')
     lng_asc_node = models.FloatField(null=True, blank=True, verbose_name='Longitude of Ascending Node', help_text='Longitude of Ascending Node. J2000. Degrees.')
     inclination = models.FloatField(null=True, blank=True, verbose_name='Inclination to the ecliptic', help_text='Inclination to the ecliptic. J2000. Degrees.')
     mean_daily_motion = models.FloatField(null=True, blank=True, verbose_name='Mean Daily Motion', help_text='Degrees per day.')
@@ -71,6 +91,61 @@ class Target(models.Model):
             fields_for_type = GLOBAL_TARGET_FIELDS
 
         return model_to_dict(self, fields=fields_for_type)
+
+    def get_pyephem_instance_for_type(self):
+        if self.type == self.SIDEREAL:
+            body = ephem.FixedBody()
+            body._ra = Angle(str(self.ra) + 'd').to_string(unit=units.hourangle, sep=':')
+            body._dec = Angle(str(self.dec) + 'd').to_string(unit=units.degree, sep=':')
+            body._epoch = self.epoch if self.epoch else ephem.Date(DEFAULT_VALUES['epoch'])
+            return body
+        elif self.type == self.NON_SIDEREAL:
+            body = ephem.EllipticalBody()
+            body._inc = ephem.degrees(self.inclination) if self.inclination else 0
+            body._Om = self.lng_asc_node if self.lng_asc_node else 0
+            body._om = self.arg_of_perihelion if self.arg_of_perihelion else 0
+            body._a = self.semimajor_axis if self.semimajor_axis else 0
+            body._M = self.mean_anomaly if self.mean_anomaly else 0
+            if self.ephemeris_epoch:
+                epoch_M = Time(self.ephemeris_epoch, format='jd')
+                epoch_M.format = 'datetime'
+                body._epoch_M = ephem.Date(epoch_M.value)
+            else:
+                body._epoch_M = ephem.Date(DEFAULT_VALUES['epoch'])
+            body._epoch = self.epoch if self.epoch else ephem.Date(DEFAULT_VALUES['epoch'])
+            body._e = self.eccentricity if self.eccentricity else 0
+            return body
+        else:
+            raise Exception("Object type is unsupported for visibility calculations")
+
+    def get_visibility(self, start_time, end_time, interval, airmass_limit=10):
+        if not airmass_limit:
+            airmass_limit = 10
+        visibility = {}
+        body = self.get_pyephem_instance_for_type()
+        sun = ephem.Sun()
+        for observing_facility in facility.get_service_classes():
+            observing_facility_class = facility.get_service_class(observing_facility)
+            sites = observing_facility_class.get_observing_sites()
+            for site, site_details in sites.items():
+                positions = [[],[]]
+                observer = observing_facility_class.get_observer_for_site(site)
+                rise_sets = get_rise_set(observer, sun, start_time, end_time)
+                for time in range(math.floor(start_time.timestamp()), math.floor(end_time.timestamp()), interval*60):
+                    rise_set_for_sun = rise_sets.get_last_rise(datetime.fromtimestamp(time))
+                    sunup = datetime.fromtimestamp(time) < rise_set_for_sun.set if rise_set_for_sun else False
+                    observer.date = datetime.fromtimestamp(time)
+                    body.compute(observer)
+                    alt = Angle(str(body.alt) + ' degrees')
+                    az = Angle(str(body.az) + ' degrees')
+                    altaz = AltAz(alt=alt.to_string(unit=units.rad), az=az.to_string(unit=units.rad))
+                    airmass = altaz.secz
+                    positions[0].append(datetime.fromtimestamp(time))
+                    positions[1].append(airmass.value if (airmass.value > 1 and airmass.value <= airmass_limit) and not sunup else None)
+                visibility['({0}) {1}'.format(observing_facility, site)] = positions
+        data = [go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()]
+        layout = go.Layout(yaxis = dict(autorange='reversed'))
+        return offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
 
 
 class TargetExtra(models.Model):

@@ -10,5 +10,5 @@ urlpatterns = [
     path('import/', TargetImport.as_view(), name='import'),
     path('<pk>/update/', TargetUpdate.as_view(), name='update'),
     path('<pk>/delete/', TargetDelete.as_view(), name='delete'),
-    path('<pk>/', TargetDetail.as_view(), name='detail'),
+    path('<pk>/', TargetDetail.as_view(), name='detail')
 ]

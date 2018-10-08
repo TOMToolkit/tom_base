@@ -34,7 +34,7 @@ class Command(BaseCommand):
             records_for_facility = ObservationRecord.objects.exclude(status__in=clazz.get_terminal_observing_states())
             for record in records_for_facility:
                 try:
-                    clazz.update_observing_status(record.observation_id)
+                    clazz.update_observation_status(record.observation_id)
                 except Exception as e:
                     failed_records[facility_name].append((record.observation_id, str(e)))
         success = True

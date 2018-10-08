@@ -37,6 +37,9 @@ setup(
         'python-dateutil',
         'requests',
         'astroquery',
+        'astropy',
+        'plotly',
+        'pyephem'
     ],
     extras_require={
         'test': ['factory_boy']
