@@ -5,7 +5,6 @@ from tom_observations.rise_set import RiseSetTree, RiseSetPair
 
 ephem_format = '%Y/%m/%d %H:%M:%S'
 
-# TODO: modify loop to not add rise/set that are out of range
 def get_rise_set(observer, target, start_time, end_time):
     observer.date = start_time
     rise_set = RiseSetTree()

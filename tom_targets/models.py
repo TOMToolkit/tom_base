@@ -12,6 +12,7 @@ from plotly import offline, io
 import plotly.graph_objs as go
 from astropy.coordinates import Angle, AltAz
 from astropy import units
+from astropy.time import Time
 from datetime import datetime, timezone, timedelta
 
 from tom_observations import facility
@@ -34,6 +35,10 @@ NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
 
 REQUIRED_SIDEREAL_FIELDS = ['ra', 'dec']
 REQUIRED_NON_SIDEREAL_FIELDS = NON_SIDEREAL_FIELDS
+
+DEFAULT_VALUES = {
+    'epoch': '2000'
+}
 
 
 class Target(models.Model):
@@ -89,28 +94,33 @@ class Target(models.Model):
 
     def get_pyephem_instance_for_type(self):
         if self.type == self.SIDEREAL:
-            # TODO: add support for sexagesimal coordinates
-            ra = Angle(str(self.ra) + 'd').to_string(unit=units.hourangle, sep=':')
-            dec = Angle(str(self.dec) + 'd').to_string(unit=units.degree, sep=':')
             body = ephem.FixedBody()
-            body._ra = ra
-            body._dec = dec
-            body._epoch = self.epoch
+            body._ra = Angle(str(self.ra) + 'd').to_string(unit=units.hourangle, sep=':')
+            body._dec = Angle(str(self.dec) + 'd').to_string(unit=units.degree, sep=':')
+            body._epoch = self.epoch if self.epoch else ephem.Date(DEFAULT_VALUES['epoch'])
             return body
-        # elif self.type == self.NON_SIDEREAL:
-        #     body = ephem.EllipticalBody()
-        #     body._inc = self.inclination
-        #     body._Om = self.lng_asc_node
-        #     body._M = self.mean_anomaly
-        #     body._epoch = self.ephemeris_epoch
-        #     body._e = self.eccentricity
-        #     return body
+        elif self.type == self.NON_SIDEREAL:
+            body = ephem.EllipticalBody()
+            body._inc = ephem.degrees(self.inclination) if self.inclination else 0
+            body._Om = self.lng_asc_node if self.lng_asc_node else 0
+            body._om = self.arg_of_perihelion if self.arg_of_perihelion else 0
+            body._a = self.semimajor_axis if self.semimajor_axis else 0
+            body._M = self.mean_anomaly if self.mean_anomaly else 0
+            if self.ephemeris_epoch:
+                epoch_M = Time(self.ephemeris_epoch, format='jd')
+                epoch_M.format = 'datetime'
+                body._epoch_M = ephem.Date(epoch_M.value)
+            else:
+                body._epoch_M = ephem.Date(DEFAULT_VALUES['epoch'])
+            body._epoch = self.epoch if self.epoch else ephem.Date(DEFAULT_VALUES['epoch'])
+            body._e = self.eccentricity if self.eccentricity else 0
+            return body
         else:
             raise Exception("Object type is unsupported for visibility calculations")
 
-    # TODO: ensure all fields have defaults to avoid exceptions--parallax may not be necessary
-    # TODO: verify non-sidereal functionality
     def get_visibility(self, start_time, end_time, interval, airmass_limit=10):
+        if not airmass_limit:
+            airmass_limit = 10
         visibility = {}
         body = self.get_pyephem_instance_for_type()
         sun = ephem.Sun()
@@ -132,9 +142,10 @@ class Target(models.Model):
                     airmass = altaz.secz
                     positions[0].append(datetime.fromtimestamp(time))
                     positions[1].append(airmass.value if (airmass.value > 1 and airmass.value <= airmass_limit) and not sunup else None)
-                visibility[site] = positions
+                visibility['({0}) {1}'.format(observing_facility, site)] = positions
         data = [go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()]
-        return offline.plot(go.Figure(data=data), output_type='div', show_link=False)
+        layout = go.Layout(yaxis = dict(autorange='reversed'))
+        return offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
 
 
 class TargetExtra(models.Model):
