@@ -2,10 +2,11 @@ from django.views.generic.list import ListView
 from django.views.generic.edit import FormView, DeleteView, UpdateView, CreateView
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import update_session_auth_hash
 from django_comments.models import Comment
 from django.utils.decorators import method_decorator
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
@@ -17,7 +18,7 @@ class UserListView(ListView):
     model = User
 
 
-class UserDeleteView(DeleteView):
+class UserDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('user-list')
     model = User
 
@@ -26,7 +27,7 @@ class UserDeleteView(DeleteView):
         return super().dispatch(*args, **kwargs)
 
 
-class UserPasswordChangeView(FormView):
+class UserPasswordChangeView(LoginRequiredMixin, FormView):
     template_name = 'tom_common/change_user_password.html'
     success_url = reverse_lazy('user-list')
     form_class = ChangeUserPasswordForm
@@ -43,7 +44,7 @@ class UserPasswordChangeView(FormView):
         return super().form_valid(form)
 
 
-class UserCreateView(CreateView):
+class UserCreateView(LoginRequiredMixin, CreateView):
     template_name = 'tom_common/create_user.html'
     success_url = reverse_lazy('user-list')
     form_class = CustomUserCreationForm
@@ -53,7 +54,7 @@ class UserCreateView(CreateView):
         return super().dispatch(*args, **kwargs)
 
 
-class UserUpdateView(UpdateView):
+class UserUpdateView(LoginRequiredMixin, UpdateView):
     model = User
     template_name = 'tom_common/create_user.html'
     form_class = CustomUserCreationForm
@@ -75,7 +76,7 @@ class UserUpdateView(UpdateView):
         return redirect(self.get_success_url())
 
 
-class CommentDeleteView(DeleteView):
+class CommentDeleteView(LoginRequiredMixin, DeleteView):
     model = Comment
 
     def delete(self, request, *args, **kwargs):

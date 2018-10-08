@@ -1,5 +1,5 @@
 from io import StringIO
-
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView, DeleteView, CreateView
 from django.views.generic.list import ListView
 from django.views.generic import View
@@ -26,6 +26,8 @@ class ObservationListView(FilterView):
     def get(self, request, *args, **kwargs):
         update_status = request.GET.get('update_status', False)
         if update_status:
+            if not request.user.is_authenticated:
+                return redirect(reverse('login'))
             out = StringIO()
             call_command('updatestatus', stdout=out)
             messages.info(request, out.getvalue())
@@ -33,7 +35,7 @@ class ObservationListView(FilterView):
         return super().get(request, *args, **kwargs)
 
 
-class ObservationCreateView(FormView):
+class ObservationCreateView(LoginRequiredMixin, FormView):
     template_name = 'tom_observations/observation_form.html'
 
     def get_target_id(self):
@@ -84,7 +86,7 @@ class ObservationCreateView(FormView):
         return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
 
 
-class ManualObservationCreateView(FormView):
+class ManualObservationCreateView(LoginRequiredMixin, FormView):
     template_name = 'tom_observations/observation_form_manual.html'
     form_class = ManualObservationForm
 
@@ -125,7 +127,7 @@ class ObservationRecordDetailView(DetailView):
         return context
 
 
-class DataProductSaveView(View):
+class DataProductSaveView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         service_class = get_service_class(request.POST['facility'])
         observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])
@@ -140,7 +142,7 @@ class DataProductSaveView(View):
         return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
 
 
-class DataProductDeleteView(DeleteView):
+class DataProductDeleteView(LoginRequiredMixin, DeleteView):
     model = DataProduct
 
     def get_success_url(self):
@@ -179,18 +181,18 @@ class DataProductGroupListView(ListView):
     model = DataProductGroup
 
 
-class DataProductGroupCreateView(CreateView):
+class DataProductGroupCreateView(LoginRequiredMixin, CreateView):
     model = DataProductGroup
     success_url = reverse_lazy('tom_observations:data-group-list')
     fields = ['name']
 
 
-class DataProductGroupDeleteView(DeleteView):
+class DataProductGroupDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('tom_observations:data-group-list')
     model = DataProductGroup
 
 
-class GroupDataView(FormView):
+class GroupDataView(LoginRequiredMixin, FormView):
     form_class = AddProductToGroupForm
     template_name = 'tom_observations/add_product_to_group.html'
 
