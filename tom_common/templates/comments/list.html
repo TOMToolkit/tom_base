@@ -17,5 +17,7 @@
       <p class="mr-1">{{ comment.comment|truncatewords:30 }}</p>
     </div>
   </li>
+  {% empty %}
+  <p>No comments yet.</p>
   {% endfor %}
 </ul>
