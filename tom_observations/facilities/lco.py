@@ -279,6 +279,20 @@ class LCOFacility:
             raise Exception('No record exists for that observation id')
 
     @classmethod
+    def update_all_observation_statuses(clz, target=None):
+        failed_records = []
+        records = ObservationRecord.objects.filter(facility=clz.name)
+        if target:
+            records = records.filter(target=target)
+        records = records.exclude(status__in=clz.get_terminal_observing_states())
+        for record in records:
+            try:
+                clz.update_observation_status(record.observation_id)
+            except Exception as e:
+                failed_records.append((record.observation_id, str(e)))
+        return failed_records
+
+    @classmethod
     def _portal_headers(clz):
         if LCO_SETTINGS.get('api_key'):
             return {'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
