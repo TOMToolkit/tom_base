@@ -81,8 +81,8 @@ class TestTargetVisibility(TestCase):
         self.st.type = 'Fake Type'
         self.assertRaises(Exception, self.st.get_pyephem_instance_for_type)
 
-    # def test_get_visibility(self):
-    #     # with patch.object(Target, '')
-    #     end = self.now + timedelta(minutes=60)
-    #     visibility_data = self.st.get_visibility(self.now, end, 10, 3)
-    #     self.assertEqual(len(visibility_data), 6)
+    def test_get_visibility(self):
+        # with patch.object(Target, '')
+        end = self.now + timedelta(minutes=60)
+        visibility_data = self.st.get_visibility(self.now, end, 10, 3)
+        self.assertEqual(len(visibility_data), 6)

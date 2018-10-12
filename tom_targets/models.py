@@ -90,6 +90,20 @@ class Target(models.Model):
         return model_to_dict(self, fields=fields_for_type)
 
     def get_pyephem_instance_for_type(self):
+        """
+        Constructs a pyephem body corresponding to the proper object type
+        in order to perform positional calculations for the target
+
+        Returns
+        -------
+        FixedBody or EllipticalBody
+
+        Raises
+        ------
+        Exception
+            When a target type other than sidereal or non-sidereal is supplied
+
+        """
         if self.type == self.SIDEREAL:
             body = ephem.FixedBody()
             body._ra = Angle(str(self.ra) + 'd').to_string(unit=units.hourangle, sep=':')
@@ -117,6 +131,37 @@ class Target(models.Model):
 
 
     def get_visibility(self, start_time, end_time, interval, airmass_limit=10):
+        """
+        Calculates the airmass for a target for each given interval between
+        the start and end times.
+
+        The resulting data omits any airmass above the provided limit (or
+        default, if one is not provided), as well as any airmass calculated
+        during the day.
+
+        Parameters
+        ----------
+        start_time : datetime
+            start of the window for which to calculate the airmass
+        end_time : datetime
+            end of the window for which to calculate the airmass
+        interval : int
+            time interval, in minutes, at which to calculate airmass within
+            the given window
+        airmass_limit : int
+            maximum acceptable airmass for the resulting calculations
+
+        Returns
+        -------
+        dict
+            A dictionary containing the airmass data for each site. The
+            dict keys consist of the site name prepended with the observing
+            facility. The values are the airmass data, structured as an
+            array containing two arrays. The first array contains the set
+            of datetimes used in the airmass calculations. The second array
+            contains the corresponding set of airmasses calculated.
+
+        """
         if not airmass_limit:
             airmass_limit = 10
         visibility = {}
