@@ -7,9 +7,6 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 
 import ephem
-import plotly
-from plotly import offline, io
-import plotly.graph_objs as go
 from astropy.coordinates import Angle, AltAz
 from astropy import units
 from astropy.time import Time
@@ -118,6 +115,7 @@ class Target(models.Model):
         else:
             raise Exception("Object type is unsupported for visibility calculations")
 
+
     def get_visibility(self, start_time, end_time, interval, airmass_limit=10):
         if not airmass_limit:
             airmass_limit = 10
@@ -131,22 +129,19 @@ class Target(models.Model):
                 positions = [[],[]]
                 observer = observing_facility_class.get_observer_for_site(site)
                 rise_sets = get_rise_set(observer, sun, start_time, end_time)
-                print(rise_sets)
                 for time in range(math.floor(start_time.timestamp()), math.floor(end_time.timestamp()), interval*60):
                     last_rise = get_last_rise(rise_sets, time)
                     sunup = time < last_rise if last_rise else False
                     observer.date = datetime.fromtimestamp(time)
                     body.compute(observer)
-                    alt = Angle(str(body.alt) + ' degrees')
-                    az = Angle(str(body.az) + ' degrees')
+                    alt = Angle(str(body.alt) + 'd')
+                    az = Angle(str(body.az) + 'd')
                     altaz = AltAz(alt=alt.to_string(unit=units.rad), az=az.to_string(unit=units.rad))
                     airmass = altaz.secz
                     positions[0].append(datetime.fromtimestamp(time))
                     positions[1].append(airmass.value if (airmass.value > 1 and airmass.value <= airmass_limit) and not sunup else None)
                 visibility['({0}) {1}'.format(observing_facility, site)] = positions
-        data = [go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()]
-        layout = go.Layout(yaxis = dict(autorange='reversed'))
-        return offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
+        return visibility
 
 
 class TargetExtra(models.Model):

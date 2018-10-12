@@ -40,26 +40,25 @@ class TestLCOFacility(TestCase):
 
 class TestRiseSet(TestCase):
     def setUp(self):
-        # now = datetime.now()
-        # self.rise_set = [
-        #     (now, now+timedelta(minutes=10)),
-        #     (now+timedelta(minutes=20), now+timedelta(minutes=30)),
-        #     (now+timedelta(minutes=40), now+timedelta(minutes=50)),
-        #     (now+timedelta(minutes=60), now+timedelta(minutes=70))
-        # ]
         self.rise_set = [
             (0, 10),
             (20, 30),
             (40, 50),
             (60, 70)
         ]
+        self.observer = ephem.city('Los Angeles')
+        self.target = ephem.Sun()
 
-    # @patch('tom_observations.utils.ephem')
-    # def test_get_rise_set(self, MockEphem):
-    #     observer = MockEphem.Observer()
-    #     target = MockEphem.Mars()
-    #     rise_set = get_rise_set(observer, target, datetime(2018, 10, 10), datetime(2018, 10, 11))
-    #     print(rise_set)
+    def test_get_rise_set_valid(self):
+        rise_set = get_rise_set(self.observer, self.target, datetime(2018, 10, 10), datetime(2018, 10, 11))
+        self.assertListEqual([(1539093196.0, 1539134793.0), (1539179642.0, 1539221115.0)], rise_set)
+
+    def test_get_rise_set_no_results(self):
+        rise_set = get_rise_set(self.observer, self.target, datetime(2018, 10, 10, 7, 0, 0), datetime(2018, 10, 10, 7, 0, 1))
+        self.assertEqual(len(rise_set), 0)
+
+    def test_get_rise_set_invalid_params(self):
+        self.assertRaisesRegex(Exception, 'Start must be before end', get_rise_set, self.observer, self.target, datetime(2018, 10, 10), datetime(2018, 10, 9))
 
     def test_get_last_rise(self):
         self.assertIsNone(get_last_rise(self.rise_set, -1), None)

@@ -9,6 +9,8 @@ def ephem_to_timestamp(ephem_time):
     return datetime.strptime(str(ephem.date(ephem_time)), EPHEM_FORMAT).timestamp()
 
 def get_rise_set(observer, target, start_time, end_time):
+    if end_time < start_time:
+        raise Exception('Start must be before end')
     observer.date = start_time
     start_time = start_time.timestamp()
     rise_set = []
@@ -22,7 +24,8 @@ def get_rise_set(observer, target, start_time, end_time):
         observer.date = datetime.fromtimestamp(start_time)
         next_rising = ephem_to_timestamp(observer.next_rising(target))
         next_setting = ephem_to_timestamp(observer.next_setting(target))
-        rise_set.append((next_rising, next_setting))
+        if next_rising > start_time and next_rising < end_time.timestamp():
+            rise_set.append((next_rising, next_setting))
         start_time = next_setting + 1
     return rise_set
 
