@@ -13,7 +13,7 @@ from .factories import TargetFactory, ObservingRecordFactory
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
 from tom_observations.facilities.lco import LCOFacility
-from tom_observations.utils import get_rise_set, get_last_rise, get_last_set, get_next_rise, get_next_set
+from tom_observations.utils import get_rise_set, get_last_rise_set_pair, get_next_rise_set_pair
 
 
 class TestLCOFacility(TestCase):
@@ -60,22 +60,22 @@ class TestRiseSet(TestCase):
     def test_get_rise_set_invalid_params(self):
         self.assertRaisesRegex(Exception, 'Start must be before end', get_rise_set, self.observer, self.target, datetime(2018, 10, 10), datetime(2018, 10, 9))
 
-    def test_get_last_rise(self):
-        self.assertIsNone(get_last_rise(self.rise_set, -1), None)
-        self.assertEqual(get_last_rise(self.rise_set, 35), 20)
-        self.assertEqual(get_last_rise(self.rise_set, 80), 60)
+    def test_get_last_rise_set_pair(self):
+        rise_set_pair = get_last_rise_set_pair(self.rise_set, -1)
+        self.assertIsNone(rise_set_pair, None)
+        rise_set_pair = get_last_rise_set_pair(self.rise_set, 25)
+        self.assertEqual(rise_set_pair[0], 20)
+        self.assertEqual(rise_set_pair[1], 30)
+        rise_set_pair = get_last_rise_set_pair(self.rise_set, 80)
+        self.assertEqual(rise_set_pair[0], 60)
+        self.assertEqual(rise_set_pair[1], 70)
 
-    def test_get_last_set(self):
-        self.assertIsNone(get_last_set(self.rise_set, -1), None)
-        self.assertEqual(get_last_set(self.rise_set, 35), 30)
-        self.assertEqual(get_last_set(self.rise_set, 80), 70)
-
-    def test_get_next_rise(self):
-        self.assertEqual(get_next_rise(self.rise_set, -1), 0)
-        self.assertEqual(get_next_rise(self.rise_set, 35), 40)
-        self.assertIsNone(get_next_rise(self.rise_set, 80), None)
-
-    def test_get_next_set(self):
-        self.assertEqual(get_next_set(self.rise_set, -1), 10)
-        self.assertEqual(get_next_set(self.rise_set, 35), 50)
-        self.assertIsNone(get_next_set(self.rise_set, 80), None)
+    def test_get_next_rise_set_pair(self):
+        rise_set_pair = get_next_rise_set_pair(self.rise_set, -1)
+        self.assertEqual(rise_set_pair[0], 0)
+        self.assertEqual(rise_set_pair[1], 10)
+        rise_set_pair = get_next_rise_set_pair(self.rise_set, 35)
+        self.assertEqual(rise_set_pair[0], 40)
+        self.assertEqual(rise_set_pair[1], 50)
+        rise_set_pair = get_next_rise_set_pair(self.rise_set, 80)
+        self.assertIsNone(rise_set_pair, None)

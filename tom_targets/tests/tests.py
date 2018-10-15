@@ -1,4 +1,5 @@
 import math
+import mock
 from datetime import datetime, timedelta
 
 from django.test import TestCase
@@ -12,6 +13,7 @@ from astropy.coordinates import Angle
 
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory
 from tom_targets.models import Target
+from tom_observations.tests.utils import FakeFacility
 
 
 class TestTargetDetail(TestCase):
@@ -45,6 +47,17 @@ class TestTargetVisibility(TestCase):
         ra = Angle(str(self.mars.ra), unit=units.hourangle)
         dec = Angle(str(self.mars.dec) + 'd', unit=units.deg)
         self.st = Target(ra=ra.deg, dec=dec.deg, type=Target.SIDEREAL)
+        self.nst = Target(
+            inclination=89.4245,
+            lng_asc_node=282.4515,
+            arg_of_perihelion=130.5641,
+            semimajor_axis=183.6816,
+            mean_daily_motion=0.0003959,
+            eccentricity=0.995026,
+            mean_anomaly=0.1825,
+            ephemeris_epoch=2451000.5,
+            type=Target.NON_SIDEREAL
+        )
 
     def test_get_pyephem_instance_for_sidereal(self):
         target_ephem = self.st.get_pyephem_instance_for_type()
@@ -58,18 +71,7 @@ class TestTargetVisibility(TestCase):
             'C/1995 O1 (Hale-Bopp),e,89.4245,282.4515,130.5641,183.6816,'
             '0.0003959,0.995026,0.1825,07/06.0/1998,2000,g -2.0,4.0'
         )
-        nst = Target(
-            inclination=89.4245,
-            lng_asc_node=282.4515,
-            arg_of_perihelion=130.5641,
-            semimajor_axis=183.6816,
-            mean_daily_motion=0.0003959,
-            eccentricity=0.995026,
-            mean_anomaly=0.1825,
-            ephemeris_epoch=2451000.5,
-            type=Target.NON_SIDEREAL
-        )
-        target_ephem = nst.get_pyephem_instance_for_type()
+        target_ephem = self.nst.get_pyephem_instance_for_type()
         location = ephem.city('Los Angeles')
         location.date = ephem.date(self.now)
         hb.compute(location)
@@ -81,8 +83,32 @@ class TestTargetVisibility(TestCase):
         self.st.type = 'Fake Type'
         self.assertRaises(Exception, self.st.get_pyephem_instance_for_type)
 
-    def test_get_visibility(self):
-        # with patch.object(Target, '')
-        end = self.now + timedelta(minutes=60)
-        visibility_data = self.st.get_visibility(self.now, end, 10, 3)
-        self.assertEqual(len(visibility_data), 6)
+    @mock.patch('tom_targets.models.facility.get_service_classes')
+    @mock.patch('tom_observations.utils.get_rise_set')
+    def test_get_visibility_sidereal(self, mock_get_rise_set, mock_facility):
+        mock_facility.return_value = {'Fake Facility': FakeFacility()}
+        mock_get_rise_set.return_value = []
+
+        start = datetime(2018, 10, 10, 7, 0, 0)
+        end = start + timedelta(minutes=60)
+        expected_airmass = [3.163820580798662, 3.450825021653962, 3.8081400741786218, 4.263476706956303, 4.860522606870165, 5.674630523473185]
+
+        airmass_data = self.st.get_visibility(start, end, 10, 10)['(Fake Facility) Los Angeles'][1]
+        self.assertEqual(len(airmass_data), len(expected_airmass))
+        for i in range(0, len(expected_airmass)):
+            self.assertLess(math.fabs(airmass_data[i] - expected_airmass[i]), 0.05)
+
+    @mock.patch('tom_targets.models.facility.get_service_classes')
+    @mock.patch('tom_targets.models.get_rise_set')
+    def test_get_visibility_non_sidereal(self, mock_get_rise_set, mock_facility):
+        mock_facility.return_value = {'Fake Facility': FakeFacility()}
+        mock_get_rise_set.return_value = []
+
+        start = datetime(1997, 4, 1, 0, 0, 0)
+        end = start + timedelta(minutes=60)
+        expected_airmass = [1.225532769770131, 1.2536644126634366, 1.2843810879053679, 1.3179084796712417, 1.3545030240774714, 1.3944575296459614]
+
+        airmass_data = self.nst.get_visibility(start, end, 10, 10)['(Fake Facility) Los Angeles'][1]
+        self.assertEqual(len(airmass_data), len(expected_airmass))
+        for i in range(0, len(expected_airmass)):
+            self.assertLess(math.fabs(airmass_data[i] - expected_airmass[i]), 0.05)

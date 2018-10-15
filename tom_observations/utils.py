@@ -70,9 +70,10 @@ def get_rise_set(observer, target, start_time, end_time):
         start_time = next_setting + 1
     return rise_set
 
-def get_last_rise(rise_sets, time):
+def get_last_rise_set_pair(rise_sets, time):
     """
-    Gets the most recent rise before the given time, using a binary search
+    Gets the rise/set pair for the last rise before the given time, using a
+    binary search
 
     Parameters
     ----------
@@ -83,41 +84,19 @@ def get_last_rise(rise_sets, time):
 
     Returns
     -------
-    float
-        Most recent rise with respect to the given time
+    tuple
+        Most recent rise/set pair with respect to the given time
 
     """
     last_rise_pos = bisect_left(rise_sets, (time,))
     if last_rise_pos-1 < 0:
         return None
-    return rise_sets[last_rise_pos-1][0]
+    return rise_sets[last_rise_pos-1]
 
-def get_last_set(rise_sets, time):
+def get_next_rise_set_pair(rise_sets, time):
     """
-    Gets the most recent set before the given time, using a binary search
-
-    Parameters
-    ----------
-    rise_sets : array
-        array of tuples representing set of rise/sets to search
-    time : float
-        time value used to find the most recent set, in UNIX time
-
-    Returns
-    -------
-    float
-        Most recent set with respect to the given time
-
-    """
-    keys = [rise_set[1] for rise_set in rise_sets]
-    last_set_pos = bisect_left(keys, time)
-    if last_set_pos-1 < 0:
-        return None
-    return rise_sets[last_set_pos-1][1]
-
-def get_next_rise(rise_sets, time):
-    """
-    Gets the upcoming rise after the given time, using a binary search
+    Gets the upcoming rise/set pair for the next rise after the given time,
+    using a binary search
 
     Parameters
     ----------
@@ -128,34 +107,11 @@ def get_next_rise(rise_sets, time):
 
     Returns
     -------
-    float
-        Soonest upcoming rise with respect to the given time
+    tuple
+        Soonest upcoming rise/set with respect to the given time
 
     """
     next_rise_pos = bisect_left(rise_sets, (time,))
     if next_rise_pos >= len(rise_sets):
         return None
-    return rise_sets[next_rise_pos][0]
-
-def get_next_set(rise_sets, time):
-    """
-    Gets the upcoming set after the given time, using a binary search
-
-    Parameters
-    ----------
-    rise_sets : array
-        array of tuples representing set of rise/sets to search
-    time : float
-        time value used to find the next set, in UNIX time
-
-    Returns
-    -------
-    float
-        Soonest upcoming set with respect to the given time
-
-    """
-    keys = [rise_set[1] for rise_set in rise_sets]
-    next_set_pos = bisect_left(keys, time)
-    if next_set_pos >= len(rise_sets):
-        return None
-    return rise_sets[next_set_pos][1]
+    return rise_sets[next_rise_pos]

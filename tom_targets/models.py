@@ -13,7 +13,7 @@ from astropy.time import Time
 from datetime import datetime, timezone, timedelta
 
 from tom_observations import facility
-from tom_observations.utils import get_rise_set, get_last_rise
+from tom_observations.utils import get_rise_set, get_last_rise_set_pair
 
 
 GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'type']
@@ -175,8 +175,8 @@ class Target(models.Model):
                 observer = observing_facility_class.get_observer_for_site(site)
                 rise_sets = get_rise_set(observer, sun, start_time, end_time)
                 for time in range(math.floor(start_time.timestamp()), math.floor(end_time.timestamp()), interval*60):
-                    last_rise = get_last_rise(rise_sets, time)
-                    sunup = time < last_rise if last_rise else False
+                    last_rise_set = get_last_rise_set_pair(rise_sets, time)
+                    sunup = time > last_rise_set[0] and time < last_rise_set[1] if last_rise_set else False
                     observer.date = datetime.fromtimestamp(time)
                     body.compute(observer)
                     alt = Angle(str(body.alt) + 'd')
