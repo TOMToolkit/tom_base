@@ -8,6 +8,8 @@ from django.urls import reverse
 from django.conf import settings
 
 import ephem
+from rise_set.angle import Angle
+from rise_set.astrometry import calc_sunrise_set
 
 from .factories import TargetFactory, ObservingRecordFactory
 from tom_targets.models import Target
@@ -46,18 +48,39 @@ class TestRiseSet(TestCase):
                          (40, 50),
                          (60, 70)]
         self.observer = ephem.city('Los Angeles')
-        self.target = ephem.Sun()
+        self.sun = ephem.Sun()
 
     def test_get_rise_set_valid(self):
-        rise_set = get_rise_set(self.observer, self.target, datetime(2018, 10, 10), datetime(2018, 10, 11))
+        rise_set = get_rise_set(self.observer, self.sun, datetime(2018, 10, 10), datetime(2018, 10, 11))
         self.assertListEqual([(datetime(2018, 10, 9, 13, 53, 16), datetime(2018, 10, 10, 1, 26, 33)),                               (datetime(2018, 10, 10, 13, 54, 2), datetime(2018, 10, 11, 1, 25, 15))],                               rise_set)
 
+    def test_get_rise_set_against_lco_rise_set(self):
+        lco = LCOFacility()
+        sites = lco.get_observing_sites()
+        start = datetime(2018, 10, 10)
+        end = datetime(2018, 10, 11)
+
+        # Get sunrise/set from rise-set library
+        coj = {
+            'latitude': Angle(degrees=sites.get('Siding Spring')['latitude']),
+            'longitude': Angle(degrees=sites.get('Siding Spring')['longitude'])
+        }
+        coj_observer = lco.get_observer_for_site('Siding Spring')
+        (transit, control_rise, control_set) = calc_sunrise_set(coj, start, 'sunrise')
+
+        # Get rise/set from observations module
+        rise_set = get_rise_set(coj_observer, self.sun, start, end)
+        rise_delta = timedelta(hours=rise_set[0][0].hour, minutes=rise_set[0][0].minute, seconds=rise_set[0][0].second)
+        set_delta = timedelta(hours=rise_set[0][1].hour, minutes=rise_set[0][1].minute, seconds=rise_set[0][1].second)
+        self.assertLessEqual(rise_delta - control_rise, abs(timedelta(minutes=5)))
+        self.assertLessEqual(set_delta - control_set, abs(timedelta(minutes=5)))
+
     def test_get_rise_set_no_results(self):
-        rise_set = get_rise_set(self.observer, self.target, datetime(2018, 10, 10, 7, 0, 0), datetime(2018, 10, 10, 7, 0, 1))
+        rise_set = get_rise_set(self.observer, self.sun, datetime(2018, 10, 10, 7, 0, 0), datetime(2018, 10, 10, 7, 0, 1))
         self.assertEqual(len(rise_set), 0)
 
     def test_get_rise_set_invalid_params(self):
-        self.assertRaisesRegex(Exception, 'Start must be before end', get_rise_set, self.observer, self.target, datetime(2018, 10, 10), datetime(2018, 10, 9))
+        self.assertRaisesRegex(Exception, 'Start must be before end', get_rise_set, self.observer, self.sun, datetime(2018, 10, 10), datetime(2018, 10, 9))
 
     def test_get_last_rise_set_pair(self):
         rise_set_pair = get_last_rise_set_pair(self.rise_set, -1)
