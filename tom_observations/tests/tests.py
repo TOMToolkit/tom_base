@@ -39,19 +39,18 @@ class TestLCOFacility(TestCase):
             self.assertEquals(uos_mock.call_count, 1)
 
 class TestRiseSet(TestCase):
+
     def setUp(self):
-        self.rise_set = [
-            (0, 10),
-            (20, 30),
-            (40, 50),
-            (60, 70)
-        ]
+        self.rise_set = [(0, 10),
+                         (20, 30),
+                         (40, 50),
+                         (60, 70)]
         self.observer = ephem.city('Los Angeles')
         self.target = ephem.Sun()
 
     def test_get_rise_set_valid(self):
         rise_set = get_rise_set(self.observer, self.target, datetime(2018, 10, 10), datetime(2018, 10, 11))
-        self.assertListEqual([(1539093196.0, 1539134793.0), (1539179642.0, 1539221115.0)], rise_set)
+        self.assertListEqual([(datetime(2018, 10, 9, 13, 53, 16), datetime(2018, 10, 10, 1, 26, 33)),                               (datetime(2018, 10, 10, 13, 54, 2), datetime(2018, 10, 11, 1, 25, 15))],                               rise_set)
 
     def test_get_rise_set_no_results(self):
         rise_set = get_rise_set(self.observer, self.target, datetime(2018, 10, 10, 7, 0, 0), datetime(2018, 10, 10, 7, 0, 1))

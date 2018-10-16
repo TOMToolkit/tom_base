@@ -5,22 +5,22 @@ from bisect import bisect_left
 
 EPHEM_FORMAT = '%Y/%m/%d %H:%M:%S'
 
-def ephem_to_timestamp(ephem_time):
+def ephem_to_datetime(ephem_time):
     """
-    Converts PyEphem time object to a UNIX timestamp
+    Converts PyEphem time object to a datetime object
 
     Parameters
     ----------
     ephem_time : PyEphem date
-        time to be converted to UNIX
+        time to be converted to datetime
 
     Returns
     -------
-    float
-        UNIX time equivalent to the ephem_time
+    datetime
+        datetime time equivalent to the ephem_time
 
     """
-    return datetime.strptime(str(ephem.date(ephem_time)), EPHEM_FORMAT).timestamp()
+    return datetime.strptime(str(ephem_time), EPHEM_FORMAT)
 
 
 def get_rise_set(observer, target, start_time, end_time):
@@ -47,27 +47,27 @@ def get_rise_set(observer, target, start_time, end_time):
     -------
     array
         An array of tuples, each a pair of values representing a rise and a set,
-        both in UNIX time
+        both datetime objects
 
     """
     if end_time < start_time:
         raise Exception('Start must be before end')
     observer.date = start_time
-    start_time = start_time.timestamp()
+    start_time = start_time
     rise_set = []
-    previous_setting = ephem_to_timestamp(observer.previous_setting(target))
-    previous_rising = ephem_to_timestamp(observer.previous_rising(target))
+    previous_setting = ephem_to_datetime(observer.previous_setting(target))
+    previous_rising = ephem_to_datetime(observer.previous_rising(target))
     if previous_rising > previous_setting:
-        next_setting = ephem_to_timestamp(observer.next_setting(target))
+        next_setting = ephem_to_datetime(observer.next_setting(target))
         rise_set.append((previous_rising, next_setting))
-        start_time = next_setting + 1
-    while start_time < end_time.timestamp():
-        observer.date = datetime.fromtimestamp(start_time)
-        next_rising = ephem_to_timestamp(observer.next_rising(target))
-        next_setting = ephem_to_timestamp(observer.next_setting(target))
-        if next_rising > start_time and next_rising < end_time.timestamp():
+        start_time = next_setting + timedelta(seconds=1)
+    while start_time < end_time:
+        observer.date = start_time
+        next_rising = ephem_to_datetime(observer.next_rising(target))
+        next_setting = ephem_to_datetime(observer.next_setting(target))
+        if next_rising > start_time and next_rising < end_time:
             rise_set.append((next_rising, next_setting))
-        start_time = next_setting + 1
+        start_time = next_setting + timedelta(seconds=1)
     return rise_set
 
 def get_last_rise_set_pair(rise_sets, time):
@@ -89,7 +89,7 @@ def get_last_rise_set_pair(rise_sets, time):
 
     """
     last_rise_pos = bisect_left(rise_sets, (time,))
-    if last_rise_pos-1 < 0:
+    if last_rise_pos <= 0:
         return None
     return rise_sets[last_rise_pos-1]
 

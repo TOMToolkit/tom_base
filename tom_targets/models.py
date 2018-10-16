@@ -174,17 +174,20 @@ class Target(models.Model):
                 positions = [[],[]]
                 observer = observing_facility_class.get_observer_for_site(site)
                 rise_sets = get_rise_set(observer, sun, start_time, end_time)
-                for time in range(math.floor(start_time.timestamp()), math.floor(end_time.timestamp()), interval*60):
+                curr_interval = start_time
+                while curr_interval <= end_time:
+                    time = curr_interval
                     last_rise_set = get_last_rise_set_pair(rise_sets, time)
                     sunup = time > last_rise_set[0] and time < last_rise_set[1] if last_rise_set else False
-                    observer.date = datetime.fromtimestamp(time)
+                    observer.date = curr_interval
                     body.compute(observer)
-                    alt = Angle(str(body.alt) + 'd')
-                    az = Angle(str(body.az) + 'd')
+                    alt = Angle(str(body.alt), unit=units.degree)
+                    az = Angle(str(body.az), unit=units.degree)
                     altaz = AltAz(alt=alt.to_string(unit=units.rad), az=az.to_string(unit=units.rad))
                     airmass = altaz.secz
-                    positions[0].append(datetime.fromtimestamp(time))
+                    positions[0].append(curr_interval)
                     positions[1].append(airmass.value if (airmass.value > 1 and airmass.value <= airmass_limit) and not sunup else None)
+                    curr_interval += timedelta(minutes=interval)
                 visibility['({0}) {1}'.format(observing_facility, site)] = positions
         return visibility
 

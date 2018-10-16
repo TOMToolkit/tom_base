@@ -91,7 +91,7 @@ class TestTargetVisibility(TestCase):
 
         start = datetime(2018, 10, 10, 7, 0, 0)
         end = start + timedelta(minutes=60)
-        expected_airmass = [3.163820580798662, 3.450825021653962, 3.8081400741786218, 4.263476706956303, 4.860522606870165, 5.674630523473185]
+        expected_airmass = [3.081682738196459, 3.351429828253038, 3.685282286699873, 4.107738945891276, 4.656447187737076, 5.395341923202923, 6.439565004457879]
 
         airmass_data = self.st.get_visibility(start, end, 10, 10)['(Fake Facility) Los Angeles'][1]
         self.assertEqual(len(airmass_data), len(expected_airmass))
@@ -106,7 +106,7 @@ class TestTargetVisibility(TestCase):
 
         start = datetime(1997, 4, 1, 0, 0, 0)
         end = start + timedelta(minutes=60)
-        expected_airmass = [1.225532769770131, 1.2536644126634366, 1.2843810879053679, 1.3179084796712417, 1.3545030240774714, 1.3944575296459614]
+        expected_airmass = [1.225532769770131, 1.2536644126634366, 1.2843810879053679, 1.3179084796712417, 1.3545030240774714, 1.3944575296459614, 1.4381124914948578]
 
         airmass_data = self.nst.get_visibility(start, end, 10, 10)['(Fake Facility) Los Angeles'][1]
         self.assertEqual(len(airmass_data), len(expected_airmass))
