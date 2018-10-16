@@ -12,6 +12,10 @@ from django.contrib import messages
 from django.core.management import call_command
 from dateutil.parser import parse
 
+import plotly
+from plotly import offline, io
+import plotly.graph_objs as go
+
 from .models import Target
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetVisibilityForm
 from .import_targets import import_targets
@@ -100,8 +104,10 @@ class TargetDetail(DetailView):
             airmass_limit = float(self.request.GET['airmass'])
         else:
             airmass_limit = None
-        visibility_graph = self.object.get_visibility(start_time, end_time, 10, airmass_limit)
-        return visibility_graph
+        visibility_data = self.object.get_visibility(start_time, end_time, 10, airmass_limit)
+        plott_data = [go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()]
+        layout = go.Layout(yaxis = dict(autorange='reversed'))
+        return offline.plot(go.Figure(data=plott_data, layout=layout), output_type='div', show_link=False)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

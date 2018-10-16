@@ -42,7 +42,7 @@ setup(
         'pyephem'
     ],
     extras_require={
-        'test': ['factory_boy']
+        'test': ['factory_boy', 'numpy', 'rise-set']
     },
     include_package_data=True,
 )

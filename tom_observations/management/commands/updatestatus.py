@@ -26,17 +26,8 @@ class Command(BaseCommand):
 
         failed_records = {}
         for facility_name in facility.get_service_classes():
-            failed_records[facility_name] = []
             clazz = facility.get_service_class(facility_name)
-            qs = ObservationRecord.objects.filter(facility=facility_name)
-            if target:
-                qs = ObservationRecord.objects.filter(target=target)
-            records_for_facility = ObservationRecord.objects.exclude(status__in=clazz.get_terminal_observing_states())
-            for record in records_for_facility:
-                try:
-                    clazz.update_observation_status(record.observation_id)
-                except Exception as e:
-                    failed_records[facility_name].append((record.observation_id, str(e)))
+            failed_records[facility_name] = clazz.update_all_observation_statuses(target=target)
         success = True
         for facility_name, errors in failed_records.items():
             if len(errors) > 0:

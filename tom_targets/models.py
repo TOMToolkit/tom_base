@@ -7,16 +7,13 @@ from django.conf import settings
 from django.forms.models import model_to_dict
 
 import ephem
-import plotly
-from plotly import offline, io
-import plotly.graph_objs as go
 from astropy.coordinates import Angle, AltAz
 from astropy import units
 from astropy.time import Time
 from datetime import datetime, timezone, timedelta
 
 from tom_observations import facility
-from tom_observations.utils import get_rise_set
+from tom_observations.utils import get_rise_set, get_last_rise_set_pair
 
 
 GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'type']
@@ -93,6 +90,20 @@ class Target(models.Model):
         return model_to_dict(self, fields=fields_for_type)
 
     def get_pyephem_instance_for_type(self):
+        """
+        Constructs a pyephem body corresponding to the proper object type
+        in order to perform positional calculations for the target
+
+        Returns
+        -------
+        FixedBody or EllipticalBody
+
+        Raises
+        ------
+        Exception
+            When a target type other than sidereal or non-sidereal is supplied
+
+        """
         if self.type == self.SIDEREAL:
             body = ephem.FixedBody()
             body._ra = Angle(str(self.ra) + 'd').to_string(unit=units.hourangle, sep=':')
@@ -118,7 +129,39 @@ class Target(models.Model):
         else:
             raise Exception("Object type is unsupported for visibility calculations")
 
+
     def get_visibility(self, start_time, end_time, interval, airmass_limit=10):
+        """
+        Calculates the airmass for a target for each given interval between
+        the start and end times.
+
+        The resulting data omits any airmass above the provided limit (or
+        default, if one is not provided), as well as any airmass calculated
+        during the day.
+
+        Parameters
+        ----------
+        start_time : datetime
+            start of the window for which to calculate the airmass
+        end_time : datetime
+            end of the window for which to calculate the airmass
+        interval : int
+            time interval, in minutes, at which to calculate airmass within
+            the given window
+        airmass_limit : int
+            maximum acceptable airmass for the resulting calculations
+
+        Returns
+        -------
+        dict
+            A dictionary containing the airmass data for each site. The
+            dict keys consist of the site name prepended with the observing
+            facility. The values are the airmass data, structured as an
+            array containing two arrays. The first array contains the set
+            of datetimes used in the airmass calculations. The second array
+            contains the corresponding set of airmasses calculated.
+
+        """
         if not airmass_limit:
             airmass_limit = 10
         visibility = {}
@@ -131,21 +174,22 @@ class Target(models.Model):
                 positions = [[],[]]
                 observer = observing_facility_class.get_observer_for_site(site)
                 rise_sets = get_rise_set(observer, sun, start_time, end_time)
-                for time in range(math.floor(start_time.timestamp()), math.floor(end_time.timestamp()), interval*60):
-                    rise_set_for_sun = rise_sets.get_last_rise(datetime.fromtimestamp(time))
-                    sunup = datetime.fromtimestamp(time) < rise_set_for_sun.set if rise_set_for_sun else False
-                    observer.date = datetime.fromtimestamp(time)
+                curr_interval = start_time
+                while curr_interval <= end_time:
+                    time = curr_interval
+                    last_rise_set = get_last_rise_set_pair(rise_sets, time)
+                    sunup = time > last_rise_set[0] and time < last_rise_set[1] if last_rise_set else False
+                    observer.date = curr_interval
                     body.compute(observer)
-                    alt = Angle(str(body.alt) + ' degrees')
-                    az = Angle(str(body.az) + ' degrees')
+                    alt = Angle(str(body.alt), unit=units.degree)
+                    az = Angle(str(body.az), unit=units.degree)
                     altaz = AltAz(alt=alt.to_string(unit=units.rad), az=az.to_string(unit=units.rad))
                     airmass = altaz.secz
-                    positions[0].append(datetime.fromtimestamp(time))
+                    positions[0].append(curr_interval)
                     positions[1].append(airmass.value if (airmass.value > 1 and airmass.value <= airmass_limit) and not sunup else None)
+                    curr_interval += timedelta(minutes=interval)
                 visibility['({0}) {1}'.format(observing_facility, site)] = positions
-        data = [go.Scatter(x=visibility_data[0], y=visibility_data[1], mode='lines', name=site) for site, visibility_data in visibility.items()]
-        layout = go.Layout(yaxis = dict(autorange='reversed'))
-        return offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
+        return visibility
 
 
 class TargetExtra(models.Model):
