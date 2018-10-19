@@ -12,7 +12,7 @@ from django.core.management import call_command
 from django.contrib import messages
 
 from .models import ObservationRecord, DataProduct, DataProductGroup
-from .forms import ManualObservationForm, AddProductToGroupForm
+from .forms import ManualObservationForm, AddProductToGroupForm, DataProductUploadForm
 from tom_targets.models import Target
 
 
@@ -121,6 +121,7 @@ class ObservationRecordDetailView(DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        context['data_product_form'] = DataProductUploadForm(initial={'observation_record': self.object})
         context['form'] = AddProductToGroupForm()
         service_class = get_service_class(self.object.facility)
         context['data_products'] = service_class.data_products(self.object, request=self.request)
@@ -140,6 +141,25 @@ class DataProductSaveView(LoginRequiredMixin, View):
                 products = service_class.save_data_products(observation_record, product, request=self.request)
                 messages.success(request, 'Successfully saved: {0}'.format('\n'.join([str(p) for p in products])))
         return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
+
+
+#TODO: ensure redirection on failure returns to observation detail
+class ManualDataProductUploadView(LoginRequiredMixin, FormView):
+    form_class = DataProductUploadForm
+    template_name = 'tom_observations/dataproduct_import.html'
+
+    def get_success_url(self):
+        return reverse('tom_observations:list')
+
+    def post(self, request, *args, **kwargs):
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        observation_record = form.cleaned_data['observation_record']
+        data_product_files = request.FILES.getlist('files')
+        for f in data_product_files:
+            dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f)
+            dp.save()
+        return super().post(request, *args, **kwargs)
 
 
 class DataProductDeleteView(LoginRequiredMixin, DeleteView):

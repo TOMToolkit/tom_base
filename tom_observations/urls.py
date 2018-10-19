@@ -4,6 +4,7 @@ from tom_observations.views import ObservationCreateView, ManualObservationCreat
 from tom_observations.views import ObservationRecordDetailView, ObservationListView, DataProductSaveView
 from tom_observations.views import DataProductDeleteView, DataProductGroupCreateView, DataProductGroupListView
 from tom_observations.views import DataProductGroupDetailView, GroupDataView, DataProductGroupDeleteView
+from tom_observations.views import ManualDataProductUploadView
 
 app_name = 'tom_observations'
 
@@ -12,6 +13,7 @@ urlpatterns = [
     path('manual/', ManualObservationCreateView.as_view(), name='manual'),
     path('list/', ObservationListView.as_view(), name='list'),
     path('data/', DataProductListView.as_view(), name='data-list'),
+    path('data/upload/', ManualDataProductUploadView.as_view(), name='data-upload'),
     path('data/group/create/', DataProductGroupCreateView.as_view(), name='data-group-create'),
     path('data/group/list/', DataProductGroupListView.as_view(), name='data-group-list'),
     path('data/group/add/', GroupDataView.as_view(), name='group-data'),
