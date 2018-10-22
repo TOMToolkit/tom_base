@@ -350,6 +350,11 @@ class LCOFacility:
                     'created': frame['DATE_OBS'],
                     'url': frame['url']
                 })
+        # Obtain products uploaded manually by users
+        user_products = DataProduct.objects.filter(
+            observation_record_id=observation_record.id, product_id='')
+        for product in user_products:
+            products['saved'].append(product)
         return products
 
     @classmethod

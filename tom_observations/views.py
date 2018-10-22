@@ -115,16 +115,6 @@ class ManualObservationCreateView(LoginRequiredMixin, FormView):
         )
         return redirect(reverse('tom_targets:detail', kwargs={'pk': self.get_target().id}))
 
-    # def post(self, request, *args, **kwargs):
-    #     form_class = self.get_form_class()
-    #     form = self.get_form(form_class)
-    #     observation_record = form.cleaned_data['observation_record']
-    #     data_product_files = request.FILES.getlist('files')
-    #     for f in data_product_files:
-    #         dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f)
-    #         dp.save()
-    #     return super().post(request, *args, **kwargs)
-
 
 class ObservationRecordDetailView(DetailView):
     model = ObservationRecord
@@ -153,7 +143,6 @@ class DataProductSaveView(LoginRequiredMixin, View):
         return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
 
 
-#TODO: display manual data products in observation detail page
 class ManualDataProductUploadView(LoginRequiredMixin, FormView):
     form_class = DataProductUploadForm
     template_name = 'tom_observations/dataproduct_import.html'
@@ -167,7 +156,7 @@ class ManualDataProductUploadView(LoginRequiredMixin, FormView):
             observation_record = form.cleaned_data['observation_record']
             data_product_files = request.FILES.getlist('files')
             for f in data_product_files:
-                dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f)
+                dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f, product_id='')
                 dp.save()
             return super().form_valid(form)
         else:

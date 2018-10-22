@@ -25,7 +25,6 @@
     {% for facility in facilities%}
     <a href="{% url 'tom_observations:create' facility=facility %}?target_id={{ object.id }}" class="btn btn-outline-primary">{{ facility }}</a>
     {% endfor %}
-    <a href="{% url 'tom_observations:manual' %}?target_id={{ object.id }}" class="btn btn-outline-primary">Manual Observation</a>
     <hr/>
     <h4>Plan</h4>
     <form action="{% url 'targets:detail' target.id %}" method="GET" class="form">

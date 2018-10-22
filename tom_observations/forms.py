@@ -11,8 +11,7 @@ def facility_choices():
 class ManualObservationForm(forms.Form):
     target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
     facility = forms.ChoiceField(choices=facility_choices)
-    observation_id = forms.CharField(required=False)
-    files = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}))
+    observation_id = forms.CharField()
 
 
 class AddProductToGroupForm(forms.Form):

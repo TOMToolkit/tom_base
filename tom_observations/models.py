@@ -51,7 +51,7 @@ class DataProductGroup(models.Model):
 
 
 class DataProduct(models.Model):
-    product_id = models.CharField(max_length=2000, unique=True, null=True)
+    product_id = models.CharField(max_length=2000, unique=True, blank=True)
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     observation_record = models.ForeignKey(ObservationRecord, null=True, default=None, on_delete=models.CASCADE)
     data = models.FileField(upload_to=data_product_path, null=True, default=None)
