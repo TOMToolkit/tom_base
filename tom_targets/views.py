@@ -114,7 +114,17 @@ class TargetDetail(DetailView):
         context['facilities'] = get_service_classes()
         context['form'] = TargetVisibilityForm()
         if all(self.request.GET.get(x) for x in ['start_time', 'end_time']):
-            context['visibility_graph'] = self.get_airmass_plot()
+            context['form'] = TargetVisibilityForm({
+                'start_time': self.request.GET.get('start_time'),
+                'end_time': self.request.GET.get('end_time'),
+                'airmass': self.request.GET.get('airmass')
+            })
+            if context['form'].is_valid():
+                context['visibility_graph'] = self.get_airmass_plot()
+            else:
+                print(context['form'].errors)
+            # if self.request.GET.get('end_time') < self.request.GET.get('start_time'):
+            #     context['form'].add_error(None, 'Start time must be before end time')
         return context
 
     def get(self, request, *args, **kwargs):
