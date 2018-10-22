@@ -115,6 +115,16 @@ class ManualObservationCreateView(LoginRequiredMixin, FormView):
         )
         return redirect(reverse('tom_targets:detail', kwargs={'pk': self.get_target().id}))
 
+    # def post(self, request, *args, **kwargs):
+    #     form_class = self.get_form_class()
+    #     form = self.get_form(form_class)
+    #     observation_record = form.cleaned_data['observation_record']
+    #     data_product_files = request.FILES.getlist('files')
+    #     for f in data_product_files:
+    #         dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f)
+    #         dp.save()
+    #     return super().post(request, *args, **kwargs)
+
 
 class ObservationRecordDetailView(DetailView):
     model = ObservationRecord
@@ -143,7 +153,7 @@ class DataProductSaveView(LoginRequiredMixin, View):
         return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
 
 
-#TODO: ensure redirection on failure returns to observation detail
+#TODO: display manual data products in observation detail page
 class ManualDataProductUploadView(LoginRequiredMixin, FormView):
     form_class = DataProductUploadForm
     template_name = 'tom_observations/dataproduct_import.html'
@@ -152,14 +162,16 @@ class ManualDataProductUploadView(LoginRequiredMixin, FormView):
         return reverse('tom_observations:list')
 
     def post(self, request, *args, **kwargs):
-        form_class = self.get_form_class()
-        form = self.get_form(form_class)
-        observation_record = form.cleaned_data['observation_record']
-        data_product_files = request.FILES.getlist('files')
-        for f in data_product_files:
-            dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f)
-            dp.save()
-        return super().post(request, *args, **kwargs)
+        form = self.get_form()
+        if form.is_valid():
+            observation_record = form.cleaned_data['observation_record']
+            data_product_files = request.FILES.getlist('files')
+            for f in data_product_files:
+                dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f)
+                dp.save()
+            return super().form_valid(form)
+        else:
+            return super().form_invalid(form)
 
 
 class DataProductDeleteView(LoginRequiredMixin, DeleteView):

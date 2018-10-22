@@ -3,7 +3,7 @@
 {% block title %}Manual Observation{% endblock %}
 {% block content %}
 <h3>Associate an observation id</h3>
-<form method="POST" action="{% url 'tom_observations:manual' %}">
+<form method="POST" action="{% url 'tom_observations:manual' %}" enctype="multipart/form-data">
   {% csrf_token %}
   {% bootstrap_form form %}
   {% buttons %}
