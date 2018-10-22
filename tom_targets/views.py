@@ -121,10 +121,6 @@ class TargetDetail(DetailView):
             })
             if context['form'].is_valid():
                 context['visibility_graph'] = self.get_airmass_plot()
-            else:
-                print(context['form'].errors)
-            # if self.request.GET.get('end_time') < self.request.GET.get('start_time'):
-            #     context['form'].add_error(None, 'Start time must be before end time')
         return context
 
     def get(self, request, *args, **kwargs):
