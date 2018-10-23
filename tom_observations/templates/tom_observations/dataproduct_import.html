@@ -1,9 +1,9 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 %}
-{% block title %}Manual Observation{% endblock %}
+{% block title %}Upload Data Product{% endblock %}
 {% block content %}
-<h3>Associate an observation id</h3>
-<form method="POST" action="{% url 'tom_observations:manual' %}" enctype="multipart/form-data">
+<h3>Upload a data product for a target</h3>
+<form method="POST" action="{% url 'tom_observations:data-upload' %}" enctype="multipart/form-data">
   {% csrf_token %}
   {% bootstrap_form form %}
   {% buttons %}
