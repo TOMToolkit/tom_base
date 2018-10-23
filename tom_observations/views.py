@@ -148,7 +148,7 @@ class ManualDataProductUploadView(LoginRequiredMixin, FormView):
     template_name = 'tom_observations/dataproduct_import.html'
 
     def get_success_url(self):
-        return reverse('tom_observations:list')
+        return reverse('tom_observations:detail', kwargs={'pk': self.kwargs.get('pk', None)})
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
@@ -156,7 +156,7 @@ class ManualDataProductUploadView(LoginRequiredMixin, FormView):
             observation_record = form.cleaned_data['observation_record']
             data_product_files = request.FILES.getlist('files')
             for f in data_product_files:
-                dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f, product_id='')
+                dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f, product_id=None)
                 dp.save()
             return super().form_valid(form)
         else:

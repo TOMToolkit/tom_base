@@ -6,7 +6,7 @@
 <p><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
 <p><strong>Status:</strong> {{ object.status }}</p>
 <h3>Upload Data Products</h3>
-<form method="POST" action="{% url 'tom_observations:data-upload' %}" enctype="multipart/form-data">
+<form method="POST" action="{% url 'tom_observations:data-upload' object.id %}" enctype="multipart/form-data">
   {% csrf_token %}
   {% bootstrap_form data_product_form %}
   {% buttons %}

@@ -352,7 +352,7 @@ class LCOFacility:
                 })
         # Obtain products uploaded manually by users
         user_products = DataProduct.objects.filter(
-            observation_record_id=observation_record.id, product_id='')
+            observation_record_id=observation_record.id, product_id=None)
         for product in user_products:
             products['saved'].append(product)
         return products
