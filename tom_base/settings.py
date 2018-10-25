@@ -143,6 +143,22 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/data/'
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        }
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'INFO'
+        }
+    }
+}
+
 TARGET_TYPE = 'NON_SIDEREAL'
 FACILITIES = {
     'LCO': {
