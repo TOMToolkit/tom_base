@@ -60,6 +60,10 @@ class Command(BaseCommand):
             os.mkdir(os.path.join(BASE_DIR, 'templates'))
         except FileExistsError:
             pass
+        try:
+            os.mkdir(os.path.join(BASE_DIR, 'static'))
+        except FileExistsError:
+            pass
         self.ok()
 
     def run_migrations(self):
