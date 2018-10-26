@@ -14,6 +14,7 @@ from datetime import datetime, timezone, timedelta
 
 from tom_observations import facility
 from tom_observations.utils import get_rise_set, get_last_rise_set_pair
+from tom_common.hooks import run_hook
 
 
 GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'type']
@@ -72,6 +73,11 @@ class Target(models.Model):
 
     class Meta:
         ordering = ('id',)
+
+    def save(self, *args, **kwargs):
+        created = False if self.id else True
+        super().save(*args, **kwargs)
+        run_hook('target_post_save', target=self, created=created)
 
     def __str__(self):
         return self.identifier
