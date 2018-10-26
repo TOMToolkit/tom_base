@@ -80,7 +80,7 @@ class Target(models.Model):
         run_hook('target_post_save', target=self, created=created)
 
     def __str__(self):
-        return self.identifier
+        return str(self.identifier)
 
     def get_absolute_url(self):
         return reverse('targets:detail', kwargs={'pk': self.id})

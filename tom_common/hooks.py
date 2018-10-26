@@ -23,8 +23,8 @@ def run_hook(name, *args, **kwargs):
 
 
 def target_post_save(target, created):
-    logger.info('Target post save hook: {} created: {}'.format(target, created))
+    logger.info('Target post save hook: %s created: %s', target, created)
 
 
 def observation_change_state(observation, previous_state):
-    logger.info('Observation change state hook: {} from {} to {}'.format(observation, previous_state))
+    logger.info('Observation change state hook: %s from %s to %s', observation, previous_state, observation.status)
