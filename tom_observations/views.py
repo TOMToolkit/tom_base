@@ -1,15 +1,22 @@
-from io import StringIO
+from io import BytesIO
+import base64
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView, DeleteView, CreateView
 from django.views.generic.list import ListView
 from django.views.generic import View
 from django_filters.views import FilterView
 from django.views.generic.detail import DetailView
-from tom_observations.facility import get_service_class
 from django.urls import reverse, reverse_lazy
 from django.shortcuts import redirect
 from django.core.management import call_command
+from django.conf import settings
 from django.contrib import messages
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib import figure
+from astropy.io import fits
 
 from .models import ObservationRecord, DataProduct, DataProductGroup
 from .forms import ManualObservationForm, AddProductToGroupForm, DataProductUploadForm
@@ -125,6 +132,20 @@ class ObservationRecordDetailView(DetailView):
         context['form'] = AddProductToGroupForm()
         service_class = get_service_class(self.object.facility)
         context['data_products'] = service_class.data_products(self.object, request=self.request)
+        newest_image = None
+        for data_product in context['data_products']['saved']:
+            newest_image = data_product if not newest_image or data_product.modified > newest_image.modified else newest_image
+        if newest_image:
+            path = settings.MEDIA_ROOT + '/' + str(newest_image.data)
+            image_data = fits.getdata(path, 0)
+            fig = plt.figure()
+            plt.imshow(image_data)
+            plt.axis('off')
+            buffer = BytesIO()
+            plt.savefig(buffer, format='png')
+            buffer.seek(0)
+            plt.close(fig)
+            context['image'] = base64.b64encode(buffer.read()).decode('utf-8')
         return context
 
 

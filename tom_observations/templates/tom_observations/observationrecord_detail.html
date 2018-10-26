@@ -2,9 +2,16 @@
 {% load bootstrap4 %}
 {% block title %} Observation record: {{ object.id }} {% endblock %}
 {% block content %}
-<h2>{{ object }}</h2>
-<p><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
-<p><strong>Status:</strong> {{ object.status }}</p>
+<div class="row">
+  <div class="col-md-6">
+    <h2>{{ object }}</h2>
+    <p><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
+    <p><strong>Status:</strong> {{ object.status }}</p>
+  </div>
+  <div class="col-md-6">
+    <img src="data:image/png;base64, {{ image }}">
+  </div>
+</div>
 <h3>Upload Data Products</h3>
 <form method="POST" action="{% url 'tom_observations:data-upload' object.id %}" enctype="multipart/form-data">
   {% csrf_token %}
