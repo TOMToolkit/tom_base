@@ -1,5 +1,3 @@
-from io import BytesIO
-import base64
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView, DeleteView, CreateView
 from django.views.generic.list import ListView
@@ -12,15 +10,10 @@ from django.core.management import call_command
 from django.conf import settings
 from django.contrib import messages
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from matplotlib import figure
-from astropy.io import fits
-
 from .models import ObservationRecord, DataProduct, DataProductGroup
 from .forms import ManualObservationForm, AddProductToGroupForm, DataProductUploadForm
 from tom_targets.models import Target
+from tom_observations.facility import get_service_class
 
 
 class ObservationListView(FilterView):
@@ -136,16 +129,7 @@ class ObservationRecordDetailView(DetailView):
         for data_product in context['data_products']['saved']:
             newest_image = data_product if not newest_image or data_product.modified > newest_image.modified else newest_image
         if newest_image:
-            path = settings.MEDIA_ROOT + '/' + str(newest_image.data)
-            image_data = fits.getdata(path, 0)
-            fig = plt.figure()
-            plt.imshow(image_data)
-            plt.axis('off')
-            buffer = BytesIO()
-            plt.savefig(buffer, format='png')
-            buffer.seek(0)
-            plt.close(fig)
-            context['image'] = base64.b64encode(buffer.read()).decode('utf-8')
+            context['image'] = newest_image.get_png_data()
         return context
 
 

@@ -1,5 +1,14 @@
 from django.db import models
+from io import BytesIO
+from base64 import b64encode
 import json
+from django.conf import settings
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib import figure
+from astropy.io import fits
 
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class
@@ -66,3 +75,15 @@ class DataProduct(models.Model):
 
     def __str__(self):
         return self.data.name
+
+    def get_png_data(self):
+        path = settings.MEDIA_ROOT + '/' + str(self.data)
+        image_data = fits.getdata(path, 0)
+        fig = plt.figure()
+        plt.imshow(image_data)
+        plt.axis('off')
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+        plt.close(fig)
+        return b64encode(buffer.read()).decode('utf-8')
