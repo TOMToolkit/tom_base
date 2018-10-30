@@ -13,6 +13,10 @@ from astropy.io import fits
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class
 
+LIGHT_CURVE = ('light_curve', 'Light Curve')
+FITS_FILE = ('fits_file', 'Fits File')
+IMAGE_FILE = ('image_file', 'Image File')
+DATA_PRODUCT_TAGS = [LIGHT_CURVE, FITS_FILE, IMAGE_FILE]
 
 class ObservationRecord(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
@@ -69,9 +73,11 @@ class DataProduct(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     tag = models.TextField(blank=True, default='')
+    featured = models.BooleanField(default=False)
 
     class Meta:
         ordering = ('-created',)
+        get_latest_by = ('modified',)
 
     def __str__(self):
         return self.data.name
@@ -83,7 +89,7 @@ class DataProduct(models.Model):
         plt.imshow(image_data)
         plt.axis('off')
         buffer = BytesIO()
-        plt.savefig(buffer, format='png')
+        plt.savefig(buffer, format='png', bbox_inches='tight', pad_inches=0)
         buffer.seek(0)
         plt.close(fig)
         return b64encode(buffer.read()).decode('utf-8')

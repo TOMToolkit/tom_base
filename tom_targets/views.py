@@ -105,9 +105,9 @@ class TargetDetail(DetailView):
         else:
             airmass_limit = None
         visibility_data = self.object.get_visibility(start_time, end_time, 10, airmass_limit)
-        plott_data = [go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()]
+        plot_data = [go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()]
         layout = go.Layout(yaxis = dict(autorange='reversed'))
-        return offline.plot(go.Figure(data=plott_data, layout=layout), output_type='div', show_link=False)
+        return offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
