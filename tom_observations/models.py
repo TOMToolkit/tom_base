@@ -3,6 +3,7 @@ import json
 
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class
+from tom_common.hooks import run_hook
 
 
 class ObservationRecord(models.Model):
@@ -16,6 +17,16 @@ class ObservationRecord(models.Model):
 
     class Meta:
         ordering = ('-created',)
+
+    def save(self, *args, **kwargs):
+        if self.id:
+            presave_data = ObservationRecord.objects.get(pk=self.id)
+            super().save(*args, **kwargs)
+            if self.status != presave_data.status:
+                run_hook('observation_change_state', self, presave_data.status)
+        else:
+            super().save(*args, **kwargs)
+            run_hook('observation_change_state', self, None)
 
     @property
     def parameters_as_dict(self):
