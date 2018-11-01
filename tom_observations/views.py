@@ -126,8 +126,9 @@ class ObservationRecordDetailView(DetailView):
         service_class = get_service_class(self.object.facility)
         context['data_products'] = service_class.data_products(self.object, request=self.request)
         newest_image = None
+        light_curve = None
         for data_product in context['data_products']['saved']:
-            newest_image = data_product if not newest_image or data_product.modified > newest_image.modified else newest_image
+            newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and data_product.data.name.split('.')[-1] == 'fits' else newest_image
         if newest_image:
             context['image'] = newest_image.get_png_data()
         return context
@@ -159,9 +160,10 @@ class ManualDataProductUploadView(LoginRequiredMixin, FormView):
         form = self.get_form()
         if form.is_valid():
             observation_record = form.cleaned_data['observation_record']
+            tag = form.cleaned_data['tag']
             data_product_files = request.FILES.getlist('files')
             for f in data_product_files:
-                dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f, product_id=None)
+                dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f, product_id=None, tag=tag)
                 dp.save()
             return super().form_valid(form)
         else:

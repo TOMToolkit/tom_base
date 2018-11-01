@@ -9,6 +9,10 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import figure
 from astropy.io import fits
+from astropy.time import Time
+import plotly
+from plotly import offline, io
+import plotly.graph_objs as go
 
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class
@@ -82,14 +86,35 @@ class DataProduct(models.Model):
     def __str__(self):
         return self.data.name
 
+    def get_light_curve(self, error_limit=None):
+        path = settings.MEDIA_ROOT + '/' + str(self.data)
+        with open(path) as f:
+            content = f.readlines()
+            time = []
+            filter_data = {}
+            for line in content:
+                data = [datum.strip() for datum in line.split(',')]
+                filter_data.setdefault(data[1], ([],[],[]))
+                time = Time(float(data[0]), format='mjd')
+                time.format = 'datetime'
+                filter_data[data[1]][0].append(time.value)
+                filter_data[data[1]][1].append(float(data[2]))
+                filter_data[data[1]][2].append(float(data[3]) if not error_limit or float(data[3]) <= error_limit else 0)
+            plot_data = [go.Scatter(x=filter_values[0], y=filter_values[1], mode='markers', name=filter_name, error_y=dict(type='data', array=filter_values[2], visible=True)) for filter_name, filter_values in filter_data.items()]
+            layout = go.Layout(yaxis=dict(autorange='reversed'))
+            return offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
+
     def get_png_data(self):
         path = settings.MEDIA_ROOT + '/' + str(self.data)
         image_data = fits.getdata(path, 0)
         fig = plt.figure()
         plt.imshow(image_data)
         plt.axis('off')
+        ax = plt.gca()
+        ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
+        ax.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
         buffer = BytesIO()
-        plt.savefig(buffer, format='png', bbox_inches='tight', pad_inches=0)
+        plt.savefig(buffer, format='png', bbox_inches='tight', transparent=True, pad_inches=0)
         buffer.seek(0)
         plt.close(fig)
         return b64encode(buffer.read()).decode('utf-8')

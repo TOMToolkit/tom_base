@@ -106,7 +106,7 @@ class TargetDetail(DetailView):
             airmass_limit = None
         visibility_data = self.object.get_visibility(start_time, end_time, 10, airmass_limit)
         plot_data = [go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()]
-        layout = go.Layout(yaxis = dict(autorange='reversed'))
+        layout = go.Layout(yaxis=dict(autorange='reversed'))
         return offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
 
     def get_context_data(self, *args, **kwargs):
@@ -121,6 +121,7 @@ class TargetDetail(DetailView):
             })
             if context['form'].is_valid():
                 context['visibility_graph'] = self.get_airmass_plot()
+            context['light_curve'] = self.object.light_curve().get_light_curve()
         return context
 
     def get(self, request, *args, **kwargs):

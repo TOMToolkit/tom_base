@@ -1,6 +1,9 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load bootstrap4 static %}
 {% block title %} Data Product List {% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_observations/css/main.css' %}">
+{% endblock %}
 {% block content %}
 <div class="row">
   <div class="col-md-9">
@@ -24,7 +27,7 @@
             {% endfor %}
           </td>
           <td><a href="{{ product.data.url }}" class="btn btn-success">⬇</a></td>
-          <td><img src="data:image/png;base64, {{ product.get_png_data }}"></td>
+          <td><img src="data:image/png;base64, {{ product.get_png_data }}" class="thumbnail"></td>
         </tr>
         {% empty %}
         <tr>

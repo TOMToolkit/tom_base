@@ -1,12 +1,15 @@
 {% extends 'tom_common/base.html' %}
-{% load comments bootstrap4 tom_common_extras %}
+{% load comments bootstrap4 tom_common_extras static %}
 {% block title %}Target {{ object.name }}{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+{% endblock %}
 {% block content %}
 <div class="row">
   <div class="col-md-4">
     <div id="target-info">
       <h3>{{ object.identifier }}</h3>
-      <img src="data:image/png;base64, {{ object.dataproduct_set.latest.get_png_data }}">
+      <img src="data:image/png;base64, {{ object.featured_image.get_png_data }}" id="featured-image">
       <a href="{% url 'tom_targets:update' pk=object.id %}" title="Update target" class="btn  btn-primary">Update Target</a>
       <a href="{% url 'tom_targets:delete' pk=object.id %}" title="Delete target" class="btn  btn-warning">Delete Target</a>
       <dl class="row">
@@ -23,40 +26,8 @@
       </dl>
     </div>
   </div>
-  <!-- <div class="col-md-8">
-    <h4>Observe</h4>
-    {% for facility in facilities%}
-    <a href="{% url 'tom_observations:create' facility=facility %}?target_id={{ object.id }}" class="btbtn-outline-primary">{{ facility }}</a>
-    {% endfor %}
-    <hr/>
-    <h4>Plan</h4>
-    <form action="{% url 'targets:detail' target.id %}" method="GET" class="form">
-      {% csrf_token %}
-      {% bootstrap_form form %}
-      {% buttons %}
-      <input type="submit" class="btn btn-primary" value="Plan">
-      {% endbuttons %}
-    </form>
-    {{ visibility_graph|safe }}
-    <hr/>
-    <h4>Observations</h4>
-    <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Updatstatusofobservations   for target" class="btn btn-primary">Update Observations Status</a>
-    <table class="table table-striped">
-      <thead><tr><th>Facility</th><th>Created</th><th>Status</th><th>Saveddata</th><th>View</th></tr></td>
-      <tbody>
-      {% for observation in object.observationrecord_set.all %}
-        <tr>
-          <td>{{ observation.facility }}</td>
-          <td>{{ observation.created }}</td>
-          <td>{{ observation.status }}</td>
-          <td>{{ observation.dataproduct_set.count }}</td>
-          <td><a href="{% url 'tom_observations:detail' observation.id %}">View</a></td>
-        </tr>
-      {% endfor %}
-    </table>
-  </div> -->
   <div class="col-md-8">
-    <ul class="nav nav-tabs" role="tablist">
+    <ul class="nav nav-tabs" id="tabs">
       <li class="nav-item">
         <span class="nav-link active" data-target="#observe" data-toggle="tab">Observe</span>
       </li>
@@ -104,6 +75,9 @@
         </table>
       </div>
       <div class="tab-pane" id="data-products">
+        <div class="light-curve">
+          {{ object.light_curve.get_light_curve|safe }}
+        </div>
         <h4>Data</h4>
         <table class="table table-striped">
           <thead><tr><th>Created</th><th>Filename</th><th>Tag</th></tr></thead>
