@@ -108,7 +108,11 @@ def proposal_choices():
         headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
     )
     response.raise_for_status()
-    return [(p['id'], p['title']) for p in response.json()['proposals']]
+    choices = []
+    for p in response.json()['proposals']:
+        if p['current']:
+            choices.append((p['id'], '{} ({})'.format(p['title'], p['id'])))
+    return choices
 
 
 class LCOObservationForm(GenericObservationForm):
