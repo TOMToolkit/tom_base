@@ -13,6 +13,7 @@ from django.contrib import messages
 
 from .models import ObservationRecord, DataProduct, DataProductGroup
 from .forms import ManualObservationForm, AddProductToGroupForm, DataProductUploadForm
+from tom_common.exceptions import ImproperCredentialsException
 from tom_targets.models import Target
 
 
