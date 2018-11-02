@@ -3,13 +3,13 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django import forms
 from dateutil.parser import parse
-from datetime import datetime
-from crispy_forms.layout import Layout, Div, Fieldset, HTML
+from crispy_forms.layout import Layout, Div
 from django.core.files.base import ContentFile
 
 import ephem
 
 from tom_observations.facility import GenericObservationForm
+from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.models import DataProduct, ObservationRecord
 from tom_targets.models import Target
 
@@ -62,6 +62,15 @@ SITES = {
     }
 }
 
+
+def make_request(*args, **kwargs):
+    response = requests.request(*args, **kwargs)
+    if 400 <= response.status_code < 500:
+        raise ImproperCredentialsException('LCO')
+    response.raise_for_status()
+    return response
+
+
 def flatten_error_dict(form, error_dict):
     non_field_errors = []
     for k, v in error_dict.items():
@@ -86,11 +95,11 @@ def flatten_error_dict(form, error_dict):
 
 
 def get_instruments():
-    response = requests.get(
+    response = make_request(
+        'GET',
         PORTAL_URL + '/api/instruments/',
         headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
     )
-    response.raise_for_status()
     return response.json()
 
 
@@ -103,11 +112,11 @@ def filter_choices():
 
 
 def proposal_choices():
-    response = requests.get(
+    response = make_request(
+        'GET',
         PORTAL_URL + '/api/profile/',
         headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
     )
-    response.raise_for_status()
     return [(p['id'], p['title']) for p in response.json()['proposals']]
 
 
@@ -222,22 +231,22 @@ class LCOFacility:
 
     @classmethod
     def submit_observation(clz, observation_payload):
-        response = requests.post(
+        response = make_request(
+            'POST',
             PORTAL_URL + '/api/userrequests/',
             json=observation_payload,
             headers=clz._portal_headers()
         )
-        response.raise_for_status()
         return [r['id'] for r in response.json()['requests']]
 
     @classmethod
     def validate_observation(clz, observation_payload):
-        response = requests.post(
+        response = make_request(
+            'POST',
             PORTAL_URL + '/api/userrequests/validate/',
             json=observation_payload,
             headers=clz._portal_headers()
         )
-        response.raise_for_status()
         return response.json()['errors']
 
     @classmethod
@@ -262,11 +271,11 @@ class LCOFacility:
 
     @classmethod
     def get_observation_status(clz, observation_id):
-        response = requests.get(
+        response = make_request(
+            'GET',
             PORTAL_URL + '/api/requests/{0}'.format(observation_id),
             headers=clz._portal_headers()
         )
-        response.raise_for_status()
         return response.json()['state']
 
     @classmethod
@@ -304,7 +313,8 @@ class LCOFacility:
         if request and request.session.get('LCO_ARCHIVE_TOKEN'):
             archive_token = request.session['LCO_ARCHIVE_TOKEN']
         else:
-            response = requests.get(
+            response = make_request(
+                'GET',
                 PORTAL_URL + '/api/profile/',
                 headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
             )
@@ -362,18 +372,18 @@ class LCOFacility:
         # todo save this key somewhere
         frames = []
         if product_id:
-            response = requests.get(
+            response = make_request(
+                'GET',
                 'https://archive-api.lco.global/frames/{0}/'.format(product_id),
                 headers=clz._archive_headers(request)
             )
-            response.raise_for_status()
             frames = [response.json()]
         else:
-            response = requests.get(
+            response = make_request(
+                'GET',
                 'https://archive-api.lco.global/frames/?REQNUM={0}'.format(observation_id),
                 headers=clz._archive_headers(request)
             )
-            response.raise_for_status()
             frames = response.json()['results']
 
         return frames

@@ -61,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'tom_common.middleware.ExternalServiceMiddleware',
 ]
 
 ROOT_URLCONF = 'tom_common.urls'
