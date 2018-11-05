@@ -44,7 +44,7 @@ setup(
         'numpy'
     ],
     extras_require={
-        'test': ['factory_boy', 'numpy', 'rise-set']
+        'test': ['factory_boy', 'rise-set']
     },
     include_package_data=True,
 )
