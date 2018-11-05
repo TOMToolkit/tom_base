@@ -61,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'tom_common.middleware.ExternalServiceMiddleware',
 ]
 
 ROOT_URLCONF = 'tom_common.urls'
@@ -165,6 +166,11 @@ FACILITIES = {
         'portal_url': 'https://observe.lco.global',
         'api_key': '',
     }
+}
+
+HOOKS = {
+    'target_post_save': 'tom_common.hooks.target_post_save',
+    'observation_change_state': 'tom_common.hooks.observation_change_state'
 }
 
 try:
