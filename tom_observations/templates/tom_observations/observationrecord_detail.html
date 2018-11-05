@@ -1,6 +1,9 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load bootstrap4 static %}
 {% block title %} Observation record: {{ object.id }} {% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_observations/css/main.css' %}">
+{% endblock %}
 {% block content %}
 <div class="row">
   <div class="col-md-6">
@@ -51,8 +54,8 @@
       {% for product in data_products.saved %}
       <tr>
         <td>{{ product.id }}</td>
-        <td>{{ product.data.name }}</td>
-        <td>{{ product.tag }}</td>
+        <td>{{ product.get_file_name }}</td>
+        <td>{{ product.get_tag_display }}</td>
         <td>{{ product.created }}</td>
         <td><a href="{{ product.data.url }}">Download</a></td>
         <td><div><a href="{% url 'tom_observations:data-delete' product.id %}" class="btn btn-danger">Delete</a></div></td>

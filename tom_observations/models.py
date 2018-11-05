@@ -2,6 +2,7 @@ from django.db import models
 from io import BytesIO
 from base64 import b64encode
 import json
+import re
 from django.conf import settings
 
 import matplotlib
@@ -13,6 +14,7 @@ from astropy.time import Time
 import plotly
 from plotly import offline, io
 import plotly.graph_objs as go
+import numpy as np
 
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class
@@ -20,7 +22,6 @@ from tom_observations.facility import get_service_class
 LIGHT_CURVE = ('light_curve', 'Light Curve')
 FITS_FILE = ('fits_file', 'Fits File')
 IMAGE_FILE = ('image_file', 'Image File')
-DATA_PRODUCT_TAGS = [LIGHT_CURVE, FITS_FILE, IMAGE_FILE]
 
 class ObservationRecord(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
@@ -68,6 +69,12 @@ class DataProductGroup(models.Model):
 
 
 class DataProduct(models.Model):
+    DATA_PRODUCT_TAGS = (
+        LIGHT_CURVE,
+        FITS_FILE,
+        IMAGE_FILE
+    )
+
     product_id = models.CharField(max_length=2000, unique=True, null=True)
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     observation_record = models.ForeignKey(ObservationRecord, null=True, default=None, on_delete=models.CASCADE)
@@ -76,7 +83,7 @@ class DataProduct(models.Model):
     group = models.ManyToManyField(DataProductGroup)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    tag = models.TextField(blank=True, default='')
+    tag = models.TextField(blank=True, default='', choices=DATA_PRODUCT_TAGS)
     featured = models.BooleanField(default=False)
 
     class Meta:
@@ -86,6 +93,14 @@ class DataProduct(models.Model):
     def __str__(self):
         return self.data.name
 
+    def get_file_name(self):
+        return self.data.name.split('/')[-1]
+
+    def get_file_extension(self):
+        name = self.data.name.partition('.')
+        extension = name[2] if len(name)==3 else ''
+        return extension
+
     def get_light_curve(self, error_limit=None):
         path = settings.MEDIA_ROOT + '/' + str(self.data)
         with open(path) as f:
@@ -93,7 +108,7 @@ class DataProduct(models.Model):
             time = []
             filter_data = {}
             for line in content:
-                data = [datum.strip() for datum in line.split(',')]
+                data = [datum.strip() for datum in re.split('[\s,|;]', line)]
                 filter_data.setdefault(data[1], ([],[],[]))
                 time = Time(float(data[0]), format='mjd')
                 time.format = 'datetime'
@@ -104,11 +119,16 @@ class DataProduct(models.Model):
             layout = go.Layout(yaxis=dict(autorange='reversed'))
             return offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
 
-    def get_png_data(self):
+    def get_png_data(self, min_scale=40, max_scale=99):
         path = settings.MEDIA_ROOT + '/' + str(self.data)
         image_data = fits.getdata(path, 0)
         fig = plt.figure()
-        plt.imshow(image_data)
+        vmin = 0
+        vmax = 0
+        if image_data.size > 0:
+            vmin = np.percentile(image_data, min_scale)
+            vmax = np.percentile(image_data, max_scale)
+        plt.imshow(image_data, vmin=vmin, vmax=vmax)
         plt.axis('off')
         ax = plt.gca()
         ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())

@@ -20,3 +20,7 @@ dl {
   height: 600px;
   width: inherit;
 }
+
+span.featured {
+  pointer-events: none;
+}

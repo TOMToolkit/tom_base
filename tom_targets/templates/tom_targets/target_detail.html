@@ -80,13 +80,18 @@
         </div>
         <h4>Data</h4>
         <table class="table table-striped">
-          <thead><tr><th>Created</th><th>Filename</th><th>Tag</th></tr></thead>
+          <thead><tr><th></th><th>Created</th><th>Filename</th><th>Tag</th></tr></thead>
           <tbody>
           {% for product in object.dataproduct_set.all %}
             <tr>
+              {% if not product.featured %}
+              <td><a href="{% url 'tom_observations:data-feature' pk=product.id %}?target_id={{ object.id }}" title="Make Featured Image" class="btn btn-primary">Feature</a></td>
+              {% else %}
+              <td><span class="btn btn-secondary active featured">Featured</span></td>
+              {% endif %}
               <td>{{ product.created }}</td>
-              <td>{{ product.data.name }}</td>
-              <td>{{ product.tag }}</td>
+              <td>{{ product.get_file_name }}</td>
+              <td>{{ product.get_tag_display }}</td>
             </tr>
           {% endfor %}
         </table>

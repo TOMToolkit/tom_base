@@ -121,7 +121,6 @@ class TargetDetail(DetailView):
             })
             if context['form'].is_valid():
                 context['visibility_graph'] = self.get_airmass_plot()
-            context['light_curve'] = self.object.light_curve().get_light_curve()
         return context
 
     def get(self, request, *args, **kwargs):

@@ -18,7 +18,7 @@
         {% for product in object_list %}
         <tr>
           <td>{{ product.created }}</td>
-          <td>{{ product.data.name }}</th>
+          <td>{{ product.get_file_name }}</th>
           <td><a href="{% url 'tom_targets:detail' product.target.id %}">{{ product.target.identifier }}</a></td>
           <td><a href="{% url 'tom_observations:detail' product.observation_record.id %}">{{ product.observation_record }}</a></td>
           <td>
@@ -27,7 +27,11 @@
             {% endfor %}
           </td>
           <td><a href="{{ product.data.url }}" class="btn btn-success">⬇</a></td>
+          {% if product.get_file_extension == 'fits' or product.get_file_extension == 'fits.fz' %}
           <td><img src="data:image/png;base64, {{ product.get_png_data }}" class="thumbnail"></td>
+          {% else %}
+          <td></td>
+          {% endif %}
         </tr>
         {% empty %}
         <tr>

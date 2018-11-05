@@ -1,3 +1,5 @@
+from io import StringIO
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView, DeleteView, CreateView
 from django.views.generic.list import ListView
@@ -192,6 +194,21 @@ class DataProductListView(FilterView):
         context = super().get_context_data(*args, **kwargs)
         context['product_groups'] = DataProductGroup.objects.all()
         return context
+
+
+class DataProductFeatureView(View):
+    def get(self, request, *args, **kwargs):
+        product_id = kwargs.get('pk', None)
+        product = DataProduct.objects.get(pk=product_id)
+        try:
+            current_featured = DataProduct.objects.get(featured=True, tag=product.tag)
+            current_featured.featured = False
+            current_featured.save()
+        except DataProduct.DoesNotExist:
+            pass
+        product.featured = True
+        product.save()
+        return redirect(reverse('tom_targets:detail', kwargs={'pk': request.GET.get('target_id')}))
 
 
 class DataProductGroupDetailView(DetailView):

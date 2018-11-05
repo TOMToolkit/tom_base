@@ -39,7 +39,9 @@ setup(
         'astroquery',
         'astropy',
         'plotly',
-        'pyephem'
+        'pyephem',
+        'matplotlib',
+        'numpy'
     ],
     extras_require={
         'test': ['factory_boy', 'numpy', 'rise-set']

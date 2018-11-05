@@ -1,7 +1,7 @@
 from django import forms
 
 from tom_observations.facility import get_service_classes
-from tom_observations.models import DataProductGroup, DataProduct, ObservationRecord, DATA_PRODUCT_TAGS
+from tom_observations.models import DataProductGroup, DataProduct, ObservationRecord
 
 EMPTY_CHOICE = [('', '------')]
 
@@ -24,4 +24,4 @@ class AddProductToGroupForm(forms.Form):
 class DataProductUploadForm(forms.Form):
     observation_record = forms.ModelChoiceField(ObservationRecord.objects.all(), widget=forms.HiddenInput())
     files = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}))
-    tag = forms.ChoiceField(choices=EMPTY_CHOICE + DATA_PRODUCT_TAGS)
+    tag = forms.ChoiceField(choices=DataProduct.DATA_PRODUCT_TAGS)
