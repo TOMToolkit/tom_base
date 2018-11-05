@@ -109,8 +109,6 @@ class DataProduct(models.Model):
         return os.path.basename(self.data.name)
 
     def get_file_extension(self):
-        name = self.data.name.partition('.')
-        extension = name[2] if len(name)==3 else ''
         return os.path.splitext(self.data.name)[1]
 
     def get_light_curve(self, error_limit=None):
@@ -140,13 +138,12 @@ class DataProduct(models.Model):
         if image_data.size > 0:
             vmin = np.percentile(image_data, min_scale)
             vmax = np.percentile(image_data, max_scale)
-        plt.imshow(image_data, vmin=vmin, vmax=vmax)
         plt.axis('off')
         ax = plt.gca()
         ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
         ax.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
         buffer = BytesIO()
-        plt.savefig(buffer, format='png', bbox_inches='tight', transparent=True, pad_inches=0)
+        plt.imsave(buffer, image_data, format='png', vmin=vmin, vmax=vmax)
         buffer.seek(0)
         plt.close(fig)
         return b64encode(buffer.read()).decode('utf-8')
