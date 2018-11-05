@@ -58,7 +58,7 @@
         <td>{{ product.get_tag_display }}</td>
         <td>{{ product.created }}</td>
         <td><a href="{{ product.data.url }}">Download</a></td>
-        <td><div><a href="{% url 'tom_observations:data-delete' product.id %}" class="btn btn-danger">Delete</a></div></td>
+        <td><a href="{% url 'tom_observations:data-delete' product.id %}" class="btn btn-danger">Delete</a></td>
       </tr>
       {% endfor %}
     </tbody>
