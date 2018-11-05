@@ -37,7 +37,7 @@
             {% endfor %}
           </td>
           <td><a href="{{ product.data.url }}" class="btn btn-success">⬇</a></td>
-          {% if product.get_file_extension == 'fits' or product.get_file_extension == 'fits.fz' %}
+          {% if product.get_file_extension == '.fits' %}
           <td><img src="data:image/png;base64, {{ product.get_png_data }}" class="thumbnail"></td>
           {% else %}
           <td></td>

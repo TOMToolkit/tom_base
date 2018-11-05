@@ -130,7 +130,7 @@ class ObservationRecordDetailView(DetailView):
         newest_image = None
         light_curve = None
         for data_product in context['data_products']['saved']:
-            newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and data_product.data.name.split('.')[-1] == 'fits' else newest_image
+            newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and data_product.get_file_extension() == '.fits' else newest_image
         if newest_image:
             context['image'] = newest_image.get_png_data()
         return context

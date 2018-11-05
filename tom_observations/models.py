@@ -3,6 +3,7 @@ from io import BytesIO
 from base64 import b64encode
 import json
 import re
+import os
 from django.conf import settings
 
 import matplotlib
@@ -105,12 +106,12 @@ class DataProduct(models.Model):
         return self.data.name
 
     def get_file_name(self):
-        return self.data.name.split('/')[-1]
+        return os.path.basename(self.data.name)
 
     def get_file_extension(self):
         name = self.data.name.partition('.')
         extension = name[2] if len(name)==3 else ''
-        return extension
+        return os.path.splitext(self.data.name)[1]
 
     def get_light_curve(self, error_limit=None):
         path = settings.MEDIA_ROOT + '/' + str(self.data)
