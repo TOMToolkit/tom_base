@@ -116,7 +116,7 @@ class DataProduct(models.Model):
                 filter_data[data[1]][1].append(float(data[2]))
                 filter_data[data[1]][2].append(float(data[3]) if not error_limit or float(data[3]) <= error_limit else 0)
             plot_data = [go.Scatter(x=filter_values[0], y=filter_values[1], mode='markers', name=filter_name, error_y=dict(type='data', array=filter_values[2], visible=True)) for filter_name, filter_values in filter_data.items()]
-            layout = go.Layout(yaxis=dict(autorange='reversed'))
+            layout = go.Layout(yaxis=dict(autorange='reversed'), height=600, width=700)
             return offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
 
     def get_png_data(self, min_scale=40, max_scale=99):

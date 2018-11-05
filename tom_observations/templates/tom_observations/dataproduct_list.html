@@ -6,14 +6,24 @@
 {% endblock %}
 {% block content %}
 <div class="row">
-  <div class="col-md-9">
+  <div class="col-md-10">
     <div class="row">
       <div class="col-md-12">
         {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
       </div>
     </div>
     <table class="table">
-      <thead><tr><th>Downloaded</th><th>Filename</th><th>Target</th><th>Observation</th><th>Groups</th><th>Data</th><th>Thumbnail</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Downloaded</th>
+          <th>Filename</th>
+          <th>Target</th>
+          <th>Observation</th>
+          <th>Groups</th>
+          <th>Data</th>
+          <th>Thumbnail</th>
+        </tr>
+      </thead>
       <tbody>
         {% for product in object_list %}
         <tr>
@@ -45,7 +55,7 @@
     </table>
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
   </div>
-  <div class="col-md-3">
+  <div class="col-md-2">
     <form action="" method="get" class="form">
       {% bootstrap_form filter.form %}
       {% buttons %}
