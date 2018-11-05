@@ -14,7 +14,6 @@ from datetime import datetime, timezone, timedelta
 
 from tom_observations import facility
 from tom_observations.utils import get_rise_set, get_last_rise_set_pair
-from tom_observations.models import FITS_FILE, LIGHT_CURVE
 
 
 GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'type']
@@ -81,10 +80,10 @@ class Target(models.Model):
         return reverse('targets:detail', kwargs={'pk': self.id})
 
     def featured_image(self):
-        return self.dataproduct_set.get(tag=FITS_FILE[0], featured=True)
+        return self.dataproduct_set.get(tag='fits_file', featured=True)
 
     def light_curve(self):
-        return self.dataproduct_set.filter(tag=LIGHT_CURVE[0]).latest()
+        return self.dataproduct_set.filter(tag='light_curve').latest()
 
     def as_dict(self):
         if self.type == self.SIDEREAL:
