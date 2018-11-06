@@ -159,7 +159,7 @@ class MARSBroker(object):
     @classmethod
     def to_target(clazz, alert):
         alert_copy = alert.copy()
-        target = Target(
+        target = Target.objects.create(
             identifier=alert_copy['lco_id'],
             name=alert_copy['objectId'],
             type='SIDEREAL',
@@ -168,12 +168,11 @@ class MARSBroker(object):
             galactic_lng=alert_copy['candidate'].pop('l'),
             galactic_lat=alert_copy['candidate'].pop('b'),
         )
-        target_extras = []
         for k, v in alert_copy['candidate'].items():
             if v is not None:
-                target_extras.append(TargetExtra(key=k, value=v))
+                TargetExtra.objects.create(target=target, key=k, value=v)
 
-        return target, target_extras
+        return target
 
     @classmethod
     def to_generic_alert(clazz, alert):
