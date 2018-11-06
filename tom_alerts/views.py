@@ -111,6 +111,10 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
         alert_id = self.request.POST['alert_id']
         broker_class = get_service_class(broker_name)
         alert = broker_class.fetch_alert(alert_id)
-        target = broker_class.to_target(alert)
+        target, target_extras = broker_class.to_target(alert)
         target.save()
+        for target_extra in target_extras:
+            target_extra.target = target
+            target_extra.save()
+
         return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
