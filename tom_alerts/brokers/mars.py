@@ -14,6 +14,7 @@ MARS_URL = 'https://mars.lco.global'
 class MARSQueryForm(GenericQueryForm):
     time__gt = forms.CharField(required=False, label='Time Lower', widget=forms.TextInput(attrs={'type': 'date'}))
     time__lt = forms.CharField(required=False, label='Time Upper', widget=forms.TextInput(attrs={'type': 'date'}))
+    since__time = forms.IntegerField(required=False, label='Since Time', help_text='Alerts younger than this number of seconds')
     jd__gt = forms.FloatField(required=False, label='JD Lower')
     jd__lt = forms.FloatField(required=False, label='JD Upper')
     filter = forms.CharField(required=False)
@@ -54,6 +55,7 @@ class MARSQueryForm(GenericQueryForm):
             self.common_layout,
             Fieldset(
                 'Time based filters',
+                'since__time',
                 Div(
                     Div(
                         'time__gt',
