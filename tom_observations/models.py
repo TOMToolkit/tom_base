@@ -85,6 +85,11 @@ class DataProduct(models.Model):
         IMAGE_FILE
     )
 
+    FITS_EXTENSIONS = {
+        '.fits': 'PRIMARY',
+        '.fz': 'SCI'
+    }
+
     product_id = models.CharField(max_length=2000, unique=True, null=True)
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     observation_record = models.ForeignKey(ObservationRecord, null=True, default=None, on_delete=models.CASCADE)
@@ -115,7 +120,7 @@ class DataProduct(models.Model):
 
     def get_png_data(self, min_scale=40, max_scale=99):
         path = settings.MEDIA_ROOT + '/' + str(self.data)
-        image_data = fits.getdata(path, 0)
+        image_data = fits.getdata(path, extname=self.FITS_EXTENSIONS[self.get_file_extension()])
         fig = plt.figure()
         vmin = 0
         vmax = 0

@@ -37,7 +37,7 @@
             {% endfor %}
           </td>
           <td><a href="{{ product.data.url }}" class="btn btn-success">⬇</a></td>
-          {% if product.get_file_extension == '.fits' %}
+          {% if product.get_file_extension == '.fz' or product.get_file_extension == '.fits' %}
           {% cache 600 thumbnail product.id %}
           <td><img src="data:image/png;base64, {{ product.get_png_data }}" class="thumbnail"></td>
           {% endcache %}
