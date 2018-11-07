@@ -12,14 +12,12 @@ import matplotlib.pyplot as plt
 from matplotlib import figure
 from astropy.io import fits
 from astropy.time import Time
-import plotly
-from plotly import offline, io
-import plotly.graph_objs as go
 import numpy as np
 
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class
 from tom_common.hooks import run_hook
+from tom_common import utils as common_utils
 
 LIGHT_CURVE = ('light_curve', 'Light Curve')
 FITS_FILE = ('fits_file', 'Fits File')
@@ -112,22 +110,8 @@ class DataProduct(models.Model):
         return os.path.splitext(self.data.name)[1]
 
     def get_light_curve(self, error_limit=None):
-        path = settings.MEDIA_ROOT + '/' + str(self.data)
-        with open(path) as f:
-            content = f.readlines()
-            time = []
-            filter_data = {}
-            for line in content:
-                data = [datum.strip() for datum in re.split('[\s,|;]', line)]
-                filter_data.setdefault(data[1], ([],[],[]))
-                time = Time(float(data[0]), format='mjd')
-                time.format = 'datetime'
-                filter_data[data[1]][0].append(time.value)
-                filter_data[data[1]][1].append(float(data[2]))
-                filter_data[data[1]][2].append(float(data[3]) if not error_limit or float(data[3]) <= error_limit else 0)
-            plot_data = [go.Scatter(x=filter_values[0], y=filter_values[1], mode='markers', name=filter_name, error_y=dict(type='data', array=filter_values[2], visible=True)) for filter_name, filter_values in filter_data.items()]
-            layout = go.Layout(yaxis=dict(autorange='reversed'), height=600, width=700)
-            return offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
+        file_path = settings.MEDIA_ROOT + '/' + str(self.data)
+        return common_utils.get_light_curve(file_path)
 
     def get_png_data(self, min_scale=40, max_scale=99):
         path = settings.MEDIA_ROOT + '/' + str(self.data)

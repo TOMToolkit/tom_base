@@ -1,7 +1,7 @@
 from io import StringIO
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import FormView, DeleteView, CreateView
+from django.views.generic.edit import FormView, DeleteView, CreateView, UpdateView
 from django.views.generic.list import ListView
 from django.views.generic import View
 from django_filters.views import FilterView
@@ -11,6 +11,7 @@ from django.shortcuts import redirect
 from django.core.management import call_command
 from django.conf import settings
 from django.contrib import messages
+from django.core.cache import cache
 
 from .models import ObservationRecord, DataProduct, DataProductGroup
 from .forms import ManualObservationForm, AddProductToGroupForm, DataProductUploadForm
@@ -149,6 +150,16 @@ class DataProductSaveView(LoginRequiredMixin, View):
                 products = service_class.save_data_products(observation_record, product, request=self.request)
                 messages.success(request, 'Successfully saved: {0}'.format('\n'.join([str(p) for p in products])))
         return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
+
+
+class DataProductTagView(LoginRequiredMixin, UpdateView):
+    model = DataProduct
+    fields = ['tag']
+    template_name = 'tom_observations/dataproduct_tag.html'
+
+    def get_success_url(self):
+        observation_id = self.object.observation_record.id
+        return reverse('tom_observations:detail', kwargs={'pk': observation_id})
 
 
 class ManualDataProductUploadView(LoginRequiredMixin, FormView):

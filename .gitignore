@@ -5,6 +5,9 @@ scratch/
 media/
 data/
 
+# Cache
+tmp/
+
 # Development database
 *.sqlite3
 
