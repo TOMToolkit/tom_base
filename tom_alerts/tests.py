@@ -162,7 +162,6 @@ class TestBrokerViews(TestCase):
             parameters='{"name": "Hoth"}',
         )
         response = self.client.get(reverse('tom_alerts:run', kwargs={'pk': broker_query.id}))
-        self.assertContains(response, 'Hoth')
         self.assertContains(response,  '66')
 
     def test_update_query(self):
