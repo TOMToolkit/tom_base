@@ -11,7 +11,7 @@
       <h3>{{ object.identifier }}</h3>
       {% if object.featured_image %}
       {% cache None featured_image object.id %}
-      <img src="data:image/png;base64, {{ object.featured_image.get_png_data }}" id="featured-image">
+      <img src="data:image/jpeg;base64, {{ object.featured_image.get_image_data }}" id="featured-image">
       {% endcache %}
       {% endif %}
       <a href="{% url 'tom_targets:update' pk=object.id %}" title="Update target" class="btn  btn-primary">Update Target</a>

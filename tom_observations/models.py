@@ -118,9 +118,10 @@ class DataProduct(models.Model):
         file_path = settings.MEDIA_ROOT + '/' + str(self.data)
         return common_utils.get_light_curve(file_path)
 
-    def get_png_data(self, min_scale=40, max_scale=99):
+    def get_image_data(self, min_scale=40, max_scale=99):
         path = settings.MEDIA_ROOT + '/' + str(self.data)
         image_data = fits.getdata(path, extname=self.FITS_EXTENSIONS[self.get_file_extension()])
+        image_data = image_data[::6, ::6]
         fig = plt.figure()
         vmin = 0
         vmax = 0
@@ -132,7 +133,7 @@ class DataProduct(models.Model):
         ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
         ax.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
         buffer = BytesIO()
-        plt.imsave(buffer, image_data, format='png', vmin=vmin, vmax=vmax)
+        plt.imsave(buffer, image_data, format='jpeg', vmin=vmin, vmax=vmax)
         buffer.seek(0)
         plt.close(fig)
         return b64encode(buffer.read()).decode('utf-8')
