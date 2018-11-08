@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load comments bootstrap4 tom_common_extras static %}
+{% load comments bootstrap4 tom_common_extras static cache %}
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
@@ -10,7 +10,9 @@
     <div id="target-info">
       <h3>{{ object.identifier }}</h3>
       {% if object.featured_image %}
+      {% cache None featured_image object.id %}
       <img src="data:image/png;base64, {{ object.featured_image.get_png_data }}" id="featured-image">
+      {% endcache %}
       {% endif %}
       <a href="{% url 'tom_targets:update' pk=object.id %}" title="Update target" class="btn  btn-primary">Update Target</a>
       <a href="{% url 'tom_targets:delete' pk=object.id %}" title="Delete target" class="btn  btn-warning">Delete Target</a>

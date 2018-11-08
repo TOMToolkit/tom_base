@@ -12,6 +12,7 @@ from django.core.management import call_command
 from django.conf import settings
 from django.contrib import messages
 from django.core.cache import cache
+from django.core.cache.utils import make_template_fragment_key
 
 from .models import ObservationRecord, DataProduct, DataProductGroup
 from .forms import ManualObservationForm, AddProductToGroupForm, DataProductUploadForm
@@ -215,6 +216,8 @@ class DataProductFeatureView(View):
             current_featured = DataProduct.objects.get(featured=True, tag=product.tag)
             current_featured.featured = False
             current_featured.save()
+            featured_image_cache_key = make_template_fragment_key('featured_image', str(current_featured.target.id))
+            cache.delete(featured_image_cache_key)
         except DataProduct.DoesNotExist:
             pass
         product.featured = True
