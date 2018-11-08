@@ -20,7 +20,9 @@
     </form>
   </div>
   <div class="col-md-6">
+    {% if image %}
     <img src="data:image/png;base64, {{ image }}" class="display">
+    {% endif %}
   </div>
 </div>
 <h4>Saved Data Products</h4>

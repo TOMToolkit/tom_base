@@ -9,7 +9,9 @@
   <div class="col-md-4">
     <div id="target-info">
       <h3>{{ object.identifier }}</h3>
+      {% if object.featured_image %}
       <img src="data:image/png;base64, {{ object.featured_image.get_png_data }}" id="featured-image">
+      {% endif %}
       <a href="{% url 'tom_targets:update' pk=object.id %}" title="Update target" class="btn  btn-primary">Update Target</a>
       <a href="{% url 'tom_targets:delete' pk=object.id %}" title="Delete target" class="btn  btn-warning">Delete Target</a>
       <dl class="row">
@@ -75,9 +77,11 @@
         </table>
       </div>
       <div class="tab-pane" id="data-products">
+        {% if object.light_curve %}
         <div class="light-curve">
           {{ object.light_curve.get_light_curve|safe }}
         </div>
+        {% endif %}
         <h4>Data</h4>
         <table class="table table-striped">
           <thead><tr><th></th><th>Created</th><th>Filename</th><th>Tag</th></tr></thead>
@@ -91,7 +95,7 @@
               {% endif %}
               <td>{{ product.created }}</td>
               <td>{{ product.get_file_name }}</td>
-              <td>{{ product.get_tag_display }}</td>
+              <td>{{ product.get_tag_display }} <a href="{% url 'tom_observations:data-tag' product.id %}" class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
             </tr>
           {% endfor %}
         </table>
