@@ -15,11 +15,11 @@
     <table class="table">
       <thead>
         <tr>
-          <th>Downloaded</th>
           <th>Filename</th>
           <th>Target</th>
           <th>Observation</th>
           <th>Groups</th>
+          <th>Tag</th>
           <th>Data</th>
           <th>Thumbnail</th>
         </tr>
@@ -27,7 +27,6 @@
       <tbody>
         {% for product in object_list %}
         <tr>
-          <td>{{ product.created }}</td>
           <td>{{ product.get_file_name }}</th>
           <td><a href="{% url 'tom_targets:detail' product.target.id %}">{{ product.target.identifier }}</a></td>
           <td><a href="{% url 'tom_observations:detail' product.observation_record.id %}">{{ product.observation_record }}</a></td>
@@ -36,9 +35,10 @@
             <a href="{% url 'tom_observations:data-group-detail' group.id %}">{{ group.name }}</a>
             {% endfor %}
           </td>
+          <td>{{ product.get_tag_display }} <a href="{% url 'tom_observations:data-tag' product.id %}" class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
           <td><a href="{{ product.data.url }}" class="btn btn-success">⬇</a></td>
           {% if product.get_file_extension == '.fz' or product.get_file_extension == '.fits' %}
-          {% cache 600 thumbnail product.id %}
+          {% cache None thumbnail product.id %}
           <td><img src="data:image/png;base64, {{ product.get_png_data }}" class="thumbnail"></td>
           {% endcache %}
           {% else %}
