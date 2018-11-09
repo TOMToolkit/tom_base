@@ -2,17 +2,14 @@ from django.db import models
 from io import BytesIO
 from base64 import b64encode
 import json
-import re
 import os
 from django.conf import settings
 
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('Agg') # noqa
 import matplotlib.pyplot as plt
-from matplotlib import figure
 from astropy.io import fits
-from astropy.time import Time
-import numpy as np
+from astropy.visualization import ZScaleInterval
 
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class
@@ -122,18 +119,15 @@ class DataProduct(models.Model):
         path = settings.MEDIA_ROOT + '/' + str(self.data)
         image_data = fits.getdata(path, extname=self.FITS_EXTENSIONS[self.get_file_extension()])
         image_data = image_data[::6, ::6]
+        interval = ZScaleInterval(nsamples=2000, contrast=0.1)
+        image_data = interval(image_data)
         fig = plt.figure()
-        vmin = 0
-        vmax = 0
-        if image_data.size > 0:
-            vmin = np.percentile(image_data, min_scale)
-            vmax = np.percentile(image_data, max_scale)
         plt.axis('off')
         ax = plt.gca()
         ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
         ax.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
         buffer = BytesIO()
-        plt.imsave(buffer, image_data, format='jpeg', vmin=vmin, vmax=vmax)
+        plt.imsave(buffer, image_data, format='jpeg')
         buffer.seek(0)
         plt.close(fig)
         return b64encode(buffer.read()).decode('utf-8')
