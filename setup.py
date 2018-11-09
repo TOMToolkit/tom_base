@@ -41,7 +41,8 @@ setup(
         'plotly',
         'pyephem',
         'matplotlib',
-        'numpy'
+        'numpy',
+        'pillow'
     ],
     extras_require={
         'test': ['factory_boy', 'rise-set']

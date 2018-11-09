@@ -38,9 +38,11 @@
           <td>{{ product.get_tag_display }} <a href="{% url 'tom_observations:data-tag' product.id %}" class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
           <td><a href="{{ product.data.url }}" class="btn btn-success">⬇</a></td>
           {% if product.get_file_extension == '.fz' or product.get_file_extension == '.fits' %}
-          {% cache None thumbnail product.id %}
-          <td><img src="data:image/jpeg;base64, {{ product.get_image_data }}" class="thumbnail"></td>
-          {% endcache %}
+          <td>
+            {% cache None thumbnail product.id %}
+            <img src="data:image/png;base64, {{ product.get_image_data }}" class="thumbnail">
+            {% endcache %}
+          </td>
           {% else %}
           <td></td>
           {% endif %}
