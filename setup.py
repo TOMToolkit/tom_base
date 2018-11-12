@@ -39,10 +39,13 @@ setup(
         'astroquery',
         'astropy',
         'plotly',
-        'pyephem'
+        'pyephem',
+        'matplotlib',
+        'numpy',
+        'pillow'
     ],
     extras_require={
-        'test': ['factory_boy', 'numpy', 'rise-set']
+        'test': ['factory_boy', 'rise-set']
     },
     include_package_data=True,
 )

@@ -85,6 +85,12 @@ class Target(models.Model):
     def get_absolute_url(self):
         return reverse('targets:detail', kwargs={'pk': self.id})
 
+    def featured_image(self):
+        return self.dataproduct_set.get(tag='fits_file', featured=True)
+
+    def light_curve(self):
+        return self.dataproduct_set.filter(tag='light_curve').latest()
+
     def as_dict(self):
         if self.type == self.SIDEREAL:
             fields_for_type = SIDEREAL_FIELDS

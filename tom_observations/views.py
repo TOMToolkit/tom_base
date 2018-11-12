@@ -1,19 +1,23 @@
 from io import StringIO
+
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import FormView, DeleteView, CreateView
+from django.views.generic.edit import FormView, DeleteView, CreateView, UpdateView
 from django.views.generic.list import ListView
 from django.views.generic import View
 from django_filters.views import FilterView
 from django.views.generic.detail import DetailView
-from tom_observations.facility import get_service_class
 from django.urls import reverse, reverse_lazy
 from django.shortcuts import redirect
 from django.core.management import call_command
+from django.conf import settings
 from django.contrib import messages
+from django.core.cache import cache
+from django.core.cache.utils import make_template_fragment_key
 
 from .models import ObservationRecord, DataProduct, DataProductGroup
 from .forms import ManualObservationForm, AddProductToGroupForm, DataProductUploadForm
 from tom_targets.models import Target
+from tom_observations.facility import get_service_class
 
 
 class ObservationListView(FilterView):
@@ -125,6 +129,12 @@ class ObservationRecordDetailView(DetailView):
         context['form'] = AddProductToGroupForm()
         service_class = get_service_class(self.object.facility)
         context['data_products'] = service_class.data_products(self.object, request=self.request)
+        newest_image = None
+        light_curve = None
+        for data_product in context['data_products']['saved']:
+            newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and data_product.get_file_extension() == '.fits' else newest_image
+        if newest_image:
+            context['image'] = newest_image.get_image_data()
         return context
 
 
@@ -143,6 +153,16 @@ class DataProductSaveView(LoginRequiredMixin, View):
         return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
 
 
+class DataProductTagView(LoginRequiredMixin, UpdateView):
+    model = DataProduct
+    fields = ['tag']
+    template_name = 'tom_observations/dataproduct_tag.html'
+
+    def get_success_url(self):
+        observation_id = self.object.observation_record.id
+        return reverse('tom_observations:detail', kwargs={'pk': observation_id})
+
+
 class ManualDataProductUploadView(LoginRequiredMixin, FormView):
     form_class = DataProductUploadForm
     template_name = 'tom_observations/dataproduct_import.html'
@@ -154,9 +174,10 @@ class ManualDataProductUploadView(LoginRequiredMixin, FormView):
         form = self.get_form()
         if form.is_valid():
             observation_record = form.cleaned_data['observation_record']
+            tag = form.cleaned_data['tag']
             data_product_files = request.FILES.getlist('files')
             for f in data_product_files:
-                dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f, product_id=None)
+                dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f, product_id=None, tag=tag)
                 dp.save()
             return super().form_valid(form)
         else:
@@ -185,6 +206,23 @@ class DataProductListView(FilterView):
         context = super().get_context_data(*args, **kwargs)
         context['product_groups'] = DataProductGroup.objects.all()
         return context
+
+
+class DataProductFeatureView(View):
+    def get(self, request, *args, **kwargs):
+        product_id = kwargs.get('pk', None)
+        product = DataProduct.objects.get(pk=product_id)
+        try:
+            current_featured = DataProduct.objects.get(featured=True, tag=product.tag)
+            current_featured.featured = False
+            current_featured.save()
+            featured_image_cache_key = make_template_fragment_key('featured_image', str(current_featured.target.id))
+            cache.delete(featured_image_cache_key)
+        except DataProduct.DoesNotExist:
+            pass
+        product.featured = True
+        product.save()
+        return redirect(reverse('tom_targets:detail', kwargs={'pk': request.GET.get('target_id')}))
 
 
 class DataProductGroupDetailView(DetailView):

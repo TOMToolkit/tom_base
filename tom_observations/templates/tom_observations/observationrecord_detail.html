@@ -1,19 +1,30 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load bootstrap4 static %}
 {% block title %} Observation record: {{ object.id }} {% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_observations/css/main.css' %}">
+{% endblock %}
 {% block content %}
-<h2>{{ object }}</h2>
-<p><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
-<p><strong>Status:</strong> {{ object.status }}</p>
-<h3>Upload Data Products</h3>
-<form method="POST" action="{% url 'tom_observations:data-upload' object.id %}" enctype="multipart/form-data">
-  {% csrf_token %}
-  {% bootstrap_form data_product_form %}
-  {% buttons %}
-  <input type="submit" class="btn btn-primary" value="Upload">
-  {% endbuttons %}
-</form>
-<!-- <br> -->
+<div class="row">
+  <div class="col-md-6">
+    <h2>{{ object }}</h2>
+    <p><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
+    <p><strong>Status:</strong> {{ object.status }}</p>
+    <h3>Upload Data Products</h3>
+    <form method="POST" action="{% url 'tom_observations:data-upload' object.id %}"   enctype="multipart/form-data">
+      {% csrf_token %}
+      {% bootstrap_form data_product_form %}
+      {% buttons %}
+      <input type="submit" class="btn btn-primary" value="Upload">
+      {% endbuttons %}
+    </form>
+  </div>
+  <div class="col-md-6">
+    {% if image %}
+    <img src="data:image/jpeg;base64, {{ image }}" class="display">
+    {% endif %}
+  </div>
+</div>
 <h4>Saved Data Products</h4>
 <form method="POST" action="{% url 'tom_observations:group-data' %}">
   {% csrf_token %}
@@ -35,6 +46,7 @@
       <tr>
         <th>Id</th>
         <th>Filename</th>
+        <th>Tag</th>
         <th>Created</th>
         <th>Download</th>
         <th>Delete</th>
@@ -44,7 +56,8 @@
       {% for product in data_products.saved %}
       <tr>
         <td>{{ product.id }}</td>
-        <td>{{ product.data.name }}</td>
+        <td>{{ product.get_file_name }}</td>
+        <td>{{ product.get_tag_display }} <a href="{% url 'tom_observations:data-tag' product.id %}" class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
         <td>{{ product.created }}</td>
         <td><a href="{{ product.data.url }}">Download</a></td>
         <td><a href="{% url 'tom_observations:data-delete' product.id %}" class="btn btn-danger">Delete</a></td>

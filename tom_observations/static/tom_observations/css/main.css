@@ -1,0 +1,12 @@
+.thumbnail {
+  height: inherit;
+  width: 100%;
+}
+
+.display {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  width: inherit;
+  height: auto;
+}

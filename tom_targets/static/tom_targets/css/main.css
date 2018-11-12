@@ -1,0 +1,26 @@
+#featured-image {
+  height: auto;
+  width: 100%;
+  padding: 2% 0 2% 0;
+}
+
+dl {
+  padding-top: 3%;
+}
+
+.tab-content {
+  padding: 2% 0 0 0;
+}
+
+.nav-item {
+  cursor: pointer;
+}
+
+.light-curve {
+  height: 600px;
+  width: inherit;
+}
+
+span.featured {
+  pointer-events: none;
+}

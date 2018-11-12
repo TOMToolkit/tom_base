@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+import tempfile
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -135,6 +136,17 @@ USE_TZ = True
 
 DATETIME_FORMAT = 'Y-m-d H:m:s'
 DATE_FORMAT = 'Y-m-d'
+
+
+# Caching
+# https://docs.djangoproject.com/en/dev/topics/cache/#filesystem-caching
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': tempfile.gettempdir()
+    }
+}
 
 
 # Static files (CSS, JavaScript, Images)

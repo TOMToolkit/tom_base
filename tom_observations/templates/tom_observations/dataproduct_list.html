@@ -1,21 +1,33 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load bootstrap4 static cache %}
 {% block title %} Data Product List {% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_observations/css/main.css' %}">
+{% endblock %}
 {% block content %}
 <div class="row">
-  <div class="col-md-9">
+  <div class="col-md-10">
     <div class="row">
       <div class="col-md-12">
         {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
       </div>
     </div>
     <table class="table">
-      <thead><tr><th>Downloaded</th><th>Filename</th><th>Target</th><th>Observation</th><th>Groups</th><th>Data</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Filename</th>
+          <th>Target</th>
+          <th>Observation</th>
+          <th>Groups</th>
+          <th>Tag</th>
+          <th>Data</th>
+          <th>Thumbnail</th>
+        </tr>
+      </thead>
       <tbody>
         {% for product in object_list %}
         <tr>
-          <td>{{ product.created }}</td>
-          <td>{{ product.data.name }}</th>
+          <td>{{ product.get_file_name }}</th>
           <td><a href="{% url 'tom_targets:detail' product.target.id %}">{{ product.target.identifier }}</a></td>
           <td><a href="{% url 'tom_observations:detail' product.observation_record.id %}">{{ product.observation_record }}</a></td>
           <td>
@@ -23,7 +35,17 @@
             <a href="{% url 'tom_observations:data-group-detail' group.id %}">{{ group.name }}</a>
             {% endfor %}
           </td>
+          <td>{{ product.get_tag_display }} <a href="{% url 'tom_observations:data-tag' product.id %}" class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
           <td><a href="{{ product.data.url }}" class="btn btn-success">⬇</a></td>
+          {% if product.get_file_extension == '.fz' or product.get_file_extension == '.fits' %}
+          <td>
+            {% cache None thumbnail product.id %}
+            <img src="data:image/png;base64, {{ product.get_image_data }}" class="thumbnail">
+            {% endcache %}
+          </td>
+          {% else %}
+          <td></td>
+          {% endif %}
         </tr>
         {% empty %}
         <tr>
@@ -37,7 +59,7 @@
     </table>
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
   </div>
-  <div class="col-md-3">
+  <div class="col-md-2">
     <form action="" method="get" class="form">
       {% bootstrap_form filter.form %}
       {% buttons %}
