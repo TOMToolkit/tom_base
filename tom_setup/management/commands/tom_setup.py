@@ -65,6 +65,10 @@ class Command(BaseCommand):
         except FileExistsError:
             pass
         try:
+            os.mknod(os.path.join(BASE_DIR, 'static/.keep'))
+        except FileExistsError:
+            pass
+        try:
             os.mkdir(os.path.join(BASE_DIR, 'tmp'))
         except FileExistsError:
             pass
