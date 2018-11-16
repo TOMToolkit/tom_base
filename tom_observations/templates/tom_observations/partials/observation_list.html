@@ -1,0 +1,13 @@
+<table class="table table-striped">
+  <thead><tr><th>Facility</th><th>Created</th><th>Status</th><th>Saved  data</th><th>View</th></tr></thead>
+  <tbody>
+  {% for observation in observations %}
+    <tr>
+      <td>{{ observation.facility }}</td>
+      <td>{{ observation.created }}</td>
+      <td>{{ observation.status }}</td>
+      <td>{{ observation.dataproduct_set.count }}</td>
+      <td><a href="{% url 'tom_observations:detail' observation.id %}">View</a></td>
+    </tr>
+  {% endfor %}
+</table>

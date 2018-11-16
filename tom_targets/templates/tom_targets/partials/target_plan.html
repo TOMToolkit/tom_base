@@ -1,0 +1,11 @@
+{% load bootstrap4 %}
+<div id="plan-panel">
+  <form action="{% url 'targets:detail' target.id %}" method="GET" class="form">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% buttons %}
+    <input type="submit" class="btn btn-primary" value="Plan">
+    {% endbuttons %}
+  </form>
+  {{ visibility_graph|safe }}
+</div>

@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load comments bootstrap4 tom_common_extras static cache %}
+{% load comments bootstrap4 tom_common_extras targets_extras observation_extras static cache %}
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
@@ -8,15 +8,10 @@
 <div class="row">
   <div class="col-md-4">
     <div id="target-info">
-      <h3>{{ object.identifier }}</h3>
-      {% if object.featured_image %}
-      {% cache None featured_image object.id %}
-      <img src="data:image/jpeg;base64, {{ object.featured_image.get_image_data }}" id="featured-image">
-      {% endcache %}
-      {% endif %}
-      <a href="{% url 'tom_targets:update' pk=object.id %}" title="Update target" class="btn  btn-primary">Update Target</a>
-      <a href="{% url 'tom_targets:delete' pk=object.id %}" title="Delete target" class="btn  btn-warning">Delete Target</a>
-      <dl class="row">
+      {% target_feature object %}
+      <!-- <a href="{% url 'tom_targets:update' pk=object.id %}" title="Update target" class="btn  btn-primary">Update Target</a>
+      <a href="{% url 'tom_targets:delete' pk=object.id %}" title="Delete target" class="btn  btn-warning">Delete Target</a> -->
+      <!-- <dl class="row">
         {% for key, value in object.as_dict.items %}
         <dt class="col-sm-6">{% verbose_name object key %}</dt>
         <dd class="col-sm-6">{{ value }}</dd>
@@ -27,7 +22,8 @@
         <dt class="col-sm-6">{{ target_extra.key }}</dt>
         <dd class="col-sm-6">{{ target_extra.value }}</dd>
       {% endfor %}
-      </dl>
+      </dl> -->
+      {% target_data object %}
     </div>
   </div>
   <div class="col-md-8">
@@ -45,62 +41,19 @@
     <div class="tab-content">
       <div class="tab-pane in active" id="observe">
         <h4>Observe</h4>
-        {% for facility in facilities %}
-        <a href="{% url 'tom_observations:create' facility=facility %}?target_id={{ object.id }}" class="btn  btn-outline-primary">{{ facility }}</a>
-        {% endfor %}
+        {% observing_buttons object %}
         <hr/>
         <h4>Plan</h4>
-        <div id="plan-panel">
-          <form action="{% url 'targets:detail' target.id %}" method="GET" class="form">
-            {% csrf_token %}
-            {% bootstrap_form form %}
-            {% buttons %}
-            <input type="submit" class="btn btn-primary" value="Plan">
-            {% endbuttons %}
-          </form>
-        </div>
-      {{ visibility_graph|safe }}
+        {% target_plan %}
       </div>
       <div class="tab-pane" id="observations">
         <h4>Observations</h4>
         <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of  observations   for target" class="btn btn-primary">Update Observations Status</a>
-        <table class="table table-striped">
-          <thead><tr><th>Facility</th><th>Created</th><th>Status</th><th>Saved  data</th><th>View</th></tr></thead>
-          <tbody>
-          {% for observation in object.observationrecord_set.all %}
-            <tr>
-              <td>{{ observation.facility }}</td>
-              <td>{{ observation.created }}</td>
-              <td>{{ observation.status }}</td>
-              <td>{{ observation.dataproduct_set.count }}</td>
-              <td><a href="{% url 'tom_observations:detail' observation.id %}">View</a></td>
-            </tr>
-          {% endfor %}
-        </table>
+        {% observation_list object %}
       </div>
       <div class="tab-pane" id="data-products">
-        {% if object.light_curve %}
-        <div class="light-curve">
-          {{ object.light_curve.get_light_curve|safe }}
-        </div>
-        {% endif %}
-        <h4>Data</h4>
-        <table class="table table-striped">
-          <thead><tr><th></th><th>Created</th><th>Filename</th><th>Tag</th></tr></thead>
-          <tbody>
-          {% for product in object.dataproduct_set.all %}
-            <tr>
-              {% if not product.featured %}
-              <td><a href="{% url 'tom_observations:data-feature' pk=product.id %}?target_id={{ object.id }}" title="Make Featured Image" class="btn btn-primary">Feature</a></td>
-              {% else %}
-              <td><span class="btn btn-secondary active featured">Featured</span></td>
-              {% endif %}
-              <td>{{ product.created }}</td>
-              <td>{{ product.get_file_name }}</td>
-              <td>{{ product.get_tag_display }} <a href="{% url 'tom_observations:data-tag' product.id %}" class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
-            </tr>
-          {% endfor %}
-        </table>
+        {% target_lightcurve target %}
+        {% dataproduct_list object %}
       </div>
       {% comments_enabled as comments_are_enabled %}
       <hr/>

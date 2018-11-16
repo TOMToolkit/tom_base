@@ -1,4 +1,3 @@
-from django.forms import Form, ModelForm
 from django import forms
 from .models import Target, TargetExtra, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS
 from .models import REQUIRED_NON_SIDEREAL_FIELDS
@@ -6,7 +5,7 @@ from .models import REQUIRED_NON_SIDEREAL_FIELDS
 from django.forms.models import inlineformset_factory
 
 
-class TargetForm(ModelForm):
+class TargetForm(forms.ModelForm):
     class Meta:
         abstract = True
         model = Target
@@ -34,7 +33,7 @@ class NonSiderealTargetCreateForm(TargetForm):
         fields = NON_SIDEREAL_FIELDS
 
 
-class TargetVisibilityForm(Form):
+class TargetVisibilityForm(forms.Form):
     start_time = forms.DateTimeField(required=True, label='Start Time', widget=forms.TextInput(attrs={'type': 'date'}))
     end_time = forms.DateTimeField(required=True, label='End Time', widget=forms.TextInput(attrs={'type': 'date'}))
     airmass = forms.DecimalField(required=False, label='Maximum Airmass')

@@ -1,0 +1,7 @@
+{% load cache %}
+<h3>{{ target.identifier }}</h3>
+{% if target.featured_image %}
+{% cache None featured_image target.id %}
+<img src="data:image/jpeg;base64, {{ target.featured_image.get_image_data }}" id="featured-image">
+{% endcache %}
+{% endif %}
