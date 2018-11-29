@@ -114,7 +114,7 @@ class Command(BaseCommand):
 
     def complete(self):
         self.exit(
-            self.style.SUCCESS('Setup complete! Run ./manage migrate && ./manage.py runserver to start your TOM.')
+            self.style.SUCCESS('Setup complete! Run ./manage.py migrate && ./manage.py runserver to start your TOM.')
         )
 
     def handle(self, *args, **options):

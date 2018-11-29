@@ -6,7 +6,7 @@
   {% for product in products %}
     <tr>
       {% if not product.featured %}
-      <td><a href="{% url 'tom_observations:data-feature' pk=product.id %}?target_id={{ object.id }}" title="Make Featured Image" class="btn btn-primary">Feature</a></td>
+      <td><a href="{% url 'tom_observations:data-feature' pk=product.id %}?target_id={{ target.id }}" title="Make Featured Image" class="btn btn-primary">Feature</a></td>
       {% else %}
       <td><span class="btn btn-secondary active featured">Featured</span></td>
       {% endif %}

@@ -1,0 +1,23 @@
+{% load bootstrap4 %}
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Created</th>
+      <th>Filename</th>
+      <th>URL</th>
+      <th>Save</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for product in products.unsaved %}
+    <tr>
+      <td>{{ product.created }}</td>
+      <td>{{ product.filename }}</td>
+      <td><a href="{{ product.url }}">Download</a></td>
+      <td>
+        <input type="checkbox" name="products" id="product{{ product.id }}" value="{{ product.id }}">
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

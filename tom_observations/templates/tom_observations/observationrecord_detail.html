@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 static %}
+{% load bootstrap4 static observation_extras %}
 {% block title %} Observation record: {{ object.id }} {% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_observations/css/main.css' %}">
@@ -10,14 +10,7 @@
     <h2>{{ object }}</h2>
     <p><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
     <p><strong>Status:</strong> {{ object.status }}</p>
-    <h3>Upload Data Products</h3>
-    <form method="POST" action="{% url 'tom_observations:data-upload' object.id %}"   enctype="multipart/form-data">
-      {% csrf_token %}
-      {% bootstrap_form data_product_form %}
-      {% buttons %}
-      <input type="submit" class="btn btn-primary" value="Upload">
-      {% endbuttons %}
-    </form>
+    {% upload_dataproduct %}
   </div>
   <div class="col-md-6">
     {% if image %}
@@ -41,30 +34,7 @@
       {% endbuttons %}
     </div>
   </div>
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Id</th>
-        <th>Filename</th>
-        <th>Tag</th>
-        <th>Created</th>
-        <th>Download</th>
-        <th>Delete</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for product in data_products.saved %}
-      <tr>
-        <td>{{ product.id }}</td>
-        <td>{{ product.get_file_name }}</td>
-        <td>{{ product.get_tag_display }} <a href="{% url 'tom_observations:data-tag' product.id %}" class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
-        <td>{{ product.created }}</td>
-        <td><a href="{{ product.data.url }}">Download</a></td>
-        <td><a href="{% url 'tom_observations:data-delete' product.id %}" class="btn btn-danger">Delete</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  {% dataproduct_list_for_observation_saved object %}
 </form>
 
 <form method="POST" action="{% url 'tom_observations:data-save' object.id %}">
@@ -86,28 +56,7 @@
       <input type="submit" value="Save Selected" class="btn btn-primary">
     </div>
   </div>
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Created</th>
-        <th>Filename</th>
-        <th>URL</th>
-        <th>Save</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for product in data_products.unsaved %}
-      <tr>
-        <td>{{ product.created }}</td>
-        <td>{{ product.filename }}</td>
-        <td><a href="{{ product.url }}">Download</a></td>
-        <td>
-          <input type="checkbox" name="products" id="product{{ product.id }}" value="{{ product.id }}">
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  {% dataproduct_list_for_observation_unsaved object %}
 </form>
 <h4>Request Parameters</h4>
 <dl class="row">
