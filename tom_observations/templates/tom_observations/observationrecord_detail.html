@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 static observation_extras %}
+{% load bootstrap4 static observation_extras dataproduct_extras %}
 {% block title %} Observation record: {{ object.id }} {% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_observations/css/main.css' %}">
@@ -10,6 +10,7 @@
     <h2>{{ object }}</h2>
     <p><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
     <p><strong>Status:</strong> {{ object.status }}</p>
+    <p><a class="btn btn-success" href="{{ object.url }}">View at observatory »</a></p>
     {% upload_dataproduct %}
   </div>
   <div class="col-md-6">

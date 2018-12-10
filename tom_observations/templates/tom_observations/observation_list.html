@@ -15,12 +15,11 @@
       </div>
     </div>
     <table class="table">
-      <thead><tr><th>Id</th><th>Observation ID</th><th>Target</th><th>Facility</th><th>Status</th><th>Saved Data</th><th>Download All</th></tr></thead>
+      <thead><tr><th>View</th><th>Target</th><th>Facility</th><th>Status</th><th>Saved Data</th><th>Download All</th></tr></thead>
       <tbody>
         {% for observation in filter.qs %}
         <tr>
-          <td><a href="{% url 'tom_observations:detail' observation.id %}">{{ observation.id }}</a></td>
-          <td><a target="_blank" rel="noopener noreferrer" href="{{ observation.url }}">{{ observation.observation_id }}</a></td>
+          <td><a class="btn btn-success" href="{% url 'tom_observations:detail' observation.id %}">Details</a></td>
           <td><a href="{% url 'tom_targets:detail' observation.target.id %}" title="{{ observation.target.id }}">{{ observation.target.name }}</a></td>
           <td>{{ observation.facility }}</td>
           <td>{{ observation.status }}</td>

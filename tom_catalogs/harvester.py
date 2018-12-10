@@ -10,11 +10,6 @@ DEFAULT_HARVESTER_CLASSES = [
     'tom_catalogs.harvesters.mpc.MPCHarvester',
 ]
 
-try:
-    TOM_HARVESTER_CLASSES = settings.TOM_HARVESTER_CLASSES
-except AttributeError:
-    TOM_HARVESTER_CLASSES = DEFAULT_HARVESTER_CLASSES
-
 
 class MissingDataException(Exception):
     pass
@@ -35,6 +30,11 @@ class AbstractHarvester(object):
 
 
 def get_service_classes():
+    try:
+        TOM_HARVESTER_CLASSES = settings.TOM_HARVESTER_CLASSES
+    except AttributeError:
+        TOM_HARVESTER_CLASSES = DEFAULT_HARVESTER_CLASSES
+
     service_choices = {}
     for service in TOM_HARVESTER_CLASSES:
         mod_name, class_name = service.rsplit('.', 1)
