@@ -19,7 +19,7 @@
   </div>
 </div>
 <h4>Saved Data Products</h4>
-<form method="POST" action="{% url 'tom_observations:group-data' %}">
+<form method="POST" action="{% url 'tom_dataproducts:group-data' %}">
   {% csrf_token %}
   <div class="form-row">
     <div class="col-sm-4">
@@ -37,13 +37,13 @@
   {% dataproduct_list_for_observation_saved object %}
 </form>
 
-<form method="POST" action="{% url 'tom_observations:data-save' object.id %}">
+<form method="POST" action="{% url 'tom_dataproducts:data-save' object.id %}">
   {% csrf_token %}
   <input type="hidden" value="{{ object.facility }}" name="facility">
   <input type="hidden" value="ALL" name="products">
   <input type="submit" value="Save All" class="btn btn-primary float-right">
 </form>
-<form method="POST" action="{% url 'tom_observations:data-save' object.id %}">
+<form method="POST" action="{% url 'tom_dataproducts:data-save' object.id %}">
   {% csrf_token %}
   <input type="hidden" value="{{ object.facility }}" name="facility">
   <div class="row">

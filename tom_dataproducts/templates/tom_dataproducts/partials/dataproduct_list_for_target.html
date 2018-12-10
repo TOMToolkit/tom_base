@@ -6,13 +6,13 @@
   {% for product in products %}
     <tr>
       {% if not product.featured %}
-      <td><a href="{% url 'tom_observations:data-feature' pk=product.id %}?target_id={{ target.id }}" title="Make Featured Image" class="btn btn-primary">Feature</a></td>
+      <td><a href="{% url 'tom_dataproducts:data-feature' pk=product.id %}?target_id={{ target.id }}" title="Make Featured Image" class="btn btn-primary">Feature</a></td>
       {% else %}
       <td><span class="btn btn-secondary active featured">Featured</span></td>
       {% endif %}
       <td>{{ product.created }}</td>
       <td>{{ product.get_file_name }}</td>
-      <td>{{ product.get_tag_display }} <a href="{% url 'tom_observations:data-tag' product.id %}" class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
+      <td>{{ product.get_tag_display }} <a href="{% url 'tom_dataproducts:data-tag' product.id %}" class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
     </tr>
   {% endfor %}
 </table>

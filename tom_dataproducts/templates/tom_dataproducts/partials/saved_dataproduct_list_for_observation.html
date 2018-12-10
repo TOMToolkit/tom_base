@@ -15,10 +15,10 @@
     <tr>
       <td>{{ product.id }}</td>
       <td>{{ product.get_file_name }}</td>
-      <td>{{ product.get_tag_display }} <a href="{% url 'tom_observations:data-tag' product.id %}"class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
+      <td>{{ product.get_tag_display }} <a href="{% url 'tom_dataproducts:data-tag' product.id %}"class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
       <td>{{ product.created }}</td>
       <td><a href="{{ product.data.url }}">Download</a></td>
-      <td><a href="{% url 'tom_observations:data-delete' product.id %}" class="btnbtn-danger">Delete</a></td>
+      <td><a href="{% url 'tom_dataproducts:data-delete' product.id %}" class="btnbtn-danger">Delete</a></td>
     </tr>
     {% endfor %}
   </tbody>

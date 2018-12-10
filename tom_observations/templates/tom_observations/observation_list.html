@@ -27,7 +27,7 @@
           <td>{{ observation.dataproduct_set.count }}</td>
           <td>
             {% if observation.status == 'COMPLETED' %}
-            <form method="POST" action="{% url 'tom_observations:data-save' observation.id %}">
+            <form method="POST" action="{% url 'tom_dataproducts:data-save' observation.id %}">
               {% csrf_token %}
               <input type="hidden" value="ALL" name="products">
               <input type="hidden" value="{{ observation.facility }}" name="facility">

@@ -10,7 +10,8 @@ import ephem
 
 from tom_observations.facility import GenericObservationForm
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.models import DataProduct, ObservationRecord
+from tom_observations.models import ObservationRecord
+from tom_dataproducts.models import DataProduct
 from tom_targets.models import Target
 
 try:
