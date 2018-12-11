@@ -3,7 +3,7 @@
 {% block title %}Upload Data Product{% endblock %}
 {% block content %}
 <h3>Upload a data product for a target</h3>
-<form method="POST" action="{% url 'tom_observations:data-upload' %}" enctype="multipart/form-data">
+<form method="POST" action="{% url 'tom_dataproducts:data-upload' %}" enctype="multipart/form-data">
   {% csrf_token %}
   {% bootstrap_form form %}
   {% buttons %}

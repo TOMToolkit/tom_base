@@ -1,0 +1,3 @@
+{% for facility in facilities %}
+<a href="{% url 'tom_observations:create' facility=facility %}?target_id={{ target.id }}" class="btn  btn-outline-primary">{{ facility }}</a>
+{% endfor %}

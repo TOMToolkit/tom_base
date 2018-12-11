@@ -9,16 +9,11 @@ from django.shortcuts import redirect
 from django.conf import settings
 from django.contrib import messages
 from django.core.management import call_command
-from dateutil.parser import parse
-
-from plotly import offline
-import plotly.graph_objs as go
 
 from .models import Target
-from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetVisibilityForm
+from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from .import_targets import import_targets
 from .filters import TargetFilter
-from tom_observations.facility import get_service_classes
 
 
 class TargetListView(FilterView):
@@ -94,32 +89,6 @@ class TargetDelete(LoginRequiredMixin, DeleteView):
 
 class TargetDetail(DetailView):
     model = Target
-
-    def get_airmass_plot(self):
-        start_time = parse(self.request.GET['start_time'])
-        end_time = parse(self.request.GET['end_time'])
-        if self.request.GET.get('airmass'):
-            airmass_limit = float(self.request.GET['airmass'])
-        else:
-            airmass_limit = None
-        visibility_data = self.object.get_visibility(start_time, end_time, 10, airmass_limit)
-        plot_data = [go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()]
-        layout = go.Layout(yaxis=dict(autorange='reversed'))
-        return offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context['facilities'] = get_service_classes()
-        context['form'] = TargetVisibilityForm()
-        if all(self.request.GET.get(x) for x in ['start_time', 'end_time']):
-            context['form'] = TargetVisibilityForm({
-                'start_time': self.request.GET.get('start_time'),
-                'end_time': self.request.GET.get('end_time'),
-                'airmass': self.request.GET.get('airmass')
-            })
-            if context['form'].is_valid():
-                context['visibility_graph'] = self.get_airmass_plot()
-        return context
 
     def get(self, request, *args, **kwargs):
         update_status = request.GET.get('update_status', False)
