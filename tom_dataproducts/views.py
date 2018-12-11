@@ -65,7 +65,6 @@ class ManualDataProductUploadView(LoginRequiredMixin, FormView):
 class DataProductDeleteView(LoginRequiredMixin, DeleteView):
     model = DataProduct
 
-    #TODO: check success url
     def get_success_url(self):
         return reverse('tom_observations:detail', kwargs={'pk': self.object.observation_record.id})
 
