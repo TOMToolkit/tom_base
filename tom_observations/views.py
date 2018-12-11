@@ -120,7 +120,6 @@ class ObservationRecordDetailView(DetailView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context['data_product_form'] = DataProductUploadForm(initial={'observation_record': self.object})
         context['form'] = AddProductToGroupForm()
         service_class = get_service_class(self.object.facility)
         context['data_products'] = service_class.data_products(self.object, request=self.request)

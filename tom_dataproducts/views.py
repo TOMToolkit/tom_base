@@ -8,7 +8,9 @@ from django.views.generic.detail import DetailView
 from django.urls import reverse, reverse_lazy
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
+from django.http import HttpResponseRedirect
 
 from .models import DataProduct, DataProductGroup
 from .forms import AddProductToGroupForm, DataProductUploadForm
@@ -43,21 +45,23 @@ class DataProductTagView(LoginRequiredMixin, UpdateView):
 
 class ManualDataProductUploadView(LoginRequiredMixin, FormView):
     form_class = DataProductUploadForm
-    template_name = 'tom_dataproducts/dataproduct_import.html'
-
-    def get_success_url(self):
-        return reverse('tom_observations:detail', kwargs={'pk': self.kwargs.get('pk', None)})
+    template_name = 'tom_dataproducts/partials/upload_dataproduct.html'
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         if form.is_valid():
-            observation_record = form.cleaned_data['observation_record']
+            target = form.cleaned_data['target']
+            if not target:
+                observation_record = form.cleaned_data['observation_record']
+                target = observation_record.target
+            else:
+                observation_record = None
             tag = form.cleaned_data['tag']
             data_product_files = request.FILES.getlist('files')
             for f in data_product_files:
-                dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f, product_id=None, tag=tag)
+                dp = DataProduct(target=target, observation_record=observation_record, data=f, product_id=None, tag=tag)
                 dp.save()
-            return super().form_valid(form)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
         else:
             return super().form_invalid(form)
 

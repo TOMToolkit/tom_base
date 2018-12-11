@@ -1,6 +1,7 @@
 from django import forms
 
 from .models import DataProductGroup, DataProduct
+from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
 
 
@@ -10,6 +11,7 @@ class AddProductToGroupForm(forms.Form):
 
 
 class DataProductUploadForm(forms.Form):
-    observation_record = forms.ModelChoiceField(ObservationRecord.objects.all(), widget=forms.HiddenInput())
+    observation_record = forms.ModelChoiceField(ObservationRecord.objects.all(), widget=forms.HiddenInput(), required=False)
+    target = forms.ModelChoiceField(Target.objects.all(), widget=forms.HiddenInput(), required=False)
     files = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}))
     tag = forms.ChoiceField(choices=DataProduct.DATA_PRODUCT_TAGS)

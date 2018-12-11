@@ -39,6 +39,7 @@
       </div>
       <div class="tab-pane" id="data-products">
         {% target_lightcurve target %}
+        {% upload_dataproduct %}
         {% dataproduct_list_for_target object %}
       </div>
       {% comments_enabled as comments_are_enabled %}
