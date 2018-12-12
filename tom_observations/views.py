@@ -7,6 +7,7 @@ from django.views.generic.detail import DetailView
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.core.management import call_command
+from django.contrib import messages
 
 from .models import ObservationRecord
 from .forms import ManualObservationForm

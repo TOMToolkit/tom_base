@@ -1,17 +1,16 @@
 import requests
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django import forms
 from dateutil.parser import parse
 from crispy_forms.layout import Layout, Div
 from django.core.files.base import ContentFile
 
-import ephem
 
 from tom_observations.facility import GenericObservationForm
 from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.models import ObservationRecord
 from tom_dataproducts.models import DataProduct
+from tom_observations.facility import GenericObservationFacility
 from tom_targets.models import Target
 
 try:
@@ -230,7 +229,7 @@ class LCOObservationForm(GenericObservationForm):
         }
 
 
-class LCOFacility:
+class LCOFacility(GenericObservationFacility):
     name = 'LCO'
     form = LCOObservationForm
 
@@ -267,14 +266,6 @@ class LCOFacility:
         return SITES
 
     @classmethod
-    def get_observer_for_site(clz, site):
-        observer = ephem.Observer()
-        observer.lon = ephem.degrees(str(SITES[site].get('longitude')))
-        observer.lat = ephem.degrees(str(SITES[site].get('latitude')))
-        observer.elevation = SITES[site].get('elevation')
-        return observer
-
-    @classmethod
     def get_observation_status(clz, observation_id):
         response = make_request(
             'GET',
@@ -282,29 +273,6 @@ class LCOFacility:
             headers=clz._portal_headers()
         )
         return response.json()['state']
-
-    @classmethod
-    def update_observation_status(clz, observation_id):
-        try:
-            record = ObservationRecord.objects.get(observation_id=observation_id)
-            record.status = clz.get_observation_status(observation_id)
-            record.save()
-        except ObjectDoesNotExist:
-            raise Exception('No record exists for that observation id')
-
-    @classmethod
-    def update_all_observation_statuses(clz, target=None):
-        failed_records = []
-        records = ObservationRecord.objects.filter(facility=clz.name)
-        if target:
-            records = records.filter(target=target)
-        records = records.exclude(status__in=clz.get_terminal_observing_states())
-        for record in records:
-            try:
-                clz.update_observation_status(record.observation_id)
-            except Exception as e:
-                failed_records.append((record.observation_id, str(e)))
-        return failed_records
 
     @classmethod
     def _portal_headers(clz):
@@ -353,6 +321,7 @@ class LCOFacility:
 
     @classmethod
     def data_products(clz, observation_record, request=None):
+        # TODO simplify return (hopefully to a list)
         products = {'saved': [], 'unsaved': []}
         for frame in clz._archive_frames(observation_record.observation_id, request=request):
             try:
