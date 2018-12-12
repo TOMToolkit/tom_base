@@ -43,10 +43,10 @@ class TestObservationViews(TestCase):
             response, FakeFacility.get_observation_url(self.observation_record.observation_id)
         )
 
-#    def test_update_observations(self):
-#        response = self.client.get(reverse('tom_observations:list') + '?update_status=True', follow=True)
-#        self.assertEqual(response.status_code, 200)
-#        self.assertContains(response, 'COMPLETED')
+    def test_update_observations(self):
+        response = self.client.get(reverse('tom_observations:list') + '?update_status=True', follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'COMPLETED')
 
 
 class TestLCOFacility(TestCase):

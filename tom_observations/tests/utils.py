@@ -1,4 +1,3 @@
-import ephem
 from tom_observations.facility import GenericObservationFacility
 from tom_observations.models import ObservationRecord
 

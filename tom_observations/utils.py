@@ -171,6 +171,7 @@ def get_visibility(target, start_time, end_time, interval, airmass_limit=10):
         for site, site_details in sites.items():
             positions = [[], []]
             observer = observer_for_site(site_details)
+            print(observer)
             rise_sets = get_rise_set(observer, sun, start_time, end_time)
             curr_interval = start_time
             while curr_interval <= end_time:
@@ -235,7 +236,7 @@ def get_pyephem_instance_for_type(target):
 
 def observer_for_site(site):
     observer = ephem.Observer()
-    observer.lon = ephem.degrees(site.get('longitude'))
-    observer.lat = ephem.degrees(site.get('latitude'))
+    observer.lon = ephem.degrees(str(site.get('longitude')))
+    observer.lat = ephem.degrees(str(site.get('latitude')))
     observer.elevation = site.get('elevation')
     return observer
