@@ -38,7 +38,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         return {'type': self.get_default_target_type(), **dict(self.request.GET.items())}
 
     def get_context_data(self, **kwargs):
-        context = super(TargetCreate, self).get_context_data(**kwargs)
+        context = super(TargetCreateView, self).get_context_data(**kwargs)
         context['type_choices'] = Target.TARGET_TYPES
         context['extra_form'] = TargetExtraFormset()
         return context
