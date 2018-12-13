@@ -7,6 +7,7 @@ from django.views.generic.detail import DetailView
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.core.management import call_command
+from django.contrib import messages
 
 from .models import ObservationRecord
 from .forms import ManualObservationForm
@@ -122,11 +123,11 @@ class ObservationRecordDetailView(DetailView):
         context = super().get_context_data(*args, **kwargs)
         context['form'] = AddProductToGroupForm()
         service_class = get_service_class(self.object.facility)
-        context['data_products'] = service_class.data_products(self.object, request=self.request)
+        context['data_products'] = service_class.data_products(self.object)
         newest_image = None
-        light_curve = None
         for data_product in context['data_products']['saved']:
-            newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and data_product.get_file_extension() == '.fits' else newest_image
+            newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and \
+                data_product.get_file_extension() == '.fits' else newest_image
         if newest_image:
             context['image'] = newest_image.get_image_data()
         return context

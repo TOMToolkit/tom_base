@@ -1,12 +1,10 @@
 from django import template
-from django.urls import reverse
-from django.shortcuts import redirect
 
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
 from tom_dataproducts.models import DataProduct
 from tom_dataproducts.forms import DataProductUploadForm
-from tom_observations.facility import get_service_classes, get_service_class
+from tom_observations.facility import get_service_class
 
 register = template.Library()
 
@@ -19,15 +17,15 @@ def dataproduct_list_for_target(target):
     }
 
 
-@register.inclusion_tag('tom_dataproducts/partials/saved_dataproduct_list_for_observation.html', takes_context=True)
-def dataproduct_list_for_observation_saved(context, observation_record):
-    products = get_service_class(observation_record.facility).data_products(observation_record, context['request'])
+@register.inclusion_tag('tom_dataproducts/partials/saved_dataproduct_list_for_observation.html')
+def dataproduct_list_for_observation_saved(observation_record):
+    products = get_service_class(observation_record.facility).data_products(observation_record)
     return {'products': products}
 
 
-@register.inclusion_tag('tom_dataproducts/partials/unsaved_dataproduct_list_for_observation.html', takes_context=True)
-def dataproduct_list_for_observation_unsaved(context, observation_record):
-    products = get_service_class(observation_record.facility).data_products(observation_record, context['request'])
+@register.inclusion_tag('tom_dataproducts/partials/unsaved_dataproduct_list_for_observation.html')
+def dataproduct_list_for_observation_unsaved(observation_record):
+    products = get_service_class(observation_record.facility).data_products(observation_record)
     return {'products': products}
 
 

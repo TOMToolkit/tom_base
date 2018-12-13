@@ -1,6 +1,5 @@
 from urllib.parse import urlparse
 
-from django.shortcuts import render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView, DeleteView, CreateView, UpdateView
 from django_filters.views import FilterView
@@ -15,9 +14,9 @@ from django.http import HttpResponseRedirect
 
 from .models import DataProduct, DataProductGroup
 from .forms import AddProductToGroupForm, DataProductUploadForm
-from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
+
 
 class DataProductSaveView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
@@ -25,11 +24,11 @@ class DataProductSaveView(LoginRequiredMixin, View):
         observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])
         products = request.POST.getlist('products')
         if products[0] == 'ALL':
-            products = service_class.save_data_products(observation_record, request=self.request)
+            products = service_class.save_data_products(observation_record)
             messages.success(request, 'Saved all available data products')
         else:
             for product in products:
-                products = service_class.save_data_products(observation_record, product, request=self.request)
+                products = service_class.save_data_products(observation_record, product)
                 messages.success(request, 'Successfully saved: {0}'.format('\n'.join([str(p) for p in products])))
         return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
 

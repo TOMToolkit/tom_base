@@ -1,4 +1,4 @@
-import ephem
+from tom_observations.facility import GenericObservationFacility
 
 # Site data matches built-in pyephem observer data for Los Angeles
 SITES = {
@@ -9,7 +9,8 @@ SITES = {
     }
 }
 
-class FakeFacility:
+
+class FakeFacility(GenericObservationFacility):
     name = 'Fake Facility'
 
     @classmethod
@@ -17,5 +18,17 @@ class FakeFacility:
         return SITES
 
     @classmethod
-    def get_observer_for_site(clz, site):
-        return ephem.city('Los Angeles')
+    def get_observation_url(clzz, observation_id):
+        return ''
+
+    @classmethod
+    def data_products(clz, observation_record, request=None):
+        return {'saved': []}
+
+    @classmethod
+    def get_observation_status(clz, observation_id):
+        return 'COMPLETED'
+
+    @classmethod
+    def get_terminal_observing_states(clz):
+        return ['COMPLETED', 'FAILED']

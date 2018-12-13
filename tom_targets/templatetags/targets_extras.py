@@ -6,6 +6,7 @@ import plotly.graph_objs as go
 
 from tom_targets.models import Target
 from tom_targets.forms import TargetVisibilityForm
+from tom_observations.utils import get_visibility
 
 register = template.Library()
 
@@ -48,10 +49,14 @@ def target_plan(context):
                 airmass_limit = float(request.GET.get('airmass'))
             else:
                 airmass_limit = None
-            visibility_data = context['object'].get_visibility(start_time, end_time, 10, airmass_limit)
-            plot_data = [go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()]
+            visibility_data = get_visibility(context['object'], start_time, end_time, 10, airmass_limit)
+            plot_data = [
+                go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()
+            ]
             layout = go.Layout(yaxis=dict(autorange='reversed'))
-            visibility_graph = offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
+            visibility_graph = offline.plot(
+                go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False
+            )
     return {
         'form': plan_form,
         'target': context['object'],
