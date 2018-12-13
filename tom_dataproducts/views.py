@@ -50,7 +50,7 @@ class DataProductTagView(LoginRequiredMixin, UpdateView):
         return context
 
 
-class ManualDataProductUploadView(LoginRequiredMixin, FormView):
+class DataProductUploadView(LoginRequiredMixin, FormView):
     form_class = DataProductUploadForm
     template_name = 'tom_dataproducts/partials/upload_dataproduct.html'
 
@@ -130,7 +130,7 @@ class DataProductGroupDetailView(DetailView):
         for product in request.POST.getlist('products'):
             group.dataproduct_set.remove(DataProduct.objects.get(pk=product))
         group.save()
-        return redirect(reverse('tom_dataproducts:data-group-detail', kwargs={'pk': group.id}))
+        return redirect(reverse('tom_dataproducts:group-detail', kwargs={'pk': group.id}))
 
 
 class DataProductGroupListView(ListView):
@@ -139,16 +139,16 @@ class DataProductGroupListView(ListView):
 
 class DataProductGroupCreateView(LoginRequiredMixin, CreateView):
     model = DataProductGroup
-    success_url = reverse_lazy('tom_dataproducts:data-group-list')
+    success_url = reverse_lazy('tom_dataproducts:group-list')
     fields = ['name']
 
 
 class DataProductGroupDeleteView(LoginRequiredMixin, DeleteView):
-    success_url = reverse_lazy('tom_dataproducts:data-group-list')
+    success_url = reverse_lazy('tom_dataproducts:group-list')
     model = DataProductGroup
 
 
-class GroupDataView(LoginRequiredMixin, FormView):
+class DataProductGroupDataView(LoginRequiredMixin, FormView):
     form_class = AddProductToGroupForm
     template_name = 'tom_dataproducts/add_product_to_group.html'
 
@@ -156,4 +156,4 @@ class GroupDataView(LoginRequiredMixin, FormView):
         group = form.cleaned_data['group']
         group.dataproduct_set.add(*form.cleaned_data['products'])
         group.save()
-        return redirect(reverse('tom_dataproducts:data-group-detail', kwargs={'pk': group.id}))
+        return redirect(reverse('tom_dataproducts:group-detail', kwargs={'pk': group.id}))

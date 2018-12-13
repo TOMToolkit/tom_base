@@ -1,6 +1,6 @@
 {% load bootstrap4 %}
 <h4>Upload a data product for a target</h3>
-<form method="POST" action="{% url 'tom_dataproducts:data-upload' %}" enctype="multipart/form-data">
+<form method="POST" action="{% url 'tom_dataproducts:upload' %}" enctype="multipart/form-data">
   {% csrf_token %}
   {% bootstrap_form data_product_form %}
   {% buttons %}
