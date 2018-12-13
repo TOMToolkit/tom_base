@@ -286,7 +286,6 @@ class LCOFacility(GenericObservationFacility):
         if LCO_SETTINGS.get('api_key'):
             archive_token = cache.get('LCO_ARCHIVE_TOKEN')
             if not archive_token:
-                print('didnt hit cache')
                 response = make_request(
                     'GET',
                     PORTAL_URL + '/api/profile/',
