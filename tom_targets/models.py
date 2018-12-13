@@ -89,7 +89,7 @@ class Target(models.Model):
         return self.dataproduct_set.get(tag='fits_file', featured=True)
 
     def light_curve(self):
-        return self.dataproduct_set.get(tag='light_curve', featured=True)
+        return self.dataproduct_set.filter(tag='light_curve', featured=True).first()
 
     def as_dict(self):
         if self.type == self.SIDEREAL:
