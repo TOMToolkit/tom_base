@@ -29,7 +29,11 @@
         <tr>
           <td>{{ product.get_file_name }}</th>
           <td><a href="{% url 'tom_targets:detail' product.target.id %}">{{ product.target.identifier }}</a></td>
+          {% if product.observation_record.id %}
           <td><a href="{% url 'tom_observations:detail' product.observation_record.id %}">{{ product.observation_record }}</a></td>
+          {% else %}
+          <td></td>
+          {% endif %}
           <td>
             {% for group in product.group.all %}
             <a href="{% url 'tom_dataproducts:data-group-detail' group.id %}">{{ group.name }}</a>
