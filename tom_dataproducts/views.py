@@ -40,8 +40,14 @@ class DataProductTagView(LoginRequiredMixin, UpdateView):
     template_name = 'tom_dataproducts/dataproduct_tag.html'
 
     def get_success_url(self):
-        observation_id = self.object.observation_record.id
-        return reverse('tom_observations:detail', kwargs={'pk': observation_id})
+        referer = self.request.GET.get('next', None)
+        referer = urlparse(referer).path if referer else '/'
+        return referer
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['next'] = self.request.META.get('HTTP_REFERER', '/')
+        return context
 
 
 class ManualDataProductUploadView(LoginRequiredMixin, FormView):
