@@ -1,17 +1,16 @@
 import requests
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django import forms
 from dateutil.parser import parse
 from crispy_forms.layout import Layout, Div
 from django.core.files.base import ContentFile
+from django.core.cache import cache
 
-import ephem
 
 from tom_observations.facility import GenericObservationForm
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.models import ObservationRecord
 from tom_dataproducts.models import DataProduct
+from tom_observations.facility import GenericObservationFacility
 from tom_targets.models import Target
 
 try:
@@ -230,7 +229,7 @@ class LCOObservationForm(GenericObservationForm):
         }
 
 
-class LCOFacility:
+class LCOFacility(GenericObservationFacility):
     name = 'LCO'
     form = LCOObservationForm
 
@@ -267,14 +266,6 @@ class LCOFacility:
         return SITES
 
     @classmethod
-    def get_observer_for_site(clz, site):
-        observer = ephem.Observer()
-        observer.lon = ephem.degrees(str(SITES[site].get('longitude')))
-        observer.lat = ephem.degrees(str(SITES[site].get('latitude')))
-        observer.elevation = SITES[site].get('elevation')
-        return observer
-
-    @classmethod
     def get_observation_status(clz, observation_id):
         response = make_request(
             'GET',
@@ -284,29 +275,6 @@ class LCOFacility:
         return response.json()['state']
 
     @classmethod
-    def update_observation_status(clz, observation_id):
-        try:
-            record = ObservationRecord.objects.get(observation_id=observation_id)
-            record.status = clz.get_observation_status(observation_id)
-            record.save()
-        except ObjectDoesNotExist:
-            raise Exception('No record exists for that observation id')
-
-    @classmethod
-    def update_all_observation_statuses(clz, target=None):
-        failed_records = []
-        records = ObservationRecord.objects.filter(facility=clz.name)
-        if target:
-            records = records.filter(target=target)
-        records = records.exclude(status__in=clz.get_terminal_observing_states())
-        for record in records:
-            try:
-                clz.update_observation_status(record.observation_id)
-            except Exception as e:
-                failed_records.append((record.observation_id, str(e)))
-        return failed_records
-
-    @classmethod
     def _portal_headers(clz):
         if LCO_SETTINGS.get('api_key'):
             return {'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
@@ -314,28 +282,29 @@ class LCOFacility:
             return {}
 
     @classmethod
-    def _archive_headers(clz, request):
-        if request and request.session.get('LCO_ARCHIVE_TOKEN'):
-            archive_token = request.session['LCO_ARCHIVE_TOKEN']
-        else:
-            response = make_request(
-                'GET',
-                PORTAL_URL + '/api/profile/',
-                headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
-            )
-            archive_token = response.json().get('tokens', {}).get('archive')
-            if request and archive_token:
-                request.session['LCO_ARCHIVE_TOKEN'] = archive_token
+    def _archive_headers(clz):
+        if LCO_SETTINGS.get('api_key'):
+            archive_token = cache.get('LCO_ARCHIVE_TOKEN')
+            if not archive_token:
+                response = make_request(
+                    'GET',
+                    PORTAL_URL + '/api/profile/',
+                    headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+                )
+                archive_token = response.json().get('tokens', {}).get('archive')
+                if archive_token:
+                    cache.set('LCO_ARCHIVE_TOKEN', archive_token, 3600)
+                    return {'Authorization': 'Bearer {0}'.format(archive_token)}
 
-        if archive_token:
-            return {'Authorization': 'Bearer {0}'.format(archive_token)}
+            else:
+                return {'Authorization': 'Bearer {0}'.format(archive_token)}
         else:
             return {}
 
     @classmethod
-    def save_data_products(clz, observation_record, product_id=None, request=None):
+    def save_data_products(clz, observation_record, product_id=None):
         products = []
-        frames = clz._archive_frames(observation_record.observation_id, product_id, request)
+        frames = clz._archive_frames(observation_record.observation_id, product_id)
 
         for frame in frames:
             dp, created = DataProduct.objects.get_or_create(
@@ -352,9 +321,10 @@ class LCOFacility:
         return products
 
     @classmethod
-    def data_products(clz, observation_record, request=None):
+    def data_products(clz, observation_record):
+        # TODO simplify return (hopefully to a list)
         products = {'saved': [], 'unsaved': []}
-        for frame in clz._archive_frames(observation_record.observation_id, request=request):
+        for frame in clz._archive_frames(observation_record.observation_id):
             try:
                 dp = DataProduct.objects.get(product_id=frame['id'])
                 products['saved'].append(dp)
@@ -373,21 +343,21 @@ class LCOFacility:
         return products
 
     @classmethod
-    def _archive_frames(clz, observation_id, product_id=None, request=None):
+    def _archive_frames(clz, observation_id, product_id=None):
         # todo save this key somewhere
         frames = []
         if product_id:
             response = make_request(
                 'GET',
                 'https://archive-api.lco.global/frames/{0}/'.format(product_id),
-                headers=clz._archive_headers(request)
+                headers=clz._archive_headers()
             )
             frames = [response.json()]
         else:
             response = make_request(
                 'GET',
                 'https://archive-api.lco.global/frames/?REQNUM={0}'.format(observation_id),
-                headers=clz._archive_headers(request)
+                headers=clz._archive_headers()
             )
             frames = response.json()['results']
 
