@@ -1,5 +1,6 @@
-from django.shortcuts import render
+from urllib.parse import urlparse
 
+from django.shortcuts import render
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView, DeleteView, CreateView, UpdateView
 from django_filters.views import FilterView
@@ -68,13 +69,21 @@ class ManualDataProductUploadView(LoginRequiredMixin, FormView):
 
 class DataProductDeleteView(LoginRequiredMixin, DeleteView):
     model = DataProduct
+    success_url = reverse_lazy('home')
 
     def get_success_url(self):
-        return reverse('tom_observations:detail', kwargs={'pk': self.object.observation_record.id})
+        referer = self.request.GET.get('next', None)
+        referer = urlparse(referer).path if referer else '/'
+        return referer
 
     def delete(self, request, *args, **kwargs):
         self.get_object().data.delete()
         return super().delete(request, *args, **kwargs)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['next'] = self.request.META.get('HTTP_REFERER', '/')
+        return context
 
 
 class DataProductListView(FilterView):

@@ -1,7 +1,7 @@
 {% load bootstrap4 %}
 <h4>Data</h4>
 <table class="table table-striped">
-  <thead><tr><th></th><th>Created</th><th>Filename</th><th>Tag</th></tr></thead>
+  <thead><tr><th></th><th>Filename</th><th>Tag</th><th>Delete</th></tr></thead>
   <tbody>
   {% for product in products %}
     <tr>
@@ -10,9 +10,9 @@
       {% else %}
       <td><span class="btn btn-secondary active featured">Featured</span></td>
       {% endif %}
-      <td>{{ product.created }}</td>
       <td>{{ product.get_file_name }}</td>
       <td>{{ product.get_tag_display }} <a href="{% url 'tom_dataproducts:data-tag' product.id %}" class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
+      <td><a href="{% url 'tom_dataproducts:data-delete' product.id %}" class="btn btn-danger">Delete</a></td>
     </tr>
   {% endfor %}
 </table>

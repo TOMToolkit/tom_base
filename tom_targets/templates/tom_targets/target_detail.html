@@ -34,7 +34,7 @@
       </div>
       <div class="tab-pane" id="observations">
         <h4>Observations</h4>
-        <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of  observations   for target" class="btn btn-primary">Update Observations Status</a>
+        <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations Status</a>
         {% observation_list object %}
       </div>
       <div class="tab-pane" id="data-products">
