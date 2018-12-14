@@ -43,7 +43,10 @@ def upload_dataproduct(context):
         object_key = 'target'
     elif type(model_instance) == ObservationRecord:
         object_key = 'observation_record'
-    form = context.get('data_product_form', DataProductUploadForm(initial={object_key: model_instance}))
+    form = context.get(
+        'data_product_form',
+        DataProductUploadForm(initial={object_key: model_instance})
+    )
     return {
         'data_product_form': form
     }
