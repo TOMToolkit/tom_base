@@ -1,5 +1,5 @@
 from django.views.generic.list import ListView
-from django.views.generic.edit import FormView, DeleteView,
+from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.edit import UpdateView, CreateView
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
