@@ -38,6 +38,17 @@ class DataProductTagView(LoginRequiredMixin, UpdateView):
     fields = ['tag']
     template_name = 'tom_dataproducts/dataproduct_tag.html'
 
+    def form_valid(self, form):
+        product = form.save(commit=False)
+        featured_images_with_tag = DataProduct.objects.filter(
+            featured=True,
+            tag=product.tag,
+            target=self.object.target
+        )
+        if len(featured_images_with_tag) > 0:
+            product.featured = False
+        return super().form_valid(form)
+
     def get_success_url(self):
         referer = self.request.GET.get('next', None)
         referer = urlparse(referer).path if referer else '/'
@@ -109,11 +120,12 @@ class DataProductFeatureView(View):
         product_id = kwargs.get('pk', None)
         product = DataProduct.objects.get(pk=product_id)
         try:
-            current_featured = DataProduct.objects.get(featured=True, tag=product.tag)
-            current_featured.featured = False
-            current_featured.save()
-            featured_image_cache_key = make_template_fragment_key('featured_image', str(current_featured.target.id))
-            cache.delete(featured_image_cache_key)
+            current_featured = DataProduct.objects.filter(featured=True, tag=product.tag, target=product.target)
+            for featured_image in current_featured:
+                current_featured.featured = False
+                current_featured.save()
+                featured_image_cache_key = make_template_fragment_key('featured_image', str(current_featured.target.id))
+                cache.delete(featured_image_cache_key)
         except DataProduct.DoesNotExist:
             pass
         product.featured = True
