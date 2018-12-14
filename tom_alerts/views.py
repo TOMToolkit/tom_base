@@ -53,7 +53,9 @@ class BrokerQueryUpdateView(LoginRequiredMixin, FormView):
 
     def get_form(self):
         form = super().get_form()
-        form.helper.form_action = reverse('tom_alerts:update', kwargs={'pk': self.object.id})
+        form.helper.form_action = reverse(
+            'tom_alerts:update', kwargs={'pk': self.object.id}
+        )
         return form
 
     def get_initial(self):
@@ -68,7 +70,9 @@ class BrokerQueryUpdateView(LoginRequiredMixin, FormView):
 
 
 class BrokerQueryFilter(django_filters.FilterSet):
-    broker = django_filters.ChoiceFilter(choices=[(k, k) for k in get_service_classes().keys()])
+    broker = django_filters.ChoiceFilter(
+        choices=[(k, k) for k in get_service_classes().keys()]
+    )
     name = django_filters.CharFilter(lookup_expr='icontains')
 
     class Meta:
@@ -100,7 +104,9 @@ class RunQueryView(TemplateView):
         query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
         broker_class = get_service_class(query.broker)
         alerts = broker_class.fetch_alerts(query.parameters_as_dict)
-        context['alerts'] = [broker_class.to_generic_alert(alert) for alert in alerts]
+        context['alerts'] = [
+            broker_class.to_generic_alert(alert) for alert in alerts
+        ]
         context['query'] = query
         return context
 
@@ -113,4 +119,6 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
         alert = broker_class.fetch_alert(alert_id)
         target = broker_class.to_target(alert)
         target.save()
-        return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
+        return redirect(reverse(
+            'tom_targets:detail', kwargs={'pk': target.id})
+        )

@@ -1,7 +1,8 @@
 from urllib.parse import urlparse
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import FormView, DeleteView, CreateView, UpdateView
+from django.views.generic.edit import FormView, DeleteView
+from django.views.generic.edit import CreateView, UpdateView
 from django_filters.views import FilterView
 from django.views.generic import View, ListView
 from django.views.generic.detail import DetailView
@@ -28,9 +29,20 @@ class DataProductSaveView(LoginRequiredMixin, View):
             messages.success(request, 'Saved all available data products')
         else:
             for product in products:
-                products = service_class.save_data_products(observation_record, product)
-                messages.success(request, 'Successfully saved: {0}'.format('\n'.join([str(p) for p in products])))
-        return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
+                products = service_class.save_data_products(
+                    observation_record,
+                    product
+                )
+                messages.success(
+                    request,
+                    'Successfully saved: {0}'.format('\n'.join(
+                        [str(p) for p in products]
+                    ))
+                )
+        return redirect(reverse(
+            'tom_observations:detail',
+            kwargs={'pk': observation_record.id})
+        )
 
 
 class DataProductTagView(LoginRequiredMixin, UpdateView):
@@ -76,7 +88,13 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             tag = form.cleaned_data['tag']
             data_product_files = request.FILES.getlist('files')
             for f in data_product_files:
-                dp = DataProduct(target=target, observation_record=observation_record, data=f, product_id=None, tag=tag)
+                dp = DataProduct(
+                    target=target,
+                    observation_record=observation_record,
+                    data=f,
+                    product_id=None,
+                    tag=tag
+                )
                 dp.save()
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
         else:
@@ -120,17 +138,27 @@ class DataProductFeatureView(View):
         product_id = kwargs.get('pk', None)
         product = DataProduct.objects.get(pk=product_id)
         try:
-            current_featured = DataProduct.objects.filter(featured=True, tag=product.tag, target=product.target)
+            current_featured = DataProduct.objects.filter(
+                featured=True,
+                tag=product.tag,
+                target=product.target
+            )
             for featured_image in current_featured:
                 current_featured.featured = False
                 current_featured.save()
-                featured_image_cache_key = make_template_fragment_key('featured_image', str(current_featured.target.id))
+                featured_image_cache_key = make_template_fragment_key(
+                    'featured_image',
+                    str(current_featured.target.id)
+                )
                 cache.delete(featured_image_cache_key)
         except DataProduct.DoesNotExist:
             pass
         product.featured = True
         product.save()
-        return redirect(reverse('tom_targets:detail', kwargs={'pk': request.GET.get('target_id')}))
+        return redirect(reverse(
+            'tom_targets:detail',
+            kwargs={'pk': request.GET.get('target_id')})
+        )
 
 
 class DataProductGroupDetailView(DetailView):
@@ -141,7 +169,10 @@ class DataProductGroupDetailView(DetailView):
         for product in request.POST.getlist('products'):
             group.dataproduct_set.remove(DataProduct.objects.get(pk=product))
         group.save()
-        return redirect(reverse('tom_dataproducts:group-detail', kwargs={'pk': group.id}))
+        return redirect(reverse(
+            'tom_dataproducts:group-detail',
+            kwargs={'pk': group.id})
+        )
 
 
 class DataProductGroupListView(ListView):
@@ -167,4 +198,7 @@ class DataProductGroupDataView(LoginRequiredMixin, FormView):
         group = form.cleaned_data['group']
         group.dataproduct_set.add(*form.cleaned_data['products'])
         group.save()
-        return redirect(reverse('tom_dataproducts:group-detail', kwargs={'pk': group.id}))
+        return redirect(reverse(
+            'tom_dataproducts:group-detail',
+            kwargs={'pk': group.id})
+        )

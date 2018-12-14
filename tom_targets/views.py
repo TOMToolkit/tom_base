@@ -11,7 +11,8 @@ from django.contrib import messages
 from django.core.management import call_command
 
 from .models import Target
-from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
+from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm
+from .forms import TargetExtraFormset
 from .import_targets import import_targets
 from .filters import TargetFilter
 
@@ -35,7 +36,10 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             return Target.SIDEREAL
 
     def get_initial(self):
-        return {'type': self.get_default_target_type(), **dict(self.request.GET.items())}
+        return {
+            'type': self.get_default_target_type(),
+            **dict(self.request.GET.items())
+        }
 
     def get_context_data(self, **kwargs):
         context = super(TargetCreateView, self).get_context_data(**kwargs)
@@ -109,7 +113,10 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
     def post(self, request):
         csv_file = request.FILES['target_csv']
         result = import_targets(csv_file)
-        messages.success(request, 'Targets created: {}'.format(len(result['targets'])))
+        messages.success(
+            request,
+            'Targets created: {}'.format(len(result['targets']))
+        )
         for error in result['errors']:
             messages.warning(request, error)
         return redirect(reverse('tom_targets:list'))

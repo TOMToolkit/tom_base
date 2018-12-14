@@ -11,7 +11,7 @@ from django.contrib import messages
 
 from .models import ObservationRecord
 from .forms import ManualObservationForm
-from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
+from tom_dataproducts.forms import AddProductToGroupForm
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class
 
@@ -58,7 +58,9 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
 
     def get_form(self):
         form = super().get_form()
-        form.helper.form_action = reverse('tom_observations:create', kwargs=self.kwargs)
+        form.helper.form_action = reverse(
+            'tom_observations:create', kwargs=self.kwargs
+        )
         return form
 
     def get_initial(self):
@@ -83,7 +85,9 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
                 parameters=form.serialize_parameters(),
                 observation_id=observation_id
             )
-        return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
+        return redirect(
+            reverse('tom_targets:detail', kwargs={'pk': target.id})
+        )
 
 
 class ManualObservationCreateView(LoginRequiredMixin, FormView):
@@ -113,7 +117,9 @@ class ManualObservationCreateView(LoginRequiredMixin, FormView):
             parameters={},
             observation_id=form.cleaned_data['observation_id']
         )
-        return redirect(reverse('tom_targets:detail', kwargs={'pk': self.get_target().id}))
+        return redirect(reverse(
+            'tom_targets:detail', kwargs={'pk': self.get_target().id})
+        )
 
 
 class ObservationRecordDetailView(DetailView):
