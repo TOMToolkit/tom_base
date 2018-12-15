@@ -81,18 +81,19 @@ class DataProduct(models.Model):
         return common_utils.get_light_curve(file_path)
 
     def get_image_data(self, min_scale=40, max_scale=99):
-        path = settings.MEDIA_ROOT + '/' + str(self.data)
-        image_data = fits.getdata(path, extname=self.FITS_EXTENSIONS[self.get_file_extension()])
-        image_data = image_data[::6, ::6]
-        interval = ZScaleInterval(nsamples=2000, contrast=0.1)
-        image_data = interval(image_data)
-        fig = plt.figure()
-        plt.axis('off')
-        ax = plt.gca()
-        ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
-        ax.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
         buffer = BytesIO()
-        plt.imsave(buffer, image_data, format='jpeg')
-        buffer.seek(0)
-        plt.close(fig)
+        path = settings.MEDIA_ROOT + '/' + str(self.data)
+        if self.tag == FITS_FILE[0]:
+            image_data = fits.getdata(path, extname=self.FITS_EXTENSIONS[self.get_file_extension()])
+            image_data = image_data[::6, ::6]
+            interval = ZScaleInterval(nsamples=2000, contrast=0.1)
+            image_data = interval(image_data)
+            fig = plt.figure()
+            plt.axis('off')
+            ax = plt.gca()
+            ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
+            ax.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
+            plt.imsave(buffer, image_data, format='jpeg')
+            buffer.seek(0)
+            plt.close(fig)
         return b64encode(buffer.read()).decode('utf-8')

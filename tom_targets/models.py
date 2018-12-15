@@ -128,10 +128,10 @@ class Target(models.Model):
         return reverse('targets:detail', kwargs={'pk': self.id})
 
     def featured_image(self):
-        return self.dataproduct_set.get(tag='fits_file', featured=True)
+        return self.dataproduct_set.filter(tag='fits_file', featured=True).first()
 
     def light_curve(self):
-        return self.dataproduct_set.filter(tag='light_curve').latest()
+        return self.dataproduct_set.filter(tag='light_curve', featured=True).first()
 
     def as_dict(self):
         if self.type == self.SIDEREAL:

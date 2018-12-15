@@ -29,13 +29,17 @@
         <tr>
           <td>{{ product.get_file_name }}</th>
           <td><a href="{% url 'tom_targets:detail' product.target.id %}">{{ product.target.identifier }}</a></td>
+          {% if product.observation_record.id %}
           <td><a href="{% url 'tom_observations:detail' product.observation_record.id %}">{{ product.observation_record }}</a></td>
+          {% else %}
+          <td></td>
+          {% endif %}
           <td>
             {% for group in product.group.all %}
-            <a href="{% url 'tom_dataproducts:data-group-detail' group.id %}">{{ group.name }}</a>
+            <a href="{% url 'tom_dataproducts:group-detail' group.id %}">{{ group.name }}</a>
             {% endfor %}
           </td>
-          <td>{{ product.get_tag_display }} <a href="{% url 'tom_dataproducts:data-tag' product.id %}" class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
+          <td>{{ product.get_tag_display }} <a href="{% url 'tom_dataproducts:tag' product.id %}" class='btn btn-secondary float-right' title="Modify Tag">⇄</a></td>
           <td><a href="{{ product.data.url }}" class="btn btn-success">⬇</a></td>
           {% if product.get_file_extension == '.fz' or product.get_file_extension == '.fits' %}
           <td>
@@ -66,17 +70,17 @@
         <button type="submit" class="btn btn-primary">
           Filter
         </button>
-        <a href="{% url 'tom_dataproducts:data-list' %}" class="btn btn-secondary" title="Reset">Reset</a>
+        <a href="{% url 'tom_dataproducts:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
       {% endbuttons %}
     </form>
     <h5>Data Groups</h5>
     {% for group in product_groups %}
     <p>
-      <a href="{% url 'tom_dataproducts:data-group-detail' group.id %}">{{ group.name }}</a><br/>
+      <a href="{% url 'tom_dataproducts:group-detail' group.id %}">{{ group.name }}</a><br/>
       <span class="text-muted">Products: {{ group.dataproduct_set.count }}</span>
     </p>
     {% endfor %}
-    <a href="{% url 'tom_dataproducts:data-group-list' %}">Manage groups</a>
+    <a href="{% url 'tom_dataproducts:group-list' %}">Manage groups</a>
   </div>
 </div>
 {% endblock %}

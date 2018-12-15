@@ -1,5 +1,7 @@
 from django import template
 
+from tom_targets.models import Target
+from tom_observations.models import ObservationRecord
 from tom_dataproducts.models import DataProduct
 from tom_dataproducts.forms import DataProductUploadForm
 from tom_observations.facility import get_service_class
@@ -35,7 +37,16 @@ def dataproduct_list_all(saved, fields):
 
 @register.inclusion_tag('tom_dataproducts/partials/upload_dataproduct.html', takes_context=True)
 def upload_dataproduct(context):
+    model_instance = context.get('object', None)
+    object_key = ''
+    if type(model_instance) == Target:
+        object_key = 'target'
+    elif type(model_instance) == ObservationRecord:
+        object_key = 'observation_record'
+    form = context.get(
+        'data_product_form',
+        DataProductUploadForm(initial={object_key: model_instance})
+    )
     return {
-        'observation': context['object'],
-        'data_product_form': DataProductUploadForm(initial={'observation_record': context['object']})
+        'data_product_form': form
     }

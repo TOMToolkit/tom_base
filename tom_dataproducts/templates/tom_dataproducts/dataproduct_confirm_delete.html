@@ -2,7 +2,8 @@
 {% load bootstrap4 %}
 {% block title %}Confirm delete{% endblock %}
 {% block content %}
-<form method="post">{% csrf_token %}
+<form method="post" action="{% url 'tom_dataproducts:delete' object.id %}?next={{ next }}">
+    {% csrf_token %}
     <p>Are you sure you want to delete "{{ object }}"?</p>
     {% buttons %}
     <button type="submit" class="btn btn-danger">Confirm</button>
