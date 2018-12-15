@@ -16,5 +16,6 @@ def observing_buttons(target):
 def observation_list(target=None):
     if target:
         observations = target.observationrecord_set.all()
-    observations = ObservationRecord.objects.all().order_by('-created')
+    else:
+        observations = ObservationRecord.objects.all().order_by('-created')
     return {'observations': observations}

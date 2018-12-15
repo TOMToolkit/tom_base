@@ -1,12 +1,17 @@
+from urllib.parse import urlparse
+
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import FormView, DeleteView, CreateView, UpdateView
+from django.views.generic.edit import FormView, DeleteView
+from django.views.generic.edit import CreateView, UpdateView
 from django_filters.views import FilterView
 from django.views.generic import View, ListView
 from django.views.generic.detail import DetailView
 from django.urls import reverse, reverse_lazy
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
+from django.http import HttpResponseRedirect
 
 from .models import DataProduct, DataProductGroup
 from .forms import AddProductToGroupForm, DataProductUploadForm
@@ -24,9 +29,20 @@ class DataProductSaveView(LoginRequiredMixin, View):
             messages.success(request, 'Saved all available data products')
         else:
             for product in products:
-                products = service_class.save_data_products(observation_record, product)
-                messages.success(request, 'Successfully saved: {0}'.format('\n'.join([str(p) for p in products])))
-        return redirect(reverse('tom_observations:detail', kwargs={'pk': observation_record.id}))
+                products = service_class.save_data_products(
+                    observation_record,
+                    product
+                )
+                messages.success(
+                    request,
+                    'Successfully saved: {0}'.format('\n'.join(
+                        [str(p) for p in products]
+                    ))
+                )
+        return redirect(reverse(
+            'tom_observations:detail',
+            kwargs={'pk': observation_record.id})
+        )
 
 
 class DataProductTagView(LoginRequiredMixin, UpdateView):
@@ -34,41 +50,74 @@ class DataProductTagView(LoginRequiredMixin, UpdateView):
     fields = ['tag']
     template_name = 'tom_dataproducts/dataproduct_tag.html'
 
+    def form_valid(self, form):
+        product = form.save(commit=False)
+        featured_images_with_tag = DataProduct.objects.filter(
+            featured=True,
+            tag=product.tag,
+            target=self.object.target
+        )
+        if len(featured_images_with_tag) > 0:
+            product.featured = False
+        return super().form_valid(form)
+
     def get_success_url(self):
-        observation_id = self.object.observation_record.id
-        return reverse('tom_observations:detail', kwargs={'pk': observation_id})
+        referer = self.request.GET.get('next', None)
+        referer = urlparse(referer).path if referer else '/'
+        return referer
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['next'] = self.request.META.get('HTTP_REFERER', '/')
+        return context
 
 
-class ManualDataProductUploadView(LoginRequiredMixin, FormView):
+class DataProductUploadView(LoginRequiredMixin, FormView):
     form_class = DataProductUploadForm
-    template_name = 'tom_dataproducts/dataproduct_import.html'
-
-    def get_success_url(self):
-        return reverse('tom_observations:detail', kwargs={'pk': self.kwargs.get('pk', None)})
+    template_name = 'tom_dataproducts/partials/upload_dataproduct.html'
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         if form.is_valid():
-            observation_record = form.cleaned_data['observation_record']
+            target = form.cleaned_data['target']
+            if not target:
+                observation_record = form.cleaned_data['observation_record']
+                target = observation_record.target
+            else:
+                observation_record = None
             tag = form.cleaned_data['tag']
             data_product_files = request.FILES.getlist('files')
             for f in data_product_files:
-                dp = DataProduct(target=observation_record.target, observation_record=observation_record, data=f, product_id=None, tag=tag)
+                dp = DataProduct(
+                    target=target,
+                    observation_record=observation_record,
+                    data=f,
+                    product_id=None,
+                    tag=tag
+                )
                 dp.save()
-            return super().form_valid(form)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
         else:
             return super().form_invalid(form)
 
 
 class DataProductDeleteView(LoginRequiredMixin, DeleteView):
     model = DataProduct
+    success_url = reverse_lazy('home')
 
     def get_success_url(self):
-        return reverse('tom_observations:detail', kwargs={'pk': self.object.observation_record.id})
+        referer = self.request.GET.get('next', None)
+        referer = urlparse(referer).path if referer else '/'
+        return referer
 
     def delete(self, request, *args, **kwargs):
         self.get_object().data.delete()
         return super().delete(request, *args, **kwargs)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['next'] = self.request.META.get('HTTP_REFERER', '/')
+        return context
 
 
 class DataProductListView(FilterView):
@@ -89,16 +138,27 @@ class DataProductFeatureView(View):
         product_id = kwargs.get('pk', None)
         product = DataProduct.objects.get(pk=product_id)
         try:
-            current_featured = DataProduct.objects.get(featured=True, tag=product.tag)
-            current_featured.featured = False
-            current_featured.save()
-            featured_image_cache_key = make_template_fragment_key('featured_image', str(current_featured.target.id))
-            cache.delete(featured_image_cache_key)
+            current_featured = DataProduct.objects.filter(
+                featured=True,
+                tag=product.tag,
+                target=product.target
+            )
+            for featured_image in current_featured:
+                current_featured.featured = False
+                current_featured.save()
+                featured_image_cache_key = make_template_fragment_key(
+                    'featured_image',
+                    str(current_featured.target.id)
+                )
+                cache.delete(featured_image_cache_key)
         except DataProduct.DoesNotExist:
             pass
         product.featured = True
         product.save()
-        return redirect(reverse('tom_targets:detail', kwargs={'pk': request.GET.get('target_id')}))
+        return redirect(reverse(
+            'tom_targets:detail',
+            kwargs={'pk': request.GET.get('target_id')})
+        )
 
 
 class DataProductGroupDetailView(DetailView):
@@ -109,7 +169,10 @@ class DataProductGroupDetailView(DetailView):
         for product in request.POST.getlist('products'):
             group.dataproduct_set.remove(DataProduct.objects.get(pk=product))
         group.save()
-        return redirect(reverse('tom_dataproducts:data-group-detail', kwargs={'pk': group.id}))
+        return redirect(reverse(
+            'tom_dataproducts:group-detail',
+            kwargs={'pk': group.id})
+        )
 
 
 class DataProductGroupListView(ListView):
@@ -118,16 +181,16 @@ class DataProductGroupListView(ListView):
 
 class DataProductGroupCreateView(LoginRequiredMixin, CreateView):
     model = DataProductGroup
-    success_url = reverse_lazy('tom_dataproducts:data-group-list')
+    success_url = reverse_lazy('tom_dataproducts:group-list')
     fields = ['name']
 
 
 class DataProductGroupDeleteView(LoginRequiredMixin, DeleteView):
-    success_url = reverse_lazy('tom_dataproducts:data-group-list')
+    success_url = reverse_lazy('tom_dataproducts:group-list')
     model = DataProductGroup
 
 
-class GroupDataView(LoginRequiredMixin, FormView):
+class DataProductGroupDataView(LoginRequiredMixin, FormView):
     form_class = AddProductToGroupForm
     template_name = 'tom_dataproducts/add_product_to_group.html'
 
@@ -135,4 +198,7 @@ class GroupDataView(LoginRequiredMixin, FormView):
         group = form.cleaned_data['group']
         group.dataproduct_set.add(*form.cleaned_data['products'])
         group.save()
-        return redirect(reverse('tom_dataproducts:data-group-detail', kwargs={'pk': group.id}))
+        return redirect(reverse(
+            'tom_dataproducts:group-detail',
+            kwargs={'pk': group.id})
+        )

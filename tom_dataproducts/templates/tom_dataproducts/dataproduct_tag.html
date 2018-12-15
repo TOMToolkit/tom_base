@@ -3,7 +3,7 @@
 {% block title %}Update Data Product Tag{% endblock %}
 {% block content %}
 <h3>Update Data Product Tag</h3>
-<form method="POST" action="">
+<form method="POST" action="{% url 'tom_dataproducts:tag' object.id %}?next={{ next }}">
   {% csrf_token %}
   {% bootstrap_form form %}
   {% buttons %}

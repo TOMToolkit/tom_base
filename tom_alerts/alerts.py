@@ -12,6 +12,7 @@ from tom_alerts.models import BrokerQuery
 
 DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.mars.MARSBroker',
+    'tom_alerts.brokers.lasair.LASAIRBroker'
 ]
 
 
@@ -28,7 +29,10 @@ def get_service_classes():
             mod = import_module(mod_name)
             clazz = getattr(mod, class_name)
         except (ImportError, AttributeError):
-            raise ImportError('Could not import {}. Did you provide the correct path?'.format(service))
+            raise ImportError(
+                '''Could not import {}.
+                Did you provide the correct path?'''.format(service)
+            )
         service_choices[clazz.name] = clazz
     return service_choices
 
@@ -38,7 +42,10 @@ def get_service_class(name):
     try:
         return available_classes[name]
     except KeyError:
-        raise ImportError('Could not a find a broker with that name. Did you add it to TOM_ALERT_CLASSES?')
+        raise ImportError(
+            '''Could not a find a broker with that name.
+            Did you add it to TOM_ALERT_CLASSES?'''
+        )
 
 
 @dataclass
@@ -55,7 +62,11 @@ class GenericAlert:
 
 class GenericQueryForm(forms.Form):
     query_name = forms.CharField(required=True)
-    broker = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
+    broker = forms.CharField(
+        required=True,
+        max_length=50,
+        widget=forms.HiddenInput()
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

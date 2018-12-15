@@ -11,7 +11,8 @@ from django.contrib import messages
 from django.core.management import call_command
 
 from .models import Target
-from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
+from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm
+from .forms import TargetExtraFormset
 from .import_targets import import_targets
 from .filters import TargetFilter
 
@@ -24,7 +25,7 @@ class TargetListView(FilterView):
     filterset_class = TargetFilter
 
 
-class TargetCreate(LoginRequiredMixin, CreateView):
+class TargetCreateView(LoginRequiredMixin, CreateView):
     model = Target
     fields = '__all__'
 
@@ -35,10 +36,13 @@ class TargetCreate(LoginRequiredMixin, CreateView):
             return Target.SIDEREAL
 
     def get_initial(self):
-        return {'type': self.get_default_target_type(), **dict(self.request.GET.items())}
+        return {
+            'type': self.get_default_target_type(),
+            **dict(self.request.GET.items())
+        }
 
     def get_context_data(self, **kwargs):
-        context = super(TargetCreate, self).get_context_data(**kwargs)
+        context = super(TargetCreateView, self).get_context_data(**kwargs)
         context['type_choices'] = Target.TARGET_TYPES
         context['extra_form'] = TargetExtraFormset()
         return context
@@ -65,7 +69,7 @@ class TargetCreate(LoginRequiredMixin, CreateView):
         return redirect(self.get_success_url())
 
 
-class TargetUpdate(LoginRequiredMixin, UpdateView):
+class TargetUpdateView(LoginRequiredMixin, UpdateView):
     model = Target
     fields = '__all__'
 
@@ -82,12 +86,12 @@ class TargetUpdate(LoginRequiredMixin, UpdateView):
         return redirect(self.get_success_url())
 
 
-class TargetDelete(LoginRequiredMixin, DeleteView):
+class TargetDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('targets:list')
     model = Target
 
 
-class TargetDetail(DetailView):
+class TargetDetailView(DetailView):
     model = Target
 
     def get(self, request, *args, **kwargs):
@@ -103,13 +107,16 @@ class TargetDetail(DetailView):
         return super().get(request, *args, **kwargs)
 
 
-class TargetImport(LoginRequiredMixin, TemplateView):
+class TargetImportView(LoginRequiredMixin, TemplateView):
     template_name = 'tom_targets/target_import.html'
 
     def post(self, request):
         csv_file = request.FILES['target_csv']
         result = import_targets(csv_file)
-        messages.success(request, 'Targets created: {}'.format(len(result['targets'])))
+        messages.success(
+            request,
+            'Targets created: {}'.format(len(result['targets']))
+        )
         for error in result['errors']:
             messages.warning(request, error)
         return redirect(reverse('tom_targets:list'))
