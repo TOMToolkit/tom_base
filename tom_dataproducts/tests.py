@@ -32,5 +32,5 @@ class TestObservationDataViews(TestCase):
         self.assertContains(response, 'afile.fits')
 
     def test_dataproduct_list(self, dp_mock):
-        response = self.client.get(reverse('tom_dataproducts:data-list'))
+        response = self.client.get(reverse('tom_dataproducts:list'))
         self.assertContains(response, 'afile.fits')
