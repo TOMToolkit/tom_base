@@ -144,11 +144,11 @@ class DataProductFeatureView(View):
                 target=product.target
             )
             for featured_image in current_featured:
-                current_featured.featured = False
-                current_featured.save()
+                featured_image.featured = False
+                featured_image.save()
                 featured_image_cache_key = make_template_fragment_key(
                     'featured_image',
-                    str(current_featured.target.id)
+                    str(featured_image.target.id)
                 )
                 cache.delete(featured_image_cache_key)
         except DataProduct.DoesNotExist:

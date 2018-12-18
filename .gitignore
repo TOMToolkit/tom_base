@@ -79,6 +79,9 @@ docs/_build/
 # PyCharm
 .idea/
 
+# Linting
+.flake8
+
 # VS Code
 .vscode/
 
