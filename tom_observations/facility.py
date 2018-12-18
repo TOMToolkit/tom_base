@@ -87,18 +87,18 @@ class GenericObservationFacility:
     def save_data_products(clz, observation_record, product_id=None):
         from tom_dataproducts.models import DataProduct
         products = []
-        frames = clz.data_products(observation_record.observation_id, product_id)
+        products = clz.data_products(observation_record.observation_id, product_id)
 
-        for frame in frames:
+        for product in products:
             dp, created = DataProduct.objects.get_or_create(
-                product_id=frame['id'],
+                product_id=product['id'],
                 target=observation_record.target,
                 observation_record=observation_record,
             )
             if created:
-                frame_data = requests.get(frame['url']).content
-                dfile = ContentFile(frame_data)
-                dp.data.save(frame['filename'], dfile)
+                product_data = requests.get(product['url']).content
+                dfile = ContentFile(product_data)
+                dp.data.save(product['filename'], dfile)
                 dp.save()
             products.append(dp)
         return products
