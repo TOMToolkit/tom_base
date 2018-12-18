@@ -1,7 +1,6 @@
 from django.db import models
 from io import BytesIO
 from base64 import b64encode
-import json
 import os
 from django.conf import settings
 

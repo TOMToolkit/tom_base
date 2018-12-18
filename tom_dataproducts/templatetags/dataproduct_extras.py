@@ -19,13 +19,13 @@ def dataproduct_list_for_target(target):
 
 @register.inclusion_tag('tom_dataproducts/partials/saved_dataproduct_list_for_observation.html')
 def dataproduct_list_for_observation_saved(observation_record):
-    products = get_service_class(observation_record.facility).data_products(observation_record)
+    products = get_service_class(observation_record.facility).all_data_products(observation_record)
     return {'products': products}
 
 
 @register.inclusion_tag('tom_dataproducts/partials/unsaved_dataproduct_list_for_observation.html')
 def dataproduct_list_for_observation_unsaved(observation_record):
-    products = get_service_class(observation_record.facility).data_products(observation_record)
+    products = get_service_class(observation_record.facility).all_data_products(observation_record)
     return {'products': products}
 
 

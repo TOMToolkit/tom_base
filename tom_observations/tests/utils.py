@@ -1,4 +1,7 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 from tom_observations.facility import GenericObservationFacility
+from tom_dataproducts.models import DataProduct
 
 # Site data matches built-in pyephem observer data for Los Angeles
 SITES = {
@@ -11,7 +14,7 @@ SITES = {
 
 
 class FakeFacility(GenericObservationFacility):
-    name = 'Fake Facility'
+    name = 'FakeFacility'
 
     @classmethod
     def get_observing_sites(clz):
@@ -22,8 +25,12 @@ class FakeFacility(GenericObservationFacility):
         return ''
 
     @classmethod
-    def data_products(clz, observation_record, request=None):
-        return {'saved': []}
+    def data_products(clz, observation_record):
+        return [{'id': 'testdpid'}]
+
+    @classmethod
+    def save_data_products(clz, observation_record, product_id=None):
+        return([DataProduct(product_id=product_id, data=SimpleUploadedFile('afile.fits', b'afile'))])
 
     @classmethod
     def get_observation_status(clz, observation_id):
