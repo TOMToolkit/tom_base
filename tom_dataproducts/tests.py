@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
@@ -9,6 +9,7 @@ from tom_observations.tests.factories import TargetFactory, ObservingRecordFacto
 from tom_dataproducts.models import DataProduct
 
 
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
 @patch('tom_dataproducts.models.DataProduct.get_image_data', return_value=b'image')
 class TestObservationDataViews(TestCase):
     def setUp(self):
@@ -34,3 +35,23 @@ class TestObservationDataViews(TestCase):
     def test_dataproduct_list(self, dp_mock):
         response = self.client.get(reverse('tom_dataproducts:list'))
         self.assertContains(response, 'afile.fits')
+
+    def test_get_dataproducts(self, dp_mock):
+        response = self.client.get(reverse('tom_observations:detail', kwargs={'pk': self.data_product.id}))
+        self.assertContains(response, 'testdpid')
+
+    def test_save_dataproduct(self, dp_mock):
+        response = self.client.post(
+            reverse('dataproducts:save', kwargs={'pk': self.observation_record.id}),
+            data={'facility': 'FakeFacility', 'products': ['testdpid']},
+            follow=True
+        )
+        self.assertContains(response, 'Successfully saved: afile.fits')
+
+    def test_tag_file(self, dp_mock):
+        self.client.post(
+            reverse('tom_dataproducts:tag', kwargs={'pk': self.data_product.id}),
+            data={'tag': 'fits_file'},
+        )
+        self.data_product.refresh_from_db()
+        self.assertEqual(self.data_product.tag, 'fits_file')
