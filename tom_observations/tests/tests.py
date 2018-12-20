@@ -10,7 +10,6 @@ from rise_set.angle import Angle
 from rise_set.astrometry import calc_sunrise_set
 
 from .factories import TargetFactory, ObservingRecordFactory
-from tom_observations.facilities.lco import LCOFacility
 from tom_observations.utils import get_rise_set, get_last_rise_set_pair
 from tom_observations.utils import get_next_rise_set_pair, observer_for_site
 from tom_observations.tests.utils import FakeFacility
@@ -120,8 +119,8 @@ class TestRiseSet(TestCase):
         )
 
     def test_get_rise_set_against_lco_rise_set(self):
-        lco = LCOFacility()
-        sites = lco.get_observing_sites()
+        facility = FakeFacility()
+        sites = facility.get_observing_sites()
         start = datetime(2018, 10, 10)
         end = datetime(2018, 10, 11)
 

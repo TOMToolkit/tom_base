@@ -8,7 +8,13 @@ SITES = {
         'latitude': 34.052222,
         'longitude': -117.756306,
         'elevation': 86.847092
-    }
+    },
+    'Siding Spring': {
+        'sitecode': 'coj',
+        'latitude': -31.272,
+        'longitude': 149.07,
+        'elevation': 1116
+    },
 }
 
 
