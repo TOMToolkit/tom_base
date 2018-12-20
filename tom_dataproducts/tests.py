@@ -41,12 +41,15 @@ class TestObservationDataViews(TestCase):
         self.assertContains(response, 'testdpid')
 
     def test_save_dataproduct(self, dp_mock):
-        response = self.client.post(
-            reverse('dataproducts:save', kwargs={'pk': self.observation_record.id}),
-            data={'facility': 'FakeFacility', 'products': ['testdpid']},
-            follow=True
-        )
-        self.assertContains(response, 'Successfully saved: afile.fits')
+        mock_return = [DataProduct(product_id='testdpid', data=SimpleUploadedFile('afile.fits', b'afile'))]
+        with patch.object(FakeFacility, 'save_data_products', return_value=mock_return) as mock:
+            response = self.client.post(
+                reverse('dataproducts:save', kwargs={'pk': self.observation_record.id}),
+                data={'facility': 'FakeFacility', 'products': ['testdpid']},
+                follow=True
+            )
+            self.assertTrue(mock.called)
+            self.assertContains(response, 'Successfully saved: afile.fits')
 
     def test_tag_file(self, dp_mock):
         self.client.post(

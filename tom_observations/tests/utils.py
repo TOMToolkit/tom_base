@@ -1,7 +1,6 @@
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django import forms
 
-from tom_observations.facility import GenericObservationFacility
-from tom_dataproducts.models import DataProduct
+from tom_observations.facility import GenericObservationFacility, GenericObservationForm
 
 # Site data matches built-in pyephem observer data for Los Angeles
 SITES = {
@@ -13,8 +12,13 @@ SITES = {
 }
 
 
+class FakeFacilityForm(GenericObservationForm):
+    test_input = forms.CharField(help_text='fake form input')
+
+
 class FakeFacility(GenericObservationFacility):
     name = 'FakeFacility'
+    form = FakeFacilityForm
 
     @classmethod
     def get_observing_sites(clz):
@@ -29,13 +33,13 @@ class FakeFacility(GenericObservationFacility):
         return [{'id': 'testdpid'}]
 
     @classmethod
-    def save_data_products(clz, observation_record, product_id=None):
-        return([DataProduct(product_id=product_id, data=SimpleUploadedFile('afile.fits', b'afile'))])
-
-    @classmethod
     def get_observation_status(clz, observation_id):
         return 'COMPLETED'
 
     @classmethod
     def get_terminal_observing_states(clz):
-        return ['COMPLETED', 'FAILED']
+        return ['COMPLETED', 'FAILED', 'CANCELED', 'WINDOW_EXPIRED']
+
+    @classmethod
+    def submit_observation(clz, payload):
+        return ['fakeid']

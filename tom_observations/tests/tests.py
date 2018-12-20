@@ -11,16 +11,18 @@ from rise_set.astrometry import calc_sunrise_set
 
 from .factories import TargetFactory, ObservingRecordFactory
 from tom_observations.facilities.lco import LCOFacility
-from tom_observations.utils import get_rise_set, get_last_rise_set_pair, get_next_rise_set_pair, observer_for_site
+from tom_observations.utils import get_rise_set, get_last_rise_set_pair
+from tom_observations.utils import get_next_rise_set_pair, observer_for_site
 from tom_observations.tests.utils import FakeFacility
+from tom_observations.models import ObservationRecord
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
 class TestObservationViews(TestCase):
     def setUp(self):
-        target = TargetFactory.create()
+        self.target = TargetFactory.create()
         self.observation_record = ObservingRecordFactory.create(
-            target_id=target.id,
+            target_id=self.target.id,
             facility=FakeFacility.name,
             parameters='{}'
         )
@@ -48,32 +50,57 @@ class TestObservationViews(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'COMPLETED')
 
+    def test_get_observation_form(self):
+        response = self.client.get(
+            '{}?target_id={}'.format(
+                reverse('tom_observations:create', kwargs={'facility': 'FakeFacility'}),
+                self.target.id
+            )
+        )
+        self.assertContains(response, 'fake form input')
 
-class TestLCOFacility(TestCase):
+    def test_submit_observation(self):
+        form_data = {
+            'target_id': self.target.id,
+            'test_input': 'gnomes',
+            'facility': 'FakeFacility',
+        }
+        response = self.client.post(
+            '{}?target_id={}'.format(
+                reverse('tom_observations:create', kwargs={'facility': 'FakeFacility'}),
+                self.target.id
+            ),
+            data=form_data,
+            follow=True
+        )
+        print(response.content)
+        self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
+
+
+class TestUpdatingObservations(TestCase):
     def setUp(self):
         self.t1 = TargetFactory.create()
-        self.or1 = ObservingRecordFactory.create(target_id=self.t1.id, status='PENDING')
+        self.or1 = ObservingRecordFactory.create(target_id=self.t1.id, facility='FakeFacility', status='PENDING')
         self.or2 = ObservingRecordFactory.create(target_id=self.t1.id, status='COMPLETED')
-        self.or3 = ObservingRecordFactory.create(target_id=self.t1.id, facility='Fake Facility', status='PENDING')
+        self.or3 = ObservingRecordFactory.create(target_id=self.t1.id, facility='FakeFacility', status='PENDING')
         self.t2 = TargetFactory.create()
         self.or4 = ObservingRecordFactory.create(target_id=self.t2.id, status='PENDING')
 
     # Tests that only 2 of the three created observing records are updated, as
     # the third is in a completed state
     def test_update_all_observations_for_facility(self):
-        with mock.patch.object(LCOFacility, 'update_observation_status') as uos_mock:
-            LCOFacility().update_all_observation_statuses()
+        with mock.patch.object(FakeFacility, 'update_observation_status') as uos_mock:
+            FakeFacility().update_all_observation_statuses()
             self.assertEquals(uos_mock.call_count, 2)
 
     # Tests that only the observing records associated with the given target are updated
     def test_update_individual_target_observations_for_facility(self):
-        with mock.patch.object(LCOFacility, 'update_observation_status', return_value='COMPLETED') as uos_mock:
-            LCOFacility().update_all_observation_statuses(target=self.t1)
-            self.assertEquals(uos_mock.call_count, 1)
+        with mock.patch.object(FakeFacility, 'update_observation_status', return_value='COMPLETED') as uos_mock:
+            FakeFacility().update_all_observation_statuses(target=self.t1)
+            self.assertEquals(uos_mock.call_count, 2)
 
 
 class TestRiseSet(TestCase):
-
     def setUp(self):
         self.rise_set = [(0, 10),
                          (20, 30),
