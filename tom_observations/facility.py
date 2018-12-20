@@ -7,6 +7,8 @@ from django.core.files.base import ContentFile
 import requests
 import json
 
+from tom_targets.models import Target
+
 
 DEFAULT_FACILITY_CLASSES = [
         'tom_observations.facilities.lco.LCOFacility',
@@ -69,7 +71,7 @@ class GenericObservationFacility:
     def all_data_products(clz, observation_record):
         from tom_dataproducts.models import DataProduct
         products = {'saved': [], 'unsaved': []}
-        for product in clz.data_products(observation_record.observation_id):
+        for product in clz.data_products(observation_record):
             try:
                 dp = DataProduct.objects.get(product_id=product['id'])
                 products['saved'].append(dp)
@@ -116,3 +118,11 @@ class GenericObservationForm(forms.Form):
 
     def serialize_parameters(self):
         return json.dumps(self.cleaned_data)
+
+    @property
+    def observation_payload(self):
+        target = Target.objects.get(pk=self.cleaned_data['target_id'])
+        return {
+            'target_id': target.id,
+            'params': self.serialize_parameters()
+        }
