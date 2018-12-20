@@ -71,7 +71,7 @@ class GenericObservationFacility:
     def all_data_products(clz, observation_record):
         from tom_dataproducts.models import DataProduct
         products = {'saved': [], 'unsaved': []}
-        for product in clz.data_products(observation_record.observation_id):
+        for product in clz.data_products(observation_record):
             try:
                 dp = DataProduct.objects.get(product_id=product['id'])
                 products['saved'].append(dp)
