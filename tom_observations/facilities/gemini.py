@@ -87,58 +87,79 @@ def flatten_error_dict(form, error_dict):
 
 
 def proposal_choices():
-    choices = ''
-#     response = make_request(
-#         'GET',
-#         PORTAL_URL + '/api/profile/',
-#         headers={'Authorization': 'Token {0}'.format(GEM_SETTINGS['api_key'])}
-#     )
-#     choices = []
-#     for p in response.json()['proposals']:
-#         if p['current']:
-#             choices.append((p['id'], '{} ({})'.format(p['title'], p['id'])))
+    choices = []
+    for p in GEM_SETTINGS['programs']:
+        choices.append((p,p))
     return choices
 
+def obs_choices():
+    choices = []
+    for p in GEM_SETTINGS['programs']:
+        for obs in GEM_SETTINGS['programs'][p]:
+            obsid = p + '-' + obs
+            val = p.split('-')
+            showtext = val[0][1]+val[1][2:]+val[2]+val[3]+ ' - '+ GEM_SETTINGS['programs'][p][obs]
+            choices.append((obsid,showtext))
+    return choices
+    
+def get_site(progid):
+    values = progid.split('-')
+    return values[0].upper()
 
 class GEMObservationForm(GenericObservationForm):
-    progid = forms.CharField()
-    userkey = forms.CharField()
-    email = forms.CharField()
-    obsnum = forms.IntegerField(min_value=1)
+    # progid = forms.CharField()
+    #progid = forms.ChoiceField(choices=proposal_choices)
+    # userkey = forms.CharField(get_site(self.cleaned_data[progid]))
+    # email = forms.CharField(choices=GEM_SETTINGS['user_email'])
+    # obsnum = forms.IntegerField(min_value=1)
+    obsid = forms.ChoiceField(choices=obs_choices())
     ready = forms.ChoiceField(
         choices=(('false', 'No'), ('true', 'Yes'))
     )
     brightness = forms.FloatField(required=False)
-    brightness_system =forms.ChoiceField(required=False,
+    brightness_system =forms.ChoiceField(required=False, initial='AB',
         choices=(('Vega', 'Vega'), ('AB', 'AB'), ('JY', 'Jy'))
     )
-    brightness_band = forms.ChoiceField(required=False,
+    brightness_band = forms.ChoiceField(required=False, initial='r',
         choices=(('u', 'u'), ('U', 'U'), ('B', 'B'), ('g', 'g'), ('V', 'V'), ('UC', 'UC'), ('r', 'r'), ('R', 'R'),
                  ('i', 'i'), ('I', 'I'), ('z', 'z'), ('Y', 'Y'), ('J', 'J'), ('H', 'H'), ('K', 'K'), ('L', 'L'),
                  ('M', 'M'), ('N', 'N'), ('Q', 'Q'), ('AP', 'AP'))
     )
-    posangle = forms.FloatField(min_value=0., max_value=360., required=False)
+    posangle = forms.FloatField(min_value=0., max_value=360., required=False, initial=0.0, label='Position Angle')
     # posangle = forms.FloatField(min_value=0., max_value=360.,help_text="Position angle in degrees [0-360]")
-    pamode = forms.ChoiceField(required=False,
+    pamode = forms.ChoiceField(required=False, label='PA Mode',
         choices=(('FLIP', 'Flip180'), ('FIXED', 'Fixed'), ('FIND', 'Find'), ('PARALLACTIC', 'Parallactic'))
     )
     group = forms.CharField(required=False)
     note = forms.CharField(required=False)
 
-    # gstarg = forms.CharField(required=False)
-    # gsra = forms.CharField(required=False)
-    # gsdec = forms.CharField(required=False)
-    # gsbrightness = forms.FloatField(required=False)
-    # gsbrightness_system =forms.ChoiceField(required=False,
-    #     choices=(('VEGA', 'Vega'), ('AB', 'AB'), ('JY', 'Jy'))
-    # )
-    # gsbrightness_band = forms.ChoiceField(required=False,
-    #     choices=(('UP', 'u'), ('U', 'U'), ('B', 'B'), ('GP', 'g'), ('V', 'V'), ('UC', 'UC'), ('RP', 'r'), ('R', 'R'),
-    #              ('IP', 'i'), ('I', 'I'), ('ZP', 'z'), ('Y', 'Y'), ('J', 'J'), ('H', 'H'), ('K', 'K'), ('L', 'L'),
-    #              ('M', 'M'), ('N', 'N'), ('Q', 'Q'), ('AP', 'AP'))
-    # )
-    #
-    # obsdate = forms.CharField(required=False,widget=forms.TextInput(attrs={'type': 'date'}))
+    eltype = forms.ChoiceField(required=False, label='Airmass/Hour Angle Constraint',
+                                choices=(('none', 'None'), ('airmass', 'Airmass'), ('hourAngle', 'Hour Angle')))
+    elmin = forms.FloatField(required=False, min_value=-5.0, max_value=5.0, label='Min Airmass/HA')
+    elmax = forms.FloatField(required=False, min_value=-5.0, max_value=5.0, label='Max Airmass/HA')
+
+    gstarg = forms.CharField(required=False)
+    gsra = forms.CharField(required=False)
+    gsdec = forms.CharField(required=False)
+    gsbrightness = forms.FloatField(required=False)
+    gsbrightness_system =forms.ChoiceField(required=False,
+        choices=(('VEGA', 'Vega'), ('AB', 'AB'), ('JY', 'Jy'))
+    )
+    gsbrightness_band = forms.ChoiceField(required=False, initial='UC',
+        choices=(('UP', 'u'), ('U', 'U'), ('B', 'B'), ('GP', 'g'), ('V', 'V'), ('UC', 'UC'), ('RP', 'r'), ('R', 'R'),
+                 ('IP', 'i'), ('I', 'I'), ('ZP', 'z'), ('Y', 'Y'), ('J', 'J'), ('H', 'H'), ('K', 'K'), ('L', 'L'),
+                 ('M', 'M'), ('N', 'N'), ('Q', 'Q'), ('AP', 'AP'))
+    )
+    gsprobe = forms.ChoiceField(required=False,
+                                choices=(('OIWFS', 'OIWFS'), ('PWFS1', 'PWFS1'), ('PWFS2', 'PWFS2')))  # GS probe (PWFS1/PWFS2/OIWFS/AOWFS)
+
+    obsdate = forms.CharField(required=False,widget=forms.TextInput(attrs={'type': 'date'}))
+    # obstime = forms.CharField(required=False)
+
+    # window_start = forms.DateTimeField(required=False)
+    window_start = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'date'}))
+    # window_time = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'time'}))
+    window_duration = forms.IntegerField(required=False, min_value=1)
 
     #     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
 #     end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
@@ -157,28 +178,20 @@ class GEMObservationForm(GenericObservationForm):
             self.common_layout,
             Div(
                 Div(
-                    'progid', 'obsnum', 'brightness', 'group',
+                    'obsid', 'posangle', 'brightness', 'eltype', 'group', 'gstarg', 'gsbrightness', 'obsdate',
                     css_class='col'
                 ),
                 Div(
-                    'email', 'posangle', 'brightness_band', 'note',
+                    'ready', 'pamode', 'brightness_band', 'elmin', 'note', 'gsra', 'gsbrightness_band',
                     css_class='col'
                 ),
                 Div(
-                    'userkey', 'pamode', 'brightness_system', 'ready',
+                    'window_start', 'window_duration', 'brightness_system', 'elmax', 'gsprobe', 'gsdec', 'gsbrightness_system',
                     css_class='col'
                 ),
                 css_class='form-row'
             )
         )
-
-    def clean_start(self):
-        start = self.cleaned_data['start']
-        return parse(start).isoformat()
-
-    def clean_end(self):
-        end = self.cleaned_data['end']
-        return parse(end).isoformat()
 
     def is_valid(self):
         super().is_valid()
@@ -195,13 +208,27 @@ class GEMObservationForm(GenericObservationForm):
 
     @property
     def observation_payload(self):
+
+        def isodatetime(value):
+            isostring = parse(value).isoformat()
+            ii = isostring.find('T')
+            date = isostring[0:ii]
+            time = isostring[ii + 1:]
+            return date, time
+
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
 
+        ii = self.cleaned_data['obsid'].rfind('-')
+        progid = self.cleaned_data['obsid'][0:ii]
+        obsnum = self.cleaned_data['obsid'][ii+1:]
+        # print(progid, obsnum)
         payload = {
-            "prog": self.cleaned_data['progid'],
-            "password": self.cleaned_data['userkey'],
-            "email": self.cleaned_data['email'],
-            "obsnum": self.cleaned_data['obsnum'],
+            "prog": progid,
+            # "password": self.cleaned_data['userkey'],
+            "password": GEM_SETTINGS['api_key'][get_site(self.cleaned_data['obsid'])],
+            # "email": self.cleaned_data['email'],
+            "email": GEM_SETTINGS['user_email'],
+            "obsnum": obsnum,
             "target": target.name,
             "ra": target.ra,
             "dec": target.dec,
@@ -219,28 +246,34 @@ class GEMObservationForm(GenericObservationForm):
         if self.cleaned_data['group'].strip() != '':
             payload['group'] = self.cleaned_data['group'].strip()
 
-        # # Guide star
-        # if self.cleaned_data['gstarg'].strip() != '':
-        #     payload['gstarget'] = self.cleaned_data['gstarg']
-        #     payload['gsra'] = self.cleaned_data['gsra']
-        #     payload['gsdec'] = self.cleaned_data['gsdec']
-        #     sgsmag = str(self.cleaned_data['smag']).strip() + '/UC/Vega'
-        #     payload['gsmags'] = sgsmag
-        #     payload['gsprobe'] = self.cleaned_data['gsprobe']
-        #
-        # # timing window?
-        # if self.cleaned_data['wDate'].strip() != '':
-        #     payload['windowDate'] = self.cleaned_data['wDate'].strip()
-        #     payload['windowTime'] = self.cleaned_data['wTime'].strip()
-        #     payload['windowDuration'] = str(self.cleaned_data['wDur)']).strip()
-        #
-        # # elevation/airmass
-        # s_eltype = self.cleaned_data['eltype'].strip()
-        # if s_eltype == 'airmass' or s_eltype == 'hourAngle':
-        #     payload['elevationType'] = s_eltype
-        #     payload['elevationMin'] = str(self.cleaned_data['elmin']).strip()
-        #     payload['elevationMax'] = str(self.cleaned_data['elmax']).strip()
-            
+        # Guide star
+        if self.cleaned_data['gstarg'].strip() != '':
+            if str(self.cleaned_data['gsbrightness']).strip() != '':
+                sgsmag = str(self.cleaned_data['gsbrightness']).strip() + '/' + \
+                        self.cleaned_data['gsbrightness_band'].strip() + '/' + \
+                        self.cleaned_data['gsbrightness_system'].strip()
+            payload['gstarget'] = self.cleaned_data['gstarg']
+            payload['gsra'] = self.cleaned_data['gsra']
+            payload['gsdec'] = self.cleaned_data['gsdec']
+            payload['gsmags'] = sgsmag
+            payload['gsprobe'] = self.cleaned_data['gsprobe']
+
+        # timing window?
+        if self.cleaned_data['window_start'].strip() != '':
+            wdate, wtime = isodatetime(self.cleaned_data['window_start'])
+            payload['windowDate'] = wdate
+            payload['windowTime'] = wtime
+            payload['windowDuration'] = str(self.cleaned_data['window_duration']).strip()
+            # print(payload['windowDate'], payload['windowTime'])
+
+        # elevation/airmass
+        if self.cleaned_data['eltype'] != None:
+            payload['elevationType'] = self.cleaned_data['eltype']
+            payload['elevationMin'] = str(self.cleaned_data['elmin']).strip()
+            payload['elevationMax'] = str(self.cleaned_data['elmax']).strip()
+
+        print(payload)
+
         return payload
 
 class GEMFacility(GenericObservationFacility):
@@ -251,7 +284,7 @@ class GEMFacility(GenericObservationFacility):
     def submit_observation(clz, observation_payload):
         response = make_request(
             'POST',
-            PORTAL_URL + '/too',
+            PORTAL_URL[get_site(observation_payload['prog'])] + '/too',
             verify=False,
             params=observation_payload
             # headers=clz._portal_headers()
