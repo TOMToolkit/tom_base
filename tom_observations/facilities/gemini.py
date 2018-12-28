@@ -149,11 +149,11 @@ class GEMObservationForm(GenericObservationForm):
     gstarg = forms.CharField(required=False, label='Guide Star Name')
     gsra = forms.CharField(required=False, label='Guide Star RA')
     gsdec = forms.CharField(required=False, label='Guide Star Dec')
-    gsbrightness = forms.FloatField(required=False, label = 'Guide Star Brighntess')
+    gsbrightness = forms.FloatField(required=False, label = 'Guide Star Brightness')
     gsbrightness_system =forms.ChoiceField(required=False, initial='Vega',
         choices=(('Vega', 'Vega'), ('AB', 'AB'), ('Jy', 'Jy'))
     )
-    gsbrightness_band = forms.ChoiceField(required=False, initial='UC',
+    gsbrightness_band = forms.ChoiceField(required=False, initial='UC', label='Guide Star Brightness Band',
         choices=(('UP', 'u'), ('U', 'U'), ('B', 'B'), ('GP', 'g'), ('V', 'V'), ('UC', 'UC'), ('RP', 'r'), ('R', 'R'),
                  ('IP', 'i'), ('I', 'I'), ('ZP', 'z'), ('Y', 'Y'), ('J', 'J'), ('H', 'H'), ('K', 'K'), ('L', 'L'),
                  ('M', 'M'), ('N', 'N'), ('Q', 'Q'), ('AP', 'AP'))
@@ -163,7 +163,7 @@ class GEMObservationForm(GenericObservationForm):
     window_start = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'date'}),
                                    label='UT Timing Window Start [Date Time]')
     # window_time = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'time'}))
-    window_duration = forms.IntegerField(required=False, min_value=1, label='Timing Window Durtion [hr]')
+    window_duration = forms.IntegerField(required=False, min_value=1, label='Timing Window Duration [hr]')
 
     # Fields needed for running parangle/gsselect
     pamode = forms.ChoiceField(required=False, label='PA Mode',
@@ -182,8 +182,8 @@ class GEMObservationForm(GenericObservationForm):
                                 choices=(('side', 'Side'), ('up', 'Up')))
     ifu = forms.ChoiceField(required=False, label='IFU Mode',
                                 choices=(('none', 'None'), ('two', 'Two Slit'), ('red', 'One Slit Red')))
-    overwrite = forms.ChoiceField(required=False, label='Overwrite previous query?', initial='false',
-        choices=(('false', 'No'), ('true', 'Yes')))
+    overwrite = forms.ChoiceField(required=False, label='Overwrite previous query?', initial='False',
+        choices=(('False', 'No'), ('True', 'Yes')))
     # chop = forms.ChoiceField(required=False, label='Chopping?', initial='false',
     #     choices=(('false', 'No'), ('true', 'Yes')))
     chop = False   # Chopping (no longer used, should be False)
@@ -295,22 +295,22 @@ class GEMObservationForm(GenericObservationForm):
                 else:
                     odate, otime = isodatetime(self.cleaned_data['obsdate'])
                     l_pa = parangle(str(ra), str(dec), odate, otime, l_site).value
-                    spa = str(l_pa).strip()
                     l_pamode = 'flip'  # in case of guide star selection
 
             # Guide star
+            overw = self.cleaned_data['overwrite'] == 'True'
             gstarg, gsra, gsdec, gsmag, gspa = gsselect(target.name, str(ra), str(dec), pa=l_pa, imdir=settings.MEDIA_ROOT,
                 site=l_site, pad=l_pad, cat='UCAC4', inst=self.cleaned_data['inst'], ifu=self.cleaned_data['ifu'],
                 port=self.cleaned_data['port'],
                 wfs=self.cleaned_data['gsprobe'], chopping=l_chop, pamode=l_pamode, rmin = l_rmin,
                 iq=self.cleaned_data['iq'], cc=self.cleaned_data['cc'], sb=self.cleaned_data['sb'],
-                overwrite=self.cleaned_data['overwrite'], display=False, verbose=False,
+                overwrite=overw, display=False, verbose=False,
                 figout=True, figfile='default')
 
             print(gstarg, gsra, gsdec, gsmag, gspa)
             if gstarg != '':
-                spa = str(gspa).strip()
                 sgsmag = str(gsmag).strip() + '/UC/Vega'
+            spa = str(gspa).strip()
 
             return gstarg, gsra, gsdec, sgsmag, spa
 
@@ -375,8 +375,8 @@ class GEMObservationForm(GenericObservationForm):
             payload['gstarget'] = gstarg
             payload['gsra'] = gsra
             payload['gsdec'] = gsdec
-            payload['gsprobe'] = self.cleaned_data['gsprobe']
             payload['gsmags'] = sgsmag
+            payload['gsprobe'] = self.cleaned_data['gsprobe']
 
         payload['posangle'] = spa
 
