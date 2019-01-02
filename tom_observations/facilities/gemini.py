@@ -123,8 +123,8 @@ class GEMObservationForm(GenericObservationForm):
     # email = forms.CharField(choices=GEM_SETTINGS['user_email'])
     # obsnum = forms.IntegerField(min_value=1)
     obsid = forms.ChoiceField(choices=obs_choices())
-    ready = forms.ChoiceField(
-        choices=(('false', 'No'), ('true', 'Yes'))
+    ready = forms.ChoiceField(initial='true',
+        choices=(('true', 'Yes'), ('false', 'No'))
     )
     brightness = forms.FloatField(required=False)
     brightness_system =forms.ChoiceField(required=False, initial='AB',
@@ -150,7 +150,7 @@ class GEMObservationForm(GenericObservationForm):
     gsra = forms.CharField(required=False, label='Guide Star RA')
     gsdec = forms.CharField(required=False, label='Guide Star Dec')
     gsbrightness = forms.FloatField(required=False, label = 'Guide Star Brightness')
-    gsbrightness_system =forms.ChoiceField(required=False, initial='Vega',
+    gsbrightness_system = forms.ChoiceField(required=False, initial='Vega', label='Guide Star Brightness System',
         choices=(('Vega', 'Vega'), ('AB', 'AB'), ('Jy', 'Jy'))
     )
     gsbrightness_band = forms.ChoiceField(required=False, initial='UC', label='Guide Star Brightness Band',
@@ -167,11 +167,11 @@ class GEMObservationForm(GenericObservationForm):
 
     # Fields needed for running parangle/gsselect
     pamode = forms.ChoiceField(required=False, label='PA Mode',
-                               choices=(('flip', 'Flip180'), ('fixed', 'Fixed'), ('find', 'PA for best GS'),
+                               choices=(('flip', 'Flip180'), ('fixed', 'Fixed'), ('find', 'Set PA for brightest guide star'),
                                         ('parallactic', 'Parallactic Angle'))
                                )
     obsdate = forms.CharField(required=False,widget=forms.TextInput(attrs={'type': 'date'}),
-                              label='UT Date Time for Obs (for Parallactic PA Mode)')
+                              label='UT Date Time (for Parallactic PA Mode)')
     # Eventually select instrument from obsid text?
     inst = forms.ChoiceField(required=False, label='Instrument', initial='GMOS',
                                 choices=(('GMOS', 'GMOS'), ('GNIRS', 'GNIRS'), ('NIFS', 'NIFS'), ('NIRIF/6', 'NIRIF/6'),
@@ -182,7 +182,7 @@ class GEMObservationForm(GenericObservationForm):
                                 choices=(('side', 'Side'), ('up', 'Up')))
     ifu = forms.ChoiceField(required=False, label='IFU Mode',
                                 choices=(('none', 'None'), ('two', 'Two Slit'), ('red', 'One Slit Red')))
-    overwrite = forms.ChoiceField(required=False, label='Overwrite previous query?', initial='False',
+    overwrite = forms.ChoiceField(required=False, label='Overwrite previous guide star query?', initial='False',
         choices=(('False', 'No'), ('True', 'Yes')))
     # chop = forms.ChoiceField(required=False, label='Chopping?', initial='false',
     #     choices=(('false', 'No'), ('true', 'Yes')))
@@ -193,7 +193,7 @@ class GEMObservationForm(GenericObservationForm):
                                 choices=(('20', '20%-tile'), ('70', '70%-tile'), ('85', '85%-tile'), ('Any', 'Any')))
     cc = forms.ChoiceField(required=False, label='Cloud Cover', initial='Any',
                                 choices=(('50', '50%-tile'), ('70', '70%-tile'), ('80', '80%-tile'), ('Any', 'Any')))
-    sb = forms.ChoiceField(required=False, label='Surface Brightness', initial='Any',
+    sb = forms.ChoiceField(required=False, label='Sky Brightness', initial='Any',
                                 choices=(('20', '20%-tile'), ('50', '50%-tile'), ('80', '80%-tile'), ('Any', 'Any')))
 
     #     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
