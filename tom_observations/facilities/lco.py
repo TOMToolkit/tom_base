@@ -301,9 +301,9 @@ class LCOFacility(GenericObservationFacility):
             return {}
 
     @classmethod
-    def data_products(clz, observation_record, product_id=None):
+    def data_products(clz, observation_id, product_id=None):
         products = []
-        for frame in clz._archive_frames(observation_record.observation_id, product_id):
+        for frame in clz._archive_frames(observation_id, product_id):
             products.append({
                 'id': frame['id'],
                 'filename': frame['filename'],
