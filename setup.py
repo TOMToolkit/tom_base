@@ -42,7 +42,8 @@ setup(
         'pyephem',
         'matplotlib',
         'numpy',
-        'pillow'
+        'pillow',
+        'gsselect',
     ],
     extras_require={
         'test': ['factory_boy', 'rise-set']
