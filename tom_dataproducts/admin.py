@@ -1,3 +1,6 @@
 from django.contrib import admin
 
-# Register your models here.
+from tom_dataproducts.models import DataProduct, DataProductGroup
+
+admin.site.register(DataProduct)
+admin.site.register(DataProductGroup)
