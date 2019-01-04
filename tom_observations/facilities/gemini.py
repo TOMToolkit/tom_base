@@ -11,8 +11,8 @@ from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.facility import GenericObservationFacility
 from tom_targets.models import Target
 
-from gsselect import gsselect
-from parangle import parangle
+from gsselect.gsselect import gsselect
+from gsselect.parangle import parangle
 
 try:
     GEM_SETTINGS = settings.FACILITIES['GEM']
