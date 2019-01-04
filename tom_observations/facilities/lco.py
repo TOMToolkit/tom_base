@@ -4,8 +4,6 @@ from django import forms
 from dateutil.parser import parse
 from crispy_forms.layout import Layout, Div
 from django.core.cache import cache
-from datetime import datetime
-
 
 from tom_observations.facility import GenericObservationForm
 from tom_common.exceptions import ImproperCredentialsException
@@ -309,7 +307,7 @@ class LCOFacility(GenericObservationFacility):
             products.append({
                 'id': frame['id'],
                 'filename': frame['filename'],
-                'created': datetime.strptime(frame['DATE_OBS'], '%Y-%m-%dT%H:%M:%S.%fZ'),
+                'created': parse(frame['DATE_OBS']),
                 'url': frame['url']
             })
         return products
