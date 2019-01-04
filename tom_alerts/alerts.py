@@ -12,7 +12,7 @@ from tom_alerts.models import BrokerQuery
 
 DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.mars.MARSBroker',
-    'tom_alerts.brokers.lasair.LASAIRBroker'
+    'tom_alerts.brokers.lasair.LasairBroker'
 ]
 
 
