@@ -16,11 +16,27 @@ from gsselect.parangle import parangle
 
 try:
     GEM_SETTINGS = settings.FACILITIES['GEM']
-except AttributeError:
+except KeyError:
     GEM_SETTINGS = {
-        # 'portal_url': 'https://139.229.34.15:8443',
-        'portal_url': 'https://gsodbtest.gemini.edu:8443',
-        'api_key': '',
+        'portal_url': {
+            'GS': 'https://139.229.34.15:8443',
+            'GN': 'https://128.171.88.221:8443',
+        },
+        'api_key': {
+            'GS': '',
+            'GN': '',
+        },
+        'user_email': '',
+        'programs': {
+            'GS-YYYYS-T-NNN': {
+                'MM': 'Std: Some descriptive text',
+                'NN': 'Rap: Some descriptive text'
+            },
+            'GN-YYYYS-T-NNN': {
+                'QQ': 'Std: Some descriptive text',
+                'PP': 'Rap: Some descriptive text',
+            },
+        },
     }
 
 PORTAL_URL = GEM_SETTINGS['portal_url']
@@ -80,12 +96,12 @@ def flatten_error_dict(form, error_dict):
 #         headers={'Authorization': 'Token {0}'.format(GEM_SETTINGS['api_key'])}
 #     )
 #     return response.json()
-# 
-# 
+#
+#
 # def instrument_choices():
 #     return [(k, k) for k in get_instruments()]
-# 
-# 
+#
+#
 # def filter_choices():
 #     return set([(f, f) for ins in get_instruments().values() for f in ins['filters']])
 
@@ -105,7 +121,7 @@ def obs_choices():
             showtext = val[0][1]+val[1][2:]+val[2]+val[3]+ ' - '+ GEM_SETTINGS['programs'][p][obs]
             choices.append((obsid,showtext))
     return choices
-    
+
 def get_site(progid,location=False):
     values = progid.split('-')
     gemloc = {'GS':'Gemini South','GN':'Gemini North'}
