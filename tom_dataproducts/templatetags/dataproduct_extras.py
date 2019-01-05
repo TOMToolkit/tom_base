@@ -47,6 +47,8 @@ def upload_dataproduct(context):
         'data_product_form',
         DataProductUploadForm(initial={object_key: model_instance})
     )
+    user = context.get('user', None)
     return {
-        'data_product_form': form
+        'data_product_form': form,
+        'user': user
     }
