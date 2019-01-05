@@ -38,7 +38,13 @@
             <a href="{% url 'tom_dataproducts:group-detail' group.id %}">{{ group.name }}</a>
             {% endfor %}
           </td>
-          <td><a href="{% url 'tom_dataproducts:tag' product.id %}" title="Modify Tag">{{ product.get_tag_display }} </a></td>
+          <td><a href="{% url 'tom_dataproducts:tag' product.id %}" title="Modify Tag">
+            {% if product.tag %}
+              {{ product.get_tag_display }}
+            {% else %}
+              set tag
+            {% endif %}
+          </a></td>
           {% if product.get_file_extension == '.fz' or product.get_file_extension == '.fits' %}
           <td>
             {% cache None thumbnail product.id %}
