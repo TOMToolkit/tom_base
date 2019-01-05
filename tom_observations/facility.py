@@ -72,7 +72,7 @@ class GenericObservationFacility:
     def all_data_products(clz, observation_record):
         from tom_dataproducts.models import DataProduct
         products = {'saved': [], 'unsaved': []}
-        for product in clz.data_products(observation_record):
+        for product in clz.data_products(observation_record.observation_id):
             try:
                 dp = DataProduct.objects.get(product_id=product['id'])
                 products['saved'].append(dp)
@@ -89,7 +89,7 @@ class GenericObservationFacility:
     @classmethod
     def save_data_products(clz, observation_record, product_id=None):
         from tom_dataproducts.models import DataProduct
-        products = []
+        final_products = []
         products = clz.data_products(observation_record.observation_id, product_id)
 
         for product in products:
@@ -103,8 +103,8 @@ class GenericObservationFacility:
                 dfile = ContentFile(product_data)
                 dp.data.save(product['filename'], dfile)
                 dp.save()
-            products.append(dp)
-        return products
+            final_products.append(dp)
+        return final_products
 
 
 class GenericObservationForm(forms.Form):
