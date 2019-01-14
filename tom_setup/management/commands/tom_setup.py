@@ -64,6 +64,7 @@ class Command(BaseCommand):
             os.mkdir(os.path.join(BASE_DIR, 'static'))
         except FileExistsError:
             pass
+        # This node created caused a crash for me, comment out to work around (Bryan Miller, Jan 2, 2019)
         try:
             os.mknod(os.path.join(BASE_DIR, 'static/.keep'))
         except FileExistsError:

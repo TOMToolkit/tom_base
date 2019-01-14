@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'tom_alerts',
     'tom_catalogs',
     'tom_observations',
+    'tom_dataproducts',
 ]
 
 SITE_ID = 1
@@ -170,7 +171,28 @@ FACILITIES = {
     'LCO': {
         'portal_url': 'https://observe.lco.global',
         'api_key': '',
-    }
+    },
+    'GEM': {
+        'portal_url': {
+            'GS': 'https://139.229.34.15:8443',
+            'GN': 'https://128.171.88.221:8443',
+        },
+        'api_key': {
+            'GS': '',
+            'GN': '',
+        },
+        'user_email': '',
+        'programs': {
+            'GS-YYYYS-T-NNN': {
+                'MM': 'Std: Some descriptive text',
+                'NN': 'Rap: Some descriptive text'
+            },
+            'GN-YYYYS-T-NNN': {
+                'QQ': 'Std: Some descriptive text',
+                'PP': 'Rap: Some descriptive text',
+            },
+        },
+    },
 }
 
 HOOKS = {

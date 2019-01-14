@@ -3,11 +3,16 @@ from django import forms
 from importlib import import_module
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout
+from django.core.files.base import ContentFile
+import requests
 import json
+
+from tom_targets.models import Target
 
 
 DEFAULT_FACILITY_CLASSES = [
         'tom_observations.facilities.lco.LCOFacility',
+        'tom_observations.facilities.gemini.GEMFacility',
 ]
 
 
@@ -63,6 +68,44 @@ class GenericObservationFacility:
                 failed_records.append((record.observation_id, str(e)))
         return failed_records
 
+    @classmethod
+    def all_data_products(clz, observation_record):
+        from tom_dataproducts.models import DataProduct
+        products = {'saved': [], 'unsaved': []}
+        for product in clz.data_products(observation_record.observation_id):
+            try:
+                dp = DataProduct.objects.get(product_id=product['id'])
+                products['saved'].append(dp)
+            except DataProduct.DoesNotExist:
+                products['unsaved'].append(product)
+        # Obtain products uploaded manually by users
+        user_products = DataProduct.objects.filter(
+            observation_record_id=observation_record.id, product_id=None
+        )
+        for product in user_products:
+            products['saved'].append(product)
+        return products
+
+    @classmethod
+    def save_data_products(clz, observation_record, product_id=None):
+        from tom_dataproducts.models import DataProduct
+        final_products = []
+        products = clz.data_products(observation_record.observation_id, product_id)
+
+        for product in products:
+            dp, created = DataProduct.objects.get_or_create(
+                product_id=product['id'],
+                target=observation_record.target,
+                observation_record=observation_record,
+            )
+            if created:
+                product_data = requests.get(product['url']).content
+                dfile = ContentFile(product_data)
+                dp.data.save(product['filename'], dfile)
+                dp.save()
+            final_products.append(dp)
+        return final_products
+
 
 class GenericObservationForm(forms.Form):
     facility = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
@@ -76,3 +119,11 @@ class GenericObservationForm(forms.Form):
 
     def serialize_parameters(self):
         return json.dumps(self.cleaned_data)
+
+    @property
+    def observation_payload(self):
+        target = Target.objects.get(pk=self.cleaned_data['target_id'])
+        return {
+            'target_id': target.id,
+            'params': self.serialize_parameters()
+        }

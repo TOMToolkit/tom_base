@@ -7,10 +7,10 @@
 {% block content %}
 <div class="row">
   <div class="col-md-6">
-    <h2>{{ object }}</h2>
+    <h2>{{ object }} <a class="btn btn-success" href="{{ object.url }}">View at observatory »</a></h2>
     <p><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
     <p><strong>Status:</strong> {{ object.status }}</p>
-    <p><a class="btn btn-success" href="{{ object.url }}">View at observatory »</a></p>
+    <p></p>
     {% upload_dataproduct %}
   </div>
   <div class="col-md-6">
@@ -19,51 +19,56 @@
     {% endif %}
   </div>
 </div>
-<h4>Saved Data Products</h4>
-<form method="POST" action="{% url 'tom_dataproducts:group-data' %}">
-  {% csrf_token %}
-  <div class="form-row">
-    <div class="col-sm-4">
-      {% bootstrap_field form.group layout='inline' %}
-      {% for product in data_products.saved %}
-        <input type="hidden" name="products" value="{{ product.id }}">
-      {% endfor %}
-    </div>
-    <div class="col-sm-8">
-      {% buttons %}
-      <input type="submit" value="Add to group" class="btn btn-primary">
-      {% endbuttons %}
-    </div>
-  </div>
-  {% dataproduct_list_for_observation_saved object %}
-</form>
+<div class="row">
+  <div class="col-md-8">
+    <h4>Saved Data Products</h4>
+    <form method="POST" action="{% url 'tom_dataproducts:group-data' %}">
+      {% csrf_token %}
+      <div class="form-row">
+        <div class="col-sm-4">
+          {% bootstrap_field form.group layout='inline' %}
+          {% for product in data_products.saved %}
+            <input type="hidden" name="products" value="{{ product.id }}">
+          {% endfor %}
+        </div>
+        <div class="col-sm-8">
+          {% buttons %}
+          <input type="submit" value="Add to group" class="btn btn-primary">
+          <a href="{% url 'dataproducts:group-list' %}">Manage groups</a>
+          {% endbuttons %}
+        </div>
+      </div>
+      {% dataproduct_list_for_observation_saved object %}
+    </form>
 
-<form method="POST" action="{% url 'tom_dataproducts:save' object.id %}">
-  {% csrf_token %}
-  <input type="hidden" value="{{ object.facility }}" name="facility">
-  <input type="hidden" value="ALL" name="products">
-  <input type="submit" value="Save All" class="btn btn-primary float-right">
-</form>
-<form method="POST" action="{% url 'tom_dataproducts:save' object.id %}">
-  {% csrf_token %}
-  <input type="hidden" value="{{ object.facility }}" name="facility">
-  <div class="row">
-    <div class="col-md-9">
-      <h4>Unsaved data products</h4>
-    </div>
-    <div class="col-md-1">
-    </div>
-    <div class="col-md-2">
-      <input type="submit" value="Save Selected" class="btn btn-primary">
-    </div>
+    <form method="POST" action="{% url 'tom_dataproducts:save' object.id %}">
+      {% csrf_token %}
+      <input type="hidden" value="{{ object.facility }}" name="facility">
+      <input type="hidden" value="ALL" name="products">
+      <input type="submit" value="Save All" class="btn btn-primary float-right">
+    </form>
+    <form method="POST" action="{% url 'tom_dataproducts:save' object.id %}">
+      {% csrf_token %}
+      <input type="hidden" value="{{ object.facility }}" name="facility">
+      <div class="row">
+        <div class="col-md-9">
+          <h4>Unsaved data products</h4>
+        </div>
+        <div class="col-md-3">
+          <input type="submit" value="Save Selected" class="btn btn-primary">
+        </div>
+      </div>
+      {% dataproduct_list_for_observation_unsaved object %}
+    </form>
   </div>
-  {% dataproduct_list_for_observation_unsaved object %}
-</form>
-<h4>Request Parameters</h4>
-<dl class="row">
-  {% for k,v in object.parameters_as_dict.items %}
-  <dt class="col-sm-6">{{ k }}</dt>
-  <dd class="col-sm-6">{{ v }}</dt>
-  {% endfor %}
-</dl>
+  <div class="col-md-4">
+    <h4>Request Parameters</h4>
+    <dl class="row">
+      {% for k,v in object.parameters_as_dict.items %}
+      <dt class="col-sm-6">{{ k }}</dt>
+      <dd class="col-sm-6">{{ v }}</dt>
+      {% endfor %}
+    </dl>
+  </div>
+</div>
 {% endblock %}

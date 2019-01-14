@@ -3,13 +3,10 @@ from django.conf import settings
 from django import forms
 from dateutil.parser import parse
 from crispy_forms.layout import Layout, Div
-from django.core.files.base import ContentFile
 from django.core.cache import cache
-
 
 from tom_observations.facility import GenericObservationForm
 from tom_common.exceptions import ImproperCredentialsException
-from tom_dataproducts.models import DataProduct
 from tom_observations.facility import GenericObservationFacility
 from tom_targets.models import Target
 
@@ -135,7 +132,9 @@ class LCOObservationForm(GenericObservationForm):
     exposure_count = forms.IntegerField(min_value=1)
     exposure_time = forms.FloatField(min_value=0.1)
     max_airmass = forms.FloatField()
-    observation_type = forms.ChoiceField(choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response')))
+    observation_type = forms.ChoiceField(
+        choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response'))
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -302,44 +301,15 @@ class LCOFacility(GenericObservationFacility):
             return {}
 
     @classmethod
-    def save_data_products(clz, observation_record, product_id=None):
+    def data_products(clz, observation_id, product_id=None):
         products = []
-        frames = clz._archive_frames(observation_record.observation_id, product_id)
-
-        for frame in frames:
-            dp, created = DataProduct.objects.get_or_create(
-                product_id=frame['id'],
-                target=observation_record.target,
-                observation_record=observation_record,
-            )
-            if created:
-                frame_data = requests.get(frame['url']).content
-                dfile = ContentFile(frame_data)
-                dp.data.save(frame['filename'], dfile)
-                dp.save()
-            products.append(dp)
-        return products
-
-    @classmethod
-    def data_products(clz, observation_record):
-        # TODO simplify return (hopefully to a list)
-        products = {'saved': [], 'unsaved': []}
-        for frame in clz._archive_frames(observation_record.observation_id):
-            try:
-                dp = DataProduct.objects.get(product_id=frame['id'])
-                products['saved'].append(dp)
-            except DataProduct.DoesNotExist:
-                products['unsaved'].append({
-                    'id': frame['id'],
-                    'filename': frame['filename'],
-                    'created': frame['DATE_OBS'],
-                    'url': frame['url']
-                })
-        # Obtain products uploaded manually by users
-        user_products = DataProduct.objects.filter(
-            observation_record_id=observation_record.id, product_id=None)
-        for product in user_products:
-            products['saved'].append(product)
+        for frame in clz._archive_frames(observation_id, product_id):
+            products.append({
+                'id': frame['id'],
+                'filename': frame['filename'],
+                'created': parse(frame['DATE_OBS']),
+                'url': frame['url']
+            })
         return products
 
     @classmethod
