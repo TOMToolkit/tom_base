@@ -5,7 +5,7 @@ from django.forms.models import model_to_dict
 from tom_common.hooks import run_hook
 
 
-GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'type']
+GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'name2', 'name3', 'type']
 
 SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'ra', 'dec', 'epoch', 'pm_ra', 'pm_dec',
@@ -33,6 +33,14 @@ class Target(models.Model):
     )
     name = models.CharField(
         max_length=100, default='', verbose_name='Name', help_text='The name of this target e.g. Barnard\'s star.'
+    )
+    name2 = models.CharField(
+        max_length=100, default='', verbose_name='Name 2', help_text='An alternative name for this target',
+        blank=True
+    )
+    name3 = models.CharField(
+        max_length=100, default='', verbose_name='Name 3', help_text='An alternative name for this target',
+        blank=True
     )
     type = models.CharField(
         max_length=100, choices=TARGET_TYPES, verbose_name='Target Type', help_text='The type of this target.'
