@@ -1,6 +1,9 @@
 import requests
 from urllib.parse import urlencode
 from dateutil.parser import parse
+from astropy import units as u
+from astropy.coordinates import Angle
+
 
 from tom_alerts.alerts import GenericAlert
 from tom_alerts.alerts import GenericQueryForm
@@ -15,7 +18,8 @@ class ScoutQueryForm(GenericQueryForm):
 
 def hours_min_to_decimal(val):
     hours, minutes = val.split(':')
-    return 15 * (int(hours) + int(minutes) / 60)
+    angle = Angle('{0}h{1}m'.format(hours, minutes))
+    return angle.to(u.degree).value
 
 
 class ScoutBroker:
