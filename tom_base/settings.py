@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'tom_alerts',
     'tom_catalogs',
     'tom_observations',
-    'tom_dataproducts'
+    'tom_dataproducts',
+    'tom_reduced_data'
 ]
 
 SITE_ID = 1

@@ -3,10 +3,12 @@ from urllib.parse import urlencode
 from tom_alerts.alerts import GenericAlert
 from dateutil.parser import parse
 from django import forms
+from django.core.exceptions import ObjectDoesNotExist
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 
 from tom_alerts.alerts import GenericQueryForm
 from tom_targets.models import Target, TargetExtra
+from tom_reduced_data.models import ReducedDataGrouping, ReducedDatum
 
 MARS_URL = 'https://mars.lco.global'
 
@@ -199,12 +201,33 @@ class MARSBroker(object):
         return parsed
 
     @classmethod
+    def process_reduced_data(clazz, target, alert=None):
+        if not alert:
+            try:
+                alert = clazz.fetch_alert(target.source_location)
+            except:
+                pass
+        reduced_data_grouping = ReducedDataGrouping(name=f'{target.name} Light Curve', target=target)
+        for prv_candidate in alert.get('prv_candidate'):
+            jd = prv_candidate['candidate']['jd']
+            magnitude = prv_candidate['candidate']['magpsf']
+            try:
+                rd = ReducedDatum.objects.filter(timestamp=jd, value=magnitude).first()
+            except ObjectDoesNotExist:
+                rd = ReducedDatum(timestamp=jd, value=magnitude)
+                rd.save()
+                reduced_data_grouping.reduceddatum_set.add(rd)
+        reduced_data_grouping.save()
+
+    @classmethod
     def to_target(clazz, alert):
         alert_copy = alert.copy()
         target = Target.objects.create(
-            identifier=alert_copy['lco_id'],
+            identifier=alert_copy['objectId'],
             name=alert_copy['objectId'],
             type='SIDEREAL',
+            source=clazz.name,
+            source_location=alert_copy['lco_id'],
             ra=alert_copy['candidate'].pop('ra'),
             dec=alert_copy['candidate'].pop('dec'),
             galactic_lng=alert_copy['candidate'].pop('l'),
