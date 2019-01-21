@@ -119,6 +119,7 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
         for alert in alerts:
             alert = broker_class.fetch_alert(alert)
             target = broker_class.to_target(alert)
+            broker_class.process_reduced_data(target, alert)
             target.save()
         return redirect(reverse(
             'tom_targets:list')

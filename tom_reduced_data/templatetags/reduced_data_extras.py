@@ -13,7 +13,7 @@ def reduced_data_lightcurve(target):
     reduced_data_grouping = ReducedDataGrouping.objects.filter(target_id=target.id).first()
     time = []
     values = []
-    for rd in reduced_data_grouping.reduceddatum_set.all():
+    for rd in ReducedDatum.objects.filter(group=reduced_data_grouping):
         time.append(rd.timestamp)
         values.append(rd.value)
     plot_data = [

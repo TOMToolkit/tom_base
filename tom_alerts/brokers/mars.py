@@ -1,4 +1,5 @@
 import requests
+from requests.exceptions import HTTPError
 from urllib.parse import urlencode
 from tom_alerts.alerts import GenericAlert
 from dateutil.parser import parse
@@ -205,19 +206,22 @@ class MARSBroker(object):
         if not alert:
             try:
                 alert = clazz.fetch_alert(target.source_location)
-            except:
-                pass
-        reduced_data_grouping = ReducedDataGrouping(name=f'{target.name} Light Curve', target=target)
+            except HTTPError:
+                raise Exception('Unable to retrieve alert information from broker')
+        # how to ensure that this is unique without restricting naming
+        try:
+            reduced_data_grouping = ReducedDataGrouping.objects.get(name=f'{target.name} Light Curve', target=target)
+        except ObjectDoesNotExist:
+            reduced_data_grouping = ReducedDataGrouping(name=f'{target.name} Light Curve', target=target)
+            reduced_data_grouping.save()
         for prv_candidate in alert.get('prv_candidate'):
             jd = prv_candidate['candidate']['jd']
             magnitude = prv_candidate['candidate']['magpsf']
-            try:
-                rd = ReducedDatum.objects.filter(timestamp=jd, value=magnitude).first()
-            except ObjectDoesNotExist:
-                rd = ReducedDatum(timestamp=jd, value=magnitude)
+            # Need to ensure that there's only one result
+            rd = ReducedDatum.objects.filter(timestamp=jd, value=magnitude, group=reduced_data_grouping).first()
+            if not rd:
+                rd = ReducedDatum(timestamp=jd, value=magnitude, group=reduced_data_grouping)
                 rd.save()
-                reduced_data_grouping.reduceddatum_set.add(rd)
-        reduced_data_grouping.save()
 
     @classmethod
     def to_target(clazz, alert):
