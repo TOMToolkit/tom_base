@@ -62,3 +62,8 @@ def target_plan(context):
         'target': context['object'],
         'visibility_graph': visibility_graph
     }
+
+
+@register.inclusion_tag('tom_targets/partials/aladin.html')
+def aladin(target):
+    return {'target': target}
