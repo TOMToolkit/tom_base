@@ -53,18 +53,6 @@ class Target(models.Model):
         auto_now=True, verbose_name='Last Modified',
         help_text='The time which this target was changed in the TOM database.'
     )
-    source = models.TextField(
-        max_length=100,
-        null=True,
-        verbose_name='Target Source',
-        help_text='The original source reference for the target data.'
-    )
-    source_location = models.TextField(
-        max_length=100,
-        null=True,
-        verbose_name='Target Source Location',
-        help_text='URL or path to original target source reference.'
-    )
     ra = models.FloatField(
         null=True, blank=True, verbose_name='Right Ascension', help_text='Right Ascension, in degrees.'
     )

@@ -1,19 +1,19 @@
 from django import template
+from django.core.management import call_command
 
 from plotly import offline
 import plotly.graph_objs as go
 
-from ..models import ReducedDataGrouping, ReducedDatum
+from ..models import ReducedDatumSource, ReducedDatum
 
 register = template.Library()
 
 
 @register.inclusion_tag('tom_reduced_data/partials/reduced_data_lightcurve.html')
 def reduced_data_lightcurve(target):
-    reduced_data_grouping = ReducedDataGrouping.objects.filter(target_id=target.id).first()
     time = []
     values = []
-    for rd in ReducedDatum.objects.filter(group=reduced_data_grouping):
+    for rd in ReducedDatum.objects.filter(target=target, data_type='PHOTOMETRY'):
         time.append(rd.timestamp)
         values.append(rd.value)
     plot_data = [
@@ -30,3 +30,10 @@ def reduced_data_lightcurve(target):
     return {
         'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
     }
+
+@register.inclusion_tag('tom_reduced_data/partials/update_reduced_data.html')
+def update_reduced_data(target=None):
+    if target:
+        call_command('updatereduceddata', target_id=target.id)
+    else:
+        call_command('updatereduceddata')

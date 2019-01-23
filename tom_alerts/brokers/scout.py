@@ -51,6 +51,10 @@ class ScoutBroker:
         return response.json()
 
     @classmethod
+    def process_reduced_data(clazz, target, alert=None):
+        pass
+
+    @classmethod
     def to_target(clazz, alert):
         target = Target.objects.create(
             identifier=alert['objectName'],

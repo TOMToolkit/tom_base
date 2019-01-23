@@ -4,6 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from tom_alerts import alerts
 from tom_targets.models import Target
+from tom_reduced_data.models import ReducedDatumSource, ReducedDatum
 
 
 class Command(BaseCommand):
@@ -17,6 +18,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         brokers = alerts.get_service_classes()
+        broker_classes = {}
+        for broker in brokers:
+            broker_classes[broker] = alerts.get_service_class(broker)
+
         target = None
         if options['target_id']:
             try:
@@ -24,17 +29,19 @@ class Command(BaseCommand):
             except ObjectDoesNotExist:
                 raise Exception('Invalid target id provided')
         else:
-            targets = Target.objects.filter(source__in=brokers)
+            sources = ReducedDatumSource.objects.filter(name__in=broker_classes.keys()).distinct()
+            targets = Target.objects.filter(
+                id__in=ReducedDatum.objects.filter(
+                    source__in=sources
+                ).values_list('target').distinct())
 
         failed_records = {}
-        broker_classes = {}
-        for broker in brokers:
-            broker_classes[broker] = alerts.get_service_class(broker)
         for target in targets:
-            try:
-                broker_classes[target.source].process_reduced_data(target)
-            except HTTPError:
-                failed_records[target.source] = target.id
+            for class_name, clazz in broker_classes.items():
+                try:
+                    clazz.process_reduced_data(target)
+                except HTTPError:
+                    failed_records[class_name] = target.id
 
         if len(failed_records) == 0:
             return 'Update completed successfully'

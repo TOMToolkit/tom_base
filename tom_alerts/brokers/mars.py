@@ -9,7 +9,7 @@ from crispy_forms.layout import Layout, Div, Fieldset, HTML
 
 from tom_alerts.alerts import GenericQueryForm
 from tom_targets.models import Target, TargetExtra
-from tom_reduced_data.models import ReducedDataGrouping, ReducedDatum
+from tom_reduced_data.models import ReducedDatumSource, ReducedDatum
 
 MARS_URL = 'https://mars.lco.global'
 
@@ -203,24 +203,36 @@ class MARSBroker(object):
 
     @classmethod
     def process_reduced_data(clazz, target, alert=None):
-        if not alert:
+        alerts = []
+        if alert:
+            alerts = [alert]
+        else:
             try:
-                alert = clazz.fetch_alert(target.source_location)
+                alert_sources = ReducedDatumSource.objects.filter(
+                    id__in=ReducedDatum.objects.filter(target=target).values_list('source').distinct(),
+                    name=clazz.name
+                )
+                for alert_source in alert_sources:
+                    alerts.append(clazz.fetch_alert(alert_source.location))
+            except ObjectDoesNotExist:
+                # TODO: Is this the correct behavior?
+                raise Exception('Unable to process reduced data, no valid alert for this target and data source')
             except HTTPError:
                 raise Exception('Unable to retrieve alert information from broker')
-        # how to ensure that this is unique without restricting naming
-        try:
-            reduced_data_grouping = ReducedDataGrouping.objects.get(name=f'{target.name} Light Curve', target=target)
-        except ObjectDoesNotExist:
-            reduced_data_grouping = ReducedDataGrouping(name=f'{target.name} Light Curve', target=target)
-            reduced_data_grouping.save()
-        for prv_candidate in alert.get('prv_candidate'):
-            jd = prv_candidate['candidate']['jd']
-            magnitude = prv_candidate['candidate']['magpsf']
-            # Need to ensure that there's only one result
-            rd = ReducedDatum.objects.filter(timestamp=jd, value=magnitude, group=reduced_data_grouping).first()
-            if not rd:
-                rd = ReducedDatum(timestamp=jd, value=magnitude, group=reduced_data_grouping)
+        for alert in alerts:
+            reduced_datum_source, created = ReducedDatumSource.objects.get_or_create(
+                name=clazz.name,
+                location=alert['lco_id']
+            )
+            for prv_candidate in alert.get('prv_candidate'):
+                jd = prv_candidate['candidate']['jd']
+                magnitude = prv_candidate['candidate']['magpsf']
+                rd, created = ReducedDatum.objects.get_or_create(
+                    timestamp=jd,
+                    value=magnitude,
+                    source=reduced_datum_source,
+                    data_type='PHOTOMETRY',
+                    target=target)
                 rd.save()
 
     @classmethod
@@ -230,8 +242,6 @@ class MARSBroker(object):
             identifier=alert_copy['objectId'],
             name=alert_copy['objectId'],
             type='SIDEREAL',
-            source=clazz.name,
-            source_location=alert_copy['lco_id'],
             ra=alert_copy['candidate'].pop('ra'),
             dec=alert_copy['candidate'].pop('dec'),
             galactic_lng=alert_copy['candidate'].pop('l'),

@@ -61,6 +61,10 @@ class LasairBroker:
         return parsed
 
     @classmethod
+    def process_reduced_data(clazz, target, alert=None):
+        pass
+
+    @classmethod
     def to_generic_alert(clazz, alert):
         return GenericAlert(
             url=LASAIR_URL + '/object/' + alert['alert_id'],
