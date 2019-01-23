@@ -1,8 +1,32 @@
 from django import forms
+from django.forms.models import inlineformset_factory
+from astropy.coordinates import Angle
+from astropy import units as u
+from django.forms import ValidationError
+
 from .models import Target, TargetExtra, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS
 from .models import REQUIRED_NON_SIDEREAL_FIELDS
 
-from django.forms.models import inlineformset_factory
+
+class CoordinateField(forms.CharField):
+    def __init__(self, *args, **kwargs):
+        c_type = kwargs.pop('c_type')
+        self.c_type = c_type
+        super().__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        try:
+            a = float(value)
+            return a
+        except ValueError:
+            try:
+                if self.c_type == 'ra':
+                    a = Angle(value, unit=u.hourangle)
+                else:
+                    a = Angle(value, unit=u.degree)
+                return a.to(u.degree).value
+            except Exception as e:
+                raise ValidationError('Invalid format. Please use sexigesimal or degrees')
 
 
 class TargetForm(forms.ModelForm):
@@ -14,6 +38,9 @@ class TargetForm(forms.ModelForm):
 
 
 class SiderealTargetCreateForm(TargetForm):
+    ra = CoordinateField(required=True, label='Right Ascension', c_type='ra')
+    dec = CoordinateField(required=True, label='Declination', c_type='dec')
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in REQUIRED_SIDEREAL_FIELDS:

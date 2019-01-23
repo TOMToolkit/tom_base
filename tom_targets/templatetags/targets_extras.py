@@ -1,8 +1,9 @@
 from django import template
 from dateutil.parser import parse
-
 from plotly import offline
 import plotly.graph_objs as go
+from astropy import units as u
+from astropy.coordinates import Angle
 
 from tom_targets.models import Target
 from tom_targets.forms import TargetVisibilityForm
@@ -62,3 +63,16 @@ def target_plan(context):
         'target': context['object'],
         'visibility_graph': visibility_graph
     }
+
+
+@register.filter
+def deg_to_sexigesimal(value, fmt):
+    a = Angle(value, unit=u.degree)
+    if fmt == 'hms':
+        return '{0}:{1}:{2}'.format(a.hms.h, a.hms.m, '%.3f' % a.hms.s)
+    elif fmt == 'dms':
+        rep = a.signed_dms
+        sign = '-' if rep.sign < 0 else '+'
+        return '{0}{1}:{2}:{3}'.format(sign, rep.d, rep.m, '%.3f' % rep.s)
+    else:
+        return 'fmt must be "hms" or "dms"'
