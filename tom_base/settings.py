@@ -64,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'tom_common.middleware.ExternalServiceMiddleware',
+    'tom_common.middleware.AuthStrategyMiddlware',
 ]
 
 ROOT_URLCONF = 'tom_common.urls'
@@ -180,6 +181,14 @@ FACILITIES = {
         'api_key': '',
     }
 }
+
+# Authentication strategy can either be LOCKED (required login for all views)
+# or READ_ONLY (read only access to views)
+AUTH_STRATEGY = 'READ_ONLY'
+
+# URLs that should be allowed access even with AUTH_STRATEGY = LOCKED
+# for example: OPEN_URLS = ['/', '/about']
+OPEN_URLS = []
 
 HOOKS = {
     'target_post_save': 'tom_common.hooks.target_post_save',
