@@ -24,6 +24,12 @@ class TargetListView(FilterView):
     model = Target
     filterset_class = TargetFilter
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['target_count'] = Target.objects.all().count()
+        return context
+
+
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
     model = Target

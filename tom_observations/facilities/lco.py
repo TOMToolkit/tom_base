@@ -10,16 +10,22 @@ from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.facility import GenericObservationFacility
 from tom_targets.models import Target
 
+# Determine settings for this module.
 try:
     LCO_SETTINGS = settings.FACILITIES['LCO']
-except AttributeError:
+except (AttributeError, KeyError):
     LCO_SETTINGS = {
         'portal_url': 'https://observe.lco.global',
         'api_key': '',
     }
 
+# Module specific settings.
 PORTAL_URL = LCO_SETTINGS['portal_url']
 TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
+
+# The SITES dictionary is used to calculate visibility intervals in the
+# planning tool. All entries should contain latitude, longitude, elevation
+# and a code.
 SITES = {
     'Siding Spring': {
         'sitecode': 'coj',
@@ -58,6 +64,8 @@ SITES = {
         'elevation': 3065
     }
 }
+
+# Functions needed specifically for LCO
 
 
 def make_request(*args, **kwargs):
@@ -122,6 +130,15 @@ def proposal_choices():
 
 
 class LCOObservationForm(GenericObservationForm):
+    """
+    This is the class that is responsible for displaying the observation request form.
+    It inherits from tom_observations.facility.GenericObservationForm which provides
+    some base shared functionality. Extra fields are provided below.
+    The layout is handlded by Django crispy forms which allows customizability of the
+    form layout without needing to write html templates:
+    https://django-crispy-forms.readthedocs.io/en/d-0/layouts.html
+    See the documentation on Django forms for more information.
+    """
     group_id = forms.CharField()
     proposal = forms.ChoiceField(choices=proposal_choices)
     ipp_value = forms.FloatField()
@@ -176,6 +193,11 @@ class LCOObservationForm(GenericObservationForm):
 
     @property
     def observation_payload(self):
+        """
+        This method is called to extract the data from the form into a form that
+        can be used by the rest of the module. In this example, a LCO request payload
+        is constructed by the form data and the associated target.
+        """
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
         return {
             "group_id": self.cleaned_data['group_id'],
@@ -229,11 +251,24 @@ class LCOObservationForm(GenericObservationForm):
 
 
 class LCOFacility(GenericObservationFacility):
+    """
+    The facility class contains all the logic specific to the facility it is
+    written for. Some methods are used only internally (starting with an
+    uderscore) but some need to be implemented by all facility classes.
+    All facilities should inherit from GenericObservationFacility which
+    provides some base functionality.
+    In order to make use of a facility class, add the path to
+    TOM_FACILITY_CLASSES in your settings.py.
+    """
     name = 'LCO'
     form = LCOObservationForm
 
     @classmethod
     def submit_observation(clz, observation_payload):
+        """
+        This method takes in the serialized data from the form and actually
+        submits the observation to the remote api
+        """
         response = make_request(
             'POST',
             PORTAL_URL + '/api/userrequests/',
@@ -244,6 +279,10 @@ class LCOFacility(GenericObservationFacility):
 
     @classmethod
     def validate_observation(clz, observation_payload):
+        """
+        Same thing as submit_observation, but a dry run. You can
+        skip this in different modules by just using "pass"
+        """
         response = make_request(
             'POST',
             PORTAL_URL + '/api/userrequests/validate/',
@@ -254,10 +293,20 @@ class LCOFacility(GenericObservationFacility):
 
     @classmethod
     def get_observation_url(clz, observation_id):
+        """
+        Takes an observation id and return the url for which a user
+        can view the observation at an external location. In this case,
+        we return a URL to the LCO observation portal's observation
+        record page.
+        """
         return PORTAL_URL + '/requests/' + observation_id
 
     @classmethod
     def get_terminal_observing_states(clz):
+        """
+        Returns the states for which an observation is not expected
+        to change.
+        """
         return TERMINAL_OBSERVING_STATES
 
     @classmethod
@@ -266,12 +315,37 @@ class LCOFacility(GenericObservationFacility):
 
     @classmethod
     def get_observation_status(clz, observation_id):
+        """
+        Return the status for a single observation. observation_id should
+        be able to be used to retrieve the status from the external service.
+        """
         response = make_request(
             'GET',
             PORTAL_URL + '/api/requests/{0}'.format(observation_id),
             headers=clz._portal_headers()
         )
         return response.json()['state']
+
+    @classmethod
+    def data_products(clz, observation_id, product_id=None):
+        """
+        Using an observation_id, retrieve a list of the data
+        products that belong to this observation. In this case,
+        the LCO module retrieves a list of frames from the LCO
+        data archive.
+        """
+        products = []
+        for frame in clz._archive_frames(observation_id, product_id):
+            products.append({
+                'id': frame['id'],
+                'filename': frame['filename'],
+                'created': parse(frame['DATE_OBS']),
+                'url': frame['url']
+            })
+        return products
+
+    # The following methods are used internally by this module
+    # and should not be called directly from outside code.
 
     @classmethod
     def _portal_headers(clz):
@@ -299,18 +373,6 @@ class LCOFacility(GenericObservationFacility):
                 return {'Authorization': 'Bearer {0}'.format(archive_token)}
         else:
             return {}
-
-    @classmethod
-    def data_products(clz, observation_id, product_id=None):
-        products = []
-        for frame in clz._archive_frames(observation_id, product_id):
-            products.append({
-                'id': frame['id'],
-                'filename': frame['filename'],
-                'created': parse(frame['DATE_OBS']),
-                'url': frame['url']
-            })
-        return products
 
     @classmethod
     def _archive_frames(clz, observation_id, product_id=None):
