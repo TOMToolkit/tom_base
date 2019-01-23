@@ -14,6 +14,8 @@
     <link rel="icon" type="image/png" href="{% static 'tom_common/img/favicon-32x32.png' %}" sizes="32x32" />
     <link rel="icon" type="image/png" href="{% static 'tom_common/img/favicon-16x16.png' %}" sizes="16x16" />
 
+    {% bootstrap_javascript jquery='True' %}
+
     <title>TOM Toolkit | {% block title %}{% endblock %}</title>
   </head>
   <body>
@@ -74,7 +76,6 @@
     </main>
 
   {% block javascript %}
-    {% bootstrap_javascript jquery='True' %}
     {% endblock %}
     {% block extra_javascript %}
     {% endblock %}

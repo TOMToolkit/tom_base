@@ -76,3 +76,8 @@ def deg_to_sexigesimal(value, fmt):
         return '{0}{1}:{2}:{3}'.format(sign, rep.d, rep.m, '%.3f' % rep.s)
     else:
         return 'fmt must be "hms" or "dms"'
+
+
+@register.inclusion_tag('tom_targets/partials/aladin.html')
+def aladin(target):
+    return {'target': target}
