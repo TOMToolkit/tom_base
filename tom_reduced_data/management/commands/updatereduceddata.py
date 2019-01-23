@@ -1,32 +1,22 @@
-import requests
-import json
-
-from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
+from requests.exceptions import HTTPError
+from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 
 from tom_alerts import alerts
-from tom_alerts.brokers import mars
 from tom_targets.models import Target
-from tom_reduced_data.models import ReducedDataGrouping, ReducedDatum
 
 
 class Command(BaseCommand):
-    help = 'Gets and saves light curve data for a particular MARS alert'
+    help = 'Gets and updates time-series data for targets from the original source'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--target_id',
-            help='Gets and saves light curve data for a particular MARS candidate'
+            help='Gets and updates time-series data for targets from the original source'
         )
 
-
     def handle(self, *args, **options):
-        try:
-            TOM_ALERT_CLASSES = settings.TOM_ALERT_CLASSES
-        except AttributeError:
-            TOM_ALERT_CLASSES = []
-
+        brokers = alerts.get_service_classes()
         target = None
         if options['target_id']:
             try:
@@ -34,13 +24,19 @@ class Command(BaseCommand):
             except ObjectDoesNotExist:
                 raise Exception('Invalid target id provided')
         else:
-            targets = Target.objects.filter(source__in=TOM_ALERT_CLASSES)
+            targets = Target.objects.filter(source__in=brokers)
 
         failed_records = {}
         broker_classes = {}
-        for broker in TOM_ALERT_CLASSES:
+        for broker in brokers:
             broker_classes[broker] = alerts.get_service_class(broker)
         for target in targets:
-            broker_classes[target.source].process_reduced_data(target)
+            try:
+                broker_classes[target.source].process_reduced_data(target)
+            except HTTPError:
+                failed_records[target.source] = target.id
 
-        return "Updated reduced data"
+        if len(failed_records) == 0:
+            return 'Update completed successfully'
+        else:
+            return 'Update completed with errors: {0}'.format(str(failed_records))
