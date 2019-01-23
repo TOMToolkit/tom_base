@@ -1,10 +1,9 @@
 from django import template
-from django.core.management import call_command
 
 from plotly import offline
 import plotly.graph_objs as go
 
-from ..models import ReducedDatumSource, ReducedDatum
+from tom_reduced_data.models import ReducedDatum
 
 register = template.Library()
 
@@ -28,12 +27,6 @@ def reduced_data_lightcurve(target):
         width=700
     )
     return {
+        'target': target,
         'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
     }
-
-@register.inclusion_tag('tom_reduced_data/partials/update_reduced_data.html')
-def update_reduced_data(target=None):
-    if target:
-        call_command('updatereduceddata', target_id=target.id)
-    else:
-        call_command('updatereduceddata')
