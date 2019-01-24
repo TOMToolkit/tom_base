@@ -89,18 +89,18 @@ class TestTargetCreate(TestCase):
 
 class TestTargetSearch(TestCase):
     def setUp(self):
-        self.st = SiderealTargetFactory.create(identifier='1337', name='M42', name2='Messier 42')
+        self.st = SiderealTargetFactory.create(identifier='1337target', name='M42', name2='Messier 42')
 
     def test_search_name_no_results(self):
         response = self.client.get(reverse('targets:list') + '?name=noresults')
-        self.assertNotContains(response, '1337')
+        self.assertNotContains(response, '1337target')
 
     def test_search_name(self):
         response = self.client.get(reverse('targets:list') + '?name=m42')
-        self.assertContains(response, '1337')
+        self.assertContains(response, '1337target')
 
         response = self.client.get(reverse('targets:list') + '?name=Messier 42')
-        self.assertContains(response, '1337')
+        self.assertContains(response, '1337target')
 
 
 class TestTargetVisibility(TestCase):
