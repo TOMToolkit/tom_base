@@ -41,7 +41,7 @@ class TestObservationViews(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, FakeFacility.get_observation_url(self.observation_record.observation_id)
+            response, FakeFacility().get_observation_url(self.observation_record.observation_id)
         )
 
     def test_update_observations(self):

@@ -75,7 +75,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         # Submit the observation
         facility = self.get_facility_class()
         target = self.get_target()
-        observation_ids = facility.submit_observation(form.observation_payload)
+        observation_ids = facility().submit_observation(form.observation_payload)
 
         for observation_id in observation_ids:
             # Create Observation record
@@ -129,7 +129,7 @@ class ObservationRecordDetailView(DetailView):
         context = super().get_context_data(*args, **kwargs)
         context['form'] = AddProductToGroupForm()
         service_class = get_service_class(self.object.facility)
-        context['data_products'] = service_class.all_data_products(self.object)
+        context['data_products'] = service_class().all_data_products(self.object)
         newest_image = None
         for data_product in context['data_products']['saved']:
             newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and \

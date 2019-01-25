@@ -180,7 +180,7 @@ class LCOObservationForm(GenericObservationForm):
 
     def is_valid(self):
         super().is_valid()
-        errors = LCOFacility.validate_observation(self.observation_payload)
+        errors = LCOFacility().validate_observation(self.observation_payload)
         if errors:
             self.add_error(None, flatten_error_dict(self, errors))
         return not errors
@@ -263,8 +263,7 @@ class LCOFacility(GenericObservationFacility):
     name = 'LCO'
     form = LCOObservationForm
 
-    @classmethod
-    def submit_observation(clz, observation_payload):
+    def submit_observation(self, observation_payload):
         """
         This method takes in the serialized data from the form and actually
         submits the observation to the remote api
@@ -273,12 +272,11 @@ class LCOFacility(GenericObservationFacility):
             'POST',
             PORTAL_URL + '/api/userrequests/',
             json=observation_payload,
-            headers=clz._portal_headers()
+            headers=self._portal_headers()
         )
         return [r['id'] for r in response.json()['requests']]
 
-    @classmethod
-    def validate_observation(clz, observation_payload):
+    def validate_observation(self, observation_payload):
         """
         Same thing as submit_observation, but a dry run. You can
         skip this in different modules by just using "pass"
@@ -287,12 +285,11 @@ class LCOFacility(GenericObservationFacility):
             'POST',
             PORTAL_URL + '/api/userrequests/validate/',
             json=observation_payload,
-            headers=clz._portal_headers()
+            headers=self._portal_headers()
         )
         return response.json()['errors']
 
-    @classmethod
-    def get_observation_url(clz, observation_id):
+    def get_observation_url(self, observation_id):
         """
         Takes an observation id and return the url for which a user
         can view the observation at an external location. In this case,
@@ -301,20 +298,17 @@ class LCOFacility(GenericObservationFacility):
         """
         return PORTAL_URL + '/requests/' + observation_id
 
-    @classmethod
-    def get_terminal_observing_states(clz):
+    def get_terminal_observing_states(self):
         """
         Returns the states for which an observation is not expected
         to change.
         """
         return TERMINAL_OBSERVING_STATES
 
-    @classmethod
-    def get_observing_sites(clz):
+    def get_observing_sites(self):
         return SITES
 
-    @classmethod
-    def get_observation_status(clz, observation_id):
+    def get_observation_status(self, observation_id):
         """
         Return the status for a single observation. observation_id should
         be able to be used to retrieve the status from the external service.
@@ -322,12 +316,11 @@ class LCOFacility(GenericObservationFacility):
         response = make_request(
             'GET',
             PORTAL_URL + '/api/requests/{0}'.format(observation_id),
-            headers=clz._portal_headers()
+            headers=self._portal_headers()
         )
         return response.json()['state']
 
-    @classmethod
-    def data_products(clz, observation_id, product_id=None):
+    def data_products(self, observation_id, product_id=None):
         """
         Using an observation_id, retrieve a list of the data
         products that belong to this observation. In this case,
@@ -335,7 +328,7 @@ class LCOFacility(GenericObservationFacility):
         data archive.
         """
         products = []
-        for frame in clz._archive_frames(observation_id, product_id):
+        for frame in self._archive_frames(observation_id, product_id):
             products.append({
                 'id': frame['id'],
                 'filename': frame['filename'],
@@ -347,15 +340,13 @@ class LCOFacility(GenericObservationFacility):
     # The following methods are used internally by this module
     # and should not be called directly from outside code.
 
-    @classmethod
-    def _portal_headers(clz):
+    def _portal_headers(self):
         if LCO_SETTINGS.get('api_key'):
             return {'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
         else:
             return {}
 
-    @classmethod
-    def _archive_headers(clz):
+    def _archive_headers(self):
         if LCO_SETTINGS.get('api_key'):
             archive_token = cache.get('LCO_ARCHIVE_TOKEN')
             if not archive_token:
@@ -374,22 +365,21 @@ class LCOFacility(GenericObservationFacility):
         else:
             return {}
 
-    @classmethod
-    def _archive_frames(clz, observation_id, product_id=None):
+    def _archive_frames(self, observation_id, product_id=None):
         # todo save this key somewhere
         frames = []
         if product_id:
             response = make_request(
                 'GET',
                 'https://archive-api.lco.global/frames/{0}/'.format(product_id),
-                headers=clz._archive_headers()
+                headers=self._archive_headers()
             )
             frames = [response.json()]
         else:
             response = make_request(
                 'GET',
                 'https://archive-api.lco.global/frames/?REQNUM={0}'.format(observation_id),
-                headers=clz._archive_headers()
+                headers=self._archive_headers()
             )
             frames = response.json()['results']
 

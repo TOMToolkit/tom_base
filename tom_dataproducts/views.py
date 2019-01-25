@@ -25,11 +25,11 @@ class DataProductSaveView(LoginRequiredMixin, View):
         observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])
         products = request.POST.getlist('products')
         if products[0] == 'ALL':
-            products = service_class.save_data_products(observation_record)
+            products = service_class().save_data_products(observation_record)
             messages.success(request, 'Saved all available data products')
         else:
             for product in products:
-                products = service_class.save_data_products(
+                products = service_class().save_data_products(
                     observation_record,
                     product
                 )

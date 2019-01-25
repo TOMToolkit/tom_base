@@ -4,6 +4,7 @@ from importlib import import_module
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout
 from django.core.files.base import ContentFile
+from abc import ABC, abstractmethod
 import requests
 import json
 
@@ -42,37 +43,34 @@ def get_service_class(name):
         raise ImportError('Could not a find a facility with that name. Did you add it to TOM_FACILITY_CLASSES?')
 
 
-class GenericObservationFacility:
-    @classmethod
-    def update_observation_status(clz, observation_id):
+class GenericObservationFacility(ABC):
+    def update_observation_status(self, observation_id):
         from tom_observations.models import ObservationRecord
         try:
             record = ObservationRecord.objects.get(observation_id=observation_id)
-            record.status = clz.get_observation_status(observation_id)
+            record.status = self.get_observation_status(observation_id)
             record.save()
-        except clz.DoesNotExist:
+        except ObservationRecord.DoesNotExist:
             raise Exception('No record exists for that observation id')
 
-    @classmethod
-    def update_all_observation_statuses(clz, target=None):
+    def update_all_observation_statuses(self, target=None):
         from tom_observations.models import ObservationRecord
         failed_records = []
-        records = ObservationRecord.objects.filter(facility=clz.name)
+        records = ObservationRecord.objects.filter(facility=self.name)
         if target:
             records = records.filter(target=target)
-        records = records.exclude(status__in=clz.get_terminal_observing_states())
+        records = records.exclude(status__in=self.get_terminal_observing_states())
         for record in records:
             try:
-                clz.update_observation_status(record.observation_id)
+                self.update_observation_status(record.observation_id)
             except Exception as e:
                 failed_records.append((record.observation_id, str(e)))
         return failed_records
 
-    @classmethod
-    def all_data_products(clz, observation_record):
+    def all_data_products(self, observation_record):
         from tom_dataproducts.models import DataProduct
         products = {'saved': [], 'unsaved': []}
-        for product in clz.data_products(observation_record.observation_id):
+        for product in self.data_products(observation_record.observation_id):
             try:
                 dp = DataProduct.objects.get(product_id=product['id'])
                 products['saved'].append(dp)
@@ -86,11 +84,10 @@ class GenericObservationFacility:
             products['saved'].append(product)
         return products
 
-    @classmethod
-    def save_data_products(clz, observation_record, product_id=None):
+    def save_data_products(self, observation_record, product_id=None):
         from tom_dataproducts.models import DataProduct
         final_products = []
-        products = clz.data_products(observation_record.observation_id, product_id)
+        products = self.data_products(observation_record.observation_id, product_id)
 
         for product in products:
             dp, created = DataProduct.objects.get_or_create(
@@ -105,6 +102,34 @@ class GenericObservationFacility:
                 dp.save()
             final_products.append(dp)
         return final_products
+
+    @abstractmethod
+    def submit_observation(self, observation_payload):
+        pass
+
+    @abstractmethod
+    def validate_observation(self, observation_payload):
+        pass
+
+    @abstractmethod
+    def get_observation_url(self, observation_id):
+        pass
+
+    @abstractmethod
+    def get_terminal_observing_states(self):
+        pass
+
+    @abstractmethod
+    def get_observing_sites(self):
+        pass
+
+    @abstractmethod
+    def get_observation_status(self, observation_id):
+        pass
+
+    @abstractmethod
+    def data_products(self, observation_id, product_id=None):
+        pass
 
 
 class GenericObservationForm(forms.Form):
