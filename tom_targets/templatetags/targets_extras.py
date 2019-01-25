@@ -82,10 +82,6 @@ def target_distribution(targets):
         'geo': {
             'projection': {
                 'type': 'mollweide',
-                #  Uncomment rotation to shift ra axis 180*
-                #  'rotation': {
-                #    'lon': 0
-                # }
             },
             'showcoastlines': False,
             'lonaxis': {
