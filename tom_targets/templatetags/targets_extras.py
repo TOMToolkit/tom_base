@@ -68,34 +68,37 @@ def target_plan(context):
 @register.inclusion_tag('tom_targets/partials/target_distribution.html')
 def target_distribution(targets):
     locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
-    plot = go.Scatter(
-        x=[l[0] for l in locations],
-        y=[l[1] for l in locations],
+    data = [dict(
+        lon=[l[0] for l in locations],
+        lat=[l[1] for l in locations],
         text=[l[2] for l in locations],
-        hoverinfo='x+y+text',
-        mode='markers'
-    )
+        hoverinfo='lon+lat+text',
+        mode='markers',
+        type='scattergeo'
+    )]
     layout = {
         'title': 'Target Distribution (sidereal)',
         'hovermode': 'closest',
-        'xaxis': {
-            'title': 'Right ascension (deg)',
-            'zeroline': False,
-            'range': [0, 360],
-            'tickmode': 'linear',
-            'tick0': 0,
-            'dtick': 20
-        },
-        'yaxis': {
-            'title': 'Declination (deg)',
-            'zeroline': False,
-            'range': [-90, 90],
-            'tickmode': 'linear',
-            'tick0': -90,
-            'dtick': 20
+        'geo': {
+            'projection': {
+                'type': 'mollweide',
+                #  Uncomment rotation to shift ra axis 180*
+                #  'rotation': {
+                #    'lon': 0
+                # }
+            },
+            'showcoastlines': False,
+            'lonaxis': {
+                'showgrid': True,
+                'range': [0, 360],
+            },
+            'lataxis': {
+                'showgrid': True,
+                'range': [-90, 90],
+            },
         }
     }
-    figure = offline.plot(go.Figure(data=[plot], layout=layout), output_type='div', show_link=False)
+    figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
     return {'figure': figure}
 
 
