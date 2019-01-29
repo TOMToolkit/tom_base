@@ -169,14 +169,13 @@ class MARSBroker(object):
     name = 'MARS'
     form = MARSQueryForm
 
-    @classmethod
-    def clean_parameters(clazz, parameters):
+    def _clean_parameters(self, parameters):
         return {k: v for k, v in parameters.items() if v and k != 'page'}
 
     def fetch_alerts(self, parameters):
         if not parameters.get('page'):
             parameters['page'] = 1
-        args = urlencode(self.clean_parameters(parameters))
+        args = urlencode(self._clean_parameters(parameters))
         url = '{0}/?page={1}&format=json&{2}'.format(
             MARS_URL,
             parameters['page'],

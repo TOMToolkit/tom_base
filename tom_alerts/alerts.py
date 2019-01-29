@@ -95,10 +95,18 @@ class GenericBroker(ABC):
 
     @abstractmethod
     def fetch_alerts(parameters):
+        """
+        This method takes in the query parameters needed to filter
+        alerts for a broker and makes the GET query to the broker
+        endpoint.
+        """
         pass
 
     @abstractmethod
     def fetch_alert(id):
+        """
+
+        """
         pass
 
     @abstractmethod
