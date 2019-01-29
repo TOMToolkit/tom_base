@@ -1,4 +1,5 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
+
 from django.contrib.auth.models import User
 from django.urls import reverse
 
@@ -67,3 +68,18 @@ class TestUserManagement(TestCase):
         self.assertContains(response, 'Profile updated')
         user.refresh_from_db()
         self.assertEqual(user.first_name, 'Luke')
+
+
+class TestAuthScheme(TestCase):
+    @override_settings(AUTH_STRATEGY='LOCKED')
+    def test_user_cannot_access_view(self):
+        response = self.client.get(reverse('tom_targets:list'))
+        self.assertRedirects(
+            response, reverse('login') + '?next=' + reverse('tom_targets:list'), status_code=302
+        )
+
+    @override_settings(AUTH_STRATEGY='READ_ONLY')
+    def test_user_can_access_view(self):
+        response = self.client.get(reverse('tom_targets:list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Add a target')

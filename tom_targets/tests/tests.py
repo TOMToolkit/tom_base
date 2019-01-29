@@ -31,13 +31,60 @@ class TestTargetDetail(TestCase):
         response = self.client.get(reverse('targets:detail', kwargs={'pk': self.nst.id}))
         self.assertContains(response, self.nst.id)
 
-    def test_sidereal_target_create(self):
+
+class TestTargetCreate(TestCase):
+    def setUp(self):
+        user = User.objects.create(username='testuser')
+        self.client.force_login(user)
+
+    def test_target_create_form(self):
         response = self.client.get(reverse('targets:create'))
         self.assertContains(response, Target.SIDEREAL)
-
-    def test_non_sidereal_target_create(self):
-        response = self.client.get(reverse('targets:create'))
         self.assertContains(response, Target.NON_SIDEREAL)
+
+    def test_create_target(self):
+        target_data = {
+            'name': 'test_target',
+            'identifier': 'test_target_id',
+            'type': Target.SIDEREAL,
+            'ra': 123.456,
+            'dec': -32.1,
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': None,
+            'targetextra_set-0-value': None,
+
+        }
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(response, target_data['name'])
+        self.assertTrue(Target.objects.filter(name=target_data['name']).exists())
+
+    def test_create_target_sexigesimal(self):
+        """
+        Using coordinates for Messier 1
+        """
+        target_data = {
+            'name': 'test_target',
+            'identifier': 'test_target_id',
+            'type': Target.SIDEREAL,
+            'ra': '05:34:31.94',
+            'dec': '+22:00:52.2',
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': None,
+            'targetextra_set-0-value': None,
+
+        }
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(response, target_data['name'])
+        target = Target.objects.get(name=target_data['name'])
+        # Coordinates according to simbad
+        self.assertAlmostEqual(target.ra, 83.63308, places=4)
+        self.assertAlmostEqual(target.dec, 22.0145, places=4)
 
 
 class TestTargetSearch(TestCase):

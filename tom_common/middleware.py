@@ -1,7 +1,9 @@
-from tom_common.exceptions import ImproperCredentialsException
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.conf import settings
+
+from tom_common.exceptions import ImproperCredentialsException
 
 
 class ExternalServiceMiddleware:
@@ -20,3 +22,16 @@ class ExternalServiceMiddleware:
             messages.error(request, msg)
             return redirect(reverse('home'))
         raise exception
+
+
+class AuthStrategyMiddlware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.open_urls = [reverse('login')] + getattr(settings, 'OPEN_URLS', [])
+
+    def __call__(self, request):
+        if settings.AUTH_STRATEGY == 'LOCKED':
+            if not request.user.is_authenticated and request.path_info not in self.open_urls:
+                return redirect(reverse('login') + '?next=' + request.path)
+
+        return self.get_response(request)

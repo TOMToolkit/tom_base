@@ -1,0 +1,14 @@
+<!-- include Aladin Lite CSS file in the head section of your page -->
+<link rel="stylesheet" href="//aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.css" />
+<!-- insert this snippet where you want Aladin Lite viewer to appear and after the loading of jQuery -->
+<h3>Survey View</h3>
+<div id="aladin-lite-div" style="width:300px;height:300px;"></div>
+<script type="text/javascript" src="//aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.js" charset="utf-8"></script>
+<script type="text/javascript">
+    var aladin = A.aladin('#aladin-lite-div', {
+      survey: "P/DSS2/color",
+      fov:5,
+      target: "{{ target.ra }} {{ target.dec }}",
+      showGotoControl: false,
+    });
+</script>
