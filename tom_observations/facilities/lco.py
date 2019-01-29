@@ -130,15 +130,6 @@ def _proposal_choices():
 
 
 class LCOObservationForm(GenericObservationForm):
-    """
-    This is the class that is responsible for displaying the observation request form.
-    It inherits from tom_observations.facility.GenericObservationForm which provides
-    some base shared functionality. Extra fields are provided below.
-    The layout is handlded by Django crispy forms which allows customizability of the
-    form layout without needing to write html templates:
-    https://django-crispy-forms.readthedocs.io/en/d-0/layouts.html
-    See the documentation on Django forms for more information.
-    """
     group_id = forms.CharField()
     proposal = forms.ChoiceField(choices=_proposal_choices)
     ipp_value = forms.FloatField()
@@ -193,11 +184,6 @@ class LCOObservationForm(GenericObservationForm):
 
     @property
     def observation_payload(self):
-        """
-        This method is called to extract the data from the form into a form that
-        can be used by the rest of the module. In this example, a LCO request payload
-        is constructed by the form data and the associated target.
-        """
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
         return {
             "group_id": self.cleaned_data['group_id'],
@@ -251,23 +237,10 @@ class LCOObservationForm(GenericObservationForm):
 
 
 class LCOFacility(GenericObservationFacility):
-    """
-    The facility class contains all the logic specific to the facility it is
-    written for. Some methods are used only internally (starting with an
-    uderscore) but some need to be implemented by all facility classes.
-    All facilities should inherit from GenericObservationFacility which
-    provides some base functionality.
-    In order to make use of a facility class, add the path to
-    TOM_FACILITY_CLASSES in your settings.py.
-    """
     name = 'LCO'
     form = LCOObservationForm
 
     def submit_observation(self, observation_payload):
-        """
-        This method takes in the serialized data from the form and actually
-        submits the observation to the remote api
-        """
         response = make_request(
             'POST',
             PORTAL_URL + '/api/userrequests/',
@@ -277,10 +250,6 @@ class LCOFacility(GenericObservationFacility):
         return [r['id'] for r in response.json()['requests']]
 
     def validate_observation(self, observation_payload):
-        """
-        Same thing as submit_observation, but a dry run. You can
-        skip this in different modules by just using "pass"
-        """
         response = make_request(
             'POST',
             PORTAL_URL + '/api/userrequests/validate/',
@@ -290,29 +259,15 @@ class LCOFacility(GenericObservationFacility):
         return response.json()['errors']
 
     def get_observation_url(self, observation_id):
-        """
-        Takes an observation id and return the url for which a user
-        can view the observation at an external location. In this case,
-        we return a URL to the LCO observation portal's observation
-        record page.
-        """
         return PORTAL_URL + '/requests/' + observation_id
 
     def get_terminal_observing_states(self):
-        """
-        Returns the states for which an observation is not expected
-        to change.
-        """
         return TERMINAL_OBSERVING_STATES
 
     def get_observing_sites(self):
         return SITES
 
     def get_observation_status(self, observation_id):
-        """
-        Return the status for a single observation. observation_id should
-        be able to be used to retrieve the status from the external service.
-        """
         response = make_request(
             'GET',
             PORTAL_URL + '/api/requests/{0}'.format(observation_id),
@@ -321,12 +276,6 @@ class LCOFacility(GenericObservationFacility):
         return response.json()['state']
 
     def data_products(self, observation_id, product_id=None):
-        """
-        Using an observation_id, retrieve a list of the data
-        products that belong to this observation. In this case,
-        the LCO module retrieves a list of frames from the LCO
-        data archive.
-        """
         products = []
         for frame in self._archive_frames(observation_id, product_id):
             products.append({
