@@ -64,7 +64,7 @@ class TestObservationViews(TestCase):
             'test_input': 'gnomes',
             'facility': 'FakeFacility',
         }
-        response = self.client.post(
+        self.client.post(
             '{}?target_id={}'.format(
                 reverse('tom_observations:create', kwargs={'facility': 'FakeFacility'}),
                 self.target.id
@@ -72,7 +72,6 @@ class TestObservationViews(TestCase):
             data=form_data,
             follow=True
         )
-        print(response.content)
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
 
 

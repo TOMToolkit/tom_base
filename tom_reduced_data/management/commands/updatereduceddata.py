@@ -20,7 +20,7 @@ class Command(BaseCommand):
         brokers = alerts.get_service_classes()
         broker_classes = {}
         for broker in brokers:
-            broker_classes[broker] = alerts.get_service_class(broker)
+            broker_classes[broker] = alerts.get_service_class(broker)()
 
         target = None
         if options['target_id']:

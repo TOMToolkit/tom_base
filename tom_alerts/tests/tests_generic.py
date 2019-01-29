@@ -32,15 +32,13 @@ class TestBroker:
     name = 'TEST'  # The name of this broker.
     form = TestBrokerForm  # The form that will be used to write and save queries.
 
-    @classmethod
-    def fetch_alerts(clazz, parameters):
+    def fetch_alerts(self, parameters):
         """ All brokers must implement this method. It must return a list of alerts.
         """
         # Here we simply return a list of `GenericAlert`s that match the name passed in via `parameters`.
         return [alert for alert in test_alerts if alert['name'] == parameters['name']]
 
-    @classmethod
-    def fetch_alert(clazz, alert_id):
+    def fetch_alert(self, alert_id):
         """ Method to retrieve and return a single alert.
         """
         for alert in test_alerts:
@@ -48,8 +46,10 @@ class TestBroker:
                 return alert
         return None
 
-    @classmethod
-    def to_generic_alert(clazz, alert):
+    def process_reduced_data(self, target, alert=None):
+        pass
+
+    def to_generic_alert(self, alert):
         """ We use this method to transform a remote alert (in this case an item
         from the `test_alerts` list) into a `GenericAlert` so they can be displayed in a
         consistent manner.
@@ -65,8 +65,7 @@ class TestBroker:
             score=alert['score']
         )
 
-    @classmethod
-    def to_target(clazz, alert):
+    def to_target(self, alert):
         """ Transform a single alert into a `Target`, so that it can be used in the rest of the TOM.
         """
         return Target(
@@ -78,9 +77,9 @@ class TestBroker:
         )
 
 
-@override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.TestBroker'])
+@override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
 class TestBrokerClass(TestCase):
-    """ Test the funcionality of the TestBroker, we modify the django settings to make sure
+    """ Test the functionality of the TestBroker, we modify the django settings to make sure
     it is the only installed broker.
     """
     def test_get_broker_class(self):
@@ -91,23 +90,23 @@ class TestBrokerClass(TestCase):
             get_service_class('MARS')
 
     def test_fetch_alerts(self):
-        alerts = TestBroker.fetch_alerts({'name': 'Hoth'})
+        alerts = TestBroker().fetch_alerts({'name': 'Hoth'})
         self.assertEqual(test_alerts[1], alerts[0])
 
     def test_fetch_alert(self):
-        alert = TestBroker.fetch_alert(1)
+        alert = TestBroker().fetch_alert(1)
         self.assertEqual(test_alerts[0], alert)
 
     def test_to_generic_alert(self):
-        ga = TestBroker.to_generic_alert(test_alerts[0])
+        ga = TestBroker().to_generic_alert(test_alerts[0])
         self.assertEqual(ga.name, test_alerts[0]['name'])
 
     def test_to_target(self):
-        target = TestBroker.to_target(test_alerts[0])
+        target = TestBroker().to_target(test_alerts[0])
         self.assertEqual(target.name, test_alerts[0]['name'])
 
 
-@override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.TestBroker'])
+@override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
 class TestBrokerViews(TestCase):
     """ Test the views that use the broker classes
     """
@@ -187,7 +186,7 @@ class TestBrokerViews(TestCase):
         )
         post_data = {
             'broker': 'TEST',
-            'alert_id': 2
+            'alerts': [2]
         }
         self.client.post(reverse('tom_alerts:create-target'), data=post_data)
         self.assertEqual(Target.objects.count(), 1)

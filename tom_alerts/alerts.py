@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout
 import json
+from abc import ABC, abstractmethod
 
 from tom_alerts.models import BrokerQuery
 
@@ -88,3 +89,26 @@ class GenericQueryForm(forms.Form):
         query.parameters = self.serialize_parameters()
         query.save()
         return query
+
+
+class GenericBroker(ABC):
+
+    @abstractmethod
+    def fetch_alerts(parameters):
+        pass
+
+    @abstractmethod
+    def fetch_alert(id):
+        pass
+
+    @abstractmethod
+    def process_reduced_data(target, alert=None):
+        pass
+
+    @abstractmethod
+    def to_target(alert):
+        pass
+
+    @abstractmethod
+    def to_generic_alert(alert):
+        pass

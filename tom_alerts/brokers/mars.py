@@ -173,11 +173,10 @@ class MARSBroker(object):
     def clean_parameters(clazz, parameters):
         return {k: v for k, v in parameters.items() if v and k != 'page'}
 
-    @classmethod
-    def fetch_alerts(clazz, parameters):
+    def fetch_alerts(self, parameters):
         if not parameters.get('page'):
             parameters['page'] = 1
-        args = urlencode(clazz.clean_parameters(parameters))
+        args = urlencode(self.clean_parameters(parameters))
         url = '{0}/?page={1}&format=json&{2}'.format(
             MARS_URL,
             parameters['page'],
@@ -190,19 +189,17 @@ class MARSBroker(object):
         alerts = parsed['results']
         if parsed['has_next'] and parameters['page'] < 10:
             parameters['page'] += 1
-            alerts += clazz.fetch_alerts(parameters)
+            alerts += self.fetch_alerts(parameters)
         return alerts
 
-    @classmethod
-    def fetch_alert(clazz, id):
+    def fetch_alert(self, id):
         url = f'{MARS_URL}/{id}/?format=json'
         response = requests.get(url)
         response.raise_for_status()
         parsed = response.json()
         return parsed
 
-    @classmethod
-    def process_reduced_data(clazz, target, alert=None):
+    def process_reduced_data(self, target, alert=None):
         alerts = []
         if alert:
             alerts = [alert]
@@ -210,10 +207,10 @@ class MARSBroker(object):
             try:
                 alert_sources = ReducedDatumSource.objects.filter(
                     id__in=ReducedDatum.objects.filter(target=target).values_list('source').distinct(),
-                    name=clazz.name
+                    name=self.name
                 )
                 for alert_source in alert_sources:
-                    alerts.append(clazz.fetch_alert(alert_source.location))
+                    alerts.append(self.fetch_alert(alert_source.location))
             except ObjectDoesNotExist:
                 # TODO: Is this the correct behavior?
                 raise Exception('Unable to process reduced data, no valid alert for this target and data source')
@@ -221,7 +218,7 @@ class MARSBroker(object):
                 raise Exception('Unable to retrieve alert information from broker')
         for alert in alerts:
             reduced_datum_source, created = ReducedDatumSource.objects.get_or_create(
-                name=clazz.name,
+                name=self.name,
                 location=alert['lco_id']
             )
             for prv_candidate in alert.get('prv_candidate'):
@@ -235,8 +232,7 @@ class MARSBroker(object):
                     target=target)
                 rd.save()
 
-    @classmethod
-    def to_target(clazz, alert):
+    def to_target(self, alert):
         alert_copy = alert.copy()
         target = Target.objects.create(
             identifier=alert_copy['objectId'],
@@ -253,8 +249,7 @@ class MARSBroker(object):
 
         return target
 
-    @classmethod
-    def to_generic_alert(clazz, alert):
+    def to_generic_alert(self, alert):
         timestamp = parse(alert['candidate']['wall_time'])
         url = '{0}/{1}/'.format(MARS_URL, alert['lco_id'])
 
