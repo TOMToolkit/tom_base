@@ -105,18 +105,30 @@ class GenericBroker(ABC):
     @abstractmethod
     def fetch_alert(id):
         """
-
+        This method takes an alert id and retrieves the specific
+        alert data from the given broker.
         """
         pass
 
     @abstractmethod
     def process_reduced_data(target, alert=None):
+        """
+        Retrieves and creates records for any reduced data provided
+        by a specific broker. Updates existing data if it has changed.
+        """
         pass
 
     @abstractmethod
     def to_target(alert):
+        """
+        Creates Target object from the broker-specific alert data.
+        """
         pass
 
     @abstractmethod
     def to_generic_alert(alert):
+        """
+        This method creates a GenericAlert object from the broker-specific
+        alert data for use outside of the implementation of the GenericBroker.
+        """
         pass
