@@ -71,12 +71,12 @@ SITES = {
 def make_request(*args, **kwargs):
     response = requests.request(*args, **kwargs)
     if 400 <= response.status_code < 500:
-        raise ImproperCredentialsException('LCO')
+        raise ImproperCredentialsException('LCO: ' + str(response.content))
     response.raise_for_status()
     return response
 
 
-def flatten_error_dict(form, error_dict):
+def _flatten_error_dict(form, error_dict):
     non_field_errors = []
     for k, v in error_dict.items():
         if type(v) == list:
@@ -87,19 +87,19 @@ def flatten_error_dict(form, error_dict):
                     else:
                         non_field_errors.append('{}: {}'.format(k, i))
                 if type(i) == dict:
-                    non_field_errors.append(flatten_error_dict(form, i))
+                    non_field_errors.append(_flatten_error_dict(form, i))
         elif type(v) == str:
             if k in form.fields:
                 form.add_error(k, v)
             else:
                 non_field_errors.append('{}: {}'.format(k, v))
         elif type(v) == dict:
-            non_field_errors.append(flatten_error_dict(form, v))
+            non_field_errors.append(_flatten_error_dict(form, v))
 
     return non_field_errors
 
 
-def get_instruments():
+def _get_instruments():
     response = make_request(
         'GET',
         PORTAL_URL + '/api/instruments/',
@@ -108,15 +108,15 @@ def get_instruments():
     return response.json()
 
 
-def instrument_choices():
-    return [(k, k) for k in get_instruments()]
+def _instrument_choices():
+    return [(k, k) for k in _get_instruments()]
 
 
-def filter_choices():
-    return set([(f, f) for ins in get_instruments().values() for f in ins['filters']])
+def _filter_choices():
+    return set([(f, f) for ins in _get_instruments().values() for f in ins['filters']])
 
 
-def proposal_choices():
+def _proposal_choices():
     response = make_request(
         'GET',
         PORTAL_URL + '/api/profile/',
@@ -140,12 +140,12 @@ class LCOObservationForm(GenericObservationForm):
     See the documentation on Django forms for more information.
     """
     group_id = forms.CharField()
-    proposal = forms.ChoiceField(choices=proposal_choices)
+    proposal = forms.ChoiceField(choices=_proposal_choices)
     ipp_value = forms.FloatField()
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
-    filter = forms.ChoiceField(choices=filter_choices)
-    instrument_name = forms.ChoiceField(choices=instrument_choices)
+    filter = forms.ChoiceField(choices=_filter_choices)
+    instrument_name = forms.ChoiceField(choices=_instrument_choices)
     exposure_count = forms.IntegerField(min_value=1)
     exposure_time = forms.FloatField(min_value=0.1)
     max_airmass = forms.FloatField()
@@ -182,7 +182,7 @@ class LCOObservationForm(GenericObservationForm):
         super().is_valid()
         errors = LCOFacility().validate_observation(self.observation_payload)
         if errors:
-            self.add_error(None, flatten_error_dict(self, errors))
+            self.add_error(None, _flatten_error_dict(self, errors))
         return not errors
 
     def instrument_to_type(self, instrument_name):
