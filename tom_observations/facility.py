@@ -44,6 +44,19 @@ def get_service_class(name):
 
 
 class GenericObservationFacility(ABC):
+    """
+    The facility class contains all the logic specific to the facility it is
+    written for. Some methods are used only internally (starting with an
+    underscore) but some need to be implemented by all facility classes.
+    All facilities should inherit from  this class which
+    provides some base functionality.
+    In order to make use of a facility class, add the path to
+    TOM_FACILITY_CLASSES in your settings.py.
+
+    For an implementation example please see
+    https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py
+    """
+
     def update_observation_status(self, observation_id):
         from tom_observations.models import ObservationRecord
         try:
@@ -105,34 +118,80 @@ class GenericObservationFacility(ABC):
 
     @abstractmethod
     def submit_observation(self, observation_payload):
+        """
+        This method takes in the serialized data from the form and actually
+        submits the observation to the remote api
+        """
         pass
 
     @abstractmethod
     def validate_observation(self, observation_payload):
+        """
+        Same thing as submit_observation, but a dry run. You can
+        skip this in different modules by just using "pass"
+        """
         pass
 
     @abstractmethod
     def get_observation_url(self, observation_id):
+        """
+        Takes an observation id and return the url for which a user
+        can view the observation at an external location. In this case,
+        we return a URL to the LCO observation portal's observation
+        record page.
+        """
         pass
 
     @abstractmethod
     def get_terminal_observing_states(self):
+        """
+        Returns the states for which an observation is not expected
+        to change.
+        """
         pass
 
     @abstractmethod
     def get_observing_sites(self):
+        """
+        Return a list of dictionaries that contain the information
+        necessary to be used in the planning (visibility) tool. The
+        list should contain dictionaries each that contain sitecode,
+        latitude, longitude and elevation.
+        """
         pass
 
     @abstractmethod
     def get_observation_status(self, observation_id):
+        """
+        Return the status for a single observation. observation_id should
+        be able to be used to retrieve the status from the external service.
+        """
         pass
 
     @abstractmethod
     def data_products(self, observation_id, product_id=None):
+        """
+        Using an observation_id, retrieve a list of the data
+        products that belong to this observation. In this case,
+        the LCO module retrieves a list of frames from the LCO
+        data archive.
+        """
         pass
 
 
 class GenericObservationForm(forms.Form):
+    """
+    This is the class that is responsible for displaying the observation request form.
+    Facility classes that provide a form should subclass this form. It provides
+    some base shared functionality. Extra fields are provided below.
+    The layout is handled by Django crispy forms which allows customizability of the
+    form layout without needing to write html templates:
+    https://django-crispy-forms.readthedocs.io/en/d-0/layouts.html
+    See the documentation on Django forms for more information.
+
+    For an implementation example please see
+    https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py#L132
+    """
     facility = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
     target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
 
@@ -147,6 +206,11 @@ class GenericObservationForm(forms.Form):
 
     @property
     def observation_payload(self):
+        """
+        This method is called to extract the data from the form into a dictionary that
+        can be used by the rest of the module. In the base implementation it simply dumps
+        the form into a json string.
+        """
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
         return {
             'target_id': target.id,
