@@ -23,11 +23,12 @@ class ReducedDatum(models.Model):
     source = models.ForeignKey(ReducedDatumSource, null=False, on_delete=models.CASCADE)
     target = models.ForeignKey(Target, null=False, on_delete=models.CASCADE)
     data_product = models.ForeignKey(DataProduct, null=True, on_delete=models.CASCADE)
-    data_type = models.TextField(
+    data_type = models.CharField(
         max_length=100,
-        choices=getattr(settings, 'DATA_TYPES', ('', ''))
+        choices=getattr(settings, 'DATA_TYPES', ('', '')),
+        default=''
     )
-    timestamp = models.TextField(null=False, blank=False, db_index=True)
+    timestamp = models.FloatField(null=False, blank=False, db_index=True)
     value = models.FloatField(null=False, blank=False)
-    label = models.TextField(null=True)
+    label = models.CharField(max_length=100, default='')
     error = models.FloatField(null=True)
