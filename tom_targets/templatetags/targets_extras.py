@@ -68,21 +68,24 @@ def target_plan(context):
 @register.inclusion_tag('tom_targets/partials/target_distribution.html')
 def target_distribution(targets):
     locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
-    data = [dict(
-        lon=[l[0] for l in locations],
-        lat=[l[1] for l in locations],
-        text=[l[2] for l in locations],
-        hoverinfo='lon+lat+text',
-        mode='markers',
-        type='scattergeo'),
-    dict(
-        lon=list(range(0,360,60))+[180]*4,
-        lat=[0]*6+[-60,-30,30,60],
-        text=list(range(0,360,60))+[-60,-30,30,60],
-        hoverinfo='none',
-        mode='text',
-        type='scattergeo'
-    )]
+    data = [
+        dict(
+            lon=[l[0] for l in locations],
+            lat=[l[1] for l in locations],
+            text=[l[2] for l in locations],
+            hoverinfo='lon+lat+text',
+            mode='markers',
+            type='scattergeo'
+        ),
+        dict(
+            lon=list(range(0, 360, 60))+[180]*4,
+            lat=[0]*6+[-60, -30, 30, 60],
+            text=list(range(0, 360, 60))+[-60, -30, 30, 60],
+            hoverinfo='none',
+            mode='text',
+            type='scattergeo'
+        )
+    ]
     layout = {
         'title': 'Target Distribution (sidereal)',
         'hovermode': 'closest',
@@ -104,6 +107,7 @@ def target_distribution(targets):
     }
     figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
     return {'figure': figure}
+
 
 @register.filter
 def deg_to_sexigesimal(value, fmt):
