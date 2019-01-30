@@ -5,13 +5,13 @@ from tom_dataproducts.models import DataProduct
 
 
 class ReducedDatumSource(models.Model):
-    name = models.TextField(
+    name = models.CharField(
         max_length=100,
         null=False,
         verbose_name='Datum Source',
         help_text='The original source reference for the datum'
     )
-    location = models.TextField(
+    location = models.CharField(
         max_length=100,
         null=True,
         verbose_name='Datum Source Location',
