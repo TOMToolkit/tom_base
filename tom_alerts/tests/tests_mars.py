@@ -7,7 +7,7 @@ from unittest import mock
 from tom_alerts.brokers.mars import MARSBroker
 from tom_alerts.alerts import get_service_class
 from tom_targets.models import Target
-from tom_reduced_data.models import ReducedDatum, ReducedDatumSource
+from tom_dataproducts.models import ReducedDatum, ReducedDatumSource
 
 alert1 = {
     'candid': 617122521615015023,

@@ -4,12 +4,11 @@ from urllib.parse import urlencode
 from tom_alerts.alerts import GenericAlert
 from dateutil.parser import parse
 from django import forms
-from django.core.exceptions import ObjectDoesNotExist
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 
 from tom_alerts.alerts import GenericQueryForm
 from tom_targets.models import Target, TargetExtra
-from tom_reduced_data.models import ReducedDatumSource, ReducedDatum
+from tom_dataproducts.models import ReducedDatumSource, ReducedDatum
 
 MARS_URL = 'https://mars.lco.global'
 

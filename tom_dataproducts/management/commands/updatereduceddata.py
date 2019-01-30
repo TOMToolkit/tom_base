@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from tom_alerts import alerts
 from tom_targets.models import Target
-from tom_reduced_data.models import ReducedDatumSource, ReducedDatum
+from tom_dataproducts.models import ReducedDatumSource, ReducedDatum
 
 
 class Command(BaseCommand):
