@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
-    'tom_reduced_data'
 ]
 
 SITE_ID = 1
@@ -65,7 +64,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'tom_common.middleware.ExternalServiceMiddleware',
-    'tom_common.middleware.AuthStrategyMiddlware',
+    'tom_common.middleware.AuthStrategyMiddleware',
 ]
 
 ROOT_URLCONF = 'tom_common.urls'

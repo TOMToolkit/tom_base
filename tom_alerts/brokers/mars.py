@@ -1,12 +1,12 @@
 import requests
 from requests.exceptions import HTTPError
 from urllib.parse import urlencode
-from tom_alerts.alerts import GenericAlert
 from dateutil.parser import parse
 from django import forms
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
+from astropy.time import Time
 
-from tom_alerts.alerts import GenericQueryForm
+from tom_alerts.alerts import GenericQueryForm, GenericAlert
 from tom_targets.models import Target, TargetExtra
 from tom_dataproducts.models import ReducedDatumSource, ReducedDatum
 
@@ -217,10 +217,10 @@ class MARSBroker(object):
                 location=alert['lco_id']
             )
             for prv_candidate in alert.get('prv_candidate'):
-                jd = prv_candidate['candidate']['jd']
+                jd = Time(prv_candidate['candidate']['jd'], format='jd')
                 magnitude = prv_candidate['candidate']['magpsf']
                 rd, created = ReducedDatum.objects.get_or_create(
-                    timestamp=jd,
+                    timestamp=jd.datetime,
                     value=magnitude,
                     source=reduced_datum_source,
                     data_type='PHOTOMETRY',

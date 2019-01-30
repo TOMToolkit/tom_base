@@ -1,6 +1,7 @@
 import json
 from requests import Response
 
+from django.utils import timezone
 from django.test import TestCase, override_settings
 from unittest import mock
 
@@ -37,7 +38,7 @@ class TestMARSBrokerClass(TestCase):
             source=self.test_source,
             target=self.test_target,
             data_type='PHOTOMETRY',
-            timestamp=3,
+            timestamp=timezone.now(),
             value=12
         )
         alert2 = alert1.copy()
@@ -73,7 +74,7 @@ class TestMARSBrokerClass(TestCase):
         test_alert['prv_candidate'] = [
             {
                 'candidate': {
-                    'jd': 4,
+                    'jd': 2458372.6225231,
                     'magpsf': 13
                 }
             }
@@ -91,7 +92,7 @@ class TestMARSBrokerClass(TestCase):
         self.test_data['prv_candidate'] = [
             {
                 'candidate': {
-                    'jd': 4,
+                    'jd': 2458372.6225231,
                     'magpsf': 13
                 }
             }
