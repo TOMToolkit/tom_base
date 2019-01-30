@@ -210,9 +210,6 @@ class MARSBroker(object):
                 )
                 for alert_source in alert_sources:
                     alerts.append(self.fetch_alert(alert_source.location))
-            except ObjectDoesNotExist:
-                # TODO: Is this the correct behavior?
-                raise Exception('Unable to process reduced data, no valid alert for this target and data source')
             except HTTPError:
                 raise Exception('Unable to retrieve alert information from broker')
         for alert in alerts:
