@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load bootstrap4 targets_extras %}
 {% block title %}Targets{% endblock %}
 {% block content %}
 <div class="row">
@@ -16,6 +16,7 @@
         </span>
       </div>
     </div>
+    {% target_distribution filter.qs %}
     <table class="table">
       <thead>
         <tr>
