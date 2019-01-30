@@ -93,8 +93,39 @@ def target_distribution(targets):
                 'showgrid': True,
                 'range': [-90, 90],
             },
-        }
+        },
+        'xaxis': {
+            'visible': False,
+            'range': [0, 360],
+        },
+        'yaxis': {
+            'visible': False,
+            'range': [-90, 90],
+        },
+        'annotations': []
     }
+    # Geoscatter plots do not support labels on graticules.
+    # Furthermore, annotations are placed via a rectangular grid, not the actual geo projection
+    # This hack attemps to place labels on the correct longitude via x cooridnates on a normal grid
+    # This is also why 'xaxis' and 'yaxis' are configured above.
+    # The tuples are (coord, text) for each annotation.
+    annotations_hack_x = (
+        (45, 0), (68, 30), (90, 60), (112, 90), (135, 120), (158, 150), (180, 180),
+        (202, 210), (225, 240), (248, 270), (270, 300), (292, 330), (315, 360)
+    )
+    layout['annotations'] += [
+        {'showarrow': False, 'xref': 'x', 'yref': 'y', 'y': 0, 'x': x, 'text': text}
+        for x, text in annotations_hack_x
+    ]
+    annotations_hack_y = (
+        (-12, -10), (-37, -30), (-59, -50), (-78, -70), (-90, -90),
+        (12, 10), (37, 30), (59, 50), (78, 70), (90, 90)
+    )
+    layout['annotations'] += [
+        {'showarrow': False, 'xref': 'x', 'yref': 'y', 'x': 180, 'y': y, 'text': text}
+        for y, text in annotations_hack_y
+    ]
+
     figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
     return {'figure': figure}
 
