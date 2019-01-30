@@ -122,7 +122,7 @@ class ReducedDatum(models.Model):
         choices=getattr(settings, 'DATA_TYPES', ('', '')),
         default=''
     )
-    timestamp = models.FloatField(null=False, blank=False, db_index=True)
+    timestamp = models.DateTimeField(null=False, blank=False, db_index=True)
     value = models.FloatField(null=False, blank=False)
     label = models.CharField(max_length=100, default='')
     error = models.FloatField(null=True)
