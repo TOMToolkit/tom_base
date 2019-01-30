@@ -26,26 +26,23 @@ class FakeFacility(GenericObservationFacility):
     name = 'FakeFacility'
     form = FakeFacilityForm
 
-    @classmethod
-    def get_observing_sites(clz):
+    def get_observing_sites(self):
         return SITES
 
-    @classmethod
-    def get_observation_url(clzz, observation_id):
+    def get_observation_url(self, observation_id):
         return ''
 
-    @classmethod
-    def data_products(clz, observation_record):
+    def data_products(self, observation_record):
         return [{'id': 'testdpid'}]
 
-    @classmethod
-    def get_observation_status(clz, observation_id):
+    def get_observation_status(self, observation_id):
         return 'COMPLETED'
 
-    @classmethod
-    def get_terminal_observing_states(clz):
+    def get_terminal_observing_states(self):
         return ['COMPLETED', 'FAILED', 'CANCELED', 'WINDOW_EXPIRED']
 
-    @classmethod
-    def submit_observation(clz, payload):
+    def submit_observation(self, payload):
         return ['fakeid']
+
+    def validate_observation(self, observation_payload):
+        return True

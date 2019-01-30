@@ -152,7 +152,7 @@ class TestTargetVisibility(TestCase):
     @mock.patch('tom_observations.utils.get_rise_set')
     @mock.patch('tom_observations.utils.observer_for_site')
     def test_get_visibility_sidereal(self, mock_observer_for_site, mock_get_rise_set, mock_facility):
-        mock_facility.return_value = {'Fake Facility': FakeFacility()}
+        mock_facility.return_value = {'Fake Facility': FakeFacility}
         mock_get_rise_set.return_value = []
         mock_observer_for_site.return_value = ephem.city('Los Angeles')
 
@@ -172,7 +172,7 @@ class TestTargetVisibility(TestCase):
     @mock.patch('tom_observations.utils.get_rise_set')
     @mock.patch('tom_observations.utils.observer_for_site')
     def test_get_visibility_non_sidereal(self, mock_observer_for_site, mock_get_rise_set, mock_facility):
-        mock_facility.return_value = {'Fake Facility': FakeFacility()}
+        mock_facility.return_value = {'Fake Facility': FakeFacility}
         mock_get_rise_set.return_value = []
         mock_observer_for_site.return_value = ephem.city('Los Angeles')
 
