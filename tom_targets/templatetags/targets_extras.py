@@ -79,6 +79,7 @@ def target_distribution(targets):
     layout = {
         'title': 'Target Distribution (sidereal)',
         'hovermode': 'closest',
+        'dragmode': 'orbit',
         'geo': {
             'projection': {
                 'type': 'mollweide',
