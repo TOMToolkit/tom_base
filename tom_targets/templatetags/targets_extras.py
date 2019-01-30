@@ -126,7 +126,12 @@ def target_distribution(targets):
         for y, text in annotations_hack_y
     ]
 
-    figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
+    # Remove toolbar buttons that can mess up labels due to all the hacks above
+    config = {'modeBarButtonsToRemove': ['pan2d', 'zoom2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']}
+
+    figure = offline.plot(
+        go.Figure(data=data, layout=layout), output_type='div', show_link=False, config=config
+    )
     return {'figure': figure}
 
 
