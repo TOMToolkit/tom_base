@@ -94,7 +94,7 @@ class GenericQueryForm(forms.Form):
 class GenericBroker(ABC):
 
     @abstractmethod
-    def fetch_alerts(parameters):
+    def fetch_alerts(self, parameters):
         """
         This method takes in the query parameters needed to filter
         alerts for a broker and makes the GET query to the broker
@@ -103,7 +103,7 @@ class GenericBroker(ABC):
         pass
 
     @abstractmethod
-    def fetch_alert(id):
+    def fetch_alert(self, id):
         """
         This method takes an alert id and retrieves the specific
         alert data from the given broker.
@@ -111,7 +111,7 @@ class GenericBroker(ABC):
         pass
 
     @abstractmethod
-    def process_reduced_data(target, alert=None):
+    def process_reduced_data(self, target, alert=None):
         """
         Retrieves and creates records for any reduced data provided
         by a specific broker. Updates existing data if it has changed.
@@ -119,14 +119,14 @@ class GenericBroker(ABC):
         pass
 
     @abstractmethod
-    def to_target(alert):
+    def to_target(self, alert):
         """
         Creates Target object from the broker-specific alert data.
         """
         pass
 
     @abstractmethod
-    def to_generic_alert(alert):
+    def to_generic_alert(self, alert):
         """
         This method creates a GenericAlert object from the broker-specific
         alert data for use outside of the implementation of the GenericBroker.
