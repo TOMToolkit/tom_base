@@ -24,7 +24,7 @@ class ExternalServiceMiddleware:
         raise exception
 
 
-class AuthStrategyMiddlware:
+class AuthStrategyMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
         self.open_urls = [reverse('login')] + getattr(settings, 'OPEN_URLS', [])

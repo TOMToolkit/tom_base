@@ -1,6 +1,7 @@
 from django.urls import path
 
-from tom_observations.views import ObservationCreateView, ManualObservationCreateView, ObservationRecordDetailView, ObservationListView
+from tom_observations.views import ObservationCreateView, ManualObservationCreateView
+from tom_observations.views import ObservationRecordDetailView, ObservationListView
 
 app_name = 'tom_observations'
 

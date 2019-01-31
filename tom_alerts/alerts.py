@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout
 import json
+from abc import ABC, abstractmethod
 
 from tom_alerts.models import BrokerQuery
 
@@ -88,3 +89,46 @@ class GenericQueryForm(forms.Form):
         query.parameters = self.serialize_parameters()
         query.save()
         return query
+
+
+class GenericBroker(ABC):
+
+    @abstractmethod
+    def fetch_alerts(self, parameters):
+        """
+        This method takes in the query parameters needed to filter
+        alerts for a broker and makes the GET query to the broker
+        endpoint.
+        """
+        pass
+
+    @abstractmethod
+    def fetch_alert(self, id):
+        """
+        This method takes an alert id and retrieves the specific
+        alert data from the given broker.
+        """
+        pass
+
+    @abstractmethod
+    def process_reduced_data(self, target, alert=None):
+        """
+        Retrieves and creates records for any reduced data provided
+        by a specific broker. Updates existing data if it has changed.
+        """
+        pass
+
+    @abstractmethod
+    def to_target(self, alert):
+        """
+        Creates Target object from the broker-specific alert data.
+        """
+        pass
+
+    @abstractmethod
+    def to_generic_alert(self, alert):
+        """
+        This method creates a GenericAlert object from the broker-specific
+        alert data for use outside of the implementation of the GenericBroker.
+        """
+        pass

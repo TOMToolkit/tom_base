@@ -5,8 +5,7 @@ from astropy import units as u
 from astropy.coordinates import Angle
 
 
-from tom_alerts.alerts import GenericAlert
-from tom_alerts.alerts import GenericQueryForm
+from tom_alerts.alerts import GenericAlert, GenericQueryForm, GenericBroker
 from tom_targets.models import Target, TargetExtra
 
 SCOUT_URL = 'https://ssd-api.jpl.nasa.gov/scout.api'
@@ -22,7 +21,7 @@ def hours_min_to_decimal(val):
     return angle.to(u.degree).value
 
 
-class ScoutBroker:
+class ScoutBroker(GenericBroker):
     name = 'Scout'
     form = ScoutQueryForm
 
@@ -32,9 +31,8 @@ class ScoutBroker:
         parameters.pop('broker')
         return {k.replace('_', '-'): v for k, v in parameters.items() if v}
 
-    @classmethod
-    def fetch_alerts(clazz, parameters):
-        args = urlencode(clazz.clean_parameters(parameters))
+    def fetch_alerts(self, parameters):
+        args = urlencode(self.clean_parameters(parameters))
         url = '{0}?{1}'.format(SCOUT_URL, args)
         response = requests.get(url)
         response.raise_for_status()
@@ -42,16 +40,17 @@ class ScoutBroker:
         parsed.sort(key=lambda x: parse(x['lastRun']), reverse=True)
         return parsed
 
-    @classmethod
-    def fetch_alert(clazz, id):
+    def fetch_alert(self, id):
         url = f'{SCOUT_URL}/{id}/?format=json'
         url = '{0}?tdes={1}'.format(SCOUT_URL, id)
         response = requests.get(url)
         response.raise_for_status()
         return response.json()
 
-    @classmethod
-    def to_target(clazz, alert):
+    def process_reduced_data(self, target, alert=None):
+        pass
+
+    def to_target(self, alert):
         target = Target.objects.create(
             identifier=alert['objectName'],
             name=alert['objectName'],
@@ -66,8 +65,7 @@ class ScoutBroker:
 
         return target
 
-    @classmethod
-    def to_generic_alert(clazz, alert):
+    def to_generic_alert(self, alert):
         timestamp = parse(alert['lastRun'])
         url = 'https://cneos.jpl.nasa.gov/scout/#/object/' + alert['objectName']
 

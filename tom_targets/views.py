@@ -30,7 +30,6 @@ class TargetListView(FilterView):
         return context
 
 
-
 class TargetCreateView(LoginRequiredMixin, CreateView):
     model = Target
     fields = '__all__'
