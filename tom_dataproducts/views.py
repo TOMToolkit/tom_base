@@ -5,7 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.edit import CreateView, UpdateView
 from django_filters.views import FilterView
-from django.views.generic import View, ListView
+from django.views.generic import View, ListView, TemplateView
 from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.urls import reverse, reverse_lazy
@@ -207,7 +207,7 @@ class DataProductGroupDataView(LoginRequiredMixin, FormView):
         )
 
 
-class UpdateReducedDataGroupingView(LoginRequiredMixin, RedirectView):
+class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
     def get(self, request, *args, **kwargs):
         target_id = request.GET.get('target_id', None)
         out = StringIO()
@@ -221,3 +221,12 @@ class UpdateReducedDataGroupingView(LoginRequiredMixin, RedirectView):
     def get_redirect_url(self):
         referer = self.request.META.get('HTTP_REFERER', '/')
         return referer
+
+
+class UploadReducedDataView(LoginRequiredMixin, TemplateView):
+    template_name = 'tom_dataproducts/upload_reduced_data.html'
+
+    def post(self, request, *args, **kwargs):
+        reduced_data_file = request.FILES['spectral_data']
+        result = import_spectroscopy_data(reduced_data_file)
+        super().post(request, *args, **kwargs)
