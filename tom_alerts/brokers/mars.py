@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 from dateutil.parser import parse
 from django import forms
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
-from astropy.time import Time
+from astropy.time import Time, TimezoneInfo
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert
 from tom_targets.models import Target, TargetExtra
@@ -217,15 +217,17 @@ class MARSBroker(object):
                 location=alert['lco_id']
             )
             for prv_candidate in alert.get('prv_candidate'):
-                jd = Time(prv_candidate['candidate']['jd'], format='jd')
-                magnitude = prv_candidate['candidate']['magpsf']
-                rd, created = ReducedDatum.objects.get_or_create(
-                    timestamp=jd.datetime,
-                    value=magnitude,
-                    source=reduced_datum_source,
-                    data_type='PHOTOMETRY',
-                    target=target)
-                rd.save()
+                if prv_candidate['candidate'].get('jd', False) and prv_candidate['candidate'].get('magpsf', False):
+                    jd = Time(prv_candidate['candidate']['jd'], format='jd', scale='utc')
+                    jd.to_datetime(timezone=TimezoneInfo())
+                    magnitude = prv_candidate['candidate']['magpsf']
+                    rd, created = ReducedDatum.objects.get_or_create(
+                        timestamp=jd.to_datetime(timezone=TimezoneInfo()),
+                        value=magnitude,
+                        source=reduced_datum_source,
+                        data_type='PHOTOMETRY',
+                        target=target)
+                    rd.save()
 
     def to_target(self, alert):
         alert_copy = alert.copy()
