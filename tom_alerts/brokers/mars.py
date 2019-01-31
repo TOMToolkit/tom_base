@@ -6,7 +6,7 @@ from django import forms
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 
 from tom_alerts.alerts import GenericQueryForm
-from tom_targets.models import Target, TargetExtra
+from tom_targets.models import Target, TargetExtra, TargetName
 
 MARS_URL = 'https://mars.lco.global'
 
@@ -203,7 +203,6 @@ class MARSBroker(object):
         alert_copy = alert.copy()
         target = Target.objects.create(
             identifier=alert_copy['lco_id'],
-            name=alert_copy['objectId'],
             type='SIDEREAL',
             ra=alert_copy['candidate'].pop('ra'),
             dec=alert_copy['candidate'].pop('dec'),
@@ -213,6 +212,7 @@ class MARSBroker(object):
         for k, v in alert_copy['candidate'].items():
             if v is not None:
                 TargetExtra.objects.create(target=target, key=k, value=v)
+        TargetName.objects.create(target=target, name=alert_copy['objectId'])
 
         return target
 

@@ -18,6 +18,7 @@
   <form action="{% url 'targets:create' %}" method="post" class="form">
   {% endif %}
   {% csrf_token %}
+  {% bootstrap_formset names_form %}
   {% bootstrap_form form %}
   <p>Extra Data</p>
   {% bootstrap_formset extra_form %}

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Target, TargetExtra, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS
+from .models import Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS
 from .models import REQUIRED_NON_SIDEREAL_FIELDS
 
 from django.forms.models import inlineformset_factory
@@ -46,3 +46,6 @@ class TargetVisibilityForm(forms.Form):
             raise forms.ValidationError('Start time must be before end time')
 
 TargetExtraFormset = inlineformset_factory(Target, TargetExtra, fields=('key', 'value'))
+
+class TargetNamesForm(forms.Form):
+    name = forms.CharField()
