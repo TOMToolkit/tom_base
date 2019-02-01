@@ -27,7 +27,9 @@ class DataProductSaveView(LoginRequiredMixin, View):
         service_class = get_service_class(request.POST['facility'])
         observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])
         products = request.POST.getlist('products')
-        if products[0] == 'ALL':
+        if not products:
+            messages.warning(request, 'No products were saved, please select at least one dataproduct')
+        elif products[0] == 'ALL':
             products = service_class().save_data_products(observation_record)
             messages.success(request, 'Saved all available data products')
         else:
