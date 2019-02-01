@@ -4,6 +4,7 @@ from tom_alerts.alerts import get_service_class, get_service_classes
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
 import django_filters
 
 from tom_alerts.models import BrokerQuery
@@ -112,15 +113,23 @@ class RunQueryView(TemplateView):
 
 
 class CreateTargetFromAlertView(LoginRequiredMixin, View):
-    def post(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         broker_name = self.request.POST['broker']
         broker_class = get_service_class(broker_name)
         alerts = self.request.POST.getlist('alerts')
+        if not alerts:
+            messages.warning(request, 'Please select at least one alert from which to create a target.')
+            return redirect(request.META.get('HTTP_REFERER', '/'))
         for alert in alerts:
             alert = broker_class().fetch_alert(alert)
             target = broker_class().to_target(alert)
             broker_class().process_reduced_data(target, alert)
             target.save()
-        return redirect(reverse(
-            'tom_targets:list')
-        )
+        if (len(alerts) == 1):
+            return redirect(reverse(
+                'tom_targets:detail', kwargs={'pk': target.id})
+            )
+        else:
+            return redirect(reverse(
+                'tom_targets:list')
+            )
