@@ -17,7 +17,6 @@
         </span>
       </div>
     </div>
-    {% target_distribution filter.qs %}
     <table class="table">
       <thead>
         <tr>
@@ -35,7 +34,7 @@
         {% for target in filter.qs %}
         <tr>
           <td><a href="{% url 'targets:detail' target.id %}" title="{{ target.identifier }}">{{ target.identifier }}</a></td>
-          <td>{{ target.name }}</td>
+          <td>{{ target.target_names_set.all }}</td>
           <td>{{ target.get_type_display }}</td>
           {% if request.GET.type == 'SIDEREAL' %}
             <td>{{ target.ra }}</td>

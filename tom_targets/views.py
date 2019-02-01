@@ -13,7 +13,7 @@ from django.forms import formset_factory
 
 from .models import Target
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm
-from .forms import TargetExtraFormset, TargetNamesForm
+from .forms import TargetExtraFormset, TargetNamesFormset
 from .import_targets import import_targets
 from .filters import TargetFilter
 
@@ -50,7 +50,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super(TargetCreateView, self).get_context_data(**kwargs)
         context['type_choices'] = Target.TARGET_TYPES
-        context['names_form'] = formset_factory(TargetNamesForm)
+        context['names_form'] = TargetNamesFormset()
         context['extra_form'] = TargetExtraFormset()
         return context
 
@@ -69,13 +69,14 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         super().form_valid(form)
-        print(self.request.POST)
         extra = TargetExtraFormset(self.request.POST)
         if extra.is_valid():
             extra.instance = self.object
             extra.save()
-        names = TargetNamesForm(self.request.POST)
-        print(names)
+        names = TargetNamesFormset(self.request.POST)
+        if names.is_valid():
+            names.instance = self.object
+            names.save()
         
         return redirect(self.get_success_url())
 
@@ -87,17 +88,19 @@ class TargetUpdateView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         names_count = self.object.targetname_set.count()
-        print(names_count)
-        context['names_form'] = formset_factory(TargetNamesForm, extra=names_count+1)
+        context['names_form'] = TargetNamesFormset(instance=self.object)
         context['extra_form'] = TargetExtraFormset(instance=self.object)
         return context
 
     def form_valid(self, form):
         super().form_valid(form)
-        print(self.request.POST)
         extra = TargetExtraFormset(self.request.POST, instance=self.object)
         if extra.is_valid():
             extra.save()
+        names = TargetNamesFormset(self.request.POST, instance=self.object)
+        if names.is_valid():
+            names.instance = self.object
+            names.save()
         return redirect(self.get_success_url())
 
 

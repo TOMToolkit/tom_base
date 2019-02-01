@@ -143,7 +143,11 @@ class Target(models.Model):
 
 class TargetName(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
-    name = models.TextField()
+    name = models.CharField(max_length=100)
+    primary = models.BooleanField()
+    created = models.DateTimeField(
+        auto_now_add=True, help_text='The time which this target name was created.'
+    )
 
     def __str__(self):
         return self.name
