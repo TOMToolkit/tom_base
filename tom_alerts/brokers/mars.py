@@ -217,7 +217,7 @@ class MARSBroker(object):
                 location=alert['lco_id']
             )
             for prv_candidate in alert.get('prv_candidate'):
-                if prv_candidate['candidate'].get('jd', False) and prv_candidate['candidate'].get('magpsf', False):
+                if all([key in prv_candidate['candidate'] for key in ['jd', 'magpsf']]):    
                     jd = Time(prv_candidate['candidate']['jd'], format='jd', scale='utc')
                     jd.to_datetime(timezone=TimezoneInfo())
                     magnitude = prv_candidate['candidate']['magpsf']
