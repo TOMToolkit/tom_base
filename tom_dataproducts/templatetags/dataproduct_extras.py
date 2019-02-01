@@ -1,8 +1,11 @@
 from django import template
 
+from plotly import offline
+import plotly.graph_objs as go
+
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
-from tom_dataproducts.models import DataProduct
+from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.forms import DataProductUploadForm
 from tom_observations.facility import get_service_class
 
@@ -19,13 +22,13 @@ def dataproduct_list_for_target(target):
 
 @register.inclusion_tag('tom_dataproducts/partials/saved_dataproduct_list_for_observation.html')
 def dataproduct_list_for_observation_saved(observation_record):
-    products = get_service_class(observation_record.facility).all_data_products(observation_record)
+    products = get_service_class(observation_record.facility)().all_data_products(observation_record)
     return {'products': products}
 
 
 @register.inclusion_tag('tom_dataproducts/partials/unsaved_dataproduct_list_for_observation.html')
 def dataproduct_list_for_observation_unsaved(observation_record):
-    products = get_service_class(observation_record.facility).all_data_products(observation_record)
+    products = get_service_class(observation_record.facility)().all_data_products(observation_record)
     return {'products': products}
 
 
@@ -51,4 +54,28 @@ def upload_dataproduct(context):
     return {
         'data_product_form': form,
         'user': user
+    }
+
+
+@register.inclusion_tag('tom_dataproducts/partials/reduced_data_lightcurve.html')
+def reduced_data_lightcurve(target):
+    time = []
+    values = []
+    for rd in ReducedDatum.objects.filter(target=target, data_type='PHOTOMETRY'):
+        time.append(rd.timestamp)
+        values.append(rd.value)
+    plot_data = [
+        go.Scatter(
+            x=time,
+            y=values, mode='markers'
+        )
+    ]
+    layout = go.Layout(
+        yaxis=dict(autorange='reversed'),
+        height=600,
+        width=700
+    )
+    return {
+        'target': target,
+        'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
     }

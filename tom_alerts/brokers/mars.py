@@ -1,12 +1,14 @@
 import requests
+from requests.exceptions import HTTPError
 from urllib.parse import urlencode
-from tom_alerts.alerts import GenericAlert
 from dateutil.parser import parse
 from django import forms
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
+from astropy.time import Time
 
-from tom_alerts.alerts import GenericQueryForm
+from tom_alerts.alerts import GenericQueryForm, GenericAlert
 from tom_targets.models import Target, TargetExtra, TargetName
+from tom_dataproducts.models import ReducedDatumSource, ReducedDatum
 
 MARS_URL = 'https://mars.lco.global'
 
@@ -166,15 +168,13 @@ class MARSBroker(object):
     name = 'MARS'
     form = MARSQueryForm
 
-    @classmethod
-    def clean_parameters(clazz, parameters):
+    def _clean_parameters(self, parameters):
         return {k: v for k, v in parameters.items() if v and k != 'page'}
 
-    @classmethod
-    def fetch_alerts(clazz, parameters):
+    def fetch_alerts(self, parameters):
         if not parameters.get('page'):
             parameters['page'] = 1
-        args = urlencode(clazz.clean_parameters(parameters))
+        args = urlencode(self._clean_parameters(parameters))
         url = '{0}/?page={1}&format=json&{2}'.format(
             MARS_URL,
             parameters['page'],
@@ -187,22 +187,51 @@ class MARSBroker(object):
         alerts = parsed['results']
         if parsed['has_next'] and parameters['page'] < 10:
             parameters['page'] += 1
-            alerts += clazz.fetch_alerts(parameters)
+            alerts += self.fetch_alerts(parameters)
         return alerts
 
-    @classmethod
-    def fetch_alert(clazz, id):
+    def fetch_alert(self, id):
         url = f'{MARS_URL}/{id}/?format=json'
         response = requests.get(url)
         response.raise_for_status()
         parsed = response.json()
         return parsed
 
-    @classmethod
-    def to_target(clazz, alert):
+    def process_reduced_data(self, target, alert=None):
+        alerts = []
+        if alert:
+            alerts = [alert]
+        else:
+            try:
+                alert_sources = ReducedDatumSource.objects.filter(
+                    id__in=ReducedDatum.objects.filter(target=target).values_list('source').distinct(),
+                    name=self.name
+                )
+                for alert_source in alert_sources:
+                    alerts.append(self.fetch_alert(alert_source.location))
+            except HTTPError:
+                raise Exception('Unable to retrieve alert information from broker')
+        for alert in alerts:
+            reduced_datum_source, created = ReducedDatumSource.objects.get_or_create(
+                name=self.name,
+                location=alert['lco_id']
+            )
+            for prv_candidate in alert.get('prv_candidate'):
+                jd = Time(prv_candidate['candidate']['jd'], format='jd')
+                magnitude = prv_candidate['candidate']['magpsf']
+                rd, created = ReducedDatum.objects.get_or_create(
+                    timestamp=jd.datetime,
+                    value=magnitude,
+                    source=reduced_datum_source,
+                    data_type='PHOTOMETRY',
+                    target=target)
+                rd.save()
+
+    def to_target(self, alert):
         alert_copy = alert.copy()
         target = Target.objects.create(
-            identifier=alert_copy['lco_id'],
+            identifier=alert_copy['objectId'],
+            name=alert_copy['objectId'],
             type='SIDEREAL',
             ra=alert_copy['candidate'].pop('ra'),
             dec=alert_copy['candidate'].pop('dec'),
@@ -216,8 +245,7 @@ class MARSBroker(object):
 
         return target
 
-    @classmethod
-    def to_generic_alert(clazz, alert):
+    def to_generic_alert(self, alert):
         timestamp = parse(alert['candidate']['wall_time'])
         url = '{0}/{1}/'.format(MARS_URL, alert['lco_id'])
 

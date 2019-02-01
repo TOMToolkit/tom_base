@@ -323,7 +323,6 @@ class GEMObservationForm(GenericObservationForm):
                 overwrite=overw, display=False, verbose=False,
                 figout=True, figfile='default')
 
-            print(gstarg, gsra, gsdec, gsmag, gspa)
             if gstarg != '':
                 sgsmag = str(gsmag).strip() + '/UC/Vega'
             spa = str(gspa).strip()
@@ -337,7 +336,6 @@ class GEMObservationForm(GenericObservationForm):
         ii = self.cleaned_data['obsid'].rfind('-')
         progid = self.cleaned_data['obsid'][0:ii]
         obsnum = self.cleaned_data['obsid'][ii+1:]
-        # print(progid, obsnum)
         payload = {
             "prog": progid,
             # "password": self.cleaned_data['userkey'],
@@ -367,7 +365,6 @@ class GEMObservationForm(GenericObservationForm):
             payload['windowDate'] = wdate
             payload['windowTime'] = wtime
             payload['windowDuration'] = str(self.cleaned_data['window_duration']).strip()
-            # print(payload['windowDate'], payload['windowTime'])
 
         # elevation/airmass
         if self.cleaned_data['eltype'] != None:
@@ -396,8 +393,6 @@ class GEMObservationForm(GenericObservationForm):
 
         payload['posangle'] = spa
 
-        print(payload)
-
         return payload
 
 class GEMFacility(GenericObservationFacility):
@@ -406,7 +401,6 @@ class GEMFacility(GenericObservationFacility):
 
     @classmethod
     def submit_observation(clz, observation_payload):
-        print(PORTAL_URL[get_site(observation_payload['prog'])] + '/too')
         response = make_request(
             'POST',
             PORTAL_URL[get_site(observation_payload['prog'])] + '/too',

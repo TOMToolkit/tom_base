@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'tom_alerts',
     'tom_catalogs',
     'tom_observations',
-    'tom_dataproducts'
+    'tom_dataproducts',
 ]
 
 SITE_ID = 1
@@ -64,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'tom_common.middleware.ExternalServiceMiddleware',
+    'tom_common.middleware.AuthStrategyMiddleware',
 ]
 
 ROOT_URLCONF = 'tom_common.urls'
@@ -181,10 +182,23 @@ FACILITIES = {
     }
 }
 
+# Authentication strategy can either be LOCKED (required login for all views)
+# or READ_ONLY (read only access to views)
+AUTH_STRATEGY = 'READ_ONLY'
+
+# URLs that should be allowed access even with AUTH_STRATEGY = LOCKED
+# for example: OPEN_URLS = ['/', '/about']
+OPEN_URLS = []
+
 HOOKS = {
     'target_post_save': 'tom_common.hooks.target_post_save',
     'observation_change_state': 'tom_common.hooks.observation_change_state'
 }
+
+DATA_TYPES = (
+    ('SPECTROSCOPY', 'Spectroscopy'),
+    ('PHOTOMETRY', 'Photometry')
+)
 
 try:
     from local_settings import * # noqa

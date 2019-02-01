@@ -2,30 +2,30 @@
 {% block title %}Query Result for {{ query }}{% endblock %}
 {% block content %}
 <h2>Query Result for {{ query }}</h2>
-<table class="table table-striped">
-  <thead>
-    <tr><th>Time</th><th>Id</th><th>RA</th><th>Dec</th><th>Mag</th><th>Score</th><th>View</th><th>Create Target</th></tr>
-  </thead>
-  <tbody>
-    {% for alert in alerts %}
-    <tr>
-      <td>{{ alert.timestamp }}</td>
-      <td>{{ alert.id }}</td>
-      <td>{{ alert.ra|floatformat:3 }}</td>
-      <td>{{ alert.dec|floatformat:3 }}</td>
-      <td>{{ alert.mag|floatformat:3 }}</td>
-      <td>{{ alert.score|floatformat:3 }}</td>
-      <td><a href="{{ alert.url }}" target="_blank" title="View alert">View</a></td>
-      <td>
-        <form method="POST" action="{% url 'tom_alerts:create-target' %}">
-          {% csrf_token %}
-          <input type="hidden" name="broker" value="{{ query.broker }}">
-          <input type="hidden" name="alert_id" value="{{ alert.id }}">
-          <input type="submit" value="Create Target" class="btn btn-primary">
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<form method="POST" action="{% url 'tom_alerts:create-target' %}">
+  {% csrf_token %}
+  <div class="">
+    <input type="hidden" name="broker" value="{{ query.broker }}"/>
+    <input type="submit" value="Create Targets" class="btn btn-primary"/>
+  </div>
+  <table class="table table-striped">
+    <thead>
+      <tr><th></th><th>Time</th><th>Id</th><th>RA</th><th>Dec</th><th>Mag</th><th>Score</th><th>View</th></tr>
+    </thead>
+    <tbody>
+      {% for alert in alerts %}
+      <tr>
+        <td><input type="checkbox" name="alerts" value="{{ alert.id }}"/></td>
+        <td>{{ alert.timestamp }}</td>
+        <td>{{ alert.id }}</td>
+        <td>{{ alert.ra|floatformat:3 }}</td>
+        <td>{{ alert.dec|floatformat:3 }}</td>
+        <td>{{ alert.mag|floatformat:3 }}</td>
+        <td>{{ alert.score|floatformat:3 }}</td>
+        <td><a href="{{ alert.url }}" target="_blank" title="View alert">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</form>
 {% endblock %}

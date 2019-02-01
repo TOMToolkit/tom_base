@@ -21,3 +21,11 @@ def verbose_name(instance, field_name):
 @register.inclusion_tag('comments/list.html')
 def recent_comments(limit=10):
     return {'comment_list': Comment.objects.all().order_by('-submit_date')[:limit]}
+
+
+@register.filter
+def truncate_number(value):
+    try:
+        return '%.3f' % value
+    except:
+        return value

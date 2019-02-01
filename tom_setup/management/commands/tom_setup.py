@@ -64,9 +64,9 @@ class Command(BaseCommand):
             os.mkdir(os.path.join(BASE_DIR, 'static'))
         except FileExistsError:
             pass
-        # This node created caused a crash for me, comment out to work around (Bryan Miller, Jan 2, 2019)
+        # os.mknod requires superuser permissions on osx, so create a blank file instead
         try:
-            os.mknod(os.path.join(BASE_DIR, 'static/.keep'))
+            open(os.path.join(BASE_DIR, 'static/.keep'), 'w').close()
         except FileExistsError:
             pass
         try:

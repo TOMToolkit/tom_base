@@ -10,16 +10,22 @@ from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.facility import GenericObservationFacility
 from tom_targets.models import Target
 
+# Determine settings for this module.
 try:
     LCO_SETTINGS = settings.FACILITIES['LCO']
-except AttributeError:
+except (AttributeError, KeyError):
     LCO_SETTINGS = {
         'portal_url': 'https://observe.lco.global',
         'api_key': '',
     }
 
+# Module specific settings.
 PORTAL_URL = LCO_SETTINGS['portal_url']
 TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
+
+# The SITES dictionary is used to calculate visibility intervals in the
+# planning tool. All entries should contain latitude, longitude, elevation
+# and a code.
 SITES = {
     'Siding Spring': {
         'sitecode': 'coj',
@@ -59,16 +65,18 @@ SITES = {
     }
 }
 
+# Functions needed specifically for LCO
+
 
 def make_request(*args, **kwargs):
     response = requests.request(*args, **kwargs)
     if 400 <= response.status_code < 500:
-        raise ImproperCredentialsException('LCO')
+        raise ImproperCredentialsException('LCO: ' + str(response.content))
     response.raise_for_status()
     return response
 
 
-def flatten_error_dict(form, error_dict):
+def _flatten_error_dict(form, error_dict):
     non_field_errors = []
     for k, v in error_dict.items():
         if type(v) == list:
@@ -79,19 +87,19 @@ def flatten_error_dict(form, error_dict):
                     else:
                         non_field_errors.append('{}: {}'.format(k, i))
                 if type(i) == dict:
-                    non_field_errors.append(flatten_error_dict(form, i))
+                    non_field_errors.append(_flatten_error_dict(form, i))
         elif type(v) == str:
             if k in form.fields:
                 form.add_error(k, v)
             else:
                 non_field_errors.append('{}: {}'.format(k, v))
         elif type(v) == dict:
-            non_field_errors.append(flatten_error_dict(form, v))
+            non_field_errors.append(_flatten_error_dict(form, v))
 
     return non_field_errors
 
 
-def get_instruments():
+def _get_instruments():
     response = make_request(
         'GET',
         PORTAL_URL + '/api/instruments/',
@@ -100,15 +108,15 @@ def get_instruments():
     return response.json()
 
 
-def instrument_choices():
-    return [(k, k) for k in get_instruments()]
+def _instrument_choices():
+    return [(k, k) for k in _get_instruments()]
 
 
-def filter_choices():
-    return set([(f, f) for ins in get_instruments().values() for f in ins['filters']])
+def _filter_choices():
+    return set([(f, f) for ins in _get_instruments().values() for f in ins['filters']])
 
 
-def proposal_choices():
+def _proposal_choices():
     response = make_request(
         'GET',
         PORTAL_URL + '/api/profile/',
@@ -123,12 +131,12 @@ def proposal_choices():
 
 class LCOObservationForm(GenericObservationForm):
     group_id = forms.CharField()
-    proposal = forms.ChoiceField(choices=proposal_choices)
+    proposal = forms.ChoiceField(choices=_proposal_choices)
     ipp_value = forms.FloatField()
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
-    filter = forms.ChoiceField(choices=filter_choices)
-    instrument_name = forms.ChoiceField(choices=instrument_choices)
+    filter = forms.ChoiceField(choices=_filter_choices)
+    instrument_name = forms.ChoiceField(choices=_instrument_choices)
     exposure_count = forms.IntegerField(min_value=1)
     exposure_time = forms.FloatField(min_value=0.1)
     max_airmass = forms.FloatField()
@@ -163,9 +171,9 @@ class LCOObservationForm(GenericObservationForm):
 
     def is_valid(self):
         super().is_valid()
-        errors = LCOFacility.validate_observation(self.observation_payload)
+        errors = LCOFacility().validate_observation(self.observation_payload)
         if errors:
-            self.add_error(None, flatten_error_dict(self, errors))
+            self.add_error(None, _flatten_error_dict(self, errors))
         return not errors
 
     def instrument_to_type(self, instrument_name):
@@ -232,56 +240,62 @@ class LCOFacility(GenericObservationFacility):
     name = 'LCO'
     form = LCOObservationForm
 
-    @classmethod
-    def submit_observation(clz, observation_payload):
+    def submit_observation(self, observation_payload):
         response = make_request(
             'POST',
             PORTAL_URL + '/api/userrequests/',
             json=observation_payload,
-            headers=clz._portal_headers()
+            headers=self._portal_headers()
         )
         return [r['id'] for r in response.json()['requests']]
 
-    @classmethod
-    def validate_observation(clz, observation_payload):
+    def validate_observation(self, observation_payload):
         response = make_request(
             'POST',
             PORTAL_URL + '/api/userrequests/validate/',
             json=observation_payload,
-            headers=clz._portal_headers()
+            headers=self._portal_headers()
         )
         return response.json()['errors']
 
-    @classmethod
-    def get_observation_url(clz, observation_id):
+    def get_observation_url(self, observation_id):
         return PORTAL_URL + '/requests/' + observation_id
 
-    @classmethod
-    def get_terminal_observing_states(clz):
+    def get_terminal_observing_states(self):
         return TERMINAL_OBSERVING_STATES
 
-    @classmethod
-    def get_observing_sites(clz):
+    def get_observing_sites(self):
         return SITES
 
-    @classmethod
-    def get_observation_status(clz, observation_id):
+    def get_observation_status(self, observation_id):
         response = make_request(
             'GET',
             PORTAL_URL + '/api/requests/{0}'.format(observation_id),
-            headers=clz._portal_headers()
+            headers=self._portal_headers()
         )
         return response.json()['state']
 
-    @classmethod
-    def _portal_headers(clz):
+    def data_products(self, observation_id, product_id=None):
+        products = []
+        for frame in self._archive_frames(observation_id, product_id):
+            products.append({
+                'id': frame['id'],
+                'filename': frame['filename'],
+                'created': parse(frame['DATE_OBS']),
+                'url': frame['url']
+            })
+        return products
+
+    # The following methods are used internally by this module
+    # and should not be called directly from outside code.
+
+    def _portal_headers(self):
         if LCO_SETTINGS.get('api_key'):
             return {'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
         else:
             return {}
 
-    @classmethod
-    def _archive_headers(clz):
+    def _archive_headers(self):
         if LCO_SETTINGS.get('api_key'):
             archive_token = cache.get('LCO_ARCHIVE_TOKEN')
             if not archive_token:
@@ -300,34 +314,21 @@ class LCOFacility(GenericObservationFacility):
         else:
             return {}
 
-    @classmethod
-    def data_products(clz, observation_id, product_id=None):
-        products = []
-        for frame in clz._archive_frames(observation_id, product_id):
-            products.append({
-                'id': frame['id'],
-                'filename': frame['filename'],
-                'created': parse(frame['DATE_OBS']),
-                'url': frame['url']
-            })
-        return products
-
-    @classmethod
-    def _archive_frames(clz, observation_id, product_id=None):
+    def _archive_frames(self, observation_id, product_id=None):
         # todo save this key somewhere
         frames = []
         if product_id:
             response = make_request(
                 'GET',
                 'https://archive-api.lco.global/frames/{0}/'.format(product_id),
-                headers=clz._archive_headers()
+                headers=self._archive_headers()
             )
             frames = [response.json()]
         else:
             response = make_request(
                 'GET',
                 'https://archive-api.lco.global/frames/?REQNUM={0}'.format(observation_id),
-                headers=clz._archive_headers()
+                headers=self._archive_headers()
             )
             frames = response.json()['results']
 

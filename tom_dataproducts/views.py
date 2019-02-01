@@ -1,14 +1,17 @@
 from urllib.parse import urlparse
+from io import StringIO
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.edit import CreateView, UpdateView
 from django_filters.views import FilterView
 from django.views.generic import View, ListView
+from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.urls import reverse, reverse_lazy
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.core.management import call_command
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
 from django.http import HttpResponseRedirect
@@ -25,11 +28,11 @@ class DataProductSaveView(LoginRequiredMixin, View):
         observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])
         products = request.POST.getlist('products')
         if products[0] == 'ALL':
-            products = service_class.save_data_products(observation_record)
+            products = service_class().save_data_products(observation_record)
             messages.success(request, 'Saved all available data products')
         else:
             for product in products:
-                products = service_class.save_data_products(
+                products = service_class().save_data_products(
                     observation_record,
                     product
                 )
@@ -202,3 +205,19 @@ class DataProductGroupDataView(LoginRequiredMixin, FormView):
             'tom_dataproducts:group-detail',
             kwargs={'pk': group.id})
         )
+
+
+class UpdateReducedDataGroupingView(LoginRequiredMixin, RedirectView):
+    def get(self, request, *args, **kwargs):
+        target_id = request.GET.get('target_id', None)
+        out = StringIO()
+        if target_id:
+            call_command('updatereduceddata', target_id=target_id, stdout=out)
+        else:
+            call_command('updatereduceddata', stdout=out)
+        messages.info(request, out.getvalue())
+        return HttpResponseRedirect(self.get_redirect_url(*args, **kwargs))
+
+    def get_redirect_url(self):
+        referer = self.request.META.get('HTTP_REFERER', '/')
+        return referer

@@ -102,7 +102,7 @@ class RunQueryView(TemplateView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data()
         query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
-        broker_class = get_service_class(query.broker)
+        broker_class = get_service_class(query.broker)()
         alerts = broker_class.fetch_alerts(query.parameters_as_dict)
         context['alerts'] = [
             broker_class.to_generic_alert(alert) for alert in alerts
@@ -114,11 +114,13 @@ class RunQueryView(TemplateView):
 class CreateTargetFromAlertView(LoginRequiredMixin, View):
     def post(self, *args, **kwargs):
         broker_name = self.request.POST['broker']
-        alert_id = self.request.POST['alert_id']
         broker_class = get_service_class(broker_name)
-        alert = broker_class.fetch_alert(alert_id)
-        target = broker_class.to_target(alert)
-        target.save()
+        alerts = self.request.POST.getlist('alerts')
+        for alert in alerts:
+            alert = broker_class().fetch_alert(alert)
+            target = broker_class().to_target(alert)
+            broker_class().process_reduced_data(target, alert)
+            target.save()
         return redirect(reverse(
-            'tom_targets:detail', kwargs={'pk': target.id})
+            'tom_targets:list')
         )

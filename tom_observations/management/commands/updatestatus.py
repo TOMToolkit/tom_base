@@ -1,8 +1,7 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 
 from tom_targets.models import Target
-from tom_observations.models import ObservationRecord
 from tom_observations import facility
 
 
@@ -15,7 +14,6 @@ class Command(BaseCommand):
             help='Update observation statuses for a single target'
         )
 
-
     def handle(self, *args, **options):
         target = None
         if options['target_id']:
@@ -27,13 +25,13 @@ class Command(BaseCommand):
         failed_records = {}
         for facility_name in facility.get_service_classes():
             clazz = facility.get_service_class(facility_name)
-            failed_records[facility_name] = clazz.update_all_observation_statuses(target=target)
+            failed_records[facility_name] = clazz().update_all_observation_statuses(target=target)
         success = True
         for facility_name, errors in failed_records.items():
             if len(errors) > 0:
                 success = False
                 break
         if success:
-            return "Update completed successfully"
+            return 'Update completed successfully'
         else:
             return 'Update completed with errors: {0}'.format(str(failed_records))

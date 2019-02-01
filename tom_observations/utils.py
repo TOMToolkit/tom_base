@@ -167,11 +167,10 @@ def get_visibility(target, start_time, end_time, interval, airmass_limit=10):
     sun = ephem.Sun()
     for observing_facility in facility.get_service_classes():
         observing_facility_class = facility.get_service_class(observing_facility)
-        sites = observing_facility_class.get_observing_sites()
+        sites = observing_facility_class().get_observing_sites()
         for site, site_details in sites.items():
             positions = [[], []]
             observer = observer_for_site(site_details)
-            print(observer)
             rise_sets = get_rise_set(observer, sun, start_time, end_time)
             curr_interval = start_time
             while curr_interval <= end_time:

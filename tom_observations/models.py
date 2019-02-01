@@ -35,7 +35,7 @@ class ObservationRecord(models.Model):
     @property
     def url(self):
         facility = get_service_class(self.facility)
-        return facility.get_observation_url(self.observation_id)
+        return facility().get_observation_url(self.observation_id)
 
     def __str__(self):
         return '{0} @ {1}'.format(self.target, self.facility)
