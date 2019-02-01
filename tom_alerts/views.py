@@ -114,12 +114,15 @@ class RunQueryView(TemplateView):
 
 class CreateTargetFromAlertView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
+        print(self.request.POST)
+        query_id = self.request.POST['query_id']
         broker_name = self.request.POST['broker']
         broker_class = get_service_class(broker_name)
         alerts = self.request.POST.getlist('alerts')
         if not alerts:
+            print('here')
             messages.warning(request, 'Please select at least one alert from which to create a target.')
-            return redirect(request.META.get('HTTP_REFERER', '/'))
+            return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
         for alert in alerts:
             alert = broker_class().fetch_alert(alert)
             target = broker_class().to_target(alert)

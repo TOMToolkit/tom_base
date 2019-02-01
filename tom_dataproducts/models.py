@@ -119,7 +119,10 @@ class ReducedDatum(models.Model):
     data_product = models.ForeignKey(DataProduct, null=True, on_delete=models.CASCADE)
     data_type = models.CharField(
         max_length=100,
-        choices=getattr(settings, 'DATA_TYPES', ('', '')),
+        choices=getattr(settings, 'DATA_TYPES', (
+            ('SPECTROSCOPY', 'Spectroscopy'),
+            ('PHOTOMETRY', 'Photometry')
+        )),
         default=''
     )
     timestamp = models.DateTimeField(null=False, blank=False, db_index=True)
