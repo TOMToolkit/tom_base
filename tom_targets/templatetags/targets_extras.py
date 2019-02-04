@@ -113,11 +113,11 @@ def target_distribution(targets):
 def deg_to_sexigesimal(value, fmt):
     a = Angle(value, unit=u.degree)
     if fmt == 'hms':
-        return '{0}:{1}:{2}'.format(a.hms.h, a.hms.m, '%.3f' % a.hms.s)
+        return '{0:02.0f}:{1:02.0f}:{2:05.3f}'.format(a.hms.h, a.hms.m, a.hms.s)
     elif fmt == 'dms':
         rep = a.signed_dms
         sign = '-' if rep.sign < 0 else '+'
-        return '{0}{1}:{2}:{3}'.format(sign, rep.d, rep.m, '%.3f' % rep.s)
+        return '{0}{1:02.0f}:{2:02.0f}:{3:05.3f}'.format(sign, rep.d, rep.m, rep.s)
     else:
         return 'fmt must be "hms" or "dms"'
 
