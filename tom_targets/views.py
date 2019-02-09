@@ -70,14 +70,18 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         super().form_valid(form)
         extra = TargetExtraFormset(self.request.POST)
-        if extra.is_valid():
+        names = TargetNamesFormset(self.request.POST)
+        if extra.is_valid() and names.is_valid():
             extra.instance = self.object
             extra.save()
-        names = TargetNamesFormset(self.request.POST)
-        if names.is_valid():
             names.instance = self.object
             names.save()
-        
+        else:
+            form.add_error(None, extra.errors)
+            form.add_error(None, extra.non_form_errors())
+            form.add_error(None, names.errors)
+            form.add_error(None, names.non_form_errors())
+            return super().form_invalid(form)        
         return redirect(self.get_success_url())
 
 
@@ -87,7 +91,6 @@ class TargetUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        names_count = self.object.targetname_set.count()
         context['names_form'] = TargetNamesFormset(instance=self.object)
         context['extra_form'] = TargetExtraFormset(instance=self.object)
         return context
@@ -95,12 +98,16 @@ class TargetUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         super().form_valid(form)
         extra = TargetExtraFormset(self.request.POST, instance=self.object)
-        if extra.is_valid():
-            extra.save()
         names = TargetNamesFormset(self.request.POST, instance=self.object)
-        if names.is_valid():
-            names.instance = self.object
+        if extra.is_valid() and names.is_valid():
+            extra.save()
             names.save()
+        else:
+            form.add_error(None, extra.errors)
+            form.add_error(None, extra.non_form_errors())
+            form.add_error(None, names.errors)
+            form.add_error(None, names.non_form_errors())
+            return super().form_invalid(form)
         return redirect(self.get_success_url())
 
 
