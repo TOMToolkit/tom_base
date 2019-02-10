@@ -233,12 +233,11 @@ class MARSBroker(object):
         alert_copy = alert.copy()
         target = Target.objects.create(
             identifier=alert_copy['objectId'],
-            name=alert_copy['objectId'],
             type='SIDEREAL',
             ra=alert_copy['candidate'].pop('ra'),
             dec=alert_copy['candidate'].pop('dec'),
             galactic_lng=alert_copy['candidate'].pop('l'),
-            galactic_lat=alert_copy['candidate'].pop('b'),
+            galactic_lat=alert_copy['candidate'].pop('b')
         )
         for k, v in alert_copy['candidate'].items():
             if v is not None:

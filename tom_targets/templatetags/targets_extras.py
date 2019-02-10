@@ -67,7 +67,7 @@ def target_plan(context):
 
 @register.inclusion_tag('tom_targets/partials/target_distribution.html')
 def target_distribution(targets):
-    locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
+    locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'targetname')
     data = [
         dict(
             lon=[l[0] for l in locations],
