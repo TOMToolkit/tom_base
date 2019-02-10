@@ -10,8 +10,8 @@ from tom_targets.models import Target
 
 # Test alert data. Normally this would come from a remote source.
 test_alerts = [
-    {'id': 1, 'name': 'Tatooine', 'timestamp': datetime.utcnow(), 'ra': 32, 'dec': -20, 'mag': 8, 'score': 20},
-    {'id': 2, 'name': 'Hoth', 'timestamp': datetime.utcnow(), 'ra': 66, 'dec': 50, 'mag': 3, 'score': 66},
+    {'id': 1, 'identifier': 'tatooine', 'name': 'Tatooine', 'timestamp': datetime.utcnow(), 'ra': 32, 'dec': -20, 'mag': 8, 'score': 20},
+    {'id': 2, 'identifier': 'hoth', 'name': 'Hoth', 'timestamp': datetime.utcnow(), 'ra': 66, 'dec': 50, 'mag': 3, 'score': 66},
 ]
 
 
@@ -70,7 +70,6 @@ class TestBroker:
         """
         return Target(
             identifier=alert['id'],
-            name=alert['name'],
             type='SIDEREAL',
             ra=alert['ra'],
             dec=alert['dec'],
@@ -103,7 +102,7 @@ class TestBrokerClass(TestCase):
 
     def test_to_target(self):
         target = TestBroker().to_target(test_alerts[0])
-        self.assertEqual(target.name, test_alerts[0]['name'])
+        self.assertEqual(target.identifier, test_alerts[0]['id'])
 
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
@@ -190,4 +189,4 @@ class TestBrokerViews(TestCase):
         }
         self.client.post(reverse('tom_alerts:create-target'), data=post_data)
         self.assertEqual(Target.objects.count(), 1)
-        self.assertEqual(Target.objects.first().name, 'Hoth')
+        self.assertEqual(Target.objects.first().identifier, '2')

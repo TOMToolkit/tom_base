@@ -109,7 +109,7 @@ class TestMARSBrokerClass(TestCase):
         test_alert = self.test_data[1]
 
         created_target = MARSBroker().to_target(test_alert)
-        self.assertEqual(created_target.name, 'ZTF18aberpsh')
+        self.assertEqual(created_target.identifier, 'ZTF18aberpsh')
 
     def test_to_generic_alert(self):
         test_alert = self.test_data[1]
