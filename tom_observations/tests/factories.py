@@ -2,15 +2,22 @@ import factory
 
 from django.conf import settings
 
-from tom_targets.models import Target
+from tom_targets.models import Target, TargetName
 from tom_observations.models import ObservationRecord
+
+
+class TargetNameFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = TargetName
+
+    name = factory.Faker('pystr')
+
 
 class TargetFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Target
 
     identifier = factory.Faker('pystr')
-    name = factory.Faker('pystr')
     ra = factory.Faker('pyfloat')
     dec = factory.Faker('pyfloat')
     epoch = factory.Faker('pyfloat')

@@ -10,7 +10,7 @@ import ephem
 from astropy import units
 from astropy.coordinates import Angle
 
-from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetNamesFactory
+from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetNameFactory
 from tom_targets.models import Target
 from tom_observations.utils import get_visibility, get_pyephem_instance_for_type
 from tom_observations.tests.utils import FakeFacility
@@ -21,9 +21,7 @@ class TestTargetDetail(TestCase):
         user = User.objects.create(username='testuser')
         self.client.force_login(user)
         self.st = SiderealTargetFactory.create()
-        self.st_name = TargetNamesFactory.create(target=self.st)
         self.nst = NonSiderealTargetFactory.create()
-        self.st_name = TargetNamesFactory.create(target=self.nst)
 
     def test_sidereal_target_detail(self):
         response = self.client.get(reverse('targets:detail', kwargs={'pk': self.st.id}))
@@ -99,8 +97,8 @@ class TestTargetCreate(TestCase):
 class TestTargetSearch(TestCase):
     def setUp(self):
         self.st = SiderealTargetFactory.create(identifier='1337target')
-        self.st_name = TargetNamesFactory.create(name='M42', target=self.st)
-        self.st_name2 = TargetNamesFactory.create(name='Messier 42', target=self.st)
+        self.st_name = TargetNameFactory.create(name='M42', target=self.st)
+        self.st_name2 = TargetNameFactory.create(name='Messier 42', target=self.st)
 
     def test_search_name_no_results(self):
         response = self.client.get(reverse('targets:list') + '?name=noresults')

@@ -9,7 +9,7 @@ import ephem
 from rise_set.angle import Angle
 from rise_set.astrometry import calc_sunrise_set
 
-from .factories import TargetFactory, ObservingRecordFactory
+from .factories import TargetFactory, ObservingRecordFactory, TargetNameFactory
 from tom_observations.utils import get_rise_set, get_last_rise_set_pair
 from tom_observations.utils import get_next_rise_set_pair, observer_for_site
 from tom_observations.tests.utils import FakeFacility
@@ -20,6 +20,7 @@ from tom_observations.models import ObservationRecord
 class TestObservationViews(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()
+        self.target_name = TargetNameFactory.create(target=self.target)
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeFacility.name,
