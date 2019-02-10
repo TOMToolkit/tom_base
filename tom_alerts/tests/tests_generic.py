@@ -178,15 +178,47 @@ class TestBrokerViews(TestCase):
         self.assertEqual(broker_query.parameters_as_dict['name'], update_data['name'])
 
     def test_create_target(self):
-        BrokerQuery.objects.create(
+        query = BrokerQuery.objects.create(
             name='find hoth',
             broker='TEST',
             parameters='{"name": "Hoth"}',
         )
         post_data = {
             'broker': 'TEST',
+            'query_id': query.id,
             'alerts': [2]
         }
-        self.client.post(reverse('tom_alerts:create-target'), data=post_data)
+        response = self.client.post(reverse('tom_alerts:create-target'), data=post_data)
         self.assertEqual(Target.objects.count(), 1)
         self.assertEqual(Target.objects.first().identifier, '2')
+        self.assertRedirects(response, reverse('tom_targets:detail', kwargs={'pk': Target.objects.first().id}))
+
+    def test_create_multiple_targets(self):
+        query = BrokerQuery.objects.create(
+            name='find anything',
+            broker='TEST',
+            parameters='{"score__gt": "19"}'
+        )
+        post_data = {
+            'broker': 'TEST',
+            'query_id': query.id,
+            'alerts': [1, 2]
+        }
+        response = self.client.post(reverse('tom_alerts:create-target'), data=post_data)
+        self.assertEqual(Target.objects.count(), 2)
+        self.assertRedirects(response, reverse('tom_targets:list'))
+
+    def test_create_no_targets(self):
+        query = BrokerQuery.objects.create(
+            name='find anything',
+            broker='TEST',
+            parameters='{"name": "Alderaan"}'
+        )
+        post_data = {
+            'broker': 'TEST',
+            'query_id': query.id,
+            'alerts': []
+        }
+        response = self.client.post(reverse('tom_alerts:create-target'), data=post_data, follow=True)
+        self.assertEqual(Target.objects.count(), 0)
+        self.assertRedirects(response, reverse('tom_alerts:run', kwargs={'pk': query.id}))

@@ -6,6 +6,7 @@
   {% csrf_token %}
   <div class="">
     <input type="hidden" name="broker" value="{{ query.broker }}"/>
+    <input type="hidden" name="query_id" value="{{ query.id }}"/>
     <input type="submit" value="Create Targets" class="btn btn-primary"/>
   </div>
   <table class="table table-striped">

@@ -178,7 +178,7 @@ TARGET_TYPE = 'NON_SIDEREAL'
 FACILITIES = {
     'LCO': {
         'portal_url': 'https://observe.lco.global',
-        'api_key': '',
+        'api_key': os.getenv('LCO_API_KEY', ''),
     }
 }
 
