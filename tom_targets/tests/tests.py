@@ -10,7 +10,7 @@ import ephem
 from astropy import units
 from astropy.coordinates import Angle
 
-from .factories import SiderealTargetFactory, NonSiderealTargetFactory
+from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetNamesFactory
 from tom_targets.models import Target
 from tom_observations.utils import get_visibility, get_pyephem_instance_for_type
 from tom_observations.tests.utils import FakeFacility
@@ -21,7 +21,9 @@ class TestTargetDetail(TestCase):
         user = User.objects.create(username='testuser')
         self.client.force_login(user)
         self.st = SiderealTargetFactory.create()
+        self.st_name = TargetNamesFactory.create(target=self.st)
         self.nst = NonSiderealTargetFactory.create()
+        self.st_name = TargetNamesFactory.create(target=self.nst)
 
     def test_sidereal_target_detail(self):
         response = self.client.get(reverse('targets:detail', kwargs={'pk': self.st.id}))
@@ -44,7 +46,6 @@ class TestTargetCreate(TestCase):
 
     def test_create_target(self):
         target_data = {
-            'name': 'test_target',
             'identifier': 'test_target_id',
             'type': Target.SIDEREAL,
             'ra': 123.456,
@@ -55,18 +56,21 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': None,
             'targetextra_set-0-value': None,
-
+            'targetname_set-TOTAL_FORMS': 1,
+            'targetname_set-INITIAL_FORMS': 0,
+            'targetname_set-MIN_NUM_FORMS': 0,
+            'targetname_set-MAX_NUM_FORMS': 1000,
+            'targetname_set-0-name': 'test_target'
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(response, target_data['name'])
-        self.assertTrue(Target.objects.filter(name=target_data['name']).exists())
+        self.assertContains(response, target_data['identifier'])
+        self.assertTrue(Target.objects.filter(identifier=target_data['identifier']).exists())
 
     def test_create_target_sexigesimal(self):
         """
         Using coordinates for Messier 1
         """
         target_data = {
-            'name': 'test_target',
             'identifier': 'test_target_id',
             'type': Target.SIDEREAL,
             'ra': '05:34:31.94',
@@ -77,11 +81,16 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': None,
             'targetextra_set-0-value': None,
+            'targetname_set-TOTAL_FORMS': 1,
+            'targetname_set-INITIAL_FORMS': 0,
+            'targetname_set-MIN_NUM_FORMS': 0,
+            'targetname_set-MAX_NUM_FORMS': 1000,
+            'targetname_set-0-name': 'test_target'
 
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(response, target_data['name'])
-        target = Target.objects.get(name=target_data['name'])
+        self.assertContains(response, target_data['identifier'])
+        target = Target.objects.get(identifier=target_data['identifier'])
         # Coordinates according to simbad
         self.assertAlmostEqual(target.ra, 83.63308, places=4)
         self.assertAlmostEqual(target.dec, 22.0145, places=4)
@@ -89,14 +98,16 @@ class TestTargetCreate(TestCase):
 
 class TestTargetSearch(TestCase):
     def setUp(self):
-        self.st = SiderealTargetFactory.create(identifier='1337target', name='M42', name2='Messier 42')
+        self.st = SiderealTargetFactory.create(identifier='1337target')
+        self.st_name = TargetNamesFactory.create(name='M42', target=self.st)
+        self.st_name2 = TargetNamesFactory.create(name='Messier 42', target=self.st)
 
     def test_search_name_no_results(self):
         response = self.client.get(reverse('targets:list') + '?name=noresults')
         self.assertNotContains(response, '1337target')
 
     def test_search_name(self):
-        response = self.client.get(reverse('targets:list') + '?name=m42')
+        response = self.client.get(reverse('targets:list') + '?name=M42')
         self.assertContains(response, '1337target')
 
         response = self.client.get(reverse('targets:list') + '?name=Messier 42')
