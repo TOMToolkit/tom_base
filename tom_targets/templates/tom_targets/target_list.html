@@ -34,7 +34,9 @@
         {% for target in filter.qs %}
         <tr>
           <td><a href="{% url 'targets:detail' target.id %}" title="{{ target.identifier }}">{{ target.identifier }}</a></td>
-          <td>{{ target.target_names_set.all }}</td>
+          {% with target_names=target.targetname_set.all %}
+          <td>{{ target_names|join:", " }}</td>
+          {% endwith %} 
           <td>{{ target.get_type_display }}</td>
           {% if request.GET.type == 'SIDEREAL' %}
             <td>{{ target.ra }}</td>

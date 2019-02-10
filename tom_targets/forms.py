@@ -74,4 +74,4 @@ class TargetVisibilityForm(forms.Form):
 
 
 TargetExtraFormset = inlineformset_factory(Target, TargetExtra, fields=('key', 'value'))
-TargetNamesFormset = inlineformset_factory(Target, TargetName, fields=('name',), min_num=1, validate_min=True, can_delete=False, extra=1)
+TargetNamesFormset = inlineformset_factory(Target, TargetName, fields=('name',), min_num=1, validate_min=True, can_delete=True, extra=1)

@@ -18,6 +18,7 @@ from django.http import HttpResponseRedirect
 
 from .models import DataProduct, DataProductGroup
 from .forms import AddProductToGroupForm, DataProductUploadForm
+from .filters import DataProductFilter
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 
@@ -127,7 +128,7 @@ class DataProductListView(FilterView):
     model = DataProduct
     template_name = 'tom_dataproducts/dataproduct_list.html'
     paginate_by = 25
-    filterset_fields = ['target__name', 'observation_record__facility']
+    filterset_class = DataProductFilter
     strict = False
 
     def get_context_data(self, *args, **kwargs):
