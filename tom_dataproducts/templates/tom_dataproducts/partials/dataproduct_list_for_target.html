@@ -11,7 +11,11 @@
       {% else %}
       <td><span class="btn btn-secondary active featured">Featured</span></td>
       {% endif %}
-      <td>{% include 'tom_dataproducts/partials/js9_button.html' with url=product.data.url only %}</td>
+      <td>
+        {%  if 'fits' in product.get_file_name or product.tag == 'fits_file' %}
+          {% include 'tom_dataproducts/partials/js9_button.html' with url=product.data.url only %}
+        {% endif %}
+      </td>
       <td><a href="{{ product.data.url }}">{{ product.get_file_name }}</a></td>
       <td>
         <a href="{% url 'tom_dataproducts:tag' product.id %}" title="Modify Tag">
