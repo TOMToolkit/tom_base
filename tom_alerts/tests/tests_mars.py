@@ -8,7 +8,7 @@ from unittest import mock
 from tom_alerts.brokers.mars import MARSBroker
 from tom_alerts.alerts import get_service_class
 from tom_targets.models import Target
-from tom_dataproducts.models import ReducedDatum, ReducedDatumSource
+from tom_dataproducts.models import ReducedDatum
 
 alert1 = {
     'candid': 617122521615015023,
@@ -33,9 +33,9 @@ class TestMARSBrokerClass(TestCase):
     """
     def setUp(self):
         self.test_target = Target.objects.create(identifier='ZTF18aberpsh')
-        self.test_source = ReducedDatumSource.objects.create(name='MARS', location=11053318)
         ReducedDatum.objects.create(
-            source=self.test_source,
+            source_name='MARS',
+            source_location=11053318,
             target=self.test_target,
             data_type='PHOTOMETRY',
             timestamp=timezone.now(),

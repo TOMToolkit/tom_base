@@ -22,11 +22,6 @@ def target_feature(target):
     return {'target': target}
 
 
-@register.inclusion_tag('tom_targets/partials/target_lightcurve.html')
-def target_lightcurve(target):
-    return {'target': target}
-
-
 @register.inclusion_tag('tom_targets/partials/target_data.html')
 def target_data(target):
     return {'target': target}

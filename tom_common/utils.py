@@ -6,23 +6,6 @@ import plotly.graph_objs as go
 
 
 def get_light_curve(file_path, error_limit=None):
-    """
-    Gets the upcoming rise/set pair for the next rise after the given time,
-    using a binary search
-
-    Parameters
-    ----------
-    rise_sets : array
-        array of tuples representing set of rise/sets to search
-    time : float
-        time value used to find the next rise, in UNIX time
-
-    Returns
-    -------
-    tuple
-        Soonest upcoming rise/set with respect to the given time
-
-    """
     with open(file_path) as f:
         content = f.readlines()
         time = []

@@ -3,6 +3,7 @@ from io import BytesIO
 from base64 import b64encode
 import os
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 import matplotlib
 matplotlib.use('Agg') # noqa
@@ -14,8 +15,9 @@ from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
 from tom_common import utils as common_utils
 
-LIGHT_CURVE = ('light_curve', 'Light Curve')
+PHOTOMETRY = ('photometry', 'Photometry')
 FITS_FILE = ('fits_file', 'Fits File')
+SPECTROSCOPY = ('spectroscopy', 'Spectroscopy')
 IMAGE_FILE = ('image_file', 'Image File')
 
 
@@ -41,9 +43,9 @@ class DataProductGroup(models.Model):
 
 class DataProduct(models.Model):
     DATA_PRODUCT_TAGS = (
-        LIGHT_CURVE,
+        PHOTOMETRY,
         FITS_FILE,
-        IMAGE_FILE
+        SPECTROSCOPY
     )
 
     FITS_EXTENSIONS = {
@@ -59,7 +61,7 @@ class DataProduct(models.Model):
     group = models.ManyToManyField(DataProductGroup)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    tag = models.TextField(blank=True, default='', choices=DATA_PRODUCT_TAGS)
+    tag = models.CharField(max_length=50, blank=True, default='', choices=DATA_PRODUCT_TAGS)
     featured = models.BooleanField(default=False)
 
     class Meta:
@@ -98,23 +100,22 @@ class DataProduct(models.Model):
         return b64encode(buffer.read()).decode('utf-8')
 
 
-class ReducedDatumSource(models.Model):
-    name = models.CharField(
-        max_length=100,
-        null=False,
-        verbose_name='Datum Source',
-        help_text='The original source reference for the datum'
-    )
-    location = models.CharField(
-        max_length=100,
-        null=True,
-        verbose_name='Datum Source Location',
-        help_text='URL or path to original target source reference'
-    )
+# class ReducedDatumSource(models.Model):
+#     name = models.CharField(
+#         max_length=100,
+#         null=False,
+#         verbose_name='Datum Source',
+#         help_text='The original source reference for the datum'
+#     )
+#     location = models.CharField(
+#         max_length=100,
+#         null=True,
+#         verbose_name='Datum Source Location',
+#         help_text='URL or path to original target source reference'
+#     )
 
 
 class ReducedDatum(models.Model):
-    source = models.ForeignKey(ReducedDatumSource, null=False, on_delete=models.CASCADE)
     target = models.ForeignKey(Target, null=False, on_delete=models.CASCADE)
     data_product = models.ForeignKey(DataProduct, null=True, on_delete=models.CASCADE)
     data_type = models.CharField(
@@ -125,7 +126,9 @@ class ReducedDatum(models.Model):
         )),
         default=''
     )
+    source_name = models.CharField(max_length=100, default='')
+    source_location = models.CharField(max_length=200, default='')
     timestamp = models.DateTimeField(null=False, blank=False, db_index=True)
-    value = models.FloatField(null=False, blank=False)
+    value = models.TextField(null=False, blank=False)
     label = models.CharField(max_length=100, default='')
     error = models.FloatField(null=True)

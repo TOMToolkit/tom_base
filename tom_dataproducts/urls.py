@@ -4,7 +4,7 @@ from tom_dataproducts.views import DataProductListView, DataProductSaveView, Dat
 from tom_dataproducts.views import DataProductDeleteView, DataProductGroupCreateView
 from tom_dataproducts.views import DataProductGroupDetailView, DataProductGroupDataView, DataProductGroupDeleteView
 from tom_dataproducts.views import DataProductUploadView, DataProductFeatureView, DataProductTagView
-from tom_dataproducts.views import UpdateReducedDataView, UploadReducedDataView
+from tom_dataproducts.views import UpdateReducedDataView
 
 app_name = 'tom_dataproducts'
 
@@ -17,7 +17,6 @@ urlpatterns = [
     path('data/group/<pk>/delete/', DataProductGroupDeleteView.as_view(), name='group-delete'),
     path('data/upload/', DataProductUploadView.as_view(), name='upload'),
     path('data/reduced/update/', UpdateReducedDataView.as_view(), name='update-reduced-data'),
-    path('data/reduced/upload/', UploadReducedDataView.as_view(), name='upload-reduced-data'),
     path('data/<pk>/delete/', DataProductDeleteView.as_view(), name='delete'),
     path('data/<pk>/feature/', DataProductFeatureView.as_view(), name='feature'),
     path('data/<pk>/tag/', DataProductTagView.as_view(), name='tag'),

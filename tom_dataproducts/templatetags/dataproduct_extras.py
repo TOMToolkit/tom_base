@@ -1,3 +1,5 @@
+import json
+
 from django import template
 
 from plotly import offline
@@ -57,11 +59,11 @@ def upload_dataproduct(context):
     }
 
 
-@register.inclusion_tag('tom_dataproducts/partials/reduced_data_lightcurve.html')
-def reduced_data_lightcurve(target):
+@register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html')
+def photometry_for_target(target):
     time = []
     values = []
-    for rd in ReducedDatum.objects.filter(target=target, data_type='PHOTOMETRY'):
+    for rd in ReducedDatum.objects.filter(target=target, data_type='photometry'):
         time.append(rd.timestamp)
         values.append(rd.value)
     plot_data = [
@@ -72,6 +74,33 @@ def reduced_data_lightcurve(target):
     ]
     layout = go.Layout(
         yaxis=dict(autorange='reversed'),
+        height=600,
+        width=700
+    )
+    return {
+        'target': target,
+        'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
+    }
+
+
+@register.inclusion_tag('tom_dataproducts/partials/spectroscopy_for_target.html')
+def spectroscopy_for_target(target):
+    spectra = []
+    spectral_dataproducts = DataProduct.objects.filter(target=target, tag='spectroscopy')
+    for data in spectral_dataproducts:
+        datum = json.loads(ReducedDatum.objects.get(data_product=data).value)
+        wavelength = []
+        flux = []
+        for key, value in datum.items():
+            wavelength.append(value['wavelength'])
+            flux.append(float(value['flux']))
+        spectra.append((wavelength, flux))
+    plot_data = [
+        go.Scatter(
+            x=spectrum[0],
+            y=spectrum[1]
+        ) for spectrum in spectra]
+    layout = go.Layout(
         height=600,
         width=700
     )
