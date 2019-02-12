@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="{% static 'tom_observations/css/main.css' %}">
 {% endblock %}
 {% block content %}
+{% include 'tom_dataproducts/partials/js9_scripts.html' %}
 <div class="row">
   <div class="col-md-10">
     <div class="row">
@@ -48,8 +49,9 @@
           {% if product.get_file_extension == '.fz' or product.get_file_extension == '.fits' %}
           <td>
             {% cache None thumbnail product.id %}
-            <img src="data:image/png;base64, {{ product.get_image_data }}" class="thumbnail">
+            <img src="data:image/png;base64, {{ product.get_image_data }}" class="thumbnail"><br/>
             {% endcache %}
+            {% include 'tom_dataproducts/partials/js9_button.html' with url=product.data.url only %}
           </td>
           {% else %}
           <td></td>
