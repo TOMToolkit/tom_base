@@ -84,9 +84,11 @@ def photometry_for_target(target):
 
 
 @register.inclusion_tag('tom_dataproducts/partials/spectroscopy_for_target.html')
-def spectroscopy_for_target(target):
+def spectroscopy_for_target(target, dataproduct=None):
     spectra = []
     spectral_dataproducts = DataProduct.objects.filter(target=target, tag='spectroscopy')
+    if dataproduct:
+        spectral_dataproducts = DataProduct.objects.get(dataproduct=dataproduct)
     for data in spectral_dataproducts:
         datum = json.loads(ReducedDatum.objects.get(data_product=data).value)
         wavelength = []
@@ -102,7 +104,13 @@ def spectroscopy_for_target(target):
         ) for spectrum in spectra]
     layout = go.Layout(
         height=600,
-        width=700
+        width=700,
+        xaxis=dict(
+            tickformat="d"
+        ),
+        yaxis=dict(
+            tickformat=".1eg"
+        )
     )
     return {
         'target': target,
