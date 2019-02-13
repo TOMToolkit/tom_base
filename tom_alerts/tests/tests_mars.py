@@ -81,10 +81,8 @@ class TestMARSBrokerClass(TestCase):
         ]
 
         MARSBroker().process_reduced_data(self.test_target, alert=test_alert)
-        reduced_data = ReducedDatum.objects.filter(target=self.test_target, source=self.test_source)
-        reduced_data_sources = ReducedDatumSource.objects.filter(name='MARS')
+        reduced_data = ReducedDatum.objects.filter(target=self.test_target, source_name='MARS')
         self.assertEqual(reduced_data.count(), 2)
-        self.assertEqual(reduced_data_sources.count(), 1)
 
     @mock.patch('tom_alerts.brokers.mars.MARSBroker.fetch_alert')
     def test_process_reduced_data_no_alert(self, mock_fetch_alert):
@@ -100,10 +98,8 @@ class TestMARSBrokerClass(TestCase):
         mock_fetch_alert.return_value = self.test_data
 
         MARSBroker().process_reduced_data(self.test_target)
-        reduced_data = ReducedDatum.objects.filter(target=self.test_target)
-        reduced_data_sources = ReducedDatumSource.objects.filter(name='MARS')
+        reduced_data = ReducedDatum.objects.filter(target=self.test_target, source_name='MARS')
         self.assertEqual(reduced_data.count(), 2)
-        self.assertEqual(reduced_data_sources.count(), 1)
 
     def test_to_target(self):
         test_alert = self.test_data[1]
