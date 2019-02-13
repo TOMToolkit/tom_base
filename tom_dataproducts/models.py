@@ -100,8 +100,8 @@ class ReducedDatum(models.Model):
     data_type = models.CharField(
         max_length=100,
         choices=getattr(settings, 'DATA_TYPES', (
-            ('SPECTROSCOPY', 'Spectroscopy'),
-            ('PHOTOMETRY', 'Photometry')
+            SPECTROSCOPY,
+            PHOTOMETRY
         )),
         default=''
     )
