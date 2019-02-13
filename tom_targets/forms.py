@@ -55,10 +55,10 @@ class TargetForm(forms.ModelForm):
         if commit:
             for field in settings.EXTRA_FIELDS:
                 if self.cleaned_data.get(field['name']):
-                    TargetExtra.objects.create(
+                    TargetExtra.objects.update_or_create(
                             target=instance,
                             key=field['name'],
-                            value=self.cleaned_data[field['name']]
+                            defaults={'value': self.cleaned_data[field['name']]}
                     )
         return instance
 

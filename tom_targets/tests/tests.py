@@ -34,15 +34,6 @@ class TestTargetCreate(TestCase):
     def setUp(self):
         user = User.objects.create(username='testuser')
         self.client.force_login(user)
-        self.extra_form_data = {
-            'targetextra_set-TOTAL_FORMS': 1,
-            'targetextra_set-INITIAL_FORMS': 0,
-            'targetextra_set-MIN_NUM_FORMS': 0,
-            'targetextra_set-MAX_NUM_FORMS': 1000,
-            'targetextra_set-0-key': None,
-            'targetextra_set-0-value': None,
-        }
-
 
     def test_target_create_form(self):
         response = self.client.get(reverse('targets:create'))
@@ -56,7 +47,6 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 123.456,
             'dec': -32.1,
-            **self.extra_form_data
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -72,7 +62,6 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': '05:34:31.94',
             'dec': '+22:00:52.2',
-            **self.extra_form_data
 
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
@@ -91,7 +80,6 @@ class TestTargetCreate(TestCase):
             'ra': 113.456,
             'dec': -22.1,
             'wins': 50.0,
-            **self.extra_form_data
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
