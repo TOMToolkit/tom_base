@@ -1,11 +1,9 @@
-import csv
-import io
 import re
 import json
 
 from astropy.time import Time
 from datetime import datetime
-from .models import DataProduct, ReducedDatum, PHOTOMETRY, SPECTROSCOPY, FITS_FILE
+from .models import ReducedDatum
 from django.conf import settings
 
 
@@ -18,13 +16,17 @@ def process_data_product(data_product, target):
                 photometry_datum = [datum.strip() for datum in re.split(',', line)]
                 time = Time(float(photometry_datum[0]), format='mjd')
                 time.format = 'datetime'
+                value = {
+                    'magnitude': photometry_datum[2],
+                    'filter': photometry_datum[1],
+                    'error': photometry_datum[3]
+                }
                 ReducedDatum.objects.create(
                     target=target,
                     data_product=data_product,
                     data_type=data_product.tag,
                     timestamp=time.value,
-                    value=float(photometry_datum[2]),
-                    error=float(photometry_datum[3])
+                    value=json.dumps(value)
                 )
     elif data_product.tag == 'spectroscopy':
         with open(settings.MEDIA_ROOT + '/' + str(data_product.data)) as f:

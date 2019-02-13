@@ -1,4 +1,5 @@
 import requests
+import json
 from requests.exceptions import HTTPError
 from urllib.parse import urlencode
 from dateutil.parser import parse
@@ -11,6 +12,7 @@ from tom_targets.models import Target, TargetExtra
 from tom_dataproducts.models import ReducedDatum
 
 MARS_URL = 'https://mars.lco.global'
+filters = {0: 'g', 1: 'r', 2: 'i'}
 
 
 class MARSQueryForm(GenericQueryForm):
@@ -204,20 +206,25 @@ class MARSBroker(object):
                     target=target,
                     data_type='PHOTOMETRY',
                     source_name=self.name).first()
+                if not target_datum:
+                    return
                 alert = self.fetch_alert(target_datum.source_location)
             except HTTPError:
                 raise Exception('Unable to retrieve alert information from broker')
         for prv_candidate in alert.get('prv_candidate'):
-            if all([key in prv_candidate['candidate'] for key in ['jd', 'magpsf']]):
+            if all([key in prv_candidate['candidate'] for key in ['jd', 'magpsf', 'fid']]):
                 jd = Time(prv_candidate['candidate']['jd'], format='jd', scale='utc')
                 jd.to_datetime(timezone=TimezoneInfo())
-                magnitude = prv_candidate['candidate']['magpsf']
+                value = {
+                    'magnitude': prv_candidate['candidate']['magpsf'],
+                    'filter': filters[prv_candidate['candidate']['fid']]
+                }
                 rd, created = ReducedDatum.objects.get_or_create(
                     timestamp=jd.to_datetime(timezone=TimezoneInfo()),
-                    value=magnitude,
+                    value=json.dumps(value),
                     source_name=self.name,
                     source_location=alert['lco_id'],
-                    data_type='PHOTOMETRY',
+                    data_type='photometry',
                     target=target)
                 rd.save()
 

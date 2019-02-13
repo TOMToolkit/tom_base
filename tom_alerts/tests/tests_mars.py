@@ -75,7 +75,8 @@ class TestMARSBrokerClass(TestCase):
             {
                 'candidate': {
                     'jd': 2458372.6225231,
-                    'magpsf': 13
+                    'magpsf': 13,
+                    'fid': 0
                 }
             }
         ]
@@ -91,7 +92,8 @@ class TestMARSBrokerClass(TestCase):
             {
                 'candidate': {
                     'jd': 2458372.6225231,
-                    'magpsf': 13
+                    'magpsf': 13,
+                    'fid': 0
                 }
             }
         ]

@@ -61,17 +61,24 @@ def upload_dataproduct(context):
 
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html')
 def photometry_for_target(target):
-    time = []
-    values = []
+    photometry_data = {}
     for rd in ReducedDatum.objects.filter(target=target, data_type='photometry'):
-        time.append(rd.timestamp)
-        values.append(rd.value)
+        value = json.loads(rd.value)
+        photometry_data.setdefault(value.get('filter', ''), {})
+        photometry_data[value.get('filter', '')].setdefault('time', []).append(rd.timestamp)
+        photometry_data[value.get('filter', '')].setdefault('magnitude', []).append(value.get('magnitude'))
+        photometry_data[value.get('filter', '')].setdefault('error', []).append(value.get('error', None))
     plot_data = [
         go.Scatter(
-            x=time,
-            y=values, mode='markers'
-        )
-    ]
+            x=filter_values['time'],
+            y=filter_values['magnitude'], mode='markers',
+            name=filter_name,
+            error_y=dict(
+                type='data',
+                array=filter_values['error'],
+                visible=True
+            )
+        ) for filter_name, filter_values in photometry_data.items()]
     layout = go.Layout(
         yaxis=dict(autorange='reversed'),
         height=600,
