@@ -1,7 +1,8 @@
 {% load bootstrap4 %}
+{% include 'tom_dataproducts/partials/js9_scripts.html' %}
 <h4>Data</h4>
 <table class="table table-striped">
-  <thead><tr><th></th><th>Filename</th><th>Tag</th><th>Delete</th></tr></thead>
+  <thead><tr><th></th><th></th><th>Filename</th><th>Tag</th><th>Delete</th></tr></thead>
   <tbody>
   {% for product in products %}
     <tr>
@@ -10,6 +11,11 @@
       {% else %}
       <td><span class="btn btn-secondary active featured">Featured</span></td>
       {% endif %}
+      <td>
+        {%  if 'fits' in product.get_file_name or product.tag == 'fits_file' %}
+          {% include 'tom_dataproducts/partials/js9_button.html' with url=product.data.url only %}
+        {% endif %}
+      </td>
       <td><a href="{{ product.data.url }}">{{ product.get_file_name }}</a></td>
       <td>
         <a href="{% url 'tom_dataproducts:tag' product.id %}" title="Modify Tag">
