@@ -189,6 +189,7 @@ FACILITIES = {
 #     {'name': 'redshift', 'type': 'number'},
 #     {'name': 'nickname', 'type': 'string'}
 # ]
+EXTRA_FIELDS = []
 
 # Authentication strategy can either be LOCKED (required login for all views)
 # or READ_ONLY (read only access to views)
