@@ -3,9 +3,17 @@ from django.forms.models import inlineformset_factory
 from astropy.coordinates import Angle
 from astropy import units as u
 from django.forms import ValidationError
+from django.conf import settings
 
 from .models import Target, TargetExtra, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS
 from .models import REQUIRED_NON_SIDEREAL_FIELDS
+
+
+def extra_field_to_form_field(field_type):
+    if field_type == 'number':
+        return forms.FloatField(required=False)
+    else:
+        return forms.CharField(required=False)
 
 
 class CoordinateField(forms.CharField):
@@ -30,6 +38,30 @@ class CoordinateField(forms.CharField):
 
 
 class TargetForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for extra_field in settings.EXTRA_FIELDS:
+            # Add extra fields to the form
+            field_name = extra_field['name']
+            self.fields[field_name] = extra_field_to_form_field(extra_field['type'])
+            # Populate them with initial values if this is an update
+            if kwargs['instance']:
+                te = TargetExtra.objects.filter(target=kwargs['instance'], key=field_name)
+                if te.exists():
+                    self.fields[field_name].initial = te.first().value
+
+    def save(self, commit=True):
+        instance = super().save(commit=commit)
+        if commit:
+            for field in settings.EXTRA_FIELDS:
+                if self.cleaned_data.get(field['name']):
+                    TargetExtra.objects.create(
+                            target=instance,
+                            key=field['name'],
+                            value=self.cleaned_data[field['name']]
+                    )
+        return instance
+
     class Meta:
         abstract = True
         model = Target

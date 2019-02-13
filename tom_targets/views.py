@@ -76,7 +76,12 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
 
 class TargetUpdateView(LoginRequiredMixin, UpdateView):
     model = Target
-    fields = '__all__'
+
+    def get_form_class(self):
+        if self.object.type == Target.SIDEREAL:
+            return SiderealTargetCreateForm
+        elif self.object.type == Target.NON_SIDEREAL:
+            return NonSiderealTargetCreateForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
