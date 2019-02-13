@@ -1,17 +1,15 @@
+from django.test import TestCase, override_settings
+from django.urls import reverse
+from django.contrib.auth.models import User
+import ephem
+from astropy import units
+from astropy.coordinates import Angle
 import math
 from unittest import mock
 from datetime import datetime, timedelta
 
-from django.test import TestCase
-from django.urls import reverse
-from django.contrib.auth.models import User
-
-import ephem
-from astropy import units
-from astropy.coordinates import Angle
-
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory
-from tom_targets.models import Target
+from tom_targets.models import Target, TargetExtra
 from tom_observations.utils import get_visibility, get_pyephem_instance_for_type
 from tom_observations.tests.utils import FakeFacility
 
@@ -36,6 +34,15 @@ class TestTargetCreate(TestCase):
     def setUp(self):
         user = User.objects.create(username='testuser')
         self.client.force_login(user)
+        self.extra_form_data = {
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': None,
+            'targetextra_set-0-value': None,
+        }
+
 
     def test_target_create_form(self):
         response = self.client.get(reverse('targets:create'))
@@ -49,13 +56,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 123.456,
             'dec': -32.1,
-            'targetextra_set-TOTAL_FORMS': 1,
-            'targetextra_set-INITIAL_FORMS': 0,
-            'targetextra_set-MIN_NUM_FORMS': 0,
-            'targetextra_set-MAX_NUM_FORMS': 1000,
-            'targetextra_set-0-key': None,
-            'targetextra_set-0-value': None,
-
+            **self.extra_form_data
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -71,12 +72,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': '05:34:31.94',
             'dec': '+22:00:52.2',
-            'targetextra_set-TOTAL_FORMS': 1,
-            'targetextra_set-INITIAL_FORMS': 0,
-            'targetextra_set-MIN_NUM_FORMS': 0,
-            'targetextra_set-MAX_NUM_FORMS': 1000,
-            'targetextra_set-0-key': None,
-            'targetextra_set-0-value': None,
+            **self.extra_form_data
 
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
@@ -85,6 +81,22 @@ class TestTargetCreate(TestCase):
         # Coordinates according to simbad
         self.assertAlmostEqual(target.ra, 83.63308, places=4)
         self.assertAlmostEqual(target.dec, 22.0145, places=4)
+
+    @override_settings(EXTRA_FIELDS=[{'name': 'wins', 'type': 'number'}])
+    def test_create_target_with_extra_fields(self):
+        target_data = {
+            'name': 'extra_field_target',
+            'identifier': 'extra_field_identifier',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'wins': 50.0,
+            **self.extra_form_data
+        }
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(response, target_data['name'])
+        target = Target.objects.get(name=target_data['name'], identifier=target_data['identifier'])
+        self.assertTrue(TargetExtra.objects.filter(target=target, key='wins', value='50.0').exists())
 
 
 class TestTargetSearch(TestCase):
@@ -101,6 +113,16 @@ class TestTargetSearch(TestCase):
 
         response = self.client.get(reverse('targets:list') + '?name=Messier 42')
         self.assertContains(response, '1337target')
+
+    @override_settings(EXTRA_FIELDS=[{'name': 'color', 'type': 'string'}])
+    def test_search_extra_fields(self):
+        TargetExtra.objects.create(target=self.st, key='color', value='red')
+
+        response = self.client.get(reverse('targets:list') + '?color=red')
+        self.assertContains(response, '1337target')
+
+        response = self.client.get(reverse('targets:list') + '?color=blue')
+        self.assertNotContains(response, '1337target')
 
 
 class TestTargetVisibility(TestCase):
