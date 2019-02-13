@@ -182,11 +182,13 @@ FACILITIES = {
     }
 }
 
-# Define extra target fields here.
-EXTRA_FIELDS = [
-    {'name': 'redshift', 'type': 'number'},
-    {'name': 'color', 'type': 'string'}
-]
+# Define extra target fields here. Types are either "number" or "string".
+# TODO: Add link to documentation
+# For example:
+# EXTRA_FIELDS = [
+#     {'name': 'redshift', 'type': 'number'},
+#     {'name': 'nickname', 'type': 'string'}
+# ]
 
 # Authentication strategy can either be LOCKED (required login for all views)
 # or READ_ONLY (read only access to views)
