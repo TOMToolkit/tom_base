@@ -51,33 +51,6 @@ class DataProductSaveView(LoginRequiredMixin, View):
         )
 
 
-class DataProductTagView(LoginRequiredMixin, UpdateView):
-    model = DataProduct
-    fields = ['tag']
-    template_name = 'tom_dataproducts/dataproduct_tag.html'
-
-    def form_valid(self, form):
-        product = form.save(commit=False)
-        featured_images_with_tag = DataProduct.objects.filter(
-            featured=True,
-            tag=product.tag,
-            target=self.object.target
-        )
-        if len(featured_images_with_tag) > 0:
-            product.featured = False
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        referer = self.request.GET.get('next', None)
-        referer = urlparse(referer).path if referer else '/'
-        return referer
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context['next'] = self.request.META.get('HTTP_REFERER', '/')
-        return context
-
-
 class DataProductUploadView(LoginRequiredMixin, FormView):
     form_class = DataProductUploadForm
     template_name = 'tom_dataproducts/partials/upload_dataproduct.html'
