@@ -5,7 +5,7 @@ import plotly.graph_objs as go
 from astropy import units as u
 from astropy.coordinates import Angle
 
-from tom_targets.models import Target
+from tom_targets.models import Target, TargetExtra
 from tom_targets.forms import TargetVisibilityForm
 from tom_observations.utils import get_visibility
 
@@ -120,6 +120,14 @@ def deg_to_sexigesimal(value, fmt):
         return '{0}{1:02.0f}:{2:02.0f}:{3:05.3f}'.format(sign, rep.d, rep.m, rep.s)
     else:
         return 'fmt must be "hms" or "dms"'
+
+
+@register.filter
+def target_extra_field(target, name):
+    try:
+        return TargetExtra.objects.get(target=target, key=name).value
+    except TargetExtra.DoesNotExist:
+        return None
 
 
 @register.inclusion_tag('tom_targets/partials/aladin.html')
