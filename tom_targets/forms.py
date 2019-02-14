@@ -12,8 +12,16 @@ from .models import REQUIRED_NON_SIDEREAL_FIELDS
 def extra_field_to_form_field(field_type):
     if field_type == 'number':
         return forms.FloatField(required=False)
-    else:
+    elif field_type == 'boolean':
+        return forms.BooleanField(required=False)
+    elif field_type == 'datetime':
+        return forms.DateTimeField(required=False)
+    elif field_type == 'string':
         return forms.CharField(required=False)
+    else:
+        raise ValueError(
+            'Invalid field type {}. Field type must be one of: number, boolean, datetime string'.format(field_type)
+        )
 
 
 class CoordinateField(forms.CharField):
@@ -48,13 +56,13 @@ class TargetForm(forms.ModelForm):
             if kwargs['instance']:
                 te = TargetExtra.objects.filter(target=kwargs['instance'], key=field_name)
                 if te.exists():
-                    self.fields[field_name].initial = te.first().value
+                    self.fields[field_name].initial = te.first().typed_value(extra_field['type'])
 
     def save(self, commit=True):
         instance = super().save(commit=commit)
         if commit:
             for field in settings.EXTRA_FIELDS:
-                if self.cleaned_data.get(field['name']):
+                if self.cleaned_data.get(field['name']) is not None:
                     TargetExtra.objects.update_or_create(
                             target=instance,
                             key=field['name'],
@@ -103,5 +111,3 @@ class TargetVisibilityForm(forms.Form):
         end_time = cleaned_data.get('end_time')
         if end_time < start_time:
             raise forms.ValidationError('Start time must be before end time')
-
-TargetExtraFormset = inlineformset_factory(Target, TargetExtra, fields=('key', 'value'))

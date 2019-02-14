@@ -1,6 +1,7 @@
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
+import pytz
 import ephem
 from astropy import units
 from astropy.coordinates import Angle
@@ -71,7 +72,13 @@ class TestTargetCreate(TestCase):
         self.assertAlmostEqual(target.ra, 83.63308, places=4)
         self.assertAlmostEqual(target.dec, 22.0145, places=4)
 
-    @override_settings(EXTRA_FIELDS=[{'name': 'wins', 'type': 'number'}])
+    @override_settings(EXTRA_FIELDS=[
+        {'name': 'wins', 'type': 'number'},
+        {'name': 'checked', 'type': 'boolean'},
+        {'name': 'birthdate', 'type': 'datetime'},
+        {'name': 'author', 'type': 'string'}
+
+    ])
     def test_create_target_with_extra_fields(self):
         target_data = {
             'name': 'extra_field_target',
@@ -80,11 +87,30 @@ class TestTargetCreate(TestCase):
             'ra': 113.456,
             'dec': -22.1,
             'wins': 50.0,
+            'checked': True,
+            'birthdate': datetime(year=2019, month=2, day=14),
+            'author': 'Dr. Suess'
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
         target = Target.objects.get(name=target_data['name'], identifier=target_data['identifier'])
         self.assertTrue(TargetExtra.objects.filter(target=target, key='wins', value='50.0').exists())
+        self.assertEqual(
+            TargetExtra.objects.get(target=target, key='wins').typed_value('number'),
+            50.0
+        )
+        self.assertEqual(
+            TargetExtra.objects.get(target=target, key='checked').typed_value('boolean'),
+            True
+        )
+        self.assertEqual(
+            TargetExtra.objects.get(target=target, key='birthdate').typed_value('datetime'),
+            datetime(year=2019, month=2, day=14, tzinfo=pytz.UTC)
+        )
+        self.assertEqual(
+            TargetExtra.objects.get(target=target, key='author').typed_value('string'),
+            'Dr. Suess'
+        )
 
 
 class TestTargetSearch(TestCase):
@@ -111,6 +137,20 @@ class TestTargetSearch(TestCase):
 
         response = self.client.get(reverse('targets:list') + '?color=blue')
         self.assertNotContains(response, '1337target')
+
+    @override_settings(EXTRA_FIELDS=[{'name': 'birthday', 'type': 'datetime'}])
+    def test_search_extra_datetime(self):
+        TargetExtra.objects.create(target=self.st, key='birthday', value='2019-02-14')
+
+        response = self.client.get(reverse('targets:list') + '?birthday_after=2019-02-13&birthday_before=2019-02-15')
+        self.assertContains(response, '1337target')
+
+    @override_settings(EXTRA_FIELDS=[{'name': 'checked', 'type': 'boolean'}])
+    def test_search_extra_boolean(self):
+        TargetExtra.objects.create(target=self.st, key='checked', value=False)
+
+        response = self.client.get(reverse('targets:list') + '?checked=3')
+        self.assertContains(response, '1337target')
 
 
 class TestTargetVisibility(TestCase):

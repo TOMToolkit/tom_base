@@ -8,8 +8,47 @@ from tom_targets.models import Target
 def filter_type_for_field(field_type):
     if field_type == 'number':
         return django_filters.RangeFilter
-    else:
+    elif field_type == 'boolean':
+        return django_filters.BooleanFilter
+    elif field_type == 'datetime':
+        return django_filters.DateTimeFromToRangeFilter
+    elif field_type == 'string':
         return django_filters.CharFilter
+    else:
+        raise ValueError(
+            'Invalid field type {}. Field type must be one of: number, boolean, datetime string'.format(field_type)
+        )
+
+
+def filter_number(queryset, name, value):
+    return queryset.filter(
+        targetextra__key=name, targetextra__float_value__gte=value.start, targetextra__float_value__lte=value.stop
+    )
+
+
+def filter_datetime(queryset, name, value):
+    return queryset.filter(
+        targetextra__key=name, targetextra__time_value__gte=value.start, targetextra__time_value__lte=value.stop
+    )
+
+
+def filter_boolean(queryset, name, value):
+    return queryset.filter(targetextra__key=name, targetextra__bool_value=value)
+
+
+def filter_text(queryset, name, value):
+    return queryset.filter(targetextra__key=name, targetextra__value__icontains=value)
+
+
+def method_filter(field_type):
+    if field_type == 'number':
+        return filter_number
+    elif field_type == 'boolean':
+        return filter_boolean
+    elif field_type == 'datetime':
+        return filter_datetime
+    elif field_type == 'string':
+        return filter_text
 
 
 class TargetFilter(django_filters.FilterSet):
@@ -17,7 +56,7 @@ class TargetFilter(django_filters.FilterSet):
         super().__init__(*args, **kwargs)
         for field in settings.EXTRA_FIELDS:
             filter_type = filter_type_for_field(field['type'])
-            new_filter = filter_type(field_name=field['name'], method='filter_extra')
+            new_filter = filter_type(field_name=field['name'], method=method_filter(field['type']))
             new_filter.parent = self
             self.filters[field['name']] = new_filter
 

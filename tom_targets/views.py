@@ -12,7 +12,6 @@ from django.core.management import call_command
 
 from .models import Target
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm
-from .forms import TargetExtraFormset
 from .import_targets import import_targets
 from .filters import TargetFilter
 
