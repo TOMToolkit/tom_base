@@ -1,0 +1,21 @@
+<link type="text/css" rel="stylesheet" href="https://cdn.lco.global/js9/js9support.css">
+<link type="text/css" rel="stylesheet" href="https://cdn.lco.global/js9/js9.css">
+<script type="text/javascript" src="https://cdn.lco.global/js9/js9prefs.js"></script>
+<script type="text/javascript" src="https://cdn.lco.global/js9/js9support.min.js"></script>
+<script type="text/javascript" src="https://cdn.lco.global/js9/js9.min.js"></script>
+<script type="text/javascript" src="https://cdn.lco.global/js9/js9plugins.js"></script>
+<script type="text/javascript">
+function openJS9Window(url) {
+  // Open in a new window
+  var opts = {
+    scaleclipping: 'zscale',
+    zoom: 'toFit',
+    // By default, images are restricted to 2048 by 2048. Set xdim and ydim to 0 for no restriction.
+    image: {
+      xdim: 0,
+      ydim: 0
+    }
+  };
+  JS9.LoadWindow(url, opts);
+}
+</script>
