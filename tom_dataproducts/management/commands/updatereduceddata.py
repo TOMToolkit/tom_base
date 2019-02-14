@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from tom_alerts import alerts
 from tom_targets.models import Target
-from tom_dataproducts.models import ReducedDatumSource, ReducedDatum
+from tom_dataproducts.models import ReducedDatum
 
 
 class Command(BaseCommand):
@@ -29,7 +29,7 @@ class Command(BaseCommand):
             except ObjectDoesNotExist:
                 raise Exception('Invalid target id provided')
         else:
-            sources = ReducedDatumSource.objects.filter(name__in=broker_classes.keys()).distinct()
+            sources = ReducedDatum.objects.filter(source_name__in=broker_classes.keys()).distinct()
             targets = Target.objects.filter(
                 id__in=ReducedDatum.objects.filter(
                     source__in=sources
