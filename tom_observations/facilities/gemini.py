@@ -176,6 +176,9 @@ class GEMObservationForm(GenericObservationForm):
                  ('IP', 'i'), ('I', 'I'), ('ZP', 'z'), ('Y', 'Y'), ('J', 'J'), ('H', 'H'), ('K', 'K'), ('L', 'L'),
                  ('M', 'M'), ('N', 'N'), ('Q', 'Q'), ('AP', 'AP'))
     )
+    gssearch = forms.ChoiceField(initial='true', required=False, label='Search for guide star if none entered?',
+        choices=(('true', 'Yes'), ('false', 'No'))
+    )
 
     # window_start = forms.DateTimeField(required=False)
     window_start = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'date'}),
@@ -246,15 +249,15 @@ class GEMObservationForm(GenericObservationForm):
             ),
             Div(
                 Div(
-                    'inst', 'iq', 'exptime',
+                    'inst',  'iq', 'exptime', 'gssearch',
                     css_class='col'
                 ),
                 Div(
-                    'gsprobe', 'cc', 'overwrite',
+                    'gsprobe', 'cc', 'port', 'overwrite',
                     css_class='col'
                 ),
                 Div(
-                    'ifu', 'sb', 'port',
+                    'ifu', 'sb', '', '',
                     css_class='col'
                 ),
                 css_class='form-row'
@@ -386,7 +389,7 @@ class GEMObservationForm(GenericObservationForm):
                 sgsmag = str(self.cleaned_data['gsbrightness']).strip() + '/' + \
                      self.cleaned_data['gsbrightness_band'] + '/' + \
                      self.cleaned_data['gsbrightness_system']
-        else:
+        elif self.cleaned_data['gssearch'] == 'true':
             gstarg, gsra, gsdec, sgsmag, spa = findgs()
 
         if gstarg != '':
