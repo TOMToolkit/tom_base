@@ -174,13 +174,24 @@ LOGGING = {
     }
 }
 
-TARGET_TYPE = 'NON_SIDEREAL'
+TARGET_TYPE = 'SIDEREAL'
 FACILITIES = {
     'LCO': {
         'portal_url': 'https://observe.lco.global',
         'api_key': os.getenv('LCO_API_KEY', ''),
     }
 }
+
+# Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"
+# See https://tomtoolkit.github.io/docs/target_fields for documentation on this feature
+# For example:
+# EXTRA_FIELDS = [
+#     {'name': 'redshift', 'type': 'number'},
+#     {'name': 'discoverer', 'type': 'string'}
+#     {'name': 'eligible', 'type': 'boolean'},
+#     {'name': 'dicovery_date', 'type': 'datetime'}
+# ]
+EXTRA_FIELDS = []
 
 # Authentication strategy can either be LOCKED (required login for all views)
 # or READ_ONLY (read only access to views)
