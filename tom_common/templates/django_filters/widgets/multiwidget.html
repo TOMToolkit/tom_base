@@ -1,0 +1,10 @@
+{% for widget in widget.subwidgets %}
+<div class="form-row">
+  <div class="col input-group">
+    <div class="input-group-prepend">
+      <span class="input-group-text">{% if forloop.first %}min{% else %}max{% endif %}</span>
+    </div>
+    {% include widget.template_name %}
+  </div>
+</div>
+{% endfor %}

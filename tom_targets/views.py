@@ -12,7 +12,6 @@ from django.core.management import call_command
 
 from .models import Target
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm
-from .forms import TargetExtraFormset
 from .import_targets import import_targets
 from .filters import TargetFilter
 
@@ -49,7 +48,6 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super(TargetCreateView, self).get_context_data(**kwargs)
         context['type_choices'] = Target.TARGET_TYPES
-        context['extra_form'] = TargetExtraFormset()
         return context
 
     def get_form_class(self):
@@ -65,30 +63,15 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             self.initial['type'] = Target.NON_SIDEREAL
             return NonSiderealTargetCreateForm
 
-    def form_valid(self, form):
-        super().form_valid(form)
-        extra = TargetExtraFormset(self.request.POST)
-        if extra.is_valid():
-            extra.instance = self.object
-            extra.save()
-        return redirect(self.get_success_url())
-
 
 class TargetUpdateView(LoginRequiredMixin, UpdateView):
     model = Target
-    fields = '__all__'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['extra_form'] = TargetExtraFormset(instance=self.object)
-        return context
-
-    def form_valid(self, form):
-        super().form_valid(form)
-        extra = TargetExtraFormset(self.request.POST, instance=self.object)
-        if extra.is_valid():
-            extra.save()
-        return redirect(self.get_success_url())
+    def get_form_class(self):
+        if self.object.type == Target.SIDEREAL:
+            return SiderealTargetCreateForm
+        elif self.object.type == Target.NON_SIDEREAL:
+            return NonSiderealTargetCreateForm
 
 
 class TargetDeleteView(LoginRequiredMixin, DeleteView):

@@ -1,6 +1,8 @@
 from django.db import models
 from django.urls import reverse
 from django.forms.models import model_to_dict
+from dateutil.parser import parse
+from datetime import datetime
 
 from tom_common.hooks import run_hook
 
@@ -139,7 +141,7 @@ class Target(models.Model):
         return self.dataproduct_set.filter(tag='fits_file', featured=True).first()
 
     def light_curve(self):
-        return self.dataproduct_set.filter(tag='light_curve', featured=True).first()
+        return self.dataproduct_set.reduceddatum_set.filter(data_type='photometry').all()
 
     def as_dict(self):
         if self.type == self.SIDEREAL:
@@ -156,6 +158,38 @@ class TargetExtra(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     key = models.CharField(max_length=200)
     value = models.TextField()
+    float_value = models.FloatField(null=True, blank=True)
+    bool_value = models.BooleanField(null=True, blank=True)
+    time_value = models.DateTimeField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        try:
+            self.float_value = float(self.value)
+        except (TypeError, ValueError):
+            self.float_value = None
+        try:
+            self.bool_value = bool(self.value)
+        except (TypeError, ValueError):
+            self.bool_value = None
+        try:
+            if isinstance(self.value, datetime):
+                self.time_value = self.value
+            else:
+                self.time_value = parse(self.value)
+        except (TypeError, ValueError) as e:
+            self.time_value = None
+
+        super().save(*args, **kwargs)
+
+    def typed_value(self, type_val):
+        if type_val == 'number':
+            return self.float_value
+        if type_val == 'boolean':
+            return self.bool_value
+        if type_val == 'datetime':
+            return self.time_value
+
+        return self.value
 
 
 class TargetList(models.Model):

@@ -1,4 +1,5 @@
 import requests
+import json
 from requests.exceptions import HTTPError
 from urllib.parse import urlencode
 from dateutil.parser import parse
@@ -8,9 +9,10 @@ from astropy.time import Time, TimezoneInfo
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert
 from tom_targets.models import Target, TargetExtra
-from tom_dataproducts.models import ReducedDatumSource, ReducedDatum
+from tom_dataproducts.models import ReducedDatum
 
 MARS_URL = 'https://mars.lco.global'
+filters = {0: 'g', 1: 'r', 2: 'i'}
 
 
 class MARSQueryForm(GenericQueryForm):
@@ -198,36 +200,33 @@ class MARSBroker(object):
         return parsed
 
     def process_reduced_data(self, target, alert=None):
-        alerts = []
-        if alert:
-            alerts = [alert]
-        else:
+        if not alert:
             try:
-                alert_sources = ReducedDatumSource.objects.filter(
-                    id__in=ReducedDatum.objects.filter(target=target).values_list('source').distinct(),
-                    name=self.name
-                )
-                for alert_source in alert_sources:
-                    alerts.append(self.fetch_alert(alert_source.location))
+                target_datum = ReducedDatum.objects.filter(
+                    target=target,
+                    data_type='PHOTOMETRY',
+                    source_name=self.name).first()
+                if not target_datum:
+                    return
+                alert = self.fetch_alert(target_datum.source_location)
             except HTTPError:
                 raise Exception('Unable to retrieve alert information from broker')
-        for alert in alerts:
-            reduced_datum_source, created = ReducedDatumSource.objects.get_or_create(
-                name=self.name,
-                location=alert['lco_id']
-            )
-            for prv_candidate in alert.get('prv_candidate'):
-                if all([key in prv_candidate['candidate'] for key in ['jd', 'magpsf']]):    
-                    jd = Time(prv_candidate['candidate']['jd'], format='jd', scale='utc')
-                    jd.to_datetime(timezone=TimezoneInfo())
-                    magnitude = prv_candidate['candidate']['magpsf']
-                    rd, created = ReducedDatum.objects.get_or_create(
-                        timestamp=jd.to_datetime(timezone=TimezoneInfo()),
-                        value=magnitude,
-                        source=reduced_datum_source,
-                        data_type='PHOTOMETRY',
-                        target=target)
-                    rd.save()
+        for prv_candidate in alert.get('prv_candidate'):
+            if all([key in prv_candidate['candidate'] for key in ['jd', 'magpsf', 'fid']]):
+                jd = Time(prv_candidate['candidate']['jd'], format='jd', scale='utc')
+                jd.to_datetime(timezone=TimezoneInfo())
+                value = {
+                    'magnitude': prv_candidate['candidate']['magpsf'],
+                    'filter': filters[prv_candidate['candidate']['fid']]
+                }
+                rd, created = ReducedDatum.objects.get_or_create(
+                    timestamp=jd.to_datetime(timezone=TimezoneInfo()),
+                    value=json.dumps(value),
+                    source_name=self.name,
+                    source_location=alert['lco_id'],
+                    data_type='photometry',
+                    target=target)
+                rd.save()
 
     def to_target(self, alert):
         alert_copy = alert.copy()

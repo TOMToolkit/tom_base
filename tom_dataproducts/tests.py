@@ -50,11 +50,3 @@ class TestObservationDataViews(TestCase):
             )
             self.assertTrue(mock.called)
             self.assertContains(response, 'Successfully saved: afile.fits')
-
-    def test_tag_file(self, dp_mock):
-        self.client.post(
-            reverse('tom_dataproducts:tag', kwargs={'pk': self.data_product.id}),
-            data={'tag': 'fits_file'},
-        )
-        self.data_product.refresh_from_db()
-        self.assertEqual(self.data_product.tag, 'fits_file')

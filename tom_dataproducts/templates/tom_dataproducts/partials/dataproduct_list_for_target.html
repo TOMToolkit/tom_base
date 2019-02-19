@@ -18,12 +18,9 @@
       </td>
       <td><a href="{{ product.data.url }}">{{ product.get_file_name }}</a></td>
       <td>
-        <a href="{% url 'tom_dataproducts:tag' product.id %}" title="Modify Tag">
-          {% if product.tag %}
-            {{ product.get_tag_display }}
-          {% else %}
-            set tag
-          {% endif %}
+        {% if product.tag %}
+          {{ product.get_tag_display }}
+        {% endif %}
         </a>
       </td>
       <td><a href="{% url 'tom_dataproducts:delete' product.id %}" class="btn btn-danger">Delete</a></td>

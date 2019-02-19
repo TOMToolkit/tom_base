@@ -154,6 +154,8 @@ class GEMObservationForm(GenericObservationForm):
     posangle = forms.FloatField(min_value=0., max_value=360., required=False, initial=0.0, label='Position Angle')
     # posangle = forms.FloatField(min_value=0., max_value=360.,help_text="Position angle in degrees [0-360]")
 
+    exptime = forms.IntegerField(required=False, min_value=1, max_value=1200, label='Exposure Time [sec]')
+
     group = forms.CharField(required=False)
     note = forms.CharField(required=False)
 
@@ -244,15 +246,15 @@ class GEMObservationForm(GenericObservationForm):
             ),
             Div(
                 Div(
-                    'inst', 'iq', 'overwrite',
+                    'inst', 'iq', 'exptime',
                     css_class='col'
                 ),
                 Div(
-                    'gsprobe', 'cc', 'port',
+                    'gsprobe', 'cc', 'overwrite',
                     css_class='col'
                 ),
                 Div(
-                    'ifu', 'sb',
+                    'ifu', 'sb', 'port',
                     css_class='col'
                 ),
                 css_class='form-row'
@@ -355,6 +357,9 @@ class GEMObservationForm(GenericObservationForm):
                 self.cleaned_data['brightness_band'] + '/' + \
                 self.cleaned_data['brightness_system']
             payload["mags"] = smags
+
+        if self.cleaned_data['exptime'] != None:
+            payload['exptime'] = self.cleaned_data['exptime']
 
         if self.cleaned_data['group'].strip() != '':
             payload['group'] = self.cleaned_data['group'].strip()
