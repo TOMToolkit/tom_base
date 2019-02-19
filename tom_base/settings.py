@@ -183,7 +183,7 @@ FACILITIES = {
 }
 
 # Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"
-# TODO: Add link to documentation
+# See https://tomtoolkit.github.io/docs/target_fields for documentation on this feature
 # For example:
 # EXTRA_FIELDS = [
 #     {'name': 'redshift', 'type': 'number'},
