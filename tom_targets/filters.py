@@ -5,18 +5,18 @@ from django.conf import settings
 from tom_targets.models import Target
 
 
-def filter_type_for_field(field_type):
-    if field_type == 'number':
-        return django_filters.RangeFilter
-    elif field_type == 'boolean':
-        return django_filters.BooleanFilter
-    elif field_type == 'datetime':
-        return django_filters.DateTimeFromToRangeFilter
-    elif field_type == 'string':
-        return django_filters.CharFilter
+def filter_for_field(field):
+    if field['type'] == 'number':
+        return django_filters.RangeFilter(field_name=field['name'], method=filter_number)
+    elif field['type'] == 'boolean':
+        return django_filters.BooleanFilter(field_name=field['name'], method=filter_boolean)
+    elif field['type'] == 'datetime':
+        return django_filters.DateTimeFromToRangeFilter(field_name=field['name'], method=filter_datetime)
+    elif field['type'] == 'string':
+        return django_filters.CharFilter(field_name=field['name'], method=filter_text)
     else:
         raise ValueError(
-            'Invalid field type {}. Field type must be one of: number, boolean, datetime string'.format(field_type)
+            'Invalid field type {}. Field type must be one of: number, boolean, datetime string'.format(field['type'])
         )
 
 
@@ -40,23 +40,11 @@ def filter_text(queryset, name, value):
     return queryset.filter(targetextra__key=name, targetextra__value__icontains=value)
 
 
-def method_filter(field_type):
-    if field_type == 'number':
-        return filter_number
-    elif field_type == 'boolean':
-        return filter_boolean
-    elif field_type == 'datetime':
-        return filter_datetime
-    elif field_type == 'string':
-        return filter_text
-
-
 class TargetFilter(django_filters.FilterSet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in settings.EXTRA_FIELDS:
-            filter_type = filter_type_for_field(field['type'])
-            new_filter = filter_type(field_name=field['name'], method=method_filter(field['type']))
+            new_filter = filter_for_field(field)
             new_filter.parent = self
             self.filters[field['name']] = new_filter
 
@@ -67,13 +55,6 @@ class TargetFilter(django_filters.FilterSet):
         return queryset.filter(
             Q(name__icontains=value) | Q(name2__icontains=value) | Q(name3__icontains=value)
         )
-
-    def filter_extra(self, queryset, name, value):
-        queryset = queryset.filter(targetextra__key=name)
-        if isinstance(value, slice):
-            return queryset.filter(targetextra__value__gte=value.start, targetextra__value__lte=value.stop)
-        else:
-            return queryset.filter(targetextra__value__icontains=value)
 
     class Meta:
         model = Target
