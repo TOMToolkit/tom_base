@@ -118,7 +118,7 @@ def obs_choices():
         for obs in GEM_SETTINGS['programs'][p]:
             obsid = p + '-' + obs
             val = p.split('-')
-            showtext = val[0][1]+val[1][2:]+val[2]+val[3]+ ' - '+ GEM_SETTINGS['programs'][p][obs]
+            showtext = val[0][1]+val[1][2:]+val[2]+val[3]+ '[' + obs + '] ' + GEM_SETTINGS['programs'][p][obs]
             choices.append((obsid,showtext))
     return choices
 
@@ -138,11 +138,12 @@ class GEMObservationForm(GenericObservationForm):
     # userkey = forms.CharField(get_site(self.cleaned_data[progid]))
     # email = forms.CharField(choices=GEM_SETTINGS['user_email'])
     # obsnum = forms.IntegerField(min_value=1)
-    obsid = forms.ChoiceField(choices=obs_choices())
+    # obsid = forms.ChoiceField(choices=obs_choices())
+    obsid = forms.MultipleChoiceField(choices=obs_choices())
     ready = forms.ChoiceField(initial='true',
         choices=(('true', 'Yes'), ('false', 'No'))
     )
-    brightness = forms.FloatField(required=False)
+    brightness = forms.FloatField(required=False, label='Target brightness')
     brightness_system =forms.ChoiceField(required=False, initial='AB',
         choices=(('Vega', 'Vega'), ('AB', 'AB'), ('Jy', 'Jy'))
     )
@@ -175,6 +176,9 @@ class GEMObservationForm(GenericObservationForm):
         choices=(('UP', 'u'), ('U', 'U'), ('B', 'B'), ('GP', 'g'), ('V', 'V'), ('UC', 'UC'), ('RP', 'r'), ('R', 'R'),
                  ('IP', 'i'), ('I', 'I'), ('ZP', 'z'), ('Y', 'Y'), ('J', 'J'), ('H', 'H'), ('K', 'K'), ('L', 'L'),
                  ('M', 'M'), ('N', 'N'), ('Q', 'Q'), ('AP', 'AP'))
+    )
+    gssearch = forms.ChoiceField(initial='true', required=False, label='Search for guide star if none entered?',
+        choices=(('true', 'Yes'), ('false', 'No'))
     )
 
     # window_start = forms.DateTimeField(required=False)
@@ -231,30 +235,45 @@ class GEMObservationForm(GenericObservationForm):
             self.common_layout,
             Div(
                 Div(
-                    'obsid', 'posangle', 'brightness', 'eltype', 'note', 'gstarg', 'gsbrightness',
+                    'obsid',
                     css_class='col'
                 ),
                 Div(
-                    'ready', 'pamode', 'brightness_band', 'elmin', 'window_start', 'gsra', 'gsbrightness_band',
+                    'ready',
                     css_class='col'
                 ),
                 Div(
-                    'group', 'obsdate', 'brightness_system', 'elmax', 'window_duration', 'gsdec', 'gsbrightness_system',
+                    'group',
                     css_class='col'
                 ),
                 css_class='form-row'
             ),
             Div(
                 Div(
-                    'inst', 'iq', 'exptime',
+                    'posangle', 'brightness', 'eltype', 'note', 'gstarg', 'gsbrightness',
                     css_class='col'
                 ),
                 Div(
-                    'gsprobe', 'cc', 'overwrite',
+                    'pamode', 'brightness_band', 'elmin', 'window_start', 'gsra', 'gsbrightness_band',
                     css_class='col'
                 ),
                 Div(
-                    'ifu', 'sb', 'port',
+                    'obsdate', 'brightness_system', 'elmax', 'window_duration', 'gsdec', 'gsbrightness_system',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            ),
+            Div(
+                Div(
+                    'inst',  'iq', 'exptime', 'gssearch',
+                    css_class='col'
+                ),
+                Div(
+                    'gsprobe', 'cc', 'port', 'overwrite',
+                    css_class='col'
+                ),
+                Div(
+                    'ifu', 'sb', '', '',
                     css_class='col'
                 ),
                 css_class='form-row'
@@ -284,7 +303,7 @@ class GEMObservationForm(GenericObservationForm):
             time = isostring[ii + 1:]
             return date, time
 
-        def findgs():
+        def findgs(obs):
 
             gstarg = ''
             gsra = ''
@@ -300,7 +319,8 @@ class GEMObservationForm(GenericObservationForm):
             ra = target.ra / 15.
             dec = target.dec
 
-            l_site = get_site(self.cleaned_data['obsid'],location=True)
+            # l_site = get_site(self.cleaned_data['obsid'],location=True)
+            l_site = get_site(obs,location=True)
             l_pad = 7.
             l_chop = False
             l_rmin = -1.
@@ -335,70 +355,74 @@ class GEMObservationForm(GenericObservationForm):
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
         spa = str(self.cleaned_data['posangle']).strip()
 
-        ii = self.cleaned_data['obsid'].rfind('-')
-        progid = self.cleaned_data['obsid'][0:ii]
-        obsnum = self.cleaned_data['obsid'][ii+1:]
-        payload = {
-            "prog": progid,
-            # "password": self.cleaned_data['userkey'],
-            "password": GEM_SETTINGS['api_key'][get_site(self.cleaned_data['obsid'])],
-            # "email": self.cleaned_data['email'],
-            "email": GEM_SETTINGS['user_email'],
-            "obsnum": obsnum,
-            "target": target.name,
-            "ra": target.ra,
-            "dec": target.dec,
-            "note": self.cleaned_data['note'],
-            "ready": self.cleaned_data['ready']
-        }
+        payloads = []
+        for obs in self.cleaned_data['obsid']:
+            ii = obs.rfind('-')
+            progid = obs[0:ii]
+            obsnum = obs[ii+1:]
+            payload = {
+                "prog": progid,
+                # "password": self.cleaned_data['userkey'],
+                "password": GEM_SETTINGS['api_key'][get_site(obs)],
+                # "email": self.cleaned_data['email'],
+                "email": GEM_SETTINGS['user_email'],
+                "obsnum": obsnum,
+                "target": target.name,
+                "ra": target.ra,
+                "dec": target.dec,
+                "note": self.cleaned_data['note'],
+                "ready": self.cleaned_data['ready']
+            }
 
-        if self.cleaned_data['brightness'] != None:
-            smags = str(self.cleaned_data['brightness']).strip() + '/' + \
-                self.cleaned_data['brightness_band'] + '/' + \
-                self.cleaned_data['brightness_system']
-            payload["mags"] = smags
+            if self.cleaned_data['brightness'] != None:
+                smags = str(self.cleaned_data['brightness']).strip() + '/' + \
+                    self.cleaned_data['brightness_band'] + '/' + \
+                    self.cleaned_data['brightness_system']
+                payload["mags"] = smags
 
-        if self.cleaned_data['exptime'] != None:
-            payload['exptime'] = self.cleaned_data['exptime']
+            if self.cleaned_data['exptime'] != None:
+                payload['exptime'] = self.cleaned_data['exptime']
 
-        if self.cleaned_data['group'].strip() != '':
-            payload['group'] = self.cleaned_data['group'].strip()
+            if self.cleaned_data['group'].strip() != '':
+                payload['group'] = self.cleaned_data['group'].strip()
 
-        # timing window?
-        if self.cleaned_data['window_start'].strip() != '':
-            wdate, wtime = isodatetime(self.cleaned_data['window_start'])
-            payload['windowDate'] = wdate
-            payload['windowTime'] = wtime
-            payload['windowDuration'] = str(self.cleaned_data['window_duration']).strip()
+            # timing window?
+            if self.cleaned_data['window_start'].strip() != '':
+                wdate, wtime = isodatetime(self.cleaned_data['window_start'])
+                payload['windowDate'] = wdate
+                payload['windowTime'] = wtime
+                payload['windowDuration'] = str(self.cleaned_data['window_duration']).strip()
 
-        # elevation/airmass
-        if self.cleaned_data['eltype'] != None:
-            payload['elevationType'] = self.cleaned_data['eltype']
-            payload['elevationMin'] = str(self.cleaned_data['elmin']).strip()
-            payload['elevationMax'] = str(self.cleaned_data['elmax']).strip()
+            # elevation/airmass
+            if self.cleaned_data['eltype'] != None:
+                payload['elevationType'] = self.cleaned_data['eltype']
+                payload['elevationMin'] = str(self.cleaned_data['elmin']).strip()
+                payload['elevationMax'] = str(self.cleaned_data['elmax']).strip()
 
-        # Guide star
-        gstarg = self.cleaned_data['gstarg']
-        if gstarg != '':
-            gsra = self.cleaned_data['gsra']
-            gsdec = self.cleaned_data['gsdec']
-            if self.cleaned_data['gsbrightness'] != None:
-                sgsmag = str(self.cleaned_data['gsbrightness']).strip() + '/' + \
-                     self.cleaned_data['gsbrightness_band'] + '/' + \
-                     self.cleaned_data['gsbrightness_system']
-        else:
-            gstarg, gsra, gsdec, sgsmag, spa = findgs()
+            # Guide star
+            gstarg = self.cleaned_data['gstarg']
+            if gstarg != '':
+                gsra = self.cleaned_data['gsra']
+                gsdec = self.cleaned_data['gsdec']
+                if self.cleaned_data['gsbrightness'] != None:
+                    sgsmag = str(self.cleaned_data['gsbrightness']).strip() + '/' + \
+                             self.cleaned_data['gsbrightness_band'] + '/' + \
+                             self.cleaned_data['gsbrightness_system']
+            elif self.cleaned_data['gssearch'] == 'true':
+                gstarg, gsra, gsdec, sgsmag, spa = findgs(obs)
 
-        if gstarg != '':
-            payload['gstarget'] = gstarg
-            payload['gsra'] = gsra
-            payload['gsdec'] = gsdec
-            payload['gsmags'] = sgsmag
-            payload['gsprobe'] = self.cleaned_data['gsprobe']
+            if gstarg != '':
+                payload['gstarget'] = gstarg
+                payload['gsra'] = gsra
+                payload['gsdec'] = gsdec
+                payload['gsmags'] = sgsmag
+                payload['gsprobe'] = self.cleaned_data['gsprobe']
 
-        payload['posangle'] = spa
+            payload['posangle'] = spa
 
-        return payload
+            payloads.append(payload)
+
+        return payloads
 
 class GEMFacility(GenericObservationFacility):
     name = 'GEM'
@@ -406,16 +430,19 @@ class GEMFacility(GenericObservationFacility):
 
     @classmethod
     def submit_observation(clz, observation_payload):
-        response = make_request(
-            'POST',
-            PORTAL_URL[get_site(observation_payload['prog'])] + '/too',
-            verify=False,
-            params=observation_payload
-            # headers=clz._portal_headers()
-        )
-        # Return just observation number
-        obsid = response.text.split('-')
-        return [obsid[-1]]
+        obsids = []
+        for payload in observation_payload:
+            response = make_request(
+                'POST',
+                PORTAL_URL[get_site(payload['prog'])] + '/too',
+                verify=False,
+                params=payload
+                # headers=clz._portal_headers()
+            )
+            # Return just observation number
+            obsid = response.text.split('-')
+            obsids.append(obsid[-1])
+        return obsids
 
     @classmethod
     def validate_observation(clz, observation_payload):
@@ -428,11 +455,11 @@ class GEMFacility(GenericObservationFacility):
         # )
         # return response.json()['errors']
         errors = {}
-        if 'elevationType' in observation_payload.keys():
-            if observation_payload['elevationType'] == 'airmass':
-                if float(observation_payload['elevationMin']) < 1.0:
+        if 'elevationType' in observation_payload[0].keys():
+            if observation_payload[0]['elevationType'] == 'airmass':
+                if float(observation_payload[0]['elevationMin']) < 1.0:
                     errors['elevationMin'] = 'Airmass must be >= 1.0'
-                if float(observation_payload['elevationMax']) > 2.5:
+                if float(observation_payload[0]['elevationMax']) > 2.5:
                     errors['elevationMax'] = 'Airmass must be <= 2.5'
         return errors
 
