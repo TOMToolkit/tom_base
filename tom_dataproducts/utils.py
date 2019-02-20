@@ -9,11 +9,10 @@ from django.conf import settings
 
 def process_data_product(data_product, target):
     if data_product.tag == 'photometry':
-        with open(settings.MEDIA_ROOT + '/' + str(data_product.data)) as f:
-            data = f.readlines()
-            for line in data:
+        with data_product.data.file.open() as f:
+            for line in f:
                 #TODO: Make processing separator- and column-ordering-agnostic
-                photometry_datum = [datum.strip() for datum in re.split(',', line)]
+                photometry_datum = [datum.strip() for datum in re.split(',', line.decode('UTF-8'))]
                 time = Time(float(photometry_datum[0]), format='mjd')
                 time.format = 'datetime'
                 value = {
@@ -29,12 +28,11 @@ def process_data_product(data_product, target):
                     value=json.dumps(value)
                 )
     elif data_product.tag == 'spectroscopy':
-        with open(settings.MEDIA_ROOT + '/' + str(data_product.data)) as f:
-            data = f.readlines()
-            spectrum = {}
-            index = 0
-            for line in data:
-                spectral_sample = [sample.strip() for sample in re.split('[\s,|;]', line)]
+        spectrum = {}
+        index = 0
+        with data_product.data.file.open() as f:
+            for line in f:
+                spectral_sample = [sample.strip() for sample in re.split('[\s,|;]', line.decode('UTF-8'))]
                 spectrum[str(index)] = ({
                     'wavelength': spectral_sample[0],
                     'flux': spectral_sample[1]

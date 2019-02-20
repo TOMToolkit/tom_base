@@ -77,9 +77,8 @@ class DataProduct(models.Model):
 
     def get_image_data(self, min_scale=40, max_scale=99):
         buffer = BytesIO()
-        path = settings.MEDIA_ROOT + '/' + str(self.data)
         if self.tag == FITS_FILE[0]:
-            image_data = fits.getdata(path, extname=self.FITS_EXTENSIONS[self.get_file_extension()])
+            image_data = fits.getdata(self.data.open(), extname=self.FITS_EXTENSIONS[self.get_file_extension()])
             image_data = image_data[::6, ::6]
             interval = ZScaleInterval(nsamples=2000, contrast=0.1)
             image_data = interval(image_data)
