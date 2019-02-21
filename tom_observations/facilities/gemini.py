@@ -352,6 +352,7 @@ class GEMObservationForm(GenericObservationForm):
 
             return gstarg, gsra, gsdec, sgsmag, spa
 
+        payloads = []
 
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
         spa = str(self.cleaned_data['posangle']).strip()
@@ -360,14 +361,17 @@ class GEMObservationForm(GenericObservationForm):
         if self.cleaned_data['exptimes'] != '':
             expvalues = self.cleaned_data['exptimes'].split(',')
             if len(expvalues) != nobs:
-                print('If exptimes given, the number of values must equal the number of obsids selected.')
-                return []
+                payloads.append({"error": "If exptimes given, the number of values must equal the number of obsids selected."})
+                return payloads
         
             # Convert exposure times to integers
             exptimes = []
-            [exptimes.append(round(float(exp))) for exp in expvalues]
-        
-        payloads = []
+            try:
+                [exptimes.append(round(float(exp))) for exp in expvalues]
+            except:
+                payloads.append({"error": "Problem converting string to integer."})
+                return payloads
+
         for jj in range(nobs):
             obs = self.cleaned_data['obsid'][jj]
             ii = obs.rfind('-')
@@ -468,21 +472,21 @@ class GEMFacility(GenericObservationFacility):
         # )
         # return response.json()['errors']
         errors = {}
-        if len(observation_payload) > 0:
-            if 'elevationType' in observation_payload[0].keys():
-                if observation_payload[0]['elevationType'] == 'airmass':
-                    if float(observation_payload[0]['elevationMin']) < 1.0:
-                        errors['elevationMin'] = 'Airmass must be >= 1.0'
-                    if float(observation_payload[0]['elevationMax']) > 2.5:
-                        errors['elevationMax'] = 'Airmass must be <= 2.5'
-            for payload in observation_payload:
-                if 'exptime' in payload.keys():
-                    if payload['exptime'] <= 0:
-                        errors['exptimes'] = 'Exposure time must be >= 1'
-                    if payload['exptime'] > 1200:
-                        errors['exptimes'] = 'Exposure time must be <= 1200'
-        else:
-            errors['exptimes'] = 'If given, the number of values must equal the number of obsids selected.'
+        if 'elevationType' in observation_payload[0].keys():
+            if observation_payload[0]['elevationType'] == 'airmass':
+                if float(observation_payload[0]['elevationMin']) < 1.0:
+                    errors['elevationMin'] = 'Airmass must be >= 1.0'
+                if float(observation_payload[0]['elevationMax']) > 2.5:
+                    errors['elevationMax'] = 'Airmass must be <= 2.5'
+                    
+        for payload in observation_payload:
+            if 'error' in payload.keys():
+                errors['exptimes'] = payload['error']
+            if 'exptime' in payload.keys():
+                if payload['exptime'] <= 0:
+                    errors['exptimes'] = 'Exposure time must be >= 1'
+                if payload['exptime'] > 1200:
+                    errors['exptimes'] = 'Exposure time must be <= 1200'
 
         return errors
 
