@@ -155,7 +155,8 @@ class GEMObservationForm(GenericObservationForm):
     posangle = forms.FloatField(min_value=0., max_value=360., required=False, initial=0.0, label='Position Angle')
     # posangle = forms.FloatField(min_value=0., max_value=360.,help_text="Position angle in degrees [0-360]")
 
-    exptime = forms.IntegerField(required=False, min_value=1, max_value=1200, label='Exposure Time [sec]')
+    # exptime = forms.IntegerField(required=False, min_value=1, max_value=1200, label='Exposure Time [sec]')
+    exptimes = forms.CharField(required=False, label='Exptime [sec]. If multiple, comma separate')
 
     group = forms.CharField(required=False)
     note = forms.CharField(required=False)
@@ -265,7 +266,7 @@ class GEMObservationForm(GenericObservationForm):
             ),
             Div(
                 Div(
-                    'inst',  'iq', 'exptime', 'gssearch',
+                    'inst',  'iq', 'exptimes', 'gssearch',
                     css_class='col'
                 ),
                 Div(
@@ -355,8 +356,20 @@ class GEMObservationForm(GenericObservationForm):
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
         spa = str(self.cleaned_data['posangle']).strip()
 
+        nobs = len(self.cleaned_data['obsid'])
+        if self.cleaned_data['exptimes'] != '':
+            expvalues = self.cleaned_data['exptimes'].split(',')
+            if len(expvalues) != nobs:
+                print('If exptimes given, the number of values must equal the number of obsids selected.')
+                return []
+        
+            # Convert exposure times to integers
+            exptimes = []
+            [exptimes.append(round(float(exp))) for exp in expvalues]
+        
         payloads = []
-        for obs in self.cleaned_data['obsid']:
+        for jj in range(nobs):
+            obs = self.cleaned_data['obsid'][jj]
             ii = obs.rfind('-')
             progid = obs[0:ii]
             obsnum = obs[ii+1:]
@@ -380,8 +393,8 @@ class GEMObservationForm(GenericObservationForm):
                     self.cleaned_data['brightness_system']
                 payload["mags"] = smags
 
-            if self.cleaned_data['exptime'] != None:
-                payload['exptime'] = self.cleaned_data['exptime']
+            if self.cleaned_data['exptimes'] != '':
+                payload['exptime'] = exptimes[jj]
 
             if self.cleaned_data['group'].strip() != '':
                 payload['group'] = self.cleaned_data['group'].strip()
@@ -455,12 +468,22 @@ class GEMFacility(GenericObservationFacility):
         # )
         # return response.json()['errors']
         errors = {}
-        if 'elevationType' in observation_payload[0].keys():
-            if observation_payload[0]['elevationType'] == 'airmass':
-                if float(observation_payload[0]['elevationMin']) < 1.0:
-                    errors['elevationMin'] = 'Airmass must be >= 1.0'
-                if float(observation_payload[0]['elevationMax']) > 2.5:
-                    errors['elevationMax'] = 'Airmass must be <= 2.5'
+        if len(observation_payload) > 0:
+            if 'elevationType' in observation_payload[0].keys():
+                if observation_payload[0]['elevationType'] == 'airmass':
+                    if float(observation_payload[0]['elevationMin']) < 1.0:
+                        errors['elevationMin'] = 'Airmass must be >= 1.0'
+                    if float(observation_payload[0]['elevationMax']) > 2.5:
+                        errors['elevationMax'] = 'Airmass must be <= 2.5'
+            for payload in observation_payload:
+                if 'exptime' in payload.keys():
+                    if payload['exptime'] <= 0:
+                        errors['exptimes'] = 'Exposure time must be >= 1'
+                    if payload['exptime'] > 1200:
+                        errors['exptimes'] = 'Exposure time must be <= 1200'
+        else:
+            errors['exptimes'] = 'If given, the number of values must equal the number of obsids selected.'
+
         return errors
 
     @classmethod
