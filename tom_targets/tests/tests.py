@@ -13,6 +13,7 @@ from .factories import SiderealTargetFactory, NonSiderealTargetFactory
 from tom_targets.models import Target, TargetExtra
 from tom_observations.utils import get_visibility, get_pyephem_instance_for_type
 from tom_observations.tests.utils import FakeFacility
+from tom_targets.import_targets import import_targets
 
 
 class TestTargetDetail(TestCase):
@@ -111,6 +112,33 @@ class TestTargetCreate(TestCase):
             TargetExtra.objects.get(target=target, key='author').typed_value('string'),
             'Dr. Suess'
         )
+
+
+class TestTargetImport(TestCase):
+    def setUp(self):
+        user = User.objects.create(username='testuser')
+        self.client.force_login(user)
+
+    def test_import_csv(self):
+        csv = [
+            'identifier,name,type,ra,dec',
+            'm13,Hercules Globular Cluster,SIDEREAL,250.421,36.459',
+            'm27,Dumbbell Nebula,SIDEREAL,299.901,22.721'
+        ]
+        result = import_targets(csv)
+        self.assertEqual(len(result['targets']), 2)
+
+    @override_settings(EXTRA_FIELDS=[{'name': 'redshift', 'type': 'number'}])
+    def test_import_with_extra(self):
+        csv = [
+            'identifier,name,type,ra,dec,redshift',
+            'm13,Hercules Globular Cluster,SIDEREAL,250.421,36.459,5',
+            'm27,Dumbbell Nebula,SIDEREAL,299.901,22.721,5'
+        ]
+        result = import_targets(csv)
+        self.assertEqual(len(result['targets']), 2)
+        for target in result['targets']:
+            self.assertTrue(TargetExtra.objects.filter(target=target, key='redshift', value='5').exists())
 
 
 class TestTargetSearch(TestCase):

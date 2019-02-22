@@ -100,7 +100,8 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
 
     def post(self, request):
         csv_file = request.FILES['target_csv']
-        result = import_targets(csv_file)
+        csv_stream = StringIO(csv_file.read().decode('utf-8'), newline=None)
+        result = import_targets(csv_stream)
         messages.success(
             request,
             'Targets created: {}'.format(len(result['targets']))
