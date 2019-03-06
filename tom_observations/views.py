@@ -1,5 +1,5 @@
 from io import StringIO
-
+import django_filters
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView
 from django_filters.views import FilterView
@@ -16,11 +16,21 @@ from tom_targets.models import Target
 from tom_observations.facility import get_service_class
 
 
+class ObservationFilter(django_filters.FilterSet):
+    ordering = django_filters.OrderingFilter(
+        fields=['status', 'created', 'modified']
+    )
+
+    class Meta:
+        model = ObservationRecord
+        fields = ['ordering', 'observation_id', 'target_id', 'facility', 'status']
+
+
 class ObservationListView(FilterView):
+    filterset_class = ObservationFilter
     template_name = 'tom_observations/observation_list.html'
     paginate_by = 25
     model = ObservationRecord
-    filterset_fields = ['observation_id', 'target_id', 'facility', 'status']
     strict = False
 
     def get(self, request, *args, **kwargs):
