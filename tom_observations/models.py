@@ -12,6 +12,8 @@ class ObservationRecord(models.Model):
     parameters = models.TextField()
     observation_id = models.CharField(max_length=2000)
     status = models.CharField(max_length=200)
+    scheduled_start = models.DateTimeField(null=True)
+    scheduled_end = models.DateTimeField(null=True)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 

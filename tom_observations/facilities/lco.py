@@ -273,7 +273,28 @@ class LCOFacility(GenericObservationFacility):
             PORTAL_URL + '/api/requests/{0}'.format(observation_id),
             headers=self._portal_headers()
         )
-        return response.json()['state']
+        state = response.json()['state']
+
+        response = make_request(
+            'GET',
+            PORTAL_URL + '/api/requests/{0}/blocks/?canceled=false'.format(observation_id),
+            headers=self._portal_headers()
+        )
+        blocks = response.json()
+        current_block = None
+        for block in blocks:
+            if block['completed']:
+                current_block = block
+                break
+            elif block['status'] == 'SCHEDULED':
+                current_block = block
+        if current_block:
+            scheduled_start = current_block['start']
+            scheduled_end = current_block['end']
+        else:
+            scheduled_start, scheduled_end = None, None
+
+        return {'state': state, 'scheduled_start': scheduled_start, 'scheduled_end': scheduled_end}
 
     def data_products(self, observation_id, product_id=None):
         products = []
