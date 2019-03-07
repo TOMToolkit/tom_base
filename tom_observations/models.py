@@ -35,6 +35,12 @@ class ObservationRecord(models.Model):
         return json.loads(self.parameters)
 
     @property
+    def terminal(self):
+        facility = get_service_class(self.facility)
+        return self.status in facility().get_terminal_observing_states()
+
+
+    @property
     def url(self):
         facility = get_service_class(self.facility)
         return facility().get_observation_url(self.observation_id)

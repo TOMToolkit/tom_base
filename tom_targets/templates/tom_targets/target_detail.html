@@ -9,6 +9,9 @@
   <div class="col-md-4">
     <div id="target-info">
       {% target_feature object %}
+      {% if object.future_observations %}
+      <div class="alert alert-success">{{ object.future_observations|length }} upcoming observations</div>
+      {% endif %}
       {% target_data object %}
       {% aladin object %}
     </div>

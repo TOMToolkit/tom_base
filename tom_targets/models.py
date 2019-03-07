@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.forms.models import model_to_dict
 from dateutil.parser import parse
 from datetime import datetime
@@ -142,6 +143,15 @@ class Target(models.Model):
 
     def light_curve(self):
         return self.dataproduct_set.reduceddatum_set.filter(data_type='photometry').all()
+
+    @property
+    def future_observations(self):
+        return [
+            obs for obs in self.observationrecord_set.filter(
+                scheduled_start__gte=timezone.now()
+            ).order_by('scheduled_start')
+            if not obs.terminal
+        ]
 
     def as_dict(self):
         if self.type == self.SIDEREAL:
