@@ -147,10 +147,7 @@ class Target(models.Model):
     @property
     def future_observations(self):
         return [
-            obs for obs in self.observationrecord_set.filter(
-                scheduled_start__gte=timezone.now()
-            ).order_by('scheduled_start')
-            if not obs.terminal
+            obs for obs in self.observationrecord_set.all().order_by('scheduled_start') if not obs.terminal
         ]
 
     def as_dict(self):
