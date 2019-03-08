@@ -10,7 +10,9 @@
     <div id="target-info">
       {% target_feature object %}
       {% if object.future_observations %}
-      <div class="alert alert-success">{{ object.future_observations|length }} upcoming observations</div>
+      <div class="alert alert-success">
+        {{ object.future_observations|length }} upcoming observation{{ object.future_observations|pluralize }}
+      </div>
       {% endif %}
       {% target_data object %}
       {% aladin object %}
