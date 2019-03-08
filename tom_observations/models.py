@@ -12,6 +12,8 @@ class ObservationRecord(models.Model):
     parameters = models.TextField()
     observation_id = models.CharField(max_length=2000)
     status = models.CharField(max_length=200)
+    scheduled_start = models.DateTimeField(null=True)
+    scheduled_end = models.DateTimeField(null=True)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
@@ -31,6 +33,12 @@ class ObservationRecord(models.Model):
     @property
     def parameters_as_dict(self):
         return json.loads(self.parameters)
+
+    @property
+    def terminal(self):
+        facility = get_service_class(self.facility)
+        return self.status in facility().get_terminal_observing_states()
+
 
     @property
     def url(self):

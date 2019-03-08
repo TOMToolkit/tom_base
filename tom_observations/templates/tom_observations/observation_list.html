@@ -15,7 +15,18 @@
       </div>
     </div>
     <table class="table">
-      <thead><tr><th>View</th><th>Target</th><th>Facility</th><th>Status</th><th>Created</th><th>Updated</th><th>Saved Data</th><th>Download All</th></tr></thead>
+      <thead>
+        <tr>
+          <th>View</th>
+          <th>Target</th>
+          <th>Facility</th>
+          <th>Status</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Saved Data</th>
+          <th>Download All</th>
+        </tr>
+      </thead>
       <tbody>
         {% for observation in filter.qs %}
         <tr>
@@ -23,8 +34,8 @@
           <td><a href="{% url 'tom_targets:detail' observation.target.id %}" title="{{ observation.target.id }}">{{ observation.target.name }}</a></td>
           <td>{{ observation.facility }}</td>
           <td>{{ observation.status }}</td>
-          <td>{{ observation.created }}</td>
-          <td>{{ observation.modified }}</td>
+          <td>{{ observation.scheduled_start }}</td>
+          <td>{{ observation.scheduled_end }}</td>
           <td>{{ observation.dataproduct_set.count }}</td>
           <td>
             {% if observation.status == 'COMPLETED' %}
