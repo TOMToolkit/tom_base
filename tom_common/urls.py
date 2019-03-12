@@ -22,7 +22,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
-from tom_common.views import CommentDeleteView
+from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'), name='home'),
@@ -35,10 +35,13 @@ urlpatterns = [
     path('users/', UserListView.as_view(), name='user-list'),
     path('users/<int:pk>/changepassword/', UserPasswordChangeView.as_view(), name='admin-user-change-password'),
     path('users/create/', UserCreateView.as_view(), name='user-create'),
-    path('users/<int:pk>/delete', UserDeleteView.as_view(), name='user-delete'),
+    path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user-delete'),
+    path('users/<int:pk>/update/', UserUpdateView.as_view(), name='user-update'),
+    path('groups/create/', GroupCreateView.as_view(), name='group-create'),
+    path('groups/<int:pk>/update/', GroupUpdateView.as_view(), name='group-update'),
+    path('groups/<int:pk>/delete/', GroupDeleteView.as_view(), name='group-delete'),
     path('accounts/login/', LoginView.as_view(), name='login'),
     path('accounts/logout/', LogoutView.as_view(), name='logout'),
-    path('accounts/update/', UserUpdateView.as_view(), name='account-update'),
     path('comment/<pk>/delete', CommentDeleteView.as_view(), name='comment-delete'),
     path('admin/', admin.site.urls),
     # The static helper below only works in development see
