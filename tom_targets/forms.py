@@ -4,6 +4,8 @@ from astropy.coordinates import Angle
 from astropy import units as u
 from django.forms import ValidationError
 from django.conf import settings
+from django.contrib.auth.models import Group
+from guardian.shortcuts import assign_perm
 
 from .models import Target, TargetExtra, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS
 from .models import REQUIRED_NON_SIDEREAL_FIELDS
@@ -46,6 +48,8 @@ class CoordinateField(forms.CharField):
 
 
 class TargetForm(forms.ModelForm):
+    groups = forms.ModelMultipleChoiceField(Group.objects.none(), required=False, widget=forms.CheckboxSelectMultiple)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for extra_field in settings.EXTRA_FIELDS:
@@ -68,6 +72,12 @@ class TargetForm(forms.ModelForm):
                             key=field['name'],
                             defaults={'value': self.cleaned_data[field['name']]}
                     )
+            # Save groups for this target
+            for group in self.cleaned_data['groups']:
+                assign_perm('tom_targets.view_target', group, instance)
+                assign_perm('tom_targets.change_target', group, instance)
+                assign_perm('tom_targets.delete_target', group, instance)
+
         return instance
 
     class Meta:

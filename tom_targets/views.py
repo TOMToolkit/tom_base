@@ -9,6 +9,8 @@ from django.shortcuts import redirect
 from django.conf import settings
 from django.contrib import messages
 from django.core.management import call_command
+from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
+from guardian.shortcuts import get_objects_for_user
 
 from .models import Target
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm
@@ -16,12 +18,14 @@ from .import_targets import import_targets
 from .filters import TargetFilter
 
 
-class TargetListView(FilterView):
+class TargetListView(PermissionListMixin, FilterView):
     template_name = 'tom_targets/target_list.html'
     paginate_by = 25
     strict = False
     model = Target
     filterset_class = TargetFilter
+    permission_required = 'tom_targets.view_target'
+
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -42,6 +46,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
     def get_initial(self):
         return {
             'type': self.get_default_target_type(),
+            'groups': self.request.user.groups.all(),
             **dict(self.request.GET.items())
         }
 
@@ -63,9 +68,18 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             self.initial['type'] = Target.NON_SIDEREAL
             return NonSiderealTargetCreateForm
 
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+        form.fields['groups'].queryset = self.request.user.groups.all()
+        return form
 
-class TargetUpdateView(LoginRequiredMixin, UpdateView):
+
+class TargetUpdateView(PermissionRequiredMixin, UpdateView):
+    permission_required = 'tom_targets.change_target'
     model = Target
+
+    def get_queryset(self, *args, **kwargs):
+        return get_objects_for_user(self.request.user, 'tom_targets.change_target')
 
     def get_form_class(self):
         if self.object.type == Target.SIDEREAL:
@@ -74,12 +88,14 @@ class TargetUpdateView(LoginRequiredMixin, UpdateView):
             return NonSiderealTargetCreateForm
 
 
-class TargetDeleteView(LoginRequiredMixin, DeleteView):
+class TargetDeleteView(PermissionRequiredMixin, DeleteView):
+    permission_required = 'tom_targets.delete_target'
     success_url = reverse_lazy('targets:list')
     model = Target
 
 
-class TargetDetailView(DetailView):
+class TargetDetailView(PermissionRequiredMixin, DetailView):
+    permission_required = 'tom_targets.view_target'
     model = Target
 
     def get(self, request, *args, **kwargs):
