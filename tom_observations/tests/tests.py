@@ -14,6 +14,7 @@ from tom_observations.utils import get_rise_set, get_last_rise_set_pair
 from tom_observations.utils import get_next_rise_set_pair, observer_for_site
 from tom_observations.tests.utils import FakeFacility
 from tom_observations.models import ObservationRecord
+from guardian.shortcuts import assign_perm
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
@@ -26,6 +27,7 @@ class TestObservationViews(TestCase):
             parameters='{}'
         )
         user = User.objects.create_user(username='test', password='test')
+        assign_perm('tom_targets.view_target', user, self.target)
         self.client.force_login(user)
 
     def test_observation_list(self):
