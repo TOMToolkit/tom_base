@@ -3,7 +3,7 @@ from io import StringIO
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView, DeleteView
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView
 from django_filters.views import FilterView
 from django.views.generic import View, ListView
 from django.views.generic.base import RedirectView
@@ -15,6 +15,7 @@ from django.core.management import call_command
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
 from django.http import HttpResponseRedirect
+from guardian.shortcuts import get_objects_for_user
 
 from .models import DataProduct, DataProductGroup
 from .utils import process_data_product
@@ -106,6 +107,11 @@ class DataProductListView(FilterView):
     paginate_by = 25
     filterset_fields = ['target__name', 'observation_record__facility']
     strict = False
+
+    def get_queryset(self):
+        return super().get_queryset().filter(
+            target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
