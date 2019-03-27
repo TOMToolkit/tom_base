@@ -3,8 +3,6 @@ from django import forms
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.contrib.auth.models import Group
-from guardian.shortcuts import assign_perm
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, get_service_class
 from tom_alerts.models import BrokerQuery
@@ -192,10 +190,9 @@ class TestBrokerViews(TestCase):
             'alerts': [2]
         }
         response = self.client.post(reverse('tom_alerts:create-target'), data=post_data)
-        assign_perm('tom_targets.view_target', self.user, Target.objects.first())
         self.assertEqual(Target.objects.count(), 1)
         self.assertEqual(Target.objects.first().name, 'Hoth')
-        self.assertRedirects(response, reverse('tom_targets:detail', kwargs={'pk': Target.objects.first().id}))
+        self.assertRedirects(response, reverse('tom_targets:update', kwargs={'pk': Target.objects.first().id}))
 
     def test_create_multiple_targets(self):
         query = BrokerQuery.objects.create(
