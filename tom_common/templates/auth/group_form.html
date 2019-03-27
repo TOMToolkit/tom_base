@@ -1,0 +1,17 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
+{% block content %}
+<div class="row">
+  <div class="col">
+    {% if object %}
+    <form method="POST" action="{% url 'group-update' object.id %}">
+    {% else %}
+    <form method="POST" action="{% url 'group-create' %}">
+    {% endif %}
+      {% csrf_token %}
+      {% bootstrap_form form %}
+      {% buttons submit="Submit" %}{% endbuttons %}
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -64,10 +64,26 @@ class TestUserManagement(TestCase):
             'password1': 'forc34eva!',
             'password2': 'forc34eva!',
         }
-        response = self.client.post(reverse('account-update'), data=user_data, follow=True)
+        response = self.client.post(reverse('user-update', kwargs={'pk': user.id}), data=user_data, follow=True)
         self.assertContains(response, 'Profile updated')
         user.refresh_from_db()
         self.assertEqual(user.first_name, 'Luke')
+
+    def test_user_cannot_update_other(self):
+        user = User.objects.create(username='luke', password='forc3')
+        self.client.force_login(user)
+        user_data = {
+            'username': 'luke',
+            'first_name': 'Luke',
+            'last_name': 'Skywalker',
+            'email': 'luke@example.com',
+            'password1': 'forc34eva!',
+            'password2': 'forc34eva!',
+        }
+        response = self.client.post(reverse('user-update', kwargs={'pk': self.admin.id}), data=user_data)
+        self.admin.refresh_from_db()
+        self.assertRedirects(response, reverse('user-update', kwargs={'pk': user.id}))
+        self.assertNotEqual(self.admin.username, user_data['username'])
 
 
 class TestAuthScheme(TestCase):
