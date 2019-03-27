@@ -19,8 +19,10 @@ from tom_observations.facility import get_service_class
 
 class ObservationFilter(django_filters.FilterSet):
     ordering = django_filters.OrderingFilter(
-        fields=['status', 'created', 'modified']
+        fields=['scheduled_start', 'scheduled_end', 'status', 'created', 'modified']
     )
+    scheduled_start = django_filters.DateTimeFromToRangeFilter()
+    scheduled_end = django_filters.DateTimeFromToRangeFilter()
 
     class Meta:
         model = ObservationRecord

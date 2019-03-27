@@ -1,4 +1,6 @@
 from django import forms
+from datetime import timedelta
+from django.utils import timezone
 
 from tom_observations.facility import GenericObservationFacility, GenericObservationForm
 
@@ -36,7 +38,11 @@ class FakeFacility(GenericObservationFacility):
         return [{'id': 'testdpid'}]
 
     def get_observation_status(self, observation_id):
-        return 'COMPLETED'
+        return {
+            'state': 'COMPLETED',
+            'scheduled_start': timezone.now() + timedelta(hours=1),
+            'scheduled_end': timezone.now() + timedelta(hours=2)
+        }
 
     def get_terminal_observing_states(self):
         return ['COMPLETED', 'FAILED', 'CANCELED', 'WINDOW_EXPIRED']

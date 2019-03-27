@@ -61,7 +61,10 @@ class GenericObservationFacility(ABC):
         from tom_observations.models import ObservationRecord
         try:
             record = ObservationRecord.objects.get(observation_id=observation_id)
-            record.status = self.get_observation_status(observation_id)
+            status = self.get_observation_status(observation_id)
+            record.status = status['state']
+            record.scheduled_start = status['scheduled_start']
+            record.scheduled_end = status['scheduled_end']
             record.save()
         except ObservationRecord.DoesNotExist:
             raise Exception('No record exists for that observation id')

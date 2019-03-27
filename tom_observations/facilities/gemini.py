@@ -363,7 +363,7 @@ class GEMObservationForm(GenericObservationForm):
             if len(expvalues) != nobs:
                 payloads.append({"error": "If exptimes given, the number of values must equal the number of obsids selected."})
                 return payloads
-        
+
             # Convert exposure times to integers
             exptimes = []
             try:
@@ -478,7 +478,7 @@ class GEMFacility(GenericObservationFacility):
                     errors['elevationMin'] = 'Airmass must be >= 1.0'
                 if float(observation_payload[0]['elevationMax']) > 2.5:
                     errors['elevationMax'] = 'Airmass must be <= 2.5'
-                    
+
         for payload in observation_payload:
             if 'error' in payload.keys():
                 errors['exptimes'] = payload['error']
@@ -511,7 +511,7 @@ class GEMFacility(GenericObservationFacility):
         #     headers=clz._portal_headers()
         # )
         # return response.json()['state']
-        return ''
+        return {'state': '', 'scheduled_start': None, 'scheduled_end': None}
 
     @classmethod
     def _portal_headers(clz):
