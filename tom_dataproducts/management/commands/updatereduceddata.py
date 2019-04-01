@@ -32,7 +32,7 @@ class Command(BaseCommand):
             sources = ReducedDatum.objects.filter(source_name__in=broker_classes.keys()).distinct()
             targets = Target.objects.filter(
                 id__in=ReducedDatum.objects.filter(
-                    source__in=sources
+                    source_name__in=sources
                 ).values_list('target').distinct())
 
         failed_records = {}
