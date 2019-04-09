@@ -22,7 +22,7 @@ class GroupForm(forms.ModelForm):
 
 
 class CustomUserCreationForm(UserCreationForm):
-    groups = forms.ModelMultipleChoiceField(Group.objects.all(), required=False, widget=forms.CheckboxSelectMultiple)
+    groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'), required=False, widget=forms.CheckboxSelectMultiple)
 
     class Meta:
         model = User

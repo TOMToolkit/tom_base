@@ -44,7 +44,7 @@ class UserListView(ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context['groups'] = Group.objects.all()
+        context['groups'] = Group.objects.all().exclude(name='Public')
         return context
 
 
@@ -70,6 +70,13 @@ class UserCreateView(SuperuserRequiredMixin, CreateView):
     template_name = 'tom_common/create_user.html'
     success_url = reverse_lazy('user-list')
     form_class = CustomUserCreationForm
+
+    def form_valid(self, form):
+        super().form_valid(form)
+        group, _ = Group.objects.get_or_create(name='Public')
+        group.user_set.add(self.object)
+        group.save()
+        return redirect(self.get_success_url())
 
 
 class UserUpdateView(LoginRequiredMixin, UpdateView):
