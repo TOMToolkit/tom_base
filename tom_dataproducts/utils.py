@@ -54,10 +54,10 @@ def process_data_product(data_product, target):
 
 def create_jpeg(data_product):
     if data_product.data and ('fits' in data_product.data.file.name):
-        tmpfile = tempfile.TemporaryFile()
+        tmpfile = tempfile.NamedTemporaryFile()
         outfile_name = os.path.basename(data_product.data.file.name)
         filename = outfile_name.split(".")[0] + ".jpg"
-        resp = fits_to_jpg(data_product.data.file.name, tmpfile, width=1000, height=1000)
+        resp = fits_to_jpg(data_product.data.file.name, tmpfile.name, width=1000, height=1000)
         if resp:
             dp, created = DataProduct.objects.get_or_create(
                 product_id="{}_{}".format(data_product.product_id, "jpeg"),
@@ -65,10 +65,10 @@ def create_jpeg(data_product):
                 observation_record=data_product.observation_record,
                 tag='image_file',
             )
-            with open(tmpfile, 'rb') as f:
+            with open(tmpfile.name, 'rb') as f:
                 dp.data.save(filename, File(f), save=True)
                 dp.save()
-        shutil.rmtree(tmpdir)
+        tmpfile.close()
         return True
     else:
         return False
