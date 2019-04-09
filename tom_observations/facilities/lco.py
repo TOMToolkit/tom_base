@@ -1,4 +1,5 @@
 import requests
+import json
 from django.conf import settings
 from django import forms
 from dateutil.parser import parse
@@ -185,6 +186,29 @@ class LCOObservationForm(GenericObservationForm):
     @property
     def observation_payload(self):
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
+        target_fields = {
+            "name": target.name,
+            "type": target.type,
+        }
+        if target.type == Target.SIDEREAL:
+            target_fields['ra'] = target.ra
+            target_fields['dec'] = target.dec
+            target_fields['proper_motion_ra'] = target.pm_ra
+            target_fields['proper_motion_dec'] = target.pm_dec
+            target_fields['epoch'] = target.epoch
+        elif target.type == Target.NON_SIDEREAL:
+            target_fields['scheme'] = target.scheme
+            target_fields['orbinc'] = target.inclination
+            target_fields['longascnode'] = target.lng_asc_node
+            target_fields['argofperih'] = target.arg_of_perihelion
+            target_fields['eccentricity'] = target.eccentricity
+            target_fields['meandist'] = target.semimajor_axis
+            target_fields['meananom'] = target.mean_anomaly
+            target_fields['perihdist'] = target.distance
+            target_fields['dailymot'] = target.mean_daily_motion
+            target_fields['epochofel'] = target.epoch
+            target_fields['epochofperih'] = target.epoch_of_perihelion
+
         return {
             "group_id": self.cleaned_data['group_id'],
             "proposal": self.cleaned_data['proposal'],
@@ -193,22 +217,7 @@ class LCOObservationForm(GenericObservationForm):
             "observation_type": self.cleaned_data['observation_type'],
             "requests": [
                 {
-                    "target": {
-                        "name": target.name,
-                        "type": target.type,
-                        "ra": target.ra,
-                        "dec": target.dec,
-                        "proper_motion_ra": target.pm_ra,
-                        "proper_motion_dec": target.pm_dec,
-                        "epoch": target.epoch,
-                        "orbinc": target.inclination,
-                        "longascnode": target.lng_asc_node,
-                        "argofperih": target.arg_of_perihelion,
-                        "perihdist": target.distance,
-                        "meandist": target.semimajor_axis,
-                        "meananom": target.mean_anomaly,
-                        "dailymot": target.mean_daily_motion
-                    },
+                    "target": target_fields,
                     "molecules": [
                         {
                             "type": self.instrument_to_type(self.cleaned_data['instrument_name']),
