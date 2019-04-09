@@ -1,3 +1,5 @@
+import tempfile
+
 from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -7,7 +9,10 @@ from unittest.mock import patch
 from tom_observations.tests.utils import FakeFacility
 from tom_observations.tests.factories import TargetFactory, ObservingRecordFactory
 from tom_dataproducts.models import DataProduct
+from tom_dataproducts.utils import create_jpeg
 
+def mock_fits2image(file1, file2, width, height):
+    return True
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
 @patch('tom_dataproducts.models.DataProduct.get_image_data', return_value=b'image')
@@ -50,3 +55,11 @@ class TestObservationDataViews(TestCase):
             )
             self.assertTrue(mock.called)
             self.assertContains(response, 'Successfully saved: afile.fits')
+    @patch('tom_dataproducts.utils.fits_to_jpg', mock_fits2image)
+    def test_create_jpeg(self, dp_mock):
+        products = DataProduct.objects.filter(tag='image_file')
+        self.assertEqual(products.count(),0)
+        resp = create_jpeg(self.data_product)
+        self.assertTrue(resp)
+        products = DataProduct.objects.filter(tag='image_file')
+        self.assertEqual(products.count(),1)

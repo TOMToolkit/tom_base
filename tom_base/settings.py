@@ -211,6 +211,8 @@ DATA_TYPES = (
     ('PHOTOMETRY', 'Photometry')
 )
 
+AUTO_THUMBNAILS = False
+
 try:
     from local_settings import * # noqa
 except ImportError:

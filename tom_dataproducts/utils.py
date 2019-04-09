@@ -1,11 +1,17 @@
-import re
 import json
+import os
+import re
+import shutil
+import tempfile
 
+from astropy.io import fits
 from astropy.time import Time
 from datetime import datetime
-from .models import ReducedDatum
 from django.conf import settings
+from django.core.files import File
+from fits2image.conversions import fits_to_jpg
 
+from .models import ReducedDatum, DataProduct
 
 def process_data_product(data_product, target):
     if data_product.tag == 'photometry':
@@ -45,3 +51,24 @@ def process_data_product(data_product, target):
             timestamp=datetime.now(),
             value=json.dumps(spectrum)
         )
+
+def create_jpeg(data_product):
+    if data_product.data and ('fits' in data_product.data.file.name):
+        tmpfile = tempfile.TemporaryFile()
+        outfile_name = os.path.basename(data_product.data.file.name)
+        filename = outfile_name.split(".")[0] + ".jpg"
+        resp = fits_to_jpg(data_product.data.file.name, tmpfile, width=1000, height=1000)
+        if resp:
+            dp, created = DataProduct.objects.get_or_create(
+                product_id="{}_{}".format(data_product.product_id, "jpeg"),
+                target=data_product.target,
+                observation_record=data_product.observation_record,
+                tag='image_file',
+            )
+            with open(tmpfile, 'rb') as f:
+                dp.data.save(filename, File(f), save=True)
+                dp.save()
+        shutil.rmtree(tmpdir)
+        return True
+    else:
+        return False

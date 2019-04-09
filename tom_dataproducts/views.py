@@ -23,6 +23,10 @@ from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 
 
+class DataProductJpegCreate(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        return
+
 class DataProductSaveView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         service_class = get_service_class(request.POST['facility'])

@@ -43,7 +43,8 @@ class DataProduct(models.Model):
     DATA_PRODUCT_TAGS = (
         PHOTOMETRY,
         FITS_FILE,
-        SPECTROSCOPY
+        SPECTROSCOPY,
+        IMAGE_FILE
     )
 
     FITS_EXTENSIONS = {
@@ -100,7 +101,8 @@ class ReducedDatum(models.Model):
         max_length=100,
         choices=getattr(settings, 'DATA_TYPES', (
             SPECTROSCOPY,
-            PHOTOMETRY
+            PHOTOMETRY,
+            IMAGE_FILE
         )),
         default=''
     )
