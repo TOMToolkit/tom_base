@@ -1,7 +1,7 @@
 from django.test import TestCase, override_settings
 from django import forms
 from datetime import datetime
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.urls import reverse
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, get_service_class
@@ -112,6 +112,9 @@ class TestBrokerViews(TestCase):
     """
     def setUp(self):
         self.user = User.objects.create(username='Han', email='han@example.com')
+        group = Group.objects.create(name='test')
+        group.user_set.add(self.user)
+        group.save()
         self.client.force_login(self.user)
 
     def test_display_form(self):
