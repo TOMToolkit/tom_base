@@ -53,11 +53,14 @@ def process_data_product(data_product, target):
         )
 
 def create_jpeg(data_product):
-    if data_product.data and ('fits' in data_product.data.file.name):
+    if data_product.data and ('.fits' in data_product.data.file.name):
         tmpfile = tempfile.NamedTemporaryFile()
         outfile_name = os.path.basename(data_product.data.file.name)
         filename = outfile_name.split(".")[0] + ".jpg"
-        resp = fits_to_jpg(data_product.data.file.name, tmpfile.name, width=1000, height=1000)
+        img_size = settings.THUMBNAIL_MAX_SIZE
+        if not img_size:
+            img_size = find_img_size(data_product.data.file.name)
+        resp = fits_to_jpg(data_product.data.file.name, tmpfile.name, width=img_size[0], height=img_size[1])
         if resp:
             dp, created = DataProduct.objects.get_or_create(
                 product_id="{}_{}".format(data_product.product_id, "jpeg"),
@@ -72,3 +75,15 @@ def create_jpeg(data_product):
         return True
     else:
         return False
+
+def find_img_size(filename):
+    hdul = fits.open(filename)
+    xsize = 0
+    ysize = 0
+    for hdu in hdul:
+        try:
+            xsize = max(xsize,hdu.header['NAXIS1'])
+            ysize = max(ysize,hdu.header['NAXIS2'])
+        except KeyError:
+            pass
+    return (xsize, ysize)

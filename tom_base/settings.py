@@ -213,6 +213,8 @@ DATA_TYPES = (
 
 AUTO_THUMBNAILS = False
 
+THUMBNAIL_MAX_SIZE = ()
+
 try:
     from local_settings import * # noqa
 except ImportError:
