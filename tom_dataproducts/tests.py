@@ -7,6 +7,7 @@ from unittest.mock import patch
 from tom_observations.tests.utils import FakeFacility
 from tom_observations.tests.factories import TargetFactory, ObservingRecordFactory
 from tom_dataproducts.models import DataProduct
+from guardian.shortcuts import assign_perm
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
@@ -26,6 +27,7 @@ class TestObservationDataViews(TestCase):
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
         user = User.objects.create_user(username='test', email='test@example.com')
+        assign_perm('tom_targets.view_target', user, self.target)
         self.client.force_login(user)
 
     def test_dataproduct_list_on_target(self, dp_mock):

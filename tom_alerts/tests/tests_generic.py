@@ -111,8 +111,8 @@ class TestBrokerViews(TestCase):
     """ Test the views that use the broker classes
     """
     def setUp(self):
-        user = User.objects.create(username='Han', email='han@example.com')
-        self.client.force_login(user)
+        self.user = User.objects.create(username='Han', email='han@example.com')
+        self.client.force_login(self.user)
 
     def test_display_form(self):
         response = self.client.get(reverse('tom_alerts:create') + '?broker=TEST')
@@ -192,7 +192,7 @@ class TestBrokerViews(TestCase):
         response = self.client.post(reverse('tom_alerts:create-target'), data=post_data)
         self.assertEqual(Target.objects.count(), 1)
         self.assertEqual(Target.objects.first().name, 'Hoth')
-        self.assertRedirects(response, reverse('tom_targets:detail', kwargs={'pk': Target.objects.first().id}))
+        self.assertRedirects(response, reverse('tom_targets:update', kwargs={'pk': Target.objects.first().id}))
 
     def test_create_multiple_targets(self):
         query = BrokerQuery.objects.create(
