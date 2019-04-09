@@ -127,9 +127,10 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             target = broker_class().to_target(alert)
             broker_class().process_reduced_data(target, alert)
             target.save()
-            assign_perm('tom_targets.view_target', request.user, target)
-            assign_perm('tom_targets.change_target', request.user, target)
-            assign_perm('tom_targets.delete_target', request.user, target)
+            for group in request.user.groups.all().exclude(name='Public'):
+                assign_perm('tom_targets.view_target', group, target)
+                assign_perm('tom_targets.change_target', group, target)
+                assign_perm('tom_targets.delete_target', group, target)
         if (len(alerts) == 1):
             return redirect(reverse(
                 'tom_targets:update', kwargs={'pk': target.id})
