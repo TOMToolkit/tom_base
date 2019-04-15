@@ -1,6 +1,5 @@
 from django.db import models
 from django.urls import reverse
-from django.utils import timezone
 from django.forms.models import model_to_dict
 from dateutil.parser import parse
 from datetime import datetime
@@ -16,10 +15,10 @@ SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
 ]
 
 NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
-    'mean_anomaly', 'arg_of_perihelion',
+    'scheme', 'mean_anomaly', 'arg_of_perihelion',
     'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
-    'eccentricity', 'ephemeris_period', 'ephemeris_period_err',
-    'ephemeris_epoch', 'ephemeris_epoch_err'
+    'eccentricity', 'epoch', 'epoch_of_perihelion', 'ephemeris_period',
+    'ephemeris_period_err', 'ephemeris_epoch', 'ephemeris_epoch_err'
 ]
 
 REQUIRED_SIDEREAL_FIELDS = ['ra', 'dec']
@@ -30,6 +29,12 @@ class Target(models.Model):
     SIDEREAL = 'SIDEREAL'
     NON_SIDEREAL = 'NON_SIDEREAL'
     TARGET_TYPES = ((SIDEREAL, 'Sidereal'), (NON_SIDEREAL, 'Non-sidereal'))
+
+    TARGET_SCHEMES = (
+        ('MPC_MINOR_PLANET', 'MPC Minor Planet'),
+        ('MPC_COMET', 'MPC Comet'),
+        ('JPL_MAJOR_PLANET', 'JPL Major Planet')
+    )
 
     identifier = models.CharField(
         max_length=100, verbose_name='Identifier', help_text='The identifier for this object, e.g. Kelt-16b.'
@@ -87,6 +92,9 @@ class Target(models.Model):
     distance_err = models.FloatField(
         null=True, blank=True, verbose_name='Distance Error', help_text='Parsecs.'
     )
+    scheme = models.CharField(
+        max_length=50, choices=TARGET_SCHEMES, verbose_name='Orbital Element Scheme', default='', blank=True
+    )
     mean_anomaly = models.FloatField(
         null=True, blank=True, verbose_name='Mean Anomaly', help_text='Angle in degrees.'
     )
@@ -110,6 +118,9 @@ class Target(models.Model):
     )
     semimajor_axis = models.FloatField(
         null=True, blank=True, verbose_name='Semimajor Axis', help_text='In AU'
+    )
+    epoch_of_perihelion = models.FloatField(
+        null=True, blank=True, verbose_name='Epoch of Perihelion', help_text='Julian Date.'
     )
     ephemeris_period = models.FloatField(
         null=True, blank=True, verbose_name='Ephemeris Period', help_text='Days'
