@@ -44,6 +44,7 @@ setup(
         'numpy',
         'pillow',
         'gsselect',
+        'fits2image',
     ],
     extras_require={
         'test': ['factory_boy', 'rise-set']
