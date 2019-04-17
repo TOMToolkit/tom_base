@@ -1,6 +1,6 @@
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 import pytz
 import ephem
 from astropy import units
@@ -14,6 +14,7 @@ from tom_targets.models import Target, TargetExtra
 from tom_observations.utils import get_visibility, get_pyephem_instance_for_type
 from tom_observations.tests.utils import FakeFacility
 from tom_targets.import_targets import import_targets
+from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
 
 class TestTargetDetail(TestCase):
@@ -22,6 +23,8 @@ class TestTargetDetail(TestCase):
         self.client.force_login(user)
         self.st = SiderealTargetFactory.create()
         self.nst = NonSiderealTargetFactory.create()
+        assign_perm('tom_targets.view_target', user, self.st)
+        assign_perm('tom_targets.view_target', user, self.nst)
 
     def test_sidereal_target_detail(self):
         response = self.client.get(reverse('targets:detail', kwargs={'pk': self.st.id}))
@@ -36,6 +39,9 @@ class TestTargetCreate(TestCase):
     def setUp(self):
         user = User.objects.create(username='testuser')
         self.client.force_login(user)
+        self.group = Group.objects.create(name='agroup')
+        user.groups.add(self.group)
+        user.save()
 
     def test_target_create_form(self):
         response = self.client.get(reverse('targets:create'))
@@ -49,6 +55,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 123.456,
             'dec': -32.1,
+            'groups': [self.group.id]
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -64,7 +71,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': '05:34:31.94',
             'dec': '+22:00:52.2',
-
+            'groups': [self.group.id]
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -90,7 +97,8 @@ class TestTargetCreate(TestCase):
             'wins': 50.0,
             'checked': True,
             'birthdate': datetime(year=2019, month=2, day=14),
-            'author': 'Dr. Suess'
+            'author': 'Dr. Suess',
+            'groups': [self.group.id]
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -144,6 +152,9 @@ class TestTargetImport(TestCase):
 class TestTargetSearch(TestCase):
     def setUp(self):
         self.st = SiderealTargetFactory.create(identifier='1337target', name='M42', name2='Messier 42')
+        user = User.objects.create(username='testuser')
+        self.client.force_login(user)
+        assign_perm('tom_targets.view_target', user, self.st)
 
     def test_search_name_no_results(self):
         response = self.client.get(reverse('targets:list') + '?name=noresults')

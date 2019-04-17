@@ -5,6 +5,7 @@ from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from guardian.shortcuts import assign_perm
 import django_filters
 
 from tom_alerts.models import BrokerQuery
@@ -126,9 +127,13 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             target = broker_class().to_target(alert)
             broker_class().process_reduced_data(target, alert)
             target.save()
+            for group in request.user.groups.all().exclude(name='Public'):
+                assign_perm('tom_targets.view_target', group, target)
+                assign_perm('tom_targets.change_target', group, target)
+                assign_perm('tom_targets.delete_target', group, target)
         if (len(alerts) == 1):
             return redirect(reverse(
-                'tom_targets:detail', kwargs={'pk': target.id})
+                'tom_targets:update', kwargs={'pk': target.id})
             )
         else:
             return redirect(reverse(

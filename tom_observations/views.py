@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.shortcuts import redirect
 from django.core.management import call_command
 from django.contrib import messages
+from guardian.shortcuts import get_objects_for_user
 
 from .models import ObservationRecord
 from .forms import ManualObservationForm
@@ -34,6 +35,11 @@ class ObservationListView(FilterView):
     paginate_by = 25
     model = ObservationRecord
     strict = False
+
+    def get_queryset(self, *args, **kwargs):
+        return ObservationRecord.objects.filter(
+            target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+        )
 
     def get(self, request, *args, **kwargs):
         update_status = request.GET.get('update_status', False)
@@ -136,6 +142,11 @@ class ManualObservationCreateView(LoginRequiredMixin, FormView):
 
 class ObservationRecordDetailView(DetailView):
     model = ObservationRecord
+
+    def get_queryset(self, *args, **kwargs):
+        return ObservationRecord.objects.filter(
+            target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
