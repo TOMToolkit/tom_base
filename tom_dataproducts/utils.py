@@ -74,7 +74,6 @@ def create_image_dataproduct(data_product):
 def create_jpeg(dp_file, width=None, height=None):
     if dp_file and ('.fits' in dp_file.file.name):
         tmpfile = tempfile.NamedTemporaryFile()
-        width, height = settings.THUMBNAIL_MAX_SIZE
         if not width or not height:
             width, height = find_img_size(dp_file.file.name)
         resp = fits_to_jpg(dp_file.file.name, tmpfile.name, width=width, height=height)
@@ -84,13 +83,16 @@ def create_jpeg(dp_file, width=None, height=None):
     return
 
 def find_img_size(filename):
-    hdul = fits.open(filename)
-    xsize = 0
-    ysize = 0
-    for hdu in hdul:
-        try:
-            xsize = max(xsize,hdu.header['NAXIS1'])
-            ysize = max(ysize,hdu.header['NAXIS2'])
-        except KeyError:
-            pass
-    return (xsize, ysize)
+    try:
+        return settings.THUMBNAIL_MAX_SIZE
+    except:
+        hdul = fits.open(filename)
+        xsize = 0
+        ysize = 0
+        for hdu in hdul:
+            try:
+                xsize = max(xsize,hdu.header['NAXIS1'])
+                ysize = max(ysize,hdu.header['NAXIS2'])
+            except KeyError:
+                pass
+        return (xsize, ysize)

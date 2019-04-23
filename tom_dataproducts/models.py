@@ -10,6 +10,7 @@ matplotlib.use('Agg') # noqa
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from astropy.visualization import ZScaleInterval
+from PIL import Image
 
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
@@ -88,6 +89,7 @@ class DataProduct(models.Model):
             im = Image.open(self.thumbnail)
             if im.size != settings.THUMBNAIL_DEFAULT_SIZE:
                 redraw = True
+
         if not self.thumbnail or redraw:
             width, height = settings.THUMBNAIL_DEFAULT_SIZE
             tmpfile = create_jpeg(self.data, width=width, height=height)
@@ -98,7 +100,7 @@ class DataProduct(models.Model):
                     self.thumbnail.save(filename, File(f), save=True)
                     self.save()
                 tmpfile.close()
-        return
+        return self.thumbnail.url
 
 
 class ReducedDatum(models.Model):
