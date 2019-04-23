@@ -218,7 +218,9 @@ DATA_TYPES = (
 
 AUTO_THUMBNAILS = False
 
-THUMBNAIL_MAX_SIZE = ()
+THUMBNAIL_MAX_SIZE = (0,0)
+
+THUMBNAIL_DEFAULT_SIZE = (200,200)
 
 try:
     from local_settings import * # noqa

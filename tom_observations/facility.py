@@ -110,7 +110,7 @@ class GenericObservationFacility(ABC):
 
     def save_data_products(self, observation_record, product_id=None):
         from tom_dataproducts.models import DataProduct
-        from tom_dataproducts.utils import create_jpeg
+        from tom_dataproducts.utils import create_image_dataproduct
         final_products = []
         products = self.data_products(observation_record.observation_id, product_id)
 
@@ -125,8 +125,9 @@ class GenericObservationFacility(ABC):
                 dfile = ContentFile(product_data)
                 dp.data.save(product['filename'], dfile)
                 dp.save()
+                dp.get_preview()
             if settings.AUTO_THUMBNAILS:
-                create_jpeg(dp)
+                create_image_dataproduct(dp)
             final_products.append(dp)
         return final_products
 

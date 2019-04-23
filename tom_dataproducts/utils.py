@@ -52,29 +52,36 @@ def process_data_product(data_product, target):
             value=json.dumps(spectrum)
         )
 
-def create_jpeg(data_product):
-    if data_product.data and ('.fits' in data_product.data.file.name):
-        tmpfile = tempfile.NamedTemporaryFile()
+def create_image_dataproduct(data_product):
+    tmpfile = create_jpeg(data_product.data)
+    if tmpfile:
+        dp, created = DataProduct.objects.get_or_create(
+            product_id="{}_{}".format(data_product.product_id, "jpeg"),
+            target=data_product.target,
+            observation_record=data_product.observation_record,
+            tag='image_file',
+        )
         outfile_name = os.path.basename(data_product.data.file.name)
         filename = outfile_name.split(".")[0] + ".jpg"
-        img_size = settings.THUMBNAIL_MAX_SIZE
-        if not img_size:
-            img_size = find_img_size(data_product.data.file.name)
-        resp = fits_to_jpg(data_product.data.file.name, tmpfile.name, width=img_size[0], height=img_size[1])
-        if resp:
-            dp, created = DataProduct.objects.get_or_create(
-                product_id="{}_{}".format(data_product.product_id, "jpeg"),
-                target=data_product.target,
-                observation_record=data_product.observation_record,
-                tag='image_file',
-            )
-            with open(tmpfile.name, 'rb') as f:
-                dp.data.save(filename, File(f), save=True)
-                dp.save()
+        with open(tmpfile.name, 'rb') as f:
+            dp.data.save(filename, File(f), save=True)
+            dp.save()
         tmpfile.close()
         return True
-    else:
-        return False
+
+    return
+
+def create_jpeg(dp_file, width=None, height=None):
+    if dp_file and ('.fits' in dp_file.file.name):
+        tmpfile = tempfile.NamedTemporaryFile()
+        width, height = settings.THUMBNAIL_MAX_SIZE
+        if not width or not height:
+            width, height = find_img_size(dp_file.file.name)
+        resp = fits_to_jpg(dp_file.file.name, tmpfile.name, width=width, height=height)
+        if resp:
+            return tmpfile
+
+    return
 
 def find_img_size(filename):
     hdul = fits.open(filename)

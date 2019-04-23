@@ -1,3 +1,4 @@
+from django.core.files import File
 from django.db import models
 from io import BytesIO
 from base64 import b64encode
@@ -62,6 +63,7 @@ class DataProduct(models.Model):
     modified = models.DateTimeField(auto_now=True)
     tag = models.CharField(max_length=50, blank=True, default='', choices=DATA_PRODUCT_TAGS)
     featured = models.BooleanField(default=False)
+    thumbnail = models.FileField(upload_to=data_product_path, null=True, default=None)
 
     class Meta:
         ordering = ('-created',)
@@ -76,22 +78,27 @@ class DataProduct(models.Model):
     def get_file_extension(self):
         return os.path.splitext(self.data.name)[1]
 
-    def get_image_data(self, min_scale=40, max_scale=99):
-        buffer = BytesIO()
-        if self.tag == FITS_FILE[0]:
-            image_data = fits.getdata(self.data.open(), extname=self.FITS_EXTENSIONS[self.get_file_extension()])
-            image_data = image_data[::6, ::6]
-            interval = ZScaleInterval(nsamples=2000, contrast=0.1)
-            image_data = interval(image_data)
-            fig = plt.figure()
-            plt.axis('off')
-            ax = plt.gca()
-            ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
-            ax.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
-            plt.imsave(buffer, image_data, format='jpeg')
-            buffer.seek(0)
-            plt.close(fig)
-        return b64encode(buffer.read()).decode('utf-8')
+    def get_image_data(self):
+        return
+
+    def get_preview(self, size=settings.THUMBNAIL_DEFAULT_SIZE):
+        from .utils import create_jpeg
+        redraw = False
+        if self.thumbnail:
+            im = Image.open(self.thumbnail)
+            if im.size != settings.THUMBNAIL_DEFAULT_SIZE:
+                redraw = True
+        if not self.thumbnail or redraw:
+            width, height = settings.THUMBNAIL_DEFAULT_SIZE
+            tmpfile = create_jpeg(self.data, width=width, height=height)
+            if tmpfile:
+                outfile_name = os.path.basename(self.data.file.name)
+                filename = outfile_name.split(".")[0] + "_tb.jpg"
+                with open(tmpfile.name, 'rb') as f:
+                    self.thumbnail.save(filename, File(f), save=True)
+                    self.save()
+                tmpfile.close()
+        return
 
 
 class ReducedDatum(models.Model):
