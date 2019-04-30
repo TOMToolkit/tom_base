@@ -56,6 +56,12 @@ class TestTargetCreate(TestCase):
             'ra': 123.456,
             'dec': -32.1,
             'groups': [self.group.id]
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': None,
+            'targetextra_set-0-value': None,
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -72,6 +78,12 @@ class TestTargetCreate(TestCase):
             'ra': '05:34:31.94',
             'dec': '+22:00:52.2',
             'groups': [self.group.id]
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': None,
+            'targetextra_set-0-value': None,
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])

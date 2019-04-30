@@ -19,6 +19,8 @@
   {% endif %}
   {% csrf_token %}
   {% bootstrap_form form %}
+  <p>Extra Data</p>
+  {% bootstrap_formset extra_form %}
   {% buttons %}
     <button type="submit" class="btn btn-primary">
       Submit
