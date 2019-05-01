@@ -1,7 +1,7 @@
 from django import forms
 from astropy.coordinates import Angle
 from astropy import units as u
-from django.forms import ValidationError
+from django.forms import ValidationError, inlineformset_factory
 from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
