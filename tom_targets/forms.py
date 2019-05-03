@@ -127,4 +127,4 @@ class TargetVisibilityForm(forms.Form):
             raise forms.ValidationError('Start time must be before end time')
 
 
-TargetExtraFormset = inlineformset_factory(Target, TargetExtra, fields=('key', 'value'))
+TargetExtraFormset = inlineformset_factory(Target, TargetExtra, fields=('key', 'value'), widgets={'value': forms.TextInput()})
