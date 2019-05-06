@@ -6,6 +6,7 @@ from django.template.loader import get_template
 from django.core.management import call_command
 from django.core.management.utils import get_random_secret_key
 from django.utils import timezone
+from django.contrib.auth.models import Group, User
 
 BASE_DIR = settings.BASE_DIR
 
@@ -80,6 +81,7 @@ class Command(BaseCommand):
         call_command('migrate', verbosity=0, interactive=False)
         self.ok()
 
+
     def get_target_type(self):
         prompt = 'Which target type will your project use? {}'.format(self.style.WARNING('[SIDEREAL/NON_SIDEREAL] '))
         target_type = input(prompt).upper()
@@ -113,6 +115,13 @@ class Command(BaseCommand):
         self.stdout.write('Please create a Principal Investigator (PI) for your project')
         call_command('createsuperuser')
 
+    def create_public_group(self):
+        self.status('Setting up Public group... ')
+        group = Group.objects.create(name='Public')
+        group.user_set.add(*User.objects.all())
+        group.save()
+        self.ok()
+
     def complete(self):
         self.exit(
             self.style.SUCCESS('Setup complete! Run ./manage.py migrate && ./manage.py runserver to start your TOM.')
@@ -129,4 +138,5 @@ class Command(BaseCommand):
         self.generate_config()
         self.run_migrations()
         self.create_pi()
+        self.create_public_group()
         self.complete()
