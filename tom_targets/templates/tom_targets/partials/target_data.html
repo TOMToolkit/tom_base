@@ -17,7 +17,9 @@
 </dl>
 <dl class="row">
 {% for target_extra in target.targetextra_set.all %}
+{% if target_extra.key not in extra_fields %}
   <dt class="col-sm-6">{{ target_extra.key }}</dt>
   <dd class="col-sm-6">{{ target_extra.value }}</dd>
+{% endif %}
 {% endfor %}
 </dl>

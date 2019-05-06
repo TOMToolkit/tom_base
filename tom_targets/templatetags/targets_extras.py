@@ -8,6 +8,7 @@ from astropy.coordinates import Angle
 from tom_targets.models import Target, TargetExtra
 from tom_targets.forms import TargetVisibilityForm
 from tom_observations.utils import get_visibility
+from django.conf import settings
 
 register = template.Library()
 
@@ -24,7 +25,7 @@ def target_feature(target):
 
 @register.inclusion_tag('tom_targets/partials/target_data.html')
 def target_data(target):
-    return {'target': target}
+    return {'target': target, 'extra_fields': [field['name'] for field in settings.EXTRA_FIELDS] }
 
 
 @register.inclusion_tag('tom_targets/partials/target_plan.html', takes_context=True)
