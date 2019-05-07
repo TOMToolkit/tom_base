@@ -55,7 +55,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 123.456,
             'dec': -32.1,
-            'groups': [self.group.id]
+            'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
             'targetextra_set-MIN_NUM_FORMS': 0,
