@@ -77,7 +77,7 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': '05:34:31.94',
             'dec': '+22:00:52.2',
-            'groups': [self.group.id]
+            'groups': [self.group.id],
             'targetextra_set-TOTAL_FORMS': 1,
             'targetextra_set-INITIAL_FORMS': 0,
             'targetextra_set-MIN_NUM_FORMS': 0,
@@ -110,7 +110,7 @@ class TestTargetCreate(TestCase):
             'checked': True,
             'birthdate': datetime(year=2019, month=2, day=14),
             'author': 'Dr. Suess',
-            'groups': [self.group.id]
+            'groups': [self.group.id],
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
