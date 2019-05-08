@@ -225,6 +225,11 @@ HOOKS = {
     'observation_change_state': 'tom_common.hooks.observation_change_state'
 }
 
+DATA_TYPES = (
+    ('SPECTROSCOPY', 'Spectroscopy'),
+    ('PHOTOMETRY', 'Photometry')
+)
+
 try:
     from local_settings import * # noqa
 except ImportError:
