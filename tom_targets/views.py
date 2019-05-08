@@ -92,8 +92,12 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     fields = '__all__'
 
     def get_context_data(self, **kwargs):
+        extra_field_names = [extra['name'] for extra in settings.EXTRA_FIELDS]
         context = super().get_context_data(**kwargs)
-        context['extra_form'] = TargetExtraFormset(instance=self.object)
+        context['extra_form'] = TargetExtraFormset(
+            instance=self.object,
+            queryset=self.object.targetextra_set.exclude(key__in=extra_field_names)
+        )
         return context
 
     def form_valid(self, form):
