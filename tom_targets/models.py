@@ -1,6 +1,7 @@
 from django.db import models
 from django.urls import reverse
 from django.forms.models import model_to_dict
+from django.conf import settings
 from dateutil.parser import parse
 from datetime import datetime
 
@@ -160,6 +161,16 @@ class Target(models.Model):
         return [
             obs for obs in self.observationrecord_set.all().order_by('scheduled_start') if not obs.terminal
         ]
+
+    @property
+    def extra_fields(self):
+        defined_extras = [extra_field['name'] for extra_field in settings.EXTRA_FIELDS]
+        return {te.key: te.value for te in self.targetextra_set.filter(key__in=defined_extras)}
+
+    @property
+    def tags(self):
+        defined_extras = [extra_field['name'] for extra_field in settings.EXTRA_FIELDS]
+        return {te.key: te.value for te in self.targetextra_set.exclude(key__in=defined_extras)}
 
     def as_dict(self):
         if self.type == self.SIDEREAL:
