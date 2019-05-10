@@ -207,7 +207,6 @@ class GenericObservationForm(forms.Form):
     def serialize_parameters(self):
         return json.dumps(self.cleaned_data)
 
-    @property
     def observation_payload(self):
         """
         This method is called to extract the data from the form into a dictionary that

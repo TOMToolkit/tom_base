@@ -93,7 +93,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         # Submit the observation
         facility = self.get_facility_class()
         target = self.get_target()
-        observation_ids = facility().submit_observation(form.observation_payload)
+        observation_ids = facility().submit_observation(form.observation_payload())
 
         for observation_id in observation_ids:
             # Create Observation record
