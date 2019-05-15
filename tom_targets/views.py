@@ -14,6 +14,7 @@ from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
 
 from .models import Target
+from tom_dataproducts.forms import DataProductUploadForm
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm
 from .import_targets import import_targets
 from .filters import TargetFilter
@@ -113,6 +114,18 @@ class TargetDeleteView(PermissionRequiredMixin, DeleteView):
 class TargetDetailView(PermissionRequiredMixin, DetailView):
     permission_required = 'tom_targets.view_target'
     model = Target
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        data_product_upload_form = DataProductUploadForm(
+            initial={
+                'target': self.get_object(),
+                'referrer': reverse('tom_targets:detail', args=(self.get_object().id,))
+            },
+            hide_timestamp=False
+        )
+        context['data_product_form'] = data_product_upload_form
+        return context
 
     def get(self, request, *args, **kwargs):
         update_status = request.GET.get('update_status', False)

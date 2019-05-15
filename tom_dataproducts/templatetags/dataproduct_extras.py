@@ -1,6 +1,7 @@
 import json
 
 from django import template
+from datetime import datetime
 
 from plotly import offline
 import plotly.graph_objs as go
@@ -38,25 +39,6 @@ def dataproduct_list_for_observation_unsaved(observation_record):
 def dataproduct_list_all(saved, fields):
     products = DataProduct.objects.all().order_by('-created')
     return {'products': products}
-
-
-@register.inclusion_tag('tom_dataproducts/partials/upload_dataproduct.html', takes_context=True)
-def upload_dataproduct(context):
-    model_instance = context.get('object', None)
-    object_key = ''
-    if type(model_instance) == Target:
-        object_key = 'target'
-    elif type(model_instance) == ObservationRecord:
-        object_key = 'observation_record'
-    form = context.get(
-        'data_product_form',
-        DataProductUploadForm(initial={object_key: model_instance})
-    )
-    user = context.get('user', None)
-    return {
-        'data_product_form': form,
-        'user': user
-    }
 
 
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html')
@@ -97,17 +79,19 @@ def spectroscopy_for_target(target, dataproduct=None):
     if dataproduct:
         spectral_dataproducts = DataProduct.objects.get(dataproduct=dataproduct)
     for data in spectral_dataproducts:
-        datum = json.loads(ReducedDatum.objects.get(data_product=data).value)
+        datum = ReducedDatum.objects.get(data_product=data)
+        datum_value = json.loads(datum.value)
         wavelength = []
         flux = []
-        for key, value in datum.items():
+        for key, value in datum_value.items():
             wavelength.append(value['wavelength'])
             flux.append(float(value['flux']))
-        spectra.append((wavelength, flux))
+        spectra.append((wavelength, flux, datetime.strftime(datum.timestamp, '%Y-%m-%d %H:%M:%S')))
     plot_data = [
         go.Scatter(
             x=spectrum[0],
-            y=spectrum[1]
+            y=spectrum[1],
+            name=spectrum[2]
         ) for spectrum in spectra]
     layout = go.Layout(
         height=600,

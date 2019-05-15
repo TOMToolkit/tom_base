@@ -1,7 +1,9 @@
-from django.db import models
+import os
 from io import BytesIO
 from base64 import b64encode
-import os
+from datetime import datetime
+
+from django.db import models
 from django.conf import settings
 
 import matplotlib
@@ -40,7 +42,7 @@ class DataProductGroup(models.Model):
 
 
 class DataProduct(models.Model):
-    DATA_PRODUCT_TAGS = (
+    DATA_PRODUCT_TYPES = (
         PHOTOMETRY,
         FITS_FILE,
         SPECTROSCOPY
@@ -59,7 +61,7 @@ class DataProduct(models.Model):
     group = models.ManyToManyField(DataProductGroup)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    tag = models.CharField(max_length=50, blank=True, default='', choices=DATA_PRODUCT_TAGS)
+    tag = models.CharField(max_length=50, blank=True, default='', choices=DATA_PRODUCT_TYPES)
     featured = models.BooleanField(default=False)
 
     class Meta:
@@ -106,5 +108,5 @@ class ReducedDatum(models.Model):
     )
     source_name = models.CharField(max_length=100, default='')
     source_location = models.CharField(max_length=200, default='')
-    timestamp = models.DateTimeField(null=False, blank=False, db_index=True)
+    timestamp = models.DateTimeField(null=False, blank=False, default=datetime.now, db_index=True)
     value = models.TextField(null=False, blank=False)

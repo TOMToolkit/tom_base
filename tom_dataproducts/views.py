@@ -14,6 +14,7 @@ from django.contrib import messages
 from django.core.management import call_command
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
+from django.core.exceptions import NON_FIELD_ERRORS
 from django.http import HttpResponseRedirect
 from guardian.shortcuts import get_objects_for_user
 
@@ -54,32 +55,41 @@ class DataProductSaveView(LoginRequiredMixin, View):
 
 class DataProductUploadView(LoginRequiredMixin, FormView):
     form_class = DataProductUploadForm
-    template_name = 'tom_dataproducts/partials/upload_dataproduct.html'
 
-    def post(self, request, *args, **kwargs):
-        form = self.get_form()
-        if form.is_valid():
-            target = form.cleaned_data['target']
-            if not target:
-                observation_record = form.cleaned_data['observation_record']
-                target = observation_record.target
-            else:
-                observation_record = None
-            tag = form.cleaned_data['tag']
-            data_product_files = request.FILES.getlist('files')
-            for f in data_product_files:
-                dp = DataProduct(
-                    target=target,
-                    observation_record=observation_record,
-                    data=f,
-                    product_id=None,
-                    tag=tag
-                )
-                dp.save()
-                process_data_product(dp, target)
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+    def form_valid(self, form):
+        print('form valid')
+        target = form.cleaned_data['target']
+        observation_timestamp = form.cleaned_data.get('observation_timestamp', None)
+        if not target:
+            observation_record = form.cleaned_data['observation_record']
+            target = observation_record.target
         else:
-            return super().form_invalid(form)
+            observation_record = None
+        tag = form.cleaned_data['tag']
+        data_product_files = self.request.FILES.getlist('files')
+        for f in data_product_files:
+            dp = DataProduct(
+                target=target,
+                observation_record=observation_record,
+                data=f,
+                product_id=None,
+                tag=tag
+            )
+            dp.save()
+            # try:
+            process_data_product(dp, target, timestamp=observation_timestamp)
+            # except: # TODO: more specific exception
+            #     dp.delete()
+            #     form.add_error(NON_FIELD_ERRORS, "Uploaded file used an invalid format. Please consult the docs.")
+            #     return super().form_invalid(form)
+        return redirect(form.cleaned_data.get('referrer', '/'))
+
+
+    # TODO: ensure fits files can have obsv dates
+    # TODO: ensure photometry can't have dates
+    def form_invalid(self, form):
+        messages.error(self.request, 'There was a problem uploading your file: {}'.format(form.errors))
+        return redirect(form.cleaned_data.get('referrer', '/'))
 
 
 class DataProductDeleteView(LoginRequiredMixin, DeleteView):

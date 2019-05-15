@@ -2,12 +2,11 @@ import re
 import json
 
 from astropy.time import Time
-from datetime import datetime
 from .models import ReducedDatum
-from django.conf import settings
 
 
-def process_data_product(data_product, target):
+def process_data_product(data_product, target, timestamp=None):
+    # TODO: Validate data
     if data_product.tag == 'photometry':
         with data_product.data.file.open() as f:
             for line in f:
@@ -42,6 +41,6 @@ def process_data_product(data_product, target):
             target=target,
             data_product=data_product,
             data_type=data_product.tag,
-            timestamp=datetime.now(),
+            timestamp=timestamp,
             value=json.dumps(spectrum)
         )

@@ -1,6 +1,7 @@
 {% load bootstrap4 %}
 {% if user.is_authenticated %}
 <h4>Upload a data product for a target</h4>
+{% if response.GET.errors %}There was an error with your upload: {{ response.GET.errors }}{% endif %}
 <form method="POST" action="{% url 'tom_dataproducts:upload' %}" enctype="multipart/form-data">
   {% csrf_token %}
   {% bootstrap_form data_product_form %}
