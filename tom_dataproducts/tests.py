@@ -19,7 +19,7 @@ def mock_find_img_size(filename):
     return (0,0)
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
-@patch('tom_dataproducts.models.DataProduct.get_image_data', return_value=b'image')
+@patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
 class TestObservationDataViews(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()

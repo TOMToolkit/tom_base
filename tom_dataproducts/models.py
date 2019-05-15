@@ -79,12 +79,8 @@ class DataProduct(models.Model):
     def get_file_extension(self):
         return os.path.splitext(self.data.name)[1]
 
-    def get_image_data(self):
-        return
-
-    def get_preview(self, size=settings.THUMBNAIL_DEFAULT_SIZE):
+    def get_preview(self, size=settings.THUMBNAIL_DEFAULT_SIZE, redraw=False):
         from .utils import create_jpeg
-        redraw = False
         if self.thumbnail:
             im = Image.open(self.thumbnail)
             if im.size != settings.THUMBNAIL_DEFAULT_SIZE:
