@@ -1,4 +1,5 @@
 import os
+import json
 from io import BytesIO
 from base64 import b64encode
 from datetime import datetime
@@ -93,6 +94,26 @@ class DataProduct(models.Model):
             buffer.seek(0)
             plt.close(fig)
         return b64encode(buffer.read()).decode('utf-8')
+
+    def get_photometry(self):
+        photometry_data = {}
+        for rd in ReducedDatum.objects.filter(data_product=self, data_type=PHOTOMETRY[0]):
+            datum = json.loads(rd.value)
+            photometry_data.setdefault(datum.get('filter', ''), {})
+            photometry_data[datum.get('filter', '')].setdefault('time', []).append(rd.timestamp)
+            for key, value in datum.items():
+                photometry_data[datum.get('filter', '')].setdefault(key, []).append(value)
+        return photometry_data
+
+    def get_spectroscopy(self):
+        spectroscopy_data = {}
+        datum = ReducedDatum.objects.get(data_product=self, data_type=SPECTROSCOPY[0])
+        obs_date = datetime.strftime(datum.timestamp, '%Y-%m-%d %H:%M:%S')
+        spectroscopy_data[obs_date] = {}
+        for key, value in json.loads(datum.value).items():
+            spectroscopy_data[obs_date].setdefault('wavelength', []).append(value['wavelength'])
+            spectroscopy_data[obs_date].setdefault('flux', []).append(value['flux'])
+        return spectroscopy_data
 
 
 class ReducedDatum(models.Model):

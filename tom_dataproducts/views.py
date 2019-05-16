@@ -18,7 +18,7 @@ from django.core.exceptions import NON_FIELD_ERRORS
 from django.http import HttpResponseRedirect
 from guardian.shortcuts import get_objects_for_user
 
-from .models import DataProduct, DataProductGroup
+from .models import DataProduct, DataProductGroup, ReducedDatum
 from .utils import process_data_product
 from .forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.models import ObservationRecord
@@ -57,7 +57,6 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
     form_class = DataProductUploadForm
 
     def form_valid(self, form):
-        print('form valid')
         target = form.cleaned_data['target']
         observation_timestamp = form.cleaned_data.get('observation_timestamp', None)
         if not target:
@@ -87,6 +86,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
 
     # TODO: ensure fits files can have obsv dates
     # TODO: ensure photometry can't have dates
+    # TODO: ensure proper message formatting
     def form_invalid(self, form):
         messages.error(self.request, 'There was a problem uploading your file: {}'.format(form.errors))
         return redirect(form.cleaned_data.get('referrer', '/'))
@@ -102,6 +102,7 @@ class DataProductDeleteView(LoginRequiredMixin, DeleteView):
         return referer
 
     def delete(self, request, *args, **kwargs):
+        reduced_data = ReducedDatum.objects.filter(data_product=self.get_object()).delete()
         self.get_object().data.delete()
         return super().delete(request, *args, **kwargs)
 

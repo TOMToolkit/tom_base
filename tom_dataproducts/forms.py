@@ -51,9 +51,8 @@ class DataProductUploadForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        print(cleaned_data)
         if cleaned_data.get('tag', '') != SPECTROSCOPY[0] and cleaned_data.get('observation_timestamp'):
             raise forms.ValidationError('Observation timestamp is not valid for uploaded photometry')
-        # elif not cleaned_data.get('observation_timestamp'):
-        #     raise forms.ValidationError('Observation timestamp is required for spectroscopy')
+        elif not cleaned_data.get('observation_timestamp'):
+            raise forms.ValidationError('Observation timestamp is required for spectroscopy')
         return cleaned_data
