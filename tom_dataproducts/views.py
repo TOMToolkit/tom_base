@@ -14,11 +14,11 @@ from django.contrib import messages
 from django.core.management import call_command
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
-from django.core.exceptions import NON_FIELD_ERRORS
 from django.http import HttpResponseRedirect
 from guardian.shortcuts import get_objects_for_user
 
-from .models import DataProduct, DataProductGroup, ReducedDatum
+from .models import DataProduct, DataProductGroup, ReducedDatum, SPECTROSCOPY, PHOTOMETRY
+from .exceptions import InvalidFileFormatException
 from .utils import process_data_product
 from .forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.models import ObservationRecord
@@ -75,12 +75,16 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
                 tag=tag
             )
             dp.save()
-            # try:
-            process_data_product(dp, target, timestamp=observation_timestamp)
-            # except: # TODO: more specific exception
-            #     dp.delete()
-            #     form.add_error(NON_FIELD_ERRORS, "Uploaded file used an invalid format. Please consult the docs.")
-            #     return super().form_invalid(form)
+            try:
+                process_data_product(dp, target, timestamp=observation_timestamp)
+                if tag == SPECTROSCOPY[0]:
+                    dp.get_spectroscopy()
+                elif tag == PHOTOMETRY[0]:
+                    dp.get_photometry()
+            except InvalidFileFormatException: # TODO: more specific exception
+                ReducedDatum.objects.filter(data_product=dp).delete()
+                dp.delete()
+                messages.error(self.request, 'There was a problem uploading your file: The file format was invalid')
         return redirect(form.cleaned_data.get('referrer', '/'))
 
 
