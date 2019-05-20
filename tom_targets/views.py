@@ -15,7 +15,7 @@ from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
 
 from .models import Target
 from tom_dataproducts.forms import DataProductUploadForm
-from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm
+from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from .import_targets import import_targets
 from .filters import TargetFilter
 
@@ -54,6 +54,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super(TargetCreateView, self).get_context_data(**kwargs)
         context['type_choices'] = Target.TARGET_TYPES
+        context['extra_form'] = TargetExtraFormset()
         return context
 
     def get_form_class(self):
@@ -69,6 +70,14 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             self.initial['type'] = Target.NON_SIDEREAL
             return NonSiderealTargetCreateForm
 
+    def form_valid(self, form):
+        super().form_valid(form)
+        extra = TargetExtraFormset(self.request.POST)
+        if extra.is_valid():
+            extra.instance = self.object
+            extra.save()
+        return redirect(self.get_success_url())
+
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
         if self.request.user.is_superuser:
@@ -81,6 +90,23 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
 class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = 'tom_targets.change_target'
     model = Target
+    fields = '__all__'
+
+    def get_context_data(self, **kwargs):
+        extra_field_names = [extra['name'] for extra in settings.EXTRA_FIELDS]
+        context = super().get_context_data(**kwargs)
+        context['extra_form'] = TargetExtraFormset(
+            instance=self.object,
+            queryset=self.object.targetextra_set.exclude(key__in=extra_field_names)
+        )
+        return context
+
+    def form_valid(self, form):
+        super().form_valid(form)
+        extra = TargetExtraFormset(self.request.POST, instance=self.object)
+        if extra.is_valid():
+            extra.save()
+        return redirect(self.get_success_url())
 
     def get_queryset(self, *args, **kwargs):
         return get_objects_for_user(self.request.user, 'tom_targets.change_target')
