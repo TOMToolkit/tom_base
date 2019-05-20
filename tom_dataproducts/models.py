@@ -1,7 +1,10 @@
-from django.db import models
+import os
+import json
 from io import BytesIO
 from base64 import b64encode
-import os
+from datetime import datetime
+
+from django.db import models
 from django.conf import settings
 
 import matplotlib
@@ -40,7 +43,7 @@ class DataProductGroup(models.Model):
 
 
 class DataProduct(models.Model):
-    DATA_PRODUCT_TAGS = (
+    DATA_PRODUCT_TYPES = (
         PHOTOMETRY,
         FITS_FILE,
         SPECTROSCOPY
@@ -59,7 +62,7 @@ class DataProduct(models.Model):
     group = models.ManyToManyField(DataProductGroup)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    tag = models.CharField(max_length=50, blank=True, default='', choices=DATA_PRODUCT_TAGS)
+    tag = models.CharField(max_length=50, blank=True, default='', choices=DATA_PRODUCT_TYPES)
     featured = models.BooleanField(default=False)
 
     class Meta:
@@ -92,6 +95,26 @@ class DataProduct(models.Model):
             plt.close(fig)
         return b64encode(buffer.read()).decode('utf-8')
 
+    def get_photometry(self):
+        photometry_data = {}
+        for rd in ReducedDatum.objects.filter(data_product=self, data_type=PHOTOMETRY[0]):
+            datum = json.loads(rd.value)
+            photometry_data.setdefault(datum.get('filter', ''), {})
+            photometry_data[datum.get('filter', '')].setdefault('time', []).append(rd.timestamp)
+            for key, value in datum.items():
+                photometry_data[datum.get('filter', '')].setdefault(key, []).append(value)
+        return photometry_data
+
+    def get_spectroscopy(self):
+        spectroscopy_data = {}
+        datum = ReducedDatum.objects.get(data_product=self, data_type=SPECTROSCOPY[0])
+        obs_date = datetime.strftime(datum.timestamp, '%Y-%m-%d %H:%M:%S')
+        spectroscopy_data[obs_date] = {}
+        for key, value in json.loads(datum.value).items():
+            spectroscopy_data[obs_date].setdefault('wavelength', []).append(value['wavelength'])
+            spectroscopy_data[obs_date].setdefault('flux', []).append(value['flux'])
+        return spectroscopy_data
+
 
 class ReducedDatum(models.Model):
     target = models.ForeignKey(Target, null=False, on_delete=models.CASCADE)
@@ -106,5 +129,5 @@ class ReducedDatum(models.Model):
     )
     source_name = models.CharField(max_length=100, default='')
     source_location = models.CharField(max_length=200, default='')
-    timestamp = models.DateTimeField(null=False, blank=False, db_index=True)
+    timestamp = models.DateTimeField(null=False, blank=False, default=datetime.now, db_index=True)
     value = models.TextField(null=False, blank=False)
