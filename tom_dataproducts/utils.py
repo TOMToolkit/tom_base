@@ -51,7 +51,7 @@ def process_data_product(data_product, target):
         )
 
 def create_image_dataproduct(data_product):
-    tmpfile = data_product.create_jpeg()
+    tmpfile = data_product.create_thumbnail()
     if tmpfile:
         dp, created = DataProduct.objects.get_or_create(
             product_id="{}_{}".format(data_product.product_id, "jpeg"),
