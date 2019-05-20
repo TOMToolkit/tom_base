@@ -26,9 +26,9 @@ class MARSQueryForm(GenericQueryForm):
         label='Time Upper',
         widget=forms.TextInput(attrs={'type': 'date'})
     )
-    since__time = forms.IntegerField(
+    time__since = forms.IntegerField(
         required=False,
-        label='Since Time',
+        label='Time Since',
         help_text='Alerts younger than this number of seconds'
     )
     jd__gt = forms.FloatField(required=False, label='JD Lower')
@@ -97,7 +97,7 @@ class MARSQueryForm(GenericQueryForm):
             self.common_layout,
             Fieldset(
                 'Time based filters',
-                'since__time',
+                'time__since',
                 Div(
                     Div(
                         'time__gt',
