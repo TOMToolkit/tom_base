@@ -81,18 +81,15 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
                     dp.get_spectroscopy()
                 elif tag == PHOTOMETRY[0]:
                     dp.get_photometry()
-            except InvalidFileFormatException: # TODO: more specific exception
+            except InvalidFileFormatException:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
                 messages.error(self.request, 'There was a problem uploading your file: The file format was invalid')
         return redirect(form.cleaned_data.get('referrer', '/'))
 
-
-    # TODO: ensure fits files can have obsv dates
-    # TODO: ensure photometry can't have dates
-    # TODO: ensure proper message formatting
     def form_invalid(self, form):
-        messages.error(self.request, 'There was a problem uploading your file: {}'.format(form.errors))
+        # TODO: Format error messages in a more human-readable way
+        messages.error(self.request, 'There was a problem uploading your file: {}'.format(form.errors.as_json()))
         return redirect(form.cleaned_data.get('referrer', '/'))
 
 

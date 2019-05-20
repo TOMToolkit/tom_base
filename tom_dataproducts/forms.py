@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import DataProductGroup, DataProduct, SPECTROSCOPY
+from .models import DataProductGroup, DataProduct, PHOTOMETRY
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
 
@@ -51,8 +51,9 @@ class DataProductUploadForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        if cleaned_data.get('tag', '') != SPECTROSCOPY[0] and cleaned_data.get('observation_timestamp'):
-            raise forms.ValidationError('Observation timestamp is not valid for uploaded photometry')
+        if cleaned_data.get('tag', '') == PHOTOMETRY[0]:
+            if cleaned_data.get('observation_timestamp'):
+                raise forms.ValidationError('Observation timestamp is not valid for uploaded photometry')
         elif not cleaned_data.get('observation_timestamp'):
-            raise forms.ValidationError('Observation timestamp is required for spectroscopy')
+            raise forms.ValidationError('Observation timestamp is required.')
         return cleaned_data
