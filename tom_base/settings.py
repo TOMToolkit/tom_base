@@ -26,7 +26,7 @@ SECRET_KEY = 'dxja^_6p35x46dx0rx+c$(^31(10^n(twe1#ax3o8xl=n^p37q'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -183,7 +183,7 @@ TARGET_TYPE = 'SIDEREAL'
 FACILITIES = {
     'LCO': {
         'portal_url': 'https://observe.lco.global',
-        'api_key': os.getenv('LCO_API_KEY', ''),
+        'api_key': os.getenv('LCO_API_KEY', '8c78f709b8e819ee99631cdc2c3817ec24f5394e'),
     }
 }
 
