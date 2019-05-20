@@ -55,7 +55,13 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': 123.456,
             'dec': -32.1,
-            'groups': [self.group.id]
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -71,7 +77,13 @@ class TestTargetCreate(TestCase):
             'type': Target.SIDEREAL,
             'ra': '05:34:31.94',
             'dec': '+22:00:52.2',
-            'groups': [self.group.id]
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -79,6 +91,29 @@ class TestTargetCreate(TestCase):
         # Coordinates according to simbad
         self.assertAlmostEqual(target.ra, 83.63308, places=4)
         self.assertAlmostEqual(target.dec, 22.0145, places=4)
+
+    def test_create_target_with_tags(self):
+        """
+        Using coordinates for Messier 1
+        """
+        target_data = {
+            'name': 'test_target',
+            'identifier': 'test_target_id',
+            'type': Target.SIDEREAL,
+            'ra': '05:34:31.94',
+            'dec': '+22:00:52.2',
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': 'category',
+            'targetextra_set-0-value': 'type2',
+        }
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(response, target_data['name'])
+        target = Target.objects.get(name=target_data['name'])
+        self.assertTrue(target.targetextra_set.filter(key='category', value='type2').exists())
 
     @override_settings(EXTRA_FIELDS=[
         {'name': 'wins', 'type': 'number'},
@@ -98,7 +133,13 @@ class TestTargetCreate(TestCase):
             'checked': True,
             'birthdate': datetime(year=2019, month=2, day=14),
             'author': 'Dr. Suess',
-            'groups': [self.group.id]
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
