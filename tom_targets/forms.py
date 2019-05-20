@@ -1,7 +1,7 @@
 from django import forms
 from astropy.coordinates import Angle
 from astropy import units as u
-from django.forms import ValidationError
+from django.forms import ValidationError, inlineformset_factory
 from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
@@ -125,3 +125,6 @@ class TargetVisibilityForm(forms.Form):
         end_time = cleaned_data.get('end_time')
         if end_time < start_time:
             raise forms.ValidationError('Start time must be before end time')
+
+
+TargetExtraFormset = inlineformset_factory(Target, TargetExtra, fields=('key', 'value'), widgets={'value': forms.TextInput()})
