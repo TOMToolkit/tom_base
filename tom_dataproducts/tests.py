@@ -10,7 +10,7 @@ from guardian.shortcuts import assign_perm
 from tom_observations.tests.utils import FakeFacility
 from tom_observations.tests.factories import TargetFactory, ObservingRecordFactory
 from tom_dataproducts.models import DataProduct
-from tom_dataproducts.utils import create_jpeg, create_image_dataproduct
+from tom_dataproducts.utils import create_image_dataproduct
 
 def mock_fits2image(file1, file2, width, height):
     return True

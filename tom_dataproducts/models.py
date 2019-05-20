@@ -1,15 +1,14 @@
-from django.core.files import File
-from django.db import models
-from io import BytesIO
 from base64 import b64encode
+from io import BytesIO
 import os
-from django.conf import settings
+import tempfile
 
-import matplotlib
-matplotlib.use('Agg') # noqa
-import matplotlib.pyplot as plt
 from astropy.io import fits
 from astropy.visualization import ZScaleInterval
+from django.conf import settings
+from django.core.files import File
+from django.db import models
+from fits2image.conversions import fits_to_jpg
 from PIL import Image
 
 from tom_targets.models import Target
@@ -80,7 +79,6 @@ class DataProduct(models.Model):
         return os.path.splitext(self.data.name)[1]
 
     def get_preview(self, size=settings.THUMBNAIL_DEFAULT_SIZE, redraw=False):
-        from .utils import create_jpeg
         if self.thumbnail:
             im = Image.open(self.thumbnail)
             if im.size != settings.THUMBNAIL_DEFAULT_SIZE:
@@ -88,7 +86,7 @@ class DataProduct(models.Model):
 
         if not self.thumbnail or redraw:
             width, height = settings.THUMBNAIL_DEFAULT_SIZE
-            tmpfile = create_jpeg(self.data, width=width, height=height)
+            tmpfile = self.create_thumbnail(self.data, width=width, height=height)
             if tmpfile:
                 outfile_name = os.path.basename(self.data.file.name)
                 filename = outfile_name.split(".")[0] + "_tb.jpg"
@@ -97,6 +95,16 @@ class DataProduct(models.Model):
                     self.save()
                 tmpfile.close()
         return self.thumbnail.url
+
+    def create_thumbnail(self, width=None, height=None):
+        if '.fits' in self.file.name:
+            tmpfile = tempfile.NamedTemporaryFile()
+            if not width or not height:
+                width, height = find_img_size(self.file.name)
+            resp = fits_to_jpg(self.file.name, tmpfile.name, width=width, height=height)
+            if resp:
+                return tmpfile
+        return
 
 
 class ReducedDatum(models.Model):

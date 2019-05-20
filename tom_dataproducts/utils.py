@@ -2,14 +2,12 @@ import json
 import os
 import re
 import shutil
-import tempfile
 
 from astropy.io import fits
 from astropy.time import Time
 from datetime import datetime
 from django.conf import settings
 from django.core.files import File
-from fits2image.conversions import fits_to_jpg
 
 from .models import ReducedDatum, DataProduct
 
@@ -53,7 +51,7 @@ def process_data_product(data_product, target):
         )
 
 def create_image_dataproduct(data_product):
-    tmpfile = create_jpeg(data_product.data)
+    tmpfile = data_product.create_jpeg()
     if tmpfile:
         dp, created = DataProduct.objects.get_or_create(
             product_id="{}_{}".format(data_product.product_id, "jpeg"),
@@ -68,17 +66,6 @@ def create_image_dataproduct(data_product):
             dp.save()
         tmpfile.close()
         return True
-
-    return
-
-def create_jpeg(dp_file, width=None, height=None):
-    if dp_file and ('.fits' in dp_file.file.name):
-        tmpfile = tempfile.NamedTemporaryFile()
-        if not width or not height:
-            width, height = find_img_size(dp_file.file.name)
-        resp = fits_to_jpg(dp_file.file.name, tmpfile.name, width=width, height=height)
-        if resp:
-            return tmpfile
 
     return
 
