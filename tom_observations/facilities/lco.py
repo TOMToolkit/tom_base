@@ -1,5 +1,4 @@
 import requests
-import json
 from django.conf import settings
 from django import forms
 from dateutil.parser import parse
@@ -8,7 +7,7 @@ from django.core.cache import cache
 
 from tom_observations.facility import GenericObservationForm
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.facility import GenericObservationFacility
+from tom_observations.facility import GenericObservationFacility, get_service_class
 from tom_targets.models import Target
 
 # Determine settings for this module.
@@ -101,23 +100,29 @@ def _flatten_error_dict(form, error_dict):
 
 
 def _get_instruments():
-    response = make_request(
-        'GET',
-        PORTAL_URL + '/api/instruments/',
-        headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
-    )
-    return response.json()
+    cached_instruments = cache.get('lco_instruments')
+
+    if not cached_instruments:
+        response = make_request(
+            'GET',
+            PORTAL_URL + '/api/instruments/',
+            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+        )
+        cached_instruments = response.json()
+        cache.set('lco_instruments', cached_instruments)
+
+    return cached_instruments
 
 
-def _instrument_choices():
+def instrument_choices():
     return [(k, k) for k in _get_instruments()]
 
 
-def _filter_choices():
+def filter_choices():
     return set([(f, f) for ins in _get_instruments().values() for f in ins['filters']])
 
 
-def _proposal_choices():
+def proposal_choices():
     response = make_request(
         'GET',
         PORTAL_URL + '/api/profile/',
@@ -132,12 +137,12 @@ def _proposal_choices():
 
 class LCOObservationForm(GenericObservationForm):
     group_id = forms.CharField()
-    proposal = forms.ChoiceField(choices=_proposal_choices)
+    proposal = forms.ChoiceField(choices=proposal_choices)
     ipp_value = forms.FloatField()
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
-    filter = forms.ChoiceField(choices=_filter_choices)
-    instrument_name = forms.ChoiceField(choices=_instrument_choices)
+    filter = forms.ChoiceField(choices=filter_choices)
+    instrument_name = forms.ChoiceField(choices=instrument_choices)
     exposure_count = forms.IntegerField(min_value=1)
     exposure_time = forms.FloatField(min_value=0.1)
     max_airmass = forms.FloatField()
@@ -149,18 +154,26 @@ class LCOObservationForm(GenericObservationForm):
         super().__init__(*args, **kwargs)
         self.helper.layout = Layout(
             self.common_layout,
-            Div(
-                Div(
-                    'group_id', 'proposal', 'ipp_value', 'observation_type', 'start', 'end',
-                    css_class='col'
-                ),
-                Div(
-                    'filter', 'instrument_name', 'exposure_count', 'exposure_time', 'max_airmass',
-                    css_class='col'
-                ),
-                css_class='form-row'
-            )
+            self.layout(),
+            self.extra_layout()
         )
+
+    def layout(self):
+        return Div(
+            Div(
+                'group_id', 'proposal', 'ipp_value', 'observation_type', 'start', 'end',
+                css_class='col'
+            ),
+            Div(
+                'filter', 'instrument_name', 'exposure_count', 'exposure_time', 'max_airmass',
+                css_class='col'
+            ),
+            css_class='form-row'
+        )
+
+    def extra_layout(self):
+        # If you just want to add some fields to the end of the form, add them here.
+        return Div()
 
     def clean_start(self):
         start = self.cleaned_data['start']
@@ -172,7 +185,9 @@ class LCOObservationForm(GenericObservationForm):
 
     def is_valid(self):
         super().is_valid()
-        errors = LCOFacility().validate_observation(self.observation_payload)
+        # TODO this is a bit leaky and should be done without the need of get_service_class
+        obs_module = get_service_class(self.cleaned_data['facility'])
+        errors = obs_module().validate_observation(self.observation_payload())
         if errors:
             self.add_error(None, _flatten_error_dict(self, errors))
         return not errors
@@ -183,7 +198,6 @@ class LCOObservationForm(GenericObservationForm):
         else:
             return 'EXPOSE'
 
-    @property
     def observation_payload(self):
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
         target_fields = {

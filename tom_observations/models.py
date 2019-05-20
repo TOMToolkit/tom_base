@@ -10,7 +10,7 @@ class ObservationRecord(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     facility = models.CharField(max_length=50)
     parameters = models.TextField()
-    observation_id = models.CharField(max_length=2000)
+    observation_id = models.CharField(max_length=255)
     status = models.CharField(max_length=200)
     scheduled_start = models.DateTimeField(null=True)
     scheduled_end = models.DateTimeField(null=True)
