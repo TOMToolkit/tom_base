@@ -61,7 +61,7 @@ class TestObservationDataViews(TestCase):
             self.assertTrue(mock.called)
             self.assertContains(response, 'Successfully saved: afile.fits')
 
-    @patch('tom_dataproducts.utils.fits_to_jpg', mock_fits2image)
+    @patch('tom_dataproducts.models.fits_to_jpg', mock_fits2image)
     @patch('tom_dataproducts.utils.find_img_size', mock_find_img_size)
     def test_create_jpeg(self, dp_mock):
         products = DataProduct.objects.filter(tag='image_file')
