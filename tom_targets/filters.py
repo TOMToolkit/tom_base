@@ -41,6 +41,8 @@ def filter_text(queryset, name, value):
 
 
 class TargetFilter(django_filters.FilterSet):
+    key = django_filters.CharFilter(field_name='targetextra__key', label='Key')
+    value = django_filters.CharFilter(field_name='targetextra__value', label='Value')
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in settings.EXTRA_FIELDS:
@@ -58,4 +60,5 @@ class TargetFilter(django_filters.FilterSet):
 
     class Meta:
         model = Target
+        fields = ['type', 'identifier', 'name', 'key', 'value']
         fields = ['type', 'identifier', 'name']

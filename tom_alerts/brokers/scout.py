@@ -6,7 +6,7 @@ from astropy.coordinates import Angle
 
 
 from tom_alerts.alerts import GenericAlert, GenericQueryForm, GenericBroker
-from tom_targets.models import Target, TargetExtra
+from tom_targets.models import Target
 
 SCOUT_URL = 'https://ssd-api.jpl.nasa.gov/scout.api'
 
@@ -59,10 +59,6 @@ class ScoutBroker(GenericBroker):
             dec=alert['dec'],
             eccentricity=alert['elong']
         )
-        for k, v in alert.items():
-            if k not in ['objectName', 'ra', 'dec'] and v:
-                TargetExtra.objects.create(target=target, key=k, value=v)
-
         return target
 
     def to_generic_alert(self, alert):

@@ -283,7 +283,7 @@ class GEMObservationForm(GenericObservationForm):
 
     def is_valid(self):
         super().is_valid()
-        errors = GEMFacility.validate_observation(self.observation_payload)
+        errors = GEMFacility.validate_observation(self.observation_payload())
         if errors:
             self.add_error(None, flatten_error_dict(self, errors))
         return not errors
@@ -294,7 +294,6 @@ class GEMObservationForm(GenericObservationForm):
 #         else:
 #             return 'EXPOSE'
 
-    @property
     def observation_payload(self):
 
         def isodatetime(value):

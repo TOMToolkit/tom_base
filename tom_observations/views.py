@@ -12,7 +12,7 @@ from guardian.shortcuts import get_objects_for_user
 
 from .models import ObservationRecord
 from .forms import ManualObservationForm
-from tom_dataproducts.forms import AddProductToGroupForm
+from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class
 
@@ -93,7 +93,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         # Submit the observation
         facility = self.get_facility_class()
         target = self.get_target()
-        observation_ids = facility().submit_observation(form.observation_payload)
+        observation_ids = facility().submit_observation(form.observation_payload())
 
         for observation_id in observation_ids:
             # Create Observation record
@@ -159,4 +159,12 @@ class ObservationRecordDetailView(DetailView):
                 data_product.get_file_extension() == '.fits' else newest_image
         if newest_image:
             context['image'] = newest_image.get_image_data()
+        data_product_upload_form = DataProductUploadForm(
+            initial={
+                'observation_record': self.get_object(),
+                'referrer': reverse('tom_observations:detail', args=(self.get_object().id,))
+            },
+            hide_timestamp=True
+        )
+        context['data_product_form'] = data_product_upload_form
         return context
