@@ -146,6 +146,13 @@ class GenericObservationFacility(ABC):
         pass
 
     @abstractmethod
+    def get_flux_density_constant(self):
+        """
+        TODO
+        """
+        pass
+
+    @abstractmethod
     def get_terminal_observing_states(self):
         """
         Returns the states for which an observation is not expected
