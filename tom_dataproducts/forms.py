@@ -1,8 +1,9 @@
 from django import forms
 
-from .models import DataProductGroup, DataProduct, PHOTOMETRY
+from .models import DataProductGroup, DataProduct, PHOTOMETRY, SPECTROSCOPY
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
+from tom_observations.facility import get_service_classes
 
 
 class AddProductToGroupForm(forms.Form):
@@ -30,6 +31,10 @@ class DataProductUploadForm(forms.Form):
         )
     )
     tag = forms.ChoiceField(choices=DataProduct.DATA_PRODUCT_TYPES)
+    facility = forms.ChoiceField(
+        choices=[(k, k) for k in get_service_classes().keys()],
+        required=True
+    )
     observation_timestamp = forms.SplitDateTimeField(
         label='Observation Time',
         widget=forms.SplitDateTimeWidget(
@@ -51,9 +56,14 @@ class DataProductUploadForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+
         if cleaned_data.get('tag', '') == PHOTOMETRY[0]:
             if cleaned_data.get('observation_timestamp'):
                 raise forms.ValidationError('Observation timestamp is not valid for uploaded photometry')
-        elif not cleaned_data.get('observation_timestamp'):
-            raise forms.ValidationError('Observation timestamp is required.')
+        elif cleaned_data.get('tag', '') == SPECTROSCOPY[0]:
+            if not cleaned_data.get('observation_timestamp'):
+                raise forms.ValidationError('Observation timestamp is required for spectroscopy.')
+            if not cleaned_data.get('facility'):
+                raise forms.ValidationError('Facility is required for spectroscopy.')
+
         return cleaned_data

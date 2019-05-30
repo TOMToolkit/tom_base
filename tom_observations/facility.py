@@ -146,7 +146,7 @@ class GenericObservationFacility(ABC):
         pass
 
     @abstractmethod
-    def get_flux_density_constant(self):
+    def get_flux_density(self):
         """
         TODO
         """

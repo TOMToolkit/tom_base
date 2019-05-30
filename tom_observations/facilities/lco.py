@@ -288,7 +288,7 @@ class LCOFacility(GenericObservationFacility):
     def get_observation_url(self, observation_id):
         return PORTAL_URL + '/requests/' + observation_id
 
-    def get_flux_density_constant(self):
+    def get_flux_density(self):
         return FLUX_DENSITY_UNITS
 
     def get_terminal_observing_states(self):

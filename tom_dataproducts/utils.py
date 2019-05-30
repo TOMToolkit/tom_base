@@ -1,19 +1,18 @@
 import re
 import json
-import numpy as np
 
 from astropy.time import Time
 from astropy.io import fits
 from astropy.wcs import WCS
 from astropy import units as u
-from datetime import datetime
 from specutils import Spectrum1D
 
 from .models import DataProduct, ReducedDatum
+from tom_observations.facility import get_service_class
 from .exceptions import InvalidFileFormatException
 
 
-def process_data_product(data_product, target, timestamp=None):
+def process_data_product(data_product, target, facility=None, timestamp=None):
     try:
         if data_product.tag == 'photometry':
             with data_product.data.file.open() as f:
@@ -56,7 +55,8 @@ def process_data_product(data_product, target, timestamp=None):
                 header['CUNIT1'] = 'Angstrom'
                 wcs = WCS(header=hdu.header)
                 # TODO: flux density differs by instrument, this needs to go in the facility-specific module
-                flux = flux * (u.erg / (u.cm ** 2 * u.second * u.angstrom))
+                flux = flux * get_service_class(facility)().get_flux_density()
+                # flux = flux * (u.erg / (u.cm ** 2 * u.second * u.angstrom))
                 spec_data = Spectrum1D(flux=flux, wcs=wcs)
                 for i in range(len(spec_data.wavelength)):
                     spectrum[i] = {
