@@ -1,7 +1,8 @@
 import re
 import magic
 
-from astropy.time import Time
+from astropy.time import Time, TimezoneInfo
+from astropy import units
 from astropy.io import fits
 from astropy.wcs import WCS
 from specutils import Spectrum1D
@@ -66,7 +67,7 @@ class DataProcessor():
     def process_photometry(self, data_product):
         filetype = magic.from_file(data_product.data.path, mime=True)
         if filetype == 'text/plain':
-            self.process_photometry_from_plaintext(data_product)
+            return self.process_photometry_from_plaintext(data_product)
         else:
             raise InvalidFileFormatException('Unsupported file type')
 
@@ -76,12 +77,13 @@ class DataProcessor():
             for line in f:
                 photometry_datum = [datum.strip() for datum in re.split(',', line.decode('UTF-8'))]
                 time = Time(float(photometry_datum[0]), format='mjd')
+                utc = TimezoneInfo(utc_offset=0*units.hour)
                 time.format = 'datetime'
                 value = {
                     'magnitude': photometry_datum[2],
                     'filter': photometry_datum[1],
                     'error': photometry_datum[3]
                 }
-                photometry.append({'time': time, 'value': value})
+                photometry[time.to_datetime(timezone=utc)] = value
 
         return photometry
