@@ -18,11 +18,13 @@ from django.http import HttpResponseRedirect
 from guardian.shortcuts import get_objects_for_user
 
 from .models import DataProduct, DataProductGroup, ReducedDatum, SPECTROSCOPY, PHOTOMETRY
+from .data_processor import DataProcessor
+from .data_serializers import SpectrumSerializer
 from .exceptions import InvalidFileFormatException
-from .utils import process_data_product
 from .forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
+from tom_common.hooks import run_hook
 
 
 class DataProductSaveView(LoginRequiredMixin, View):
@@ -77,11 +79,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             )
             dp.save()
             try:
-                process_data_product(dp, target, facility=facility, timestamp=observation_timestamp)
-                if tag == SPECTROSCOPY[0]:
-                    dp.get_spectroscopy()
-                elif tag == PHOTOMETRY[0]:
-                    dp.get_photometry()
+                run_hook('data_product_post_upload', dp, observation_timestamp, facility)
             except InvalidFileFormatException:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
@@ -104,7 +102,7 @@ class DataProductDeleteView(LoginRequiredMixin, DeleteView):
         return referer
 
     def delete(self, request, *args, **kwargs):
-        reduced_data = ReducedDatum.objects.filter(data_product=self.get_object()).delete()
+        ReducedDatum.objects.filter(data_product=self.get_object()).delete()
         self.get_object().data.delete()
         return super().delete(request, *args, **kwargs)
 

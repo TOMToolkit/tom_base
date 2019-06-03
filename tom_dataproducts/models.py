@@ -5,7 +5,6 @@ from base64 import b64encode
 from datetime import datetime
 
 from django.db import models
-from django.conf import settings
 
 import matplotlib
 matplotlib.use('Agg') # noqa
@@ -121,10 +120,10 @@ class ReducedDatum(models.Model):
     data_product = models.ForeignKey(DataProduct, null=True, on_delete=models.CASCADE)
     data_type = models.CharField(
         max_length=100,
-        choices=getattr(settings, 'DATA_TYPES', (
+        choices=(
             SPECTROSCOPY,
             PHOTOMETRY
-        )),
+        ),
         default=''
     )
     source_name = models.CharField(max_length=100, default='')
