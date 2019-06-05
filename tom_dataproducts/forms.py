@@ -32,8 +32,8 @@ class DataProductUploadForm(forms.Form):
     )
     tag = forms.ChoiceField(choices=DataProduct.DATA_PRODUCT_TYPES)
     facility = forms.ChoiceField(
-        choices=[(k, k) for k in get_service_classes().keys()],
-        required=True
+        choices=[('', '----')] + [(k, k) for k in get_service_classes().keys()],
+        required=False
     )
     observation_timestamp = forms.SplitDateTimeField(
         label='Observation Time',

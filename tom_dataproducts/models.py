@@ -104,16 +104,6 @@ class DataProduct(models.Model):
                 photometry_data[datum.get('filter', '')].setdefault(key, []).append(value)
         return photometry_data
 
-    def get_spectroscopy(self):
-        spectroscopy_data = {}
-        datum = ReducedDatum.objects.get(data_product=self, data_type=SPECTROSCOPY[0])
-        obs_date = datetime.strftime(datum.timestamp, '%Y-%m-%d %H:%M:%S')
-        spectroscopy_data[obs_date] = {}
-        for key, value in json.loads(datum.value).items():
-            spectroscopy_data[obs_date].setdefault('wavelength', []).append(value['wavelength'])
-            spectroscopy_data[obs_date].setdefault('flux', []).append(value['flux'])
-        return spectroscopy_data
-
 
 class ReducedDatum(models.Model):
     target = models.ForeignKey(Target, null=False, on_delete=models.CASCADE)

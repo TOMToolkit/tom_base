@@ -25,7 +25,7 @@ PORTAL_URL = LCO_SETTINGS['portal_url']
 TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
 
 # Units of flux density for converting to Specutils Spectrum1D objects
-FLUX_DENSITY_UNITS = (1e-15 * u.erg) / (u.cm ** 2 * u.second * u.angstrom)
+FLUX_CONSTANT = (1e-15 * u.erg) / (u.cm ** 2 * u.second * u.angstrom)
 
 # The SITES dictionary is used to calculate visibility intervals in the
 # planning tool. All entries should contain latitude, longitude, elevation
@@ -288,8 +288,8 @@ class LCOFacility(GenericObservationFacility):
     def get_observation_url(self, observation_id):
         return PORTAL_URL + '/requests/' + observation_id
 
-    def get_flux_density(self):
-        return FLUX_DENSITY_UNITS
+    def get_flux_constant(self):
+        return FLUX_CONSTANT
 
     def get_terminal_observing_states(self):
         return TERMINAL_OBSERVING_STATES

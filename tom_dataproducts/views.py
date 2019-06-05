@@ -17,9 +17,7 @@ from django.core.cache.utils import make_template_fragment_key
 from django.http import HttpResponseRedirect
 from guardian.shortcuts import get_objects_for_user
 
-from .models import DataProduct, DataProductGroup, ReducedDatum, SPECTROSCOPY, PHOTOMETRY
-from .data_processor import DataProcessor
-from .data_serializers import SpectrumSerializer
+from .models import DataProduct, DataProductGroup, ReducedDatum
 from .exceptions import InvalidFileFormatException
 from .forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.models import ObservationRecord
@@ -84,6 +82,11 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
                 messages.error(self.request, 'There was a problem uploading your file: The file format was invalid')
+        else:
+            messages.success(
+                self.request,
+                'Successfully uploaded: {0}'.format('\n'.join([str(p) for p in data_product_files]))
+            )
         return redirect(form.cleaned_data.get('referrer', '/'))
 
     def form_invalid(self, form):

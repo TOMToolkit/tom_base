@@ -50,5 +50,8 @@ class FakeFacility(GenericObservationFacility):
     def submit_observation(self, payload):
         return ['fakeid']
 
+    def get_flux_constant(self):
+        return ''
+
     def validate_observation(self, observation_payload):
         return True
