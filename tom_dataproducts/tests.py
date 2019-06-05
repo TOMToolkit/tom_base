@@ -3,7 +3,8 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from unittest.mock import patch
-from datetime import datetime, timezone, date, time
+from datetime import date, time
+from copy import copy
 
 from tom_observations.tests.utils import FakeFacility
 from tom_observations.tests.factories import TargetFactory, ObservingRecordFactory
@@ -98,28 +99,49 @@ class TestUploadDataProducts(TestCase):
 class TestDataUploadForms(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()
-
-    def test_form_spectroscopy_valid(self):
-        form_data = {
+        self.spectroscopy_form_data = {
             'target': self.target.id,
-            'files': {'file': SimpleUploadedFile('afile.fits', b'afile')},
             'tag': SPECTROSCOPY[0],
             'facility': 'LCO',
             'observation_timestamp_0': date(2019, 6, 1),
             'observation_timestamp_1': time(12, 0, 0),
             'referrer': 'referrer'
         }
-        form = DataProductUploadForm(files=form_data)
-        print(form)
-        print(form.errors)
+        self.photometry_form_data = {
+            'target': self.target.id,
+            'tag': PHOTOMETRY[0],
+            'referrer': 'referrer'
+        }
+        self.file_data = {
+            'files': SimpleUploadedFile('afile.fits', b'afile')
+        }
+
+    def test_form_spectroscopy_valid(self):
+        form = DataProductUploadForm(self.spectroscopy_form_data, self.file_data)
         self.assertTrue(form.is_valid())
 
     def test_form_spectroscopy_no_timestamp(self):
-        form_data = {
-            'target': self.target,
-            'files': SimpleUploadedFile('afile.fits', b'afile'),
-            'tag': SPECTROSCOPY[0],
-            'facility': 'LCO'
-        }
-        form = DataProductUploadForm(form_data)
+        self.spectroscopy_form_data.pop('observation_timestamp_0')
+        self.spectroscopy_form_data.pop('observation_timestamp_1')
+        form = DataProductUploadForm(self.spectroscopy_form_data, self.file_data)
+        self.assertFalse(form.is_valid())
+
+    def test_form_spectroscopy_no_facility(self):
+        self.spectroscopy_form_data.pop('facility')
+        form = DataProductUploadForm(self.spectroscopy_form_data, self.file_data)
+        self.assertFalse(form.is_valid())
+
+    def test_form_photometry_valid(self):
+        form = DataProductUploadForm(self.photometry_form_data, self.file_data)
+        self.assertTrue(form.is_valid())
+
+    def test_form_photometry_with_timestamp(self):
+        self.photometry_form_data['facility'] = 'LCO'
+        form = DataProductUploadForm(self.photometry_form_data, self.file_data)
+        self.assertFalse(form.is_valid())
+
+    def test_form_photometry_with_facility(self):
+        self.photometry_form_data['observation_timestamp_0'] = date(2019, 6, 1)
+        self.photometry_form_data['observation_timestamp_1'] = time(12, 0, 0)
+        form = DataProductUploadForm(self.photometry_form_data, self.file_data)
         self.assertFalse(form.is_valid())
