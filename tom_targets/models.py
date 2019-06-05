@@ -140,8 +140,13 @@ class Target(models.Model):
         ordering = ('id',)
 
     def save(self, *args, **kwargs):
+        extras = kwargs.pop('extras', {})
         created = False if self.id else True
         super().save(*args, **kwargs)
+        for k, v in extras.items():
+            target_extra, _ = TargetExtra.objects.get_or_create(target=self, key=k)
+            target_extra.value = v
+            target_extra.save()
         run_hook('target_post_save', target=self, created=created)
 
     def __str__(self):
@@ -190,6 +195,12 @@ class TargetExtra(models.Model):
     float_value = models.FloatField(null=True, blank=True)
     bool_value = models.BooleanField(null=True, blank=True)
     time_value = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ['target', 'key']
+
+    def __str__(self):
+        return f'{self.key}: {self.value}'
 
     def save(self, *args, **kwargs):
         try:
