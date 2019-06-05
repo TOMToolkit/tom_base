@@ -28,7 +28,6 @@ class DataProcessor():
         # https://specutils.readthedocs.io/en/doc-testing/specutils/read_fits.html
         flux, header = fits.getdata(data_product.data.path, header=True)
 
-        # hdu = hlist[0]
         dim = len(flux.shape)
         if dim == 3:
             flux = flux[0, 0, :]
@@ -43,6 +42,8 @@ class DataProcessor():
         return spectrum
 
     def _process_spectrum_from_plaintext(self, data_product, facility):
+        # http://docs.astropy.org/en/stable/io/ascii/read.html
+
         # TODO: Move spectral axis units to facility?
         data = ascii.read(data_product.data.path)
         spectral_axis = np.array(data['wavelength']) * units.Angstrom
@@ -52,6 +53,8 @@ class DataProcessor():
         return spectrum
 
     def process_photometry(self, data_product):
+        # http://docs.astropy.org/en/stable/io/ascii/read.html
+
         filetype = magic.from_file(data_product.data.path, mime=True)
         if filetype == 'text/plain':
             return self.process_photometry_from_plaintext(data_product)
@@ -60,17 +63,17 @@ class DataProcessor():
 
     def process_photometry_from_plaintext(self, data_product):
         photometry = {}
-        with data_product.data.file.open() as f:
-            for line in f:
-                photometry_datum = [datum.strip() for datum in re.split(',', line.decode('UTF-8'))]
-                time = Time(float(photometry_datum[0]), format='mjd')
-                utc = TimezoneInfo(utc_offset=0*units.hour)
-                time.format = 'datetime'
-                value = {
-                    'magnitude': photometry_datum[2],
-                    'filter': photometry_datum[1],
-                    'error': photometry_datum[3]
-                }
-                photometry[time.to_datetime(timezone=utc)] = value
+
+        data = ascii.read(data_product.data.path)
+        for datum in data:
+            time = Time(float(datum['time']), format='mjd')
+            utc = TimezoneInfo(utc_offset=0*units.hour)
+            time.format = 'datetime'
+            value = {
+                'magnitude': datum['magnitude'],
+                'filter': datum['filter'],
+                'error': datum['error']
+            }
+            photometry[time.to_datetime(timezone=utc)] = value
 
         return photometry
