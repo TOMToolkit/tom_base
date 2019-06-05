@@ -53,5 +53,8 @@ class FakeFacility(GenericObservationFacility):
     def get_flux_constant(self):
         return ''
 
+    def get_wavelength_units(self):
+        return ''
+
     def validate_observation(self, observation_payload):
         return True

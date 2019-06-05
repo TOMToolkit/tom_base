@@ -1,4 +1,3 @@
-import re
 import magic
 
 from astropy.time import Time, TimezoneInfo
@@ -44,17 +43,14 @@ class DataProcessor():
     def _process_spectrum_from_plaintext(self, data_product, facility):
         # http://docs.astropy.org/en/stable/io/ascii/read.html
 
-        # TODO: Move spectral axis units to facility?
         data = ascii.read(data_product.data.path)
-        spectral_axis = np.array(data['wavelength']) * units.Angstrom
+        spectral_axis = np.array(data['wavelength']) * get_service_class(facility)().get_wavelength_units()
         flux = np.array(data['flux']) * get_service_class(facility)().get_flux_constant()
         spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis)
 
         return spectrum
 
     def process_photometry(self, data_product):
-        # http://docs.astropy.org/en/stable/io/ascii/read.html
-
         filetype = magic.from_file(data_product.data.path, mime=True)
         if filetype == 'text/plain':
             return self.process_photometry_from_plaintext(data_product)
@@ -62,6 +58,7 @@ class DataProcessor():
             raise InvalidFileFormatException('Unsupported file type')
 
     def process_photometry_from_plaintext(self, data_product):
+        # http://docs.astropy.org/en/stable/io/ascii/read.html
         photometry = {}
 
         data = ascii.read(data_product.data.path)

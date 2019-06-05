@@ -24,8 +24,9 @@ except (AttributeError, KeyError):
 PORTAL_URL = LCO_SETTINGS['portal_url']
 TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
 
-# Units of flux density for converting to Specutils Spectrum1D objects
+# Units of flux and wavelength for converting to Specutils Spectrum1D objects
 FLUX_CONSTANT = (1e-15 * u.erg) / (u.cm ** 2 * u.second * u.angstrom)
+WAVELENGTH_UNITS = u.angstrom
 
 # The SITES dictionary is used to calculate visibility intervals in the
 # planning tool. All entries should contain latitude, longitude, elevation
@@ -290,6 +291,9 @@ class LCOFacility(GenericObservationFacility):
 
     def get_flux_constant(self):
         return FLUX_CONSTANT
+
+    def get_wavelength_units(self):
+        return WAVELENGTH_UNITS
 
     def get_terminal_observing_states(self):
         return TERMINAL_OBSERVING_STATES

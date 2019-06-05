@@ -67,6 +67,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             observation_record = None
         tag = form.cleaned_data['tag']
         data_product_files = self.request.FILES.getlist('files')
+        successful_uploads = []
         for f in data_product_files:
             dp = DataProduct(
                 target=target,
@@ -78,15 +79,23 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             dp.save()
             try:
                 run_hook('data_product_post_upload', dp, observation_timestamp, facility)
+                successful_uploads.append(str(dp))
             except InvalidFileFormatException:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
-                messages.error(self.request, 'There was a problem uploading your file: The file format was invalid')
-        else:
-            messages.success(
-                self.request,
-                'Successfully uploaded: {0}'.format('\n'.join([str(p) for p in data_product_files]))
-            )
+                messages.error(
+                    self.request,
+                    'There was a problem uploading your file--the file format was invalid for file: {0}'.format(str(dp))
+                )
+            except Exception:
+                ReducedDatum.objects.filter(data_product=dp).delete()
+                dp.delete()
+                messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))
+        messages.success(
+            self.request,
+            'Successfully uploaded: {0}'.format('\n'.join([p for p in successful_uploads]))
+        )
+
         return redirect(form.cleaned_data.get('referrer', '/'))
 
     def form_invalid(self, form):
