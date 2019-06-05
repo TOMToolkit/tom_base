@@ -14,7 +14,7 @@ from tom_targets.models import Target, TargetExtra
 from tom_observations.utils import get_visibility, get_pyephem_instance_for_type
 from tom_observations.tests.utils import FakeFacility
 from tom_targets.import_targets import import_targets
-from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
+from guardian.shortcuts import assign_perm
 
 
 class TestTargetDetail(TestCase):
@@ -161,6 +161,11 @@ class TestTargetCreate(TestCase):
             TargetExtra.objects.get(target=target, key='author').typed_value('string'),
             'Dr. Suess'
         )
+
+    def test_target_save_programmatic_extras(self):
+        target = SiderealTargetFactory.create()
+        target.save(extras={'foo': 5})
+        self.assertTrue(TargetExtra.objects.filter(target=target, key='foo', value='5').exists())
 
 
 class TestTargetImport(TestCase):
