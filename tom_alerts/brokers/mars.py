@@ -239,10 +239,6 @@ class MARSBroker(object):
             galactic_lng=alert_copy['candidate'].pop('l'),
             galactic_lat=alert_copy['candidate'].pop('b'),
         )
-        for k, v in alert_copy['candidate'].items():
-            if v is not None:
-                TargetExtra.objects.create(target=target, key=k, value=v)
-
         return target
 
     def to_generic_alert(self, alert):

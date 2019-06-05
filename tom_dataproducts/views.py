@@ -17,7 +17,8 @@ from django.core.cache.utils import make_template_fragment_key
 from django.http import HttpResponseRedirect
 from guardian.shortcuts import get_objects_for_user
 
-from .models import DataProduct, DataProductGroup
+from .models import DataProduct, DataProductGroup, ReducedDatum, SPECTROSCOPY, PHOTOMETRY
+from .exceptions import InvalidFileFormatException
 from .utils import process_data_product
 from .forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.models import ObservationRecord
@@ -54,32 +55,42 @@ class DataProductSaveView(LoginRequiredMixin, View):
 
 class DataProductUploadView(LoginRequiredMixin, FormView):
     form_class = DataProductUploadForm
-    template_name = 'tom_dataproducts/partials/upload_dataproduct.html'
 
-    def post(self, request, *args, **kwargs):
-        form = self.get_form()
-        if form.is_valid():
-            target = form.cleaned_data['target']
-            if not target:
-                observation_record = form.cleaned_data['observation_record']
-                target = observation_record.target
-            else:
-                observation_record = None
-            tag = form.cleaned_data['tag']
-            data_product_files = request.FILES.getlist('files')
-            for f in data_product_files:
-                dp = DataProduct(
-                    target=target,
-                    observation_record=observation_record,
-                    data=f,
-                    product_id=None,
-                    tag=tag
-                )
-                dp.save()
-                process_data_product(dp, target)
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+    def form_valid(self, form):
+        target = form.cleaned_data['target']
+        observation_timestamp = form.cleaned_data.get('observation_timestamp', None)
+        if not target:
+            observation_record = form.cleaned_data['observation_record']
+            target = observation_record.target
         else:
-            return super().form_invalid(form)
+            observation_record = None
+        tag = form.cleaned_data['tag']
+        data_product_files = self.request.FILES.getlist('files')
+        for f in data_product_files:
+            dp = DataProduct(
+                target=target,
+                observation_record=observation_record,
+                data=f,
+                product_id=None,
+                tag=tag
+            )
+            dp.save()
+            try:
+                process_data_product(dp, target, timestamp=observation_timestamp)
+                if tag == SPECTROSCOPY[0]:
+                    dp.get_spectroscopy()
+                elif tag == PHOTOMETRY[0]:
+                    dp.get_photometry()
+            except InvalidFileFormatException:
+                ReducedDatum.objects.filter(data_product=dp).delete()
+                dp.delete()
+                messages.error(self.request, 'There was a problem uploading your file: The file format was invalid')
+        return redirect(form.cleaned_data.get('referrer', '/'))
+
+    def form_invalid(self, form):
+        # TODO: Format error messages in a more human-readable way
+        messages.error(self.request, 'There was a problem uploading your file: {}'.format(form.errors.as_json()))
+        return redirect(form.cleaned_data.get('referrer', '/'))
 
 
 class DataProductDeleteView(LoginRequiredMixin, DeleteView):
@@ -92,6 +103,7 @@ class DataProductDeleteView(LoginRequiredMixin, DeleteView):
         return referer
 
     def delete(self, request, *args, **kwargs):
+        reduced_data = ReducedDatum.objects.filter(data_product=self.get_object()).delete()
         self.get_object().data.delete()
         return super().delete(request, *args, **kwargs)
 
