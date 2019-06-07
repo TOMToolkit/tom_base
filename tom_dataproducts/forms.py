@@ -49,10 +49,11 @@ class DataProductUploadForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        hide_timestamp = kwargs.pop('hide_timestamp', False)
+        hide_target_fields = kwargs.pop('hide_target_fields', False)
         super(DataProductUploadForm, self).__init__(*args, **kwargs)
-        if hide_timestamp:
+        if hide_target_fields:
             self.fields['observation_timestamp'].widget = forms.HiddenInput()
+            self.fields['facility'].widget = forms.HiddenInput()
 
     def clean(self):
         cleaned_data = super().clean()

@@ -164,7 +164,7 @@ class ObservationRecordDetailView(DetailView):
                 'observation_record': self.get_object(),
                 'referrer': reverse('tom_observations:detail', args=(self.get_object().id,))
             },
-            hide_timestamp=True
+            hide_target_fields=True
         )
         context['data_product_form'] = data_product_upload_form
         return context

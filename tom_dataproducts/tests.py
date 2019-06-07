@@ -4,7 +4,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from unittest.mock import patch
 from datetime import date, time
-from copy import copy
 
 from tom_observations.tests.utils import FakeFacility
 from tom_observations.tests.factories import TargetFactory, ObservingRecordFactory
@@ -58,7 +57,6 @@ class TestObservationDataViews(TestCase):
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
-@patch('tom_dataproducts.models.DataProduct.get_image_data', return_value=b'image')
 class TestUploadDataProducts(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()
@@ -77,9 +75,9 @@ class TestUploadDataProducts(TestCase):
         assign_perm('tom_targets.view_target', user, self.target)
         self.client.force_login(user)
 
-    def test_upload_spectrum_to_target(self):
+    @patch('tom_dataproducts.views.run_hook')
+    def test_upload_data_for_target(self, run_hook_mock):
         print(DataProductUploadForm())
-        mock_return = [DataProduct(product_id='testdpid', data=SimpleUploadedFile('afile.fits', b'afile'))]
         response = self.client.post(
             reverse('dataproducts:upload'),
             {
@@ -93,7 +91,28 @@ class TestUploadDataProducts(TestCase):
             },
             follow=True
         )
-        self.assertContains(response, 'Successfully uploaded: afile.fits')
+        print(response)
+        self.assertContains(response, 'Successfully uploaded: {0}/none/afile.fits'.format(self.target.identifier))
+
+    @patch('tom_dataproducts.views.run_hook')
+    def test_upload_data_for_observation(self, run_hook_mock):
+        response = self.client.post(
+            reverse('dataproducts:upload'),
+            {
+                'files': SimpleUploadedFile('afile.fits', b'afile'),
+                'target': self.target.id,
+                'observation_record': self.observation_record,
+                'tag': SPECTROSCOPY[0],
+                'observation_timestamp_0': date(2019, 6, 1),
+                'observation_timestamp_1': time(12, 0, 0),
+                'referrer': reverse('targets:detail', kwargs={'pk': self.target.id})
+            },
+            follow=True
+        )
+        print(response)
+        self.assertContains(response, 'Successfully uploaded: {0}/LCO/afile.fits'.format(
+            self.target.identifier, self.observation_record.facility)
+        )
 
 
 class TestDataUploadForms(TestCase):
