@@ -53,7 +53,12 @@ class DataProduct(models.Model):
         '.fz': 'SCI'
     }
 
-    product_id = models.CharField(max_length=255, unique=True, null=True)
+    product_id = models.CharField(
+        max_length=255,
+        unique=True,
+        null=True,
+        help_text='Data product identifier used by the source of the data product.'
+    )
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     observation_record = models.ForeignKey(ObservationRecord, null=True, default=None, on_delete=models.CASCADE)
     data = models.FileField(upload_to=data_product_path, null=True, default=None)
