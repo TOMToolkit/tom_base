@@ -52,21 +52,30 @@ class DataProductUploadForm(forms.Form):
         hide_target_fields = kwargs.pop('hide_target_fields', False)
         super(DataProductUploadForm, self).__init__(*args, **kwargs)
         if hide_target_fields:
-            self.fields['observation_timestamp'].widget = forms.HiddenInput()
             self.fields['facility'].widget = forms.HiddenInput()
 
     def clean(self):
         cleaned_data = super().clean()
 
+        # For dataproducts uploaded to target detail pages, facility and observation timestamp are only valid for
+        # spectroscopy. Bulk photometry uploads already have timestamp information per datum, and facility
+        # information can vary by datum.
+        # For dataproducts uploaded to observation pages, facility is taken from the observing record. Timestamp is
+        # simply ignored for photometry submissions--however, this should be improved upon in the future.
         if cleaned_data.get('tag', '') == PHOTOMETRY[0]:
             if cleaned_data.get('observation_timestamp'):
-                raise forms.ValidationError('Observation timestamp is not valid for uploaded photometry')
+                if not cleaned_data.get('observation_record'):
+                    raise forms.ValidationError('Observation timestamp is not valid for uploaded photometry')
             if cleaned_data.get('facility'):
-                raise forms.ValidationError('Facility is not valid for uploaded photometry.')
+                if not cleaned_data.get('observation_record'):
+                    raise forms.ValidationError('Facility is not valid for uploaded photometry.')
         elif cleaned_data.get('tag', '') == SPECTROSCOPY[0]:
             if not cleaned_data.get('observation_timestamp'):
                 raise forms.ValidationError('Observation timestamp is required for spectroscopy.')
             if not cleaned_data.get('facility'):
-                raise forms.ValidationError('Facility is required for spectroscopy.')
+                if not cleaned_data.get('observation_record'):
+                    raise forms.ValidationError('Facility is required for spectroscopy.')
+                else:
+                    cleaned_data['facility'] = cleaned_data.get('observation_record').facility
 
         return cleaned_data

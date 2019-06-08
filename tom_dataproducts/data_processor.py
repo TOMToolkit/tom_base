@@ -122,11 +122,11 @@ class DataProcessor():
 
         filetype = magic.from_file(data_product.data.path, mime=True)
         if filetype == 'text/plain':
-            return self.process_photometry_from_plaintext(data_product)
+            return self._process_photometry_from_plaintext(data_product)
         else:
             raise InvalidFileFormatException('Unsupported file type')
 
-    def process_photometry_from_plaintext(self, data_product):
+    def _process_photometry_from_plaintext(self, data_product):
         """
         Processes the photometric data from a plaintext file into a dict, which can then be  stored as a ReducedDatum
         for further processing or display. File is read using astropy as specified in the below documentation. The file
