@@ -148,7 +148,7 @@ class GenericObservationFacility(ABC):
     @abstractmethod
     def get_flux_constant(self):
         """
-        TODO
+        Returns the astropy quantity that a facility uses for its spectral flux conversion.
         """
         pass
 

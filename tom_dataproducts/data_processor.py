@@ -34,7 +34,6 @@ class DataProcessor():
         filetype = magic.from_file(data_product.data.path, mime=True)
         if filetype == 'image/fits':
             return self._process_spectrum_from_fits(data_product, facility)
-        # TODO: process into Spectrum1D file
         elif filetype == 'text/plain':
             return self._process_spectrum_from_plaintext(data_product, facility)
         else:

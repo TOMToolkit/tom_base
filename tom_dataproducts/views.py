@@ -26,6 +26,7 @@ from tom_common.hooks import run_hook
 
 
 class DataProductSaveView(LoginRequiredMixin, View):
+    # TODO: Add post-processing hook calls
     def post(self, request, *args, **kwargs):
         service_class = get_service_class(request.POST['facility'])
         observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])

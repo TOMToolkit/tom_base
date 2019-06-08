@@ -1,15 +1,22 @@
 import json
 
-from .data_processor import DataProcessor
+from django.conf import settings
+
 from .data_serializers import SpectrumSerializer
 from .models import ReducedDatum, SPECTROSCOPY, PHOTOMETRY
 
+DEFAULT_DATA_PROCESSOR_CLASS = 'tom_dataproducts.data_processor.DataProcessor'
+
 
 def data_product_post_upload(dp, observation_timestamp, facility):
-    processor = DataProcessor()
+    try:
+        processor_class = settings.DATA_PROCESSOR_CLASS
+    except:
+        processor_class = DEFAULT_DATA_PROCESSOR_CLASS
+    data_processor = processor_class()
 
     if dp.tag == SPECTROSCOPY[0]:
-        spectrum = processor.process_spectroscopy(dp, facility)
+        spectrum = data_processor.process_spectroscopy(dp, facility)
         serialized_spectrum = SpectrumSerializer().serialize(spectrum)
         ReducedDatum.objects.create(
             target=dp.target,
@@ -19,7 +26,7 @@ def data_product_post_upload(dp, observation_timestamp, facility):
             value=serialized_spectrum
         )
     elif dp.tag == PHOTOMETRY[0]:
-        photometry = processor.process_photometry(dp)
+        photometry = data_processor.process_photometry(dp)
         for time, photometry_datum in photometry.items():
             ReducedDatum.objects.create(
                 target=dp.target,
