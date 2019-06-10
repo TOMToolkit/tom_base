@@ -1,5 +1,6 @@
 import json
 
+from importlib import import_module
 from django.conf import settings
 
 from .data_serializers import SpectrumSerializer
@@ -13,7 +14,14 @@ def data_product_post_upload(dp, observation_timestamp, facility):
         processor_class = settings.DATA_PROCESSOR_CLASS
     except:
         processor_class = DEFAULT_DATA_PROCESSOR_CLASS
-    data_processor = processor_class()
+
+    try:
+        mod_name, class_name = processor_class.rsplit('.', 1)
+        mod = import_module(mod_name)
+        clazz = getattr(mod, class_name)
+    except (ImportError, AttributeError):
+        raise ImportError('Could not import {}. Did you provide the correct path?'.format(processor_class))
+    data_processor = clazz()
 
     if dp.tag == SPECTROSCOPY[0]:
         spectrum = data_processor.process_spectroscopy(dp, facility)
@@ -28,10 +36,11 @@ def data_product_post_upload(dp, observation_timestamp, facility):
     elif dp.tag == PHOTOMETRY[0]:
         photometry = data_processor.process_photometry(dp)
         for time, photometry_datum in photometry.items():
-            ReducedDatum.objects.create(
-                target=dp.target,
-                data_product=dp,
-                data_type=dp.tag,
-                timestamp=time,
-                value=json.dumps(photometry_datum)
-            )
+            for datum in photometry_datum:
+                ReducedDatum.objects.create(
+                    target=dp.target,
+                    data_product=dp,
+                    data_type=dp.tag,
+                    timestamp=time,
+                    value=json.dumps(datum)
+                )

@@ -99,16 +99,6 @@ class DataProduct(models.Model):
             plt.close(fig)
         return b64encode(buffer.read()).decode('utf-8')
 
-    def get_photometry(self):
-        photometry_data = {}
-        for rd in ReducedDatum.objects.filter(data_product=self, data_type=PHOTOMETRY[0]):
-            datum = json.loads(rd.value)
-            photometry_data.setdefault(datum.get('filter', ''), {})
-            photometry_data[datum.get('filter', '')].setdefault('time', []).append(rd.timestamp)
-            for key, value in datum.items():
-                photometry_data[datum.get('filter', '')].setdefault(key, []).append(value)
-        return photometry_data
-
 
 class ReducedDatum(models.Model):
     target = models.ForeignKey(Target, null=False, on_delete=models.CASCADE)

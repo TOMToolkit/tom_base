@@ -29,6 +29,10 @@ class DataProcessor():
         -------
         specutils.Spectrum1D
             Spectrum1D object containing the data from the DataProduct
+
+        Raises
+        ------
+        InvalidFileFormatException
         """
 
         filetype = magic.from_file(data_product.data.path, mime=True)
@@ -155,6 +159,6 @@ class DataProcessor():
                 'filter': datum['filter'],
                 'error': datum['error']
             }
-            photometry[time.to_datetime(timezone=utc)] = value
+            photometry.setdefault(time.to_datetime(timezone=utc), []).append(value)
 
         return photometry

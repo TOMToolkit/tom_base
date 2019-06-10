@@ -1,3 +1,5 @@
+import json
+
 from django import template
 from datetime import datetime
 
@@ -40,10 +42,12 @@ def dataproduct_list_all(saved, fields):
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html')
 def photometry_for_target(target):
     photometry_data = {}
-    target_dataproducts = DataProduct.objects.filter(target=target, tag=PHOTOMETRY[0])
-    for dataproduct in target_dataproducts:
-        data = dataproduct.get_photometry()
-        photometry_data.update(data)
+    for datum in ReducedDatum.objects.filter(data_type=PHOTOMETRY[0]):
+        values = json.loads(datum.value)
+        photometry_data.setdefault(values['filter'], {})
+        photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
+        photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
+        photometry_data[values['filter']].setdefault('error', []).append(values.get('error'))
     plot_data = [
         go.Scatter(
             x=filter_values['time'],

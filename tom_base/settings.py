@@ -199,7 +199,7 @@ FACILITIES = {
 EXTRA_FIELDS = []
 
 # Define custom DataProcessor class
-DATA_PROCESSOR_CLASS = 'mytom.custom_data_processor.CustomDataProcessor'
+# DATA_PROCESSOR_CLASS = 'mytom.custom_data_processor.CustomDataProcessor'
 
 # Authentication strategy can either be LOCKED (required login for all views)
 # or READ_ONLY (read only access to views)

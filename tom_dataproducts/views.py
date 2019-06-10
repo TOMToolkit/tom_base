@@ -26,7 +26,6 @@ from tom_common.hooks import run_hook
 
 
 class DataProductSaveView(LoginRequiredMixin, View):
-    # TODO: Add post-processing hook calls
     def post(self, request, *args, **kwargs):
         service_class = get_service_class(request.POST['facility'])
         observation_record = ObservationRecord.objects.get(pk=kwargs['pk'])
@@ -92,10 +91,11 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
                 messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))
-        messages.success(
-            self.request,
-            'Successfully uploaded: {0}'.format('\n'.join([p for p in successful_uploads]))
-        )
+        if successful_uploads:
+            messages.success(
+                self.request,
+                'Successfully uploaded: {0}'.format('\n'.join([p for p in successful_uploads]))
+            )
 
         return redirect(form.cleaned_data.get('referrer', '/'))
 
