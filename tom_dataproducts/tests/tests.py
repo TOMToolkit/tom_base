@@ -244,7 +244,7 @@ class TestDataProcessor(TestCase):
             self.data_processor.process_spectroscopy(self.data_product, FakeFacility.name)
 
     def test_process_spectrum_from_fits(self):
-        with open('tom_dataproducts/tests/data/test_spectrum.fits', 'rb') as spectrum_file:
+        with open('tom_dataproducts/tests/test_data/test_spectrum.fits', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.fits', spectrum_file)
             spectrum = self.data_processor._process_spectrum_from_fits(self.data_product, FakeFacility.name)
             self.assertTrue(type(spectrum) is Spectrum1D)
@@ -252,7 +252,7 @@ class TestDataProcessor(TestCase):
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 6600.478789, places=5)
 
     def test_process_spectrum_from_plaintext(self):
-        with open('tom_dataproducts/tests/data/test_spectrum.csv', 'rb') as spectrum_file:
+        with open('tom_dataproducts/tests/test_data/test_spectrum.csv', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.csv', spectrum_file)
             spectrum = self.data_processor._process_spectrum_from_plaintext(self.data_product, FakeFacility.name)
             self.assertTrue(type(spectrum) is Spectrum1D)
@@ -273,7 +273,7 @@ class TestDataProcessor(TestCase):
             self.data_processor.process_photometry(self.data_product)
 
     def test_process_photometry_from_plaintext(self):
-        with open('tom_dataproducts/tests/data/test_lightcurve.csv', 'rb') as lightcurve_file:
+        with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
             self.data_product.data.save('lightcurve.csv', lightcurve_file)
             lightcurve = self.data_processor._process_photometry_from_plaintext(self.data_product)
             self.assertTrue(type(lightcurve) is dict)
