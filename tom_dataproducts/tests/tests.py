@@ -1,3 +1,5 @@
+import json
+
 from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -6,6 +8,7 @@ from unittest.mock import patch
 from datetime import date, time
 from specutils import Spectrum1D
 from astropy import units
+import numpy as np
 
 from tom_observations.tests.utils import FakeFacility
 from tom_observations.tests.factories import TargetFactory, ObservingRecordFactory
@@ -156,19 +159,6 @@ class TestDataUploadForms(TestCase):
         form = DataProductUploadForm(self.spectroscopy_form_data, self.file_data)
         self.assertFalse(form.is_valid())
 
-    # TODO: Fix this test
-    # def test_form_spectroscopy_no_facility_for_observation(self):
-    #     self.spectroscopy_form_data.pop('facility')
-    #     self.observation_record.facility = 'LCO'
-    #     self.spectroscopy_form_data['observation_record'] = self.observation_record
-    #     print(self.spectroscopy_form_data)
-    #     print(self.observation_record.facility)
-    #     form = DataProductUploadForm(self.spectroscopy_form_data, self.file_data)
-    #     print(form)
-    #     print(form.cleaned_data['facility'])
-    #     print(form.errors)
-    #     self.assertTrue(form.is_valid())
-
     def test_form_photometry_valid(self):
         form = DataProductUploadForm(self.photometry_form_data, self.file_data)
         self.assertTrue(form.is_valid())
@@ -185,17 +175,43 @@ class TestDataUploadForms(TestCase):
         self.assertFalse(form.is_valid())
 
 
-# TODO: Write serializer tests
 class TestDataSerializer(TestCase):
     def setUp(self):
-        pass
+        self.serializer = SpectrumSerializer()
 
     def test_serialize_spectrum(self):
-        pass
+        flux = np.arange(1, 200) * units.Jy
+        wavelength = np.arange(1, 200) * units.Angstrom
+        spectrum = Spectrum1D(spectral_axis=wavelength, flux=flux)
+        serialized = self.serializer.serialize(spectrum)
+
+        self.assertTrue(type(serialized) is str)
+        serialized = json.loads(serialized)
+        self.assertTrue(serialized['photon_flux'])
+        self.assertTrue(serialized['photon_flux_units'])
+        self.assertTrue(serialized['wavelength'])
+        self.assertTrue(serialized['wavelength_units'])
+
+    def test_serialize_spectrum_invalid(self):
+        with self.assertRaises(Exception):
+            self.serializer.serialize({'flux': [1, 2], 'wavelength': [1, 2]})
 
     def test_deserialize_spectrum(self):
-        pass
+        serialized_spectrum = json.dumps({
+            'photon_flux': [1, 2],
+            'photon_flux_units': 'ph / (Angstrom cm2 s)',
+            'wavelength': [1, 2],
+            'wavelength_units': 'Angstrom'
+        })
+        deserialized = self.serializer.deserialize(serialized_spectrum)
 
+        self.assertTrue(type(deserialized) is Spectrum1D)
+        self.assertEqual(deserialized.flux.mean().value, 1.5)
+        self.assertEqual(deserialized.wavelength.mean().value, 1.5)
+
+    def test_deserialize_spectrum_invalid(self):
+        with self.assertRaises(Exception):
+            self.serializer.deserialize(json.dumps({'invalid_key': 'value'}))
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
 class TestDataProcessor(TestCase):
@@ -256,12 +272,9 @@ class TestDataProcessor(TestCase):
         with self.assertRaises(InvalidFileFormatException):
             self.data_processor.process_photometry(self.data_product)
 
-    # TODO: Photometry processing is incorrect, doesn't handle multiple filters at same epoch
-    # def test_process_photometry_from_plaintext(self):
-    #     with open('tom_dataproducts/tests/data/test_lightcurve.csv', 'rb') as lightcurve_file:
-    #         self.data_product.data.save('lightcurve.csv', lightcurve_file)
-    #         lightcurve = self.data_processor._process_photometry_from_plaintext(self.data_product)
-    #         self.assertTrue(type(lightcurve) is dict)
-    #         print(lightcurve)
-    #         self.assertEqual(len(lightcurve))
-    #         self.assertAlmostEqual(lightcurve.wavelength.mean().value, 3250.744489, places=5)
+    def test_process_photometry_from_plaintext(self):
+        with open('tom_dataproducts/tests/data/test_lightcurve.csv', 'rb') as lightcurve_file:
+            self.data_product.data.save('lightcurve.csv', lightcurve_file)
+            lightcurve = self.data_processor._process_photometry_from_plaintext(self.data_product)
+            self.assertTrue(type(lightcurve) is dict)
+            self.assertEqual(len(lightcurve), 2)
