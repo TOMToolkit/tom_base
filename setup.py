@@ -45,6 +45,8 @@ setup(
         'numpy',
         'pillow',
         'gsselect',
+        'specutils',
+        'python-magic'
     ],
     extras_require={
         'test': ['factory_boy', 'rise-set']

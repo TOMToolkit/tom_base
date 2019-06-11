@@ -3,6 +3,7 @@ from django.conf import settings
 from django import forms
 from dateutil.parser import parse
 from crispy_forms.layout import Layout, Div
+from astropy import units as u
 # from django.core.cache import cache
 # from datetime import datetime
 
@@ -41,6 +42,11 @@ except KeyError:
 
 PORTAL_URL = GEM_SETTINGS['portal_url']
 TERMINAL_OBSERVING_STATES = ['TRIGGERED', 'ON_HOLD']
+
+# Units of flux and wavelength for converting to Specutils Spectrum1D objects
+FLUX_CONSTANT = (1 * u.erg) / (u.cm ** 2 * u.second * u.angstrom)
+WAVELENGTH_UNITS = u.angstrom
+
 SITES = {
     'Cerro Pachon': {
         'sitecode': 'cpo',
