@@ -158,10 +158,7 @@ class ObservationRecordDetailView(DetailView):
             newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and \
                 data_product.get_file_extension() == '.fits' else newest_image
         if newest_image:
-<<<<<<< HEAD
             context['image'] = newest_image.get_preview()
-=======
-            context['image'] = newest_image.get_image_data()
         data_product_upload_form = DataProductUploadForm(
             initial={
                 'observation_record': self.get_object(),
@@ -170,5 +167,4 @@ class ObservationRecordDetailView(DetailView):
             hide_timestamp=True
         )
         context['data_product_form'] = data_product_upload_form
->>>>>>> af3f4607a63957731d201e7c90d51e2370fe49a2
         return context
