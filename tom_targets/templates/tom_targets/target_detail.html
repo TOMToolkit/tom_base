@@ -45,7 +45,7 @@
       </div>
       <div class="tab-pane" id="data-products">
         {% photometry_for_target target %}
-        {% upload_dataproduct %}
+        {% include 'tom_dataproducts/upload_dataproduct.html' %}
         {% dataproduct_list_for_target object %}
         {% spectroscopy_for_target target %}
       </div>

@@ -12,7 +12,7 @@ from guardian.shortcuts import get_objects_for_user
 
 from .models import ObservationRecord
 from .forms import ManualObservationForm
-from tom_dataproducts.forms import AddProductToGroupForm
+from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class
 
@@ -158,5 +158,17 @@ class ObservationRecordDetailView(DetailView):
             newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and \
                 data_product.get_file_extension() == '.fits' else newest_image
         if newest_image:
+<<<<<<< HEAD
             context['image'] = newest_image.get_preview()
+=======
+            context['image'] = newest_image.get_image_data()
+        data_product_upload_form = DataProductUploadForm(
+            initial={
+                'observation_record': self.get_object(),
+                'referrer': reverse('tom_observations:detail', args=(self.get_object().id,))
+            },
+            hide_timestamp=True
+        )
+        context['data_product_form'] = data_product_upload_form
+>>>>>>> af3f4607a63957731d201e7c90d51e2370fe49a2
         return context
