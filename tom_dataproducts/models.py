@@ -20,6 +20,33 @@ SPECTROSCOPY = ('spectroscopy', 'Spectroscopy')
 IMAGE_FILE = ('image_file', 'Image File')
 
 
+def find_img_size(filename):
+    try:
+        return settings.THUMBNAIL_MAX_SIZE
+    except:
+        hdul = fits.open(filename)
+        xsize = 0
+        ysize = 0
+        for hdu in hdul:
+            try:
+                xsize = max(xsize,hdu.header['NAXIS1'])
+                ysize = max(ysize,hdu.header['NAXIS2'])
+            except KeyError:
+                pass
+        return (xsize, ysize)
+
+
+def is_fits_image_file(filename):
+    try:
+        hdul = fits.open(filename)
+    except OSError:  # OSError is raised if file is not FITS format
+        return False
+    for hdu in hdul:
+        if hdu.header.get('XTENSION') == 'IMAGE':
+            return True
+    return False
+
+
 def data_product_path(instance, filename):
     # Uploads go to MEDIA_ROOT
     if instance.observation_record is not None:
@@ -97,11 +124,11 @@ class DataProduct(models.Model):
         return self.thumbnail.url
 
     def create_thumbnail(self, width=None, height=None):
-        if '.fits' in self.file.name:
+        if is_fits_image_file(self.data.file.name):
             tmpfile = tempfile.NamedTemporaryFile()
             if not width or not height:
-                width, height = find_img_size(self.file.name)
-            resp = fits_to_jpg(self.file.name, tmpfile.name, width=width, height=height)
+                width, height = find_img_size(self.data.file.name)
+            resp = fits_to_jpg(self.data.file.name, tmpfile.name, width=width, height=height)
             if resp:
                 return tmpfile
         return

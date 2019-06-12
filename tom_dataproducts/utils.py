@@ -68,18 +68,3 @@ def create_image_dataproduct(data_product):
         return True
 
     return
-
-def find_img_size(filename):
-    try:
-        return settings.THUMBNAIL_MAX_SIZE
-    except:
-        hdul = fits.open(filename)
-        xsize = 0
-        ysize = 0
-        for hdu in hdul:
-            try:
-                xsize = max(xsize,hdu.header['NAXIS1'])
-                ysize = max(ysize,hdu.header['NAXIS2'])
-            except KeyError:
-                pass
-        return (xsize, ysize)
