@@ -120,7 +120,7 @@ class DataProduct(models.Model):
 
         if not self.thumbnail or redraw:
             width, height = settings.THUMBNAIL_DEFAULT_SIZE
-            tmpfile = self.create_thumbnail(self.data, width=width, height=height)
+            tmpfile = self.create_thumbnail(width=width, height=height)
             if tmpfile:
                 outfile_name = os.path.basename(self.data.file.name)
                 filename = outfile_name.split(".")[0] + "_tb.jpg"
