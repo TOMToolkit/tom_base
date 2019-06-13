@@ -6,10 +6,8 @@ from datetime import datetime
 from plotly import offline
 import plotly.graph_objs as go
 
-from tom_targets.models import Target
-from tom_observations.models import ObservationRecord
 from tom_dataproducts.models import DataProduct, ReducedDatum, PHOTOMETRY, SPECTROSCOPY
-from tom_dataproducts.forms import DataProductUploadForm
+from tom_dataproducts.data_serializers import SpectrumSerializer
 from tom_observations.facility import get_service_class
 
 register = template.Library()
@@ -44,10 +42,12 @@ def dataproduct_list_all(saved, fields):
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html')
 def photometry_for_target(target):
     photometry_data = {}
-    target_dataproducts = DataProduct.objects.filter(target=target, tag=PHOTOMETRY[0])
-    for dataproduct in target_dataproducts:
-        data = dataproduct.get_photometry()
-        photometry_data.update(data)
+    for datum in ReducedDatum.objects.filter(data_type=PHOTOMETRY[0]):
+        values = json.loads(datum.value)
+        photometry_data.setdefault(values['filter'], {})
+        photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
+        photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
+        photometry_data[values['filter']].setdefault('error', []).append(values.get('error'))
     plot_data = [
         go.Scatter(
             x=filter_values['time'],
@@ -72,19 +72,19 @@ def photometry_for_target(target):
 
 @register.inclusion_tag('tom_dataproducts/partials/spectroscopy_for_target.html')
 def spectroscopy_for_target(target, dataproduct=None):
-    spectra = {}
     spectral_dataproducts = DataProduct.objects.filter(target=target, tag=SPECTROSCOPY[0])
     if dataproduct:
-        spectral_dataproducts = DataProduct.objects.get(dataproduct=dataproduct)
-    for data in spectral_dataproducts:
-        spectrum = data.get_spectroscopy()
-        spectra.update(spectrum)
-    plot_data = [
-        go.Scatter(
-            x=spectrum['wavelength'],
-            y=spectrum['flux'],
-            name=name
-        ) for name, spectrum in spectra.items()]
+        spectral_dataproducts = DataProduct.objects.get(data_product=dataproduct)
+
+    plot_data = []
+    for datum in ReducedDatum.objects.filter(data_product__in=spectral_dataproducts):
+        deserialized = SpectrumSerializer().deserialize(datum.value)
+        plot_data.append(go.Scatter(
+            x=deserialized.wavelength.value,
+            y=deserialized.flux.value,
+            name=datetime.strftime(datum.timestamp, '%Y%m%d-%H:%M:%s')
+        ))
+
     layout = go.Layout(
         height=600,
         width=700,

@@ -158,6 +158,20 @@ class GenericObservationFacility(ABC):
         pass
 
     @abstractmethod
+    def get_flux_constant(self):
+        """
+        Returns the astropy quantity that a facility uses for its spectral flux conversion.
+        """
+        pass
+
+    @abstractmethod
+    def get_wavelength_units(self):
+        """
+        Returns the astropy units that a facility uses for its spectral wavelengths
+        """
+        pass
+
+    @abstractmethod
     def get_terminal_observing_states(self):
         """
         Returns the states for which an observation is not expected

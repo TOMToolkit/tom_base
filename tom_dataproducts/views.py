@@ -17,12 +17,12 @@ from django.core.cache.utils import make_template_fragment_key
 from django.http import HttpResponseRedirect
 from guardian.shortcuts import get_objects_for_user
 
-from .models import DataProduct, DataProductGroup, ReducedDatum, SPECTROSCOPY, PHOTOMETRY
+from .models import DataProduct, DataProductGroup, ReducedDatum
 from .exceptions import InvalidFileFormatException
-from .utils import process_data_product
 from .forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
+from tom_common.hooks import run_hook
 
 
 class DataProductSaveView(LoginRequiredMixin, View):
@@ -59,6 +59,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         target = form.cleaned_data['target']
         observation_timestamp = form.cleaned_data.get('observation_timestamp', None)
+        facility = form.cleaned_data.get('facility', None)
         if not target:
             observation_record = form.cleaned_data['observation_record']
             target = observation_record.target
@@ -66,6 +67,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             observation_record = None
         tag = form.cleaned_data['tag']
         data_product_files = self.request.FILES.getlist('files')
+        successful_uploads = []
         for f in data_product_files:
             dp = DataProduct(
                 target=target,
@@ -76,15 +78,25 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             )
             dp.save()
             try:
-                process_data_product(dp, target, timestamp=observation_timestamp)
-                if tag == SPECTROSCOPY[0]:
-                    dp.get_spectroscopy()
-                elif tag == PHOTOMETRY[0]:
-                    dp.get_photometry()
+                run_hook('data_product_post_upload', dp, observation_timestamp, facility)
+                successful_uploads.append(str(dp))
             except InvalidFileFormatException:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
-                messages.error(self.request, 'There was a problem uploading your file: The file format was invalid')
+                messages.error(
+                    self.request,
+                    'There was a problem uploading your file--the file format was invalid for file: {0}'.format(str(dp))
+                )
+            except Exception:
+                ReducedDatum.objects.filter(data_product=dp).delete()
+                dp.delete()
+                messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))
+        if successful_uploads:
+            messages.success(
+                self.request,
+                'Successfully uploaded: {0}'.format('\n'.join([p for p in successful_uploads]))
+            )
+
         return redirect(form.cleaned_data.get('referrer', '/'))
 
     def form_invalid(self, form):
@@ -103,7 +115,7 @@ class DataProductDeleteView(LoginRequiredMixin, DeleteView):
         return referer
 
     def delete(self, request, *args, **kwargs):
-        reduced_data = ReducedDatum.objects.filter(data_product=self.get_object()).delete()
+        ReducedDatum.objects.filter(data_product=self.get_object()).delete()
         self.get_object().data.delete()
         return super().delete(request, *args, **kwargs)
 

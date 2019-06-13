@@ -46,6 +46,8 @@ setup(
         'pillow',
         'gsselect',
         'fits2image',
+        'specutils',
+        'python-magic'
     ],
     extras_require={
         'test': ['factory_boy', 'rise-set']
