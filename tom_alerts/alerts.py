@@ -14,7 +14,8 @@ from tom_alerts.models import BrokerQuery
 DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.mars.MARSBroker',
     'tom_alerts.brokers.lasair.LasairBroker',
-    'tom_alerts.brokers.scout.ScoutBroker'
+    'tom_alerts.brokers.scout.ScoutBroker',
+    'tom_alerts.brokers.antares.AntaresBroker'
 ]
 
 
@@ -132,3 +133,13 @@ class GenericBroker(ABC):
         alert data for use outside of the implementation of the GenericBroker.
         """
         pass
+
+    def fetch_and_save_all(self, parameters):
+        targets = []
+        for alert in self.fetch_alerts(parameters):
+            generic_alert = self.to_generic_alert(alert)
+            full_alert = self.fetch_alert(generic_alert.id)
+            target = self.to_target(full_alert)
+            targets.append(target)
+
+        return targets
