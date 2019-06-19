@@ -3,10 +3,14 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from antares_client import Client
+from time import sleep
 import requests
+import logging
 
 from tom_alerts.alerts import GenericBroker, GenericQueryForm, GenericAlert
 from tom_targets.models import Target
+
+logger = logging.getLogger(__name__)
 
 
 class AntaresBrokerForm(GenericQueryForm):
@@ -73,3 +77,16 @@ class AntaresBroker(GenericBroker):
             mag=alert['new_alert']['properties']['ztf_magpsf'],
             score=alert['new_alert']['properties']['ztf_rb']
         )
+
+    def run_stream(self, parameters):
+        stream = parameters['stream']
+        with Client([stream], **self.config) as client:
+            logger.info('Listening to alerts on {}. Ctrl-c to exit.'.format(stream))
+            try:
+                for topic, alert in client.iter():
+                    to_save = self.fetch_alert(alert['new_alert']['properties']['ztf_candid'])
+                    target = self.to_target(to_save)
+                    logger.info('Saved target: {}'.format(target))
+                    sleep(1)
+            except KeyboardInterrupt:
+                logger.info('Exiting...')
