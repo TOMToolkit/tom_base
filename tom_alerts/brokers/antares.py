@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class AntaresBrokerForm(GenericQueryForm):
-    alert_limit = forms.IntegerField(min_value=1)
     stream = forms.CharField()
 
 
@@ -34,13 +33,8 @@ class AntaresBroker(GenericBroker):
 
     def fetch_alerts(self, parameters):
         stream = parameters['stream']
-        alert_limit = parameters['alert_limit']
-        with Client([stream], **self.config) as client:
-            alerts = []
-            for topic, alert in client.iter(num_alerts=alert_limit):
-                alerts.append(alert)
-
-            return alerts
+        client = Client([stream], **self.config)
+        return client.iter()
 
     def fetch_alert(self, id):
         # Antares doesn't have programmatic access to alerts, so we use MARS here
@@ -53,6 +47,7 @@ class AntaresBroker(GenericBroker):
         pass
 
     def to_target(self, alert):
+        _, alert = alert
         target = Target.objects.create(
             identifier=alert['candid'],
             name=alert['objectId'],
@@ -65,6 +60,7 @@ class AntaresBroker(GenericBroker):
         return target
 
     def to_generic_alert(self, alert):
+        _, alert = alert
         url = 'https://antares.noao.edu/alerts/data/{}'.format(alert['new_alert']['alert_id'])
         timestamp = datetime.utcfromtimestamp(alert['timestamp_unix']).replace(tzinfo=timezone.utc)
         return GenericAlert(

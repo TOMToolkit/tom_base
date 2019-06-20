@@ -9,6 +9,7 @@ import json
 from abc import ABC, abstractmethod
 
 from tom_alerts.models import BrokerQuery
+from tom_targets.models import Target
 
 
 DEFAULT_ALERT_CLASSES = [
@@ -62,6 +63,15 @@ class GenericAlert:
     score: float
     url: str
 
+    def to_target(self):
+        return Target(
+            identifier=self.id,
+            name=self.name,
+            type='SIDEREAL',
+            ra=self.ra,
+            dec=self.dec
+        )
+
 
 class GenericQueryForm(forms.Form):
     query_name = forms.CharField(required=True)
@@ -103,7 +113,6 @@ class GenericBroker(ABC):
         """
         pass
 
-    @abstractmethod
     def fetch_alert(self, id):
         """
         This method takes an alert id and retrieves the specific
@@ -111,7 +120,6 @@ class GenericBroker(ABC):
         """
         pass
 
-    @abstractmethod
     def process_reduced_data(self, target, alert=None):
         """
         Retrieves and creates records for any reduced data provided
@@ -119,7 +127,6 @@ class GenericBroker(ABC):
         """
         pass
 
-    @abstractmethod
     def to_target(self, alert):
         """
         Creates Target object from the broker-specific alert data.

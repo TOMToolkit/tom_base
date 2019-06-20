@@ -5,8 +5,10 @@ from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.core.cache import cache
 from guardian.shortcuts import assign_perm
 import django_filters
+import json
 
 from tom_alerts.models import BrokerQuery
 
@@ -106,10 +108,16 @@ class RunQueryView(TemplateView):
         query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
         broker_class = get_service_class(query.broker)()
         alerts = broker_class.fetch_alerts(query.parameters_as_dict)
-        context['alerts'] = [
-            broker_class.to_generic_alert(alert) for alert in alerts
-        ]
+        context['alerts'] = []
         context['query'] = query
+        while len(context['alerts']) < 20:
+            try:
+                alert = next(alerts)
+                generic_alert = broker_class.to_generic_alert(alert)
+                cache.set('alert_{}'.format(generic_alert.id), json.dumps(alert), 3600)
+                context['alerts'].append(generic_alert)
+            except StopIteration:
+                pass
         return context
 
 
@@ -122,10 +130,12 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
         if not alerts:
             messages.warning(request, 'Please select at least one alert from which to create a target.')
             return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
-        for alert in alerts:
-            alert = broker_class().fetch_alert(alert)
-            target = broker_class().to_target(alert)
-            broker_class().process_reduced_data(target, alert)
+        for alert_id in alerts:
+            cached_alert = json.loads(cache.get('alert_{}'.format(alert_id)))
+            generic_alert = broker_class().to_generic_alert(cached_alert)
+            target = generic_alert.to_target()
+            target.save()
+            broker_class().process_reduced_data(target, cached_alert)
             target.save()
             for group in request.user.groups.all().exclude(name='Public'):
                 assign_perm('tom_targets.view_target', group, target)
