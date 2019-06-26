@@ -159,12 +159,16 @@ class ObservationRecordDetailView(DetailView):
                 data_product.get_file_extension() == '.fits' else newest_image
         if newest_image:
             context['image'] = newest_image.get_image_data()
+        data_timestamp = self.get_object().scheduled_end if self.get_object().scheduled_end \
+            else self.get_object().created
         data_product_upload_form = DataProductUploadForm(
             initial={
                 'observation_record': self.get_object(),
+                'observation_timestamp': data_timestamp,
+                'facility': self.get_object().facility,
                 'referrer': reverse('tom_observations:detail', args=(self.get_object().id,))
             },
-            hide_timestamp=True
+            hide_target_fields=True
         )
         context['data_product_form'] = data_product_upload_form
         return context
