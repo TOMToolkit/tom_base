@@ -6,6 +6,7 @@ from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from guardian.shortcuts import assign_perm
+from datetime import datetime
 import django_filters
 
 from tom_alerts.models import BrokerQuery
@@ -101,6 +102,12 @@ class BrokerQueryDeleteView(LoginRequiredMixin, DeleteView):
 class RunQueryView(TemplateView):
     template_name = 'tom_alerts/query_result.html'
 
+    def save_run(self, query_id):
+        query = BrokerQuery.objects.get(id=query_id)
+        query.last_run = datetime.utcnow()
+        query.save()
+        return query
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data()
         query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
@@ -109,6 +116,7 @@ class RunQueryView(TemplateView):
         context['alerts'] = [
             broker_class.to_generic_alert(alert) for alert in alerts
         ]
+        query = self.save_run(query_id=self.kwargs['pk'])
         context['query'] = query
         return context
 
