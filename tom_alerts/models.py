@@ -8,7 +8,7 @@ class BrokerQuery(models.Model):
     parameters = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField()
-    last_run = models.DateTimeField()
+    last_run = models.DateTimeField(blank=True, null=True, default=None)
 
     @property
     def parameters_as_dict(self):
