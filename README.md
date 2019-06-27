@@ -24,7 +24,4 @@ have a [contribution guide](https://tomtoolkit.github.io/docs/contributing) that
 you might find helpful. We are particularly interested in the contribution of
 observation and alert modules.
 
-## Changes in this branch:
-Using Postgresql as the database. Run commands with "--settings=test_settings" flag.
-ex) manage.py migrate --settings=test_settings
 
