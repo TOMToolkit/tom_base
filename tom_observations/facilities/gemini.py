@@ -501,6 +501,14 @@ class GEMFacility(GenericObservationFacility):
         return ''
 
     @classmethod
+    def get_flux_constant(self):
+        return FLUX_CONSTANT
+
+    @classmethod
+    def get_wavelength_units(self):
+        return WAVELENGTH_UNITS
+
+    @classmethod
     def get_terminal_observing_states(clz):
         return TERMINAL_OBSERVING_STATES
 
