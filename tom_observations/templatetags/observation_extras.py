@@ -1,4 +1,5 @@
 from django import template
+from django.db.models.aggregates import Max
 
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_classes
@@ -26,24 +27,56 @@ def observation_list(target=None):
     return {'observations': observations}
 
 @register.inclusion_tag('tom_observations/partials/observation_distribution.html')
-def observation_distribution(targets):
-    print("*******************")
-    print(targets)
-    for obs in targets:
-        print(obs.target)
-        print(obs.target.id)
-        print(Target.objects.get(id=obs.target.id))
+def observation_distribution(observations):
 
+    # This does not work 
+    # print(observations.values('target_id').annotate(time=Max('scheduled_end')))
 
+    # This does not work either
+    # distinct_targets = observations.order_by('target').distinct('target')
 
-    locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
+    # must use 'target_id' to reference Observations. 'target' will access Targets instead.
+    observation_distinct_targets = observations.order_by('target_id','-scheduled_end').distinct('target_id')
+    print(observation_distinct_targets.values())
+
+    observation_no_status = [t.target_id for t in observation_distinct_targets if not t.status] 
+    observation_terminal = [t.target_id for t in observation_distinct_targets if t.status and t.terminal]
+    observation_non_terminal = [t.target_id for t in observation_distinct_targets if t.status and not t.terminal]
+
+    targets_no_status = Target.objects.filter(pk__in=observation_no_status)
+    targets_terminal = Target.objects.filter(pk__in=observation_terminal)
+    targets_non_terminal = Target.objects.filter(pk__in=observation_non_terminal)
+
+    locations_no_status = targets_no_status.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
+    locations_terminal = targets_terminal.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
+    locations_non_terminal = targets_non_terminal.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
+
     data = [
         dict(
-            lon=[l[0] for l in locations],
-            lat=[l[1] for l in locations],
-            text=[l[2] for l in locations],
+            lon=[l[0] for l in locations_no_status],
+            lat=[l[1] for l in locations_no_status],
+            text=[l[2] for l in locations_no_status],
             hoverinfo='lon+lat+text',
             mode='markers',
+            marker = dict(color = 'rgba(90, 90, 90, .8)'),
+            type='scattergeo'
+        ),
+        dict(
+            lon=[l[0] for l in locations_non_terminal],
+            lat=[l[1] for l in locations_non_terminal],
+            text=[l[2] for l in locations_non_terminal],
+            hoverinfo='lon+lat+text',
+            mode='markers',
+            marker = dict(color = 'rgba(152, 0, 0, .8)'),
+            type='scattergeo'
+        ),
+        dict(
+            lon=[l[0] for l in locations_terminal],
+            lat=[l[1] for l in locations_terminal],
+            text=[l[2] for l in locations_terminal],
+            hoverinfo='lon+lat+text',
+            mode='markers',
+            marker = dict(color = 'rgba(0, 152, 0, .8)'),
             type='scattergeo'
         ),
         dict(
@@ -56,7 +89,7 @@ def observation_distribution(targets):
         )
     ]
     layout = {
-        'title': 'Target Distribution (sidereal)',
+        'title': 'Observation Distribution (sidereal)',
         'hovermode': 'closest',
         'showlegend': False,
         'geo': {
