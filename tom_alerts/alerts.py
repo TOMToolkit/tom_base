@@ -87,6 +87,7 @@ class GenericQueryForm(forms.Form):
         query.name = self.cleaned_data['query_name']
         query.broker = self.cleaned_data['broker']
         query.parameters = self.serialize_parameters()
+        query.modified = datetime.utcnow()
         query.save()
         return query
 

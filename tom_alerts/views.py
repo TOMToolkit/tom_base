@@ -6,6 +6,7 @@ from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from guardian.shortcuts import assign_perm
+from datetime import datetime
 import django_filters
 
 from tom_alerts.models import BrokerQuery
@@ -109,6 +110,8 @@ class RunQueryView(TemplateView):
         context['alerts'] = [
             broker_class.to_generic_alert(alert) for alert in alerts
         ]
+        query.last_run = datetime.utcnow()
+        query.save()
         context['query'] = query
         return context
 
