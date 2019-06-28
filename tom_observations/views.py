@@ -50,6 +50,8 @@ class ObservationListView(FilterView):
             call_command('updatestatus', stdout=out)
             messages.info(request, out.getvalue())
             return redirect(reverse('tom_observations:list'))
+        # context = super().get_context_data(**kwargs)
+        # return self.render_to_response(context)
         return super().get(request, *args, **kwargs)
 
 
