@@ -1,13 +1,11 @@
 from django import template
-from django.db.models.aggregates import Max
 
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_classes
-from tom_targets.models import Target, TargetExtra
+from tom_targets.models import Target
 
 from plotly import offline
 import plotly.graph_objs as go
-
 
 register = template.Library()
 
@@ -29,19 +27,20 @@ def observation_list(target=None):
 @register.inclusion_tag('tom_observations/partials/observation_distribution.html')
 def observation_distribution(observations):
 
-    # This does not work 
-    # print(observations.values('target_id').annotate(time=Max('scheduled_end')))
-
-    # This does not work either
-    # distinct_targets = observations.order_by('target').distinct('target')
-
+    # this does not work 
+    #   distinct_targets = observations.order_by('target').distinct('target')
     # must use 'target_id' to reference Observations. 'target' will access Targets instead.
-    observation_distinct_targets = observations.order_by('target_id','-scheduled_end').distinct('target_id')
-    print(observation_distinct_targets.values())
+    # distinct(*field) only works postgres. don't use it
+    # also, in the model, ordering = ('-created',), thus django generates SELECT DISTINCT target_id, created FROM ...
 
-    observation_no_status = [t.target_id for t in observation_distinct_targets if not t.status] 
-    observation_terminal = [t.target_id for t in observation_distinct_targets if t.status and t.terminal]
-    observation_non_terminal = [t.target_id for t in observation_distinct_targets if t.status and not t.terminal]
+    sorted_observations = observations.order_by('scheduled_end') # ascending so that only the max is preserved
+    observation_targets = {}
+    for obs in sorted_observations:
+        observation_targets[obs.target_id] = (obs.status, obs.terminal)
+
+    observation_no_status = [t for t in observation_targets.keys() if not observation_targets[t][0]] # status==""
+    observation_terminal = [t for t in observation_targets.keys() if observation_targets[t][0] and observation_targets[t][1]] # status!="" and terminal
+    observation_non_terminal = [t for t in observation_targets.keys() if observation_targets[t][0] and not observation_targets[t][1]] # status!="" and not terminal
 
     targets_no_status = Target.objects.filter(pk__in=observation_no_status)
     targets_terminal = Target.objects.filter(pk__in=observation_terminal)
