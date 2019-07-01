@@ -197,7 +197,6 @@ class TargetExportFilteredView(TargetListView):
 
     def render_to_response(self, context, **response_kwargs):
         qs = context['filter'].qs.values('identifier')
-        print(qs)
         filepath, filename = export_targets(qs)
         stream_file = File(open(filepath, "r"))
         response = StreamingHttpResponse(stream_file, content_type="text/csv")
