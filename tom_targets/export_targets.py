@@ -18,7 +18,7 @@ def export_targets(qs):
         os.mkdir(path)
     filepath = os.path.join(path, filename)
     target_fields = [field.name for field in Target._meta.get_fields()]
-    target_extra_fields = list({field.key for field in TargetExtra.objects.filter(pk__in = qs_pk)})
+    target_extra_fields = list({field.key for field in TargetExtra.objects.filter(target__in = qs_pk)})
     all_fields = target_fields + target_extra_fields
 
     with open(filepath, 'w') as my_csv:
