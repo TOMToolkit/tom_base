@@ -10,6 +10,9 @@ def import_targets(targets):
     errors = []
     base_target_fields = [field.name for field in Target._meta.get_fields()]
     for index, row in enumerate(targetreader):
+        row = {k:v for (k,v) in row.items() if v} # filter empty fields
+        print(row)
+        print('')
         target_extra_fields = []
         for k in row:
             if k not in base_target_fields:

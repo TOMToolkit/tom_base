@@ -8,7 +8,7 @@ from .models import Target
 
 # this will just export all the targets existing into a csv file in folder csvTargetFiles
 # referenced https://www.codingforentrepreneurs.com/blog/django-queryset-to-csv-files-datasets/
-def export_targets():
+def export_all_targets():
     # should prob pass argument. Should prob be the queryset.
     qs = Target.objects.all().values()
     data_list = list(qs)
@@ -23,4 +23,4 @@ def export_targets():
         writer.writeheader()
         for target_data in data_list:
             writer.writerow(target_data)
-    return
+    return filepath, filename

@@ -3,13 +3,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 from django_filters.views import FilterView
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import redirect
 from django.conf import settings
 from django.contrib import messages
 from django.core.management import call_command
+from django.core.files import File
+from django.http import HttpResponse, StreamingHttpResponse
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
 
@@ -17,6 +19,7 @@ from .models import Target
 from tom_dataproducts.forms import DataProductUploadForm
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from .import_targets import import_targets
+from .export_targets import export_targets
 from .filters import TargetFilter
 
 
@@ -180,3 +183,11 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
         for error in result['errors']:
             messages.warning(request, error)
         return redirect(reverse('tom_targets:list'))
+
+class TargetExportView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        filepath, filename = export_targets()
+        stream_file = File(open(filepath, "r"))
+        response = StreamingHttpResponse(stream_file, content_type="text/csv")
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+        return response
