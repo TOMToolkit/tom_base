@@ -7,6 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.cache import cache
 from guardian.shortcuts import assign_perm
+from datetime import datetime
 import django_filters
 import json
 
@@ -109,6 +110,8 @@ class RunQueryView(TemplateView):
         broker_class = get_service_class(query.broker)()
         alerts = broker_class.fetch_alerts(query.parameters_as_dict)
         context['alerts'] = []
+        query.last_run = datetime.utcnow()
+        query.save()
         context['query'] = query
         try:
             while len(context['alerts']) < 20:

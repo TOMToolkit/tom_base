@@ -115,11 +115,13 @@ class TestBrokerViews(TestCase):
             name='Is it dust?',
             broker='TEST',
             parameters='{"name": "Alderaan"}',
+            modified = datetime.utcnow()
         )
         not_found = BrokerQuery.objects.create(
             name='find hoth',
             broker='TEST',
             parameters='{"name": "Hoth"}',
+            modified=datetime.utcnow()
         )
         response = self.client.get(reverse('tom_alerts:list') + '?name=dust')
         self.assertContains(response, broker_query.name)
@@ -130,6 +132,7 @@ class TestBrokerViews(TestCase):
             name='find hoth',
             broker='TEST',
             parameters='{"name": "Hoth"}',
+            modified=datetime.utcnow()
         )
         self.assertTrue(BrokerQuery.objects.filter(name='find hoth').exists())
         self.client.post(reverse('tom_alerts:delete', kwargs={'pk': broker_query.id}))
@@ -140,6 +143,7 @@ class TestBrokerViews(TestCase):
             name='find hoth',
             broker='TEST',
             parameters='{"name": "Hoth"}',
+            modified=datetime.utcnow()
         )
         response = self.client.get(reverse('tom_alerts:run', kwargs={'pk': broker_query.id}))
         self.assertContains(response,  '66')
@@ -149,6 +153,7 @@ class TestBrokerViews(TestCase):
             name='find hoth',
             broker='TEST',
             parameters='{"name": "Hoth"}',
+            modified=datetime.utcnow()
         )
         update_data = {
             'query_name': 'find hoth',
@@ -170,6 +175,7 @@ class TestBrokerViews(TestCase):
             name='find hoth',
             broker='TEST',
             parameters='{"name": "Hoth"}',
+            modified=datetime.utcnow()
         )
         post_data = {
             'broker': 'TEST',
@@ -192,7 +198,8 @@ class TestBrokerViews(TestCase):
         query = BrokerQuery.objects.create(
             name='find anything',
             broker='TEST',
-            parameters='{"score__gt": "19"}'
+            parameters='{"score__gt": "19"}',
+            modified = datetime.utcnow()
         )
         post_data = {
             'broker': 'TEST',
@@ -207,7 +214,8 @@ class TestBrokerViews(TestCase):
         query = BrokerQuery.objects.create(
             name='find anything',
             broker='TEST',
-            parameters='{"name": "Alderaan"}'
+            parameters='{"name": "Alderaan"}',
+            modified = datetime.utcnow()
         )
         post_data = {
             'broker': 'TEST',
