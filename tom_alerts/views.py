@@ -110,14 +110,14 @@ class RunQueryView(TemplateView):
         alerts = broker_class.fetch_alerts(query.parameters_as_dict)
         context['alerts'] = []
         context['query'] = query
-        while len(context['alerts']) < 20:
-            try:
+        try:
+            while len(context['alerts']) < 20:
                 alert = next(alerts)
                 generic_alert = broker_class.to_generic_alert(alert)
                 cache.set('alert_{}'.format(generic_alert.id), json.dumps(alert), 3600)
                 context['alerts'].append(generic_alert)
-            except StopIteration:
-                pass
+        except StopIteration:
+            pass
         return context
 
 
@@ -131,8 +131,11 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             messages.warning(request, 'Please select at least one alert from which to create a target.')
             return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
         for alert_id in alerts:
-            cached_alert = json.loads(cache.get('alert_{}'.format(alert_id)))
-            generic_alert = broker_class().to_generic_alert(cached_alert)
+            cached_alert = cache.get('alert_{}'.format(alert_id))
+            if not cached_alert:
+                messages.error(request, 'Could not create targets. Try re running the query again.')
+                return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
+            generic_alert = broker_class().to_generic_alert(json.loads(cached_alert))
             target = generic_alert.to_target()
             target.save()
             broker_class().process_reduced_data(target, cached_alert)
