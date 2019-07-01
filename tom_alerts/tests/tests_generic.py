@@ -3,6 +3,7 @@ from django import forms
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
 from django.core.cache import cache
+from datetime import datetime
 import json
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, get_service_class
@@ -115,7 +116,7 @@ class TestBrokerViews(TestCase):
             name='Is it dust?',
             broker='TEST',
             parameters='{"name": "Alderaan"}',
-            modified = datetime.utcnow()
+            modified=datetime.utcnow()
         )
         not_found = BrokerQuery.objects.create(
             name='find hoth',
@@ -199,7 +200,7 @@ class TestBrokerViews(TestCase):
             name='find anything',
             broker='TEST',
             parameters='{"score__gt": "19"}',
-            modified = datetime.utcnow()
+            modified=datetime.utcnow()
         )
         post_data = {
             'broker': 'TEST',
@@ -215,7 +216,7 @@ class TestBrokerViews(TestCase):
             name='find anything',
             broker='TEST',
             parameters='{"name": "Alderaan"}',
-            modified = datetime.utcnow()
+            modified=datetime.utcnow()
         )
         post_data = {
             'broker': 'TEST',
