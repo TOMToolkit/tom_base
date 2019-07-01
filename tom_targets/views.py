@@ -191,3 +191,16 @@ class TargetExportView(LoginRequiredMixin, View):
         response = StreamingHttpResponse(stream_file, content_type="text/csv")
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
         return response
+
+class TargetExportFilteredView(TargetListView):
+
+    def render_to_response(self, context, **response_kwargs):
+        print(context['filter'].qs)
+        return HttpResponse(str(context['filter'].qs))
+    # def get(self, request, *args, **kwargs):
+    #     print(vars(self))
+    #     filepath, filename = export_targets()
+    #     stream_file = File(open(filepath, "r"))
+    #     response = StreamingHttpResponse(stream_file, content_type="text/csv")
+    #     response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+    #     return response

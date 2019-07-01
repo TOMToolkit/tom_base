@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import TargetCreateView, TargetUpdateView, TargetDetailView
-from .views import TargetDeleteView, TargetListView, TargetImportView, TargetExportView
+from .views import TargetDeleteView, TargetListView, TargetImportView, TargetExportView, TargetExportFilteredView
 
 app_name = 'tom_targets'
 
@@ -10,6 +10,7 @@ urlpatterns = [
     path('create/', TargetCreateView.as_view(), name='create'),
     path('import/', TargetImportView.as_view(), name='import'),
     path('export/', TargetExportView.as_view(), name='export'),
+    path('export/filtered/', TargetExportFilteredView.as_view(), name='export-filtered'),
     path('<pk>/update/', TargetUpdateView.as_view(), name='update'),
     path('<pk>/delete/', TargetDeleteView.as_view(), name='delete'),
     path('<pk>/', TargetDetailView.as_view(), name='detail')
