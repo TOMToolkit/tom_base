@@ -73,16 +73,3 @@ class AntaresBroker(GenericBroker):
             mag=alert['new_alert']['properties']['ztf_magpsf'],
             score=alert['new_alert']['properties']['ztf_rb']
         )
-
-    def run_stream(self, parameters):
-        stream = parameters['stream']
-        with Client([stream], **self.config) as client:
-            logger.info('Listening to alerts on {}. Ctrl-c to exit.'.format(stream))
-            try:
-                for topic, alert in client.iter():
-                    to_save = self.fetch_alert(alert['new_alert']['properties']['ztf_candid'])
-                    target = self.to_target(to_save)
-                    logger.info('Saved target: {}'.format(target))
-                    sleep(1)
-            except KeyboardInterrupt:
-                logger.info('Exiting...')
