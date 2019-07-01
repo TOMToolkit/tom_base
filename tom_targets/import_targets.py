@@ -10,13 +10,14 @@ def import_targets(targets):
     errors = []
     base_target_fields = [field.name for field in Target._meta.get_fields()]
     for index, row in enumerate(targetreader):
-        row = {k:v for (k,v) in row.items() if v} # filter empty fields
-        print(row)
-        print('')
+        # filter empty values (Note that the target will lose this extra field if its value is blank): 
+        row = {k:v for (k,v) in row.items() if v} 
         target_extra_fields = []
         for k in row:
             if k not in base_target_fields:
-                target_extra_fields.append((k, row.pop(k)))
+                target_extra_fields.append((k, row[k]))
+        for extra in target_extra_fields:
+            row.pop(extra[0])
         try:
             target = Target.objects.create(**row)
             for extra in target_extra_fields:
