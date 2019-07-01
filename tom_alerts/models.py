@@ -7,7 +7,7 @@ class BrokerQuery(models.Model):
     broker = models.CharField(max_length=50)
     parameters = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField()
+    modified = models.DateTimeField(auto_now=True)
     last_run = models.DateTimeField(blank=True, null=True, default=None)
 
     @property
