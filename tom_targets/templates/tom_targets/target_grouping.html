@@ -1,19 +1,31 @@
 {% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
 {% block title %}Target Groups{% endblock %}
 {% block content %}
 <h1>Target Groupings</h1>
-<table class="table">
+<div class="row">
+    <div class="col-md-10">
+        <p>
+            <form action="" method="POST" id="create-group">
+                {% csrf_token %}
+                Add new grouping: <input type="text" name="group-name"/>
+                <input type="submit" class="btn btn-primary" value="Create">
+            </form>
+        </p>
+    </div>
+</div>
+<table class="table table-striped">
     <thead>
       <tr>
         <th>Name</th>
-        <th></th>
+        <th>Delete</th>
       </tr>
     </thead>
     <tbody>
       {% for group in object_list %}
       <tr>
         <td><a href="{% url 'targets:list' %}">{{ group.name }}</a></td>
-        <td>'delete'</td>
+        <td><a href="{% url 'targets:list' %}" title="Delete Group" class="btn btn-danger">Delete</a></td>
       </tr>
       {% empty %}
       <tr>

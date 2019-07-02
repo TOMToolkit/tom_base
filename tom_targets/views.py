@@ -45,6 +45,10 @@ class TargetGroupingView(ListView):
         context = super().get_context_data(**kwargs)
         return context
 
+# class TargetGroupingDeleteView(PermissionRequiredMixin, DeleteView):
+#     permission_required = 'tom_targets.delete_target'
+#     model = TargetList
+#     success_url = reverse_lazy('targets:targetgrouping')
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
     model = Target

@@ -1,8 +1,8 @@
 from django.urls import path
 
 from .views import TargetCreateView, TargetUpdateView, TargetDetailView
-from .views import TargetDeleteView, TargetListView, TargetImportView, TargetGroupingView
-
+from .views import TargetDeleteView, TargetListView, TargetImportView
+from .views import TargetGroupingView #TargetGroupingDeleteView
 app_name = 'tom_targets'
 
 urlpatterns = [
@@ -14,3 +14,5 @@ urlpatterns = [
     path('<pk>/delete/', TargetDeleteView.as_view(), name='delete'),
     path('<pk>/', TargetDetailView.as_view(), name='detail')
 ]
+
+# path('targetgrouping/<int:pk>/delete/', TargetGroupingDeleteView.as_view(), name='delete-group')
