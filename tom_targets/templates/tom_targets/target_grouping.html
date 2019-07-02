@@ -1,0 +1,26 @@
+{% extends 'tom_common/base.html' %}
+{% block title %}Target Groups{% endblock %}
+{% block content %}
+<h1>Target Groupings</h1>
+<table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for group in object_list %}
+      <tr>
+        <td><a href="{% url 'targets:list' %}">{{ group.name }}</a></td>
+        <td>'delete'</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td>No groups yet</td>
+        <td></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
