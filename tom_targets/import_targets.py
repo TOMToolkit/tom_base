@@ -3,6 +3,14 @@ import csv
 from .models import Target, TargetExtra
 
 
+"""
+A minor bug:
+This might throw error when importing targetextra field with too large value
+such as ZTF18ablisrr (Ra=285.5168321, Dec=8.762932, pid=906353920615) has targetextra objectidps2=118512855167055353
+probably because of the auto-type system
+Fortunately this error is safely handled and the user is informed.
+The target is created but the rest of the targetextras are not.
+"""
 def import_targets(targets):
     # TODO: Replace this with an in memory iterator
     targetreader = csv.DictReader(targets, dialect=csv.excel)

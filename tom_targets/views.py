@@ -1,4 +1,3 @@
-from io import StringIO
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
@@ -11,9 +10,12 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.management import call_command
 from django.core.files import File
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import StreamingHttpResponse
+from django.utils.text import slugify
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
+from datetime import datetime
+from io import StringIO
 
 from .models import Target
 from tom_dataproducts.forms import DataProductUploadForm
@@ -184,21 +186,14 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
             messages.warning(request, error)
         return redirect(reverse('tom_targets:list'))
 
-class TargetExportAllView(LoginRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        qs = Target.objects.all().values()
-        filepath, filename = export_targets(qs)
-        stream_file = File(open(filepath, "r"))
-        response = StreamingHttpResponse(stream_file, content_type="text/csv")
-        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
-        return response
 
-class TargetExportFilteredView(TargetListView):
+class TargetExportView(TargetListView):
 
     def render_to_response(self, context, **response_kwargs):
         qs = context['filter'].qs.values()
-        filepath, filename = export_targets(qs)
-        stream_file = File(open(filepath, "r"))
-        response = StreamingHttpResponse(stream_file, content_type="text/csv")
+        file_buffer = export_targets(qs)
+        file_buffer.seek(0) # goto the beginning of the buffer
+        response = StreamingHttpResponse(file_buffer, content_type="text/csv")
+        filename = "targets-{}.csv".format(slugify(datetime.utcnow()))
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
         return response
