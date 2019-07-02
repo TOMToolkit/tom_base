@@ -3,7 +3,6 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from antares_client import Client
-from time import sleep
 import requests
 import logging
 
@@ -13,8 +12,13 @@ from tom_targets.models import Target
 logger = logging.getLogger(__name__)
 
 
+def get_available_streams():
+    response = requests.get('https://antares.noao.edu/api/streams/streams').json()
+    return [(s['name'], s['name']) for s in response['result']]
+
+
 class AntaresBrokerForm(GenericQueryForm):
-    stream = forms.CharField()
+    stream = forms.ChoiceField(choices=get_available_streams)
 
 
 class AntaresBroker(GenericBroker):
