@@ -30,7 +30,7 @@ class TargetListView(PermissionListMixin, FilterView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context['target_count'] = Target.objects.all().count()
+        context['target_count'] = context['object_list'].count()
         return context
 
 
