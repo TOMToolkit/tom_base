@@ -13,7 +13,10 @@ from django.core.management import call_command
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
 
-from .models import Target
+from django.views.generic.list import ListView
+from django.http import HttpResponse
+
+from .models import Target, TargetList
 from tom_dataproducts.forms import DataProductUploadForm
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from .import_targets import import_targets
@@ -31,6 +34,15 @@ class TargetListView(PermissionListMixin, FilterView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['target_count'] = context['paginator'].count
+        return context
+
+class TargetGroupingView(ListView):
+    template_name = 'tom_targets/target_grouping.html'
+    model = TargetList
+    paginate_by = 100  # if pagination is desired
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         return context
 
 
