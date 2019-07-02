@@ -2,6 +2,7 @@ from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.base import TemplateView, View
 from tom_alerts.alerts import get_service_class, get_service_classes
 from django.shortcuts import redirect, get_object_or_404
+from django.utils import timezone
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
@@ -109,6 +110,8 @@ class RunQueryView(TemplateView):
         context['alerts'] = [
             broker_class.to_generic_alert(alert) for alert in alerts
         ]
+        query.last_run = timezone.now()
+        query.save()
         context['query'] = query
         return context
 

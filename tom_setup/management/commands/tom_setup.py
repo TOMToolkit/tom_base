@@ -83,12 +83,18 @@ class Command(BaseCommand):
 
 
     def get_target_type(self):
-        prompt = 'Which target type will your project use? {}'.format(self.style.WARNING('[SIDEREAL/NON_SIDEREAL] '))
-        target_type = input(prompt).upper()
-        if target_type not in ['SIDEREAL', 'NON_SIDEREAL']:
-            self.stdout.write('Error: invalid type {} valid types are SIDEREAL, NON_SIDEREAL'.format(target_type))
+        allowed_types = {
+            '1': 'SIDEREAL',
+            '2': 'NON_SIDEREAL'
+        }
+        options_str = ['{}) {}'.format(key, target_type) for key, target_type in allowed_types.items()]
+        prompt = 'Which target type will your project use? {} '.format(self.style.WARNING(", ".join(options_str)))
+        target_type = input(prompt)
+        try:
+            self.context['TARGET_TYPE'] = allowed_types[target_type]
+        except KeyError:
+            self.stdout.write('Error: invalid choice {}'.format(target_type))
             self.get_target_type()
-        self.context['TARGET_TYPE'] = target_type
 
     def generate_secret_key(self):
         self.status('Generating secret key... ')

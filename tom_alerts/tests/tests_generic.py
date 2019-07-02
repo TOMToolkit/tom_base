@@ -201,7 +201,7 @@ class TestBrokerViews(TestCase):
         query = BrokerQuery.objects.create(
             name='find anything',
             broker='TEST',
-            parameters='{"score__gt": "19"}'
+            parameters='{"score__gt": "19"}',
         )
         post_data = {
             'broker': 'TEST',
@@ -216,7 +216,7 @@ class TestBrokerViews(TestCase):
         query = BrokerQuery.objects.create(
             name='find anything',
             broker='TEST',
-            parameters='{"name": "Alderaan"}'
+            parameters='{"name": "Alderaan"}',
         )
         post_data = {
             'broker': 'TEST',
