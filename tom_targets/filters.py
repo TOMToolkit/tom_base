@@ -2,7 +2,7 @@ import django_filters
 from django.db.models import Q
 from django.conf import settings
 
-from tom_targets.models import Target
+from tom_targets.models import Target, TargetList
 
 
 def filter_for_field(field):
@@ -52,6 +52,7 @@ class TargetFilter(django_filters.FilterSet):
 
     identifier = django_filters.CharFilter(field_name='identifier', lookup_expr='icontains')
     name = django_filters.CharFilter(field_name='name', method='filter_name')
+    targetlist__name = django_filters.ModelChoiceFilter(queryset=TargetList.objects.all(), label="Target Grouping")
 
     def filter_name(self, queryset, name, value):
         return queryset.filter(
