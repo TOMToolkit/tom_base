@@ -17,59 +17,59 @@
     {% target_distribution filter.qs %}
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
     <form id="grouping-form" action="{% url 'targets:add-remove-grouping' %}" method="POST">
-    {% csrf_token %}
-    <div class="d-flex justify-content-end align-items-center">
-      <label">Add/Remove from grouping</label>
-      <select name="grouping" class="btn">
-        {% for grouping in groupings %}
-        <option value="{{ grouping.id }}">{{ grouping.name }}</option>
-        {% endfor %} 
-      </select>
-      <button type="submit" class="btn btn-outline-primary" name="add">Add</button>
-      <button type="submit" class="btn btn-outline-warning" name="remove">Remove</button>
-    </div>
-    <table class="table">
-      <thead>
-        <tr>
-          <th></th>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Type</th>
-          {% if request.GET.type == 'SIDEREAL' %}
-          <th>RA</th><th>Dec</th>
-          {% endif %}
-          <th>Observations</th>
-          <th>Saved Data</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for target in object_list %}
-        <tr>
-          <td><input type="checkbox" name="selected-target" value="{{ target.id }}"/></td>
-          <td><a href="{% url 'targets:detail' target.id %}" title="{{ target.identifier }}">{{ target.identifier }}</a></td>
-          <td>{{ target.name }}</td>
-          <td>{{ target.get_type_display }}</td>
-          {% if request.GET.type == 'SIDEREAL' %}
-            <td>{{ target.ra }}</td>
-            <td>{{ target.dec }}</td>
-          {% endif %}
-          <td>{{ target.observationrecord_set.count }}</td>
-          <td>{{ target.dataproduct_set.count }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5">
-            {% if target_count == 0 %}
-            No targets yet. You might want to <a href="{% url 'tom_targets:create' %}">create a target manually</a>
-            or <a href="{% url 'tom_alerts:list' %}">import one from an alert broker</a>.
-            {% else %}
-            No targets match those filters.
+      {% csrf_token %}
+      <div class="d-flex justify-content-end align-items-center">
+        <label">Add/Remove from grouping</label>
+        <select name="grouping" class="btn">
+          {% for grouping in groupings %}
+          <option value="{{ grouping.id }}">{{ grouping.name }}</option>
+          {% endfor %} 
+        </select>
+        <button type="submit" class="btn btn-outline-primary" name="add">Add</button>
+        <button type="submit" class="btn btn-outline-warning" name="remove">Remove</button>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Type</th>
+            {% if request.GET.type == 'SIDEREAL' %}
+            <th>RA</th><th>Dec</th>
             {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+            <th>Observations</th>
+            <th>Saved Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for target in object_list %}
+          <tr>
+            <td><input type="checkbox" name="selected-target" value="{{ target.id }}"/></td>
+            <td><a href="{% url 'targets:detail' target.id %}" title="{{ target.identifier }}">{{ target.identifier }}</a></td>
+            <td>{{ target.name }}</td>
+            <td>{{ target.get_type_display }}</td>
+            {% if request.GET.type == 'SIDEREAL' %}
+              <td>{{ target.ra }}</td>
+              <td>{{ target.dec }}</td>
+            {% endif %}
+            <td>{{ target.observationrecord_set.count }}</td>
+            <td>{{ target.dataproduct_set.count }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">
+              {% if target_count == 0 %}
+              No targets yet. You might want to <a href="{% url 'tom_targets:create' %}">create a target manually</a>
+              or <a href="{% url 'tom_alerts:list' %}">import one from an alert broker</a>.
+              {% else %}
+              No targets match those filters.
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </form>
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
   </div>

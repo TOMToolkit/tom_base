@@ -10,7 +10,8 @@
         </p>
     </div>
 </div>
-<table class="table table-striped">
+<form action="{% url 'targets:list' %}" method="GET">
+  <table class="table table-striped">
     <thead>
       <tr>
         <th>Name</th>
@@ -20,7 +21,7 @@
     <tbody>
       {% for group in object_list %}
       <tr>
-        <td><a href="{% url 'targets:list' %}">{{ group.name }}</a></td>
+        <td><button type="submit" class="btn btn-link" name="targetlist__name" value="{{group.id}}">{{ group.name }}</button></td>
         <td><a href="{% url 'targets:delete-group' group.id%}" title="Delete Group" class="btn btn-danger">Delete</a></td>
       </tr>
       {% empty %}
@@ -30,5 +31,6 @@
       </tr>
       {% endfor %}
     </tbody>
-</table>
+  </table>
+</form>
 {% endblock %}
