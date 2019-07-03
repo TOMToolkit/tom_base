@@ -50,6 +50,11 @@ class TargetGroupingDeleteView(PermissionRequiredMixin, DeleteView):
     model = TargetList
     success_url = reverse_lazy('targets:targetgrouping')
 
+class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
+    model = TargetList
+    fields = ['name']
+    success_url = reverse_lazy('targets:targetgrouping')
+
 class TargetCreateView(LoginRequiredMixin, CreateView):
     model = Target
     fields = '__all__'
