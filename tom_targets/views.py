@@ -36,24 +36,6 @@ class TargetListView(PermissionListMixin, FilterView):
         context['target_count'] = context['paginator'].count
         return context
 
-class TargetGroupingView(ListView):
-    template_name = 'tom_targets/target_grouping.html'
-    model = TargetList
-    paginate_by = 100  # if pagination is desired
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return context
-
-class TargetGroupingDeleteView(PermissionRequiredMixin, DeleteView):
-    permission_required = 'tom_targets.delete_target_list'
-    model = TargetList
-    success_url = reverse_lazy('targets:targetgrouping')
-
-class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
-    model = TargetList
-    fields = ['name']
-    success_url = reverse_lazy('targets:targetgrouping')
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
     model = Target
@@ -201,3 +183,23 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
         for error in result['errors']:
             messages.warning(request, error)
         return redirect(reverse('tom_targets:list'))
+
+
+class TargetGroupingView(ListView):
+    template_name = 'tom_targets/target_grouping.html'
+    model = TargetList
+    paginate_by = 100  # if pagination is desired
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class TargetGroupingDeleteView(PermissionRequiredMixin, DeleteView):
+    permission_required = 'tom_targets.delete_target_list'
+    model = TargetList
+    success_url = reverse_lazy('targets:targetgrouping')
+
+class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
+    model = TargetList
+    fields = ['name']
+    success_url = reverse_lazy('targets:targetgrouping')
