@@ -33,7 +33,8 @@ class TargetListView(PermissionListMixin, FilterView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['target_count'] = context['paginator'].count
-        context['groupings'] = TargetList.objects.all()
+        # hide target grouping list if user not logged in
+        context['groupings'] = TargetList.objects.all() if self.request.user.is_authenticated else TargetList.objects.none()
         return context
 
 

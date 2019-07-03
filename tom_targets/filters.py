@@ -52,12 +52,20 @@ class TargetFilter(django_filters.FilterSet):
 
     identifier = django_filters.CharFilter(field_name='identifier', lookup_expr='icontains')
     name = django_filters.CharFilter(field_name='name', method='filter_name')
-    targetlist__name = django_filters.ModelChoiceFilter(queryset=TargetList.objects.all(), label="Target Grouping")
-
+    
     def filter_name(self, queryset, name, value):
         return queryset.filter(
             Q(name__icontains=value) | Q(name2__icontains=value) | Q(name3__icontains=value)
         )
+
+    # hide target grouping list if user not logged in
+    def get_target_list_queryset(request):
+        if request.user.is_authenticated:
+            return TargetList.objects.all()
+        else:
+            return TargetList.objects.none()
+
+    targetlist__name = django_filters.ModelChoiceFilter(queryset=get_target_list_queryset, label="Target Grouping")
 
     class Meta:
         model = Target
