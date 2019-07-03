@@ -3,7 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 from django_filters.views import FilterView
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import redirect
@@ -34,6 +34,7 @@ class TargetListView(PermissionListMixin, FilterView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['target_count'] = context['paginator'].count
+        context['groupings'] = TargetList.objects.all()
         return context
 
 class TargetGroupingView(ListView):
@@ -191,4 +192,21 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
         )
         for error in result['errors']:
             messages.warning(request, error)
+        return redirect(reverse('tom_targets:list'))
+
+class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
+    
+    def post(self, request):
+        targets_ids = request.POST.getlist('selected-target')
+        grouping_id = request.POST.get('grouping')
+        try:
+            for target_id in targets_ids:
+                list_object = TargetList.objects.get(pk=grouping_id)
+                target_object = Target.objects.get(pk=target_id)
+                if 'add' in request.POST:
+                    list_object.targets.add(target_object)
+                if 'remove' in request.POST:
+                    list_object.targets.remove(target_object)
+        except Exception as e:
+            redirect(reverse('tom_targets:list'))
         return redirect(reverse('tom_targets:list'))
