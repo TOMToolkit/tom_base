@@ -202,10 +202,11 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
             redirect(reverse('tom_targets:list'))
         return redirect(reverse('tom_targets:list'))
 
-class TargetGroupingView(ListView):
+class TargetGroupingView(PermissionRequiredMixin, ListView):
+    permission_required = 'tom_targets.view_target_list'
     template_name = 'tom_targets/target_grouping.html'
     model = TargetList
-    paginate_by = 100  # if pagination is desired
+    paginate_by = 25
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

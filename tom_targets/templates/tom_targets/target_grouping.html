@@ -10,6 +10,7 @@
         </p>
     </div>
 </div>
+{% bootstrap_pagination page_obj extra=request.GET.urlencode %}
 <form action="{% url 'targets:list' %}" method="GET">
   <table class="table table-striped">
     <thead>
@@ -33,4 +34,5 @@
     </tbody>
   </table>
 </form>
+{% bootstrap_pagination page_obj extra=request.GET.urlencode %}
 {% endblock %}
