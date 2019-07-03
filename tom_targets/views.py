@@ -12,7 +12,6 @@ from django.contrib import messages
 from django.core.management import call_command
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
-
 from django.views.generic.list import ListView
 from django.http import HttpResponse
 
@@ -202,7 +201,8 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
             redirect(reverse('tom_targets:list'))
         return redirect(reverse('tom_targets:list'))
 
-class TargetGroupingView(ListView):
+class TargetGroupingView(PermissionRequiredMixin, ListView):
+    permission_required = 'tom_targets.view_target_list'
     template_name = 'tom_targets/target_grouping.html'
     model = TargetList
     paginate_by = 100  # if pagination is desired
