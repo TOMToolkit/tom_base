@@ -239,5 +239,8 @@ class TargetList(models.Model):
         auto_now_add=True, help_text='The time which this target list was created in the TOM database.'
     )
 
+    class Meta:
+        ordering = ('-created', 'name',)
+    
     def __str__(self):
         return self.name
