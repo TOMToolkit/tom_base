@@ -32,8 +32,9 @@ class DataProductUploadForm(forms.Form):
     )
     tag = forms.ChoiceField(choices=DataProduct.DATA_PRODUCT_TYPES)
     facility = forms.ChoiceField(
-        choices=[('', '----')] + [(k, k) for k in get_service_classes().keys()],
-        required=False
+        choices=[('', '----')] + [(k, k) for k in get_service_classes().keys()] + [('No processing', 'No processing')],
+        required=False,
+        help_text='Facility algorithm used to process the data - spectroscopy only'
     )
     observation_timestamp = forms.SplitDateTimeField(
         label='Observation Time',
@@ -42,7 +43,8 @@ class DataProductUploadForm(forms.Form):
             time_attrs={'format': '%H:%M:%S', 'placeholder': 'Observation Time',
                         'type': 'time', 'step': '1'}
         ),
-        required=False
+        required=False,
+        help_text='Timestamp of the observation during which data was collected - spectroscopy only'
     )
     referrer = forms.CharField(
         widget=forms.HiddenInput()
