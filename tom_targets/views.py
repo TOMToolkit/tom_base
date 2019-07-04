@@ -190,16 +190,21 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
     def post(self, request):
         targets_ids = request.POST.getlist('selected-target')
         grouping_id = request.POST.get('grouping')
-        try:
-            for target_id in targets_ids:
-                list_object = TargetList.objects.get(pk=grouping_id)
-                target_object = Target.objects.get(pk=target_id)
+        fail_count = 0
+        for target_id in targets_ids:
+            list_object = TargetList.objects.get(pk=grouping_id)
+            target_object = Target.objects.get(pk=target_id)
+            try:
                 if 'add' in request.POST:
                     list_object.targets.add(target_object)
                 if 'remove' in request.POST:
                     list_object.targets.remove(target_object)
-        except Exception as e:
-            redirect(reverse('tom_targets:list'))
+            except Exception as e:
+                fail_count += 1
+        if fail_count:
+            messages.warning(request, 'Failed on {} target(s). Succeeded on {} target(s).'.format(fail_count, len(targets_ids)-fail_count))
+        else:
+            messages.success(request, "Succeeded on all {} target(s).".format(len(targets_ids)))
         return redirect(reverse('tom_targets:list'))
 
 class TargetGroupingView(PermissionRequiredMixin, ListView):
