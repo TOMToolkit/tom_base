@@ -12,7 +12,6 @@ from django.contrib import messages
 from django.core.management import call_command
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
-
 from django.views.generic.list import ListView
 from django.http import HttpResponse
 
@@ -34,7 +33,8 @@ class TargetListView(PermissionListMixin, FilterView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['target_count'] = context['paginator'].count
-        context['groupings'] = TargetList.objects.all()
+        # hide target grouping list if user not logged in
+        context['groupings'] = TargetList.objects.all() if self.request.user.is_authenticated else TargetList.objects.none()
         return context
 
 
