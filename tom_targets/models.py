@@ -205,18 +205,18 @@ class TargetExtra(models.Model):
     def save(self, *args, **kwargs):
         try:
             self.float_value = float(self.value)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             self.float_value = None
         try:
             self.bool_value = bool(self.value)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             self.bool_value = None
         try:
             if isinstance(self.value, datetime):
                 self.time_value = self.value
             else:
                 self.time_value = parse(self.value)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             self.time_value = None
 
         super().save(*args, **kwargs)
