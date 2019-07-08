@@ -5,7 +5,6 @@ from base64 import b64encode
 from datetime import datetime
 
 from django.db import models
-from django.conf import settings
 
 import matplotlib
 matplotlib.use('Agg') # noqa
@@ -54,7 +53,12 @@ class DataProduct(models.Model):
         '.fz': 'SCI'
     }
 
-    product_id = models.CharField(max_length=255, unique=True, null=True)
+    product_id = models.CharField(
+        max_length=255,
+        unique=True,
+        null=True,
+        help_text='Data product identifier used by the source of the data product.'
+    )
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     observation_record = models.ForeignKey(ObservationRecord, null=True, default=None, on_delete=models.CASCADE)
     data = models.FileField(upload_to=data_product_path, null=True, default=None)
@@ -95,36 +99,16 @@ class DataProduct(models.Model):
             plt.close(fig)
         return b64encode(buffer.read()).decode('utf-8')
 
-    def get_photometry(self):
-        photometry_data = {}
-        for rd in ReducedDatum.objects.filter(data_product=self, data_type=PHOTOMETRY[0]):
-            datum = json.loads(rd.value)
-            photometry_data.setdefault(datum.get('filter', ''), {})
-            photometry_data[datum.get('filter', '')].setdefault('time', []).append(rd.timestamp)
-            for key, value in datum.items():
-                photometry_data[datum.get('filter', '')].setdefault(key, []).append(value)
-        return photometry_data
-
-    def get_spectroscopy(self):
-        spectroscopy_data = {}
-        datum = ReducedDatum.objects.get(data_product=self, data_type=SPECTROSCOPY[0])
-        obs_date = datetime.strftime(datum.timestamp, '%Y-%m-%d %H:%M:%S')
-        spectroscopy_data[obs_date] = {}
-        for key, value in json.loads(datum.value).items():
-            spectroscopy_data[obs_date].setdefault('wavelength', []).append(value['wavelength'])
-            spectroscopy_data[obs_date].setdefault('flux', []).append(value['flux'])
-        return spectroscopy_data
-
 
 class ReducedDatum(models.Model):
     target = models.ForeignKey(Target, null=False, on_delete=models.CASCADE)
     data_product = models.ForeignKey(DataProduct, null=True, on_delete=models.CASCADE)
     data_type = models.CharField(
         max_length=100,
-        choices=getattr(settings, 'DATA_TYPES', (
+        choices=(
             SPECTROSCOPY,
             PHOTOMETRY
-        )),
+        ),
         default=''
     )
     source_name = models.CharField(max_length=100, default='')

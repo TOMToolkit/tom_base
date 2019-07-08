@@ -4,6 +4,7 @@ from django import forms
 from dateutil.parser import parse
 from crispy_forms.layout import Layout, Div
 from django.core.cache import cache
+from astropy import units as u
 
 from tom_observations.facility import GenericObservationForm
 from tom_common.exceptions import ImproperCredentialsException
@@ -22,6 +23,10 @@ except (AttributeError, KeyError):
 # Module specific settings.
 PORTAL_URL = LCO_SETTINGS['portal_url']
 TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
+
+# Units of flux and wavelength for converting to Specutils Spectrum1D objects
+FLUX_CONSTANT = (1e-15 * u.erg) / (u.cm ** 2 * u.second * u.angstrom)
+WAVELENGTH_UNITS = u.angstrom
 
 # The SITES dictionary is used to calculate visibility intervals in the
 # planning tool. All entries should contain latitude, longitude, elevation
@@ -283,6 +288,12 @@ class LCOFacility(GenericObservationFacility):
 
     def get_observation_url(self, observation_id):
         return PORTAL_URL + '/requests/' + observation_id
+
+    def get_flux_constant(self):
+        return FLUX_CONSTANT
+
+    def get_wavelength_units(self):
+        return WAVELENGTH_UNITS
 
     def get_terminal_observing_states(self):
         return TERMINAL_OBSERVING_STATES

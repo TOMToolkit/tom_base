@@ -1,6 +1,7 @@
 from django import forms
 from datetime import timedelta
 from django.utils import timezone
+from astropy import units
 
 from tom_observations.facility import GenericObservationFacility, GenericObservationForm
 
@@ -49,6 +50,12 @@ class FakeFacility(GenericObservationFacility):
 
     def submit_observation(self, payload):
         return ['fakeid']
+
+    def get_flux_constant(self):
+        return units.erg / units.angstrom
+
+    def get_wavelength_units(self):
+        return units.angstrom
 
     def validate_observation(self, observation_payload):
         return True

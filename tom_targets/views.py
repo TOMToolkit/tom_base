@@ -30,7 +30,7 @@ class TargetListView(PermissionListMixin, FilterView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context['target_count'] = Target.objects.all().count()
+        context['target_count'] = context['paginator'].count
         return context
 
 
@@ -148,7 +148,7 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
                 'target': self.get_object(),
                 'referrer': reverse('tom_targets:detail', args=(self.get_object().id,))
             },
-            hide_timestamp=False
+            hide_target_fields=False
         )
         context['data_product_form'] = data_product_upload_form
         return context
