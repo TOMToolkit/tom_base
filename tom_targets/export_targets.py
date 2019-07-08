@@ -13,6 +13,7 @@ def export_targets(qs):
     target_fields = [field.name for field in Target._meta.get_fields()]
     target_extra_fields = list({field.key for field in TargetExtra.objects.filter(target__in = qs_pk)})
     all_fields = target_fields + target_extra_fields
+    all_fields.remove('id') # do not export 'id'
 
     file_buffer = StringIO()
     writer = csv.DictWriter(file_buffer, fieldnames=all_fields)
@@ -21,5 +22,6 @@ def export_targets(qs):
         extras = list(TargetExtra.objects.filter(target_id=target_data['id']))
         for e in extras:
             target_data[e.key] = e.value
+        del target_data['id'] # do not export 'id'
         writer.writerow(target_data)
     return file_buffer
