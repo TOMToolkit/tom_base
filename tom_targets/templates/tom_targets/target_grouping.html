@@ -15,14 +15,16 @@
   <table class="table table-striped">
     <thead>
       <tr>
-        <th>Name</th>
+        <th>Group</th>
+        <th>Total Targets</th>
         <th>Delete</th>
       </tr>
     </thead>
     <tbody>
       {% for group in object_list %}
       <tr>
-        <td><button type="submit" class="btn btn-link" name="targetlist__name" value="{{group.id}}">{{ group.name }}</button></td>
+        <td><button type="submit" class="btn btn-link" name="targetlist__name" value="{{group.id}}" title="View Group">{{ group.name }}</button></td>
+        <td valign="middle">{{ group.targets.count }}</td>        
         <td><a href="{% url 'targets:delete-group' group.id%}" title="Delete Group" class="btn btn-danger">Delete</a></td>
       </tr>
       {% empty %}
