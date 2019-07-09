@@ -10,8 +10,9 @@ def import_targets(targets):
     errors = []
     base_target_fields = [field.name for field in Target._meta.get_fields()]
     for index, row in enumerate(targetreader):
-        # filter empty values (Note that the target will lose this extra field if its value is blank): 
-        row = {k:v for (k,v) in row.items() if v} 
+        # filter out empty values in base fields, otherwise converting empty string to float will throw error
+        row = {k:v for (k,v) in row.items() if not (k in base_target_fields and not v)} 
+        print(row)
         target_extra_fields = []
         for k in row:
             if k not in base_target_fields:

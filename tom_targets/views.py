@@ -2,14 +2,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
-from django.views.generic import TemplateView, View
+from django.views.generic import TemplateView
 from django_filters.views import FilterView
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import redirect
 from django.conf import settings
 from django.contrib import messages
 from django.core.management import call_command
-from django.core.files import File
 from django.http import StreamingHttpResponse
 from django.utils.text import slugify
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin

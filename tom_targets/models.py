@@ -142,7 +142,9 @@ class Target(models.Model):
     def save(self, *args, **kwargs):
         extras = kwargs.pop('extras', {})
         created = False if self.id else True
+        print('before super.save')
         super().save(*args, **kwargs)
+        print('after super.save')
         for k, v in extras.items():
             target_extra, _ = TargetExtra.objects.get_or_create(target=self, key=k)
             target_extra.value = v
