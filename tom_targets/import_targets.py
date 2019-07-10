@@ -10,10 +10,15 @@ def import_targets(targets):
     errors = []
     base_target_fields = [field.name for field in Target._meta.get_fields()]
     for index, row in enumerate(targetreader):
+        # filter out empty values in base fields, otherwise converting empty string to float will throw error
+        row = {k:v for (k,v) in row.items() if not (k in base_target_fields and not v)} 
+        print(row)
         target_extra_fields = []
         for k in row:
             if k not in base_target_fields:
-                target_extra_fields.append((k, row.pop(k)))
+                target_extra_fields.append((k, row[k]))
+        for extra in target_extra_fields:
+            row.pop(extra[0])
         try:
             target = Target.objects.create(**row)
             for extra in target_extra_fields:
