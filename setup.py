@@ -45,6 +45,7 @@ setup(
         'numpy',
         'pillow',
         'gsselect',
+        'fits2image',
         'specutils',
         'python-magic',
         'antares-client',
