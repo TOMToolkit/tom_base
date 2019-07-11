@@ -185,27 +185,58 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
             messages.warning(request, error)
         return redirect(reverse('tom_targets:list'))
 
-class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
+class TargetAddRemoveGroupingView(LoginRequiredMixin, TargetListView):
     
-    def post(self, request):
-        targets_ids = request.POST.getlist('selected-target')
-        grouping_id = request.POST.get('grouping')
-        fail_count = 0
-        for target_id in targets_ids:
+    def get(self, request):
+        targets_ids = request.GET.getlist('st')
+        grouping_id = request.GET.get('grouping')
+        try:
             list_object = TargetList.objects.get(pk=grouping_id)
-            target_object = Target.objects.get(pk=target_id)
-            try:
-                if 'add' in request.POST:
-                    list_object.targets.add(target_object)
-                if 'remove' in request.POST:
-                    list_object.targets.remove(target_object)
-            except Exception as e:
-                fail_count += 1
-        if fail_count:
-            messages.warning(request, 'Failed on {} target(s). Succeeded on {} target(s).'.format(fail_count, len(targets_ids)-fail_count))
-        else:
-            messages.success(request, "Succeeded on all {} target(s).".format(len(targets_ids)))
-        return redirect(reverse('tom_targets:list'))
+        except Exception as e:
+            messages.error(request, 'Cannot find the target grouping with id={}'.format(grouping_id))
+
+        if 'add' in request.GET:
+            success_targets = []
+            included_targets = [] # targets that are already included in the grouping
+            failure_targets = []
+            for target_id in targets_ids:
+                try:
+                    target_object = Target.objects.get(pk=target_id)
+                    if target_object in list_object.targets.all(): # included?
+                        included_targets.append(target_object.identifier)
+                    else:
+                        list_object.targets.add(target_object)
+                        success_targets.append(target_object.identifier)
+                except Exception as e:
+                    failure_targets.append((target_id, e,))
+            messages.success(request, "{} target(s) are successfully added".format(len(success_targets)))
+            if included_targets:
+                messages.warning(request, "{} target(s) are already in the grouping: {}".format(len(included_targets), ', '.join(included_targets)))
+            for failure_target in failure_targets:
+                messages.error(request, "Failed to add target(s) with id={} to the grouping; {}".format(failure_target[0], failure_target[1]))
+
+        if 'remove' in request.GET:
+            success_targets = []
+            excluded_targets = [] # targets that are not in the grouping
+            failure_targets = []
+            for target_id in targets_ids:
+                try:
+                    target_object = Target.objects.get(pk=target_id)
+                    if target_object in list_object.targets.all():
+                        list_object.targets.remove(target_object)
+                        success_targets.append(target_object.identifier)
+                    else:
+                        excluded_targets.append(target_object.identifier)
+                except Exception as e:
+                    failure_targets.append((target_id, e,))                    
+            messages.success(request, "{} target(s) are successfully removed.".format(len(success_targets)))
+            if excluded_targets:
+                messages.warning(request, "{} target(s) are not in the grouping: {}".format(len(excluded_targets), ', '.join(excluded_targets)))
+            for failure_target in failure_targets:
+                messages.error(request, "Failed to remove target(s) with id={} from the grouping; {}".format(failure_target[0], failure_target[1]))
+
+        return super().get(request)
+
 
 class TargetGroupingView(PermissionRequiredMixin, ListView):
     permission_required = 'tom_targets.view_target_list'
