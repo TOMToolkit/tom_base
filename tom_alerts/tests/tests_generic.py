@@ -1,9 +1,8 @@
 from django.test import TestCase, override_settings
 from django import forms
+from datetime import datetime
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
-from django.core.cache import cache
-import json
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, get_service_class
 from tom_alerts.models import BrokerQuery
@@ -11,8 +10,8 @@ from tom_targets.models import Target
 
 # Test alert data. Normally this would come from a remote source.
 test_alerts = [
-    {'id': 1, 'name': 'Tatooine', 'timestamp': '2019-07-01', 'ra': 32, 'dec': -20, 'mag': 8, 'score': 20},
-    {'id': 2, 'name': 'Hoth', 'timestamp': '2019-07-02', 'ra': 66, 'dec': 50, 'mag': 3, 'score': 66},
+    {'id': 1, 'name': 'Tatooine', 'timestamp': datetime.utcnow(), 'ra': 32, 'dec': -20, 'mag': 8, 'score': 20},
+    {'id': 2, 'name': 'Hoth', 'timestamp': datetime.utcnow(), 'ra': 66, 'dec': 50, 'mag': 3, 'score': 66},
 ]
 
 
@@ -37,7 +36,15 @@ class TestBroker:
         """ All brokers must implement this method. It must return a list of alerts.
         """
         # Here we simply return a list of `GenericAlert`s that match the name passed in via `parameters`.
-        return iter([alert for alert in test_alerts if alert['name'] == parameters['name']])
+        return [alert for alert in test_alerts if alert['name'] == parameters['name']]
+
+    def fetch_alert(self, alert_id):
+        """ Method to retrieve and return a single alert.
+        """
+        for alert in test_alerts:
+            if alert['id'] == int(alert_id):
+                return alert
+        return None
 
     def process_reduced_data(self, target, alert=None):
         pass
@@ -58,6 +65,17 @@ class TestBroker:
             score=alert['score']
         )
 
+    def to_target(self, alert):
+        """ Transform a single alert into a `Target`, so that it can be used in the rest of the TOM.
+        """
+        return Target(
+            identifier=alert['id'],
+            name=alert['name'],
+            type='SIDEREAL',
+            ra=alert['ra'],
+            dec=alert['dec'],
+        )
+
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
 class TestBrokerClass(TestCase):
@@ -73,14 +91,18 @@ class TestBrokerClass(TestCase):
 
     def test_fetch_alerts(self):
         alerts = TestBroker().fetch_alerts({'name': 'Hoth'})
-        self.assertEqual(test_alerts[1], list(alerts)[0])
+        self.assertEqual(test_alerts[1], alerts[0])
+
+    def test_fetch_alert(self):
+        alert = TestBroker().fetch_alert(1)
+        self.assertEqual(test_alerts[0], alert)
 
     def test_to_generic_alert(self):
         ga = TestBroker().to_generic_alert(test_alerts[0])
         self.assertEqual(ga.name, test_alerts[0]['name'])
 
     def test_to_target(self):
-        target = TestBroker().to_generic_alert(test_alerts[0]).to_target()
+        target = TestBroker().to_target(test_alerts[0])
         self.assertEqual(target.name, test_alerts[0]['name'])
 
 
@@ -159,13 +181,7 @@ class TestBrokerViews(TestCase):
         broker_query.refresh_from_db()
         self.assertEqual(broker_query.parameters_as_dict['name'], update_data['name'])
 
-    @override_settings(CACHES={
-            'default': {
-                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            }
-        })
     def test_create_target(self):
-        cache.set('alert_2', json.dumps(test_alerts[1]))
         query = BrokerQuery.objects.create(
             name='find hoth',
             broker='TEST',
@@ -181,14 +197,7 @@ class TestBrokerViews(TestCase):
         self.assertEqual(Target.objects.first().name, 'Hoth')
         self.assertRedirects(response, reverse('tom_targets:update', kwargs={'pk': Target.objects.first().id}))
 
-    @override_settings(CACHES={
-            'default': {
-                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            }
-        })
     def test_create_multiple_targets(self):
-        cache.set('alert_1', json.dumps(test_alerts[0]))
-        cache.set('alert_2', json.dumps(test_alerts[1]))
         query = BrokerQuery.objects.create(
             name='find anything',
             broker='TEST',

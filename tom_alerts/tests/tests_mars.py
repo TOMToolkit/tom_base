@@ -67,7 +67,7 @@ class TestMARSBrokerClass(TestCase):
         mock_requests_get.return_value = mock_response
 
         alerts = MARSBroker().fetch_alerts({'objectId': 'ZTF18aberpsh'})
-        self.assertEqual(self.test_data[1]['objectId'], list(alerts)[0]['objectId'])
+        self.assertEqual(self.test_data[1]['objectId'], alerts[0]['objectId'])
 
     def test_process_reduced_data_with_alert(self):
         test_alert = self.test_data[1]

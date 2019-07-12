@@ -16,7 +16,7 @@ def get_lasair_object(objectId):
     url = LASAIR_URL + '/object/' + objectId + '/json/'
     response = requests.get(url)
     obj = response.json()
-    jdmax = obj['candidates'][0]['mjd']
+    jdmax = obj['candidates'][0]['jd']
     ra = obj['objectData']['ramean']
     dec = obj['objectData']['decmean']
     glon = obj['objectData']['glonmean']
@@ -47,7 +47,7 @@ class LasairBroker(GenericBroker):
             alerts = []
             for objectId in cone_result['hitlist']:
                 alerts.append(get_lasair_object(objectId))
-            return iter(alerts)
+            return alerts
 
         # note: the sql SELECT must include objectId
         if 'sqlquery' in parameters and len(parameters['sqlquery'].strip()) > 0:
@@ -59,7 +59,7 @@ class LasairBroker(GenericBroker):
             alerts = []
             for record in records:
                 alerts.append(get_lasair_object(record['objectId']))
-            return iter(alerts)
+            return alerts
 
     def fetch_alert(self, alert_id):
         url = LASAIR_URL + '/object/' + alert_id + '/json/'

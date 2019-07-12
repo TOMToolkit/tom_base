@@ -1,8 +1,8 @@
+from io import StringIO
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
-from django.views.generic.list import ListView
 from django.views.generic import TemplateView, View
 from django_filters.views import FilterView
 from django.urls import reverse_lazy, reverse
@@ -10,18 +10,15 @@ from django.shortcuts import redirect
 from django.conf import settings
 from django.contrib import messages
 from django.core.management import call_command
-from django.http import StreamingHttpResponse
-from django.utils.text import slugify
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
-from datetime import datetime
-from io import StringIO
+from django.views.generic.list import ListView
+from django.http import HttpResponse
 
 from .models import Target, TargetList
 from tom_dataproducts.forms import DataProductUploadForm
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from .import_targets import import_targets
-from .export_targets import export_targets
 from .filters import TargetFilter
 
 
@@ -188,42 +185,9 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
             messages.warning(request, error)
         return redirect(reverse('tom_targets:list'))
 
-      
-class TargetExportView(TargetListView):
-    def render_to_response(self, context, **response_kwargs):
-        qs = context['filter'].qs.values()
-        file_buffer = export_targets(qs)
-        file_buffer.seek(0) # goto the beginning of the buffer
-        response = StreamingHttpResponse(file_buffer, content_type="text/csv")
-        filename = "targets-{}.csv".format(slugify(datetime.utcnow()))
-        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
-        return response     
-      
 
-class TargetGroupingView(PermissionRequiredMixin, ListView):
-    permission_required = 'tom_targets.view_target_list'
-    template_name = 'tom_targets/target_grouping.html'
-    model = TargetList
-    paginate_by = 25
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return context
-      
-
-class TargetGroupingDeleteView(PermissionRequiredMixin, DeleteView):
-    permission_required = 'tom_targets.delete_target_list'
-    model = TargetList
-    success_url = reverse_lazy('targets:targetgrouping')
-    
-
-class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
-    model = TargetList
-    fields = ['name']
-    success_url = reverse_lazy('targets:targetgrouping')
-    
-    
 class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
+    
     def post(self, request):
         targets_ids = request.POST.getlist('selected-target')
         grouping_id = request.POST.get('grouping')
@@ -273,3 +237,23 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
                 messages.error(request, "Failed to remove target(s) with id={} from the grouping; {}".format(failure_target[0], failure_target[1]))
 
         return redirect(reverse('tom_targets:list'))
+
+class TargetGroupingView(PermissionRequiredMixin, ListView):
+    permission_required = 'tom_targets.view_target_list'
+    template_name = 'tom_targets/target_grouping.html'
+    model = TargetList
+    paginate_by = 25
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+class TargetGroupingDeleteView(PermissionRequiredMixin, DeleteView):
+    permission_required = 'tom_targets.delete_target_list'
+    model = TargetList
+    success_url = reverse_lazy('targets:targetgrouping')
+
+class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
+    model = TargetList
+    fields = ['name']
+    success_url = reverse_lazy('targets:targetgrouping')
