@@ -9,12 +9,14 @@ import json
 from abc import ABC, abstractmethod
 
 from tom_alerts.models import BrokerQuery
+from tom_targets.models import Target
 
 
 DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.mars.MARSBroker',
     'tom_alerts.brokers.lasair.LasairBroker',
-    'tom_alerts.brokers.scout.ScoutBroker'
+    'tom_alerts.brokers.scout.ScoutBroker',
+    'tom_alerts.brokers.antares.AntaresBroker'
 ]
 
 
@@ -61,6 +63,15 @@ class GenericAlert:
     score: float
     url: str
 
+    def to_target(self):
+        return Target(
+            identifier=self.id,
+            name=self.name,
+            type='SIDEREAL',
+            ra=self.ra,
+            dec=self.dec
+        )
+
 
 class GenericQueryForm(forms.Form):
     query_name = forms.CharField(required=True)
@@ -102,7 +113,6 @@ class GenericBroker(ABC):
         """
         pass
 
-    @abstractmethod
     def fetch_alert(self, id):
         """
         This method takes an alert id and retrieves the specific
@@ -110,7 +120,6 @@ class GenericBroker(ABC):
         """
         pass
 
-    @abstractmethod
     def process_reduced_data(self, target, alert=None):
         """
         Retrieves and creates records for any reduced data provided
@@ -118,7 +127,6 @@ class GenericBroker(ABC):
         """
         pass
 
-    @abstractmethod
     def to_target(self, alert):
         """
         Creates Target object from the broker-specific alert data.
@@ -132,3 +140,13 @@ class GenericBroker(ABC):
         alert data for use outside of the implementation of the GenericBroker.
         """
         pass
+
+    def fetch_and_save_all(self, parameters):
+        targets = []
+        for alert in self.fetch_alerts(parameters):
+            generic_alert = self.to_generic_alert(alert)
+            full_alert = self.fetch_alert(generic_alert.id)
+            target = self.to_target(full_alert)
+            targets.append(target)
+
+        return targets
