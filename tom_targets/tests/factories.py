@@ -41,3 +41,4 @@ class TargetGroupingFactory(factory.django.DjangoModelFactory):
         model = TargetList
 
     name = factory.Faker('pystr')
+    
