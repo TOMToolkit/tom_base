@@ -27,16 +27,16 @@
       <tbody>
         {% for product in object_list %}
         <tr>
-          <td><a href="{{ product.data.url }}">{{ product.get_file_name }}</a></th>
-          <td><a href="{% url 'tom_targets:detail' product.target.id %}">{{ product.target.identifier }}</a></td>
+          <td><a href="{{ product.data.url }}">{{ product.get_file_name|truncatechars:40 }}</a></th>
+          <td><a href="{% url 'tom_targets:detail' product.target.id %}">{{ product.target.identifier|truncatechars:40 }}</a></td>
           {% if product.observation_record.id %}
-          <td><a href="{% url 'tom_observations:detail' product.observation_record.id %}">{{ product.observation_record }}</a></td>
+          <td><a href="{% url 'tom_observations:detail' product.observation_record.id %}">{{ product.observation_record|truncatechars:40 }}</a></td>
           {% else %}
           <td></td>
           {% endif %}
           <td>
             {% for group in product.group.all %}
-            <a href="{% url 'tom_dataproducts:group-detail' group.id %}">{{ group.name }}</a>
+            <a href="{% url 'tom_dataproducts:group-detail' group.id %}">{{ group.name|truncatechars:40 }}</a>
             {% endfor %}
           </td>
           <td>
