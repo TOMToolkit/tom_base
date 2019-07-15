@@ -9,11 +9,7 @@ import math
 from unittest import mock
 from datetime import datetime, timedelta
 
-<<<<<<< HEAD
-from .factories import SiderealTargetFactory, NonSiderealTargetFactory
-=======
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory
->>>>>>> 05eedffdc9f39c6c564001f2011b699320386b9c
 from tom_targets.models import Target, TargetExtra, TargetList
 from tom_observations.utils import get_visibility, get_pyephem_instance_for_type
 from tom_observations.tests.utils import FakeFacility
@@ -339,9 +335,9 @@ class TestTargetGrouping(TestCase):
 
     def test_view_groupings(self):
         # create a group, check it is added to DB
-        group = TargetList(name="testgroup")
+        group = TargetList(name="test_group")
         group.save()
-        self.assertTrue(TargetList.objects.filter(name="testgroup").exists())
+        self.assertTrue(TargetList.objects.filter(name="test_group").exists())
 
         # give this user the permission to view it
         user = User.objects.get(username='testuser')
@@ -354,9 +350,24 @@ class TestTargetGrouping(TestCase):
         group_data = {
             'name': 'test_group'
         }
-        r = self.client.post(reverse('targets:create-group'), data=group_data)
-
+        response = self.client.post(reverse('targets:create-group'), data=group_data)
+        
+        self.assertRedirects(response, reverse('targets:targetgrouping'), status_code=302)
         self.assertTrue(TargetList.objects.filter(name=group_data['name']).exists())
+
+    def test_delete_group(self):
+        # create a group, check it is added to DB
+        group = TargetList(name="test_group")
+        group.save()
+        self.assertTrue(TargetList.objects.filter(name="test_group").exists())
+
+        # give user permission to delete
+        user = User.objects.get(username='testuser')
+        assign_perm('tom_targets.delete_targetlist', user, group)
+        
+        response = self.client.post(reverse('targets:delete-group', args=(group.pk,)), follow=True)
+        self.assertRedirects(response, reverse('targets:targetgrouping'), status_code=302)
+        self.assertFalse(TargetList.objects.filter(name='test_group').exists())
 
 
 class TestTargetAddRemoveGrouping(TestCase):
