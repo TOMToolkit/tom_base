@@ -34,7 +34,7 @@ class TargetListView(PermissionListMixin, FilterView):
         context = super().get_context_data(*args, **kwargs)
         context['target_count'] = context['paginator'].count
         # hide target grouping list if user not logged in
-        context['groupings'] = TargetList.objects.all() if self.request.user.is_authenticated else TargetList.objects.none()
+        context['groupings'] = [grouping for grouping in TargetList.objects.all() if self.request.user.has_perm('tom_targets.view_targetlist', grouping)]
         return context
 
 
@@ -195,6 +195,11 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
             list_object = TargetList.objects.get(pk=grouping_id)
         except Exception as e:
             messages.error(request, 'Cannot find the target grouping with id={}'.format(grouping_id))
+            return redirect(reverse('tom_targets:list'))
+
+        if not request.user.has_perm('tom_targets.view_targetlist', list_object):
+            messages.error(request, 'Permission denied.')
+            return redirect(reverse('tom_targets:list'))
 
         if 'add' in request.POST:
             success_targets = []
@@ -203,7 +208,9 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
             for target_id in targets_ids:
                 try:
                     target_object = Target.objects.get(pk=target_id)
-                    if target_object in list_object.targets.all(): # included?
+                    if not request.user.has_perm('tom_targets.view_target', target_object):
+                        failure_targets.append(target_object.identifier)
+                    elif target_object in list_object.targets.all(): # included?
                         included_targets.append(target_object.identifier)
                     else:
                         list_object.targets.add(target_object)
@@ -223,7 +230,9 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
             for target_id in targets_ids:
                 try:
                     target_object = Target.objects.get(pk=target_id)
-                    if target_object in list_object.targets.all():
+                    if not request.user.has_perm('tom_targets.view_target', target_object):
+                        failure_targets.append(target_object.identifier)
+                    elif target_object in list_object.targets.all():
                         list_object.targets.remove(target_object)
                         success_targets.append(target_object.identifier)
                     else:
