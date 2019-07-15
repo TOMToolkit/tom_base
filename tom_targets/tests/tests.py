@@ -10,7 +10,7 @@ from unittest import mock
 from datetime import datetime, timedelta
 
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory
-from tom_targets.models import Target, TargetExtra
+from tom_targets.models import Target, TargetExtra, TargetList
 from tom_observations.utils import get_visibility, get_pyephem_instance_for_type
 from tom_observations.tests.utils import FakeFacility
 from tom_targets.import_targets import import_targets
@@ -322,3 +322,34 @@ class TestTargetVisibility(TestCase):
         self.assertEqual(len(airmass_data), len(expected_airmass))
         for i in range(0, len(expected_airmass)):
             self.assertLess(math.fabs(airmass_data[i] - expected_airmass[i]), 0.05)
+
+
+class TestTargetGrouping(TestCase):
+    def setUp(self):
+        user = User.objects.create(username='testuser')
+        self.client.force_login(user)
+        self.st = SiderealTargetFactory.create()
+        self.nst = NonSiderealTargetFactory.create()
+        assign_perm('tom_targets.view_target', user, self.st)
+        assign_perm('tom_targets.view_target', user, self.nst)
+
+    def test_view_groupings(self):
+        # create a group, check it is added to DB
+        group = TargetList(name="testgroup")
+        group.save()
+        self.assertTrue(TargetList.objects.filter(name="testgroup").exists())
+
+        # give this user the permission to view it
+        user = User.objects.get(username='testuser')
+        assign_perm('tom_targets.view_targetlist', user, group)
+        
+        response = self.client.get(reverse('targets:targetgrouping'), follow=True)
+        self.assertContains(response, group.name)
+
+    def test_create_group(self):
+        group_data = {
+            'name': 'test_group'
+        }
+        r = self.client.post(reverse('targets:create-group'), data=group_data)
+
+        self.assertTrue(TargetList.objects.filter(name=group_data['name']).exists())
