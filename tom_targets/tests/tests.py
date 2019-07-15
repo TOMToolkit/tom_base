@@ -328,10 +328,6 @@ class TestTargetGrouping(TestCase):
     def setUp(self):
         user = User.objects.create(username='testuser')
         self.client.force_login(user)
-        self.st = SiderealTargetFactory.create()
-        self.nst = NonSiderealTargetFactory.create()
-        assign_perm('tom_targets.view_target', user, self.st)
-        assign_perm('tom_targets.view_target', user, self.nst)
 
     def test_view_groupings(self):
         # create a group, check it is added to DB
