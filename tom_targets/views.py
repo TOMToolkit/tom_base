@@ -210,7 +210,7 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
                         success_targets.append(target_object.identifier)
                 except Exception as e:
                     failure_targets.append((target_id, e,))
-            messages.success(request, "{} target(s) are successfully added".format(len(success_targets)))
+            messages.success(request, "{} target(s) are successfully added.".format(len(success_targets)))
             if included_targets:
                 messages.warning(request, "{} target(s) are already in the grouping: {}".format(len(included_targets), ', '.join(included_targets)))
             for failure_target in failure_targets:

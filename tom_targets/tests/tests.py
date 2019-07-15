@@ -9,8 +9,8 @@ import math
 from unittest import mock
 from datetime import datetime, timedelta
 
-from .factories import SiderealTargetFactory, NonSiderealTargetFactory
-from tom_targets.models import Target, TargetExtra
+from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory
+from tom_targets.models import Target, TargetExtra, TargetList
 from tom_observations.utils import get_visibility, get_pyephem_instance_for_type
 from tom_observations.tests.utils import FakeFacility
 from tom_targets.import_targets import import_targets
@@ -322,3 +322,60 @@ class TestTargetVisibility(TestCase):
         self.assertEqual(len(airmass_data), len(expected_airmass))
         for i in range(0, len(expected_airmass)):
             self.assertLess(math.fabs(airmass_data[i] - expected_airmass[i]), 0.05)
+
+
+class TestTargetAddRemoveGrouping(TestCase):
+
+    def setUp(self):
+        user = User.objects.create(username='testuser')
+        self.client.force_login(user)
+        # create targets
+        self.fake_targets = []
+        for i in range(3):
+            ft = SiderealTargetFactory.create()
+            self.fake_targets.append(ft)
+            assign_perm('tom_targets.view_target', user, ft)
+        # create grouping
+        self.fake_grouping = TargetGroupingFactory.create()
+        # add target[0] to grouping
+        self.fake_grouping.targets.add(self.fake_targets[0])
+
+        
+    # Add target[0] and [1] to grouping; [0] already exists and [1] new
+    def test_add_grouping(self):
+        data = {
+            'grouping': self.fake_grouping.id,
+            'add': True,
+            'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
+        }
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        
+        self.assertEqual(self.fake_grouping.targets.count(), 2)
+        self.assertTrue(self.fake_targets[0] in self.fake_grouping.targets.all())
+        self.assertTrue(self.fake_targets[1] in self.fake_grouping.targets.all())
+
+    def test_add_grouping_invalid_grouping(self):
+        data = {
+            'grouping': -1,
+            'add': True,
+            'selected-target': self.fake_targets[1].id,
+        }
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        self.assertEqual(self.fake_grouping.targets.count(), 1)
+        self.assertTrue(self.fake_targets[0] in self.fake_grouping.targets.all())
+
+    # Remove target[0] and [1] from grouping; 
+    def test_remove_grouping(self):
+        data = {
+            'grouping': self.fake_grouping.id,
+            'remove': True,
+            'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
+        }
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)        
+        self.assertEqual(self.fake_grouping.targets.count(), 0)
+        
+    def empty_data(self):
+        response = self.client.post(reverse('targets:add-remove-grouping'), data={})
+        self.assertEqual(self.fake_grouping.targets.count(), 1)
+
+
