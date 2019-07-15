@@ -75,7 +75,7 @@ SITES = {
 
 def make_request(*args, **kwargs):
     response = requests.request(*args, **kwargs)
-    if 400 <= response.status_code < 500:
+    if 400 <= response.status_code <= 403:
         raise ImproperCredentialsException('LCO: ' + str(response.content))
     response.raise_for_status()
     return response
