@@ -324,8 +324,49 @@ class TestTargetVisibility(TestCase):
             self.assertLess(math.fabs(airmass_data[i] - expected_airmass[i]), 0.05)
 
 
-class TestTargetAddRemoveGrouping(TestCase):
+class TestTargetGrouping(TestCase):
+    def setUp(self):
+        user = User.objects.create(username='testuser')
+        self.client.force_login(user)
 
+    def test_view_groupings(self):
+        # create a group, check it is added to DB
+        group = TargetList(name="test_group")
+        group.save()
+        self.assertTrue(TargetList.objects.filter(name="test_group").exists())
+
+        # give this user the permission to view it
+        user = User.objects.get(username='testuser')
+        assign_perm('tom_targets.view_targetlist', user, group)
+        
+        response = self.client.get(reverse('targets:targetgrouping'), follow=True)
+        self.assertContains(response, group.name)
+
+    def test_create_group(self):
+        group_data = {
+            'name': 'test_group'
+        }
+        response = self.client.post(reverse('targets:create-group'), data=group_data)
+        
+        self.assertRedirects(response, reverse('targets:targetgrouping'), status_code=302)
+        self.assertTrue(TargetList.objects.filter(name=group_data['name']).exists())
+
+    def test_delete_group(self):
+        # create a group, check it is added to DB
+        group = TargetList(name="test_group")
+        group.save()
+        self.assertTrue(TargetList.objects.filter(name="test_group").exists())
+
+        # give user permission to delete
+        user = User.objects.get(username='testuser')
+        assign_perm('tom_targets.delete_targetlist', user, group)
+        
+        response = self.client.post(reverse('targets:delete-group', args=(group.pk,)), follow=True)
+        self.assertRedirects(response, reverse('targets:targetgrouping'), status_code=302)
+        self.assertFalse(TargetList.objects.filter(name='test_group').exists())
+
+
+class TestTargetAddRemoveGrouping(TestCase):
     def setUp(self):
         user = User.objects.create(username='testuser')
         self.client.force_login(user)
@@ -340,7 +381,6 @@ class TestTargetAddRemoveGrouping(TestCase):
         assign_perm('tom_targets.view_targetlist', user, self.fake_grouping)
         # add target[0] to grouping
         self.fake_grouping.targets.add(self.fake_targets[0])
-
         
     # Add target[0] and [1] to grouping; [0] already exists and [1] new
     def test_add_grouping(self):
