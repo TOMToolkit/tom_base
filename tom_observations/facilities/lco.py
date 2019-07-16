@@ -141,7 +141,7 @@ def proposal_choices():
 
 
 class LCOObservationForm(GenericObservationForm):
-    group_id = forms.CharField()
+    name = forms.CharField()
     proposal = forms.ChoiceField(choices=proposal_choices)
     ipp_value = forms.FloatField()
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
@@ -166,7 +166,7 @@ class LCOObservationForm(GenericObservationForm):
     def layout(self):
         return Div(
             Div(
-                'group_id', 'proposal', 'ipp_value', 'observation_type', 'start', 'end',
+                'group name', 'proposal', 'ipp_value', 'observation_type', 'start', 'end',
                 css_class='col'
             ),
             Div(
@@ -207,15 +207,16 @@ class LCOObservationForm(GenericObservationForm):
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
         target_fields = {
             "name": target.name,
-            "type": target.type,
         }
         if target.type == Target.SIDEREAL:
+            target_fields['type'] = 'ICRS'
             target_fields['ra'] = target.ra
             target_fields['dec'] = target.dec
             target_fields['proper_motion_ra'] = target.pm_ra
             target_fields['proper_motion_dec'] = target.pm_dec
             target_fields['epoch'] = target.epoch
         elif target.type == Target.NON_SIDEREAL:
+            target_fields['type'] = 'ORBITAL_ELEMENTS'
             target_fields['scheme'] = target.scheme
             target_fields['orbinc'] = target.inclination
             target_fields['longascnode'] = target.lng_asc_node
@@ -229,22 +230,37 @@ class LCOObservationForm(GenericObservationForm):
             target_fields['epochofperih'] = target.epoch_of_perihelion
 
         return {
-            "group_id": self.cleaned_data['group_id'],
+            "name": self.cleaned_data['name'],
             "proposal": self.cleaned_data['proposal'],
             "ipp_value": self.cleaned_data['ipp_value'],
             "operator": "SINGLE",
             "observation_type": self.cleaned_data['observation_type'],
             "requests": [
                 {
-                    "target": target_fields,
-                    "molecules": [
+                    "configurations": [
                         {
                             "type": self.instrument_to_type(self.cleaned_data['instrument_name']),
-                            "instrument_name": self.cleaned_data['instrument_name'],
-                            "filter": self.cleaned_data['filter'],
-                            "spectra_slit": self.cleaned_data['filter'],
-                            "exposure_count": self.cleaned_data['exposure_count'],
-                            "exposure_time": self.cleaned_data['exposure_time']
+                            "target": target_fields,
+                            "instrument_configs": [
+                                {
+                                    "exposure_count": self.cleaned_data['exposure_count'],
+                                    "exposure_time": self.cleaned_data['exposure_time'],
+                                    "instrument_type": self.cleaned_data['instrument_name'],
+                                    "optical_elements": {
+                                        "filter": self.cleaned_data['filter'],
+                                        "spectra_slit": self.cleaned_data['filter'],
+                                    }
+                                }
+                            ],
+                            "acquisition_config": {
+
+                            },
+                            "guiding_config": {
+
+                            },
+                            "constraints": {
+                               "max_airmass": self.cleaned_data['max_airmass'],
+                            }
                         }
                     ],
                     "windows": [
@@ -255,9 +271,6 @@ class LCOObservationForm(GenericObservationForm):
                     ],
                     "location": {
                         "telescope_class": self.cleaned_data['instrument_name'][:3].lower()
-                    },
-                    "constraints": {
-                        "max_airmass": self.cleaned_data['max_airmass'],
                     }
                 }
             ]
@@ -271,7 +284,7 @@ class LCOFacility(GenericObservationFacility):
     def submit_observation(self, observation_payload):
         response = make_request(
             'POST',
-            PORTAL_URL + '/api/userrequests/',
+            PORTAL_URL + '/api/requestgroups/validate/',
             json=observation_payload,
             headers=self._portal_headers()
         )
@@ -280,7 +293,7 @@ class LCOFacility(GenericObservationFacility):
     def validate_observation(self, observation_payload):
         response = make_request(
             'POST',
-            PORTAL_URL + '/api/userrequests/validate/',
+            PORTAL_URL + '/api/requestgroups/validate/',
             json=observation_payload,
             headers=self._portal_headers()
         )
@@ -311,7 +324,7 @@ class LCOFacility(GenericObservationFacility):
 
         response = make_request(
             'GET',
-            PORTAL_URL + '/api/requests/{0}/blocks/?canceled=false'.format(observation_id),
+            PORTAL_URL + '/api/observations/{0}/?cancelled=false'.format(observation_id),
             headers=self._portal_headers()
         )
         blocks = response.json()
