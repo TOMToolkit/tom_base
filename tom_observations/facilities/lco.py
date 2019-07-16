@@ -196,7 +196,6 @@ class LCOObservationForm(GenericObservationForm):
         # TODO this is a bit leaky and should be done without the need of get_service_class
         obs_module = get_service_class(self.cleaned_data['facility'])
         errors = obs_module().validate_observation(self.observation_payload())
-        print(errors)
         if errors:
             self.add_error(None, _flatten_error_dict(self, errors))
         return not errors
@@ -298,7 +297,6 @@ class LCOFacility(GenericObservationFacility):
             json=observation_payload,
             headers=self._portal_headers()
         )
-        print(response.json())
         return [r['id'] for r in response.json()['requests']]
 
     def validate_observation(self, observation_payload):
