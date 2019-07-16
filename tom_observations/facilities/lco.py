@@ -124,7 +124,10 @@ def instrument_choices():
 
 
 def filter_choices():
-    return set([(f['name'], f['name']) for ins in _get_instruments().values() for f in ins['optical_elements'].get('filters', {})])
+    return set([
+            (f['code'], f['name']) for ins in _get_instruments().values() for f in
+            ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
+            ])
 
 
 def proposal_choices():
@@ -147,7 +150,7 @@ class LCOObservationForm(GenericObservationForm):
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     filter = forms.ChoiceField(choices=filter_choices)
-    instrument_name = forms.ChoiceField(choices=instrument_choices)
+    instrument_type = forms.ChoiceField(choices=instrument_choices)
     exposure_count = forms.IntegerField(min_value=1)
     exposure_time = forms.FloatField(min_value=0.1)
     max_airmass = forms.FloatField()
@@ -166,11 +169,11 @@ class LCOObservationForm(GenericObservationForm):
     def layout(self):
         return Div(
             Div(
-                'group name', 'proposal', 'ipp_value', 'observation_type', 'start', 'end',
+                'name', 'proposal', 'ipp_value', 'observation_type', 'start', 'end',
                 css_class='col'
             ),
             Div(
-                'filter', 'instrument_name', 'exposure_count', 'exposure_time', 'max_airmass',
+                'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass',
                 css_class='col'
             ),
             css_class='form-row'
@@ -193,12 +196,13 @@ class LCOObservationForm(GenericObservationForm):
         # TODO this is a bit leaky and should be done without the need of get_service_class
         obs_module = get_service_class(self.cleaned_data['facility'])
         errors = obs_module().validate_observation(self.observation_payload())
+        print(errors)
         if errors:
             self.add_error(None, _flatten_error_dict(self, errors))
         return not errors
 
-    def instrument_to_type(self, instrument_name):
-        if any(x in instrument_name for x in ['FLOYDS', 'NRES']):
+    def instrument_to_type(self, instrument_type):
+        if any(x in instrument_type for x in ['FLOYDS', 'NRES']):
             return 'SPECTRUM'
         else:
             return 'EXPOSE'
@@ -229,6 +233,15 @@ class LCOObservationForm(GenericObservationForm):
             target_fields['epochofel'] = target.epoch
             target_fields['epochofperih'] = target.epoch_of_perihelion
 
+        if self.instrument_to_type(self.cleaned_data['instrument_type']) == 'EXPOSE':
+            optical_elements = {
+                'filter': self.cleaned_data['filter'],
+            }
+        else:
+            optical_elements = {
+                "slit": self.cleaned_data['filter'],
+            }
+
         return {
             "name": self.cleaned_data['name'],
             "proposal": self.cleaned_data['proposal'],
@@ -239,17 +252,14 @@ class LCOObservationForm(GenericObservationForm):
                 {
                     "configurations": [
                         {
-                            "type": self.instrument_to_type(self.cleaned_data['instrument_name']),
+                            "type": self.instrument_to_type(self.cleaned_data['instrument_type']),
+                            "instrument_type": self.cleaned_data['instrument_type'],
                             "target": target_fields,
                             "instrument_configs": [
                                 {
                                     "exposure_count": self.cleaned_data['exposure_count'],
                                     "exposure_time": self.cleaned_data['exposure_time'],
-                                    "instrument_type": self.cleaned_data['instrument_name'],
-                                    "optical_elements": {
-                                        "filter": self.cleaned_data['filter'],
-                                        "spectra_slit": self.cleaned_data['filter'],
-                                    }
+                                    "optical_elements": optical_elements
                                 }
                             ],
                             "acquisition_config": {
@@ -270,7 +280,7 @@ class LCOObservationForm(GenericObservationForm):
                         }
                     ],
                     "location": {
-                        "telescope_class": self.cleaned_data['instrument_name'][:3].lower()
+                        "telescope_class": self.cleaned_data['instrument_type'][:3].lower()
                     }
                 }
             ]
@@ -284,10 +294,11 @@ class LCOFacility(GenericObservationFacility):
     def submit_observation(self, observation_payload):
         response = make_request(
             'POST',
-            PORTAL_URL + '/api/requestgroups/validate/',
+            PORTAL_URL + '/api/requestgroups/',
             json=observation_payload,
             headers=self._portal_headers()
         )
+        print(response.json())
         return [r['id'] for r in response.json()['requests']]
 
     def validate_observation(self, observation_payload):
@@ -324,16 +335,16 @@ class LCOFacility(GenericObservationFacility):
 
         response = make_request(
             'GET',
-            PORTAL_URL + '/api/observations/{0}/?cancelled=false'.format(observation_id),
+            PORTAL_URL + '/api/requests/{0}/observations/'.format(observation_id),
             headers=self._portal_headers()
         )
         blocks = response.json()
         current_block = None
         for block in blocks:
-            if block['completed']:
+            if block['state'] == 'COMPLETED':
                 current_block = block
                 break
-            elif block['status'] == 'SCHEDULED':
+            elif block['state'] == 'PENDING':
                 current_block = block
         if current_block:
             scheduled_start = current_block['start']
