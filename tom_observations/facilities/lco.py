@@ -124,7 +124,7 @@ def instrument_choices():
 
 
 def filter_choices():
-    return set([(f['name'], f['name']) for ins in _get_instruments().values() for f in ins['optical_elements'].get('filters', {})])
+    return set([(f['code'], f['name']) for ins in _get_instruments().values() for f in ins['optical_elements'].get('filters', {})])
 
 
 def proposal_choices():
