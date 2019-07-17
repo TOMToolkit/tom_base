@@ -124,7 +124,10 @@ def instrument_choices():
 
 
 def filter_choices():
-    return set([(f['code'], f['name']) for ins in _get_instruments().values() for f in ins['optical_elements'].get('filters', {})])
+    return set([
+            (f['code'], f['name']) for ins in _get_instruments().values() for f in
+            ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
+            ])
 
 
 def proposal_choices():
@@ -141,13 +144,13 @@ def proposal_choices():
 
 
 class LCOObservationForm(GenericObservationForm):
-    group_id = forms.CharField()
+    name = forms.CharField()
     proposal = forms.ChoiceField(choices=proposal_choices)
     ipp_value = forms.FloatField()
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     filter = forms.ChoiceField(choices=filter_choices)
-    instrument_name = forms.ChoiceField(choices=instrument_choices)
+    instrument_type = forms.ChoiceField(choices=instrument_choices)
     exposure_count = forms.IntegerField(min_value=1)
     exposure_time = forms.FloatField(min_value=0.1)
     max_airmass = forms.FloatField()
@@ -166,11 +169,11 @@ class LCOObservationForm(GenericObservationForm):
     def layout(self):
         return Div(
             Div(
-                'group_id', 'proposal', 'ipp_value', 'observation_type', 'start', 'end',
+                'name', 'proposal', 'ipp_value', 'observation_type', 'start', 'end',
                 css_class='col'
             ),
             Div(
-                'filter', 'instrument_name', 'exposure_count', 'exposure_time', 'max_airmass',
+                'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass',
                 css_class='col'
             ),
             css_class='form-row'
@@ -197,8 +200,8 @@ class LCOObservationForm(GenericObservationForm):
             self.add_error(None, _flatten_error_dict(self, errors))
         return not errors
 
-    def instrument_to_type(self, instrument_name):
-        if any(x in instrument_name for x in ['FLOYDS', 'NRES']):
+    def instrument_to_type(self, instrument_type):
+        if any(x in instrument_type for x in ['FLOYDS', 'NRES']):
             return 'SPECTRUM'
         else:
             return 'EXPOSE'
@@ -207,15 +210,16 @@ class LCOObservationForm(GenericObservationForm):
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
         target_fields = {
             "name": target.name,
-            "type": target.type,
         }
         if target.type == Target.SIDEREAL:
+            target_fields['type'] = 'ICRS'
             target_fields['ra'] = target.ra
             target_fields['dec'] = target.dec
             target_fields['proper_motion_ra'] = target.pm_ra
             target_fields['proper_motion_dec'] = target.pm_dec
             target_fields['epoch'] = target.epoch
         elif target.type == Target.NON_SIDEREAL:
+            target_fields['type'] = 'ORBITAL_ELEMENTS'
             target_fields['scheme'] = target.scheme
             target_fields['orbinc'] = target.inclination
             target_fields['longascnode'] = target.lng_asc_node
@@ -228,23 +232,44 @@ class LCOObservationForm(GenericObservationForm):
             target_fields['epochofel'] = target.epoch
             target_fields['epochofperih'] = target.epoch_of_perihelion
 
+        if self.instrument_to_type(self.cleaned_data['instrument_type']) == 'EXPOSE':
+            optical_elements = {
+                'filter': self.cleaned_data['filter'],
+            }
+        else:
+            optical_elements = {
+                "slit": self.cleaned_data['filter'],
+            }
+
         return {
-            "group_id": self.cleaned_data['group_id'],
+            "name": self.cleaned_data['name'],
             "proposal": self.cleaned_data['proposal'],
             "ipp_value": self.cleaned_data['ipp_value'],
             "operator": "SINGLE",
             "observation_type": self.cleaned_data['observation_type'],
             "requests": [
                 {
-                    "target": target_fields,
-                    "molecules": [
+                    "configurations": [
                         {
-                            "type": self.instrument_to_type(self.cleaned_data['instrument_name']),
-                            "instrument_name": self.cleaned_data['instrument_name'],
-                            "filter": self.cleaned_data['filter'],
-                            "spectra_slit": self.cleaned_data['filter'],
-                            "exposure_count": self.cleaned_data['exposure_count'],
-                            "exposure_time": self.cleaned_data['exposure_time']
+                            "type": self.instrument_to_type(self.cleaned_data['instrument_type']),
+                            "instrument_type": self.cleaned_data['instrument_type'],
+                            "target": target_fields,
+                            "instrument_configs": [
+                                {
+                                    "exposure_count": self.cleaned_data['exposure_count'],
+                                    "exposure_time": self.cleaned_data['exposure_time'],
+                                    "optical_elements": optical_elements
+                                }
+                            ],
+                            "acquisition_config": {
+
+                            },
+                            "guiding_config": {
+
+                            },
+                            "constraints": {
+                               "max_airmass": self.cleaned_data['max_airmass'],
+                            }
                         }
                     ],
                     "windows": [
@@ -254,10 +279,7 @@ class LCOObservationForm(GenericObservationForm):
                         }
                     ],
                     "location": {
-                        "telescope_class": self.cleaned_data['instrument_name'][:3].lower()
-                    },
-                    "constraints": {
-                        "max_airmass": self.cleaned_data['max_airmass'],
+                        "telescope_class": self.cleaned_data['instrument_type'][:3].lower()
                     }
                 }
             ]
@@ -271,7 +293,7 @@ class LCOFacility(GenericObservationFacility):
     def submit_observation(self, observation_payload):
         response = make_request(
             'POST',
-            PORTAL_URL + '/api/userrequests/',
+            PORTAL_URL + '/api/requestgroups/',
             json=observation_payload,
             headers=self._portal_headers()
         )
@@ -280,7 +302,7 @@ class LCOFacility(GenericObservationFacility):
     def validate_observation(self, observation_payload):
         response = make_request(
             'POST',
-            PORTAL_URL + '/api/userrequests/validate/',
+            PORTAL_URL + '/api/requestgroups/validate/',
             json=observation_payload,
             headers=self._portal_headers()
         )
@@ -311,16 +333,16 @@ class LCOFacility(GenericObservationFacility):
 
         response = make_request(
             'GET',
-            PORTAL_URL + '/api/requests/{0}/blocks/?canceled=false'.format(observation_id),
+            PORTAL_URL + '/api/requests/{0}/observations/'.format(observation_id),
             headers=self._portal_headers()
         )
         blocks = response.json()
         current_block = None
         for block in blocks:
-            if block['completed']:
+            if block['state'] == 'COMPLETED':
                 current_block = block
                 break
-            elif block['status'] == 'SCHEDULED':
+            elif block['state'] == 'PENDING':
                 current_block = block
         if current_block:
             scheduled_start = current_block['start']
