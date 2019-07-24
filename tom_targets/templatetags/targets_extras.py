@@ -90,6 +90,7 @@ def target_distribution(targets):
                 'type': 'mollweide',
             },
             'showcoastlines': False,
+            'showland': False,
             'lonaxis': {
                 'showgrid': True,
                 'range': [0, 360],
