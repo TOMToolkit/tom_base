@@ -20,7 +20,7 @@ from tom_dataproducts.forms import DataProductUploadForm
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from .import_targets import import_targets
 from .filters import TargetFilter
-
+from .add_remove_from_grouping import add_remove_from_grouping
 
 class TargetListView(PermissionListMixin, FilterView):
     template_name = 'tom_targets/target_list.html'
@@ -37,7 +37,6 @@ class TargetListView(PermissionListMixin, FilterView):
         context['groupings'] = TargetList.objects.all() if self.request.user.is_authenticated else TargetList.objects.none()
         context['query_string'] = self.request.META['QUERY_STRING']
         return context
-
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
     model = Target
@@ -188,56 +187,10 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
 
 
 class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
-    
-    def post(self, request):
-        targets_ids = request.POST.getlist('selected-target')
-        grouping_id = request.POST.get('grouping')
-        try:
-            list_object = TargetList.objects.get(pk=grouping_id)
-        except Exception as e:
-            messages.error(request, 'Cannot find the target grouping with id={}'.format(grouping_id))
 
-        if 'add' in request.POST:
-            success_targets = []
-            included_targets = [] # targets that are already included in the grouping
-            failure_targets = []
-            for target_id in targets_ids:
-                try:
-                    target_object = Target.objects.get(pk=target_id)
-                    if target_object in list_object.targets.all(): # included?
-                        included_targets.append(target_object.identifier)
-                    else:
-                        list_object.targets.add(target_object)
-                        success_targets.append(target_object.identifier)
-                except Exception as e:
-                    failure_targets.append((target_id, e,))
-            messages.success(request, "{} target(s) are successfully added.".format(len(success_targets)))
-            if included_targets:
-                messages.warning(request, "{} target(s) are already in the grouping: {}".format(len(included_targets), ', '.join(included_targets)))
-            for failure_target in failure_targets:
-                messages.error(request, "Failed to add target(s) with id={} to the grouping; {}".format(failure_target[0], failure_target[1]))
-
-        if 'remove' in request.POST:
-            success_targets = []
-            excluded_targets = [] # targets that are not in the grouping
-            failure_targets = []
-            for target_id in targets_ids:
-                try:
-                    target_object = Target.objects.get(pk=target_id)
-                    if target_object in list_object.targets.all():
-                        list_object.targets.remove(target_object)
-                        success_targets.append(target_object.identifier)
-                    else:
-                        excluded_targets.append(target_object.identifier)
-                except Exception as e:
-                    failure_targets.append((target_id, e,))                    
-            messages.success(request, "{} target(s) are successfully removed.".format(len(success_targets)))
-            if excluded_targets:
-                messages.warning(request, "{} target(s) are not in the grouping: {}".format(len(excluded_targets), ', '.join(excluded_targets)))
-            for failure_target in failure_targets:
-                messages.error(request, "Failed to remove target(s) with id={} from the grouping; {}".format(failure_target[0], failure_target[1]))
-        
+    def post(self, request, *args, **kwargs):
         query_string = request.POST.get('query_string')
+        add_remove_from_grouping(request, query_string)
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 
 

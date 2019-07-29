@@ -378,6 +378,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             assign_perm('tom_targets.view_target', user, ft)
         # create grouping
         self.fake_grouping = TargetGroupingFactory.create()
+        assign_perm('tom_targets.view_targetlist', user, self.fake_grouping)
         # add target[0] to grouping
         self.fake_grouping.targets.add(self.fake_targets[0])
         
@@ -421,4 +422,12 @@ class TestTargetAddRemoveGrouping(TestCase):
         response = self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': "",})
         self.assertEqual(self.fake_grouping.targets.count(), 1)
 
-
+    def test_permission_denied(self):
+        new_user = User.objects.create(username='newuser')
+        self.client.force_login(new_user)
+        data = {
+            'grouping': self.fake_grouping.id,
+            'add': True,
+            'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
+        }
+        self.assertEqual(self.fake_grouping.targets.count(), 1)
