@@ -387,6 +387,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             'grouping': self.fake_grouping.id,
             'add': True,
             'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
+            'query_string': "",
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         
@@ -399,6 +400,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             'grouping': -1,
             'add': True,
             'selected-target': self.fake_targets[1].id,
+            'query_string': "",
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 1)
@@ -410,12 +412,13 @@ class TestTargetAddRemoveGrouping(TestCase):
             'grouping': self.fake_grouping.id,
             'remove': True,
             'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
+            'query_string': "",
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)        
         self.assertEqual(self.fake_grouping.targets.count(), 0)
         
     def empty_data(self):
-        response = self.client.post(reverse('targets:add-remove-grouping'), data={})
+        response = self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': "",})
         self.assertEqual(self.fake_grouping.targets.count(), 1)
 
 
