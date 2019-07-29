@@ -25,6 +25,7 @@
           <option value="{{ grouping.id }}">{{ grouping.name }}</option>
           {% endfor %} 
         </select>
+        <input type="hidden" value="{{ query_string }}" name="query_string">
         <button type="submit" class="btn btn-outline-primary ml-1" name="add">Add</button>
         <button type="submit" class="btn btn-outline-danger ml-1" name="remove">Remove</button>
       </div>

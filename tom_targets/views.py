@@ -34,7 +34,12 @@ class TargetListView(PermissionListMixin, FilterView):
         context = super().get_context_data(*args, **kwargs)
         context['target_count'] = context['paginator'].count
         # hide target grouping list if user not logged in
+<<<<<<< HEAD
         context['groupings'] = [grouping for grouping in TargetList.objects.all() if self.request.user.has_perm('tom_targets.view_targetlist', grouping)]
+=======
+        context['groupings'] = TargetList.objects.all() if self.request.user.is_authenticated else TargetList.objects.none()
+        context['query_string'] = self.request.META['QUERY_STRING']
+>>>>>>> 6f7d5e4cc94f490633f509648a098b2c695a663e
         return context
 
 
@@ -244,8 +249,9 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
                 messages.warning(request, "{} target(s) are not in the grouping: {}".format(len(excluded_targets), ', '.join(excluded_targets)))
             for failure_target in failure_targets:
                 messages.error(request, "Failed to remove target(s) with id={} from the grouping; {}".format(failure_target[0], failure_target[1]))
-
-        return redirect(reverse('tom_targets:list'))
+        
+        query_string = request.POST.get('query_string')
+        return redirect(reverse('tom_targets:list') + '?' + query_string)
 
 
 class TargetGroupingView(PermissionListMixin, ListView):
