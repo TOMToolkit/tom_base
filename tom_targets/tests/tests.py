@@ -418,7 +418,7 @@ class TestTargetAddRemoveGrouping(TestCase):
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)        
         self.assertEqual(self.fake_grouping.targets.count(), 0)
         
-    def empty_data(self):
+    def test_empty_data(self):
         response = self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': "",})
         self.assertEqual(self.fake_grouping.targets.count(), 1)
 
@@ -431,3 +431,23 @@ class TestTargetAddRemoveGrouping(TestCase):
             'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
         }
         self.assertEqual(self.fake_grouping.targets.count(), 1)
+
+    def test_persist_filter(self):
+        data={'query_string': "type=SIDEREAL&identifier=A&name=B&key=C&value=123&targetlist__name=1",}
+        expected_query_dict = {
+            'type': 'SIDEREAL', 
+            'identifier': 'A', 
+            'name': 'B', 
+            'key': 'C', 
+            'value': '123', 
+            'targetlist__name': '1'}
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data, follow=True)
+        response_query_dict = response.context['filter'].data.dict()
+        self.assertEqual(response_query_dict, expected_query_dict)
+
+    def test_persist_filter_empty(self):
+        data={'query_string': "",}
+        expected_query_dict = {}
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data, follow=True)
+        response_query_dict = response.context['filter'].data
+        self.assertEqual(response_query_dict, expected_query_dict)
