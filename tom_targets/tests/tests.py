@@ -422,7 +422,11 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.assertEqual(self.fake_grouping.targets.count(), 0)
         
     def test_empty_data(self):
+<<<<<<< HEAD
         response = self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': '',})
+=======
+        response = self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': "",})
+>>>>>>> b864124db5fa602d74c06cf5c96faae92a9f1c03
         self.assertEqual(self.fake_grouping.targets.count(), 1)
 
     def test_permission_denied(self):
@@ -491,3 +495,22 @@ class TestTargetAddRemoveGrouping(TestCase):
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 0)
+    def test_persist_filter(self):
+        data={'query_string': "type=SIDEREAL&identifier=A&name=B&key=C&value=123&targetlist__name=1",}
+        expected_query_dict = {
+            'type': 'SIDEREAL', 
+            'identifier': 'A', 
+            'name': 'B', 
+            'key': 'C', 
+            'value': '123', 
+            'targetlist__name': '1'}
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data, follow=True)
+        response_query_dict = response.context['filter'].data.dict()
+        self.assertEqual(response_query_dict, expected_query_dict)
+
+    def test_persist_filter_empty(self):
+        data={'query_string': "",}
+        expected_query_dict = {}
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data, follow=True)
+        response_query_dict = response.context['filter'].data
+        self.assertEqual(response_query_dict, expected_query_dict)
