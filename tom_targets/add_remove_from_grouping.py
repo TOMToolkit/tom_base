@@ -116,13 +116,13 @@ def add_remove_from_grouping(request, query_string):
         return 
 
     if 'add' in request.POST:
-        if 'all_filtered' in request.POST:
+        if request.POST.get('isSelectAll') == 'True':
             add_all_to_grouping(filter_data, grouping_object, request)
         else:
             targets_ids = request.POST.getlist('selected-target')
             add_selected_to_grouping(targets_ids, grouping_object, request)
     if 'remove' in request.POST:
-        if 'all_filtered' in request.POST:
+        if request.POST.get('isSelectAll') == 'True':
             remove_all_from_grouping(filter_data, grouping_object, request)
         else:
             targets_ids = request.POST.getlist('selected-target')

@@ -131,6 +131,11 @@ def target_extra_field(target, name):
         return None
 
 
+@register.inclusion_tag('tom_targets/partials/targetlist_select.html')
+def select_target_js():
+    return
+
+
 @register.inclusion_tag('tom_targets/partials/aladin.html')
 def aladin(target):
     return {'target': target}
