@@ -189,7 +189,7 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
 class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
-        query_string = request.POST.get('query_string')
+        query_string = request.POST.get('query_string', '')
         add_remove_from_grouping(request, query_string)
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 

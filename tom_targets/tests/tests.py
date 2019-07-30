@@ -383,12 +383,13 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.fake_grouping.targets.add(self.fake_targets[0])
         
     # Add target[0] and [1] to grouping; [0] already exists and [1] new
-    def test_add_grouping(self):
+    def test_add_selected_to_grouping(self):
         data = {
             'grouping': self.fake_grouping.id,
             'add': True,
+            'isSelectAll': 'False',
             'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
-            'query_string': "",
+            'query_string': '',
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         
@@ -396,30 +397,32 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.assertTrue(self.fake_targets[0] in self.fake_grouping.targets.all())
         self.assertTrue(self.fake_targets[1] in self.fake_grouping.targets.all())
 
-    def test_add_grouping_invalid_grouping(self):
+    def test_add_to_invalid_grouping(self):
         data = {
             'grouping': -1,
             'add': True,
+            'isSelectAll': 'False',
             'selected-target': self.fake_targets[1].id,
-            'query_string': "",
+            'query_string': '',
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 1)
         self.assertTrue(self.fake_targets[0] in self.fake_grouping.targets.all())
 
     # Remove target[0] and [1] from grouping; 
-    def test_remove_grouping(self):
+    def test_remove_selected_from_grouping(self):
         data = {
             'grouping': self.fake_grouping.id,
             'remove': True,
+            'isSelectAll': 'False',
             'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
-            'query_string': "",
+            'query_string': '',
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)        
         self.assertEqual(self.fake_grouping.targets.count(), 0)
         
-    def empty_data(self):
-        response = self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': "",})
+    def test_empty_data(self):
+        response = self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': '',})
         self.assertEqual(self.fake_grouping.targets.count(), 1)
 
     def test_permission_denied(self):
@@ -428,6 +431,63 @@ class TestTargetAddRemoveGrouping(TestCase):
         data = {
             'grouping': self.fake_grouping.id,
             'add': True,
+            'isSelectAll': 'False',
             'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
+            'query_string': '',
         }
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 1)
+
+    def test_add_all_to_grouping_filtered_by_sidereal(self):
+        data = {
+            'grouping': self.fake_grouping.id,
+            'add': True,
+            'isSelectAll': 'True',
+            'selected-target': [],
+            'query_string': 'type=SIDEREAL&identifier=&name=&key=&value=&targetlist__name=',
+        }
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        self.assertEqual(self.fake_grouping.targets.count(), 3)
+
+    def test_remove_all_from_grouping_filtered_by_sidereal(self):
+        data = {
+            'grouping': self.fake_grouping.id,
+            'remove': True,
+            'isSelectAll': 'True',
+            'selected-target': [],
+            'query_string': 'type=SIDEREAL&identifier=&name=&key=&value=&targetlist__name=',
+        }
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        self.assertEqual(self.fake_grouping.targets.count(), 0)
+
+    def test_remove_all_from_grouping_filtered_by_grouping(self):
+        data = {
+            'grouping': self.fake_grouping.id,
+            'remove': True,
+            'isSelectAll': 'True',
+            'selected-target': [],
+            'query_string': 'type=&identifier=&name=&key=&value=&targetlist__name=' + str(self.fake_grouping.id),
+        }
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        self.assertEqual(self.fake_grouping.targets.count(), 0)
+
+    def test_add_remove_with_random_query_string(self):
+        data = {
+            'grouping': self.fake_grouping.id,
+            'remove': True,
+            'isSelectAll': 'True',
+            'selected-target': [],
+            'query_string': 'asdfghjk@!#$%6',
+        }
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        self.assertEqual(self.fake_grouping.targets.count(), 0)
+
+    def test_add_remove_from_grouping_empty_query_string(self):
+        data = {
+            'grouping': self.fake_grouping.id,
+            'remove': True,
+            'isSelectAll': 'True',
+            'selected-target': [],
+        }
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        self.assertEqual(self.fake_grouping.targets.count(), 0)
