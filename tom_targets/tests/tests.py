@@ -422,11 +422,7 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.assertEqual(self.fake_grouping.targets.count(), 0)
         
     def test_empty_data(self):
-<<<<<<< HEAD
         response = self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': '',})
-=======
-        response = self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': "",})
->>>>>>> b864124db5fa602d74c06cf5c96faae92a9f1c03
         self.assertEqual(self.fake_grouping.targets.count(), 1)
 
     def test_permission_denied(self):
