@@ -1,12 +1,13 @@
-from django.conf import settings
-from django import forms
 from importlib import import_module
+import json
+import requests
+
+from abc import ABC, abstractmethod
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout
+from django import forms
+from django.conf import settings
 from django.core.files.base import ContentFile
-from abc import ABC, abstractmethod
-import requests
-import json
 
 from tom_targets.models import Target
 
@@ -98,10 +99,18 @@ class GenericObservationFacility(ABC):
         )
         for product in user_products:
             products['saved'].append(product)
+
+        # Add any JPEG images created from DataProducts
+        image_products = DataProduct.objects.filter(
+            observation_record_id=observation_record.id, tag='image_file'
+        )
+        for product in image_products:
+            products['saved'].append(product)
         return products
 
     def save_data_products(self, observation_record, product_id=None):
         from tom_dataproducts.models import DataProduct
+        from tom_dataproducts.utils import create_image_dataproduct
         final_products = []
         products = self.data_products(observation_record.observation_id, product_id)
 
@@ -116,6 +125,9 @@ class GenericObservationFacility(ABC):
                 dfile = ContentFile(product_data)
                 dp.data.save(product['filename'], dfile)
                 dp.save()
+                dp.get_preview()
+            if settings.AUTO_THUMBNAILS:
+                create_image_dataproduct(dp)
             final_products.append(dp)
         return final_products
 

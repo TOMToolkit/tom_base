@@ -109,12 +109,18 @@ class RunQueryView(TemplateView):
         query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
         broker_class = get_service_class(query.broker)()
         alerts = broker_class.fetch_alerts(query.parameters_as_dict)
-        context['alerts'] = [
-            broker_class.to_generic_alert(alert) for alert in alerts
-        ]
+        context['alerts'] = []
         query.last_run = timezone.now()
         query.save()
         context['query'] = query
+        try:
+            while len(context['alerts']) < 20:
+                alert = next(alerts)
+                generic_alert = broker_class.to_generic_alert(alert)
+                cache.set('alert_{}'.format(generic_alert.id), json.dumps(alert), 3600)
+                context['alerts'].append(generic_alert)
+        except StopIteration:
+            pass
         return context
 
 

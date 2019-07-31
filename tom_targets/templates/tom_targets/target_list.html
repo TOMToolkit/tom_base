@@ -11,7 +11,9 @@
         <a href="{% url 'dataproducts:update-reduced-data' %}" class="btn btn-primary" title="Update Targets">Update Targets</a>
         <a href="{% url 'targets:create' %}" class="btn btn-primary" title="Add Target">Add a target</a>
         <a href="{% url 'targets:import' %}" class="btn btn-primary" title="Import Targets">Import Targets</a>
-        </span>
+        <button onclick="document.getElementById('invisible-export-button').click()" class="btn btn-primary">Export Filtered Targets</button>
+         <!-- use an invisible button, because the key "Enter" event will triggered the first submit button and we want the default action to be applying filter -->
+      </span>
       </div>
     </div>
     {% select_target_js %}
@@ -89,6 +91,7 @@
           Filter
         </button>
         <a href="{% url 'targets:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
+        <button type="submit" formaction="{% url 'targets:export' %}" id="invisible-export-button" style="display:none"></button>
       {% endbuttons %}
     </form>
   </div>
