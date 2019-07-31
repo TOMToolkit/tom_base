@@ -6,8 +6,10 @@ from django.utils import timezone
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.core.cache import cache
 from guardian.shortcuts import assign_perm
 import django_filters
+import json
 
 from tom_alerts.models import BrokerQuery
 
@@ -125,10 +127,15 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
         if not alerts:
             messages.warning(request, 'Please select at least one alert from which to create a target.')
             return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
-        for alert in alerts:
-            alert = broker_class().fetch_alert(alert)
-            target = broker_class().to_target(alert)
-            broker_class().process_reduced_data(target, alert)
+        for alert_id in alerts:
+            cached_alert = cache.get('alert_{}'.format(alert_id))
+            if not cached_alert:
+                messages.error(request, 'Could not create targets. Try re running the query again.')
+                return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
+            generic_alert = broker_class().to_generic_alert(json.loads(cached_alert))
+            target = generic_alert.to_target()
+            target.save()
+            broker_class().process_reduced_data(target, json.loads(cached_alert))
             target.save()
             for group in request.user.groups.all().exclude(name='Public'):
                 assign_perm('tom_targets.view_target', group, target)
