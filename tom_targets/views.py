@@ -14,8 +14,6 @@ from django.http import StreamingHttpResponse
 from django.utils.text import slugify
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
-from django.views.generic.list import ListView
-from django.http import HttpResponse
 from datetime import datetime
 from io import StringIO
 
@@ -26,6 +24,7 @@ from .import_targets import import_targets
 from .export_targets import export_targets
 from .filters import TargetFilter
 from .add_remove_from_grouping import add_remove_from_grouping
+
 
 class TargetListView(PermissionListMixin, FilterView):
     template_name = 'tom_targets/target_list.html'
