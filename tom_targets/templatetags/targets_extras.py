@@ -5,7 +5,7 @@ import plotly.graph_objs as go
 from astropy import units as u
 from astropy.coordinates import Angle
 
-from tom_targets.models import Target, TargetExtra
+from tom_targets.models import Target, TargetExtra, TargetList
 from tom_targets.forms import TargetVisibilityForm
 from tom_observations.utils import get_visibility
 
@@ -26,6 +26,12 @@ def target_feature(target):
 def target_data(target):
     return {'target': target}
 
+
+@register.inclusion_tag('tom_targets/partials/target_groups.html')
+def target_groups(target):
+    groups = TargetList.objects.filter(targets=target)
+    return {'target': target,
+            'groups': groups}
 
 @register.inclusion_tag('tom_targets/partials/target_plan.html', takes_context=True)
 def target_plan(context):
@@ -124,6 +130,11 @@ def target_extra_field(target, name):
         return TargetExtra.objects.get(target=target, key=name).value
     except TargetExtra.DoesNotExist:
         return None
+
+
+@register.inclusion_tag('tom_targets/partials/targetlist_select.html')
+def select_target_js():
+    return
 
 
 @register.inclusion_tag('tom_targets/partials/aladin.html')

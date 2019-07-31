@@ -1,0 +1,37 @@
+<h4>Groups</h4>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Total Targets</th>
+        <th>Remove</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for group in groups %}
+    <tr>
+        <td>
+            <form action="{% url 'targets:list' %}" method="GET">
+                <button type="submit" class="btn btn-link" name="targetlist__name" value="{{group.id}}" title="View Group">{{ group.name }}</button>
+            </form> 
+        </td>
+        <td valign="middle">{{ group.targets.count }}</td>        
+        <td>
+            <form action="{% url 'targets:add-remove-grouping' %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" title="Remove Target from Group" class="btn btn-danger" name="remove">Remove</button>
+                <input type="hidden" name="selected-target" value="{{ target.id }}"/>
+                <input type="hidden" name="grouping" value="{{ group.id }}"/>
+            </form>
+        </td>
+        
+    </tr>
+    {% empty %}
+    <tr>
+        <td>Not in any groups</td>
+        <td></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
