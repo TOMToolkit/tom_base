@@ -1,0 +1,45 @@
+<script language="JavaScript">
+    function count_selected() {
+        var checked = 0;
+        checkboxes = document.getElementsByName("selected-target");
+        for (var i = 0, n = checkboxes.length; i < n; i++) {
+            if (checkboxes[i].checked) {
+                checked += 1;
+            }
+        }
+        if (checked == 0) {
+            document.getElementById("displaySelected").innerHTML = "";
+        }
+        else {
+            document.getElementById("displaySelected").innerHTML = checked + " Targets Selected";
+        }
+    }
+
+    function single_select() {
+        count_selected();
+        document.getElementById("optionSelectAll").innerHTML = "";
+        document.getElementById("selectPage").checked = false;
+        document.getElementById("isSelectAll").value = "False";
+    }
+
+    function select_page(source, totalTargets) {
+        checkboxes = document.getElementsByName("selected-target");
+        for (var i = 0, n = checkboxes.length; i < n; i++) {
+            checkboxes[i].checked = source.checked;
+        }
+        count_selected();
+        document.getElementById("isSelectAll").value = "False";
+        if (source.checked) {
+            document.getElementById("optionSelectAll").innerHTML = "Select All " + totalTargets + " Target(s) Listed";
+        }
+        else {
+            document.getElementById("optionSelectAll").innerHTML = "";
+        }
+    }
+
+    function select_all(totalTargets) {
+        document.getElementById("isSelectAll").value = "True";
+        document.getElementById("displaySelected").innerHTML = "All " + totalTargets + " Targets Selected";
+        document.getElementById("optionSelectAll").innerHTML = "";
+    }
+</script>
