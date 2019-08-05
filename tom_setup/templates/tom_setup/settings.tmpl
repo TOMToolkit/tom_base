@@ -243,10 +243,11 @@ HOOKS = {
     'observation_change_state': 'tom_common.hooks.observation_change_state'
 }
 
-DATA_TYPES = (
-    ('SPECTROSCOPY', 'Spectroscopy'),
-    ('PHOTOMETRY', 'Photometry')
-)
+AUTO_THUMBNAILS = False
+
+THUMBNAIL_MAX_SIZE = (0, 0)
+
+THUMBNAIL_DEFAULT_SIZE = (200, 200)
 
 try:
     from local_settings import * # noqa
