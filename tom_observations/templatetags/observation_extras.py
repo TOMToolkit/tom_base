@@ -27,12 +27,7 @@ def observation_list(target=None):
 @register.inclusion_tag('tom_observations/partials/observation_distribution.html')
 def observation_distribution(observations):
 
-    # this does not work 
-    #   distinct_targets = observations.order_by('target').distinct('target')
-    # must use 'target_id' to reference Observations. 'target' will access Targets instead.
-    # distinct(*field) only works postgres. don't use it
-    # also, in the model, ordering = ('-created',), thus django generates SELECT DISTINCT target_id, created FROM ...
-
+    # "distinct" query is not supported, must manually find distinct observation per target
     sorted_observations = observations.order_by('scheduled_end') # ascending so that only the max is preserved
     observation_targets = {}
     for obs in sorted_observations:
