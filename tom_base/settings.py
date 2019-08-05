@@ -141,7 +141,7 @@ USE_L10N = False
 
 USE_TZ = True
 
-DATETIME_FORMAT = 'Y-m-d H:m:s'
+DATETIME_FORMAT = 'Y-m-d H:i:s'
 DATE_FORMAT = 'Y-m-d'
 
 
@@ -214,6 +214,12 @@ HOOKS = {
     'observation_change_state': 'tom_common.hooks.observation_change_state',
     'data_product_post_upload': 'tom_dataproducts.hooks.data_product_post_upload'
 }
+
+AUTO_THUMBNAILS = False
+
+THUMBNAIL_MAX_SIZE = (0, 0)
+
+THUMBNAIL_DEFAULT_SIZE = (200, 200)
 
 try:
     from local_settings import * # noqa

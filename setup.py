@@ -45,11 +45,14 @@ setup(
         'numpy',
         'pillow',
         'gsselect',
+        'fits2image',
         'specutils',
-        'python-magic'
+        'python-magic',
+        'antares-client',
+        'rise-set'
     ],
     extras_require={
-        'test': ['factory_boy', 'rise-set']
+        'test': ['factory_boy']
     },
     include_package_data=True,
 )

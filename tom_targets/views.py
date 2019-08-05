@@ -1,4 +1,3 @@
-from io import StringIO
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
@@ -10,13 +9,18 @@ from django.shortcuts import redirect
 from django.conf import settings
 from django.contrib import messages
 from django.core.management import call_command
+from django.http import StreamingHttpResponse
+from django.utils.text import slugify
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
+from datetime import datetime
+from io import StringIO
 
 from .models import Target
 from tom_dataproducts.forms import DataProductUploadForm
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from .import_targets import import_targets
+from .export_targets import export_targets
 from .filters import TargetFilter
 
 
@@ -30,7 +34,7 @@ class TargetListView(PermissionListMixin, FilterView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context['target_count'] = Target.objects.all().count()
+        context['target_count'] = context['paginator'].count
         return context
 
 
@@ -180,3 +184,15 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
         for error in result['errors']:
             messages.warning(request, error)
         return redirect(reverse('tom_targets:list'))
+
+
+class TargetExportView(TargetListView):
+
+    def render_to_response(self, context, **response_kwargs):
+        qs = context['filter'].qs.values()
+        file_buffer = export_targets(qs)
+        file_buffer.seek(0) # goto the beginning of the buffer
+        response = StreamingHttpResponse(file_buffer, content_type="text/csv")
+        filename = "targets-{}.csv".format(slugify(datetime.utcnow()))
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+        return response

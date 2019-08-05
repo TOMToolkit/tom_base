@@ -192,7 +192,7 @@ class MARSBroker(object):
         if parsed['has_next'] and parameters['page'] < 10:
             parameters['page'] += 1
             alerts += self.fetch_alerts(parameters)
-        return alerts
+        return iter(alerts)
 
     def fetch_alert(self, id):
         url = f'{MARS_URL}/{id}/?format=json'
@@ -213,6 +213,8 @@ class MARSBroker(object):
                 alert = self.fetch_alert(target_datum.source_location)
             except HTTPError:
                 raise Exception('Unable to retrieve alert information from broker')
+        if not alert.get('prv_candidate'):
+            alert = self.fetch_alert(alert['lco_id'])
         for prv_candidate in alert.get('prv_candidate'):
             if all([key in prv_candidate['candidate'] for key in ['jd', 'magpsf', 'fid']]):
                 jd = Time(prv_candidate['candidate']['jd'], format='jd', scale='utc')
