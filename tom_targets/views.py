@@ -2,7 +2,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
-from django.views.generic import TemplateView
+from django.views.generic.list import ListView
+from django.views.generic import TemplateView, View
 from django_filters.views import FilterView
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import redirect
@@ -12,16 +13,17 @@ from django.core.management import call_command
 from django.http import StreamingHttpResponse
 from django.utils.text import slugify
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
-from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
+from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
 from datetime import datetime
 from io import StringIO
 
-from .models import Target
+from .models import Target, TargetList
 from tom_dataproducts.forms import DataProductUploadForm
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from .import_targets import import_targets
 from .export_targets import export_targets
 from .filters import TargetFilter
+from .add_remove_from_grouping import add_remove_from_grouping
 
 
 class TargetListView(PermissionListMixin, FilterView):
@@ -35,8 +37,10 @@ class TargetListView(PermissionListMixin, FilterView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['target_count'] = context['paginator'].count
+        # hide target grouping list if user not logged in
+        context['groupings'] = TargetList.objects.all() if self.request.user.is_authenticated else TargetList.objects.none()
+        context['query_string'] = self.request.META['QUERY_STRING']
         return context
-
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
     model = Target
@@ -196,3 +200,43 @@ class TargetExportView(TargetListView):
         filename = "targets-{}.csv".format(slugify(datetime.utcnow()))
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
         return response
+
+
+class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        query_string = request.POST.get('query_string', '')
+        add_remove_from_grouping(request, query_string)
+        return redirect(reverse('tom_targets:list') + '?' + query_string)
+
+
+class TargetGroupingView(PermissionListMixin, ListView):
+    permission_required = 'tom_targets.view_targetlist'
+    template_name = 'tom_targets/target_grouping.html'
+    model = TargetList
+    paginate_by = 25
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+
+class TargetGroupingDeleteView(PermissionRequiredMixin, DeleteView):
+    permission_required = 'tom_targets.delete_targetlist'
+    model = TargetList
+    success_url = reverse_lazy('targets:targetgrouping')
+
+
+class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
+    model = TargetList
+    fields = ['name']
+    success_url = reverse_lazy('targets:targetgrouping')
+
+    def form_valid(self, form):
+        obj = form.save(commit=False)
+        obj.save()
+        assign_perm('tom_targets.view_targetlist', self.request.user, obj)
+        assign_perm('tom_targets.change_targetlist', self.request.user, obj)
+        assign_perm('tom_targets.delete_targetlist', self.request.user, obj)
+        return super().form_valid(form)
+
