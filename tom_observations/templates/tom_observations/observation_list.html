@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load bootstrap4 observation_extras %}
 {% block title %}Observations{% endblock %}
 {% block content %}
 <div class="row">
@@ -14,6 +14,7 @@
         </span>
       </div>
     </div>
+    {% observation_distribution filter.qs %}
     <table class="table">
       <thead>
         <tr>

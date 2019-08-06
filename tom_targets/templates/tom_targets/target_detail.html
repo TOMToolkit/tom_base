@@ -30,6 +30,9 @@
         <span class="nav-link" data-target="#manage-data" data-toggle="tab">Manage Data</span>
       </li>
       <li class="nav-item">
+        <span class="nav-link" data-target="#manage-groups" data-toggle="tab">Manage Groups</span>
+      </li>
+      <li class="nav-item">
         <span class="nav-link" data-target="#photometry" data-toggle="tab">Photometry</span>
       </li>
       <li class="nav-item">
@@ -52,6 +55,9 @@
       <div class="tab-pane" id="manage-data">
         {% include 'tom_dataproducts/upload_dataproduct.html' %}
         {% dataproduct_list_for_target object %}
+      </div>
+      <div class="tab-pane" id="manage-groups">
+        {% target_groups target %}
       </div>
       <div class="tab-pane" id="photometry">
         {% photometry_for_target target %}

@@ -1,6 +1,6 @@
 import factory
 
-from tom_targets.models import Target
+from tom_targets.models import Target, TargetList
 
 
 class SiderealTargetFactory(factory.django.DjangoModelFactory):
@@ -34,3 +34,11 @@ class NonSiderealTargetFactory(factory.django.DjangoModelFactory):
     ephemeris_period_err = factory.Faker('pyfloat')
     ephemeris_epoch = factory.Faker('pyfloat')
     ephemeris_epoch_err = factory.Faker('pyfloat')
+
+
+class TargetGroupingFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = TargetList
+
+    name = factory.Faker('pystr')
+    
