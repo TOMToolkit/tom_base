@@ -117,6 +117,22 @@ class Command(BaseCommand):
 
         self.ok()
 
+    def generate_urls(self):
+        self.status('Generating urls.py... ')
+        template = get_template('tom_setup/urls.tmpl')
+        rendered = template.render(self.context)
+
+        # TODO: Ugly hack to get project name
+        urls_location = os.path.join(BASE_DIR, os.path.basename(BASE_DIR), 'urls.py')
+        if not os.path.exists(urls_location):
+            msg = 'Could not determine urls.py location. Writing urls.py out to {}. Please copy file to \
+                   the proper location after script finishes.'.format(urls_location)
+            self.stdout.write(self.style.WARNING(msg))
+        with open(urls_location, 'w+') as urls_file:
+            urls_file.write(rendered)
+
+        self.ok()
+
     def create_pi(self):
         self.stdout.write('Please create a Principal Investigator (PI) for your project')
         call_command('createsuperuser')
@@ -142,6 +158,7 @@ class Command(BaseCommand):
         self.generate_secret_key()
         self.get_target_type()
         self.generate_config()
+        self.generate_urls()
         self.run_migrations()
         self.create_pi()
         self.create_public_group()
