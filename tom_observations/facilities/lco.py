@@ -67,6 +67,12 @@ SITES = {
         'latitude': 20.706,
         'longitude': -156.258,
         'elevation': 3065
+    },
+    'Cerro Pachón': {
+        'sitecode': 'sor',
+        'latitude': -30.237892,
+        'longitude': -70.733642,
+        'elevation': 2000
     }
 }
 
@@ -121,8 +127,6 @@ def _get_instruments():
 
 def instrument_choices():
     choices = [(k, v['name']) for k, v in _get_instruments().items()]
-    # choices = [(k, k) for k in _get_instruments()]
-    print(choices)
     return choices
 
 
@@ -209,6 +213,41 @@ class LCOObservationForm(GenericObservationForm):
                 return 'SPECTRUM'
         return 'EXPOSE'
 
+    def configure_optical_elements(self):
+        if self.instrument_to_type(self.cleaned_data['instrument_type']) == 'EXPOSE':
+            optical_elements = {
+                'filter': self.cleaned_data['filter'],
+            }
+        else:
+            optical_elements = {
+                'slit': self.cleaned_data['filter'],
+            }
+
+            if 'SOAR' in self.cleaned_data['instrument_type']:
+                optical_elements['grating'] = 'SYZY_400'
+
+        return optical_elements
+
+    def configure_instrument_config(self):
+        instrument_config = {
+                "exposure_count": self.cleaned_data['exposure_count'],
+                "exposure_time": self.cleaned_data['exposure_time'],
+                "optical_elements": self.configure_optical_elements()
+        }
+
+        # SOAR instruments require rotator mode of SKY and rotator angle
+        # LCO spectrographs require rotator mode of VFLOAT
+        # TODO: Add form field for rotator angle
+        if 'SOAR' in self.cleaned_data['instrument_type']:
+            instrument_config['rotator_mode'] = 'SKY'
+            instrument_config['extra_params'] = {
+               'rotator_angle': 0
+            }
+        elif self.instrument_to_type(self.cleaned_data['instrument_type']) == 'SPECTRUM':
+            instrument_config['rotator_mode'] = 'VFLOAT'
+
+        return instrument_config
+
     def observation_payload(self):
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
         target_fields = {
@@ -235,18 +274,7 @@ class LCOObservationForm(GenericObservationForm):
             target_fields['epochofel'] = target.epoch
             target_fields['epochofperih'] = target.epoch_of_perihelion
 
-        print(self.cleaned_data['instrument_type'])
-        if self.instrument_to_type(self.cleaned_data['instrument_type']) == 'EXPOSE':
-            optical_elements = {
-                'filter': self.cleaned_data['filter'],
-            }
-        else:
-            optical_elements = {
-                "slit": self.cleaned_data['filter'],
-            }
-
-        print(self.cleaned_data['instrument_type'])
-        print(_get_instruments()[self.cleaned_data['instrument_type']]['class'])
+        instrument_config = self.configure_instrument_config()
 
         return {
             "name": self.cleaned_data['name'],
@@ -262,11 +290,7 @@ class LCOObservationForm(GenericObservationForm):
                             "instrument_type": self.cleaned_data['instrument_type'],
                             "target": target_fields,
                             "instrument_configs": [
-                                {
-                                    "exposure_count": self.cleaned_data['exposure_count'],
-                                    "exposure_time": self.cleaned_data['exposure_time'],
-                                    "optical_elements": optical_elements
-                                }
+                                instrument_config
                             ],
                             "acquisition_config": {
 
@@ -298,6 +322,7 @@ class LCOFacility(GenericObservationFacility):
     form = LCOObservationForm
 
     def submit_observation(self, observation_payload):
+
         response = make_request(
             'POST',
             PORTAL_URL + '/api/requestgroups/',
