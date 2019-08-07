@@ -120,7 +120,10 @@ def _get_instruments():
 
 
 def instrument_choices():
-    return [(k, k) for k in _get_instruments()]
+    choices = [(k, v['name']) for k, v in _get_instruments().items()]
+    # choices = [(k, k) for k in _get_instruments()]
+    print(choices)
+    return choices
 
 
 def filter_choices():
@@ -201,10 +204,10 @@ class LCOObservationForm(GenericObservationForm):
         return not errors
 
     def instrument_to_type(self, instrument_type):
-        if any(x in instrument_type for x in ['FLOYDS', 'NRES']):
-            return 'SPECTRUM'
-        else:
-            return 'EXPOSE'
+        if any(x in instrument_type for x in ['FLOYDS', 'NRES', 'SOAR']):
+            if 'IMAGER' not in instrument_type:
+                return 'SPECTRUM'
+        return 'EXPOSE'
 
     def observation_payload(self):
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
@@ -232,6 +235,7 @@ class LCOObservationForm(GenericObservationForm):
             target_fields['epochofel'] = target.epoch
             target_fields['epochofperih'] = target.epoch_of_perihelion
 
+        print(self.cleaned_data['instrument_type'])
         if self.instrument_to_type(self.cleaned_data['instrument_type']) == 'EXPOSE':
             optical_elements = {
                 'filter': self.cleaned_data['filter'],
@@ -240,6 +244,9 @@ class LCOObservationForm(GenericObservationForm):
             optical_elements = {
                 "slit": self.cleaned_data['filter'],
             }
+
+        print(self.cleaned_data['instrument_type'])
+        print(_get_instruments()[self.cleaned_data['instrument_type']]['class'])
 
         return {
             "name": self.cleaned_data['name'],
@@ -279,7 +286,7 @@ class LCOObservationForm(GenericObservationForm):
                         }
                     ],
                     "location": {
-                        "telescope_class": self.cleaned_data['instrument_type'][:3].lower()
+                        "telescope_class": _get_instruments()[self.cleaned_data['instrument_type']]['class']
                     }
                 }
             ]
