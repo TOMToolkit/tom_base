@@ -1,4 +1,5 @@
 from django import template
+from django.conf import settings
 from dateutil.parser import parse
 from plotly import offline
 import plotly.graph_objs as go
@@ -24,7 +25,10 @@ def target_feature(target):
 
 @register.inclusion_tag('tom_targets/partials/target_data.html')
 def target_data(target):
-    return {'target': target}
+    return {
+        'target': target,
+        'display_extras': [ex['name'] for ex in settings.EXTRA_FIELDS if not ex.get('hidden')]
+    }
 
 
 @register.inclusion_tag('tom_targets/partials/target_groups.html')

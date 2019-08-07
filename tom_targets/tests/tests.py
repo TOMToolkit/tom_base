@@ -34,6 +34,16 @@ class TestTargetDetail(TestCase):
         response = self.client.get(reverse('targets:detail', kwargs={'pk': self.nst.id}))
         self.assertContains(response, self.nst.id)
 
+    @override_settings(EXTRA_FIELDS=[
+        {'name': 'somefield', 'type': 'string'},
+        {'name': 'hiddenfield', 'type': 'string', 'hidden': True},
+    ])
+    def test_extra_fields(self):
+        self.st.save(extras={'somefield': 'somevalue', 'hiddenfield': 'hiddenvalue'})
+        response = self.client.get(reverse('targets:detail', kwargs={'pk': self.st.id}))
+        self.assertContains(response, 'somevalue')
+        self.assertNotContains(response, 'hiddenvalue')
+
 
 class TestTargetCreate(TestCase):
     def setUp(self):
