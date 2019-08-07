@@ -161,6 +161,12 @@ class TestTargetCreate(TestCase):
             TargetExtra.objects.get(target=target, key='author').typed_value('string'),
             'Dr. Suess'
         )
+        # Check extra_fields property converts values to the correct type
+        self.assertIsInstance(target.extra_fields, dict)
+        self.assertIsInstance(target.extra_fields['wins'], float)
+        self.assertIsInstance(target.extra_fields['checked'], bool)
+        self.assertIsInstance(target.extra_fields['birthdate'], datetime)
+        self.assertIsInstance(target.extra_fields['author'], str)
 
     def test_target_save_programmatic_extras(self):
         target = SiderealTargetFactory.create()

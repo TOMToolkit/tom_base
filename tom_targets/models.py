@@ -170,7 +170,9 @@ class Target(models.Model):
     @property
     def extra_fields(self):
         defined_extras = [extra_field['name'] for extra_field in settings.EXTRA_FIELDS]
-        return {te.key: te.value for te in self.targetextra_set.filter(key__in=defined_extras)}
+        types = {extra_field['name']: extra_field['type'] for extra_field in settings.EXTRA_FIELDS}
+        return {te.key: te.typed_value(types[te.key])
+                for te in self.targetextra_set.filter(key__in=defined_extras)}
 
     @property
     def tags(self):
