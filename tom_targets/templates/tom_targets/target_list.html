@@ -28,7 +28,7 @@
         <select name="grouping" class="form-control w-25 ml-1">
           {% for grouping in groupings %}
           <option value="{{ grouping.id }}">{{ grouping.name }}</option>
-          {% endfor %} 
+          {% endfor %}
         </select>
         <input type="hidden" value="{{ query_string }}" name="query_string">
         <input type="hidden" value="False" id="isSelectAll" name="isSelectAll">
@@ -54,8 +54,15 @@
           {% for target in object_list %}
           <tr>
             <td><input type="checkbox" name="selected-target" value="{{ target.id }}" onClick="single_select()"/></td>
-            <td><a href="{% url 'targets:detail' target.id %}"
-                title="{{ target.identifier }}">{{ target.identifier }}</a></td>
+            <td>
+              <a href="{% url 'targets:detail' target.id %}" title="{{ target.identifier }}">
+                {% if not target.identifier %}
+                  (none)
+                {% else %}
+                  {{ target.identifier }}
+                {% endif %}
+              </a>
+            </td>
             <td>{{ target.name }}</td>
             <td>{{ target.get_type_display }}</td>
             {% if request.GET.type == 'SIDEREAL' %}
