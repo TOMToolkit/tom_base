@@ -17,10 +17,6 @@ FITS_FILE = ('fits_file', 'Fits File')
 SPECTROSCOPY = ('spectroscopy', 'Spectroscopy')
 IMAGE_FILE = ('image_file', 'Image File')
 
-try:
-    THUMBNAIL_MAX_SIZE = settings.THUMBNAIL_MAX_SIZE
-except AttributeError:
-    THUMBNAIL_MAX_SIZE = (0, 0)
 
 try:
     THUMBNAIL_DEFAULT_SIZE = settings.THUMBNAIL_DEFAULT_SIZE
@@ -30,8 +26,8 @@ except AttributeError:
 
 def find_img_size(filename):
     try:
-        return THUMBNAIL_MAX_SIZE
-    except:
+        return settings.THUMBNAIL_MAX_SIZE
+    except AttributeError:
         hdul = fits.open(filename)
         xsize = 0
         ysize = 0
