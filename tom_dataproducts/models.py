@@ -1,12 +1,8 @@
-from base64 import b64encode
 from datetime import datetime
-from io import BytesIO
-import json
 import os
 import tempfile
 
 from astropy.io import fits
-from astropy.visualization import ZScaleInterval
 from django.conf import settings
 from django.core.files import File
 from django.db import models
@@ -21,18 +17,28 @@ FITS_FILE = ('fits_file', 'Fits File')
 SPECTROSCOPY = ('spectroscopy', 'Spectroscopy')
 IMAGE_FILE = ('image_file', 'Image File')
 
+try:
+    THUMBNAIL_MAX_SIZE = settings.THUMBNAIL_MAX_SIZE
+except AttributeError:
+    THUMBNAIL_MAX_SIZE = (0, 0)
+
+try:
+    THUMBNAIL_DEFAULT_SIZE = settings.THUMBNAIL_DEFAULT_SIZE
+except AttributeError:
+    THUMBNAIL_DEFAULT_SIZE = (200, 200)
+
 
 def find_img_size(filename):
     try:
-        return settings.THUMBNAIL_MAX_SIZE
+        return THUMBNAIL_MAX_SIZE
     except:
         hdul = fits.open(filename)
         xsize = 0
         ysize = 0
         for hdu in hdul:
             try:
-                xsize = max(xsize,hdu.header['NAXIS1'])
-                ysize = max(ysize,hdu.header['NAXIS2'])
+                xsize = max(xsize, hdu.header['NAXIS1'])
+                ysize = max(ysize, hdu.header['NAXIS2'])
             except KeyError:
                 pass
         return (xsize, ysize)
@@ -112,14 +118,14 @@ class DataProduct(models.Model):
     def get_file_extension(self):
         return os.path.splitext(self.data.name)[1]
 
-    def get_preview(self, size=settings.THUMBNAIL_DEFAULT_SIZE, redraw=False):
+    def get_preview(self, size=THUMBNAIL_DEFAULT_SIZE, redraw=False):
         if self.thumbnail:
             im = Image.open(self.thumbnail)
-            if im.size != settings.THUMBNAIL_DEFAULT_SIZE:
+            if im.size != THUMBNAIL_DEFAULT_SIZE:
                 redraw = True
 
         if not self.thumbnail or redraw:
-            width, height = settings.THUMBNAIL_DEFAULT_SIZE
+            width, height = THUMBNAIL_DEFAULT_SIZE
             tmpfile = self.create_thumbnail(width=width, height=height)
             if tmpfile:
                 outfile_name = os.path.basename(self.data.file.name)

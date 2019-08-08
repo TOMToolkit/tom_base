@@ -17,6 +17,11 @@ DEFAULT_FACILITY_CLASSES = [
         'tom_observations.facilities.gemini.GEMFacility',
 ]
 
+try:
+    AUTO_THUMBNAILS = settings.AUTO_THUMBNAILS
+except AttributeError:
+    AUTO_THUMBNAILS = False
+
 
 def get_service_classes():
     try:
@@ -126,7 +131,7 @@ class GenericObservationFacility(ABC):
                 dp.data.save(product['filename'], dfile)
                 dp.save()
                 dp.get_preview()
-            if settings.AUTO_THUMBNAILS:
+            if AUTO_THUMBNAILS:
                 create_image_dataproduct(dp)
             final_products.append(dp)
         return final_products
