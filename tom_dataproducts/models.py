@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 import tempfile
+import magic
 
 from astropy.io import fits
 from django.conf import settings
@@ -40,14 +41,17 @@ def find_img_size(filename):
         return (xsize, ysize)
 
 
-def is_fits_image_file(filename):
-    try:
-        hdul = fits.open(filename)
-    except OSError:  # OSError is raised if file is not FITS format
+def is_fits_image_file(file):
+    filetype = magic.from_file(file.path, mime=True)
+    if filetype == 'image/fits':
+        try:
+            hdul = fits.open(file.path)
+        except OSError:  # OSError is raised if file is not FITS format
+            return False
+        for hdu in hdul:
+            if hdu.header.get('EXTNAME') == 'SCI':
+                return True
         return False
-    for hdu in hdul:
-        if hdu.header.get('XTENSION') == 'IMAGE':
-            return True
     return False
 
 
@@ -133,7 +137,7 @@ class DataProduct(models.Model):
         return self.thumbnail.url
 
     def create_thumbnail(self, width=None, height=None):
-        if is_fits_image_file(self.data.file.name):
+        if is_fits_image_file(self.data):
             tmpfile = tempfile.NamedTemporaryFile()
             if not width or not height:
                 width, height = find_img_size(self.data.file.name)
