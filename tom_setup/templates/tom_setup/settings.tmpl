@@ -68,7 +68,7 @@ MIDDLEWARE = [
     'tom_common.middleware.ExternalServiceMiddleware',
 ]
 
-ROOT_URLCONF = 'tom_common.urls'
+ROOT_URLCONF = '{{ PROJECT_NAME }}.urls'
 
 TEMPLATES = [
     {
@@ -218,6 +218,10 @@ TOM_ALERT_CLASSES = [
     'tom_alerts.brokers.scout.ScoutBroker',
     'tom_alerts.brokers.antares.AntaresBroker'
 ]
+
+BROKER_CREDENTIALS = {
+
+}
 
 # Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"
 # See https://tomtoolkit.github.io/docs/target_fields for documentation on this feature

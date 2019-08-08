@@ -34,6 +34,16 @@ class TestTargetDetail(TestCase):
         response = self.client.get(reverse('targets:detail', kwargs={'pk': self.nst.id}))
         self.assertContains(response, self.nst.id)
 
+    @override_settings(EXTRA_FIELDS=[
+        {'name': 'somefield', 'type': 'string'},
+        {'name': 'hiddenfield', 'type': 'string', 'hidden': True},
+    ])
+    def test_extra_fields(self):
+        self.st.save(extras={'somefield': 'somevalue', 'hiddenfield': 'hiddenvalue'})
+        response = self.client.get(reverse('targets:detail', kwargs={'pk': self.st.id}))
+        self.assertContains(response, 'somevalue')
+        self.assertNotContains(response, 'hiddenvalue')
+
 
 class TestTargetCreate(TestCase):
     def setUp(self):
@@ -161,6 +171,12 @@ class TestTargetCreate(TestCase):
             TargetExtra.objects.get(target=target, key='author').typed_value('string'),
             'Dr. Suess'
         )
+        # Check extra_fields property converts values to the correct type
+        self.assertIsInstance(target.extra_fields, dict)
+        self.assertIsInstance(target.extra_fields['wins'], float)
+        self.assertIsInstance(target.extra_fields['checked'], bool)
+        self.assertIsInstance(target.extra_fields['birthdate'], datetime)
+        self.assertIsInstance(target.extra_fields['author'], str)
 
     def test_target_save_programmatic_extras(self):
         target = SiderealTargetFactory.create()
