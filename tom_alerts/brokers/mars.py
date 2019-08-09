@@ -81,7 +81,7 @@ class MARSQueryForm(GenericQueryForm):
         label='Delta Mag Ref Upper'
     )
     rb__gte = forms.FloatField(required=False, label='Real/Bogus Lower')
-    drb__gte = forms.FloatField(required=False, label='Deep-Learning Real/Bogus Lower') 
+    drb__gte = forms.FloatField(required=False, label='Deep-Learning Real/Bogus Lower')
     classtar__gte = forms.FloatField(required=False, label='Classtar Lower')
     classtar__lte = forms.FloatField(required=False, label='Classtar Upper')
     fwhm__lte = forms.FloatField(required=False, label='FWHM Upper')
@@ -163,7 +163,7 @@ class MARSQueryForm(GenericQueryForm):
             'filter',
             'sigmapsf__lte',
             'rb__gte',
-            'drb__gte', 
+            'drb__gte',
             'fwhm__lte'
         )
 
@@ -215,13 +215,15 @@ class MARSBroker(object):
                 raise Exception('Unable to retrieve alert information from broker')
         if not alert.get('prv_candidate'):
             alert = self.fetch_alert(alert['lco_id'])
-        for prv_candidate in alert.get('prv_candidate'):
-            if all([key in prv_candidate['candidate'] for key in ['jd', 'magpsf', 'fid']]):
-                jd = Time(prv_candidate['candidate']['jd'], format='jd', scale='utc')
+
+        candidates = [{'candidate': alert.get('candidate')}] + alert.get('prv_candidate')
+        for candidate in candidates:
+            if all([key in candidate['candidate'] for key in ['jd', 'magpsf', 'fid']]):
+                jd = Time(candidate['candidate']['jd'], format='jd', scale='utc')
                 jd.to_datetime(timezone=TimezoneInfo())
                 value = {
-                    'magnitude': prv_candidate['candidate']['magpsf'],
-                    'filter': filters[prv_candidate['candidate']['fid']]
+                    'magnitude': candidate['candidate']['magpsf'],
+                    'filter': filters[candidate['candidate']['fid']]
                 }
                 rd, created = ReducedDatum.objects.get_or_create(
                     timestamp=jd.to_datetime(timezone=TimezoneInfo()),
