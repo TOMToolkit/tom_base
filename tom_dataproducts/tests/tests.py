@@ -80,37 +80,57 @@ class TestObservationDataViews(TestCase):
             self.assertTrue(mock.called)
             self.assertContains(response, 'Successfully saved: afile.fits')
 
-    def test_is_fits_image_file(self, dp_mock):
+    # Non-FITS file
+    def test_is_fits_image_file_invalid_fits(self, dp_mock):
         with tempfile.TemporaryDirectory() as tmpdir:
-            # Non-FITS file
-            nonfits_file = os.path.join(tmpdir, 'nonfits.fits')
-            with open(nonfits_file, 'w') as f:
-                f.write('hello')
-            self.assertFalse(is_fits_image_file(nonfits_file))
+            with self.settings(MEDIA_ROOT=tmpdir):
+                nonfits_file = os.path.join(tmpdir, 'nonfits.fits')
+                with open(nonfits_file, 'w') as f:
+                    f.write('hello')
+                self.data_product.data = nonfits_file
+                self.assertFalse(is_fits_image_file(self.data_product.data))
 
-            # Binary table: not image data
-            table_file = os.path.join(tmpdir, 'table.fits')
-            t = Table([[1, 2], [4, 5], [7, 8]], names=('a', 'b', 'c'))
-            t.write(table_file, format='fits')
-            self.assertFalse(is_fits_image_file(table_file))
+    # Binary table: not image data
+    def test_is_fits_image_file_binary_table(self, dp_mock):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with self.settings(MEDIA_ROOT=tmpdir):
+                table_file = os.path.join(tmpdir, 'table.fits')
+                t = Table([[1, 2], [4, 5], [7, 8]], names=('a', 'b', 'c'))
+                t.write(table_file, format='fits')
+                self.data_product.data = table_file
+                self.assertFalse(is_fits_image_file(self.data_product.data))
 
-            # Image file
-            img_file = os.path.join(tmpdir, 'img.blah')  # file name should be irrelevant
-            img = fits.PrimaryHDU(np.arange(100))
-            img.header['XTENSION'] = 'IMAGE'
-            hdul = fits.HDUList([img])
-            hdul.writeto(img_file)
-            self.assertTrue(is_fits_image_file(img_file))
+    # Image file
+    def test_is_fits_image_file_img(self, dp_mock):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with self.settings(MEDIA_ROOT=tmpdir):
+                img_file = os.path.join(tmpdir, 'img.blah')  # file name should be irrelevant
+                img = fits.PrimaryHDU(np.arange(100))
+                img.header['EXTNAME'] = 'SCI'
+                hdul = fits.HDUList([img])
+                hdul.writeto(img_file)
+                self.data_product.data = img_file
+                self.assertTrue(is_fits_image_file(self.data_product.data))
 
-            # Table + image data
-            tabimg_file = os.path.join(tmpdir, 'both.fits')
-            table = fits.BinTableHDU.from_columns([
-                fits.Column(name='col1', format='I', array=np.array([1, 2, 3])),
-                fits.Column(name='col2', format='I', array=np.array([4, 5, 6]))
-            ])
-            hdul = fits.HDUList([img, table])
-            hdul.writeto(tabimg_file)
-            self.assertTrue(is_fits_image_file(tabimg_file))
+    # Table + image data
+    def test_is_fits_image_file_table_img(self, dp_mock):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with self.settings(MEDIA_ROOT=tmpdir):
+                img_file = os.path.join(tmpdir, 'img.blah')  # file name should be irrelevant
+                img = fits.PrimaryHDU(np.arange(100))
+                img.header['EXTNAME'] = 'SCI'
+                hdul = fits.HDUList([img])
+                hdul.writeto(img_file)
+
+                tabimg_file = os.path.join(tmpdir, 'both.fits')
+                table = fits.BinTableHDU.from_columns([
+                    fits.Column(name='col1', format='I', array=np.array([1, 2, 3])),
+                    fits.Column(name='col2', format='I', array=np.array([4, 5, 6]))
+                ])
+                hdul = fits.HDUList([img, table])
+                hdul.writeto(tabimg_file)
+                self.data_product.data = tabimg_file
+                self.assertTrue(is_fits_image_file(self.data_product.data))
 
     @patch('tom_dataproducts.models.fits_to_jpg', mock_fits2image)
     @patch('tom_dataproducts.models.find_img_size', mock_find_img_size)

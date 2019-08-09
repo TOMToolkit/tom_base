@@ -91,6 +91,7 @@ def observation_distribution(observations):
                 'type': 'mollweide',
             },
             'showcoastlines': False,
+            'showland': False,
             'lonaxis': {
                 'showgrid': True,
                 'range': [0, 360],
