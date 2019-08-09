@@ -43,6 +43,7 @@ def find_img_size(filename):
 
 def is_fits_image_file(file):
     filetype = magic.from_file(file.path, mime=True)
+    print(filetype)
     if filetype == 'image/fits':
         try:
             hdul = fits.open(file.path)
