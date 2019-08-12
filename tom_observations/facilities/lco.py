@@ -120,7 +120,7 @@ def _get_instruments():
 
 
 def instrument_choices():
-    return [(k, k) for k in _get_instruments()]
+    return [(k, v['name']) for k, v in _get_instruments().items()]
 
 
 def filter_choices():
@@ -206,7 +206,7 @@ class LCOObservationForm(GenericObservationForm):
         else:
             return 'EXPOSE'
 
-    def observation_payload(self):
+    def _build_target_fields(self):
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
         target_fields = {
             "name": target.name,
@@ -232,15 +232,47 @@ class LCOObservationForm(GenericObservationForm):
             target_fields['epochofel'] = target.epoch
             target_fields['epochofperih'] = target.epoch_of_perihelion
 
+        return target_fields
+
+    def _build_instrument_config(self):
+        instrument_config = {
+                'exposure_count': self.cleaned_data['exposure_count'],
+                'exposure_time': self.cleaned_data['exposure_time'],
+        }
+
         if self.instrument_to_type(self.cleaned_data['instrument_type']) == 'EXPOSE':
-            optical_elements = {
-                'filter': self.cleaned_data['filter'],
+            instrument_config['optical_elements'] = {
+                'filter': self.cleaned_data['filter']
             }
         else:
-            optical_elements = {
-                "slit": self.cleaned_data['filter'],
+            instrument_config['optical_elements'] = {
+                'slit': self.cleaned_data['filter']
+            }
+            instrument_config['rotator_mode'] = 'VFLOAT'
+            instrument_config['extra_params'] = {
+                'rotator_angle': 0  # TODO: This should be a part of the eventual distinct spectroscopy form
             }
 
+        return instrument_config
+
+    def _build_configuration(self):
+        return {
+            'type': self.instrument_to_type(self.cleaned_data['instrument_type']),
+            'instrument_type': self.cleaned_data['instrument_type'],
+            'target': self.build_target_fields(),
+            'instrument_config': [self.build_instrument_config()],
+            'acquisition_config': {
+
+            },
+            'guiding_config': {
+
+            },
+            'constraints': {
+                'max_airmass': self.cleaned_data['max_airmass']
+            }
+        }
+
+    def observation_payload(self):
         return {
             "name": self.cleaned_data['name'],
             "proposal": self.cleaned_data['proposal'],
@@ -249,29 +281,7 @@ class LCOObservationForm(GenericObservationForm):
             "observation_type": self.cleaned_data['observation_type'],
             "requests": [
                 {
-                    "configurations": [
-                        {
-                            "type": self.instrument_to_type(self.cleaned_data['instrument_type']),
-                            "instrument_type": self.cleaned_data['instrument_type'],
-                            "target": target_fields,
-                            "instrument_configs": [
-                                {
-                                    "exposure_count": self.cleaned_data['exposure_count'],
-                                    "exposure_time": self.cleaned_data['exposure_time'],
-                                    "optical_elements": optical_elements
-                                }
-                            ],
-                            "acquisition_config": {
-
-                            },
-                            "guiding_config": {
-
-                            },
-                            "constraints": {
-                               "max_airmass": self.cleaned_data['max_airmass'],
-                            }
-                        }
-                    ],
+                    "configurations": [self.build_configuration()],
                     "windows": [
                         {
                             "start": self.cleaned_data['start'],
@@ -279,7 +289,7 @@ class LCOObservationForm(GenericObservationForm):
                         }
                     ],
                     "location": {
-                        "telescope_class": self.cleaned_data['instrument_type'][:3].lower()
+                        "telescope_class": _get_instruments()[self.cleaned_data['instrument_type']]['class']
                     }
                 }
             ]

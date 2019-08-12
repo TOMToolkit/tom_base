@@ -1,16 +1,11 @@
 import requests
 from django.conf import settings
 from django import forms
-from dateutil.parser import parse
-from crispy_forms.layout import Layout, Div
 from django.core.cache import cache
-from astropy import units as u
 
-from tom_observations.facility import GenericObservationForm
 from tom_observations.facilities.lco import LCOObservationForm, LCOFacility
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.facility import GenericObservationFacility, get_service_class
-from tom_targets.models import Target
+
 
 # Determine settings for this module.
 try:
@@ -37,6 +32,9 @@ SITES = {
         'elevation': 2000
     }
 }
+
+# There is currently only one available grating, which is required for spectroscopy.
+SPECTRAL_GRATING = 'SYZY_400'
 
 
 def make_request(*args, **kwargs):
@@ -79,7 +77,7 @@ def _get_instruments():
             PORTAL_URL + '/api/instruments/',
             headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
         )
-        
+
         cached_instruments = {k: v for k, v in response.json().items() if 'SOAR' in k}
         print(cached_instruments)
         cache.set('soar_instruments', cached_instruments)
@@ -88,7 +86,7 @@ def _get_instruments():
 
 
 def instrument_choices():
-    return [(k, k) for k in _get_instruments()]
+    return [(k, v['name']) for k, v in _get_instruments().items()]
 
 
 def filter_choices():
@@ -121,9 +119,29 @@ class SOARObservationForm(LCOObservationForm):
         else:
             return 'SPECTRUM'
 
-    
+    def _build_instrument_config(self):
+        instrument_config = {
+                'exposure_count': self.cleaned_data['exposure_count'],
+                'exposure_time': self.cleaned_data['exposure_time'],
+                'rotator_mode': 'SKY',
+                'extra_params': {
+                    'rotator_angle': 0  # TODO: This should be a part of the eventual distinct spectroscopy form
+                }
+        }
+
+        if self.instrument_to_type(self.cleaned_data['instrument_type']) == 'EXPOSE':
+            instrument_config['optical_elements'] = {
+                'filter': self.cleaned_data['filter']
+            }
+        else:
+            instrument_config['optical_elements'] = {
+                'slit': self.cleaned_data['filter'],
+                'grating': SPECTRAL_GRATING
+            }
+
+        return instrument_config
+
+
 class SOARFacility(LCOFacility):
     name = 'SOAR'
     form = SOARObservationForm
-
-# TODO: Still needs specific logic for optical elements and filter fields
