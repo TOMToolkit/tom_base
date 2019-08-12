@@ -81,76 +81,11 @@ def make_request(*args, **kwargs):
     return response
 
 
-def _flatten_error_dict(form, error_dict):
-    non_field_errors = []
-    for k, v in error_dict.items():
-        if type(v) == list:
-            for i in v:
-                if type(i) == str:
-                    if k in form.fields:
-                        form.add_error(k, i)
-                    else:
-                        non_field_errors.append('{}: {}'.format(k, i))
-                if type(i) == dict:
-                    non_field_errors.append(_flatten_error_dict(form, i))
-        elif type(v) == str:
-            if k in form.fields:
-                form.add_error(k, v)
-            else:
-                non_field_errors.append('{}: {}'.format(k, v))
-        elif type(v) == dict:
-            non_field_errors.append(_flatten_error_dict(form, v))
-
-    return non_field_errors
-
-
-def _get_instruments():
-    cached_instruments = cache.get('lco_instruments')
-
-    if not cached_instruments:
-        response = make_request(
-            'GET',
-            PORTAL_URL + '/api/instruments/',
-            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
-        )
-        cached_instruments = {k: v for k, v in response.json().items() if 'SOAR' not in k}
-        cache.set('lco_instruments', cached_instruments)
-
-    return cached_instruments
-
-
-def instrument_choices():
-    return [(k, v['name']) for k, v in _get_instruments().items()]
-
-
-def filter_choices():
-    return set([
-            (f['code'], f['name']) for ins in _get_instruments().values() for f in
-            ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
-            ])
-
-
-def proposal_choices():
-    response = make_request(
-        'GET',
-        PORTAL_URL + '/api/profile/',
-        headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
-    )
-    choices = []
-    for p in response.json()['proposals']:
-        if p['current']:
-            choices.append((p['id'], '{} ({})'.format(p['title'], p['id'])))
-    return choices
-
-
 class LCOObservationForm(GenericObservationForm):
     name = forms.CharField()
-    proposal = forms.ChoiceField(choices=proposal_choices)
     ipp_value = forms.FloatField()
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
-    filter = forms.ChoiceField(choices=filter_choices)
-    instrument_type = forms.ChoiceField(choices=instrument_choices)
     exposure_count = forms.IntegerField(min_value=1)
     exposure_time = forms.FloatField(min_value=0.1)
     max_airmass = forms.FloatField()
@@ -160,6 +95,9 @@ class LCOObservationForm(GenericObservationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['proposal'] = forms.ChoiceField(choices=self.proposal_choices())
+        self.fields['filter'] = forms.ChoiceField(choices=self.filter_choices())
+        self.fields['instrument_type'] = forms.ChoiceField(choices=self.instrument_choices())
         self.helper.layout = Layout(
             self.common_layout,
             self.layout(),
@@ -183,6 +121,41 @@ class LCOObservationForm(GenericObservationForm):
         # If you just want to add some fields to the end of the form, add them here.
         return Div()
 
+    def _get_instruments(self):
+        cached_instruments = cache.get('lco_instruments')
+
+        if not cached_instruments:
+            response = make_request(
+                'GET',
+                PORTAL_URL + '/api/instruments/',
+                headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+            )
+            cached_instruments = {k: v for k, v in response.json().items() if 'SOAR' not in k}
+            cache.set('lco_instruments', cached_instruments)
+
+        return cached_instruments
+
+    def instrument_choices(self):
+        return [(k, v['name']) for k, v in self._get_instruments().items()]
+
+    def filter_choices(self):
+        return set([
+            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
+            ])
+
+    def proposal_choices(self):
+        response = make_request(
+            'GET',
+            PORTAL_URL + '/api/profile/',
+            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+        )
+        choices = []
+        for p in response.json()['proposals']:
+            if p['current']:
+                choices.append((p['id'], '{} ({})'.format(p['title'], p['id'])))
+        return choices
+
     def clean_start(self):
         start = self.cleaned_data['start']
         return parse(start).isoformat()
@@ -197,8 +170,30 @@ class LCOObservationForm(GenericObservationForm):
         obs_module = get_service_class(self.cleaned_data['facility'])
         errors = obs_module().validate_observation(self.observation_payload())
         if errors:
-            self.add_error(None, _flatten_error_dict(self, errors))
+            self.add_error(None, self._flatten_error_dict(errors))
         return not errors
+
+    def _flatten_error_dict(self, error_dict):
+        non_field_errors = []
+        for k, v in error_dict.items():
+            if type(v) == list:
+                for i in v:
+                    if type(i) == str:
+                        if k in self.fields:
+                            self.add_error(k, i)
+                        else:
+                            non_field_errors.append('{}: {}'.format(k, i))
+                    if type(i) == dict:
+                        non_field_errors.append(self._flatten_error_dict(i))
+            elif type(v) == str:
+                if k in self.fields:
+                    self.add_error(k, v)
+                else:
+                    non_field_errors.append('{}: {}'.format(k, v))
+            elif type(v) == dict:
+                non_field_errors.append(self._flatten_error_dict(v))
+
+        return non_field_errors
 
     def instrument_to_type(self, instrument_type):
         if any(x in instrument_type for x in ['FLOYDS', 'NRES']):
@@ -255,11 +250,6 @@ class LCOObservationForm(GenericObservationForm):
 
         return instrument_config
 
-    def _build_location(self):
-        return {
-            'telescope_class': _get_instruments()[self.cleaned_data['instrument_type']]['class']
-        }
-
     def _build_configuration(self):
         return {
             'type': self.instrument_to_type(self.cleaned_data['instrument_type']),
@@ -293,7 +283,9 @@ class LCOObservationForm(GenericObservationForm):
                             "end": self.cleaned_data['end']
                         }
                     ],
-                    "location": self._build_location()
+                    "location": {
+                        "telescope_class": self._get_instruments()[self.cleaned_data['instrument_type']]['class']
+                    }
                 }
             ]
         }
