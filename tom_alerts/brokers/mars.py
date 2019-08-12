@@ -81,7 +81,7 @@ class MARSQueryForm(GenericQueryForm):
         label='Delta Mag Ref Upper'
     )
     rb__gte = forms.FloatField(required=False, label='Real/Bogus Lower')
-    drb__gte = forms.FloatField(required=False, label='Deep-Learning Real/Bogus Lower') 
+    drb__gte = forms.FloatField(required=False, label='Deep-Learning Real/Bogus Lower')
     classtar__gte = forms.FloatField(required=False, label='Classtar Lower')
     classtar__lte = forms.FloatField(required=False, label='Classtar Upper')
     fwhm__lte = forms.FloatField(required=False, label='FWHM Upper')
@@ -163,7 +163,7 @@ class MARSQueryForm(GenericQueryForm):
             'filter',
             'sigmapsf__lte',
             'rb__gte',
-            'drb__gte', 
+            'drb__gte',
             'fwhm__lte'
         )
 
