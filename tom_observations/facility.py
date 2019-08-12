@@ -14,12 +14,8 @@ from tom_targets.models import Target
 
 DEFAULT_FACILITY_CLASSES = [
         'tom_observations.facilities.lco.LCOFacility',
-<<<<<<< HEAD
         'tom_observations.facilities.gemini.GEMFacility',
-        'tom_observations.facilities.soar.SOARFacility'
-=======
-        'tom_observations.facilities.gemini.GEMFacility'
->>>>>>> development
+        'tom_observations.facilities.soar.SOARFacility',
 ]
 
 try:
