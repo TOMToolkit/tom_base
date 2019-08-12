@@ -125,3 +125,5 @@ class SOARObservationForm(LCOObservationForm):
 class SOARFacility(LCOFacility):
     name = 'SOAR'
     form = SOARObservationForm
+
+# TODO: Still needs specific logic for optical elements and filter fields
