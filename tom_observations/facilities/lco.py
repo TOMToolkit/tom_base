@@ -113,7 +113,7 @@ def _get_instruments():
             PORTAL_URL + '/api/instruments/',
             headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
         )
-        cached_instruments = response.json()
+        cached_instruments = {k: v for k, v in response.json().items() if 'SOAR' not in k}
         cache.set('lco_instruments', cached_instruments)
 
     return cached_instruments
