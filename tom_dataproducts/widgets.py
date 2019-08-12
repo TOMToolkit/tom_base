@@ -1,5 +1,5 @@
-from datetime import date
 from django.forms import widgets
+
 
 class ObservationDateTimeWidget(widgets.SplitDateTimeWidget):
     def __init__(self, attrs=None):

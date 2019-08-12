@@ -37,6 +37,7 @@ def target_groups(target):
     return {'target': target,
             'groups': groups}
 
+
 @register.inclusion_tag('tom_targets/partials/target_plan.html', takes_context=True)
 def target_plan(context):
     request = context['request']

@@ -38,9 +38,12 @@ class TargetListView(PermissionListMixin, FilterView):
         context = super().get_context_data(*args, **kwargs)
         context['target_count'] = context['paginator'].count
         # hide target grouping list if user not logged in
-        context['groupings'] = TargetList.objects.all() if self.request.user.is_authenticated else TargetList.objects.none()
+        context['groupings'] = (TargetList.objects.all()
+                                if self.request.user.is_authenticated
+                                else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
         return context
+
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
     model = Target
@@ -194,7 +197,7 @@ class TargetExportView(TargetListView):
     def render_to_response(self, context, **response_kwargs):
         qs = context['filter'].qs.values()
         file_buffer = export_targets(qs)
-        file_buffer.seek(0) # goto the beginning of the buffer
+        file_buffer.seek(0)  # goto the beginning of the buffer
         response = StreamingHttpResponse(file_buffer, content_type="text/csv")
         filename = "targets-{}.csv".format(slugify(datetime.utcnow()))
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
