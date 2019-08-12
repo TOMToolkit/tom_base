@@ -11,8 +11,7 @@ def import_targets(targets):
     base_target_fields = [field.name for field in Target._meta.get_fields()]
     for index, row in enumerate(targetreader):
         # filter out empty values in base fields, otherwise converting empty string to float will throw error
-        row = {k:v for (k,v) in row.items() if not (k in base_target_fields and not v)} 
-        print(row)
+        row = {k: v for (k, v) in row.items() if not (k in base_target_fields and not v)}
         target_extra_fields = []
         for k in row:
             if k not in base_target_fields:

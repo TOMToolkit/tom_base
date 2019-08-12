@@ -130,6 +130,8 @@ class DataProduct(models.Model):
                     self.thumbnail.save(filename, File(f), save=True)
                     self.save()
                 tmpfile.close()
+        if not self.thumbnail:
+            return ''
         return self.thumbnail.url
 
     def create_thumbnail(self, width=None, height=None):

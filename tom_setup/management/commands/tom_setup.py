@@ -48,7 +48,7 @@ class Command(BaseCommand):
             except ImportError:
                 self.exit('Could not load dataclasses. Please use Python >= 3.7 or 3.6 with dataclasses installed')
         elif major < 3 or minor < 7:
-                self.exit('Incompatible Python version found. Please install Python >= 3.7')
+            self.exit('Incompatible Python version found. Please install Python >= 3.7')
         self.ok()
 
     def create_project_dirs(self):
@@ -80,7 +80,6 @@ class Command(BaseCommand):
         self.status('Running initial migrations... ')
         call_command('migrate', verbosity=0, interactive=False)
         self.ok()
-
 
     def get_target_type(self):
         allowed_types = {
