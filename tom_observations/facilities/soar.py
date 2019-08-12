@@ -79,7 +79,6 @@ def _get_instruments():
         )
 
         cached_instruments = {k: v for k, v in response.json().items() if 'SOAR' in k}
-        print(cached_instruments)
         cache.set('soar_instruments', cached_instruments)
 
     return cached_instruments
@@ -118,6 +117,11 @@ class SOARObservationForm(LCOObservationForm):
             return 'EXPOSE'
         else:
             return 'SPECTRUM'
+
+    def _build_location(self):
+        return {
+            'telescope_class': _get_instruments()[self.cleaned_data['instrument_type']]['class']
+        }
 
     def _build_instrument_config(self):
         instrument_config = {

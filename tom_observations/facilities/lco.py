@@ -255,12 +255,17 @@ class LCOObservationForm(GenericObservationForm):
 
         return instrument_config
 
+    def _build_location(self):
+        return {
+            'telescope_class': _get_instruments()[self.cleaned_data['instrument_type']]['class']
+        }
+
     def _build_configuration(self):
         return {
             'type': self.instrument_to_type(self.cleaned_data['instrument_type']),
             'instrument_type': self.cleaned_data['instrument_type'],
-            'target': self.build_target_fields(),
-            'instrument_config': [self.build_instrument_config()],
+            'target': self._build_target_fields(),
+            'instrument_configs': [self._build_instrument_config()],
             'acquisition_config': {
 
             },
@@ -281,16 +286,14 @@ class LCOObservationForm(GenericObservationForm):
             "observation_type": self.cleaned_data['observation_type'],
             "requests": [
                 {
-                    "configurations": [self.build_configuration()],
+                    "configurations": [self._build_configuration()],
                     "windows": [
                         {
                             "start": self.cleaned_data['start'],
                             "end": self.cleaned_data['end']
                         }
                     ],
-                    "location": {
-                        "telescope_class": _get_instruments()[self.cleaned_data['instrument_type']]['class']
-                    }
+                    "location": self._build_location()
                 }
             ]
         }
