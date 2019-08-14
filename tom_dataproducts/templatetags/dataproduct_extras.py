@@ -1,6 +1,7 @@
 import json
 
 from django import template
+from django.core.paginator import Paginator
 from datetime import datetime
 
 from plotly import offline
@@ -22,9 +23,14 @@ def dataproduct_list_for_target(target):
 
 
 @register.inclusion_tag('tom_dataproducts/partials/saved_dataproduct_list_for_observation.html')
-def dataproduct_list_for_observation_saved(observation_record):
+def dataproduct_list_for_observation_saved(observation_record, request):
+    print('dataproduct_list_for_observation_saved')
+    page = request.GET.get('page_saved')
     products = get_service_class(observation_record.facility)().all_data_products(observation_record)
-    return {'products': products}
+    paginator = Paginator(products['saved'], 25)
+    products_page = paginator.get_page(page)
+    # print(vars(products_page))
+    return {'products_page': products_page}
 
 
 @register.inclusion_tag('tom_dataproducts/partials/unsaved_dataproduct_list_for_observation.html')

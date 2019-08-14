@@ -38,7 +38,7 @@
           {% endbuttons %}
         </div>
       </div>
-      {% dataproduct_list_for_observation_saved object %}
+      {% dataproduct_list_for_observation_saved object request %}
     </form>
 
     <form method="POST" action="{% url 'tom_dataproducts:save' object.id %}">
