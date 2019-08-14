@@ -436,7 +436,10 @@ class GEMObservationForm(GenericObservationForm):
 
 class GEMFacility(GenericObservationFacility):
     name = 'GEM'
-    form = GEMObservationForm
+    observation_types = [('OBSERVATION', 'Gemini Observation')]
+
+    def get_form(self, observation_type):
+        return GEMObservationForm
 
     @classmethod
     def submit_observation(clz, observation_payload):

@@ -42,7 +42,7 @@ class CoordinateField(forms.CharField):
                 else:
                     a = Angle(value, unit=u.degree)
                 return a.to(u.degree).value
-            except Exception as e:
+            except Exception:
                 raise ValidationError('Invalid format. Please use sexigesimal or degrees')
 
 

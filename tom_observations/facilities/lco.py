@@ -81,7 +81,7 @@ def make_request(*args, **kwargs):
     return response
 
 
-class LCOObservationForm(GenericObservationForm):
+class LCOBaseObservationForm(GenericObservationForm):
     name = forms.CharField()
     ipp_value = forms.FloatField()
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
@@ -89,7 +89,7 @@ class LCOObservationForm(GenericObservationForm):
     exposure_count = forms.IntegerField(min_value=1)
     exposure_time = forms.FloatField(min_value=0.1)
     max_airmass = forms.FloatField()
-    observation_type = forms.ChoiceField(
+    observation_mode = forms.ChoiceField(
         choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response'))
     )
 
@@ -107,7 +107,7 @@ class LCOObservationForm(GenericObservationForm):
     def layout(self):
         return Div(
             Div(
-                'name', 'proposal', 'ipp_value', 'observation_type', 'start', 'end',
+                'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
                 css_class='col'
             ),
             Div(
@@ -196,8 +196,10 @@ class LCOObservationForm(GenericObservationForm):
         return non_field_errors
 
     def instrument_to_type(self, instrument_type):
-        if any(x in instrument_type for x in ['FLOYDS', 'NRES']):
+        if 'FLOYDS' in instrument_type:
             return 'SPECTRUM'
+        elif 'NRES' in instrument_type:
+            return 'NRES_SPECTRUM'
         else:
             return 'EXPOSE'
 
@@ -231,22 +233,12 @@ class LCOObservationForm(GenericObservationForm):
 
     def _build_instrument_config(self):
         instrument_config = {
-                'exposure_count': self.cleaned_data['exposure_count'],
-                'exposure_time': self.cleaned_data['exposure_time'],
-        }
-
-        if self.instrument_to_type(self.cleaned_data['instrument_type']) == 'EXPOSE':
-            instrument_config['optical_elements'] = {
+            'exposure_count': self.cleaned_data['exposure_count'],
+            'exposure_time': self.cleaned_data['exposure_time'],
+            'optical_elements': {
                 'filter': self.cleaned_data['filter']
             }
-        else:
-            instrument_config['optical_elements'] = {
-                'slit': self.cleaned_data['filter']
-            }
-            instrument_config['rotator_mode'] = 'VFLOAT'
-            instrument_config['extra_params'] = {
-                'rotator_angle': 0  # TODO: This should be a part of the eventual distinct spectroscopy form
-            }
+        }
 
         return instrument_config
 
@@ -273,7 +265,7 @@ class LCOObservationForm(GenericObservationForm):
             "proposal": self.cleaned_data['proposal'],
             "ipp_value": self.cleaned_data['ipp_value'],
             "operator": "SINGLE",
-            "observation_type": self.cleaned_data['observation_type'],
+            "observation_type": self.cleaned_data['observation_mode'],
             "requests": [
                 {
                     "configurations": [self._build_configuration()],
@@ -291,9 +283,70 @@ class LCOObservationForm(GenericObservationForm):
         }
 
 
+class LCOImagingObservationForm(LCOBaseObservationForm):
+    def instrument_choices(self):
+        return [(k, v['name']) for k, v in self._get_instruments().items() if 'IMAGE' in v['type']]
+
+    def filter_choices(self):
+        return set([
+            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            ins['optical_elements'].get('filters', [])
+            ])
+
+
+class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
+    rotator_angle = forms.FloatField(min_value=0.0, initial=0.0)
+
+    def layout(self):
+        return Div(
+            Div(
+                'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
+                css_class='col'
+            ),
+            Div(
+                'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass', 'rotator_angle',
+                css_class='col'
+            ),
+            css_class='form-row'
+        )
+
+    def instrument_choices(self):
+        return [(k, v['name']) for k, v in self._get_instruments().items() if 'SPECTRA' in v['type']]
+
+    # NRES does not take a slit, and therefore needs an option of None
+    def filter_choices(self):
+        return set([
+            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            ins['optical_elements'].get('slits', [])
+            ] + [('None', 'None')])
+
+    def _build_instrument_config(self):
+        instrument_config = super()._build_instrument_config()
+        if self.cleaned_data['filter'] != 'None':
+            instrument_config['optical_elements'] = {
+                'slit': self.cleaned_data['filter']
+            }
+        else:
+            instrument_config.pop('optical_elements')
+        instrument_config['rotator_mode'] = 'VFLOAT'  # TODO: Should be a distinct field, SKY & VFLOAT are both valid
+        instrument_config['extra_params'] = {
+            'rotator_angle': self.cleaned_data['rotator_angle']
+        }
+
+        return instrument_config
+
+
 class LCOFacility(GenericObservationFacility):
     name = 'LCO'
-    form = LCOObservationForm
+    observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy')]
+
+    def get_form(self, observation_type):
+        if observation_type == 'IMAGING':
+            return LCOImagingObservationForm
+        elif observation_type == 'SPECTRA':
+            return LCOSpectroscopyObservationForm
+        else:
+            return LCOBaseObservationForm
 
     def submit_observation(self, observation_payload):
         response = make_request(

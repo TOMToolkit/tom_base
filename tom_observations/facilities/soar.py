@@ -2,7 +2,8 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 
-from tom_observations.facilities.lco import LCOObservationForm, LCOFacility
+from tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm
+from tom_observations.facilities.lco import LCOImagingObservationForm, LCOSpectroscopyObservationForm
 from tom_common.exceptions import ImproperCredentialsException
 
 
@@ -44,7 +45,7 @@ def make_request(*args, **kwargs):
     return response
 
 
-class SOARObservationForm(LCOObservationForm):
+class SOARBaseObservationForm(LCOBaseObservationForm):
 
     def _get_instruments(self):
         cached_instruments = cache.get('soar_instruments')
@@ -67,29 +68,44 @@ class SOARObservationForm(LCOObservationForm):
         else:
             return 'SPECTRUM'
 
+
+class SOARImagingObservationForm(SOARBaseObservationForm, LCOImagingObservationForm):
+    pass
+
+
+class SOARSpectroscopyObservationForm(SOARBaseObservationForm, LCOSpectroscopyObservationForm):
+
+    def filter_choices(self):
+        return set([
+            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            ins['optical_elements'].get('slits', [])
+            ])
+
     def _build_instrument_config(self):
         instrument_config = {
                 'exposure_count': self.cleaned_data['exposure_count'],
                 'exposure_time': self.cleaned_data['exposure_time'],
                 'rotator_mode': 'SKY',
                 'extra_params': {
-                    'rotator_angle': 0  # TODO: This should be a part of the eventual distinct spectroscopy form
+                    'rotator_angle': self.cleaned_data['rotator_angle']
+                },
+                'optical_elements': {
+                    'slit': self.cleaned_data['filter'],
+                    'grating': SPECTRAL_GRATING
                 }
         }
-
-        if self.instrument_to_type(self.cleaned_data['instrument_type']) == 'EXPOSE':
-            instrument_config['optical_elements'] = {
-                'filter': self.cleaned_data['filter']
-            }
-        else:
-            instrument_config['optical_elements'] = {
-                'slit': self.cleaned_data['filter'],
-                'grating': SPECTRAL_GRATING
-            }
 
         return instrument_config
 
 
 class SOARFacility(LCOFacility):
     name = 'SOAR'
-    form = SOARObservationForm
+    observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy')]
+
+    def get_form(self, observation_type):
+        if observation_type == 'IMAGING':
+            return SOARImagingObservationForm
+        elif observation_type == 'SPECTRA':
+            return SOARSpectroscopyObservationForm
+        else:
+            return SOARBaseObservationForm
