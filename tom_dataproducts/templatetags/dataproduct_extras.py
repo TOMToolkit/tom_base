@@ -42,7 +42,7 @@ def dataproduct_list_all(saved, fields):
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html')
 def photometry_for_target(target):
     photometry_data = {}
-    for datum in ReducedDatum.objects.filter(data_type=PHOTOMETRY[0]):
+    for datum in ReducedDatum.objects.filter(target=target, data_type=PHOTOMETRY[0]):
         values = json.loads(datum.value)
         photometry_data.setdefault(values['filter'], {})
         photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
