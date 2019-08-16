@@ -460,11 +460,13 @@ class LCOFacility(GenericObservationFacility):
             )
             frames = [response.json()]
         else:
-            response = make_request(
-                'GET',
-                'https://archive-api.lco.global/frames/?REQNUM={0}'.format(observation_id),
-                headers=self._archive_headers()
-            )
-            frames = response.json()['results']
-
+            url = 'https://archive-api.lco.global/frames/?REQNUM={0}&limit=1000'.format(observation_id)
+            while url:
+                response = make_request(
+                    'GET',
+                    url,
+                    headers=self._archive_headers()
+                )
+                frames.extend(response.json()['results'])
+                url = response.json()['next']
         return frames
