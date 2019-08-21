@@ -7,7 +7,7 @@ from django import forms
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from astropy.time import Time, TimezoneInfo
 
-from tom_alerts.alerts import GenericQueryForm, GenericAlert
+from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
 from tom_targets.models import Target, TargetExtra
 from tom_dataproducts.models import ReducedDatum
 
@@ -168,7 +168,7 @@ class MARSQueryForm(GenericQueryForm):
         )
 
 
-class MARSBroker(object):
+class MARSBroker(GenericBroker):
     name = 'MARS'
     form = MARSQueryForm
 
