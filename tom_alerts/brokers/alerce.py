@@ -11,6 +11,9 @@ from tom_targets.models import Target
 ALERCE_URL = 'http://alerce.online'
 ALERCE_SEARCH_URL = 'http://ztf.alerce.online/query'
 
+RF_CLASSIFIERS = [(None, "None")] + [(k, k) for k in ["CEPH","DSCT","EB","LPV","RRL","SNe","Other"]]
+STAMP_CLASSIFIERS = [(None, "None")] + [(k, k) for k in ["AGN","SN","VS","asteroid","bogus"]]
+
 class ALeRCEQueryForm(GenericQueryForm):
     nobs__gt = forms.IntegerField(
         required=False,
@@ -22,12 +25,21 @@ class ALeRCEQueryForm(GenericQueryForm):
     )
     classrf = forms.ChoiceField(
         required=False,
-        label='Classifier (Random Forest)',
-        choices=[("None", "")] + [(k, k) for k in ["CEPH","DSCT","EB","LPV","RRL","SNe","Other"]]
+        label='Late Classifier (Random Forest)',
+        choices=RF_CLASSIFIERS
     )
     pclassrf = forms.FloatField(
         required=False,
-        label=''
+        label='Classifier Probability (Random Forest)'
+    )
+    classearly = forms.ChoiceField(
+        required=False,
+        label='Early Classifier (Stamp Classifier)',
+        choices=STAMP_CLASSIFIERS
+    )
+    pclassearly = forms.FloatField(
+        required=False,
+        label='Classifier Probability (Stamp Classifier)'
     )
     ra = forms.IntegerField(
         required=False,
@@ -73,10 +85,12 @@ class ALeRCEQueryForm(GenericQueryForm):
                 Div(
                     Div(
                         'classrf',
-                        css_class='col',
+                        'classearly',
+                        css_class='col'
                     ),
                     Div(
                         'pclassrf',
+                        'pclassearly',
                         css_class='col',
                     ),
                     css_class="form-row",
@@ -109,7 +123,7 @@ class ALeRCEBroker(GenericBroker):
     name = 'ALeRCE'
     form = ALeRCEQueryForm
 
-    def fetch_alerts_payload(self, parameters):
+    def _fetch_alerts_payload(self, parameters):
         payload = {
             'page': parameters.get('page', 1),
             'query_parameters': {
@@ -128,6 +142,10 @@ class ALeRCEBroker(GenericBroker):
                 filters['classrf'] = parameters['classrf']
             if parameters['pclassrf']:
                 filters['pclassrf'] = parameters['pclassrf']
+            if parameters['classearly']:
+                filters['classearly'] = parameters['classearly']
+            if parameters['pclassearly']:
+                filters['pclassearly'] = parameters['pclassearly']
             payload['query_parameters']['filters'] = filters
 
         if any([parameters['ra'], parameters['dec'], parameters['sr']]):
@@ -152,8 +170,7 @@ class ALeRCEBroker(GenericBroker):
 
 
     def fetch_alerts(self, parameters):
-        payload = self.fetch_alerts_payload(parameters)
-        print(payload)
+        payload = self._fetch_alerts_payload(parameters)
         response = requests.post(ALERCE_SEARCH_URL, json=payload)
         response.raise_for_status()
         parsed = response.json()
