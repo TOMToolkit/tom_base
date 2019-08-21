@@ -39,7 +39,7 @@ class ALeRCEQueryForm(GenericQueryForm):
         choices=STAMP_CLASSIFIERS
     )
     pclassearly = forms.FloatField(
-        required©=False,
+        required=False,
         label='Classifier Probability (Stamp Classifier)'
     )
     ra = forms.IntegerField(
