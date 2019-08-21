@@ -11,8 +11,9 @@ from tom_targets.models import Target
 ALERCE_URL = 'http://alerce.online'
 ALERCE_SEARCH_URL = 'http://ztf.alerce.online/query'
 
-RF_CLASSIFIERS = [(None, "None")] + [(k, k) for k in ["CEPH","DSCT","EB","LPV","RRL","SNe","Other"]]
-STAMP_CLASSIFIERS = [(None, "None")] + [(k, k) for k in ["AGN","SN","VS","asteroid","bogus"]]
+RF_CLASSIFIERS = [(None, "None")] + [(k, k) for k in ["CEPH", "DSCT", "EB", "LPV", "RRL", "SNe", "Other"]]
+STAMP_CLASSIFIERS = [(None, "None")] + [(k, k) for k in ["AGN", "SN", "VS", "asteroid", "bogus"]]
+
 
 class ALeRCEQueryForm(GenericQueryForm):
     nobs__gt = forms.IntegerField(
@@ -38,7 +39,7 @@ class ALeRCEQueryForm(GenericQueryForm):
         choices=STAMP_CLASSIFIERS
     )
     pclassearly = forms.FloatField(
-        required=False,
+        required©=False,
         label='Classifier Probability (Stamp Classifier)'
     )
     ra = forms.IntegerField(
@@ -168,7 +169,6 @@ class ALeRCEBroker(GenericBroker):
 
         return payload
 
-
     def fetch_alerts(self, parameters):
         payload = self._fetch_alerts_payload(parameters)
         response = requests.post(ALERCE_SEARCH_URL, json=payload)
@@ -191,7 +191,6 @@ class ALeRCEBroker(GenericBroker):
         response = requests.post(ALERCE_SEARCH_URL, json=payload)
         response.raise_for_status()
         return response.json()['result'][0]
-
 
     def to_target(self, alert):
         return Target.objects.create(
