@@ -18,3 +18,5 @@ fits2image
 specutils
 python-magic
 antares-client
+pyephem
+rise-set
