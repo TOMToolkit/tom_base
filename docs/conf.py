@@ -57,6 +57,7 @@ source_parsers = {
 
 source_suffix = ['.rst', '.md']
 
+autodoc_mock_imports = ['numpy', 'astropy']
 
 # -- Options for HTML output -------------------------------------------------
 
