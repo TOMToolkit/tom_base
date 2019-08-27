@@ -6,9 +6,14 @@ django-contrib-comments
 django-gravatar2
 django-crispy-forms
 django-guardian
+numpy
+python-dateutil
 requests
+astroquery
+astropy
 plotly
 pillow
+gsselect
 fits2image
 specutils
 python-magic
