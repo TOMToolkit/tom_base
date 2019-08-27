@@ -7,7 +7,6 @@ django-gravatar2
 django-crispy-forms
 django-guardian
 requests
-astroquery
 plotly
 pillow
 gsselect
@@ -15,4 +14,3 @@ fits2image
 specutils
 python-magic
 antares-client
-rise-set
