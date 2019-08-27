@@ -9,7 +9,6 @@ django-guardian
 requests
 plotly
 pillow
-gsselect
 fits2image
 specutils
 python-magic
