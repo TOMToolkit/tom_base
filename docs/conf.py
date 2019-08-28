@@ -40,7 +40,8 @@ django.setup()
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc'
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -58,8 +59,13 @@ source_parsers = {
 source_suffix = ['.rst', '.md']
 
 autodoc_mock_imports = ['rise-set']
-
 autodoc_inherit_docstrings = False
+# autodoc_default_options = {
+#     'members':         True,
+#     'member-order':    'bysource',
+#     'special-members': '__init__',
+# }
+autoclass_content = 'both'
 
 # -- Options for HTML output -------------------------------------------------
 
