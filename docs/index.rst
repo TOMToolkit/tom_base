@@ -6,12 +6,23 @@
 Welcome to TOM Toolkit's documentation!
 =======================================
 
-.. toctree::
-   :maxdepth: 2
+*****
+About
+*****
 
-  setup
-  modules
+.. toctree::
+  :maxdepth: 1
+
   Contributing <https://tomtoolkit.github.io/docs/contributing>
   Reporting Issues <https://tomtoolkit.github.io/docs/support>
   Requesting Features <https://tomtoolkit.github.io/docs/support>
   About <https://tomtoolkit.github.io/about>
+
+*******
+Modules
+*******
+
+.. toctree::
+  :maxdepth: 2
+
+  modules

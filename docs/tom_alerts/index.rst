@@ -1,10 +1,9 @@
-Targets
-=======
+Alerts
+======
 
 .. toctree::
   :maxdepth: 2
 
   models
   views
-  templatetags
-  utils
+  brokers

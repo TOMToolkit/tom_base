@@ -15,6 +15,16 @@ register = template.Library()
 
 @register.inclusion_tag('tom_targets/partials/recent_targets.html')
 def recent_targets(limit=10):
+    """
+    Returns the most recent targets, limited by the given kwarg.
+
+    :param limit: Maximum number of recent targets to return
+    :type limit: integer
+
+    :returns: Dictionary containing a entry, targets, with a value of a QuerySet of tom_targets.models.Target objects
+    :rtype: dict
+
+    """
     return {'targets': Target.objects.all().order_by('-created')[:limit]}
 
 

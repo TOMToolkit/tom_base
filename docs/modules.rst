@@ -7,10 +7,9 @@ Modules
 =======
 
 .. toctree::
-   :maxdepth: 1
+  :maxdepth: 1
 
   tom_alerts/index
-  tom_base/index
   tom_catalogs/index
   tom_common/index
   tom_dataproducts/index

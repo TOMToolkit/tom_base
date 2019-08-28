@@ -1,5 +1,5 @@
-Targets
-=======
+Observations
+============
 
 .. toctree::
   :maxdepth: 2
@@ -7,4 +7,5 @@ Targets
   models
   views
   templatetags
+  facilities
   utils

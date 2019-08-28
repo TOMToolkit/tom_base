@@ -20,8 +20,7 @@ from io import StringIO
 from .models import Target, TargetList
 from tom_dataproducts.forms import DataProductUploadForm
 from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
-from .import_targets import import_targets
-from .export_targets import export_targets
+from .utils import import_targets, export_targets
 from .filters import TargetFilter
 from .add_remove_from_grouping import add_remove_from_grouping
 
@@ -46,16 +45,37 @@ class TargetListView(PermissionListMixin, FilterView):
 
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
+    """
+    View for creating a Target
+    """
+
     model = Target
     fields = '__all__'
 
     def get_default_target_type(self):
+        """
+        Returns the user-configured target type specified in settings.py, if it exists, otherwise returns sidereal
+
+        :returns: User-configured target type or global default
+        :rtype: str
+        """
         try:
             return settings.TARGET_TYPE
         except AttributeError:
             return Target.SIDEREAL
 
     def get_initial(self):
+        """
+        Returns the initial data to use for forms on this view.
+
+        :returns: Dictionary with the following keys:
+
+                  `type`: ``str``: Type of the target to be created
+
+                  `groups`: ``QuerySet<Group>`` Groups available to the current user
+
+        :rtype: dict
+        """
         return {
             'type': self.get_default_target_type(),
             'groups': self.request.user.groups.all(),
@@ -63,12 +83,24 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         }
 
     def get_context_data(self, **kwargs):
+        """
+        Inserts certain form data into the context dict.
+
+        :returns: Dictionary with the following keys:
+
+                  `type_choices`: ``tuple``: Tuple of 2-tuples of strings containing available target types in the TOM
+
+                  `extra_form`: ``FormSet``: Django formset with fields for arbitrary key/value pairs
+        """
         context = super(TargetCreateView, self).get_context_data(**kwargs)
         context['type_choices'] = Target.TARGET_TYPES
         context['extra_form'] = TargetExtraFormset()
         return context
 
     def get_form_class(self):
+        """
+        Return the form class to use in this view.
+        """
         target_type = self.get_default_target_type()
         if self.request.GET:
             target_type = self.request.GET.get('type', target_type)
