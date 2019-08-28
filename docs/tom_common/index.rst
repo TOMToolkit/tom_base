@@ -1,5 +1,5 @@
-Common Module
-=============
+Common
+======
 
 .. toctree::
   :maxdepth: 2
