@@ -61,6 +61,18 @@ def data_product_path(instance, filename):
 
 
 class DataProductGroup(models.Model):
+    """
+    Class representing a group of ``DataProduct`` objects in a TOM.
+
+    :param name: The name of the group of ``DataProduct`` objects
+    :type name: str
+
+    :param created: The time at which this object was created.
+    :type datetime:
+
+    :param modified: The time at which this object was last changed.
+    :type modified: datetime
+    """
     name = models.CharField(max_length=200)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
@@ -73,6 +85,43 @@ class DataProductGroup(models.Model):
 
 
 class DataProduct(models.Model):
+    """
+    Class representing a data product object in a TOM.
+
+    A DataProduct corresponds to any file containing data, from a FITS, to a PNG, to a CSV. It can optionally be
+    associated with a specific observation, and is required to be associated with a target.
+
+    :param product_id: The identifier of the data product used by its original source.
+    :type product_id: str
+
+    :param target: The ``Target`` with which this object is associated.
+
+    :param observation_record: The ``ObservationRecord`` with which this object is optionally associated.
+
+    :param data: The file this object refers to.
+
+    :param extra_data: Arbitrary text field for storing additional information about this object.
+    :type extra_data: str
+
+    :param group: Set of ``DataProductGroup`` objects this object is associated with.
+
+    :param created: The time at which this object was created.
+    :type created: datetime
+
+    :param modified: The time at which this object was last modified.
+    :type modified: datetime
+
+    :param tag: The type of data referred to by this object. Options are photometry, FITS file, spectroscopy, or image
+                file.
+    :type tag: str
+
+    :param featured: Whether or not the data product is intended to be featured, used by default on the target detail
+                     page as a "display" option. Only one ``DataProduct`` can be featured per ``Target``.
+    :type featured: boolean
+
+    :param thumbnail: The thumbnail file associated with this object. Only generated for FITS image files.
+    """
+
     DATA_PRODUCT_TYPES = (
         PHOTOMETRY,
         FITS_FILE,
@@ -147,14 +196,56 @@ class DataProduct(models.Model):
 
 
 class ReducedDatum(models.Model):
+    """
+    Class representing a datum in a TOM.
+
+    A ``ReducedDatum`` generally refers to a single piece of data--e.g., a spectrum, or a photometry point. It is
+    associated with a target, and optionally with the data product it came from. An example of a ``ReducedDatum``
+    without an associated data product would be photometry ingested from a broker.
+
+    :param target: The ``Target`` with which this object is associated.
+
+    :param data_product: The ``DataProduct`` with which this object is optionally associated.
+
+    :param data_type: The type of data this datum represents. Default choices are spectroscopy and photometry.
+    :type data_type: str
+
+    :param source_name: The original source of this datum. The current major use of this field is to track the broker a
+                        datum came from, but can be used for other sources.
+    :type source_name: str
+
+    :param source_location: A reference to the location that this datum was originally sourced from. The current major
+                            use of this field is the URL path to the alert that this datum came from.
+    :type source_name: str
+
+    :param timestamp: The timestamp of this datum.
+    :type timestamp: datetime
+
+    :param value: The value of the datum. This is generally a JSON string, intended to store data with a variety of
+                  scopes. As an example, a photometry value might contain the following:
+
+                  ``{
+                    'magnitude': 18.5,
+                    'magnitude_error': .5
+                  }``
+
+                  but could also contain filter:
+
+                  ``{
+                    'magnitude': 18.5,
+                    'magnitude_error': .5,
+                    'filter': 'r'
+                  }``
+    :type value: str
+    """
+
     target = models.ForeignKey(Target, null=False, on_delete=models.CASCADE)
     data_product = models.ForeignKey(DataProduct, null=True, on_delete=models.CASCADE)
     data_type = models.CharField(
         max_length=100,
         choices=(
             SPECTROSCOPY,
-            PHOTOMETRY,
-            IMAGE_FILE
+            PHOTOMETRY
         ),
         default=''
     )

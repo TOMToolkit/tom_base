@@ -258,7 +258,8 @@ class Target(models.Model):
 
     def featured_image(self):
         """
-        Gets the ``DataProduct`` associated with this ``Target`` that is a FITS file and is uniquely marked as "featured".
+        Gets the ``DataProduct`` associated with this ``Target`` that is a FITS file and is uniquely marked as
+        "featured".
 
         :returns: ``DataProduct`` with tag of ``fits_file`` and featured as ``True``
         :rtype: DataProduct
@@ -355,7 +356,6 @@ class TargetExtra(models.Model):
     def __str__(self):
         return f'{self.key}: {self.value}'
 
-
     def save(self, *args, **kwargs):
         """
         Saves TargetExtra model data to the database. In the process, converts the string value of the ``TargetExtra``
@@ -378,7 +378,6 @@ class TargetExtra(models.Model):
             self.time_value = None
 
         super().save(*args, **kwargs)
-
 
     def typed_value(self, type_val):
         """
@@ -411,7 +410,7 @@ class TargetList(models.Model):
     :param targets: Set of ``Target`` objects associated with this ``TargetList``
 
     :param created: The time at which this object was created.
-    :type datetime:
+    :type created: datetime
     """
     name = models.CharField(max_length=200, help_text='The name of the target list.')
     targets = models.ManyToManyField(Target)
