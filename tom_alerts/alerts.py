@@ -109,6 +109,7 @@ class GenericBroker(ABC):
         This method takes in the query parameters needed to filter
         alerts for a broker and makes the GET query to the broker
         endpoint.
+        See https://tomtoolkit.github.io/docs/create_broker
         """
         pass
 
@@ -123,6 +124,7 @@ class GenericBroker(ABC):
         """
         Retrieves and creates records for any reduced data provided
         by a specific broker. Updates existing data if it has changed.
+        See https://tomtoolkit.github.io/docs/customizing_data_processing
         """
         pass
 
