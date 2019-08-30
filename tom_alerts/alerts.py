@@ -16,7 +16,6 @@ DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.mars.MARSBroker',
     'tom_alerts.brokers.lasair.LasairBroker',
     'tom_alerts.brokers.scout.ScoutBroker',
-    'tom_alerts.brokers.antares.AntaresBroker'
 ]
 
 
