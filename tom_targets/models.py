@@ -52,73 +52,73 @@ class Target(models.Model):
     :type type:
 
     :param ra: Right Ascension, in degrees.
-    :type float:
+    :type ra: float
 
     :param dec: Declination, in degrees.
-    :type float:
+    :type dec: float
 
     :param epoch: Julian Years. Max 2100.
-    :type float:
+    :type epoch: float
 
     :param parallax: Parallax, in milliarcseconds.
-    :type float:
+    :type parallax: float
 
     :param pm_ra: Proper Motion: RA. Milliarsec/year.
-    :type float:
+    :type pm_ra: float
 
     :param pm_dec: Proper Motion: Dec. Milliarsec/year.
-    :type float:
+    :type pm_dec: float
 
     :param galactic_lng: Galactic Longitude in degrees.
-    :type float:
+    :type galactic_lng: float
 
     :param galactic_lat: Galactic Latitude in degrees.
-    :type float:
+    :type galactic_lat: float
 
     :param distance: Parsecs.
-    :type float:
+    :type distance: float
 
     :param distance_err: Parsecs.
-    :type float:
+    :type distance_err: float
 
     :param scheme: Orbital Element Scheme
-    :type str:
+    :type scheme: str
 
     :param mean_anomaly: Angle in degrees.
-    :type float:
+    :type mean_anomaly: float
 
     :param arg_of_perihelion: Argument of Perhihelion. J2000. Degrees.
-    :type float:
+    :type arg_of_perihelion: float
 
     :param eccentricity: Eccentricity
-    :type float:
+    :type eccentricity: float
 
     :param lng_asc_node: Longitude of Ascending Node. J2000. Degrees.
-    :type float:
+    :type lng_asc_node: float
 
     :param inclination: Inclination to the ecliptic. J2000. Degrees.
-    :type float:
+    :type inclination: float
 
     :param mean_daily_motion: Degrees per day.
-    :type float:
+    :type mean_daily_motion: float
 
     :param semimajor_axis: Semimajor Axis in AU
-    :type float:
+    :type semimajor_axis: float
 
     :param epoch_of_perihelion: Julian Date.
-    :type float:
+    :type epoch_of_perihelion: float
 
     :param ephemeris_period: Ephemeris period in days
-    :type float:
+    :type ephemeris_period: float
 
     :param ephemeris_period_err: Days
-    :type float:
+    :type ephemeris_period_err: float
 
     :param ephemeris_epoch: Days
-    :type float:
+    :type ephemeris_epoch: float
 
     :param ephemeris_epoch_err: Days
-    :type float:
+    :type ephemeris_epoch_err: float
     """
 
     SIDEREAL = 'SIDEREAL'

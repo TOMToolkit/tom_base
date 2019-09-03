@@ -25,7 +25,16 @@ except AttributeError:
     THUMBNAIL_DEFAULT_SIZE = (200, 200)
 
 
-def find_img_size(filename):
+def find_fits_img_size(filename):
+    """
+    Returns the size of a FITS image, given a valid FITS image file
+
+    :param filename: The fully-qualified path of the FITS image file
+    :type filename: str
+
+    :returns: Tuple of horizontal/vertical dimensions
+    :rtype: tuple
+    """
     try:
         return settings.THUMBNAIL_MAX_SIZE
     except AttributeError:
@@ -42,6 +51,15 @@ def find_img_size(filename):
 
 
 def is_fits_image_file(file):
+    """
+    Checks if a file is a valid FITS image by checking if any header contains 'SCI' in the 'EXTNAME'.
+
+    :param file: The file to be checked.
+    :type file:
+
+    :returns: True if the file is a FITS image, False otherwise
+    :rtype: boolean
+    """
     try:
         hdul = fits.open(file.path)
     except OSError:  # OSError is raised if file is not FITS format
@@ -53,6 +71,19 @@ def is_fits_image_file(file):
 
 
 def data_product_path(instance, filename):
+    """
+    Returns the TOM-style path for a ``DataProduct`` file. Structure is <target identifier>/<facility>/<filename>.
+    ``DataProduct`` objects not associated with a facility will save with 'None' as the facility.
+
+    :param instance: The specific instance of the ``DataProduct`` class.
+    :type instance: DataProduct
+
+    :param filename: The filename to add to the path.
+    :type filename: str
+
+    :returns: The TOM-style path of the file
+    :rtype: str
+    """
     # Uploads go to MEDIA_ROOT
     if instance.observation_record is not None:
         return '{0}/{1}/{2}'.format(instance.target.identifier, instance.observation_record.facility, filename)
@@ -68,7 +99,7 @@ class DataProductGroup(models.Model):
     :type name: str
 
     :param created: The time at which this object was created.
-    :type datetime:
+    :type created: datetime
 
     :param modified: The time at which this object was last changed.
     :type modified: datetime
@@ -95,8 +126,10 @@ class DataProduct(models.Model):
     :type product_id: str
 
     :param target: The ``Target`` with which this object is associated.
+    :type target: Target
 
     :param observation_record: The ``ObservationRecord`` with which this object is optionally associated.
+    :type observation_record: ObservationRecord
 
     :param data: The file this object refers to.
 
@@ -104,6 +137,7 @@ class DataProduct(models.Model):
     :type extra_data: str
 
     :param group: Set of ``DataProductGroup`` objects this object is associated with.
+    :type DataProductGroup:
 
     :param created: The time at which this object was created.
     :type created: datetime
@@ -162,9 +196,25 @@ class DataProduct(models.Model):
         return os.path.basename(self.data.name)
 
     def get_file_extension(self):
+        """
+        Returns the extension of the file associated with this data product
+
+        :returns: File extension
+        :rtype: str
+        """
         return os.path.splitext(self.data.name)[1]
 
     def get_preview(self, size=THUMBNAIL_DEFAULT_SIZE, redraw=False):
+        """
+        Returns path to the thumbnail of this data product, and creates a thumbnail if none exists
+
+       :Keyword Arguments:
+            * size (`tuple`): Desired size of the thumbnail, as a 2-tuple of ints for width/height
+            * redraw (`boolean`): True if the thumbnail will be recreated despite existing, False otherwise
+
+        :returns: Path to the thumbnail image
+        :rtype: str
+        """
         if self.thumbnail:
             im = Image.open(self.thumbnail)
             if im.size != THUMBNAIL_DEFAULT_SIZE:
@@ -185,10 +235,21 @@ class DataProduct(models.Model):
         return self.thumbnail.url
 
     def create_thumbnail(self, width=None, height=None):
+        """
+        Creates a thumbnail image of this data product (if it is a valid FITS image file) with specified width and
+        height, or the original width and height if none is specified.
+
+        :Keyword Arguments:
+            * width (`int`): Desired width of the thumbnail
+            * height (`int`): Desired height of the thumbnail
+
+        :returns: Thumbnail file if created, None otherwise
+        :rtype: file
+        """
         if is_fits_image_file(self.data):
             tmpfile = tempfile.NamedTemporaryFile()
             if not width or not height:
-                width, height = find_img_size(self.data.file.name)
+                width, height = find_fits_img_size(self.data.file.name)
             resp = fits_to_jpg(self.data.file.name, tmpfile.name, width=width, height=height)
             if resp:
                 return tmpfile
@@ -224,18 +285,22 @@ class ReducedDatum(models.Model):
     :param value: The value of the datum. This is generally a JSON string, intended to store data with a variety of
                   scopes. As an example, a photometry value might contain the following:
 
-                  ``{
-                    'magnitude': 18.5,
-                    'magnitude_error': .5
-                  }``
+                  ::
 
-                  but could also contain filter:
+                    {
+                      'magnitude': 18.5,
+                      'magnitude_error': .5
+                    }
 
-                  ``{
-                    'magnitude': 18.5,
-                    'magnitude_error': .5,
-                    'filter': 'r'
-                  }``
+                  but could also contain a filter:
+
+                  ::
+
+                    {
+                      'magnitude': 18.5,
+                      'magnitude_error': .5,
+                      'filter': 'r'
+                    }
     :type value: str
     """
 
