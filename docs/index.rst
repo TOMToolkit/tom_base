@@ -11,8 +11,9 @@ About
 *****
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
+  introduction/index
   Contributing <https://tomtoolkit.github.io/docs/contributing>
   Reporting Issues <https://tomtoolkit.github.io/docs/support>
   Requesting Features <https://tomtoolkit.github.io/docs/support>

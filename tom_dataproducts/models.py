@@ -1,7 +1,6 @@
 from datetime import datetime
 import os
 import tempfile
-import magic
 
 from astropy.io import fits
 from django.conf import settings
@@ -145,8 +144,8 @@ class DataProduct(models.Model):
     :param modified: The time at which this object was last modified.
     :type modified: datetime
 
-    :param tag: The type of data referred to by this object. Options are photometry, FITS file, spectroscopy, or image
-                file.
+    :param tag: The type of data referred to by this object. Options are photometry, fits_file, spectroscopy, or
+    image_file.
     :type tag: str
 
     :param featured: Whether or not the data product is intended to be featured, used by default on the target detail
@@ -289,7 +288,7 @@ class ReducedDatum(models.Model):
 
                     {
                       'magnitude': 18.5,
-                      'magnitude_error': .5
+                      'error': .5
                     }
 
                   but could also contain a filter:

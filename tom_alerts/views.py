@@ -8,22 +8,35 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.cache import cache
 from guardian.shortcuts import assign_perm
-import django_filters
+from django_filters.views import FilterView
+from django_filters import FilterSet, ChoiceFilter, CharFilter
 import json
 
 from tom_alerts.models import BrokerQuery
 
 
 class BrokerQueryCreateView(LoginRequiredMixin, FormView):
+    """
+    View for creating a new query to a broker.
+    """
     template_name = 'tom_alerts/query_form.html'
 
     def get_broker_name(self):
+        """
+        Returns the broker specified in the request
+
+        :returns: Broker name
+        :rtype: str
+        """
         if self.request.method == 'GET':
             return self.request.GET.get('broker')
         elif self.request.method == 'POST':
             return self.request.POST.get('broker')
 
     def get_form_class(self):
+        """
+        Returns the form class to use in this view.
+        """
         broker_name = self.get_broker_name()
 
         if not broker_name:
@@ -32,6 +45,9 @@ class BrokerQueryCreateView(LoginRequiredMixin, FormView):
         return get_service_class(broker_name).form
 
     def get_form(self):
+        """
+        Returns the
+        """
         form = super().get_form()
         form.helper.form_action = reverse('tom_alerts:create')
         return form
@@ -74,18 +90,18 @@ class BrokerQueryUpdateView(LoginRequiredMixin, FormView):
         return redirect(reverse('tom_alerts:list'))
 
 
-class BrokerQueryFilter(django_filters.FilterSet):
-    broker = django_filters.ChoiceFilter(
+class BrokerQueryFilter(FilterSet):
+    broker = ChoiceFilter(
         choices=[(k, k) for k in get_service_classes().keys()]
     )
-    name = django_filters.CharFilter(lookup_expr='icontains')
+    name = CharFilter(lookup_expr='icontains')
 
     class Meta:
         model = BrokerQuery
         fields = ['broker', 'name']
 
 
-class BrokerQueryListView(django_filters.views.FilterView):
+class BrokerQueryListView(FilterView):
     model = BrokerQuery
     template_name = 'tom_alerts/brokerquery_list.html'
     filterset_class = BrokerQueryFilter

@@ -20,3 +20,4 @@ python-magic
 antares-client
 pyephem
 sphinx>=2.1.2
+recommonmark
