@@ -23,3 +23,13 @@ If you'd like to contribute to the TOM Toolkit, first of all, thanks! Secondly, 
 have a [contribution guide](https://tomtoolkit.github.io/docs/contributing) that
 you might find helpful. We are particularly interested in the contribution of
 observation and alert modules.
+
+## Plugins
+
+### Gemini
+The [tom-gemini](https://github.com/TOMToolkit/tom_gemini) plugin adds support for
+submitting observations to the Gemini Phase 2 system.
+
+### Antares
+The [tom-antares](https://github.com/TOMToolkit/tom_antares) plugin adds support
+for querying the Antares broker for targets of interest.
