@@ -18,8 +18,6 @@ fits2image
 specutils
 python-magic
 antares_client
-tom-antares
-tom-gemini
 pyephem
 sphinx>=2.1.2
 recommonmark
