@@ -42,7 +42,7 @@ class CoordinateField(forms.CharField):
                 else:
                     a = Angle(value, unit=u.degree)
                 return a.to(u.degree).value
-            except Exception as e:
+            except Exception:
                 raise ValidationError('Invalid format. Please use sexigesimal or degrees')
 
 
@@ -127,4 +127,5 @@ class TargetVisibilityForm(forms.Form):
             raise forms.ValidationError('Start time must be before end time')
 
 
-TargetExtraFormset = inlineformset_factory(Target, TargetExtra, fields=('key', 'value'), widgets={'value': forms.TextInput()})
+TargetExtraFormset = inlineformset_factory(Target, TargetExtra,
+                                           fields=('key', 'value'), widgets={'value': forms.TextInput()})

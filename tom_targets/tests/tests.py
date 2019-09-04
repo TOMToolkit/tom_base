@@ -354,7 +354,7 @@ class TestTargetGrouping(TestCase):
         # give this user the permission to view it
         user = User.objects.get(username='testuser')
         assign_perm('tom_targets.view_targetlist', user, group)
-        
+
         response = self.client.get(reverse('targets:targetgrouping'), follow=True)
         self.assertContains(response, group.name)
 
@@ -363,7 +363,7 @@ class TestTargetGrouping(TestCase):
             'name': 'test_group'
         }
         response = self.client.post(reverse('targets:create-group'), data=group_data)
-        
+
         self.assertRedirects(response, reverse('targets:targetgrouping'), status_code=302)
         self.assertTrue(TargetList.objects.filter(name=group_data['name']).exists())
 
@@ -376,7 +376,7 @@ class TestTargetGrouping(TestCase):
         # give user permission to delete
         user = User.objects.get(username='testuser')
         assign_perm('tom_targets.delete_targetlist', user, group)
-        
+
         response = self.client.post(reverse('targets:delete-group', args=(group.pk,)), follow=True)
         self.assertRedirects(response, reverse('targets:targetgrouping'), status_code=302)
         self.assertFalse(TargetList.objects.filter(name='test_group').exists())
@@ -397,7 +397,7 @@ class TestTargetAddRemoveGrouping(TestCase):
         assign_perm('tom_targets.view_targetlist', user, self.fake_grouping)
         # add target[0] to grouping
         self.fake_grouping.targets.add(self.fake_targets[0])
-        
+
     # Add target[0] and [1] to grouping; [0] already exists and [1] new
     def test_add_selected_to_grouping(self):
         data = {
@@ -408,7 +408,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             'query_string': '',
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
-        
+
         self.assertEqual(self.fake_grouping.targets.count(), 2)
         self.assertTrue(self.fake_targets[0] in self.fake_grouping.targets.all())
         self.assertTrue(self.fake_targets[1] in self.fake_grouping.targets.all())
@@ -421,11 +421,11 @@ class TestTargetAddRemoveGrouping(TestCase):
             'selected-target': self.fake_targets[1].id,
             'query_string': '',
         }
-        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 1)
         self.assertTrue(self.fake_targets[0] in self.fake_grouping.targets.all())
 
-    # Remove target[0] and [1] from grouping; 
+    # Remove target[0] and [1] from grouping;
     def test_remove_selected_from_grouping(self):
         data = {
             'grouping': self.fake_grouping.id,
@@ -434,11 +434,11 @@ class TestTargetAddRemoveGrouping(TestCase):
             'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
             'query_string': '',
         }
-        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)        
+        self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 0)
-        
+
     def test_empty_data(self):
-        response = self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': '',})
+        self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': ''})
         self.assertEqual(self.fake_grouping.targets.count(), 1)
 
     def test_permission_denied(self):
@@ -451,7 +451,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
             'query_string': '',
         }
-        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 1)
 
     def test_add_all_to_grouping_filtered_by_sidereal(self):
@@ -495,7 +495,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             'selected-target': [],
             'query_string': 'asdfghjk@!#$%6',
         }
-        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 0)
 
     def test_add_remove_from_grouping_empty_query_string(self):
@@ -505,24 +505,24 @@ class TestTargetAddRemoveGrouping(TestCase):
             'isSelectAll': 'True',
             'selected-target': [],
         }
-        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 0)
-    
+
     def test_persist_filter(self):
-        data={'query_string': "type=SIDEREAL&identifier=A&name=B&key=C&value=123&targetlist__name=1",}
+        data = {'query_string': "type=SIDEREAL&identifier=A&name=B&key=C&value=123&targetlist__name=1"}
         expected_query_dict = {
-            'type': 'SIDEREAL', 
-            'identifier': 'A', 
-            'name': 'B', 
-            'key': 'C', 
-            'value': '123', 
+            'type': 'SIDEREAL',
+            'identifier': 'A',
+            'name': 'B',
+            'key': 'C',
+            'value': '123',
             'targetlist__name': '1'}
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data, follow=True)
         response_query_dict = response.context['filter'].data.dict()
         self.assertEqual(response_query_dict, expected_query_dict)
 
     def test_persist_filter_empty(self):
-        data={}
+        data = {}
         expected_query_dict = {}
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data, follow=True)
         response_query_dict = response.context['filter'].data

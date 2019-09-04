@@ -12,7 +12,7 @@ DEFAULT_DATA_PROCESSOR_CLASS = 'tom_dataproducts.data_processor.DataProcessor'
 def data_product_post_upload(dp, observation_timestamp, facility):
     try:
         processor_class = settings.DATA_PROCESSOR_CLASS
-    except:
+    except Exception:
         processor_class = DEFAULT_DATA_PROCESSOR_CLASS
 
     try:

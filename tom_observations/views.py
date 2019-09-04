@@ -71,8 +71,23 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     def get_facility_class(self):
         return get_service_class(self.get_facility())
 
+    def get_observation_type(self):
+        if self.request.method == 'GET':
+            return self.request.GET.get('observation_type', self.get_facility_class().observation_types[0])
+        elif self.request.method == 'POST':
+            return self.request.POST.get('observation_type')
+
+    def get_context_data(self, **kwargs):
+        context = super(ObservationCreateView, self).get_context_data(**kwargs)
+        context['type_choices'] = self.get_facility_class().observation_types
+        return context
+
     def get_form_class(self):
-        return self.get_facility_class().form
+        if self.request.GET:
+            observation_type = self.request.GET.get('observation_type')
+        elif self.request.POST:
+            observation_type = self.request.POST.get('observation_type')
+        return self.get_facility_class()().get_form(observation_type)
 
     def get_form(self):
         form = super().get_form()
@@ -87,6 +102,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             raise Exception('Must provide target_id')
         initial['target_id'] = self.get_target_id()
         initial['facility'] = self.get_facility()
+        initial['observation_type'] = self.get_observation_type()
         return initial
 
     def form_valid(self, form):
