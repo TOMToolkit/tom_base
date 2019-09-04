@@ -115,8 +115,9 @@ def flatten_error_dict(form, error_dict):
 def proposal_choices():
     choices = []
     for p in GEM_SETTINGS['programs']:
-        choices.append((p,p))
+        choices.append((p, p))
     return choices
+
 
 def obs_choices():
     choices = []
@@ -124,33 +125,35 @@ def obs_choices():
         for obs in GEM_SETTINGS['programs'][p]:
             obsid = p + '-' + obs
             val = p.split('-')
-            showtext = val[0][1]+val[1][2:]+val[2]+val[3]+ '[' + obs + '] ' + GEM_SETTINGS['programs'][p][obs]
-            choices.append((obsid,showtext))
+            showtext = val[0][1] + val[1][2:] + val[2] + val[3] + '[' + obs + '] ' + GEM_SETTINGS['programs'][p][obs]
+            choices.append((obsid, showtext))
     return choices
 
-def get_site(progid,location=False):
+
+def get_site(progid, location=False):
     values = progid.split('-')
-    gemloc = {'GS':'Gemini South','GN':'Gemini North'}
+    gemloc = {'GS': 'Gemini South', 'GN': 'Gemini North'}
     site = values[0].upper()
     if location:
         site = gemloc[site]
     return site
 
+
 class GEMObservationForm(GenericObservationForm):
 
     # Field for the URL API
     # progid = forms.CharField()
-    #progid = forms.ChoiceField(choices=proposal_choices)
+    # progid = forms.ChoiceField(choices=proposal_choices)
     # userkey = forms.CharField(get_site(self.cleaned_data[progid]))
     # email = forms.CharField(choices=GEM_SETTINGS['user_email'])
     # obsnum = forms.IntegerField(min_value=1)
     # obsid = forms.ChoiceField(choices=obs_choices())
     obsid = forms.MultipleChoiceField(choices=obs_choices())
     ready = forms.ChoiceField(initial='true',
-        choices=(('true', 'Yes'), ('false', 'No'))
-    )
+                              choices=(('true', 'Yes'), ('false', 'No'))
+                              )
     brightness = forms.FloatField(required=False, label='Target brightness')
-    brightness_system =forms.ChoiceField(required=False, initial='AB',
+    brightness_system = forms.ChoiceField(required=False, initial='AB',
         choices=(('Vega', 'Vega'), ('AB', 'AB'), ('Jy', 'Jy'))
     )
     brightness_band = forms.ChoiceField(required=False, initial='r',
@@ -175,7 +178,7 @@ class GEMObservationForm(GenericObservationForm):
     gstarg = forms.CharField(required=False, label='Guide Star Name')
     gsra = forms.CharField(required=False, label='Guide Star RA')
     gsdec = forms.CharField(required=False, label='Guide Star Dec')
-    gsbrightness = forms.FloatField(required=False, label = 'Guide Star Brightness')
+    gsbrightness = forms.FloatField(required=False, label='Guide Star Brightness')
     gsbrightness_system = forms.ChoiceField(required=False, initial='Vega', label='Guide Star Brightness System',
         choices=(('Vega', 'Vega'), ('AB', 'AB'), ('Jy', 'Jy'))
     )
@@ -196,21 +199,22 @@ class GEMObservationForm(GenericObservationForm):
 
     # Fields needed for running parangle/gsselect
     pamode = forms.ChoiceField(required=False, label='PA Mode',
-                               choices=(('flip', 'Flip180'), ('fixed', 'Fixed'), ('find', 'Set PA for brightest guide star'),
+                               choices=(('flip', 'Flip180'), ('fixed', 'Fixed'),
+                                        ('find', 'Set PA for brightest guide star'),
                                         ('parallactic', 'Parallactic Angle'))
                                )
-    obsdate = forms.CharField(required=False,widget=forms.TextInput(attrs={'type': 'date'}),
+    obsdate = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'date'}),
                               label='UT Date Time (for Parallactic PA Mode)')
     # Eventually select instrument from obsid text?
     inst = forms.ChoiceField(required=False, label='Instrument', initial='GMOS',
-                                choices=(('GMOS', 'GMOS'), ('GNIRS', 'GNIRS'), ('NIFS', 'NIFS'), ('NIRIF/6', 'NIRIF/6'),
-                                         ('NIRIF/14', 'NIRIF/14'),('NIRIF/32', 'NIRIF/32')))
+                             choices=(('GMOS', 'GMOS'), ('GNIRS', 'GNIRS'), ('NIFS', 'NIFS'), ('NIRIF/6', 'NIRIF/6'),
+                                      ('NIRIF/14', 'NIRIF/14'), ('NIRIF/32', 'NIRIF/32')))
     gsprobe = forms.ChoiceField(required=False, label='Guide Probe', initial='OIWFS',
-                                choices=(('OIWFS', 'OIWFS'), ('PWFS1', 'PWFS1'), ('PWFS2', 'PWFS2')))  # GS probe (PWFS1/PWFS2/OIWFS/AOWFS)
+                            choices=(('OIWFS', 'OIWFS'), ('PWFS1', 'PWFS1'), ('PWFS2', 'PWFS2')))
     port = forms.ChoiceField(required=False, label='ISS Port',
-                                choices=(('side', 'Side'), ('up', 'Up')))
+                            choices=(('side', 'Side'), ('up', 'Up')))
     ifu = forms.ChoiceField(required=False, label='IFU Mode',
-                                choices=(('none', 'None'), ('two', 'Two Slit'), ('red', 'One Slit Red')))
+                            choices=(('none', 'None'), ('two', 'Two Slit'), ('red', 'One Slit Red')))
     overwrite = forms.ChoiceField(required=False, label='Overwrite previous guide star query?', initial='False',
         choices=(('False', 'No'), ('True', 'Yes')))
     # chop = forms.ChoiceField(required=False, label='Chopping?', initial='false',
@@ -219,22 +223,22 @@ class GEMObservationForm(GenericObservationForm):
     l_pad = 7.     # Padding applied to WFS FoV (to account for uncertainties in shape) [arcsec]
     l_rmin = -1.   # Minimum radius for guide star search [arcmin], -1 to use default
     iq = forms.ChoiceField(required=False, label='Image Quality', initial='Any',
-                                choices=(('20', '20%-tile'), ('70', '70%-tile'), ('85', '85%-tile'), ('Any', 'Any')))
+                           choices=(('20', '20%-tile'), ('70', '70%-tile'), ('85', '85%-tile'), ('Any', 'Any')))
     cc = forms.ChoiceField(required=False, label='Cloud Cover', initial='Any',
-                                choices=(('50', '50%-tile'), ('70', '70%-tile'), ('80', '80%-tile'), ('Any', 'Any')))
+                           choices=(('50', '50%-tile'), ('70', '70%-tile'), ('80', '80%-tile'), ('Any', 'Any')))
     sb = forms.ChoiceField(required=False, label='Sky Brightness', initial='Any',
-                                choices=(('20', '20%-tile'), ('50', '50%-tile'), ('80', '80%-tile'), ('Any', 'Any')))
+                           choices=(('20', '20%-tile'), ('50', '50%-tile'), ('80', '80%-tile'), ('Any', 'Any')))
 
     #     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
-#     end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
-#     filter = forms.ChoiceField(choices=filter_choices)
-#     instrument_name = forms.ChoiceField(choices=instrument_choices)
-#     exposure_count = forms.IntegerField(min_value=1)
-#     exposure_time = forms.FloatField(min_value=0.1)
-#     max_airmass = forms.FloatField()
-#     observation_type = forms.ChoiceField(
-#         choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response'))
-#     )
+    #     end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
+    #     filter = forms.ChoiceField(choices=filter_choices)
+    #     instrument_name = forms.ChoiceField(choices=instrument_choices)
+    #     exposure_count = forms.IntegerField(min_value=1)
+    #     exposure_time = forms.FloatField(min_value=0.1)
+    #     max_airmass = forms.FloatField()
+    #     observation_type = forms.ChoiceField(
+    #         choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response'))
+    #     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -280,7 +284,7 @@ class GEMObservationForm(GenericObservationForm):
                     css_class='col'
                 ),
                 Div(
-                    'ifu', 'sb', '', '',
+                    'ifu', 'sb',
                     css_class='col'
                 ),
                 css_class='form-row'
@@ -326,7 +330,7 @@ class GEMObservationForm(GenericObservationForm):
             dec = target.dec
 
             # l_site = get_site(self.cleaned_data['obsid'],location=True)
-            l_site = get_site(obs,location=True)
+            l_site = get_site(obs, location=True)
             l_pad = 7.
             l_chop = False
             l_rmin = -1.
@@ -343,10 +347,10 @@ class GEMObservationForm(GenericObservationForm):
 
             # Guide star
             overw = self.cleaned_data['overwrite'] == 'True'
-            gstarg, gsra, gsdec, gsmag, gspa = gsselect(target.name, str(ra), str(dec), pa=l_pa, imdir=settings.MEDIA_ROOT,
+            gstarg, gsra, gsdec, gsmag, gspa = gsselect(target.name, str(ra), str(dec), pa=l_pa,
                 site=l_site, pad=l_pad, cat='UCAC4', inst=self.cleaned_data['inst'], ifu=self.cleaned_data['ifu'],
-                port=self.cleaned_data['port'],
-                wfs=self.cleaned_data['gsprobe'], chopping=l_chop, pamode=l_pamode, rmin = l_rmin,
+                port=self.cleaned_data['port'], imdir=settings.MEDIA_ROOT,
+                wfs=self.cleaned_data['gsprobe'], chopping=l_chop, pamode=l_pamode, rmin=l_rmin,
                 iq=self.cleaned_data['iq'], cc=self.cleaned_data['cc'], sb=self.cleaned_data['sb'],
                 overwrite=overw, display=False, verbose=False,
                 figout=True, figfile='default')
@@ -366,14 +370,15 @@ class GEMObservationForm(GenericObservationForm):
         if self.cleaned_data['exptimes'] != '':
             expvalues = self.cleaned_data['exptimes'].split(',')
             if len(expvalues) != nobs:
-                payloads.append({"error": "If exptimes given, the number of values must equal the number of obsids selected."})
+                stringerr = "If exptimes given, the number of values must equal the number of obsids selected."
+                payloads.append({"error": stringerr})
                 return payloads
 
             # Convert exposure times to integers
             exptimes = []
             try:
                 [exptimes.append(round(float(exp))) for exp in expvalues]
-            except:
+            except Exception as e:
                 payloads.append({"error": "Problem converting string to integer."})
                 return payloads
 
@@ -396,7 +401,7 @@ class GEMObservationForm(GenericObservationForm):
                 "ready": self.cleaned_data['ready']
             }
 
-            if self.cleaned_data['brightness'] != None:
+            if self.cleaned_data['brightness'] is not None:
                 smags = str(self.cleaned_data['brightness']).strip() + '/' + \
                     self.cleaned_data['brightness_band'] + '/' + \
                     self.cleaned_data['brightness_system']
@@ -416,7 +421,7 @@ class GEMObservationForm(GenericObservationForm):
                 payload['windowDuration'] = str(self.cleaned_data['window_duration']).strip()
 
             # elevation/airmass
-            if self.cleaned_data['eltype'] != None:
+            if self.cleaned_data['eltype'] is not None:
                 payload['elevationType'] = self.cleaned_data['eltype']
                 payload['elevationMin'] = str(self.cleaned_data['elmin']).strip()
                 payload['elevationMax'] = str(self.cleaned_data['elmax']).strip()
@@ -426,7 +431,7 @@ class GEMObservationForm(GenericObservationForm):
             if gstarg != '':
                 gsra = self.cleaned_data['gsra']
                 gsdec = self.cleaned_data['gsdec']
-                if self.cleaned_data['gsbrightness'] != None:
+                if self.cleaned_data['gsbrightness'] is not None:
                     sgsmag = str(self.cleaned_data['gsbrightness']).strip() + '/' + \
                              self.cleaned_data['gsbrightness_band'] + '/' + \
                              self.cleaned_data['gsbrightness_system']
@@ -445,6 +450,7 @@ class GEMObservationForm(GenericObservationForm):
             payloads.append(payload)
 
         return payloads
+
 
 class GEMFacility(GenericObservationFacility):
     name = 'GEM'
