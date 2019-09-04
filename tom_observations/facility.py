@@ -15,6 +15,7 @@ from tom_targets.models import Target
 DEFAULT_FACILITY_CLASSES = [
         'tom_observations.facilities.lco.LCOFacility',
         'tom_observations.facilities.gemini.GEMFacility',
+        'tom_observations.facilities.soar.SOARFacility',
 ]
 
 try:
@@ -137,6 +138,13 @@ class GenericObservationFacility(ABC):
         return final_products
 
     @abstractmethod
+    def get_form(self, observation_type):
+        """
+        This method takes in an observation type and returns the form type that matches it.
+        """
+        pass
+
+    @abstractmethod
     def submit_observation(self, observation_payload):
         """
         This method takes in the serialized data from the form and actually
@@ -226,12 +234,13 @@ class GenericObservationForm(forms.Form):
     """
     facility = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
     target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
+    observation_type = forms.CharField(required=False, max_length=50, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit('submit', 'Submit'))
-        self.common_layout = Layout('facility', 'target_id')
+        self.common_layout = Layout('facility', 'target_id', 'observation_type')
 
     def serialize_parameters(self):
         return json.dumps(self.cleaned_data)

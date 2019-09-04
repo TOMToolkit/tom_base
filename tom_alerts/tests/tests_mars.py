@@ -26,6 +26,7 @@ alert1 = {
     'objectId': 'ZTF18abbkloa',
 }
 
+
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.brokers.mars.MARSBroker'])
 class TestMARSBrokerClass(TestCase):
     """ Test the functionality of the MARSBroker, we modify the django settings to make sure

@@ -27,7 +27,10 @@ class FakeFacilityForm(GenericObservationForm):
 
 class FakeFacility(GenericObservationFacility):
     name = 'FakeFacility'
-    form = FakeFacilityForm
+    observation_types = [('FakeFacility Observation', 'OBSERVATION')]
+
+    def get_form(self, observation_type):
+        return FakeFacilityForm
 
     def get_observing_sites(self):
         return SITES

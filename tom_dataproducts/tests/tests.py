@@ -137,11 +137,11 @@ class TestObservationDataViews(TestCase):
     @patch('tom_dataproducts.models.is_fits_image_file', mock_is_fits_image_file)
     def test_create_jpeg(self, dp_mock):
         products = DataProduct.objects.filter(tag='image_file')
-        self.assertEqual(products.count(),0)
+        self.assertEqual(products.count(), 0)
         resp = create_image_dataproduct(self.data_product)
         self.assertTrue(resp)
         products = DataProduct.objects.filter(tag='image_file')
-        self.assertEqual(products.count(),1)
+        self.assertEqual(products.count(), 1)
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
@@ -292,6 +292,7 @@ class TestDataSerializer(TestCase):
     def test_deserialize_spectrum_invalid(self):
         with self.assertRaises(Exception):
             self.serializer.deserialize(json.dumps({'invalid_key': 'value'}))
+
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
 class TestDataProcessor(TestCase):

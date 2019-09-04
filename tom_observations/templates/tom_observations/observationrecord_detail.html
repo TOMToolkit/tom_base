@@ -38,7 +38,7 @@
           {% endbuttons %}
         </div>
       </div>
-      {% dataproduct_list_for_observation_saved object %}
+      {% dataproduct_list_for_observation_saved data_products request %}
     </form>
 
     <form method="POST" action="{% url 'tom_dataproducts:save' object.id %}">
@@ -58,7 +58,7 @@
           <input type="submit" value="Save Selected" class="btn btn-primary">
         </div>
       </div>
-      {% dataproduct_list_for_observation_unsaved object %}
+      {% dataproduct_list_for_observation_unsaved data_products %}
     </form>
   </div>
   <div class="col-md-4">
