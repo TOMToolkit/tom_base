@@ -21,7 +21,7 @@ ALeRCE
 ANTARES
 *******
 
-.. automodule:: tom_alerts.brokers.antares
+.. automodule:: tom_antares.antares
     :members:
 
 

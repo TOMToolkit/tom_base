@@ -90,7 +90,7 @@ def target_plan(context):
 @register.inclusion_tag('tom_targets/partials/target_distribution.html')
 def target_distribution(targets):
     """
-    Displays a plot showing on a map the locations of all targets in the TOM.
+    Displays a plot showing on a map the locations of all sidereal targets in the TOM.
     """
     locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
     data = [

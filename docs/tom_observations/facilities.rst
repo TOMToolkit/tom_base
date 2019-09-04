@@ -13,7 +13,7 @@ Base Facility Class
 Gemini
 ******
 
-.. automodule:: tom_observations.facilities.gemini
+.. automodule:: tom_gemini.gemini
     :members:
 
 
