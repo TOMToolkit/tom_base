@@ -145,11 +145,11 @@ class DataProduct(models.Model):
     :type modified: datetime
 
     :param tag: The type of data referred to by this object. Options are photometry, fits_file, spectroscopy, or
-    image_file.
+        image_file.
     :type tag: str
 
     :param featured: Whether or not the data product is intended to be featured, used by default on the target detail
-                     page as a "display" option. Only one ``DataProduct`` can be featured per ``Target``.
+        page as a "display" option. Only one ``DataProduct`` can be featured per ``Target``.
     :type featured: boolean
 
     :param thumbnail: The thumbnail file associated with this object. Only generated for FITS image files.

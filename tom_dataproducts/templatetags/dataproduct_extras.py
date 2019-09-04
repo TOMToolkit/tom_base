@@ -31,7 +31,7 @@ def dataproduct_list_for_observation_saved(data_products, request):
     templatetag paginates the subset of ``DataProduct``, and therefore requires the request to have a 'page_saved' key.
 
     This templatetag is intended to be used with the ``all_data_products()`` method from a facility, as it returns a
-    dictionary with keys of ``saved`` and ``unsaved`` that have values of lists of ``DataProduct``s.
+    dictionary with keys of ``saved`` and ``unsaved`` that have values of lists of ``DataProduct`` objects.
     """
     page = request.GET.get('page_saved')
     paginator = Paginator(data_products['saved'], 25)
@@ -46,7 +46,7 @@ def dataproduct_list_for_observation_unsaved(data_products):
     the TOM.
 
     This templatetag is intended to be used with the ``all_data_products()`` method from a facility, as it returns a
-    dictionary with keys of ``saved`` and ``unsaved`` that have values of lists of ``DataProduct``s.
+    dictionary with keys of ``saved`` and ``unsaved`` that have values of lists of ``DataProduct`` objects.
     """
     return {'products': data_products['unsaved']}
 

@@ -17,15 +17,15 @@ class ObservationRecord(models.Model):
     :type target: Target
 
     :param facility: The facility at which this observation is taken. Should be the name specified in the corresponding
-    TOM facility module, if one exists.
+        TOM facility module, if one exists.
     :type facility: str
 
     :param parameters: The set of parameters used in the API request made to create the observation, usually stored as
-    JSON.
+        JSON.
     :type parameters: str
 
     :param status: The current status of the observation. Should be a valid status in the corresponding TOM facility
-    module, if one exists.
+        module, if one exists.
     :type status: str
 
     :param scheduled_start: The time at which the observation is scheduled to begin, according to the facility.

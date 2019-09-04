@@ -3,7 +3,7 @@ TOM Software Architecture
 
 The goal of the TOM Toolkit is to make developing TOMs as easy as possible while
 providing the flexibility needed to tailor each TOM to its specific science
-case. The motivation for the TOM Toolkit is discussed on the [about](/about/)
+case. The motivation for the TOM Toolkit is discussed on the [about](https://tomtoolkit.github.io/about)
 page.
 
 The TOM Toolkit (referred to as "the toolkit") provides a framework for

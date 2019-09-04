@@ -17,7 +17,9 @@ gsselect
 fits2image
 specutils
 python-magic
-antares-client
+antares_client
+tom_antares
+tom_gemini
 pyephem
 sphinx>=2.1.2
 recommonmark

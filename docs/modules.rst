@@ -8,6 +8,7 @@ Modules
 
 .. toctree::
   :maxdepth: 1
+  :includehidden:
 
   tom_alerts/index
   tom_catalogs/index
