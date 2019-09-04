@@ -64,7 +64,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # source_suffix = ['.rst', '.md']
 
-autodoc_mock_imports = ['rise-set']
+autodoc_mock_imports = ['rise-set', 'gsselect']
 autodoc_inherit_docstrings = False
 # autodoc_default_options = {
 #     'members':         True,
