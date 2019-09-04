@@ -16,10 +16,7 @@ register = template.Library()
 @register.inclusion_tag('tom_dataproducts/partials/dataproduct_list_for_target.html')
 def dataproduct_list_for_target(target):
     """
-    Given a ``Target``, returns all ``DataProduct`` objects associated with that ``Target``
-
-    :param target: ``Target`` object for which to return ``DataProduct``s
-    :type target: Target
+    Given a ``Target``, returns a list of ``DataProduct`` objects associated with that ``Target``
     """
     return {
         'products': target.dataproduct_set.all(),
@@ -31,19 +28,10 @@ def dataproduct_list_for_target(target):
 def dataproduct_list_for_observation_saved(data_products, request):
     """
     Given a dictionary of dataproducts from an ``ObservationRecord``, returns the subset that are saved to the TOM. This
-    templatetag paginates the subset of ``DataProduct``.
+    templatetag paginates the subset of ``DataProduct``, and therefore requires the request to have a 'page_saved' key.
 
     This templatetag is intended to be used with the ``all_data_products()`` method from a facility, as it returns a
     dictionary with keys of ``saved`` and ``unsaved`` that have values of lists of ``DataProduct``s.
-
-    :param data_products: dict with, at minimum, a key/value pair of ``'saved'/DataProduct``
-    :type data_products: dict
-
-    :param request: request object with a a property of 'page_saved'
-    :type request: Python requests object
-
-    :returns: dict with key of 'products_page' and value as a list of ``DataProduct`` objects
-    :rtype: dict
     """
     page = request.GET.get('page_saved')
     paginator = Paginator(data_products['saved'], 25)
@@ -54,16 +42,11 @@ def dataproduct_list_for_observation_saved(data_products, request):
 @register.inclusion_tag('tom_dataproducts/partials/unsaved_dataproduct_list_for_observation.html')
 def dataproduct_list_for_observation_unsaved(data_products):
     """
-    Given a dictionary of dataproducts from an ``ObservationRecord``, returns the subset that are not saved to the TOM.
+    Given a dictionary of dataproducts from an ``ObservationRecord``, returns a list of the subset that are not saved to
+    the TOM.
 
     This templatetag is intended to be used with the ``all_data_products()`` method from a facility, as it returns a
     dictionary with keys of ``saved`` and ``unsaved`` that have values of lists of ``DataProduct``s.
-
-    :param data_products: dictionary with, at minimum, a key/value pair of ``'unsaved'/DataProduct``
-    :type data_products: dict
-
-    :returns: dict with key of 'products' and value as a list of ``DataProduct`` objects
-    :rtype: dict
     """
     return {'products': data_products['unsaved']}
 
@@ -71,7 +54,7 @@ def dataproduct_list_for_observation_unsaved(data_products):
 @register.inclusion_tag('tom_dataproducts/partials/dataproduct_list.html')
 def dataproduct_list_all():
     """
-    Returns the full list of data products in the TOM, with the most recent first
+    Returns the full list of data products in the TOM, with the most recent first.
     """
     products = DataProduct.objects.all().order_by('-created')
     return {'products': products}
@@ -79,6 +62,12 @@ def dataproduct_list_all():
 
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html')
 def photometry_for_target(target):
+    """
+    Renders a photometric plot for a target.
+
+    This templatetag requires all ``ReducedDatum`` objects with a data_type of ``photometry`` to be structured with the
+    following keys in the JSON representation: magnitude, error, filter
+    """
     photometry_data = {}
     for datum in ReducedDatum.objects.filter(target=target, data_type=PHOTOMETRY[0]):
         values = json.loads(datum.value)
@@ -110,6 +99,10 @@ def photometry_for_target(target):
 
 @register.inclusion_tag('tom_dataproducts/partials/spectroscopy_for_target.html')
 def spectroscopy_for_target(target, dataproduct=None):
+    """
+    Renders a spectroscopic plot for a ``Target``. If a ``DataProduct`` is specified, it will only render a plot with
+    that spectrum.
+    """
     spectral_dataproducts = DataProduct.objects.filter(target=target, tag=SPECTROSCOPY[0])
     if dataproduct:
         spectral_dataproducts = DataProduct.objects.get(data_product=dataproduct)
