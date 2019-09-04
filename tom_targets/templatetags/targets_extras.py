@@ -138,6 +138,7 @@ def target_distribution(targets):
 @register.filter
 def deg_to_sexigesimal(value, fmt):
     """
+    Displays a degree coordinate value in sexigesimal, given a format of hms or dms.
     """
     a = Angle(value, unit=u.degree)
     if fmt == 'hms':
@@ -153,6 +154,7 @@ def deg_to_sexigesimal(value, fmt):
 @register.filter
 def target_extra_field(target, name):
     """
+    Returns a ``TargetExtra`` value of the given name, if one exists.
     """
     try:
         return TargetExtra.objects.get(target=target, key=name).value
@@ -162,9 +164,14 @@ def target_extra_field(target, name):
 
 @register.inclusion_tag('tom_targets/partials/targetlist_select.html')
 def select_target_js():
+    """
+    """
     return
 
 
 @register.inclusion_tag('tom_targets/partials/aladin.html')
 def aladin(target):
+    """
+    Displays Aladin skyview of the given target.
+    """
     return {'target': target}

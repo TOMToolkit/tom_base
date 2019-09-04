@@ -1,6 +1,5 @@
----
 TOM Software Architecture
----
+-------------------------
 
 The goal of the TOM Toolkit is to make developing TOMs as easy as possible while
 providing the flexibility needed to tailor each TOM to its specific science
@@ -51,7 +50,7 @@ available that might suit their needs.
 We **highly recommend** that developers interested in utilizing the TOM Toolkit
 familiarize themselves with the basics of Django, especially if they want to
 customize the toolkit in any significant fashion. The majority of the [guides
-found in the TOM toolkit documentation](/docs/) are simply Django concepts
+found in the TOM toolkit documentation](/index) are simply Django concepts
 rewritten in a TOM context.
 
 ### Extending and Customizing the TOM Toolkit
@@ -64,10 +63,10 @@ After a TOM developer follows the [getting started guide](getting_started)
 they are left with a functioning but generic TOM. It is then up to the developer
 to implement the specific features that their science case requires. The toolkit
 tries to facilitate this as efficiently as possible and provides
-[documentation](/docs/) in areas of customization from [changing the HTML layout
-of a page](/docs/customize_templates) to [altering how observations are
-submitted](/docs/customize_observations) and even [creating a new alert
-broker](/docs/create_broker).
+[documentation](/index) in areas of customization from [changing the HTML layout
+of a page](/customization/customize_templates) to [altering how observations are
+submitted](/customization/customize_observations) and even [creating a new alert
+broker](/customization/create_broker).
 
 Django, and by extension the toolkit, rely heavily on object oriented
 programming, especially inheritance. Most customization in the TOM toolkit comes
@@ -107,7 +106,7 @@ each other. This means a TOM developer can easily change the layout and style of
 any page without modifying the underlying framework's code directly. Entire pages
 may be replaced, or only "blocks" within a template.
 
-Compare theses screenshots of the [standard target detail
+Compare these screenshots of the [standard target detail
 page](/assets/img/architecture/standardlayout.png) and the [Global Supernova
 Project's target detail page](/assets/img/architecture/snex2layout.png), the
 latter taking heavy advantage of template inheritance.
@@ -125,12 +124,12 @@ ones. By default SQLite is deployed because of its ease of use.
 For non-database storage (data products, fits files, etc) the toolkit can be
 configured to use a variety of cloud-based storage services via
 [django-storages](https://django-storages.readthedocs.io). The documentation
-provides a guide for [storing data on Amazon S3](/docs/amazons3). By default,
+provides a guide for [storing data on Amazon S3](/deployment/amazons3). By default,
 data is stored on disk.
 
 Similarly, deployment works with a variety of servers, including uWsgi and
 Gunicorn. The documentation provides a guide to [deploying to
-Heroku](docs/deployment_heroku) for those who want to get up and running
+Heroku](/deployment/deployment_heroku) for those who want to get up and running
 quickly. Another option is to use Docker: the demo instance of the toolkit is
 deployed to a Kubernetes cluster and the
 [Dockerfile](https://github.com/TOMToolkit/tom_demo/blob/master/Dockerfile) is

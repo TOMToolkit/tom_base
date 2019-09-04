@@ -1,6 +1,5 @@
----
 Getting Started with the TOM Toolkit
----
+------------------------------------
 
 So you've decided to run a Target Observation Manager. This article will help you get started.
 
@@ -29,7 +28,7 @@ If you are on MacOS, you will need to install libmagic for filetype detection. I
 
     brew install libmagic
 
-If you need to install Homebrew, there is a single-line installation command that can be found on the [website](brew.sh):
+If you need to install Homebrew, there is a single-line installation command that can be found on the [website](https://brew.sh):
 
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
