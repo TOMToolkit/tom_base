@@ -20,19 +20,6 @@ except (AttributeError, KeyError):
 PORTAL_URL = LCO_SETTINGS['portal_url']
 TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
 
-
-# The SITES dictionary is used to calculate visibility intervals in the
-# planning tool. All entries should contain latitude, longitude, elevation
-# and a code.
-SITES = {
-    'Cerro Pachón': {
-        'sitecode': 'sor',
-        'latitude': -30.237892,
-        'longitude': -70.733642,
-        'elevation': 2000
-    }
-}
-
 # There is currently only one available grating, which is required for spectroscopy.
 SPECTRAL_GRATING = 'SYZY_400'
 
@@ -101,6 +88,17 @@ class SOARSpectroscopyObservationForm(SOARBaseObservationForm, LCOSpectroscopyOb
 class SOARFacility(LCOFacility):
     name = 'SOAR'
     observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy')]
+    # The SITES dictionary is used to calculate visibility intervals in the
+    # planning tool. All entries should contain latitude, longitude, elevation
+    # and a code.
+    SITES = {
+        'Cerro Pachón': {
+            'sitecode': 'sor',
+            'latitude': -30.237892,
+            'longitude': -70.733642,
+            'elevation': 2000
+        }
+    }
 
     def get_form(self, observation_type):
         if observation_type == 'IMAGING':

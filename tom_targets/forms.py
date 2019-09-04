@@ -18,7 +18,7 @@ def extra_field_to_form_field(field_type):
     elif field_type == 'datetime':
         return forms.DateTimeField(required=False)
     elif field_type == 'string':
-        return forms.CharField(required=False)
+        return forms.CharField(required=False, widget=forms.Textarea)
     else:
         raise ValueError(
             'Invalid field type {}. Field type must be one of: number, boolean, datetime string'.format(field_type)

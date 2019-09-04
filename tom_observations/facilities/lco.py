@@ -28,48 +28,6 @@ TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
 FLUX_CONSTANT = (1e-15 * u.erg) / (u.cm ** 2 * u.second * u.angstrom)
 WAVELENGTH_UNITS = u.angstrom
 
-# The SITES dictionary is used to calculate visibility intervals in the
-# planning tool. All entries should contain latitude, longitude, elevation
-# and a code.
-SITES = {
-    'Siding Spring': {
-        'sitecode': 'coj',
-        'latitude': -31.272,
-        'longitude': 149.07,
-        'elevation': 1116
-    },
-    'Sutherland': {
-        'sitecode': 'cpt',
-        'latitude': -32.38,
-        'longitude': 20.81,
-        'elevation': 1804
-    },
-    'Teide': {
-        'sitecode': 'tfn',
-        'latitude': 20.3,
-        'longitude': -16.511,
-        'elevation': 2390
-    },
-    'Cerro Tololo': {
-        'sitecode': 'lsc',
-        'latitude': -30.167,
-        'longitude': -70.804,
-        'elevation': 2198
-    },
-    'McDonald': {
-        'sitecode': 'elp',
-        'latitude': 30.679,
-        'longitude': -104.015,
-        'elevation': 2027
-    },
-    'Haleakala': {
-        'sitecode': 'ogg',
-        'latitude': 20.706,
-        'longitude': -156.258,
-        'elevation': 3065
-    }
-}
-
 # Functions needed specifically for LCO
 
 
@@ -339,6 +297,47 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
 class LCOFacility(GenericObservationFacility):
     name = 'LCO'
     observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy')]
+    # The SITES dictionary is used to calculate visibility intervals in the
+    # planning tool. All entries should contain latitude, longitude, elevation
+    # and a code.
+    SITES = {
+        'Siding Spring': {
+            'sitecode': 'coj',
+            'latitude': -31.272,
+            'longitude': 149.07,
+            'elevation': 1116
+        },
+        'Sutherland': {
+            'sitecode': 'cpt',
+            'latitude': -32.38,
+            'longitude': 20.81,
+            'elevation': 1804
+        },
+        'Teide': {
+            'sitecode': 'tfn',
+            'latitude': 20.3,
+            'longitude': -16.511,
+            'elevation': 2390
+        },
+        'Cerro Tololo': {
+            'sitecode': 'lsc',
+            'latitude': -30.167,
+            'longitude': -70.804,
+            'elevation': 2198
+        },
+        'McDonald': {
+            'sitecode': 'elp',
+            'latitude': 30.679,
+            'longitude': -104.015,
+            'elevation': 2027
+        },
+        'Haleakala': {
+            'sitecode': 'ogg',
+            'latitude': 20.706,
+            'longitude': -156.258,
+            'elevation': 3065
+        }
+    }
 
     def get_form(self, observation_type):
         if observation_type == 'IMAGING':
@@ -379,7 +378,7 @@ class LCOFacility(GenericObservationFacility):
         return TERMINAL_OBSERVING_STATES
 
     def get_observing_sites(self):
-        return SITES
+        return self.SITES
 
     def get_observation_status(self, observation_id):
         response = make_request(
@@ -460,11 +459,13 @@ class LCOFacility(GenericObservationFacility):
             )
             frames = [response.json()]
         else:
-            response = make_request(
-                'GET',
-                'https://archive-api.lco.global/frames/?REQNUM={0}'.format(observation_id),
-                headers=self._archive_headers()
-            )
-            frames = response.json()['results']
-
+            url = 'https://archive-api.lco.global/frames/?REQNUM={0}&limit=1000'.format(observation_id)
+            while url:
+                response = make_request(
+                    'GET',
+                    url,
+                    headers=self._archive_headers()
+                )
+                frames.extend(response.json()['results'])
+                url = response.json()['next']
         return frames
