@@ -1,9 +1,8 @@
 import factory
 
-from django.conf import settings
-
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
+
 
 class TargetFactory(factory.django.DjangoModelFactory):
     class Meta:

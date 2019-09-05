@@ -243,6 +243,6 @@ class TargetList(models.Model):
 
     class Meta:
         ordering = ('-created', 'name',)
-    
+
     def __str__(self):
         return self.name

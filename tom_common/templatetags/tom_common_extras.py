@@ -27,5 +27,5 @@ def recent_comments(limit=10):
 def truncate_number(value):
     try:
         return '%.3f' % value
-    except:
+    except Exception:
         return value

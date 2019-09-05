@@ -12,7 +12,7 @@
       <td><span class="btn btn-secondary active featured">Featured</span></td>
       {% endif %}
       <td>
-        {%  if 'fits' in product.get_file_name or product.tag == 'fits_file' %}
+        {%  if product.tag != 'spectroscopy' and 'fits' in product.get_file_name or product.tag == 'fits_file' %}
           {% include 'tom_dataproducts/partials/js9_button.html' with url=product.data.url only %}
         {% endif %}
       </td>

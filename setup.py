@@ -7,7 +7,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='tomtoolkit',
-    version='0.6.1',
+    version='0.7.0',
     description='The TOM Toolkit and base modules',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -35,6 +35,7 @@ setup(
         'django-gravatar2',
         'django-crispy-forms',
         'django-guardian',
+        'numpy',
         'python-dateutil',
         'requests',
         'astroquery',
@@ -42,7 +43,6 @@ setup(
         'plotly',
         'pyephem',
         'matplotlib',
-        'numpy',
         'pillow',
         'gsselect',
         'fits2image',
