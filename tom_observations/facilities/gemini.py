@@ -270,7 +270,7 @@ class GEMObservationForm(GenericObservationForm):
                     css_class='col'
                 ),
                 Div(
-                    'ifu', 'sb', '', '',
+                    'ifu', 'sb',
                     css_class='col'
                 ),
                 css_class='form-row'
