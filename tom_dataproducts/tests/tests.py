@@ -228,31 +228,9 @@ class TestDataUploadForms(TestCase):
         form = DataProductUploadForm(self.spectroscopy_form_data, self.file_data)
         self.assertTrue(form.is_valid())
 
-    def test_form_spectroscopy_no_timestamp(self):
-        self.spectroscopy_form_data.pop('observation_timestamp_0')
-        self.spectroscopy_form_data.pop('observation_timestamp_1')
-        form = DataProductUploadForm(self.spectroscopy_form_data, self.file_data)
-        self.assertFalse(form.is_valid())
-
-    def test_form_spectroscopy_no_facility(self):
-        self.spectroscopy_form_data.pop('facility')
-        form = DataProductUploadForm(self.spectroscopy_form_data, self.file_data)
-        self.assertFalse(form.is_valid())
-
     def test_form_photometry_valid(self):
         form = DataProductUploadForm(self.photometry_form_data, self.file_data)
         self.assertTrue(form.is_valid())
-
-    def test_form_photometry_with_timestamp(self):
-        self.photometry_form_data['facility'] = 'LCO'
-        form = DataProductUploadForm(self.photometry_form_data, self.file_data)
-        self.assertFalse(form.is_valid())
-
-    def test_form_photometry_with_facility(self):
-        self.photometry_form_data['observation_timestamp_0'] = date(2019, 6, 1)
-        self.photometry_form_data['observation_timestamp_1'] = time(12, 0, 0)
-        form = DataProductUploadForm(self.photometry_form_data, self.file_data)
-        self.assertFalse(form.is_valid())
 
 
 class TestDataSerializer(TestCase):
@@ -299,35 +277,33 @@ class TestDataProcessor(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()
         self.data_product = DataProduct.objects.create(
-            target=self.target,
-            data=SimpleUploadedFile('afile.fits', b'somedata')
+            target=self.target
         )
         self.data_processor = DataProcessor()
+        self.test_file = SimpleUploadedFile('afile.fits', b'somedata')
 
     @patch('tom_dataproducts.data_processor.DataProcessor._process_spectrum_from_fits')
-    @patch('tom_dataproducts.data_processor.magic.from_file')
-    def test_process_spectroscopy_with_fits_file(self, libmagic_mock, process_data_mock):
-        libmagic_mock.return_value = 'image/fits'
-        self.data_processor.process_spectroscopy(self.data_product, FakeFacility.name)
-        process_data_mock.assert_called_with(self.data_product, FakeFacility.name)
+    def test_process_spectroscopy_with_fits_file(self, process_data_mock):
+        self.data_product.data.save('spectrum.fits', self.test_file)
+        self.data_processor.process_spectroscopy(self.data_product)
+        process_data_mock.assert_called_with(self.data_product)
 
     @patch('tom_dataproducts.data_processor.DataProcessor._process_spectrum_from_plaintext')
-    @patch('tom_dataproducts.data_processor.magic.from_file')
-    def test_process_spectroscopy_with_plaintext_file(self, libmagic_mock, process_data_mock):
-        libmagic_mock.return_value = 'text/plain'
-        self.data_processor.process_spectroscopy(self.data_product, FakeFacility.name)
-        process_data_mock.assert_called_with(self.data_product, FakeFacility.name)
+    def test_process_spectroscopy_with_plaintext_file(self, process_data_mock):
+        self.data_product.data.save('spectrum.csv', self.test_file)
+        self.data_processor.process_spectroscopy(self.data_product)
+        process_data_mock.assert_called_with(self.data_product)
 
-    @patch('tom_dataproducts.data_processor.magic.from_file')
-    def test_process_spectroscopy_with_invalid_file_type(self, libmagic_mock):
-        libmagic_mock.return_value = 'image/png'
+    @patch('tom_dataproducts.data_processor.mimetypes.guess_type')
+    def test_process_spectroscopy_with_invalid_file_type(self, mimetypes_mock):
+        self.data_product.data.save('spectrum.png', self.test_file)
         with self.assertRaises(InvalidFileFormatException):
-            self.data_processor.process_spectroscopy(self.data_product, FakeFacility.name)
+            self.data_processor.process_spectroscopy(self.data_product)
 
     def test_process_spectrum_from_fits(self):
         with open('tom_dataproducts/tests/test_data/test_spectrum.fits', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.fits', spectrum_file)
-            spectrum = self.data_processor._process_spectrum_from_fits(self.data_product, FakeFacility.name)
+            spectrum, date_obs = self.data_processor._process_spectrum_from_fits(self.data_product)
             self.assertTrue(type(spectrum) is Spectrum1D)
             self.assertAlmostEqual(spectrum.flux.mean().value, 2.295068e-14, places=19)
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 6600.478789, places=5)
@@ -335,21 +311,19 @@ class TestDataProcessor(TestCase):
     def test_process_spectrum_from_plaintext(self):
         with open('tom_dataproducts/tests/test_data/test_spectrum.csv', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.csv', spectrum_file)
-            spectrum = self.data_processor._process_spectrum_from_plaintext(self.data_product, FakeFacility.name)
+            spectrum, date_obs = self.data_processor._process_spectrum_from_plaintext(self.data_product)
             self.assertTrue(type(spectrum) is Spectrum1D)
             self.assertAlmostEqual(spectrum.flux.mean().value, 1.166619e-14, places=19)
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 3250.744489, places=5)
 
     @patch('tom_dataproducts.data_processor.DataProcessor._process_photometry_from_plaintext')
-    @patch('tom_dataproducts.data_processor.magic.from_file')
-    def test_process_photometry_with_plaintext_file(self, libmagic_mock, process_data_mock):
-        libmagic_mock.return_value = 'text/plain'
+    def test_process_photometry_with_plaintext_file(self, process_data_mock):
+        self.data_product.data.save('lightcurve.csv', self.test_file)
         self.data_processor.process_photometry(self.data_product)
         process_data_mock.assert_called_with(self.data_product)
 
-    @patch('tom_dataproducts.data_processor.magic.from_file')
-    def test_process_photometry_with_invalid_file_type(self, libmagic_mock):
-        libmagic_mock.return_value = 'image/png'
+    def test_process_photometry_with_invalid_file_type(self):
+        self.data_product.data.save('lightcurve.blah', self.test_file)
         with self.assertRaises(InvalidFileFormatException):
             self.data_processor.process_photometry(self.data_product)
 

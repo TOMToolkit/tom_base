@@ -182,6 +182,9 @@ class GenericObservationFacility(ABC):
         """
         pass
 
+    def is_fits_facility(self, header):
+        return False
+
     @abstractmethod
     def get_terminal_observing_states(self):
         """

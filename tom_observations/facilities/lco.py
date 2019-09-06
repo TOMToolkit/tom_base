@@ -28,6 +28,11 @@ TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
 FLUX_CONSTANT = (1e-15 * u.erg) / (u.cm ** 2 * u.second * u.angstrom)
 WAVELENGTH_UNITS = u.angstrom
 
+# FITS header keywords used for data processing
+FITS_FACILITY_KEYWORD = 'ORIGIN'
+FITS_FACILITY_KEYWORD_VALUE = 'LCOGT'
+FITS_FACILITY_DATE_OBS_KEYWORD = 'DATE-OBS'
+
 # Functions needed specifically for LCO
 
 
@@ -373,6 +378,12 @@ class LCOFacility(GenericObservationFacility):
 
     def get_wavelength_units(self):
         return WAVELENGTH_UNITS
+
+    def get_date_obs_from_fits_header(self, header):
+        return header.get(FITS_FACILITY_DATE_OBS_KEYWORD, None)
+
+    def is_fits_facility(self, header):
+        return FITS_FACILITY_KEYWORD_VALUE == header.get(FITS_FACILITY_KEYWORD, None)
 
     def get_terminal_observing_states(self):
         return TERMINAL_OBSERVING_STATES
