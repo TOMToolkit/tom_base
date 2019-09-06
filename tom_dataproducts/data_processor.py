@@ -62,7 +62,6 @@ class DataProcessor():
         :rtype: AstroPy.Time
         """
 
-        # TODO: Add methods to Gemini, SOAR
         flux, header = fits.getdata(data_product.data.path, header=True)
 
         for facility_class in get_service_classes():

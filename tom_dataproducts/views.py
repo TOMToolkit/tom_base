@@ -58,8 +58,6 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         target = form.cleaned_data['target']
-        observation_timestamp = form.cleaned_data.get('observation_timestamp', None)
-        facility = form.cleaned_data.get('facility', None)
         if not target:
             observation_record = form.cleaned_data['observation_record']
             target = observation_record.target

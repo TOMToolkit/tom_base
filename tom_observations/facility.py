@@ -183,6 +183,10 @@ class GenericObservationFacility(ABC):
         pass
 
     def is_fits_facility(self, header):
+        """
+        Returns True if the FITS header is from this facility based on valid keywords and associated
+        values, False otherwise.
+        """
         return False
 
     @abstractmethod

@@ -383,6 +383,16 @@ class LCOFacility(GenericObservationFacility):
         return header.get(FITS_FACILITY_DATE_OBS_KEYWORD, None)
 
     def is_fits_facility(self, header):
+        """
+        Returns True if the 'ORIGIN' keyword is in the given FITS header and contains the value 'LCOGT', False
+        otherwise.
+
+        :param header: FITS header object
+        :type header: dictionary-like
+
+        :returns: True if header matches LCOGT, False otherwise
+        :rtype: boolean
+        """
         return FITS_FACILITY_KEYWORD_VALUE == header.get(FITS_FACILITY_KEYWORD, None)
 
     def get_terminal_observing_states(self):
