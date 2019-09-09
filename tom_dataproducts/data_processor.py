@@ -1,5 +1,4 @@
-import magic
-
+import mimetypes
 from astropy.time import Time, TimezoneInfo
 from astropy import units
 from astropy.io import fits, ascii
@@ -9,6 +8,8 @@ import numpy as np
 
 from tom_observations.facility import get_service_class
 from .exceptions import InvalidFileFormatException
+
+mimetypes.add_type('image/fits', '.fz')
 
 
 class DataProcessor():
@@ -35,13 +36,14 @@ class DataProcessor():
         InvalidFileFormatException
         """
 
-        filetype = magic.from_file(data_product.data.path, mime=True)
+        filetype = mimetypes.guess_type(data_product.data.path)[0]
         if filetype == 'image/fits':
             return self._process_spectrum_from_fits(data_product, facility)
-        elif filetype == 'text/plain':
-            return self._process_spectrum_from_plaintext(data_product, facility)
         else:
-            raise InvalidFileFormatException('Unsupported file type')
+            try:
+                return self._process_spectrum_from_plaintext(data_product, facility)
+            except Exception:
+                raise InvalidFileFormatException('Unsupported file type')
 
     def _process_spectrum_from_fits(self, data_product, facility):
         """
@@ -123,11 +125,12 @@ class DataProcessor():
             python dict containing the data from the DataProduct
         """
 
-        filetype = magic.from_file(data_product.data.path, mime=True)
-        if filetype == 'text/plain':
+        try:
             return self._process_photometry_from_plaintext(data_product)
-        else:
-            raise InvalidFileFormatException('Unsupported file type')
+        except InvalidFileFormatException as e:
+            raise e
+        except Exception:
+            raise InvalidFileFormatException('Could not read file')
 
     def _process_photometry_from_plaintext(self, data_product):
         """
@@ -150,6 +153,8 @@ class DataProcessor():
         photometry = {}
 
         data = ascii.read(data_product.data.path)
+        if len(data) < 1:
+            raise InvalidFileFormatException('Empty table or invalid file type')
         for datum in data:
             time = Time(float(datum['time']), format='mjd')
             utc = TimezoneInfo(utc_offset=0*units.hour)

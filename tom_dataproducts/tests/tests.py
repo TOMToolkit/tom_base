@@ -1,7 +1,6 @@
 import json
 import os
 import tempfile
-
 from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -302,27 +301,29 @@ class TestDataProcessor(TestCase):
             target=self.target,
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
+        self.textual_data_product = DataProduct.objects.create(
+            target=self.target,
+            data=SimpleUploadedFile('afile.csv', b'somedata')
+        )
+        self.png_data_product = DataProduct.objects.create(
+            target=self.target,
+            data=SimpleUploadedFile('afile.png', b'somedata')
+        )
         self.data_processor = DataProcessor()
 
     @patch('tom_dataproducts.data_processor.DataProcessor._process_spectrum_from_fits')
-    @patch('tom_dataproducts.data_processor.magic.from_file')
-    def test_process_spectroscopy_with_fits_file(self, libmagic_mock, process_data_mock):
-        libmagic_mock.return_value = 'image/fits'
+    def test_process_spectroscopy_with_fits_file(self, process_data_mock):
         self.data_processor.process_spectroscopy(self.data_product, FakeFacility.name)
         process_data_mock.assert_called_with(self.data_product, FakeFacility.name)
 
     @patch('tom_dataproducts.data_processor.DataProcessor._process_spectrum_from_plaintext')
-    @patch('tom_dataproducts.data_processor.magic.from_file')
-    def test_process_spectroscopy_with_plaintext_file(self, libmagic_mock, process_data_mock):
-        libmagic_mock.return_value = 'text/plain'
-        self.data_processor.process_spectroscopy(self.data_product, FakeFacility.name)
-        process_data_mock.assert_called_with(self.data_product, FakeFacility.name)
+    def test_process_spectroscopy_with_plaintext_file(self, process_data_mock):
+        self.data_processor.process_spectroscopy(self.textual_data_product, FakeFacility.name)
+        process_data_mock.assert_called_with(self.textual_data_product, FakeFacility.name)
 
-    @patch('tom_dataproducts.data_processor.magic.from_file')
-    def test_process_spectroscopy_with_invalid_file_type(self, libmagic_mock):
-        libmagic_mock.return_value = 'image/png'
+    def test_process_spectroscopy_with_invalid_file_type(self):
         with self.assertRaises(InvalidFileFormatException):
-            self.data_processor.process_spectroscopy(self.data_product, FakeFacility.name)
+            self.data_processor.process_spectroscopy(self.png_data_product, FakeFacility.name)
 
     def test_process_spectrum_from_fits(self):
         with open('tom_dataproducts/tests/test_data/test_spectrum.fits', 'rb') as spectrum_file:
@@ -341,21 +342,17 @@ class TestDataProcessor(TestCase):
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 3250.744489, places=5)
 
     @patch('tom_dataproducts.data_processor.DataProcessor._process_photometry_from_plaintext')
-    @patch('tom_dataproducts.data_processor.magic.from_file')
-    def test_process_photometry_with_plaintext_file(self, libmagic_mock, process_data_mock):
-        libmagic_mock.return_value = 'text/plain'
-        self.data_processor.process_photometry(self.data_product)
-        process_data_mock.assert_called_with(self.data_product)
+    def test_process_photometry_with_plaintext_file(self,  process_data_mock):
+        self.data_processor.process_photometry(self.textual_data_product)
+        process_data_mock.assert_called_with(self.textual_data_product)
 
-    @patch('tom_dataproducts.data_processor.magic.from_file')
-    def test_process_photometry_with_invalid_file_type(self, libmagic_mock):
-        libmagic_mock.return_value = 'image/png'
+    def test_process_photometry_with_invalid_file_type(self):
         with self.assertRaises(InvalidFileFormatException):
-            self.data_processor.process_photometry(self.data_product)
+            self.data_processor.process_photometry(self.png_data_product)
 
     def test_process_photometry_from_plaintext(self):
         with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
-            self.data_product.data.save('lightcurve.csv', lightcurve_file)
-            lightcurve = self.data_processor._process_photometry_from_plaintext(self.data_product)
+            self.textual_data_product.data.save('lightcurve.csv', lightcurve_file)
+            lightcurve = self.data_processor._process_photometry_from_plaintext(self.textual_data_product)
             self.assertTrue(type(lightcurve) is dict)
             self.assertEqual(len(lightcurve), 2)
