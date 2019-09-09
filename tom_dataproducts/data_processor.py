@@ -17,6 +17,11 @@ PLAINTEXT_MIMETYPES = ['text/plain', 'text/csv']
 DEFAULT_WAVELENGTH_UNITS = units.angstrom
 DEFAULT_FLUX_CONSTANT = units.erg / units.cm ** 2 / units.second / units.angstrom
 
+mimetypes.add_type('image/fits', '.fits')
+mimetypes.add_type('image/fits', '.fz')
+mimetypes.add_type('application/fits', '.fits')
+mimetypes.add_type('application/fits', '.fz')
+
 
 class DataProcessor():
 
