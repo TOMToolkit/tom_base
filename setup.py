@@ -47,8 +47,7 @@ setup(
         'gsselect',
         'fits2image',
         'specutils',
-        'python-magic',
-        'antares-client'
+        'antares-client',
     ],
     extras_require={
         'test': ['factory_boy', 'rise-set']

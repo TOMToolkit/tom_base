@@ -58,8 +58,6 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         target = form.cleaned_data['target']
-        observation_timestamp = form.cleaned_data.get('observation_timestamp', None)
-        facility = form.cleaned_data.get('facility', None)
         if not target:
             observation_record = form.cleaned_data['observation_record']
             target = observation_record.target
@@ -78,7 +76,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             )
             dp.save()
             try:
-                run_hook('data_product_post_upload', dp, observation_timestamp, facility)
+                run_hook('data_product_post_upload', dp)
                 successful_uploads.append(str(dp))
             except InvalidFileFormatException:
                 ReducedDatum.objects.filter(data_product=dp).delete()

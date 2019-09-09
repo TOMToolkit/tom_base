@@ -190,8 +190,7 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
             initial={
                 'target': self.get_object(),
                 'referrer': reverse('tom_targets:detail', args=(self.get_object().id,))
-            },
-            hide_target_fields=False
+            }
         )
         context['data_product_form'] = data_product_upload_form
         return context

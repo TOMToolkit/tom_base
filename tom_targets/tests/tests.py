@@ -1,13 +1,14 @@
-from django.test import TestCase, override_settings
-from django.urls import reverse
-from django.contrib.auth.models import User, Group
 import pytz
 import ephem
-from astropy import units
-from astropy.coordinates import Angle
 import math
 from unittest import mock
 from datetime import datetime, timedelta
+
+from django.test import TestCase, override_settings
+from django.urls import reverse
+from django.contrib.auth.models import User, Group
+from astropy import units
+from astropy.coordinates import Angle
 
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory
 from tom_targets.models import Target, TargetExtra, TargetList

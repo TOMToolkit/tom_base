@@ -9,7 +9,7 @@ from .models import ReducedDatum, SPECTROSCOPY, PHOTOMETRY
 DEFAULT_DATA_PROCESSOR_CLASS = 'tom_dataproducts.data_processor.DataProcessor'
 
 
-def data_product_post_upload(dp, observation_timestamp, facility):
+def data_product_post_upload(dp):
     try:
         processor_class = settings.DATA_PROCESSOR_CLASS
     except Exception:
@@ -24,13 +24,13 @@ def data_product_post_upload(dp, observation_timestamp, facility):
     data_processor = clazz()
 
     if dp.tag == SPECTROSCOPY[0]:
-        spectrum = data_processor.process_spectroscopy(dp, facility)
+        spectrum, obs_date = data_processor.process_spectroscopy(dp)
         serialized_spectrum = SpectrumSerializer().serialize(spectrum)
         ReducedDatum.objects.create(
             target=dp.target,
             data_product=dp,
             data_type=dp.tag,
-            timestamp=observation_timestamp,
+            timestamp=obs_date,
             value=serialized_spectrum
         )
     elif dp.tag == PHOTOMETRY[0]:
