@@ -116,6 +116,8 @@ class DataProcessor():
         """
 
         data = ascii.read(data_product.data.path)
+        if len(data) < 1:
+            raise InvalidFileFormatException('Empty table or invalid file type')
         facility_name = None
         date_obs = datetime.now()
         comments = data.meta.get('comments', [])
@@ -170,6 +172,9 @@ class DataProcessor():
         photometry = {}
 
         data = ascii.read(data_product.data.path)
+        if len(data) < 1:
+            raise InvalidFileFormatException('Empty table or invalid file type')
+
         for datum in data:
             time = Time(float(datum['time']), format='mjd')
             utc = TimezoneInfo(utc_offset=0*units.hour)
