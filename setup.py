@@ -49,10 +49,9 @@ setup(
         'specutils',
         'python-magic',
         'antares-client',
-        'rise-set'
     ],
     extras_require={
-        'test': ['factory_boy']
+        'test': ['factory_boy', 'rise-set']
     },
     include_package_data=True,
 )
