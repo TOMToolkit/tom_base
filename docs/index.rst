@@ -90,7 +90,7 @@ Contributing
 ------------
 
 If you find an issue, you need help with your TOM, you have a useful idea, or you wrote a module you'd like to be
-included in the TOM Toolkit, start with the `Contribution Guide <https://tomtoolkit.github.io/docs/contributing>`_.
+included in the TOM Toolkit, start with the :doc:`Contribution Guide <contributing>`.
 
 Support
 -------
@@ -115,7 +115,7 @@ API Documentation
   :maxdepth: 1
   :hidden:
 
-  Contributing <https://tomtoolkit.github.io/docs/contributing>
+  contributing
   support
   About <https://tomtoolkit.github.io/about>
 
