@@ -47,11 +47,10 @@ setup(
         'fits2image',
         'specutils',
         'python-magic',
-        'antares-client',
-        'rise-set'
+        'antares-client'
     ],
     extras_require={
-        'test': ['factory_boy']
+        'test': ['factory_boy', 'rise-set']
     },
     include_package_data=True,
 )

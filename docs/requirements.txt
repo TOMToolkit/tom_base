@@ -13,11 +13,8 @@ astroquery
 astropy
 plotly
 pillow
-gsselect
 fits2image
 specutils
-python-magic
-antares_client
 pyephem
 sphinx>=2.1.2
 recommonmark
