@@ -37,6 +37,7 @@ class DataProcessor():
         """
 
         mimetype = mimetypes.guess_type(data_product.data.path)[0]
+        print(mimetype)
         if mimetype in FITS_MIMETYPES:
             return self._process_spectrum_from_fits(data_product)
         elif mimetype in PLAINTEXT_MIMETYPES:

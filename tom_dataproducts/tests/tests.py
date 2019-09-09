@@ -294,8 +294,7 @@ class TestDataProcessor(TestCase):
         self.data_processor.process_spectroscopy(self.data_product)
         process_data_mock.assert_called_with(self.data_product)
 
-    @patch('tom_dataproducts.data_processor.mimetypes.guess_type')
-    def test_process_spectroscopy_with_invalid_file_type(self, mimetypes_mock):
+    def test_process_spectroscopy_with_invalid_file_type(self):
         self.data_product.data.save('spectrum.png', self.test_file)
         with self.assertRaises(InvalidFileFormatException):
             self.data_processor.process_spectroscopy(self.data_product)
