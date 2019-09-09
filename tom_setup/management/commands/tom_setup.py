@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 import sys
 import os
+import mimetypes
 from django.conf import settings
 from django.template.loader import get_template
 from django.core.management import call_command

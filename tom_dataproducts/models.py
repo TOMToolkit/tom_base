@@ -1,7 +1,6 @@
 from datetime import datetime
 import os
 import tempfile
-import magic
 
 from astropy.io import fits
 from django.conf import settings
