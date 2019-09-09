@@ -8,4 +8,4 @@ Introduction
   tomarchitecture
   getting_started
   workflow
-  FAQ <https://tomtoolkit.github.io/docs/#frequently-asked-questions>
+  faqs
