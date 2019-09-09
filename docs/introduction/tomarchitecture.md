@@ -107,8 +107,8 @@ any page without modifying the underlying framework's code directly. Entire page
 may be replaced, or only "blocks" within a template.
 
 Compare these screenshots of the [standard target detail
-page](/assets/img/architecture/standardlayout.png) and the [Global Supernova
-Project's target detail page](/assets/img/architecture/snex2layout.png), the
+page](/_static/architecture/standardlayout.png) and the [Global Supernova
+Project's target detail page](/_static/architecture/snex2layout.png), the
 latter taking heavy advantage of template inheritance.
 
 ### Data Storage, Deployment and Tooling
@@ -237,7 +237,7 @@ display the relationship between tables in a database. In this case, it may help
 illustrate how the data from each of the toolkit's packages relate to each other.
 It is not exhaustive; many tables and rows have been omitted for brevity.
 
-[![db layout](/assets/img/architecture/erd.png)](/assets/img/architecture/erd.png)
+[![db layout](/_static/architecture/erd.png)](/_static/architecture/erd.png)
 
 ### Models
 Django models are the classes that map to the database tables in your Django application. The

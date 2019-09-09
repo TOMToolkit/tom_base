@@ -21,7 +21,7 @@ standard Jupyter Notebook, with the exception of an additional option under the
 use the `Django Shell-Plus` option instead of the regular Python 3 option. This will
 open the notebook with the correct Django context loaded:
 
-![new](/assets/img/jupyterdoc/newnotebook.png)
+![new](/_static/jupyterdoc/newnotebook.png)
 
 Creat a new notebook. Now that it's open, we can use it just like any other
 Notebook.

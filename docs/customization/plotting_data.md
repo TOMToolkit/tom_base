@@ -170,7 +170,7 @@ If your parent template already has a queryset of targets available in the conte
 Otherwise the plot will simply use all targets in your database. Either way, you
 should end up with something like this:
 
-![plot](/assets/img/plotting_data_doc/plot.png)
+![plot](/_static/plotting_data_doc/plot.png)
 
 That's it! Plot.ly provides a wide range of plotting capabilities, you should
 reference [the documentation](https://plot.ly/python/) for more information. It

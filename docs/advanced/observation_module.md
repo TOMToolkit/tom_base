@@ -72,7 +72,7 @@ TOM_FACILITY_CLASSES = [
 
 Now go ahead and view a target in your TOM, you should see something like this:
 
-![myfacility](/assets/img/observation_module/myfacility.png)
+![myfacility](/_static/observation_module/myfacility.png)
 
 This means our new observation facility module has been successfully loaded.
 
@@ -117,7 +117,7 @@ the django form module with `from django import forms`.
 Now if we click on the "MyFacility" button on the observation facility list on the
 target page, we should see something like this:
 
-![fields](/assets/img/observation_module/fields.png)
+![fields](/_static/observation_module/fields.png)
 
 
 Now we'll implement the method that performs an action with our form when we

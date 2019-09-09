@@ -55,7 +55,7 @@ application without the need to hardcode urls.
 Enough techno blabber. Launch your TOM and navigate to
 [/about/](http://127.0.0.1:8000/about/). You should see something like this:
 
-![quote](/assets/img/adding_pages_doc/quote.png)
+![quote](/_static/adding_pages_doc/quote.png)
 
 That's progress, but our new page is pretty ugly. The navigation bar is missing
 and we don't have any of the nice CSS that makes the rest of the TOM pages look
@@ -81,7 +81,7 @@ what we do not know, that is true knowledge. <br/>
 
 Now when you reload the page you should see this:
 
-![base](/assets/img/adding_pages_doc/base.png)
+![base](/_static/adding_pages_doc/base.png)
 
 
 ### Adding in dynamic data
@@ -151,7 +151,7 @@ dictionary and have access to it in our templates.
 
 Reloading your about page, you should now see something like this:
 
-![targets](/assets/img/adding_pages_doc/targets.png)
+![targets](/_static/adding_pages_doc/targets.png)
 
 
 ### Class based views

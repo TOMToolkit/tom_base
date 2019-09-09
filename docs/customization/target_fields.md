@@ -50,12 +50,12 @@ available to add to our targets.
 
 Now if you go to the target creation page, you should see the new field available:
 
-![redshift field](/assets/img/target_fields_doc/redshift.png)
+![redshift field](/_static/target_fields_doc/redshift.png)
 
 And if we go to our list of targets, we should see redshift as a field available
 to filter on:
 
-![redshift filter](/assets/img/target_fields_doc/redshift_filter.png)
+![redshift filter](/_static/target_fields_doc/redshift_filter.png)
 
 Extra fields with the `number` type allow filtering on range of values. The same
 goes for fields with the `datetime` type. `string` types to a case insensitive
@@ -63,7 +63,7 @@ inclusive search, and `boolean` fields to a simple matching comparison.
 
 Of course, redshift does appear on our target's display page as well:
 
-![redshift display](/assets/img/target_fields_doc/redshift_display.png)
+![redshift display](/_static/target_fields_doc/redshift_display.png)
 
 To hide extra fields from the target page, we can set the "hidden" key (this
 doesn't affect filtering and searching):
@@ -99,7 +99,7 @@ available in the template context:
 
 The result is the redshift value being printed on the template:
 
-![redshift display](/assets/img/target_fields_doc/redshift_tag.png)
+![redshift display](/_static/target_fields_doc/redshift_tag.png)
 
 ### Working with extra fields programatically
 

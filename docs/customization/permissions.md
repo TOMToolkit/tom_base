@@ -10,7 +10,7 @@ PI in the TOM, via the users page. To add a group, simply use the "Add Group"
 button found at the top of the groups table:
 
 
-![Add Group](/assets/img/permissions_doc/addgroup.png)
+![Add Group](/_static/permissions_doc/addgroup.png)
 
 Modifying a group will allow you to change it's name and add/remove users.
 
@@ -18,7 +18,7 @@ When a user adds or modifies a target, they are able to choose the groups to
 assign to the target:
 
 
-![Target Groups](/assets/img/permissions_doc/targetgroups.png)
+![Target Groups](/_static/permissions_doc/targetgroups.png)
 
 
 By default the target will be assigned to all groups the user belongs to.
