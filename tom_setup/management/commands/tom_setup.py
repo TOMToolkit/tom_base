@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 import sys
 import os
+import mimetypes
 from django.conf import settings
 from django.template.loader import get_template
 from django.core.management import call_command
@@ -143,6 +144,12 @@ class Command(BaseCommand):
         group.save()
         self.ok()
 
+    def add_fits_mimetypes(self):
+        mimetypes.add_type('image/fits', '.fits')
+        mimetypes.add_type('image/fits', '.fz')
+        mimetypes.add_type('application/fits', '.fits')
+        mimetypes.add_type('application/fits', '.fz')
+
     def complete(self):
         self.exit(
             self.style.SUCCESS('Setup complete! Run ./manage.py migrate && ./manage.py runserver to start your TOM.')
@@ -161,4 +168,5 @@ class Command(BaseCommand):
         self.run_migrations()
         self.create_pi()
         self.create_public_group()
+        self.add_fits_mimetypes()
         self.complete()

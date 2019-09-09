@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+import mimetypes
 
 from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
@@ -281,6 +282,10 @@ class TestDataProcessor(TestCase):
         )
         self.data_processor = DataProcessor()
         self.test_file = SimpleUploadedFile('afile.fits', b'somedata')
+        mimetypes.add_type('image/fits', '.fits')
+        mimetypes.add_type('image/fits', '.fz')
+        mimetypes.add_type('application/fits', '.fits')
+        mimetypes.add_type('application/fits', '.fz')
 
     @patch('tom_dataproducts.data_processor.DataProcessor._process_spectrum_from_fits')
     def test_process_spectroscopy_with_fits_file(self, process_data_mock):
