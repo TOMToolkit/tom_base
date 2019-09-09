@@ -42,6 +42,7 @@ setup(
         'astropy',
         'plotly',
         'pyephem',
+        'matplotlib',
         'pillow',
         'gsselect',
         'fits2image',
