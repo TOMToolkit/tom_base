@@ -1,9 +1,9 @@
-Contribute to the TOM Toolkit
------------------------------
+Contributing
+------------
 
 This page will go over the process for contributing to the TOM Toolkit.
 
-## Contributing Code/Documentation
+### Contributing Code/Documentation
 
 If you're interested in contributing code to the project, thank you! For those unfamiliar with the process of contributing to an open-source project, you may want to read through Github's own short informational section on [how to submit a contribution](https://opensource.guide/how-to-contribute/#how-to-submit-a-contribution).
 

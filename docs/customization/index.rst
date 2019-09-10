@@ -1,6 +1,6 @@
-*************************
-Extending and Customizing
-*************************
+***********
+Customizing
+***********
 
 .. toctree::
   :maxdepth: 1

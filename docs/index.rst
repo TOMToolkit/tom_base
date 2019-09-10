@@ -1,5 +1,5 @@
-Welcome to TOM Toolkit's documentation!
-=======================================
+Welcome to the TOM Toolkit's documentation!
+===========================================
 
 .. toctree::
   :maxdepth: 1
@@ -12,6 +12,10 @@ Welcome to TOM Toolkit's documentation!
 
 Introduction
 ------------
+
+The TOM (Target and Observation Manager) Toolkit project was started in early 2018 with the goal of simplifying the development of next generation software for the rapidly evolving field of astronomy. Read more :doc:`about TOMs<about>` and the motivation for them.
+
+Are you looking to run a TOM of your own? This documentation is a good place to get started. The source code for the project is also available on Github.
 
 Start with the :doc:`introduction<introduction/index>` if you are new to using the TOM Toolkit.
 
@@ -98,18 +102,12 @@ Support
 Looking for help? Want to request a feature? Have questions about Github Issues? Take a look at the :doc:`support guide
 <support>`.
 
+If you just need an idea, checkout out the :doc:`examples<examples>` of existing TOMs built with the TOM Toolkit.
+
 About the TOM Toolkit
 ---------------------
 
-Read about the project and the motivations behind in on the `About page <https://tomtoolkit.github.io/about>`_.
-
-API Documentation
------------------
-
-.. toctree::
-  :maxdepth: 2
-
-  modules
+Read about the project and the motivations behind it on the :doc:`About page <about>`.
 
 .. toctree::
   :maxdepth: 1
@@ -117,7 +115,18 @@ API Documentation
 
   contributing
   support
-  About <https://tomtoolkit.github.io/about>
+  examples
+  about
+  Github <https://github.com/TOMToolkit>
+
+API Documentation
+-----------------
+
+.. toctree::
+  :maxdepth: 2
+
+  modules/modules
+  modules/plugins
 
 ******************
 Indices and tables
