@@ -4,9 +4,11 @@ python:
 dist: xenial
 sudo: true
 before_install:
-    - sudo apt-get install -y gfortran
+    - sudo apt-get install -y gfortran sphinx-build
 install:
     - pip install -r requirements.txt pycodestyle
 script:
     - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
+    - sphinx-build -b html docs docs/_build
+    - rm -rf docs/_build
     - python3 manage.py test

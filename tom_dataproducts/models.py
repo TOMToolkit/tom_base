@@ -300,6 +300,11 @@ class ReducedDatum(models.Model):
                       'magnitude_error': .5,
                       'filter': 'r'
                     }
+
+                  It should be noted that when storing a dict in a ``ReducedDatum`` value field, it should always be
+                  converted with ``json.dumps`` before saving, as certain functions in the TOM Toolkit call
+                  ``json.loads`` with ``ReducedDatum`` value fields.
+
     :type value: str
     """
 
