@@ -127,6 +127,7 @@ API Documentation
 
   modules/modules
   modules/plugins
+  modules/affiliated
 
 ******************
 Indices and tables

@@ -60,7 +60,7 @@ You should now have a fully functional standard Django installation inside the
 
 ### Getting started with the `tom_setup` script.
 
-We ned to add the `tom_setup` app to our project's `INSTALLED_APPS`. Locate the
+We need to add the `tom_setup` app to our project's `INSTALLED_APPS`. Locate the
 `settings.py` file inside your project directory (usually in a subdirectory of the
 main folder, i.e. mytom/mytom/settings.py) and edit it so that it looks like this:
 

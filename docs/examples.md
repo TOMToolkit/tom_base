@@ -17,6 +17,10 @@ The [Microlensing TOM](https://github.com/KSNikolaus/ZTF_TOM) is being written i
 
 The [ROME/REA TOM](https://github.com/rachel3834/romerea_phot_tom) is being built to manage ROME/REA photometry for the [LCO key project of the same name](https://robonet.lco.global/).
 
+### Calibration TOM
+
+LCO is rewriting an existing piece of software that automatically schedules nightly telescope calibrations using the TOM Toolkit called the [Calibration TOM](https://github.com/LCOGT/calibration-tom/).
+
 ### Others
 
 There are a few other TOMs in development that we're aware of, but if you're developing a TOM, feel free to contribute to this page, or let us know and we'll take care of it for you.
