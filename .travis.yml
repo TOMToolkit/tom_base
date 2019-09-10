@@ -4,9 +4,9 @@ python:
 dist: xenial
 sudo: true
 before_install:
-    - sudo apt-get install -y gfortran sphinx-build
+    - sudo apt-get install -y gfortran
 install:
-    - pip install -r requirements.txt pycodestyle
+    - pip install -r requirements.txt pycodestyle sphinx
 script:
     - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
     - sphinx-build -b html docs docs/_build
