@@ -8,9 +8,9 @@ As a community project, our goal is to provide a base package that gives users s
 SNEx Custom Code
 ****************
 
-The [updated SNEx codebase](https://github.com/jfrostburke/snex2) contains the following custom elements:
+The `updated SNEx codebase <https://github.com/jfrostburke/snex2>`_ contains the following custom elements:
 
-* [Custom forms for submission to LCO and Gemini](https://github.com/jfrostburke/snex2/tree/master/custom_code/facilities)
-* [Custom catalog search of MARS](https://github.com/jfrostburke/snex2/blob/master/custom_code/harvesters/mars_harvester.py)
-* [Moon visibility plot](https://github.com/jfrostburke/snex2/blob/master/custom_code/templatetags/custom_code_tags.py#L223), among other custom plots
-* [View of recent TNS target data](https://github.com/jfrostburke/snex2/blob/master/custom_code/views.py#L44)
+* `Custom forms for submission to LCO and Gemini <https://github.com/jfrostburke/snex2/tree/master/custom_code/facilities>`_
+* `Custom catalog search of MARS <https://github.com/jfrostburke/snex2/blob/master/custom_code/harvesters/mars_harvester.py>`_
+* `Moon visibility plot <https://github.com/jfrostburke/snex2/blob/master/custom_code/templatetags/custom_code_tags.py#L223>`_, among other custom plots
+* `View of recent TNS target data <https://github.com/jfrostburke/snex2/blob/master/custom_code/views.py#L44>`_
