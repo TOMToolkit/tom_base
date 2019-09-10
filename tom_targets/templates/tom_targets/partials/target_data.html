@@ -3,8 +3,10 @@
 <a href="{% url 'tom_targets:delete' pk=target.id %}" title="Delete target" class="btn  btn-warning">Delete Target</a>
 <dl class="row">
   {% for key, value in target.as_dict.items %}
+  {% if value %}
   <dt class="col-sm-6">{% verbose_name target key %}</dt>
   <dd class="col-sm-6">{{ value|truncate_number }}</dd>
+  {% endif %}
   {% if key == 'ra' %}
     <dt class="col-sm-6">&nbsp;</dt>
     <dd class="col-sm-6">{{ value|deg_to_sexigesimal:"hms" }}</dd>
