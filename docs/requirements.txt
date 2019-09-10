@@ -18,4 +18,3 @@ specutils
 pyephem
 sphinx>=2.1.2
 recommonmark
-rise-set
