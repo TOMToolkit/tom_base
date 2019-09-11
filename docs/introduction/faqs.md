@@ -1,5 +1,5 @@
-Frequently Asked Questions
---------------------------
+FAQ
+---
 
 ### Can I use Jupyter Notebooks with my TOM?
 

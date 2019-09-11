@@ -2,13 +2,14 @@ Welcome to the TOM Toolkit's documentation!
 ===========================================
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 3
   :hidden:
 
   introduction/index
   customization/index
   advanced/index
   deployment/index
+  introduction/faqs
 
 Introduction
 ------------

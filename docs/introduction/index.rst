@@ -3,9 +3,18 @@ Introduction
 
 .. toctree::
   :maxdepth: 2
-  :includehidden:
+  :hidden:
 
   tomarchitecture
   getting_started
   workflow
   faqs
+
+:doc:`Architecture <tomarchitecture>` - This document describes the architecture of the TOM Toolkit at a
+high level. Read this first if you're interested in how the TOM Toolkit works.
+
+:doc:`Getting Started <getting_started>` - First steps for getting a TOM up and running.
+
+:doc:`Workflow <workflow>` - The general workflow used with TOMs.
+
+:doc:`Frequently Asked Questions <faqs>` - Look here for a potential quick answer to a common question.
