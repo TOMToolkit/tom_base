@@ -2,7 +2,7 @@ import requests
 from django.conf import settings
 from django import forms
 from dateutil.parser import parse
-from crispy_forms.layout import Layout, Div
+from crispy_forms.layout import Layout, Div, HTML
 from astropy import units as u
 
 from tom_observations.facility import GenericObservationForm
@@ -10,16 +10,13 @@ from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.facility import GenericObservationFacility
 from tom_targets.models import Target
 
-from gsselect.gsselect import gsselect
-from gsselect.parangle import parangle
-
 try:
     GEM_SETTINGS = settings.FACILITIES['GEM']
 except KeyError:
     GEM_SETTINGS = {
         'portal_url': {
-            'GS': 'https://139.229.34.15:8443',
-            'GN': 'https://128.171.88.221:8443',
+            'GS': 'https://gsodb.gemini.edu:8443',
+            'GN': 'https://gnodb.gemini.edu:8443',
         },
         'api_key': {
             'GS': '',
@@ -122,13 +119,7 @@ def get_site(progid, location=False):
 
 class GEMObservationForm(GenericObservationForm):
 
-    # Field for the URL API
-    # progid = forms.CharField()
-    # progid = forms.ChoiceField(choices=proposal_choices)
-    # userkey = forms.CharField(get_site(self.cleaned_data[progid]))
-    # email = forms.CharField(choices=GEM_SETTINGS['user_email'])
-    # obsnum = forms.IntegerField(min_value=1)
-    # obsid = forms.ChoiceField(choices=obs_choices())
+    # Form fields
     obsid = forms.MultipleChoiceField(choices=obs_choices())
     ready = forms.ChoiceField(initial='true', choices=(('true', 'Yes'), ('false', 'No')))
     brightness = forms.FloatField(required=False, label='Target brightness')
@@ -172,64 +163,21 @@ class GEMObservationForm(GenericObservationForm):
                                                    ('UC', 'UC'), ('RP', 'r'), ('R', 'R'), ('IP', 'i'), ('I', 'I'),
                                                    ('ZP', 'z'), ('Y', 'Y'), ('J', 'J'), ('H', 'H'), ('K', 'K'),
                                                    ('L', 'L'), ('M', 'M'), ('N', 'N'), ('Q', 'Q'), ('AP', 'AP')))
-    gssearch = forms.ChoiceField(initial='true',
-                                 required=False,
-                                 label='Search for guide star if none entered?',
-                                 choices=(('true', 'Yes'), ('false', 'No')))
-    window_start = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'date'}),
-                                   label='UT Timing Window Start [Date Time]')
-    window_duration = forms.IntegerField(required=False, min_value=1, label='Timing Window Duration [hr]')
-
-    # Fields needed for running parangle/gsselect
-    pamode = forms.ChoiceField(required=False,
-                               label='PA Mode',
-                               choices=(('flip', 'Flip180'),
-                                        ('fixed', 'Fixed'),
-                                        ('find', 'Set PA for brightest guide star'),
-                                        ('parallactic', 'Parallactic Angle')))
-    obsdate = forms.CharField(required=False,
-                              widget=forms.TextInput(attrs={'type': 'date'}),
-                              label='UT Date Time (for Parallactic PA Mode)')
-    # Eventually select instrument from obsid text?
-    inst = forms.ChoiceField(required=False,
-                             label='Instrument',
-                             initial='GMOS',
-                             choices=(('GMOS', 'GMOS'), ('GNIRS', 'GNIRS'), ('NIFS', 'NIFS'), ('NIRIF/6', 'NIRIF/6'),
-                                      ('NIRIF/14', 'NIRIF/14'), ('NIRIF/32', 'NIRIF/32')))
     gsprobe = forms.ChoiceField(required=False,
                                 label='Guide Probe',
                                 initial='OIWFS',
                                 choices=(('OIWFS', 'OIWFS'),
                                          ('PWFS1', 'PWFS1'),
                                          ('PWFS2', 'PWFS2')))  # GS probe (PWFS1/PWFS2/OIWFS/AOWFS)
-    port = forms.ChoiceField(required=False, label='ISS Port', choices=(('side', 'Side'), ('up', 'Up')))
-    ifu = forms.ChoiceField(required=False,
-                            label='IFU Mode',
-                            choices=(('none', 'None'), ('two', 'Two Slit'), ('red', 'One Slit Red')))
-    overwrite = forms.ChoiceField(required=False,
-                                  label='Overwrite previous guide star query?',
-                                  initial='False',
-                                  choices=(('False', 'No'), ('True', 'Yes')))
-    chop = False   # Chopping (no longer used, should be False)
-    l_pad = 7.     # Padding applied to WFS FoV (to account for uncertainties in shape) [arcsec]
-    l_rmin = -1.   # Minimum radius for guide star search [arcmin], -1 to use default
-    iq = forms.ChoiceField(required=False,
-                           label='Image Quality',
-                           initial='Any',
-                           choices=(('20', '20%-tile'), ('70', '70%-tile'), ('85', '85%-tile'), ('Any', 'Any')))
-    cc = forms.ChoiceField(required=False,
-                           label='Cloud Cover',
-                           initial='Any',
-                           choices=(('50', '50%-tile'), ('70', '70%-tile'), ('80', '80%-tile'), ('Any', 'Any')))
-    sb = forms.ChoiceField(required=False,
-                           label='Sky Brightness',
-                           initial='Any',
-                           choices=(('20', '20%-tile'), ('50', '50%-tile'), ('80', '80%-tile'), ('Any', 'Any')))
+    window_start = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'date'}),
+                                   label='UT Timing Window Start [Date Time]')
+    window_duration = forms.IntegerField(required=False, min_value=1, label='Timing Window Duration [hr]')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper.layout = Layout(
             self.common_layout,
+            HTML('<big>Observation Parameters</big>'),
             Div(
                 Div(
                     'obsid',
@@ -247,33 +195,34 @@ class GEMObservationForm(GenericObservationForm):
             ),
             Div(
                 Div(
-                    'posangle', 'brightness', 'eltype', 'note', 'gstarg', 'gsbrightness',
+                    'posangle', 'brightness', 'eltype', 'window_start',
                     css_class='col'
                 ),
                 Div(
-                    'pamode', 'brightness_band', 'elmin', 'window_start', 'gsra', 'gsbrightness_band',
+                    'exptimes', 'brightness_band', 'elmin', 'window_duration',
                     css_class='col'
                 ),
                 Div(
-                    'obsdate', 'brightness_system', 'elmax', 'window_duration', 'gsdec', 'gsbrightness_system',
+                    'note', 'brightness_system', 'elmax',
                     css_class='col'
                 ),
                 css_class='form-row'
             ),
+            HTML('<big>Optional Guide Star Parameters: If any one of Name/RA/Dec is given, then all must be.</big>'),
             Div(
                 Div(
-                    'inst',  'iq', 'exptimes', 'gssearch',
+                    'gstarg', 'gsbrightness', 'gsprobe',
                     css_class='col'
                 ),
                 Div(
-                    'gsprobe', 'cc', 'port', 'overwrite',
+                    'gsra', 'gsbrightness_band',
                     css_class='col'
                 ),
                 Div(
-                    'ifu', 'sb',
+                    'gsdec', 'gsbrightness_system',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='form-row',
             )
         )
 
@@ -292,56 +241,6 @@ class GEMObservationForm(GenericObservationForm):
             date = isostring[0:ii]
             time = isostring[ii + 1:]
             return date, time
-
-        def findgs(obs):
-
-            gstarg = ''
-            gsra = ''
-            gsdec = ''
-            gsmag = ''
-            sgsmag = ''
-            gspa = 0.0
-            spa = str(gspa).strip()
-            l_pa = self.cleaned_data['posangle']
-
-            # Convert RA to hours
-            target = Target.objects.get(pk=self.cleaned_data['target_id'])
-            ra = target.ra / 15.
-            dec = target.dec
-
-            # l_site = get_site(self.cleaned_data['obsid'],location=True)
-            l_site = get_site(obs, location=True)
-            l_pad = 7.
-            l_chop = False
-            l_rmin = -1.
-            # Parallactic angle?
-            l_pamode = self.cleaned_data['pamode']
-            if l_pamode == 'parallactic':
-                if self.cleaned_data['obsdate'].strip() == '':
-                    print('WARNING: Observation date must be set in order to calculate the parallactic angle.')
-                    return gstarg, gsra, gsdec, sgsmag, spa
-                else:
-                    odate, otime = isodatetime(self.cleaned_data['obsdate'])
-                    l_pa = parangle(str(ra), str(dec), odate, otime, l_site).value
-                    l_pamode = 'flip'  # in case of guide star selection
-
-            # Guide star
-            overw = self.cleaned_data['overwrite'] == 'True'
-            gstarg, gsra, gsdec, gsmag, gspa = gsselect(target.name, str(ra), str(dec),
-                                                        pa=l_pa, imdir=settings.MEDIA_ROOT, site=l_site, pad=l_pad,
-                                                        cat='UCAC4', inst=self.cleaned_data['inst'],
-                                                        ifu=self.cleaned_data['ifu'], port=self.cleaned_data['port'],
-                                                        wfs=self.cleaned_data['gsprobe'], chopping=l_chop,
-                                                        pamode=l_pamode, rmin=l_rmin, iq=self.cleaned_data['iq'],
-                                                        cc=self.cleaned_data['cc'], sb=self.cleaned_data['sb'],
-                                                        overwrite=overw, display=False, verbose=False, figout=True,
-                                                        figfile='default')
-
-            if gstarg != '':
-                sgsmag = str(gsmag).strip() + '/UC/Vega'
-            spa = str(gspa).strip()
-
-            return gstarg, gsra, gsdec, sgsmag, spa
 
         payloads = []
 
@@ -417,8 +316,6 @@ class GEMObservationForm(GenericObservationForm):
                     sgsmag = str(self.cleaned_data['gsbrightness']).strip() + '/' + \
                              self.cleaned_data['gsbrightness_band'] + '/' + \
                              self.cleaned_data['gsbrightness_system']
-            elif self.cleaned_data['gssearch'] == 'true':
-                gstarg, gsra, gsdec, sgsmag, spa = findgs(obs)
 
             if gstarg != '':
                 payload['gstarget'] = gstarg
