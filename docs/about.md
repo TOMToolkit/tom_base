@@ -30,3 +30,16 @@ However, designing the existing TOM systems required high levels of expertise in
 No two TOM systems are identical, as astronomers strongly prefer to directly control the science-specific aspects of their projects such as target selection, observing strategy and analysis techniques.  At the same time, while all of these systems are customised for the science goals of the projects they support, much of their underlying infrastructure and functions are very similar.
 
 What’s needed is a software package that lets astronomers easily build a TOM, customised to suit the needs of their project, without becoming an IT expert or software engineer.
+
+### Financial Support
+
+The TOM Toolkit has been made possible through generous financial support from the [Heising-Simons Foundation](https://hsfoundation.org) and the [Zegar Family Foundation](https://sites.google.com/zegarff.org/site).
+
+<div class="partners">
+<a href="https://hsfoundation.org">
+  <img src="_static/hs.jpg" alt="Heising-Simons Foundation" height="100"/>
+</a>
+<a href="https://sites.google.com/zegarff.org/site">
+  <img src="_static/zff.png" alt="Zegar Family Foundation" height="75"/>
+</a>
+</div>

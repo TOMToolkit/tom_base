@@ -105,11 +105,6 @@ Looking for help? Want to request a feature? Have questions about Github Issues?
 
 If you just need an idea, checkout out the :doc:`examples<examples>` of existing TOMs built with the TOM Toolkit.
 
-About the TOM Toolkit
----------------------
-
-Read about the project and the motivations behind it on the :doc:`About page <about>`.
-
 .. toctree::
   :maxdepth: 1
   :hidden:
@@ -137,3 +132,11 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+About the TOM Toolkit
+---------------------
+
+The TOM Toolkit is managed by Las Cumbres Observatory, with generous financial support from the `Heising-Simons Foundation <https://hsfoundation.org>`_ and the `Zegar Family Foundation <https://sites.google.com/zegarff.org/site>`_.
+
+
+Read about the project and the motivations behind it on the :doc:`About page <about>`.

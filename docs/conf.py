@@ -78,6 +78,16 @@ autoclass_content = 'both'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 
+html_sidebars = {
+    '**': [
+        'about.html',
+        'navigation.html',
+        'relations.html',
+        'searchbox.html',
+        'donate.html',
+    ]
+}
+
 html_static_path = ['_static']
 html_theme = 'alabaster'
 # html_theme = 'sphinx_rtd_theme'
@@ -86,7 +96,8 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_theme_options = {
     'logo': 'logo-color.png',
     'logo_name': 'false',
-    'github_repo': 'tom_base'
+    'github_repo': 'tom_base',
+    'github_button': 'false',
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
