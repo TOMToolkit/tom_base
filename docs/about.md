@@ -36,7 +36,7 @@ What’s needed is a software package that lets astronomers easily build a TOM, 
 The TOM Toolkit has been made possible through generous financial support from the [Heising-Simons Foundation](https://hsfoundation.org) and the [Zegar Family Foundation](https://sites.google.com/zegarff.org/site).
 
 <div class="partners">
-<a href="https://hsfoundation.org">
+<a href="https://hsfoundation.org"class="hs">
   <img src="_static/hs.jpg" alt="Heising-Simons Foundation" height="100"/>
 </a>
 <a href="https://sites.google.com/zegarff.org/site">
