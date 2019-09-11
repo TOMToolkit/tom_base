@@ -1,6 +1,6 @@
 # TOM Toolkit
 [![Build Status](https://travis-ci.org/TOMToolkit/tom_base.svg?branch=master)](https://travis-ci.org/TOMToolkit/tom_base)
-[Documentation](https://tom-toolkit.readthedocs.io)
+[Documentation](https://tom-toolkit.readthedocs.io/en/latest/)
 
 ![logo](tom_common/static/tom_common/img/logo-color.png)
 
