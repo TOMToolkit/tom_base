@@ -29,7 +29,7 @@ def mock_fits2image(file1, file2, width, height):
     return True
 
 
-def mock_find_img_size(filename):
+def mock_find_fits_img_size(filename):
     return (0, 0)
 
 
@@ -133,7 +133,7 @@ class TestObservationDataViews(TestCase):
                 self.assertTrue(is_fits_image_file(self.data_product.data))
 
     @patch('tom_dataproducts.models.fits_to_jpg', mock_fits2image)
-    @patch('tom_dataproducts.models.find_img_size', mock_find_img_size)
+    @patch('tom_dataproducts.models.find_fits_img_size', mock_find_fits_img_size)
     @patch('tom_dataproducts.models.is_fits_image_file', mock_is_fits_image_file)
     def test_create_jpeg(self, dp_mock):
         products = DataProduct.objects.filter(tag='image_file')

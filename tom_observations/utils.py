@@ -18,16 +18,11 @@ def ephem_to_datetime(ephem_time):
     """
     Converts PyEphem time object to a datetime object
 
-    Parameters
-    ----------
-    ephem_time : PyEphem date
-        time to be converted to datetime
+    :param ephem_time: time to be converted to datetime
+    :type ephem_time: PyEphem date
 
-    Returns
-    -------
-    datetime
-        datetime time equivalent to the ephem_time
-
+    :returns: datetime time equivalent to the ephem_time
+    :rtype: datetime
     """
     return datetime.strptime(str(ephem_time), EPHEM_FORMAT)
 
@@ -41,23 +36,20 @@ def get_rise_set(observer, target, start_time, end_time):
     despite not being within the window. Similarly, if the target is up at the
     end time, the next setting beyond the end window is included in the result.
 
-    Parameters
-    ----------
-    observer : PyEphem Observer
-        Represents the position from which to calculate the rise/sets
-    target : Target
-        The object for which to calculate the rise/sets
-    start_time : datetime
-        start of the calculation window
-    end_time : datetime
-        end of the calculation window
+    :param observer: Represents the position from which to calculate the rise/sets
+    :type observer: PyEphem Observer
 
-    Returns
-    -------
-    array
-        An array of tuples, each a pair of values representing a rise and a set,
-        both datetime objects
+    :param target: The object for which to calculate the rise/sets
+    :type target: Target
 
+    :param start_time: start of the calculation window
+    :type start_time: datetime
+
+    :param end_time: end of the calculation window
+    :type end_time: datetime
+
+    :returns: A list of 2-tuples, each a pair of values representing a rise and a set, both datetime objects
+    :rtype: list
     """
     if end_time < start_time:
         raise Exception('Start must be before end')
@@ -85,18 +77,14 @@ def get_last_rise_set_pair(rise_sets, time):
     Gets the rise/set pair for the last rise before the given time, using a
     binary search
 
-    Parameters
-    ----------
-    rise_sets : array
-        array of tuples representing set of rise/sets to search
-    time : float
-        time value used to find the most recent rise, in UNIX time
+    :param rise_sets: array of tuples representing set of rise/sets to search
+    :type rise_sets: array
 
-    Returns
-    -------
-    tuple
-        Most recent rise/set pair with respect to the given time
+    :param time: time value used to find the most recent rise, in UNIX time
+    :type time: float
 
+    :returns: Most recent rise/set pair with respect to the given time
+    :rtype: tuple
     """
     last_rise_pos = bisect_left(rise_sets, (time,))
     if last_rise_pos <= 0:
@@ -109,18 +97,14 @@ def get_next_rise_set_pair(rise_sets, time):
     Gets the upcoming rise/set pair for the next rise after the given time,
     using a binary search
 
-    Parameters
-    ----------
-    rise_sets : array
-        array of tuples representing set of rise/sets to search
-    time : float
-        time value used to find the next rise, in UNIX time
+    :param rise_sets: array of tuples representing set of rise/sets to search
+    :type rise_sets: array
 
-    Returns
-    -------
-    tuple
-        Soonest upcoming rise/set with respect to the given time
+    :param time: time value used to find the next rise, in UNIX time
+    :type time: float
 
+    :returns: Soonest upcoming rise/set with respect to the given time
+    :rtype: tuple
     """
     next_rise_pos = bisect_left(rise_sets, (time,))
     if next_rise_pos >= len(rise_sets):
@@ -137,27 +121,23 @@ def get_visibility(target, start_time, end_time, interval, airmass_limit=10):
     default, if one is not provided), as well as any airmass calculated
     during the day.
 
-    Parameters
-    ----------
-    start_time : datetime
-        start of the window for which to calculate the airmass
-    end_time : datetime
-        end of the window for which to calculate the airmass
-    interval : int
-        time interval, in minutes, at which to calculate airmass within
-        the given window
-    airmass_limit : int
-        maximum acceptable airmass for the resulting calculations
+    :param start_time: start of the window for which to calculate the airmass
+    :type start_time: datetime
 
-    Returns
-    -------
-    dict
-        A dictionary containing the airmass data for each site. The
-        dict keys consist of the site name prepended with the observing
-        facility. The values are the airmass data, structured as an
-        array containing two arrays. The first array contains the set
-        of datetimes used in the airmass calculations. The second array
-        contains the corresponding set of airmasses calculated.
+    :param end_time: end of the window for which to calculate the airmass
+    :type end_time: datetime
+
+    :param interval: time interval, in minutes, at which to calculate airmass within the given window
+    :type interval: int
+
+    :param airmass_limit: maximum acceptable airmass for the resulting calculations
+    :type airmass_limit: int
+
+    :returns: A dictionary containing the airmass data for each site. The dict keys consist of the site name prepended
+        with the observing facility. The values are the airmass data, structured as an array containing two arrays. The
+        first array contains the set of datetimes used in the airmass calculations. The second array contains the
+        corresponding set of airmasses calculated.
+    :rtype: dict
 
     """
     if not airmass_limit:
@@ -197,14 +177,9 @@ def get_pyephem_instance_for_type(target):
     Constructs a pyephem body corresponding to the proper object type
     in order to perform positional calculations for the target
 
-    Returns
-    -------
-    FixedBody or EllipticalBody
+    :returns: FixedBody or EllipticalBody
 
-    Raises
-    ------
-    Exception
-        When a target type other than sidereal or non-sidereal is supplied
+    :raises Exception: When a target type other than sidereal or non-sidereal is supplied
 
     """
     if target.type == target.SIDEREAL:

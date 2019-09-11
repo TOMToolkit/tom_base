@@ -12,12 +12,18 @@ register = template.Library()
 
 @register.inclusion_tag('tom_observations/partials/observing_buttons.html')
 def observing_buttons(target):
+    """
+    Displays the observation buttons for all facilities available in the TOM.
+    """
     facilities = get_service_classes()
     return {'target': target, 'facilities': facilities}
 
 
 @register.inclusion_tag('tom_observations/partials/observation_list.html')
 def observation_list(target=None):
+    """
+    Displays a list of all observations in the TOM, limited to an individual target if specified.
+    """
     if target:
         observations = target.observationrecord_set.all()
     else:
@@ -27,6 +33,9 @@ def observation_list(target=None):
 
 @register.inclusion_tag('tom_observations/partials/observation_distribution.html')
 def observation_distribution(observations):
+    """
+    Displays a plot showing on a map the locations of all observations recorded in the TOM.
+    """
 
     # "distinct" query is not supported, must manually find distinct observation per target
     sorted_observations = observations.order_by('scheduled_end')  # ascending so that only the max is preserved

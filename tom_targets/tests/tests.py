@@ -14,7 +14,7 @@ from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGr
 from tom_targets.models import Target, TargetExtra, TargetList
 from tom_observations.utils import get_visibility, get_pyephem_instance_for_type
 from tom_observations.tests.utils import FakeFacility
-from tom_targets.import_targets import import_targets
+from tom_targets.utils import import_targets
 from guardian.shortcuts import assign_perm
 
 

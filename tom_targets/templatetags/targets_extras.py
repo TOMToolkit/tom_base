@@ -15,16 +15,25 @@ register = template.Library()
 
 @register.inclusion_tag('tom_targets/partials/recent_targets.html')
 def recent_targets(limit=10):
+    """
+    Displays a list of the most recently created targets in the TOM up to the given limit, or 10 if not specified.
+    """
     return {'targets': Target.objects.all().order_by('-created')[:limit]}
 
 
 @register.inclusion_tag('tom_targets/partials/target_feature.html')
 def target_feature(target):
+    """
+    Displays the featured image for a target.
+    """
     return {'target': target}
 
 
 @register.inclusion_tag('tom_targets/partials/target_data.html')
 def target_data(target):
+    """
+    Displays the data of a target.
+    """
     return {
         'target': target,
         'display_extras': [ex['name'] for ex in settings.EXTRA_FIELDS if not ex.get('hidden')]
@@ -33,6 +42,9 @@ def target_data(target):
 
 @register.inclusion_tag('tom_targets/partials/target_groups.html')
 def target_groups(target):
+    """
+    Widget displaying groups this target is in and controls for modifying group association for the given target.
+    """
     groups = TargetList.objects.filter(targets=target)
     return {'target': target,
             'groups': groups}
@@ -40,6 +52,10 @@ def target_groups(target):
 
 @register.inclusion_tag('tom_targets/partials/target_plan.html', takes_context=True)
 def target_plan(context):
+    """
+    Displays form and renders plot for visibility calculation. Using this templatetag to render a plot requires that
+    the context of the parent view have values for start_time, end_time, and airmass.
+    """
     request = context['request']
     plan_form = TargetVisibilityForm()
     visibility_graph = ''
@@ -73,6 +89,9 @@ def target_plan(context):
 
 @register.inclusion_tag('tom_targets/partials/target_distribution.html')
 def target_distribution(targets):
+    """
+    Displays a plot showing on a map the locations of all sidereal targets in the TOM.
+    """
     locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
     data = [
         dict(
@@ -118,6 +137,9 @@ def target_distribution(targets):
 
 @register.filter
 def deg_to_sexigesimal(value, fmt):
+    """
+    Displays a degree coordinate value in sexigesimal, given a format of hms or dms.
+    """
     a = Angle(value, unit=u.degree)
     if fmt == 'hms':
         return '{0:02.0f}:{1:02.0f}:{2:05.3f}'.format(a.hms.h, a.hms.m, a.hms.s)
@@ -131,6 +153,9 @@ def deg_to_sexigesimal(value, fmt):
 
 @register.filter
 def target_extra_field(target, name):
+    """
+    Returns a ``TargetExtra`` value of the given name, if one exists.
+    """
     try:
         return TargetExtra.objects.get(target=target, key=name).value
     except TargetExtra.DoesNotExist:
@@ -139,9 +164,14 @@ def target_extra_field(target, name):
 
 @register.inclusion_tag('tom_targets/partials/targetlist_select.html')
 def select_target_js():
+    """
+    """
     return
 
 
 @register.inclusion_tag('tom_targets/partials/aladin.html')
 def aladin(target):
+    """
+    Displays Aladin skyview of the given target.
+    """
     return {'target': target}
