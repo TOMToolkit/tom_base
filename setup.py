@@ -7,7 +7,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='tomtoolkit',
-    version='0.7.0',
+    version='0.7.1',
     description='The TOM Toolkit and base modules',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -49,10 +49,9 @@ setup(
         'specutils',
         'python-magic',
         'antares-client',
-        'rise-set'
     ],
     extras_require={
-        'test': ['factory_boy']
+        'test': ['factory_boy', 'rise-set']
     },
     include_package_data=True,
 )
