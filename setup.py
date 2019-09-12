@@ -44,7 +44,6 @@ setup(
         'pyephem',
         'matplotlib',
         'pillow',
-        'gsselect',
         'fits2image',
         'specutils',
         'antares-client',
