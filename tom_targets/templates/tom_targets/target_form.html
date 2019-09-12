@@ -3,7 +3,6 @@
 {% block title %}New target{% endblock %}
 {% block content %}
 {% if not object %}
-<a href="{% url 'tom_catalogs:query' %}" class="btn btn-primary float-right">Search online sources</a>
 <ul class="nav nav-tabs">
   {% for k, v in type_choices %}
     <li class="nav-item">

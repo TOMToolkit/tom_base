@@ -1,19 +1,20 @@
-from django.test import TestCase, override_settings
-from django.urls import reverse
-from django.contrib.auth.models import User, Group
 import pytz
 import ephem
-from astropy import units
-from astropy.coordinates import Angle
 import math
 from unittest import mock
 from datetime import datetime, timedelta
+
+from django.test import TestCase, override_settings
+from django.urls import reverse
+from django.contrib.auth.models import User, Group
+from astropy import units
+from astropy.coordinates import Angle
 
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory
 from tom_targets.models import Target, TargetExtra, TargetList
 from tom_observations.utils import get_visibility, get_pyephem_instance_for_type
 from tom_observations.tests.utils import FakeFacility
-from tom_targets.import_targets import import_targets
+from tom_targets.utils import import_targets
 from guardian.shortcuts import assign_perm
 
 

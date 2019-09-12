@@ -2,12 +2,9 @@ from django.views.generic.list import ListView
 from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.edit import UpdateView, CreateView
 from django.contrib.auth.models import User, Group
-from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import update_session_auth_hash
-from django.contrib.admin.widgets import FilteredSelectMultiple
 from django_comments.models import Comment
-from django.utils.decorators import method_decorator
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import HttpResponseForbidden
@@ -39,7 +36,7 @@ class GroupUpdateView(SuperuserRequiredMixin, UpdateView):
         return initial
 
 
-class UserListView(ListView):
+class UserListView(LoginRequiredMixin, ListView):
     model = User
 
     def get_context_data(self, *args, **kwargs):

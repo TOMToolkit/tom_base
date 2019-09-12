@@ -1,6 +1,6 @@
 # TOM Toolkit
 [![Build Status](https://travis-ci.org/TOMToolkit/tom_base.svg?branch=master)](https://travis-ci.org/TOMToolkit/tom_base)
-[Documentation](https://tomtoolkit.github.io)
+[Documentation](https://tom-toolkit.readthedocs.io/en/latest/)
 
 ![logo](tom_common/static/tom_common/img/logo-color.png)
 
@@ -8,10 +8,10 @@ The TOM Toolkit is a web framework for building TOMs: Target and Observation
 Managers. TOMs are meant to facilitate collaborative astronomical observing
 projects. A typical TOM allows it's users to curate target lists, request
 observations of those targets at various observatories as well as manage and
-organize their data. [Read more](https://tomtoolkit.github.io/about/) about TOMs.
+organize their data. [Read more](https://tom-toolkit.readthedocs.io/en/latest/about.html) about TOMs.
 
 ## Getting started with the TOM Toolkit
-The [getting started guide](https://tomtoolkit.github.io/docs/getting_started)
+The [getting started guide](https://tom-toolkit.readthedocs.io/en/latest/introduction/getting_started.html)
 will guide you through the process of setting up a TOM for the first time.
 
 ## Reporting issues/feature requests
@@ -20,6 +20,13 @@ report any issues or support questions.
 
 ## Contributing to the project
 If you'd like to contribute to the TOM Toolkit, first of all, thanks! Secondly, we
-have a [contribution guide](https://tomtoolkit.github.io/docs/contributing) that
+have a [contribution guide](https://tom-toolkit.readthedocs.io/en/latest/contributing.html) that
 you might find helpful. We are particularly interested in the contribution of
 observation and alert modules.
+
+
+## Plugins
+
+### Antares
+The [tom-antares](https://github.com/TOMToolkit/tom_antares) plugin adds support
+for querying the Antares broker for targets of interest.

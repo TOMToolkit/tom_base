@@ -98,4 +98,4 @@ class TestAuthScheme(TestCase):
     def test_user_can_access_view(self):
         response = self.client.get(reverse('tom_targets:list'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Add a target')
+        self.assertContains(response, 'Create Targets')

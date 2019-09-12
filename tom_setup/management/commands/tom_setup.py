@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 import sys
 import os
+import mimetypes
 from django.conf import settings
 from django.template.loader import get_template
 from django.core.management import call_command
@@ -32,11 +33,17 @@ class Command(BaseCommand):
             'DO NOT RUN THIS SCRIPT ON AN EXISTING TOM. It will override any custom settings you may '
             'already have.\n'
         )
-        prompt = 'Do you wish to continue? {}'.format(self.style.WARNING('[Y/n] '))
+        prompt = 'Do you wish to continue? {}'.format(self.style.WARNING('[y/N] '))
         self.stdout.write(welcome_text)
-
-        if not input(prompt).upper() == 'Y':
-            self.exit()
+        while True:
+            response = input(prompt).lower()
+            if not response or response == 'n':
+                self.stdout.write('Aborting installation.')
+                self.exit()
+            elif response == 'y':
+                break
+            else:
+                self.stdout.write('Invalid response. Please try again.')
 
     def check_python(self):
         self.status('Checking Python version... ')

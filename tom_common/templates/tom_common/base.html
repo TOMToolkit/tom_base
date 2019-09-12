@@ -27,32 +27,22 @@
 
       <div class="collapse navbar-collapse" id="navbarsExampleDefault">
         <ul class="navbar-nav mr-auto">
-          <li class="nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-            <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" data-toggle="dropdown">Targets</a>
-            <ul class="dropdown-menu">
-              <li class="nav-item {% if request.resolver_match.namespace == 'targets' %}active{% endif %}">
-                <a class="nav-link" href="{% url 'targets:list' %}"><font color="black">Targets</font></a>
-              </li>
-              <li class="nav-item {% if request.resolver_match.namespace == 'targets' %}active{% endif %}">
-                <a class="nav-link" href="{% url 'targets:targetgrouping' %}"><font color="black">Target Grouping</font></a>
-              </li>
-            </ul>
-          </li>
-          <li class="nav-item {% if request.resolver_match.namespace == 'alerts' %}active{% endif %}">
-            <a class="nav-link" href="{% url 'alerts:list' %}">Alerts</a>
-          </li>
-          <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
-              <a class="nav-link" href="{% url 'tom_observations:list' %}">Observations</a>
-          </li>
-          <li class="nav-item {% if request.resolver_match.namespace == 'dataproducts' %}active{% endif %}">
-              <a class="nav-link" href="{% url 'tom_dataproducts:list' %}">Data</a>
-          </li>
-          <li class="nav-item {% if 'user' in request.resolver_match.url_name %}active{% endif %}">
-            <a class="nav-link" href="{% url 'user-list' %}">Users</a>
-          </li>
+          {% comment "Navbar Content Template" %}
+          The navbar_content.html template defines the list (li) of nav-items that appear
+          in the navbar-nav (ul).
+
+          To customize your navbar-nav in your TOM:
+          1. Create a templates/tom_common directory at the project level.
+          2. Copy tom_common/templates/tom_common/navbar_content.html to your project's
+             templates/tom_common directory.
+          3. Customize your navbar content by editing your navbar_content.html.
+
+          For more information,
+          see the Django tutorial, "Writing your first Django app",
+          Part 7, Section "Customize the admin look and feel"
+          {% endcomment %}
+          {% include 'tom_common/navbar_content.html' %}
+
         </ul>
         <ul class="navbar-nav ml-auto">
         {% if user.is_authenticated %}
@@ -71,6 +61,7 @@
             <a class="btn btn-outline-success" title="logout" href="{% url 'login' %}">Login</a>
           </li>
         {% endif %}
+        </ul>
       </div>
     </nav>
 
