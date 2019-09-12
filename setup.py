@@ -46,7 +46,6 @@ setup(
         'pillow',
         'fits2image',
         'specutils',
-        'antares-client',
     ],
     extras_require={
         'test': ['factory_boy', 'rise-set']
