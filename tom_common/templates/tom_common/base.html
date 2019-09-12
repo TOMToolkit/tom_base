@@ -11,8 +11,8 @@
     <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
     {% block additional_css %}
     {% endblock %}
-    <link rel="icon" type="image/png" href="{% static 'tom_common/img/favicon-32x32.png' %}" sizes="32x32" />
-    <link rel="icon" type="image/png" href="{% static 'tom_common/img/favicon-16x16.png' %}" sizes="16x16" />
+    <link rel="icon" type="image/x-icon" href="{% static 'tom_common/img/favicon-32.ico' %}" sizes="32x32" />
+    <link rel="icon" type="image/x-icon" href="{% static 'tom_common/img/favicon-16.ico' %}" sizes="16x16" />
 
     {% bootstrap_javascript jquery='True' %}
 
@@ -20,39 +20,37 @@
   </head>
   <body>
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-      <a class="navbar-brand" href="/"><img src="{% static 'tom_common/img/icon.png' %}" class="img-fluid">TOM Toolkit</a>
+      <a class="navbar-brand" href="/"><img src="{% static 'tom_common/img/logo-color-cropped.png' %}" class="img-fluid"> TOM Toolkit</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
 
       <div class="collapse navbar-collapse" id="navbarsExampleDefault">
         <ul class="navbar-nav mr-auto">
-          <li class="nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-            <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
-          </li>
-          <li class="nav-item {% if request.resolver_match.namespace == 'targets' %}active{% endif %}">
-            <a class="nav-link" href="{% url 'targets:list' %}">Targets</a>
-          </li>
-          <li class="nav-item {% if request.resolver_match.namespace == 'alerts' %}active{% endif %}">
-            <a class="nav-link" href="{% url 'alerts:list' %}">Alerts</a>
-          </li>
-          <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
-              <a class="nav-link" href="{% url 'tom_observations:list' %}">Observations</a>
-          </li>
-          <li class="nav-item {% if request.resolver_match.namespace == 'dataproducts' %}active{% endif %}">
-              <a class="nav-link" href="{% url 'tom_dataproducts:list' %}">Data</a>
-          </li>
-          <li class="nav-item {% if 'user' in request.resolver_match.url_name %}active{% endif %}">
-            <a class="nav-link" href="{% url 'user-list' %}">Users</a>
-          </li>
+          {% comment "Navbar Content Template" %}
+          The navbar_content.html template defines the list (li) of nav-items that appear
+          in the navbar-nav (ul).
+
+          To customize your navbar-nav in your TOM:
+          1. Create a templates/tom_common directory at the project level.
+          2. Copy tom_common/templates/tom_common/navbar_content.html to your project's
+             templates/tom_common directory.
+          3. Customize your navbar content by editing your navbar_content.html.
+
+          For more information,
+          see the Django tutorial, "Writing your first Django app",
+          Part 7, Section "Customize the admin look and feel"
+          {% endcomment %}
+          {% include 'tom_common/navbar_content.html' %}
+
         </ul>
         <ul class="navbar-nav ml-auto">
         {% if user.is_authenticated %}
           <li class="nav-item">
             {% if user.first_name or user.last_name %}
-            <a class="nav-link" href="{% url 'account-update' %}">{{ user.first_name }} {{ user.last_name }}</a>
+            <a class="nav-link" href="{% url 'user-update' user.id %}">{{ user.first_name }} {{ user.last_name }}</a>
             {% else %}
-            <a class="nav-link" href="{% url 'account-update' %}">User {{ user.id }}</a>
+            <a class="nav-link" href="{% url 'user-update' user.id %}">User {{ user.id }}</a>
             {% endif %}
           </li>
           <li>
@@ -63,6 +61,7 @@
             <a class="btn btn-outline-success" title="logout" href="{% url 'login' %}">Login</a>
           </li>
         {% endif %}
+        </ul>
       </div>
     </nav>
 

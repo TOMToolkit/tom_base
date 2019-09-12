@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django_extensions',
+    'guardian',
     'tom_common',
     'django_comments',
     'bootstrap4',
@@ -122,6 +123,10 @@ AUTH_PASSWORD_VALIDATORS = [
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'guardian.backends.ObjectPermissionBackend',
+)
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
@@ -136,7 +141,7 @@ USE_L10N = False
 
 USE_TZ = True
 
-DATETIME_FORMAT = 'Y-m-d H:m:s'
+DATETIME_FORMAT = 'Y-m-d H:i:s'
 DATE_FORMAT = 'Y-m-d'
 
 
@@ -174,13 +179,27 @@ LOGGING = {
     }
 }
 
-TARGET_TYPE = 'NON_SIDEREAL'
+TARGET_TYPE = 'SIDEREAL'
 FACILITIES = {
     'LCO': {
         'portal_url': 'https://observe.lco.global',
         'api_key': os.getenv('LCO_API_KEY', ''),
     }
 }
+
+# Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"
+# See https://tomtoolkit.github.io/docs/target_fields for documentation on this feature
+# For example:
+# EXTRA_FIELDS = [
+#     {'name': 'redshift', 'type': 'number'},
+#     {'name': 'discoverer', 'type': 'string'}
+#     {'name': 'eligible', 'type': 'boolean'},
+#     {'name': 'dicovery_date', 'type': 'datetime'}
+# ]
+EXTRA_FIELDS = []
+
+# Define custom DataProcessor class
+# DATA_PROCESSOR_CLASS = 'mytom.custom_data_processor.CustomDataProcessor'
 
 # Authentication strategy can either be LOCKED (required login for all views)
 # or READ_ONLY (read only access to views)
@@ -192,15 +211,17 @@ OPEN_URLS = []
 
 HOOKS = {
     'target_post_save': 'tom_common.hooks.target_post_save',
-    'observation_change_state': 'tom_common.hooks.observation_change_state'
+    'observation_change_state': 'tom_common.hooks.observation_change_state',
+    'data_product_post_upload': 'tom_dataproducts.hooks.data_product_post_upload'
 }
 
-DATA_TYPES = (
-    ('SPECTROSCOPY', 'Spectroscopy'),
-    ('PHOTOMETRY', 'Photometry')
-)
+AUTO_THUMBNAILS = False
+
+THUMBNAIL_MAX_SIZE = (0, 0)
+
+THUMBNAIL_DEFAULT_SIZE = (200, 200)
 
 try:
-    from local_settings import * # noqa
+    from local_settings import *  # noqa
 except ImportError:
     pass

@@ -1,0 +1,11 @@
+{% load bootstrap4 %}
+{% if user.is_authenticated %}
+<h4>Upload a data product</h4>
+<form method="POST" action="{% url 'tom_dataproducts:upload' %}" enctype="multipart/form-data">
+  {% csrf_token %}
+  {% bootstrap_form data_product_form %}
+  {% buttons %}
+  <input type="submit" class="btn btn-primary" value="Upload" name="upload_dataproduct_form">
+  {% endbuttons %}
+</form>
+{% endif %}

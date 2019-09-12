@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
+import tempfile
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django_extensions',
+    'guardian',
     'tom_common',
     'django_comments',
     'bootstrap4',
@@ -66,7 +68,7 @@ MIDDLEWARE = [
     'tom_common.middleware.ExternalServiceMiddleware',
 ]
 
-ROOT_URLCONF = 'tom_common.urls'
+ROOT_URLCONF = '{{ PROJECT_NAME }}.urls'
 
 TEMPLATES = [
     {
@@ -122,6 +124,11 @@ AUTH_PASSWORD_VALIDATORS = [
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'guardian.backends.ObjectPermissionBackend',
+)
+
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
 
@@ -164,6 +171,16 @@ LOGGING = {
     }
 }
 
+# Caching
+# https://docs.djangoproject.com/en/dev/topics/cache/#filesystem-caching
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': tempfile.gettempdir()
+    }
+}
+
 # TOM Specific configuration
 TARGET_TYPE = '{{ TARGET_TYPE }}'
 
@@ -195,6 +212,28 @@ FACILITIES = {
     },
 }
 
+TOM_ALERT_CLASSES = [
+    'tom_alerts.brokers.mars.MARSBroker',
+    'tom_alerts.brokers.lasair.LasairBroker',
+    'tom_alerts.brokers.scout.ScoutBroker',
+    'tom_alerts.brokers.antares.AntaresBroker'
+]
+
+BROKER_CREDENTIALS = {
+
+}
+
+# Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"
+# See https://tomtoolkit.github.io/docs/target_fields for documentation on this feature
+# For example:
+# EXTRA_FIELDS = [
+#     {'name': 'redshift', 'type': 'number'},
+#     {'name': 'discoverer', 'type': 'string'}
+#     {'name': 'eligible', 'type': 'boolean'},
+#     {'name': 'dicovery_date', 'type': 'datetime'}
+# ]
+EXTRA_FIELDS = []
+
 # Authentication strategy can either be LOCKED (required login for all views)
 # or READ_ONLY (read only access to views)
 AUTH_STRATEGY = 'READ_ONLY'
@@ -207,6 +246,12 @@ HOOKS = {
     'target_post_save': 'tom_common.hooks.target_post_save',
     'observation_change_state': 'tom_common.hooks.observation_change_state'
 }
+
+AUTO_THUMBNAILS = False
+
+THUMBNAIL_MAX_SIZE = (0, 0)
+
+THUMBNAIL_DEFAULT_SIZE = (200, 200)
 
 try:
     from local_settings import * # noqa

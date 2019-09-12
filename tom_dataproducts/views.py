@@ -3,7 +3,7 @@ from io import StringIO
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView, DeleteView
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView
 from django_filters.views import FilterView
 from django.views.generic import View, ListView
 from django.views.generic.base import RedirectView
@@ -15,12 +15,15 @@ from django.core.management import call_command
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
 from django.http import HttpResponseRedirect
+from guardian.shortcuts import get_objects_for_user
 
-from .models import DataProduct, DataProductGroup
+from .models import DataProduct, DataProductGroup, ReducedDatum
+from .exceptions import InvalidFileFormatException
 from .forms import AddProductToGroupForm, DataProductUploadForm
 from .filters import DataProductFilter
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
+from tom_common.hooks import run_hook
 
 
 class DataProductSaveView(LoginRequiredMixin, View):
@@ -51,60 +54,54 @@ class DataProductSaveView(LoginRequiredMixin, View):
         )
 
 
-class DataProductTagView(LoginRequiredMixin, UpdateView):
-    model = DataProduct
-    fields = ['tag']
-    template_name = 'tom_dataproducts/dataproduct_tag.html'
-
-    def form_valid(self, form):
-        product = form.save(commit=False)
-        featured_images_with_tag = DataProduct.objects.filter(
-            featured=True,
-            tag=product.tag,
-            target=self.object.target
-        )
-        if len(featured_images_with_tag) > 0:
-            product.featured = False
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        referer = self.request.GET.get('next', None)
-        referer = urlparse(referer).path if referer else '/'
-        return referer
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context['next'] = self.request.META.get('HTTP_REFERER', '/')
-        return context
-
-
 class DataProductUploadView(LoginRequiredMixin, FormView):
     form_class = DataProductUploadForm
-    template_name = 'tom_dataproducts/partials/upload_dataproduct.html'
 
-    def post(self, request, *args, **kwargs):
-        form = self.get_form()
-        if form.is_valid():
-            target = form.cleaned_data['target']
-            if not target:
-                observation_record = form.cleaned_data['observation_record']
-                target = observation_record.target
-            else:
-                observation_record = None
-            tag = form.cleaned_data['tag']
-            data_product_files = request.FILES.getlist('files')
-            for f in data_product_files:
-                dp = DataProduct(
-                    target=target,
-                    observation_record=observation_record,
-                    data=f,
-                    product_id=None,
-                    tag=tag
-                )
-                dp.save()
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+    def form_valid(self, form):
+        target = form.cleaned_data['target']
+        if not target:
+            observation_record = form.cleaned_data['observation_record']
+            target = observation_record.target
         else:
-            return super().form_invalid(form)
+            observation_record = None
+        tag = form.cleaned_data['tag']
+        data_product_files = self.request.FILES.getlist('files')
+        successful_uploads = []
+        for f in data_product_files:
+            dp = DataProduct(
+                target=target,
+                observation_record=observation_record,
+                data=f,
+                product_id=None,
+                tag=tag
+            )
+            dp.save()
+            try:
+                run_hook('data_product_post_upload', dp)
+                successful_uploads.append(str(dp))
+            except InvalidFileFormatException:
+                ReducedDatum.objects.filter(data_product=dp).delete()
+                dp.delete()
+                messages.error(
+                    self.request,
+                    'There was a problem uploading your file--the file format was invalid for file: {0}'.format(str(dp))
+                )
+            except Exception:
+                ReducedDatum.objects.filter(data_product=dp).delete()
+                dp.delete()
+                messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))
+        if successful_uploads:
+            messages.success(
+                self.request,
+                'Successfully uploaded: {0}'.format('\n'.join([p for p in successful_uploads]))
+            )
+
+        return redirect(form.cleaned_data.get('referrer', '/'))
+
+    def form_invalid(self, form):
+        # TODO: Format error messages in a more human-readable way
+        messages.error(self.request, 'There was a problem uploading your file: {}'.format(form.errors.as_json()))
+        return redirect(form.cleaned_data.get('referrer', '/'))
 
 
 class DataProductDeleteView(LoginRequiredMixin, DeleteView):
@@ -117,6 +114,7 @@ class DataProductDeleteView(LoginRequiredMixin, DeleteView):
         return referer
 
     def delete(self, request, *args, **kwargs):
+        ReducedDatum.objects.filter(data_product=self.get_object()).delete()
         self.get_object().data.delete()
         return super().delete(request, *args, **kwargs)
 
@@ -132,6 +130,11 @@ class DataProductListView(FilterView):
     paginate_by = 25
     filterset_class = DataProductFilter
     strict = False
+
+    def get_queryset(self):
+        return super().get_queryset().filter(
+            target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+        )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -210,7 +213,7 @@ class DataProductGroupDataView(LoginRequiredMixin, FormView):
         )
 
 
-class UpdateReducedDataGroupingView(LoginRequiredMixin, RedirectView):
+class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
     def get(self, request, *args, **kwargs):
         target_id = request.GET.get('target_id', None)
         out = StringIO()

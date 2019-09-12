@@ -1,4 +1,5 @@
 import requests
+import json
 from requests.exceptions import HTTPError
 from urllib.parse import urlencode
 from dateutil.parser import parse
@@ -6,11 +7,12 @@ from django import forms
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from astropy.time import Time, TimezoneInfo
 
-from tom_alerts.alerts import GenericQueryForm, GenericAlert
+from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
 from tom_targets.models import Target, TargetExtra, TargetName
-from tom_dataproducts.models import ReducedDatumSource, ReducedDatum
+from tom_dataproducts.models import ReducedDatum
 
 MARS_URL = 'https://mars.lco.global'
+filters = {0: 'g', 1: 'r', 2: 'i'}
 
 
 class MARSQueryForm(GenericQueryForm):
@@ -24,9 +26,9 @@ class MARSQueryForm(GenericQueryForm):
         label='Time Upper',
         widget=forms.TextInput(attrs={'type': 'date'})
     )
-    since__time = forms.IntegerField(
+    time__since = forms.IntegerField(
         required=False,
-        label='Since Time',
+        label='Time Since',
         help_text='Alerts younger than this number of seconds'
     )
     jd__gt = forms.FloatField(required=False, label='JD Lower')
@@ -79,6 +81,7 @@ class MARSQueryForm(GenericQueryForm):
         label='Delta Mag Ref Upper'
     )
     rb__gte = forms.FloatField(required=False, label='Real/Bogus Lower')
+    drb__gte = forms.FloatField(required=False, label='Deep-Learning Real/Bogus Lower')
     classtar__gte = forms.FloatField(required=False, label='Classtar Lower')
     classtar__lte = forms.FloatField(required=False, label='Classtar Upper')
     fwhm__lte = forms.FloatField(required=False, label='FWHM Upper')
@@ -95,7 +98,7 @@ class MARSQueryForm(GenericQueryForm):
             self.common_layout,
             Fieldset(
                 'Time based filters',
-                'since__time',
+                'time__since',
                 Div(
                     Div(
                         'time__gt',
@@ -160,11 +163,12 @@ class MARSQueryForm(GenericQueryForm):
             'filter',
             'sigmapsf__lte',
             'rb__gte',
+            'drb__gte',
             'fwhm__lte'
         )
 
 
-class MARSBroker(object):
+class MARSBroker(GenericBroker):
     name = 'MARS'
     form = MARSQueryForm
 
@@ -188,7 +192,7 @@ class MARSBroker(object):
         if parsed['has_next'] and parameters['page'] < 10:
             parameters['page'] += 1
             alerts += self.fetch_alerts(parameters)
-        return alerts
+        return iter(alerts)
 
     def fetch_alert(self, id):
         url = f'{MARS_URL}/{id}/?format=json'
@@ -198,36 +202,37 @@ class MARSBroker(object):
         return parsed
 
     def process_reduced_data(self, target, alert=None):
-        alerts = []
-        if alert:
-            alerts = [alert]
-        else:
+        if not alert:
             try:
-                alert_sources = ReducedDatumSource.objects.filter(
-                    id__in=ReducedDatum.objects.filter(target=target).values_list('source').distinct(),
-                    name=self.name
-                )
-                for alert_source in alert_sources:
-                    alerts.append(self.fetch_alert(alert_source.location))
+                target_datum = ReducedDatum.objects.filter(
+                    target=target,
+                    data_type='PHOTOMETRY',
+                    source_name=self.name).first()
+                if not target_datum:
+                    return
+                alert = self.fetch_alert(target_datum.source_location)
             except HTTPError:
                 raise Exception('Unable to retrieve alert information from broker')
-        for alert in alerts:
-            reduced_datum_source, created = ReducedDatumSource.objects.get_or_create(
-                name=self.name,
-                location=alert['lco_id']
-            )
-            for prv_candidate in alert.get('prv_candidate'):
-                if all([key in prv_candidate['candidate'] for key in ['jd', 'magpsf']]):    
-                    jd = Time(prv_candidate['candidate']['jd'], format='jd', scale='utc')
-                    jd.to_datetime(timezone=TimezoneInfo())
-                    magnitude = prv_candidate['candidate']['magpsf']
-                    rd, created = ReducedDatum.objects.get_or_create(
-                        timestamp=jd.to_datetime(timezone=TimezoneInfo()),
-                        value=magnitude,
-                        source=reduced_datum_source,
-                        data_type='PHOTOMETRY',
-                        target=target)
-                    rd.save()
+        if not alert.get('prv_candidate'):
+            alert = self.fetch_alert(alert['lco_id'])
+
+        candidates = [{'candidate': alert.get('candidate')}] + alert.get('prv_candidate')
+        for candidate in candidates:
+            if all([key in candidate['candidate'] for key in ['jd', 'magpsf', 'fid']]):
+                jd = Time(candidate['candidate']['jd'], format='jd', scale='utc')
+                jd.to_datetime(timezone=TimezoneInfo())
+                value = {
+                    'magnitude': candidate['candidate']['magpsf'],
+                    'filter': filters[candidate['candidate']['fid']]
+                }
+                rd, created = ReducedDatum.objects.get_or_create(
+                    timestamp=jd.to_datetime(timezone=TimezoneInfo()),
+                    value=json.dumps(value),
+                    source_name=self.name,
+                    source_location=alert['lco_id'],
+                    data_type='photometry',
+                    target=target)
+                rd.save()
 
     def to_target(self, alert):
         alert_copy = alert.copy()
@@ -243,7 +248,6 @@ class MARSBroker(object):
             if v is not None:
                 TargetExtra.objects.create(target=target, key=k, value=v)
         TargetName.objects.create(target=target, name=alert_copy['objectId'])
-
         return target
 
     def to_generic_alert(self, alert):

@@ -1,43 +1,25 @@
-# TOM Toolkit - Base Project
+# TOM Toolkit
 [![Build Status](https://travis-ci.org/TOMToolkit/tom_base.svg?branch=master)](https://travis-ci.org/TOMToolkit/tom_base)
+[Documentation](https://tom-toolkit.readthedocs.io/en/latest/)
 
-This is the starting point for all new TOMs. This project provides
-a base TOM with much of the functionality provided by the TOM Toolkit
-enabled by default. If you are looking to start a new TOM this is where
-you start.
+![logo](tom_common/static/tom_common/img/logo-color.png)
 
-## Module Descriptions
+The TOM Toolkit is a web framework for building TOMs: Target and Observation
+Managers. TOMs are meant to facilitate collaborative astronomical observing
+projects. A typical TOM allows it's users to curate target lists, request
+observations of those targets at various observatories as well as manage and
+organize their data. [Read more](https://tom-toolkit.readthedocs.io/en/latest/about.html) about TOMs.
 
-### TOM Targets
-Provides the target storage and import capabilities of the TOM.
+## Getting started with the TOM Toolkit
+The [getting started guide](https://tom-toolkit.readthedocs.io/en/latest/introduction/getting_started.html)
+will guide you through the process of setting up a TOM for the first time.
 
-### Tom Alerts
-A gerneric module for working with astronomical alert streams. Transforms alerts
-into targets in the TOM Targets module.
+## Reporting issues/feature requests
+Please use the [issue tracker](https://github.com/TOMToolkit/tom_base/issues) to
+report any issues or support questions.
 
-Implementations:
-* LCO
-
-### TOM Catalogs
-Provides online catalog searching and the ability to import TOM Targets from
-search results.
-
-Implementations:
-* SIMBAD
-* JPL Horizons
-* NED
-
-### TOM Observations
-A framework for submitting observations and retrieving data products from
-astronomical observatories.
-
-Implementations:
-* LCO
-
-### TOM Common
-Common functions and utilities shared by other modules.
-
-## Quickstart
-
-Please read the
-[Getting Started guide](https://tomtoolkit.github.io/docs/getting_started)
+## Contributing to the project
+If you'd like to contribute to the TOM Toolkit, first of all, thanks! Secondly, we
+have a [contribution guide](https://tom-toolkit.readthedocs.io/en/latest/contributing.html) that
+you might find helpful. We are particularly interested in the contribution of
+observation and alert modules.

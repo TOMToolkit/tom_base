@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load bootstrap4 observation_extras %}
 {% block title %}Observations{% endblock %}
 {% block content %}
 <div class="row">
@@ -14,8 +14,20 @@
         </span>
       </div>
     </div>
+    {% observation_distribution filter.qs %}
     <table class="table">
-      <thead><tr><th>View</th><th>Target</th><th>Facility</th><th>Status</th><th>Saved Data</th><th>Download All</th></tr></thead>
+      <thead>
+        <tr>
+          <th>View</th>
+          <th>Target</th>
+          <th>Facility</th>
+          <th>Status</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Saved Data</th>
+          <th>Download All</th>
+        </tr>
+      </thead>
       <tbody>
         {% for observation in filter.qs %}
         <tr>
@@ -23,6 +35,8 @@
           <td><a href="{% url 'tom_targets:detail' observation.target.id %}" title="{{ observation.target.id }}">{{ observation.target.targetname_set.all|join:", " }}</a></td>
           <td>{{ observation.facility }}</td>
           <td>{{ observation.status }}</td>
+          <td>{{ observation.scheduled_start }}</td>
+          <td>{{ observation.scheduled_end }}</td>
           <td>{{ observation.dataproduct_set.count }}</td>
           <td>
             {% if observation.status == 'COMPLETED' %}

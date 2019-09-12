@@ -9,6 +9,11 @@
   <div class="col-md-4">
     <div id="target-info">
       {% target_feature object %}
+      {% if object.future_observations %}
+      <div class="alert alert-success">
+        {{ object.future_observations|length }} upcoming observation{{ object.future_observations|pluralize }}
+      </div>
+      {% endif %}
       {% target_data object %}
       {% aladin object %}
     </div>
@@ -22,7 +27,16 @@
         <span class="nav-link" data-target="#observations" data-toggle="tab">Observations</span>
       </li>
       <li class="nav-item">
-        <span class="nav-link" data-target="#data-products" data-toggle="tab">Data</span>
+        <span class="nav-link" data-target="#manage-data" data-toggle="tab">Manage Data</span>
+      </li>
+      <li class="nav-item">
+        <span class="nav-link" data-target="#manage-groups" data-toggle="tab">Manage Groups</span>
+      </li>
+      <li class="nav-item">
+        <span class="nav-link" data-target="#photometry" data-toggle="tab">Photometry</span>
+      </li>
+      <li class="nav-item">
+        <span class="nav-link" data-target="#spectroscopy" data-toggle="tab">Spectroscopy</span>
       </li>
     </ul>
     <div class="tab-content">
@@ -38,10 +52,18 @@
         <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations Status</a>
         {% observation_list object %}
       </div>
-      <div class="tab-pane" id="data-products">
-        {% reduced_data_lightcurve target %}
-        {% upload_dataproduct %}
+      <div class="tab-pane" id="manage-data">
+        {% include 'tom_dataproducts/upload_dataproduct.html' %}
         {% dataproduct_list_for_target object %}
+      </div>
+      <div class="tab-pane" id="manage-groups">
+        {% target_groups target %}
+      </div>
+      <div class="tab-pane" id="photometry">
+        {% photometry_for_target target %}
+        </div>
+      <div class="tab-pane" id="spectroscopy">
+        {% spectroscopy_for_target target %}
       </div>
       {% comments_enabled as comments_are_enabled %}
       <hr/>

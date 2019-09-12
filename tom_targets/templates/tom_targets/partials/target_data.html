@@ -11,8 +11,10 @@
     <dd class="col-sm-6">{{ target_name.name }}</dd>
   {% endfor %}
   {% for key, value in target.as_dict.items %}
+  {% if value %}
   <dt class="col-sm-6">{% verbose_name target key %}</dt>
   <dd class="col-sm-6">{{ value|truncate_number }}</dd>
+  {% endif %}
   {% if key == 'ra' %}
     <dt class="col-sm-6">&nbsp;</dt>
     <dd class="col-sm-6">{{ value|deg_to_sexigesimal:"hms" }}</dd>
@@ -24,8 +26,17 @@
   {% endfor %}
 </dl>
 <dl class="row">
-{% for target_extra in target.targetextra_set.all %}
-  <dt class="col-sm-6">{{ target_extra.key }}</dt>
-  <dd class="col-sm-6">{{ target_extra.value }}</dd>
+{% for key, value in target.extra_fields.items %}
+  {% if key in display_extras %}
+    <dt class="col-sm-6">{{ key }}</dt>
+    <dd class="col-sm-6">{{ value }}</dd>
+  {% endif %}
+{% endfor %}
+</dl>
+<h4>Tags</h4>
+<dl class="row">
+{% for key, value in target.tags.items %}
+  <dt class="col-sm-6">{{ key }}</dt>
+  <dd class="col-sm-6">{{ value }}</dd>
 {% endfor %}
 </dl>

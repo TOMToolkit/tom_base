@@ -29,4 +29,11 @@ class DataProductUploadForm(forms.Form):
             attrs={'multiple': True}
         )
     )
-    tag = forms.ChoiceField(choices=DataProduct.DATA_PRODUCT_TAGS)
+    tag = forms.ChoiceField(
+        choices=DataProduct.DATA_PRODUCT_TYPES,
+        widget=forms.RadioSelect(),
+        required=True
+    )
+    referrer = forms.CharField(
+        widget=forms.HiddenInput()
+    )

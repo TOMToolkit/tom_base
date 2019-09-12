@@ -3,5 +3,12 @@
 {% block title %}Submit Observation{% endblock %}
 {% block content %}
 <h3>Submit an observation to {{ form.facility.value }}</h3>
+<ul class="nav nav-tabs">
+  {% for k, v in type_choices %}
+    <li class="nav-item">
+      <a class="nav-link {% if request.GET.observation_type == k or observation_type not in request.GET and first %} active {% endif %}" href="{% url 'observations:create' facility=form.facility.value %}?target_id={{ form.target_id.value }}&observation_type={{ k }}">{{ v }}</a>
+    </li>
+  {% endfor %}
+</ul>
 {% crispy form %}
 {% endblock %}

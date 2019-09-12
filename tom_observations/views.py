@@ -1,5 +1,5 @@
 from io import StringIO
-
+import django_filters
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormView
 from django_filters.views import FilterView
@@ -8,20 +8,38 @@ from django.urls import reverse
 from django.shortcuts import redirect
 from django.core.management import call_command
 from django.contrib import messages
+from guardian.shortcuts import get_objects_for_user
 
 from .models import ObservationRecord
 from .forms import ManualObservationForm
-from tom_dataproducts.forms import AddProductToGroupForm
+from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class
 
 
+class ObservationFilter(django_filters.FilterSet):
+    ordering = django_filters.OrderingFilter(
+        fields=['scheduled_start', 'scheduled_end', 'status', 'created', 'modified']
+    )
+    scheduled_start = django_filters.DateTimeFromToRangeFilter()
+    scheduled_end = django_filters.DateTimeFromToRangeFilter()
+
+    class Meta:
+        model = ObservationRecord
+        fields = ['ordering', 'observation_id', 'target_id', 'facility', 'status']
+
+
 class ObservationListView(FilterView):
+    filterset_class = ObservationFilter
     template_name = 'tom_observations/observation_list.html'
     paginate_by = 25
     model = ObservationRecord
-    filterset_fields = ['observation_id', 'target_id', 'facility', 'status']
     strict = False
+
+    def get_queryset(self, *args, **kwargs):
+        return ObservationRecord.objects.filter(
+            target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+        )
 
     def get(self, request, *args, **kwargs):
         update_status = request.GET.get('update_status', False)
@@ -53,8 +71,24 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     def get_facility_class(self):
         return get_service_class(self.get_facility())
 
+    def get_observation_type(self):
+        if self.request.method == 'GET':
+            # TODO: This appears to not work as intended.
+            return self.request.GET.get('observation_type', self.get_facility_class().observation_types[0])
+        elif self.request.method == 'POST':
+            return self.request.POST.get('observation_type')
+
+    def get_context_data(self, **kwargs):
+        context = super(ObservationCreateView, self).get_context_data(**kwargs)
+        context['type_choices'] = self.get_facility_class().observation_types
+        return context
+
     def get_form_class(self):
-        return self.get_facility_class().form
+        if self.request.GET:
+            observation_type = self.request.GET.get('observation_type')
+        elif self.request.POST:
+            observation_type = self.request.POST.get('observation_type')
+        return self.get_facility_class()().get_form(observation_type)
 
     def get_form(self):
         form = super().get_form()
@@ -69,13 +103,14 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             raise Exception('Must provide target_id')
         initial['target_id'] = self.get_target_id()
         initial['facility'] = self.get_facility()
+        initial['observation_type'] = self.get_observation_type()
         return initial
 
     def form_valid(self, form):
         # Submit the observation
         facility = self.get_facility_class()
         target = self.get_target()
-        observation_ids = facility().submit_observation(form.observation_payload)
+        observation_ids = facility().submit_observation(form.observation_payload())
 
         for observation_id in observation_ids:
             # Create Observation record
@@ -125,6 +160,11 @@ class ManualObservationCreateView(LoginRequiredMixin, FormView):
 class ObservationRecordDetailView(DetailView):
     model = ObservationRecord
 
+    def get_queryset(self, *args, **kwargs):
+        return ObservationRecord.objects.filter(
+            target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+        )
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['form'] = AddProductToGroupForm()
@@ -136,4 +176,11 @@ class ObservationRecordDetailView(DetailView):
                 data_product.get_file_extension() == '.fits' else newest_image
         if newest_image:
             context['image'] = newest_image.get_image_data()
+        data_product_upload_form = DataProductUploadForm(
+            initial={
+                'observation_record': self.get_object(),
+                'referrer': reverse('tom_observations:detail', args=(self.get_object().id,))
+            }
+        )
+        context['data_product_form'] = data_product_upload_form
         return context

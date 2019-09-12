@@ -8,7 +8,7 @@
     </tr>
   </thead>
   <tbody>
-    {% for product in products.unsaved %}
+    {% for product in products %}
     <tr>
       <td>{{ product.created }}</td>
       <td><a href="{{ product.data }}">{{ product.filename }}</a></td>

@@ -1,6 +1,9 @@
 from django.db import models
 from django.urls import reverse
 from django.forms.models import model_to_dict
+from django.conf import settings
+from dateutil.parser import parse
+from datetime import datetime
 
 from tom_common.hooks import run_hook
 
@@ -13,10 +16,10 @@ SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
 ]
 
 NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
-    'mean_anomaly', 'arg_of_perihelion',
+    'scheme', 'mean_anomaly', 'arg_of_perihelion',
     'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
-    'eccentricity', 'ephemeris_period', 'ephemeris_period_err',
-    'ephemeris_epoch', 'ephemeris_epoch_err'
+    'eccentricity', 'epoch', 'epoch_of_perihelion', 'ephemeris_period',
+    'ephemeris_period_err', 'ephemeris_epoch', 'ephemeris_epoch_err'
 ]
 
 REQUIRED_SIDEREAL_FIELDS = ['ra', 'dec']
@@ -24,9 +27,109 @@ REQUIRED_NON_SIDEREAL_FIELDS = NON_SIDEREAL_FIELDS
 
 
 class Target(models.Model):
+    """
+    Class representing a target in a TOM
+
+    :param identifier: The identifier for this object, e.g. Kelt-16b.
+    :type identifier: str
+
+    :param name: The name of this target e.g. Barnard\'s star.
+    :type name: str
+
+    :param name2: An alternative name for this target.
+    :type name2: str
+
+    :param name3: An alternative name for this target.
+    :type name3: str
+
+    :param type: The type of this target.
+    :type type: str
+
+    :param created: The time at which this target was created in the TOM database.
+    :type type: datetime
+
+    :param modified: The time at which this target was changed in the TOM database.
+    :type type:
+
+    :param ra: Right Ascension, in degrees.
+    :type ra: float
+
+    :param dec: Declination, in degrees.
+    :type dec: float
+
+    :param epoch: Julian Years. Max 2100.
+    :type epoch: float
+
+    :param parallax: Parallax, in milliarcseconds.
+    :type parallax: float
+
+    :param pm_ra: Proper Motion: RA. Milliarsec/year.
+    :type pm_ra: float
+
+    :param pm_dec: Proper Motion: Dec. Milliarsec/year.
+    :type pm_dec: float
+
+    :param galactic_lng: Galactic Longitude in degrees.
+    :type galactic_lng: float
+
+    :param galactic_lat: Galactic Latitude in degrees.
+    :type galactic_lat: float
+
+    :param distance: Parsecs.
+    :type distance: float
+
+    :param distance_err: Parsecs.
+    :type distance_err: float
+
+    :param scheme: Orbital Element Scheme
+    :type scheme: str
+
+    :param mean_anomaly: Angle in degrees.
+    :type mean_anomaly: float
+
+    :param arg_of_perihelion: Argument of Perhihelion. J2000. Degrees.
+    :type arg_of_perihelion: float
+
+    :param eccentricity: Eccentricity
+    :type eccentricity: float
+
+    :param lng_asc_node: Longitude of Ascending Node. J2000. Degrees.
+    :type lng_asc_node: float
+
+    :param inclination: Inclination to the ecliptic. J2000. Degrees.
+    :type inclination: float
+
+    :param mean_daily_motion: Degrees per day.
+    :type mean_daily_motion: float
+
+    :param semimajor_axis: Semimajor Axis in AU
+    :type semimajor_axis: float
+
+    :param epoch_of_perihelion: Julian Date.
+    :type epoch_of_perihelion: float
+
+    :param ephemeris_period: Ephemeris period in days
+    :type ephemeris_period: float
+
+    :param ephemeris_period_err: Days
+    :type ephemeris_period_err: float
+
+    :param ephemeris_epoch: Days
+    :type ephemeris_epoch: float
+
+    :param ephemeris_epoch_err: Days
+    :type ephemeris_epoch_err: float
+    """
+
     SIDEREAL = 'SIDEREAL'
     NON_SIDEREAL = 'NON_SIDEREAL'
     TARGET_TYPES = ((SIDEREAL, 'Sidereal'), (NON_SIDEREAL, 'Non-sidereal'))
+
+    TARGET_SCHEMES = (
+        ('MPC_MINOR_PLANET', 'MPC Minor Planet'),
+        ('MPC_COMET', 'MPC Comet'),
+        ('JPL_MAJOR_PLANET', 'JPL Major Planet')
+    )
 
     identifier = models.CharField(
         max_length=100, verbose_name='Identifier', help_text='The identifier for this object, e.g. Kelt-16b.'
@@ -73,6 +176,9 @@ class Target(models.Model):
     distance_err = models.FloatField(
         null=True, blank=True, verbose_name='Distance Error', help_text='Parsecs.'
     )
+    scheme = models.CharField(
+        max_length=50, choices=TARGET_SCHEMES, verbose_name='Orbital Element Scheme', default='', blank=True
+    )
     mean_anomaly = models.FloatField(
         null=True, blank=True, verbose_name='Mean Anomaly', help_text='Angle in degrees.'
     )
@@ -97,6 +203,9 @@ class Target(models.Model):
     semimajor_axis = models.FloatField(
         null=True, blank=True, verbose_name='Semimajor Axis', help_text='In AU'
     )
+    epoch_of_perihelion = models.FloatField(
+        null=True, blank=True, verbose_name='Epoch of Perihelion', help_text='Julian Date.'
+    )
     ephemeris_period = models.FloatField(
         null=True, blank=True, verbose_name='Ephemeris Period', help_text='Days'
     )
@@ -114,8 +223,20 @@ class Target(models.Model):
         ordering = ('id',)
 
     def save(self, *args, **kwargs):
+        """
+        Saves Target model data to the database, including extra fields. After saving to the database, also runs the
+        hook ``target_post_save``. The hook run is the one specified in ``settings.py``.
+
+        :Keyword Arguments:
+            * extras (`dict`): dictionary of key/value pairs representing target attributes
+        """
+        extras = kwargs.pop('extras', {})
         created = False if self.id else True
         super().save(*args, **kwargs)
+        for k, v in extras.items():
+            target_extra, _ = TargetExtra.objects.get_or_create(target=self, key=k)
+            target_extra.value = v
+            target_extra.save()
         run_hook('target_post_save', target=self, created=created)
 
     def __str__(self):
@@ -125,12 +246,61 @@ class Target(models.Model):
         return reverse('targets:detail', kwargs={'pk': self.id})
 
     def featured_image(self):
+        """
+        Gets the ``DataProduct`` associated with this ``Target`` that is a FITS file and is uniquely marked as
+        "featured".
+
+        :returns: ``DataProduct`` with tag of ``fits_file`` and featured as ``True``
+        :rtype: DataProduct
+        """
         return self.dataproduct_set.filter(tag='fits_file', featured=True).first()
 
-    def light_curve(self):
-        return self.dataproduct_set.filter(tag='light_curve', featured=True).first()
+    @property
+    def future_observations(self):
+        """
+        Gets all observations scheduled for this ``Target``
+
+        :returns: List of ``ObservationRecord`` objects without a terminal status
+        :rtype: list
+        """
+        return [
+            obs for obs in self.observationrecord_set.all().order_by('scheduled_start') if not obs.terminal
+        ]
+
+    @property
+    def extra_fields(self):
+        """
+        Gets all ``TargetExtra`` fields associated with this ``Target``, provided the key is defined in ``settings.py``
+        ``EXTRA_FIELDS``
+
+        :returns: Dictionary of key/value pairs representing target attributes
+        :rtype: dict
+        """
+        defined_extras = [extra_field['name'] for extra_field in settings.EXTRA_FIELDS]
+        types = {extra_field['name']: extra_field['type'] for extra_field in settings.EXTRA_FIELDS}
+        return {te.key: te.typed_value(types[te.key])
+                for te in self.targetextra_set.filter(key__in=defined_extras)}
+
+    @property
+    def tags(self):
+        """
+        Gets all ``TargetExtra`` fields associated with this ``Target``, provided the key is `NOT` defined in
+        ``settings.py`` ``EXTRA_FIELDS``
+
+        :returns: Dictionary of key/value pairs representing target attributes
+        :rtype: dict
+        """
+        defined_extras = [extra_field['name'] for extra_field in settings.EXTRA_FIELDS]
+        return {te.key: te.value for te in self.targetextra_set.exclude(key__in=defined_extras)}
 
     def as_dict(self):
+        """
+        Returns dictionary representation of attributes, excluding all attributes not associated with the ``type`` of
+        this ``Target``.
+
+        :returns: Dictionary of key/value pairs representing target attributes
+        :rtype: dict
+        """
         if self.type == self.SIDEREAL:
             fields_for_type = SIDEREAL_FIELDS
         elif self.type == self.NON_SIDEREAL:
@@ -154,17 +324,103 @@ class TargetName(models.Model):
 
 
 class TargetExtra(models.Model):
+    """
+    Class representing a list of targets in a TOM.
+
+    :param target: The ``Target`` object this ``TargetExtra`` is associated with.
+
+    :param key: Denotation of the value represented by this ``TargetExtra`` object.
+    :type key: str
+
+    :param value: Value of the field stored in this object.
+    :type value: str
+
+    :param float_value: Float representation of the ``value`` field for this object, if applicable.
+    :type float_value: float
+
+    :param bool_value: Boolean representation of the ``value`` field for this object, if applicable.
+    :type bool_value: bool
+
+    :param time_value: Datetime representation of the ``value`` field for this object, if applicable.
+    :type time_value: datetime
+    """
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     key = models.CharField(max_length=200)
     value = models.TextField()
+    float_value = models.FloatField(null=True, blank=True)
+    bool_value = models.BooleanField(null=True, blank=True)
+    time_value = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ['target', 'key']
+
+    def __str__(self):
+        return f'{self.key}: {self.value}'
+
+    def save(self, *args, **kwargs):
+        """
+        Saves TargetExtra model data to the database. In the process, converts the string value of the ``TargetExtra``
+        to the appropriate type, and stores it in the corresponding field as well.
+        """
+        try:
+            self.float_value = float(self.value)
+        except (TypeError, ValueError, OverflowError):
+            self.float_value = None
+        try:
+            self.bool_value = bool(self.value)
+        except (TypeError, ValueError, OverflowError):
+            self.bool_value = None
+        try:
+            if isinstance(self.value, datetime):
+                self.time_value = self.value
+            else:
+                self.time_value = parse(self.value)
+        except (TypeError, ValueError, OverflowError) as e:
+            self.time_value = None
+
+        super().save(*args, **kwargs)
+
+    def typed_value(self, type_val):
+        """
+        Returns the value of this ``TargetExtra`` in the corresponding type provided by the caller. If the type is
+        invalid, returns the string representation.
+
+        :param type_val: Requested type of the ``TargetExtra`` ``value`` field
+        :type type_val: str
+
+        :returns: Requested typed value field of this object
+        :rtype: float, boolean, datetime, or str
+        """
+        if type_val == 'number':
+            return self.float_value
+        if type_val == 'boolean':
+            return self.bool_value
+        if type_val == 'datetime':
+            return self.time_value
+
+        return self.value
 
 
 class TargetList(models.Model):
+    """
+    Class representing a list of targets in a TOM.
+
+    :param name: The name of the target list
+    :type name: str
+
+    :param targets: Set of ``Target`` objects associated with this ``TargetList``
+
+    :param created: The time at which this object was created.
+    :type created: datetime
+    """
     name = models.CharField(max_length=200, help_text='The name of the target list.')
     targets = models.ManyToManyField(Target)
     created = models.DateTimeField(
         auto_now_add=True, help_text='The time which this target list was created in the TOM database.'
     )
+
+    class Meta:
+        ordering = ('-created', 'name',)
 
     def __str__(self):
         return self.name

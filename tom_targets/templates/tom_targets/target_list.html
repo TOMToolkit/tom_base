@@ -8,12 +8,21 @@
       <div class="col-md-12">
         <span class="float-right">
         {{ target_count }} Targets &nbsp;
+        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Create Targets
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+          <a class="dropdown-item" href="{% url 'targets:create' %}" title="Create a Target">Create a Target</a>
+          <a class="dropdown-item" href="{% url 'targets:import' %}" title="Import Targets">Import Targets</a>
+          <a class="dropdown-item" href="{% url 'tom_catalogs:query' %}" title="Catalog Search">Catalog Search</a>
+        </div>
         <a href="{% url 'dataproducts:update-reduced-data' %}" class="btn btn-primary" title="Update Targets">Update Targets</a>
-        <a href="{% url 'targets:create' %}" class="btn btn-primary" title="Add Target">Add a target</a>
-        <a href="{% url 'targets:import' %}" class="btn btn-primary" title="Import Targets">Import Targets</a>
-        </span>
+        <button onclick="document.getElementById('invisible-export-button').click()" class="btn btn-primary">Export Filtered Targets</button>
+         <!-- use an invisible button, because the key "Enter" event will triggered the first submit button and we want the default action to be applying filter -->
+      </span>
       </div>
     </div>
+    {% select_target_js %}
     {% target_distribution filter.qs %}
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
     <table class="table">
@@ -40,24 +49,25 @@
           {% if request.GET.type == 'SIDEREAL' %}
             <td>{{ target.ra }}</td>
             <td>{{ target.dec }}</td>
-          {% endif %}
-          <td>{{ target.observationrecord_set.count }}</td>
-          <td>{{ target.dataproduct_set.count }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5">
-            {% if target_count == 0 %}
-            No targets yet. You might want to <a href="{% url 'tom_targets:create' %}">create a target manually</a>
-            or <a href="{% url 'tom_alerts:list' %}">import one from an alert broker</a>.
-            {% else %}
-            No targets match those filters.
             {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+            <td>{{ target.observationrecord_set.count }}</td>
+            <td>{{ target.dataproduct_set.count }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">
+              {% if target_count == 0 %}
+              No targets yet. You might want to <a href="{% url 'tom_targets:create' %}">create a target manually</a>
+              or <a href="{% url 'tom_alerts:list' %}">import one from an alert broker</a>.
+              {% else %}
+              No targets match those filters.
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </form>
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
   </div>
   {{ filter.fields }}
@@ -69,6 +79,7 @@
           Filter
         </button>
         <a href="{% url 'targets:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
+        <button type="submit" formaction="{% url 'targets:export' %}" id="invisible-export-button" style="display:none"></button>
       {% endbuttons %}
     </form>
   </div>

@@ -1,4 +1,7 @@
 {% load bootstrap4 %}
+{% if products_page.has_other_pages %}
+  {% bootstrap_pagination products_page parameter_name="page_saved" %}
+{% endif%}
 <table class="table table-striped">
   <thead>
     <tr>
@@ -9,15 +12,13 @@
     </tr>
   </thead>
   <tbody>
-    {% for product in products.saved %}
+    {% for product in products_page %}
     <tr>
       <td><a href="{{ product.data.url }}">{{ product.get_file_name }}</a></td>
-      <td><a href="{% url 'tom_dataproducts:tag' product.id %}" title="Modify Tag">
-          {% if product.tag %}
-            {{ product.get_tag_display }}
-          {% else %}
-            set tag
-          {% endif %}
+      <td>
+        {% if product.tag %}
+          {{ product.get_tag_display }}
+        {% endif %}
       </a></td>
       <td>{{ product.created }}</td>
       <td><a href="{% url 'tom_dataproducts:delete' product.id %}" class="btnbtn-danger">Delete</a></td>
@@ -31,3 +32,6 @@
     {% endfor %}
   </tbody>
 </table>
+{% if products_page.has_other_pages %}
+  {% bootstrap_pagination products_page parameter_name="page_saved" %}
+{% endif%}

@@ -1,4 +1,7 @@
 from django import forms
+from datetime import timedelta
+from django.utils import timezone
+from astropy import units
 
 from tom_observations.facility import GenericObservationFacility, GenericObservationForm
 
@@ -24,7 +27,10 @@ class FakeFacilityForm(GenericObservationForm):
 
 class FakeFacility(GenericObservationFacility):
     name = 'FakeFacility'
-    form = FakeFacilityForm
+    observation_types = [('FakeFacility Observation', 'OBSERVATION')]
+
+    def get_form(self, observation_type):
+        return FakeFacilityForm
 
     def get_observing_sites(self):
         return SITES
@@ -36,13 +42,23 @@ class FakeFacility(GenericObservationFacility):
         return [{'id': 'testdpid'}]
 
     def get_observation_status(self, observation_id):
-        return 'COMPLETED'
+        return {
+            'state': 'COMPLETED',
+            'scheduled_start': timezone.now() + timedelta(hours=1),
+            'scheduled_end': timezone.now() + timedelta(hours=2)
+        }
 
     def get_terminal_observing_states(self):
         return ['COMPLETED', 'FAILED', 'CANCELED', 'WINDOW_EXPIRED']
 
     def submit_observation(self, payload):
         return ['fakeid']
+
+    def get_flux_constant(self):
+        return units.erg / units.angstrom
+
+    def get_wavelength_units(self):
+        return units.angstrom
 
     def validate_observation(self, observation_payload):
         return True

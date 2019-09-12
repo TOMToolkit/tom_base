@@ -1,8 +1,9 @@
 from django.test import TestCase, override_settings
 from django import forms
-from datetime import datetime
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.urls import reverse
+from django.core.cache import cache
+import json
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, get_service_class
 from tom_alerts.models import BrokerQuery
@@ -10,8 +11,8 @@ from tom_targets.models import Target
 
 # Test alert data. Normally this would come from a remote source.
 test_alerts = [
-    {'id': 1, 'identifier': 'tatooine', 'name': 'Tatooine', 'timestamp': datetime.utcnow(), 'ra': 32, 'dec': -20, 'mag': 8, 'score': 20},
-    {'id': 2, 'identifier': 'hoth', 'name': 'Hoth', 'timestamp': datetime.utcnow(), 'ra': 66, 'dec': 50, 'mag': 3, 'score': 66},
+    {'id': 1, 'identifier': 'tatooine', 'name': 'Tatooine', 'timestamp': '2019-07-01', 'ra': 32, 'dec': -20, 'mag': 8, 'score': 20},
+    {'id': 2, 'identifier': 'hoth', 'name': 'Hoth', 'timestamp': '2019-07-02', 'ra': 66, 'dec': 50, 'mag': 3, 'score': 66},
 ]
 
 
@@ -36,15 +37,7 @@ class TestBroker:
         """ All brokers must implement this method. It must return a list of alerts.
         """
         # Here we simply return a list of `GenericAlert`s that match the name passed in via `parameters`.
-        return [alert for alert in test_alerts if alert['name'] == parameters['name']]
-
-    def fetch_alert(self, alert_id):
-        """ Method to retrieve and return a single alert.
-        """
-        for alert in test_alerts:
-            if alert['id'] == int(alert_id):
-                return alert
-        return None
+        return iter([alert for alert in test_alerts if alert['name'] == parameters['name']])
 
     def process_reduced_data(self, target, alert=None):
         pass
@@ -90,18 +83,14 @@ class TestBrokerClass(TestCase):
 
     def test_fetch_alerts(self):
         alerts = TestBroker().fetch_alerts({'name': 'Hoth'})
-        self.assertEqual(test_alerts[1], alerts[0])
-
-    def test_fetch_alert(self):
-        alert = TestBroker().fetch_alert(1)
-        self.assertEqual(test_alerts[0], alert)
+        self.assertEqual(test_alerts[1], list(alerts)[0])
 
     def test_to_generic_alert(self):
         ga = TestBroker().to_generic_alert(test_alerts[0])
         self.assertEqual(ga.name, test_alerts[0]['name'])
 
     def test_to_target(self):
-        target = TestBroker().to_target(test_alerts[0])
+        target = TestBroker().to_generic_alert(test_alerts[0]).to_target()
         self.assertEqual(target.identifier, test_alerts[0]['id'])
 
 
@@ -110,8 +99,11 @@ class TestBrokerViews(TestCase):
     """ Test the views that use the broker classes
     """
     def setUp(self):
-        user = User.objects.create(username='Han', email='han@example.com')
-        self.client.force_login(user)
+        self.user = User.objects.create(username='Han', email='han@example.com')
+        group = Group.objects.create(name='test')
+        group.user_set.add(self.user)
+        group.save()
+        self.client.force_login(self.user)
 
     def test_display_form(self):
         response = self.client.get(reverse('tom_alerts:create') + '?broker=TEST')
@@ -177,7 +169,13 @@ class TestBrokerViews(TestCase):
         broker_query.refresh_from_db()
         self.assertEqual(broker_query.parameters_as_dict['name'], update_data['name'])
 
+    @override_settings(CACHES={
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            }
+        })
     def test_create_target(self):
+        cache.set('alert_2', json.dumps(test_alerts[1]))
         query = BrokerQuery.objects.create(
             name='find hoth',
             broker='TEST',
@@ -190,14 +188,24 @@ class TestBrokerViews(TestCase):
         }
         response = self.client.post(reverse('tom_alerts:create-target'), data=post_data)
         self.assertEqual(Target.objects.count(), 1)
+        # TODO assert statements might not be what we want here
         self.assertEqual(Target.objects.first().identifier, '2')
         self.assertRedirects(response, reverse('tom_targets:detail', kwargs={'pk': Target.objects.first().id}))
+        self.assertEqual(Target.objects.first().name, 'Hoth')
+        self.assertRedirects(response, reverse('tom_targets:update', kwargs={'pk': Target.objects.first().id}))
 
+    @override_settings(CACHES={
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            }
+        })
     def test_create_multiple_targets(self):
+        cache.set('alert_1', json.dumps(test_alerts[0]))
+        cache.set('alert_2', json.dumps(test_alerts[1]))
         query = BrokerQuery.objects.create(
             name='find anything',
             broker='TEST',
-            parameters='{"score__gt": "19"}'
+            parameters='{"score__gt": "19"}',
         )
         post_data = {
             'broker': 'TEST',
@@ -212,7 +220,7 @@ class TestBrokerViews(TestCase):
         query = BrokerQuery.objects.create(
             name='find anything',
             broker='TEST',
-            parameters='{"name": "Alderaan"}'
+            parameters='{"name": "Alderaan"}',
         )
         post_data = {
             'broker': 'TEST',

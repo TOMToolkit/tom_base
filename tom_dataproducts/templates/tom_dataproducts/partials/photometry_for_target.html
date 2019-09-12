@@ -1,0 +1,11 @@
+<div class="row">
+  <div class="col-md-8">
+    <h4>Photometry</h4>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'dataproducts:update-reduced-data' %}?target_id={{ target.id }}" class="btn btn-primary" title="Update Targets">Check for new data</a>
+  </div>
+</div>
+<div class="light-curve">
+  {{ plot|safe }}
+</div>

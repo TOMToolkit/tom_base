@@ -3,14 +3,15 @@
 {% block title %}New target{% endblock %}
 {% block content %}
 {% if not object %}
-<a href="{% url 'tom_catalogs:query' %}" class="btn btn-primary float-right">Search online sources</a>
-{% endif %}
 <ul class="nav nav-tabs">
   {% for k, v in type_choices %}
     <li class="nav-item">
       <a class="nav-link {% if form.type.initial == k %} active {% endif %}" href="{% url 'targets:create' %}?type={{ k }}">{{ v }}</a>
     </li>
   {% endfor %}
+{% else %}
+<h3> Update {{ object.identifier }}</h3>
+{% endif %}
 </ul>
   {% if object %}
   <form action="{% url 'targets:update' pk=object.id %}" method="post" class="form">
@@ -20,7 +21,7 @@
   {% csrf_token %}
   {% bootstrap_formset names_form %}
   {% bootstrap_form form %}
-  <p>Extra Data</p>
+  <h3>Tags</h3>
   {% bootstrap_formset extra_form %}
   {% buttons %}
     <button type="submit" class="btn btn-primary">

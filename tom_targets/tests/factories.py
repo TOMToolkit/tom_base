@@ -1,6 +1,6 @@
 import factory
 
-from tom_targets.models import Target, TargetName
+from tom_targets.models import Target, TargetName, TargetList
 
 
 class SiderealTargetFactory(factory.django.DjangoModelFactory):
@@ -38,4 +38,8 @@ class TargetNameFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = TargetName
 
+
+class TargetGroupingFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = TargetList
     name = factory.Faker('pystr')

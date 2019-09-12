@@ -16,7 +16,11 @@ class ExternalServiceMiddleware:
 
     def process_exception(self, request, exception):
         if isinstance(exception, ImproperCredentialsException):
-            msg = 'There was a problem authenticating with {}. Please check you have the correct credentials.'.format(
+            msg = (
+                    'There was a problem authenticating with {}. Please check you have the correct '
+                    'credentials entered into your FACILITIES setting. '
+                    'https://tomtoolkit.github.io/docs/customsettings#facilities '
+                ).format(
                 str(exception)
             )
             messages.error(request, msg)

@@ -1,7 +1,5 @@
 import factory
 
-from django.conf import settings
-
 from tom_targets.models import Target, TargetName
 from tom_observations.models import ObservationRecord
 
