@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.urls import reverse
 from django.forms.models import model_to_dict
 from django.conf import settings
@@ -8,7 +8,7 @@ from datetime import datetime
 from tom_common.hooks import run_hook
 
 
-GLOBAL_TARGET_FIELDS = ['identifier', 'type']
+GLOBAL_TARGET_FIELDS = ['type']
 
 SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'ra', 'dec', 'epoch', 'pm_ra', 'pm_dec',
@@ -30,17 +30,8 @@ class Target(models.Model):
     """
     Class representing a target in a TOM
 
-    :param identifier: The identifier for this object, e.g. Kelt-16b.
-    :type identifier: str
-
     :param name: The name of this target e.g. Barnard\'s star.
     :type name: str
-
-    :param name2: An alternative name for this target.
-    :type name2: str
-
-    :param name3: An alternative name for this target.
-    :type name3: str
 
     :param type: The type of this target.
     :type type: str
@@ -131,9 +122,6 @@ class Target(models.Model):
         ('JPL_MAJOR_PLANET', 'JPL Major Planet')
     )
 
-    identifier = models.CharField(
-        max_length=100, verbose_name='Identifier', help_text='The identifier for this object, e.g. Kelt-16b.'
-    )
     type = models.CharField(
         max_length=100, choices=TARGET_TYPES, verbose_name='Target Type', help_text='The type of this target.'
     )
@@ -222,6 +210,7 @@ class Target(models.Model):
     class Meta:
         ordering = ('id',)
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
         """
         Saves Target model data to the database, including extra fields. After saving to the database, also runs the
@@ -231,12 +220,20 @@ class Target(models.Model):
             * extras (`dict`): dictionary of key/value pairs representing target attributes
         """
         extras = kwargs.pop('extras', {})
+        names = kwargs.pop('names', [])
+
         created = False if self.id else True
         super().save(*args, **kwargs)
+
         for k, v in extras.items():
             target_extra, _ = TargetExtra.objects.get_or_create(target=self, key=k)
             target_extra.value = v
             target_extra.save()
+
+        for name in names:
+            name = TargetName.objects.get_or_create(target=self, name=name)
+            name.save()
+
         run_hook('target_post_save', target=self, created=created)
 
     def __str__(self):
@@ -254,6 +251,10 @@ class Target(models.Model):
         :rtype: DataProduct
         """
         return self.dataproduct_set.filter(tag='fits_file', featured=True).first()
+
+    @property
+    def identifier(self):
+        return TargetName.objects.filter(target=self).order_by('created').first().name
 
     @property
     def future_observations(self):
@@ -312,8 +313,11 @@ class Target(models.Model):
 
 
 class TargetName(models.Model):
+    """
+
+    """
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     primary = models.BooleanField(null=True, blank=True)
     created = models.DateTimeField(
         auto_now_add=True, help_text='The time which this target name was created.'

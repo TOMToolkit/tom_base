@@ -237,7 +237,6 @@ class MARSBroker(GenericBroker):
     def to_target(self, alert):
         alert_copy = alert.copy()
         target = Target.objects.create(
-            identifier=alert_copy['objectId'],
             type='SIDEREAL',
             ra=alert_copy['candidate'].pop('ra'),
             dec=alert_copy['candidate'].pop('dec'),
@@ -247,7 +246,7 @@ class MARSBroker(GenericBroker):
         for k, v in alert_copy['candidate'].items():
             if v is not None:
                 TargetExtra.objects.create(target=target, key=k, value=v)
-        TargetName.objects.create(target=target, name=alert_copy['objectId'])
+        TargetName.objects.update_or_create(target=target, name=alert_copy['objectId'])
         return target
 
     def to_generic_alert(self, alert):

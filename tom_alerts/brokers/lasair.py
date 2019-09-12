@@ -1,5 +1,5 @@
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
-from tom_targets.models import Target
+from tom_targets.models import Target, TargetName
 from django import forms
 import requests
 
@@ -88,12 +88,11 @@ class LasairBroker(GenericBroker):
             if 'candid' in c:
                 break
         target = Target.objects.create(
-            identifier=c['candid'],
             type='SIDEREAL',
             ra=c['ra'],
             dec=c['decl'],
             galactic_lng=alert['objectData']['glonmean'],
             galactic_lat=alert['objectData']['glatmean'],
         )
-        TargetName.objects.create(target=target, name=c['candid'])
+        TargetName.objects.update_or_create(target=target, name=c['candid'])
         return target

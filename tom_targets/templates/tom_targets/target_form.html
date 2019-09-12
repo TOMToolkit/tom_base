@@ -10,7 +10,11 @@
     </li>
   {% endfor %}
 {% else %}
+    {% comment %}
+
 <h3> Update {{ object.identifier }}</h3>
+{% endcomment %}
+
 {% endif %}
 </ul>
   {% if object %}

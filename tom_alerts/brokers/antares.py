@@ -7,7 +7,7 @@ import requests
 import logging
 
 from tom_alerts.alerts import GenericBroker, GenericQueryForm, GenericAlert
-from tom_targets.models import Target
+from tom_targets.models import Target, TargetName
 
 logger = logging.getLogger(__name__)
 
@@ -54,14 +54,13 @@ class AntaresBroker(GenericBroker):
     def to_target(self, alert):
         _, alert = alert
         target = Target.objects.create(
-            identifier=alert['candid'],
-            name=alert['objectId'],
             type='SIDEREAL',
             ra=alert['candidate']['ra'],
             dec=alert['candidate']['dec'],
             galactic_lng=alert['candidate']['l'],
             galactic_lat=alert['candidate']['b'],
         )
+        TargetName.objects.update_or_create(target=target, name=alert['objectId'])
         return target
 
     def to_generic_alert(self, alert):

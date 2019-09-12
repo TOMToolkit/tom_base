@@ -11,7 +11,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.management import call_command
 
-from .import_targets import import_targets
 from django.http import StreamingHttpResponse
 from django.utils.text import slugify
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin

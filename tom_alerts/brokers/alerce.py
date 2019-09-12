@@ -6,7 +6,7 @@ from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from astropy.time import Time, TimezoneInfo
 
 from tom_alerts.alerts import GenericQueryForm, GenericBroker, GenericAlert
-from tom_targets.models import Target
+from tom_targets.models import Target, TargetName
 
 ALERCE_URL = 'http://alerce.online'
 ALERCE_SEARCH_URL = 'http://ztf.alerce.online/query'
@@ -193,13 +193,13 @@ class ALeRCEBroker(GenericBroker):
         return response.json()['result'][0]
 
     def to_target(self, alert):
-        return Target.objects.create(
-            identifier=alert['oid'],
-            name=alert['oid'],
+        target = Target.objects.create(
             type='SIDEREAL',
             ra=alert['meanra'],
             dec=alert['meandec']
         )
+        TargetName.objects.update_or_create(target=target, name=alert['oid'])
+        return target
 
     def to_generic_alert(self, alert):
         if alert['lastmjd']:
