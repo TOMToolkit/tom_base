@@ -15,22 +15,12 @@ Ready to go? Let's get started.
 
 ### Prerequisites
 
-The TOM toolkit requires Python >= 3.7 and numpy to be installed:
-
-    pip install numpy
+The TOM toolkit requires Python >= 3.7
 
 If you are using Python 3.6 and cannot upgrade to 3.7, install the `dataclasses`
 backport:
 
     pip install dataclasses
-
-If you are on MacOS, you will need to install libmagic for filetype detection. It's easy to install with Homebrew:
-
-    brew install libmagic
-
-If you need to install Homebrew, there is a single-line installation command that can be found on the [website](https://brew.sh):
-
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
 ### Installing the TOM Toolkit and Django
 
@@ -99,19 +89,3 @@ Now, start the dev server:
 
 Your new TOM should now be running on [http://127.0.0.1:8000](http://127.0.0.1:8000)!
 
-### Compatibility Notes
-
-If you're on Mac OS, it should be noted that the Antares client library has a dependency
-that only supports Mac OS 10.13 or later. If you try to run `./manage.py migrate` on an
-earlier version, you may see an error. In this case, you can still use the TOM Toolkit,
-but not Antares. Get running by removing Antares from the following list in `settings.py`:
-
-```
-TOM_ALERT_CLASSES = [
-    'tom_alerts.brokers.mars.MARSBroker',
-    'tom_alerts.brokers.lasair.LasairBroker',
-    'tom_alerts.brokers.scout.ScoutBroker',
-    'tom_alerts.brokers.antares.AntaresBroker',
-    'tom_alerts.brokers.alerce.ALeRCEBroker'
-]
-```
