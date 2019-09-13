@@ -1,6 +1,6 @@
 # Scripting your TOM with a Jupyter Notebook
 
-The TOM provides a graphical interface to perform many tasks, but there are many
+The TOM provides a graphical interface to perform many tasks, but there are some
 tasks where writing code to interact with your TOM's data and functions may be
 desirable.  In this tutorial we will explore how to interact with a TOM with code,
 _programatically_, using a Jupyter notebook.
@@ -23,9 +23,15 @@ open the notebook with the correct Django context loaded:
 
 ![new](/_static/jupyterdoc/newnotebook.png)
 
-Creat a new notebook. Now that it's open, we can use it just like any other
+Create a new notebook. Now that it's open, we can use it just like any other
 Notebook.
 
+### The API Documentation
+
+When working with the TOM programmatically, you'll often reference the [API
+documentation](http://cygnus.lco.gtn:7777/api/modules.html) which is a reference
+to the code of the TOM Toolkit itself. Since you will be using these classes and
+functions, it would be a good idea to familiarize yourself with it.
 
 ### Creating Targets
 
