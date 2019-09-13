@@ -33,7 +33,7 @@ class Command(BaseCommand):
             'DO NOT RUN THIS SCRIPT ON AN EXISTING TOM. It will override any custom settings you may '
             'already have.\n'
         )
-        prompt = 'Do you wish to continue? {}'.format(self.style.WARNING('[y/N] '))
+        prompt = 'Do you wish to continue? {}'.format(self.style.WARNING('[y/n] '))
         self.stdout.write(welcome_text)
         while True:
             response = input(prompt).lower()
