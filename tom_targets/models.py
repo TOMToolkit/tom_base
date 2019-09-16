@@ -19,11 +19,22 @@ NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'scheme', 'mean_anomaly', 'arg_of_perihelion',
     'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
     'eccentricity', 'epoch', 'epoch_of_perihelion', 'ephemeris_period',
-    'ephemeris_period_err', 'ephemeris_epoch', 'ephemeris_epoch_err'
+    'ephemeris_period_err', 'ephemeris_epoch', 'ephemeris_epoch_err',
+    'perihdist'
 ]
 
 REQUIRED_SIDEREAL_FIELDS = ['ra', 'dec']
-REQUIRED_NON_SIDEREAL_FIELDS = NON_SIDEREAL_FIELDS
+REQUIRED_NON_SIDEREAL_FIELDS = [
+    'scheme', 'epoch', 'inclination', 'lng_asc_node', 'arg_of_perihelion',
+    'eccentricity',
+]
+# Additional non-sidereal fields that are required for specific orbital element
+# schemes
+REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME = {
+    'MPC_COMET': ['perihdist', 'epoch_of_perihelion'],
+    'MPC_MINOR_PLANET': ['mean_anomaly', 'semimajor_axis'],
+    'JPL_MAJOR_PLANET': ['mean_daily_motion', 'mean_anomaly', 'semimajor_axis']
+}
 
 
 class Target(models.Model):
@@ -228,6 +239,9 @@ class Target(models.Model):
     )
     ephemeris_epoch_err = models.FloatField(
         null=True, blank=True, verbose_name='Ephemeris Epoch Error', help_text='Days'
+    )
+    perihdist = models.FloatField(
+        null=True, blank=True, verbose_name='Perihelion Distance', help_text='AU'
     )
 
     class Meta:

@@ -15,9 +15,7 @@ Ready to go? Let's get started.
 
 ### Prerequisites
 
-The TOM toolkit requires Python >= 3.7 and numpy to be installed:
-
-    pip install numpy
+The TOM toolkit requires Python >= 3.7
 
 If you are using Python 3.6 and cannot upgrade to 3.7, install the `dataclasses`
 backport:

@@ -121,9 +121,9 @@ API Documentation
 .. toctree::
   :maxdepth: 2
 
-  modules/modules
-  modules/plugins
-  modules/affiliated
+  api/modules
+  api/plugins
+  api/affiliated
 
 ******************
 Indices and tables
