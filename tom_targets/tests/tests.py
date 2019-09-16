@@ -61,7 +61,7 @@ class TestTargetCreate(TestCase):
 
     def test_create_target(self):
         target_data = {
-            'identifier': 'test_target_id',
+            'name': 'test_target_name',
             'type': Target.SIDEREAL,
             'ra': 123.456,
             'dec': -32.1,
@@ -79,15 +79,15 @@ class TestTargetCreate(TestCase):
             'targetname_set-0-name': 'test_target'
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(response, target_data['identifier'])
-        self.assertTrue(Target.objects.filter(identifier=target_data['identifier']).exists())
+        self.assertContains(response, target_data['name'])
+        self.assertTrue(Target.objects.filter(name=target_data['name']).exists())
 
     def test_create_target_sexigesimal(self):
         """
         Using coordinates for Messier 1
         """
         target_data = {
-            'identifier': 'test_target_id',
+            'name': 'test_target_name',
             'type': Target.SIDEREAL,
             'ra': '05:34:31.94',
             'dec': '+22:00:52.2',
@@ -105,8 +105,8 @@ class TestTargetCreate(TestCase):
             'targetname_set-0-name': 'test_target'
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(response, target_data['identifier'])
-        target = Target.objects.get(identifier=target_data['identifier'])
+        self.assertContains(response, target_data['name'])
+        target = Target.objects.get(name=target_data['name'])
         # Coordinates according to simbad
         self.assertAlmostEqual(target.ra, 83.63308, places=4)
         self.assertAlmostEqual(target.dec, 22.0145, places=4)
@@ -117,7 +117,6 @@ class TestTargetCreate(TestCase):
         """
         target_data = {
             'name': 'test_target',
-            'identifier': 'test_target_id',
             'type': Target.SIDEREAL,
             'ra': '05:34:31.94',
             'dec': '+22:00:52.2',
@@ -144,7 +143,6 @@ class TestTargetCreate(TestCase):
     def test_create_target_with_extra_fields(self):
         target_data = {
             'name': 'extra_field_target',
-            'identifier': 'extra_field_identifier',
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
@@ -162,7 +160,7 @@ class TestTargetCreate(TestCase):
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
-        target = Target.objects.get(name=target_data['name'], identifier=target_data['identifier'])
+        target = Target.objects.get(name=target_data['name'])
         self.assertTrue(TargetExtra.objects.filter(target=target, key='wins', value='50.0').exists())
         self.assertEqual(
             TargetExtra.objects.get(target=target, key='wins').typed_value('number'),
@@ -222,7 +220,7 @@ class TestTargetImport(TestCase):
 
 class TestTargetSearch(TestCase):
     def setUp(self):
-        self.st = SiderealTargetFactory.create(identifier='1337target')
+        self.st = SiderealTargetFactory.create(name='1337target')
         self.st_name = TargetNameFactory.create(name='M42', target=self.st)
         self.st_name2 = TargetNameFactory.create(name='Messier 42', target=self.st)
         user = User.objects.create(username='testuser')
@@ -471,7 +469,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             'add': True,
             'isSelectAll': 'True',
             'selected-target': [],
-            'query_string': 'type=SIDEREAL&identifier=&name=&key=&value=&targetlist__name=',
+            'query_string': 'type=SIDEREAL&name=&key=&value=&targetlist__name=',
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 3)
@@ -482,7 +480,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             'remove': True,
             'isSelectAll': 'True',
             'selected-target': [],
-            'query_string': 'type=SIDEREAL&identifier=&name=&key=&value=&targetlist__name=',
+            'query_string': 'type=SIDEREAL&name=&key=&value=&targetlist__name=',
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 0)
@@ -493,7 +491,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             'remove': True,
             'isSelectAll': 'True',
             'selected-target': [],
-            'query_string': 'type=&identifier=&name=&key=&value=&targetlist__name=' + str(self.fake_grouping.id),
+            'query_string': 'type=&name=&key=&value=&targetlist__name=' + str(self.fake_grouping.id),
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 0)
@@ -520,10 +518,9 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.assertEqual(self.fake_grouping.targets.count(), 0)
 
     def test_persist_filter(self):
-        data = {'query_string': "type=SIDEREAL&identifier=A&name=B&key=C&value=123&targetlist__name=1"}
+        data = {'query_string': "type=SIDEREAL&name=B&key=C&value=123&targetlist__name=1"}
         expected_query_dict = {
             'type': 'SIDEREAL',
-            'identifier': 'A',
             'name': 'B',
             'key': 'C',
             'value': '123',

@@ -123,7 +123,8 @@ class Target(models.Model):
     )
 
     name = models.CharField(
-        max_length=100, default='', verbose_name='Name', help_text='The name of this target e.g. Barnard\'s star.', unique=True
+        max_length=100, default='', verbose_name='Name', help_text='The name of this target e.g. Barnard\'s star.',
+        unique=True
     )
     type = models.CharField(
         max_length=100, choices=TARGET_TYPES, verbose_name='Target Type', help_text='The type of this target.'

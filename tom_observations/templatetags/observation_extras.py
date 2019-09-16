@@ -31,7 +31,6 @@ def observation_list(target=None):
     return {'observations': observations}
 
 
-# TODO:  Fix this for target names update
 @register.inclusion_tag('tom_observations/partials/observation_distribution.html')
 def observation_distribution(observations):
     """

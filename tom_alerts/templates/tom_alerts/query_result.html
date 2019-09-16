@@ -11,14 +11,14 @@
   </div>
   <table class="table table-striped">
     <thead>
-      <tr><th></th><th>Time</th><th>Id</th><th>RA</th><th>Dec</th><th>Mag</th><th>Score</th><th>View</th></tr>
+      <tr><th></th><th>Time</th><th>Name</th><th>RA</th><th>Dec</th><th>Mag</th><th>Score</th><th>View</th></tr>
     </thead>
     <tbody>
       {% for alert in alerts %}
       <tr>
         <td><input type="checkbox" name="alerts" value="{{ alert.id }}"/></td>
         <td>{{ alert.timestamp }}</td>
-        <td>{{ alert.id }}</td>
+        <td>{{ alert.name }}</td>
         <td>{{ alert.ra|floatformat:3 }}</td>
         <td>{{ alert.dec|floatformat:3 }}</td>
         <td>{{ alert.mag|floatformat:3 }}</td>

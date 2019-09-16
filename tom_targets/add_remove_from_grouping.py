@@ -17,12 +17,12 @@ def add_all_to_grouping(filter_data, grouping_object, request):
     for target_object in target_queryset:
         try:
             if not request.user.has_perm('tom_targets.view_target', target_object):
-                failure_targets.append((target_object.identifier, 'Permission denied.',))
+                failure_targets.append((target_object.name, 'Permission denied.',))
             elif target_object in grouping_object.targets.all():
-                warning_targets.append(target_object.identifier)
+                warning_targets.append(target_object.name)
             else:
                 grouping_object.targets.add(target_object)
-                success_targets.append(target_object.identifier)
+                success_targets.append(target_object.name)
         except Exception as e:
             failure_targets.append((target_object.pk, e,))
     messages.success(request, "{} target(s) successfully added to group '{}'."
@@ -43,12 +43,12 @@ def add_selected_to_grouping(targets_ids, grouping_object, request):
         try:
             target_object = Target.objects.get(pk=target_id)
             if not request.user.has_perm('tom_targets.view_target', target_object):
-                failure_targets.append((target_object.identifier, 'Permission denied.',))
+                failure_targets.append((target_object.name, 'Permission denied.',))
             elif target_object in grouping_object.targets.all():
-                warning_targets.append(target_object.identifier)
+                warning_targets.append(target_object.name)
             else:
                 grouping_object.targets.add(target_object)
-                success_targets.append(target_object.identifier)
+                success_targets.append(target_object.name)
         except Exception as e:
             failure_targets.append((target_object.pk, e,))
     messages.success(request, "{} target(s) successfully added to group '{}'."
@@ -74,14 +74,14 @@ def remove_all_from_grouping(filter_data, grouping_object, request):
     for target_object in target_queryset:
         try:
             if not request.user.has_perm('tom_targets.view_target', target_object):
-                failure_targets.append((target_object.identifier, 'Permission denied.',))
+                failure_targets.append((target_object.name, 'Permission denied.',))
             elif target_object not in grouping_object.targets.all():
-                warning_targets.append(target_object.identifier)
+                warning_targets.append(target_object.name)
             else:
                 grouping_object.targets.remove(target_object)
-                success_targets.append(target_object.identifier)
+                success_targets.append(target_object.name)
         except Exception as e:
-            failure_targets.append({'id': target_id, 'error': e})
+            failure_targets.append({'name': target_object.name, 'error': e})
     messages.success(request, "{} target(s) successfully removed from group '{}'."
                               .format(len(success_targets), grouping_object.name))
     if warning_targets:
@@ -100,12 +100,12 @@ def remove_selected_from_grouping(targets_ids, grouping_object, request):
         try:
             target_object = Target.objects.get(pk=target_id)
             if not request.user.has_perm('tom_targets.view_target', target_object):
-                failure_targets.append((target_object.identifier, 'Permission denied.',))
+                failure_targets.append((target_object.name, 'Permission denied.',))
             elif target_object not in grouping_object.targets.all():
-                warning_targets.append(target_object.identifier)
+                warning_targets.append(target_object.name)
             else:
                 grouping_object.targets.remove(target_object)
-                success_targets.append(target_object.identifier)
+                success_targets.append(target_object.name)
         except Exception as e:
             failure_targets.append({'id': target_id, 'error': e})
     messages.success(request, "{} target(s) successfully removed from group '{}'."
