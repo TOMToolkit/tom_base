@@ -24,7 +24,17 @@ NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
 ]
 
 REQUIRED_SIDEREAL_FIELDS = ['ra', 'dec']
-REQUIRED_NON_SIDEREAL_FIELDS = NON_SIDEREAL_FIELDS
+REQUIRED_NON_SIDEREAL_FIELDS = [
+    'scheme', 'epoch', 'inclination', 'lng_asc_node', 'arg_of_perihelion',
+    'eccentricity',
+]
+# Additional non-sidereal fields that are required for specific orbital element
+# schemes
+REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME = {
+    'MPC_COMET': ['perihdist', 'epoch_of_perihelion'],
+    'MPC_MINOR_PLANET': ['mean_anomaly', 'semimajor_axis'],
+    'JPL_MAJOR_PLANET': ['mean_daily_motion', 'mean_anomaly', 'semimajor_axis']
+}
 
 
 class Target(models.Model):
