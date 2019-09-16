@@ -125,7 +125,6 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             names.instance = self.object
             names.save()
         else:
-            print(names.errors)
             form.add_error(None, extra.errors)
             form.add_error(None, extra.non_form_errors())
             form.add_error(None, names.errors)
@@ -165,7 +164,6 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
             extra.save()
             names.save()
         else:
-            print(names.errors)
             form.add_error(None, extra.errors)
             form.add_error(None, extra.non_form_errors())
             form.add_error(None, names.errors)

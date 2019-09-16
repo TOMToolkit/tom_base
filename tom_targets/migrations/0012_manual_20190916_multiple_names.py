@@ -29,7 +29,8 @@ class Migration(migrations.Migration):
             name='TargetName',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100, unique=True)),
+                ('name', models.CharField(max_length=100, unique=True, help_text='Alias for this target',
+                                          verbose_name='Alias for this target')),
                 ('created', models.DateTimeField(auto_now_add=True,
                                                  help_text='The time which this target name was created.')),
             ],

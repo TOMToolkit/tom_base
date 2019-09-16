@@ -127,6 +127,10 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': 'category',
             'targetextra_set-0-value': 'type2',
+            'targetname_set-TOTAL_FORMS': 1,
+            'targetname_set-INITIAL_FORMS': 0,
+            'targetname_set-MIN_NUM_FORMS': 0,
+            'targetname_set-MAX_NUM_FORMS': 1000,
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -157,6 +161,10 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': '',
             'targetextra_set-0-value': '',
+            'targetname_set-TOTAL_FORMS': 1,
+            'targetname_set-INITIAL_FORMS': 0,
+            'targetname_set-MIN_NUM_FORMS': 0,
+            'targetname_set-MAX_NUM_FORMS': 1000,
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -198,9 +206,9 @@ class TestTargetImport(TestCase):
 
     def test_import_csv(self):
         csv = [
-            'identifier,name,type,ra,dec',
-            'm13,Hercules Globular Cluster,SIDEREAL,250.421,36.459',
-            'm27,Dumbbell Nebula,SIDEREAL,299.901,22.721'
+            'name,type,ra,dec',
+            'm13,SIDEREAL,250.421,36.459',
+            'm27,SIDEREAL,299.901,22.721'
         ]
         result = import_targets(csv)
         self.assertEqual(len(result['targets']), 2)
@@ -208,9 +216,9 @@ class TestTargetImport(TestCase):
     @override_settings(EXTRA_FIELDS=[{'name': 'redshift', 'type': 'number'}])
     def test_import_with_extra(self):
         csv = [
-            'identifier,name,type,ra,dec,redshift',
-            'm13,Hercules Globular Cluster,SIDEREAL,250.421,36.459,5',
-            'm27,Dumbbell Nebula,SIDEREAL,299.901,22.721,5'
+            'name,type,ra,dec,redshift',
+            'm13,SIDEREAL,250.421,36.459,5',
+            'm27,SIDEREAL,299.901,22.721,5'
         ]
         result = import_targets(csv)
         self.assertEqual(len(result['targets']), 2)
