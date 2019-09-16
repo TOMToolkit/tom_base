@@ -318,11 +318,10 @@ class Target(models.Model):
 
 class TargetName(models.Model):
     """
-
+    TODO: Add cross table constraint on unique names
     """
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     name = models.CharField(max_length=100, unique=True)
-    primary = models.BooleanField(null=True, blank=True)
     created = models.DateTimeField(
         auto_now_add=True, help_text='The time which this target name was created.'
     )
