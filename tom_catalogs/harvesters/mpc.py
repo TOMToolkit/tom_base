@@ -10,6 +10,7 @@ class MPCHarvester(AbstractHarvester):
         self.catalog_data = MPC.query_object('asteroid', name=term)
 
     def to_target(self):
+        # TODO: Save somewhere besides the form (maybe here?)
         target = super().to_target()
         result = self.catalog_data[0]
         target.type = 'NON_SIDEREAL'

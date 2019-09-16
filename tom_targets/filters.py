@@ -68,5 +68,4 @@ class TargetFilter(django_filters.FilterSet):
         fields = ['type', 'name']
 
     def filter_name(self, queryset, name, value):
-        print(name)
         return queryset.filter(Q(name__icontains=value) | Q(targetname__name__icontains=value))
