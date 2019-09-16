@@ -15,7 +15,7 @@ class TargetFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Target
 
-    identifier = factory.Faker('pystr')
+    name = factory.Faker('pystr')
     ra = factory.Faker('pyfloat')
     dec = factory.Faker('pyfloat')
     epoch = factory.Faker('pyfloat')
