@@ -58,16 +58,6 @@ class TestBroker:
             score=alert['score']
         )
 
-    # def to_target(self, alert):
-    #     """ Transform a single alert into a `Target`, so that it can be used in the rest of the TOM.
-    #     """
-    #     return Target(
-    #         name=alert['id'],
-    #         type='SIDEREAL',
-    #         ra=alert['ra'],
-    #         dec=alert['dec'],
-    #     )
-
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
 class TestBrokerClass(TestCase):
@@ -91,7 +81,7 @@ class TestBrokerClass(TestCase):
 
     def test_to_target(self):
         target = TestBroker().to_generic_alert(test_alerts[0]).to_target()
-        self.assertEqual(target.name, test_alerts[0]['id'])
+        self.assertEqual(target.name, test_alerts[0]['name'])
 
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
@@ -188,9 +178,6 @@ class TestBrokerViews(TestCase):
         }
         response = self.client.post(reverse('tom_alerts:create-target'), data=post_data)
         self.assertEqual(Target.objects.count(), 1)
-        # TODO assert statements might not be what we want here
-        self.assertEqual(Target.objects.first().identifier, '2')
-        self.assertRedirects(response, reverse('tom_targets:detail', kwargs={'pk': Target.objects.first().id}))
         self.assertEqual(Target.objects.first().name, 'Hoth')
         self.assertRedirects(response, reverse('tom_targets:update', kwargs={'pk': Target.objects.first().id}))
 
