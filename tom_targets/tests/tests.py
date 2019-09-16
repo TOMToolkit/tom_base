@@ -184,6 +184,63 @@ class TestTargetCreate(TestCase):
         target.save(extras={'foo': 5})
         self.assertTrue(TargetExtra.objects.filter(target=target, key='foo', value='5').exists())
 
+    def test_non_sidereal_required_fields(self):
+        base_data = {
+            'name': 'nonsidereal_target',
+            'identifier': 'nonsidereal_identifier',
+            'type': Target.NON_SIDEREAL,
+            'epoch': 100,
+            'lng_asc_node': 100,
+            'arg_of_perihelion': 100,
+            'eccentricity': 100,
+            'mean_anomaly': 100,
+            'inclination': 100,
+            'semimajor_axis': 100,
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+        }
+        create_url = reverse('targets:create') + '?type=NON_SIDEREAL'
+
+        # Make data for a major planet scheme: missing 'mean_daily_motion'
+        maj_planet_data = dict(**base_data, scheme='JPL_MAJOR_PLANET')
+        response = self.client.post(create_url, data=maj_planet_data, follow=True)
+        errors = response.context['form'].errors
+        self.assertEqual(set(errors.keys()), {'__all__'})
+        messages = errors['__all__']
+        self.assertEqual(len(messages), 1)
+        self.assertTrue(messages[0].startswith("Scheme 'JPL Major Planet' requires fields"))
+        self.assertIn('Daily Motion', messages[0])
+
+        # Use the same data for minor planet: should be no errors
+        min_planet_data = dict(**base_data, scheme='MPC_MINOR_PLANET')
+        response = self.client.post(create_url, data=min_planet_data, follow=True)
+        errors = response.context['form'].errors
+        self.assertEqual(errors, {})
+
+    def test_create_form_failure(self):
+        """
+        If a failure occurs when creating a non-sidereal target, make sure the
+        user is shown the non-sidereal form (not the sidereal one)
+        """
+        target_data = {
+            'name': 'test_target',
+            'type': Target.NON_SIDEREAL,
+            'scheme': 'MPC_MINOR_PLANET',
+            # Miss out a load of required fields...
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+        }
+        response = self.client.post(reverse('targets:create'), data=target_data)
+        self.assertEqual(response.context['form'].initial['type'], Target.NON_SIDEREAL)
+
 
 class TestTargetImport(TestCase):
     def setUp(self):
