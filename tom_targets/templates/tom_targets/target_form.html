@@ -10,10 +10,7 @@
     </li>
   {% endfor %}
 {% else %}
-    {% comment %}
-
-<h3> Update {{ object.identifier }}</h3>
-{% endcomment %}
+<h3> Update {{ object.name }}</h3>
 
 {% endif %}
 </ul>
@@ -23,8 +20,8 @@
   <form action="{% url 'targets:create' %}" method="post" class="form">
   {% endif %}
   {% csrf_token %}
-  {% bootstrap_formset names_form %}
   {% bootstrap_form form %}
+  {% bootstrap_formset names_form %}
   <h3>Tags</h3>
   {% bootstrap_formset extra_form %}
   {% buttons %}

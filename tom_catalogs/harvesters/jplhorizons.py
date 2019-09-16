@@ -20,7 +20,7 @@ class JPLHorizonsHarvester(AbstractHarvester):
     def to_target(self):
         target = super().to_target()
         target.type = 'NON_SIDEREAL'
-        target.identifier = str(self.catalog_data['targetname'][0])
+        target.name = str(self.catalog_data['targetname'][0])
         target.mean_anomaly = self.catalog_data['M'][0]
         target.arg_of_perihelion = self.catalog_data['w'][0]
         target.lng_asc_node = self.catalog_data['Omega'][0]

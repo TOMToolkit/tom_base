@@ -193,13 +193,12 @@ class ALeRCEBroker(GenericBroker):
         return response.json()['result'][0]
 
     def to_target(self, alert):
-        target = Target.objects.create(
+        return Target.objects.create(
             type='SIDEREAL',
+            name=alert['oid'],
             ra=alert['meanra'],
             dec=alert['meandec']
         )
-        TargetName.objects.update_or_create(target=target, name=alert['oid'])
-        return target
 
     def to_generic_alert(self, alert):
         if alert['lastmjd']:

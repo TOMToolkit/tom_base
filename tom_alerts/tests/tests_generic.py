@@ -11,8 +11,8 @@ from tom_targets.models import Target
 
 # Test alert data. Normally this would come from a remote source.
 test_alerts = [
-    {'id': 1, 'identifier': 'tatooine', 'name': 'Tatooine', 'timestamp': '2019-07-01', 'ra': 32, 'dec': -20, 'mag': 8, 'score': 20},
-    {'id': 2, 'identifier': 'hoth', 'name': 'Hoth', 'timestamp': '2019-07-02', 'ra': 66, 'dec': 50, 'mag': 3, 'score': 66},
+    {'id': 1, 'name': 'Tatooine', 'timestamp': '2019-07-01', 'ra': 32, 'dec': -20, 'mag': 8, 'score': 20},
+    {'id': 2, 'name': 'Hoth', 'timestamp': '2019-07-02', 'ra': 66, 'dec': 50, 'mag': 3, 'score': 66},
 ]
 
 
@@ -58,15 +58,15 @@ class TestBroker:
             score=alert['score']
         )
 
-    def to_target(self, alert):
-        """ Transform a single alert into a `Target`, so that it can be used in the rest of the TOM.
-        """
-        return Target(
-            identifier=alert['id'],
-            type='SIDEREAL',
-            ra=alert['ra'],
-            dec=alert['dec'],
-        )
+    # def to_target(self, alert):
+    #     """ Transform a single alert into a `Target`, so that it can be used in the rest of the TOM.
+    #     """
+    #     return Target(
+    #         name=alert['id'],
+    #         type='SIDEREAL',
+    #         ra=alert['ra'],
+    #         dec=alert['dec'],
+    #     )
 
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
@@ -91,7 +91,7 @@ class TestBrokerClass(TestCase):
 
     def test_to_target(self):
         target = TestBroker().to_generic_alert(test_alerts[0]).to_target()
-        self.assertEqual(target.identifier, test_alerts[0]['id'])
+        self.assertEqual(target.name, test_alerts[0]['id'])
 
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])

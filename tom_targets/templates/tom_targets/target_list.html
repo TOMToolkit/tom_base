@@ -28,7 +28,6 @@
     <table class="table">
       <thead>
         <tr>
-          <th>ID</th>
           <th>Name</th>
           <th>Type</th>
           {% if request.GET.type == 'SIDEREAL' %}
@@ -41,10 +40,7 @@
       <tbody>
         {% for target in object_list %}
         <tr>
-          <td><a href="{% url 'targets:detail' target.id %}" title="{{ target.identifier }}">{{ target.identifier }}</a></td>
-          {% with target_names=target.targetname_set.all %}
-          <td>{{ target_names|join:", " }}</td>
-          {% endwith %}
+          <td><a href="{% url 'targets:detail' target.id %}" title="{{ target.name }}">{{ target.names|join:", " }}</a></td>
           <td>{{ target.get_type_display }}</td>
           {% if request.GET.type == 'SIDEREAL' %}
             <td>{{ target.ra }}</td>

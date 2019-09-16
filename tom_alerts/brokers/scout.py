@@ -53,6 +53,7 @@ class ScoutBroker(GenericBroker):
     def to_target(self, alert):
         target = Target.objects.create(
             type='NON_SIDEREAL',
+            name=alert['objectName'],
             ra=hours_min_to_decimal(alert['ra']),
             dec=alert['dec'],
             eccentricity=alert['elong']
@@ -60,7 +61,6 @@ class ScoutBroker(GenericBroker):
         for k, v in alert.items():
             if k not in ['objectName', 'ra', 'dec'] and v:
                 TargetExtra.objects.create(target=target, key=k, value=v)
-        TargetName.objects.update_or_create(target=target, name=alert['objectName'])
         return target
 
     def to_generic_alert(self, alert):

@@ -169,7 +169,7 @@ class LCOBaseObservationForm(GenericObservationForm):
     def _build_target_fields(self):
         target = Target.objects.get(pk=self.cleaned_data['target_id'])
         target_fields = {
-            "name": target.name,
+            'name': target.name,
         }
         if target.type == Target.SIDEREAL:
             target_fields['type'] = 'ICRS'

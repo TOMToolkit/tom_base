@@ -14,7 +14,7 @@ class MPCHarvester(AbstractHarvester):
         result = self.catalog_data[0]
         target.type = 'NON_SIDEREAL'
         target.name = result['name']
-        target.identifier = result['number']
+        target.identifier = result['number']  # TODO: This won't work
         target.epoch = result['epoch_jd']
         target.mean_anomaly = result['mean_anomaly']
         target.arg_of_perihelion = result['argument_of_perihelion']

@@ -125,11 +125,12 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             names.instance = self.object
             names.save()
         else:
+            print(names.errors)
             form.add_error(None, extra.errors)
             form.add_error(None, extra.non_form_errors())
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
-            return super().form_invalid(form)        
+            return super().form_invalid(form)
         return redirect(self.get_success_url())
 
     def get_form(self, *args, **kwargs):
@@ -164,6 +165,7 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
             extra.save()
             names.save()
         else:
+            print(names.errors)
             form.add_error(None, extra.errors)
             form.add_error(None, extra.non_form_errors())
             form.add_error(None, names.errors)

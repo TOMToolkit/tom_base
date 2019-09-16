@@ -8,7 +8,7 @@ from datetime import datetime
 from tom_common.hooks import run_hook
 
 
-GLOBAL_TARGET_FIELDS = ['type']
+GLOBAL_TARGET_FIELDS = ['name', 'type']
 
 SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'ra', 'dec', 'epoch', 'pm_ra', 'pm_dec',
@@ -122,6 +122,9 @@ class Target(models.Model):
         ('JPL_MAJOR_PLANET', 'JPL Major Planet')
     )
 
+    name = models.CharField(
+        max_length=100, default='', verbose_name='Name', help_text='The name of this target e.g. Barnard\'s star.', unique=True
+    )
     type = models.CharField(
         max_length=100, choices=TARGET_TYPES, verbose_name='Target Type', help_text='The type of this target.'
     )
@@ -237,7 +240,7 @@ class Target(models.Model):
         run_hook('target_post_save', target=self, created=created)
 
     def __str__(self):
-        return str(self.identifier)
+        return str(self.name)
 
     def get_absolute_url(self):
         return reverse('targets:detail', kwargs={'pk': self.id})
@@ -253,8 +256,8 @@ class Target(models.Model):
         return self.dataproduct_set.filter(tag='fits_file', featured=True).first()
 
     @property
-    def identifier(self):
-        return TargetName.objects.filter(target=self).order_by('created').first().name
+    def names(self):
+        return [self.name] + [target_name.name for target_name in TargetName.objects.filter(target=self)]
 
     @property
     def future_observations(self):
