@@ -47,6 +47,16 @@ Target post save hook: Messier 51 created: True
 Messier 51
 ```
 
+If we wish to populate any extra fields that we've defined in `settings.EXTRA_FIELDS`, we can do now do that:
+
+```python
+In [2]: t.save(extras={'foo': 42,
+                       'bar': 'baz'})
+   ...: print(t.extra_fields)
+Target post save hook: Messier 51 created: False
+Out [2]: {'bar': 'baz', 'foo': 42.0}
+```
+
 Now we should have a target in our database for M51. We can fetch it now, or
 anytime later:
 
@@ -73,7 +83,7 @@ And if we tire of it, we can delete it entirely:
 In [15]: target.delete()
 Out[15]:
 (1,
- {'tom_targets.TargetExtra': 0,
+ {'tom_targets.TargetExtra': 2,
   'tom_targets.TargetList_targets': 0,
   'tom_dataproducts.ReducedDatum': 0,
   'tom_targets.Target': 1})
