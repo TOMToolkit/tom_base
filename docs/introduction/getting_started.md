@@ -15,9 +15,7 @@ Ready to go? Let's get started.
 
 ### Prerequisites
 
-The TOM toolkit requires Python >= 3.7 and numpy to be installed:
-
-    pip install numpy
+The TOM toolkit requires Python >= 3.7
 
 If you are using Python 3.6 and cannot upgrade to 3.7, install the `dataclasses`
 backport:
@@ -90,3 +88,4 @@ Now, start the dev server:
     ./manage.py runserver
 
 Your new TOM should now be running on [http://127.0.0.1:8000](http://127.0.0.1:8000)!
+

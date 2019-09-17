@@ -1,6 +1,6 @@
 # Scripting your TOM with a Jupyter Notebook
 
-The TOM provides a graphical interface to perform many tasks, but there are many
+The TOM provides a graphical interface to perform many tasks, but there are some
 tasks where writing code to interact with your TOM's data and functions may be
 desirable.  In this tutorial we will explore how to interact with a TOM with code,
 _programatically_, using a Jupyter notebook.
@@ -23,9 +23,15 @@ open the notebook with the correct Django context loaded:
 
 ![new](/_static/jupyterdoc/newnotebook.png)
 
-Creat a new notebook. Now that it's open, we can use it just like any other
+Create a new notebook. Now that it's open, we can use it just like any other
 Notebook.
 
+### The API Documentation
+
+When working with the TOM programmatically, you'll often reference the [API
+documentation](http://cygnus.lco.gtn:7777/api/modules.html) which is a reference
+to the code of the TOM Toolkit itself. Since you will be using these classes and
+functions, it would be a good idea to familiarize yourself with it.
 
 ### Creating Targets
 
@@ -39,6 +45,16 @@ In [1]: from tom_targets.models import Target
    ...:
 Target post save hook: Messier 51 created: True
 Messier 51
+```
+
+If we wish to populate any extra fields that we've defined in `settings.EXTRA_FIELDS`, we can do now do that:
+
+```python
+In [2]: t.save(extras={'foo': 42,
+                       'bar': 'baz'})
+   ...: print(t.extra_fields)
+Target post save hook: Messier 51 created: False
+Out [2]: {'bar': 'baz', 'foo': 42.0}
 ```
 
 Now we should have a target in our database for M51. We can fetch it now, or
@@ -67,7 +83,7 @@ And if we tire of it, we can delete it entirely:
 In [15]: target.delete()
 Out[15]:
 (1,
- {'tom_targets.TargetExtra': 0,
+ {'tom_targets.TargetExtra': 2,
   'tom_targets.TargetList_targets': 0,
   'tom_dataproducts.ReducedDatum': 0,
   'tom_targets.Target': 1})
