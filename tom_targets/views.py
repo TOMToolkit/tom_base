@@ -95,7 +95,9 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         """
         context = super(TargetCreateView, self).get_context_data(**kwargs)
         context['type_choices'] = Target.TARGET_TYPES
-        context['names_form'] = TargetNamesFormset()
+        context['names_form'] = TargetNamesFormset(initial=[{'names': new_name}
+                                                            for new_name
+                                                            in self.request.GET.get('names', []).split(',')])
         context['extra_form'] = TargetExtraFormset()
         return context
 

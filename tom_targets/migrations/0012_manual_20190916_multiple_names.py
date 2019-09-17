@@ -33,12 +33,13 @@ class Migration(migrations.Migration):
                                           verbose_name='Alias for this target')),
                 ('created', models.DateTimeField(auto_now_add=True,
                                                  help_text='The time which this target name was created.')),
-            ],
+            ]
         ),
         migrations.AddField(
                 model_name='targetname',
                 name='target',
-                field=models.ForeignKey(on_delete=models.deletion.CASCADE, to='tom_targets.Target'),
+                field=models.ForeignKey(on_delete=models.deletion.CASCADE, related_name='test_alias',
+                                        to='tom_targets.Target'),
             ),
 
         migrations.RunPython(copy_names_from_target_to_targetnames, reverse_code=migrations.RunPython.noop),

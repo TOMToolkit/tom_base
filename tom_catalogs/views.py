@@ -20,4 +20,6 @@ class CatalogQueryView(FormView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('targets:create') + '?' + urlencode(self.target.as_dict())
+        target_params = self.target.as_dict()
+        target_params['names'] = ','.join(self.target.new_names)
+        return reverse('targets:create') + '?' + urlencode(target_params)

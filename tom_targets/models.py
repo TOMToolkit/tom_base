@@ -215,6 +215,10 @@ class Target(models.Model):
     class Meta:
         ordering = ('id',)
 
+    def __init__(self, *args, **kwargs):
+        self.new_names = []
+        super().__init__(*args, **kwargs)
+
     @transaction.atomic
     def save(self, *args, **kwargs):
         """
@@ -226,8 +230,6 @@ class Target(models.Model):
         """
         extras = kwargs.pop('extras', {})
         names = kwargs.pop('names', [])
-        print(extras)
-        print(names)
 
         created = False if self.id else True
         super().save(*args, **kwargs)
@@ -242,6 +244,12 @@ class Target(models.Model):
             name.save()
 
         run_hook('target_post_save', target=self, created=created)
+
+    def validate_unique(self, *args, **kwargs):
+        super().validate_unique(*args, **kwargs)
+        for alias in self.aliases.all():
+            if alias.name == self.name:
+                raise ValidationError('Target name and target aliases must be unique')
 
     def __str__(self):
         return str(self.name)
@@ -261,7 +269,7 @@ class Target(models.Model):
 
     @property
     def names(self):
-        return [self.name] + [target_name.name for target_name in TargetName.objects.filter(target=self)]
+        return [self.name] + [alias.name for alias in self.aliases.all()]
 
     @property
     def future_observations(self):
@@ -320,10 +328,7 @@ class Target(models.Model):
 
 
 class TargetName(models.Model):
-    """
-    TODO: Add cross table constraint on unique names
-    """
-    target = models.ForeignKey(Target, on_delete=models.CASCADE)
+    target = models.ForeignKey(Target, on_delete=models.CASCADE, related_name='aliases')
     name = models.CharField(max_length=100, unique=True, verbose_name='Alias for target')
     created = models.DateTimeField(
         auto_now_add=True, help_text='The time which this target name was created.'
@@ -333,7 +338,6 @@ class TargetName(models.Model):
         return self.name
 
     def validate_unique(self, *args, **kwargs):
-        print('validate unique')
         super().validate_unique(*args, **kwargs)
         if self.name == self.target.name:
             raise ValidationError('Target name and target aliases must be unique')

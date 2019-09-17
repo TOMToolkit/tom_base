@@ -10,12 +10,11 @@ class MPCHarvester(AbstractHarvester):
         self.catalog_data = MPC.query_object('asteroid', name=term)
 
     def to_target(self):
-        # TODO: Save somewhere besides the form (maybe here?)
         target = super().to_target()
         result = self.catalog_data[0]
         target.type = 'NON_SIDEREAL'
         target.name = result['name']
-        target.identifier = result['number']  # TODO: This won't work
+        target.new_names = [result['designation']] if result['designation'] else []
         target.epoch = result['epoch_jd']
         target.mean_anomaly = result['mean_anomaly']
         target.arg_of_perihelion = result['argument_of_perihelion']
