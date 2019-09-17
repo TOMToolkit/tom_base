@@ -1,4 +1,5 @@
 from django.db import models, transaction
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.forms.models import model_to_dict
 from django.conf import settings
@@ -225,6 +226,8 @@ class Target(models.Model):
         """
         extras = kwargs.pop('extras', {})
         names = kwargs.pop('names', [])
+        print(extras)
+        print(names)
 
         created = False if self.id else True
         super().save(*args, **kwargs)
@@ -328,6 +331,12 @@ class TargetName(models.Model):
 
     def __str__(self):
         return self.name
+
+    def validate_unique(self, *args, **kwargs):
+        print('validate unique')
+        super().validate_unique(*args, **kwargs)
+        if self.name == self.target.name:
+            raise ValidationError('Target name and target aliases must be unique')
 
 
 class TargetExtra(models.Model):

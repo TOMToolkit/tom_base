@@ -107,6 +107,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         return initial
 
     def form_valid(self, form):
+        super().is_valid()
         # Submit the observation
         facility = self.get_facility_class()
         target = self.get_target()

@@ -1,5 +1,5 @@
 import csv
-from .models import Target, TargetExtra
+from .models import Target, TargetExtra, TargetName
 from io import StringIO
 
 
@@ -39,15 +39,26 @@ def import_targets(targets):
         # filter out empty values in base fields, otherwise converting empty string to float will throw error
         row = {k: v for (k, v) in row.items() if not (k in base_target_fields and not v)}
         target_extra_fields = []
+        target_names = []
+        target_fields = {}
         for k in row:
             if k not in base_target_fields:
                 target_extra_fields.append((k, row[k]))
+            elif k == 'name':
+                print(row[k])
+                target_names.append(row[k])
+            else:
+                target_fields[k] = row[k]
         for extra in target_extra_fields:
             row.pop(extra[0])
         try:
-            target = Target.objects.create(**row)
+            print(target_names)
+            target_fields['name'] = target_names.pop(0)
+            target = Target.objects.create(**target_fields)
             for extra in target_extra_fields:
                 TargetExtra.objects.create(target=target, key=extra[0], value=extra[1])
+            for name in target_names:
+                TargetName.objects.create(target=target, name=name)
             targets.append(target)
         except Exception as e:
             error = 'Error on line {0}: {1}'.format(index + 2, str(e))
