@@ -40,6 +40,7 @@ setup(
         'requests',
         'astroquery',
         'astropy',
+        'astroplan',
         'plotly',
         'pyephem',
         'matplotlib',

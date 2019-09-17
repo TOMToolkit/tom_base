@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
 from bisect import bisect_left
-from astropy.coordinates import Angle, AltAz
+from astropy.coordinates import Angle, AltAz, get_sun, SkyCoord
 from astropy import units
 from astropy.time import Time
 import ephem
+from astroplan import Observer, FixedTarget, time_grid_from_range
+import numpy as np
 
 from tom_observations import facility
 
@@ -12,6 +14,105 @@ EPHEM_FORMAT = '%Y/%m/%d %H:%M:%S'
 DEFAULT_VALUES = {
     'epoch': '2000'
 }
+
+
+def get_visibility(target, start_time, end_time, interval, airmass_limit=10):
+    """
+    Calculates the airmass for a target for each given interval between
+    the start and end times.
+
+    The resulting data omits any airmass above the provided limit (or
+    default, if one is not provided), as well as any airmass calculated
+    during the day.
+
+    :param start_time: start of the window for which to calculate the airmass
+    :type start_time: datetime
+
+    :param end_time: end of the window for which to calculate the airmass
+    :type end_time: datetime
+
+    :param interval: time interval, in minutes, at which to calculate airmass within the given window
+    :type interval: int
+
+    :param airmass_limit: maximum acceptable airmass for the resulting calculations
+    :type airmass_limit: int
+
+    :returns: A dictionary containing the airmass data for each site. The dict keys consist of the site name prepended
+        with the observing facility. The values are the airmass data, structured as an array containing two arrays. The
+        first array contains the set of datetimes used in the airmass calculations. The second array contains the
+        corresponding set of airmasses calculated.
+    :rtype: dict
+    """
+    if not airmass_limit:
+        airmass_limit = 10
+    if target.type == target.SIDEREAL:
+        visibility = get_sidereal_visibility(target, start_time, 
+            end_time, interval, airmass_limit)
+    elif target.type == target.NON_SIDEREAL:
+        visibility = get_nonsidereal_visibility(target, start_time,
+            end_time, interval, airmass_limit)
+    else:
+        raise Exception("Object type is unsupported for visibility calculations")
+
+    return visibility
+
+
+
+def get_nonsidereal_visibility(target, start_time, end_time, interval, airmass_limit):
+    """
+    Uses pyephem to calculate the airmass for a non-sidereal target 
+    for each given interval between the start and end times.
+
+    The resulting data omits any airmass above the provided limit (or
+    default, if one is not provided), as well as any airmass calculated
+    during the day.
+
+    :param start_time: start of the window for which to calculate the airmass
+    :type start_time: datetime
+
+    :param end_time: end of the window for which to calculate the airmass
+    :type end_time: datetime
+
+    :param interval: time interval, in minutes, at which to calculate airmass within the given window
+    :type interval: int
+
+    :param airmass_limit: maximum acceptable airmass for the resulting calculations
+    :type airmass_limit: int
+
+    :returns: A dictionary containing the airmass data for each site. The dict keys consist of the site name prepended
+        with the observing facility. The values are the airmass data, structured as an array containing two arrays. The
+        first array contains the set of datetimes used in the airmass calculations. The second array contains the
+        corresponding set of airmasses calculated.
+    :rtype: dict
+    """
+    visibility = {}
+    body = get_pyephem_instance_for_type(target)
+    sun = ephem.Sun()
+    for observing_facility in facility.get_service_classes():
+        observing_facility_class = facility.get_service_class(observing_facility)
+        sites = observing_facility_class().get_observing_sites()
+        for site, site_details in sites.items():
+            positions = [[], []]
+            observer = get_pyephem_observer_for_site(site_details)
+            rise_sets = get_rise_set(observer, sun, start_time, end_time)
+            curr_interval = start_time
+            while curr_interval <= end_time:
+                time = curr_interval
+                last_rise_set = get_last_rise_set_pair(rise_sets, time)
+                sunup = time > last_rise_set[0] and time < last_rise_set[1] if last_rise_set else False
+                observer.date = curr_interval
+                body.compute(observer)
+                alt = Angle(str(body.alt), unit=units.degree)
+                az = Angle(str(body.az), unit=units.degree)
+                altaz = AltAz(alt=alt.to_string(unit=units.rad), az=az.to_string(unit=units.rad))
+                airmass = altaz.secz
+                positions[0].append(curr_interval)
+                positions[1].append(
+                    airmass.value if (airmass.value > 1 and airmass.value <= airmass_limit) and not sunup else None
+                )
+                curr_interval += timedelta(minutes=interval)
+            visibility['({0}) {1}'.format(observing_facility, site)] = positions
+    return visibility
 
 
 def ephem_to_datetime(ephem_time):
@@ -112,14 +213,53 @@ def get_next_rise_set_pair(rise_sets, time):
     return rise_sets[next_rise_pos]
 
 
-def get_visibility(target, start_time, end_time, interval, airmass_limit=10):
+def get_pyephem_instance_for_type(target):
     """
-    Calculates the airmass for a target for each given interval between
-    the start and end times.
+    Constructs a pyephem body for non-sidereal targets
+    in order to perform positional calculations for the target
+
+    :returns: EllipticalBody
+    """
+    body = ephem.EllipticalBody()
+    body._inc = ephem.degrees(target.inclination) if target.inclination else 0
+    body._Om = target.lng_asc_node if target.lng_asc_node else 0
+    body._om = target.arg_of_perihelion if target.arg_of_perihelion else 0
+    body._a = target.semimajor_axis if target.semimajor_axis else 0
+    body._M = target.mean_anomaly if target.mean_anomaly else 0
+    if target.ephemeris_epoch:
+        epoch_M = Time(target.ephemeris_epoch, format='jd')
+        epoch_M.format = 'datetime'
+        body._epoch_M = ephem.Date(epoch_M.value)
+    else:
+        body._epoch_M = ephem.Date(DEFAULT_VALUES['epoch'])
+    body._epoch = target.epoch if target.epoch else ephem.Date(DEFAULT_VALUES['epoch'])
+    body._e = target.eccentricity if target.eccentricity else 0
+    return body
+
+
+def get_pyephem_observer_for_site(site):
+    """
+    Constructs a pyephem observer for non-sidereal targets
+    in order to perform positional calculations for the target
+
+    :returns: Observer
+    """
+    observer = ephem.Observer()
+    observer.lon = ephem.degrees(str(site.get('longitude')))
+    observer.lat = ephem.degrees(str(site.get('latitude')))
+    observer.elevation = site.get('elevation')
+    return observer
+
+
+
+def get_sidereal_visibility(target, start_time, end_time, interval, airmass_limit):
+    """
+    Uses astroplan to calculate the airmass for a sidereal target 
+    for each given interval between the start and end times.
 
     The resulting data omits any airmass above the provided limit (or
     default, if one is not provided), as well as any airmass calculated
-    during the day.
+    during the day (defined as between astronomical twilights).
 
     :param start_time: start of the window for which to calculate the airmass
     :type start_time: datetime
@@ -138,79 +278,122 @@ def get_visibility(target, start_time, end_time, interval, airmass_limit=10):
         first array contains the set of datetimes used in the airmass calculations. The second array contains the
         corresponding set of airmasses calculated.
     :rtype: dict
-
     """
-    if not airmass_limit:
-        airmass_limit = 10
+
     visibility = {}
-    body = get_pyephem_instance_for_type(target)
-    sun = ephem.Sun()
+    body = get_astroplan_instance_for_type(target)
+    sun, time_range = get_astroplan_sun_and_time(start_time, end_time, interval)
     for observing_facility in facility.get_service_classes():
         observing_facility_class = facility.get_service_class(observing_facility)
         sites = observing_facility_class().get_observing_sites()
         for site, site_details in sites.items():
-            positions = [[], []]
-            observer = observer_for_site(site_details)
-            rise_sets = get_rise_set(observer, sun, start_time, end_time)
-            curr_interval = start_time
-            while curr_interval <= end_time:
-                time = curr_interval
-                last_rise_set = get_last_rise_set_pair(rise_sets, time)
-                sunup = time > last_rise_set[0] and time < last_rise_set[1] if last_rise_set else False
-                observer.date = curr_interval
-                body.compute(observer)
-                alt = Angle(str(body.alt), unit=units.degree)
-                az = Angle(str(body.az), unit=units.degree)
-                altaz = AltAz(alt=alt.to_string(unit=units.rad), az=az.to_string(unit=units.rad))
-                airmass = altaz.secz
-                positions[0].append(curr_interval)
-                positions[1].append(
-                    airmass.value if (airmass.value > 1 and airmass.value <= airmass_limit) and not sunup else None
-                )
-                curr_interval += timedelta(minutes=interval)
-            visibility['({0}) {1}'.format(observing_facility, site)] = positions
+
+            observer = get_astroplan_observer_for_site(site_details)
+
+            sun_alt = observer.altaz(time_range, sun).alt
+            obj_airmass = observer.altaz(time_range, body).secz
+
+            bad_indices = np.argwhere(
+                (obj_airmass >= airmass_limit) |
+                (obj_airmass <= 1) |
+                (sun_alt > -18*units.deg) #between astro twilights
+            )
+
+            obj_airmass = [None if i in bad_indices else float(x)
+                for i, x in enumerate(obj_airmass)]
+
+            visibility['({0}) {1}'.format(observing_facility, site)] = [time_range.datetime, obj_airmass]
     return visibility
 
 
-def get_pyephem_instance_for_type(target):
+def get_astroplan_instance_for_type(target):
     """
-    Constructs a pyephem body corresponding to the proper object type
+    Constructs an astroplan FixedTarget from a tom_targets target
+    in order to perform positional calculations for the target.
+
+    :param target: the target
+    :type target: tom_targets.models.Target
+
+    :returns: a fixed target at the target's ra and dec
+    :rtype: astroplan FixedTarget
+    """
+
+    fixed_target = FixedTarget(name = target.name,
+        coord = SkyCoord(
+            target.ra,
+            target.dec,
+            unit = 'deg'
+        )
+    )
+
+    return fixed_target
+    
+
+def get_astroplan_sun_and_time(start_time, end_time, interval):
+    """
+    Uses astroplan's time_grid_from_range to generate
+    an astropy Time object covering the time range.
+
+    Uses astropy's get_sun to generate sun positions over
+    that time range.
+
+    If time range is small and interval is coarse, approximates
+    the sun at a fixed position from the middle of the
+    time range to speed up calculations.
+    Since the sun moves ~4 minutes a day, this approximation
+    happens when the number of days covered by the time range
+    * 4 is less than the interval (in minutes) / 2.
+
+    :param start_time: start of the window for which to calculate the airmass
+    :type start_time: datetime
+
+    :param end_time: end of the window for which to calculate the airmass
+    :type end_time: datetime
+
+    :param interval: time interval, in minutes, at which to calculate airmass within the given window
+    :type interval: int
+
+    :returns: ra/dec positions of the sun over the time range,
+        time range between start_time and end_time at interval
+    :rtype: astropy SkyCoord, astropy Time
+    """
+
+    start = Time(start_time)
+    end = Time(end_time)
+
+    time_range = time_grid_from_range(
+        time_range = [start, end],
+        time_resolution = interval*units.minute
+    )
+
+    number_of_days = end.mjd - start.mjd
+    if number_of_days*4 < float(interval)/2:
+        #Hack to speed up calculation by factor of ~3
+        sun_coords = get_sun(time_range[int(len(time_range)/2)])
+        fixed_sun = FixedTarget(name = 'sun',
+            coord = SkyCoord(
+                sun_coords.ra,
+                sun_coords.dec,
+                unit = 'deg'
+            )
+        )
+        sun = fixed_sun
+    else:
+        sun = get_sun(time_range)
+
+    return sun, time_range
+
+
+def get_astroplan_observer_for_site(site_details):
+    """
+    Constructs an astroplan observer for sidereal targets
     in order to perform positional calculations for the target
 
-    :returns: FixedBody or EllipticalBody
-
-    :raises Exception: When a target type other than sidereal or non-sidereal is supplied
-
+    :returns: Observer
     """
-    if target.type == target.SIDEREAL:
-        body = ephem.FixedBody()
-        body._ra = Angle(str(target.ra) + 'd').to_string(unit=units.hourangle, sep=':')
-        body._dec = Angle(str(target.dec) + 'd').to_string(unit=units.degree, sep=':')
-        body._epoch = target.epoch if target.epoch else ephem.Date(DEFAULT_VALUES['epoch'])
-        return body
-    elif target.type == target.NON_SIDEREAL:
-        body = ephem.EllipticalBody()
-        body._inc = ephem.degrees(target.inclination) if target.inclination else 0
-        body._Om = target.lng_asc_node if target.lng_asc_node else 0
-        body._om = target.arg_of_perihelion if target.arg_of_perihelion else 0
-        body._a = target.semimajor_axis if target.semimajor_axis else 0
-        body._M = target.mean_anomaly if target.mean_anomaly else 0
-        if target.ephemeris_epoch:
-            epoch_M = Time(target.ephemeris_epoch, format='jd')
-            epoch_M.format = 'datetime'
-            body._epoch_M = ephem.Date(epoch_M.value)
-        else:
-            body._epoch_M = ephem.Date(DEFAULT_VALUES['epoch'])
-        body._epoch = target.epoch if target.epoch else ephem.Date(DEFAULT_VALUES['epoch'])
-        body._e = target.eccentricity if target.eccentricity else 0
-        return body
-    else:
-        raise Exception("Object type is unsupported for visibility calculations")
-
-
-def observer_for_site(site):
-    observer = ephem.Observer()
-    observer.lon = ephem.degrees(str(site.get('longitude')))
-    observer.lat = ephem.degrees(str(site.get('latitude')))
-    observer.elevation = site.get('elevation')
+    observer = Observer(
+        longitude = site_details.get('longitude')*units.deg,
+        latitude = site_details.get('latitude')*units.deg,
+        elevation = site_details.get('elevation')*units.m
+    )
     return observer
