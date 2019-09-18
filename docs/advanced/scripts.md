@@ -114,7 +114,7 @@ form = LCOObservationForm({
 Is the form valid?
 
 ```python
-In [18]: form.valid()
+In [18]: form.is_valid()
 Out[18]: true
 ```
 
