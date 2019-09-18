@@ -66,7 +66,7 @@ class TestObservationDataViews(TestCase):
         self.assertContains(response, 'afile.fits')
 
     def test_get_dataproducts(self, dp_mock):
-        response = self.client.get(reverse('tom_observations:detail', kwargs={'pk': self.data_product.id}))
+        response = self.client.get(reverse('tom_observations:detail', kwargs={'pk': self.observation_record.id}))
         self.assertContains(response, 'testdpid')
 
     def test_save_dataproduct(self, dp_mock):

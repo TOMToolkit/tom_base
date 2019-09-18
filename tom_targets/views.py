@@ -65,6 +65,14 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         except AttributeError:
             return Target.SIDEREAL
 
+    def get_target_type(self):
+        obj = self.request.GET or self.request.POST
+        target_type = obj.get('type')
+        # If None or some invalid value, use default target type
+        if target_type not in (Target.SIDEREAL, Target.NON_SIDEREAL):
+            target_type = self.get_default_target_type()
+        return target_type
+
     def get_initial(self):
         """
         Returns the initial data to use for forms on this view.
@@ -78,7 +86,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         :rtype: dict
         """
         return {
-            'type': self.get_default_target_type(),
+            'type': self.get_target_type(),
             'groups': self.request.user.groups.all(),
             **dict(self.request.GET.items())
         }
@@ -105,16 +113,11 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         """
         Return the form class to use in this view.
         """
-        target_type = self.get_default_target_type()
-        if self.request.GET:
-            target_type = self.request.GET.get('type', target_type)
-        elif self.request.POST:
-            target_type = self.request.POST.get('type', target_type)
+        target_type = self.get_target_type()
+        self.initial['type'] = target_type
         if target_type == Target.SIDEREAL:
-            self.initial['type'] = Target.SIDEREAL
             return SiderealTargetCreateForm
-        elif target_type == Target.NON_SIDEREAL:
-            self.initial['type'] = Target.NON_SIDEREAL
+        else:
             return NonSiderealTargetCreateForm
 
     def form_valid(self, form):

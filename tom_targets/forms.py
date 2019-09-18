@@ -6,8 +6,16 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
+<<<<<<< HEAD
 from .models import Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS
 from .models import REQUIRED_NON_SIDEREAL_FIELDS
+=======
+from .models import (
+    Target, TargetExtra, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS,
+    REQUIRED_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS,
+    REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
+)
+>>>>>>> development
 
 
 def extra_field_to_form_field(field_type):
@@ -51,15 +59,18 @@ class TargetForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.extra_fields = {}
         for extra_field in settings.EXTRA_FIELDS:
             # Add extra fields to the form
             field_name = extra_field['name']
-            self.fields[field_name] = extra_field_to_form_field(extra_field['type'])
+            self.extra_fields[field_name] = extra_field_to_form_field(extra_field['type'])
             # Populate them with initial values if this is an update
             if kwargs['instance']:
                 te = TargetExtra.objects.filter(target=kwargs['instance'], key=field_name)
                 if te.exists():
-                    self.fields[field_name].initial = te.first().typed_value(extra_field['type'])
+                    self.extra_fields[field_name].initial = te.first().typed_value(extra_field['type'])
+
+            self.fields.update(self.extra_fields)
 
     def save(self, commit=True):
         instance = super().save(commit=commit)
@@ -109,6 +120,27 @@ class NonSiderealTargetCreateForm(TargetForm):
         super().__init__(*args, **kwargs)
         for field in REQUIRED_NON_SIDEREAL_FIELDS:
             self.fields[field].required = True
+
+    def clean(self):
+        """
+        Look at the 'scheme' field and check the fields required for the
+        specified field have been given
+        """
+        cleaned_data = super().clean()
+        scheme = cleaned_data['scheme']  # scheme is a required field, so this should be safe
+        required_fields = REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME[scheme]
+
+        for field in required_fields:
+            if not cleaned_data.get(field):
+                # Get verbose names of required fields
+                field_names = [
+                    "'" + Target._meta.get_field(f).verbose_name + "'"
+                    for f in required_fields
+                ]
+                scheme_name = dict(Target.TARGET_SCHEMES)[scheme]
+                raise ValidationError(
+                    "Scheme '{}' requires fields {}".format(scheme_name, ', '.join(field_names))
+                )
 
     class Meta(TargetForm.Meta):
         fields = NON_SIDEREAL_FIELDS

@@ -23,3 +23,10 @@ If you'd like to contribute to the TOM Toolkit, first of all, thanks! Secondly, 
 have a [contribution guide](https://tom-toolkit.readthedocs.io/en/latest/contributing.html) that
 you might find helpful. We are particularly interested in the contribution of
 observation and alert modules.
+
+
+## Plugins
+
+### Antares
+The [tom-antares](https://github.com/TOMToolkit/tom_antares) plugin adds support
+for querying the Antares broker for targets of interest.
