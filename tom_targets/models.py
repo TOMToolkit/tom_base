@@ -260,6 +260,9 @@ class Target(models.Model):
         run_hook('target_post_save', target=self, created=created)
 
     def validate_unique(self, *args, **kwargs):
+        """
+        Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
+        """
         super().validate_unique(*args, **kwargs)
         for alias in self.aliases.all():
             if alias.name == self.name:
@@ -283,6 +286,12 @@ class Target(models.Model):
 
     @property
     def names(self):
+        """
+        Gets a list with the name and aliases of this target
+
+        :returns: list of all names and `TargetName` values associated with this target
+        :rtype: list
+        """
         return [self.name] + [alias.name for alias in self.aliases.all()]
 
     @property
@@ -342,6 +351,17 @@ class Target(models.Model):
 
 
 class TargetName(models.Model):
+    """
+    Class representing an alternative name for a ``Target``.
+
+    :param target: The ``Target`` object this ``TargetName`` is associated with.
+
+    :param name: The name that this ``TargetName`` object represents.
+    :type name: str
+
+    :param created: The time at which this target was created in the TOM database.
+    :type type: datetime
+    """
     target = models.ForeignKey(Target, on_delete=models.CASCADE, related_name='aliases')
     name = models.CharField(max_length=100, unique=True, verbose_name='Alias for target')
     created = models.DateTimeField(
@@ -352,6 +372,9 @@ class TargetName(models.Model):
         return self.name
 
     def validate_unique(self, *args, **kwargs):
+        """
+        Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
+        """
         super().validate_unique(*args, **kwargs)
         if self.name == self.target.name:
             raise ValidationError('Target name and target aliases must be unique')

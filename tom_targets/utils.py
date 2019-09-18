@@ -42,7 +42,9 @@ def import_targets(targets):
         target_names = []
         target_fields = {}
         for k in row:
-            if k != 'name' and 'name' in k:
+            # All fields starting with 'name' (e.g. name2, name3) that aren't literally 'name' will be added as
+            # TargetNames
+            if k != 'name' and k.startswith('name'):
                 target_names.append(row[k])
             elif k not in base_target_fields:
                 target_extra_fields.append((k, row[k]))

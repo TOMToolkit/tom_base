@@ -88,8 +88,8 @@ class LasairBroker(GenericBroker):
             if 'candid' in c:
                 break
         return Target.objects.create(
-            type='SIDEREAL',
             name=c['candid'],
+            type='SIDEREAL',
             ra=c['ra'],
             dec=c['decl'],
             galactic_lng=alert['objectData']['glonmean'],

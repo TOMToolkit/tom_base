@@ -20,6 +20,13 @@ def copy_identifier_to_name(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
+    # This migration script does the following:
+    # - Creates the TargetName model
+    # - Adds a related name to the foreign key
+    # - Copies existing name, name2, and name3 fields to TargetNames
+    # - Copies target.identifier to target.name field
+    # - Removes target.identifier, target.name2, and target.name3
+
     dependencies = [
         ('tom_targets', '0012_target_perihdist'),
     ]
@@ -38,7 +45,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
                 model_name='targetname',
                 name='target',
-                field=models.ForeignKey(on_delete=models.deletion.CASCADE, related_name='test_alias',
+                field=models.ForeignKey(on_delete=models.deletion.CASCADE, related_name='aliases',
                                         to='tom_targets.Target'),
             ),
 
