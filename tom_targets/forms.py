@@ -6,16 +6,10 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
-<<<<<<< HEAD
-from .models import Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS
-from .models import REQUIRED_NON_SIDEREAL_FIELDS
-=======
 from .models import (
-    Target, TargetExtra, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS,
-    REQUIRED_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS,
-    REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
+    Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
+    REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 )
->>>>>>> development
 
 
 def extra_field_to_form_field(field_type):

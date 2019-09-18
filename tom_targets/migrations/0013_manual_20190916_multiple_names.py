@@ -21,7 +21,7 @@ def copy_identifier_to_name(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tom_targets', '0011_merge_20190731_1821'),
+        ('tom_targets', '0012_target_perihdist'),
     ]
 
     operations = [

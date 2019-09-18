@@ -214,6 +214,10 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': '',
             'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
         }
         create_url = reverse('targets:create') + '?type=NON_SIDEREAL'
 
@@ -249,6 +253,10 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': '',
             'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
         }
         response = self.client.post(reverse('targets:create'), data=target_data)
         self.assertEqual(response.context['form'].initial['type'], Target.NON_SIDEREAL)
