@@ -42,18 +42,15 @@ def import_targets(targets):
         target_names = []
         target_fields = {}
         for k in row:
-            if k not in base_target_fields:
-                target_extra_fields.append((k, row[k]))
-            elif k == 'name':
-                print(row[k])
+            if k != 'name' and 'name' in k:
                 target_names.append(row[k])
+            elif k not in base_target_fields:
+                target_extra_fields.append((k, row[k]))
             else:
                 target_fields[k] = row[k]
         for extra in target_extra_fields:
             row.pop(extra[0])
         try:
-            print(target_names)
-            target_fields['name'] = target_names.pop(0)
             target = Target.objects.create(**target_fields)
             for extra in target_extra_fields:
                 TargetExtra.objects.create(target=target, key=extra[0], value=extra[1])
