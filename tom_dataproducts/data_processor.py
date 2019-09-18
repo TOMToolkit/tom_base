@@ -64,6 +64,7 @@ def run_data_processor(dp):
                     value=json.dumps(datum)
                 )
 
+
 class DataProcessor():
 
     def process_spectroscopy(self, data_product):
