@@ -72,11 +72,10 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': '',
             'targetextra_set-0-value': '',
-            'targetname_set-TOTAL_FORMS': 1,
-            'targetname_set-INITIAL_FORMS': 0,
-            'targetname_set-MIN_NUM_FORMS': 0,
-            'targetname_set-MAX_NUM_FORMS': 1000,
-            'targetname_set-0-name': 'test_target'
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -98,11 +97,10 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': '',
             'targetextra_set-0-value': '',
-            'targetname_set-TOTAL_FORMS': 1,
-            'targetname_set-INITIAL_FORMS': 0,
-            'targetname_set-MIN_NUM_FORMS': 0,
-            'targetname_set-MAX_NUM_FORMS': 1000,
-            'targetname_set-0-name': 'test_target'
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -127,10 +125,10 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': 'category',
             'targetextra_set-0-value': 'type2',
-            'targetname_set-TOTAL_FORMS': 1,
-            'targetname_set-INITIAL_FORMS': 0,
-            'targetname_set-MIN_NUM_FORMS': 0,
-            'targetname_set-MAX_NUM_FORMS': 1000,
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -161,10 +159,10 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': '',
             'targetextra_set-0-value': '',
-            'targetname_set-TOTAL_FORMS': 1,
-            'targetname_set-INITIAL_FORMS': 0,
-            'targetname_set-MIN_NUM_FORMS': 0,
-            'targetname_set-MAX_NUM_FORMS': 1000,
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
