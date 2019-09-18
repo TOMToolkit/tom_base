@@ -29,7 +29,7 @@ Notebook.
 ### The API Documentation
 
 When working with the TOM programmatically, you'll often reference the [API
-documentation](http://cygnus.lco.gtn:7777/api/modules.html) which is a reference
+documentation](/api/modules) which is a reference
 to the code of the TOM Toolkit itself. Since you will be using these classes and
 functions, it would be a good idea to familiarize yourself with it.
 
@@ -164,6 +164,6 @@ pending observation!
 
 These are just a few examples of what's possible using the TOM's programmatic API.
 In fact, you have complete control over your data when using this api. The best
-way to learn what is possible is by [browsing the source
-code](https://github.com/tomtoolkit/tom_base)
+way to learn what is possible is by [exploring the API docs](/api/modules) and by
+[browsing the source code](https://github.com/tomtoolkit/tom_base)
 of the TOM Toolkit project.
