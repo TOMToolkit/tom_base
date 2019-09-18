@@ -1,12 +1,11 @@
 import requests
-import json
 
 from django import forms
-from crispy_forms.layout import Layout, Div, Fieldset, HTML
+from crispy_forms.layout import Layout, Div, Fieldset
 from astropy.time import Time, TimezoneInfo
 
 from tom_alerts.alerts import GenericQueryForm, GenericBroker, GenericAlert
-from tom_targets.models import Target, TargetName
+from tom_targets.models import Target
 
 ALERCE_URL = 'http://alerce.online'
 ALERCE_SEARCH_URL = 'http://ztf.alerce.online/query'
@@ -194,8 +193,8 @@ class ALeRCEBroker(GenericBroker):
 
     def to_target(self, alert):
         return Target.objects.create(
-            type='SIDEREAL',
             name=alert['oid'],
+            type='SIDEREAL',
             ra=alert['meanra'],
             dec=alert['meandec']
         )

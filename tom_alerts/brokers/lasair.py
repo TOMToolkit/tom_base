@@ -1,5 +1,5 @@
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
-from tom_targets.models import Target, TargetName
+from tom_targets.models import Target
 from django import forms
 import requests
 

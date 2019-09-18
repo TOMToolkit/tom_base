@@ -8,7 +8,7 @@ from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from astropy.time import Time, TimezoneInfo
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
-from tom_targets.models import Target, TargetExtra, TargetName
+from tom_targets.models import Target, TargetExtra
 from tom_dataproducts.models import ReducedDatum
 
 MARS_URL = 'https://mars.lco.global'
@@ -237,16 +237,13 @@ class MARSBroker(GenericBroker):
     def to_target(self, alert):
         alert_copy = alert.copy()
         target = Target.objects.create(
-            type='SIDEREAL',
             name=alert_copy['objectId'],
+            type='SIDEREAL',
             ra=alert_copy['candidate'].pop('ra'),
             dec=alert_copy['candidate'].pop('dec'),
             galactic_lng=alert_copy['candidate'].pop('l'),
-            galactic_lat=alert_copy['candidate'].pop('b')
+            galactic_lat=alert_copy['candidate'].pop('b'),
         )
-        for k, v in alert_copy['candidate'].items():
-            if v is not None:
-                TargetExtra.objects.create(target=target, key=k, value=v)
         return target
 
     def to_generic_alert(self, alert):
