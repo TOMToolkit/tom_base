@@ -145,7 +145,7 @@ class TestObservationDataViews(TestCase):
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
-@patch('tom_dataproducts.views.run_hook')
+@patch('tom_dataproducts.views.run_data_processor')
 class TestUploadDataProducts(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()
@@ -164,7 +164,7 @@ class TestUploadDataProducts(TestCase):
         assign_perm('tom_targets.view_target', user, self.target)
         self.client.force_login(user)
 
-    def test_upload_data_for_target(self, run_hook_mock):
+    def test_upload_data_for_target(self, run_data_processor_mock):
         response = self.client.post(
             reverse('dataproducts:upload'),
             {
@@ -180,7 +180,7 @@ class TestUploadDataProducts(TestCase):
         )
         self.assertContains(response, 'Successfully uploaded: {0}/none/afile.fits'.format(self.target.identifier))
 
-    def test_upload_data_for_observation(self, run_hook_mock):
+    def test_upload_data_for_observation(self, run_data_processor_mock):
         response = self.client.post(
             reverse('dataproducts:upload'),
             {
