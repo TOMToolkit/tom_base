@@ -226,6 +226,9 @@ THUMBNAIL_MAX_SIZE = (0, 0)
 
 THUMBNAIL_DEFAULT_SIZE = (200, 200)
 
+HINTS_ENABLED = False
+HINT_LEVEL = HINTS_ENABLED * 20
+
 try:
     from local_settings import *  # noqa
 except ImportError:
