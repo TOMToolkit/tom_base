@@ -1,8 +1,9 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 %}
-{% block title %}New target{% endblock %}
+{% block title %}New Target{% endblock %}
 {% block content %}
 {% if not object %}
+<h3>Create a Target</h3>
 <ul class="nav nav-tabs">
   {% for k, v in type_choices %}
     <li class="nav-item">
