@@ -22,6 +22,7 @@ class GroupForm(forms.ModelForm):
 
 
 class CustomUserCreationForm(UserCreationForm):
+    email = forms.EmailField(required=True)
     groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
                                             required=False, widget=forms.CheckboxSelectMultiple)
 
