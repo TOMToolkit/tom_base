@@ -103,14 +103,14 @@ Let's make some imports:
 ```python
 In [16]:
 from tom_targets.models import Target
-from tom_observations.facilities.lco import LCOFacility, LCOObservationForm
+from tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm
 ```
 
 And since we are submitting to LCO, we will instantiate an LCO observation form:
 
 ```python
 In [17]:
-form = LCOObservationForm({
+form = LCOBaseObservationForm({
     'name': 'Programmatic Observation',
     'proposal': 'LCOEngineering',
     'ipp_value': 1.05,
@@ -130,7 +130,7 @@ form = LCOObservationForm({
 Is the form valid?
 
 ```python
-In [18]: form.valid()
+In [18]: form.is_valid()
 Out[18]: true
 ```
 
