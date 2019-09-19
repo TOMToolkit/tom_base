@@ -20,6 +20,7 @@ from guardian.shortcuts import get_objects_for_user
 from .models import DataProduct, DataProductGroup, ReducedDatum
 from .exceptions import InvalidFileFormatException
 from .forms import AddProductToGroupForm, DataProductUploadForm
+from .data_processor import run_data_processor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 from tom_common.hooks import run_hook
@@ -77,6 +78,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             dp.save()
             try:
                 run_hook('data_product_post_upload', dp)
+                run_data_processor(dp)
                 successful_uploads.append(str(dp))
             except InvalidFileFormatException:
                 ReducedDatum.objects.filter(data_product=dp).delete()
