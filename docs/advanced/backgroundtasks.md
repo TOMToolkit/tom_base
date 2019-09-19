@@ -7,12 +7,12 @@ you click a button or link in the TOM your browser constructs a web request, whi
 is then sent to the webserver running your TOM. The TOM receives this request and
 then runs a bunch of code, ultimately to generate a response that gets sent back
 to the browser. This response is what you see when the next page loads. For the
-purposes of this explanation, this all happens _synchronusly_ meaning that your
+purposes of this explanation, this all happens _synchronously_ meaning that your
 browser has to wait for your TOM to respond before displaying the next page.
 
     ----------   request        ----------
     |         | ------------->  |        |
-    | browser |  reponse        |  TOM   |
+    | browser |  response       |  TOM   |
     |         | <-------------  |        |
     ----------                  ----------
 
@@ -25,14 +25,14 @@ and either reload the page or close it completely. In fact, according to a study
 by Akamai 50% of web users will not wait longer than 10-15 seconds for a page to
 load before giving up.
 
-The way we avoid these wait times is to run our slow code _asynchronusly_ in the
+The way we avoid these wait times is to run our slow code _asynchronously_ in the
 background, in a separate thread or process. In this model the TOM responds to the
 browser with a response immediately, before the slow code has even finished.
 
 
     ----------   request        ----------   task     -----------
     |         | ------------->  |        | -------->  |         |
-    | browser |  reponse        |  TOM   |   result   | worker  |
+    | browser |  response       |  TOM   |   result   | worker  |
     |         | <-------------  |        | <--------  |         |
     ----------                  ----------            -----------
 
@@ -43,7 +43,7 @@ email takes a very short amount of time, but it is still good practice to remove
 it from the request/response cycle, just in case it takes longer than usual or
 errors in some way.
 
-In this turotial we will go over how to run tasks asynchronously in your TOM if
+In this tutorial we will go over how to run tasks asynchronously in your TOM if
 you have the need to do so.
 
 ### Running tasks with Dramatiq
@@ -59,7 +59,7 @@ _workers_.
 
 Unfortunately, the broker is a separate piece of software outside of the task
 library. Dramatiq supports using either RabbitMQ or Redis. We'll use Redis because
-of it's versatility: not only can it be used as a message broker but it can also
+of its versatility: not only can it be used as a message broker but it can also
 be used in your TOM as a cache (though not covered in this tutorial).
 
 Depending on your OS, there are a few ways [to install
@@ -79,8 +79,8 @@ You can now run the server with:
     ./src/redis-server
 
 
-If you are running linux, most likely Redis is included with your distribution via
-it's package manager. For example:
+If you are running Linux, most likely Redis is included with your distribution via
+its package manager. For example:
 
 
     apt install Redis
@@ -191,7 +191,7 @@ def super_complicated_task():
     logger.info('done!')
 ```
 
-This task will emulate a function that blocks for 4 seconds, in pratice this would
+This task will emulate a function that blocks for 4 seconds, in practice this would
 be a network call or some kind of heavy processing task.
 
 Now open up a Django shell:
@@ -222,9 +222,9 @@ browser right away. The task will finish in the background.
 
 
 #### Conclusion
-In this turotial we went over the need for asynchronous tasks, the
+In this tutorial we went over the need for asynchronous tasks, the
 installation of Dramatiq and the broker, and finally writing a running a task.
 
-We reccomend reading the [Dramatiq](https://dramatiq.io/guide.html) documentaion
+We recommend reading the [Dramatiq](https://dramatiq.io/guide.html) documentation
 for full details on what the library is capable of, as well as additional usage
 examples.
