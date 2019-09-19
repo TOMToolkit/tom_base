@@ -1,20 +1,22 @@
 from urllib.parse import urlparse
 from io import StringIO
 
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import FormView, DeleteView
-from django.views.generic.edit import CreateView
-from django_filters.views import FilterView
-from django.views.generic import View, ListView
-from django.views.generic.base import RedirectView
-from django.views.generic.detail import DetailView
-from django.urls import reverse, reverse_lazy
-from django.shortcuts import redirect
 from django.contrib import messages
 from django.core.management import call_command
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
 from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
+from django.urls import reverse, reverse_lazy
+from django.utils.safestring import mark_safe
+from django.views.generic import View, ListView
+from django.views.generic.base import RedirectView
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import FormView, DeleteView
+from django.views.generic.edit import CreateView
+from django_filters.views import FilterView
 from guardian.shortcuts import get_objects_for_user
 
 from .models import DataProduct, DataProductGroup, ReducedDatum
@@ -221,6 +223,10 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
         else:
             call_command('updatereduceddata', stdout=out)
         messages.info(request, out.getvalue())
+        messages.add_message(request, settings.HINT_LEVEL, mark_safe(
+                             'Did you know updating observation statuses can be automated? Learn how in'
+                             '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
+                             'the docs.</a>'))
         return HttpResponseRedirect(self.get_redirect_url(*args, **kwargs))
 
     def get_redirect_url(self):

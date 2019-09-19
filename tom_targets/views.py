@@ -1,28 +1,30 @@
+from datetime import datetime
+from io import StringIO
+
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
+from django.core.management import call_command
+from django.http import StreamingHttpResponse
+from django.shortcuts import redirect
+from django.urls import reverse_lazy, reverse
+from django.utils.text import slugify
+from django.utils.safestring import mark_safe
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django.views.generic import TemplateView, View
 from django_filters.views import FilterView
-from django.urls import reverse_lazy, reverse
-from django.shortcuts import redirect
-from django.conf import settings
-from django.contrib import messages
-from django.core.management import call_command
-from django.http import StreamingHttpResponse
-from django.utils.text import slugify
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
-from datetime import datetime
-from io import StringIO
 
-from .models import Target, TargetList
+from tom_targets.models import Target, TargetList
+from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
+from tom_targets.utils import import_targets, export_targets
+from tom_targets.filters import TargetFilter
+from tom_targets.add_remove_from_grouping import add_remove_from_grouping
 from tom_dataproducts.forms import DataProductUploadForm
-from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
-from .utils import import_targets, export_targets
-from .filters import TargetFilter
-from .add_remove_from_grouping import add_remove_from_grouping
 
 
 class TargetListView(PermissionListMixin, FilterView):
@@ -207,6 +209,10 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
             out = StringIO()
             call_command('updatestatus', target_id=target_id, stdout=out)
             messages.info(request, out.getvalue())
+            messages.add_message(request, settings.HINT_LEVEL, mark_safe(
+                                 'Did you know updating observation statuses can be automated? Learn how in'
+                                 '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
+                                 'the docs.</a>'))
             return redirect(reverse('tom_targets:detail', args=(target_id,)))
         return super().get(request, *args, **kwargs)
 
