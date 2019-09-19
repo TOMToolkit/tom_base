@@ -179,6 +179,7 @@ class Command(BaseCommand):
         self.create_project_dirs()
         self.generate_secret_key()
         self.get_target_type()
+        self.get_hint_preference()
         self.generate_config()
         self.generate_urls()
         self.run_migrations()
