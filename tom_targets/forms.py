@@ -150,9 +150,11 @@ class TargetVisibilityForm(forms.Form):
         cleaned_data = super().clean()
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
+        target = self.data['target']
         if end_time < start_time:
             raise forms.ValidationError('Start time must be before end time')
-
+        if target.type == 'NON_SIDEREAL':
+            raise forms.ValidationError('Airmass plotting is only supported for sidereal targets')
 
 TargetExtraFormset = inlineformset_factory(Target, TargetExtra,
                                            fields=('key', 'value'), widgets={'value': forms.TextInput()})

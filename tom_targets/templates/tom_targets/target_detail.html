@@ -45,7 +45,11 @@
         {% observing_buttons object %}
         <hr/>
         <h4>Plan</h4>
-        {% target_plan %}
+        {% if object.type == 'SIDEREAL' %}
+            {% target_plan %}
+        {% elif target.type == 'NON_SIDEREAL' %}
+            <p>Airmass plotting for non-sidereal targets is not currently supported. If you would like to add this functionality, please check out this URL.</p>
+        {% endif %}
       </div>
       <div class="tab-pane" id="observations">
         <h4>Observations</h4>

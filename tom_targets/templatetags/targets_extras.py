@@ -63,7 +63,8 @@ def target_plan(context):
         plan_form = TargetVisibilityForm({
             'start_time': request.GET.get('start_time'),
             'end_time': request.GET.get('end_time'),
-            'airmass': request.GET.get('airmass')
+            'airmass': request.GET.get('airmass'),
+            'target': context['object']
         })
         if plan_form.is_valid():
             start_time = parse(request.GET['start_time'])
