@@ -25,6 +25,7 @@ from .forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 from tom_common.hooks import run_hook
+from tom_common.hints import add_hint
 
 
 class DataProductSaveView(LoginRequiredMixin, View):
@@ -223,10 +224,10 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
         else:
             call_command('updatereduceddata', stdout=out)
         messages.info(request, out.getvalue())
-        messages.add_message(request, settings.HINT_LEVEL, mark_safe(
-                             'Did you know updating observation statuses can be automated? Learn how in'
-                             '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
-                             'the docs.</a>'))
+        add_hint(request, mark_safe(
+                          'Did you know updating observation statuses can be automated? Learn how in '
+                          '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
+                          'the docs.</a>'))
         return HttpResponseRedirect(self.get_redirect_url(*args, **kwargs))
 
     def get_redirect_url(self):

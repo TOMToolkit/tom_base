@@ -15,6 +15,7 @@ from guardian.shortcuts import get_objects_for_user
 
 from .models import ObservationRecord
 from .forms import ManualObservationForm
+from tom_common.hints import add_hint
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class
@@ -52,10 +53,10 @@ class ObservationListView(FilterView):
             out = StringIO()
             call_command('updatestatus', stdout=out)
             messages.info(request, out.getvalue())
-            messages.add_message(request, settings.HINT_LEVEL, mark_safe(
-                                 'Did you know updating observation statuses can be automated? Learn how in'
-                                 '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
-                                 'the docs.</a>'))
+            add_hint(request, mark_safe(
+                              'Did you know updating observation statuses can be automated? Learn how in '
+                              '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
+                              'the docs.</a>'))
             return redirect(reverse('tom_observations:list'))
         return super().get(request, *args, **kwargs)
 
