@@ -55,6 +55,19 @@ to configure it here first. For example the LCO facility requires you to provide
 value for the `api_key` configuration value.
 
 
+### [HINTS](#hints)
+
+Default:
+
+HINTS_ENABLED = False
+HINT_LEVEL = 20
+
+A few messages are sprinkled throughout the TOM Toolkit that offer suggestions on 
+things you might want to change right out of the gate. These can be turned on and 
+off, and the level adjusted. For more information on Django message levels, see 
+the [Django messages framework documentation](https://docs.djangoproject.com/en/2.2/ref/contrib/messages/#message-levels).
+
+
 ### [HOOKS](#hooks)
 
 Default:

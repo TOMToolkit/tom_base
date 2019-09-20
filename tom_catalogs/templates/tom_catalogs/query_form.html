@@ -1,7 +1,8 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 %}
-{% block title %} Lookup Object {% endblock %}
+{% block title %} Look Up Object {% endblock %}
 {% block content %}
+<h3>Search Catalogs for a Target</h3>
 <form action="{% url 'tom_catalogs:query' %}" method="POST">
   {% csrf_token %}
   {% bootstrap_form form %}
