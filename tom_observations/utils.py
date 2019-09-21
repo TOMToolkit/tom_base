@@ -3,8 +3,11 @@ from astropy import units
 from astropy.time import Time
 from astroplan import Observer, FixedTarget, time_grid_from_range
 import numpy as np
+import logging
 
 from tom_observations import facility
+
+logger = logging.getLogger(__name__)
 
 def get_visibility(target, start_time, end_time, interval, airmass_limit):
     """
@@ -38,7 +41,7 @@ def get_visibility(target, start_time, end_time, interval, airmass_limit):
 
     if target.type != 'SIDEREAL':
         msg = '\033[1m\033[91mAirmass plotting is only supported for sidereal targets\033[0m'
-        print(msg)
+        logger.info(msg)
         empty_visibility = {}
         return empty_visibility
 
