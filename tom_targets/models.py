@@ -366,6 +366,10 @@ class TargetName(models.Model):
     created = models.DateTimeField(
         auto_now_add=True, help_text='The time which this target name was created.'
     )
+    modified = models.DateTimeField(
+        auto_now=True, verbose_name='Last Modified',
+        help_text='The time which this target was changed in the TOM database.'
+    )
 
     def __str__(self):
         return self.name
@@ -473,6 +477,10 @@ class TargetList(models.Model):
     targets = models.ManyToManyField(Target)
     created = models.DateTimeField(
         auto_now_add=True, help_text='The time which this target list was created in the TOM database.'
+    )
+    modified = models.DateTimeField(
+        auto_now=True, verbose_name='Last Modified',
+        help_text='The time which this target was changed in the TOM database.'
     )
 
     class Meta:
