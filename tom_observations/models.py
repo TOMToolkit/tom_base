@@ -85,7 +85,5 @@ class ObservationRecord(models.Model):
         facility = get_service_class(self.facility)
         facility().save_data_products(self)
 
-
-
     def __str__(self):
         return '{0} @ {1}'.format(self.target, self.facility)
