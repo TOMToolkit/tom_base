@@ -229,9 +229,6 @@ class Target(models.Model):
     class Meta:
         ordering = ('id',)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     @transaction.atomic
     def save(self, *args, **kwargs):
         """
