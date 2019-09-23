@@ -49,7 +49,7 @@ setup(
         'specutils',
     ],
     extras_require={
-        'test': ['factory_boy', 'rise-set']
+        'test': ['factory_boy']
     },
     include_package_data=True,
 )
