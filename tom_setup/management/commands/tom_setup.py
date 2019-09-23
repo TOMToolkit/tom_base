@@ -117,6 +117,9 @@ class Command(BaseCommand):
                 self.context['HINTS_ENABLED'] = True
             else:
                 self.stdout.write('Invalid response. Please try again.')
+                continue
+
+            break
 
     def generate_secret_key(self):
         self.status('Generating secret key... ')
