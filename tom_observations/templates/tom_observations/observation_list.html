@@ -32,7 +32,7 @@
         {% for observation in filter.qs %}
         <tr>
           <td><a class="btn btn-success" href="{% url 'tom_observations:detail' observation.id %}">Details</a></td>
-          <td><a href="{% url 'tom_targets:detail' observation.target.id %}" title="{{ observation.target.id }}">{{ observation.target.name }}</a></td>
+          <td><a href="{% url 'tom_targets:detail' observation.target.id %}" title="{{ observation.target.id }}">{{ observation.target.names|join:", " }}</a></td>
           <td>{{ observation.facility }}</td>
           <td>{{ observation.status }}</td>
           <td>{{ observation.scheduled_start }}</td>

@@ -16,12 +16,15 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django.views.generic import TemplateView, View
 from django_filters.views import FilterView
+
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
 
 from tom_common.hints import add_hint
 from tom_targets.models import Target, TargetList
-from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
+from tom_targets.forms import (
+    SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset
+)
 from tom_targets.utils import import_targets, export_targets
 from tom_targets.filters import TargetFilter
 from tom_targets.add_remove_from_grouping import add_remove_from_grouping
@@ -105,6 +108,9 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         """
         context = super(TargetCreateView, self).get_context_data(**kwargs)
         context['type_choices'] = Target.TARGET_TYPES
+        context['names_form'] = TargetNamesFormset(initial=[{'name': new_name}
+                                                            for new_name
+                                                            in self.request.GET.get('names', '').split(',')])
         context['extra_form'] = TargetExtraFormset()
         return context
 
@@ -122,9 +128,18 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         super().form_valid(form)
         extra = TargetExtraFormset(self.request.POST)
-        if extra.is_valid():
+        names = TargetNamesFormset(self.request.POST)
+        if extra.is_valid() and names.is_valid():
             extra.instance = self.object
             extra.save()
+            names.instance = self.object
+            names.save()
+        else:
+            form.add_error(None, extra.errors)
+            form.add_error(None, extra.non_form_errors())
+            form.add_error(None, names.errors)
+            form.add_error(None, names.non_form_errors())
+            return super().form_invalid(form)
         return redirect(self.get_success_url())
 
     def get_form(self, *args, **kwargs):
@@ -144,6 +159,7 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         extra_field_names = [extra['name'] for extra in settings.EXTRA_FIELDS]
         context = super().get_context_data(**kwargs)
+        context['names_form'] = TargetNamesFormset(instance=self.object)
         context['extra_form'] = TargetExtraFormset(
             instance=self.object,
             queryset=self.object.targetextra_set.exclude(key__in=extra_field_names)
@@ -153,8 +169,16 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     def form_valid(self, form):
         super().form_valid(form)
         extra = TargetExtraFormset(self.request.POST, instance=self.object)
-        if extra.is_valid():
+        names = TargetNamesFormset(self.request.POST, instance=self.object)
+        if extra.is_valid() and names.is_valid():
             extra.save()
+            names.save()
+        else:
+            form.add_error(None, extra.errors)
+            form.add_error(None, extra.non_form_errors())
+            form.add_error(None, names.errors)
+            form.add_error(None, names.non_form_errors())
+            return super().form_invalid(form)
         return redirect(self.get_success_url())
 
     def get_queryset(self, *args, **kwargs):

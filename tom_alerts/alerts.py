@@ -65,7 +65,6 @@ class GenericAlert:
 
     def to_target(self):
         return Target(
-            identifier=self.id,
             name=self.name,
             type='SIDEREAL',
             ra=self.ra,

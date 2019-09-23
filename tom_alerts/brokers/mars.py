@@ -237,7 +237,6 @@ class MARSBroker(GenericBroker):
     def to_target(self, alert):
         alert_copy = alert.copy()
         target = Target.objects.create(
-            identifier=alert_copy['objectId'],
             name=alert_copy['objectId'],
             type='SIDEREAL',
             ra=alert_copy['candidate'].pop('ra'),

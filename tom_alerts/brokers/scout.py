@@ -52,7 +52,6 @@ class ScoutBroker(GenericBroker):
 
     def to_target(self, alert):
         target = Target.objects.create(
-            identifier=alert['objectName'],
             name=alert['objectName'],
             type='NON_SIDEREAL',
             ra=hours_min_to_decimal(alert['ra']),

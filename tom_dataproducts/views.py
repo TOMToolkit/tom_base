@@ -22,6 +22,7 @@ from guardian.shortcuts import get_objects_for_user
 from .models import DataProduct, DataProductGroup, ReducedDatum
 from .exceptions import InvalidFileFormatException
 from .forms import AddProductToGroupForm, DataProductUploadForm
+from .filters import DataProductFilter
 from .data_processor import run_data_processor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
@@ -132,7 +133,7 @@ class DataProductListView(FilterView):
     model = DataProduct
     template_name = 'tom_dataproducts/dataproduct_list.html'
     paginate_by = 25
-    filterset_fields = ['target__name', 'observation_record__facility']
+    filterset_class = DataProductFilter
     strict = False
 
     def get_queryset(self):

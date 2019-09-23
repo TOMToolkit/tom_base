@@ -10,8 +10,8 @@ from django.contrib.auth.models import User, Group
 from astropy import units
 from astropy.coordinates import Angle
 
-from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory
-from tom_targets.models import Target, TargetExtra, TargetList
+from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory, TargetNameFactory
+from tom_targets.models import Target, TargetExtra, TargetList, TargetName
 from tom_observations.utils import get_visibility, get_pyephem_instance_for_type
 from tom_observations.tests.utils import FakeFacility
 from tom_targets.utils import import_targets
@@ -61,8 +61,7 @@ class TestTargetCreate(TestCase):
 
     def test_create_target(self):
         target_data = {
-            'name': 'test_target',
-            'identifier': 'test_target_id',
+            'name': 'test_target_name',
             'type': Target.SIDEREAL,
             'ra': 123.456,
             'dec': -32.1,
@@ -73,6 +72,10 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': '',
             'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -83,8 +86,7 @@ class TestTargetCreate(TestCase):
         Using coordinates for Messier 1
         """
         target_data = {
-            'name': 'test_target',
-            'identifier': 'test_target_id',
+            'name': 'test_target_name',
             'type': Target.SIDEREAL,
             'ra': '05:34:31.94',
             'dec': '+22:00:52.2',
@@ -95,6 +97,10 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': '',
             'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -109,7 +115,6 @@ class TestTargetCreate(TestCase):
         """
         target_data = {
             'name': 'test_target',
-            'identifier': 'test_target_id',
             'type': Target.SIDEREAL,
             'ra': '05:34:31.94',
             'dec': '+22:00:52.2',
@@ -120,6 +125,10 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': 'category',
             'targetextra_set-0-value': 'type2',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
@@ -136,7 +145,6 @@ class TestTargetCreate(TestCase):
     def test_create_target_with_extra_fields(self):
         target_data = {
             'name': 'extra_field_target',
-            'identifier': 'extra_field_identifier',
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
@@ -151,10 +159,14 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': '',
             'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
         }
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
-        target = Target.objects.get(name=target_data['name'], identifier=target_data['identifier'])
+        target = Target.objects.get(name=target_data['name'])
         self.assertTrue(TargetExtra.objects.filter(target=target, key='wins', value='50.0').exists())
         self.assertEqual(
             TargetExtra.objects.get(target=target, key='wins').typed_value('number'),
@@ -202,6 +214,10 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': '',
             'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
         }
         create_url = reverse('targets:create') + '?type=NON_SIDEREAL'
 
@@ -237,9 +253,92 @@ class TestTargetCreate(TestCase):
             'targetextra_set-MAX_NUM_FORMS': 1000,
             'targetextra_set-0-key': '',
             'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
         }
         response = self.client.post(reverse('targets:create'), data=target_data)
         self.assertEqual(response.context['form'].initial['type'], Target.NON_SIDEREAL)
+
+    def test_create_targets_with_multiple_names(self):
+        target_data = {
+            'name': 'multiple_names_target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 2,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        names = ['John', 'Doe']
+        for i, name in enumerate(names):
+            target_data[f'aliases-{i}-name'] = name
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(response, target_data['name'])
+
+        target = Target.objects.get(name=target_data['name'])
+        for target_name in names:
+            self.assertTrue(TargetName.objects.filter(target=target, name=target_name).exists())
+
+    def test_create_targets_with_conflicting_names(self):
+        target_data = {
+            'name': 'multiple_names_target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 2,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        names = ['John', 'Doe']
+        for i, name in enumerate(names):
+            target_data[f'aliases-{i}-name'] = name
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(second_response, 'Target with this Name already exists')
+
+    def test_create_targets_with_conflicting_aliases(self):
+        target_data = {
+            'name': 'multiple_names_target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 2,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        names = ['John', 'Doe']
+        for i, name in enumerate(names):
+            target_data[f'aliases-{i}-name'] = name
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        target_data['name'] = 'multiple_names_target2'
+        second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(second_response, 'Target name with this Alias for target already exists.')
 
 
 class TestTargetImport(TestCase):
@@ -249,9 +348,9 @@ class TestTargetImport(TestCase):
 
     def test_import_csv(self):
         csv = [
-            'identifier,name,type,ra,dec',
-            'm13,Hercules Globular Cluster,SIDEREAL,250.421,36.459',
-            'm27,Dumbbell Nebula,SIDEREAL,299.901,22.721'
+            'name,type,ra,dec',
+            'm13,SIDEREAL,250.421,36.459',
+            'm27,SIDEREAL,299.901,22.721'
         ]
         result = import_targets(csv)
         self.assertEqual(len(result['targets']), 2)
@@ -259,19 +358,40 @@ class TestTargetImport(TestCase):
     @override_settings(EXTRA_FIELDS=[{'name': 'redshift', 'type': 'number'}])
     def test_import_with_extra(self):
         csv = [
-            'identifier,name,type,ra,dec,redshift',
-            'm13,Hercules Globular Cluster,SIDEREAL,250.421,36.459,5',
-            'm27,Dumbbell Nebula,SIDEREAL,299.901,22.721,5'
+            'name,type,ra,dec,redshift',
+            'm13,SIDEREAL,250.421,36.459,5',
+            'm27,SIDEREAL,299.901,22.721,5'
         ]
         result = import_targets(csv)
         self.assertEqual(len(result['targets']), 2)
         for target in result['targets']:
             self.assertTrue(TargetExtra.objects.filter(target=target, key='redshift', value='5').exists())
 
+    def test_import_csv_with_multiple_names(self):
+        csv = [
+            'name,type,ra,dec,name1,name2',
+            'm13,SIDEREAL,250.421,36.459,Tom,Joe',
+            'm27,SIDEREAL,299.901,22.721,John,Doe'
+        ]
+        result = import_targets(csv)
+        self.assertEqual(len(result['targets']), 2)
+        aliases = {'m13': 'Tom,Joe', 'm27': 'John,Doe'}
+        for target_name in aliases:
+            target = Target.objects.get(name=target_name)
+            for alias in aliases[target_name].split(','):
+                self.assertTrue(TargetName.objects.filter(target=target, name=alias).exists())
+
 
 class TestTargetSearch(TestCase):
     def setUp(self):
-        self.st = SiderealTargetFactory.create(identifier='1337target', name='M42', name2='Messier 42')
+        self.st = SiderealTargetFactory.create(name='1337target')
+        self.st_name = TargetNameFactory.create(name='M42', target=self.st)
+        self.st_name2 = TargetNameFactory.create(name='Messier 42', target=self.st)
+
+        self.target2 = SiderealTargetFactory.create(name='Target1309')
+        self.target2_name = TargetNameFactory.create(name='NGC1309', target=self.target2)
+        self.target2_name2 = TargetNameFactory.create(name='PGC 012626', target=self.target2)
+
         user = User.objects.create(username='testuser')
         self.client.force_login(user)
         assign_perm('tom_targets.view_target', user, self.st)
@@ -281,11 +401,13 @@ class TestTargetSearch(TestCase):
         self.assertNotContains(response, '1337target')
 
     def test_search_name(self):
-        response = self.client.get(reverse('targets:list') + '?name=m42')
+        response = self.client.get(reverse('targets:list') + '?name=M42')
         self.assertContains(response, '1337target')
+        self.assertNotContains(response, '1309Target')
 
         response = self.client.get(reverse('targets:list') + '?name=Messier 42')
         self.assertContains(response, '1337target')
+        self.assertNotContains(response, '1309Target')
 
     @override_settings(EXTRA_FIELDS=[{'name': 'color', 'type': 'string'}])
     def test_search_extra_fields(self):
@@ -518,7 +640,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             'add': True,
             'isSelectAll': 'True',
             'selected-target': [],
-            'query_string': 'type=SIDEREAL&identifier=&name=&key=&value=&targetlist__name=',
+            'query_string': 'type=SIDEREAL&name=&key=&value=&targetlist__name=',
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 3)
@@ -529,7 +651,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             'remove': True,
             'isSelectAll': 'True',
             'selected-target': [],
-            'query_string': 'type=SIDEREAL&identifier=&name=&key=&value=&targetlist__name=',
+            'query_string': 'type=SIDEREAL&name=&key=&value=&targetlist__name=',
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 0)
@@ -540,7 +662,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             'remove': True,
             'isSelectAll': 'True',
             'selected-target': [],
-            'query_string': 'type=&identifier=&name=&key=&value=&targetlist__name=' + str(self.fake_grouping.id),
+            'query_string': 'type=&name=&key=&value=&targetlist__name=' + str(self.fake_grouping.id),
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 0)
@@ -567,10 +689,9 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.assertEqual(self.fake_grouping.targets.count(), 0)
 
     def test_persist_filter(self):
-        data = {'query_string': "type=SIDEREAL&identifier=A&name=B&key=C&value=123&targetlist__name=1"}
+        data = {'query_string': "type=SIDEREAL&name=B&key=C&value=123&targetlist__name=1"}
         expected_query_dict = {
             'type': 'SIDEREAL',
-            'identifier': 'A',
             'name': 'B',
             'key': 'C',
             'value': '123',

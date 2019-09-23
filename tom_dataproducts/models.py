@@ -85,9 +85,9 @@ def data_product_path(instance, filename):
     """
     # Uploads go to MEDIA_ROOT
     if instance.observation_record is not None:
-        return '{0}/{1}/{2}'.format(instance.target.identifier, instance.observation_record.facility, filename)
+        return '{0}/{1}/{2}'.format(instance.target.name, instance.observation_record.facility, filename)
     else:
-        return '{0}/none/{1}'.format(instance.target.identifier, filename)
+        return '{0}/none/{1}'.format(instance.target.name, filename)
 
 
 class DataProductGroup(models.Model):
