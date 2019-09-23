@@ -230,7 +230,6 @@ class Target(models.Model):
         ordering = ('id',)
 
     def __init__(self, *args, **kwargs):
-        self.new_names = []
         super().__init__(*args, **kwargs)
 
     @transaction.atomic
