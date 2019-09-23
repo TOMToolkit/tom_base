@@ -100,7 +100,7 @@ class TestUpdatingObservations(TestCase):
             self.assertEquals(uos_mock.call_count, 2)
 
 
-class TestRiseSet(TestCase):
+class TestGetVisibility(TestCase):
     def setUp(self):
         self.rise_set = [(0, 10),
                          (20, 30),
@@ -109,15 +109,37 @@ class TestRiseSet(TestCase):
         self.observer = ephem.city('Los Angeles')
         self.sun = ephem.Sun()
 
-    def test_get_rise_set_valid(self):
-        rise_set = get_rise_set(self.observer, self.sun, datetime(2018, 10, 10), datetime(2018, 10, 11))
-        self.assertListEqual(
-            [
-                (datetime(2018, 10, 9, 13, 53, 16), datetime(2018, 10, 10, 1, 26, 33)),
-                (datetime(2018, 10, 10, 13, 54, 2), datetime(2018, 10, 11, 1, 25, 15))
-            ],
-            rise_set
+    def test_get_astroplan_sun_and_time(self):
+        pass
+        # rise_set = get_rise_set(self.observer, self.sun, datetime(2018, 10, 10), datetime(2018, 10, 11))
+        # self.assertListEqual(
+        #     [
+        #         (datetime(2018, 10, 9, 13, 53, 16), datetime(2018, 10, 10, 1, 26, 33)),
+        #         (datetime(2018, 10, 10, 13, 54, 2), datetime(2018, 10, 11, 1, 25, 15))
+        #     ],
+        #     rise_set
+        # )
+
+    def test_get_astroplan_sun_and_time_small_range(self):
+        pass
+
+    def test_get_visibility_sidereal(self):
+        pass
+
+    def test_get_visibility_invalid_target_type(self):
+        pass
+
+    def test_get_visibility_invalid_params(self):
+        self.assertRaisesRegex(
+            Exception, 'Start must be before end', get_rise_set,
+            self.observer, self.sun, datetime(2018, 10, 10), datetime(2018, 10, 9)
         )
+
+    def test_get_visibility_no_results(self):
+        rise_set = get_rise_set(
+            self.observer, self.sun, datetime(2018, 10, 10, 7, 0, 0), datetime(2018, 10, 10, 7, 0, 1)
+        )
+        self.assertEqual(len(rise_set), 0)
 
     def test_get_rise_set_against_lco_rise_set(self):
         facility = FakeFacility()
@@ -140,34 +162,33 @@ class TestRiseSet(TestCase):
         self.assertLessEqual(rise_delta - control_rise, abs(timedelta(minutes=5)))
         self.assertLessEqual(set_delta - control_set, abs(timedelta(minutes=5)))
 
-    def test_get_rise_set_no_results(self):
-        rise_set = get_rise_set(
-            self.observer, self.sun, datetime(2018, 10, 10, 7, 0, 0), datetime(2018, 10, 10, 7, 0, 1)
-        )
-        self.assertEqual(len(rise_set), 0)
 
-    def test_get_rise_set_invalid_params(self):
-        self.assertRaisesRegex(
-            Exception, 'Start must be before end', get_rise_set,
-            self.observer, self.sun, datetime(2018, 10, 10), datetime(2018, 10, 9)
-        )
+class TestTargetVisibility(TestCase):
+    def setUp(self):
+        self.mars = ephem.Mars()
+        self.time = datetime(2018, 10, 10, 7, 0, 0)
+        self.mars.compute(self.time)
+        ra = Angle(str(self.mars.ra), unit=units.hourangle)
+        dec = Angle(str(self.mars.dec) + 'd', unit=units.deg)
+        self.st = Target(ra=ra.deg, dec=dec.deg, type=Target.SIDEREAL)
 
-    def test_get_last_rise_set_pair(self):
-        rise_set_pair = get_last_rise_set_pair(self.rise_set, -1)
-        self.assertIsNone(rise_set_pair, None)
-        rise_set_pair = get_last_rise_set_pair(self.rise_set, 25)
-        self.assertEqual(rise_set_pair[0], 20)
-        self.assertEqual(rise_set_pair[1], 30)
-        rise_set_pair = get_last_rise_set_pair(self.rise_set, 80)
-        self.assertEqual(rise_set_pair[0], 60)
-        self.assertEqual(rise_set_pair[1], 70)
 
-    def test_get_next_rise_set_pair(self):
-        rise_set_pair = get_next_rise_set_pair(self.rise_set, -1)
-        self.assertEqual(rise_set_pair[0], 0)
-        self.assertEqual(rise_set_pair[1], 10)
-        rise_set_pair = get_next_rise_set_pair(self.rise_set, 35)
-        self.assertEqual(rise_set_pair[0], 40)
-        self.assertEqual(rise_set_pair[1], 50)
-        rise_set_pair = get_next_rise_set_pair(self.rise_set, 80)
-        self.assertIsNone(rise_set_pair, None)
+    @mock.patch('tom_observations.utils.facility.get_service_classes')
+    @mock.patch('tom_observations.utils.get_rise_set')
+    @mock.patch('tom_observations.utils.observer_for_site')
+    def test_get_visibility_sidereal(self, mock_observer_for_site, mock_get_rise_set, mock_facility):
+        mock_facility.return_value = {'Fake Facility': FakeFacility}
+        mock_get_rise_set.return_value = []
+        mock_observer_for_site.return_value = ephem.city('Los Angeles')
+
+        start = self.time
+        end = start + timedelta(minutes=60)
+        expected_airmass = [
+            3.6074370614681017, 3.997263815883785, 4.498087520663738, 5.162731916462906,
+            6.083298253498044, 7.4363610371608475, 9.607152214891583
+        ]
+
+        airmass_data = get_visibility(self.st, start, end, 10, 10)['(Fake Facility) Los Angeles'][1]
+        self.assertEqual(len(airmass_data), len(expected_airmass))
+        for i in range(0, len(expected_airmass)):
+            self.assertEqual(airmass_data[i], expected_airmass[i])

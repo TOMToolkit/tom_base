@@ -9,9 +9,10 @@ from tom_observations import facility
 
 logger = logging.getLogger(__name__)
 
+
 def get_visibility(target, start_time, end_time, interval, airmass_limit):
     """
-    Uses astroplan to calculate the airmass for a sidereal target 
+    Uses astroplan to calculate the airmass for a sidereal target
     for each given interval between the start and end times.
 
     The resulting data omits any airmass above the provided limit (or
@@ -48,15 +49,17 @@ def get_visibility(target, start_time, end_time, interval, airmass_limit):
     if airmass_limit is None:
         airmass_limit = 10
 
+    body = FixedTarget(name=target.name, coord=SkyCoord(target.ra, target.dec, unit='deg'))
+
     visibility = {}
-    body = get_astroplan_instance_for_type(target)
     sun, time_range = get_astroplan_sun_and_time(start_time, end_time, interval)
     for observing_facility in facility.get_service_classes():
         observing_facility_class = facility.get_service_class(observing_facility)
         sites = observing_facility_class().get_observing_sites()
         for site, site_details in sites.items():
-
-            observer = get_astroplan_observer_for_site(site_details)
+            observer = Observer(longitude=site_details.get('longitude')*units.deg,
+                                latitude=site_details.get('latitude')*units.deg,
+                                elevation=site_details.get('elevation')*units.m)
 
             sun_alt = observer.altaz(time_range, sun).alt
             obj_airmass = observer.altaz(time_range, body).secz
@@ -64,38 +67,14 @@ def get_visibility(target, start_time, end_time, interval, airmass_limit):
             bad_indices = np.argwhere(
                 (obj_airmass >= airmass_limit) |
                 (obj_airmass <= 1) |
-                (sun_alt > -18*units.deg) #between astro twilights
+                (sun_alt > -18*units.deg)  # between astronomical twilights, i.e. sun is up
             )
 
-            obj_airmass = [None if i in bad_indices else float(x)
-                for i, x in enumerate(obj_airmass)]
+            obj_airmass = [None if i in bad_indices else float(airmass) for i, airmass in enumerate(obj_airmass)]
 
-            visibility['({0}) {1}'.format(observing_facility, site)] = [time_range.datetime, obj_airmass]
+            visibility[f'({observing_facility}) {site}'] = (time_range.datetime, obj_airmass)
     return visibility
 
-
-def get_astroplan_instance_for_type(target):
-    """
-    Constructs an astroplan FixedTarget from a tom_targets target
-    in order to perform positional calculations for the target.
-
-    :param target: the target
-    :type target: tom_targets.models.Target
-
-    :returns: a fixed target at the target's ra and dec
-    :rtype: astroplan FixedTarget
-    """
-
-    fixed_target = FixedTarget(name = target.name,
-        coord = SkyCoord(
-            target.ra,
-            target.dec,
-            unit = 'deg'
-        )
-    )
-
-    return fixed_target
-    
 
 def get_astroplan_sun_and_time(start_time, end_time, interval):
     """
@@ -129,39 +108,14 @@ def get_astroplan_sun_and_time(start_time, end_time, interval):
     start = Time(start_time)
     end = Time(end_time)
 
-    time_range = time_grid_from_range(
-        time_range = [start, end],
-        time_resolution = interval*units.minute
-    )
+    time_range = time_grid_from_range(time_range=[start, end], time_resolution=interval*units.minute)
 
     number_of_days = end.mjd - start.mjd
     if number_of_days*4 < float(interval)/2:
-        #Hack to speed up calculation by factor of ~3
+        # Hack to speed up calculation by factor of ~3
         sun_coords = get_sun(time_range[int(len(time_range)/2)])
-        fixed_sun = FixedTarget(name = 'sun',
-            coord = SkyCoord(
-                sun_coords.ra,
-                sun_coords.dec,
-                unit = 'deg'
-            )
-        )
-        sun = fixed_sun
+        sun = FixedTarget(name='sun', coord=SkyCoord(sun_coords.ra, sun_coords.dec, unit='deg'))
     else:
         sun = get_sun(time_range)
 
     return sun, time_range
-
-
-def get_astroplan_observer_for_site(site_details):
-    """
-    Constructs an astroplan observer for sidereal targets
-    in order to perform positional calculations for the target
-
-    :returns: astroplan Observer
-    """
-    observer = Observer(
-        longitude = site_details.get('longitude')*units.deg,
-        latitude = site_details.get('latitude')*units.deg,
-        elevation = site_details.get('elevation')*units.m
-    )
-    return observer
