@@ -9,7 +9,10 @@ from astropy import units as u
 from tom_observations.facility import GenericObservationForm
 from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.facility import GenericObservationFacility, get_service_class
-from tom_targets.models import Target
+from tom_targets.models import (
+    Target, REQUIRED_NON_SIDEREAL_FIELDS,
+    REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
+)
 
 # Determine settings for this module.
 try:
@@ -180,17 +183,25 @@ class LCOBaseObservationForm(GenericObservationForm):
             target_fields['epoch'] = target.epoch
         elif target.type == Target.NON_SIDEREAL:
             target_fields['type'] = 'ORBITAL_ELEMENTS'
-            target_fields['scheme'] = target.scheme
-            target_fields['orbinc'] = target.inclination
-            target_fields['longascnode'] = target.lng_asc_node
-            target_fields['argofperih'] = target.arg_of_perihelion
-            target_fields['eccentricity'] = target.eccentricity
-            target_fields['meandist'] = target.semimajor_axis
-            target_fields['meananom'] = target.mean_anomaly
-            target_fields['perihdist'] = target.distance
-            target_fields['dailymot'] = target.mean_daily_motion
-            target_fields['epochofel'] = target.epoch
-            target_fields['epochofperih'] = target.epoch_of_perihelion
+            # Mapping from TOM field names to LCO API field names, for fields
+            # where there are differences
+            field_mapping = {
+                'inclination': 'orbinc',
+                'lng_asc_node': 'longascnode',
+                'arg_of_perihelion': 'argofperih',
+                'semimajor_axis': 'meandist',
+                'mean_anomaly': 'meananom',
+                'mean_daily_motion': 'dailymot',
+                'epoch': 'epochofel',
+                'epoch_of_perihelion': 'epochofperih',
+            }
+            # The fields to include in the payload depend on the scheme. Add
+            # only those that are required
+            fields = (REQUIRED_NON_SIDEREAL_FIELDS
+                      + REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME[target.scheme])
+            for field in fields:
+                lco_field = field_mapping.get(field, field)
+                target_fields[lco_field] = getattr(target, field)
 
         return target_fields
 

@@ -2,6 +2,7 @@
 {% load bootstrap4 %}
 {% block title %}Confirm delete{% endblock %}
 {% block content %}
+<h3>Confirm Delete</h3>
 <form method="post">{% csrf_token %}
     <p>Are you sure you want to delete "{{ object }}"?</p>
     {% buttons %}

@@ -31,9 +31,9 @@
     <table class="table table-striped">
       <thead>
         <tr>
-          <th>Username</th><th>Name</th><th>Email</th><th>PI</th>
+          <th>Username</th><th>Name</th><th>Email</th><th>Admin</th>
           {% if request.user.is_superuser %}
-          <th>Update</th><th>Delete</th><th>Change Password</th>
+          <th>Edit</th><th>Delete</th><th>Change Password</th>
           {% endif %}
         </tr>
       </thead>
@@ -45,7 +45,7 @@
           <td>{{ user.email }}</td>
           <td>{% if user.is_superuser %} yes {% endif %}</td>
           {% if request.user.is_superuser %}
-          <td><a href="{% url 'user-update' user.id %}" class="btn btn-primary">Update</a></td>
+          <td><a href="{% url 'user-update' user.id %}" class="btn btn-primary">Edit</a></td>
           <td><a href="{% url 'user-delete' user.id %}" class="btn btn-danger">Delete</a></td>
           <td><a href="{% url 'admin-user-change-password' user.id %}" class="btn btn-primary">Change</a></td>
           {% endif %}
