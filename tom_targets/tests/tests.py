@@ -11,7 +11,7 @@ from astropy import units
 from astropy.coordinates import Angle
 
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory, TargetNameFactory
-from tom_targets.models import Target, TargetExtra, TargetList
+from tom_targets.models import Target, TargetExtra, TargetList, TargetName
 from tom_observations.utils import get_visibility, get_pyephem_instance_for_type
 from tom_observations.tests.utils import FakeFacility
 from tom_targets.utils import import_targets
@@ -261,6 +261,85 @@ class TestTargetCreate(TestCase):
         response = self.client.post(reverse('targets:create'), data=target_data)
         self.assertEqual(response.context['form'].initial['type'], Target.NON_SIDEREAL)
 
+    def test_create_targets_with_multiple_names(self):
+        target_data = {
+            'name': 'multiple_names_target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 2,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        names = ['John', 'Doe']
+        for i, name in enumerate(names):
+            target_data[f'aliases-{i}-name'] = name
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(response, target_data['name'])
+
+        target = Target.objects.get(name=target_data['name'])
+        for target_name in names:
+            self.assertTrue(TargetName.objects.filter(target=target, name=target_name).exists())
+
+    def test_create_targets_with_conflicting_names(self):
+        target_data = {
+            'name': 'multiple_names_target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 2,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        names = ['John', 'Doe']
+        for i, name in enumerate(names):
+            target_data[f'aliases-{i}-name'] = name
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(second_response, 'Target with this Name already exists')
+
+    def test_create_targets_with_conflicting_aliases(self):
+        target_data = {
+            'name': 'multiple_names_target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 2,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        names = ['John', 'Doe']
+        for i, name in enumerate(names):
+            target_data[f'aliases-{i}-name'] = name
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        target_data['name'] = 'multiple_names_target2'
+        second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(second_response, 'Target name with this Alias for target already exists.')
+
 
 class TestTargetImport(TestCase):
     def setUp(self):
@@ -288,12 +367,31 @@ class TestTargetImport(TestCase):
         for target in result['targets']:
             self.assertTrue(TargetExtra.objects.filter(target=target, key='redshift', value='5').exists())
 
+    def test_import_csv_with_multiple_names(self):
+        csv = [
+            'name,type,ra,dec,name1,name2',
+            'm13,SIDEREAL,250.421,36.459,Tom,Joe',
+            'm27,SIDEREAL,299.901,22.721,John,Doe'
+        ]
+        result = import_targets(csv)
+        self.assertEqual(len(result['targets']), 2)
+        aliases = {'m13': 'Tom,Joe', 'm27': 'John,Doe'}
+        for target_name in aliases:
+            target = Target.objects.get(name=target_name)
+            for alias in aliases[target_name].split(','):
+                self.assertTrue(TargetName.objects.filter(target=target, name=alias).exists())
+
 
 class TestTargetSearch(TestCase):
     def setUp(self):
         self.st = SiderealTargetFactory.create(name='1337target')
         self.st_name = TargetNameFactory.create(name='M42', target=self.st)
         self.st_name2 = TargetNameFactory.create(name='Messier 42', target=self.st)
+
+        self.target2 = SiderealTargetFactory.create(name='Target1309')
+        self.target2_name = TargetNameFactory.create(name='NGC1309', target=self.target2)
+        self.target2_name2 = TargetNameFactory.create(name='PGC 012626', target=self.target2)
+
         user = User.objects.create(username='testuser')
         self.client.force_login(user)
         assign_perm('tom_targets.view_target', user, self.st)
@@ -305,9 +403,11 @@ class TestTargetSearch(TestCase):
     def test_search_name(self):
         response = self.client.get(reverse('targets:list') + '?name=M42')
         self.assertContains(response, '1337target')
+        self.assertNotContains(response, '1309Target')
 
         response = self.client.get(reverse('targets:list') + '?name=Messier 42')
         self.assertContains(response, '1337target')
+        self.assertNotContains(response, '1309Target')
 
     @override_settings(EXTRA_FIELDS=[{'name': 'color', 'type': 'string'}])
     def test_search_extra_fields(self):
