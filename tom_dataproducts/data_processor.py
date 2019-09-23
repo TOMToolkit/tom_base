@@ -1,26 +1,68 @@
 import mimetypes
 from datetime import datetime
-
 from astropy.time import Time, TimezoneInfo
 from astropy import units
 from astropy.io import fits, ascii
 from astropy.wcs import WCS
 from specutils import Spectrum1D
+from django.conf import settings
+from importlib import import_module
 import numpy as np
+import json
 
 from tom_observations.facility import get_service_class, get_service_classes
 from .exceptions import InvalidFileFormatException
+from .models import ReducedDatum, SPECTROSCOPY, PHOTOMETRY
+from .data_serializers import SpectrumSerializer
 
 
 FITS_MIMETYPES = ['image/fits', 'application/fits']
 PLAINTEXT_MIMETYPES = ['text/plain', 'text/csv']
 DEFAULT_WAVELENGTH_UNITS = units.angstrom
 DEFAULT_FLUX_CONSTANT = units.erg / units.cm ** 2 / units.second / units.angstrom
+DEFAULT_DATA_PROCESSOR_CLASS = 'tom_dataproducts.data_processor.DataProcessor'
 
 mimetypes.add_type('image/fits', '.fits')
 mimetypes.add_type('image/fits', '.fz')
 mimetypes.add_type('application/fits', '.fits')
 mimetypes.add_type('application/fits', '.fz')
+
+
+def run_data_processor(dp):
+    try:
+        processor_class = settings.DATA_PROCESSOR_CLASS
+    except Exception:
+        processor_class = DEFAULT_DATA_PROCESSOR_CLASS
+
+    try:
+        mod_name, class_name = processor_class.rsplit('.', 1)
+        mod = import_module(mod_name)
+        clazz = getattr(mod, class_name)
+    except (ImportError, AttributeError):
+        raise ImportError('Could not import {}. Did you provide the correct path?'.format(processor_class))
+    data_processor = clazz()
+
+    if dp.tag == SPECTROSCOPY[0]:
+        spectrum, obs_date = data_processor.process_spectroscopy(dp)
+        serialized_spectrum = SpectrumSerializer().serialize(spectrum)
+        ReducedDatum.objects.create(
+            target=dp.target,
+            data_product=dp,
+            data_type=dp.tag,
+            timestamp=obs_date,
+            value=serialized_spectrum
+        )
+    elif dp.tag == PHOTOMETRY[0]:
+        photometry = data_processor.process_photometry(dp)
+        for time, photometry_datum in photometry.items():
+            for datum in photometry_datum:
+                ReducedDatum.objects.create(
+                    target=dp.target,
+                    data_product=dp,
+                    data_type=dp.tag,
+                    timestamp=time,
+                    value=json.dumps(datum)
+                )
 
 
 class DataProcessor():

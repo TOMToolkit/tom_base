@@ -102,6 +102,25 @@ class Command(BaseCommand):
             self.stdout.write('Error: invalid choice {}'.format(target_type))
             self.get_target_type()
 
+    def get_hint_preference(self):
+        help_message_info = (
+            'Help messages can be configured to appear to give suggestions on commonly customized functions. If '
+            'enabled now, they can be turned off by changing HINTS_ENABLED to False in settings.py.\n'
+        )
+        prompt = 'Would you like to enable hints? {}'.format(self.style.WARNING('[y/N] '))
+        self.stdout.write(help_message_info)
+        while True:
+            response = input(prompt).lower()
+            if not response or response == 'n':
+                self.context['HINTS_ENABLED'] = False
+            elif response == 'y':
+                self.context['HINTS_ENABLED'] = True
+            else:
+                self.stdout.write('Invalid response. Please try again.')
+                continue
+
+            break
+
     def generate_secret_key(self):
         self.status('Generating secret key... ')
         self.context['SECRET_KEY'] = get_random_secret_key()
@@ -163,6 +182,7 @@ class Command(BaseCommand):
         self.create_project_dirs()
         self.generate_secret_key()
         self.get_target_type()
+        self.get_hint_preference()
         self.generate_config()
         self.generate_urls()
         self.run_migrations()
