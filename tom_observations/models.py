@@ -77,5 +77,15 @@ class ObservationRecord(models.Model):
         facility = get_service_class(self.facility)
         return facility().get_observation_url(self.observation_id)
 
+    def update_status(self):
+        facility = get_service_class(self.facility)
+        facility().update_observation_status(self.id)
+
+    def save_data(self):
+        facility = get_service_class(self.facility)
+        facility().save_data_products(self)
+
+
+
     def __str__(self):
         return '{0} @ {1}'.format(self.target, self.facility)
