@@ -355,8 +355,11 @@ class TargetName(models.Model):
     :param name: The name that this ``TargetName`` object represents.
     :type name: str
 
-    :param created: The time at which this target was created in the TOM database.
-    :type type: datetime
+    :param created: The time at which this target name was created in the TOM database.
+    :type created: datetime
+
+    :param modified: The time at which this target name was modified in the TOM database.
+    :type modified: datetime
     """
     target = models.ForeignKey(Target, on_delete=models.CASCADE, related_name='aliases')
     name = models.CharField(max_length=100, unique=True, verbose_name='Alias for target')
@@ -365,7 +368,7 @@ class TargetName(models.Model):
     )
     modified = models.DateTimeField(
         auto_now=True, verbose_name='Last Modified',
-        help_text='The time which this target was changed in the TOM database.'
+        help_text='The time which this target name was changed in the TOM database.'
     )
 
     def __str__(self):
@@ -467,8 +470,11 @@ class TargetList(models.Model):
 
     :param targets: Set of ``Target`` objects associated with this ``TargetList``
 
-    :param created: The time at which this object was created.
+    :param created: The time at which this target list was created.
     :type created: datetime
+
+    :param modified: The time at which this target list was modified in the TOM database.
+    :type modified: datetime
     """
     name = models.CharField(max_length=200, help_text='The name of the target list.')
     targets = models.ManyToManyField(Target)
@@ -477,7 +483,7 @@ class TargetList(models.Model):
     )
     modified = models.DateTimeField(
         auto_now=True, verbose_name='Last Modified',
-        help_text='The time which this target was changed in the TOM database.'
+        help_text='The time which this target list was changed in the TOM database.'
     )
 
     class Meta:
