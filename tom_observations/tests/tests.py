@@ -11,7 +11,7 @@ from astropy.coordinates import get_sun, SkyCoord
 from astropy.time import Time
 
 from .factories import TargetFactory, ObservingRecordFactory, TargetNameFactory
-from tom_observations.utils import get_astroplan_sun_and_time, get_visibility
+from tom_observations.utils import get_astroplan_sun_and_time, get_sidereal_visibility
 from tom_observations.tests.utils import FakeFacility
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
@@ -118,22 +118,35 @@ class TestGetVisibility(TestCase):
         end = self.start + timedelta(days=2)
         sun, time_range = get_astroplan_sun_and_time(self.start, end, self.interval)
         self.assertIsInstance(sun, SkyCoord)
+        self.assertEqual(len(time_range), 288)
+        check_time_range = [time.mjd for time in time_range[::50]]
+        expected_time_range = [58400.58074074052, 58400.92796296533,
+                               58401.27518519014, 58401.62240741495,
+                               58401.96962963976, 58402.31685186457]
+        for i in range(0, len(expected_time_range)):
+            self.assertEqual(check_time_range[i], expected_time_range[i])
 
     def test_get_astroplan_sun_and_time_small_range(self):
         end = self.start + timedelta(hours=10)
         sun, time_range = get_astroplan_sun_and_time(self.start, end, self.interval)
         self.assertIsInstance(sun, FixedTarget)
+        self.assertEqual(len(time_range), 61)
+        check_time_range = [time.mjd for time in time_range[::20]]
+        expected_time_range = [58400.58074074052, 58400.71962963045,
+                               58400.85851852037, 58400.997407410294]
+        for i in range(0, len(expected_time_range)):
+            self.assertEqual(check_time_range[i], expected_time_range[i])
 
     def test_get_visibility_invalid_target_type(self):
         invalid_target = self.target
         invalid_target.type = 'Invalid Type'
         end = self.start + timedelta(minutes=60)
-        airmass = get_visibility(invalid_target, self.start, end, self.interval, self.airmass_limit)
+        airmass = get_sidereal_visibility(invalid_target, self.start, end, self.interval, self.airmass_limit)
         self.assertEqual(len(airmass), 0)
 
     def test_get_visibility_invalid_params(self):
         self.assertRaisesRegex(
-            Exception, 'Start must be before end', get_visibility,
+            Exception, 'Start must be before end', get_sidereal_visibility,
             self.target, datetime(2018, 10, 10), datetime(2018, 10, 9),
             self.interval, self.airmass_limit
         )
@@ -142,7 +155,7 @@ class TestGetVisibility(TestCase):
     def test_get_visibility_sidereal(self, mock_facility):
         mock_facility.return_value = {'Fake Facility': FakeFacility}
         end = self.start + timedelta(minutes=60)
-        airmass = get_visibility(self.target, self.start, end, self.interval, self.airmass_limit)
+        airmass = get_sidereal_visibility(self.target, self.start, end, self.interval, self.airmass_limit)
         airmass_data = airmass['(Fake Facility) Siding Spring'][1]
         expected_airmass = [
             1.2619096566629477, 1.2648181328558852, 1.2703522349950636, 1.2785703053923894,

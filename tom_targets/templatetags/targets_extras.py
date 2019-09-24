@@ -8,7 +8,7 @@ from astropy.coordinates import Angle
 
 from tom_targets.models import Target, TargetExtra, TargetList
 from tom_targets.forms import TargetVisibilityForm
-from tom_observations.utils import get_visibility
+from tom_observations.utils import get_sidereal_visibility
 
 register = template.Library()
 
@@ -73,7 +73,7 @@ def target_plan(context):
                 airmass_limit = float(request.GET.get('airmass'))
             else:
                 airmass_limit = None
-            visibility_data = get_visibility(context['object'], start_time, end_time, 10, airmass_limit)
+            visibility_data = get_sidereal_visibility(context['object'], start_time, end_time, 10, airmass_limit)
             plot_data = [
                 go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()
             ]
