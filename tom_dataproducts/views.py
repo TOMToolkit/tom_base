@@ -1,28 +1,33 @@
 from urllib.parse import urlparse
 from io import StringIO
 
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import FormView, DeleteView
-from django.views.generic.edit import CreateView
-from django_filters.views import FilterView
-from django.views.generic import View, ListView
-from django.views.generic.base import RedirectView
-from django.views.generic.detail import DetailView
-from django.urls import reverse, reverse_lazy
-from django.shortcuts import redirect
 from django.contrib import messages
 from django.core.management import call_command
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
 from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
+from django.urls import reverse, reverse_lazy
+from django.utils.safestring import mark_safe
+from django.views.generic import View, ListView
+from django.views.generic.base import RedirectView
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import FormView, DeleteView
+from django.views.generic.edit import CreateView
+from django_filters.views import FilterView
 from guardian.shortcuts import get_objects_for_user
 
 from .models import DataProduct, DataProductGroup, ReducedDatum
 from .exceptions import InvalidFileFormatException
 from .forms import AddProductToGroupForm, DataProductUploadForm
+from .filters import DataProductFilter
+from .data_processor import run_data_processor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 from tom_common.hooks import run_hook
+from tom_common.hints import add_hint
 
 
 class DataProductSaveView(LoginRequiredMixin, View):
@@ -77,6 +82,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             dp.save()
             try:
                 run_hook('data_product_post_upload', dp)
+                run_data_processor(dp)
                 successful_uploads.append(str(dp))
             except InvalidFileFormatException:
                 ReducedDatum.objects.filter(data_product=dp).delete()
@@ -127,7 +133,7 @@ class DataProductListView(FilterView):
     model = DataProduct
     template_name = 'tom_dataproducts/dataproduct_list.html'
     paginate_by = 25
-    filterset_fields = ['target__name', 'observation_record__facility']
+    filterset_class = DataProductFilter
     strict = False
 
     def get_queryset(self):
@@ -221,6 +227,10 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
         else:
             call_command('updatereduceddata', stdout=out)
         messages.info(request, out.getvalue())
+        add_hint(request, mark_safe(
+                          'Did you know updating observation statuses can be automated? Learn how in '
+                          '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
+                          'the docs.</a>'))
         return HttpResponseRedirect(self.get_redirect_url(*args, **kwargs))
 
     def get_redirect_url(self):

@@ -1,4 +1,5 @@
-from django.db import models
+from django.db import models, transaction
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.forms.models import model_to_dict
 from django.conf import settings
@@ -8,7 +9,7 @@ from datetime import datetime
 from tom_common.hooks import run_hook
 
 
-GLOBAL_TARGET_FIELDS = ['identifier', 'name', 'name2', 'name3', 'type']
+GLOBAL_TARGET_FIELDS = ['name', 'type']
 
 SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'ra', 'dec', 'epoch', 'pm_ra', 'pm_dec',
@@ -19,28 +20,30 @@ NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'scheme', 'mean_anomaly', 'arg_of_perihelion',
     'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
     'eccentricity', 'epoch', 'epoch_of_perihelion', 'ephemeris_period',
-    'ephemeris_period_err', 'ephemeris_epoch', 'ephemeris_epoch_err'
+    'ephemeris_period_err', 'ephemeris_epoch', 'ephemeris_epoch_err',
+    'perihdist'
 ]
 
 REQUIRED_SIDEREAL_FIELDS = ['ra', 'dec']
-REQUIRED_NON_SIDEREAL_FIELDS = NON_SIDEREAL_FIELDS
+REQUIRED_NON_SIDEREAL_FIELDS = [
+    'scheme', 'epoch', 'inclination', 'lng_asc_node', 'arg_of_perihelion',
+    'eccentricity',
+]
+# Additional non-sidereal fields that are required for specific orbital element
+# schemes
+REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME = {
+    'MPC_COMET': ['perihdist', 'epoch_of_perihelion'],
+    'MPC_MINOR_PLANET': ['mean_anomaly', 'semimajor_axis'],
+    'JPL_MAJOR_PLANET': ['mean_daily_motion', 'mean_anomaly', 'semimajor_axis']
+}
 
 
 class Target(models.Model):
     """
     Class representing a target in a TOM
 
-    :param identifier: The identifier for this object, e.g. Kelt-16b.
-    :type identifier: str
-
     :param name: The name of this target e.g. Barnard\'s star.
     :type name: str
-
-    :param name2: An alternative name for this target.
-    :type name2: str
-
-    :param name3: An alternative name for this target.
-    :type name3: str
 
     :param type: The type of this target.
     :type type: str
@@ -131,19 +134,9 @@ class Target(models.Model):
         ('JPL_MAJOR_PLANET', 'JPL Major Planet')
     )
 
-    identifier = models.CharField(
-        max_length=100, verbose_name='Identifier', help_text='The identifier for this object, e.g. Kelt-16b.'
-    )
     name = models.CharField(
-        max_length=100, default='', verbose_name='Name', help_text='The name of this target e.g. Barnard\'s star.'
-    )
-    name2 = models.CharField(
-        max_length=100, default='', verbose_name='Name 2', help_text='An alternative name for this target',
-        blank=True
-    )
-    name3 = models.CharField(
-        max_length=100, default='', verbose_name='Name 3', help_text='An alternative name for this target',
-        blank=True
+        max_length=100, default='', verbose_name='Name', help_text='The name of this target e.g. Barnard\'s star.',
+        unique=True
     )
     type = models.CharField(
         max_length=100, choices=TARGET_TYPES, verbose_name='Target Type', help_text='The type of this target.'
@@ -229,10 +222,14 @@ class Target(models.Model):
     ephemeris_epoch_err = models.FloatField(
         null=True, blank=True, verbose_name='Ephemeris Epoch Error', help_text='Days'
     )
+    perihdist = models.FloatField(
+        null=True, blank=True, verbose_name='Perihelion Distance', help_text='AU'
+    )
 
     class Meta:
         ordering = ('id',)
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
         """
         Saves Target model data to the database, including extra fields. After saving to the database, also runs the
@@ -242,16 +239,33 @@ class Target(models.Model):
             * extras (`dict`): dictionary of key/value pairs representing target attributes
         """
         extras = kwargs.pop('extras', {})
+        names = kwargs.pop('names', [])
+
         created = False if self.id else True
         super().save(*args, **kwargs)
+
         for k, v in extras.items():
             target_extra, _ = TargetExtra.objects.get_or_create(target=self, key=k)
             target_extra.value = v
             target_extra.save()
+
+        for name in names:
+            name = TargetName.objects.get_or_create(target=self, name=name)
+            name.save()
+
         run_hook('target_post_save', target=self, created=created)
 
+    def validate_unique(self, *args, **kwargs):
+        """
+        Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
+        """
+        super().validate_unique(*args, **kwargs)
+        for alias in self.aliases.all():
+            if alias.name == self.name:
+                raise ValidationError('Target name and target aliases must be unique')
+
     def __str__(self):
-        return str(self.identifier)
+        return str(self.name)
 
     def get_absolute_url(self):
         return reverse('targets:detail', kwargs={'pk': self.id})
@@ -265,6 +279,16 @@ class Target(models.Model):
         :rtype: DataProduct
         """
         return self.dataproduct_set.filter(tag='fits_file', featured=True).first()
+
+    @property
+    def names(self):
+        """
+        Gets a list with the name and aliases of this target
+
+        :returns: list of all names and `TargetName` values associated with this target
+        :rtype: list
+        """
+        return [self.name] + [alias.name for alias in self.aliases.all()]
 
     @property
     def future_observations(self):
@@ -320,6 +344,43 @@ class Target(models.Model):
             fields_for_type = GLOBAL_TARGET_FIELDS
 
         return model_to_dict(self, fields=fields_for_type)
+
+
+class TargetName(models.Model):
+    """
+    Class representing an alternative name for a ``Target``.
+
+    :param target: The ``Target`` object this ``TargetName`` is associated with.
+
+    :param name: The name that this ``TargetName`` object represents.
+    :type name: str
+
+    :param created: The time at which this target name was created in the TOM database.
+    :type created: datetime
+
+    :param modified: The time at which this target name was modified in the TOM database.
+    :type modified: datetime
+    """
+    target = models.ForeignKey(Target, on_delete=models.CASCADE, related_name='aliases')
+    name = models.CharField(max_length=100, unique=True, verbose_name='Alias for target')
+    created = models.DateTimeField(
+        auto_now_add=True, help_text='The time which this target name was created.'
+    )
+    modified = models.DateTimeField(
+        auto_now=True, verbose_name='Last Modified',
+        help_text='The time which this target name was changed in the TOM database.'
+    )
+
+    def __str__(self):
+        return self.name
+
+    def validate_unique(self, *args, **kwargs):
+        """
+        Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
+        """
+        super().validate_unique(*args, **kwargs)
+        if self.name == self.target.name:
+            raise ValidationError('Target name and target aliases must be unique')
 
 
 class TargetExtra(models.Model):
@@ -409,13 +470,20 @@ class TargetList(models.Model):
 
     :param targets: Set of ``Target`` objects associated with this ``TargetList``
 
-    :param created: The time at which this object was created.
+    :param created: The time at which this target list was created.
     :type created: datetime
+
+    :param modified: The time at which this target list was modified in the TOM database.
+    :type modified: datetime
     """
     name = models.CharField(max_length=200, help_text='The name of the target list.')
     targets = models.ManyToManyField(Target)
     created = models.DateTimeField(
         auto_now_add=True, help_text='The time which this target list was created in the TOM database.'
+    )
+    modified = models.DateTimeField(
+        auto_now=True, verbose_name='Last Modified',
+        help_text='The time which this target list was changed in the TOM database.'
     )
 
     class Meta:

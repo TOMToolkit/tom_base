@@ -11,11 +11,11 @@ class TestHarvester(AbstractHarvester):
     def query(self, term):
         if term == 'notfound':
             raise MissingDataException
-        self.catalog_data = {'ra': 24, 'dec': 77, 'id': 'faketarget', 'type': 'SIDEREAL'}
+        self.catalog_data = {'ra': 24, 'dec': 77, 'name': 'faketarget', 'type': 'SIDEREAL'}
 
     def to_target(self):
         target = super().to_target()
-        target.identifier = self.catalog_data['id']
+        target.name = self.catalog_data['name']
         target.type = self.catalog_data['type']
         target.ra = self.catalog_data['ra']
         target.dec = self.catalog_data['dec']

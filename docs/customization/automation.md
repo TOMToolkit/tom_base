@@ -33,7 +33,10 @@ Now we are read to start writing our new commands.
 
 #### Writing the command
 
-Let's walk through a command to download observation data every hour. The first thing to be done is to create a `management/commands` directory within your application. The structure should look like this:
+Let's walk through a command to download observation data every hour. The first
+thing to be done is to create a `management/commands` directory within your
+application to house our script. We'll call it `save_data.py`. The structure should
+look like this:
 
 ```
 mytom/
@@ -45,65 +48,54 @@ mytom/
     ├── views.py
     └── management/
         └── commands/
-            └── updatedata.py
+            └── save_data.py
 ```
 
 A management command simply needs a class called `Command` that inherits from `BaseCommand`, and a `handle` class method that contains the logic for the command.
 
 ```python
 from django.core.management.base import BaseCommand
-from tom_observations import facility
 from tom_observations.models import ObservationRecord
 
 
 class Command(BaseCommand):
 
-  help = 'Downloads data for all completed observations'
+    help = 'Downloads data for all completed observations'
 
-  def handle(self, *args, **options):
+    def handle(self, *args, **options):
 ```
 
-Now, we need to add the logic to query the facilities for data. First, we instantiate a class object for each facility:
+Now, we need to add the logic to query the facilities for data. We'll iterate
+over each incomplete `ObservationRecord`, and save the data products locally for
+that ObservationRecord.
 
 ```python
-    facility_classes = {}
-    for facility_name in facility.get_service_classes():
-      facility_classes[facility_name] = facility.get_service_class(facility_name)()
-```
+observation_records = ObservationRecord.objects.all()
+for record in observation_records:
+    if not record.terminal:
+        record.save_data()
 
-Then, we iterate over each incomplete `ObservationRecord`, update the status in the database, and save the data products locally for that ObservationRecord.
-
-```python
-    observation_records = ObservationRecord.objects.all()
-    for record in observation_record:
-      if record.status not in facility_classes[record.facility].get_terminal_observing_states():
-        facility_classes[record.facility].update_observation_status(record.observation_id)
-        facility_classes[record.facility].save_data_products(record)
+return 'Success!'
 ```
 
 So our final management command should look like this:
 
 ```python
 from django.core.management.base import BaseCommand
-from tom_observations import facility
 from tom_observations.models import ObservationRecord
 
 
 class Command(BaseCommand):
 
-  help = 'Downloads data for all completed observations'
+    help = 'Downloads data for all completed observations'
 
-  def handle(self, *args, **options):
-    facility_classes = {}
-    for facility_name in facility.get_service_classes():
-      facility_classes[facility_name] = facility.get_service_class(facility_name)()
-    observation_records = ObservationRecord.objects.all()
-    for record in observation_records:
-      if record.status not in facility_classes[record.facility].get_terminal_observing_states():
-        facility_classes[record.facility].update_observation_status(record.observation_id)
-        facility_classes[record.facility].save_data_products(record)
+    def handle(self, *args, **options):
+        observation_records = ObservationRecord.objects.all()
+        for record in observation_records:
+            if not record.terminal:
+                record.save_data()
 
-    return 'Success!'
+        return 'Success!'
 ```
 
 #### Adding parameters
@@ -115,18 +107,20 @@ Management commands also provide the ability to accept parameters. Doing this is
     parser.add_argument('--target_id', help='Download data for a single target')
 ```
 
-That code will process any additional parameters, and we simply need to handle them in our, well, `handle` class method.
+That code will process any additional parameters, and we simply need to handle
+them in our,  `handle` class method. We'll attempt to fetch the supplied target
+from the database and filter the ObservationRecords accordingly:
 
 ```python
   def handle(self, *args, **options):
     if options['target_id']:
       try:
         target = Target.objects.get(pk=options['target_id'])
+        observation_records = ObservationRecord.objects.filter(target=target)
       except ObjectDoesNotExist:
         raise Exception('Invalid target id provided')
-
-    facility_classes = {}
-    for facility_name in facility.get_service_classes():
+    else:
+        observation_records = ObservationRecord.objects.all()
     ...
 ```
 

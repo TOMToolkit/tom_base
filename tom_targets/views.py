@@ -1,28 +1,34 @@
+from datetime import datetime
+from io import StringIO
+
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
+from django.core.management import call_command
+from django.http import StreamingHttpResponse
+from django.shortcuts import redirect
+from django.urls import reverse_lazy, reverse
+from django.utils.text import slugify
+from django.utils.safestring import mark_safe
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django.views.generic import TemplateView, View
 from django_filters.views import FilterView
-from django.urls import reverse_lazy, reverse
-from django.shortcuts import redirect
-from django.conf import settings
-from django.contrib import messages
-from django.core.management import call_command
-from django.http import StreamingHttpResponse
-from django.utils.text import slugify
+
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
-from datetime import datetime
-from io import StringIO
 
-from .models import Target, TargetList
+from tom_common.hints import add_hint
+from tom_targets.models import Target, TargetList
+from tom_targets.forms import (
+    SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset
+)
+from tom_targets.utils import import_targets, export_targets
+from tom_targets.filters import TargetFilter
+from tom_targets.add_remove_from_grouping import add_remove_from_grouping
 from tom_dataproducts.forms import DataProductUploadForm
-from .forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
-from .utils import import_targets, export_targets
-from .filters import TargetFilter
-from .add_remove_from_grouping import add_remove_from_grouping
 
 
 class TargetListView(PermissionListMixin, FilterView):
@@ -64,6 +70,14 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         except AttributeError:
             return Target.SIDEREAL
 
+    def get_target_type(self):
+        obj = self.request.GET or self.request.POST
+        target_type = obj.get('type')
+        # If None or some invalid value, use default target type
+        if target_type not in (Target.SIDEREAL, Target.NON_SIDEREAL):
+            target_type = self.get_default_target_type()
+        return target_type
+
     def get_initial(self):
         """
         Returns the initial data to use for forms on this view.
@@ -77,7 +91,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         :rtype: dict
         """
         return {
-            'type': self.get_default_target_type(),
+            'type': self.get_target_type(),
             'groups': self.request.user.groups.all(),
             **dict(self.request.GET.items())
         }
@@ -94,6 +108,9 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         """
         context = super(TargetCreateView, self).get_context_data(**kwargs)
         context['type_choices'] = Target.TARGET_TYPES
+        context['names_form'] = TargetNamesFormset(initial=[{'name': new_name}
+                                                            for new_name
+                                                            in self.request.GET.get('names', '').split(',')])
         context['extra_form'] = TargetExtraFormset()
         return context
 
@@ -101,24 +118,28 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         """
         Return the form class to use in this view.
         """
-        target_type = self.get_default_target_type()
-        if self.request.GET:
-            target_type = self.request.GET.get('type', target_type)
-        elif self.request.POST:
-            target_type = self.request.POST.get('type', target_type)
+        target_type = self.get_target_type()
+        self.initial['type'] = target_type
         if target_type == Target.SIDEREAL:
-            self.initial['type'] = Target.SIDEREAL
             return SiderealTargetCreateForm
-        elif target_type == Target.NON_SIDEREAL:
-            self.initial['type'] = Target.NON_SIDEREAL
+        else:
             return NonSiderealTargetCreateForm
 
     def form_valid(self, form):
         super().form_valid(form)
         extra = TargetExtraFormset(self.request.POST)
-        if extra.is_valid():
+        names = TargetNamesFormset(self.request.POST)
+        if extra.is_valid() and names.is_valid():
             extra.instance = self.object
             extra.save()
+            names.instance = self.object
+            names.save()
+        else:
+            form.add_error(None, extra.errors)
+            form.add_error(None, extra.non_form_errors())
+            form.add_error(None, names.errors)
+            form.add_error(None, names.non_form_errors())
+            return super().form_invalid(form)
         return redirect(self.get_success_url())
 
     def get_form(self, *args, **kwargs):
@@ -138,6 +159,7 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         extra_field_names = [extra['name'] for extra in settings.EXTRA_FIELDS]
         context = super().get_context_data(**kwargs)
+        context['names_form'] = TargetNamesFormset(instance=self.object)
         context['extra_form'] = TargetExtraFormset(
             instance=self.object,
             queryset=self.object.targetextra_set.exclude(key__in=extra_field_names)
@@ -147,8 +169,16 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     def form_valid(self, form):
         super().form_valid(form)
         extra = TargetExtraFormset(self.request.POST, instance=self.object)
-        if extra.is_valid():
+        names = TargetNamesFormset(self.request.POST, instance=self.object)
+        if extra.is_valid() and names.is_valid():
             extra.save()
+            names.save()
+        else:
+            form.add_error(None, extra.errors)
+            form.add_error(None, extra.non_form_errors())
+            form.add_error(None, names.errors)
+            form.add_error(None, names.non_form_errors())
+            return super().form_invalid(form)
         return redirect(self.get_success_url())
 
     def get_queryset(self, *args, **kwargs):
@@ -204,6 +234,10 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
             out = StringIO()
             call_command('updatestatus', target_id=target_id, stdout=out)
             messages.info(request, out.getvalue())
+            add_hint(request, mark_safe(
+                              'Did you know updating observation statuses can be automated? Learn how in'
+                              '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
+                              ' the docs.</a>'))
             return redirect(reverse('tom_targets:detail', args=(target_id,)))
         return super().get(request, *args, **kwargs)
 

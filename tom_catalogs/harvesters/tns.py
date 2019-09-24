@@ -40,7 +40,7 @@ class TNSHarvester(AbstractHarvester):
     def to_target(self):
         target = super().to_target()
         target.type = 'SIDEREAL'
-        target.identifier = (self.catalog_data['name_prefix'] + self.catalog_data['name'])
+        target.name = (self.catalog_data['name_prefix'] + self.catalog_data['name'])
         c = SkyCoord('{0} {1}'.format(self.catalog_data['ra'], self.catalog_data['dec']), unit=(u.hourangle, u.deg))
         target.ra, target.dec = c.ra.deg, c.dec.deg
         return target
