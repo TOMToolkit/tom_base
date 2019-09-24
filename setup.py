@@ -42,7 +42,6 @@ setup(
         'astropy',
         'astroplan',
         'plotly',
-        'pyephem',
         'matplotlib',
         'pillow',
         'fits2image',
