@@ -46,6 +46,9 @@ def get_visibility(target, start_time, end_time, interval, airmass_limit):
         empty_visibility = {}
         return empty_visibility
 
+    if end_time < start_time:
+        raise Exception('Start must be before end')
+
     if airmass_limit is None:
         airmass_limit = 10
 

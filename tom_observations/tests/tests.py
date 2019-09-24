@@ -5,15 +5,16 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 
-import ephem
-from rise_set.angle import Angle
-from rise_set.astrometry import calc_sunrise_set
+from astroplan import Observer, FixedTarget
+from astropy import units
+from astropy.coordinates import get_sun, SkyCoord
+from astropy.time import Time
 
 from .factories import TargetFactory, ObservingRecordFactory
-from tom_observations.utils import get_rise_set, get_last_rise_set_pair
-from tom_observations.utils import get_next_rise_set_pair, observer_for_site
+from tom_observations.utils import get_astroplan_sun_and_time, get_visibility
 from tom_observations.tests.utils import FakeFacility
 from tom_observations.models import ObservationRecord
+from tom_targets.models import Target
 from guardian.shortcuts import assign_perm
 
 
@@ -102,93 +103,50 @@ class TestUpdatingObservations(TestCase):
 
 class TestGetVisibility(TestCase):
     def setUp(self):
-        self.rise_set = [(0, 10),
-                         (20, 30),
-                         (40, 50),
-                         (60, 70)]
-        self.observer = ephem.city('Los Angeles')
-        self.sun = ephem.Sun()
+        self.sun = get_sun(Time(datetime(2019, 10, 9, 13, 56)))
+        self.target = Target(
+            ra=(self.sun.ra.deg + 180) % 360,
+            dec=-(self.sun.dec.deg),
+            type=Target.SIDEREAL
+        )
+        self.start = datetime(2018, 10, 9, 13, 56, 16)
+        self.interval = 10
+        self.airmass_limit = 10
 
     def test_get_astroplan_sun_and_time(self):
-        pass
-        # rise_set = get_rise_set(self.observer, self.sun, datetime(2018, 10, 10), datetime(2018, 10, 11))
-        # self.assertListEqual(
-        #     [
-        #         (datetime(2018, 10, 9, 13, 53, 16), datetime(2018, 10, 10, 1, 26, 33)),
-        #         (datetime(2018, 10, 10, 13, 54, 2), datetime(2018, 10, 11, 1, 25, 15))
-        #     ],
-        #     rise_set
-        # )
+        end = self.start + timedelta(days=2)
+        sun, time_range = get_astroplan_sun_and_time(self.start, end, self.interval)
+        self.assertIsInstance(sun, SkyCoord)
 
     def test_get_astroplan_sun_and_time_small_range(self):
-        pass
-
-    def test_get_visibility_sidereal(self):
-        pass
+        end = self.start + timedelta(hours=10)
+        sun, time_range = get_astroplan_sun_and_time(self.start, end, self.interval)
+        self.assertIsInstance(sun, FixedTarget)
 
     def test_get_visibility_invalid_target_type(self):
-        pass
+        invalid_target = self.target
+        invalid_target.type = 'Invalid Type'
+        end = self.start + timedelta(minutes=60)
+        airmass = get_visibility(invalid_target, self.start, end, self.interval, self.airmass_limit)
+        self.assertEqual(len(airmass), 0)
 
     def test_get_visibility_invalid_params(self):
         self.assertRaisesRegex(
-            Exception, 'Start must be before end', get_rise_set,
-            self.observer, self.sun, datetime(2018, 10, 10), datetime(2018, 10, 9)
+            Exception, 'Start must be before end', get_visibility,
+            self.target, datetime(2018, 10, 10), datetime(2018, 10, 9),
+            self.interval, self.airmass_limit
         )
-
-    def test_get_visibility_no_results(self):
-        rise_set = get_rise_set(
-            self.observer, self.sun, datetime(2018, 10, 10, 7, 0, 0), datetime(2018, 10, 10, 7, 0, 1)
-        )
-        self.assertEqual(len(rise_set), 0)
-
-    def test_get_rise_set_against_lco_rise_set(self):
-        facility = FakeFacility()
-        sites = facility.get_observing_sites()
-        start = datetime(2018, 10, 10)
-        end = datetime(2018, 10, 11)
-
-        # Get sunrise/set from rise-set library
-        coj = {
-            'latitude': Angle(degrees=sites.get('Siding Spring')['latitude']),
-            'longitude': Angle(degrees=sites.get('Siding Spring')['longitude'])
-        }
-        coj_observer = observer_for_site(sites.get('Siding Spring'))
-        (transit, control_rise, control_set) = calc_sunrise_set(coj, start, 'sunrise')
-
-        # Get rise/set from observations module
-        rise_set = get_rise_set(coj_observer, self.sun, start, end)
-        rise_delta = timedelta(hours=rise_set[0][0].hour, minutes=rise_set[0][0].minute, seconds=rise_set[0][0].second)
-        set_delta = timedelta(hours=rise_set[0][1].hour, minutes=rise_set[0][1].minute, seconds=rise_set[0][1].second)
-        self.assertLessEqual(rise_delta - control_rise, abs(timedelta(minutes=5)))
-        self.assertLessEqual(set_delta - control_set, abs(timedelta(minutes=5)))
-
-
-class TestTargetVisibility(TestCase):
-    def setUp(self):
-        self.mars = ephem.Mars()
-        self.time = datetime(2018, 10, 10, 7, 0, 0)
-        self.mars.compute(self.time)
-        ra = Angle(str(self.mars.ra), unit=units.hourangle)
-        dec = Angle(str(self.mars.dec) + 'd', unit=units.deg)
-        self.st = Target(ra=ra.deg, dec=dec.deg, type=Target.SIDEREAL)
-
 
     @mock.patch('tom_observations.utils.facility.get_service_classes')
-    @mock.patch('tom_observations.utils.get_rise_set')
-    @mock.patch('tom_observations.utils.observer_for_site')
-    def test_get_visibility_sidereal(self, mock_observer_for_site, mock_get_rise_set, mock_facility):
+    def test_get_visibility_sidereal(self, mock_facility):
         mock_facility.return_value = {'Fake Facility': FakeFacility}
-        mock_get_rise_set.return_value = []
-        mock_observer_for_site.return_value = ephem.city('Los Angeles')
-
-        start = self.time
-        end = start + timedelta(minutes=60)
+        end = self.start + timedelta(minutes=60)
+        airmass = get_visibility(self.target, self.start, end, self.interval, self.airmass_limit)
+        airmass_data = airmass['(Fake Facility) Siding Spring'][1]
         expected_airmass = [
-            3.6074370614681017, 3.997263815883785, 4.498087520663738, 5.162731916462906,
-            6.083298253498044, 7.4363610371608475, 9.607152214891583
+            1.2619096566629477, 1.2648181328558852, 1.2703522349950636, 1.2785703053923894,
+            1.2895601364316183, 1.3034413026227516, 1.3203684217446099
         ]
-
-        airmass_data = get_visibility(self.st, start, end, 10, 10)['(Fake Facility) Los Angeles'][1]
         self.assertEqual(len(airmass_data), len(expected_airmass))
         for i in range(0, len(expected_airmass)):
             self.assertEqual(airmass_data[i], expected_airmass[i])

@@ -156,5 +156,6 @@ class TargetVisibilityForm(forms.Form):
         if target.type == 'NON_SIDEREAL':
             raise forms.ValidationError('Airmass plotting is only supported for sidereal targets')
 
+
 TargetExtraFormset = inlineformset_factory(Target, TargetExtra,
                                            fields=('key', 'value'), widgets={'value': forms.TextInput()})
