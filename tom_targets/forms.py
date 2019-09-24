@@ -7,9 +7,8 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
 from .models import (
-    Target, TargetExtra, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS,
-    REQUIRED_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS,
-    REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
+    Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
+    REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 )
 
 
@@ -157,5 +156,7 @@ class TargetVisibilityForm(forms.Form):
             raise forms.ValidationError('Airmass plotting is only supported for sidereal targets')
 
 
-TargetExtraFormset = inlineformset_factory(Target, TargetExtra,
-                                           fields=('key', 'value'), widgets={'value': forms.TextInput()})
+TargetExtraFormset = inlineformset_factory(Target, TargetExtra, fields=('key', 'value'),
+                                           widgets={'value': forms.TextInput()})
+TargetNamesFormset = inlineformset_factory(Target, TargetName, fields=('name',), validate_min=False, can_delete=True,
+                                           extra=3)

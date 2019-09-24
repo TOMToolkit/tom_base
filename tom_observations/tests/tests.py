@@ -10,7 +10,7 @@ from astropy import units
 from astropy.coordinates import get_sun, SkyCoord
 from astropy.time import Time
 
-from .factories import TargetFactory, ObservingRecordFactory
+from .factories import TargetFactory, ObservingRecordFactory, TargetNameFactory
 from tom_observations.utils import get_astroplan_sun_and_time, get_visibility
 from tom_observations.tests.utils import FakeFacility
 from tom_observations.models import ObservationRecord
@@ -22,6 +22,7 @@ from guardian.shortcuts import assign_perm
 class TestObservationViews(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()
+        self.target_name = TargetNameFactory.create(target=self.target)
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeFacility.name,

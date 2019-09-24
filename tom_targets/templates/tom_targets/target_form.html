@@ -11,7 +11,8 @@
       </li>
     {% endfor %}
 {% else %}
-  <h3> Update {{ object.identifier }}</h3>
+<h3> Update {{ object.name }}</h3>
+
 {% endif %}
 </ul>
 {% if not object %}
@@ -21,6 +22,7 @@
 {% endif %}
 {% csrf_token %}
 {% bootstrap_form form %}
+{% bootstrap_formset names_form %}
 <h3>Tags</h3>
 {% bootstrap_formset extra_form %}
 {% buttons %}

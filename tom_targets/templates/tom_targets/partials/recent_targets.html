@@ -4,8 +4,8 @@
     {% for target in targets %}
     <tr>
       <td>
-        <a href="{% url 'targets:detail' target.id %}" title="Detail for {{ target.identifier }}">
-          {{ target.identifier }}
+        <a href="{% url 'targets:detail' target.id %}" title="Detail for {{ target.name }}">
+          {{ target.name }}
         </a>
       </td>
       <td>

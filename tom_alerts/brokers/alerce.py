@@ -1,8 +1,7 @@
 import requests
-import json
 
 from django import forms
-from crispy_forms.layout import Layout, Div, Fieldset, HTML
+from crispy_forms.layout import Layout, Div, Fieldset
 from astropy.time import Time, TimezoneInfo
 
 from tom_alerts.alerts import GenericQueryForm, GenericBroker, GenericAlert
@@ -194,7 +193,6 @@ class ALeRCEBroker(GenericBroker):
 
     def to_target(self, alert):
         return Target.objects.create(
-            identifier=alert['oid'],
             name=alert['oid'],
             type='SIDEREAL',
             ra=alert['meanra'],

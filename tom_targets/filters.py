@@ -51,13 +51,10 @@ class TargetFilter(django_filters.FilterSet):
             new_filter.parent = self
             self.filters[field['name']] = new_filter
 
-    identifier = django_filters.CharFilter(field_name='identifier', lookup_expr='icontains')
-    name = django_filters.CharFilter(field_name='name', method='filter_name')
+    name = django_filters.CharFilter(method='filter_name', label='Name')
 
     def filter_name(self, queryset, name, value):
-        return queryset.filter(
-            Q(name__icontains=value) | Q(name2__icontains=value) | Q(name3__icontains=value)
-        )
+        return queryset.filter(Q(name__icontains=value) | Q(aliases__name__icontains=value))
 
     # hide target grouping list if user not logged in
     def get_target_list_queryset(request):
@@ -70,5 +67,5 @@ class TargetFilter(django_filters.FilterSet):
 
     class Meta:
         model = Target
-        fields = ['type', 'identifier', 'name', 'key', 'value']
-        fields = ['type', 'identifier', 'name']
+        fields = ['type', 'name', 'key', 'value']
+        fields = ['type', 'name']

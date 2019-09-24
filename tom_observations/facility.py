@@ -1,16 +1,17 @@
 from importlib import import_module
 import json
 import requests
-
 from abc import ABC, abstractmethod
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout
 from django import forms
 from django.conf import settings
 from django.core.files.base import ContentFile
+import logging
 
 from tom_targets.models import Target
 
+logger = logging.getLogger(__name__)
 
 DEFAULT_FACILITY_CLASSES = [
         'tom_observations.facilities.lco.LCOFacility',
@@ -131,9 +132,10 @@ class GenericObservationFacility(ABC):
                 dfile = ContentFile(product_data)
                 dp.data.save(product['filename'], dfile)
                 dp.save()
-                dp.get_preview()
+                logger.info('Saved new dataproduct: {}'.format(dp.data))
             if AUTO_THUMBNAILS:
                 create_image_dataproduct(dp)
+                dp.get_preview()
             final_products.append(dp)
         return final_products
 

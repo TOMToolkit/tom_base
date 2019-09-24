@@ -249,6 +249,10 @@ The `Target` model is relatively self-evident--it stores the data that describes
 targets in your TOM. By default, that includes things like name, type, coordinates, and
 ephemerides.
 
+#### TargetName
+The `TargetName` model stores extra names for a target, aka aliases. The corresponding target
+is stored as a foreign key.
+
 #### ObservationRecord
 The `ObservationRecord` model describes an individual observation request for a single target.
 It stores the target as a foreign key, and can optionally store facility information and the

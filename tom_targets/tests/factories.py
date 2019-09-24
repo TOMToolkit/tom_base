@@ -1,13 +1,12 @@
 import factory
 
-from tom_targets.models import Target, TargetList
+from tom_targets.models import Target, TargetName, TargetList
 
 
 class SiderealTargetFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Target
 
-    identifier = factory.Faker('pystr')
     name = factory.Faker('pystr')
     type = Target.SIDEREAL
     ra = factory.Faker('pyfloat')
@@ -21,7 +20,6 @@ class NonSiderealTargetFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Target
 
-    identifier = factory.Faker('pystr')
     name = factory.Faker('pystr')
     type = Target.NON_SIDEREAL
     mean_anomaly = factory.Faker('pyfloat')
@@ -36,8 +34,12 @@ class NonSiderealTargetFactory(factory.django.DjangoModelFactory):
     ephemeris_epoch_err = factory.Faker('pyfloat')
 
 
+class TargetNameFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = TargetName
+
+
 class TargetGroupingFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = TargetList
-
     name = factory.Faker('pystr')

@@ -45,7 +45,6 @@
         <thead>
           <tr>
             <th><input type="checkbox" id="selectPage" onClick="select_page(this, {{ target_count }})" /></th>
-            <th>ID</th>
             <th>Name</th>
             <th>Type</th>
             {% if request.GET.type == 'SIDEREAL' %}
@@ -61,13 +60,7 @@
           <tr>
             <td><input type="checkbox" name="selected-target" value="{{ target.id }}" onClick="single_select()"/></td>
             <td>
-              <a href="{% url 'targets:detail' target.id %}" title="{{ target.identifier }}">
-                {% if not target.identifier %}
-                  (none)
-                {% else %}
-                  {{ target.identifier }}
-                {% endif %}
-              </a>
+                <a href="{% url 'targets:detail' target.id %}" title="{{ target.name }}">{{ target.names|join:", " }}</a>
             </td>
             <td>{{ target.name }}</td>
             <td>{{ target.get_type_display }}</td>

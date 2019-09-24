@@ -1,6 +1,8 @@
+import json
+
 from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.base import TemplateView, View
-from tom_alerts.alerts import get_service_class, get_service_classes
+from django.db import IntegrityError
 from django.shortcuts import redirect, get_object_or_404
 from django.utils import timezone
 from django.urls import reverse, reverse_lazy
@@ -10,9 +12,9 @@ from django.core.cache import cache
 from guardian.shortcuts import assign_perm
 from django_filters.views import FilterView
 from django_filters import FilterSet, ChoiceFilter, CharFilter
-import json
 
 from tom_alerts.models import BrokerQuery
+from tom_alerts.alerts import get_service_class, get_service_classes
 
 
 class BrokerQueryCreateView(LoginRequiredMixin, FormView):
@@ -146,6 +148,7 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
         broker_name = self.request.POST['broker']
         broker_class = get_service_class(broker_name)
         alerts = self.request.POST.getlist('alerts')
+        errors = []
         if not alerts:
             messages.warning(request, 'Please select at least one alert from which to create a target.')
             return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
@@ -156,14 +159,19 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
                 return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
             generic_alert = broker_class().to_generic_alert(json.loads(cached_alert))
             target = generic_alert.to_target()
-            target.save()
-            broker_class().process_reduced_data(target, json.loads(cached_alert))
-            target.save()
-            for group in request.user.groups.all().exclude(name='Public'):
-                assign_perm('tom_targets.view_target', group, target)
-                assign_perm('tom_targets.change_target', group, target)
-                assign_perm('tom_targets.delete_target', group, target)
-        if (len(alerts) == 1):
+            try:
+                target.save()
+                broker_class().process_reduced_data(target, json.loads(cached_alert))
+                for group in request.user.groups.all().exclude(name='Public'):
+                    assign_perm('tom_targets.view_target', group, target)
+                    assign_perm('tom_targets.change_target', group, target)
+                    assign_perm('tom_targets.delete_target', group, target)
+            except IntegrityError:
+                messages.warning(request, f'Unable to save {target.name}, target with that name already exists.')
+                errors.append(target.name)
+        if (len(alerts) == len(errors)):
+            return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
+        elif (len(alerts) == 1):
             return redirect(reverse(
                 'tom_targets:update', kwargs={'pk': target.id})
             )
