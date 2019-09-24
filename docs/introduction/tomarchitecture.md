@@ -182,7 +182,7 @@ and
 [lco.py](https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py)
 are two examples, and we expect more in the future.
 
-#### TOM Dataproducts
+#### TOM Data Products
 
 Straddling both the `tom_targets` and `tom_observations` packages is
 [tom_dataproducts](https://github.com/TOMToolkit/tom_base/tree/master/tom_dataproducts).
