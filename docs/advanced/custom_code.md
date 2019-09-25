@@ -1,7 +1,7 @@
 Running Custom Code on Actions in your TOM
 ------------------------------------------
 
-Sometimes it would be desireable for your TOM to run custom code when certain
+Sometimes it would be desirable for your TOM to run custom code when certain
 actions happen. For example: when an observation is completed you'd like to submit
 your data to an outside service. Or when you add a new target you'd like to
 automatically search a remote catalog for matches. You could even make your TOM
@@ -15,7 +15,7 @@ observation record changes it's state to 'COMPLETED'. We'll assume you have gone
 through the [getting started](/introduction/getting_started) guide, and that you have
 working TOM up and running called mytom.
 
-First, let's create a python module where the entrypoint to our custom code will
+First, let's create a python module where the entry point to our custom code will
 live:
 
     touch mytom/hooks.py
@@ -95,5 +95,5 @@ def observation_change_state(observation, previous_status):
 ```
 
 That is all that is necessary for sending an email, though you might want to look
-into using asynchronus task runners such as [dramatiq](https://dramatiq.io/) or
+into using asynchronous task runners such as [dramatiq](https://dramatiq.io/) or
 [celery](http://www.celeryproject.org/).

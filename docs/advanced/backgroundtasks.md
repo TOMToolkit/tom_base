@@ -4,7 +4,7 @@ Running asynchronous background tasks
 When you are using your TOM via the web interface, the code that is running in the
 background is tied to the request/response cycle. What this means is that when
 you click a button or link in the TOM your browser constructs a web request, which
-is then sent to the webserver running your TOM. The TOM receives this request and
+is then sent to the web server running your TOM. The TOM receives this request and
 then runs a bunch of code, ultimately to generate a response that gets sent back
 to the browser. This response is what you see when the next page loads. For the
 purposes of this explanation, this all happens _synchronously_ meaning that your
@@ -67,7 +67,7 @@ Redis](https://redis.io/download). One of the easiest is to use Docker:
 
     docker run --name tom-redis -d -p6379:6379 redis
 
-You can also download redis directly from the website and compile it:
+You can also download Redis directly from the website and compile it:
 
     $ wget http://download.redis.io/releases/redis-5.0.5.tar.gz
     $ tar xzf redis-5.0.5.tar.gz
@@ -167,7 +167,7 @@ Now that we have some workers, lets put them to work. In order to do that we'll
 write a task.
 
 
-Createa a file `mytom/myapp/tasks.py` where `myapp` is a django app you've
+Create a file `mytom/myapp/tasks.py` where `myapp` is a django app you've
 installed into `INSTALLED_APPS`. If you haven't started one, you can do so with:
 
     ./manage.py startapp myapp
@@ -215,7 +215,7 @@ should see the following output:
 
 Notice how calling the task returned immediately in the shell, but the task took a
 few seconds to complete. This is how it would work in practice in your django app:
-Somewhere in your code, for example in your app's views.py, you would import the
+Somewhere in your code, for example in your app's `views.py`, you would import the
 task just like we did in the terminal. Now when the view gets called, the task
 will be queued for execution and the response can be sent back to the user's
 browser right away. The task will finish in the background.
