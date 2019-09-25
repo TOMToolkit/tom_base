@@ -66,7 +66,6 @@ to do is extend
  on [Customizing TOM Templates](/customization/customize_templates). Let's modify
  `about.html` to extend the base template:
 
-{% raw %}
 ```html
 {% extends 'tom_common/base.html' %}
 {% block content %}
@@ -77,11 +76,16 @@ what we do not know, that is true knowledge. <br/>
 </p>
 {% endblock %}
 ```
-{% endraw %}
 
 Now when you reload the page you should see this:
 
 ![base](/_static/adding_pages_doc/base.png)
+
+Much better! By extending a template and providing a `content` block, we are able
+to make consistent looking pages without copying and pasting any code.
+
+You can read more about template inheritance in [Django's official
+docs](https://docs.djangoproject.com/en/2.2/ref/templates/language/#template-inheritance)
 
 
 ### Adding in dynamic data
@@ -126,7 +130,6 @@ just wrote, and modified the call to `path()` accordingly.
 Lastly let's update our `about.html` template to actually show the list of
 targets:
 
-{% raw %}
 ```html
 {% extends 'tom_common/base.html' %}
 {% block content %}
@@ -143,7 +146,6 @@ what we do not know, that is true knowledge. <br/>
 {% endblock %}
 
 ```
-{% endraw %}
 
 `targets` in this template refers to the key in the dictionary we returned in the
 `get_context_data` method in our view. We can add anything to the context
@@ -153,7 +155,9 @@ Reloading your about page, you should now see something like this:
 
 ![targets](/_static/adding_pages_doc/targets.png)
 
-
+If the page looks exactly the same as last time, you might need to add some
+targets. Navigate to
+[http://localhost:8000/targets/](http://cygnus.lco.gtn:8000/targets/) to do so.
 ### Class based views
 Django has the concept of [class based
 views](https://docs.djangoproject.com/en/2.2/topics/class-based-views/intro/).
