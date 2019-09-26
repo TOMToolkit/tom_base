@@ -10,7 +10,7 @@ from tom_observations import facility
 logger = logging.getLogger(__name__)
 
 
-def get_visibility(target, start_time, end_time, interval, airmass_limit):
+def get_sidereal_visibility(target, start_time, end_time, interval, airmass_limit):
     """
     Uses astroplan to calculate the airmass for a sidereal target
     for each given interval between the start and end times.

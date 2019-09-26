@@ -7,8 +7,6 @@ from django.contrib.auth.models import User, Group
 
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory, TargetNameFactory
 from tom_targets.models import Target, TargetExtra, TargetList, TargetName
-from tom_observations.utils import get_visibility
-from tom_observations.tests.utils import FakeFacility
 from tom_targets.utils import import_targets
 from guardian.shortcuts import assign_perm
 
