@@ -19,7 +19,8 @@ def get_visibility(target, start_time, end_time, interval, airmass_limit):
     default, if one is not provided), as well as any airmass calculated
     during the day (defined as between astronomical twilights).
 
-    Important note: only works for sidereal targets!
+    Important note: only works for sidereal targets! For non-sidereal visibility, see here:
+    https://github.com/TOMToolkit/tom_nonsidereal_airmass
 
     :param start_time: start of the window for which to calculate the airmass
     :type start_time: datetime
