@@ -20,3 +20,14 @@ from within a TOM.
 If you're on Mac OS, it should be noted that the Antares client library has a dependency
 that only supports Mac OS 10.13 or later. If you try to run `./manage.py migrate` on an
 earlier version, you may see an error.
+
+### tom-nonsidereal-airmass
+
+This module provides a templatetag supporting visibility plots for non-sidereal targets. This plugin is fully
+supported by the TOM Toolkit team; however, non-sidereal visibility calculations require the PyEphem library, which is
+minimally supported while its successor is in development. The library used for the TOM Toolkit sidereal visibility,
+`astroplan`, does not yet support non-sidereal visibility calculations.
+
+[Github](https://github.com/TOMToolkit/tom_nonsidereal_airmass)
+
+[Installation Instructions](https://github.com/TOMToolkit/tom_nonsidereal_airmass)

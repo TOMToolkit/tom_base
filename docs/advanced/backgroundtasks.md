@@ -3,11 +3,11 @@ Running asynchronous background tasks
 
 When you are using your TOM via the web interface, the code that is running in the
 background is tied to the request/response cycle. What this means is that when
-you click a button or link in the TOM your browser constructs a web request, which
+you click a button or link in the TOM, your browser constructs a web request, which
 is then sent to the web server running your TOM. The TOM receives this request and
 then runs a bunch of code, ultimately to generate a response that gets sent back
 to the browser. This response is what you see when the next page loads. For the
-purposes of this explanation, this all happens _synchronously_ meaning that your
+purposes of this explanation, this all happens _synchronously_, meaning that your
 browser has to wait for your TOM to respond before displaying the next page.
 
     ----------   request        ----------
@@ -17,12 +17,12 @@ browser has to wait for your TOM to respond before displaying the next page.
     ----------                  ----------
 
 But what happens if your TOM performs some compute or IO heavy task while
-constructing the response? For example: running a source extraction on a data
+constructing the response? One example would be running a source extraction on a data
 product after a user uploads it to your TOM. Normally, the browser will just wait
 for the response. This results in an agonizing wait time for the user as they
 watch the browser's loading spinner slowly rotate. Eventually they will give up
 and either reload the page or close it completely. In fact, according to a study
-by Akamai 50% of web users will not wait longer than 10-15 seconds for a page to
+by Akamai, 50% of web users will not wait longer than 10-15 seconds for a page to
 load before giving up.
 
 The way we avoid these wait times is to run our slow code _asynchronously_ in the
@@ -37,20 +37,20 @@ browser with a response immediately, before the slow code has even finished.
     ----------                  ----------            -----------
 
 A very common scenario is sending email. Many web applications require the
-functionality of sending mail at some point: let's say the PI of a project has the
-option to mass notify their CIs that observations have been taken. Usually sending
+functionality of sending mail at some point. Let's say the PI of a project has the
+option to mass notify their CIs that observations have been taken. Usually, sending
 email takes a very short amount of time, but it is still good practice to remove
 it from the request/response cycle, just in case it takes longer than usual or
 errors in some way.
 
-In this tutorial we will go over how to run tasks asynchronously in your TOM if
+In this tutorial, we will go over how to run tasks asynchronously in your TOM if
 you have the need to do so.
 
 ### Running tasks with Dramatiq
 
 [Dramatiq](https://dramatiq.io/) is a task processing library for python. Simply
 put: it allows you to define functions as _actors_ and then execute those function
-using _workers_. None of this can happen without a _broker_ though, which is the
+using _workers_. None of this can happen without a _broker_, though, which is the
 piece that is responsible for passing messages from the _web process_ to the
 _workers_.
 
@@ -62,10 +62,16 @@ library. Dramatiq supports using either RabbitMQ or Redis. We'll use Redis becau
 of its versatility: not only can it be used as a message broker but it can also
 be used in your TOM as a cache (though not covered in this tutorial).
 
-Depending on your OS, there are a few ways [to install
-Redis](https://redis.io/download). One of the easiest is to use Docker:
+Depending on your OS, there are a few ways to [install
+Redis](https://redis.io/download).
+
+##### Using Docker
+
+One of the easiest ways to install Redis is to use Docker:
 
     docker run --name tom-redis -d -p6379:6379 redis
+
+##### Building from source
 
 You can also download Redis directly from the website and compile it:
 
@@ -78,13 +84,12 @@ You can now run the server with:
 
     ./src/redis-server
 
+##### Using a package manager
 
 If you are running Linux, most likely Redis is included with your distribution via
 its package manager. For example:
 
-
     apt install Redis
-
 
 Whichever way works for you, we should now have a Redis server up and running and
 listening on port 6379.
@@ -95,7 +100,7 @@ listening on port 6379.
 Now that we have our broker running, we can install and configure our TOM to run
 Dramatiq. Start by installing the required dependencies into your virtualenv:
 
-    pip install dramatiq[watch, redis] django-dramatiq
+    pip install 'dramatiq[watch, redis]' django-dramatiq
 
 [django-dramatiq](https://github.com/Bogdanp/django_dramatiq)
 will offer us some conveniences while working with tasks in our TOM.
@@ -146,8 +151,7 @@ DRAMATIQ_RESULT_BACKEND = {
 }
 ```
 
-Now that all the settings are in place we can test installation by starting up
-some workers:
+Now that all the settings are in place, we need to run a `manage.py migrate` in order to create the `django_dramatiq` table. Then, we can test installation by starting up some workers:
 
     ./manage.py rundramatiq
 

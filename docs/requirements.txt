@@ -15,6 +15,5 @@ plotly
 pillow
 fits2image
 specutils
-pyephem
 sphinx>=2.1.2
 recommonmark

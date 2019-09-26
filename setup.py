@@ -40,15 +40,15 @@ setup(
         'requests',
         'astroquery',
         'astropy',
+        'astroplan',
         'plotly',
-        'pyephem',
         'matplotlib',
         'pillow',
         'fits2image',
         'specutils',
     ],
     extras_require={
-        'test': ['factory_boy', 'rise-set']
+        'test': ['factory_boy']
     },
     include_package_data=True,
 )
