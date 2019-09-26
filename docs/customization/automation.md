@@ -72,7 +72,7 @@ that ObservationRecord.
 ```python
 observation_records = ObservationRecord.objects.all()
 for record in observation_records:
-    if not record.terminal:
+    if record.terminal:
         record.save_data()
 
 return 'Success!'
@@ -92,7 +92,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         observation_records = ObservationRecord.objects.all()
         for record in observation_records:
-            if not record.terminal:
+            if record.terminal:
                 record.save_data()
 
         return 'Success!'
@@ -161,7 +161,7 @@ class Command(BaseCommand):
         else:
             observation_records = ObservationRecord.objects.all()
         for record in observation_records:
-            if not record.terminal:
+            if record.terminal:
                 record.save_data()
 
         return 'Success!'
