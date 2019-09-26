@@ -3,7 +3,7 @@
 The TOM provides a graphical interface to perform many tasks, but there are some
 tasks where writing code to interact with your TOM's data and functions may be
 desirable.  In this tutorial we will explore how to interact with a TOM with code,
-_programatically_, using a Jupyter notebook.
+_programmatically_, using a Jupyter notebook.
 
 
 First install JupyterLab into your TOM's virtualenv:
@@ -21,7 +21,7 @@ standard Jupyter Notebook, with the exception of an additional option under the
 use the `Django Shell-Plus` option instead of the regular Python 3 option. This will
 open the notebook with the correct Django context loaded:
 
-![new](/_static/jupyterdoc/newnotebook.png)
+![](/_static/jupyterdoc/newnotebook.png)
 
 Create a new notebook. Now that it's open, we can use it just like any other
 Notebook.
@@ -29,7 +29,7 @@ Notebook.
 ### The API Documentation
 
 When working with the TOM programmatically, you'll often reference the [API
-documentation](/api/modules) which is a reference
+documentation](/api/modules), which is a reference
 to the code of the TOM Toolkit itself. Since you will be using these classes and
 functions, it would be a good idea to familiarize yourself with it.
 
@@ -40,21 +40,22 @@ create a target for M51 using the bare necessary information:
 
 ```python
 In [1]: from tom_targets.models import Target
-   ...: t = Target.objects.create(name='m51', identifier='Messier 51', type='NON_SIDEREAL', ra=123.3, dec=23.3)
+   ...: t = Target.objects.create(name='m51', type='SIDEREAL', ra=123.3, dec=23.3)
    ...: print(t)
    ...:
 Target post save hook: Messier 51 created: True
 Messier 51
 ```
 
-If we wish to populate any extra fields that we've defined in `settings.EXTRA_FIELDS`, we can do now do that:
+If we wish to populate any extra fields that we've defined in `settings.EXTRA_FIELDS`, we can do now do that. We can also give our new target additional names, which can be used for searching in the UI:
 
 ```python
-In [2]: t.save(extras={'foo': 42,
-                       'bar': 'baz'})
+In [3]: t.save(extras={'foo': 42,
+                       'bar': 'baz'},
+               names=['Messier 51'])
    ...: print(t.extra_fields)
 Target post save hook: Messier 51 created: False
-Out [2]: {'bar': 'baz', 'foo': 42.0}
+Out [3]: {'bar': 'baz', 'foo': 42.0}
 ```
 
 Now we should have a target in our database for M51. We can fetch it now, or
@@ -75,6 +76,9 @@ Out[13]: 123.3
 
 In [14]: target.future_observations
 Out[14]: []
+
+In [15]: target.names
+Out[15]: ['m51', 'Messier 51']
 ```
 
 And if we tire of it, we can delete it entirely:
@@ -121,7 +125,7 @@ form = LCOBaseObservationForm({
     'exposure_count': 1,
     'exposure_time': 20,
     'max_airmass': 4.0,
-    'observation_type': 'NORMAL',
+    'observation_mode': 'NORMAL',
     'target_id': target.id,
     'facility': 'LCO'
 })
@@ -145,7 +149,8 @@ Out[19]: [123456789]
 And create records for them:
 
 ```python
-In [20]:
+In [20]: from tom_observations.models import ObservationRecord
+In [21]:
 for observation_id in observation_ids:
     record = ObservationRecord.objects.create(
         target=target,

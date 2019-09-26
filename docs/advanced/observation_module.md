@@ -89,7 +89,7 @@ observations, check observation status, etc. It inherits from
 observation facility classes will want.
 
 `MyObservationFacilityForm` is the class that will display a GUI form for our
-users to create an observation. We can submit observations programatically, but it
+users to create an observation. We can submit observations programmatically, but it
 is also nice to have a GUI for our users to use.  The `GenericObservationForm`
 class, just like the previous super class, contains logic and layout that all
 observation facility form classes should contain.
@@ -147,7 +147,7 @@ class MyObservationFacility(GenericObservationFacility):
     def get_observing_sites(self):
         return []
 
-    def data_products(self, observation_id, proudct_id=None):
+    def data_products(self, observation_id, product_id=None):
         return []
 
 ```
