@@ -60,7 +60,7 @@ def is_fits_image_file(file):
     :rtype: boolean
     """
     try:
-        hdul = fits.open(file.path)
+        hdul = fits.open(file)
     except OSError:  # OSError is raised if file is not FITS format
         return False
     for hdu in hdul:
@@ -245,11 +245,11 @@ class DataProduct(models.Model):
         :returns: Thumbnail file if created, None otherwise
         :rtype: file
         """
-        if is_fits_image_file(self.data):
+        if is_fits_image_file(self.data.file):
             tmpfile = tempfile.NamedTemporaryFile()
             if not width or not height:
-                width, height = find_fits_img_size(self.data.file.name)
-            resp = fits_to_jpg(self.data.file.name, tmpfile.name, width=width, height=height)
+                width, height = find_fits_img_size(self.data.file)
+            resp = fits_to_jpg(self.data.file, tmpfile.name, width=width, height=height)
             if resp:
                 return tmpfile
         return
