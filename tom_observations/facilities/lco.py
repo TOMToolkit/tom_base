@@ -316,6 +316,7 @@ class LCOFacility(GenericObservationFacility):
     # The SITES dictionary is used to calculate visibility intervals in the
     # planning tool. All entries should contain latitude, longitude, elevation
     # and a code.
+    # TODO: Flip sitecode and site name
     SITES = {
         'Siding Spring': {
             'sitecode': 'coj',

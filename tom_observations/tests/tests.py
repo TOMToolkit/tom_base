@@ -5,15 +5,16 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 
-import ephem
-from rise_set.angle import Angle
-from rise_set.astrometry import calc_sunrise_set
+from astroplan import Observer, FixedTarget
+from astropy import units
+from astropy.coordinates import get_sun, SkyCoord
+from astropy.time import Time
 
 from .factories import TargetFactory, ObservingRecordFactory, TargetNameFactory
-from tom_observations.utils import get_rise_set, get_last_rise_set_pair
-from tom_observations.utils import get_next_rise_set_pair, observer_for_site
+from tom_observations.utils import get_astroplan_sun_and_time, get_sidereal_visibility
 from tom_observations.tests.utils import FakeFacility
 from tom_observations.models import ObservationRecord
+from tom_targets.models import Target
 from guardian.shortcuts import assign_perm
 
 
@@ -101,74 +102,65 @@ class TestUpdatingObservations(TestCase):
             self.assertEquals(uos_mock.call_count, 2)
 
 
-class TestRiseSet(TestCase):
+class TestGetVisibility(TestCase):
     def setUp(self):
-        self.rise_set = [(0, 10),
-                         (20, 30),
-                         (40, 50),
-                         (60, 70)]
-        self.observer = ephem.city('Los Angeles')
-        self.sun = ephem.Sun()
-
-    def test_get_rise_set_valid(self):
-        rise_set = get_rise_set(self.observer, self.sun, datetime(2018, 10, 10), datetime(2018, 10, 11))
-        self.assertListEqual(
-            [
-                (datetime(2018, 10, 9, 13, 53, 16), datetime(2018, 10, 10, 1, 26, 33)),
-                (datetime(2018, 10, 10, 13, 54, 2), datetime(2018, 10, 11, 1, 25, 15))
-            ],
-            rise_set
+        self.sun = get_sun(Time(datetime(2019, 10, 9, 13, 56)))
+        self.target = Target(
+            ra=(self.sun.ra.deg + 180) % 360,
+            dec=-(self.sun.dec.deg),
+            type=Target.SIDEREAL
         )
+        self.start = datetime(2018, 10, 9, 13, 56, 16)
+        self.interval = 10
+        self.airmass_limit = 10
 
-    def test_get_rise_set_against_lco_rise_set(self):
-        facility = FakeFacility()
-        sites = facility.get_observing_sites()
-        start = datetime(2018, 10, 10)
-        end = datetime(2018, 10, 11)
+    def test_get_astroplan_sun_and_time(self):
+        end = self.start + timedelta(days=2)
+        sun, time_range = get_astroplan_sun_and_time(self.start, end, self.interval)
+        self.assertIsInstance(sun, SkyCoord)
+        self.assertEqual(len(time_range), 288)
+        check_time_range = [time.mjd for time in time_range[::50]]
+        expected_time_range = [58400.58074074052, 58400.92796296533,
+                               58401.27518519014, 58401.62240741495,
+                               58401.96962963976, 58402.31685186457]
+        for i in range(0, len(expected_time_range)):
+            self.assertEqual(check_time_range[i], expected_time_range[i])
 
-        # Get sunrise/set from rise-set library
-        coj = {
-            'latitude': Angle(degrees=sites.get('Siding Spring')['latitude']),
-            'longitude': Angle(degrees=sites.get('Siding Spring')['longitude'])
-        }
-        coj_observer = observer_for_site(sites.get('Siding Spring'))
-        (transit, control_rise, control_set) = calc_sunrise_set(coj, start, 'sunrise')
+    def test_get_astroplan_sun_and_time_small_range(self):
+        end = self.start + timedelta(hours=10)
+        sun, time_range = get_astroplan_sun_and_time(self.start, end, self.interval)
+        self.assertIsInstance(sun, FixedTarget)
+        self.assertEqual(len(time_range), 61)
+        check_time_range = [time.mjd for time in time_range[::20]]
+        expected_time_range = [58400.58074074052, 58400.71962963045,
+                               58400.85851852037, 58400.997407410294]
+        for i in range(0, len(expected_time_range)):
+            self.assertEqual(check_time_range[i], expected_time_range[i])
 
-        # Get rise/set from observations module
-        rise_set = get_rise_set(coj_observer, self.sun, start, end)
-        rise_delta = timedelta(hours=rise_set[0][0].hour, minutes=rise_set[0][0].minute, seconds=rise_set[0][0].second)
-        set_delta = timedelta(hours=rise_set[0][1].hour, minutes=rise_set[0][1].minute, seconds=rise_set[0][1].second)
-        self.assertLessEqual(rise_delta - control_rise, abs(timedelta(minutes=5)))
-        self.assertLessEqual(set_delta - control_set, abs(timedelta(minutes=5)))
+    def test_get_visibility_invalid_target_type(self):
+        invalid_target = self.target
+        invalid_target.type = 'Invalid Type'
+        end = self.start + timedelta(minutes=60)
+        airmass = get_sidereal_visibility(invalid_target, self.start, end, self.interval, self.airmass_limit)
+        self.assertEqual(len(airmass), 0)
 
-    def test_get_rise_set_no_results(self):
-        rise_set = get_rise_set(
-            self.observer, self.sun, datetime(2018, 10, 10, 7, 0, 0), datetime(2018, 10, 10, 7, 0, 1)
-        )
-        self.assertEqual(len(rise_set), 0)
-
-    def test_get_rise_set_invalid_params(self):
+    def test_get_visibility_invalid_params(self):
         self.assertRaisesRegex(
-            Exception, 'Start must be before end', get_rise_set,
-            self.observer, self.sun, datetime(2018, 10, 10), datetime(2018, 10, 9)
+            Exception, 'Start must be before end', get_sidereal_visibility,
+            self.target, datetime(2018, 10, 10), datetime(2018, 10, 9),
+            self.interval, self.airmass_limit
         )
 
-    def test_get_last_rise_set_pair(self):
-        rise_set_pair = get_last_rise_set_pair(self.rise_set, -1)
-        self.assertIsNone(rise_set_pair, None)
-        rise_set_pair = get_last_rise_set_pair(self.rise_set, 25)
-        self.assertEqual(rise_set_pair[0], 20)
-        self.assertEqual(rise_set_pair[1], 30)
-        rise_set_pair = get_last_rise_set_pair(self.rise_set, 80)
-        self.assertEqual(rise_set_pair[0], 60)
-        self.assertEqual(rise_set_pair[1], 70)
-
-    def test_get_next_rise_set_pair(self):
-        rise_set_pair = get_next_rise_set_pair(self.rise_set, -1)
-        self.assertEqual(rise_set_pair[0], 0)
-        self.assertEqual(rise_set_pair[1], 10)
-        rise_set_pair = get_next_rise_set_pair(self.rise_set, 35)
-        self.assertEqual(rise_set_pair[0], 40)
-        self.assertEqual(rise_set_pair[1], 50)
-        rise_set_pair = get_next_rise_set_pair(self.rise_set, 80)
-        self.assertIsNone(rise_set_pair, None)
+    @mock.patch('tom_observations.utils.facility.get_service_classes')
+    def test_get_visibility_sidereal(self, mock_facility):
+        mock_facility.return_value = {'Fake Facility': FakeFacility}
+        end = self.start + timedelta(minutes=60)
+        airmass = get_sidereal_visibility(self.target, self.start, end, self.interval, self.airmass_limit)
+        airmass_data = airmass['(Fake Facility) Siding Spring'][1]
+        expected_airmass = [
+            1.2619096566629477, 1.2648181328558852, 1.2703522349950636, 1.2785703053923894,
+            1.2895601364316183, 1.3034413026227516, 1.3203684217446099
+        ]
+        self.assertEqual(len(airmass_data), len(expected_airmass))
+        for i in range(0, len(expected_airmass)):
+            self.assertEqual(airmass_data[i], expected_airmass[i])

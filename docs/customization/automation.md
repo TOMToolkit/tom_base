@@ -72,7 +72,7 @@ that ObservationRecord.
 ```python
 observation_records = ObservationRecord.objects.all()
 for record in observation_records:
-    if not record.terminal:
+    if record.terminal:
         record.save_data()
 
 return 'Success!'
@@ -92,7 +92,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         observation_records = ObservationRecord.objects.all()
         for record in observation_records:
-            if not record.terminal:
+            if record.terminal:
                 record.save_data()
 
         return 'Success!'
@@ -140,33 +140,31 @@ And our final finished command looks as follows:
 
 ```python
 from django.core.management.base import BaseCommand
-from tom_observations import facility
 from tom_observations.models import ObservationRecord
+from tom_targets.models import Target
 
 
 class Command(BaseCommand):
 
-  help = 'Downloads data for all completed observations'
+    help = 'Downloads data for all completed observations'
 
-  def add_arguments(self, parser):
-    parser.add_argument('--target_id', help='Download data for a single target')
+    def add_arguments(self, parser):
+        parser.add_argument('--target_id', help='Download data for a single target')
 
-  def handle(self, *args, **options):
-    if options['target_id']:
-      try:
-        target = Target.objects.get(pk=options['target_id'])
-      except ObjectDoesNotExist:
-        raise Exception('Invalid target id provided')
-    facility_classes = {}
-    for facility_name in facility.get_service_classes():
-      facility_classes[facility_name] = facility.get_service_class(facility_name)()
-    observation_records = ObservationRecord.objects.filter(target=target)
-    for record in observation_records:
-      if record.status not in facility_classes[record.facility].get_terminal_observing_states():
-        facility_classes[record.facility].update_observation_status(record.observation_id)
-        facility_classes[record.facility].save_data_products(record)
+    def handle(self, *args, **options):
+        if options['target_id']:
+            try:
+                target = Target.objects.get(pk=options['target_id'])
+                observation_records = ObservationRecord.objects.filter(target=target)
+            except Target.DoesNotExist:
+                raise Exception('Invalid target id provided')
+        else:
+            observation_records = ObservationRecord.objects.all()
+        for record in observation_records:
+            if record.terminal:
+                record.save_data()
 
-    return 'Success!'
+        return 'Success!'
 ```
 
 ### Automating a management command
@@ -178,6 +176,9 @@ On Unix-based systems, [cron](https://linux.die.net/man/8/cron) can be used to a
 `30 2 * 6 3 /path/to/command /path/to/parameters`
 
 In the above case, the first five values, which can either be numbers or asterisks, represent elements of time. From left to right, they are minutes, hours, day of the month, month of the year, and day of the week. Our example would run a command every Wednesday (fourth day of the week, starting from 0) in June (sixth month of the year, starting from 1) at 2:30 AM.
+
+Websites like [crontab.guru](https://crontab.guru/) make it easier to reason about
+crontab expressions.
 
 Scheduling can be made more complex as well--values can be comma-separated or presented as a range. Refer to the abundance of cron documentation for more information. An excellent beginner's guide can be found [here](https://www.ostechnix.com/a-beginners-guide-to-cron-jobs/).
 
