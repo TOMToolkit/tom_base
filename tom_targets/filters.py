@@ -54,7 +54,7 @@ class TargetFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(method='filter_name', label='Name')
 
     def filter_name(self, queryset, name, value):
-        return queryset.filter(Q(name__icontains=value) | Q(aliases__name__icontains=value))
+        return queryset.filter(Q(name__icontains=value) | Q(aliases__name__icontains=value)).distinct()
 
     # hide target grouping list if user not logged in
     def get_target_list_queryset(request):
