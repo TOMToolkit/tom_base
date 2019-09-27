@@ -1,3 +1,5 @@
+from django.db.models import Count
+
 import csv
 from .models import Target, TargetExtra, TargetName
 from io import StringIO
@@ -14,16 +16,29 @@ def export_targets(qs):
     data_list = list(qs)
     target_fields = [field.name for field in Target._meta.get_fields()]
     target_extra_fields = list({field.key for field in TargetExtra.objects.filter(target__in=qs_pk)})
-    all_fields = target_fields + target_extra_fields
-    all_fields.remove('id')  # do not export 'id'
+    # Gets the count of the target names for the target with the most aliases in the database
+    # This is to construct enough row headers of format "name2, name3, name4, etc" for exporting aliases
+    # The alias headers are then added to the set of fields for export
+    max_alias_count = max([alias['count']
+                           for alias
+                           in TargetName.objects.values('target_id').annotate(count=Count('target_id'))
+                           ])
+    all_fields = target_fields + target_extra_fields + [f'name{index+1}' for index in range(1, max_alias_count+1)]
+    for key in ['id', 'targetlist', 'dataproduct', 'observationrecord', 'reduceddatum', 'aliases', 'targetextra']:
+        all_fields.remove(key)
 
     file_buffer = StringIO()
     writer = csv.DictWriter(file_buffer, fieldnames=all_fields)
     writer.writeheader()
     for target_data in data_list:
         extras = list(TargetExtra.objects.filter(target_id=target_data['id']))
+        names = list(TargetName.objects.filter(target_id=target_data['id']))
         for e in extras:
             target_data[e.key] = e.value
+        name_index = 2
+        for name in names:
+            target_data[f'name{str(name_index)}'] = name.name
+            name_index += 1
         del target_data['id']  # do not export 'id'
         writer.writerow(target_data)
     return file_buffer
@@ -57,7 +72,8 @@ def import_targets(targets):
             for extra in target_extra_fields:
                 TargetExtra.objects.create(target=target, key=extra[0], value=extra[1])
             for name in target_names:
-                TargetName.objects.create(target=target, name=name)
+                if name:
+                    TargetName.objects.create(target=target, name=name)
             targets.append(target)
         except Exception as e:
             error = 'Error on line {0}: {1}'.format(index + 2, str(e))
