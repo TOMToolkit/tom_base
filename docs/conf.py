@@ -27,7 +27,8 @@ copyright = '2019, David Collom and Austin Riba'
 author = 'David Collom and Austin Riba'
 
 # The full version, including alpha/beta/rc tags
-release = '0.7.0'
+# This has to mirror the setup.py version for PDF generation
+release = '1.1.0'
 
 # -- Django Configuration -------------------------------------------------
 
@@ -64,7 +65,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # source_suffix = ['.rst', '.md']
 
-autodoc_mock_imports = ['rise-set']
+# autodoc_mock_imports = ['rise-set']
 autodoc_inherit_docstrings = False
 # autodoc_default_options = {
 #     'members':         True,

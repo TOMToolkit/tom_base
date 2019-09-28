@@ -13,7 +13,7 @@ coordinates on the sky along with other meta data.
 The TOM Toolkit provides a variety of methods for importing astronomical targets
 into the TOM:
 
-![Target Sources](/_static/target_sources.png)
+![](/_static/target_sources.png)
 
 
 * The Alert Module provides the functionality to create targets from alert brokers
@@ -52,7 +52,7 @@ Observations can also be requested in a completely automated manner, which is
 particularly useful for rapid response time domain follow-up programs.
 
 
-![Common Interface](/_static/common_interface.png)
+![](/_static/common_interface.png)
 
 #### Observation Status
 

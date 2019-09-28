@@ -20,7 +20,7 @@ If you are not familiar with git, we encourage you to briefly look at the [Git B
 The workflow for submitting a code change is, more or less, the following:
 
 1. Fork the TOM Toolkit repository to your own Github account.
-![Forking example](/_static/fork.png)
+![](/_static/fork.png)
 2. Clone the forked repository to your local working machine.
   ```
     git clone git@github.com:<Your Username>/tom_base.git
@@ -43,10 +43,10 @@ The workflow for submitting a code change is, more or less, the following:
   git push origin <Branch Name>
   ```
 7. When your code is complete and tested, create a pull request from the upstream TOM Toolkit repository.
-![Pull request](/_static/pull-request.png)
+![](/_static/pull-request.png)
 
 8. Be sure to click "compare across forks" in order to see your branch!
-![Compare across forks](/_static/compare-across-forks.png)
+![](/_static/compare-across-forks.png)
 
 9. We may ask for some updates to your pull request, so revise as necessary and push when revisions are complete. This will automatically update your pull request.
 

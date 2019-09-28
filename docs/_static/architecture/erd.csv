@@ -1,0 +1,18 @@
+Id,Name,Shape Library,Page ID,Contained By,Group,Line Source,Line Destination,Source Arrow,Destination Arrow,Text Area 1,Text Area 2,Text Area 3,Text Area 4,Text Area 5,Text Area 6,Text Area 7,Text Area 8,Text Area 9,Text Area 10,Text Area 11,Text Area 12,Text Area 13,Text Area 14,Text Area 15,Text Area 16,Text Area 17,Text Area 18,Text Area 19,Text Area 20,Text Area 21,Text Area 22,Text Area 23,Text Area 24,Text Area 25,Text Area 26,Text Area 27,Text Area 28,Text Area 29,Text Area 30,Text Area 31
+1,Page,,,,,,,,,Entity Relationship Diagram,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+2,Text,Standard,1,,,,,,,TOM Toolkit ERD,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+3,Entity,Entity Relationship,1,,,,,,,tom_dataproducts_dataproduct,PK,id,integer,AK,product_id,character varying(255),,data,character varying(100),,extra_data,text,,created,timestamp with time zone,,modified,timestamp with time zone,,tag,text,,featured,boolean,FK,observation_record_id,integer,FK,target_id,integer
+4,Entity,Entity Relationship,1,,,,,,,tom_observations_observationrecord,PK,id,integer,,facility,character varying(50),,parameters,text,,observation_id,character varying(255),,additional fields,....,FK,target_id,integer,,,,,,,,,,,,
+5,Entity,Entity Relationship,1,,,,,,,tom_targets_target,PK,id,integer,,name,character varying(100),,type,character varying(100),,additional fields ,....,,,,,,,,,,,,,,,,,,
+6,Entity,Entity Relationship,1,,,,,,,tom_dataproducts_reduceddatum,PK,id,integer,,data_type,character varying(100),,timestamp,timestamp with time zone,,value,double precision,,label,character varying(100),,error,double precision,FK,data_product_id,integer,,source_id,integer,FK,target_id,integer,,,
+7,Entity,Entity Relationship,1,,,,,,,tom_targets_targetextra,PK,id,integer,,key,character varying(200),,value,text,FK,target_id,integer,,,,,,,,,,,,,,,,,,
+8,Entity,Entity Relationship,1,,,,,,,tom_alerts_brokerquery,PK,id,integer,,name,character varying(500),,broker,character varying(50),,parameters,text,,created,timestamp with time zone,,modified,timestamp with time zone,,,,,,,,,,,,
+9,Text,Standard,1,,,,,,,This is a simplified diagram of the TOM Toolkit's underlying database structure. Some tables and rows have been removed. The purpose of this diagram is to give the reader a general understanding of how each module stores its data and how that data is related to other modules,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+10,Entity,Entity Relationship,1,,,,,,,tom_targets_targetname,PK,id,integer,FK,target_id,integer,,name,character varying(200),,additional fields,....,,,,,,,,,,,,,,,,,,
+11,Line,,1,,,2,2,None,None,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+12,Line,,1,,,4,3,CFN ERD One Arrow,CFN ERD Many Arrow,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+13,Line,,1,,,5,4,CFN ERD One Arrow,CFN ERD Many Arrow,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+14,Line,,1,,,5,3,CFN ERD One Arrow,CFN ERD Many Arrow,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+15,Line,,1,,,3,6,CFN ERD One Arrow,CFN ERD Many Arrow,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+16,Line,,1,,,5,7,CFN ERD One Arrow,CFN ERD Many Arrow,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+17,Line,,1,,,5,10,CFN ERD One Arrow,CFN ERD Many Arrow,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,

@@ -62,7 +62,6 @@
             <td>
                 <a href="{% url 'targets:detail' target.id %}" title="{{ target.name }}">{{ target.names|join:", " }}</a>
             </td>
-            <td>{{ target.name }}</td>
             <td>{{ target.get_type_display }}</td>
             {% if request.GET.type == 'SIDEREAL' %}
             <td>{{ target.ra }}</td>

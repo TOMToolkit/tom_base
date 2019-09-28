@@ -72,7 +72,7 @@ TOM_FACILITY_CLASSES = [
 
 Now go ahead and view a target in your TOM, you should see something like this:
 
-![myfacility](/_static/observation_module/myfacility.png)
+![](/_static/observation_module/myfacility.png)
 
 This means our new observation facility module has been successfully loaded.
 
@@ -137,7 +137,7 @@ To fix up `get_form`, adjust it to:
 
 Reload the page and now it should look something like this:
 
-![empty_form](/_static/observation_module/empty_form.png)
+![](/_static/observation_module/empty_form.png)
 
 Some notes:
 1. The form is empty, but we'll fix that next.
@@ -175,7 +175,7 @@ the django form module with `from django import forms`.
 
 Now if we reload the page, we should see something like this:
 
-![fields](/_static/observation_module/fields.png)
+![](/_static/observation_module/fields.png)
 
 
 This is progress, but remember that most of the functions in `MyObservationFacility`

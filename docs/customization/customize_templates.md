@@ -3,7 +3,7 @@ Customizing TOM Templates
 
 So you've got a TOM up and running, and your homepage looks something like this:
 
-![Fresh Tom](/_static/customize_templates_doc/tomhomepagenew.png)
+![](/_static/customize_templates_doc/tomhomepagenew.png)
 
 This is fine for starting out, but since you're running a TOM for a specific
 project, the homepage ought to reflect that.
@@ -29,39 +29,14 @@ so that we can edit some text and change the image. Overriding and extending tem
 Django's website and we highly recommend reading these docs if you plan on customizing your
 TOM further.
 
+Since the template we want to override is already part of the TOM Toolkit source
+code, we can use it as a starting point for our customized template. In fact,
+we'll copy and paste the entire thing from the  [source code of TOM Toolkit](https://github.com/TOMToolkit/tom_base/blob/master/tom_common/templates/tom_common/index.html).
+and place it in our project. The template we are looking for is `tom_common/index.html`
 
-The first step is to tell Django where to look for templates you provide.
-
-In your projects `settings.py` we will edit the `DIRS` attribute of the `TEMPLATES` setting
-to include a folder called `templates/` under the base directory of your project.
-
-```python
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
-```
-
-What this means is we can now create a folder called `templates` in our project, and this
-is where we will place our custom templates.
-
-As mentioned before, the template we want to override is the included `tom_common/index.html`
-template. You can find this template in the
-[source code of TOM Toolkit](https://github.com/TOMToolkit/tom_base/blob/master/tom_common/templates/tom_common/index.html).
-
-Let's download and copy that template into our new `templates` folder (including the `tom_common`
-sub-directory) so that our directory structure now looks like this:
+Let's download and copy that template into our `templates` folder
+(including the `tom_common` sub-directory) so that our directory structure now
+looks like this:
 
 ```
 ├── db.sqlite3
@@ -79,32 +54,37 @@ sub-directory) so that our directory structure now looks like this:
 Now let's make a few changes to the `templates/tom_common/index.html` template:
 
 ```html
-{% raw %}
 {% extends 'tom_common/base.html' %}
-{% load static targets_extras tom_common_extras %}
+{% load static targets_extras observation_extras dataproduct_extras tom_common_extras %}
 {% block title %}Home{% endblock %}
 {% block content %}
 <div class="row">
   <div class="col-md-8">
     <h2 class="text-center">Project LEO</h2>
+
+    <!-- BEGIN MODIFIED CONTENT -->
+
     <p class="text-center"><img src="https://raw.githubusercontent.com/TOMToolkit/tomtoolkit.github.io/master/assets/img/customize_templates_doc/sciencecat.jpg" class="img-fluid mx-auto"></p>
     <p>Project LEO is a very serious survey of the most important constellation.</p>
+
+    <!-- END MODIFIED CONTENT -->
+
     <h3>Next steps</h3>
     <ul>
       <li>
-        Check out the <a href="https://tomtoolkit.github.io" title="TOM Toolkit home page">TOM Toolkit homepage</a>
-        for the latest news, downloads and documentation.
+        Check out the <a href="https://tom-toolkit.readthedocs.io/en/stable/" title="TOM Toolkit home page">TOM
+        Toolkit homepage</a> for the latest news, downloads and documentation.
       </li>
       <li>
         <a href="{% url 'targets:create' %}" title="Create Target">Add your first target</a>.
       </li>
       <li>
-        Check out some <a href="">example code</a>.
-      </li>
-      <li>
         Customize this page by editing the
         <code>templates/index.html</code> file or by editing your
         project's <code>urls.py</code>.
+      </li>
+      <li>
+        Take a look at some <a href="https://tom-toolkit.readthedocs.io/en/stable/customization/common_customizations.html">common first customizations</a>.
       </li>
     </ul>
     <h3>Other Resources</h3>
@@ -129,12 +109,15 @@ Now let's make a few changes to the `templates/tom_common/index.html` template:
   </div>
 </div>
 {% endblock %}
-{% endraw %}
 ```
+Look for the block of HTML we changed between the <\!-- BEGIN MODIFIED CONTENT -->
+and <\!-- END MODIFIED CONTENT --> comments. Everything else is the same as the
+base template.
+
 We've just changed a few lines of HTML, but basically left the template alone. Reload your homepage,
 and you should see something like this:
 
-![modified homepage](/_static/customize_templates_doc/tomhomepagemod.png)
+![](/_static/customize_templates_doc/tomhomepagemod.png)
 
 Thats it! You've just customized your TOM homepage.
 
