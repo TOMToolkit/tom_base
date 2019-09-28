@@ -117,7 +117,7 @@ base template.
 We've just changed a few lines of HTML, but basically left the template alone. Reload your homepage,
 and you should see something like this:
 
-![modified homepage](/_static/customize_templates_doc/tomhomepagemod.png)
+![](/_static/customize_templates_doc/tomhomepagemod.png)
 
 Thats it! You've just customized your TOM homepage.
 

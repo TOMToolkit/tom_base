@@ -65,7 +65,7 @@ TOM.
 With that done, go to any target in your TOM and you should see your new module in
 the list:
 
-![observe button](/_static/customize_observations/observebutton.png)
+![](/_static/customize_observations/observebutton.png)
 
 You could now use the new module now to make an observation, and it would work the
 same as the old LCO module.
@@ -183,7 +183,7 @@ new row.
 Now if you select "LCOMultiFilter" from the list of observation facilities on a
 target you should see your new form:
 
-![newform.png](/_static/customize_observations/newform.png)
+![](/_static/customize_observations/newform.png)
 
 Is the form still too ugly for you? Trying playing with the layout definition to
 suit your needs.
