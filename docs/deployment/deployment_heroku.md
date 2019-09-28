@@ -55,13 +55,13 @@ project. Give it a name, but leave the pipeline stuff alone for now.
 After creating an app you'll be presented with a choice of Deployment methods.
 Choose Github and click the "Connect to Github" button.
 
-![deployment methods](/_static/heroku_deploy_doc/githubintegration.png)
+![](/_static/heroku_deploy_doc/githubintegration.png)
 
 Once you have given Heroku access to your Github account and found your repo, your
 app should successfully be connected and your deployment dashboard should look
 like this:
 
-![github connected](/_static/heroku_deploy_doc/githubconnected.png)
+![](/_static/heroku_deploy_doc/githubconnected.png)
 
 
 That's it for now, we'll return to this page after we've made some modifications
@@ -142,13 +142,13 @@ should see a section for Manual deploy, at the bottom, with a button "Deploy
 Branch".
 
 
-![deploy branch](/_static/heroku_deploy_doc/herokudeploybranch.png)
+![](/_static/heroku_deploy_doc/herokudeploybranch.png)
 
 Select the branch to deploy (usually "master") and click the "Deploy Branch"
 button. Heroku will begin launching your app. If all goes well, you should see
 something like this:
 
-![branch deployed](/_static/heroku_deploy_doc/branchdeployed.png)
+![](/_static/heroku_deploy_doc/branchdeployed.png)
 
 Your TOM should now be running at https://<<appname>>.herokuapp.com.
 Congratulations!

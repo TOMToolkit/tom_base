@@ -31,3 +31,9 @@ minimally supported while its successor is in development. The library used for 
 [Github](https://github.com/TOMToolkit/tom_nonsidereal_airmass)
 
 [Installation Instructions](https://github.com/TOMToolkit/tom_nonsidereal_airmass)
+
+### tom-lt
+
+This module provides the ability to submit observations to the Liverpool Telescope Phase 2 system. It is in a very
+alpha state, with little error handling and minimal instrument options, but can successfully submit well-formed
+observation requests.
