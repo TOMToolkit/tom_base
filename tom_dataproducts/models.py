@@ -59,13 +59,14 @@ def is_fits_image_file(file):
     :returns: True if the file is a FITS image, False otherwise
     :rtype: boolean
     """
-    try:
-        hdul = fits.open(file)
-    except OSError:  # OSError is raised if file is not FITS format
-        return False
-    for hdu in hdul:
-        if hdu.header.get('EXTNAME') == 'SCI':
-            return True
+    with file.open() as f:
+        try:
+            hdul = fits.open(f)
+        except OSError:  # OSError is raised if file is not FITS format
+            return False
+        for hdu in hdul:
+            if hdu.header.get('EXTNAME') == 'SCI':
+                return True
     return False
 
 
@@ -228,7 +229,6 @@ class DataProduct(models.Model):
                 with open(tmpfile.name, 'rb') as f:
                     self.thumbnail.save(filename, File(f), save=True)
                     self.save()
-                tmpfile.close()
         if not self.thumbnail:
             return ''
         return self.thumbnail.url
