@@ -55,7 +55,7 @@ application without the need to hardcode urls.
 Enough techno blabber. Launch your TOM and navigate to
 [/about/](http://127.0.0.1:8000/about/). You should see something like this:
 
-![quote](/_static/adding_pages_doc/quote.png)
+![](/_static/adding_pages_doc/quote.png)
 
 That's progress, but our new page is pretty ugly. The navigation bar is missing
 and we don't have any of the nice CSS that makes the rest of the TOM pages look
@@ -79,7 +79,7 @@ what we do not know, that is true knowledge. <br/>
 
 Now when you reload the page you should see this:
 
-![base](/_static/adding_pages_doc/base.png)
+![](/_static/adding_pages_doc/base.png)
 
 Much better! By extending a template and providing a `content` block, we are able
 to make consistent looking pages without copying and pasting any code.
@@ -149,11 +149,13 @@ what we do not know, that is true knowledge. <br/>
 
 `targets` in this template refers to the key in the dictionary we returned in the
 `get_context_data` method in our view. We can add anything to the context
-dictionary and have access to it in our templates.
+dictionary and have access to it in our templates. In this particular example, we're 
+iterating over all of the targets in our TOM and displaying all of their names. If you 
+don't see anything, make sure you have targets in your TOM!
 
 Reloading your about page, you should now see something like this:
 
-![targets](/_static/adding_pages_doc/targets.png)
+![](/_static/adding_pages_doc/targets.png)
 
 If the page looks exactly the same as last time, you might need to add some
 targets. Navigate to

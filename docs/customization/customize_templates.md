@@ -3,7 +3,7 @@ Customizing TOM Templates
 
 So you've got a TOM up and running, and your homepage looks something like this:
 
-![Fresh Tom](/_static/customize_templates_doc/tomhomepagenew.png)
+![](/_static/customize_templates_doc/tomhomepagenew.png)
 
 This is fine for starting out, but since you're running a TOM for a specific
 project, the homepage ought to reflect that.
@@ -117,7 +117,7 @@ base template.
 We've just changed a few lines of HTML, but basically left the template alone. Reload your homepage,
 and you should see something like this:
 
-![modified homepage](/_static/customize_templates_doc/tomhomepagemod.png)
+![](/_static/customize_templates_doc/tomhomepagemod.png)
 
 Thats it! You've just customized your TOM homepage.
 
