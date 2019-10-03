@@ -122,8 +122,7 @@ def fetch_alerts(clazz, parameters):
     response = requests.get(broker_url)
     response.raise_for_status()
     test_alerts = response.json()
-    return iter([alert for alert in test_alerts if alert['name'] ==
-    parameters['name']])
+    return iter([alert for alert in test_alerts if alert['name'] == parameters['target_name']])
 ```
 **Why an iterator?** Because some alert brokers work by sending streams, not fully
 evaluated lists. This simple example broker could easily return a list (in fact we
