@@ -221,10 +221,11 @@ TOM_ALERT_CLASSES = [
     'tom_alerts.brokers.mars.MARSBroker',
     'tom_alerts.brokers.lasair.LasairBroker',
     'tom_alerts.brokers.scout.ScoutBroker',
+    'tom_alerts.brokers.tns.TNSBroker',
 ]
 
 BROKER_CREDENTIALS = {
-
+    TNS_APIKEY = os.getenv('TNS_APIKEY')
 }
 
 # Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"
