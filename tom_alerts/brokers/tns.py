@@ -4,21 +4,72 @@ from django.conf import settings
 import requests
 import json
 from datetime import datetime, timedelta
+from crispy_forms.layout import Layout, Div, Fieldset
+
 
 tns_search_url = 'https://wis-tns.weizmann.ac.il/api/get/search'
 tns_object_url = 'https://wis-tns.weizmann.ac.il/api/get/object'
 
 
 class TNSForm(GenericQueryForm):
-    target_name = forms.CharField(required=False)
-    internal_name = forms.CharField(required=False)
-    ra = forms.FloatField(required=False, min_value=0., max_value=360.)
-    dec = forms.FloatField(required=False, min_value=-90., max_value=90.)
-    radius = forms.FloatField(required=False, min_value=0.)
-    units = forms.ChoiceField(choices=[('', ''), ('arcsec', 'arcsec'), ('arcmin', 'arcmin'), ('deg', 'deg')], required=False)
-    days_ago = forms.FloatField(required=False, min_value=0.)
-    min_date = forms.DateTimeField(required=False)
-    days_from_nondet = forms.FloatField(required=False, min_value=0.)
+    target_name = forms.CharField(required=False,
+                                  label='Target (IAU) Name',
+                                  help_text='Omit the AT or SN prefix')
+    internal_name = forms.CharField(required=False,
+                                    label='Internal (Survey) Name')
+    ra = forms.FloatField(required=False, min_value=0., max_value=360.,
+                          label='R.A.',
+                          help_text='Right ascension in degrees')
+    dec = forms.FloatField(required=False, min_value=-90., max_value=90.,
+                           label='Dec.',
+                           help_text='Declination in degrees')
+    radius = forms.FloatField(required=False, min_value=0.,
+                              label='Cone Radius')
+    units = forms.ChoiceField(required=False,
+                              label='Radius Units',
+                              choices=[('', ''), ('arcsec', 'arcsec'), ('arcmin', 'arcmin'), ('deg', 'deg')])
+    days_ago = forms.FloatField(required=False, min_value=0.,
+                                label='Discovered in the Last __ Days',
+                                help_text='Leave blank to use the "Discovered After" field')
+    min_date = forms.DateTimeField(required=False,
+                                   label='Discovered After',
+                                   help_text='Most valid date formats are recognized')
+    days_from_nondet = forms.FloatField(required=False, min_value=0.,
+                                        label='Days From Nondetection',
+                                        help_text='Maximum time between last nondetection and first detection')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            self.common_layout,
+            'target_name',
+            'internal_name',
+            Fieldset(
+                'Cone Search',
+                Div(
+                    Div(
+                        'ra',
+                        'radius',
+                        css_class='col',
+                    ),
+                    Div(
+                        'dec',
+                        'units',
+                        css_class='col',
+                    ),
+                    css_class="form-row",
+                )
+            ),
+            Fieldset(
+                'Discovery Date',
+                Div(
+                    Div('days_ago', css_class='col'),
+                    Div('min_date', css_class='col'),
+                    css_class='form-row'
+                ),
+                'days_from_nondet'
+            )
+        )
 
 
 class TNSBroker(GenericBroker):
@@ -28,7 +79,8 @@ class TNSBroker(GenericBroker):
     @classmethod
     def fetch_alerts(cls, parameters):
         if parameters['days_ago'] is not None:
-            public_timestamp = (datetime.utcnow() - timedelta(days=parameters['days_ago'])).strftime('%Y-%m-%d %H:%M:%S')
+            public_timestamp = (datetime.utcnow() - timedelta(days=parameters['days_ago']))\
+                .strftime('%Y-%m-%d %H:%M:%S')
         elif parameters['min_date'] is not None:
             public_timestamp = parameters['min_date'].strftime('%Y-%m-%d %H:%M:%S')
         else:
