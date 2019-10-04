@@ -70,8 +70,6 @@ class TNSBroker(GenericBroker):
                         last_nondet = max(last_nondet, phot['jd'])
                     else:
                         first_det = min(first_det, phot['jd'])
-                    print(phot['jd'], phot['remarks'])
-                print(first_det, last_nondet, first_det - last_nondet)
                 if first_det - last_nondet < parameters['days_from_nondet']:
                     alerts.append(alert)
             else:
