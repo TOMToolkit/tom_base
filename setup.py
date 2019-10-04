@@ -46,7 +46,7 @@ setup(
         'pillow',
         'fits2image',
         'specutils',
-        "dataclasses; python_version < '3.7'",
+        'dataclasses; python_version < "3.7"',
     ],
     extras_require={
         'test': ['factory_boy']
