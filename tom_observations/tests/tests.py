@@ -163,4 +163,4 @@ class TestGetVisibility(TestCase):
         ]
         self.assertEqual(len(airmass_data), len(expected_airmass))
         for i in range(0, len(expected_airmass)):
-            self.assertEqual(airmass_data[i], expected_airmass[i])
+            self.assertAlmostEqual(airmass_data[i], expected_airmass[i])
