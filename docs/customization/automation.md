@@ -188,12 +188,12 @@ Now, how is cron called? Well, cron jobs are run by the system, and it reads the
 
 To make this more specific to our example, let's say we want to update the observation data every hour. The command we would normally run in our project directory would be the following:
 
-`python manage.py updatedata`
+`python manage.py save_data`
 
 However, cron is a system-level operation, so the command needs to be directory-agnostic, and we need to ensure we're using the right Python version. If you have a virtualenv, the command should be the absolute path to the Python interpreter in the virtualenv. If your TOM is in a Docker container, it should be the version of Python running in the container. Otherwise, just ensure that it's at least version 3.6 or higher.
 
 So, the line in our crontab should be as follows:
 
-`0 * * * * /path/to/virtualenv/bin/python /path/to/project/manage.py updatedata`
+`0 * * * * /path/to/virtualenv/bin/python /path/to/project/manage.py save_data`
 
 This will run every day on the hour. And that's it! Just exit the crontab and it will automatically restart cron, then your command will run on the next hour.
