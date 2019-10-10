@@ -29,6 +29,16 @@ mimetypes.add_type('application/fits', '.fz')
 
 
 def run_data_processor(dp):
+    """
+    This function determines how to process ``DataProducts`` into ``ReducedDatum`` objects depending on the
+    ``DataProduct`` tag.
+
+    Spectroscopic products are converted to ``Spectrum1D`` objects, then serialized into JSON and stored as a
+    ``ReducedDatum``.
+
+    Photometric products are simply converted to JSON as stored as one ``ReducedDatum`` per photometric point.
+    """
+
     try:
         processor_class = settings.DATA_PROCESSOR_CLASS
     except Exception:

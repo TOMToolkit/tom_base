@@ -1,6 +1,9 @@
-{% load bootstrap4 %}
+{% load bootstrap4 static %}
 {% if user.is_authenticated %}
 <h4>Upload a data product</h4>
+<p>
+  For example CSVs, see the <a href="{% static 'tom_dataproducts/photometry_sample.csv' %}">photometry</a> and <a href="{% static 'tom_dataproducts/spectrum_sample.csv' %}">spectroscopy</a> sample files. FITS is supported for spectra.
+</p>
 <form method="POST" action="{% url 'tom_dataproducts:upload' %}" enctype="multipart/form-data">
   {% csrf_token %}
   {% bootstrap_form data_product_form %}
