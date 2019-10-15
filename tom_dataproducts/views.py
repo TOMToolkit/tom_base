@@ -29,6 +29,10 @@ from tom_observations.facility import get_service_class
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class DataProductSaveView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
@@ -91,9 +95,10 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
                     self.request,
                     'There was a problem uploading your file--the file format was invalid for file: {0}'.format(str(dp))
                 )
-            except Exception:
+            except Exception as e:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
+                logging.error(':'.join(e.args))
                 messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))
         if successful_uploads:
             messages.success(
