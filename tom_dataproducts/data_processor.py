@@ -228,7 +228,13 @@ class DataProcessor():
             raise InvalidFileFormatException('Empty table or invalid file type')
 
         for datum in data:
-            time = Time(float(datum['time']), format='mjd')
+            try:
+                time = Time(datum['time'])
+            except ValueError:
+                try:
+                    time = Time(datum['time'], format='mjd')
+                except ValueError:
+                    raise InvalidFileFormatException(f"Invalid date: {datum['time']}")
             utc = TimezoneInfo(utc_offset=0*units.hour)
             time.format = 'datetime'
             value = {
