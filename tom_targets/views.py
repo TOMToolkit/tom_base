@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.core.management import call_command
+from django.db import transaction
 from django.http import StreamingHttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
@@ -125,8 +126,8 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         else:
             return NonSiderealTargetCreateForm
 
+    @transaction.atomic
     def form_valid(self, form):
-        super().form_valid(form)
         extra = TargetExtraFormset(self.request.POST)
         names = TargetNamesFormset(self.request.POST)
         if extra.is_valid() and names.is_valid():
@@ -140,6 +141,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
+        super().form_valid(form)
         return redirect(self.get_success_url())
 
     def get_form(self, *args, **kwargs):
