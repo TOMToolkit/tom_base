@@ -27,6 +27,9 @@ high level. Read this first if you're interested in how the TOM Toolkit works.
 
 :doc:`Workflow <introduction/workflow>` - The general workflow used with TOMs.
 
+:doc:`Programming Resources <introduction/resources>` - Resources for learning the core components of the TOM Toolkit:
+HTML, CSS, Python, and Django
+
 :doc:`Frequently Asked Questions <introduction/faqs>` - Look here for a potential quick answer to a common question.
 
 Extending and Customizing
