@@ -3,6 +3,7 @@ import os
 import tempfile
 
 from django.test import TestCase, override_settings
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
@@ -16,7 +17,7 @@ import numpy as np
 
 from tom_observations.tests.utils import FakeFacility
 from tom_observations.tests.factories import TargetFactory, ObservingRecordFactory
-from tom_dataproducts.models import DataProduct, PHOTOMETRY, SPECTROSCOPY, is_fits_image_file
+from tom_dataproducts.models import DataProduct, is_fits_image_file
 from tom_dataproducts.forms import DataProductUploadForm
 from tom_dataproducts.data_processor import DataProcessor
 from tom_dataproducts.data_serializers import SpectrumSerializer
@@ -136,11 +137,11 @@ class TestObservationDataViews(TestCase):
     @patch('tom_dataproducts.models.find_fits_img_size', mock_find_fits_img_size)
     @patch('tom_dataproducts.models.is_fits_image_file', mock_is_fits_image_file)
     def test_create_jpeg(self, dp_mock):
-        products = DataProduct.objects.filter(tag='image_file')
+        products = DataProduct.objects.filter(data_product_type='image_file')
         self.assertEqual(products.count(), 0)
         resp = create_image_dataproduct(self.data_product)
         self.assertTrue(resp)
-        products = DataProduct.objects.filter(tag='image_file')
+        products = DataProduct.objects.filter(data_product_type='image_file')
         self.assertEqual(products.count(), 1)
 
 
@@ -171,7 +172,7 @@ class TestUploadDataProducts(TestCase):
                 'facility': 'LCO',
                 'files': SimpleUploadedFile('afile.fits', b'afile'),
                 'target': self.target.id,
-                'tag': SPECTROSCOPY[0],
+                'data_product_type': settings.DATA_PRODUCT_TYPES['SPECTROSCOPY'][0],
                 'observation_timestamp_0': date(2019, 6, 1),
                 'observation_timestamp_1': time(12, 0, 0),
                 'referrer': reverse('targets:detail', kwargs={'pk': self.target.id})
@@ -187,7 +188,7 @@ class TestUploadDataProducts(TestCase):
                 'facility': 'LCO',
                 'files': SimpleUploadedFile('bfile.fits', b'afile'),
                 'observation_record': self.observation_record.id,
-                'tag': SPECTROSCOPY[0],
+                'data_product_type': settings.DATA_PRODUCT_TYPES['SPECTROSCOPY'][0],
                 'observation_timestamp_0': date(2019, 6, 1),
                 'observation_timestamp_1': time(12, 0, 0),
                 'referrer': reverse('targets:detail', kwargs={'pk': self.target.id})
@@ -209,7 +210,7 @@ class TestDataUploadForms(TestCase):
         )
         self.spectroscopy_form_data = {
             'target': self.target.id,
-            'tag': SPECTROSCOPY[0],
+            'data_product_type': settings.DATA_PRODUCT_TYPES['SPECTROSCOPY'][0],
             'facility': 'LCO',
             'observation_timestamp_0': date(2019, 6, 1),
             'observation_timestamp_1': time(12, 0, 0),
@@ -217,7 +218,7 @@ class TestDataUploadForms(TestCase):
         }
         self.photometry_form_data = {
             'target': self.target.id,
-            'tag': PHOTOMETRY[0],
+            'data_product_type': settings.DATA_PRODUCT_TYPES['PHOTOMETRY'][0],
             'referrer': 'referrer'
         }
         self.file_data = {

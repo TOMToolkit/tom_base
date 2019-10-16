@@ -12,7 +12,7 @@ def create_image_dataproduct(data_product):
             product_id="{}_{}".format(data_product.product_id, "jpeg"),
             target=data_product.target,
             observation_record=data_product.observation_record,
-            tag='image_file',
+            data_product_type='image_file',
         )
         outfile_name = os.path.basename(data_product.data.file.name)
         filename = outfile_name.split(".")[0] + ".jpg"

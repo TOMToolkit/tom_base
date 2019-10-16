@@ -33,29 +33,29 @@ from .models import ReducedDatum, SPECTROSCOPY, PHOTOMETRY
 def data_product_post_upload(dp, observation_timestamp, facility):
     processor = DataProcessor()
 
-    if dp.tag == SPECTROSCOPY[0]:
+    if dp.data_product_type == SPECTROSCOPY[0]:
         spectrum = processor.process_spectroscopy(dp, facility)
         serialized_spectrum = SpectrumSerializer().serialize(spectrum)
         ReducedDatum.objects.create(
             target=dp.target,
             data_product=dp,
-            data_type=dp.tag,
+            data_type=dp.data_product_type,
             timestamp=observation_timestamp,
             value=serialized_spectrum
         )
-    elif dp.tag == PHOTOMETRY[0]:
+    elif dp.data_product_type == PHOTOMETRY[0]:
         photometry = processor.process_photometry(dp)
         for time, photometry_datum in photometry.items():
             ReducedDatum.objects.create(
                 target=dp.target,
                 data_product=dp,
-                data_type=dp.tag,
+                data_type=dp.data_product_type,
                 timestamp=time,
                 value=json.dumps(photometry_datum)
             )
 ```
 
-The basic idea is as follows: depending on the tag of the `DataProduct` passed in, the data in the `DataProduct` is
+The basic idea is as follows: depending on the type of the `DataProduct` passed in, the data in the `DataProduct` is
 processed by the `DataProcessor` class into a uniform format. The resulting object, if necessary, is then serialized
 by the `SpectrumSerializer` (the default photometry format is already easily serializable) so that it can be stored
 in the database as a `ReducedDatum`. Then, the `ReducedDatum` objects are created and stored in the database.
@@ -122,23 +122,23 @@ from mytom.custom_data_processor import CustomDataProcessor
 def custom_data_product_post_upload(dp, observation_timestamp, facility):
     processor = CustomDataProcessor()
 
-    if dp.tag == SPECTROSCOPY[0]:
+    if dp.data_product_type == SPECTROSCOPY[0]:
         spectrum = processor.process_spectroscopy(dp, facility)
         serialized_spectrum = CustomSpectrumSerializer().serialize(spectrum)
         ReducedDatum.objects.create(
             target=dp.target,
             data_product=dp,
-            data_type=dp.tag,
+            data_type=dp.data_product_type,
             timestamp=observation_timestamp,
             value=serialized_spectrum
         )
-    elif dp.tag == PHOTOMETRY[0]:
+    elif dp.data_product_type == PHOTOMETRY[0]:
         photometry = processor.process_photometry(dp)
         for time, photometry_datum in photometry.items():
             ReducedDatum.objects.create(
                 target=dp.target,
                 data_product=dp,
-                data_type=dp.tag,
+                data_type=dp.data_product_type,
                 timestamp=time,
                 value=json.dumps(photometry_datum)
             )

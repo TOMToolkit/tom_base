@@ -11,9 +11,9 @@ import numpy as np
 import json
 
 from tom_observations.facility import get_service_class, get_service_classes
-from .exceptions import InvalidFileFormatException
-from .models import ReducedDatum, SPECTROSCOPY, PHOTOMETRY
-from .data_serializers import SpectrumSerializer
+from tom_dataproducts.exceptions import InvalidFileFormatException
+from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.data_serializers import SpectrumSerializer
 
 
 FITS_MIMETYPES = ['image/fits', 'application/fits']
@@ -42,24 +42,24 @@ def run_data_processor(dp):
         raise ImportError('Could not import {}. Did you provide the correct path?'.format(processor_class))
     data_processor = clazz()
 
-    if dp.tag == SPECTROSCOPY[0]:
+    if dp.data_product_type == settings.DATA_PRODUCT_TYPES['SPECTROSCOPY'][0]:
         spectrum, obs_date = data_processor.process_spectroscopy(dp)
         serialized_spectrum = SpectrumSerializer().serialize(spectrum)
         ReducedDatum.objects.create(
             target=dp.target,
             data_product=dp,
-            data_type=dp.tag,
+            data_type=dp.data_product_type,
             timestamp=obs_date,
             value=serialized_spectrum
         )
-    elif dp.tag == PHOTOMETRY[0]:
+    elif dp.data_product_type == settings.DATA_PRODUCT_TYPES['PHOTOMETRY'][0]:
         photometry = data_processor.process_photometry(dp)
         for time, photometry_datum in photometry.items():
             for datum in photometry_datum:
                 ReducedDatum.objects.create(
                     target=dp.target,
                     data_product=dp,
-                    data_type=dp.tag,
+                    data_type=dp.data_product_type,
                     timestamp=time,
                     value=json.dumps(datum)
                 )

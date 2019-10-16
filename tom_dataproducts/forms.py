@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 
 from .models import DataProductGroup, DataProduct
 from tom_targets.models import Target
@@ -29,8 +30,8 @@ class DataProductUploadForm(forms.Form):
             attrs={'multiple': True}
         )
     )
-    tag = forms.ChoiceField(
-        choices=DataProduct.DATA_PRODUCT_TYPES,
+    data_product_type = forms.ChoiceField(
+        choices=[v for k, v in settings.DATA_PRODUCT_TYPES.items()],
         widget=forms.RadioSelect(),
         required=True
     )
