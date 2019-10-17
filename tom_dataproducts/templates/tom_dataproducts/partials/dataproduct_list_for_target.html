@@ -19,7 +19,7 @@
       <td><a href="{{ product.data.url }}">{{ product.get_file_name }}</a></td>
       <td>
         {% if product.data_product_type %}
-          {{ product.data_product_type }}
+          {{ product.get_type_display }}
         {% endif %}
         </a>
       </td>

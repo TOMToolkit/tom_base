@@ -188,6 +188,9 @@ class DataProduct(models.Model):
             raise ValidationError('Not a valid DataProduct type.')
         return super().save()
 
+    def get_type_display(self):
+        return settings.DATA_PRODUCT_TYPES[self.data_product_type][1]
+
     def get_file_name(self):
         return os.path.basename(self.data.name)
 

@@ -15,14 +15,14 @@ anything. A value of **LOCKED** requires all users to login before viewing any
 page. Use the [**OPEN_URLS**](#open_urls) setting for adding exemptions.
 
 
-### [DATA_TYPES](#data_types)
+### [DATA_PRODUCT_TYPES](#data_types)
 
 Default:
 
-    (
-        ('SPECTROSCOPY', 'Spectroscopy'),
-        ('PHOTOMETRY', 'Photometry')
-    )
+    {
+        'spectroscopy': ('spectroscopy', 'Spectroscopy'),
+        'photometry': ('photometry', 'Photometry')
+    }
 
 A list of machine readable, human readable tuples which determine the choices
 available to categorize reduced data.
@@ -62,9 +62,9 @@ Default:
 HINTS_ENABLED = False
 HINT_LEVEL = 20
 
-A few messages are sprinkled throughout the TOM Toolkit that offer suggestions on 
-things you might want to change right out of the gate. These can be turned on and 
-off, and the level adjusted. For more information on Django message levels, see 
+A few messages are sprinkled throughout the TOM Toolkit that offer suggestions on
+things you might want to change right out of the gate. These can be turned on and
+off, and the level adjusted. For more information on Django message levels, see
 the [Django messages framework documentation](https://docs.djangoproject.com/en/2.2/ref/contrib/messages/#message-levels).
 
 

@@ -172,7 +172,7 @@ class TestUploadDataProducts(TestCase):
                 'facility': 'LCO',
                 'files': SimpleUploadedFile('afile.fits', b'afile'),
                 'target': self.target.id,
-                'data_product_type': settings.DATA_PRODUCT_TYPES['SPECTROSCOPY'][0],
+                'data_product_type': settings.DATA_PRODUCT_TYPES['spectroscopy'][0],
                 'observation_timestamp_0': date(2019, 6, 1),
                 'observation_timestamp_1': time(12, 0, 0),
                 'referrer': reverse('targets:detail', kwargs={'pk': self.target.id})
@@ -188,7 +188,7 @@ class TestUploadDataProducts(TestCase):
                 'facility': 'LCO',
                 'files': SimpleUploadedFile('bfile.fits', b'afile'),
                 'observation_record': self.observation_record.id,
-                'data_product_type': settings.DATA_PRODUCT_TYPES['SPECTROSCOPY'][0],
+                'data_product_type': settings.DATA_PRODUCT_TYPES['spectroscopy'][0],
                 'observation_timestamp_0': date(2019, 6, 1),
                 'observation_timestamp_1': time(12, 0, 0),
                 'referrer': reverse('targets:detail', kwargs={'pk': self.target.id})
@@ -210,7 +210,7 @@ class TestDataUploadForms(TestCase):
         )
         self.spectroscopy_form_data = {
             'target': self.target.id,
-            'data_product_type': settings.DATA_PRODUCT_TYPES['SPECTROSCOPY'][0],
+            'data_product_type': settings.DATA_PRODUCT_TYPES['spectroscopy'][0],
             'facility': 'LCO',
             'observation_timestamp_0': date(2019, 6, 1),
             'observation_timestamp_1': time(12, 0, 0),
@@ -218,7 +218,7 @@ class TestDataUploadForms(TestCase):
         }
         self.photometry_form_data = {
             'target': self.target.id,
-            'data_product_type': settings.DATA_PRODUCT_TYPES['PHOTOMETRY'][0],
+            'data_product_type': settings.DATA_PRODUCT_TYPES['photometry'][0],
             'referrer': 'referrer'
         }
         self.file_data = {

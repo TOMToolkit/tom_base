@@ -26,14 +26,16 @@ When a user either uploads or saves a `DataProduct` to their TOM, the TOM runs a
 ```python
 import json
 
+from django.conf import settings
+
 from .data_processor import DataProcessor
 from .data_serializers import SpectrumSerializer
-from .models import ReducedDatum, SPECTROSCOPY, PHOTOMETRY
+from .models import ReducedDatum
 
 def data_product_post_upload(dp, observation_timestamp, facility):
     processor = DataProcessor()
 
-    if dp.data_product_type == SPECTROSCOPY[0]:
+    if dp.data_product_type == settings.DATA_PRODUCT_TYPES['spectroscopy'][0]:
         spectrum = processor.process_spectroscopy(dp, facility)
         serialized_spectrum = SpectrumSerializer().serialize(spectrum)
         ReducedDatum.objects.create(
@@ -43,7 +45,7 @@ def data_product_post_upload(dp, observation_timestamp, facility):
             timestamp=observation_timestamp,
             value=serialized_spectrum
         )
-    elif dp.data_product_type == PHOTOMETRY[0]:
+    elif dp.data_product_type == settings.DATA_PRODUCT_TYPES['photometry'][0]:
         photometry = processor.process_photometry(dp)
         for time, photometry_datum in photometry.items():
             ReducedDatum.objects.create(
@@ -114,7 +116,9 @@ Then, in your custom hook:
 ```python
 import json
 
-from .models import ReducedDatum, SPECTROSCOPY, PHOTOMETRY
+from django.conf import settings
+
+from .models import ReducedDatum
 
 from mytom.custom_data_serializers import CustomSpectrumSerializer
 from mytom.custom_data_processor import CustomDataProcessor
@@ -122,7 +126,7 @@ from mytom.custom_data_processor import CustomDataProcessor
 def custom_data_product_post_upload(dp, observation_timestamp, facility):
     processor = CustomDataProcessor()
 
-    if dp.data_product_type == SPECTROSCOPY[0]:
+    if dp.data_product_type == settings.DATA_PRODUCT_TYPES['spectroscopy'][0]:
         spectrum = processor.process_spectroscopy(dp, facility)
         serialized_spectrum = CustomSpectrumSerializer().serialize(spectrum)
         ReducedDatum.objects.create(
@@ -132,7 +136,7 @@ def custom_data_product_post_upload(dp, observation_timestamp, facility):
             timestamp=observation_timestamp,
             value=serialized_spectrum
         )
-    elif dp.data_product_type == PHOTOMETRY[0]:
+    elif dp.data_product_type == settings.DATA_PRODUCT_TYPES['photometry'][0]:
         photometry = processor.process_photometry(dp)
         for time, photometry_datum in photometry.items():
             ReducedDatum.objects.create(

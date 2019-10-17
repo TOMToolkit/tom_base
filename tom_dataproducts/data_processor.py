@@ -42,7 +42,7 @@ def run_data_processor(dp):
         raise ImportError('Could not import {}. Did you provide the correct path?'.format(processor_class))
     data_processor = clazz()
 
-    if dp.data_product_type == settings.DATA_PRODUCT_TYPES['SPECTROSCOPY'][0]:
+    if dp.data_product_type == settings.DATA_PRODUCT_TYPES['spectroscopy'][0]:
         spectrum, obs_date = data_processor.process_spectroscopy(dp)
         serialized_spectrum = SpectrumSerializer().serialize(spectrum)
         ReducedDatum.objects.create(
@@ -52,7 +52,7 @@ def run_data_processor(dp):
             timestamp=obs_date,
             value=serialized_spectrum
         )
-    elif dp.data_product_type == settings.DATA_PRODUCT_TYPES['PHOTOMETRY'][0]:
+    elif dp.data_product_type == settings.DATA_PRODUCT_TYPES['photometry'][0]:
         photometry = data_processor.process_photometry(dp)
         for time, photometry_datum in photometry.items():
             for datum in photometry_datum:
