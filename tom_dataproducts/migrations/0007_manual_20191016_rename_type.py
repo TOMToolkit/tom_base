@@ -4,7 +4,7 @@ from django.db import migrations, models
 def copy_tag_to_data_product_type(apps, schema_editor):
     data_products = apps.get_model('tom_dataproducts', 'DataProduct')
     for row in data_products.objects.all():
-        row.data_product_type = row.tag
+        row.data_product_type = row.tag.lower()
         row.save(update_fields=['data_product_type'])
 
 
