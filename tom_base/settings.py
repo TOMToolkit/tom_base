@@ -191,10 +191,10 @@ FACILITIES = {
 # rely on the existence of the photometry and spectroscopy entries, and will likely stop working if those entries are
 # removed.
 DATA_PRODUCT_TYPES = {
-    'PHOTOMETRY': ('photometry', 'Photometry'),
-    'FITS_FILE': ('fits_file', 'FITS File'),
-    'SPECTROSCOPY': ('spectroscopy', 'Spectroscopy'),
-    'IMAGE_FILE': ('image_file', 'Image File')
+    'photometry': ('photometry', 'Photometry'),
+    'fits_file': ('fits_file', 'FITS File'),
+    'spectroscopy': ('spectroscopy', 'Spectroscopy'),
+    'image_file': ('image_file', 'Image File')
 }
 
 TOM_FACILITY_CLASSES = [
