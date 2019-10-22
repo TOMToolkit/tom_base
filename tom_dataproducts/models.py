@@ -55,13 +55,14 @@ def is_fits_image_file(file):
     :returns: True if the file is a FITS image, False otherwise
     :rtype: boolean
     """
-    try:
-        hdul = fits.open(file.path)
-    except OSError:  # OSError is raised if file is not FITS format
-        return False
-    for hdu in hdul:
-        if hdu.header.get('EXTNAME') == 'SCI':
-            return True
+    with file.open() as f:
+        try:
+            hdul = fits.open(f)
+        except OSError:  # OSError is raised if file is not FITS format
+            return False
+        for hdu in hdul:
+            if hdu.header.get('EXTNAME') == 'SCI':
+                return True
     return False
 
 
@@ -228,7 +229,6 @@ class DataProduct(models.Model):
                 with open(tmpfile.name, 'rb') as f:
                     self.thumbnail.save(filename, File(f), save=True)
                     self.save()
-                tmpfile.close()
         if not self.thumbnail:
             return ''
         return self.thumbnail.url
@@ -245,11 +245,11 @@ class DataProduct(models.Model):
         :returns: Thumbnail file if created, None otherwise
         :rtype: file
         """
-        if is_fits_image_file(self.data):
+        if is_fits_image_file(self.data.file):
             tmpfile = tempfile.NamedTemporaryFile()
             if not width or not height:
-                width, height = find_fits_img_size(self.data.file.name)
-            resp = fits_to_jpg(self.data.file.name, tmpfile.name, width=width, height=height)
+                width, height = find_fits_img_size(self.data.file)
+            resp = fits_to_jpg(self.data.file, tmpfile.name, width=width, height=height)
             if resp:
                 return tmpfile
         return

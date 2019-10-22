@@ -46,7 +46,8 @@ This is done via the `HOOKS` configuration parameter in your project's
 ```python
 HOOKS = {
     'target_post_save': 'tom_common.hooks.target_post_save',
-    'observation_change_state': 'mytom.hooks.observation_change_state'
+    'observation_change_state': 'mytom.hooks.observation_change_state',
+    'data_product_post_upload': 'tom_dataproducts.hooks.data_product_post_upload',
 }
 ```
 
@@ -97,3 +98,16 @@ def observation_change_state(observation, previous_status):
 That is all that is necessary for sending an email, though you might want to look
 into using asynchronous task runners such as [dramatiq](https://dramatiq.io/) or
 [celery](http://www.celeryproject.org/).
+
+### Available code hooks
+
+At present, there are three available code hooks.
+
+* target_post_save: Runs after a target is created or updated.
+* observation_change_state: Runs whenever an observation's state is updated.
+* data_product_post_upload: Runs after a data product is successfully uploaded to the TOM.
+
+> **NOTE**: `target_post_save` does not run automatically following a programmatic create statement, such as:
+> ```python
+> Target.objects.create(name='m51')
+> ```

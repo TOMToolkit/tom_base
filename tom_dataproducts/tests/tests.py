@@ -40,7 +40,7 @@ def mock_is_fits_image_file(filename):
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
 @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
-class TestObservationDataViews(TestCase):
+class Views(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()
         self.observation_record = ObservingRecordFactory.create(
@@ -111,7 +111,7 @@ class TestObservationDataViews(TestCase):
                 hdul = fits.HDUList([img])
                 hdul.writeto(img_file)
                 self.data_product.data = img_file
-                self.assertTrue(is_fits_image_file(self.data_product.data))
+                self.assertTrue(is_fits_image_file(self.data_product.data.file))
 
     # Table + image data
     def test_is_fits_image_file_table_img(self, dp_mock):
@@ -131,7 +131,7 @@ class TestObservationDataViews(TestCase):
                 hdul = fits.HDUList([img, table])
                 hdul.writeto(tabimg_file)
                 self.data_product.data = tabimg_file
-                self.assertTrue(is_fits_image_file(self.data_product.data))
+                self.assertTrue(is_fits_image_file(self.data_product.data.file))
 
     @patch('tom_dataproducts.models.fits_to_jpg', mock_fits2image)
     @patch('tom_dataproducts.models.find_fits_img_size', mock_find_fits_img_size)

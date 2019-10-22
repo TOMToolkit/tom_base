@@ -61,6 +61,9 @@ class DataProductSaveView(LoginRequiredMixin, View):
 class DataProductUploadView(LoginRequiredMixin, FormView):
     form_class = DataProductUploadForm
 
+    # def get_form_class(self):
+    #     pass
+
     def form_valid(self, form):
         target = form.cleaned_data['target']
         if not target:
@@ -84,12 +87,12 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
                 run_hook('data_product_post_upload', dp)
                 run_data_processor(dp)
                 successful_uploads.append(str(dp))
-            except InvalidFileFormatException:
+            except InvalidFileFormatException as iffe:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
                 messages.error(
                     self.request,
-                    'There was a problem uploading your file--the file format was invalid for file: {0}'.format(str(dp))
+                    'File format invalid for file {0} -- error was {1}'.format(str(dp), iffe)
                 )
             except Exception:
                 ReducedDatum.objects.filter(data_product=dp).delete()
