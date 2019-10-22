@@ -1,8 +1,9 @@
 import mimetypes
 import json
 
-from astropy.time import Time, TimezoneInfo
 from astropy import units
+from astropy.io import ascii
+from astropy.time import Time, TimezoneInfo
 
 from tom_dataproducts.data_processor import DataProcessor
 from tom_dataproducts.exceptions import InvalidFileFormatException
@@ -22,23 +23,18 @@ class PhotometryProcessor(DataProcessor):
         :rtype: dict
         """
 
-        print('process_data')
-
         mimetype = mimetypes.guess_type(data_product.data.path)[0]
-        print(mimetype)
         if mimetype in self.PLAINTEXT_MIMETYPES:
             photometry = self._process_photometry_from_plaintext(data_product)
             for time, photometry_datum in photometry.items():
                 for datum in photometry_datum:
-                    datum, created = ReducedDatum.objects.create(
+                    ReducedDatum.objects.create(
                         target=data_product.target,
                         data_product=data_product,
                         data_type=data_product.data_product_type,
                         timestamp=time,
                         value=json.dumps(datum)
                     )
-                    print(datum)
-                    print(created)
         else:
             raise InvalidFileFormatException('Unsupported file type')
 
@@ -55,8 +51,6 @@ class PhotometryProcessor(DataProcessor):
         :returns: python dict containing the data from the DataProduct
         :rtype: dict
         """
-
-        print('from plaintext')
 
         photometry = {}
 
