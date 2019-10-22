@@ -20,6 +20,8 @@ Are you looking to run a TOM of your own? This documentation is a good place to 
 
 Start with the :doc:`introduction<introduction/index>` if you are new to using the TOM Toolkit.
 
+If you'd like to know what we're working on, check out the `TOM Toolkit project board <https://github.com/TOMToolkit/tom_base/projects/1>`_.
+
 :doc:`Architecture <introduction/tomarchitecture>` - This document describes the architecture of the TOM Toolkit at a
 high level. Read this first if you're interested in how the TOM Toolkit works.
 
