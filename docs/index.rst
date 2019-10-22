@@ -20,12 +20,17 @@ Are you looking to run a TOM of your own? This documentation is a good place to 
 
 Start with the :doc:`introduction<introduction/index>` if you are new to using the TOM Toolkit.
 
+If you'd like to know what we're working on, check out the `TOM Toolkit project board <https://github.com/TOMToolkit/tom_base/projects/1>`_.
+
 :doc:`Architecture <introduction/tomarchitecture>` - This document describes the architecture of the TOM Toolkit at a
 high level. Read this first if you're interested in how the TOM Toolkit works.
 
 :doc:`Getting Started <introduction/getting_started>` - First steps for getting a TOM up and running.
 
 :doc:`Workflow <introduction/workflow>` - The general workflow used with TOMs.
+
+:doc:`Programming Resources <introduction/resources>` - Resources for learning the core components of the TOM Toolkit:
+HTML, CSS, Python, and Django
 
 :doc:`Frequently Asked Questions <introduction/faqs>` - Look here for a potential quick answer to a common question.
 

@@ -8,7 +8,6 @@ from datetime import datetime
 
 from tom_common.hooks import run_hook
 
-
 GLOBAL_TARGET_FIELDS = ['name', 'type']
 
 SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
@@ -253,7 +252,8 @@ class Target(models.Model):
             name, _ = TargetName.objects.get_or_create(target=self, name=name)
             name.save()
 
-        run_hook('target_post_save', target=self, created=created)
+        if not created:
+            run_hook('target_post_save', target=self, created=created)
 
     def validate_unique(self, *args, **kwargs):
         """

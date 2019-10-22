@@ -1,3 +1,5 @@
+import logging
+
 from datetime import datetime
 from io import StringIO
 
@@ -6,6 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.core.management import call_command
+from django.db import transaction
 from django.http import StreamingHttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
@@ -21,6 +24,7 @@ from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
 
 from tom_common.hints import add_hint
+from tom_common.hooks import run_hook
 from tom_targets.models import Target, TargetList
 from tom_targets.forms import (
     SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset
@@ -29,6 +33,8 @@ from tom_targets.utils import import_targets, export_targets
 from tom_targets.filters import TargetFilter
 from tom_targets.add_remove_from_grouping import add_remove_from_grouping
 from tom_dataproducts.forms import DataProductUploadForm
+
+logger = logging.getLogger(__name__)
 
 
 class TargetListView(PermissionListMixin, FilterView):
@@ -140,6 +146,8 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
+        logger.info('Target post save hook: %s created: %s', self.object, True)
+        run_hook('target_post_save', target=self.object, created=True)
         return redirect(self.get_success_url())
 
     def get_form(self, *args, **kwargs):
@@ -166,8 +174,8 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         )
         return context
 
+    @transaction.atomic
     def form_valid(self, form):
-        super().form_valid(form)
         extra = TargetExtraFormset(self.request.POST, instance=self.object)
         names = TargetNamesFormset(self.request.POST, instance=self.object)
         if extra.is_valid() and names.is_valid():
@@ -179,6 +187,7 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
+        super().form_valid(form)
         return redirect(self.get_success_url())
 
     def get_queryset(self, *args, **kwargs):
