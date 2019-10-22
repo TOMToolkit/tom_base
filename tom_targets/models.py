@@ -6,6 +6,7 @@ from django.conf import settings
 from dateutil.parser import parse
 from datetime import datetime
 
+from tom_common.hooks import run_hook
 
 GLOBAL_TARGET_FIELDS = ['name', 'type']
 
@@ -239,6 +240,7 @@ class Target(models.Model):
         extras = kwargs.pop('extras', {})
         names = kwargs.pop('names', [])
 
+        created = False if self.id else True
         super().save(*args, **kwargs)
 
         for k, v in extras.items():
@@ -249,6 +251,9 @@ class Target(models.Model):
         for name in names:
             name, _ = TargetName.objects.get_or_create(target=self, name=name)
             name.save()
+
+        if not created:
+            run_hook('target_post_save', target=self, created=created)
 
     def validate_unique(self, *args, **kwargs):
         """
