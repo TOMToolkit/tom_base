@@ -1,6 +1,7 @@
-from django.conf import settings
-from importlib import import_module
 import logging
+from importlib import import_module
+
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +21,6 @@ def run_hook(name, *args, **kwargs):
     if hook:
         method = import_method(hook)
         return method(*args, **kwargs)
-
-
-def target_post_save(target, created):
-    logger.info('Target post save hook: %s created: %s', target, created)
 
 
 def observation_change_state(observation, previous_state):
