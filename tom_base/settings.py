@@ -197,6 +197,11 @@ DATA_PRODUCT_TYPES = {
     'image_file': ('image_file', 'Image File')
 }
 
+DATA_PROCESSORS = {
+    'photometry': 'tom_dataproducts.data_processors.photometry_processor.PhotometryProcessor',
+    'spectroscopy': 'tom_dataproducts.data_processors.spectroscopy_processor.SpectroscopyProcessor',
+}
+
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility'
