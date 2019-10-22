@@ -1,3 +1,5 @@
+import logging
+
 from datetime import datetime
 from io import StringIO
 
@@ -22,6 +24,7 @@ from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
 
 from tom_common.hints import add_hint
+from tom_common.hooks import run_hook
 from tom_targets.models import Target, TargetList
 from tom_targets.forms import (
     SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset
@@ -30,6 +33,8 @@ from tom_targets.utils import import_targets, export_targets
 from tom_targets.filters import TargetFilter
 from tom_targets.add_remove_from_grouping import add_remove_from_grouping
 from tom_dataproducts.forms import DataProductUploadForm
+
+logger = logging.getLogger(__name__)
 
 
 class TargetListView(PermissionListMixin, FilterView):
@@ -141,6 +146,8 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
+        logger.info('Target post save hook: %s created: %s', self.object, True)
+        run_hook('target_post_save', target=self.object, created=True)
         return redirect(self.get_success_url())
 
     def get_form(self, *args, **kwargs):
