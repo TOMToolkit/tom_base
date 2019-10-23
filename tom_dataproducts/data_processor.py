@@ -1,5 +1,4 @@
 import mimetypes
-from datetime import datetime
 from astropy.time import Time, TimezoneInfo
 from astropy import units
 from astropy.io import fits, ascii
@@ -121,11 +120,16 @@ class DataProcessor():
             facility = get_service_class(facility_class)()
             if facility.is_fits_facility(header):
                 flux_constant = facility.get_flux_constant()
-                date_obs = facility.get_date_obs(header)
                 break
         else:
             flux_constant = DEFAULT_FLUX_CONSTANT
-            date_obs = datetime.now()
+
+        if form_data['time']:
+            date_obs = Time(form_data['time'], format='datetime')
+        elif form_data['time_keyword'] in header:
+            date_obs = Time(header[form_data['time_keyword']], format=form_data['time_format'])
+        else:
+            date_obs = Time.now()
 
         dim = len(flux.shape)
         if dim == 3:
@@ -138,7 +142,7 @@ class DataProcessor():
 
         spectrum = Spectrum1D(flux=flux, wcs=wcs)
 
-        return spectrum, Time(date_obs).to_datetime()
+        return spectrum, date_obs.to_datetime()
 
     def _process_spectrum_from_plaintext(self, data_product, form_data):
         """
@@ -166,28 +170,39 @@ class DataProcessor():
         :rtype: AstroPy.Time
         """
 
-        data = ascii.read(data_product.data.path)
+        data = ascii.read(data_product.data.path, format=form_data['table_format'])
         if len(data) < 1:
             raise InvalidFileFormatException('Empty table or invalid file type')
-        facility_name = None
-        date_obs = datetime.now()
         comments = data.meta.get('comments', [])
 
         for comment in comments:
-            if 'date-obs' in comment.lower():
-                date_obs = comment.split(':')[1].strip()
-            if 'facility' in comment.lower():
-                facility_name = comment.split(':')[1].strip()
+            if '=' in comment:
+                key, value = comment.split('=')
+                key = key.strip().upper()
+                value = value.split('/')[0]
+                value = value.strip("' ")
+                try:
+                    value = float(value)
+                except ValueError:
+                    pass
+                data.meta[key] = value
 
-        facility = get_service_class(facility_name)() if facility_name else None
+        if form_data['time']:
+            date_obs = Time(form_data['time'], format='datetime')
+        elif form_data['time_keyword'] in data.meta:
+            date_obs = Time(data.meta[form_data['time_keyword']], format=form_data['time_format'])
+        else:
+            date_obs = Time.now()
+
+        facility = get_service_class(data.meta['FACILITY'])() if 'FACILITY' in data.meta else None
         wavelength_units = facility.get_wavelength_units() if facility else DEFAULT_WAVELENGTH_UNITS
         flux_constant = facility.get_flux_constant() if facility else DEFAULT_FLUX_CONSTANT
 
-        spectral_axis = np.array(data['wavelength']) * wavelength_units
-        flux = np.array(data['flux']) * flux_constant
+        spectral_axis = np.array(data[form_data['wavelength_column']]) * wavelength_units
+        flux = np.array(data[form_data['flux_column']]) * flux_constant
         spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis)
 
-        return spectrum, Time(date_obs).to_datetime()
+        return spectrum, date_obs.to_datetime()
 
     def process_photometry(self, data_product, form_data):
         """
@@ -228,12 +243,12 @@ class DataProcessor():
 
         photometry = {}
 
-        data = ascii.read(data_product.data.path, format=form_data['photometry_format'])
+        data = ascii.read(data_product.data.path, format=form_data['table_format'])
         if len(data) < 1:
             raise InvalidFileFormatException('Empty table or invalid file type')
 
         for datum in data:
-            time = Time(datum[form_data['time_column']], format=form_data['time_format'])
+            time = Time(datum[form_data['time_keyword']], format=form_data['time_format'])
             utc = TimezoneInfo(utc_offset=0*units.hour)
             time.format = 'datetime'
             value = {
