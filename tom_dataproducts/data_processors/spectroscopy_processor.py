@@ -121,8 +121,8 @@ class SpectroscopyProcessor(DataProcessor):
                 facility_name = comment.split(':')[1].strip()
 
         facility = get_service_class(facility_name)() if facility_name else None
-        wavelength_units = facility.get_wavelength_units() if facility else DEFAULT_WAVELENGTH_UNITS
-        flux_constant = facility.get_flux_constant() if facility else DEFAULT_FLUX_CONSTANT
+        wavelength_units = facility.get_wavelength_units() if facility else self.DEFAULT_WAVELENGTH_UNITS
+        flux_constant = facility.get_flux_constant() if facility else self.DEFAULT_FLUX_CONSTANT
 
         spectral_axis = np.array(data['wavelength']) * wavelength_units
         flux = np.array(data['flux']) * flux_constant

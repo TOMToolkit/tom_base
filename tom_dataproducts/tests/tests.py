@@ -19,8 +19,9 @@ from tom_observations.tests.utils import FakeFacility
 from tom_observations.tests.factories import TargetFactory, ObservingRecordFactory
 from tom_dataproducts.models import DataProduct, is_fits_image_file
 from tom_dataproducts.forms import DataProductUploadForm
-from tom_dataproducts.data_processor import DataProcessor
-from tom_dataproducts.data_serializers import SpectrumSerializer
+from tom_dataproducts.data_processors.photometry_processor import PhotometryProcessor
+from tom_dataproducts.data_processors.spectroscopy_processor import SpectroscopyProcessor
+from tom_dataproducts.data_processors.data_serializers import SpectrumSerializer
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.utils import create_image_dataproduct
 from guardian.shortcuts import assign_perm
@@ -280,30 +281,31 @@ class TestDataProcessor(TestCase):
         self.data_product = DataProduct.objects.create(
             target=self.target
         )
-        self.data_processor = DataProcessor()
+        self.spectrum_data_processor = SpectroscopyProcessor()
+        self.photometry_data_processor = PhotometryProcessor()
         self.test_file = SimpleUploadedFile('afile.fits', b'somedata')
 
-    @patch('tom_dataproducts.data_processor.DataProcessor._process_spectrum_from_fits')
+    @patch('tom_dataproducts.data_processors.spectroscopy_processor.SpectroscopyProcessor._process_spectrum_from_fits')
     def test_process_spectroscopy_with_fits_file(self, process_data_mock):
         self.data_product.data.save('spectrum.fits', self.test_file)
-        self.data_processor.process_spectroscopy(self.data_product)
+        self.spectrum_data_processor.process_data(self.data_product)
         process_data_mock.assert_called_with(self.data_product)
 
-    @patch('tom_dataproducts.data_processor.DataProcessor._process_spectrum_from_plaintext')
+    @patch('tom_dataproducts.data_processors.spectroscopy_processor.SpectroscopyProcessor._process_spectrum_from_plaintext')
     def test_process_spectroscopy_with_plaintext_file(self, process_data_mock):
         self.data_product.data.save('spectrum.csv', self.test_file)
-        self.data_processor.process_spectroscopy(self.data_product)
+        self.spectrum_data_processor.process_data(self.data_product)
         process_data_mock.assert_called_with(self.data_product)
 
     def test_process_spectroscopy_with_invalid_file_type(self):
         self.data_product.data.save('spectrum.png', self.test_file)
         with self.assertRaises(InvalidFileFormatException):
-            self.data_processor.process_spectroscopy(self.data_product)
+            self.spectrum_data_processor.process_data(self.data_product)
 
     def test_process_spectrum_from_fits(self):
         with open('tom_dataproducts/tests/test_data/test_spectrum.fits', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.fits', spectrum_file)
-            spectrum, date_obs = self.data_processor._process_spectrum_from_fits(self.data_product)
+            spectrum, date_obs = self.spectrum_data_processor._process_spectrum_from_fits(self.data_product)
             self.assertTrue(type(spectrum) is Spectrum1D)
             self.assertAlmostEqual(spectrum.flux.mean().value, 2.295068e-14, places=19)
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 6600.478789, places=5)
@@ -311,25 +313,25 @@ class TestDataProcessor(TestCase):
     def test_process_spectrum_from_plaintext(self):
         with open('tom_dataproducts/tests/test_data/test_spectrum.csv', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.csv', spectrum_file)
-            spectrum, date_obs = self.data_processor._process_spectrum_from_plaintext(self.data_product)
+            spectrum, date_obs = self.spectrum_data_processor._process_spectrum_from_plaintext(self.data_product)
             self.assertTrue(type(spectrum) is Spectrum1D)
             self.assertAlmostEqual(spectrum.flux.mean().value, 1.166619e-14, places=19)
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 3250.744489, places=5)
 
-    @patch('tom_dataproducts.data_processor.DataProcessor._process_photometry_from_plaintext')
+    @patch('tom_dataproducts.data_processors.photometry_processor.PhotometryProcessor._process_photometry_from_plaintext')
     def test_process_photometry_with_plaintext_file(self, process_data_mock):
         self.data_product.data.save('lightcurve.csv', self.test_file)
-        self.data_processor.process_photometry(self.data_product)
+        self.photometry_data_processor.process_data(self.data_product)
         process_data_mock.assert_called_with(self.data_product)
 
     def test_process_photometry_with_invalid_file_type(self):
         self.data_product.data.save('lightcurve.blah', self.test_file)
         with self.assertRaises(InvalidFileFormatException):
-            self.data_processor.process_photometry(self.data_product)
+            self.photometry_data_processor.process_data(self.data_product)
 
     def test_process_photometry_from_plaintext(self):
         with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
             self.data_product.data.save('lightcurve.csv', lightcurve_file)
-            lightcurve = self.data_processor._process_photometry_from_plaintext(self.data_product)
+            lightcurve = self.photometry_data_processor._process_photometry_from_plaintext(self.data_product)
             self.assertTrue(type(lightcurve) is dict)
             self.assertEqual(len(lightcurve), 2)
