@@ -287,17 +287,16 @@ class TestDataProcessor(TestCase):
 
     @patch('tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor._process_spectrum_from_fits',
            return_value=('', ''))
-    def test_process_spectroscopy_with_fits_file(self, process_data_mock):
+    @patch('tom_dataproducts.processors.spectroscopy_processor.SpectrumSerializer.serialize', return_value={})
+    def test_process_spectroscopy_with_fits_file(self, serializer_mock, process_data_mock):
         self.data_product.data.save('spectrum.fits', self.test_file)
         self.spectrum_data_processor.process_data(self.data_product)
         process_data_mock.assert_called_with(self.data_product)
 
     @patch('tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor._process_spectrum_from_plaintext',
            return_value=('', ''))
-    @patch('tom_dataproducts.processors.spectroscopy_processor.SpectrumSerializer')
+    @patch('tom_dataproducts.processors.spectroscopy_processor.SpectrumSerializer.serialize', return_value={})
     def test_process_spectroscopy_with_plaintext_file(self, serializer_mock, process_data_mock):
-        mock_instance = serializer_mock.return_value
-        mock_instance.serialize.side_effect = {}
         self.data_product.data.save('spectrum.csv', self.test_file)
         self.spectrum_data_processor.process_data(self.data_product)
         process_data_mock.assert_called_with(self.data_product)
@@ -339,4 +338,4 @@ class TestDataProcessor(TestCase):
             self.data_product.data.save('lightcurve.csv', lightcurve_file)
             lightcurve = self.photometry_data_processor._process_photometry_from_plaintext(self.data_product)
             self.assertTrue(type(lightcurve) is list)
-            self.assertEqual(len(lightcurve), 2)
+            self.assertEqual(len(lightcurve), 3)
