@@ -9,7 +9,7 @@ from plotly import offline
 import plotly.graph_objs as go
 
 from tom_dataproducts.models import DataProduct, ReducedDatum
-from tom_dataproducts.data_processors.data_serializers import SpectrumSerializer
+from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 
 register = template.Library()
 

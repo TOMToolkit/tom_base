@@ -11,8 +11,7 @@ from specutils import Spectrum1D
 
 from tom_dataproducts.data_processor import DataProcessor
 from tom_dataproducts.exceptions import InvalidFileFormatException
-from tom_dataproducts.data_processors.data_serializers import SpectrumSerializer
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_observations.facility import get_service_class, get_service_classes
 
 
@@ -33,13 +32,7 @@ class SpectroscopyProcessor(DataProcessor):
 
         serialized_spectrum = SpectrumSerializer().serialize(spectrum)
 
-        ReducedDatum.objects.create(
-            target=data_product.target,
-            data_product=data_product,
-            data_type=data_product.data_product_type,
-            timestamp=obs_date,
-            value=serialized_spectrum
-        )
+        return [(obs_date, serialized_spectrum)]
 
     def _process_spectrum_from_fits(self, data_product):
         """

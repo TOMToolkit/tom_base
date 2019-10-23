@@ -7,7 +7,6 @@ from astropy.time import Time, TimezoneInfo
 
 from tom_dataproducts.data_processor import DataProcessor
 from tom_dataproducts.exceptions import InvalidFileFormatException
-from tom_dataproducts.models import ReducedDatum
 
 
 class PhotometryProcessor(DataProcessor):
@@ -26,15 +25,7 @@ class PhotometryProcessor(DataProcessor):
         mimetype = mimetypes.guess_type(data_product.data.path)[0]
         if mimetype in self.PLAINTEXT_MIMETYPES:
             photometry = self._process_photometry_from_plaintext(data_product)
-            for time, photometry_datum in photometry.items():
-                for datum in photometry_datum:
-                    ReducedDatum.objects.create(
-                        target=data_product.target,
-                        data_product=data_product,
-                        data_type=data_product.data_product_type,
-                        timestamp=time,
-                        value=json.dumps(datum)
-                    )
+            return [(datum.pop('timestamp'), json.dumps(datum)) for datum in photometry]
         else:
             raise InvalidFileFormatException('Unsupported file type')
 
@@ -52,7 +43,7 @@ class PhotometryProcessor(DataProcessor):
         :rtype: dict
         """
 
-        photometry = {}
+        photometry = []
 
         data = ascii.read(data_product.data.path)
         if len(data) < 1:
@@ -63,10 +54,11 @@ class PhotometryProcessor(DataProcessor):
             utc = TimezoneInfo(utc_offset=0*units.hour)
             time.format = 'datetime'
             value = {
+                'timestamp': time.to_datetime(timezone=utc),
                 'magnitude': datum['magnitude'],
                 'filter': datum['filter'],
                 'error': datum['error']
             }
-            photometry.setdefault(time.to_datetime(timezone=utc), []).append(value)
+            photometry.append(value)
 
         return photometry

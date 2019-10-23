@@ -10,7 +10,7 @@ To begin, here's a brief look at the part of the structure of the tom_dataproduc
 tom_dataproducts
 ├──hooks.py
 ├──models.py
-└──data_processors
+└──processors
    ├──data_serializers.py
    ├──photometry_processor.py
    └──spectroscopy_processor.py
@@ -45,8 +45,8 @@ and those are also specified in `settings.py`:
 
 ```python
 DATA_PROCESSORS = {
-    'photometry': 'tom_dataproducts.data_processors.photometry_processor.PhotometryProcessor',
-    'spectroscopy': 'tom_dataproducts.data_processors.spectroscopy_processor.SpectroscopyProcessor',
+    'photometry': 'tom_dataproducts.processors.photometry_processor.PhotometryProcessor',
+    'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
 }
 ```
 
@@ -156,7 +156,7 @@ spectroscopy:
 
 ```python
 DATA_PROCESSORS = {
-    'photometry': 'tom_dataproducts.data_processors.photometry_processor.PhotometryProcessor',
+    'photometry': 'tom_dataproducts.processors.photometry_processor.PhotometryProcessor',
     'spectroscopy': 'mytom.my_data_processor.MyDataProcessor',
 }
 ```
