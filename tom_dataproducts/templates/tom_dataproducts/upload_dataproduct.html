@@ -1,9 +1,9 @@
-{% load bootstrap4 %}
+{% load bootstrap4 crispy_forms_tags %}
 {% if user.is_authenticated %}
 <h4>Upload a data product</h4>
 <form method="POST" action="{% url 'tom_dataproducts:upload' %}" enctype="multipart/form-data">
   {% csrf_token %}
-  {% bootstrap_form data_product_form %}
+  {% crispy data_product_form %}
   {% buttons %}
   <input type="submit" class="btn btn-primary" value="Upload" name="upload_dataproduct_form">
   {% endbuttons %}

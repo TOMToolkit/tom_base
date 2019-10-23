@@ -28,7 +28,7 @@ mimetypes.add_type('application/fits', '.fits')
 mimetypes.add_type('application/fits', '.fz')
 
 
-def run_data_processor(dp):
+def run_data_processor(dp, form_data):
     try:
         processor_class = settings.DATA_PROCESSOR_CLASS
     except Exception:
@@ -43,7 +43,7 @@ def run_data_processor(dp):
     data_processor = clazz()
 
     if dp.tag == SPECTROSCOPY[0]:
-        spectrum, obs_date = data_processor.process_spectroscopy(dp)
+        spectrum, obs_date = data_processor.process_spectroscopy(dp, form_data)
         serialized_spectrum = SpectrumSerializer().serialize(spectrum)
         ReducedDatum.objects.create(
             target=dp.target,
@@ -53,7 +53,7 @@ def run_data_processor(dp):
             value=serialized_spectrum
         )
     elif dp.tag == PHOTOMETRY[0]:
-        photometry = data_processor.process_photometry(dp)
+        photometry = data_processor.process_photometry(dp, form_data)
         for time, photometry_datum in photometry.items():
             for datum in photometry_datum:
                 ReducedDatum.objects.create(
@@ -67,12 +67,15 @@ def run_data_processor(dp):
 
 class DataProcessor():
 
-    def process_spectroscopy(self, data_product):
+    def process_spectroscopy(self, data_product, form_data):
         """
         Routes a spectrum processing call to a method specific to a file-format.
 
         :param data_product: Spectroscopic DataProduct which will be processed into a Spectrum1D
         :type data_product: tom_dataproducts.models.DataProduct
+
+        :param form_data: Data processing options from the upload form
+        :type form_data: dict
 
         :returns: Spectrum1D object containing the data from the DataProduct
         :rtype: specutils.Spectrum1D
@@ -85,13 +88,13 @@ class DataProcessor():
 
         mimetype = mimetypes.guess_type(data_product.data.path)[0]
         if mimetype in FITS_MIMETYPES:
-            return self._process_spectrum_from_fits(data_product)
+            return self._process_spectrum_from_fits(data_product, form_data)
         elif mimetype in PLAINTEXT_MIMETYPES:
-            return self._process_spectrum_from_plaintext(data_product)
+            return self._process_spectrum_from_plaintext(data_product, form_data)
         else:
             raise InvalidFileFormatException('Unsupported file type')
 
-    def _process_spectrum_from_fits(self, data_product):
+    def _process_spectrum_from_fits(self, data_product, form_data):
         """
         Processes the data from a spectrum from a fits file into a Spectrum1D object, which can then be serialized and
         stored as a ReducedDatum for further processing or display. File is read using specutils as specified in the
@@ -100,6 +103,9 @@ class DataProcessor():
 
         :param data_product: Spectroscopic DataProduct which will be processed into a Spectrum1D
         :type data_product: tom_dataproducts.models.DataProduct
+
+        :param form_data: Data processing options from the upload form
+        :type form_data: dict
 
         :returns: Spectrum1D object containing the data from the DataProduct
         :rtype: specutils.Spectrum1D
@@ -134,7 +140,7 @@ class DataProcessor():
 
         return spectrum, Time(date_obs).to_datetime()
 
-    def _process_spectrum_from_plaintext(self, data_product):
+    def _process_spectrum_from_plaintext(self, data_product, form_data):
         """
         Processes the data from a spectrum from a plaintext file into a Spectrum1D object, which can then be serialized
         and stored as a ReducedDatum for further processing or display. File is read using astropy as specified in
@@ -148,6 +154,9 @@ class DataProcessor():
         ----------
         :param data_product: Spectroscopic DataProduct which will be processed into a Spectrum1D
         :type data_product: tom_dataproducts.models.DataProduct
+
+        :param form_data: Data processing options from the upload form
+        :type form_data: dict
 
         :returns: Spectrum1D object containing the data from the DataProduct
         :rtype: specutils.Spectrum1D
@@ -180,12 +189,15 @@ class DataProcessor():
 
         return spectrum, Time(date_obs).to_datetime()
 
-    def process_photometry(self, data_product):
+    def process_photometry(self, data_product, form_data):
         """
         Routes a photometry processing call to a method specific to a file-format.
 
         :param data_product: Photometric DataProduct which will be processed into a dict
         :type data_product: DataProduct
+
+        :param form_data: Data processing options from the upload form
+        :type form_data: dict
 
         :returns: python dict containing the data from the DataProduct
         :rtype: dict
@@ -193,11 +205,11 @@ class DataProcessor():
 
         mimetype = mimetypes.guess_type(data_product.data.path)[0]
         if mimetype in PLAINTEXT_MIMETYPES:
-            return self._process_photometry_from_plaintext(data_product)
+            return self._process_photometry_from_plaintext(data_product, form_data)
         else:
             raise InvalidFileFormatException('Unsupported file type')
 
-    def _process_photometry_from_plaintext(self, data_product):
+    def _process_photometry_from_plaintext(self, data_product, form_data):
         """
         Processes the photometric data from a plaintext file into a dict, which can then be  stored as a ReducedDatum
         for further processing or display. File is read using astropy as specified in the below documentation. The file
@@ -207,24 +219,27 @@ class DataProcessor():
         :param data_product: Photometric DataProduct which will be processed into a dict
         :type data_product: DataProduct
 
+        :param form_data: Data processing options from the upload form
+        :type form_data: dict
+
         :returns: python dict containing the data from the DataProduct
         :rtype: dict
         """
 
         photometry = {}
 
-        data = ascii.read(data_product.data.path)
+        data = ascii.read(data_product.data.path, format=form_data['photometry_format'])
         if len(data) < 1:
             raise InvalidFileFormatException('Empty table or invalid file type')
 
         for datum in data:
-            time = Time(float(datum['time']), format='mjd')
+            time = Time(datum[form_data['time_column']], format=form_data['time_format'])
             utc = TimezoneInfo(utc_offset=0*units.hour)
             time.format = 'datetime'
             value = {
-                'magnitude': datum['magnitude'],
-                'filter': datum['filter'],
-                'error': datum['error']
+                'magnitude': datum[form_data['magnitude_column']],
+                'error': datum[form_data['error_column']],
+                'filter': datum[form_data['filter_column']]
             }
             photometry.setdefault(time.to_datetime(timezone=utc), []).append(value)
 

@@ -86,7 +86,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             dp.save()
             try:
                 run_hook('data_product_post_upload', dp)
-                run_data_processor(dp)
+                run_data_processor(dp, form.cleaned_data)
                 successful_uploads.append(str(dp))
             except InvalidFileFormatException:
                 ReducedDatum.objects.filter(data_product=dp).delete()
