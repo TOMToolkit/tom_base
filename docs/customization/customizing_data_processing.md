@@ -81,27 +81,18 @@ Now let's look at the built-in data processors. First, let's check out the `Phot
 class PhotometryProcessor(DataProcessor):
 
     def process_data(self, data_product):
-
         mimetype = mimetypes.guess_type(data_product.data.path)[0]
         if mimetype in self.PLAINTEXT_MIMETYPES:
             photometry = self._process_photometry_from_plaintext(data_product)
-            for time, photometry_datum in photometry.items():
-                for datum in photometry_datum:
-                    ReducedDatum.objects.create(
-                        target=data_product.target,
-                        data_product=data_product,
-                        data_type=data_product.data_product_type,
-                        timestamp=time,
-                        value=json.dumps(datum)
-                    )
+            return [(datum.pop('timestamp'), json.dumps(datum)) for datum in photometry]
         else:
             raise InvalidFileFormatException('Unsupported file type')
 ```
 
 This class has an implementation of `process_data()` from the superclass `DataProcessor`. The implementation calls an
-internal method `_process_photometry_from_plaintext()`, which return a `dict` of `dict`s, the keys of which are
-photometry timestamps, and the values of which are a dictionary of magnitude, error, and filter. Each of those
-photometry points is then JSON-ified and saved in the database as a `ReducedDatum`.
+internal method `_process_photometry_from_plaintext()`, which return a `list` of `dict`s. Each dict contains the values
+for the timestamp, magnitude, filter, and error for that photometry point. The list is then transformed into a list of
+2-tuples, with the first value being the photometry timestamp, and the second being the JSON-ified remaining values.
 
 Next, let's look at the `SpectroscopyProcessor`:
 
@@ -123,19 +114,19 @@ class SpectroscopyProcessor(DataProcessor):
 
         serialized_spectrum = SpectrumSerializer().serialize(spectrum)
 
-        ReducedDatum.objects.create(
-            target=data_product.target,
-            data_product=data_product,
-            data_type=data_product.data_product_type,
-            timestamp=obs_date,
-            value=serialized_spectrum
-        )
+        return [(obs_date, serialized_spectrum)]
 ```
 
 Just like the `PhotometryProcessor`, this class inherits from `DataProcessor` and implements `process_data()`. This is a
 requirement for a custom DataProcessor! This `process_data()` method handles two file types, unlike the previous
-example, each of which calls an internal method that returns a `Spectrum1D` object. That `Spectrum1D` is then serialized
-into JSON and saved as a `ReducedDatum`.
+example, each of which calls an internal method that returns a `Spectrum1D` object. Again, like the
+`PhotometryProcessor`, a list of 2-tuples is created, with the first value being the timestamp, and the second being
+the JSON spectrum.
+
+You may be wondering why these two methods return lists of 2-tuples, especially when the `SpectroscopyProcessor` only
+returns a list of length one. The rationale is to ensure that you, the TOM user, shouldn't have to worry about the
+database insertion, so the internal logic handles that aspect, and it can do so whether you return one data point or
+many data points.
 
 For a custom `DataProcessor`, there are just a few required steps. The first is to create a class that implements
 `DataProcessor`, like so:
@@ -148,6 +139,8 @@ class MyDataProcessor(DataProcessor):
 
     def process_data(self, data_product):
         # custom data processing here
+
+        return [(timestamp1, json1), (timestamp2, json2), ..., (timestampN, dictN)]
 ```
 
 Let's say that this file lives at `mytom/my_data_processor.py`. Now the processor needs to be added to
