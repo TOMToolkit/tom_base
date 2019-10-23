@@ -187,9 +187,8 @@ FACILITIES = {
     }
 }
 
-# Define the valid data product types for your TOM. Be careful when removing items, as the data processing operations
-# rely on the existence of the photometry and spectroscopy entries, and will likely stop working if those entries are
-# removed.
+# Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
+# longer be valid, and may cause issues unless the offending records are modified.
 DATA_PRODUCT_TYPES = {
     'photometry': ('photometry', 'Photometry'),
     'fits_file': ('fits_file', 'FITS File'),

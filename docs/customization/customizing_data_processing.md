@@ -8,10 +8,12 @@ To begin, here's a brief look at the part of the structure of the tom_dataproduc
 
 ```
 tom_dataproducts
-├──data_processor.py
-├──data_serializers.py
 ├──hooks.py
-└──models.py
+├──models.py
+└──data_processors
+   ├──data_serializers.py
+   ├──photometry_processor.py
+   └──spectroscopy_processor.py
 ```
 
 Let's start with a quick overview of `models.py`. The file contains the Django models for the dataproducts app--in our
@@ -20,132 +22,143 @@ such as the file name, file path, and what kind of file it is. The `ReducedDatum
 points that are taken from the `DataProduct` files. Examples of `ReducedDatum` points would be individual photometry
 points or individual spectra.
 
-When a user either uploads or saves a `DataProduct` to their TOM, the TOM runs a hook, as described in the
-[Custom Code](/advanced/custom_code) section of the documentation. The default version of this hook looks like this:
+Each `DataProduct` also has a `data_product_type`. The `data_product_type` is simply a description of what the file is,
+more or less, and is customizable. The list of supported `data_product_type`s is maintained in `settings.py`:
 
 ```python
-import json
-
-from django.conf import settings
-
-from .data_processor import DataProcessor
-from .data_serializers import SpectrumSerializer
-from .models import ReducedDatum
-
-def data_product_post_upload(dp, observation_timestamp, facility):
-    processor = DataProcessor()
-
-    if dp.data_product_type == settings.DATA_PRODUCT_TYPES['spectroscopy'][0]:
-        spectrum = processor.process_spectroscopy(dp, facility)
-        serialized_spectrum = SpectrumSerializer().serialize(spectrum)
-        ReducedDatum.objects.create(
-            target=dp.target,
-            data_product=dp,
-            data_type=dp.data_product_type,
-            timestamp=observation_timestamp,
-            value=serialized_spectrum
-        )
-    elif dp.data_product_type == settings.DATA_PRODUCT_TYPES['photometry'][0]:
-        photometry = processor.process_photometry(dp)
-        for time, photometry_datum in photometry.items():
-            ReducedDatum.objects.create(
-                target=dp.target,
-                data_product=dp,
-                data_type=dp.data_product_type,
-                timestamp=time,
-                value=json.dumps(photometry_datum)
-            )
+# Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
+# longer be valid, and may cause issues unless the offending records are modified.
+DATA_PRODUCT_TYPES = {
+    'photometry': ('photometry', 'Photometry'),
+    'fits_file': ('fits_file', 'FITS File'),
+    'spectroscopy': ('spectroscopy', 'Spectroscopy'),
+    'image_file': ('image_file', 'Image File')
+}
 ```
 
-The basic idea is as follows: depending on the type of the `DataProduct` passed in, the data in the `DataProduct` is
-processed by the `DataProcessor` class into a uniform format. The resulting object, if necessary, is then serialized
-by the `SpectrumSerializer` (the default photometry format is already easily serializable) so that it can be stored
-in the database as a `ReducedDatum`. Then, the `ReducedDatum` objects are created and stored in the database.
+In order to add new data product types, simply add a new key/value pair, with the value being a 2-tuple. The first
+tuple item is the database value, and the second is the display value.
 
-The meat and potatoes of the processing is in the `DataProcessor` class, and the details of that can be seen in the
-[source code](https://github.com/TOMToolkit/tom_base/tree/master/tom_dataproducts/data_processor.py). We understand
-that the way the data is processed might not work for everyone, and so it's easily customizable.
+All data products are automatically "processed" on upload, as well. Of course, that can mean different things to
+different TOMs! The TOM has two built-in data processors, both of which simply ingest the data into the database,
+and those are also specified in `settings.py`:
 
-To do so, it's as simple as creating a custom `DataProcessor` class that inherits from the one in the TOMToolkit. Let's
-say most of the DataProcessor code is great, but you want to change how spectra are processed from FITS files:
+```python
+DATA_PROCESSORS = {
+    'photometry': 'tom_dataproducts.data_processors.photometry_processor.PhotometryProcessor',
+    'spectroscopy': 'tom_dataproducts.data_processors.spectroscopy_processor.SpectroscopyProcessor',
+}
+```
+
+When a user either uploads a `DataProduct` to their TOM, the TOM runs `process_data()` from the corresponding
+`DataProcessor` subclass specified in `DATA_PROCESSORS` seen above. To illustrate, this is the base `DataProcessor`
+class:
+
+```python
+import mimetypes
+
+...
+
+class DataProcessor():
+
+    FITS_MIMETYPES = ['image/fits', 'application/fits']
+    PLAINTEXT_MIMETYPES = ['text/plain', 'text/csv']
+
+    mimetypes.add_type('image/fits', '.fits')
+    mimetypes.add_type('image/fits', '.fz')
+    mimetypes.add_type('application/fits', '.fits')
+    mimetypes.add_type('application/fits', '.fz')
+
+    def process_data(self, data_product):
+        pass
+
+```
+
+Now let's look at the built-in data processors. First, let's check out the `PhotometryProcessor`, which inherits from
+`DataProcessor`:
+
+```python
+class PhotometryProcessor(DataProcessor):
+
+    def process_data(self, data_product):
+
+        mimetype = mimetypes.guess_type(data_product.data.path)[0]
+        if mimetype in self.PLAINTEXT_MIMETYPES:
+            photometry = self._process_photometry_from_plaintext(data_product)
+            for time, photometry_datum in photometry.items():
+                for datum in photometry_datum:
+                    ReducedDatum.objects.create(
+                        target=data_product.target,
+                        data_product=data_product,
+                        data_type=data_product.data_product_type,
+                        timestamp=time,
+                        value=json.dumps(datum)
+                    )
+        else:
+            raise InvalidFileFormatException('Unsupported file type')
+```
+
+This class has an implementation of `process_data()` from the superclass `DataProcessor`. The implementation calls an
+internal method `_process_photometry_from_plaintext()`, which return a `dict` of `dict`s, the keys of which are
+photometry timestamps, and the values of which are a dictionary of magnitude, error, and filter. Each of those
+photometry points is then JSON-ified and saved in the database as a `ReducedDatum`.
+
+Next, let's look at the `SpectroscopyProcessor`:
+
+```python
+class SpectroscopyProcessor(DataProcessor):
+
+    DEFAULT_WAVELENGTH_UNITS = units.angstrom
+    DEFAULT_FLUX_CONSTANT = units.erg / units.cm ** 2 / units.second / units.angstrom
+
+    def process_data(self, data_product):
+
+        mimetype = mimetypes.guess_type(data_product.data.path)[0]
+        if mimetype in self.FITS_MIMETYPES:
+            spectrum, obs_date = self._process_spectrum_from_fits(data_product)
+        elif mimetype in self.PLAINTEXT_MIMETYPES:
+            spectrum, obs_date = self._process_spectrum_from_plaintext(data_product)
+        else:
+            raise InvalidFileFormatException('Unsupported file type')
+
+        serialized_spectrum = SpectrumSerializer().serialize(spectrum)
+
+        ReducedDatum.objects.create(
+            target=data_product.target,
+            data_product=data_product,
+            data_type=data_product.data_product_type,
+            timestamp=obs_date,
+            value=serialized_spectrum
+        )
+```
+
+Just like the `PhotometryProcessor`, this class inherits from `DataProcessor` and implements `process_data()`. This is a
+requirement for a custom DataProcessor! This `process_data()` method handles two file types, unlike the previous
+example, each of which calls an internal method that returns a `Spectrum1D` object. That `Spectrum1D` is then serialized
+into JSON and saved as a `ReducedDatum`.
+
+For a custom `DataProcessor`, there are just a few required steps. The first is to create a class that implements
+`DataProcessor`, like so:
 
 ```python
 from tom_dataproducts.data_processor import DataProcessor
 
-class CustomDataProcessor(DataProcessor):
 
-  def _process_spectrum_from_fits(self, data_product, facility):
-        # Custom processing here, needs to return a Spectrum1D
+class MyDataProcessor(DataProcessor):
 
-        return spectrum
+    def process_data(self, data_product):
+        # custom data processing here
 ```
 
-Then, just add the path to your `CustomDataProcessor` class file to your TOM settings.py:
+Let's say that this file lives at `mytom/my_data_processor.py`. Now the processor needs to be added to
+`DATA_PROCESSORS`, and it can either process a new data product type, or replace an existing one. Let's replace
+spectroscopy:
 
 ```python
-...
-DATA_PROCESSOR_CLASS = 'mytom.custom_data_processor.CustomDataProcessor'
-...
+DATA_PROCESSORS = {
+    'photometry': 'tom_dataproducts.data_processors.photometry_processor.PhotometryProcessor',
+    'spectroscopy': 'mytom.my_data_processor.MyDataProcessor',
+}
 ```
 
-As long as the `CustomDataProcessor` returns an object with the same type as the superclass implementation, you won't
-need to change anything else. However, if you do have a need to return a different object type, then you can just
-override the `SpectrumSerializer` in the `tom_dataproducts.data_serializers.py`. Be careful, because the TOM Toolkit
-doesn't have a mechanism to provide a custom serializer, so you'll also need to customize your
-`data_product_post_upload` hook. Here's a brief example of a custom serializer:
-
-```python
-from tom_dataproducts.data_serializers import SpectrumSerializer
-
-class CustomSpectrumSerializer(SpectrumSerializer):
-
-  def serialize(self, spectrum):
-    # convert spectrum into dict
-
-    return json.dumps(spectrum_dict)
-
-  def deserialize(self, spectrum):
-    data = json.loads(spectrum) # spectrum is a dict object
-
-    # convert from dict to preferred object type
-    return converted_spectrum
-```
-
-Then, in your custom hook:
-
-```python
-import json
-
-from django.conf import settings
-
-from .models import ReducedDatum
-
-from mytom.custom_data_serializers import CustomSpectrumSerializer
-from mytom.custom_data_processor import CustomDataProcessor
-
-def custom_data_product_post_upload(dp, observation_timestamp, facility):
-    processor = CustomDataProcessor()
-
-    if dp.data_product_type == settings.DATA_PRODUCT_TYPES['spectroscopy'][0]:
-        spectrum = processor.process_spectroscopy(dp, facility)
-        serialized_spectrum = CustomSpectrumSerializer().serialize(spectrum)
-        ReducedDatum.objects.create(
-            target=dp.target,
-            data_product=dp,
-            data_type=dp.data_product_type,
-            timestamp=observation_timestamp,
-            value=serialized_spectrum
-        )
-    elif dp.data_product_type == settings.DATA_PRODUCT_TYPES['photometry'][0]:
-        photometry = processor.process_photometry(dp)
-        for time, photometry_datum in photometry.items():
-            ReducedDatum.objects.create(
-                target=dp.target,
-                data_product=dp,
-                data_type=dp.data_product_type,
-                timestamp=time,
-                value=json.dumps(photometry_datum)
-            )
-```
-
-And just like that, your TOM will be running your custom processing code.
+And that's it! Now your TOM will run the data processing specific to your case instead of the default one.
