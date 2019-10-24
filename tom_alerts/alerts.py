@@ -21,6 +21,13 @@ DEFAULT_ALERT_CLASSES = [
 
 
 def get_service_classes():
+    """
+    Gets the broker classes available to this TOM as specified in `settings.py`. If none are specified, returns the
+    default set.
+
+    :returns: dict of broker classes, with keys being the name of the broker and values being the broker class
+    :rtype: dict
+    """
     try:
         TOM_ALERT_CLASSES = settings.TOM_ALERT_CLASSES
     except AttributeError:
@@ -38,10 +45,17 @@ def get_service_classes():
                 Did you provide the correct path?'''.format(service)
             )
         service_choices[clazz.name] = clazz
+    print(service_choices)
     return service_choices
 
 
 def get_service_class(name):
+    """
+    Gets the specific broker class for a given broker name.
+
+    :returns: Broker class
+    :rtype: class
+    """
     available_classes = get_service_classes()
     try:
         return available_classes[name]
@@ -54,6 +68,10 @@ def get_service_class(name):
 
 @dataclass
 class GenericAlert:
+    """
+    dataclass representing an alert in order to display it in the UI.
+    """
+
     timestamp: datetime
     id: int
     name: str
@@ -64,6 +82,12 @@ class GenericAlert:
     url: str
 
     def to_target(self):
+        """
+        Returns a Target instance for an object defined by an alert.
+
+        :returns: representation of object for an alert
+        :rtype: `Target`
+        """
         return Target(
             name=self.name,
             type='SIDEREAL',

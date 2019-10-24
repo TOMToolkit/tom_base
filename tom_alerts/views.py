@@ -37,7 +37,8 @@ class BrokerQueryCreateView(LoginRequiredMixin, FormView):
 
     def get_form_class(self):
         """
-        Returns the form class to use in this view.
+        Returns the form class to use in this view. The form class will be the one defined in the specific broker
+        module for which a new query is being created.
         """
         broker_name = self.get_broker_name()
 
@@ -48,18 +49,30 @@ class BrokerQueryCreateView(LoginRequiredMixin, FormView):
 
     def get_form(self):
         """
-        Returns the
+        Returns an instance of the form to be used in this view.
+
+        :returns: Form instance
+        :rtype: django.forms.Form
         """
         form = super().get_form()
         form.helper.form_action = reverse('tom_alerts:create')
         return form
 
     def get_initial(self):
+        """
+        Returns the initial data to use for forms on this view.
+
+        :returns: dict of initial values
+        :rtype: dict
+        """
         initial = super().get_initial()
         initial['broker'] = self.get_broker_name()
         return initial
 
     def form_valid(self, form):
+        """
+        Saves the associated `BrokerQuery` and redirects to the `BrokerQuery` list.
+        """
         form.save()
         return redirect(reverse('tom_alerts:list'))
 
@@ -68,13 +81,29 @@ class BrokerQueryUpdateView(LoginRequiredMixin, FormView):
     template_name = 'tom_alerts/query_form.html'
 
     def get_object(self):
+        """
+        Returns the `BrokerQuery` object that corresponds with the ID in the query path.
+
+        :returns: `BrokerQuery` object
+        :rtype: `BrokerQuery`
+        """
         return BrokerQuery.objects.get(pk=self.kwargs['pk'])
 
     def get_form_class(self):
+        """
+        Returns the form class to use in this view. The form class will be the one defined in the specific broker
+        module for which the query is being updated.
+        """
         self.object = self.get_object()
         return get_service_class(self.object.broker).form
 
     def get_form(self):
+        """
+        Returns an instance of the form to be used in this view.
+
+        :returns: Form instance
+        :rtype: django.forms.Form
+        """
         form = super().get_form()
         form.helper.form_action = reverse(
             'tom_alerts:update', kwargs={'pk': self.object.id}
@@ -82,17 +111,30 @@ class BrokerQueryUpdateView(LoginRequiredMixin, FormView):
         return form
 
     def get_initial(self):
+        """
+        Returns the initial data to use for forms on this view. Initial data for this form consists of the name of
+        the broker that the query is for.
+
+        :returns: dict of initial values
+        :rtype: dict
+        """
         initial = super().get_initial()
         initial.update(self.object.parameters_as_dict)
         initial['broker'] = self.object.broker
         return initial
 
     def form_valid(self, form):
+        """
+        Saves the associated `BrokerQuery` and redirects to the `BrokerQuery` list.
+        """
         form.save(query_id=self.object.id)
         return redirect(reverse('tom_alerts:list'))
 
 
 class BrokerQueryFilter(FilterSet):
+    """
+    Defines the available fields for filtering the list of broker queries
+    """
     broker = ChoiceFilter(
         choices=[(k, k) for k in get_service_classes().keys()]
     )
@@ -104,25 +146,47 @@ class BrokerQueryFilter(FilterSet):
 
 
 class BrokerQueryListView(FilterView):
+    """
+    View that displays all saved `BrokerQuery`s.
+    """
     model = BrokerQuery
     template_name = 'tom_alerts/brokerquery_list.html'
     filterset_class = BrokerQueryFilter
 
     def get_context_data(self, *args, **kwargs):
+        """
+        Adds the brokers available to the TOM to the context dictionary.
+
+        :returns: context
+        :rtype: dict
+        """
         context = super().get_context_data(*args, **kwargs)
         context['installed_brokers'] = get_service_classes()
         return context
 
 
 class BrokerQueryDeleteView(LoginRequiredMixin, DeleteView):
+    """
+    View that handles the deletion of a saved `BrokerQuery`.
+    """
     model = BrokerQuery
     success_url = reverse_lazy('tom_alerts:list')
 
 
 class RunQueryView(TemplateView):
+    """
+    View that handles the running of a specific `BrokerQuery`.
+    """
     template_name = 'tom_alerts/query_result.html'
 
     def get_context_data(self, *args, **kwargs):
+        """
+        Runs the `fetch_alerts` method specific to the given `BrokerQuery` and adds the matching alerts to the context
+        dictionary.
+
+        :returns: context
+        :rtype: dict
+        """
         context = super().get_context_data()
         query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
         broker_class = get_service_class(query.broker)()
@@ -143,7 +207,16 @@ class RunQueryView(TemplateView):
 
 
 class CreateTargetFromAlertView(LoginRequiredMixin, View):
+    """
+    View that handles the creation of `Target` objects from a `BrokerQuery` result.
+    """
+
     def post(self, request, *args, **kwargs):
+        """
+        Handles the POST requests to this view. Creates a `Target` for each alert sent in the POST. Redirects to the
+        `TargetListView` if multiple targets were created, and the `TargetUpdateView` if only one was created. Redirects
+        to the `RunQueryView` if no `Target`s were successfully created.
+        """
         query_id = self.request.POST['query_id']
         broker_name = self.request.POST['broker']
         broker_class = get_service_class(broker_name)
