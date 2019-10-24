@@ -15,11 +15,12 @@ class PhotometryProcessor(DataProcessor):
         """
         Routes a photometry processing call to a method specific to a file-format.
 
-        :param data_product: Photometric DataProduct which will be processed into a dict
+        :param data_product: Photometric DataProduct which will be processed into the specified format for database
+        ingestion
         :type data_product: DataProduct
 
-        :returns: python dict containing the data from the DataProduct
-        :rtype: dict
+        :returns: python list of 2-tuples, each with a timestamp and corresponding data
+        :rtype: list
         """
 
         mimetype = mimetypes.guess_type(data_product.data.path)[0]
@@ -31,16 +32,16 @@ class PhotometryProcessor(DataProcessor):
 
     def _process_photometry_from_plaintext(self, data_product):
         """
-        Processes the photometric data from a plaintext file into a dict, which can then be  stored as a ReducedDatum
-        for further processing or display. File is read using astropy as specified in the below documentation. The file
-        is expected to be a multi-column delimited file, with headers for time, magnitude, filter, and error.
+        Processes the photometric data from a plaintext file into a list of dicts. File is read using astropy as
+        specified in the below documentation. The file is expected to be a multi-column delimited file, with headers for
+        time, magnitude, filter, and error.
         # http://docs.astropy.org/en/stable/io/ascii/read.html
 
-        :param data_product: Photometric DataProduct which will be processed into a dict
+        :param data_product: Photometric DataProduct which will be processed into a list of dicts
         :type data_product: DataProduct
 
-        :returns: python dict containing the data from the DataProduct
-        :rtype: dict
+        :returns: python list containing the photometric data from the DataProduct
+        :rtype: list
         """
 
         photometry = []

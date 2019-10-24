@@ -182,6 +182,10 @@ class DataProduct(models.Model):
         return self.data.name
 
     def save(self, *args, **kwargs):
+        """
+        Saves the current `DataProduct` instance. Before saving, validates the `data_product_type` against those
+        specified in `settings.py`.
+        """
         for dp_type, dp_values in settings.DATA_PRODUCT_TYPES.items():
             if not self.data_product_type or self.data_product_type == dp_values[0]:
                 break
@@ -190,6 +194,12 @@ class DataProduct(models.Model):
         return super().save()
 
     def get_type_display(self):
+        """
+        Gets the corresponding display value for a data_product_type.
+
+        :returns: Display value for a given data_product_type.
+        :rtype: str
+        """
         return settings.DATA_PRODUCT_TYPES[self.data_product_type][1]
 
     def get_file_name(self):

@@ -10,6 +10,13 @@ DEFAULT_DATA_PROCESSOR_CLASS = 'tom_dataproducts.data_processor.DataProcessor'
 
 
 def run_data_processor(dp):
+    """
+    Reads the `data_product_type` from the dp parameter and imports the corresponding `DataProcessor` specified in
+    `settings.py`, then runs `process_data` and inserts the returned values into the database.
+
+    :param dp: DataProduct which will be processed into a list
+    :type dp: DataProduct
+    """
 
     try:
         processor_class = settings.DATA_PROCESSORS[dp.data_product_type]
@@ -47,4 +54,14 @@ class DataProcessor():
     mimetypes.add_type('application/fits', '.fz')
 
     def process_data(self, data_product):
-        pass
+        """
+        Routes a photometry processing call to a method specific to a file-format. This method is expected to be
+        implemented by any subclasses.
+
+        :param data_product: DataProduct which will be processed into a list
+        :type data_product: DataProduct
+
+        :returns: python list of 2-tuples, each with a timestamp and corresponding data
+        :rtype: list of 2-tuples
+        """
+        return []

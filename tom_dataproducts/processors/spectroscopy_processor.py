@@ -21,6 +21,16 @@ class SpectroscopyProcessor(DataProcessor):
     DEFAULT_FLUX_CONSTANT = units.erg / units.cm ** 2 / units.second / units.angstrom
 
     def process_data(self, data_product):
+        """
+        Routes a spectroscopy processing call to a method specific to a file-format, then serializes the returned data.
+
+        :param data_product: Spectroscopic DataProduct which will be processed into the specified format for database
+        ingestion
+        :type data_product: DataProduct
+
+        :returns: python list of 2-tuples, each with a timestamp and corresponding data
+        :rtype: list
+        """
 
         mimetype = mimetypes.guess_type(data_product.data.path)[0]
         if mimetype in self.FITS_MIMETYPES:
