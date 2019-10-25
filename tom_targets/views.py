@@ -38,6 +38,9 @@ logger = logging.getLogger(__name__)
 
 
 class TargetListView(PermissionListMixin, FilterView):
+    """
+    View for listing targets in the TOM. Only shows targets that the user is authorized to view.
+    """
     template_name = 'tom_targets/target_list.html'
     paginate_by = 25
     strict = False
@@ -46,6 +49,13 @@ class TargetListView(PermissionListMixin, FilterView):
     permission_required = 'tom_targets.view_target'
 
     def get_context_data(self, *args, **kwargs):
+        """
+        Adds the number of targets visible, the available ``TargetList`` objects if the user is authenticated, and
+        the query string to the context object.
+
+        :returns: context dictionary
+        :rtype: dict
+        """
         context = super().get_context_data(*args, **kwargs)
         context['target_count'] = context['paginator'].count
         # hide target grouping list if user not logged in
@@ -58,7 +68,7 @@ class TargetListView(PermissionListMixin, FilterView):
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
     """
-    View for creating a Target
+    View for creating a Target.
     """
 
     model = Target
@@ -66,7 +76,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
 
     def get_default_target_type(self):
         """
-        Returns the user-configured target type specified in settings.py, if it exists, otherwise returns sidereal
+        Returns the user-configured target type specified in ``settings.py``, if it exists, otherwise returns sidereal
 
         :returns: User-configured target type or global default
         :rtype: str
@@ -77,6 +87,13 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             return Target.SIDEREAL
 
     def get_target_type(self):
+        """
+        Gets the type of the target to be created from the query parameters. If none exists, use the default target
+        type specified in ``settings.py``.
+
+        :returns: target type
+        :rtype: str
+        """
         obj = self.request.GET or self.request.POST
         target_type = obj.get('type')
         # If None or some invalid value, use default target type
@@ -111,6 +128,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
                   `type_choices`: ``tuple``: Tuple of 2-tuples of strings containing available target types in the TOM
 
                   `extra_form`: ``FormSet``: Django formset with fields for arbitrary key/value pairs
+        :rtype: dict
         """
         context = super(TargetCreateView, self).get_context_data(**kwargs)
         context['type_choices'] = Target.TARGET_TYPES
@@ -123,6 +141,9 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
     def get_form_class(self):
         """
         Return the form class to use in this view.
+
+        :returns: form class for target creation
+        :rtype: subclass of TargetCreateForm
         """
         target_type = self.get_target_type()
         self.initial['type'] = target_type
@@ -132,6 +153,13 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             return NonSiderealTargetCreateForm
 
     def form_valid(self, form):
+        """
+        Runs after form validation. Creates the ``Target``, and creates any ``TargetName`` or ``TargetExtra`` objects,
+        then runs the ``target_post_save`` hook and redirects to the success URL.
+
+        :param form: Form data for target creation
+        :type form: subclass of TargetCreateForm
+        """
         super().form_valid(form)
         extra = TargetExtraFormset(self.request.POST)
         names = TargetNamesFormset(self.request.POST)
@@ -151,6 +179,12 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         return redirect(self.get_success_url())
 
     def get_form(self, *args, **kwargs):
+        """
+        Gets an instance of the ``TargetCreateForm`` and populates it with the groups available to the current user.
+
+        :returns: instance of creation form
+        :rtype: subclass of TargetCreateForm
+        """
         form = super().get_form(*args, **kwargs)
         if self.request.user.is_superuser:
             form.fields['groups'].queryset = Group.objects.all()
@@ -214,6 +248,9 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
 
 
 class TargetDeleteView(PermissionRequiredMixin, DeleteView):
+    """
+    View for deleting a target.
+    """
     permission_required = 'tom_targets.delete_target'
     success_url = reverse_lazy('targets:list')
     model = Target
