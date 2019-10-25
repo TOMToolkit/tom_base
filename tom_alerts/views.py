@@ -71,7 +71,7 @@ class BrokerQueryCreateView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         """
-        Saves the associated `BrokerQuery` and redirects to the `BrokerQuery` list.
+        Saves the associated ``BrokerQuery`` and redirects to the ``BrokerQuery`` list.
         """
         form.save()
         return redirect(reverse('tom_alerts:list'))
@@ -82,10 +82,10 @@ class BrokerQueryUpdateView(LoginRequiredMixin, FormView):
 
     def get_object(self):
         """
-        Returns the `BrokerQuery` object that corresponds with the ID in the query path.
+        Returns the ``BrokerQuery`` object that corresponds with the ID in the query path.
 
-        :returns: `BrokerQuery` object
-        :rtype: `BrokerQuery`
+        :returns: ``BrokerQuery`` object
+        :rtype: ``BrokerQuery``
         """
         return BrokerQuery.objects.get(pk=self.kwargs['pk'])
 
@@ -125,7 +125,7 @@ class BrokerQueryUpdateView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         """
-        Saves the associated `BrokerQuery` and redirects to the `BrokerQuery` list.
+        Saves the associated ``BrokerQuery`` and redirects to the ``BrokerQuery`` list.
         """
         form.save(query_id=self.object.id)
         return redirect(reverse('tom_alerts:list'))
@@ -147,7 +147,7 @@ class BrokerQueryFilter(FilterSet):
 
 class BrokerQueryListView(FilterView):
     """
-    View that displays all saved `BrokerQuery`s.
+    View that displays all saved ``BrokerQuery``s.
     """
     model = BrokerQuery
     template_name = 'tom_alerts/brokerquery_list.html'
@@ -167,7 +167,7 @@ class BrokerQueryListView(FilterView):
 
 class BrokerQueryDeleteView(LoginRequiredMixin, DeleteView):
     """
-    View that handles the deletion of a saved `BrokerQuery`.
+    View that handles the deletion of a saved ``BrokerQuery``.
     """
     model = BrokerQuery
     success_url = reverse_lazy('tom_alerts:list')
@@ -175,13 +175,13 @@ class BrokerQueryDeleteView(LoginRequiredMixin, DeleteView):
 
 class RunQueryView(TemplateView):
     """
-    View that handles the running of a specific `BrokerQuery`.
+    View that handles the running of a specific ``BrokerQuery``.
     """
     template_name = 'tom_alerts/query_result.html'
 
     def get_context_data(self, *args, **kwargs):
         """
-        Runs the `fetch_alerts` method specific to the given `BrokerQuery` and adds the matching alerts to the context
+        Runs the ``fetch_alerts`` method specific to the given ``BrokerQuery`` and adds the matching alerts to the context
         dictionary.
 
         :returns: context
@@ -208,14 +208,14 @@ class RunQueryView(TemplateView):
 
 class CreateTargetFromAlertView(LoginRequiredMixin, View):
     """
-    View that handles the creation of `Target` objects from a `BrokerQuery` result.
+    View that handles the creation of ``Target`` objects from a ``BrokerQuery`` result.
     """
 
     def post(self, request, *args, **kwargs):
         """
-        Handles the POST requests to this view. Creates a `Target` for each alert sent in the POST. Redirects to the
-        `TargetListView` if multiple targets were created, and the `TargetUpdateView` if only one was created. Redirects
-        to the `RunQueryView` if no `Target`s were successfully created.
+        Handles the POST requests to this view. Creates a ``Target`` for each alert sent in the POST. Redirects to the
+        ``TargetListView`` if multiple targets were created, and the ``TargetUpdateView`` if only one was created. Redirects
+        to the ``RunQueryView`` if no ``Target``s were successfully created.
         """
         query_id = self.request.POST['query_id']
         broker_name = self.request.POST['broker']
