@@ -174,7 +174,7 @@ class DataProductDeleteView(LoginRequiredMixin, DeleteView):
 
 class DataProductListView(FilterView):
     """
-    View that handles the list of ``DataProduct``s.
+    View that handles the list of ``DataProduct`` objects.
     """
 
     model = DataProduct
@@ -196,7 +196,7 @@ class DataProductListView(FilterView):
 
     def get_context_data(self, *args, **kwargs):
         """
-        Adds the set of ``DataProductGroup``s to the context dictionary.
+        Adds the set of ``DataProductGroup`` objects to the context dictionary.
 
         :returns: context dictionary
         :rtype: dict
@@ -265,7 +265,7 @@ class DataProductGroupDetailView(DetailView):
 
 class DataProductGroupListView(ListView):
     """
-    View that handles the display of all ``DataProductGroup``s.
+    View that handles the display of all ``DataProductGroup`` objects.
     """
     model = DataProductGroup
 
@@ -296,7 +296,7 @@ class DataProductGroupDataView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         """
-        Runs after form validation. Adds the specified ``DataProduct``s to the group.
+        Runs after form validation. Adds the specified ``DataProduct`` objects to the group.
 
         :param form: Form with data products and group information
         :type form: AddProductToGroupForm
