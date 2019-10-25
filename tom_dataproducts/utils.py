@@ -6,6 +6,15 @@ from .models import DataProduct
 
 
 def create_image_dataproduct(data_product):
+    """
+    Creates and saves a thumbnail image for a ``DataProduct``.
+
+    :param data_product: ``DataProduct`` for which to create an image
+    :type data_product: DataProduct
+
+    :returns: True if creation was successful
+    :rtype: boolean
+    """
     tmpfile = data_product.create_thumbnail()
     if tmpfile:
         dp, created = DataProduct.objects.get_or_create(
