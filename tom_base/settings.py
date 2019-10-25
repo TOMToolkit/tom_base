@@ -183,7 +183,12 @@ TARGET_TYPE = 'SIDEREAL'
 FACILITIES = {
     'LCO': {
         'portal_url': 'https://observe.lco.global',
-        'api_key': os.getenv('LCO_API_KEY', ''),
+        'api_key': os.getenv('LCO_API_KEY', '43742d03f996d4bb4f22e873927a907e2881c7b9'),
+    },
+    'LT': {
+        'proposal': 'lcotesting',
+        'username': 'test_tom',
+        'password': 'pagatoyu70'
     }
 }
 
