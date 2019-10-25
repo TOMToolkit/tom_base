@@ -5,6 +5,6 @@ Targets
   :maxdepth: 2
 
   models
-  views
   templatetags
   utils
+  views

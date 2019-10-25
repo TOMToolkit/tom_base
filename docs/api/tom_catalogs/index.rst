@@ -5,5 +5,5 @@ Catalogs
   :maxdepth: 2
 
   forms
-  views
   harvesters
+  views
