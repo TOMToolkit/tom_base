@@ -6,7 +6,8 @@ Base Broker Class
 *****************
 
 .. automodule:: tom_alerts.alerts
-    :members: GenericAlert
+    :members:
+    :member-order: bysource
 
 
 ******

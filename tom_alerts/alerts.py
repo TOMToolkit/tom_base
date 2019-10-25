@@ -22,7 +22,7 @@ DEFAULT_ALERT_CLASSES = [
 
 def get_service_classes():
     """
-    Gets the broker classes available to this TOM as specified in `settings.py`. If none are specified, returns the
+    Gets the broker classes available to this TOM as specified in ``settings.py``. If none are specified, returns the
     default set.
 
     :returns: dict of broker classes, with keys being the name of the broker and values being the broker class
@@ -45,7 +45,6 @@ def get_service_classes():
                 Did you provide the correct path?'''.format(service)
             )
         service_choices[clazz.name] = clazz
-    print(service_choices)
     return service_choices
 
 
@@ -97,6 +96,10 @@ class GenericAlert:
 
 
 class GenericQueryForm(forms.Form):
+    """
+    Form class representing the default form for a broker.
+    """
+
     query_name = forms.CharField(required=True)
     broker = forms.CharField(
         required=True,
@@ -111,9 +114,21 @@ class GenericQueryForm(forms.Form):
         self.common_layout = Layout('query_name', 'broker')
 
     def serialize_parameters(self):
+        """
+        Returns a JSON-serialized representation of the form data.
+
+        :returns: JSON-ified form parameters
+        :rtype: str
+        """
         return json.dumps(self.cleaned_data)
 
     def save(self, query_id=None):
+        """
+        Saves the form data in the database as a ``BrokerQuery``.
+
+        :returns: ``BrokerQuery`` model representation of the form that was saved to the db
+        :rtype: ``BrokerQuery``
+        """
         if query_id:
             query = BrokerQuery.objects.get(id=query_id)
         else:
@@ -126,6 +141,14 @@ class GenericQueryForm(forms.Form):
 
 
 class GenericBroker(ABC):
+    """
+    The `GenericBroker` provides an interface for implementing a broker module. It contains a number of methods to be
+    implemented, but only the methods decorated with ``@abstractmethod`` are required to be implemented. In order to
+    make use of a broker module, add the path to ``TOM_ALERT_CLASSES`` in your ``settings.py``.
+
+    For an implementation example, please see
+    https://github.com/TOMToolkit/tom_base/blob/master/tom_alerts/brokers/mars.py
+    """
 
     @abstractmethod
     def fetch_alerts(self, parameters):
@@ -133,6 +156,9 @@ class GenericBroker(ABC):
         This method takes in the query parameters needed to filter
         alerts for a broker and makes the GET query to the broker
         endpoint.
+
+        :param parameters: JSON string of query parameters
+        :type parameters: str
         """
         pass
 
@@ -140,6 +166,9 @@ class GenericBroker(ABC):
         """
         This method takes an alert id and retrieves the specific
         alert data from the given broker.
+
+        :param id: Broker-specific id corresponding with the desired alert
+        :type id: str
         """
         pass
 
@@ -147,24 +176,45 @@ class GenericBroker(ABC):
         """
         Retrieves and creates records for any reduced data provided
         by a specific broker. Updates existing data if it has changed.
+
+        :param target: ``Target`` object that was previously created from a ``BrokerQuery`` alert
+        :type target: Target
+
+        :param alert: alert data from a particular ``BrokerQuery``
+        :type alert: str
         """
         pass
 
     def to_target(self, alert):
         """
-        Creates Target object from the broker-specific alert data.
+        Creates ``Target`` object from the broker-specific alert data.
+
+        :param alert: alert data from a particular ``BrokerQuery``
+        :type alert: str
         """
         pass
 
     @abstractmethod
     def to_generic_alert(self, alert):
         """
-        This method creates a GenericAlert object from the broker-specific
-        alert data for use outside of the implementation of the GenericBroker.
+        This method creates a ``GenericAlert`` object from the broker-specific
+        alert data for use outside of the implementation of the ``GenericBroker``.
+
+        :param alert: alert data from a particular ``BrokerQuery``
+        :type alert: str
         """
         pass
 
     def fetch_and_save_all(self, parameters):
+        """
+        Gets all alerts using a particular ``BrokerQuery`` and creates a ``Target`` from each one.
+
+        :param parameters: JSON string of query parameters
+        :type parameters: str
+
+        :returns: list of ``Target`` objects
+        :rtype: list
+        """
         targets = []
         for alert in self.fetch_alerts(parameters):
             generic_alert = self.to_generic_alert(alert)
