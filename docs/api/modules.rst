@@ -7,7 +7,7 @@ API Documentation
 =================
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 3
   :includehidden:
 
   tom_alerts/index

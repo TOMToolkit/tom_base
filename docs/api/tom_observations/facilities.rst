@@ -1,6 +1,8 @@
 Facilities
 ==========
 
+# TODO Fix toctree
+
 *******************
 Base Facility Class
 *******************
@@ -13,7 +15,8 @@ Base Facility Class
 Gemini
 ******
 
-
+.. automodule:: tom_observations.facilities.gemini
+    :members:
 
 ***********************
 Las Cumbres Observatory

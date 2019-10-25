@@ -413,6 +413,11 @@ class GEMObservationForm(GenericObservationForm):
 
 
 class GEMFacility(GenericObservationFacility):
+    """
+    The ``GEMFacility`` is the interface to the Gemini Telescope. For information regarding Gemini observing and the
+    available parameters, please see https://www.gemini.edu/sciops/observing-gemini.
+    """
+
     name = 'GEM'
     observation_types = [('OBSERVATION', 'Gemini Observation')]
 

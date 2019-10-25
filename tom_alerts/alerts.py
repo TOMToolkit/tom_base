@@ -22,8 +22,8 @@ DEFAULT_ALERT_CLASSES = [
 
 def get_service_classes():
     """
-    Gets the broker classes available to this TOM as specified in ``settings.py``. If none are specified, returns the
-    default set.
+    Gets the broker classes available to this TOM as specified by ``TOM_ALERT_CLASSES`` in ``settings.py``. If none are
+    specified, returns the default set.
 
     :returns: dict of broker classes, with keys being the name of the broker and values being the broker class
     :rtype: dict
@@ -142,7 +142,7 @@ class GenericQueryForm(forms.Form):
 
 class GenericBroker(ABC):
     """
-    The `GenericBroker` provides an interface for implementing a broker module. It contains a number of methods to be
+    The ``GenericBroker`` provides an interface for implementing a broker module. It contains a number of methods to be
     implemented, but only the methods decorated with ``@abstractmethod`` are required to be implemented. In order to
     make use of a broker module, add the path to ``TOM_ALERT_CLASSES`` in your ``settings.py``.
 
