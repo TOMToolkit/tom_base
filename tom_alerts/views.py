@@ -19,7 +19,7 @@ from tom_alerts.alerts import get_service_class, get_service_classes
 
 class BrokerQueryCreateView(LoginRequiredMixin, FormView):
     """
-    View for creating a new query to a broker.
+    View for creating a new query to a broker. Requires authentication.
     """
     template_name = 'tom_alerts/query_form.html'
 
@@ -78,6 +78,9 @@ class BrokerQueryCreateView(LoginRequiredMixin, FormView):
 
 
 class BrokerQueryUpdateView(LoginRequiredMixin, FormView):
+    """
+    View that handles the modification of a previously saved ``BrokerQuery``. Requires authentication.
+    """
     template_name = 'tom_alerts/query_form.html'
 
     def get_object(self):
@@ -133,7 +136,7 @@ class BrokerQueryUpdateView(LoginRequiredMixin, FormView):
 
 class BrokerQueryFilter(FilterSet):
     """
-    Defines the available fields for filtering the list of broker queries
+    Defines the available fields for filtering the list of broker queries.
     """
     broker = ChoiceFilter(
         choices=[(k, k) for k in get_service_classes().keys()]
@@ -167,7 +170,7 @@ class BrokerQueryListView(FilterView):
 
 class BrokerQueryDeleteView(LoginRequiredMixin, DeleteView):
     """
-    View that handles the deletion of a saved ``BrokerQuery``.
+    View that handles the deletion of a saved ``BrokerQuery``. Requires authentication.
     """
     model = BrokerQuery
     success_url = reverse_lazy('tom_alerts:list')
@@ -208,7 +211,7 @@ class RunQueryView(TemplateView):
 
 class CreateTargetFromAlertView(LoginRequiredMixin, View):
     """
-    View that handles the creation of ``Target`` objects from a ``BrokerQuery`` result.
+    View that handles the creation of ``Target`` objects from a ``BrokerQuery`` result. Requires authentication.
     """
 
     def post(self, request, *args, **kwargs):

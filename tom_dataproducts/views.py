@@ -37,8 +37,8 @@ class DataProductSaveView(LoginRequiredMixin, View):
     # TODO: Add note about authentication/authorization to all view classes
     def post(self, request, *args, **kwargs):
         """
-        Method that handles POST requests for the ``DataProductSaveView``. Gets the observation facility that created 
-        the data and saves the selected data products as ``DataProduct`` objects. Redirects to the 
+        Method that handles POST requests for the ``DataProductSaveView``. Gets the observation facility that created
+        the data and saves the selected data products as ``DataProduct`` objects. Redirects to the
         ``ObservationDetailView`` for the specific ``ObservationRecord``.
 
         :param request: Django POST request object
@@ -81,7 +81,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         """
-        Runs after ``DataProductUploadForm`` is validated. Saves each ``DataProduct`` and calls ``run_data_processor`` 
+        Runs after ``DataProductUploadForm`` is validated. Saves each ``DataProduct`` and calls ``run_data_processor``
         on each saved file. Redirects to the previous page.
         """
         target = form.cleaned_data['target']
@@ -154,7 +154,7 @@ class DataProductDeleteView(LoginRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         """
-        Method that handles DELETE requests for this view. First deletes all ``ReducedDatum`` objects associated with 
+        Method that handles DELETE requests for this view. First deletes all ``ReducedDatum`` objects associated with
         the ``DataProduct``, then deletes the ``DataProduct``.
         """
         ReducedDatum.objects.filter(data_product=self.get_object()).delete()
@@ -209,13 +209,13 @@ class DataProductListView(FilterView):
 
 class DataProductFeatureView(View):
     """
-    View that handles the featuring of ``DataProduct``s. A featured ``DataProduct`` is displayed on the 
+    View that handles the featuring of ``DataProduct``s. A featured ``DataProduct`` is displayed on the
     ``TargetDetailView``.
     """
     def get(self, request, *args, **kwargs):
         """
-        Method that handles the GET requests for this view. Sets all other ``DataProduct``s to unfeatured in the 
-        database, and sets the specified ``DataProduct`` to featured. Caches the featured image. Deletes previously 
+        Method that handles the GET requests for this view. Sets all other ``DataProduct``s to unfeatured in the
+        database, and sets the specified ``DataProduct`` to featured. Caches the featured image. Deletes previously
         featured images from the cache.
         """
         product_id = kwargs.get('pk', None)
@@ -252,7 +252,7 @@ class DataProductGroupDetailView(DetailView):
 
     def post(self, request, *args, **kwargs):
         """
-        Handles the POST request for this view. 
+        Handles the POST request for this view.
         """
         group = self.get_object()
         for product in request.POST.getlist('products'):
@@ -307,8 +307,8 @@ class DataProductGroupDataView(LoginRequiredMixin, FormView):
 
 class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
     """
-    View that handles the updating of reduced data tied to a ``DataProduct`` that was automatically ingested from a 
-    broker. Authentication required.
+    View that handles the updating of reduced data tied to a ``DataProduct`` that was automatically ingested from a
+    broker. Requires authentication.
     """
     def get(self, request, *args, **kwargs):
         target_id = request.GET.get('target_id', None)

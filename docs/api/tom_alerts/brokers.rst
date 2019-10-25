@@ -45,3 +45,11 @@ Scout
 
 .. automodule:: tom_alerts.brokers.scout
     :members:
+
+
+*********************
+Transient Name Server
+*********************
+
+.. automodule:: tom_alerts.brokers.tns
+    :members:
