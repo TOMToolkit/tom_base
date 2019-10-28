@@ -1,8 +1,6 @@
 Facilities
 ==========
 
-# TODO Fix toctree
-
 *******************
 Base Facility Class
 *******************
