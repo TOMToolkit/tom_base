@@ -184,8 +184,8 @@ class RunQueryView(TemplateView):
 
     def get_context_data(self, *args, **kwargs):
         """
-        Runs the ``fetch_alerts`` method specific to the given ``BrokerQuery`` and adds the matching alerts to the context
-        dictionary.
+        Runs the ``fetch_alerts`` method specific to the given ``BrokerQuery`` and adds the matching alerts to the
+        context dictionary.
 
         :returns: context
         :rtype: dict

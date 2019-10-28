@@ -31,7 +31,7 @@ class CatalogQueryView(FormView):
 
     def get_success_url(self):
         """
-        Redirects to the ``TargetCreateView``. Appends the target parameters to the URL as query parameters in order to 
+        Redirects to the ``TargetCreateView``. Appends the target parameters to the URL as query parameters in order to
         autofill the ``TargetCreateForm``, including any additional names returned from the query.
         """
         target_params = self.target.as_dict()

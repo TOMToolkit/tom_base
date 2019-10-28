@@ -11,8 +11,7 @@ class CatalogQueryForm(forms.Form):
 
     def get_target(self):
         """
-        Queries the specific catalog via the search term and returns a ``Target`` representation of 
-        the result.
+        Queries the specific catalog via the search term and returns a ``Target`` representation of the result.
 
         :returns: ``Target`` instance of the catalog query result
         :rtype: Target
