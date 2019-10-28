@@ -9,13 +9,13 @@ Programming Resources
 HTML
 ----
 
-`W3 Schools <https://www.w3schools.com/html/>`_ - Contains an excellent step-by-step tutorial, as well as a comprehensive tag reference.
+`W3 Schools HTML <https://www.w3schools.com/html/>`_ - Contains an excellent step-by-step tutorial, as well as a comprehensive tag reference.
 
 
 CSS
 ---
 
-`W3 Schools <https://www.w3schools.com/css/default.asp>`_ - Just like HTML, walks through a number of the common styling options and includes a comprehensive reference.
+`W3 Schools CSS <https://www.w3schools.com/css/default.asp>`_ - Just like HTML, walks through a number of the common styling options and includes a comprehensive reference.
 
 `Bootstrap <https://getbootstrap.com/docs/4.0/getting-started/introduction/>`_ - CSS framework used in much of the TOM Toolkit via a specific PyPi package. The site contains a tutorial on the built-in CSS styles available for use.
 

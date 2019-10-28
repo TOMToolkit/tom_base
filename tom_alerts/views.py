@@ -150,7 +150,7 @@ class BrokerQueryFilter(FilterSet):
 
 class BrokerQueryListView(FilterView):
     """
-    View that displays all saved ``BrokerQuery``s.
+    View that displays all saved ``BrokerQuery`` objects.
     """
     model = BrokerQuery
     template_name = 'tom_alerts/brokerquery_list.html'
@@ -217,8 +217,8 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         """
         Handles the POST requests to this view. Creates a ``Target`` for each alert sent in the POST. Redirects to the
-        ``TargetListView`` if multiple targets were created, and the ``TargetUpdateView`` if only one was created. Redirects
-        to the ``RunQueryView`` if no ``Target``s were successfully created.
+        ``TargetListView`` if multiple targets were created, and the ``TargetUpdateView`` if only one was created.
+        Redirects to the ``RunQueryView`` if no ``Target`` objects. were successfully created.
         """
         query_id = self.request.POST['query_id']
         broker_name = self.request.POST['broker']

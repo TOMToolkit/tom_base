@@ -154,8 +154,6 @@ class DataProcessor():
         matching the name of a valid facility in the TOM.
         # http://docs.astropy.org/en/stable/io/ascii/read.html
 
-        Parameters
-        ----------
         :param data_product: Spectroscopic DataProduct which will be processed into a Spectrum1D
         :type data_product: tom_dataproducts.models.DataProduct
 

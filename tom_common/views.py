@@ -41,9 +41,9 @@ class GroupUpdateView(SuperuserRequiredMixin, UpdateView):
 
     def get_initial(self, *args, **kwargs):
         """
-        Adds the ``User``s that are associated with this ``Group`` to the initial data.
+        Adds the ``User`` objects that are associated with this ``Group`` to the initial data.
 
-        :returns: list of ``User``s
+        :returns: list of users
         :rtype: QuerySet
         """
         initial = super().get_initial(*args, **kwargs)
@@ -53,7 +53,7 @@ class GroupUpdateView(SuperuserRequiredMixin, UpdateView):
 
 class UserListView(LoginRequiredMixin, ListView):
     """
-    View that handles display of the list of ``User``s. Requires authentication.
+    View that handles display of the list of ``User`` object. Requires authentication.
     """
     model = User
 

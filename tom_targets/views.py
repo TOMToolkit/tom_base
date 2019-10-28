@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.db import transaction
-from django.http import StreamingHttpResponse
+from django.http import QueryDict, StreamingHttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
@@ -31,7 +31,8 @@ from tom_targets.forms import (
 )
 from tom_targets.utils import import_targets, export_targets
 from tom_targets.filters import TargetFilter
-from tom_targets.groups import add_remove_from_grouping
+from tom_targets.groups import add_all_to_grouping, add_selected_to_grouping
+from tom_targets.groups import remove_all_from_grouping, remove_selected_from_grouping
 from tom_dataproducts.forms import DataProductUploadForm
 
 logger = logging.getLogger(__name__)
@@ -405,14 +406,36 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         """
-        Handles the POST requests to this view. Calls ``add_remove_from_grouping`` with the HTTPRequest and query
-        string and redirects to the ``TargetListView``.
+        Handles the POST requests to this view. Routes the information from the request and query parameters to the
+        appropriate utility method in ``groups.py``.
 
         :param request: the request object passed to this view
         :type request: HTTPRequest
         """
         query_string = request.POST.get('query_string', '')
-        add_remove_from_grouping(request, query_string)
+        grouping_id = request.POST.get('grouping')
+        filter_data = QueryDict(query_string)
+        try:
+            grouping_object = TargetList.objects.get(pk=grouping_id)
+        except Exception as e:
+            messages.error(request, 'Cannot find the target group with id={}; {}'.format(grouping_id, e))
+            return
+        if not request.user.has_perm('tom_targets.view_targetlist', grouping_object):
+            messages.error(request, 'Permission denied.')
+            return
+
+        if 'add' in request.POST:
+            if request.POST.get('isSelectAll') == 'True':
+                add_all_to_grouping(filter_data, grouping_object, request)
+            else:
+                targets_ids = request.POST.getlist('selected-target')
+                add_selected_to_grouping(targets_ids, grouping_object, request)
+        if 'remove' in request.POST:
+            if request.POST.get('isSelectAll') == 'True':
+                remove_all_from_grouping(filter_data, grouping_object, request)
+            else:
+                targets_ids = request.POST.getlist('selected-target')
+                remove_selected_from_grouping(targets_ids, grouping_object, request)
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 
 
