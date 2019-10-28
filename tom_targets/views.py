@@ -419,10 +419,11 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
             grouping_object = TargetList.objects.get(pk=grouping_id)
         except Exception as e:
             messages.error(request, 'Cannot find the target group with id={}; {}'.format(grouping_id, e))
-            return
+            return redirect(reverse('tom_targets:list') + '?' + query_string)
         if not request.user.has_perm('tom_targets.view_targetlist', grouping_object):
             messages.error(request, 'Permission denied.')
-            return
+            return redirect(reverse('tom_targets:list') + '?' + query_string)
+
 
         if 'add' in request.POST:
             if request.POST.get('isSelectAll') == 'True':
