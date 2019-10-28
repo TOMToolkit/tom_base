@@ -31,7 +31,7 @@ from tom_targets.forms import (
 )
 from tom_targets.utils import import_targets, export_targets
 from tom_targets.filters import TargetFilter
-from tom_targets.add_remove_from_grouping import add_remove_from_grouping
+from tom_targets.groups import add_remove_from_grouping
 from tom_dataproducts.forms import DataProductUploadForm
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 class TargetListView(PermissionListMixin, FilterView):
     """
-    View for listing targets in the TOM. Only shows targets that the user is authorized to view.
+    View for listing targets in the TOM. Only shows targets that the user is authorized to view. Requires authorization.
     """
     template_name = 'tom_targets/target_list.html'
     paginate_by = 25
@@ -68,7 +68,7 @@ class TargetListView(PermissionListMixin, FilterView):
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
     """
-    View for creating a Target.
+    View for creating a Target. Requires authentication.
     """
 
     model = Target
@@ -194,11 +194,20 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
 
 
 class TargetUpdateView(PermissionRequiredMixin, UpdateView):
+    """
+    View that handles updating a target. Requires authorization.
+    """
     permission_required = 'tom_targets.change_target'
     model = Target
     fields = '__all__'
 
     def get_context_data(self, **kwargs):
+        """
+        Adds formset for ``TargetName`` and ``TargetExtra`` to the context.
+
+        :returns: context object
+        :rtype: dict
+        """
         extra_field_names = [extra['name'] for extra in settings.EXTRA_FIELDS]
         context = super().get_context_data(**kwargs)
         context['names_form'] = TargetNamesFormset(instance=self.object)
@@ -210,6 +219,16 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
 
     @transaction.atomic
     def form_valid(self, form):
+        """
+        Runs after form validation. Validates and saves the ``TargetExtra`` and ``TargetName`` formsets, then calls the
+        superclass implementation of ``form_valid``, which saves the ``Target``. If any forms are invalid, rolls back
+        the changes.
+
+        Saving is done in this order to ensure that new names/extras are available in the ``target_post_save`` hook.
+
+        :param form: Form data for target update
+        :type form: subclass of TargetCreateForm
+        """
         extra = TargetExtraFormset(self.request.POST, instance=self.object)
         names = TargetNamesFormset(self.request.POST, instance=self.object)
         if extra.is_valid() and names.is_valid():
@@ -225,20 +244,46 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         return redirect(self.get_success_url())
 
     def get_queryset(self, *args, **kwargs):
+        """
+        Returns the queryset that will be used to look up the Target by limiting the result to targets that the user is
+        authorized to modify.
+
+        :returns: Set of targets
+        :rtype: QuerySet
+        """
         return get_objects_for_user(self.request.user, 'tom_targets.change_target')
 
     def get_form_class(self):
+        """
+        Return the form class to use in this view.
+
+        :returns: form class for target update
+        :rtype: subclass of TargetCreateForm
+        """
         if self.object.type == Target.SIDEREAL:
             return SiderealTargetCreateForm
         elif self.object.type == Target.NON_SIDEREAL:
             return NonSiderealTargetCreateForm
 
     def get_initial(self):
+        """
+        Returns the initial data to use for forms on this view. For the ``TargetUpdateView``, adds the groups that the
+        target is a member of.
+
+        :returns:
+        :rtype: dict
+        """
         initial = super().get_initial()
         initial['groups'] = get_groups_with_perms(self.get_object())
         return initial
 
     def get_form(self, *args, **kwargs):
+        """
+        Gets an instance of the ``TargetCreateForm`` and populates it with the groups available to the current user.
+
+        :returns: instance of creation form
+        :rtype: subclass of TargetCreateForm
+        """
         form = super().get_form(*args, **kwargs)
         if self.request.user.is_superuser:
             form.fields['groups'].queryset = Group.objects.all()
@@ -249,7 +294,7 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
 
 class TargetDeleteView(PermissionRequiredMixin, DeleteView):
     """
-    View for deleting a target.
+    View for deleting a target. Requires authorization.
     """
     permission_required = 'tom_targets.delete_target'
     success_url = reverse_lazy('targets:list')
@@ -257,10 +302,19 @@ class TargetDeleteView(PermissionRequiredMixin, DeleteView):
 
 
 class TargetDetailView(PermissionRequiredMixin, DetailView):
+    """
+    View that handles the display of the target details. Requires authorization.
+    """
     permission_required = 'tom_targets.view_target'
     model = Target
 
     def get_context_data(self, *args, **kwargs):
+        """
+        Adds the ``DataProductUploadForm`` to the context and prepopulates the hidden fields.
+
+        :returns: context object
+        :rtype: dict
+        """
         context = super().get_context_data(*args, **kwargs)
         data_product_upload_form = DataProductUploadForm(
             initial={
@@ -272,6 +326,14 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
         return context
 
     def get(self, request, *args, **kwargs):
+        """
+        Handles the GET requests to this view. If update_status is passed into the query parameters, calls the
+        updatestatus management command to query for new statuses for ``ObservationRecord`` objects associated with this
+        target.
+
+        :param request: the request object passed to this view
+        :type request: HTTPRequest
+        """
         update_status = request.GET.get('update_status', False)
         if update_status:
             if not request.user.is_authenticated:
@@ -289,9 +351,18 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
 
 
 class TargetImportView(LoginRequiredMixin, TemplateView):
+    """
+    View that handles the import of targets from a CSV. Requires authentication.
+    """
     template_name = 'tom_targets/target_import.html'
 
     def post(self, request):
+        """
+        Handles the POST requests to this view. Creates a StringIO object and passes it to ``import_targets``.
+
+        :param request: the request object passed to this view
+        :type request: HTTPRequest
+        """
         csv_file = request.FILES['target_csv']
         csv_stream = StringIO(csv_file.read().decode('utf-8'), newline=None)
         result = import_targets(csv_stream)
@@ -305,7 +376,19 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
 
 
 class TargetExportView(TargetListView):
+    """
+    View that handles the export of targets to a CSV. Only exports selected targets.
+    """
     def render_to_response(self, context, **response_kwargs):
+        """
+        Returns a response containing the exported CSV of selected targets.
+
+        :param context: Context object for this view
+        :type context: dict
+
+        :returns: response class with CSV
+        :rtype: StreamingHttpResponse
+        """
         qs = context['filter'].qs.values()
         file_buffer = export_targets(qs)
         file_buffer.seek(0)  # goto the beginning of the buffer
@@ -316,36 +399,57 @@ class TargetExportView(TargetListView):
 
 
 class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
+    """
+    View that handles addition and removal of targets to target groups. Requires authentication.
+    """
 
     def post(self, request, *args, **kwargs):
+        """
+        Handles the POST requests to this view. Calls ``add_remove_from_grouping`` with the HTTPRequest and query
+        string and redirects to the ``TargetListView``.
+
+        :param request: the request object passed to this view
+        :type request: HTTPRequest
+        """
         query_string = request.POST.get('query_string', '')
         add_remove_from_grouping(request, query_string)
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 
 
 class TargetGroupingView(PermissionListMixin, ListView):
+    """
+    View that handles the display of ``TargetList`` objects, also known as target groups. Requires authorization.
+    """
     permission_required = 'tom_targets.view_targetlist'
     template_name = 'tom_targets/target_grouping.html'
     model = TargetList
     paginate_by = 25
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return context
-
 
 class TargetGroupingDeleteView(PermissionRequiredMixin, DeleteView):
+    """
+    View that handles the deletion of ``TargetList`` objects, also known as target groups. Requires authorization.
+    """
     permission_required = 'tom_targets.delete_targetlist'
     model = TargetList
     success_url = reverse_lazy('targets:targetgrouping')
 
 
 class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
+    """
+    View that handles the creation of ``TargetList`` objects, also known as target groups. Requires authentication.
+    """
     model = TargetList
     fields = ['name']
     success_url = reverse_lazy('targets:targetgrouping')
 
     def form_valid(self, form):
+        """
+        Runs after form validation. Saves the target group and assigns the user's permissions to the group.
+
+        :param form: Form data for target creation
+        :type form: django.forms.ModelForm
+        """
         obj = form.save(commit=False)
         obj.save()
         assign_perm('tom_targets.view_targetlist', self.request.user, obj)
