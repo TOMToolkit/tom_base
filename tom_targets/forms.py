@@ -98,13 +98,13 @@ class TargetForm(forms.ModelForm):
 
 class SiderealTargetCreateForm(TargetForm):
     ra = CoordinateField(required=True, label='Right Ascension', c_type='ra',
-                         help_text='Right Ascension, in decimal degrees or sexagesimal hours. See ' \
-                                   ' https://docs.astropy.org/en/stable/api/astropy.coordinates.Angle.html for ' \
+                         help_text='Right Ascension, in decimal degrees or sexagesimal hours. See '
+                                   'https://docs.astropy.org/en/stable/api/astropy.coordinates.Angle.html for '
                                    'supported sexagesimal inputs.')
     dec = CoordinateField(required=True, label='Declination', c_type='dec',
-                          help_text='Declination, in decimal or sexagesimal degrees. See ' \
-                                   ' https://docs.astropy.org/en/stable/api/astropy.coordinates.Angle.html for ' \
-                                   'supported sexagesimal inputs.')
+                          help_text='Declination, in decimal or sexagesimal degrees. See '
+                                    ' https://docs.astropy.org/en/stable/api/astropy.coordinates.Angle.html for '
+                                    'supported sexagesimal inputs.')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
