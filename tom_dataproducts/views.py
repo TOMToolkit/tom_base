@@ -71,7 +71,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             target = observation_record.target
         else:
             observation_record = None
-        tag = form.cleaned_data['tag']
+        dp_type = form.cleaned_data['data_product_type']
         data_product_files = self.request.FILES.getlist('files')
         successful_uploads = []
         for f in data_product_files:
@@ -80,7 +80,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
                 observation_record=observation_record,
                 data=f,
                 product_id=None,
-                tag=tag
+                data_product_type=dp_type
             )
             dp.save()
             try:
@@ -157,7 +157,7 @@ class DataProductFeatureView(View):
         try:
             current_featured = DataProduct.objects.filter(
                 featured=True,
-                tag=product.tag,
+                data_product_type=product.data_product_type,
                 target=product.target
             )
             for featured_image in current_featured:

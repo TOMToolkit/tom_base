@@ -187,6 +187,20 @@ FACILITIES = {
     }
 }
 
+# Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
+# longer be valid, and may cause issues unless the offending records are modified.
+DATA_PRODUCT_TYPES = {
+    'photometry': ('photometry', 'Photometry'),
+    'fits_file': ('fits_file', 'FITS File'),
+    'spectroscopy': ('spectroscopy', 'Spectroscopy'),
+    'image_file': ('image_file', 'Image File')
+}
+
+DATA_PROCESSORS = {
+    'photometry': 'tom_dataproducts.processors.photometry_processor.PhotometryProcessor',
+    'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
+}
+
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility'

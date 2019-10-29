@@ -15,14 +15,14 @@ anything. A value of **LOCKED** requires all users to login before viewing any
 page. Use the [**OPEN_URLS**](#open_urls) setting for adding exemptions.
 
 
-### [DATA_TYPES](#data_types)
+### [DATA_PRODUCT_TYPES](#data_types)
 
 Default:
 
-    (
-        ('SPECTROSCOPY', 'Spectroscopy'),
-        ('PHOTOMETRY', 'Photometry')
-    )
+    {
+        'spectroscopy': ('spectroscopy', 'Spectroscopy'),
+        'photometry': ('photometry', 'Photometry')
+    }
 
 A list of machine readable, human readable tuples which determine the choices
 available to categorize reduced data.

@@ -20,7 +20,7 @@
           <th>Target</th>
           <th>Observation</th>
           <th>Groups</th>
-          <th>Tag</th>
+          <th>Type</th>
           <th>Thumbnail</th>
         </tr>
       </thead>
@@ -40,8 +40,8 @@
             {% endfor %}
           </td>
           <td>
-            {% if product.tag %}
-              {{ product.get_tag_display }}
+            {% if product.data_product_type %}
+              {{ product.get_type_display }}
             {% endif %}
           </a></td>
           {% if product.get_file_extension == '.fz' or product.get_file_extension == '.fits' %}

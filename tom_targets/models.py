@@ -275,10 +275,10 @@ class Target(models.Model):
         Gets the ``DataProduct`` associated with this ``Target`` that is a FITS file and is uniquely marked as
         "featured".
 
-        :returns: ``DataProduct`` with tag of ``fits_file`` and featured as ``True``
+        :returns: ``DataProduct`` with data_product_type of ``fits_file`` and featured as ``True``
         :rtype: DataProduct
         """
-        return self.dataproduct_set.filter(tag='fits_file', featured=True).first()
+        return self.dataproduct_set.filter(data_product_type='fits_file', featured=True).first()
 
     @property
     def names(self):
