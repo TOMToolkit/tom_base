@@ -11,4 +11,8 @@
       target: "{{ target.ra }} {{ target.dec }}",
       showGotoControl: false,
     });
+    var target_cat = A.catalog({name: '{{ target.name }}', sourceSize: 10, color: 'red'});
+    aladin.addCatalog(target_cat, {shape: 'circle'});
+    target_cat.addSources([A.marker({{ target.ra }}, {{ target.dec }}, 
+      {popupTitle: '{{ target.name }}'})]);
 </script>
