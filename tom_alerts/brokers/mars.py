@@ -211,7 +211,7 @@ class MARSBroker(GenericBroker):
             try:
                 target_datum = ReducedDatum.objects.filter(
                     target=target,
-                    data_type='PHOTOMETRY',
+                    data_type='photometry',
                     source_name=self.name).first()
                 if not target_datum:
                     return

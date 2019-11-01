@@ -109,7 +109,7 @@ class GenericObservationFacility(ABC):
 
         # Add any JPEG images created from DataProducts
         image_products = DataProduct.objects.filter(
-            observation_record_id=observation_record.id, tag='image_file'
+            observation_record_id=observation_record.id, data_product_type='image_file'
         )
         for product in image_products:
             products['saved'].append(product)

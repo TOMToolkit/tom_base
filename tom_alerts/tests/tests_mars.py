@@ -38,7 +38,7 @@ class TestMARSBrokerClass(TestCase):
             source_name='MARS',
             source_location=11053318,
             target=self.test_target,
-            data_type='PHOTOMETRY',
+            data_type='photometry',
             timestamp=timezone.now(),
             value=12
         )

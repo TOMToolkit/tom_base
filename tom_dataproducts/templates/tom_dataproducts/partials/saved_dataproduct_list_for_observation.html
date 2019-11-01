@@ -6,7 +6,7 @@
   <thead>
     <tr>
       <th>Filename</th>
-      <th>Tag</th>
+      <th>Type</th>
       <th>Created</th>
       <th>Delete</th>
     </tr>
@@ -16,8 +16,8 @@
     <tr>
       <td><a href="{{ product.data.url }}">{{ product.get_file_name }}</a></td>
       <td>
-        {% if product.tag %}
-          {{ product.get_tag_display }}
+        {% if product.data_product_type %}
+          {{ product.get_type_display }}
         {% endif %}
       </a></td>
       <td>{{ product.created }}</td>
