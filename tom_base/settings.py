@@ -184,7 +184,7 @@ FACILITIES = {
     'LCO': {
         'portal_url': 'https://observe.lco.global',
         'api_key': os.getenv('LCO_API_KEY', ''),
-    }
+    },
 }
 
 # Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no

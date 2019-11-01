@@ -59,9 +59,9 @@ class GenericObservationFacility(ABC):
     All facilities should inherit from  this class which
     provides some base functionality.
     In order to make use of a facility class, add the path to
-    TOM_FACILITY_CLASSES in your settings.py.
+    ``TOM_FACILITY_CLASSES`` in your ``settings.py``.
 
-    For an implementation example please see
+    For an implementation example, please see
     https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py
     """
 

@@ -4,5 +4,6 @@ Catalogs
 .. toctree::
   :maxdepth: 2
 
-  views
+  forms
   harvesters
+  views

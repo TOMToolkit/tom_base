@@ -7,6 +7,7 @@ Base Broker Class
 
 .. automodule:: tom_alerts.alerts
     :members:
+    :member-order: bysource
 
 
 ******
@@ -43,4 +44,12 @@ Scout
 *****
 
 .. automodule:: tom_alerts.brokers.scout
+    :members:
+
+
+*********************
+Transient Name Server
+*********************
+
+.. automodule:: tom_alerts.brokers.tns
     :members:

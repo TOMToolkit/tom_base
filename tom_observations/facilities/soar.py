@@ -86,6 +86,11 @@ class SOARSpectroscopyObservationForm(SOARBaseObservationForm, LCOSpectroscopyOb
 
 
 class SOARFacility(LCOFacility):
+    """
+    The ``SOARFacility`` is the interface to the SOAR Telescope. For information regarding SOAR observing and the
+    available parameters, please see http://www.ctio.noao.edu/soar/content/observing-soar.
+    """
+
     name = 'SOAR'
     observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy')]
     # The SITES dictionary is used to calculate visibility intervals in the

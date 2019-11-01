@@ -15,47 +15,83 @@ from tom_common.mixins import SuperuserRequiredMixin
 
 
 class GroupCreateView(SuperuserRequiredMixin, CreateView):
+    """
+    View that handles creation of a user ``Group``. Requires authorization.
+    """
     form_class = GroupForm
     model = Group
     success_url = reverse_lazy('user-list')
 
 
 class GroupDeleteView(SuperuserRequiredMixin, DeleteView):
+    """
+    View that handles deletion of a user ``Group``. Requires authorization.
+    """
     model = Group
     success_url = reverse_lazy('user-list')
 
 
 class GroupUpdateView(SuperuserRequiredMixin, UpdateView):
+    """
+    View that handles modification of a user ``Group``. Requires authorization.
+    """
     form_class = GroupForm
     model = Group
     success_url = reverse_lazy('user-list')
 
     def get_initial(self, *args, **kwargs):
+        """
+        Adds the ``User`` objects that are associated with this ``Group`` to the initial data.
+
+        :returns: list of users
+        :rtype: QuerySet
+        """
         initial = super().get_initial(*args, **kwargs)
         initial['users'] = self.get_object().user_set.all()
         return initial
 
 
 class UserListView(LoginRequiredMixin, ListView):
+    """
+    View that handles display of the list of ``User`` object. Requires authentication.
+    """
     model = User
 
     def get_context_data(self, *args, **kwargs):
+        """
+        Adds the list of ``Group``s, excluding the public ``Group``, to the context.
+
+        :returns: context dictionary
+        :rtype: dict
+        """
         context = super().get_context_data(*args, **kwargs)
         context['groups'] = Group.objects.all().exclude(name='Public')
         return context
 
 
 class UserDeleteView(SuperuserRequiredMixin, DeleteView):
+    """
+    View that handles deletion of a ``User``. Requires authorization.
+    """
     success_url = reverse_lazy('user-list')
     model = User
 
 
 class UserPasswordChangeView(SuperuserRequiredMixin, FormView):
+    """
+    View that handles modification of the password for a ``User``. Requires authorization.
+    """
     template_name = 'tom_common/change_user_password.html'
     success_url = reverse_lazy('user-list')
     form_class = ChangeUserPasswordForm
 
     def form_valid(self, form):
+        """
+        Called after form is validated. Updates the password for the current specified user.
+
+        :param form: Password submission form
+        :type form: django.forms.Form
+        """
         user = User.objects.get(pk=self.kwargs['pk'])
         user.set_password(form.cleaned_data['password'])
         user.save()
@@ -64,11 +100,20 @@ class UserPasswordChangeView(SuperuserRequiredMixin, FormView):
 
 
 class UserCreateView(SuperuserRequiredMixin, CreateView):
+    """
+    View that handles ``User`` creation. Requires authorization.
+    """
     template_name = 'tom_common/create_user.html'
     success_url = reverse_lazy('user-list')
     form_class = CustomUserCreationForm
 
     def form_valid(self, form):
+        """
+        Called after form is validated. Creates the ``User`` and adds them to the public ``Group``.
+
+        :param form: User creation form
+        :type form: django.forms.Form
+        """
         super().form_valid(form)
         group, _ = Group.objects.get_or_create(name='Public')
         group.user_set.add(self.object)
@@ -77,17 +122,34 @@ class UserCreateView(SuperuserRequiredMixin, CreateView):
 
 
 class UserUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    View that handles ``User`` modification. Requires authentication to call, and authorization to update.
+    """
     model = User
     template_name = 'tom_common/create_user.html'
     form_class = CustomUserCreationForm
 
     def get_success_url(self):
+        """
+        Returns the redirect URL for a successful update. If the current user is a superuser, returns the URL for the
+        user list. Otherwise, returns the URL for updating the current user.
+
+        :returns: URL for user list or update user
+        :rtype: str
+        """
         if self.request.user.is_superuser:
             return reverse_lazy('user-list')
         else:
             return reverse_lazy('user-update', kwargs={'pk': self.request.user.id})
 
     def get_form(self):
+        """
+        Gets the user update form and removes the password requirement. Removes the groups field if the user is not a
+        superuser.
+
+        :returns: Form used by this view
+        :rtype: CustomUserCreationForm
+        """
         form = super().get_form()
         form.fields['password1'].required = False
         form.fields['password2'].required = False
@@ -96,12 +158,22 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         return form
 
     def dispatch(self, *args, **kwargs):
+        """
+        Directs the class-based view to the correct method for the HTTP request method. Ensures that non-superusers
+        are not incorrectly updating the profiles of other users.
+        """
         if not self.request.user.is_superuser and self.request.user.id != self.kwargs['pk']:
             return redirect('user-update', self.request.user.id)
         else:
             return super().dispatch(*args, **kwargs)
 
     def form_valid(self, form):
+        """
+        Called after form is validated. Updates the ``User`` and the session hash to maintain login session.
+
+        :param form: User creation form
+        :type form: django.forms.Form
+        """
         super().form_valid(form)
         if self.get_object() == self.request.user:
             update_session_auth_hash(self.request, self.object)
@@ -110,9 +182,16 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
 
 
 class CommentDeleteView(LoginRequiredMixin, DeleteView):
+    """
+    View that handles deletion of a ``Comment``. Requires authentication to call, and authorization to delete.
+    """
     model = Comment
 
     def delete(self, request, *args, **kwargs):
+        """
+        Method that handles the DELETE request for a ``Comment``. Validates that the user either authored the comment or
+        is a superuser, then deletes the ``Comment``.
+        """
         if request.user == self.get_object().user or request.user.is_superuser:
             self.success_url = self.get_object().get_absolute_url()
             return super().delete(request, *args, **kwargs)

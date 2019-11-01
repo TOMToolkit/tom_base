@@ -4,7 +4,8 @@ Targets
 .. toctree::
   :maxdepth: 2
 
+  groups
   models
-  views
   templatetags
   utils
+  views

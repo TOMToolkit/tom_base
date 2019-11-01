@@ -5,6 +5,11 @@ from tom_catalogs.harvester import AbstractHarvester
 
 
 class NEDHarvester(AbstractHarvester):
+    """
+    The ``NEDHarvester`` is the interface to the NASA/IPAC Extragalactic Database. For information regarding the NED
+    catalog, please see https://ned.ipac.caltech.edu/ or https://astroquery.readthedocs.io/en/latest/ned/ned.html.
+    """
+
     name = 'NED'
 
     def query(self, term):

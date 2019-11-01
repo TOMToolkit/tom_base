@@ -73,6 +73,11 @@ class TNSForm(GenericQueryForm):
 
 
 class TNSBroker(GenericBroker):
+    """
+    The ``TNSBroker`` is the interface to the Transient Name Server. For information regarding the TNS, please see \
+    https://wis-tns.weizmann.ac.il/
+    """
+
     name = 'TNS'
     form = TNSForm
 

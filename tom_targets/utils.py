@@ -9,8 +9,14 @@ from io import StringIO
 # referenced https://www.codingforentrepreneurs.com/blog/django-queryset-to-csv-files-datasets/
 def export_targets(qs):
     """
-    This will export all the targets existing into a csv file in folder csvTargetFiles
+    Exports all the specified targets into a csv file in folder csvTargetFiles
     NOTE: This saves locally. To avoid this, create file buffer.
+
+    :param qs: List of targets to export
+    :type qs: QuerySet
+
+    :returns: String buffer of exported targets
+    :rtype: StringIO
     """
     qs_pk = [data['id'] for data in qs]
     data_list = list(qs)
@@ -43,6 +49,15 @@ def export_targets(qs):
 
 
 def import_targets(targets):
+    """
+    Imports a set of targets into the TOM and saves them to the database.
+
+    :param targets: String buffer of targets
+    :type targets: StringIO
+
+    :returns: dictionary of successfully imported targets, as well errors
+    :rtype: dict
+    """
     # TODO: Replace this with an in memory iterator
     targetreader = csv.DictReader(targets, dialect=csv.excel)
     targets = []

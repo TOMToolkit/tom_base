@@ -4,8 +4,8 @@ Observations
 .. toctree::
   :maxdepth: 2
 
-  models
-  views
-  templatetags
   facilities
+  models
+  templatetags
   utils
+  views

@@ -13,7 +13,8 @@ Base Facility Class
 Gemini
 ******
 
-
+.. automodule:: tom_observations.facilities.gemini
+    :members:
 
 ***********************
 Las Cumbres Observatory

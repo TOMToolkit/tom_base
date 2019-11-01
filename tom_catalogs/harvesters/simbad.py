@@ -4,6 +4,11 @@ from astroquery.simbad import Simbad
 
 
 class SimbadHarvester(AbstractHarvester):
+    """
+    The ``SimbadHarvester`` is the interface to the SIMBAD catalog. At present, it is only queryable by identifier. For
+    information regarding identifier format, please see http://simbad.u-strasbg.fr/simbad/sim-fid or
+    https://astroquery.readthedocs.io/en/latest/simbad/simbad.html.
+    """
     name = 'Simbad'
 
     def __init__(self, *args, **kwargs):

@@ -4,6 +4,12 @@ from tom_catalogs.harvester import AbstractHarvester
 
 
 class JPLHorizonsHarvester(AbstractHarvester):
+    """
+    The ``JPLHorizonsHarvester`` is the interface to the JPL Horizons catalog. For information regarding the JPL
+    Horizons catalog, please see https://ssd.jpl.nasa.gov/?horizons or
+    https://astroquery.readthedocs.io/en/latest/jplhorizons/jplhorizons.html.
+    """
+
     name = 'JPL Horizons'
 
     def query(self, term, location=None, start=None, end=None, step=None):

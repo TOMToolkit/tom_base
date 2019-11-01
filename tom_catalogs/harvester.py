@@ -17,13 +17,28 @@ class MissingDataException(Exception):
 
 
 class AbstractHarvester(object):
+    """
+    The ``AbstractHarvester`` provides an interface for implementing a harvester module to query catalogs.
+    """
     name = 'ABSTRACT_HARVESTER'
     catalog_data = {}
 
     def query(self, term):
+        """
+        Submits the specific query to the specified catalog.
+
+        :param term: Value to search for within the catalog.
+        :type term: str
+        """
         raise NotImplementedError
 
     def to_target(self):
+        """
+        Instantiates a ``Target`` object with the data from the catalog search result.
+
+        :returns: ``Target`` representation of the catalog search result
+        :rtype: Target
+        """
         if not self.catalog_data:
             raise MissingDataException('No catalog data. Did you call query()?')
         else:
@@ -31,6 +46,13 @@ class AbstractHarvester(object):
 
 
 def get_service_classes():
+    """
+    Gets the harvester classes available to this TOM as specified by ``TOM_HARVESTER_CLASSES`` in ``settings.py``. If
+    none are specified, returns the default set.
+
+    :returns: dict of harvester classes, with keys being the name of the catalog and values being the harvester class
+    :rtype: dict
+    """
     try:
         TOM_HARVESTER_CLASSES = settings.TOM_HARVESTER_CLASSES
     except AttributeError:

@@ -311,6 +311,11 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
 
 
 class LCOFacility(GenericObservationFacility):
+    """
+    The ``LCOFacility`` is the interface to the Las Cumbres Observatory Observation Portal. For information regarding
+    LCO observing and the available parameters, please see https://observe.lco.global/help/.
+    """
+
     name = 'LCO'
     observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy')]
     # The SITES dictionary is used to calculate visibility intervals in the
