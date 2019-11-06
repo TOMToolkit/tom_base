@@ -1,8 +1,7 @@
 from django.conf import settings
-from django.db.models import ExpressionWrapper, Q, F, FloatField
-from django.db.models.functions.math import ACos, Cos, Pi, Sin
+from django.db.models import ExpressionWrapper, F, FloatField, Q
+from django.db.models.functions.math import ACos, Cos, Sin
 import django_filters
-import numpy as np
 
 from tom_targets.models import Target, TargetList
 
@@ -59,10 +58,24 @@ class TargetFilter(django_filters.FilterSet):
         return queryset.filter(Q(name__icontains=value) | Q(aliases__name__icontains=value)).distinct()
 
     cone_search = django_filters.CharFilter(method='filter_cone_search', label='Cone Search',
-                                            help_text='RA, Dec, Search Radius')
+                                            help_text='RA, Dec, Search Radius (degrees)')
+
+    target_cone_search = django_filters.CharFilter(method='filter_cone_search', label='Cone Search (Target)',
+                                                   help_text='Target Name, Search Radius (degrees)')
 
     def filter_cone_search(self, queryset, name, value):
-        ra, dec, radius = value.split(',')
+        if name == 'cone_search':
+            ra, dec, radius = value.split(',')
+        elif name == 'target_cone_search':
+            target_name, radius = value.split(',')
+            targets = Target.objects.filter(
+                Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name)
+            ).distinct()
+            if len(targets) == 1:
+                ra = targets[0].ra
+                dec = targets[0].dec
+            else:
+                return queryset.filter(name=None)
 
         half_pi = 90
 
@@ -74,6 +87,9 @@ class TargetFilter(django_filters.FilterSet):
         )
 
         return queryset.annotate(separation=separation).filter(separation__lte=radius)
+
+    def filter_target_cone_search(self, queryset, name, value):
+        return queryset
 
     # hide target grouping list if user not logged in
     def get_target_list_queryset(request):
