@@ -1,6 +1,10 @@
-import django_filters
-from django.db.models import Q
+from astropy.coordinates import Angle, SkyCoord
+from astropy import units as u
 from django.conf import settings
+from django.db.models import ExpressionWrapper, Q, F, FloatField
+from django.db.models.functions.math import ACos, Cos, Radians, Sin
+import django_filters
+import numpy as np
 
 from tom_targets.models import Target, TargetList
 
@@ -56,6 +60,23 @@ class TargetFilter(django_filters.FilterSet):
     def filter_name(self, queryset, name, value):
         return queryset.filter(Q(name__icontains=value) | Q(aliases__name__icontains=value)).distinct()
 
+    cone_search = django_filters.CharFilter(method='filter_cone_search', label='Cone Search',
+                                            help_text='RA, Dec, Search Radius')
+
+    def filter_cone_search(self, queryset, name, value):
+        ra, dec, radius = value.split(',')
+
+        half_pi = np.pi/2
+
+        separation = ExpressionWrapper(
+            ACos(
+                (Cos(half_pi - float(dec)) * Cos(half_pi - F('dec'))) +
+                (Sin(half_pi - float(dec)) * Sin(half_pi - F('dec')) * Cos(float(ra) - F('ra')))
+            ), FloatField()
+        )
+
+        return queryset.annotate(separation=separation).filter(separation__lte=radius)
+
     # hide target grouping list if user not logged in
     def get_target_list_queryset(request):
         if request.user.is_authenticated:
@@ -67,5 +88,4 @@ class TargetFilter(django_filters.FilterSet):
 
     class Meta:
         model = Target
-        fields = ['type', 'name', 'key', 'value']
-        fields = ['type', 'name']
+        fields = ['type', 'name', 'key', 'value', 'cone_search', 'targetlist__name']
