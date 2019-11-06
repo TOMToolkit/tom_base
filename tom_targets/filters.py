@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db.models import ExpressionWrapper, Q, F, FloatField
-from django.db.models.functions.math import ACos, Cos, Sin
+from django.db.models.functions.math import ACos, Cos, Pi, Sin
 import django_filters
 import numpy as np
 
@@ -64,7 +64,7 @@ class TargetFilter(django_filters.FilterSet):
     def filter_cone_search(self, queryset, name, value):
         ra, dec, radius = value.split(',')
 
-        half_pi = np.pi/2
+        half_pi = 90
 
         separation = ExpressionWrapper(
             ACos(
