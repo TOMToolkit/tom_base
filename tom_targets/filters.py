@@ -1,8 +1,6 @@
-from astropy.coordinates import Angle, SkyCoord
-from astropy import units as u
 from django.conf import settings
 from django.db.models import ExpressionWrapper, Q, F, FloatField
-from django.db.models.functions.math import ACos, Cos, Radians, Sin
+from django.db.models.functions.math import ACos, Cos, Sin
 import django_filters
 import numpy as np
 
