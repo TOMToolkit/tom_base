@@ -1,15 +1,17 @@
-from tom_catalogs.harvester import AbstractHarvester
-
+import json
 import os
 import requests
-import json
-from collections import OrderedDict
+
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from collections import OrderedDict
+from django.conf import settings
+
+from tom_catalogs.harvester import AbstractHarvester
 
 
 def get(term):
-    api_key = os.environ['TNS_APIKEY']
+    api_key = settings.BROKER_CREDENTIALS['TNS_APIKEY']
     url = "https://wis-tns.weizmann.ac.il/api/get"
 
     try:
