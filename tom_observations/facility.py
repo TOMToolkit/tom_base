@@ -59,9 +59,9 @@ class GenericObservationFacility(ABC):
     All facilities should inherit from  this class which
     provides some base functionality.
     In order to make use of a facility class, add the path to
-    TOM_FACILITY_CLASSES in your settings.py.
+    ``TOM_FACILITY_CLASSES`` in your ``settings.py``.
 
-    For an implementation example please see
+    For an implementation example, please see
     https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py
     """
 
@@ -109,7 +109,7 @@ class GenericObservationFacility(ABC):
 
         # Add any JPEG images created from DataProducts
         image_products = DataProduct.objects.filter(
-            observation_record_id=observation_record.id, tag='image_file'
+            observation_record_id=observation_record.id, data_product_type='image_file'
         )
         for product in image_products:
             products['saved'].append(product)

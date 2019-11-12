@@ -67,11 +67,11 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # autodoc_mock_imports = ['rise-set']
 autodoc_inherit_docstrings = False
-# autodoc_default_options = {
-#     'members':         True,
-#     'member-order':    'bysource',
-#     'special-members': '__init__',
-# }
+autodoc_default_options = {
+    # 'members':         True,
+    'member-order':    'bysource',
+    # 'special-members': '__init__',
+}
 autoclass_content = 'both'
 
 # -- Options for HTML output -------------------------------------------------

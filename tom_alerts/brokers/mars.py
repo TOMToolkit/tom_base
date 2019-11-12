@@ -8,7 +8,7 @@ from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from astropy.time import Time, TimezoneInfo
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
-from tom_targets.models import Target, TargetExtra
+from tom_targets.models import Target
 from tom_dataproducts.models import ReducedDatum
 
 MARS_URL = 'https://mars.lco.global'
@@ -169,6 +169,11 @@ class MARSQueryForm(GenericQueryForm):
 
 
 class MARSBroker(GenericBroker):
+    """
+    The ``MARSBroker`` is the interface to the MARS alert broker. For information regarding MARS and its available
+    filters for querying, please see https://mars.lco.global/help/.
+    """
+
     name = 'MARS'
     form = MARSQueryForm
 
@@ -206,7 +211,7 @@ class MARSBroker(GenericBroker):
             try:
                 target_datum = ReducedDatum.objects.filter(
                     target=target,
-                    data_type='PHOTOMETRY',
+                    data_type='photometry',
                     source_name=self.name).first()
                 if not target_datum:
                     return

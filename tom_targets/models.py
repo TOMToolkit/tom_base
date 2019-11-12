@@ -8,7 +8,6 @@ from datetime import datetime
 
 from tom_common.hooks import run_hook
 
-
 GLOBAL_TARGET_FIELDS = ['name', 'type']
 
 SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
@@ -253,7 +252,8 @@ class Target(models.Model):
             name, _ = TargetName.objects.get_or_create(target=self, name=name)
             name.save()
 
-        run_hook('target_post_save', target=self, created=created)
+        if not created:
+            run_hook('target_post_save', target=self, created=created)
 
     def validate_unique(self, *args, **kwargs):
         """
@@ -275,10 +275,10 @@ class Target(models.Model):
         Gets the ``DataProduct`` associated with this ``Target`` that is a FITS file and is uniquely marked as
         "featured".
 
-        :returns: ``DataProduct`` with tag of ``fits_file`` and featured as ``True``
+        :returns: ``DataProduct`` with data_product_type of ``fits_file`` and featured as ``True``
         :rtype: DataProduct
         """
-        return self.dataproduct_set.filter(tag='fits_file', featured=True).first()
+        return self.dataproduct_set.filter(data_product_type='fits_file', featured=True).first()
 
     @property
     def names(self):

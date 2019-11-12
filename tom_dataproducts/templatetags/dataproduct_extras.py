@@ -1,14 +1,15 @@
 import json
 
 from django import template
+from django.conf import settings
 from django.core.paginator import Paginator
 from datetime import datetime
 
 from plotly import offline
 import plotly.graph_objs as go
 
-from tom_dataproducts.models import DataProduct, ReducedDatum, PHOTOMETRY, SPECTROSCOPY
-from tom_dataproducts.data_serializers import SpectrumSerializer
+from tom_dataproducts.models import DataProduct, ReducedDatum
+from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 
 register = template.Library()
 
@@ -69,7 +70,7 @@ def photometry_for_target(target):
     following keys in the JSON representation: magnitude, error, filter
     """
     photometry_data = {}
-    for datum in ReducedDatum.objects.filter(target=target, data_type=PHOTOMETRY[0]):
+    for datum in ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0]):
         values = json.loads(datum.value)
         photometry_data.setdefault(values['filter'], {})
         photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
@@ -103,7 +104,8 @@ def spectroscopy_for_target(target, dataproduct=None):
     Renders a spectroscopic plot for a ``Target``. If a ``DataProduct`` is specified, it will only render a plot with
     that spectrum.
     """
-    spectral_dataproducts = DataProduct.objects.filter(target=target, tag=SPECTROSCOPY[0])
+    spectral_dataproducts = DataProduct.objects.filter(target=target,
+                                                       data_product_type=settings.DATA_PRODUCT_TYPES['spectroscopy'][0])
     if dataproduct:
         spectral_dataproducts = DataProduct.objects.get(data_product=dataproduct)
 

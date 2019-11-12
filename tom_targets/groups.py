@@ -1,10 +1,22 @@
 from .filters import TargetFilter
-from .models import Target, TargetList
+from .models import Target
 from django.contrib import messages
-from django.http import QueryDict
 
 
 def add_all_to_grouping(filter_data, grouping_object, request):
+    """
+    Adds all targets displayed by a particular filter to a ``TargetList``. Successes, warnings, and errors result in
+    messages being added to the request with the appropriate message level.
+
+    :param filter_data: target filter data passed to the calling view
+    :type filter_data: django.http.QueryDict
+
+    :param grouping_object: ``TargetList`` to add targets to
+    :type grouping_object: TargetList
+
+    :param request: request object passed to the calling view
+    :type request: HTTPRequest
+    """
     success_targets = []
     warning_targets = []  # targets that are already in the grouping
     failure_targets = []
@@ -36,6 +48,19 @@ def add_all_to_grouping(filter_data, grouping_object, request):
 
 
 def add_selected_to_grouping(targets_ids, grouping_object, request):
+    """
+    Adds all selected targets to a ``TargetList``. Successes, warnings, and errors result in messages being added to the
+    request with the appropriate message level.
+
+    :param targets_ids: list of selected targets
+    :type targets_ids: list
+
+    :param grouping_object: ``TargetList`` to add targets to
+    :type grouping_object: TargetList
+
+    :param request: request object passed to the calling view
+    :type request: HTTPRequest
+    """
     success_targets = []
     warning_targets = []
     failure_targets = []
@@ -62,6 +87,19 @@ def add_selected_to_grouping(targets_ids, grouping_object, request):
 
 
 def remove_all_from_grouping(filter_data, grouping_object, request):
+    """
+    Removes all targets displayed by a particular filter from a ``TargetList``. Successes, warnings, and errors result
+    in messages being added to the request with the appropriate message level.
+
+    :param filter_data: target filter data passed to the calling view
+    :type filter_data: django.http.QueryDict
+
+    :param grouping_object: ``TargetList`` to remove targets from
+    :type grouping_object: TargetList
+
+    :param request: request object passed to the calling view
+    :type request: HTTPRequest
+    """
     success_targets = []
     warning_targets = []
     failure_targets = []
@@ -93,6 +131,19 @@ def remove_all_from_grouping(filter_data, grouping_object, request):
 
 
 def remove_selected_from_grouping(targets_ids, grouping_object, request):
+    """
+    Removes all targets displayed by a particular filter from a ``TargetList``. Successes, warnings, and errors result
+    in messages being added to the request with the appropriate message level.
+
+    :param targets_ids: list of selected targets
+    :type targets_ids: list
+
+    :param grouping_object: ``TargetList`` to remove targets from
+    :type grouping_object: TargetList
+
+    :param request: request object passed to the calling view
+    :type request: HTTPRequest
+    """
     success_targets = []
     warning_targets = []
     failure_targets = []
@@ -116,29 +167,3 @@ def remove_selected_from_grouping(targets_ids, grouping_object, request):
     for failure_target in failure_targets:
         messages.error(request, "Failed to remove target with id={} from group '{}'; {}"
                                 .format(failure_target['id'], grouping_object.name, failure_target['error']))
-
-
-def add_remove_from_grouping(request, query_string):
-    grouping_id = request.POST.get('grouping')
-    filter_data = QueryDict(query_string)
-    try:
-        grouping_object = TargetList.objects.get(pk=grouping_id)
-    except Exception as e:
-        messages.error(request, 'Cannot find the target group with id={}; {}'.format(grouping_id, e))
-        return
-    if not request.user.has_perm('tom_targets.view_targetlist', grouping_object):
-        messages.error(request, 'Permission denied.')
-        return
-
-    if 'add' in request.POST:
-        if request.POST.get('isSelectAll') == 'True':
-            add_all_to_grouping(filter_data, grouping_object, request)
-        else:
-            targets_ids = request.POST.getlist('selected-target')
-            add_selected_to_grouping(targets_ids, grouping_object, request)
-    if 'remove' in request.POST:
-        if request.POST.get('isSelectAll') == 'True':
-            remove_all_from_grouping(filter_data, grouping_object, request)
-        else:
-            targets_ids = request.POST.getlist('selected-target')
-            remove_selected_from_grouping(targets_ids, grouping_object, request)

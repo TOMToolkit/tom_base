@@ -4,6 +4,12 @@ from astroquery.mpc import MPC
 
 
 class MPCHarvester(AbstractHarvester):
+    """
+    The ``MPCHarvester`` is the interface to the Minor Planet Center catalog. For information regarding the Minor Planet
+    Center catalog, please see https://minorplanetcenter.net/ or
+    https://astroquery.readthedocs.io/en/latest/mpc/mpc.html.
+    """
+
     name = 'MPC'
 
     def query(self, term):

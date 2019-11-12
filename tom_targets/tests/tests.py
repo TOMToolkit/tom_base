@@ -377,17 +377,17 @@ class TestTargetImport(TestCase):
 
 class TestTargetSearch(TestCase):
     def setUp(self):
-        self.st = SiderealTargetFactory.create(name='1337target')
+        self.st = SiderealTargetFactory.create(name='1337target', ra=83.8221, dec=-5.3911)
         self.st_name = TargetNameFactory.create(name='M42', target=self.st)
         self.st_name2 = TargetNameFactory.create(name='Messier 42', target=self.st)
 
-        self.target2 = SiderealTargetFactory.create(name='Target1309')
+        self.target2 = SiderealTargetFactory.create(name='Target1309', ra=50, dec=-20)
         self.target2_name = TargetNameFactory.create(name='NGC1309', target=self.target2)
         self.target2_name2 = TargetNameFactory.create(name='PGC 012626', target=self.target2)
 
-        user = User.objects.create(username='testuser')
-        self.client.force_login(user)
-        assign_perm('tom_targets.view_target', user, self.st)
+        self.user = User.objects.create(username='testuser')
+        self.client.force_login(self.user)
+        assign_perm('tom_targets.view_target', self.user, self.st)
 
     def test_search_name_no_results(self):
         response = self.client.get(reverse('targets:list') + '?name=noresults')
@@ -425,6 +425,20 @@ class TestTargetSearch(TestCase):
 
         response = self.client.get(reverse('targets:list') + '?checked=3')
         self.assertContains(response, '1337target')
+
+    def test_cone_search_coordinates(self):
+        response = self.client.get(reverse('targets:list') + '?cone_search=83,-5,0.8')
+        self.assertContains(response, '1337target')
+        self.assertNotContains(response, 'Target1309')
+
+    def test_cone_search_target(self):
+        cone_search_target = Target.objects.create(name='Cone Search', ra=83, dec=-5)
+        cone_search_failure = Target.objects.create(name='Failed Search', ra=82, dec=-6)
+        assign_perm('tom_targets.view_target', self.user, cone_search_target)
+        assign_perm('tom_targets.view_target', self.user, cone_search_failure)
+        response = self.client.get(reverse('targets:list') + '?target_cone_search=1337target,0.8')
+        self.assertContains(response, 'Cone Search')
+        self.assertNotContains(response, 'Failed Search')
 
 
 class TestTargetGrouping(TestCase):

@@ -11,15 +11,11 @@ class SpectrumSerializer():
         Serializes a Spectrum1D in order to store in a ReducedDatum object. The serialization stores only what's
         necessary to rebuild the Spectrum1D--namely, photon_flux and wavelength, and their respective units.
 
-        Parameters
-        ----------
-        spectrum : specutils.Spectrum1D
-            Spectrum1D to be serialized
+        :param spectrum: Spectrum1D to be serialized
+        :type spectrum: specutils.Spectrum1D
 
-        Returns
-        -------
-        str
-            JSON representation of spectrum
+        :returns: JSON representation of spectrum
+        :rtype: str
         """
         serialized = {}
         serialized['photon_flux'] = spectrum.photon_flux.value.tolist()
@@ -32,15 +28,11 @@ class SpectrumSerializer():
         """
         Constructs a Spectrum1D from the spectrum value stored in a ReducedDatum
 
-        Parameters
-        ----------
-        spectrum : str
-            JSON representation used to construct the Spectrum1D
+        :param spectrum: JSON representation used to construct the Spectrum1D
+        :type spectrum: str
 
-        Returns
-        -------
-        Spectrum1D
-            Spectrum1D representing the spectrum information
+        :returns: Spectrum1D representing the spectrum information
+        :rtype: specutil.Spectrum1D
         """
         data = json.loads(spectrum)
         flux = Quantity(value=data['photon_flux'], unit=data['photon_flux_units'])

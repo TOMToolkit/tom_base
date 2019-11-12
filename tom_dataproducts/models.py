@@ -6,16 +6,12 @@ from astropy.io import fits
 from django.conf import settings
 from django.core.files import File
 from django.db import models
+from django.core.exceptions import ValidationError
 from fits2image.conversions import fits_to_jpg
 from PIL import Image
 
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
-
-PHOTOMETRY = ('photometry', 'Photometry')
-FITS_FILE = ('fits_file', 'Fits File')
-SPECTROSCOPY = ('spectroscopy', 'Spectroscopy')
-IMAGE_FILE = ('image_file', 'Image File')
 
 
 try:
@@ -59,13 +55,14 @@ def is_fits_image_file(file):
     :returns: True if the file is a FITS image, False otherwise
     :rtype: boolean
     """
-    try:
-        hdul = fits.open(file.path)
-    except OSError:  # OSError is raised if file is not FITS format
-        return False
-    for hdu in hdul:
-        if hdu.header.get('EXTNAME') == 'SCI':
-            return True
+    with file.open() as f:
+        try:
+            hdul = fits.open(f)
+        except OSError:  # OSError is raised if file is not FITS format
+            return False
+        for hdu in hdul:
+            if hdu.header.get('EXTNAME') == 'SCI':
+                return True
     return False
 
 
@@ -144,9 +141,9 @@ class DataProduct(models.Model):
     :param modified: The time at which this object was last modified.
     :type modified: datetime
 
-    :param tag: The type of data referred to by this object. Options are photometry, fits_file, spectroscopy, or
-        image_file.
-    :type tag: str
+    :param data_product_type: The type of data referred to by this object. Default options are photometry, fits_file,
+    spectroscopy, or image_file. Can be configured in settings.py.
+    :type data_product_type: str
 
     :param featured: Whether or not the data product is intended to be featured, used by default on the target detail
         page as a "display" option. Only one ``DataProduct`` can be featured per ``Target``.
@@ -154,13 +151,6 @@ class DataProduct(models.Model):
 
     :param thumbnail: The thumbnail file associated with this object. Only generated for FITS image files.
     """
-
-    DATA_PRODUCT_TYPES = (
-        PHOTOMETRY,
-        FITS_FILE,
-        SPECTROSCOPY,
-        IMAGE_FILE
-    )
 
     FITS_EXTENSIONS = {
         '.fits': 'PRIMARY',
@@ -180,7 +170,7 @@ class DataProduct(models.Model):
     group = models.ManyToManyField(DataProductGroup)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    tag = models.CharField(max_length=50, blank=True, default='', choices=DATA_PRODUCT_TYPES)
+    data_product_type = models.CharField(max_length=50, blank=True, default='')
     featured = models.BooleanField(default=False)
     thumbnail = models.FileField(upload_to=data_product_path, null=True, default=None)
 
@@ -190,6 +180,27 @@ class DataProduct(models.Model):
 
     def __str__(self):
         return self.data.name
+
+    def save(self, *args, **kwargs):
+        """
+        Saves the current `DataProduct` instance. Before saving, validates the `data_product_type` against those
+        specified in `settings.py`.
+        """
+        for dp_type, dp_values in settings.DATA_PRODUCT_TYPES.items():
+            if not self.data_product_type or self.data_product_type == dp_values[0]:
+                break
+        else:
+            raise ValidationError('Not a valid DataProduct type.')
+        return super().save()
+
+    def get_type_display(self):
+        """
+        Gets the corresponding display value for a data_product_type.
+
+        :returns: Display value for a given data_product_type.
+        :rtype: str
+        """
+        return settings.DATA_PRODUCT_TYPES[self.data_product_type][1]
 
     def get_file_name(self):
         return os.path.basename(self.data.name)
@@ -228,7 +239,6 @@ class DataProduct(models.Model):
                 with open(tmpfile.name, 'rb') as f:
                     self.thumbnail.save(filename, File(f), save=True)
                     self.save()
-                tmpfile.close()
         if not self.thumbnail:
             return ''
         return self.thumbnail.url
@@ -245,11 +255,11 @@ class DataProduct(models.Model):
         :returns: Thumbnail file if created, None otherwise
         :rtype: file
         """
-        if is_fits_image_file(self.data):
+        if is_fits_image_file(self.data.file):
             tmpfile = tempfile.NamedTemporaryFile()
             if not width or not height:
-                width, height = find_fits_img_size(self.data.file.name)
-            resp = fits_to_jpg(self.data.file.name, tmpfile.name, width=width, height=height)
+                width, height = find_fits_img_size(self.data.file)
+            resp = fits_to_jpg(self.data.file, tmpfile.name, width=width, height=height)
             if resp:
                 return tmpfile
         return
@@ -267,7 +277,8 @@ class ReducedDatum(models.Model):
 
     :param data_product: The ``DataProduct`` with which this object is optionally associated.
 
-    :param data_type: The type of data this datum represents. Default choices are spectroscopy and photometry.
+    :param data_type: The type of data this datum represents. Default choices are the default values found in
+    DATA_PRODUCT_TYPES in settings.py.
     :type data_type: str
 
     :param source_name: The original source of this datum. The current major use of this field is to track the broker a
@@ -312,13 +323,17 @@ class ReducedDatum(models.Model):
     data_product = models.ForeignKey(DataProduct, null=True, on_delete=models.CASCADE)
     data_type = models.CharField(
         max_length=100,
-        choices=(
-            SPECTROSCOPY,
-            PHOTOMETRY
-        ),
         default=''
     )
     source_name = models.CharField(max_length=100, default='')
     source_location = models.CharField(max_length=200, default='')
     timestamp = models.DateTimeField(null=False, blank=False, default=datetime.now, db_index=True)
     value = models.TextField(null=False, blank=False)
+
+    def save(self, *args, **kwargs):
+        for dp_type, dp_values in settings.DATA_PRODUCT_TYPES.items():
+            if self.data_type and self.data_type == dp_values[0]:
+                break
+        else:
+            raise ValidationError('Not a valid DataProduct type.')
+        return super().save()
