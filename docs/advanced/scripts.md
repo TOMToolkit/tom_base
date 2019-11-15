@@ -169,7 +169,7 @@ pending observation!
 
 It may be that we have some data we want to associate with our target. In that case, we'll need to create a
 `DataProduct`. However, one field on the `DataProduct` is the `data` field--the TOM Toolkit expects a
-`django.core.files.File` object, so we need to create one first.
+`django.core.files.File` object, so we need to create one first, then create our `DataProduct`.
 
 ```python
 In [22]: from tom_dataproducts.models import DataProduct
