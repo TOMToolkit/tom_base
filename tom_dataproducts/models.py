@@ -128,6 +128,7 @@ class DataProduct(models.Model):
     :type observation_record: ObservationRecord
 
     :param data: The file this object refers to.
+    :type data: django.core.files.File
 
     :param extra_data: Arbitrary text field for storing additional information about this object.
     :type extra_data: str

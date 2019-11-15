@@ -165,6 +165,26 @@ Out[20]: M51 @ LCO
 Now when we check our TOM interface, we should see that our target, M51, has a
 pending observation!
 
+### Saving DataProducts
+
+It may be that we have some data we want to associate with our target. In that case, we'll need to create a
+`DataProduct`. However, one field on the `DataProduct` is the `data` field--the TOM Toolkit expects a
+`django.core.files.File` object, so we need to create one first.
+
+```python
+In [22]: from tom_dataproducts.models import DataProduct
+In [23]: from django.core.files import File
+In [24]: f = File(open('path/to/file.png'))
+In [25]:
+dp = DataProduct.objects.create(
+    target=target,
+    data_product_type='image_file',
+    data=f
+)
+print(dp.data.name)
+Out[25]: 'm51/none/file.png'
+```
+
 ### More possibilities
 
 These are just a few examples of what's possible using the TOM's programmatic API.
