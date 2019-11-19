@@ -47,22 +47,23 @@ class GaiaAlertsBroker(GenericBroker):
                                                  frame="icrs", unit="deg")
 
         filtered_alerts = []
-        for alert in alert_list:
-            if parameters['target_name'] != None and len(parameters['target_name']) > 0:
+        if parameters['target_name'] != None and len(parameters['target_name']) > 0:
+            for alert in alert_list:
                 if parameters['target_name'] in alert['name']:
                     filtered_alerts.append(alert)
-            else:
-                filtered_alerts.append(alert)
 
-        filtered_alerts2 = []
-        for alert in filtered_alerts:
-            if 'cone_radius' in parameters.keys():
+
+        elif 'cone_radius' in parameters.keys():
+            for alert in alert_list:
                 c = SkyCoord(float(alert['ra']), float(alert['dec']),
                              frame="icrs", unit="deg")
                 if parameters['cone_centre'].separation(c) <= parameters['cone_radius']:
-                    filtered_alerts2.append(alert)
+                    filtered_alerts.append(alert)
 
-        return iter(filtered_alerts2)
+        else:
+            filtered_alerts = alert_list
+
+        return iter(filtered_alerts)
 
     def to_generic_alert(self, alert):
         timestamp = parse(alert['obstime'])
