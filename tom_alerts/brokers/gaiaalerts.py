@@ -8,6 +8,7 @@ from astropy.coordinates import SkyCoord
 from astropy.time import Time, TimezoneInfo
 import astropy.units as u
 import requests
+from requests.exceptions import HTTPError
 import json
 from os import path
 
@@ -65,6 +66,15 @@ class GaiaAlertsBroker(GenericBroker):
 
         return iter(filtered_alerts)
 
+    def fetch_alert(self, target_name):
+
+        alert_list = list(self.fetch_alerts({'target_name': target_name, 'cone': None}))
+
+        if len(alert_list) == 1:
+            return alert_list[0]
+        else:
+            return {}
+
     def to_generic_alert(self, alert):
         timestamp = parse(alert['obstime'])
         url = BROKER_URL.replace('/alerts/alertsindex', alert['per_alert']['link'])
@@ -83,6 +93,14 @@ class GaiaAlertsBroker(GenericBroker):
     def process_reduced_data(self, target, alert=None):
 
         base_url = BROKER_URL.replace('/alertsindex', '/alert')
+
+        if not alert:
+            try:
+                alert = self.fetch_alert(target.name)
+
+            except HTTPError:
+                raise Exception('Unable to retrieve alert information from broker')
+
         alert_url = BROKER_URL.replace('/alerts/alertsindex',
                                         alert['per_alert']['link'])
 
