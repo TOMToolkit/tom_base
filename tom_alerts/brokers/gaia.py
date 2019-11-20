@@ -14,7 +14,8 @@ from os import path
 
 BROKER_URL = 'http://gsaweb.ast.cam.ac.uk/alerts/alertsindex'
 
-class GaiaAlertsQueryForm(GenericQueryForm):
+
+class GaiaQueryForm(GenericQueryForm):
     target_name = forms.CharField(required=False)
     cone = forms.CharField(
         required=False,
@@ -22,9 +23,16 @@ class GaiaAlertsQueryForm(GenericQueryForm):
         help_text='RA,Dec,radius in degrees'
     )
 
-class GaiaAlertsBroker(GenericBroker):
-    name = 'Gaia Alerts'
-    form = GaiaAlertsQueryForm
+    def clean(self):
+        if len(self.cleaned_data['target_name']) == 0 and \
+            len(self.cleaned_data['cone']) == 0:
+            raise forms.ValidationError(
+                "Please enter either a target name or cone search parameters"
+                )
+
+class GaiaBroker(GenericBroker):
+    name = 'Gaia'
+    form = GaiaQueryForm
 
     def fetch_alerts(self, parameters):
         """Must return an iterator"""
@@ -34,11 +42,12 @@ class GaiaAlertsBroker(GenericBroker):
         html_data = response.text.split('\n')
         for line in html_data:
             if 'var alerts' in line:
-                alerts_data = line.replace('var alerts = ', '').replace('\n','').replace(';','')
+                alerts_data = line.replace('var alerts = ', '')
+                alerts_data = alerts_data.replace('\n', '').replace(';', '')
 
         alert_list = json.loads(alerts_data)
 
-        if parameters['cone'] != None and len(parameters['cone']) > 0:
+        if parameters['cone'] is not None and len(parameters['cone']) > 0:
             cone_params = parameters['cone'].split(',')
             parameters['cone_ra'] = float(cone_params[0])
             parameters['cone_dec'] = float(cone_params[1])
@@ -48,11 +57,11 @@ class GaiaAlertsBroker(GenericBroker):
                                                  frame="icrs", unit="deg")
 
         filtered_alerts = []
-        if parameters['target_name'] != None and len(parameters['target_name']) > 0:
+        if parameters['target_name'] is not None and \
+            len(parameters['target_name']) > 0:
             for alert in alert_list:
                 if parameters['target_name'] in alert['name']:
                     filtered_alerts.append(alert)
-
 
         elif 'cone_radius' in parameters.keys():
             for alert in alert_list:
@@ -102,7 +111,7 @@ class GaiaAlertsBroker(GenericBroker):
                 raise Exception('Unable to retrieve alert information from broker')
 
         alert_url = BROKER_URL.replace('/alerts/alertsindex',
-                                        alert['per_alert']['link'])
+                    alert['per_alert']['link'])
 
         if alert:
             lc_url = path.join(base_url, alert['name'], 'lightcurve.csv')
