@@ -25,10 +25,11 @@ class GaiaQueryForm(GenericQueryForm):
 
     def clean(self):
         if len(self.cleaned_data['target_name']) == 0 and \
-            len(self.cleaned_data['cone']) == 0:
+                        len(self.cleaned_data['cone']) == 0:
             raise forms.ValidationError(
                 "Please enter either a target name or cone search parameters"
                 )
+
 
 class GaiaBroker(GenericBroker):
     name = 'Gaia'
@@ -58,7 +59,7 @@ class GaiaBroker(GenericBroker):
 
         filtered_alerts = []
         if parameters['target_name'] is not None and \
-            len(parameters['target_name']) > 0:
+                    len(parameters['target_name']) > 0:
             for alert in alert_list:
                 if parameters['target_name'] in alert['name']:
                     filtered_alerts.append(alert)
@@ -111,7 +112,7 @@ class GaiaBroker(GenericBroker):
                 raise Exception('Unable to retrieve alert information from broker')
 
         alert_url = BROKER_URL.replace('/alerts/alertsindex',
-                    alert['per_alert']['link'])
+                                alert['per_alert']['link'])
 
         if alert:
             lc_url = path.join(base_url, alert['name'], 'lightcurve.csv')
