@@ -331,6 +331,9 @@ class ReducedDatum(models.Model):
     timestamp = models.DateTimeField(null=False, blank=False, default=datetime.now, db_index=True)
     value = models.TextField(null=False, blank=False)
 
+    class Meta:
+        get_latest_by = ('timestamp',)
+
     def save(self, *args, **kwargs):
         for dp_type, dp_values in settings.DATA_PRODUCT_TYPES.items():
             if self.data_type and self.data_type == dp_values[0]:
