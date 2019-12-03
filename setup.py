@@ -7,7 +7,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='tomtoolkit',
-    version='1.2.0',
+    version='1.2.1',
     description='The TOM Toolkit and base modules',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -27,7 +27,7 @@ setup(
     keywords=['tomtoolkit', 'astronomy', 'astrophysics', 'cosmology', 'science', 'fits', 'observatory'],
     packages=find_packages(),
     install_requires=[
-        'django',
+        'django<3.0',
         'django-bootstrap4',
         'django-extensions',
         'django-filter',
