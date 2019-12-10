@@ -1,4 +1,6 @@
 from django.db import models, transaction
+created = models.DateTimeField(auto_now_add=True)
+modified = models.DateTimeField(auto_now=True)
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.forms.models import model_to_dict

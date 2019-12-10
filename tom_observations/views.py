@@ -1,19 +1,19 @@
 from io import StringIO
 import django_filters
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.management import call_command
 from django.shortcuts import redirect
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import FormView
+from django.views.generic.edit import FormView, CreateView
 from django_filters.views import FilterView
-from guardian.shortcuts import get_objects_for_user
-
-from .models import ObservationRecord
+from django.views.generic.list import ListView
+from guardian.shortcuts import get_objects_for_user, assign_perm
+from guardian.mixins import PermissionListMixin
+from .models import ObservationRecord, ObservationGroup
 from .forms import ManualObservationForm
 from tom_common.hints import add_hint
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
@@ -29,11 +29,14 @@ class ObservationFilter(django_filters.FilterSet):
         fields=['scheduled_start', 'scheduled_end', 'status', 'created', 'modified']
     )
     scheduled_start = django_filters.DateTimeFromToRangeFilter()
-    scheduled_end = django_filters.DateTimeFromToRangeFilter()
+    scheduled_end = django_filters.DateTimeFromToRangeFilter
+    observationgroup = django_filters.ModelMultipleChoiceFilter(
+        label='Observation Groups', queryset=ObservationGroup.objects.all()
+    )
 
     class Meta:
         model = ObservationRecord
-        fields = ['ordering', 'observation_id', 'target_id', 'facility', 'status']
+        fields = ['ordering', 'observation_id', 'target_id', 'observationgroup', 'facility', 'status']
 
 
 class ObservationListView(FilterView):
@@ -196,6 +199,9 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         Runs after form validation. Submits the observation to the desired facility and creates an associated
         ``ObservationRecord``, then redirects to the detail page of the target to be observed.
 
+        If the facility returns more than one record, a group is created and all observation
+        records from the request are added to it.
+
         :param form: form containing observating request parameters
         :type form: subclass of GenericObservationForm
         """
@@ -203,15 +209,26 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         facility = self.get_facility_class()
         target = self.get_target()
         observation_ids = facility().submit_observation(form.observation_payload())
+        records = []
 
         for observation_id in observation_ids:
             # Create Observation record
-            ObservationRecord.objects.create(
+            record = ObservationRecord.objects.create(
                 target=target,
                 facility=facility.name,
                 parameters=form.serialize_parameters(),
                 observation_id=observation_id
             )
+            records.append(record)
+
+        if len(records) > 1:
+            group_name = form.cleaned_data['name']
+            observation_group = ObservationGroup.objects.create(name=group_name)
+            observation_group.observation_records.add(*records)
+            assign_perm('tom_observations.view_observationgroup', self.request.user, observation_group)
+            assign_perm('tom_observations.change_observationgroup', self.request.user, observation_group)
+            assign_perm('tom_observations.delete_observationgroup', self.request.user, observation_group)
+
         return redirect(
             reverse('tom_targets:detail', kwargs={'pk': target.id})
         )
@@ -322,3 +339,38 @@ class ObservationRecordDetailView(DetailView):
         )
         context['data_product_form'] = data_product_upload_form
         return context
+
+
+class ObservationGroupCreateView(LoginRequiredMixin, CreateView):
+    """
+    View that handles the creation of ``ObservationGroup`` objects, also
+    known as observation groups. Requires authentication.
+    """
+    model = ObservationGroup
+    fields = ['name']
+    success_url = reverse_lazy('tom_observations:group-list')
+
+    def form_valid(self, form):
+        """
+        Runs after form validation. Saves the observation group and assigns the
+        user's permissions to the group.
+
+        :param form: Form data for target creation
+        :type form: django.forms.ModelForm
+        """
+        obj = form.save(commit=False)
+        obj.save()
+        assign_perm('tom_observations.view_observationgroup', self.request.user, obj)
+        assign_perm('tom_observations.change_observationgroup', self.request.user, obj)
+        assign_perm('tom_observations.delete_observationgroup', self.request.user, obj)
+        return super().form_valid(form)
+
+
+class ObservationGroupListView(PermissionListMixin, ListView):
+    """
+    View that handles the display of ``ObservationGroup`` objects, also
+    known as observation groups. Requires authorization.
+    """
+    permission_required = 'tom_observations.view_observationgroup'
+    model = ObservationGroup
+    paginate_by = 25

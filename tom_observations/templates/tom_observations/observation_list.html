@@ -24,6 +24,7 @@
           <th>Status</th>
           <th>Start</th>
           <th>End</th>
+          <th>Groups</th>
           <th>Saved Data</th>
           <th>Download All</th>
         </tr>
@@ -37,6 +38,7 @@
           <td>{{ observation.status }}</td>
           <td>{{ observation.scheduled_start }}</td>
           <td>{{ observation.scheduled_end }}</td>
+          <td>{% for o in observation.observationgroup_set.all %}{{ o.name }} {% endfor %}</td>
           <td>{{ observation.dataproduct_set.count }}</td>
           <td>
             {% if observation.status == 'COMPLETED' %}
