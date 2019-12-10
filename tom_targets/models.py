@@ -243,6 +243,11 @@ class Target(models.Model):
         created = False if self.id else True
         super().save(*args, **kwargs)
 
+        if created:
+            for extra_field in settings.EXTRA_FIELDS:
+                if extra_field.get('default') is not None:
+                    TargetExtra(target=self, key=extra_field['name'], value=extra_field.get('default')).save()
+
         for k, v in extras.items():
             target_extra, _ = TargetExtra.objects.get_or_create(target=self, key=k)
             target_extra.value = v

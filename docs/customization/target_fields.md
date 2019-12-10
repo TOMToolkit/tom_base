@@ -74,6 +74,14 @@ doesn't affect filtering and searching):
  ]
 ```
 
+And we can set a default value for an extra field by including a default key/value pair:
+
+```python
+ EXTRA_FIELDS = [
+     {'name': 'redshift', 'type': 'number', 'default': 0},
+ ]
+```
+
 ### Displaying extra fields in templates
 
 If we want to display the redshift in other places, we can use a template filter to
