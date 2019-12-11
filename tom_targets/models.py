@@ -245,6 +245,11 @@ class Target(models.Model):
         created = False if self.id else True
         super().save(*args, **kwargs)
 
+        if created:
+            for extra_field in settings.EXTRA_FIELDS:
+                if extra_field.get('default') is not None:
+                    TargetExtra(target=self, key=extra_field['name'], value=extra_field.get('default')).save()
+
         for k, v in extras.items():
             target_extra, _ = TargetExtra.objects.get_or_create(target=self, key=k)
             target_extra.value = v
@@ -408,7 +413,7 @@ class TargetExtra(models.Model):
     """
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     key = models.CharField(max_length=200)
-    value = models.TextField()
+    value = models.TextField(blank=True, default='')
     float_value = models.FloatField(null=True, blank=True)
     bool_value = models.BooleanField(null=True, blank=True)
     time_value = models.DateTimeField(null=True, blank=True)

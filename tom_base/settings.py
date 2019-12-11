@@ -210,9 +210,9 @@ TOM_FACILITY_CLASSES = [
 # See https://tomtoolkit.github.io/docs/target_fields for documentation on this feature
 # For example:
 # EXTRA_FIELDS = [
-#     {'name': 'redshift', 'type': 'number'},
+#     {'name': 'redshift', 'type': 'number', 'default': 0},
 #     {'name': 'discoverer', 'type': 'string'}
-#     {'name': 'eligible', 'type': 'boolean'},
+#     {'name': 'eligible', 'type': 'boolean', 'hidden': True},
 #     {'name': 'dicovery_date', 'type': 'datetime'}
 # ]
 EXTRA_FIELDS = []
