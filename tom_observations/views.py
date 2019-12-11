@@ -8,11 +8,11 @@ from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import FormView, CreateView
+from django.views.generic.edit import FormView, DeleteView
 from django_filters.views import FilterView
 from django.views.generic.list import ListView
 from guardian.shortcuts import get_objects_for_user, assign_perm
-from guardian.mixins import PermissionListMixin
+from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from .models import ObservationRecord, ObservationGroup
 from .forms import ManualObservationForm
 from tom_common.hints import add_hint
@@ -341,31 +341,6 @@ class ObservationRecordDetailView(DetailView):
         return context
 
 
-class ObservationGroupCreateView(LoginRequiredMixin, CreateView):
-    """
-    View that handles the creation of ``ObservationGroup`` objects, also
-    known as observation groups. Requires authentication.
-    """
-    model = ObservationGroup
-    fields = ['name']
-    success_url = reverse_lazy('tom_observations:group-list')
-
-    def form_valid(self, form):
-        """
-        Runs after form validation. Saves the observation group and assigns the
-        user's permissions to the group.
-
-        :param form: Form data for target creation
-        :type form: django.forms.ModelForm
-        """
-        obj = form.save(commit=False)
-        obj.save()
-        assign_perm('tom_observations.view_observationgroup', self.request.user, obj)
-        assign_perm('tom_observations.change_observationgroup', self.request.user, obj)
-        assign_perm('tom_observations.delete_observationgroup', self.request.user, obj)
-        return super().form_valid(form)
-
-
 class ObservationGroupListView(PermissionListMixin, ListView):
     """
     View that handles the display of ``ObservationGroup`` objects, also
@@ -374,3 +349,12 @@ class ObservationGroupListView(PermissionListMixin, ListView):
     permission_required = 'tom_observations.view_observationgroup'
     model = ObservationGroup
     paginate_by = 25
+
+
+class ObservationGroupDeleteView(PermissionRequiredMixin, DeleteView):
+    """
+    View that handles the deletion of ``ObservationGroup`` objects. Requires authorization.
+    """
+    permission_required = 'tom_observations.delete_observationgroup'
+    model = ObservationGroup
+    success_url = reverse_lazy('tom_observations:group-list')

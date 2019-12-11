@@ -1,0 +1,12 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
+{% block title %}Confirm delete{% endblock %}
+{% block content %}
+<form method="post">{% csrf_token %}
+    <p>Are you sure you want to delete "{{ object }}"?
+    Note that this will not delete it's individual observation records.</p>
+    {% buttons %}
+    <button type="submit" class="btn btn-danger">Confirm</button>
+    {% endbuttons %}
+</form>
+{% endblock %}
