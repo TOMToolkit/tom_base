@@ -80,6 +80,20 @@ class ObservationListView(FilterView):
                               '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
                               'the docs.</a>'))
             return redirect(reverse('tom_observations:list'))
+
+        selected = request.GET.getlist('selected')
+        observationgroups = request.GET.getlist('observationgroup')
+        action = request.GET.get('action')
+        if selected and observationgroups and action:
+            observation_records = ObservationRecord.objects.filter(id__in=selected)
+            groups = ObservationGroup.objects.filter(id__in=observationgroups)
+            for group in groups:
+                if action == 'add':
+                    group.observation_records.add(*observation_records)
+                if action == 'remove':
+                    group.observation_records.remove(*observation_records)
+                group.save()
+            return redirect(reverse('tom_observations:list'))
         return super().get(request, *args, **kwargs)
 
 
