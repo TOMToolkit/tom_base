@@ -357,8 +357,8 @@ class ObservationRecordDetailView(DetailView):
 
 class ObservationGroupListView(PermissionListMixin, ListView):
     """
-    View that handles the display of ``ObservationGroup`` objects, also
-    known as observation groups. Requires authorization.
+    View that handles the display of ``ObservationGroup``.
+    Requires authorization.
     """
     permission_required = 'tom_observations.view_observationgroup'
     model = ObservationGroup
