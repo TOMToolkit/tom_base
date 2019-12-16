@@ -87,3 +87,30 @@ class ObservationRecord(models.Model):
 
     def __str__(self):
         return '{0} @ {1}'.format(self.target, self.facility)
+
+
+class ObservationGroup(models.Model):
+    """
+    Class representing a logical group of observations.
+
+    :param name: The name of the grouping.
+    :type name: str
+
+    :param observation_records: Set of ``ObservationRecord`` objects associated with this ``ObservationGroup``
+
+    :param created: The time at which this ``ObservationGroup`` was created.
+    :type created: datetime
+
+    :param modified: The time at which this ``ObservationGroup`` was modified.
+    :type modified: datetime
+    """
+    name = models.CharField(max_length=50)
+    observation_records = models.ManyToManyField(ObservationRecord)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-created',)
+
+    def __str__(self):
+        return self.name

@@ -2,7 +2,7 @@ import requests
 from django.conf import settings
 from django import forms
 from dateutil.parser import parse
-from crispy_forms.layout import Layout, Div
+from crispy_forms.layout import Layout, Div, HTML
 from django.core.cache import cache
 from astropy import units as u
 
@@ -55,6 +55,8 @@ class LCOBaseObservationForm(GenericObservationForm):
     exposure_count = forms.IntegerField(min_value=1)
     exposure_time = forms.FloatField(min_value=0.1)
     max_airmass = forms.FloatField()
+    period = forms.FloatField(required=False)
+    jitter = forms.FloatField(required=False)
     observation_mode = forms.ChoiceField(
         choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response'))
     )
@@ -73,14 +75,27 @@ class LCOBaseObservationForm(GenericObservationForm):
     def layout(self):
         return Div(
             Div(
-                'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
-                css_class='col'
+                Div(
+                    'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
+                    css_class='col'
+                ),
+                Div(
+                    'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass',
+                    css_class='col'
+                ),
+                css_class='form-row',
             ),
             Div(
-                'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass',
-                css_class='col'
+                HTML('<p>Cadence parameters. Leave blank if no cadencing is desired.</p>'),
+                css_class='row'
             ),
-            css_class='form-row'
+            Div(
+                Div(
+                    'period', 'jitter',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            )
         )
 
     def extra_layout(self):
@@ -233,8 +248,24 @@ class LCOBaseObservationForm(GenericObservationForm):
             }
         }
 
+    def _expand_cadence_request(self, payload):
+        payload['requests'][0]['cadence'] = {
+            'start': self.cleaned_data['start'],
+            'end': self.cleaned_data['end'],
+            'period': self.cleaned_data['period'],
+            'jitter': self.cleaned_data['jitter']
+        }
+        payload['requests'][0]['windows'] = []
+        response = make_request(
+            'POST',
+            PORTAL_URL + '/api/requestgroups/cadence/',
+            json=payload,
+            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+        )
+        return response.json()
+
     def observation_payload(self):
-        return {
+        payload = {
             "name": self.cleaned_data['name'],
             "proposal": self.cleaned_data['proposal'],
             "ipp_value": self.cleaned_data['ipp_value'],
@@ -255,6 +286,10 @@ class LCOBaseObservationForm(GenericObservationForm):
                 }
             ]
         }
+        if self.cleaned_data.get('period') and self.cleaned_data.get('jitter'):
+            payload = self._expand_cadence_request(payload)
+
+        return payload
 
 
 class LCOImagingObservationForm(LCOBaseObservationForm):
