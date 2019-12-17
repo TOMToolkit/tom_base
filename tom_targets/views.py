@@ -20,11 +20,12 @@ from django.views.generic.list import ListView
 from django.views.generic import TemplateView, View
 from django_filters.views import FilterView
 
-from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
+from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
 
 from tom_common.hints import add_hint
 from tom_common.hooks import run_hook
+from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_targets.models import Target, TargetList
 from tom_targets.forms import (
     SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset
@@ -194,7 +195,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         return form
 
 
-class TargetUpdateView(PermissionRequiredMixin, UpdateView):
+class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
     """
     View that handles updating a target. Requires authorization.
     """
@@ -293,7 +294,7 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         return form
 
 
-class TargetDeleteView(PermissionRequiredMixin, DeleteView):
+class TargetDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     """
     View for deleting a target. Requires authorization.
     """
@@ -302,7 +303,7 @@ class TargetDeleteView(PermissionRequiredMixin, DeleteView):
     model = Target
 
 
-class TargetDetailView(PermissionRequiredMixin, DetailView):
+class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
     """
     View that handles the display of the target details. Requires authorization.
     """
@@ -449,7 +450,7 @@ class TargetGroupingView(PermissionListMixin, ListView):
     paginate_by = 25
 
 
-class TargetGroupingDeleteView(PermissionRequiredMixin, DeleteView):
+class TargetGroupingDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     """
     View that handles the deletion of ``TargetList`` objects, also known as target groups. Requires authorization.
     """
