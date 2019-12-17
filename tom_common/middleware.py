@@ -2,6 +2,7 @@ from django.urls import reverse
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.conf import settings
+from django.http import HttpResponseForbidden
 
 from tom_common.exceptions import ImproperCredentialsException
 
@@ -36,6 +37,24 @@ class AuthStrategyMiddleware:
     def __call__(self, request):
         if settings.AUTH_STRATEGY == 'LOCKED':
             if not request.user.is_authenticated and request.path_info not in self.open_urls:
-                return redirect(reverse('login') + '?next=' + request.path)
+                return HttpResponseForbidden()
 
         return self.get_response(request)
+
+
+class Raise403Middleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        if response.status_code == 403:
+            msg = (
+                'You do not have permission to access this page. Please login as a user '
+                'with the correct permissions or contact your PI.'
+            )
+            messages.error(request, msg)
+            return redirect(reverse('login') + '?next=' + request.path)
+
+        return response

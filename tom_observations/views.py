@@ -12,10 +12,12 @@ from django.views.generic.edit import FormView, DeleteView
 from django_filters.views import FilterView
 from django.views.generic.list import ListView
 from guardian.shortcuts import get_objects_for_user, assign_perm
-from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
+from guardian.mixins import PermissionListMixin
+
 from .models import ObservationRecord, ObservationGroup
 from .forms import ManualObservationForm
 from tom_common.hints import add_hint
+from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class
@@ -365,7 +367,7 @@ class ObservationGroupListView(PermissionListMixin, ListView):
     paginate_by = 25
 
 
-class ObservationGroupDeleteView(PermissionRequiredMixin, DeleteView):
+class ObservationGroupDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     """
     View that handles the deletion of ``ObservationGroup`` objects. Requires authorization.
     """
