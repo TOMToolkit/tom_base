@@ -1,8 +1,10 @@
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 
 from .views import TargetCreateView, TargetUpdateView, TargetDetailView
 from .views import TargetDeleteView, TargetListView, TargetImportView, TargetExportView
 from .views import TargetGroupingView, TargetGroupingDeleteView, TargetGroupingCreateView, TargetAddRemoveGroupingView
+from .api_views import TargetViewSet
 
 app_name = 'tom_targets'
 
@@ -19,3 +21,7 @@ urlpatterns = [
     path('targetgrouping/<int:pk>/delete/', TargetGroupingDeleteView.as_view(), name='delete-group'),
     path('targetgrouping/create/', TargetGroupingCreateView.as_view(), name='create-group')
 ]
+
+router = DefaultRouter()
+router.register(r'targets', TargetViewSet, 'targets')
+apiurlpatterns = router.urls

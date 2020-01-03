@@ -46,6 +46,7 @@ setup(
         'pillow',
         'fits2image',
         'specutils',
+        'djangorestframework',
         'dataclasses; python_version < "3.7"',
     ],
     extras_require={
