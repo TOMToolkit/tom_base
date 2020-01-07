@@ -17,9 +17,20 @@ class TestTargetViewset(APITestCase):
         assign_perm('tom_targets.view_target', user, self.st)
         assign_perm('tom_targets.view_target', user, self.nst)
 
+    def test_target_list(self):
+        response = self.client.get(reverse('api:targets-list'))
+        self.assertEqual(response.json()['count'], 2)
+
     def test_target_detail(self):
         response = self.client.get(reverse('api:targets-detail', args=(self.st.id,)))
         self.assertEqual(response.json()['name'], self.st.name)
+
+    def test_target_detail_bad_permissions(self):
+        other_user = User.objects.create(username='otheruser')
+        self.client.force_login(other_user)
+        response = self.client.get(reverse('api:targets-detail', args=(self.st.id,)), follow=True)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.json()['detail'], 'Not found.')
 
     def test_target_create(self):
         target_data = {
@@ -39,9 +50,14 @@ class TestTargetViewset(APITestCase):
         self.assertEqual(response.json()['name'], target_data['name'])
         self.assertEqual(response.json()['aliases'][0]['name'], target_data['aliases'][0]['name'])
 
-    def test_target_detail_bad_permissions(self):
-        other_user = User.objects.create(username='otheruser')
-        self.client.force_login(other_user)
-        response = self.client.get(reverse('api:targets-detail', kwargs={'pk': self.st.id}), follow=True)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.json()['detail'], 'Not found.')
+    def test_target_update(self):
+        updates = {'ra': 123.456}
+        response = self.client.patch(reverse('api:targets-detail', args=(self.st.id,)), data=updates)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.st.refresh_from_db()
+        self.assertEqual(self.st.ra, updates['ra'])
+
+    def test_target_delete(self):
+        response = self.client.delete(reverse('api:targets-detail', args=(self.st.id,)))
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Target.objects.filter(pk=self.st.id).exists())
