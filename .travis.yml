@@ -7,7 +7,7 @@ sudo: true
 before_install:
     - sudo apt-get install -y gfortran
 install:
-    - pip install -r requirements.txt pycodestyle
+    - pip install -r -I requirements.txt pycodestyle
 script:
     - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
     - python3 manage.py test
