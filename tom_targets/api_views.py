@@ -7,6 +7,9 @@ from .filters import TargetFilter
 
 
 class TargetViewSet(PermissionListMixin, viewsets.ModelViewSet):
+    """Viewset for Target objects. By default supports CRUD operations.
+    See the docs on viewsets: https://www.django-rest-framework.org/api-guide/viewsets/
+    """
     queryset = Target.objects.all()
     serializer_class = TargetSerializer
     filterset_class = TargetFilter

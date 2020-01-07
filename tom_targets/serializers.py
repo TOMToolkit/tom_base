@@ -15,6 +15,10 @@ class TargetExtraSerializer(serializers.ModelSerializer):
 
 
 class TargetSerializer(serializers.ModelSerializer):
+    """Target serializer responsbile for transforming models to/from
+    json (or other representations). See
+    https://www.django-rest-framework.org/api-guide/serializers/#modelserializer
+    """
     targetextra_set = TargetExtraSerializer(many=True)
     aliases = TargetNameSerializer(many=True)
 
@@ -23,8 +27,7 @@ class TargetSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
-        """
-        DRF requires explicitly handling writeable nested serializers,
+        """DRF requires explicitly handling writeable nested serializers,
         here we pop the alias/tag data and save it using thier respective
         serializers
         """

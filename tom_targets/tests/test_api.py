@@ -35,7 +35,13 @@ class TestTargetViewset(APITestCase):
             ]
         }
         response = self.client.post(reverse('api:targets-list'), data=target_data)
-        print(str(response.content))
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.json()['name'], target_data['name'])
         self.assertEqual(response.json()['aliases'][0]['name'], target_data['aliases'][0]['name'])
+
+    def test_target_detail_bad_permissions(self):
+        other_user = User.objects.create(username='otheruser')
+        self.client.force_login(other_user)
+        response = self.client.get(reverse('api:targets-detail', kwargs={'pk': self.st.id}), follow=True)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.json()['detail'], 'Not found.')
