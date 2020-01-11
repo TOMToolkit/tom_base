@@ -8,6 +8,7 @@ before_install:
     - sudo apt-get install -y gfortran
 install:
     - pip install -I -r requirements.txt pycodestyle
+    - python -c "import numpy; print(numpy.__version__)"
 script:
     - pip freeze
     - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
