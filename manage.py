@@ -3,6 +3,10 @@ import os
 import sys
 
 if __name__ == "__main__":
+    import astropy
+    import numpy
+    print(astropy.__version__)
+    print(numpy.__version__)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tom_base.settings")
     try:
         from django.core.management import execute_from_command_line
