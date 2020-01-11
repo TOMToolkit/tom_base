@@ -8,9 +8,9 @@ before_install:
     - sudo apt-get install -y gfortran
 install:
     - ls /home/travis/virtualenv/python3.7.1/lib/python3.7/site-packages/
-    - python -c "import numpy; print(numpy.__version__)"
     - pip install -I -r requirements.txt pycodestyle
     - ls /home/travis/virtualenv/python3.7.1/lib/python3.7/site-packages/
+    - python -c "import numpy; print(numpy.__version__)"
 script:
     - pip freeze
     - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
