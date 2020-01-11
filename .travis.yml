@@ -6,6 +6,7 @@ dist: xenial
 sudo: true
 before_install:
     - sudo apt-get install -y gfortran
+    - pip uninstall numpy
 install:
     - ls /home/travis/virtualenv/python3.7.1/lib/python3.7/site-packages/
     - pip install -I -r requirements.txt pycodestyle
