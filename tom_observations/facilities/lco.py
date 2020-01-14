@@ -6,9 +6,9 @@ from crispy_forms.layout import Layout, Div, HTML
 from django.core.cache import cache
 from astropy import units as u
 
-from tom_observations.facility import GenericObservationForm
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.facility import GenericObservationFacility, get_service_class
+from tom_observations.facility import GenericObservationFacility, GenericObservationForm
+from tom_observations.facility import get_service_class
 from tom_targets.models import (
     Target, REQUIRED_NON_SIDEREAL_FIELDS,
     REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
@@ -26,6 +26,7 @@ except (AttributeError, KeyError):
 # Module specific settings.
 PORTAL_URL = LCO_SETTINGS['portal_url']
 TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
+FAILED_OBSERVING_STATES = ['WINDOW_EXPIRED', 'CANCELED']
 
 # Units of flux and wavelength for converting to Specutils Spectrum1D objects
 FLUX_CONSTANT = (1e-15 * u.erg) / (u.cm ** 2 * u.second * u.angstrom)
@@ -449,6 +450,9 @@ class LCOFacility(GenericObservationFacility):
 
     def get_terminal_observing_states(self):
         return TERMINAL_OBSERVING_STATES
+
+    def get_failed_observing_states(self):
+        return FAILED_OBSERVING_STATES
 
     def get_observing_sites(self):
         return self.SITES
