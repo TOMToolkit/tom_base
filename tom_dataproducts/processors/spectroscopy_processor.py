@@ -79,9 +79,10 @@ class SpectroscopyProcessor(DataProcessor):
             flux = flux[0, 0, :]
         elif flux.shape[0] == 2:
             flux = flux[0, :]
-        header['CUNIT1'] = 'Angstrom'
-        wcs = WCS(header=header)
         flux = flux * flux_constant
+
+        header['CUNIT1'] = 'Angstrom'
+        wcs = WCS(header=header, naxis=1)
 
         spectrum = Spectrum1D(flux=flux, wcs=wcs)
 
