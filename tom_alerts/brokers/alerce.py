@@ -18,7 +18,7 @@ SORT_CHOICES = [("nobs", "Number Of Epochs"),
                 ("pclassearly", "Early Probability")]
 
 PAGES_CHOICES = [
-    (i, i) for i in [5, 1, 10, 15]
+    (i, i) for i in [1, 5, 10, 15]
 ]
 
 RECORDS_CHOICES = [
