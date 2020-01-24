@@ -1,0 +1,29 @@
+{% load bootstrap4 latexify %}
+{% include 'latexify/stylesheets.html' %}
+<!-- {% bootstrap_javascript jquery='True' %} -->
+{% include "latexify/scripts.html" %}
+<!-- <script>
+  var latexText = document.getElementById("copy-latex");
+  copyText.select();
+  copyText.setSelectionRange(0, 99999);
+  document.execCommand("copy");
+</script> -->
+<div class="row">
+  <div id="latex-form" class="col-md-4">
+    <h3>Generate latex table for {{ object.name }}</h3>
+    <form method="GET" action="{% url 'tom_publications:create-latex' %}" class="form">
+      {% csrf_token %}
+      {% bootstrap_form form %}
+      {% buttons %}
+      <input type="submit" class="btn btn-primary" value="Create Table" name="create-latex">
+      {% endbuttons %}
+    </form>
+  </div>
+  <div class="col-md-8">
+    {% if latex %}
+      {% latexify latex %}
+      <input type="hidden" value="{{ latex }}" id="copy-latex">
+      <button onclick="copyLatex()">Copy to clipboard</button>
+    {% endif %}
+  </div>
+</div>
