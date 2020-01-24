@@ -2,7 +2,7 @@ import requests
 from django.conf import settings
 from django import forms
 from dateutil.parser import parse
-from crispy_forms.layout import Layout, Div
+from crispy_forms.layout import Layout, Div, HTML
 from django.core.cache import cache
 from astropy import units as u
 
@@ -49,7 +49,9 @@ def make_request(*args, **kwargs):
 
 class LCOBaseObservationForm(GenericObservationForm):
     name = forms.CharField()
-    ipp_value = forms.FloatField()
+    ipp_value = forms.FloatField(label='Intra Proposal Priority (IPP factor)',
+                                 min_value=0.5,
+                                 max_value=2)
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     exposure_count = forms.IntegerField(min_value=1)
@@ -73,7 +75,12 @@ class LCOBaseObservationForm(GenericObservationForm):
     def layout(self):
         return Div(
             Div(
-                'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
+                'name',
+                'proposal',
+                'ipp_value',
+                'observation_mode',
+                'start',
+                'end',
                 css_class='col'
             ),
             Div(
