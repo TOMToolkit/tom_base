@@ -2,7 +2,7 @@ import requests
 from django.conf import settings
 from django import forms
 from dateutil.parser import parse
-from crispy_forms.layout import Layout, Div, HTML
+from crispy_forms.layout import Layout, Div
 from django.core.cache import cache
 from astropy import units as u
 
@@ -37,6 +37,46 @@ FITS_FACILITY_KEYWORD_VALUE = 'LCOGT'
 FITS_FACILITY_DATE_OBS_KEYWORD = 'DATE-OBS'
 
 # Functions needed specifically for LCO
+# Helpers for LCO fields
+ipp_value_help = """
+        Value between 0.5 to 2.0.
+        <a href="https://lco.global/documents/20/the_new_priority_factor.pdf">
+            More information about Intra Proprosal Priority (IPP).
+        </a>.
+"""
+
+observation_mode_help = """
+    <a href="https://lco.global/documentation/special-scheduling-modes/">
+        More information about Rapid Response mode.
+    </a>
+"""
+
+end_help = """
+    Try the
+    <a href="https://lco.global/observatory/visibility/">
+        Target Visibility Calculator.
+    </a>
+"""
+
+instrument_type_help = """
+    <a href="https://lco.global/observatory/instruments/">
+        More information about LCO instruments.
+    </a>
+"""
+
+exposure_time_help = """
+    Try the
+    <a href="https://exposure-time-calculator.lco.global/">
+        online Exposure Time Calculator.
+    </a>
+"""
+
+max_airmass_help = """
+    Advice on
+    <a href="https://lco.global/documentation/airmass-limit">
+        setting the airmass limit.
+    </a>
+"""
 
 
 def make_request(*args, **kwargs):
@@ -51,21 +91,27 @@ class LCOBaseObservationForm(GenericObservationForm):
     name = forms.CharField()
     ipp_value = forms.FloatField(label='Intra Proposal Priority (IPP factor)',
                                  min_value=0.5,
-                                 max_value=2)
+                                 max_value=2,
+                                 help_text=ipp_value_help)
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
-    end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
+    end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}),
+                          help_text=end_help)
     exposure_count = forms.IntegerField(min_value=1)
-    exposure_time = forms.FloatField(min_value=0.1)
-    max_airmass = forms.FloatField()
+    exposure_time = forms.FloatField(min_value=0.1,
+                                     widget=forms.TextInput(attrs={'placeholder': 'Seconds'}),
+                                     help_text=exposure_time_help)
+    max_airmass = forms.FloatField(help_text=max_airmass_help)
     observation_mode = forms.ChoiceField(
-        choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response'))
+        choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response')),
+        help_text=observation_mode_help
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['proposal'] = forms.ChoiceField(choices=self.proposal_choices())
         self.fields['filter'] = forms.ChoiceField(choices=self.filter_choices())
-        self.fields['instrument_type'] = forms.ChoiceField(choices=self.instrument_choices())
+        self.fields['instrument_type'] = forms.ChoiceField(choices=self.instrument_choices(),
+                                                           help_text=instrument_type_help)
         self.helper.layout = Layout(
             self.common_layout,
             self.layout(),
@@ -73,6 +119,7 @@ class LCOBaseObservationForm(GenericObservationForm):
         )
 
     def layout(self):
+
         return Div(
             Div(
                 'name',
@@ -84,7 +131,11 @@ class LCOBaseObservationForm(GenericObservationForm):
                 css_class='col'
             ),
             Div(
-                'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass',
+                'filter',
+                'instrument_type',
+                'exposure_count',
+                'exposure_time',
+                'max_airmass',
                 css_class='col'
             ),
             css_class='form-row'
@@ -281,11 +332,21 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
     def layout(self):
         return Div(
             Div(
-                'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
+                'name',
+                'proposal',
+                'ipp_value',
+                'observation_mode',
+                'start',
+                'end',
                 css_class='col'
             ),
             Div(
-                'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass', 'rotator_angle',
+                'filter',
+                'instrument_type',
+                'exposure_count',
+                'exposure_time',
+                'max_airmass',
+                'rotator_angle',
                 css_class='col'
             ),
             css_class='form-row'
