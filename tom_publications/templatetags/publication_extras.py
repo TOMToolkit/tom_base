@@ -12,8 +12,8 @@ register = template.Library()
 
 @register.inclusion_tag('tom_publications/partials/latex_button.html')
 def latex_button(object):
-    model_name = object._meta.verbose_name.replace(' ', '')
-    return {'model_name': model_name, 'model_pk': object.id}
+    model_name = object._meta.label
+    return {'model_name': object._meta.label, 'model_pk': object.id}
 
 
 @register.inclusion_tag('tom_publications/partials/latex_table_form.html', takes_context=True)

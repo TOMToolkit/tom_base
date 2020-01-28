@@ -27,54 +27,24 @@ def get_latex_processor(model_name):
     return latex_processor
 
 
-# class GenericLatexForm(forms.Form):
+class GenericLatexForm(forms.Form):
 
-#     model_pk = forms.IntegerField(
-#         widget=forms.HiddenInput(),
-#         required=True
-#     )
-#     model_name = forms.CharField(
-#         widget=forms.HiddenInput(),
-#         required=True
-#     )
-
-#     def __init__(self, *args, **kwargs):
-#         print('init')
-#         print(kwargs)
-#         super().__init__(*args, **kwargs)
-#         print(kwargs)
-
-#         model_name = self.fields['model_name'].value()
-#         if not model_name:
-#             model_name = self.get_initial_for_field(self.fields['model_name'], 'model_name')
-
-#         # print(self.initial.get('model_name'))
-#         # print(self.initial)
-#         field_list = self.initial.getlist('field_list')
-#         print(type(field_list))
-#         print(field_list)
-
-#         for app in apps.get_app_configs():
-#             try:
-#                 model = app.get_model(model_name)
-#                 break
-#             except LookupError:
-#                 pass
-
-#         self.fields['field_list'] = forms.MultipleChoiceField(
-#             choices=[(v.name, v.name) for v in model._meta.get_fields() if issubclass(type(v), Field)],
-#             initial=['name', 'ra', 'dec'],
-#             widget=forms.CheckboxSelectMultiple(),
-#             required=True,
-#         )
+    model_pk = forms.IntegerField(
+        widget=forms.HiddenInput(),
+        required=True
+    )
+    model_name = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=True
+    )
+    template = forms.CharField(widget=forms.HiddenInput(), required=False)
 
 
 class GenericLatexProcessor():
-    # form_class = GenericLatexForm
+    form_class = GenericLatexForm
 
-    # def get_form(self, model_name, model_pk, field_list={}):
-    #     print(model_name)
-    #     return self.form_class(model_name=model_name, model_pk=model_pk, field_list=field_list)
+    def get_form(self, data=None, **kwargs):
+        return self.form_class(data, **kwargs)
 
     def create_latex(self, model_type, model_pk):
         pass

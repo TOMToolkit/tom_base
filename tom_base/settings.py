@@ -206,8 +206,8 @@ DATA_PROCESSORS = {
 
 TOM_LATEX_PROCESSORS = {
     # 'target': 'tom_publications.processors.latex_processor.TargetLatexProcessor',
-    'observation_record': 'tom_publications.processors.latex_processor.ObservationGroupLatexProcessor',
-    'target_list': 'tom_publications.processors.latex_processor.TargetListLatexProcessor'
+    'ObservationRecord': 'tom_publications.processors.latex_processor.ObservationGroupLatexProcessor',
+    'TargetList': 'tom_publications.processors.target_list_latex_processor.TargetListLatexProcessor'
 }
 
 TOM_FACILITY_CLASSES = [
