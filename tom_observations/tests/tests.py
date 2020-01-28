@@ -5,15 +5,14 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 
-from astroplan import Observer, FixedTarget
-from astropy import units
+from astroplan import FixedTarget
 from astropy.coordinates import get_sun, SkyCoord
 from astropy.time import Time
 
 from .factories import TargetFactory, ObservingRecordFactory, TargetNameFactory
 from tom_observations.utils import get_astroplan_sun_and_time, get_sidereal_visibility
 from tom_observations.tests.utils import FakeFacility
-from tom_observations.models import ObservationRecord
+from tom_observations.models import ObservationRecord, ObservationGroup
 from tom_targets.models import Target
 from guardian.shortcuts import assign_perm
 
@@ -61,6 +60,31 @@ class TestObservationViews(TestCase):
             )
         )
         self.assertContains(response, 'fake form input')
+
+    def test_add_observations_to_group(self):
+        obs_group = ObservationGroup.objects.create(name='testgroup')
+        reqstring = '?action=add&selected={}&observationgroup={}'.format(
+            self.observation_record.id,
+            obs_group.id
+        )
+        response = self.client.get(reverse('tom_observations:list') + reqstring)
+        self.assertEqual(response.status_code, 302)
+        obs_group.refresh_from_db()
+        self.assertIn(self.observation_record, obs_group.observation_records.all())
+
+    def test_remove_observations_from_group(self):
+        obs_group = ObservationGroup.objects.create(name='testgroup')
+        obs_group.observation_records.add(self.observation_record)
+        obs_group.save()
+        self.assertIn(self.observation_record, obs_group.observation_records.all())
+        reqstring = '?action=remove&selected={}&observationgroup={}'.format(
+            self.observation_record.id,
+            obs_group.id
+        )
+        response = self.client.get(reverse('tom_observations:list') + reqstring)
+        self.assertEqual(response.status_code, 302)
+        obs_group.refresh_from_db()
+        self.assertNotIn(self.observation_record, obs_group.observation_records.all())
 
     def test_submit_observation(self):
         form_data = {
