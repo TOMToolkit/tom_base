@@ -7,6 +7,11 @@ from tom_publications.models import LatexConfiguration
 
 class LatexTableForm(forms.Form):
 
+    # field_list_models = {
+    #     'targetlist': 'target',
+    #     'observationgroup': 'observationrecord'
+    # }
+
     model_pk = forms.IntegerField(
         widget=forms.HiddenInput(),
         required=True
@@ -15,6 +20,8 @@ class LatexTableForm(forms.Form):
         widget=forms.HiddenInput(),
         required=True
     )
+    template = forms.CharField(widget=forms.HiddenInput(), required=False)
+    save = forms.BooleanField(widget=forms.HiddenInput(), required=False)
 
     def __init__(self, *args, **kwargs):
         """
@@ -40,11 +47,14 @@ class LatexTableForm(forms.Form):
 
         for app in apps.get_app_configs():
             try:
+                # model = app.get_model(self.field_list_models[model_name])
                 model = app.get_model(model_name)
                 break
             except LookupError:
                 pass
 
+
+        print(model)
         self.fields['field_list'] = forms.MultipleChoiceField(
             choices=[(v.name, v.name) for v in model._meta.get_fields() if issubclass(type(v), Field)],
             initial=field_list,
@@ -54,4 +64,6 @@ class LatexTableForm(forms.Form):
 
 
 class LatexConfigurationForm(forms.ModelForm):
-    model = LatexConfiguration
+    class Meta:
+        model = LatexConfiguration
+        fields = '__all__'

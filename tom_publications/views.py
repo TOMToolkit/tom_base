@@ -7,11 +7,63 @@ from django.views.generic.edit import FormView
 from tom_dataproducts.models import DataProduct
 from tom_observations.models import ObservationGroup
 from tom_publications.forms import LatexTableForm, LatexConfigurationForm
+from tom_publications.latex import get_latex_processor
+from tom_publications.models import LatexConfiguration
 from tom_targets.models import TargetList
 
 
 class LatexTableView(LoginRequiredMixin, TemplateView):
     template_name = 'tom_publications/latex_table.html'
+
+    def get(self, request, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        print(self.request.GET)
+
+        for app in apps.get_app_configs():
+            try:
+                print(app)
+                model = app.get_model(request.GET.get('model_name'))
+                print(model)
+                obj = model.objects.get(pk=request.GET.get('model_pk'))
+                break
+            except LookupError:
+                pass
+
+        latex = []
+        if not request.GET.getlist('field_list'):
+            latex_form = LatexTableForm(initial={
+                'model_pk': request.GET.get('model_pk'),
+                'model_name': request.GET.get('model_name'),
+                'field_list': request.GET.getlist('field_list', [])
+            })
+        else:
+            latex_form = LatexTableForm({
+                'model_pk': request.GET.get('model_pk'),
+                'model_name': request.GET.get('model_name'),
+                'field_list': request.GET.getlist('field_list', []),
+            })
+            if latex_form.is_valid():
+                latex_form.clean()
+                print('cleaned')
+                print(latex_form.cleaned_data)
+                print(latex_form.cleaned_data['field_list'])
+
+                processor = get_latex_processor(request.GET.get('model_name'))
+                latex = processor.create_latex(request.GET.get('model_pk'), latex_form.cleaned_data['field_list'])
+                # print(ascii.write(latex, format='latex'))
+                print(latex)
+                if request.GET.get('save-latex'):
+                    config = LatexConfiguration(
+                        fields=','.join(request.GET.getlist('field_list')),
+                        model_name=request.GET.get('model_name')
+                    )
+                    config.save()
+
+        context['object'] = obj
+        context['latex_form'] = latex_form
+        context['latex'] = latex
+
+        return self.render_to_response(context)
 
     # def get_object(self):
     #     # obj = self.request.GET.get('model')
@@ -70,6 +122,33 @@ class LatexTableView(LoginRequiredMixin, TemplateView):
 class SaveLatexConfigurationView(LoginRequiredMixin, FormView):
     form_class = LatexConfigurationForm
     template_name = 'tom_publications/latex_table.html'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        if self.request.method == 'GET':
+            model_name = self.request.GET.get('model_name')
+            # model_pk = self.request.GET.get('model_pk')
+            field_list = self.request.GET.getlist('field_list')
+
+            form_class = self.get_form_class()
+            form = form_class(initial={'field_list': field_list, 'model_name': model_name})
+
+            context['form'] = form
+
+        return context
+
+    def form_invalid(self, form):
+        print('form_invalid')
+        return super().form_invalid(form)
+
+    def form_valid(self, form):
+        print('form_valid')
+        return super().form_valid(form)
+
+    def post(self, request, *args, **kwargs):
+        print('post')
+        return super().post(request, *args, **kwargs)
+
 
 
 # class LatexTableView(LoginRequiredMixin, FormView):

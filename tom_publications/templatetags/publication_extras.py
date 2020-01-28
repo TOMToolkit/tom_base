@@ -59,7 +59,7 @@ def latex_table(context):
 
     print(obj)
     return {
-        'form': latex_form,
+        'latex_form': latex_form,
         'object': obj,
         'latex': latex
     }

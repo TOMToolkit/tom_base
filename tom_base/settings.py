@@ -204,6 +204,12 @@ DATA_PROCESSORS = {
     'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
 }
 
+TOM_LATEX_PROCESSORS = {
+    # 'target': 'tom_publications.processors.latex_processor.TargetLatexProcessor',
+    'observation_record': 'tom_publications.processors.latex_processor.ObservationGroupLatexProcessor',
+    'target_list': 'tom_publications.processors.latex_processor.TargetListLatexProcessor'
+}
+
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility'
