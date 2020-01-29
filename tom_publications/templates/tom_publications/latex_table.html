@@ -5,7 +5,7 @@
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block content %}
 <div class="row">
-  <div id="latex-form" class="col-md-4">
+  <div id="latex-form" class="col-md-12">
     <h3>Generate latex table for {{ object.name }}</h3>
     <form method="GET" action="{% url 'tom_publications:create-latex' %}" class="form">
       {% csrf_token %}

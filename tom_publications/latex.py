@@ -1,5 +1,7 @@
 from importlib import import_module
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Submit
 from django import forms
 from django.apps import apps
 from django.conf import settings
@@ -38,6 +40,13 @@ class GenericLatexForm(forms.Form):
         required=True
     )
     template = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.add_input(Submit('submit', 'Create Table'))
+        self.helper.add_input(Submit('submit', 'Save Latex Config'))
+        self.common_layout = Layout('model_pk', 'model_name', 'template')
 
 
 class GenericLatexProcessor():
