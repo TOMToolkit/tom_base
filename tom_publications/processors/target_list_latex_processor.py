@@ -3,7 +3,7 @@ import io
 from astropy.io import ascii
 from astropy.table import Table
 from crispy_forms.bootstrap import InlineCheckboxes
-from crispy_forms.layout import Div, Layout
+from crispy_forms.layout import Layout, Submit
 from django import forms
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
@@ -26,30 +26,21 @@ class TargetListLatexForm(GenericLatexForm):
         super().__init__(*args, **kwargs)
         self.helper.layout = Layout(
             self.common_layout,
-            self.layout()
+            InlineCheckboxes('field_list')
         )
-
-    def layout(self):
-        return Div(Div(InlineCheckboxes('field_list')))
-        # print(len(self.fields['field_list']))
 
 
 class TargetListLatexProcessor(GenericLatexProcessor):
 
     form_class = TargetListLatexForm
 
-    def get_form(self, data=None, **kwargs):
-        return self.form_class(data, **kwargs)
-
-    def create_latex(self, pk, field_names):
-        # TODO: allow specification of a header
-        # TODO: allow addition of notes and references
-        target_list = TargetList.objects.get(pk=pk)
-        targets = target_list.targets
+    def create_latex(self, cleaned_data):
+        # TODO: enable user to modify column header
+        # TODO: add preview PDF
+        target_list = TargetList.objects.get(pk=cleaned_data.get('model_pk'))
 
         table_data = {}
-        print(field_names)
-        for field in field_names:
+        for field in cleaned_data.get('field_list', []):
             for target in target_list.targets.all():
                 try:
                     verbose_name = Target._meta.get_field(field).verbose_name
@@ -57,7 +48,9 @@ class TargetListLatexProcessor(GenericLatexProcessor):
                 except FieldDoesNotExist:
                     table_data.setdefault(field, []).append(TargetExtra.objects.filter(target=target, key=field).first().value)
 
+        latex_dict=ascii.latex.latexdicts['AA']
+        latex_dict.update({'caption': cleaned_data.get('table_header'), 'tablefoot': cleaned_data.get('table_footer')})
+
         latex = io.StringIO()
-        ascii.write(table_data, latex, format='latex')
-        print(latex.getvalue())
+        ascii.write(table_data, latex, format='latex', latexdict=latex_dict)
         return latex.getvalue()

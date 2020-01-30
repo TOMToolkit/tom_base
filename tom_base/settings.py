@@ -53,7 +53,6 @@ INSTALLED_APPS = [
     'tom_observations',
     'tom_dataproducts',
     'tom_publications',
-    'latexify'
 ]
 
 SITE_ID = 1
@@ -205,8 +204,7 @@ DATA_PROCESSORS = {
 }
 
 TOM_LATEX_PROCESSORS = {
-    # 'target': 'tom_publications.processors.latex_processor.TargetLatexProcessor',
-    'ObservationRecord': 'tom_publications.processors.latex_processor.ObservationGroupLatexProcessor',
+    'ObservationGroup': 'tom_publications.processors.latex_processor.ObservationGroupLatexProcessor',
     'TargetList': 'tom_publications.processors.target_list_latex_processor.TargetListLatexProcessor'
 }
 

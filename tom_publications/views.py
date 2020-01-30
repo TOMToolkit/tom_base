@@ -19,8 +19,6 @@ class LatexTableView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         model_name = request.GET.get('model_name')
-        model_pk = request.GET.get('model_pk')
-        field_list = request.GET.getlist('field_list', None)
         obj = None
         if not model_name:
             raise Exception
@@ -31,30 +29,16 @@ class LatexTableView(LoginRequiredMixin, TemplateView):
         processor = get_latex_processor(model_name.split('.')[1])
 
         latex = []
-        if not field_list:
-            latex_form = processor.get_form(initial={
-                'model_pk': model_pk,
-                'model_name': model_name,
-                'field_list': []
-            })
+        if not request.GET.getlist('field_list'):
+            latex_form = processor.get_form(initial=request.GET)
         else:
-            latex_form = processor.get_form({
-                'model_pk': model_pk,
-                'model_name': model_name,
-                'field_list': field_list,
-            })
+            latex_form = processor.get_form(request.GET)
             if latex_form.is_valid():
                 latex_form.clean()
-                print('cleaned')
-                print(latex_form.cleaned_data)
-                print(latex_form.cleaned_data['field_list'])
 
                 latex = processor.create_latex(
-                    latex_form.cleaned_data['model_pk'],
-                    latex_form.cleaned_data['field_list']
+                    latex_form.cleaned_data
                 )
-                # print(ascii.write(latex, format='latex'))
-                print(latex)
                 if request.GET.get('save-latex'):
                     config = LatexConfiguration(
                         fields=','.join(latex_form.cleaned_data['field_list']),

@@ -1,5 +1,6 @@
 from importlib import import_module
 
+from abc import ABC, abstractmethod
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit
 from django import forms
@@ -39,21 +40,43 @@ class GenericLatexForm(forms.Form):
         widget=forms.HiddenInput(),
         required=True
     )
+    table_header = forms.CharField(
+        required=False,
+        widget=forms.TextInput()
+    )
+    table_footer = forms.CharField(
+        required=False,
+        widget=forms.TextInput()
+    )
     template = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.add_input(Submit('submit', 'Create Table'))
-        self.helper.add_input(Submit('submit', 'Save Latex Config'))
-        self.common_layout = Layout('model_pk', 'model_name', 'template')
+        self.helper.add_input(Submit('create-latex', 'Create Table'))
+        if self.is_bound:
+            self.helper.add_input(Submit('save-latex', 'Save Latex Config'))
+        self.common_layout = Layout('model_pk', 'model_name', 'table_header', 'table_footer', 'template')
 
 
-class GenericLatexProcessor():
+class GenericLatexProcessor(ABC):
+    """
+    The latex processor class contains the logic to render a Latex-formatted table using the fields from a TOM model.
+    All abstract methods need to be implemented by any subclasses of the GenericLatexProcessor. In order to make use of
+    a latex processor, add the model type and processor path to ``TOM_LATEX_PROCESSORS`` in your ``settings.py``.
+    """
+
     form_class = GenericLatexForm
 
     def get_form(self, data=None, **kwargs):
+        """
+        This method returns the form class specified for the processor class.
+        """
         return self.form_class(data, **kwargs)
 
-    def create_latex(self, model_type, model_pk):
+    @abstractmethod
+    def create_latex(self, cleaned_data):
+        """
+        This method takes in the data from a form.clean() and returns a string of latex.
+        """
         pass
