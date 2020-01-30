@@ -13,12 +13,22 @@ class JPLHorizonsHarvester(AbstractHarvester):
     name = 'JPL Horizons'
 
     def query(self, term, location=None, start=None, end=None, step=None):
+        print(location)
+        print(start)
+        print(end)
+        print(step)
         if all((start, end, step)):
             epochs = {'start': start, 'end': end, 'step': step}
         else:
             epochs = None
         try:
             obj = Horizons(id=term, location=location, epochs=epochs)
+            elements = obj.elements()
+            print(type(elements))
+            print(elements['e'])
+            print(elements.colnames)
+            for element in elements.colnames:
+                print(elements[element])
             self.catalog_data = obj.elements()
         except (ValueError, IOError):
             self.catalog_data = {}
@@ -33,5 +43,9 @@ class JPLHorizonsHarvester(AbstractHarvester):
         target.inclination = self.catalog_data['incl'][0]
         target.mean_daily_motion = self.catalog_data['n'][0]
         target.semimajor_axis = self.catalog_data['a'][0]
+        target.eccentricity = self.catalog_data['e'][0]
+        target.epoch = self.catalog_data['datetime_jd'][0]
+        target.epoch_of_perihelion = self.catalog_data['Tp_jd'][0]
+        target.perihdist = self.catalog_data['q'][0]
         target.ephemeris_period = self.catalog_data['P'][0]
         return target
