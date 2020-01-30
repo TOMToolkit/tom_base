@@ -204,7 +204,7 @@ DATA_PROCESSORS = {
 }
 
 TOM_LATEX_PROCESSORS = {
-    'ObservationGroup': 'tom_publications.processors.latex_processor.ObservationGroupLatexProcessor',
+    'ObservationGroup': 'tom_publications.processors.observation_group_latex_processor.ObservationGroupLatexProcessor',
     'TargetList': 'tom_publications.processors.target_list_latex_processor.TargetListLatexProcessor'
 }
 

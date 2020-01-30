@@ -5,7 +5,7 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Field
 
 from tom_publications.latex import GenericLatexProcessor, GenericLatexForm
-from tom_observations.models import ObservationRecord
+from tom_observations.models import ObservationRecord, ObservationGroup
 
 
 class ObservationGroupLatexForm(GenericLatexForm):
@@ -30,11 +30,11 @@ class ObservationGroupLatexProcessor(GenericLatexProcessor):
     def create_latex_table_data(self, cleaned_data):
         # TODO: enable user to modify column header
         # TODO: add preview PDF
-        observation_list = ObservationList.objects.get(pk=cleaned_data.get('model_pk'))
+        observation_group = ObservationGroup.objects.get(pk=cleaned_data.get('model_pk'))
 
         table_data = {}
         for field in cleaned_data.get('field_list', []):
-            for obs_record in observation_list.observationrecords.all():
+            for obs_record in observation_group.observation_records.all():
                 try:
                     verbose_name = ObservationRecord._meta.get_field(field).verbose_name
                     table_data.setdefault(verbose_name, []).append(getattr(obs_record, field))
