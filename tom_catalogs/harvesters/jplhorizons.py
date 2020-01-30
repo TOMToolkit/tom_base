@@ -13,22 +13,12 @@ class JPLHorizonsHarvester(AbstractHarvester):
     name = 'JPL Horizons'
 
     def query(self, term, location=None, start=None, end=None, step=None):
-        print(location)
-        print(start)
-        print(end)
-        print(step)
         if all((start, end, step)):
             epochs = {'start': start, 'end': end, 'step': step}
         else:
             epochs = None
         try:
             obj = Horizons(id=term, location=location, epochs=epochs)
-            elements = obj.elements()
-            print(type(elements))
-            print(elements['e'])
-            print(elements.colnames)
-            for element in elements.colnames:
-                print(elements[element])
             self.catalog_data = obj.elements()
         except (ValueError, IOError):
             self.catalog_data = {}
