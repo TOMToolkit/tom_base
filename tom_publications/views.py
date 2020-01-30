@@ -36,7 +36,7 @@ class LatexTableView(LoginRequiredMixin, TemplateView):
             if latex_form.is_valid():
                 latex_form.clean()
 
-                latex = processor.create_latex(
+                latex = processor.generate_latex(
                     latex_form.cleaned_data
                 )
                 if request.GET.get('save-latex'):

@@ -10,7 +10,6 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Field
 
 from tom_publications.latex import GenericLatexProcessor, GenericLatexForm
-from tom_publications.forms import LatexTableForm
 from tom_targets.models import Target, TargetExtra, TargetList
 
 
@@ -34,7 +33,7 @@ class TargetListLatexProcessor(GenericLatexProcessor):
 
     form_class = TargetListLatexForm
 
-    def create_latex(self, cleaned_data):
+    def create_latex_table_data(self, cleaned_data):
         # TODO: enable user to modify column header
         # TODO: add preview PDF
         target_list = TargetList.objects.get(pk=cleaned_data.get('model_pk'))
@@ -48,9 +47,4 @@ class TargetListLatexProcessor(GenericLatexProcessor):
                 except FieldDoesNotExist:
                     table_data.setdefault(field, []).append(TargetExtra.objects.filter(target=target, key=field).first().value)
 
-        latex_dict=ascii.latex.latexdicts['AA']
-        latex_dict.update({'caption': cleaned_data.get('table_header'), 'tablefoot': cleaned_data.get('table_footer')})
-
-        latex = io.StringIO()
-        ascii.write(table_data, latex, format='latex', latexdict=latex_dict)
-        return latex.getvalue()
+        return table_data

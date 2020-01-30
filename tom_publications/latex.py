@@ -1,6 +1,9 @@
 from importlib import import_module
+import io
 
 from abc import ABC, abstractmethod
+from astropy.io import ascii
+from astropy.table import Table
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit
 from django import forms
@@ -54,8 +57,8 @@ class GenericLatexForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit('create-latex', 'Create Table'))
-        if self.is_bound:
-            self.helper.add_input(Submit('save-latex', 'Save Latex Config'))
+        # if self.is_bound:
+        #     self.helper.add_input(Submit('save-latex', 'Save Latex Config'))
         self.common_layout = Layout('model_pk', 'model_name', 'table_header', 'table_footer', 'template')
 
 
@@ -74,9 +77,28 @@ class GenericLatexProcessor(ABC):
         """
         return self.form_class(data, **kwargs)
 
-    @abstractmethod
-    def create_latex(self, cleaned_data):
+    def create_latex_table_data(self, cleaned_data):
+        """
+        This method creates the actual table data to be passed to the latex generator.
+
+        :param cleaned_data: Cleaned form data from a Django form
+        :type cleaned_data: dict
+
+        :returns: dict of tabular data. Keys should be column headers, with values being lists of ordered data.
+        :rtype: dict
+        """
+        return {}
+
+    def generate_latex(self, cleaned_data):
         """
         This method takes in the data from a form.clean() and returns a string of latex.
         """
-        pass
+
+        table_data = self._create_latex_table_data(cleaned_data)
+
+        latex_dict=ascii.latex.latexdicts['AA']
+        latex_dict.update({'caption': cleaned_data.get('table_header'), 'tablefoot': cleaned_data.get('table_footer')})
+
+        latex = io.StringIO()
+        ascii.write(table_data, latex, format='latex', latexdict=latex_dict)
+        return latex.getvalue()
