@@ -1,9 +1,5 @@
-import io
-
-from astropy.io import ascii
-from astropy.table import Table
 from crispy_forms.bootstrap import InlineCheckboxes
-from crispy_forms.layout import Layout, Submit
+from crispy_forms.layout import Layout
 from django import forms
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
@@ -16,7 +12,7 @@ from tom_targets.models import Target, TargetExtra, TargetList
 class TargetListLatexForm(GenericLatexForm):
     field_list = forms.MultipleChoiceField(
         choices=[(v.name, v.verbose_name) for v in Target._meta.get_fields()
-                if issubclass(type(v), Field)] + [(e['name'], e['name']) for e in settings.EXTRA_FIELDS],
+                 if issubclass(type(v), Field)] + [(e['name'], e['name']) for e in settings.EXTRA_FIELDS],
         required=True,
         widget=forms.CheckboxSelectMultiple()
     )
@@ -45,6 +41,7 @@ class TargetListLatexProcessor(GenericLatexProcessor):
                     verbose_name = Target._meta.get_field(field).verbose_name
                     table_data.setdefault(verbose_name, []).append(getattr(target, field))
                 except FieldDoesNotExist:
-                    table_data.setdefault(field, []).append(TargetExtra.objects.filter(target=target, key=field).first().value)
+                    table_data.setdefault(field, []).append(TargetExtra.objects.filter(target=target,
+                                                                                       key=field).first().value)
 
         return table_data

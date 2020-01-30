@@ -96,7 +96,7 @@ class GenericLatexProcessor(ABC):
 
         table_data = self._create_latex_table_data(cleaned_data)
 
-        latex_dict=ascii.latex.latexdicts['AA']
+        latex_dict = ascii.latex.latexdicts['AA']
         latex_dict.update({'caption': cleaned_data.get('table_header'), 'tablefoot': cleaned_data.get('table_footer')})
 
         latex = io.StringIO()
