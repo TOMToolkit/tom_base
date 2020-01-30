@@ -94,7 +94,7 @@ class GenericLatexProcessor(ABC):
         This method takes in the data from a form.clean() and returns a string of latex.
         """
 
-        table_data = self._create_latex_table_data(cleaned_data)
+        table_data = self.create_latex_table_data(cleaned_data)
 
         latex_dict = ascii.latex.latexdicts['AA']
         latex_dict.update({'caption': cleaned_data.get('table_header'), 'tablefoot': cleaned_data.get('table_footer')})

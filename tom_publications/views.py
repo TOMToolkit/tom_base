@@ -29,9 +29,7 @@ class LatexTableView(LoginRequiredMixin, TemplateView):
         processor = get_latex_processor(model_name.split('.')[1])
 
         latex = []
-        if not request.GET.getlist('field_list'):
-            latex_form = processor.get_form(initial=request.GET)
-        else:
+        if 'create-latex' in request.GET or 'save-latex' in request.GET:
             latex_form = processor.get_form(request.GET)
             if latex_form.is_valid():
                 latex_form.clean()
@@ -45,6 +43,8 @@ class LatexTableView(LoginRequiredMixin, TemplateView):
                         model_name=latex_form.cleaned_data['model_name']
                     )
                     config.save()
+        else:
+            latex_form = processor.get_form(initial=request.GET)
 
         context['object'] = obj
         context['latex_form'] = latex_form
