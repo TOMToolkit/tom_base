@@ -32,6 +32,13 @@ class AbstractHarvester(object):
         """
         raise NotImplementedError
 
+    @staticmethod
+    def jd_to_mjd(jd_value):
+        if jd_value > 2400000.5:
+            return jd_value - 2400000.5
+        else:
+            return jd_value
+
     def to_target(self):
         """
         Instantiates a ``Target`` object with the data from the catalog search result.

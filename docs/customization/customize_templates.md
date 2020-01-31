@@ -44,7 +44,7 @@ looks like this:
 ├── templates
 │   └── tom_common
 │       └── index.html
-└── tomtest
+└── mytom
     ├── __init__.py
     ├── settings.py
     ├── urls.py
