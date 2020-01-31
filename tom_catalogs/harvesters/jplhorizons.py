@@ -30,7 +30,7 @@ class JPLHorizonsHarvester(AbstractHarvester):
         target.name = str(self.catalog_data['targetname'][0])
         target.mean_anomaly = self.catalog_data['M'][0]  # mean anomaly in JPL astroquery column names
         target.arg_of_perihelion = self.catalog_data['w'][0]  # argument of the perifocus in JPL
-        target.lng_asc_node = self.catalog_data['Omega'][0]  # logintude of asc. node in JPL
+        target.lng_asc_node = self.catalog_data['Omega'][0]  # longitude of asc. node in JPL
         target.inclination = self.catalog_data['incl'][0]  # inclination in JPL
         target.mean_daily_motion = self.catalog_data['n'][0]  # mean motion in JPL
         target.semimajor_axis = self.catalog_data['a'][0]  # semi-major axis in JPL
