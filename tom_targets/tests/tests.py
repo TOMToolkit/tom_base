@@ -194,7 +194,7 @@ class TestTargetCreate(TestCase):
             'name': 'nonsidereal_target',
             'identifier': 'nonsidereal_identifier',
             'type': Target.NON_SIDEREAL,
-            'epoch': 100,
+            'epoch_of_elements': 100,
             'lng_asc_node': 100,
             'arg_of_perihelion': 100,
             'eccentricity': 100,

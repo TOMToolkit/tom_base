@@ -192,7 +192,7 @@ class LCOBaseObservationForm(GenericObservationForm):
                 'semimajor_axis': 'meandist',
                 'mean_anomaly': 'meananom',
                 'mean_daily_motion': 'dailymot',
-                'epoch': 'epochofel',
+                'epoch_of_elements': 'epochofel',
                 'epoch_of_perihelion': 'epochofperih',
             }
             # The fields to include in the payload depend on the scheme. Add

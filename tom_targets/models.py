@@ -11,22 +11,18 @@ from tom_common.hooks import run_hook
 GLOBAL_TARGET_FIELDS = ['name', 'type']
 
 SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
-    'ra', 'dec', 'epoch', 'pm_ra', 'pm_dec',
-    'galactic_lng', 'galactic_lat', 'distance', 'distance_err'
+    'ra', 'dec', 'epoch', 'pm_ra', 'pm_dec', 'galactic_lng', 'galactic_lat', 'distance', 'distance_err'
 ]
 
 NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
-    'scheme', 'mean_anomaly', 'arg_of_perihelion',
-    'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
-    'eccentricity', 'epoch', 'epoch_of_perihelion', 'ephemeris_period',
-    'ephemeris_period_err', 'ephemeris_epoch', 'ephemeris_epoch_err',
-    'perihdist'
+    'scheme', 'mean_anomaly', 'arg_of_perihelion', 'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
+    'eccentricity', 'epoch_of_elements', 'epoch_of_perihelion', 'ephemeris_period', 'ephemeris_period_err',
+    'ephemeris_epoch', 'ephemeris_epoch_err', 'perihdist'
 ]
 
 REQUIRED_SIDEREAL_FIELDS = ['ra', 'dec']
 REQUIRED_NON_SIDEREAL_FIELDS = [
-    'scheme', 'epoch', 'inclination', 'lng_asc_node', 'arg_of_perihelion',
-    'eccentricity',
+    'scheme', 'epoch_of_elements', 'inclination', 'lng_asc_node', 'arg_of_perihelion', 'eccentricity',
 ]
 # Additional non-sidereal fields that are required for specific orbital element
 # schemes
@@ -85,6 +81,9 @@ class Target(models.Model):
 
     :param scheme: Orbital Element Scheme
     :type scheme: str
+
+    :param epoch_of_elements: Epoch of elements in JD.
+    :type epoch_of_elements: float
 
     :param mean_anomaly: Angle in degrees.
     :type mean_anomaly: float
@@ -155,7 +154,7 @@ class Target(models.Model):
         null=True, blank=True, verbose_name='Declination', help_text='Declination, in degrees.'
     )
     epoch = models.FloatField(
-        null=True, blank=True, verbose_name='Epoch of Elements', help_text='Julian Years. Max 2100.'
+        null=True, blank=True, verbose_name='Epoch', help_text='Julian Years. Max 2100.'
     )
     parallax = models.FloatField(
         null=True, blank=True, verbose_name='Parallax', help_text='Parallax, in milliarcseconds.'
@@ -181,6 +180,9 @@ class Target(models.Model):
     )
     scheme = models.CharField(
         max_length=50, choices=TARGET_SCHEMES, verbose_name='Orbital Element Scheme', default='', blank=True
+    )
+    epoch_of_elements = models.FloatField(
+        null=True, blank=True, verbose_name='Epoch of Elements', help_text='Julian date.'
     )
     mean_anomaly = models.FloatField(
         null=True, blank=True, verbose_name='Mean Anomaly', help_text='Angle in degrees.'
