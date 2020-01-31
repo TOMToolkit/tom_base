@@ -34,10 +34,10 @@ class AbstractHarvester(object):
 
     @staticmethod
     def jd_to_mjd(jd_value):
-        if jd_value > 2400000.5:
-            return jd_value - 2400000.5
+        if float(jd_value) > 2400000.5:
+            return float(jd_value) - 2400000.5
         else:
-            return jd_value
+            return float(jd_value)
 
     def to_target(self):
         """

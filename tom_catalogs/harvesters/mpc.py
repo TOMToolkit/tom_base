@@ -21,7 +21,7 @@ class MPCHarvester(AbstractHarvester):
         target.type = 'NON_SIDEREAL'
         target.name = result['name']
         target.extra_names = [result['designation']] if result['designation'] else []
-        target.epoch = result['epoch_jd']
+        target.epoch_of_elements = self.jd_to_mjd(result['epoch_jd'])
         target.mean_anomaly = result['mean_anomaly']
         target.arg_of_perihelion = result['argument_of_perihelion']
         target.eccentricity = result['eccentricity']
