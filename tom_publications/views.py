@@ -1,15 +1,9 @@
 from django.apps import apps
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import render
 from django.views.generic import TemplateView
-from django.views.generic.edit import FormView
 
-from tom_dataproducts.models import DataProduct
-from tom_observations.models import ObservationGroup
-from tom_publications.forms import LatexTableForm
 from tom_publications.latex import get_latex_processor
 from tom_publications.models import LatexConfiguration
-from tom_targets.models import TargetList
 
 
 class LatexTableView(LoginRequiredMixin, TemplateView):

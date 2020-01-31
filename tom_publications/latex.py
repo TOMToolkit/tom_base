@@ -1,15 +1,12 @@
 from importlib import import_module
 import io
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from astropy.io import ascii
-from astropy.table import Table
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit
 from django import forms
-from django.apps import apps
 from django.conf import settings
-from django.db.models.fields import Field
 
 
 DEFAULT_LATEX_PROCESSOR_CLASS = 'tom_publications.latex.GenericLatexProcessor'
