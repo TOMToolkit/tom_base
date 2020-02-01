@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load bootstrap4 crispy_forms_tags %}
 {% block title %}New Target{% endblock %}
 {% block content %}
 {% if not object %}
@@ -21,7 +21,7 @@
   <form method="post" class="form">
 {% endif %}
 {% csrf_token %}
-{% bootstrap_form form %}
+{% crispy form %}
 {% bootstrap_formset names_form %}
 <h3>Tags</h3>
 {% bootstrap_formset extra_form %}

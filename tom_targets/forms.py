@@ -1,6 +1,8 @@
-from django import forms
 from astropy.coordinates import Angle
 from astropy import units as u
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Field, Fieldset, HTML, Layout
+from django import forms
 from django.forms import ValidationError, inlineformset_factory
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -118,6 +120,19 @@ class SiderealTargetCreateForm(TargetForm):
 class NonSiderealTargetCreateForm(TargetForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_style = 'inline'
+        fieldset = Fieldset(None)
+        fieldset.append(Field('name', placeholder='Name'))
+        fieldset.append(Field('type'))
+        fieldset.append(Field('scheme'))
+        fieldset.append(HTML('<small class=\"text-muted\">Note: coordinates are heliocentric.</small>'))
+        for field_name in NON_SIDEREAL_FIELDS:
+            if field_name not in ['name', 'type', 'scheme']:
+                fieldset.append(Field(field_name, placeholder=Target._meta.get_field(field_name).verbose_name))
+        self.helper.layout = Layout(fieldset)
+
         for field in REQUIRED_NON_SIDEREAL_FIELDS:
             self.fields[field].required = True
 
