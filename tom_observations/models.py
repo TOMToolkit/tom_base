@@ -111,6 +111,7 @@ class ObservationGroup(models.Model):
     """
     name = models.CharField(max_length=50)
     observation_records = models.ManyToManyField(ObservationRecord)
+    cadence_strategy = models.CharField(max_length=100, blank=True, default='')
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 

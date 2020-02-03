@@ -7,6 +7,7 @@ from django.core.cache import cache
 from astropy import units as u
 
 from tom_common.exceptions import ImproperCredentialsException
+from tom_observations.cadence import get_cadence_strategies
 from tom_observations.facility import GenericObservationFacility, GenericObservationForm
 from tom_observations.facility import get_service_class
 from tom_targets.models import (
@@ -25,6 +26,7 @@ except (AttributeError, KeyError):
 
 # Module specific settings.
 PORTAL_URL = LCO_SETTINGS['portal_url']
+SUCCESSFUL_OBSERVING_STATES = ['COMPLETED']
 TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
 FAILED_OBSERVING_STATES = ['WINDOW_EXPIRED', 'CANCELED']
 
@@ -58,6 +60,10 @@ class LCOBaseObservationForm(GenericObservationForm):
     max_airmass = forms.FloatField()
     period = forms.FloatField(required=False)
     jitter = forms.FloatField(required=False)
+    cadence_strategy = forms.ChoiceField(
+        required=False,
+        choices=[('', '---------')] + [(v, k) for k, v in get_cadence_strategies().items()]
+    )
     observation_mode = forms.ChoiceField(
         choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response'))
     )
@@ -94,6 +100,13 @@ class LCOBaseObservationForm(GenericObservationForm):
                 Div(
                     'period', 'jitter',
                     css_class='col'
+                ),
+                css_class='form-row'
+            ),
+            Div(
+                Div(
+                    'cadence_strategy',
+                    'period'
                 ),
                 css_class='form-row'
             )
@@ -310,14 +323,29 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
     def layout(self):
         return Div(
             Div(
-                'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
-                css_class='col'
+                Div(
+                    'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
+                    css_class='col'
+                ),
+                Div(
+                    'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass', 'rotator_angle',
+                    css_class='col'
+                ),
+                css_class='form-row',
             ),
-            Div(
-                'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass', 'rotator_angle',
-                css_class='col'
-            ),
-            css_class='form-row'
+            # Div(
+            #     Div(
+            #         HTML('<p>Cadence parameters. Leave blank if no cadencing is desired.</p>'),
+            #         css_class='row'
+            #     ),
+            #     Div(
+            #         Div(
+            #             'period', 'jitter', 'cadence_strategy',
+            #             css_class='col'
+            #         ),
+            #         css_class='form-row'
+            #     )
+            # )
         )
 
     def instrument_choices(self):
@@ -447,6 +475,12 @@ class LCOFacility(GenericObservationFacility):
         :rtype: boolean
         """
         return FITS_FACILITY_KEYWORD_VALUE == header.get(FITS_FACILITY_KEYWORD, None)
+
+    def get_start_end_keywords(self):
+        return ('start', 'end')
+
+    def get_successful_observing_states(self):
+        return
 
     def get_terminal_observing_states(self):
         return TERMINAL_OBSERVING_STATES

@@ -207,6 +207,11 @@ TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.gemini.GEMFacility'
 ]
 
+TOM_CADENCE_STRATEGIES = [
+    'tom_observations.cadence.RetryFailedObservationsStrategy',
+    'tom_observations.cadence.ResumeCadenceAfterFailureStrategy'
+]
+
 # Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"
 # See https://tomtoolkit.github.io/docs/target_fields for documentation on this feature
 # For example:
