@@ -11,9 +11,12 @@
     <dd class="col-sm-6">{{ target_name }}</dd>
   {% endfor %}
   {% for key, value in target.as_dict.items %}
+  {% if target.type == 'NON_SIDEREAL' and key == 'epoch_of_elements' %}
+    <small class="text-muted col-sm-12">Note: coordinates are heliocentric</small>
+  {% endif %}
   {% if value and key != 'name' %}
-  <dt class="col-sm-6">{% verbose_name target key %}</dt>
-  <dd class="col-sm-6">{{ value|truncate_number }}</dd>
+    <dt class="col-sm-6">{% verbose_name target key %}</dt>
+    <dd class="col-sm-6">{{ value|truncate_number }}</dd>
   {% endif %}
   {% if key == 'ra' %}
     <dt class="col-sm-6">&nbsp;</dt>
