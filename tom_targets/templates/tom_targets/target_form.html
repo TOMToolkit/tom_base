@@ -12,14 +12,9 @@
     {% endfor %}
 {% else %}
 <h3> Update {{ object.name }}</h3>
-
 {% endif %}
 </ul>
-{% if not object %}
-  <form method="post" class="form">
-{% else %}
-  <form method="post" class="form">
-{% endif %}
+<form method="post" class="form">
 {% csrf_token %}
 {% crispy form %}
 {% bootstrap_formset names_form %}

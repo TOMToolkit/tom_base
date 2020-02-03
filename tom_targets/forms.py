@@ -124,13 +124,13 @@ class NonSiderealTargetCreateForm(TargetForm):
         self.helper = FormHelper()
         self.helper.form_style = 'inline'
         fieldset = Fieldset(None)
-        fieldset.append(Field('name', placeholder='Name'))
+        fieldset.append(Field('name'))
         fieldset.append(Field('type'))
         fieldset.append(Field('scheme'))
         fieldset.append(HTML('<small class=\"text-muted\">Note: coordinates are heliocentric.</small>'))
         for field_name in NON_SIDEREAL_FIELDS:
             if field_name not in ['name', 'type', 'scheme']:
-                fieldset.append(Field(field_name, placeholder=Target._meta.get_field(field_name).verbose_name))
+                fieldset.append(Field(field_name))
         self.helper.layout = Layout(fieldset)
 
         for field in REQUIRED_NON_SIDEREAL_FIELDS:
