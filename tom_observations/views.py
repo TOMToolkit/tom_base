@@ -237,9 +237,11 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             )
             records.append(record)
 
-        if len(records) > 1:
+        if len(records) > 1 or form.cleaned_data.get('cadence_strategy'):
             group_name = form.cleaned_data['name']
-            observation_group = ObservationGroup.objects.create(name=group_name)
+            observation_group = ObservationGroup.objects.create(
+                name=group_name, cadence_strategy=form.cleaned_data.get('cadence_strategy')
+            )
             observation_group.observation_records.add(*records)
             assign_perm('tom_observations.view_observationgroup', self.request.user, observation_group)
             assign_perm('tom_observations.change_observationgroup', self.request.user, observation_group)

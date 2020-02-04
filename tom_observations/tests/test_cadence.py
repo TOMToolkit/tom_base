@@ -1,13 +1,15 @@
 from django.test import TestCase
 from unittest.mock import patch
-from datetime import timedelta
+from datetime import datetime, timedelta
 from dateutil.parser import parse
 
 from .factories import ObservingRecordFactory, TargetFactory
-from tom_observations.models import ObservationGroup
-from tom_observations.cadence import RetryFailedObservationsStrategy
+from tom_observations.models import ObservationGroup, ObservationRecord
+from tom_observations.cadence import RetryFailedObservationsStrategy, ResumeCadenceAfterFailureStrategy
 
 
+@patch('tom_observations.facilities.lco.LCOBaseObservationForm.proposal_choices',
+       return_value=[('LCOSchedulerTest', 'LCOSchedulerTest')])
 @patch('tom_observations.facilities.lco.LCOFacility.submit_observation', return_value=[198132])
 @patch('tom_observations.facilities.lco.LCOFacility.validate_observation')
 class TestReactiveCadencing(TestCase):
@@ -18,13 +20,13 @@ class TestReactiveCadencing(TestCase):
         self.group.observation_records.add(*observing_records)
         self.group.save()
 
-    def test_retry_when_failed_cadence(self, patch1, patch2):
+    def test_retry_when_failed_cadence(self, patch1, patch2, patch3):
         num_records = self.group.observation_records.count()
         observing_record = self.group.observation_records.first()
         observing_record.status = 'CANCELED'
         observing_record.save()
 
-        strategy = RetryFailedObservationsStrategy(self.group, advance_window_days=3)
+        strategy = RetryFailedObservationsStrategy(self.group, 72)
         new_records = strategy.run()
         self.group.refresh_from_db()
         # Make sure the candence run created a new observation.
@@ -32,6 +34,40 @@ class TestReactiveCadencing(TestCase):
         # assert that the newly added observation record has a window of exactly 3 days
         # later than the canceled observation.
         self.assertEqual(
+            parse(observing_record.parameters_as_dict['start']),
+            parse(new_records[0].parameters_as_dict['start']) - timedelta(days=3)
+        )
+
+    @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'CANCELED',
+           'scheduled_start': None, 'scheduled_end': None})
+    def test_resume_when_failed_cadence_failed_obs(self, patch1, patch2, patch3, patch4):
+        num_records = self.group.observation_records.count()
+        # observing_record = self.group.observation_records.order_by('-created').first()
+        # observing_record.status = 'FAILED'
+        # observing_record.save()
+
+        strategy = ResumeCadenceAfterFailureStrategy(self.group, 72)
+        new_records = strategy.run()
+        self.group.refresh_from_db()
+        self.assertEqual(num_records + 1, self.group.observation_records.count())
+        self.assertEqual(
+            datetime.now().replace(second=0, microsecond=0),
+            parse(new_records[0].parameters_as_dict['start']).replace(second=0, microsecond=0)
+        )
+
+    @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'COMPLETED',
+           'scheduled_start': None, 'scheduled_end': None})
+    def test_resume_when_failed_cadence_successful_obs(self, patch1, patch2, patch3, patch4):
+        num_records = self.group.observation_records.count()
+        observing_record = self.group.observation_records.order_by('-created').first()
+        # observing_record.status = 'COMPLETED'
+        # observing_record.save()
+
+        strategy = ResumeCadenceAfterFailureStrategy(self.group, 72)
+        new_records = strategy.run()
+        self.group.refresh_from_db()
+        self.assertEqual(num_records + 1, self.group.observation_records.count())
+        self.assertAlmostEqual(
             parse(observing_record.parameters_as_dict['start']),
             parse(new_records[0].parameters_as_dict['start']) - timedelta(days=3)
         )

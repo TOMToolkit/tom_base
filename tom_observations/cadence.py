@@ -31,14 +31,20 @@ def get_cadence_strategies():
             clazz = getattr(mod, class_name)
         except (ImportError, AttributeError):
             raise ImportError(f'Could not import {cadence}. Did you provide the correct path?')
-        print(mod_name)
-        print(class_name)
         cadence_choices[class_name] = clazz
     return cadence_choices
 
 
+def get_cadence_strategy(name):
+    available_classes = get_cadence_strategies()
+    try:
+        return available_classes[name]
+    except KeyError:
+        raise ImportError('Could not a find a facility with that name. Did you add it to TOM_FACILITY_CLASSES?')
+
+
 class CadenceStrategy(ABC):
-    def __init__(self, observation_group=None, *args, **kwargs):
+    def __init__(self, observation_group, *args, **kwargs):
         self.cadence_strategy = type(self).__name__
         self.observation_group = observation_group
 
@@ -53,7 +59,7 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
     number of hours later, as specified by ``advance_window_hours``.
     """
 
-    def __init__(self, advance_window_hours, observation_group=None, *args, **kwargs):
+    def __init__(self, observation_group, advance_window_hours, *args, **kwargs):
         self.advance_window_hours = advance_window_hours
         super().__init__(observation_group, *args, **kwargs)
 
@@ -101,14 +107,14 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
     fails, it will submit the next observation immediately, and follow the same decision tree based on the success
     of the subsequent observation."""
 
-    def __init__(self, advance_window_hours, observation_group, *args, **kwargs):
+    def __init__(self, observation_group, advance_window_hours, *args, **kwargs):
         self.advance_window_hours = advance_window_hours
         super().__init__(observation_group, *args, **kwargs)
 
     def run(self):
         last_obs = self.observation_group.observation_records.order_by('-created').first()
         facility = get_service_class(last_obs.facility)()
-        facility.update_observation_status(last_obs.id)
+        facility.update_observation_status(last_obs.observation_id)
         last_obs.refresh_from_db()
         start_keyword, end_keyword = facility.get_start_end_keywords()
         observation_payload = last_obs.parameters_as_dict
@@ -117,9 +123,9 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
             return
         elif last_obs.status in facility.get_failed_observing_states():
             # Submit next observation to be taken as soon as possible
-            window_length = parse(observation_payload['end']) - parse(observation_payload['start'])
-            observation_payload['start'] = datetime.now()
-            observation_payload['end'] = observation_payload['start'] + window_length
+            window_length = parse(observation_payload[end_keyword]) - parse(observation_payload[start_keyword])
+            observation_payload[start_keyword] = datetime.now().isoformat()
+            observation_payload[end_keyword] = (parse(observation_payload[start_keyword]) + window_length).isoformat()
         else:
             # Advance window normally according to cadence parameters
             observation_payload = self.advance_window(
@@ -141,6 +147,10 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
             self.observation_group.observation_records.add(record)
             self.observation_group.save()
             new_observations.append(record)
+
+        for obsr in new_observations:
+            facility = get_service_class(obsr.facility)()
+            facility.update_observation_status(obsr.observation_id)
 
         return new_observations
 

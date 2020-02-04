@@ -1,19 +1,17 @@
 import requests
-from django.conf import settings
-from django import forms
+
+from astropy import units as u
+from crispy_forms.layout import Div, Fieldset, HTML, Layout
 from dateutil.parser import parse
-from crispy_forms.layout import Layout, Div, HTML
+from django import forms
+from django.conf import settings
 from django.core.cache import cache
 from astropy import units as u
 
 from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.cadence import get_cadence_strategies
-from tom_observations.facility import GenericObservationFacility, GenericObservationForm
-from tom_observations.facility import get_service_class
-from tom_targets.models import (
-    Target, REQUIRED_NON_SIDEREAL_FIELDS,
-    REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
-)
+from tom_observations.facility import GenericObservationFacility, GenericObservationForm, get_service_class
+from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
 # Determine settings for this module.
 try:
@@ -98,15 +96,25 @@ class LCOBaseObservationForm(GenericObservationForm):
             ),
             Div(
                 Div(
-                    'period', 'jitter',
+                    'period',
+                    css_class='col'
+                ),
+                Div(
+                    'jitter',
                     css_class='col'
                 ),
                 css_class='form-row'
             ),
             Div(
-                Div(
-                    'cadence_strategy',
-                    'period'
+                Fieldset('Reactive cadence parameters',
+                    Div(
+                        'cadence_strategy',
+                        css_class='col'
+                    ),
+                    Div(
+                        'cadence_frequency',
+                        css_class='col'
+                    ),
                 ),
                 css_class='form-row'
             )
