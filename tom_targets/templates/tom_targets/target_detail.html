@@ -44,6 +44,8 @@
         <h4>Observe</h4>
         {% observing_buttons object %}
         <hr/>
+        {% observingstrategy_run object %}
+        <hr/>
         <h4>Plan</h4>
         {% if object.type == 'SIDEREAL' %}
             {% target_plan %}

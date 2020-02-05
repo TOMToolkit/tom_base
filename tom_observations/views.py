@@ -23,7 +23,6 @@ from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.facility import get_service_class, get_service_classes
 from tom_observations.forms import ManualObservationForm
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
-from tom_observations.observing_strategy import RunStrategyForm
 from tom_targets.models import Target
 
 
@@ -503,8 +502,23 @@ class ObservingStrategyDeleteView(LoginRequiredMixin, DeleteView):
 
 
 class ObservingStrategyRunView(LoginRequiredMixin, FormView):
-    template_name = 'tom_observations/observationstrategy_run.html'
-    form_class = RunStrategyForm
+    template_name = 'tom_observations/observingstrategy_run.html'
+
+    def get_observing_strategy(self):
+        strat_id = self.request.GET.get('observing_strategy')
+        return ObservingStrategy.objects.get(pk=strat_id)
 
     def get_success_url(self):
         return reverse_lazy('tom_observations:detail')
+
+    def get_form_class(self):
+        obs_strat = self.get_observing_strategy()
+        return get_service_class(obs_strat.facility)().get_form(None)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        obs_strat = self.get_observing_strategy()
+        initial.update(obs_strat.parameters_as_dict)
+        initial['facility'] = obs_strat.facility
+        initial['target_id'] = self.request.GET.get('target')
+        return initial

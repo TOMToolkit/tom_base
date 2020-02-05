@@ -36,6 +36,20 @@ class GenericStrategyForm(forms.Form):
 
 class RunStrategyForm(forms.Form):
     target = forms.ModelChoiceField(queryset=Target.objects.all())
+    observing_strategy = forms.ModelChoiceField(queryset=ObservingStrategy.objects.all())
     cadence_strategy = forms.ChoiceField(
         choices=[('', '---------')] + [(v, k) for k, v in get_cadence_strategies().items()]
     )
+    cadence_frequency = forms.IntegerField(
+        required=False,
+        help_text='Frequency of observations, in hours'
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.layout = Layout(
+            'target',
+            'cadence_strategy',
+            'cadence_frequency'
+        )

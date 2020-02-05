@@ -132,3 +132,6 @@ class ObservingStrategy(models.Model):
     @property
     def parameters_as_dict(self):
         return json.loads(self.parameters)
+
+    def __str__(self):
+        return self.name

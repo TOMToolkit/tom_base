@@ -388,6 +388,10 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
 class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for field in self.fields:
+            print(field)
+            if field != 'strategy_name':
+                self.fields[field].required = False
         self.helper.layout = Layout(
             self.common_layout,
             Div(

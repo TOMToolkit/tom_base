@@ -1,7 +1,8 @@
-from django import template
+from django import forms, template
 
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_classes
+from tom_observations.observing_strategy import RunStrategyForm
 from tom_targets.models import Target
 
 from plotly import offline
@@ -29,6 +30,13 @@ def observation_list(target=None):
     else:
         observations = ObservationRecord.objects.all().order_by('-created')
     return {'observations': observations}
+
+
+@register.inclusion_tag('tom_observations/partials/observingstrategy_run.html')
+def observingstrategy_run(target):
+    form = RunStrategyForm(initial={'target': target})
+    form.fields['target'].widget = forms.HiddenInput()
+    return {'form': form}
 
 
 @register.inclusion_tag('tom_observations/partials/observation_distribution.html')

@@ -1,0 +1,11 @@
+{% load bootstrap4 %}
+<h4>Run an observing strategy</h4>
+<div>
+  <form action="{% url 'tom_observations:strategy-run' %}" method="GET" class="form">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% buttons %}
+    <input type="submit" class="btn btn-primary" value="Run">
+    {% endbuttons %}
+  </form>
+</div>
