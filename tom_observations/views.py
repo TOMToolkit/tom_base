@@ -23,6 +23,7 @@ from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.facility import get_service_class, get_service_classes
 from tom_observations.forms import ManualObservationForm
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
+from tom_observations.observing_strategy import RunStrategyForm
 from tom_targets.models import Target
 
 
@@ -421,7 +422,7 @@ class ObservingStrategyFilter(FilterSet):
 class ObservingStrategyListView(FilterView):
     model = ObservingStrategy
     filterset_class = ObservingStrategyFilter
-    template_name = 'tom_observations/ObservingStrategy_list.html'
+    template_name = 'tom_observations/observingstrategy_list.html'
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -436,7 +437,7 @@ class ObservingStrategyListView(FilterView):
 
 
 class ObservingStrategyCreateView(FormView):
-    template_name = 'tom_observations/ObservingStrategy_create.html'
+    template_name = 'tom_observations/observingstrategy_form.html'
 
     def get_facility_name(self):
         if self.request.method == 'GET':
@@ -469,7 +470,7 @@ class ObservingStrategyCreateView(FormView):
 
 
 class ObservingStrategyUpdateView(LoginRequiredMixin, FormView):
-    template_name = 'tom_observations/ObservingStrategy_form.html'
+    template_name = 'tom_observations/observingstrategy_form.html'
 
     def get_object(self):
         return ObservingStrategy.objects.get(pk=self.kwargs['pk'])
@@ -502,4 +503,8 @@ class ObservingStrategyDeleteView(LoginRequiredMixin, DeleteView):
 
 
 class ObservingStrategyRunView(LoginRequiredMixin, FormView):
-    pass
+    template_name = 'tom_observations/observationstrategy_run.html'
+    form_class = RunStrategyForm
+
+    def get_success_url(self):
+        return reverse_lazy('tom_observations:detail')

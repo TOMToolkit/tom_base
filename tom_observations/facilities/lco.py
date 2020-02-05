@@ -11,7 +11,7 @@ from django.core.cache import cache
 from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.cadence import get_cadence_strategies, CadenceForm
 from tom_observations.facility import GenericObservationFacility, GenericObservationForm, get_service_class
-from tom_observations.strategy import GenericStrategyForm
+from tom_observations.observing_strategy import GenericStrategyForm
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
 # Determine settings for this module.

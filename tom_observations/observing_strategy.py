@@ -5,6 +5,8 @@ from crispy_forms.layout import Layout, Submit
 from django import forms
 
 from tom_observations.models import ObservingStrategy
+from tom_observations.cadence import get_cadence_strategies
+from tom_targets.models import Target
 
 
 class GenericStrategyForm(forms.Form):
@@ -30,3 +32,10 @@ class GenericStrategyForm(forms.Form):
         strategy.parameters = self.serialize_parameters()
         strategy.save()
         return strategy
+
+
+class RunStrategyForm(forms.Form):
+    target = forms.ModelChoiceField(queryset=Target.objects.all())
+    cadence_strategy = forms.ChoiceField(
+        choices=[('', '---------')] + [(v, k) for k, v in get_cadence_strategies().items()]
+    )
