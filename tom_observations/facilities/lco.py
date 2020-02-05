@@ -1,6 +1,7 @@
 import requests
 
 from astropy import units as u
+from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div, Field, Fieldset, HTML, Layout
 from dateutil.parser import parse
 from django import forms
@@ -10,6 +11,7 @@ from django.core.cache import cache
 from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.cadence import get_cadence_strategies, CadenceForm
 from tom_observations.facility import GenericObservationFacility, GenericObservationForm, get_service_class
+from tom_observations.strategy import GenericStrategyForm
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
 # Determine settings for this module.
@@ -47,7 +49,55 @@ def make_request(*args, **kwargs):
     return response
 
 
-class LCOBaseObservationForm(GenericObservationForm):
+class LCOBaseForm(forms.Form):
+    ipp_value = forms.FloatField()
+    exposure_count = forms.IntegerField(min_value=1)
+    exposure_time = forms.FloatField(min_value=0.1)
+    max_airmass = forms.FloatField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['proposal'] = forms.ChoiceField(choices=self.proposal_choices())
+        self.fields['filter'] = forms.ChoiceField(choices=self.filter_choices())
+        self.fields['instrument_type'] = forms.ChoiceField(choices=self.instrument_choices())
+
+    def _get_instruments(self):
+        cached_instruments = cache.get('lco_instruments')
+
+        if not cached_instruments:
+            response = make_request(
+                'GET',
+                PORTAL_URL + '/api/instruments/',
+                headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+            )
+            cached_instruments = {k: v for k, v in response.json().items() if 'SOAR' not in k}
+            cache.set('lco_instruments', cached_instruments)
+
+        return cached_instruments
+
+    def instrument_choices(self):
+        return [(k, v['name']) for k, v in self._get_instruments().items()]
+
+    def filter_choices(self):
+        return set([
+            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
+            ])
+
+    def proposal_choices(self):
+        response = make_request(
+            'GET',
+            PORTAL_URL + '/api/profile/',
+            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+        )
+        choices = []
+        for p in response.json()['proposals']:
+            if p['current']:
+                choices.append((p['id'], '{} ({})'.format(p['title'], p['id'])))
+        return choices
+
+
+class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm):
     name = forms.CharField()
     ipp_value = forms.FloatField()
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
@@ -71,9 +121,6 @@ class LCOBaseObservationForm(GenericObservationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['proposal'] = forms.ChoiceField(choices=self.proposal_choices())
-        self.fields['filter'] = forms.ChoiceField(choices=self.filter_choices())
-        self.fields['instrument_type'] = forms.ChoiceField(choices=self.instrument_choices())
         self.helper.layout = Layout(
             self.common_layout,
             self.layout(),
@@ -114,41 +161,6 @@ class LCOBaseObservationForm(GenericObservationForm):
     def extra_layout(self):
         # If you just want to add some fields to the end of the form, add them here.
         return Div()
-
-    def _get_instruments(self):
-        cached_instruments = cache.get('lco_instruments')
-
-        if not cached_instruments:
-            response = make_request(
-                'GET',
-                PORTAL_URL + '/api/instruments/',
-                headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
-            )
-            cached_instruments = {k: v for k, v in response.json().items() if 'SOAR' not in k}
-            cache.set('lco_instruments', cached_instruments)
-
-        return cached_instruments
-
-    def instrument_choices(self):
-        return [(k, v['name']) for k, v in self._get_instruments().items()]
-
-    def filter_choices(self):
-        return set([
-            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
-            ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
-            ])
-
-    def proposal_choices(self):
-        response = make_request(
-            'GET',
-            PORTAL_URL + '/api/profile/',
-            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
-        )
-        choices = []
-        for p in response.json()['proposals']:
-            if p['current']:
-                choices.append((p['id'], '{} ({})'.format(p['title'], p['id'])))
-        return choices
 
     def clean_start(self):
         start = self.cleaned_data['start']
@@ -373,6 +385,25 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
         return instrument_config
 
 
+class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            self.common_layout,
+            Div(
+                Div(
+                    'proposal', 'ipp_value', 'filter', 'instrument_type',
+                    css_class='col'
+                ),
+                Div(
+                    'exposure_count', 'exposure_time', 'max_airmass',
+                    css_class='col'
+                ),
+                css_class='form-row',
+            )
+        )
+
+
 class LCOFacility(GenericObservationFacility):
     """
     The ``LCOFacility`` is the interface to the Las Cumbres Observatory Observation Portal. For information regarding
@@ -431,6 +462,9 @@ class LCOFacility(GenericObservationFacility):
             return LCOSpectroscopyObservationForm
         else:
             return LCOBaseObservationForm
+
+    def get_strategy_form(self, observation_type):
+        return LCOObservingStrategyForm
 
     def submit_observation(self, observation_payload):
         response = make_request(

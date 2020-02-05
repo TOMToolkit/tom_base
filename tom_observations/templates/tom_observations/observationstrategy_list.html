@@ -12,15 +12,17 @@
       {% endfor %}
     </p>
     <table class="table table-striped">
-      <thead><tr><th>Name</th><th>Facility</th><th>Created</th><th>Run</th><th>Delete</th></tr></thead>
+      <thead><tr><th>Name</th><th>Facility</th><th>Created</th><th>Delete</th></tr></thead>
       <tbody>
-        {% for query in filter.qs %}
+        {% for strategy in filter.qs %}
         <tr>
-          <td><a href="{% url 'tom_observations:update-strategy' strategy.id %}" title="Update {{ strategy.name }}">{{ strategy.name }}</a></td>
+          <td><a href="{% url 'tom_observations:strategy-update' strategy.id %}" title="Update {{ strategy.name }}">{{ strategy.name }}</a></td>
           <td>{{ strategy.facility }}</td>
           <td>{{ strategy.created }}</td>
-          <!-- <td><a href="{% url 'tom_observations:run-strategy' query.id %}" title="Run query" class="btn btn-primary">Run</a></td>
-          <td><a href="{% url 'tom_observations:delete-strategy' query.id %}" title="Delete query" class="btn btn-danger">Delete</a></td> -->
+          {% comment %}
+          <td><a href="{% url 'tom_observations:run-strategy' strategy.id %}" title="Run query" class="btn btn-primary">Run</a></td>
+          {% endcomment %}
+          <td><a href="{% url 'tom_observations:strategy-delete' strategy.id %}" title="Delete strategy" class="btn btn-danger">Delete</a></td>
         </tr>
         {% empty %}
         <tr>

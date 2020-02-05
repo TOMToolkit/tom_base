@@ -122,9 +122,13 @@ class ObservationGroup(models.Model):
         return self.name
 
 
-class ObservationStrategy(models.Model):
+class ObservingStrategy(models.Model):
     name = models.CharField(max_length=200)
     facility = models.CharField(max_length=50)
     parameters = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
+
+    @property
+    def parameters_as_dict(self):
+        return json.loads(self.parameters)

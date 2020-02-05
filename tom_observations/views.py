@@ -20,9 +20,9 @@ from guardian.mixins import PermissionListMixin
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
-from tom_observations.facility import GenericObservationForm, get_service_class, get_service_classes
+from tom_observations.facility import get_service_class, get_service_classes
 from tom_observations.forms import ManualObservationForm
-from tom_observations.models import ObservationRecord, ObservationGroup, ObservationStrategy
+from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
 from tom_targets.models import Target
 
 
@@ -407,21 +407,27 @@ class ObservationGroupDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     success_url = reverse_lazy('tom_observations:group-list')
 
 
-class ObservationStrategyFilter(FilterSet):
+class ObservingStrategyFilter(FilterSet):
     facility = ChoiceFilter(
         choices=[(k, k) for k in get_service_classes().keys()]
     )
     name = CharFilter(lookup_expr='icontains')
 
     class Meta:
-        model = ObservationStrategy
+        model = ObservingStrategy
         fields = ['name', 'facility']
 
 
-class ObservationStrategyListView(FilterView):
-    model = ObservationStrategy
-    filterset_class = ObservationStrategyFilter
-    template_name = 'tom_observations/observationstrategy_list.html'
+class ObservingStrategyListView(FilterView):
+    model = ObservingStrategy
+    filterset_class = ObservingStrategyFilter
+    template_name = 'tom_observations/ObservingStrategy_list.html'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        for item in qs:
+            print(item)
+        return qs
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -429,8 +435,8 @@ class ObservationStrategyListView(FilterView):
         return context
 
 
-class ObservationStrategyCreateView(FormView):
-    template_name = 'tom_observations/observationstrategy_create.html'
+class ObservingStrategyCreateView(FormView):
+    template_name = 'tom_observations/ObservingStrategy_create.html'
 
     def get_facility_name(self):
         if self.request.method == 'GET':
@@ -457,6 +463,43 @@ class ObservationStrategyCreateView(FormView):
         initial['facility'] = self.get_facility_name()
         return initial
 
+    def form_valid(self, form):
+        form.save()
+        return redirect(reverse('tom_observations:strategy-list'))
 
-class ObservationStrategyUpdateView(LoginRequiredMixin, FormView):
+
+class ObservingStrategyUpdateView(LoginRequiredMixin, FormView):
+    template_name = 'tom_observations/ObservingStrategy_form.html'
+
+    def get_object(self):
+        return ObservingStrategy.objects.get(pk=self.kwargs['pk'])
+
+    def get_form_class(self):
+        self.object = self.get_object()
+        return get_service_class(self.object.facility)().get_strategy_form(None)
+
+    def get_form(self):
+        form = super().get_form()
+        form.helper.form_action = reverse(
+            'tom_observations:strategy-update', kwargs={'pk': self.object.id}
+        )
+        return form
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial.update(self.object.parameters_as_dict)
+        initial['facility'] = self.object.facility
+        return initial
+
+    def form_valid(self, form):
+        form.save(strategy_id=self.object.id)
+        return redirect(reverse('tom_observations:strategy-list'))
+
+
+class ObservingStrategyDeleteView(LoginRequiredMixin, DeleteView):
+    model = ObservingStrategy
+    success_url = reverse_lazy('tom_observations:strategy-list')
+
+
+class ObservingStrategyRunView(LoginRequiredMixin, FormView):
     pass
