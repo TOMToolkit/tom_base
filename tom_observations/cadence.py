@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from importlib import import_module
-
 from datetime import datetime, timedelta
 from dateutil.parser import parse
+from importlib import import_module
 import json
 
+from crispy_forms.layout import Div, Field, Fieldset, HTML, Layout
+from django import forms
 from django.conf import settings
 
 from tom_observations.facility import get_service_class
@@ -58,6 +59,9 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
     The RetryFailedObservationsStrategy immediately re-submits all observations within an observation group a certain
     number of hours later, as specified by ``advance_window_hours``.
     """
+    name = 'Retry Failed Observations'
+    description = """This strategy immediately re-submits a cadenced observation without amending any other part of the
+                     cadence."""
 
     def __init__(self, observation_group, advance_window_hours, *args, **kwargs):
         self.advance_window_hours = advance_window_hours
@@ -106,6 +110,11 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
     cadence is every three days, it will submit the next observation three days in the future. If the observations
     fails, it will submit the next observation immediately, and follow the same decision tree based on the success
     of the subsequent observation."""
+
+    name = 'Resume Cadence After Failure'
+    description = """This strategy schedules one observation in the cadence at a time. If the observation fails, it
+                     re-submits the observation until it succeeds. If it succeeds, it submits the next observation on
+                     the same cadence."""
 
     def __init__(self, observation_group, advance_window_hours, *args, **kwargs):
         self.advance_window_hours = advance_window_hours
@@ -161,3 +170,33 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         observation_payload[end_keyword] = new_end.isoformat()
 
         return observation_payload
+
+
+class CadenceForm(forms.Form):
+    cadence_strategy = forms.ChoiceField(
+        required=False,
+        choices=[('', '---------')] + [(v, k) for k, v in get_cadence_strategies().items()]
+    )
+    cadence_frequency = forms.IntegerField(
+        required=False,
+        help_text='Frequency of observations, in hours'
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cadence_layout = Layout(
+            Div(
+                HTML('<p>Reactive cadencing parameters. Leave blank if no reactive cadencing is desired.</p>'),
+            ),
+            Div(
+                Div(
+                    'cadence_strategy',
+                    css_class='col'
+                ),
+                Div(
+                    'cadence_frequency',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            )
+        )

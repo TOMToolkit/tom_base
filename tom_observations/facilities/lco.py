@@ -1,15 +1,14 @@
 import requests
 
 from astropy import units as u
-from crispy_forms.layout import Div, Fieldset, HTML, Layout
+from crispy_forms.layout import Div, Field, Fieldset, HTML, Layout
 from dateutil.parser import parse
 from django import forms
 from django.conf import settings
 from django.core.cache import cache
-from astropy import units as u
 
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.cadence import get_cadence_strategies
+from tom_observations.cadence import get_cadence_strategies, CadenceForm
 from tom_observations.facility import GenericObservationFacility, GenericObservationForm, get_service_class
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
@@ -58,10 +57,14 @@ class LCOBaseObservationForm(GenericObservationForm):
     max_airmass = forms.FloatField()
     period = forms.FloatField(required=False)
     jitter = forms.FloatField(required=False)
-    cadence_strategy = forms.ChoiceField(
-        required=False,
-        choices=[('', '---------')] + [(v, k) for k, v in get_cadence_strategies().items()]
-    )
+    # cadence_strategy = forms.ChoiceField(
+    #     required=False,
+    #     choices=[('', '---------')] + [(v, k) for k, v in get_cadence_strategies().items()]
+    # )
+    # cadence_frequency = forms.IntegerField(
+    #     required=False,
+    #     help_text='Frequency of observations, in hours'
+    # )
     observation_mode = forms.ChoiceField(
         choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response'))
     )
@@ -74,7 +77,8 @@ class LCOBaseObservationForm(GenericObservationForm):
         self.helper.layout = Layout(
             self.common_layout,
             self.layout(),
-            self.extra_layout()
+            self.extra_layout(),
+            # self.cadence_layout
         )
 
     def layout(self):
@@ -92,7 +96,7 @@ class LCOBaseObservationForm(GenericObservationForm):
             ),
             Div(
                 HTML('<p>Cadence parameters. Leave blank if no cadencing is desired.</p>'),
-                css_class='row'
+                # css_class='row'
             ),
             Div(
                 Div(
@@ -105,19 +109,6 @@ class LCOBaseObservationForm(GenericObservationForm):
                 ),
                 css_class='form-row'
             ),
-            Div(
-                Fieldset('Reactive cadence parameters',
-                    Div(
-                        'cadence_strategy',
-                        css_class='col'
-                    ),
-                    Div(
-                        'cadence_frequency',
-                        css_class='col'
-                    ),
-                ),
-                css_class='form-row'
-            )
         )
 
     def extra_layout(self):
@@ -455,6 +446,14 @@ class LCOFacility(GenericObservationFacility):
             'POST',
             PORTAL_URL + '/api/requestgroups/validate/',
             json=observation_payload,
+            headers=self._portal_headers()
+        )
+        return response.json()['errors']
+
+    def cancel_observation(self, observation_id):
+        response = make_request(
+            'POST',
+            f'{PORTAL_URL}/api/requestgroups/{observation_id}/cancel/',
             headers=self._portal_headers()
         )
         return response.json()['errors']

@@ -120,3 +120,11 @@ class ObservationGroup(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ObservationStrategy(models.Model):
+    name = models.CharField(max_length=200)
+    facility = models.CharField(max_length=50)
+    parameters = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
