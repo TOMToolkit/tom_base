@@ -8,7 +8,15 @@ from tom_observations.models import ObservationGroup, ObservationRecord
 from tom_observations.cadence import RetryFailedObservationsStrategy, ResumeCadenceAfterFailureStrategy
 
 
-mock_filters = {'1M0-SCICAM-SINISTRO': {'type': 'IMAGE', 'class': '1m0', 'name': '1.0 meter Sinistro', 'optical_elements': {'filters': [{'name': 'Bessell-I', 'code': 'I'}]}}}
+mock_filters = {'1M0-SCICAM-SINISTRO': {
+                    'type': 'IMAGE',
+                    'class': '1m0',
+                    'name': '1.0 meter Sinistro',
+                    'optical_elements': {
+                        'filters': [{'name': 'Bessell-I', 'code': 'I'}]}
+                    }
+                }
+
 
 @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments', return_value=mock_filters)
 @patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices',
