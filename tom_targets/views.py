@@ -370,8 +370,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
             params = urlencode(obs_strat.parameters_as_dict)
             return redirect(
                 reverse('tom_observations:create',
-                        args=(obs_strat.facility,)
-                ) + f'?target_id={self.get_object().id}%' + params)
+                        args=(obs_strat.facility,)) + f'?target_id={self.get_object().id}%' + params)
 
         return super().get(request, *args, **kwargs)
 
