@@ -1,12 +1,14 @@
+from urllib.parse import urlencode
+
 from django import forms, template
+from plotly import offline
+import plotly.graph_objs as go
 
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_classes
 from tom_observations.observing_strategy import RunStrategyForm
 from tom_targets.models import Target
 
-from plotly import offline
-import plotly.graph_objs as go
 
 register = template.Library()
 
@@ -37,6 +39,15 @@ def observingstrategy_run(target):
     form = RunStrategyForm(initial={'target': target})
     form.fields['target'].widget = forms.HiddenInput()
     return {'form': form}
+
+
+@register.inclusion_tag('tom_observations/partials/observingstrategy_from_record.html')
+def observingstrategy_from_record(obsr):
+    params = urlencode(obsr.parameters_as_dict)
+    print(params)
+    return {
+        'params': params
+    }
 
 
 @register.inclusion_tag('tom_observations/partials/observation_distribution.html')

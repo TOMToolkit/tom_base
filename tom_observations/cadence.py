@@ -77,7 +77,8 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
             observation_payload = self.advance_window(
                 observation_payload, start_keyword=start_keyword, end_keyword=end_keyword
             )
-            form = facility.get_form('IMAGING')(observation_payload)
+            obs_type = obs.parameters_as_dict.get('observation_type', None)
+            form = facility.get_form(obs_type)(observation_payload)
             form.is_valid()
             observation_ids = facility.submit_observation(form.observation_payload())
 
@@ -141,7 +142,8 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
                 observation_payload, start_keyword=start_keyword, end_keyword=end_keyword
             )
 
-        form = facility.get_form('IMAGING')(observation_payload)
+        obs_type = last_obs.parameters_as_dict.get('observation_type')
+        form = facility.get_form(obs_type)(observation_payload)
         form.is_valid()
         observation_ids = facility.submit_observation(form.observation_payload())
 
@@ -175,7 +177,7 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
 class CadenceForm(forms.Form):
     cadence_strategy = forms.ChoiceField(
         required=False,
-        choices=[('', '---------')] + [(v, k) for k, v in get_cadence_strategies().items()]
+        choices=[('', '---------')] + [(k, k) for k, v in get_cadence_strategies().items()]
     )
     cadence_frequency = forms.IntegerField(
         required=False,
@@ -184,6 +186,8 @@ class CadenceForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['cadence_strategy'].widget.attrs['readonly'] = True
+        self.fields['cadence_frequency'].widget.attrs['readonly'] = True
         self.cadence_layout = Layout(
             Div(
                 HTML('<p>Reactive cadencing parameters. Leave blank if no reactive cadencing is desired.</p>'),

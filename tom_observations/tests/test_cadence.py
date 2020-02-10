@@ -42,9 +42,6 @@ class TestReactiveCadencing(TestCase):
            'scheduled_start': None, 'scheduled_end': None})
     def test_resume_when_failed_cadence_failed_obs(self, patch1, patch2, patch3, patch4):
         num_records = self.group.observation_records.count()
-        # observing_record = self.group.observation_records.order_by('-created').first()
-        # observing_record.status = 'FAILED'
-        # observing_record.save()
 
         strategy = ResumeCadenceAfterFailureStrategy(self.group, 72)
         new_records = strategy.run()
@@ -60,8 +57,6 @@ class TestReactiveCadencing(TestCase):
     def test_resume_when_failed_cadence_successful_obs(self, patch1, patch2, patch3, patch4):
         num_records = self.group.observation_records.count()
         observing_record = self.group.observation_records.order_by('-created').first()
-        # observing_record.status = 'COMPLETED'
-        # observing_record.save()
 
         strategy = ResumeCadenceAfterFailureStrategy(self.group, 72)
         new_records = strategy.run()

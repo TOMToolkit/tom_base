@@ -3,6 +3,7 @@ import json
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit
 from django import forms
+from django.urls import reverse_lazy
 
 from tom_observations.models import ObservingStrategy
 from tom_observations.cadence import get_cadence_strategies
@@ -38,7 +39,7 @@ class RunStrategyForm(forms.Form):
     target = forms.ModelChoiceField(queryset=Target.objects.all())
     observing_strategy = forms.ModelChoiceField(queryset=ObservingStrategy.objects.all())
     cadence_strategy = forms.ChoiceField(
-        choices=[('', '---------')] + [(v, k) for k, v in get_cadence_strategies().items()]
+        choices=[('', '')] + [(k, k) for k in get_cadence_strategies().keys()],
     )
     cadence_frequency = forms.IntegerField(
         required=False,
@@ -53,3 +54,5 @@ class RunStrategyForm(forms.Form):
             'cadence_strategy',
             'cadence_frequency'
         )
+        self.helper.form_method = 'GET'
+        self.helper.add_input(Submit('run', 'Run'))

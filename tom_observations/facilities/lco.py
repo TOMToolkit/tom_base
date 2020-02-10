@@ -97,7 +97,7 @@ class LCOBaseForm(forms.Form):
         return choices
 
 
-class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm):
+class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm, CadenceForm):
     name = forms.CharField()
     ipp_value = forms.FloatField()
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
@@ -107,14 +107,6 @@ class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm):
     max_airmass = forms.FloatField()
     period = forms.FloatField(required=False)
     jitter = forms.FloatField(required=False)
-    # cadence_strategy = forms.ChoiceField(
-    #     required=False,
-    #     choices=[('', '---------')] + [(v, k) for k, v in get_cadence_strategies().items()]
-    # )
-    # cadence_frequency = forms.IntegerField(
-    #     required=False,
-    #     help_text='Frequency of observations, in hours'
-    # )
     observation_mode = forms.ChoiceField(
         choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response'))
     )
@@ -125,7 +117,7 @@ class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm):
             self.common_layout,
             self.layout(),
             self.extra_layout(),
-            # self.cadence_layout
+            self.cadence_layout
         )
 
     def layout(self):
@@ -389,7 +381,6 @@ class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields:
-            print(field)
             if field != 'strategy_name':
                 self.fields[field].required = False
         self.helper.layout = Layout(

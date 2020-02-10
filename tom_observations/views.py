@@ -12,7 +12,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic import View
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import FormView, DeleteView
+from django.views.generic.edit import FormMixin, FormView, DeleteView
 from django.views.generic.list import ListView
 from guardian.shortcuts import get_objects_for_user, assign_perm
 from guardian.mixins import PermissionListMixin
@@ -23,6 +23,7 @@ from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.facility import get_service_class, get_service_classes
 from tom_observations.forms import ManualObservationForm
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
+from tom_observations.observing_strategy import RunStrategyForm
 from tom_targets.models import Target
 
 
@@ -178,6 +179,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :returns: observation form
         :rtype: subclass of GenericObservationForm
         """
+        observation_type = None
         if self.request.GET:
             observation_type = self.request.GET.get('observation_type')
         elif self.request.POST:
@@ -211,6 +213,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         initial['target_id'] = self.get_target_id()
         initial['facility'] = self.get_facility()
         initial['observation_type'] = self.get_observation_type()
+        initial.update(self.request.GET.dict())
         return initial
 
     def form_valid(self, form):
@@ -243,7 +246,8 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         if len(records) > 1 or form.cleaned_data.get('cadence_strategy'):
             group_name = form.cleaned_data['name']
             observation_group = ObservationGroup.objects.create(
-                name=group_name, cadence_strategy=form.cleaned_data.get('cadence_strategy')
+                name=group_name, cadence_strategy=form.cleaned_data.get('cadence_strategy'),
+                cadence_parameters=form.cleaned_data.get('cadence_parameters')
             )
             observation_group.observation_records.add(*records)
             assign_perm('tom_observations.view_observationgroup', self.request.user, observation_group)
@@ -264,10 +268,8 @@ class ObservationGroupCancelView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         obsr_id = self.kwargs.get('pk')
-        print(obsr_id)
         obsr = ObservationRecord.objects.get(id=obsr_id)
         facility = get_service_class(obsr.facility)()
-        print(obsr.observation_id)
         errors = facility.cancel_observation(obsr.observation_id)
         if errors:
             messages.error(
@@ -423,12 +425,6 @@ class ObservingStrategyListView(FilterView):
     filterset_class = ObservingStrategyFilter
     template_name = 'tom_observations/observingstrategy_list.html'
 
-    def get_queryset(self):
-        qs = super().get_queryset()
-        for item in qs:
-            print(item)
-        return qs
-
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['installed_facilities'] = get_service_classes()
@@ -461,6 +457,7 @@ class ObservingStrategyCreateView(FormView):
     def get_initial(self):
         initial = super().get_initial()
         initial['facility'] = self.get_facility_name()
+        initial.update(self.request.GET.dict())
         return initial
 
     def form_valid(self, form):
@@ -499,26 +496,3 @@ class ObservingStrategyUpdateView(LoginRequiredMixin, FormView):
 class ObservingStrategyDeleteView(LoginRequiredMixin, DeleteView):
     model = ObservingStrategy
     success_url = reverse_lazy('tom_observations:strategy-list')
-
-
-class ObservingStrategyRunView(LoginRequiredMixin, FormView):
-    template_name = 'tom_observations/observingstrategy_run.html'
-
-    def get_observing_strategy(self):
-        strat_id = self.request.GET.get('observing_strategy')
-        return ObservingStrategy.objects.get(pk=strat_id)
-
-    def get_success_url(self):
-        return reverse_lazy('tom_observations:detail')
-
-    def get_form_class(self):
-        obs_strat = self.get_observing_strategy()
-        return get_service_class(obs_strat.facility)().get_form(None)
-
-    def get_initial(self):
-        initial = super().get_initial()
-        obs_strat = self.get_observing_strategy()
-        initial.update(obs_strat.parameters_as_dict)
-        initial['facility'] = obs_strat.facility
-        initial['target_id'] = self.request.GET.get('target')
-        return initial
