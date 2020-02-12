@@ -3,8 +3,7 @@ from django.urls import path
 from tom_dataproducts.views import DataProductListView, DataProductSaveView, DataProductGroupListView
 from tom_dataproducts.views import DataProductDeleteView, DataProductGroupCreateView
 from tom_dataproducts.views import DataProductGroupDetailView, DataProductGroupDataView, DataProductGroupDeleteView
-from tom_dataproducts.views import DataProductUploadView, DataProductFeatureView
-from tom_dataproducts.views import UpdateReducedDataView
+from tom_dataproducts.views import DataProductUploadView, DataProductFeatureView, UpdateReducedDataView
 
 app_name = 'tom_dataproducts'
 
