@@ -1,5 +1,6 @@
 from io import StringIO
 from urllib.parse import urlparse
+import json
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -12,7 +13,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic import View
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import FormMixin, FormView, DeleteView
+from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.list import ListView
 from guardian.shortcuts import get_objects_for_user, assign_perm
 from guardian.mixins import PermissionListMixin
@@ -23,7 +24,6 @@ from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.facility import get_service_class, get_service_classes
 from tom_observations.forms import ManualObservationForm
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
-from tom_observations.observing_strategy import RunStrategyForm
 from tom_targets.models import Target
 
 
@@ -247,7 +247,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             group_name = form.cleaned_data['name']
             observation_group = ObservationGroup.objects.create(
                 name=group_name, cadence_strategy=form.cleaned_data.get('cadence_strategy'),
-                cadence_parameters=form.cleaned_data.get('cadence_parameters')
+                cadence_parameters=json.dumps({'cadence_frequency': form.cleaned_data.get('cadence_frequency')})
             )
             observation_group.observation_records.add(*records)
             assign_perm('tom_observations.view_observationgroup', self.request.user, observation_group)

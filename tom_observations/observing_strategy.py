@@ -1,7 +1,7 @@
 import json
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit
+from crispy_forms.layout import Fieldset, Layout, Submit
 from django import forms
 from django.urls import reverse_lazy
 
@@ -49,8 +49,9 @@ class RunStrategyForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.layout = Layout(
+        self.helper.layout = Layout(
             'target',
+            'observing_strategy',
             'cadence_strategy',
             'cadence_frequency'
         )

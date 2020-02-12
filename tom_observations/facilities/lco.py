@@ -135,7 +135,6 @@ class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm, CadenceForm):
             ),
             Div(
                 HTML('<p>Cadence parameters. Leave blank if no cadencing is desired.</p>'),
-                # css_class='row'
             ),
             Div(
                 Div(
@@ -336,19 +335,19 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
                 ),
                 css_class='form-row',
             ),
-            # Div(
-            #     Div(
-            #         HTML('<p>Cadence parameters. Leave blank if no cadencing is desired.</p>'),
-            #         css_class='row'
-            #     ),
-            #     Div(
-            #         Div(
-            #             'period', 'jitter', 'cadence_strategy',
-            #             css_class='col'
-            #         ),
-            #         css_class='form-row'
-            #     )
-            # )
+            Div(
+                Div(
+                    HTML('<p>Cadence parameters. Leave blank if no cadencing is desired.</p>'),
+                    css_class='row'
+                ),
+                Div(
+                    Div(
+                        'period', 'jitter', 'cadence_strategy',
+                        css_class='col'
+                    ),
+                    css_class='form-row'
+                )
+            )
         )
 
     def instrument_choices(self):
