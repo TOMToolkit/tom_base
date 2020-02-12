@@ -1,15 +1,14 @@
 import requests
 
 from astropy import units as u
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Div, Field, Fieldset, HTML, Layout
+from crispy_forms.layout import Div, HTML, Layout
 from dateutil.parser import parse
 from django import forms
 from django.conf import settings
 from django.core.cache import cache
 
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.cadence import get_cadence_strategies, CadenceForm
+from tom_observations.cadence import CadenceForm
 from tom_observations.facility import GenericObservationFacility, GenericObservationForm, get_service_class
 from tom_observations.observing_strategy import GenericStrategyForm
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME

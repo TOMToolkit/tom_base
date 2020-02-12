@@ -4,7 +4,7 @@ from dateutil.parser import parse
 from importlib import import_module
 import json
 
-from crispy_forms.layout import Div, Field, Fieldset, HTML, Layout
+from crispy_forms.layout import Div, HTML, Layout
 from django import forms
 from django.conf import settings
 

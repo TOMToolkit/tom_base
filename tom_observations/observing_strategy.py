@@ -1,9 +1,8 @@
 import json
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Fieldset, Layout, Submit
+from crispy_forms.layout import Layout, Submit
 from django import forms
-from django.urls import reverse_lazy
 
 from tom_observations.models import ObservingStrategy
 from tom_observations.cadence import get_cadence_strategies
