@@ -4,7 +4,7 @@ Customizing Data Processing
 One of the many goals of the TOM Toolkit is to enable the simplification of the flow of your data from observations. To
 that end, there's some built-in functionality that can be overridden to allow your TOM to work for your use case.
 
-To begin, here's a brief look at the part of the structure of the tom_dataproducts app in the TOM Toolkit:
+To begin, here's a brief look at part of the structure of the tom_dataproducts app in the TOM Toolkit:
 
 ```
 tom_dataproducts
