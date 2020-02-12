@@ -129,9 +129,9 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         start_keyword, end_keyword = facility.get_start_end_keywords()
         observation_payload = last_obs.parameters_as_dict
         new_observations = []
-        if last_obs.status not in facility.get_terminal_observing_states():
+        if not last_obs.terminal:
             return
-        elif last_obs.status in facility.get_failed_observing_states():
+        elif last_obs.failed:
             # Submit next observation to be taken as soon as possible
             window_length = parse(observation_payload[end_keyword]) - parse(observation_payload[start_keyword])
             observation_payload[start_keyword] = datetime.now().isoformat()

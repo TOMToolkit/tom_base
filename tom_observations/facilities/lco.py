@@ -26,8 +26,8 @@ except (AttributeError, KeyError):
 # Module specific settings.
 PORTAL_URL = LCO_SETTINGS['portal_url']
 SUCCESSFUL_OBSERVING_STATES = ['COMPLETED']
-TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
 FAILED_OBSERVING_STATES = ['WINDOW_EXPIRED', 'CANCELED']
+TERMINAL_OBSERVING_STATES = SUCCESSFUL_OBSERVING_STATES + FAILED_OBSERVING_STATES
 
 # Units of flux and wavelength for converting to Specutils Spectrum1D objects
 FLUX_CONSTANT = (1e-15 * u.erg) / (u.cm ** 2 * u.second * u.angstrom)
@@ -561,9 +561,6 @@ class LCOFacility(GenericObservationFacility):
 
     def get_start_end_keywords(self):
         return ('start', 'end')
-
-    def get_successful_observing_states(self):
-        return
 
     def get_terminal_observing_states(self):
         return TERMINAL_OBSERVING_STATES
