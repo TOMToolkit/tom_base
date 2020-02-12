@@ -42,10 +42,3 @@ class CustomUserCreationForm(UserCreationForm):
             self.save_m2m()
 
         return user
-
-
-class BaseCrispyForm(forms.Form):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args,  **kwargs)
-        self.helper = FormHelper()
-        self.helper.add_input(Submit('submit', 'Submit'))
