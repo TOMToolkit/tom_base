@@ -1,6 +1,8 @@
+from math import radians
+
 from django.conf import settings
 from django.db.models import ExpressionWrapper, F, FloatField, Q
-from django.db.models.functions.math import ACos, Cos, Sin
+from django.db.models.functions.math import ACos, Cos, Radians, Pi, Sin
 import django_filters
 
 from tom_targets.models import Target, TargetList
@@ -77,19 +79,18 @@ class TargetFilter(django_filters.FilterSet):
             else:
                 return queryset.filter(name=None)
 
-        half_pi = 90
+        ra = radians(float(ra))
+        dec = radians(float(dec))
 
         separation = ExpressionWrapper(
-            ACos(
-                (Cos(half_pi - float(dec)) * Cos(half_pi - F('dec'))) +
-                (Sin(half_pi - float(dec)) * Sin(half_pi - F('dec')) * Cos(float(ra) - F('ra')))
-            ), FloatField()
+            180 * ACos(
+                (Sin(dec) * Sin(Radians('dec'))) +
+                (Cos(dec) * Cos(Radians('dec')) * Cos(ra - Radians('ra')))
+            ) / Pi(), FloatField()
         )
 
         return queryset.annotate(separation=separation).filter(separation__lte=radius)
 
-    def filter_target_cone_search(self, queryset, name, value):
-        return queryset
 
     # hide target grouping list if user not logged in
     def get_target_list_queryset(request):
