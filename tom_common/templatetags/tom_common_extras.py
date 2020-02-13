@@ -38,6 +38,6 @@ def truncate_number(value):
     Truncates a numerical value to three decimal places
     """
     try:
-        return '%.3f' % value
+        return '%.4f' % value
     except Exception:
         return value

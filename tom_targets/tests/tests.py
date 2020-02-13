@@ -377,11 +377,11 @@ class TestTargetImport(TestCase):
 
 class TestTargetSearch(TestCase):
     def setUp(self):
-        self.st = SiderealTargetFactory.create(name='1337target', ra=83.8221, dec=-5.3911)
+        self.st = SiderealTargetFactory.create(name='1337target', ra=269.9983, dec=-29.0698)
         self.st_name = TargetNameFactory.create(name='M42', target=self.st)
         self.st_name2 = TargetNameFactory.create(name='Messier 42', target=self.st)
 
-        self.target2 = SiderealTargetFactory.create(name='Target1309', ra=50, dec=-20)
+        self.target2 = SiderealTargetFactory.create(name='Target1309', ra=266.9360, dec=-35.7749)
         self.target2_name = TargetNameFactory.create(name='NGC1309', target=self.target2)
         self.target2_name2 = TargetNameFactory.create(name='PGC 012626', target=self.target2)
 
@@ -427,18 +427,14 @@ class TestTargetSearch(TestCase):
         self.assertContains(response, '1337target')
 
     def test_cone_search_coordinates(self):
-        response = self.client.get(reverse('targets:list') + '?cone_search=83,-5,0.8')
+        response = self.client.get(reverse('targets:list') + '?cone_search=269.75891,-29.179583,0.25')
         self.assertContains(response, '1337target')
         self.assertNotContains(response, 'Target1309')
 
     def test_cone_search_target(self):
-        cone_search_target = Target.objects.create(name='Cone Search', ra=83, dec=-5)
-        cone_search_failure = Target.objects.create(name='Failed Search', ra=82, dec=-6)
-        assign_perm('tom_targets.view_target', self.user, cone_search_target)
-        assign_perm('tom_targets.view_target', self.user, cone_search_failure)
-        response = self.client.get(reverse('targets:list') + '?target_cone_search=1337target,0.8')
-        self.assertContains(response, 'Cone Search')
-        self.assertNotContains(response, 'Failed Search')
+        response = self.client.get(reverse('targets:list') + '?target_cone_search=1337target,1')
+        self.assertContains(response, '1337target')
+        self.assertNotContains(response, 'Target1309')
 
 
 class TestTargetGrouping(TestCase):
