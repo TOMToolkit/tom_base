@@ -26,7 +26,7 @@ def observing_buttons(target):
 def observation_type_tabs(context):
     request = context['request']
     query_params = request.GET.copy()
-    observation_type = query_params.pop('observation_type')
+    observation_type = query_params.pop('observation_type', None)
     return {
         'params': urlencode(query_params),
         'type_choices': context['type_choices'],
