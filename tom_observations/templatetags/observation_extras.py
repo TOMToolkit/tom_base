@@ -22,6 +22,20 @@ def observing_buttons(target):
     return {'target': target, 'facilities': facilities}
 
 
+@register.inclusion_tag('tom_observations/partials/observation_type_tabs.html', takes_context=True)
+def observation_type_tabs(context):
+    request = context['request']
+    query_params = request.GET.copy()
+    observation_type = query_params.pop('observation_type')
+    return {
+        'params': urlencode(query_params),
+        'type_choices': context['type_choices'],
+        'observation_type': observation_type,
+        'facility': context['form']['facility'].value,
+        'target_id': request.GET.get('target_id')
+    }
+
+
 @register.inclusion_tag('tom_observations/partials/observation_list.html')
 def observation_list(target=None):
     """

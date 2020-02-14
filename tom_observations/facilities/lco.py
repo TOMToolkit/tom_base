@@ -389,7 +389,7 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
                 ),
                 Div(
                     Div(
-                        'period', 'jitter', 'cadence_strategy',
+                        'period', 'jitter',
                         css_class='col'
                     ),
                     css_class='form-row'
