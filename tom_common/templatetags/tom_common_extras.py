@@ -35,9 +35,10 @@ def recent_comments(limit=10):
 @register.filter
 def truncate_number(value):
     """
-    Truncates a numerical value to three decimal places
+    Truncates a numerical value to four decimal places for display purposes. Etienne Bachelet advised that three
+    decimal places was insufficient precision, but that four would be more acceptable.
     """
     try:
-        return '%.3f' % value
+        return '%.4f' % value
     except Exception:
         return value
