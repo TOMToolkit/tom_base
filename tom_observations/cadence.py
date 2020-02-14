@@ -188,6 +188,12 @@ class CadenceForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['cadence_strategy'].widget.attrs['readonly'] = True
         self.fields['cadence_frequency'].widget.attrs['readonly'] = True
+
+        # If cadence strategy or cadence frequency aren't set, this is a normal observation and the widgets shouldn't
+        # be rendered
+        if not (self.initial.get('cadence_strategy') or self.initial.get('cadence_frequency')):
+            self.fields['cadence_strategy'].widget = forms.HiddenInput()
+            self.fields['cadence_frequency'].widget = forms.HiddenInput()
         self.cadence_layout = Layout(
             Div(
                 HTML('<p>Reactive cadencing parameters. Leave blank if no reactive cadencing is desired.</p>'),
