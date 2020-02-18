@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from dateutil.parser import parse
 
 from .factories import ObservingRecordFactory, TargetFactory
-from tom_observations.models import ObservationGroup, ObservationRecord
+from tom_observations.models import ObservationGroup
 from tom_observations.cadence import RetryFailedObservationsStrategy, ResumeCadenceAfterFailureStrategy
 
 

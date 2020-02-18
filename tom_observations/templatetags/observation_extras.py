@@ -67,10 +67,9 @@ def observingstrategy_from_record(obsr):
     Renders a button that will pre-populate and observing strategy form with parameters from the specified
     ``ObservationRecord``.
     """
-    obs_params = obsr.parameters_as_dict
-    params = urlencode(obs_params)
+    params = urlencode(obsr.parameters_as_dict)
     return {
-        'facility': obs_params['facility'],
+        'facility': obsr.facility,
         'params': params
     }
 
