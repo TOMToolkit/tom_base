@@ -445,10 +445,7 @@ class ObservingStrategyCreateView(FormView):
     template_name = 'tom_observations/observingstrategy_form.html'
 
     def get_facility_name(self):
-        if self.request.method == 'GET':
-            return self.request.GET.get('facility')
-        elif self.request.method == 'POST':
-            return self.request.POST.get('facility')
+        return self.kwargs['facility']
 
     def get_form_class(self):
         facility_name = self.get_facility_name()
@@ -461,7 +458,8 @@ class ObservingStrategyCreateView(FormView):
 
     def get_form(self, form_class=None):
         form = super().get_form()
-        form.helper.form_action = reverse('tom_observations:strategy-create')
+        form.helper.form_action = reverse('tom_observations:strategy-create',
+                                          kwargs={'facility': self.get_facility_name()})
         return form
 
     def get_initial(self):

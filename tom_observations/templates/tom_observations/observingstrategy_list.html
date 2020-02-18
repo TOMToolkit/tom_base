@@ -8,7 +8,7 @@
     <p>
       Create a new observing strategy using
       {% for facility in installed_facilities %}
-      <a href="{% url 'tom_observations:strategy-create' %}?facility={{ facility }}" title="{{ facility }}" class="btn btn-outline-primary">{{ facility }}</a>
+      <a href="{% url 'tom_observations:strategy-create' facility %}" title="{{ facility }}" class="btn btn-outline-primary">{{ facility }}</a>
       {% endfor %}
     </p>
     <table class="table table-striped">
