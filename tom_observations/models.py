@@ -124,6 +124,24 @@ class ObservationGroup(models.Model):
 
 
 class ObservingStrategy(models.Model):
+    """
+    Class representing an observing strategy, or template.
+
+    :param name: The name of the ``ObservingStrategy``
+    :type name: str
+
+    :param facility: The module-specified facility name for which the strategy is valid
+    :type facility: str
+
+    :param parameters: JSON string of observing parameters
+    :type parameters: str
+
+    :param created: The time at which this ``ObservationGroup`` was created.
+    :type created: datetime
+
+    :param modified: The time at which this ``ObservationGroup`` was modified.
+    :type modified: datetime
+    """
     name = models.CharField(max_length=200)
     facility = models.CharField(max_length=50)
     parameters = models.TextField()

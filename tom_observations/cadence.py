@@ -45,6 +45,13 @@ def get_cadence_strategy(name):
 
 
 class CadenceStrategy(ABC):
+    """
+    The CadenceStrategy interface provides the methods necessary to implement a custom cadence strategy. All
+    CadenceStrategies should inherit from this base class.
+
+    In order to make use of a custom CadenceStrategy, add the path to ``TOM_CADENCE_STRATEGIES`` in your
+    ``settings.py``.
+    """
     def __init__(self, observation_group, *args, **kwargs):
         self.cadence_strategy = type(self).__name__
         self.observation_group = observation_group

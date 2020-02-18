@@ -410,6 +410,9 @@ class ObservationGroupDeleteView(Raise403PermissionRequiredMixin, DeleteView):
 
 
 class ObservingStrategyFilter(FilterSet):
+    """
+    Defines the available fields for filtering the list of ``ObservingStrategy`` objects.
+    """
     facility = ChoiceFilter(
         choices=[(k, k) for k in get_service_classes().keys()]
     )
@@ -421,6 +424,9 @@ class ObservingStrategyFilter(FilterSet):
 
 
 class ObservingStrategyListView(FilterView):
+    """
+    Displays the observing strategies that exist in the TOM.
+    """
     model = ObservingStrategy
     filterset_class = ObservingStrategyFilter
     template_name = 'tom_observations/observingstrategy_list.html'
@@ -432,6 +438,10 @@ class ObservingStrategyListView(FilterView):
 
 
 class ObservingStrategyCreateView(FormView):
+    """
+    Displays the form for creating a new observing strategy. Uses the observing strategy form specified in the
+    respective facility class.
+    """
     template_name = 'tom_observations/observingstrategy_form.html'
 
     def get_facility_name(self):
@@ -466,6 +476,9 @@ class ObservingStrategyCreateView(FormView):
 
 
 class ObservingStrategyUpdateView(LoginRequiredMixin, FormView):
+    """
+    View for updating an existing observing strategy.
+    """
     template_name = 'tom_observations/observingstrategy_form.html'
 
     def get_object(self):
@@ -494,5 +507,8 @@ class ObservingStrategyUpdateView(LoginRequiredMixin, FormView):
 
 
 class ObservingStrategyDeleteView(LoginRequiredMixin, DeleteView):
+    """
+    Deletes an observing strategy.
+    """
     model = ObservingStrategy
     success_url = reverse_lazy('tom_observations:strategy-list')

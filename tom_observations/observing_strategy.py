@@ -10,6 +10,10 @@ from tom_targets.models import Target
 
 
 class GenericStrategyForm(forms.Form):
+    """
+    Form used to create new observing strategy. Any facility-specific observing strategy form should inherit from
+    this form.
+    """
     facility = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
     strategy_name = forms.CharField()
 
@@ -35,6 +39,9 @@ class GenericStrategyForm(forms.Form):
 
 
 class RunStrategyForm(forms.Form):
+    """
+    Form used for submission of parameters for pairing an observing strategy with a cadence strategy.
+    """
     target = forms.ModelChoiceField(queryset=Target.objects.all())
     observing_strategy = forms.ModelChoiceField(queryset=ObservingStrategy.objects.all())
     cadence_strategy = forms.ChoiceField(

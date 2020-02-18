@@ -24,6 +24,9 @@ def observing_buttons(target):
 
 @register.inclusion_tag('tom_observations/partials/observation_type_tabs.html', takes_context=True)
 def observation_type_tabs(context):
+    """
+    Displays tabs in observation creation form representing each available observation type.
+    """
     request = context['request']
     query_params = request.GET.copy()
     observation_type = query_params.pop('observation_type', None)
@@ -50,6 +53,9 @@ def observation_list(target=None):
 
 @register.inclusion_tag('tom_observations/partials/observingstrategy_run.html')
 def observingstrategy_run(target):
+    """
+    Renders the form for running an observing strategy.
+    """
     form = RunStrategyForm(initial={'target': target})
     form.fields['target'].widget = forms.HiddenInput()
     return {'form': form}
@@ -57,6 +63,10 @@ def observingstrategy_run(target):
 
 @register.inclusion_tag('tom_observations/partials/observingstrategy_from_record.html')
 def observingstrategy_from_record(obsr):
+    """
+    Renders a button that will pre-populate and observing strategy form with parameters from the specified
+    ``ObservationRecord``.
+    """
     params = urlencode(obsr.parameters_as_dict)
     print(params)
     return {
