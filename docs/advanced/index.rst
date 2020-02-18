@@ -22,3 +22,6 @@ within your TOM (for example, an observation completes).
 
 :doc:`Scripting your TOM with Jupyter Notebooks <scripts>` - Use a Jupyter notebook (or just a python
 console/scripts) to interact directly with your TOM.
+
+:doc:`Observing and cadence strategies <strategies>` - Learn about observing and cadence strategies and how to write a
+custom cadence strategy to automate a series of observations

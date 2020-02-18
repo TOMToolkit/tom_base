@@ -211,3 +211,13 @@ def run(self):
 
 Configuring the cadence strategy to run automatically
 -----------------------------------------------------
+
+As you may have noticed, the cadence strategies act on updates to the status of an ``ObservationRecord``. Ideally, we want
+the cadence strategies to run as soon as an observation status changes--so, we need to automate that and have it run
+periodically.
+
+Fortunately, the TOM Toolkit comes with a built-in management command to update all cadences in the TOM. If you've perused
+the TOM Toolkit documentation previously, you may have noticed a section about automation of tasks, and, more specifically,
+a subsection about :doc:`Using cron with a management command <../customization/automation>`. You can simply apply the
+instructions here, but use the management command ``runcadencestrategies.py`` in place of the example. If you set your cron
+to run every few minutes or so, you'll ensure that your cadences are kept up to date!
