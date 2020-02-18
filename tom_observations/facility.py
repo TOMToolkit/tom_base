@@ -1,13 +1,14 @@
+from abc import ABC, abstractmethod
 from importlib import import_module
 import json
+import logging
 import requests
-from abc import ABC, abstractmethod
+
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit, Layout
+from crispy_forms.layout import Layout, Submit
 from django import forms
 from django.conf import settings
 from django.core.files.base import ContentFile
-import logging
 
 from tom_targets.models import Target
 
@@ -190,6 +191,13 @@ class GenericObservationFacility(ABC):
         values, False otherwise.
         """
         return False
+
+    def get_start_end_keywords(self):
+        """
+        Returns the keywords representing the start and end of an observation window for a facility. Defaults to
+        ``start`` and ``end``.
+        """
+        return ('start', 'end')
 
     @abstractmethod
     def get_terminal_observing_states(self):

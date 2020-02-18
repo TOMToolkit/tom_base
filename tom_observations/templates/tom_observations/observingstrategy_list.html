@@ -1,0 +1,50 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
+{% block title %}Query List{% endblock %}
+{% block content %}
+<h3>Manage Observing Strategies</h3>
+<div class="row">
+  <div class="col-md-10">
+    <p>
+      Create a new observing strategy using
+      {% for facility in installed_facilities %}
+      <a href="{% url 'tom_observations:strategy-create' facility %}" title="{{ facility }}" class="btn btn-outline-primary">{{ facility }}</a>
+      {% endfor %}
+    </p>
+    <table class="table table-striped">
+      <thead><tr><th>Name</th><th>Facility</th><th>Created</th><th>Delete</th></tr></thead>
+      <tbody>
+        {% for strategy in filter.qs %}
+        <tr>
+          <td><a href="{% url 'tom_observations:strategy-update' strategy.id %}" title="Update {{ strategy.name }}">{{ strategy.name }}</a></td>
+          <td>{{ strategy.facility }}</td>
+          <td>{{ strategy.created }}</td>
+          {% comment %}
+          <td><a href="{% url 'tom_observations:run-strategy' strategy.id %}" title="Run query" class="btn btn-primary">Run</a></td>
+          {% endcomment %}
+          <td><a href="{% url 'tom_observations:strategy-delete' strategy.id %}" title="Delete strategy" class="btn btn-danger">Delete</a></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5">
+            No saved strategies yet, Try creating a strategy from one of the facilities listed above.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-2">
+    <h4>Filter Saved Observing Strategies</h4>
+    <form action="" method="get" class="form">
+      {% bootstrap_form filter.form %}
+      {% buttons %}
+        <button type="submit" class="btn btn-primary">
+          Filter
+        </button>
+        <a href="{% url 'tom_observations:strategy-list' %}" class="btn btn-secondary" title="Reset">Reset</a>
+      {% endbuttons %}
+    </form>
+  </div>
+</div>
+{% endblock %}
