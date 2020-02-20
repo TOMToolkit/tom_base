@@ -322,13 +322,6 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
         :rtype: dict
         """
         context = super().get_context_data(*args, **kwargs)
-        data_product_upload_form = DataProductUploadForm(
-            initial={
-                'target': self.get_object(),
-                'referrer': reverse('tom_targets:detail', args=(self.get_object().id,))
-            }
-        )
-        context['data_product_form'] = data_product_upload_form
         observing_strategy_form = RunStrategyForm(initial={'target': self.get_object()})
         if any(self.request.GET.get(x) for x in ['observing_strategy', 'cadence_strategy', 'cadence_frequency']):
             initial = {'target': self.object}

@@ -1,7 +1,8 @@
 from django import forms
+from django.contrib.auth.models import Group
 from django.conf import settings
 
-from tom_dataproducts.models import DataProductGroup, DataProduct, ReducedDatum
+from tom_dataproducts.models import DataProductGroup, DataProduct
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
@@ -24,6 +25,11 @@ class DataProductUploadForm(forms.Form):
         Target.objects.all(),
         widget=forms.HiddenInput(),
         required=False
+    )
+    groups = forms.ModelMultipleChoiceField(
+        Group.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple
     )
     files = forms.FileField(
         widget=forms.ClearableFileInput(

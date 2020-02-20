@@ -11,7 +11,7 @@
     <p><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
     <p><strong>Status:</strong> {{ object.status }}</p>
     <p></p>
-    {% include 'tom_dataproducts/upload_dataproduct.html' %}
+    {% upload_dataproduct object %}
   </div>
   <div class="col-md-6">
     {% if image %}

@@ -1,11 +1,13 @@
-from urllib.parse import urlparse
 from io import StringIO
+from urllib.parse import urlparse
 
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.conf import settings
 from django.contrib import messages
-from django.core.management import call_command
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
+from django.core.management import call_command
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -13,20 +15,19 @@ from django.utils.safestring import mark_safe
 from django.views.generic import View, ListView
 from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import FormView, DeleteView
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, DeleteView, FormView
 from django_filters.views import FilterView
-from guardian.shortcuts import get_objects_for_user
+from guardian.shortcuts import assign_perm, get_objects_for_user
 
-from .models import DataProduct, DataProductGroup, ReducedDatum
-from .exceptions import InvalidFileFormatException
-from .forms import AddProductToGroupForm, DataProductUploadForm
-from .filters import DataProductFilter
-from .data_processor import run_data_processor
-from tom_observations.models import ObservationRecord
-from tom_observations.facility import get_service_class
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
+from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
+from tom_dataproducts.exceptions import InvalidFileFormatException
+from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
+from tom_dataproducts.filters import DataProductFilter
+from tom_dataproducts.data_processor import run_data_processor
+from tom_observations.models import ObservationRecord
+from tom_observations.facility import get_service_class
 
 
 class DataProductSaveView(LoginRequiredMixin, View):
@@ -74,6 +75,14 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
     """
     form_class = DataProductUploadForm
 
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+        if self.request.user.is_superuser:
+            form.fields['groups'].queryset = Group.objects.all()
+        else:
+            form.fields['groups'].queryset = self.request.user.groups.all()
+        return form
+
     def form_valid(self, form):
         """
         Runs after ``DataProductUploadForm`` is validated. Saves each ``DataProduct`` and calls ``run_data_processor``
@@ -99,7 +108,12 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             dp.save()
             try:
                 run_hook('data_product_post_upload', dp)
-                run_data_processor(dp)
+                reduced_data = run_data_processor(dp)
+                if settings.ROW_LEVEL_DATA_PERMISSIONS:
+                    for group in form.cleaned_data['groups']:
+                        assign_perm('tom_dataproducts.view_dataproduct', group, dp)
+                        assign_perm('tom_dataproducts.delete_dataproduct', group, dp)
+                        assign_perm('tom_dataproducts.view_reduceddatum', group, reduced_data)
                 successful_uploads.append(str(dp))
             except InvalidFileFormatException as iffe:
                 ReducedDatum.objects.filter(data_product=dp).delete()
