@@ -203,9 +203,7 @@ class DataProductListView(FilterView):
         :returns: Set of ``DataProduct`` objects
         :rtype: QuerySet
         """
-        return super().get_queryset().filter(
-            target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
-        )
+        return get_objects_for_user(self.request.user, 'tom_dataproducts.view_dataproduct')
 
     def get_context_data(self, *args, **kwargs):
         """
