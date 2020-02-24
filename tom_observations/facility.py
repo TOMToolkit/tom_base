@@ -254,18 +254,22 @@ class GenericObservationForm(forms.Form):
     facility = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
     target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
     observation_type = forms.CharField(required=False, max_length=50, widget=forms.HiddenInput())
-    groups = forms.ModelMultipleChoiceField(Group.objects.none(), required=False, widget=forms.CheckboxSelectMultiple)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit('submit', 'Submit'))
-        self.common_layout = Layout('facility', 'target_id', 'observation_type', 'groups')
-        self.common_layout = Layout('facility', 'target_id', 'observation_type')
+        if settings.ROW_LEVEL_PERMISSIONS:
+            self.fields['groups'] = forms.ModelMultipleChoiceField(Group.objects.none(),
+                                                                   required=False,
+                                                                   widget=forms.CheckboxSelectMultiple)
+            self.common_layout = Layout('facility', 'target_id', 'observation_type', 'groups')
+        else:
+            self.common_layout = Layout('facility', 'target_id', 'observation_type')
 
     def serialize_parameters(self):
         parameters = copy.deepcopy(self.cleaned_data)
-        parameters.pop('groups')
+        parameters.pop('groups', None)
         return json.dumps(parameters)
 
     def observation_payload(self):

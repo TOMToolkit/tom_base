@@ -198,7 +198,8 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :rtype: subclass of GenericObservationForm
         """
         form = super().get_form()
-        form.fields['groups'].queryset = self.request.user.groups.all()
+        if settings.ROW_LEVEL_PERMISSIONS:
+            form.fields['groups'].queryset = self.request.user.groups.all()
         form.helper.form_action = reverse(
             'tom_observations:create', kwargs=self.kwargs
         )

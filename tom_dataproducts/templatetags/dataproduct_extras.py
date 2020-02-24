@@ -77,7 +77,6 @@ def dataproduct_list_all(context):
 
 @register.inclusion_tag('tom_dataproducts/partials/upload_dataproduct.html', takes_context=True)
 def upload_dataproduct(context, obj):
-    # TODO: don't include groups in form if object is observation record
     user = context['user']
     initial = {}
     if isinstance(obj, Target):
