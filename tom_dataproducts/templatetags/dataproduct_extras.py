@@ -86,10 +86,11 @@ def upload_dataproduct(context, obj):
         initial['observation_record'] = obj
         initial['referrer'] = reverse('tom_observations:detail', args=(obj.id,))
     form = DataProductUploadForm(initial=initial)
-    if user.is_superuser:
-        form.fields['groups'].queryset = Group.objects.all()
-    else:
-        form.fields['groups'].queryset = user.groups.all()
+    if settings.ROW_LEVEL_PERMISSIONS:
+        if user.is_superuser:
+            form.fields['groups'].queryset = Group.objects.all()
+        else:
+            form.fields['groups'].queryset = user.groups.all()
     return {'data_product_form': form}
 
 

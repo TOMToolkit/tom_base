@@ -26,11 +26,6 @@ class DataProductUploadForm(forms.Form):
         widget=forms.HiddenInput(),
         required=False
     )
-    groups = forms.ModelMultipleChoiceField(
-        Group.objects.none(),
-        required=False,
-        widget=forms.CheckboxSelectMultiple
-    )
     files = forms.FileField(
         widget=forms.ClearableFileInput(
             attrs={'multiple': True}
@@ -44,3 +39,10 @@ class DataProductUploadForm(forms.Form):
     referrer = forms.CharField(
         widget=forms.HiddenInput()
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if settings.ROW_LEVEL_PERMISSIONS:
+            self.fields['groups'] = forms.ModelMultipleChoiceField(Group.objects.none(),
+                                                                   required=False,
+                                                                   widget=forms.CheckboxSelectMultiple)

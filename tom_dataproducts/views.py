@@ -77,10 +77,11 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
-        if self.request.user.is_superuser:
-            form.fields['groups'].queryset = Group.objects.all()
-        else:
-            form.fields['groups'].queryset = self.request.user.groups.all()
+        if settings.ROW_LEVEL_PERMISSIONS:
+            if self.request.user.is_superuser:
+                form.fields['groups'].queryset = Group.objects.all()
+            else:
+                form.fields['groups'].queryset = self.request.user.groups.all()
         return form
 
     def form_valid(self, form):
