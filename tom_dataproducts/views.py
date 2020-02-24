@@ -109,7 +109,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             try:
                 run_hook('data_product_post_upload', dp)
                 reduced_data = run_data_processor(dp)
-                if settings.ROW_LEVEL_DATA_PERMISSIONS:
+                if settings.ROW_LEVEL_PERMISSIONS:
                     for group in form.cleaned_data['groups']:
                         assign_perm('tom_dataproducts.view_dataproduct', group, dp)
                         assign_perm('tom_dataproducts.delete_dataproduct', group, dp)
@@ -203,7 +203,12 @@ class DataProductListView(FilterView):
         :returns: Set of ``DataProduct`` objects
         :rtype: QuerySet
         """
-        return get_objects_for_user(self.request.user, 'tom_dataproducts.view_dataproduct')
+        if settings.ROW_LEVEL_PERMISSIONS:
+            return get_objects_for_user(self.request.user, 'tom_dataproducts.view_dataproduct')
+        else:
+            return super().get_queryset().filter(
+                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+            )
 
     def get_context_data(self, *args, **kwargs):
         """

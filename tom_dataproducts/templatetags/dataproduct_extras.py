@@ -25,8 +25,11 @@ def dataproduct_list_for_target(context, target):
     """
     Given a ``Target``, returns a list of ``DataProduct`` objects associated with that ``Target``
     """
-    target_products_for_user = get_objects_for_user(
-        context['request'].user, 'tom_dataproducts.view_dataproduct', klass=target.dataproduct_set.all())
+    if settings.ROW_LEVEL_PERMISSIONS:
+        target_products_for_user = get_objects_for_user(
+            context['request'].user, 'tom_dataproducts.view_dataproduct', klass=target.dataproduct_set.all())
+    else:
+        target_products_for_user = target.dataproduct_set.all()
     return {
         'products': target_products_for_user,
         'target': target
@@ -60,17 +63,21 @@ def dataproduct_list_for_observation_unsaved(data_products):
     return {'products': data_products['unsaved']}
 
 
-@register.inclusion_tag('tom_dataproducts/partials/dataproduct_list.html')
-def dataproduct_list_all():
+@register.inclusion_tag('tom_dataproducts/partials/dataproduct_list.html', takes_context=True)
+def dataproduct_list_all(context):
     """
     Returns the full list of data products in the TOM, with the most recent first.
     """
-    products = DataProduct.objects.all().order_by('-created')
+    if settings.ROW_LEVEL_PERMISSIONS:
+        products = get_objects_for_user(context['request'].user, 'tom_dataproducts.view_dataproduct')
+    else:
+        products = DataProduct.objects.all().order_by('-created')
     return {'products': products}
 
 
 @register.inclusion_tag('tom_dataproducts/partials/upload_dataproduct.html', takes_context=True)
 def upload_dataproduct(context, obj):
+    # TODO: don't include groups in form if object is observation record
     user = context['user']
     initial = {}
     if isinstance(obj, Target):
@@ -96,9 +103,16 @@ def photometry_for_target(context, target):
     following keys in the JSON representation: magnitude, error, filter
     """
     photometry_data = {}
-    for datum in get_objects_for_user(
-        context['request'].user, 'tom_dataproducts.view_reduceddatum', klass=ReducedDatum.objects.filter(
-            target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])):
+    if settings.ROW_LEVEL_PERMISSIONS:
+        datums = get_objects_for_user(context['request'].user,
+                                      'tom_dataproducts.view_reduceddatum',
+                                      klass=ReducedDatum.objects.filter(
+                                        target=target,
+                                        data_type=settings.DATA_PRODUCT_TYPES['photometry'][0]))
+    else:
+        datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
+
+    for datum in datums:
         values = json.loads(datum.value)
         photometry_data.setdefault(values['filter'], {})
         photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
@@ -138,9 +152,13 @@ def spectroscopy_for_target(context, target, dataproduct=None):
         spectral_dataproducts = DataProduct.objects.get(data_product=dataproduct)
 
     plot_data = []
-    for datum in get_objects_for_user(
-        context['request'].user, 'tom_dataproducts.view_reduceddatum', klass=ReducedDatum.objects.filter(
-            data_product__in=spectral_dataproducts)):
+    if settings.ROW_LEVEL_PERMISSIONS:
+        datums = get_objects_for_user(context['request'].user,
+                                      'tom_dataproducts.view_reduceddatum',
+                                      klass=ReducedDatum.objects.filter(data_product__in=spectral_dataproducts))
+    else:
+        datums = ReducedDatum.objects.filter(data_product__in=spectral_dataproducts)
+    for datum in datums:
         deserialized = SpectrumSerializer().deserialize(datum.value)
         plot_data.append(go.Scatter(
             x=deserialized.wavelength.value,

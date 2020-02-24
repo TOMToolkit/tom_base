@@ -39,7 +39,7 @@ def mock_is_fits_image_file(filename):
     return True
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], ROW_LEVEL_PERMISSIONS=False)
 @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
 class Views(TestCase):
     def setUp(self):
@@ -146,7 +146,52 @@ class Views(TestCase):
         self.assertEqual(products.count(), 1)
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], ROW_LEVEL_PERMISSIONS=True)
+@patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
+class TestViewsWithPermissions(TestCase):
+    def setUp(self):
+        self.target = TargetFactory.create()
+        self.observation_record = ObservingRecordFactory.create(
+            target_id=self.target.id,
+            facility=FakeFacility.name,
+            parameters='{}'
+        )
+        self.data_product = DataProduct.objects.create(
+            product_id='testproductid',
+            target=self.target,
+            observation_record=self.observation_record,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+        user = User.objects.create_user(username='aaronrodgers', email='aaron.rodgers@packers.com')
+        self.user2 = User.objects.create_user(username='timboyle', email='tim.boyle@packers.com')
+        assign_perm('tom_targets.view_target', user, self.target)
+        assign_perm('tom_targets.view_target', self.user2, self.target)
+        assign_perm('tom_targets.view_observationrecord', user, self.observation_record)
+        assign_perm('tom_targets.view_observationrecord', self.user2, self.observation_record)
+        assign_perm('tom_targets.view_dataproduct', user, self.data_product)
+        self.client.force_login(user)
+
+    def test_dataproduct_list_on_target(self, dp_mock):
+        response = self.client.get(reverse('tom_targets:detail', kwargs={'pk': self.target.id}))
+        self.assertContains(response, 'afile.fits')
+        self.client.force_login(self.user2)
+
+    def test_dataproduct_list_on_target_unauthorized(self, dp_mock):
+        self.client.force_login(self.user2)
+        response = self.client.get(reverse('tom_targets:detail', kwargs={'pk': self.target.id}))
+        self.assertNotContains(response, 'afile.fits')
+
+    def test_dataproduct_list(self, dp_mock):
+        response = self.client.get(reverse('tom_dataproducts:list'))
+        self.assertContains(response, 'afile.fits')
+
+    def test_dataproduct_list_unauthorized(self, dp_mock):
+        self.client.force_login(self.user2)
+        response = self.client.get(reverse('tom_dataproducts:list'))
+        self.assertNotContains(response, 'afile.fits')
+
+
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], ROW_LEVEL_PERMISSIONS=False)
 @patch('tom_dataproducts.views.run_data_processor')
 class TestUploadDataProducts(TestCase):
     def setUp(self):

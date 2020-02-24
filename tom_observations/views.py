@@ -2,6 +2,7 @@ from io import StringIO
 from urllib.parse import urlparse
 import json
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.management import call_command
@@ -62,9 +63,12 @@ class ObservationListView(FilterView):
         :returns: set of ObservationRecords
         :rtype: QuerySet
         """
-        return ObservationRecord.objects.filter(
-            target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
-        )
+        if settings.ROW_LEVEL_PERMISSIONS:
+            return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
+        else:
+            return ObservationRecord.objects.filter(
+                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+            )
 
     def get(self, request, *args, **kwargs):
         """
@@ -194,6 +198,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :rtype: subclass of GenericObservationForm
         """
         form = super().get_form()
+        form.fields['groups'].queryset = self.request.user.groups.all()
         form.helper.form_action = reverse(
             'tom_observations:create', kwargs=self.kwargs
         )
@@ -253,6 +258,13 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             assign_perm('tom_observations.view_observationgroup', self.request.user, observation_group)
             assign_perm('tom_observations.change_observationgroup', self.request.user, observation_group)
             assign_perm('tom_observations.delete_observationgroup', self.request.user, observation_group)
+
+        if settings.ROW_LEVEL_PERMISSIONS:
+            groups = form.cleaned_data['groups']
+            for record in records:
+                assign_perm('tom_observations.view_observationrecord', groups, record)
+                assign_perm('tom_observations.change_observationrecord', groups, record)
+                assign_perm('tom_observations.delete_observationrecord', groups, record)
 
         return redirect(
             reverse('tom_targets:detail', kwargs={'pk': target.id})
@@ -355,9 +367,12 @@ class ObservationRecordDetailView(DetailView):
         :returns: set of ObservationRecords
         :rtype: QuerySet
         """
-        return ObservationRecord.objects.filter(
-            target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
-        )
+        if settings.ROW_LEVEL_PERMISSIONS:
+            return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
+        else:
+            return ObservationRecord.objects.filter(
+                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+            )
 
     def get_context_data(self, *args, **kwargs):
         """

@@ -17,7 +17,7 @@ from tom_targets.models import Target
 from guardian.shortcuts import assign_perm
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], ROW_LEVEL_PERMISSIONS=False)
 class TestObservationViews(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()
@@ -27,7 +27,8 @@ class TestObservationViews(TestCase):
             facility=FakeFacility.name,
             parameters='{}'
         )
-        user = User.objects.create_user(username='test', password='test')
+        user = User.objects.create_user(username='vincent_adultman', password='important')
+        self.user2 = User.objects.create_user(username='peon', password='plebian')
         assign_perm('tom_targets.view_target', user, self.target)
         self.client.force_login(user)
 
@@ -35,6 +36,14 @@ class TestObservationViews(TestCase):
         response = self.client.get(reverse('tom_observations:list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(
+            response, reverse('tom_observations:detail', kwargs={'pk': self.observation_record.id})
+        )
+
+    def test_observation_list_unauthorized(self):
+        self.client.force_login(self.user2)
+        response = self.client.get(reverse('tom_observations:list'))
+        self.assertEqual(response.status_code,  200)
+        self.assertNotContains(
             response, reverse('tom_observations:detail', kwargs={'pk': self.observation_record.id})
         )
 
@@ -46,6 +55,13 @@ class TestObservationViews(TestCase):
         self.assertContains(
             response, FakeFacility().get_observation_url(self.observation_record.observation_id)
         )
+
+    def test_observation_detail_unauthorized(self):
+        self.client.force_login(self.user2)
+        response = self.client.get(
+            reverse('tom_observations:detail', kwargs={'pk': self.observation_record.id})
+        )
+        self.assertEqual(response.status_code, 404)
 
     def test_update_observations(self):
         response = self.client.get(reverse('tom_observations:list') + '?update_status=True', follow=True)
@@ -101,6 +117,55 @@ class TestObservationViews(TestCase):
             follow=True
         )
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
+
+
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], ROW_LEVEL_PERMISSIONS=True)
+class TestObservationViewsRowLevelPermissions(TestCase):
+    def setUp(self):
+        self.target = TargetFactory.create()
+        self.target_name = TargetNameFactory.create(target=self.target)
+        self.observation_record = ObservingRecordFactory.create(
+            target_id=self.target.id,
+            facility=FakeFacility.name,
+            parameters='{}'
+        )
+        user = User.objects.create_user(username='vincent_adultman', password='important')
+        self.user2 = User.objects.create_user(username='peon', password='plebian')
+        assign_perm('tom_targets.view_target', user, self.target)
+        assign_perm('tom_targets.view_target', self.user2, self.target)
+        assign_perm('tom_observations.view_observationrecord', user, self.observation_record)
+        self.client.force_login(user)
+
+    def test_observation_list_authorized(self):
+        response = self.client.get(reverse('tom_observations:list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response, reverse('tom_observations:detail', kwargs={'pk': self.observation_record.id})
+        )
+
+    def test_observation_list_unauthorized(self):
+        self.client.force_login(self.user2)
+        response = self.client.get(reverse('tom_observations:list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(
+            response, reverse('tom_observations:detail', kwargs={'pk': self.observation_record.id})
+        )
+
+    def test_observation_detail(self):
+        response = self.client.get(
+            reverse('tom_observations:detail', kwargs={'pk': self.observation_record.id})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response, FakeFacility().get_observation_url(self.observation_record.observation_id)
+        )
+
+    def test_observation_detail_unauthorized(self):
+        self.client.force_login(self.user2)
+        response = self.client.get(
+            reverse('tom_observations:detail', kwargs={'pk': self.observation_record.id})
+        )
+        self.assertEqual(response.status_code, 404)
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])

@@ -1,9 +1,22 @@
 The Permissions System
 ---
 
-The TOM Toolkit provides a permissions system which can be used to limit the
-targets a user or group of users can access. This may be helpful if you have many
-users in your TOM but would like to keep some targets proprietary.
+The permissions system is built on top of
+[django-guardian](https://django-guardian.readthedocs.io/en/stable/). It has been
+kept as simple as possible, but TOM developers may extend the capabilities if
+needed.
+
+The TOM Toolkit provides a permissions system that can be used in two different modes. The mode is controlled by the
+`ROW_LEVEL_PERMISSIONS` boolean in `settings.py`.
+
+
+First Mode -- Permissions on Targets and Observation Records
+---
+
+
+The first mode limits the targets that a user or a group of users can access. This may be helpful if you have many
+users in your TOM but would like to keep some targets proprietary. In addition, users are limited to accessing only the
+observation records and data products associated with the targets for which they have permission to view.
 
 Permissions are enforced through groups. Groups can be created and managed by any
 PI in the TOM, via the users page. To add a group, simply use the "Add Group"
@@ -28,8 +41,9 @@ group, so all targets assigned to it would be accessible by anyone. The PI does
 have the ability to remove users for the Public group, however.
 
 
-The permissions system is built on top of
-[django-guardian](https://django-guardian.readthedocs.io/en/stable/). It has been
-kept as simple as possible, but TOM developers may extend the capabilities if
-needed.
+Second Mode -- Permissions on most objects
+---
 
+The second permissions mode is an expanded version of the first. Observation records and data products can be restricted
+to certain groups, and children of those objects will have the same restrictions--that is, all data products of an
+observation record will share its permissions, and all reduced datums of a data product will share its permissions.
