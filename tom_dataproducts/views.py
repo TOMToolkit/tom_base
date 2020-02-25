@@ -150,17 +150,18 @@ class DataProductDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     View that handles the deletion of a ``DataProduct``. Requires authentication.
     """
     model = DataProduct
+    permission_required = 'tom_dataproducts.delete_dataproduct'
     success_url = reverse_lazy('home')
 
     def get_required_permissions(self, request=None):
-        if settings.ROW_LEVEL_PERMISSIONS:
-            self.permission_required = 'tom_dataproducts.delete_dataproduct'
+        if not settings.ROW_LEVEL_PERMISSIONS:
+            return None
         return super(Raise403PermissionRequiredMixin, self).get_required_permissions(request)
 
     def check_permissions(self, request):
-        self.permission_required = self.get_required_permissions(request=request)
-        forbidden = super(Raise403PermissionRequiredMixin, self).check_permissions(request)
-        return forbidden
+        if not settings.ROW_LEVEL_PERMISSIONS:
+            return False
+        return super(Raise403PermissionRequiredMixin, self).check_permissions(request)
 
     def get_success_url(self):
         """
