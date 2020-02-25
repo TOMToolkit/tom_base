@@ -47,3 +47,59 @@ Second Mode -- Permissions on most objects
 The second permissions mode is an expanded version of the first. Observation records and data products can be restricted
 to certain groups, and children of those objects will have the same restrictions--that is, all data products of an
 observation record will share its permissions, and all reduced datums of a data product will share its permissions.
+
+
+A note about toggling `ROW_LEVEL_PERMISSIONS`
+---
+
+It must be noted that while `ROW_LEVEL_PERMISSIONS` is set to `False`, no permissions will be set on any objects other
+than targets. This means that if your TOM is used without `ROW_LEVEL_PERMISSIONS`, and `ROW_LEVEL_PERMISSIONS` is
+enabled after the fact, all permissions will need to be configured manually.
+
+
+Manual permissions modification
+---
+
+If you want to enable `ROW_LEVEL_PERMISSIONS` after adding any data, you'll need to do so on your own. We encourage you
+to read the documention on django-guardian linked above, but here's an example of a bulk permissions assignment for a target:
+
+```python
+>>> from django.contrib.auth.models import Group, User
+>>> from guardian.shortcuts import assign_perm
+>>> from tom_targets.models import Target
+>>> user = User.objects.filter(username='jaire_alexander').first()
+>>> groups = user.groups.all()
+>>> targets = Target.objects.all()
+>>> for group in groups:
+...  assign_perm('tom_targets.view_target', group, targets)
+...  assign_perm('tom_targets.change_target', group, targets)
+...  assign_perm('tom_targets.delete_target', group, targets)
+```
+
+The above code will allow all users in the groups that the example user belongs to to view, modify, and delete all targets. This example can be expanded to the other model-related permissions in the TOM. Below is a brief list of the permissions-enabled models with their permission names:
+
+`Targets`:
+
+* `tom_targets.view_target`
+* `tom_targets.change_target`
+* `tom_targets.delete_target`
+
+`TargetLists`:
+
+* `tom_targets.view_targetlist`
+* `tom_targets.delete_targetlist`
+
+`ObservationRecords`:
+
+* `tom_observations.view_observationrecord`
+
+`ObservationGroups`:
+
+* `tom_observations.view_observationgroup`
+
+`DataProducts`:
+* `tom_dataproducts.view_dataproduct`
+* `tom_dataproducts.delete_dataproduct`
+
+`ReducedDatum`:
+* `tom_dataproducts.view_reduceddatum`

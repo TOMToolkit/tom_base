@@ -121,6 +121,28 @@ class Command(BaseCommand):
 
             break
 
+    def get_permissions_preference(self):
+        permissions_message_info = (
+            'The TOM Toolkit permissions system allows you to either restrict access based on which user groups have '
+            'access to particular targets, or lets you restrict access for Targets, ObservationRecords, and '
+            'DataProducts individually.'
+        )
+        prompt = 'Would you like to the enable the second, more comprehensive permissions system? {}'.format(
+            self.style.WARNING('[y/N] ')
+        )
+        self.stdout.write(permissions_message_info)
+        while True:
+            response = input(prompt).lower()
+            if not response or response == 'n':
+                self.context['ROW_LEVEL_PERMISSIONS'] = False
+            elif response == 'y':
+                self.context['ROW_LEVEL_PERMISSIONS'] = True
+            else:
+                self.stdout.write('Invalid response. Please try again.')
+                continue
+
+            break
+
     def generate_secret_key(self):
         self.status('Generating secret key... ')
         self.context['SECRET_KEY'] = get_random_secret_key()

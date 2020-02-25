@@ -151,6 +151,12 @@ class DataProductDeleteView(LoginRequiredMixin, DeleteView):
     model = DataProduct
     success_url = reverse_lazy('home')
 
+    def get_required_permissions(*kwargs):
+        permissions = super().get_required_permissions(**kwargs)
+        if settings.ROW_LEVEL_PERMISSIONS:
+            permissions.append('tom_dataproduct.delete_dataproduct')
+        return permissions
+
     def get_success_url(self):
         """
         Gets the URL specified in the query params by "next" if it exists, otherwise returns the URL for home.

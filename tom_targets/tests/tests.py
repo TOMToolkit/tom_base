@@ -1,14 +1,67 @@
 import pytz
 from datetime import datetime
 
+from django.contrib.auth.models import User, Group
+from django.core import serializers
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.contrib.auth.models import User, Group
 
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory, TargetNameFactory
 from tom_targets.models import Target, TargetExtra, TargetList, TargetName
 from tom_targets.utils import import_targets
 from guardian.shortcuts import assign_perm
+
+
+class TestTargetListUserPermissions(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(username='testuser')
+        self.user2 = User.objects.create(username='unauthorized')
+        self.st1 = SiderealTargetFactory.create()
+        self.st2 = SiderealTargetFactory.create()
+
+        assign_perm('tom_targets.view_target', self.user, self.st1)
+        assign_perm('tom_targets.view_target', self.user, self.st2)
+        assign_perm('tom_targets.view_target', self.user2, self.st2)
+
+    def test_list_targets(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('targets:list'))
+        self.assertContains(response, self.st1.name)
+        self.assertContains(response, self.st2.name)
+
+    def test_list_targets_limited_permissions(self):
+        self.client.force_login(self.user2)
+        response = self.client.get(reverse('targets:list'))
+        self.assertContains(response, self.st2.name)
+        self.assertNotContains(response, self.st1.name)
+
+
+class TestTargetListGroupPermissions(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(username='testuser')
+        self.user2 = User.objects.create(username='unauthorized')
+        self.st1 = SiderealTargetFactory.create()
+        self.st2 = SiderealTargetFactory.create()
+        self.group1 = Group.objects.create(name='group1')
+        self.group2 = Group.objects.create(name='group2')
+        self.group1.user_set.add(self.user)
+        self.group2.user_set.add(self.user)
+        self.group2.user_set.add(self.user2)
+
+        assign_perm('tom_targets.view_target', self.group1, self.st1)
+        assign_perm('tom_targets.view_target', self.group2, self.st2)
+
+    def test_list_targets(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('targets:list'))
+        self.assertContains(response, self.st1.name)
+        self.assertContains(response, self.st2.name)
+
+    def test_list_targets_limited_permissions(self):
+        self.client.force_login(self.user2)
+        response = self.client.get(reverse('targets:list'))
+        self.assertContains(response, self.st2.name)
+        self.assertNotContains(response, self.st1.name)
 
 
 class TestTargetDetail(TestCase):
@@ -310,7 +363,7 @@ class TestTargetCreate(TestCase):
         names = ['John', 'Doe']
         for i, name in enumerate(names):
             target_data[f'aliases-{i}-name'] = name
-        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.client.post(reverse('targets:create'), data=target_data, follow=True)
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(second_response, 'Target with this Name already exists')
 
@@ -335,7 +388,7 @@ class TestTargetCreate(TestCase):
         names = ['John', 'Doe']
         for i, name in enumerate(names):
             target_data[f'aliases-{i}-name'] = name
-        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.client.post(reverse('targets:create'), data=target_data, follow=True)
         target_data['name'] = 'multiple_names_target2'
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(second_response, 'Target name with this Alias for target already exists.')
@@ -511,7 +564,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
             'query_string': '',
         }
-        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        self.client.post(reverse('targets:add-remove-grouping'), data=data)
 
         self.assertEqual(self.fake_grouping.targets.count(), 2)
         self.assertTrue(self.fake_targets[0] in self.fake_grouping.targets.all())

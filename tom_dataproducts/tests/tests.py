@@ -4,7 +4,7 @@ import tempfile
 
 from django.test import TestCase, override_settings
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from unittest.mock import patch
@@ -162,14 +162,12 @@ class TestViewsWithPermissions(TestCase):
             observation_record=self.observation_record,
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
-        user = User.objects.create_user(username='aaronrodgers', email='aaron.rodgers@packers.com')
+        self.user = User.objects.create_user(username='aaronrodgers', email='aaron.rodgers@packers.com')
         self.user2 = User.objects.create_user(username='timboyle', email='tim.boyle@packers.com')
-        assign_perm('tom_targets.view_target', user, self.target)
+        assign_perm('tom_targets.view_target', self.user, self.target)
         assign_perm('tom_targets.view_target', self.user2, self.target)
-        assign_perm('tom_targets.view_observationrecord', user, self.observation_record)
-        assign_perm('tom_targets.view_observationrecord', self.user2, self.observation_record)
-        assign_perm('tom_targets.view_dataproduct', user, self.data_product)
-        self.client.force_login(user)
+        assign_perm('tom_targets.view_dataproduct', self.user, self.data_product)
+        self.client.force_login(self.user)
 
     def test_dataproduct_list_on_target(self, dp_mock):
         response = self.client.get(reverse('tom_targets:detail', kwargs={'pk': self.target.id}))
@@ -190,6 +188,29 @@ class TestViewsWithPermissions(TestCase):
         response = self.client.get(reverse('tom_dataproducts:list'))
         self.assertNotContains(response, 'afile.fits')
 
+    @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], ROW_LEVEL_PERMISSIONS=True)
+    def test_upload_data_row_level_permissions(self, dp_mock):
+        group = Group.objects.create(name='permitted')
+        group.user_set.add(self.user)
+        response = self.client.post(
+            reverse('dataproducts:upload'),
+            {
+                'facility': 'LCO',
+                'files': SimpleUploadedFile('afile.fits', b'afile'),
+                'target': self.target.id,
+                'groups': Group.objects.filter(name='permitted'),
+                'data_product_type': settings.DATA_PRODUCT_TYPES['spectroscopy'][0],
+                'observation_timestamp_0': date(2019, 6, 1),
+                'observation_timestamp_1': time(12, 0, 0),
+                'referrer': reverse('targets:detail', kwargs={'pk': self.target.id})
+            },
+            follow=True
+        )
+        self.assertContains(response, 'afile.fits')
+        self.client.force_login(self.user2)
+        response = self.client.get(reverse('targets:detail', kwargs={'pk': self.target.id}))
+        self.assertNotContains(response, 'afile.fits')
+
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], ROW_LEVEL_PERMISSIONS=False)
 @patch('tom_dataproducts.views.run_data_processor')
@@ -207,9 +228,9 @@ class TestUploadDataProducts(TestCase):
             observation_record=self.observation_record,
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
-        user = User.objects.create_user(username='test', email='test@example.com')
-        assign_perm('tom_targets.view_target', user, self.target)
-        self.client.force_login(user)
+        self.user = User.objects.create_user(username='test', email='test@example.com')
+        assign_perm('tom_targets.view_target', self.user, self.target)
+        self.client.force_login(self.user)
 
     def test_upload_data_for_target(self, run_data_processor_mock):
         response = self.client.post(

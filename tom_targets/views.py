@@ -38,7 +38,6 @@ from tom_targets.utils import import_targets, export_targets
 from tom_targets.filters import TargetFilter
 from tom_targets.groups import add_all_to_grouping, add_selected_to_grouping
 from tom_targets.groups import remove_all_from_grouping, remove_selected_from_grouping
-from tom_dataproducts.forms import DataProductUploadForm
 
 logger = logging.getLogger(__name__)
 
