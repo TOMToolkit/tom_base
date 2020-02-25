@@ -21,6 +21,7 @@ from guardian.shortcuts import assign_perm, get_objects_for_user
 
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
+from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
@@ -144,18 +145,22 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
         return redirect(form.cleaned_data.get('referrer', '/'))
 
 
-class DataProductDeleteView(LoginRequiredMixin, DeleteView):
+class DataProductDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     """
     View that handles the deletion of a ``DataProduct``. Requires authentication.
     """
     model = DataProduct
     success_url = reverse_lazy('home')
 
-    def get_required_permissions(*kwargs):
-        permissions = super().get_required_permissions(**kwargs)
+    def get_required_permissions(self, request=None):
         if settings.ROW_LEVEL_PERMISSIONS:
-            permissions.append('tom_dataproduct.delete_dataproduct')
-        return permissions
+            self.permission_required = 'tom_dataproducts.delete_dataproduct'
+        return super(Raise403PermissionRequiredMixin, self).get_required_permissions(request)
+
+    def check_permissions(self, request):
+        self.permission_required = self.get_required_permissions(request=request)
+        forbidden = super(Raise403PermissionRequiredMixin, self).check_permissions(request)
+        return forbidden
 
     def get_success_url(self):
         """

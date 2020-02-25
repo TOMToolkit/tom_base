@@ -267,6 +267,42 @@ class TestUploadDataProducts(TestCase):
         )
 
 
+class TestDeleteDataProducts(TestCase):
+    def setUp(self):
+        self.target = TargetFactory.create()
+        self.data_product = DataProduct.objects.create(
+            product_id='testproductid',
+            target=self.target,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+        self.user = User.objects.create_user(username='aaronrodgers', email='aaron.rodgers@packers.com')
+        self.user2 = User.objects.create_user(username='timboyle', email='tim.boyle@packers.com')
+        assign_perm('tom_targets.view_target', self.user, self.target)
+        assign_perm('tom_targets.view_target', self.user2, self.target)
+        assign_perm('tom_targets.view_dataproduct', self.user, self.data_product)
+        assign_perm('tom_targets.view_dataproduct', self.user2, self.data_product)
+        assign_perm('tom_targets.delete_dataproduct', self.user, self.data_product)
+        self.client.force_login(self.user)
+
+    def test_delete_data_product_no_row_level_permissions(self):
+        response = self.client.post(reverse('dataproducts:delete', kwargs={'pk': self.data_product.id}), follow=True)
+        self.assertRedirects(response, reverse('home'))
+        self.assertFalse(DataProduct.objects.filter(product_id='testproductid').exists())
+
+    @override_settings(ROW_LEVEL_PERMISSIONS=True)
+    def test_delete_data_product_unauthorized(self):
+        self.client.force_login(self.user2)
+        response = self.client.post(reverse('dataproducts:delete', kwargs={'pk': self.data_product.id}), follow=True)
+        self.assertRedirects(response, reverse('login') + f'?next=/dataproducts/data/{self.data_product.id}/delete/')
+        self.assertTrue(DataProduct.objects.filter(product_id='testproductid').exists())
+
+    @override_settings(ROW_LEVEL_PERMISSIONS=True)
+    def test_delete_data_product_authorized(self):
+        response = self.client.post(reverse('dataproducts:delete', kwargs={'pk': self.data_product.id}), follow=True)
+        self.assertRedirects(response, reverse('home'))
+        self.assertFalse(DataProduct.objects.filter(product_id='testproductid').exists())
+
+
 class TestDataUploadForms(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()
