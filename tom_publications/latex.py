@@ -9,14 +9,17 @@ from django import forms
 from django.conf import settings
 
 
-DEFAULT_LATEX_PROCESSOR_CLASS = 'tom_publications.latex.GenericLatexProcessor'
+DEFAULT_LATEX_PROCESSOR_CLASSES = {
+    'ObservationGroup': 'tom_publications.processors.observation_group_latex_processor.ObservationGroupLatexProcessor',
+    'TargetList': 'tom_publications.processors.target_list_latex_processor.TargetListLatexProcessor'
+}
 
 
 def get_latex_processor(model_name):
     try:
         processor_class = settings.TOM_LATEX_PROCESSORS[model_name]
     except AttributeError:
-        processor_class = DEFAULT_LATEX_PROCESSOR_CLASS
+        processor_class = DEFAULT_LATEX_PROCESSOR_CLASSES[model_name]
 
     try:
         mod_name, class_name = processor_class.rsplit('.', 1)
