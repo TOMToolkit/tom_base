@@ -1,24 +1,26 @@
-from django import template
-from django.conf import settings
-from dateutil.parser import parse
-from plotly import offline
-import plotly.graph_objs as go
 from astropy import units as u
 from astropy.coordinates import Angle
+from dateutil.parser import parse
+from django import template
+from django.conf import settings
+from guardian.shortcuts import get_objects_for_user
+from plotly import offline
+from plotly import graph_objs as go
 
+from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target, TargetExtra, TargetList
 from tom_targets.forms import TargetVisibilityForm
-from tom_observations.utils import get_sidereal_visibility
 
 register = template.Library()
 
 
-@register.inclusion_tag('tom_targets/partials/recent_targets.html')
-def recent_targets(limit=10):
+@register.inclusion_tag('tom_targets/partials/recent_targets.html', takes_context=True)
+def recent_targets(context, limit=10):
     """
     Displays a list of the most recently created targets in the TOM up to the given limit, or 10 if not specified.
     """
-    return {'targets': Target.objects.all().order_by('-created')[:limit]}
+    user = context['request'].user
+    return {'targets': get_objects_for_user(user, 'tom_targets.view_target').order_by('-created')[:limit]}
 
 
 @register.inclusion_tag('tom_targets/partials/target_feature.html')

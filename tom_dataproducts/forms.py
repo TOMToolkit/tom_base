@@ -1,9 +1,9 @@
 from django import forms
 from django.conf import settings
 
-from .models import DataProductGroup, DataProduct
-from tom_targets.models import Target
+from tom_dataproducts.models import DataProductGroup, DataProduct, ReducedDatum
 from tom_observations.models import ObservationRecord
+from tom_targets.models import Target
 
 
 class AddProductToGroupForm(forms.Form):

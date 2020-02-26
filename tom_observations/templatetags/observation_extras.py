@@ -1,11 +1,14 @@
-from django import template
+from urllib.parse import urlencode
+
+from django import forms, template
+from plotly import offline
+import plotly.graph_objs as go
 
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_classes
+from tom_observations.observing_strategy import RunStrategyForm
 from tom_targets.models import Target
 
-from plotly import offline
-import plotly.graph_objs as go
 
 register = template.Library()
 
@@ -19,6 +22,23 @@ def observing_buttons(target):
     return {'target': target, 'facilities': facilities}
 
 
+@register.inclusion_tag('tom_observations/partials/observation_type_tabs.html', takes_context=True)
+def observation_type_tabs(context):
+    """
+    Displays tabs in observation creation form representing each available observation type.
+    """
+    request = context['request']
+    query_params = request.GET.copy()
+    observation_type = query_params.pop('observation_type', None)
+    return {
+        'params': urlencode(query_params),
+        'type_choices': context['type_choices'],
+        'observation_type': observation_type,
+        'facility': context['form']['facility'].value,
+        'target_id': request.GET.get('target_id')
+    }
+
+
 @register.inclusion_tag('tom_observations/partials/observation_list.html')
 def observation_list(target=None):
     """
@@ -29,6 +49,29 @@ def observation_list(target=None):
     else:
         observations = ObservationRecord.objects.all().order_by('-created')
     return {'observations': observations}
+
+
+@register.inclusion_tag('tom_observations/partials/observingstrategy_run.html')
+def observingstrategy_run(target):
+    """
+    Renders the form for running an observing strategy.
+    """
+    form = RunStrategyForm(initial={'target': target})
+    form.fields['target'].widget = forms.HiddenInput()
+    return {'form': form}
+
+
+@register.inclusion_tag('tom_observations/partials/observingstrategy_from_record.html')
+def observingstrategy_from_record(obsr):
+    """
+    Renders a button that will pre-populate and observing strategy form with parameters from the specified
+    ``ObservationRecord``.
+    """
+    params = urlencode(obsr.parameters_as_dict)
+    return {
+        'facility': obsr.facility,
+        'params': params
+    }
 
 
 @register.inclusion_tag('tom_observations/partials/observation_distribution.html')

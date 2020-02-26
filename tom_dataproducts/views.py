@@ -1,7 +1,6 @@
 from urllib.parse import urlparse
 from io import StringIO
 
-from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.management import call_command

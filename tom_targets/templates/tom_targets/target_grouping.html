@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load bootstrap4 publication_extras %}
 {% block title %}Target Groups{% endblock %}
 {% block content %}
 <h1>Target Groupings</h1>
@@ -17,6 +17,7 @@
       <tr>
         <th>Group</th>
         <th>Total Targets</th>
+        <th>Generate Latex</th>
         <th>Delete</th>
       </tr>
     </thead>
@@ -24,7 +25,8 @@
       {% for group in object_list %}
       <tr>
         <td><button type="submit" class="btn btn-link" name="targetlist__name" value="{{group.id}}" title="View Group">{{ group.name }}</button></td>
-        <td valign="middle">{{ group.targets.count }}</td>        
+        <td valign="middle">{{ group.targets.count }}</td>
+        <td>{% latex_button group %}</td>
         <td><a href="{% url 'targets:delete-group' group.id%}" title="Delete Group" class="btn btn-danger">Delete</a></td>
       </tr>
       {% empty %}

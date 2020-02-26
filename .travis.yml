@@ -8,7 +8,7 @@ before_install:
     - sudo apt-get install -y gfortran
     - pip uninstall -y numpy
 install:
-    - pip install -r requirements.txt pycodestyle
+    - pip install -I -r requirements.txt pycodestyle
 script:
     - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
     - python3 manage.py test

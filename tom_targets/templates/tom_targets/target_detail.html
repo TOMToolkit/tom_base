@@ -1,9 +1,10 @@
 {% extends 'tom_common/base.html' %}
-{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras static cache %}
+{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras publication_extras static cache %}
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
 {% endblock %}
+{% bootstrap_javascript jquery='True' %}
 {% block content %}
 <div class="row">
   <div class="col-md-4">
@@ -40,9 +41,11 @@
       </li>
     </ul>
     <div class="tab-content">
-      <div class="tab-pane in active" id="observe">
+      <div class="tab-pane active" id="observe">
         <h4>Observe</h4>
         {% observing_buttons object %}
+        <hr/>
+        {% observingstrategy_run object %}
         <hr/>
         <h4>Plan</h4>
         {% if object.type == 'SIDEREAL' %}

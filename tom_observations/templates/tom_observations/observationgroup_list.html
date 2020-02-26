@@ -1,0 +1,43 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 publication_extras %}
+{% block title %}Target Groups{% endblock %}
+{% block content %}
+<h1>Observation Groups</h1>
+{% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+<form action="{% url 'targets:list' %}" method="GET">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Total Observations</th>
+        <th>Generate Latex</th>
+        <th>Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for group in object_list %}
+      <tr>
+        <td>
+          <a href="{% url 'tom_observations:list' %}?observationgroup={{ group.id }}">
+            {{ group.name }}
+          </a>
+        </td>
+        <td>
+            {{ group.observation_records.count }}
+        </td>
+        <td>{% latex_button group %}</td>
+        <td>
+          <a href="{% url 'tom_observations:group-delete' pk=group.id %}" class="btn btn-danger">Delete</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td>No groups yet</td>
+        <td></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</form>
+{% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+{% endblock %}

@@ -38,6 +38,13 @@ class TestTargetDetail(TestCase):
         self.assertContains(response, 'somevalue')
         self.assertNotContains(response, 'hiddenvalue')
 
+    def test_target_bad_permissions(self):
+        other_user = User.objects.create(username='otheruser')
+        self.client.force_login(other_user)
+        response = self.client.get(reverse('targets:detail', kwargs={'pk': self.st.id}), follow=True)
+        self.assertRedirects(response, '{}?next=/targets/{}/'.format(reverse('login'), self.st.id))
+        self.assertContains(response, 'You do not have permission to access this page')
+
 
 class TestTargetCreate(TestCase):
     def setUp(self):

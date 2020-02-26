@@ -5,15 +5,14 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 
-from astroplan import Observer, FixedTarget
-from astropy import units
+from astroplan import FixedTarget
 from astropy.coordinates import get_sun, SkyCoord
 from astropy.time import Time
 
-from .factories import TargetFactory, ObservingRecordFactory, TargetNameFactory
+from .factories import ObservingRecordFactory, ObservingStrategyFactory, TargetFactory, TargetNameFactory
 from tom_observations.utils import get_astroplan_sun_and_time, get_sidereal_visibility
 from tom_observations.tests.utils import FakeFacility
-from tom_observations.models import ObservationRecord
+from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
 from tom_targets.models import Target
 from guardian.shortcuts import assign_perm
 
@@ -62,6 +61,31 @@ class TestObservationViews(TestCase):
         )
         self.assertContains(response, 'fake form input')
 
+    def test_add_observations_to_group(self):
+        obs_group = ObservationGroup.objects.create(name='testgroup')
+        reqstring = '?action=add&selected={}&observationgroup={}'.format(
+            self.observation_record.id,
+            obs_group.id
+        )
+        response = self.client.get(reverse('tom_observations:list') + reqstring)
+        self.assertEqual(response.status_code, 302)
+        obs_group.refresh_from_db()
+        self.assertIn(self.observation_record, obs_group.observation_records.all())
+
+    def test_remove_observations_from_group(self):
+        obs_group = ObservationGroup.objects.create(name='testgroup')
+        obs_group.observation_records.add(self.observation_record)
+        obs_group.save()
+        self.assertIn(self.observation_record, obs_group.observation_records.all())
+        reqstring = '?action=remove&selected={}&observationgroup={}'.format(
+            self.observation_record.id,
+            obs_group.id
+        )
+        response = self.client.get(reverse('tom_observations:list') + reqstring)
+        self.assertEqual(response.status_code, 302)
+        obs_group.refresh_from_db()
+        self.assertNotIn(self.observation_record, obs_group.observation_records.all())
+
     def test_submit_observation(self):
         form_data = {
             'target_id': self.target.id,
@@ -77,6 +101,37 @@ class TestObservationViews(TestCase):
             follow=True
         )
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
+
+
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
+class TestObservationGroupViews(TestCase):
+    pass
+
+
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
+class TestObservingStrategyViews(TestCase):
+    def setUp(self):
+        self.observing_strategy = ObservingStrategyFactory.create(name='Test Strategy')
+        self.user = User.objects.create_user(username='test', password='test')
+        self.client.force_login(self.user)
+
+    def test_observing_strategy_list(self):
+        response = self.client.get(reverse('tom_observations:strategy-list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response, reverse('tom_observations:strategy-update', kwargs={'pk': self.observing_strategy.id})
+        )
+
+    def test_observing_strategy_create(self):
+        response = self.client.get(reverse('tom_observations:strategy-create', kwargs={'facility': 'FakeFacility'}))
+        self.assertContains(response, 'Strategy name')
+
+    def test_observing_strategy_delete(self):
+        response = self.client.post(reverse('tom_observations:strategy-delete',
+                                    args=(self.observing_strategy.id,)),
+                                    follow=True)
+        self.assertRedirects(response, reverse('tom_observations:strategy-list'), status_code=302)
+        self.assertFalse(ObservingStrategy.objects.filter(pk=self.observing_strategy.id).exists())
 
 
 class TestUpdatingObservations(TestCase):

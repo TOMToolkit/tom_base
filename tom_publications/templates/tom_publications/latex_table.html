@@ -1,0 +1,32 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 crispy_forms_tags %}
+{% bootstrap_javascript jquery='True' %}
+{% block title %}Target {{ object.name }}{% endblock %}
+{% block extra_javascript %}
+<script>
+  function copyLatex() {
+    latex = document.getElementById("copy-latex");
+    latex.select();
+    document.execCommand("copy");
+  }
+</script>
+{% endblock %}
+{% block content %}
+<div class="row">
+  <div id="latex-form" class="col-md-12">
+    <h3>Generate latex table for {{ object.name }}</h3>
+    <form method="GET" action="{% url 'tom_publications:create-latex' %}" class="form">
+      {% csrf_token %}
+      {% crispy latex_form %}
+    </form>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-12">
+    {% if latex %}
+      <textarea type="text" rows="4" class="form-control" id="copy-latex">{{ latex }}</textarea>
+    {% endif %}
+  </div>
+  <button class="btn btn-outline-primary" onclick="copyLatex()">Copy to clipboard</button>
+</div>
+{% endblock %}

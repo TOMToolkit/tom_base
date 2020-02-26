@@ -1,18 +1,17 @@
 import requests
-from django.conf import settings
-from django import forms
-from dateutil.parser import parse
-from crispy_forms.layout import Layout, Div
-from django.core.cache import cache
-from astropy import units as u
 
-from tom_observations.facility import GenericObservationForm
+from astropy import units as u
+from crispy_forms.layout import Div, HTML, Layout
+from dateutil.parser import parse
+from django import forms
+from django.conf import settings
+from django.core.cache import cache
+
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.facility import GenericObservationFacility, get_service_class
-from tom_targets.models import (
-    Target, REQUIRED_NON_SIDEREAL_FIELDS,
-    REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
-)
+from tom_observations.cadence import CadenceForm
+from tom_observations.facility import GenericObservationFacility, GenericObservationForm, get_service_class
+from tom_observations.observing_strategy import GenericStrategyForm
+from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
 # Determine settings for this module.
 try:
@@ -25,7 +24,9 @@ except (AttributeError, KeyError):
 
 # Module specific settings.
 PORTAL_URL = LCO_SETTINGS['portal_url']
-TERMINAL_OBSERVING_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
+SUCCESSFUL_OBSERVING_STATES = ['COMPLETED']
+FAILED_OBSERVING_STATES = ['WINDOW_EXPIRED', 'CANCELED']
+TERMINAL_OBSERVING_STATES = SUCCESSFUL_OBSERVING_STATES + FAILED_OBSERVING_STATES
 
 # Units of flux and wavelength for converting to Specutils Spectrum1D objects
 FLUX_CONSTANT = (1e-15 * u.erg) / (u.cm ** 2 * u.second * u.angstrom)
@@ -37,6 +38,46 @@ FITS_FACILITY_KEYWORD_VALUE = 'LCOGT'
 FITS_FACILITY_DATE_OBS_KEYWORD = 'DATE-OBS'
 
 # Functions needed specifically for LCO
+# Helpers for LCO fields
+ipp_value_help = """
+        Value between 0.5 to 2.0.
+        <a href="https://lco.global/documents/20/the_new_priority_factor.pdf">
+            More information about Intra Proprosal Priority (IPP).
+        </a>.
+"""
+
+observation_mode_help = """
+    <a href="https://lco.global/documentation/special-scheduling-modes/">
+        More information about Rapid Response mode.
+    </a>
+"""
+
+end_help = """
+    Try the
+    <a href="https://lco.global/observatory/visibility/">
+        Target Visibility Calculator.
+    </a>
+"""
+
+instrument_type_help = """
+    <a href="https://lco.global/observatory/instruments/">
+        More information about LCO instruments.
+    </a>
+"""
+
+exposure_time_help = """
+    Try the
+    <a href="https://exposure-time-calculator.lco.global/">
+        online Exposure Time Calculator.
+    </a>
+"""
+
+max_airmass_help = """
+    Advice on
+    <a href="https://lco.global/documentation/airmass-limit">
+        setting the airmass limit.
+    </a>
+"""
 
 
 def make_request(*args, **kwargs):
@@ -47,45 +88,17 @@ def make_request(*args, **kwargs):
     return response
 
 
-class LCOBaseObservationForm(GenericObservationForm):
-    name = forms.CharField()
+class LCOBaseForm(forms.Form):
     ipp_value = forms.FloatField()
-    start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
-    end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     exposure_count = forms.IntegerField(min_value=1)
     exposure_time = forms.FloatField(min_value=0.1)
     max_airmass = forms.FloatField()
-    observation_mode = forms.ChoiceField(
-        choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response'))
-    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['proposal'] = forms.ChoiceField(choices=self.proposal_choices())
         self.fields['filter'] = forms.ChoiceField(choices=self.filter_choices())
         self.fields['instrument_type'] = forms.ChoiceField(choices=self.instrument_choices())
-        self.helper.layout = Layout(
-            self.common_layout,
-            self.layout(),
-            self.extra_layout()
-        )
-
-    def layout(self):
-        return Div(
-            Div(
-                'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
-                css_class='col'
-            ),
-            Div(
-                'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass',
-                css_class='col'
-            ),
-            css_class='form-row'
-        )
-
-    def extra_layout(self):
-        # If you just want to add some fields to the end of the form, add them here.
-        return Div()
 
     def _get_instruments(self):
         cached_instruments = cache.get('lco_instruments')
@@ -121,6 +134,71 @@ class LCOBaseObservationForm(GenericObservationForm):
             if p['current']:
                 choices.append((p['id'], '{} ({})'.format(p['title'], p['id'])))
         return choices
+
+
+class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm, CadenceForm):
+    name = forms.CharField()
+    ipp_value = forms.FloatField(label='Intra Proposal Priority (IPP factor)',
+                                 min_value=0.5,
+                                 max_value=2,
+                                 help_text=ipp_value_help)
+    start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
+    end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}),
+                          help_text=end_help)
+    exposure_count = forms.IntegerField(min_value=1)
+    exposure_time = forms.FloatField(min_value=0.1,
+                                     widget=forms.TextInput(attrs={'placeholder': 'Seconds'}),
+                                     help_text=exposure_time_help)
+    max_airmass = forms.FloatField(help_text=max_airmass_help)
+    period = forms.FloatField(required=False)
+    jitter = forms.FloatField(required=False)
+    observation_mode = forms.ChoiceField(
+        choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response')),
+        help_text=observation_mode_help
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            self.common_layout,
+            self.layout(),
+            self.extra_layout(),
+            self.cadence_layout
+        )
+
+    def layout(self):
+
+        return Div(
+            Div(
+                Div(
+                    'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
+                    css_class='col'
+                ),
+                Div(
+                    'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass',
+                    css_class='col'
+                ),
+                css_class='form-row',
+            ),
+            Div(
+                HTML('<p>Cadence parameters. Leave blank if no cadencing is desired.</p>'),
+            ),
+            Div(
+                Div(
+                    'period',
+                    css_class='col'
+                ),
+                Div(
+                    'jitter',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            ),
+        )
+
+    def extra_layout(self):
+        # If you just want to add some fields to the end of the form, add them here.
+        return Div()
 
     def clean_start(self):
         start = self.cleaned_data['start']
@@ -233,8 +311,24 @@ class LCOBaseObservationForm(GenericObservationForm):
             }
         }
 
+    def _expand_cadence_request(self, payload):
+        payload['requests'][0]['cadence'] = {
+            'start': self.cleaned_data['start'],
+            'end': self.cleaned_data['end'],
+            'period': self.cleaned_data['period'],
+            'jitter': self.cleaned_data['jitter']
+        }
+        payload['requests'][0]['windows'] = []
+        response = make_request(
+            'POST',
+            PORTAL_URL + '/api/requestgroups/cadence/',
+            json=payload,
+            headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
+        )
+        return response.json()
+
     def observation_payload(self):
-        return {
+        payload = {
             "name": self.cleaned_data['name'],
             "proposal": self.cleaned_data['proposal'],
             "ipp_value": self.cleaned_data['ipp_value'],
@@ -255,6 +349,10 @@ class LCOBaseObservationForm(GenericObservationForm):
                 }
             ]
         }
+        if self.cleaned_data.get('period') and self.cleaned_data.get('jitter'):
+            payload = self._expand_cadence_request(payload)
+
+        return payload
 
 
 class LCOImagingObservationForm(LCOBaseObservationForm):
@@ -274,14 +372,29 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
     def layout(self):
         return Div(
             Div(
-                'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
-                css_class='col'
+                Div(
+                    'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
+                    css_class='col'
+                ),
+                Div(
+                    'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass', 'rotator_angle',
+                    css_class='col'
+                ),
+                css_class='form-row',
             ),
             Div(
-                'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass', 'rotator_angle',
-                css_class='col'
-            ),
-            css_class='form-row'
+                Div(
+                    HTML('<p>Cadence parameters. Leave blank if no cadencing is desired.</p>'),
+                    css_class='row'
+                ),
+                Div(
+                    Div(
+                        'period', 'jitter',
+                        css_class='col'
+                    ),
+                    css_class='form-row'
+                )
+            )
         )
 
     def instrument_choices(self):
@@ -308,6 +421,28 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
         }
 
         return instrument_config
+
+
+class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            if field != 'strategy_name':
+                self.fields[field].required = False
+        self.helper.layout = Layout(
+            self.common_layout,
+            Div(
+                Div(
+                    'proposal', 'ipp_value', 'filter', 'instrument_type',
+                    css_class='col'
+                ),
+                Div(
+                    'exposure_count', 'exposure_time', 'max_airmass',
+                    css_class='col'
+                ),
+                css_class='form-row',
+            )
+        )
 
 
 class LCOFacility(GenericObservationFacility):
@@ -369,6 +504,9 @@ class LCOFacility(GenericObservationFacility):
         else:
             return LCOBaseObservationForm
 
+    def get_strategy_form(self, observation_type):
+        return LCOObservingStrategyForm
+
     def submit_observation(self, observation_payload):
         response = make_request(
             'POST',
@@ -383,6 +521,14 @@ class LCOFacility(GenericObservationFacility):
             'POST',
             PORTAL_URL + '/api/requestgroups/validate/',
             json=observation_payload,
+            headers=self._portal_headers()
+        )
+        return response.json()['errors']
+
+    def cancel_observation(self, observation_id):
+        response = make_request(
+            'POST',
+            f'{PORTAL_URL}/api/requestgroups/{observation_id}/cancel/',
             headers=self._portal_headers()
         )
         return response.json()['errors']
@@ -412,8 +558,14 @@ class LCOFacility(GenericObservationFacility):
         """
         return FITS_FACILITY_KEYWORD_VALUE == header.get(FITS_FACILITY_KEYWORD, None)
 
+    def get_start_end_keywords(self):
+        return ('start', 'end')
+
     def get_terminal_observing_states(self):
         return TERMINAL_OBSERVING_STATES
+
+    def get_failed_observing_states(self):
+        return FAILED_OBSERVING_STATES
 
     def get_observing_sites(self):
         return self.SITES

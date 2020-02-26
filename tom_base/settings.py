@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
+    'tom_publications',
 ]
 
 SITE_ID = 1
@@ -64,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'tom_common.middleware.Raise403Middleware',
     'tom_common.middleware.ExternalServiceMiddleware',
     'tom_common.middleware.AuthStrategyMiddleware',
 ]
@@ -201,9 +203,19 @@ DATA_PROCESSORS = {
     'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
 }
 
+TOM_LATEX_PROCESSORS = {
+    'ObservationGroup': 'tom_publications.processors.observation_group_latex_processor.ObservationGroupLatexProcessor',
+    'TargetList': 'tom_publications.processors.target_list_latex_processor.TargetListLatexProcessor'
+}
+
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility'
+]
+
+TOM_CADENCE_STRATEGIES = [
+    'tom_observations.cadence.RetryFailedObservationsStrategy',
+    'tom_observations.cadence.ResumeCadenceAfterFailureStrategy'
 ]
 
 # Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"

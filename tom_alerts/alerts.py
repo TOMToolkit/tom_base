@@ -17,7 +17,8 @@ DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.lasair.LasairBroker',
     'tom_alerts.brokers.scout.ScoutBroker',
     'tom_alerts.brokers.alerce.ALeRCEBroker',
-    'tom_alerts.brokers.antares.ANTARESBroker'
+    'tom_alerts.brokers.antares.ANTARESBroker',
+    'tom_alerts.brokers.gaia.GaiaBroker'
 ]
 
 
@@ -41,10 +42,7 @@ def get_service_classes():
             mod = import_module(mod_name)
             clazz = getattr(mod, class_name)
         except (ImportError, AttributeError):
-            raise ImportError(
-                '''Could not import {}.
-                Did you provide the correct path?'''.format(service)
-            )
+            raise ImportError(f'Could not import {service}. Did you provide the correct path?')
         service_choices[clazz.name] = clazz
     return service_choices
 

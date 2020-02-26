@@ -413,7 +413,7 @@ class TargetExtra(models.Model):
     """
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     key = models.CharField(max_length=200)
-    value = models.TextField()
+    value = models.TextField(blank=True, default='')
     float_value = models.FloatField(null=True, blank=True)
     bool_value = models.BooleanField(null=True, blank=True)
     time_value = models.DateTimeField(null=True, blank=True)
