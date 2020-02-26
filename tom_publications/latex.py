@@ -14,7 +14,6 @@ DEFAULT_LATEX_PROCESSOR_CLASS = 'tom_publications.latex.GenericLatexProcessor'
 
 def get_latex_processor(model_name):
     try:
-        print(model_name)
         processor_class = settings.TOM_LATEX_PROCESSORS[model_name]
     except AttributeError:
         processor_class = DEFAULT_LATEX_PROCESSOR_CLASS
