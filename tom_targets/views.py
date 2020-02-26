@@ -38,7 +38,6 @@ from tom_targets.utils import import_targets, export_targets
 from tom_targets.filters import TargetFilter
 from tom_targets.groups import add_all_to_grouping, add_selected_to_grouping
 from tom_targets.groups import remove_all_from_grouping, remove_selected_from_grouping
-from tom_dataproducts.forms import DataProductUploadForm
 
 logger = logging.getLogger(__name__)
 
@@ -322,13 +321,6 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
         :rtype: dict
         """
         context = super().get_context_data(*args, **kwargs)
-        data_product_upload_form = DataProductUploadForm(
-            initial={
-                'target': self.get_object(),
-                'referrer': reverse('tom_targets:detail', args=(self.get_object().id,))
-            }
-        )
-        context['data_product_form'] = data_product_upload_form
         observing_strategy_form = RunStrategyForm(initial={'target': self.get_object()})
         if any(self.request.GET.get(x) for x in ['observing_strategy', 'cadence_strategy', 'cadence_frequency']):
             initial = {'target': self.object}

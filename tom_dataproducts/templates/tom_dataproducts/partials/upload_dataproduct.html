@@ -1,5 +1,4 @@
 {% load bootstrap4 static %}
-{% if user.is_authenticated %}
 <h4>Upload a data product</h4>
 <p>
   For example CSVs, see the <a href="{% static 'tom_dataproducts/photometry_sample.csv' %}">photometry</a> and <a href="{% static 'tom_dataproducts/spectrum_sample.csv' %}">spectroscopy</a> sample files. FITS is supported for spectra.
@@ -11,4 +10,3 @@
   <input type="submit" class="btn btn-primary" value="Upload" name="upload_dataproduct_form">
   {% endbuttons %}
 </form>
-{% endif %}

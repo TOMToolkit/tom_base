@@ -2,8 +2,6 @@
 Data Processing
 ***************
 
-# TODO: Fix this
-
 The TOM is configured with built-in data processing on the upload of Data Products. This processing is broken up into
 three components.
 

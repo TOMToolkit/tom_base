@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from importlib import import_module
+import copy
 import json
 import logging
 import requests
@@ -8,6 +9,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit
 from django import forms
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
 
 from tom_targets.models import Target
@@ -257,10 +259,18 @@ class GenericObservationForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit('submit', 'Submit'))
-        self.common_layout = Layout('facility', 'target_id', 'observation_type')
+        if settings.TARGET_PERMISSIONS_ONLY:
+            self.common_layout = Layout('facility', 'target_id', 'observation_type')
+        else:
+            self.fields['groups'] = forms.ModelMultipleChoiceField(Group.objects.none(),
+                                                                   required=False,
+                                                                   widget=forms.CheckboxSelectMultiple)
+            self.common_layout = Layout('facility', 'target_id', 'observation_type', 'groups')
 
     def serialize_parameters(self):
-        return json.dumps(self.cleaned_data)
+        parameters = copy.deepcopy(self.cleaned_data)
+        parameters.pop('groups', None)
+        return json.dumps(parameters)
 
     def observation_payload(self):
         """
