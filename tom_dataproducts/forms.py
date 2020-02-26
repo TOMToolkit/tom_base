@@ -42,7 +42,7 @@ class DataProductUploadForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if settings.ROW_LEVEL_PERMISSIONS:
+        if not settings.TARGET_PERMISSIONS_ONLY:
             self.fields['groups'] = forms.ModelMultipleChoiceField(Group.objects.none(),
                                                                    required=False,
                                                                    widget=forms.CheckboxSelectMultiple)

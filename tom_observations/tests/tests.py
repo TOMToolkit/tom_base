@@ -17,7 +17,7 @@ from tom_targets.models import Target
 from guardian.shortcuts import assign_perm
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], ROW_LEVEL_PERMISSIONS=False)
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], TARGET_PERMISSIONS_ONLY=True)
 class TestObservationViews(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()
@@ -119,7 +119,7 @@ class TestObservationViews(TestCase):
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], ROW_LEVEL_PERMISSIONS=True)
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], TARGET_PERMISSIONS_ONLY=False)
 class TestObservationViewsRowLevelPermissions(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()

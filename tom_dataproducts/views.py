@@ -78,7 +78,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
-        if settings.ROW_LEVEL_PERMISSIONS:
+        if not settings.TARGET_PERMISSIONS_ONLY:
             if self.request.user.is_superuser:
                 form.fields['groups'].queryset = Group.objects.all()
             else:
@@ -111,7 +111,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             try:
                 run_hook('data_product_post_upload', dp)
                 reduced_data = run_data_processor(dp)
-                if settings.ROW_LEVEL_PERMISSIONS:
+                if not settings.TARGET_PERMISSIONS_ONLY:
                     for group in form.cleaned_data['groups']:
                         assign_perm('tom_dataproducts.view_dataproduct', group, dp)
                         assign_perm('tom_dataproducts.delete_dataproduct', group, dp)
@@ -154,12 +154,12 @@ class DataProductDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     success_url = reverse_lazy('home')
 
     def get_required_permissions(self, request=None):
-        if not settings.ROW_LEVEL_PERMISSIONS:
+        if settings.TARGET_PERMISSIONS_ONLY:
             return None
         return super(Raise403PermissionRequiredMixin, self).get_required_permissions(request)
 
     def check_permissions(self, request):
-        if not settings.ROW_LEVEL_PERMISSIONS:
+        if settings.TARGET_PERMISSIONS_ONLY:
             return False
         return super(Raise403PermissionRequiredMixin, self).check_permissions(request)
 
@@ -216,12 +216,12 @@ class DataProductListView(FilterView):
         :returns: Set of ``DataProduct`` objects
         :rtype: QuerySet
         """
-        if settings.ROW_LEVEL_PERMISSIONS:
-            return get_objects_for_user(self.request.user, 'tom_dataproducts.view_dataproduct')
-        else:
+        if settings.TARGET_PERMISSIONS_ONLY:
             return super().get_queryset().filter(
                 target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
             )
+        else:
+            return get_objects_for_user(self.request.user, 'tom_dataproducts.view_dataproduct')
 
     def get_context_data(self, *args, **kwargs):
         """

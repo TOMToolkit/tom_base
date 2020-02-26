@@ -259,13 +259,13 @@ class GenericObservationForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit('submit', 'Submit'))
-        if settings.ROW_LEVEL_PERMISSIONS:
+        if settings.TARGET_PERMISSIONS_ONLY:
+            self.common_layout = Layout('facility', 'target_id', 'observation_type')
+        else:
             self.fields['groups'] = forms.ModelMultipleChoiceField(Group.objects.none(),
                                                                    required=False,
                                                                    widget=forms.CheckboxSelectMultiple)
             self.common_layout = Layout('facility', 'target_id', 'observation_type', 'groups')
-        else:
-            self.common_layout = Layout('facility', 'target_id', 'observation_type')
 
     def serialize_parameters(self):
         parameters = copy.deepcopy(self.cleaned_data)

@@ -39,7 +39,7 @@ def mock_is_fits_image_file(filename):
     return True
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], ROW_LEVEL_PERMISSIONS=False)
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], TARGET_PERMISSIONS_ONLY=True)
 @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
 class Views(TestCase):
     def setUp(self):
@@ -146,7 +146,7 @@ class Views(TestCase):
         self.assertEqual(products.count(), 1)
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], ROW_LEVEL_PERMISSIONS=True)
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], TARGET_PERMISSIONS_ONLY=False)
 @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
 class TestViewsWithPermissions(TestCase):
     def setUp(self):
@@ -188,8 +188,9 @@ class TestViewsWithPermissions(TestCase):
         response = self.client.get(reverse('tom_dataproducts:list'))
         self.assertNotContains(response, 'afile.fits')
 
-    @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], ROW_LEVEL_PERMISSIONS=True)
-    def test_upload_data_row_level_permissions(self, dp_mock):
+    @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'],
+                       TARGET_PERMISSIONS_ONLY=False)
+    def test_upload_data_extended_permissions(self, dp_mock):
         group = Group.objects.create(name='permitted')
         group.user_set.add(self.user)
         response = self.client.post(
@@ -212,7 +213,7 @@ class TestViewsWithPermissions(TestCase):
         self.assertNotContains(response, 'afile.fits')
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], ROW_LEVEL_PERMISSIONS=False)
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], TARGET_PERMISSIONS_ONLY=True)
 @patch('tom_dataproducts.views.run_data_processor')
 class TestUploadDataProducts(TestCase):
     def setUp(self):
@@ -284,19 +285,19 @@ class TestDeleteDataProducts(TestCase):
         assign_perm('tom_targets.delete_dataproduct', self.user, self.data_product)
         self.client.force_login(self.user)
 
-    def test_delete_data_product_no_row_level_permissions(self):
+    def test_delete_data_product_target_permissions_only(self):
         response = self.client.post(reverse('dataproducts:delete', kwargs={'pk': self.data_product.id}), follow=True)
         self.assertRedirects(response, reverse('home'))
         self.assertFalse(DataProduct.objects.filter(product_id='testproductid').exists())
 
-    @override_settings(ROW_LEVEL_PERMISSIONS=True)
+    @override_settings(TARGET_PERMISSIONS_ONLY=False)
     def test_delete_data_product_unauthorized(self):
         self.client.force_login(self.user2)
         response = self.client.post(reverse('dataproducts:delete', kwargs={'pk': self.data_product.id}), follow=True)
         self.assertRedirects(response, reverse('login') + f'?next=/dataproducts/data/{self.data_product.id}/delete/')
         self.assertTrue(DataProduct.objects.filter(product_id='testproductid').exists())
 
-    @override_settings(ROW_LEVEL_PERMISSIONS=True)
+    @override_settings(TARGET_PERMISSIONS_ONLY=False)
     def test_delete_data_product_authorized(self):
         response = self.client.post(reverse('dataproducts:delete', kwargs={'pk': self.data_product.id}), follow=True)
         self.assertRedirects(response, reverse('home'))

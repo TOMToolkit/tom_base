@@ -25,11 +25,11 @@ def dataproduct_list_for_target(context, target):
     """
     Given a ``Target``, returns a list of ``DataProduct`` objects associated with that ``Target``
     """
-    if settings.ROW_LEVEL_PERMISSIONS:
+    if settings.TARGET_PERMISSIONS_ONLY:
+        target_products_for_user = target.dataproduct_set.all()
+    else:
         target_products_for_user = get_objects_for_user(
             context['request'].user, 'tom_dataproducts.view_dataproduct', klass=target.dataproduct_set.all())
-    else:
-        target_products_for_user = target.dataproduct_set.all()
     return {
         'products': target_products_for_user,
         'target': target
@@ -68,10 +68,10 @@ def dataproduct_list_all(context):
     """
     Returns the full list of data products in the TOM, with the most recent first.
     """
-    if settings.ROW_LEVEL_PERMISSIONS:
-        products = get_objects_for_user(context['request'].user, 'tom_dataproducts.view_dataproduct')
-    else:
+    if settings.TARGET_PERMISSIONS_ONLY:
         products = DataProduct.objects.all().order_by('-created')
+    else:
+        products = get_objects_for_user(context['request'].user, 'tom_dataproducts.view_dataproduct')
     return {'products': products}
 
 
@@ -86,7 +86,7 @@ def upload_dataproduct(context, obj):
         initial['observation_record'] = obj
         initial['referrer'] = reverse('tom_observations:detail', args=(obj.id,))
     form = DataProductUploadForm(initial=initial)
-    if settings.ROW_LEVEL_PERMISSIONS:
+    if not settings.TARGET_PERMISSIONS_ONLY:
         if user.is_superuser:
             form.fields['groups'].queryset = Group.objects.all()
         else:
@@ -103,14 +103,14 @@ def photometry_for_target(context, target):
     following keys in the JSON representation: magnitude, error, filter
     """
     photometry_data = {}
-    if settings.ROW_LEVEL_PERMISSIONS:
+    if settings.TARGET_PERMISSIONS_ONLY:
+        datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
+    else:
         datums = get_objects_for_user(context['request'].user,
                                       'tom_dataproducts.view_reduceddatum',
                                       klass=ReducedDatum.objects.filter(
                                         target=target,
                                         data_type=settings.DATA_PRODUCT_TYPES['photometry'][0]))
-    else:
-        datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
 
     for datum in datums:
         values = json.loads(datum.value)
@@ -152,12 +152,12 @@ def spectroscopy_for_target(context, target, dataproduct=None):
         spectral_dataproducts = DataProduct.objects.get(data_product=dataproduct)
 
     plot_data = []
-    if settings.ROW_LEVEL_PERMISSIONS:
+    if settings.TARGET_PERMISSIONS_ONLY:
+        datums = ReducedDatum.objects.filter(data_product__in=spectral_dataproducts)
+    else:
         datums = get_objects_for_user(context['request'].user,
                                       'tom_dataproducts.view_reduceddatum',
                                       klass=ReducedDatum.objects.filter(data_product__in=spectral_dataproducts))
-    else:
-        datums = ReducedDatum.objects.filter(data_product__in=spectral_dataproducts)
     for datum in datums:
         deserialized = SpectrumSerializer().deserialize(datum.value)
         plot_data.append(go.Scatter(

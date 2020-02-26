@@ -7,7 +7,7 @@ kept as simple as possible, but TOM developers may extend the capabilities if
 needed.
 
 The TOM Toolkit provides a permissions system that can be used in two different modes. The mode is controlled by the
-`ROW_LEVEL_PERMISSIONS` boolean in `settings.py`.
+`TARGET_PERMISSIONS_ONLY` boolean in `settings.py`.
 
 
 First Mode -- Permissions on Targets and Observation Records
@@ -49,19 +49,19 @@ to certain groups, and children of those objects will have the same restrictions
 observation record will share its permissions, and all reduced datums of a data product will share its permissions.
 
 
-A note about toggling `ROW_LEVEL_PERMISSIONS`
+A note about toggling `TARGET_PERMISSIONS_ONLY`
 ---
 
-It must be noted that while `ROW_LEVEL_PERMISSIONS` is set to `False`, no permissions will be set on any objects other
-than targets. This means that if your TOM is used without `ROW_LEVEL_PERMISSIONS`, and `ROW_LEVEL_PERMISSIONS` is
-enabled after the fact, all permissions will need to be configured manually.
+It must be noted that while `TARGET_PERMISSIONS_ONLY` is set to `True`, no permissions will be set on any objects other
+than targets. This means that if your TOM is used with `TARGET_PERMISSIONS_ONLY`, and `TARGET_PERMISSIONS_ONLY` is
+disabled after the fact, all permissions will need to be configured manually.
 
 
 Manual permissions modification
 ---
 
-If you want to enable `ROW_LEVEL_PERMISSIONS` after adding any data, you'll need to do so on your own. We encourage you
-to read the documention on django-guardian linked above, but here's an example of a bulk permissions assignment for a target:
+If you want to disable `TARGET_PERMISSIONS_ONLY` after adding any data, you'll need to do so on your own. We encourage you to read the documention on django-guardian linked above, but here's an example of a bulk permissions assignment for
+a target:
 
 ```python
 >>> from django.contrib.auth.models import Group, User

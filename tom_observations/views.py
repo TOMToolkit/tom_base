@@ -63,12 +63,12 @@ class ObservationListView(FilterView):
         :returns: set of ObservationRecords
         :rtype: QuerySet
         """
-        if settings.ROW_LEVEL_PERMISSIONS:
-            return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
-        else:
+        if settings.TARGET_PERMISSIONS_ONLY:
             return ObservationRecord.objects.filter(
                 target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
             )
+        else:
+            return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
 
     def get(self, request, *args, **kwargs):
         """
@@ -198,7 +198,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :rtype: subclass of GenericObservationForm
         """
         form = super().get_form()
-        if settings.ROW_LEVEL_PERMISSIONS:
+        if not settings.TARGET_PERMISSIONS_ONLY:
             form.fields['groups'].queryset = self.request.user.groups.all()
         form.helper.form_action = reverse(
             'tom_observations:create', kwargs=self.kwargs
@@ -260,7 +260,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             assign_perm('tom_observations.change_observationgroup', self.request.user, observation_group)
             assign_perm('tom_observations.delete_observationgroup', self.request.user, observation_group)
 
-        if settings.ROW_LEVEL_PERMISSIONS:
+        if not settings.TARGET_PERMISSIONS_ONLY:
             groups = form.cleaned_data['groups']
             for record in records:
                 assign_perm('tom_observations.view_observationrecord', groups, record)
@@ -368,12 +368,12 @@ class ObservationRecordDetailView(DetailView):
         :returns: set of ObservationRecords
         :rtype: QuerySet
         """
-        if settings.ROW_LEVEL_PERMISSIONS:
-            return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
-        else:
+        if settings.TARGET_PERMISSIONS_ONLY:
             return ObservationRecord.objects.filter(
                 target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
             )
+        else:
+            return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
 
     def get_context_data(self, *args, **kwargs):
         """

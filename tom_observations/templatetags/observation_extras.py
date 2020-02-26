@@ -47,13 +47,13 @@ def observation_list(context, target=None):
     Displays a list of all observations in the TOM, limited to an individual target if specified.
     """
     if target:
-        if settings.ROW_LEVEL_PERMISSIONS:
+        if settings.TARGET_PERMISSIONS_ONLY:
+            observations = target.observationrecord_set.all()
+        else:
             observations = get_objects_for_user(
                                 context['request'].user,
                                 'tom_observations.view_observationrecord'
                             ).filter(target=target)
-        else:
-            observations = target.observationrecord_set.all()
     else:
         observations = ObservationRecord.objects.all().order_by('-created')
     return {'observations': observations}

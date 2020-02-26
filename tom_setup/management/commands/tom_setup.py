@@ -134,9 +134,9 @@ class Command(BaseCommand):
         while True:
             response = input(prompt).lower()
             if not response or response == 'n':
-                self.context['ROW_LEVEL_PERMISSIONS'] = False
+                self.context['TARGET_PERMISSIONS_ONLY'] = True
             elif response == 'y':
-                self.context['ROW_LEVEL_PERMISSIONS'] = True
+                self.context['TARGET_PERMISSIONS_ONLY'] = False
             else:
                 self.stdout.write('Invalid response. Please try again.')
                 continue
