@@ -1,13 +1,6 @@
 {% load bootstrap4 latexify %}
 {% include 'latexify/stylesheets.html' %}
-<!-- {% bootstrap_javascript jquery='True' %} -->
 {% include "latexify/scripts.html" %}
-<!-- <script>
-  var latexText = document.getElementById("copy-latex");
-  copyText.select();
-  copyText.setSelectionRange(0, 99999);
-  document.execCommand("copy");
-</script> -->
 <div class="row">
   <div id="latex-form" class="col-md-4">
     <h3>Generate latex table for {{ object.name }}</h3>
