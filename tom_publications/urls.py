@@ -7,4 +7,3 @@ app_name = 'tom_publications'
 urlpatterns = [
     path('latex/create/', LatexTableView.as_view(), name='create-latex'),
 ]
-
