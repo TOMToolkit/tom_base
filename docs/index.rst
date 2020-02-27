@@ -16,7 +16,7 @@ Introduction
 
 The TOM (Target and Observation Manager) Toolkit project was started in early 2018 with the goal of simplifying the development of next generation software for the rapidly evolving field of astronomy. Read more :doc:`about TOMs<about>` and the motivation for them.
 
-Interested in seeing what a TOM can do? Take a look at our `demonstration TOM <https://tom-demo.lco.global>`, where we show off the features of the TOM Toolkit.
+Interested in seeing what a TOM can do? Take a look at our `demonstration TOM <https://tom-demo.lco.global>`_, where we show off the features of the TOM Toolkit.
 
 Are you looking to run a TOM of your own? This documentation is a good place to get started. The source code for the project is also available on Github.
 
