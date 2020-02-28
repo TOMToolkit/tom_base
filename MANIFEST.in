@@ -12,3 +12,5 @@ recursive-include tom_observations/static *
 recursive-include tom_observations/templates *
 recursive-include tom_dataproducts/static *
 recursive-include tom_dataproducts/templates *
+recursive-include tom_publications/static *
+recursive-include tom_publications/templates *
