@@ -36,9 +36,10 @@ def target_data(target):
     """
     Displays the data of a target.
     """
+    extras = {k['name']: target.extra_fields.get(k['name'], '') for k in settings.EXTRA_FIELDS if not k.get('hidden')}
     return {
         'target': target,
-        'display_extras': [ex['name'] for ex in settings.EXTRA_FIELDS if not ex.get('hidden')]
+        'extras': extras
     }
 
 
