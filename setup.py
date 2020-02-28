@@ -39,7 +39,7 @@ setup(
         'python-dateutil',
         'requests',
         'astroquery',
-        'astropy',
+        'astropy>=4.0',
         'astroplan',
         'plotly',
         'matplotlib',
