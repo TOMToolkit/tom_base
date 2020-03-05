@@ -53,6 +53,7 @@
         {% elif target.type == 'NON_SIDEREAL' %}
             <p>Airmass plotting for non-sidereal targets is not currently supported. If you would like to add this functionality, please check out the <a href="https://github.com/TOMToolkit/tom_nonsidereal_airmass" target="_blank">non-sidereal airmass plugin.</a></p>
         {% endif %}
+        {% moon_distance object %}
       </div>
       <div class="tab-pane" id="observations">
         <h4>Observations</h4>
