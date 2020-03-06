@@ -15,7 +15,7 @@ class TestTargetDetail(TestCase):
     def setUp(self):
         user = User.objects.create(username='testuser')
         self.client.force_login(user)
-        self.st = SiderealTargetFactory.create()
+        self.st = SiderealTargetFactory.create(ra=123.456, dec=-32.1)
         self.nst = NonSiderealTargetFactory.create()
         assign_perm('tom_targets.view_target', user, self.st)
         assign_perm('tom_targets.view_target', user, self.nst)
