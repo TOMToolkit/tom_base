@@ -1,6 +1,6 @@
 from crispy_forms.layout import Layout, HTML
 
-from tom_observations.facility import GenericObservationForm
+from tom_observations.facility import GenericObservationFacility, GenericObservationForm
 
 
 class LTQueryForm(GenericObservationForm):
@@ -19,9 +19,30 @@ class LTQueryForm(GenericObservationForm):
         )
 
 
-class LTFacility():
+class LTFacility(GenericObservationFacility):
     name = 'LT'
     observation_types = [('Default', '')]
 
     def get_form(self, observation_type):
         return LTQueryForm
+
+    def submit_observation(self, observation_payload):
+        return
+
+    def validate_observation(self, observation_payload):
+        return
+
+    def get_observation_url(self, observation_id):
+        return
+
+    def get_terminal_observing_states(self):
+        return []
+
+    def get_observing_sites(self):
+        return {}
+
+    def get_observation_status(self, observation_id):
+        return
+
+    def data_products(self, observation_id, product_id=None):
+        return []
