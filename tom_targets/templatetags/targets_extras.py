@@ -1,9 +1,14 @@
+from datetime import datetime, timedelta
+
+from astroplan import moon_illumination
 from astropy import units as u
-from astropy.coordinates import Angle
+from astropy.coordinates import Angle, get_moon, SkyCoord
+from astropy.time import Time
 from dateutil.parser import parse
 from django import template
 from django.conf import settings
 from guardian.shortcuts import get_objects_for_user
+import numpy as np
 from plotly import offline
 from plotly import graph_objs as go
 
@@ -88,6 +93,58 @@ def target_plan(context):
         'target': context['object'],
         'visibility_graph': visibility_graph
     }
+
+
+@register.inclusion_tag('tom_targets/partials/moon_distance.html')
+def moon_distance(target, day_range=30):
+    """
+    Renders plot for lunar distance from target.
+
+    Adapted from Jamison Frost Burke's moon visibility code in Supernova Exchange 2.0, as seen here:
+    https://github.com/jfrostburke/snex2/blob/0c1eb184c942cb10f7d54084e081d8ac11700edf/custom_code/templatetags/custom_code_tags.py#L196
+
+    :param target: Target object for which moon distance is calculated
+    :type target: tom_targets.models.Target
+
+    :param day_range: Number of days to plot lunar distance
+    :type day_range: int
+    """
+
+    day_range = 30
+    times = Time(
+        [str(datetime.utcnow() + timedelta(days=delta)) for delta in np.arange(0, day_range, 0.2)],
+        format='iso', scale='utc'
+    )
+
+    obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
+    moon_pos = get_moon(times)
+
+    separations = moon_pos.separation(obj_pos).deg
+    phases = moon_illumination(times)
+
+    distance_color = 'rgb(0, 0, 255)'
+    phase_color = 'rgb(255, 0, 0)'
+    plot_data = [
+        go.Scatter(x=times.mjd-times[0].mjd, y=separations, mode='lines', name='Moon distance (degrees)',
+                   line=dict(color=distance_color)),
+        go.Scatter(x=times.mjd-times[0].mjd, y=phases, mode='lines', name='Moon phase', yaxis='y2',
+                   line=dict(color=phase_color))
+    ]
+    layout = go.Layout(
+                xaxis={'title': 'Days from now'},
+                yaxis={'range': [0, 180], 'tick0': 0, 'dtick': 45, 'tickfont': {'color': distance_color}},
+                yaxis2={'range': [0, 1], 'tick0': 0, 'dtick': 0.25, 'overlaying': 'y', 'side': 'right',
+                        'tickfont': {'color': phase_color}},
+                margin={'l': 20, 'r': 10, 'b': 30, 't': 40},
+                width=600,
+                height=300,
+                autosize=True
+            )
+    moon_distance_plot = offline.plot(
+        go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False
+    )
+
+    return {'plot': moon_distance_plot}
 
 
 @register.inclusion_tag('tom_targets/partials/target_distribution.html')
