@@ -21,9 +21,9 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django.views.generic import TemplateView, View
 from django_filters.views import FilterView
-
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
+from silk.profiling.profiler import silk_profile
 
 from tom_common.hints import add_hint
 from tom_common.hooks import run_hook
@@ -340,6 +340,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
         context['observing_strategy_form'] = observing_strategy_form
         return context
 
+    @silk_profile()
     def get(self, request, *args, **kwargs):
         """
         Handles the GET requests to this view. If update_status is passed into the query parameters, calls the
