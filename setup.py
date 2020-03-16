@@ -49,7 +49,10 @@ setup(
         'dataclasses; python_version < "3.7"',
     ],
     extras_require={
-        'test': ['factory_boy']
+        'test': ['factory_boy', 
+                 'django-debug-toolbar', 
+                 'django-silk', 
+                 'django-debug-toolbar-template-profiler']
     },
     include_package_data=True,
 )
