@@ -47,12 +47,12 @@ setup(
         'fits2image',
         'specutils==0.7',
         'dataclasses; python_version < "3.7"',
+        'django-debug-toolbar', 
+        'django-silk', 
+        'django-debug-toolbar-template-profiler'
     ],
     extras_require={
-        'test': ['factory_boy', 
-                 'django-debug-toolbar', 
-                 'django-silk', 
-                 'django-debug-toolbar-template-profiler']
+        'test': ['factory_boy']
     },
     include_package_data=True,
 )

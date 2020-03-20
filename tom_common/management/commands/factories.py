@@ -1,5 +1,6 @@
 import factory
 import json
+import pytz
 import random
 
 from tom_dataproducts.models import DataProduct, ReducedDatum
@@ -13,11 +14,11 @@ class TargetFactory(factory.django.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: f'perf_target_{n}')
     type = 'SIDEREAL'
-    ra = factory.Faker('pyfloat')
-    dec = factory.Faker('pyfloat')
-    epoch = factory.Faker('pyfloat')
-    pm_ra = factory.Faker('pyfloat')
-    pm_dec = factory.Faker('pyfloat')
+    ra = factory.Faker('pydecimal', max_value=360)
+    dec = factory.Faker('pydecimal', min_value=-90, max_value=90)
+    epoch = 2000
+    pm_ra = factory.Faker('pydecimal', max_value=1, min_value=-1)
+    pm_dec = factory.Faker('pydecimal', max_value=1, min_value=-1)
 
 
 class TargetExtraFactory(factory.django.DjangoModelFactory):
@@ -39,7 +40,7 @@ class TargetNameFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = TargetName
 
-    name = factory.Sequence(lambda l: f'name{l}')
+    name = factory.Sequence(lambda l: f'perf_name{l}')
 
 
 class ObservingRecordFactory(factory.django.DjangoModelFactory):
@@ -71,13 +72,14 @@ class DataProductFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = DataProduct
 
+    data = factory.django.FileField(filename=factory.Sequence(lambda f: f'perf_file{f}'))
 
 class PhotometryFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ReducedDatum
 
     data_type = 'photometry'
-    timestamp = factory.Faker('date_time_this_year')
+    timestamp = factory.Faker('date_time_this_year', tzinfo=pytz.UTC)
     value = json.dumps({
         'magnitude': random.randint(16, 25),
         'filter': 'i',
@@ -87,4 +89,23 @@ class PhotometryFactory(factory.django.DjangoModelFactory):
 
 # class SpectrumFactory(factory.django.DjangoModelFactory):
 #     class Meta:
-#         model = DataProduct
+#         model = ReducedDatum
+
+#     data_type = 'spectroscopy'
+#     timestamp = factory.Faker('date_time_this_year')
+#     value = json.dumps({
+#         [
+#             {'wavelength': random.uniform(3000, 5000), 'flux': random.uniform(0.000000000000001, 0.000000000000002)},
+#             {'wavelength': random.uniform(3000, 5000), 'flux': random.uniform(0.000000000000001, 0.000000000000002)},
+#             {'wavelength': random.uniform(3000, 5000), 'flux': random.uniform(0.000000000000001, 0.000000000000002)},
+#             {'wavelength': random.uniform(3000, 5000), 'flux': random.uniform(0.000000000000001, 0.000000000000002)},
+#             {'wavelength': random.uniform(3000, 5000), 'flux': random.uniform(0.000000000000001, 0.000000000000002)},
+#             {'wavelength': random.uniform(3000, 5000), 'flux': random.uniform(0.000000000000001, 0.000000000000002)},
+#             {'wavelength': random.uniform(3000, 5000), 'flux': random.uniform(0.000000000000001, 0.000000000000002)},
+#             {'wavelength': random.uniform(3000, 5000), 'flux': random.uniform(0.000000000000001, 0.000000000000002)},
+#             {'wavelength': random.uniform(3000, 5000), 'flux': random.uniform(0.000000000000001, 0.000000000000002)},
+#             {'wavelength': random.uniform(3000, 5000), 'flux': random.uniform(0.000000000000001, 0.000000000000002)},
+#             {'wavelength': random.uniform(3000, 5000), 'flux': random.uniform(0.000000000000001, 0.000000000000002)},
+#             {'wavelength': random.uniform(3000, 5000), 'flux': random.uniform(0.000000000000001, 0.000000000000002)},
+#         ]
+#     })
