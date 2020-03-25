@@ -6,11 +6,11 @@
 <form id="chart-form">
   <div class="form-group row">
     <label for="fov">Field of view</label>
-    <input type="number" id="fov" name="fov" min="0" value="5">
+    <input type="number" id="fov" name="fov" min="0" value="10">
     <div class="form-check form-check-inline">
-      <input class="form-check-input" type="radio" id="deg-fov-units" name="fov-units" value="deg" checked>
+      <input class="form-check-input" type="radio" id="deg-fov-units" name="fov-units" value="deg">
       <label class="form-check-label" for="deg-fov-units">deg</label><br>
-      <input class="form-check-input" type="radio" id="arcmin-fov-units" name="fov-units" value="arcmin">
+      <input class="form-check-input" type="radio" id="arcmin-fov-units" name="fov-units" value="arcmin" checked>
       <label class="form-check-label" for="arcmin-fov-units">arcmin</label><br>
       <input class="form-check-input" type="radio" id="arcsec-fov-units" name="fov-units" value="arcsec">
       <label class="form-check-label" for="arcsec-fov-units">arcsec</label>
@@ -20,9 +20,9 @@
     <label for="scale-bar-size">Scale bar size:</label>
     <input type="number" id="scale-bar-size" name="scale-bar-size" min="0" value="1">
     <div class="form-check form-check-inline">
-      <input type="radio" id="deg-scale-bar-units" name="scale-bar-units" value="deg" checked>
+      <input type="radio" id="deg-scale-bar-units" name="scale-bar-units" value="deg">
       <label for="deg-scale-bar-units">deg</label><br>
-      <input type="radio" id="arcmin-scale-bar-units" name="scale-bar-units" value="arcmin">
+      <input type="radio" id="arcmin-scale-bar-units" name="scale-bar-units" value="arcmin" checked>
       <label for="arcmin-scale-bar-units">arcmin</label><br>
       <input type="radio" id="arcsec-scale-bar-units" name="scale-bar-units" value="arcsec">
       <label for="arcsec-scale-bar-units">arcsec</label>
@@ -38,7 +38,7 @@
 
     let aladin = A.aladin('#aladin-lite-div', {
       survey: "P/DSS2/color",
-      fov: getFovFromForm(),
+      fov: getFovAsDegreesFromForm(),
       showReticle: false,
       target: "{{ target.ra }} {{ target.dec }}",
       showGotoControl: false,
@@ -54,20 +54,22 @@
       annotateChart({{ target.ra }}, {{ target.dec }});
     });
 
-    function getFovFromForm() {
-      return Number($('#fov').val());
+    function getScaleBarFromForm() {
+      const size = $('#scale-bar-size').val() || '1';
+      const units = $('input[name=scale-bar-units]:checked', '#chart-form').val() || 'arcmin';
+      const label = size + ' ' + units;
+      const sizeAsDegrees = toDegrees(Number(size), units);
+      return {size: Number(size), units: units, label: label, sizeAsDegrees: sizeAsDegrees};
     }
 
-    function getScaleBarUnitsFromForm() {
-      return $('input[name=scale-bar-units]:checked', '#chart-form').val();
-    }
-
-    function getFovUnitsFromForm() {
-      return $('input[name=fov-units]:checked', '#chart-form').val();
-    }
-
-    function getScaleBarSizeFromForm() {
-      return Number($('#scale-bar-size').val());
+    function getFovAsDegreesFromForm() {
+      const fov = Number($('#fov').val());
+      const units = $('input[name=fov-units]:checked', '#chart-form').val();
+      let fovAsDegrees;
+      if (fov && units) {
+        fovAsDegrees = toDegrees(fov, units);
+      }
+      return fovAsDegrees;
     }
 
     function toDegrees(value, units) {
@@ -82,11 +84,10 @@
 
     function annotateChart(targetRa, targetDec) {
       const fov = aladin.getFov()[0]; // Returns decimal degrees
-      const scaleBarSize = getScaleBarSizeFromForm() || 1;
-      const scaleBarUnits = getScaleBarUnitsFromForm() || 'arcsec';
+      const scaleBar = getScaleBarFromForm();
       // Pixel position (0,0) is the top left corner of the view
       const viewSizePix = aladin.getSize();
-      const offsetPixFromEdge = 15;
+      const offsetPixFromEdge = 25;
       const scaleBarStartPix = [offsetPixFromEdge, viewSizePix[1] - offsetPixFromEdge]; // Bottom left corner
       const compassCenterPix = [viewSizePix[0] - offsetPixFromEdge, viewSizePix[1] - offsetPixFromEdge]; // Bottom right corner
       // Compass position
@@ -99,16 +100,16 @@
       const compassEastArmPix = aladin.world2pix(compassEastArm[0], compassEastArm[1]);
       // Scale bar position
       const scaleBarStart = aladin.pix2world(scaleBarStartPix[0], scaleBarStartPix[1]);
-      const scaleBarEnd = [scaleBarStart[0] - toDegrees(scaleBarSize, scaleBarUnits), scaleBarStart[1]]
+      const scaleBarEnd = [scaleBarStart[0] - scaleBar.sizeAsDegrees, scaleBarStart[1]]
       // Re-draw the annotations on the chart
       const color = '#f72525';
       aladin.removeLayers();
-      let layer = A.graphicOverlay({name: 'chart annotations', color: color, lineWidth: 1});
+      let layer = A.graphicOverlay({name: 'chart annotations', color: color, lineWidth: 2});
       aladin.addOverlay(layer);
       layer.add(A.polyline([compassNorthArm, compassCenter, compassEastArm]));
       layer.add(A.polyline([scaleBarStart, scaleBarEnd]));
       layer.add(A.circle(targetRa, targetDec, fov / 30));
-      layer.add(new Text(scaleBarStartPix[0], scaleBarStartPix[1] - 10, String(scaleBarSize) + ' ' + scaleBarUnits, {color: color}));
+      layer.add(new Text(scaleBarStartPix[0], scaleBarStartPix[1] - 10, scaleBar.label, {color: color}));
       layer.add(new Text(compassNorthArmPix[0], compassNorthArmPix[1] - 5, 'N', {color: color}));
       layer.add(new Text(compassEastArmPix[0] - 10, compassEastArmPix[1], 'E', {color: color}));
     }
@@ -120,27 +121,27 @@
     }
 
     function updateFromForm(ra, dec) {
-      const fov = getFovFromForm();
-      const fovUnits = getFovUnitsFromForm();
-      if (fov && fovUnits) {
-        aladin.setFov(toDegrees(fov, fovUnits));
+      const fov = getFovAsDegreesFromForm();
+      if (fov) {
+        aladin.setFov(fov);
         annotateChart(ra, dec);
       }
     }
 
     Text = (function() {
+      // The AladinLite API does not provide a way to draw arbitrary text at an arbitrary location in an overlay layer.
+      // This implements the methods necessary to do so when provided as an input to layer.add(). This approach was
+      // preferable to the others (possibilities included directly getting and drawing on the actual canvas element that the
+      // other overlay elements are drawn on, or creating another canvas element and placing it directly on top of
+      // the others) as the text that is drawn will then be integrated with the draw/destroy/redraw loops within aladin,
+      // and the text will show up in the generated data url that is used for saving an image without having to do anything extra.
 
-      // TODO: Add description
-
-      // constructor
       Text = function(x, y, text, options) {
         options = options || {};
         this.x = x || undefined;
         this.y = y || undefined;
         this.text = text || '';
         this.color = options['color'] || undefined;
-        // // TODO : all graphic overlays should have an id
-        // this.id = 'text';
         this.overlay = null;
       };
 
