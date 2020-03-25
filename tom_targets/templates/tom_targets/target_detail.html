@@ -16,7 +16,9 @@
       </div>
       {% endif %}
       {% target_data object %}
+      {% if object.type == 'SIDEREAL' %}
       {% aladin object %}
+      {% endif %}
     </div>
   </div>
   <div class="col-md-8">
