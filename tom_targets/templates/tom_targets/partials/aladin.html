@@ -3,36 +3,44 @@
 <!-- insert this snippet where you want Aladin Lite viewer to appear and after the loading of jQuery -->
 <h3>Survey View</h3>
 <div id="aladin-lite-div" style="width:300px;height:300px;"></div>
-<form id="chart-form">
-  <div class="form-group row">
-    <label for="fov">Field of view</label>
-    <input type="number" id="fov" name="fov" min="0" value="10">
-    <div class="form-check form-check-inline">
-      <input class="form-check-input" type="radio" id="deg-fov-units" name="fov-units" value="deg">
-      <label class="form-check-label" for="deg-fov-units">deg</label><br>
-      <input class="form-check-input" type="radio" id="arcmin-fov-units" name="fov-units" value="arcmin" checked>
-      <label class="form-check-label" for="arcmin-fov-units">arcmin</label><br>
-      <input class="form-check-input" type="radio" id="arcsec-fov-units" name="fov-units" value="arcsec">
-      <label class="form-check-label" for="arcsec-fov-units">arcsec</label>
+<div id="chart-form-div" style="width:300px;">
+  <form id="chart-form">
+    <div class="form-group mt-1 mb-1">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text bg-transparent" style="font-family: inherit;">Field of view</span>
+        </div>
+        <input type="number" class="form-control" aria-label="Field of view" id="fov" min="0" value="10">
+        <div class="input-group-append">
+          <select id="fov-units-select" class="form-control">
+            <option>arcsec</option>
+            <option selected>arcmin</option>
+            <option>deg</option>
+          </select>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="form-group row">
-    <label for="scale-bar-size">Scale bar size:</label>
-    <input type="number" id="scale-bar-size" name="scale-bar-size" min="0" value="1">
-    <div class="form-check form-check-inline">
-      <input type="radio" id="deg-scale-bar-units" name="scale-bar-units" value="deg">
-      <label for="deg-scale-bar-units">deg</label><br>
-      <input type="radio" id="arcmin-scale-bar-units" name="scale-bar-units" value="arcmin" checked>
-      <label for="arcmin-scale-bar-units">arcmin</label><br>
-      <input type="radio" id="arcsec-scale-bar-units" name="scale-bar-units" value="arcsec">
-      <label for="arcsec-scale-bar-units">arcsec</label>
+    <div class="form-group mt-1 mb-1">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <label class="input-group-text bg-transparent" style="font-family: inherit;" for="scale-bar-units-select">Scale bar</label>
+        </div>
+        <input type="number" class="form-control" aria-label="Scale bar size" id="scale-bar-size" min="0" value="1">
+        <div class="input-group-append">
+          <select id="scale-bar-units-select" class="form-control">
+            <option>arcsec</option>
+            <option selected>arcmin</option>
+            <option>deg</option>
+          </select>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="form-group row">
-    <input class="btn btn-outline-primary" type="button" onclick="updateFromForm({{ target.ra }}, {{ target.dec }})" value="Update">
-    <a class="btn btn-outline-primary" id="download-chart" href="" download="chart.png" onclick="downloadImage()">Save Image</a>
-  </div>
-</form>
+    <div class="form-group mt-1 mb-1">
+      <input class="btn btn-primary" type="button" onclick="updateFromForm({{ target.ra }}, {{ target.dec }})" value="Update">
+      <a class="btn btn-primary" id="download-chart" href="" download="chart.png" onclick="downloadImage()">Save Image</a>
+    </div>
+  </form>
+</div>
 <script type="text/javascript" src="//aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.js" charset="utf-8"></script>
 <script type="text/javascript">
 
@@ -56,7 +64,7 @@
 
     function getScaleBarFromForm() {
       const size = $('#scale-bar-size').val() || '1';
-      const units = $('input[name=scale-bar-units]:checked', '#chart-form').val() || 'arcmin';
+      const units = $('#scale-bar-units-select option:selected').val() || 'arcmin';
       const label = size + ' ' + units;
       const sizeAsDegrees = toDegrees(Number(size), units);
       return {size: Number(size), units: units, label: label, sizeAsDegrees: sizeAsDegrees};
@@ -64,7 +72,7 @@
 
     function getFovAsDegreesFromForm() {
       const fov = Number($('#fov').val());
-      const units = $('input[name=fov-units]:checked', '#chart-form').val();
+      const units = $('#fov-units-select option:selected').val();
       let fovAsDegrees;
       if (fov && units) {
         fovAsDegrees = toDegrees(fov, units);
