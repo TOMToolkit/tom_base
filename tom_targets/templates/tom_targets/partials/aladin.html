@@ -3,16 +3,157 @@
 <!-- insert this snippet where you want Aladin Lite viewer to appear and after the loading of jQuery -->
 <h3>Survey View</h3>
 <div id="aladin-lite-div" style="width:300px;height:300px;"></div>
+<form id="chart-form">
+  <div class="form-group row">
+    <label for="fov">Field of view</label>
+    <input type="number" id="fov" name="fov" min="0" value="5">
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="radio" id="deg-fov-units" name="fov-units" value="deg" checked>
+      <label class="form-check-label" for="deg-fov-units">deg</label><br>
+      <input class="form-check-input" type="radio" id="arcmin-fov-units" name="fov-units" value="arcmin">
+      <label class="form-check-label" for="arcmin-fov-units">arcmin</label><br>
+      <input class="form-check-input" type="radio" id="arcsec-fov-units" name="fov-units" value="arcsec">
+      <label class="form-check-label" for="arcsec-fov-units">arcsec</label>
+    </div>
+  </div>
+  <div class="form-group row">
+    <label for="scale-bar-size">Scale bar size:</label>
+    <input type="number" id="scale-bar-size" name="scale-bar-size" min="0" value="1">
+    <div class="form-check form-check-inline">
+      <input type="radio" id="deg-scale-bar-units" name="scale-bar-units" value="deg" checked>
+      <label for="deg-scale-bar-units">deg</label><br>
+      <input type="radio" id="arcmin-scale-bar-units" name="scale-bar-units" value="arcmin">
+      <label for="arcmin-scale-bar-units">arcmin</label><br>
+      <input type="radio" id="arcsec-scale-bar-units" name="scale-bar-units" value="arcsec">
+      <label for="arcsec-scale-bar-units">arcsec</label>
+    </div>
+  </div>
+  <div class="form-group row">
+    <input class="btn btn-outline-primary" type="button" onclick="updateFromForm({{ target.ra }}, {{ target.dec }})" value="Update">
+    <a class="btn btn-outline-primary" id="download-chart" href="" download="chart.png" onclick="downloadImage()">Save Image</a>
+  </div>
+</form>
 <script type="text/javascript" src="//aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.js" charset="utf-8"></script>
 <script type="text/javascript">
-    var aladin = A.aladin('#aladin-lite-div', {
+
+    let aladin = A.aladin('#aladin-lite-div', {
       survey: "P/DSS2/color",
-      fov:5,
+      fov: getFovFromForm(),
+      showReticle: false,
       target: "{{ target.ra }} {{ target.dec }}",
       showGotoControl: false,
+      showZoomControl: false,
+      allowFullZoomout: false
     });
-    var target_cat = A.catalog({name: '{{ target.name }}', sourceSize: 10, color: 'red'});
-    aladin.addCatalog(target_cat, {shape: 'circle'});
-    target_cat.addSources([A.marker({{ target.ra }}, {{ target.dec }}, 
-      {popupTitle: '{{ target.name }}'})]);
+
+    aladin.on('positionChanged', function() {
+      annotateChart({{ target.ra }}, {{ target.dec }});
+    });
+
+    aladin.on('zoomChanged', function() {
+      annotateChart({{ target.ra }}, {{ target.dec }});
+    });
+
+    function getFovFromForm() {
+      return Number($('#fov').val());
+    }
+
+    function getScaleBarUnitsFromForm() {
+      return $('input[name=scale-bar-units]:checked', '#chart-form').val();
+    }
+
+    function getFovUnitsFromForm() {
+      return $('input[name=fov-units]:checked', '#chart-form').val();
+    }
+
+    function getScaleBarSizeFromForm() {
+      return Number($('#scale-bar-size').val());
+    }
+
+    function toDegrees(value, units) {
+      if (units === 'arcmin') {
+        return value / 60;
+      } else if (units === 'arcsec') {
+        return value / 3600;
+      } else {
+        return value;
+      }
+    }
+
+    function annotateChart(targetRa, targetDec) {
+      const fov = aladin.getFov()[0]; // Returns decimal degrees
+      const scaleBarSize = getScaleBarSizeFromForm() || 1;
+      const scaleBarUnits = getScaleBarUnitsFromForm() || 'arcsec';
+      // Pixel position (0,0) is the top left corner of the view
+      const viewSizePix = aladin.getSize();
+      const offsetPixFromEdge = 15;
+      const scaleBarStartPix = [offsetPixFromEdge, viewSizePix[1] - offsetPixFromEdge]; // Bottom left corner
+      const compassCenterPix = [viewSizePix[0] - offsetPixFromEdge, viewSizePix[1] - offsetPixFromEdge]; // Bottom right corner
+      // Compass position
+      // TODO: Will North/ East arms ever not be up/ to the left? In that case the placement will be wrong
+      const compassArmLength = fov / 10;
+      const compassCenter = aladin.pix2world(compassCenterPix[0], compassCenterPix[1]);
+      const compassNorthArm = [compassCenter[0], compassCenter[1] + compassArmLength];
+      const compassNorthArmPix = aladin.world2pix(compassNorthArm[0], compassNorthArm[1]);
+      const compassEastArm = [compassCenter[0] + compassArmLength, compassCenter[1]];
+      const compassEastArmPix = aladin.world2pix(compassEastArm[0], compassEastArm[1]);
+      // Scale bar position
+      const scaleBarStart = aladin.pix2world(scaleBarStartPix[0], scaleBarStartPix[1]);
+      const scaleBarEnd = [scaleBarStart[0] - toDegrees(scaleBarSize, scaleBarUnits), scaleBarStart[1]]
+      // Re-draw the annotations on the chart
+      const color = '#f72525';
+      aladin.removeLayers();
+      let layer = A.graphicOverlay({name: 'chart annotations', color: color, lineWidth: 1});
+      aladin.addOverlay(layer);
+      layer.add(A.polyline([compassNorthArm, compassCenter, compassEastArm]));
+      layer.add(A.polyline([scaleBarStart, scaleBarEnd]));
+      layer.add(A.circle(targetRa, targetDec, fov / 30));
+      layer.add(new Text(scaleBarStartPix[0], scaleBarStartPix[1] - 10, String(scaleBarSize) + ' ' + scaleBarUnits, {color: color}));
+      layer.add(new Text(compassNorthArmPix[0], compassNorthArmPix[1] - 5, 'N', {color: color}));
+      layer.add(new Text(compassEastArmPix[0] - 10, compassEastArmPix[1], 'E', {color: color}));
+    }
+
+    function downloadImage() {
+      // Update the data that the link that was clicked will download
+      $('#download-chart').attr('href', aladin.getViewDataURL());
+      return true;
+    }
+
+    function updateFromForm(ra, dec) {
+      const fov = getFovFromForm();
+      const fovUnits = getFovUnitsFromForm();
+      if (fov && fovUnits) {
+        aladin.setFov(toDegrees(fov, fovUnits));
+        annotateChart(ra, dec);
+      }
+    }
+
+    Text = (function() {
+
+      // TODO: Add description
+
+      // constructor
+      Text = function(x, y, text, options) {
+        options = options || {};
+        this.x = x || undefined;
+        this.y = y || undefined;
+        this.text = text || '';
+        this.color = options['color'] || undefined;
+        // // TODO : all graphic overlays should have an id
+        // this.id = 'text';
+        this.overlay = null;
+      };
+
+      Text.prototype.setOverlay = function(overlay) {
+        this.overlay = overlay;
+      };
+
+      Text.prototype.draw = function(ctx) {
+        ctx.fillStyle = this.color;
+        ctx.font = "12px Arial";
+        ctx.fillText(this.text, this.x, this.y);
+      };
+
+      return Text;
+    })();
 </script>
