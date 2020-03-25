@@ -83,16 +83,16 @@
     }
 
     function annotateChart(targetRa, targetDec) {
-      const fov = aladin.getFov()[0]; // Returns decimal degrees
+      const fovDegrees = aladin.getFov()[0];
       const scaleBar = getScaleBarFromForm();
       // Pixel position (0,0) is the top left corner of the view
       const viewSizePix = aladin.getSize();
-      const offsetPixFromEdge = 25;
+      const offsetPixFromEdge = 30;
       const scaleBarStartPix = [offsetPixFromEdge, viewSizePix[1] - offsetPixFromEdge]; // Bottom left corner
       const compassCenterPix = [viewSizePix[0] - offsetPixFromEdge, viewSizePix[1] - offsetPixFromEdge]; // Bottom right corner
       // Compass position
       // TODO: Will North/ East arms ever not be up/ to the left? In that case the placement will be wrong
-      const compassArmLength = fov / 10;
+      const compassArmLength = fovDegrees / 10;
       const compassCenter = aladin.pix2world(compassCenterPix[0], compassCenterPix[1]);
       const compassNorthArm = [compassCenter[0], compassCenter[1] + compassArmLength];
       const compassNorthArmPix = aladin.world2pix(compassNorthArm[0], compassNorthArm[1]);
@@ -100,18 +100,22 @@
       const compassEastArmPix = aladin.world2pix(compassEastArm[0], compassEastArm[1]);
       // Scale bar position
       const scaleBarStart = aladin.pix2world(scaleBarStartPix[0], scaleBarStartPix[1]);
-      const scaleBarEnd = [scaleBarStart[0] - scaleBar.sizeAsDegrees, scaleBarStart[1]]
+      const scaleBarEnd = [scaleBarStart[0] - scaleBar.sizeAsDegrees, scaleBarStart[1]];
+      const scaleBarEndPix = aladin.world2pix(scaleBarEnd[0], scaleBarEnd[1]);
+      const scaleBarLength = scaleBarEndPix[0] - scaleBarStartPix[0];
       // Re-draw the annotations on the chart
       const color = '#f72525';
+      const scaleBarTextSpacing = 7;
+      const compassTextSpacing = 3;
       aladin.removeLayers();
       let layer = A.graphicOverlay({name: 'chart annotations', color: color, lineWidth: 2});
       aladin.addOverlay(layer);
       layer.add(A.polyline([compassNorthArm, compassCenter, compassEastArm]));
       layer.add(A.polyline([scaleBarStart, scaleBarEnd]));
-      layer.add(A.circle(targetRa, targetDec, fov / 30));
-      layer.add(new Text(scaleBarStartPix[0], scaleBarStartPix[1] - 10, scaleBar.label, {color: color}));
-      layer.add(new Text(compassNorthArmPix[0], compassNorthArmPix[1] - 5, 'N', {color: color}));
-      layer.add(new Text(compassEastArmPix[0] - 10, compassEastArmPix[1], 'E', {color: color}));
+      layer.add(A.circle(targetRa, targetDec, fovDegrees / 30));
+      layer.add(new Text(scaleBarStartPix[0] + scaleBarLength/2, scaleBarStartPix[1] - scaleBarTextSpacing, scaleBar.label, {color: color}));
+      layer.add(new Text(compassNorthArmPix[0], compassNorthArmPix[1] - compassTextSpacing, 'N', {color: color}));
+      layer.add(new Text(compassEastArmPix[0] - compassTextSpacing, compassEastArmPix[1], 'E', {color: color, align: 'end', baseline: 'middle'}));
     }
 
     function downloadImage() {
@@ -142,6 +146,8 @@
         this.y = y || undefined;
         this.text = text || '';
         this.color = options['color'] || undefined;
+        this.align = options['align'] || 'center';
+        this.baseline = options['baseline'] || 'alphabetic';
         this.overlay = null;
       };
 
@@ -151,7 +157,9 @@
 
       Text.prototype.draw = function(ctx) {
         ctx.fillStyle = this.color;
-        ctx.font = "12px Arial";
+        ctx.font = '15px Arial';
+        ctx.textAlign = this.align;
+        ctx.textBaseline = this.baseline;
         ctx.fillText(this.text, this.x, this.y);
       };
 
