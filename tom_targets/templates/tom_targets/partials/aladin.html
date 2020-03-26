@@ -63,18 +63,21 @@
     });
 
     function getScaleBarFromForm() {
-      const size = $('#scale-bar-size').val() || '1';
-      const units = $('#scale-bar-units-select option:selected').val() || 'arcmin';
-      const label = size + ' ' + units;
-      const sizeAsDegrees = toDegrees(Number(size), units);
-      return {size: Number(size), units: units, label: label, sizeAsDegrees: sizeAsDegrees};
+      let size = Number($('#scale-bar-size').val());
+      if (size < 0) {
+        size = 0;
+      }
+      const units = $('#scale-bar-units-select option:selected').val();
+      const label = String(size) + ' ' + units;
+      const sizeAsDegrees = toDegrees(size, units);
+      return {size: size, units: units, label: label, sizeAsDegrees: sizeAsDegrees};
     }
 
     function getFovAsDegreesFromForm() {
       const fov = Number($('#fov').val());
       const units = $('#fov-units-select option:selected').val();
       let fovAsDegrees;
-      if (fov && units) {
+      if (fov >= 0) {
         fovAsDegrees = toDegrees(fov, units);
       }
       return fovAsDegrees;
@@ -134,7 +137,7 @@
 
     function updateFromForm(ra, dec) {
       const fov = getFovAsDegreesFromForm();
-      if (fov) {
+      if (fov !== undefined) {
         aladin.setFov(fov);
         annotateChart(ra, dec);
       }
