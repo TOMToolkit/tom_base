@@ -7,6 +7,7 @@ import plotly.graph_objs as go
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_classes
 from tom_observations.observing_strategy import RunStrategyForm
+from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target
 
 
