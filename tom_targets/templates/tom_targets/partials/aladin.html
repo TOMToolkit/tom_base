@@ -102,18 +102,18 @@
       const scaleBarStartPix = [offsetPixFromEdge, viewSizePix[1] - offsetPixFromEdge]; // Bottom left corner
       const compassCenterPix = [viewSizePix[0] - offsetPixFromEdge, viewSizePix[1] - offsetPixFromEdge]; // Bottom right corner
       // Compass position
-      // TODO: Will North/ East arms ever not be up/ to the left? In that case the placement will be wrong
+      const cosDec = Math.cos(targetDec * Math.PI / 180);
       const compassArmLength = fovDegrees / 10;
       const compassCenter = aladin.pix2world(compassCenterPix[0], compassCenterPix[1]);
       const compassNorthArm = [compassCenter[0], compassCenter[1] + compassArmLength];
       const compassNorthArmPix = aladin.world2pix(compassNorthArm[0], compassNorthArm[1]);
-      const compassEastArm = [compassCenter[0] + compassArmLength, compassCenter[1]];
+      const compassEastArm = [compassCenter[0] + compassArmLength / cosDec, compassCenter[1]];
       const compassEastArmPix = aladin.world2pix(compassEastArm[0], compassEastArm[1]);
       // Scale bar position
       const scaleBarStart = aladin.pix2world(scaleBarStartPix[0], scaleBarStartPix[1]);
-      const scaleBarEnd = [scaleBarStart[0] - scaleBar.sizeAsDegrees, scaleBarStart[1]];
+      const scaleBarEnd = [scaleBarStart[0] - scaleBar.sizeAsDegrees / cosDec, scaleBarStart[1]];
       const scaleBarEndPix = aladin.world2pix(scaleBarEnd[0], scaleBarEnd[1]);
-      const scaleBarLength = scaleBarEndPix[0] - scaleBarStartPix[0];
+      const scaleBarLength = Math.abs(scaleBarEndPix[0] - scaleBarStartPix[0]);
       // Re-draw the annotations on the chart
       const color = '#f72525';
       const scaleBarTextSpacing = 7;
@@ -124,7 +124,7 @@
       layer.add(A.polyline([compassNorthArm, compassCenter, compassEastArm]));
       layer.add(A.polyline([scaleBarStart, scaleBarEnd]));
       layer.add(A.circle(targetRa, targetDec, fovDegrees / 30));
-      layer.add(new Text(scaleBarStartPix[0] + scaleBarLength/2, scaleBarStartPix[1] - scaleBarTextSpacing, scaleBar.label, {color: color}));
+      layer.add(new Text(scaleBarStartPix[0] + scaleBarLength / 2, scaleBarStartPix[1] - scaleBarTextSpacing, scaleBar.label, {color: color}));
       layer.add(new Text(compassNorthArmPix[0], compassNorthArmPix[1] - compassTextSpacing, 'N', {color: color}));
       layer.add(new Text(compassEastArmPix[0] - compassTextSpacing, compassEastArmPix[1], 'E', {color: color, align: 'end', baseline: 'middle'}));
     }
