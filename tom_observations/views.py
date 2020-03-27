@@ -174,6 +174,8 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         """
         context = super(ObservationCreateView, self).get_context_data(**kwargs)
         context['type_choices'] = self.get_facility_class().observation_types
+        target = Target.objects.get(pk=self.get_target_id())
+        context['target'] = target
         return context
 
     def get_form_class(self):
