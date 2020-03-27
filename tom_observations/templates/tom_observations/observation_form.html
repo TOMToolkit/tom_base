@@ -1,8 +1,22 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 crispy_forms_tags observation_extras %}
+{% load bootstrap4 crispy_forms_tags observation_extras targets_extras %}
 {% block title %}Submit Observation{% endblock %}
 {% block content %}
 <h3>Submit an observation to {{ form.facility.value }}</h3>
-{% observation_type_tabs %}
-{% crispy form %}
+{% if target.type == 'SIDEREAL' %}
+<div class="row">
+    <div class="col">
+    {% observation_plan target form.facility.value %}
+    </div>
+</div>
+{% endif %}
+<div class="row">
+    <div class="col-md-4">
+        {% target_data target %}
+    </div>
+    <div class="col-md-8">
+        {% observation_type_tabs %}
+        {% crispy form %}
+    </div>
+</div>
 {% endblock %}
