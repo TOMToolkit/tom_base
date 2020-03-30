@@ -386,7 +386,7 @@ class TestTargetImport(TestCase):
 
 class TestTargetExport(TestCase):
     """
-    The use of a list to handle the map returned by StreamingHttpResponse.streaming_content is taken directly from 
+    The use of a list to handle the map returned by StreamingHttpResponse.streaming_content is taken directly from
     the Django httpwrappers tests, as seen here:
     https://github.com/django/django/blob/00ff7a44dee91be59a64559cadeeba0f7386fd6f/tests/httpwrappers/tests.py#L569
 
