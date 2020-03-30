@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 from django import forms, template
+from django.conf import settings
+from guardian.shortcuts import get_objects_for_user
 from plotly import offline
 import plotly.graph_objs as go
 
@@ -66,13 +68,19 @@ def observation_plan(target, facility, length=7, interval=60, airmass_limit=None
     }
 
 
-@register.inclusion_tag('tom_observations/partials/observation_list.html')
-def observation_list(target=None):
+@register.inclusion_tag('tom_observations/partials/observation_list.html', takes_context=True)
+def observation_list(context, target=None):
     """
     Displays a list of all observations in the TOM, limited to an individual target if specified.
     """
     if target:
-        observations = target.observationrecord_set.all()
+        if settings.TARGET_PERMISSIONS_ONLY:
+            observations = target.observationrecord_set.all()
+        else:
+            observations = get_objects_for_user(
+                                context['request'].user,
+                                'tom_observations.view_observationrecord'
+                            ).filter(target=target)
     else:
         observations = ObservationRecord.objects.all().order_by('-created')
     return {'observations': observations}
