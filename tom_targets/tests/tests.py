@@ -610,7 +610,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
             'query_string': '',
         }
-        self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
 
         self.assertEqual(self.fake_grouping.targets.count(), 2)
         self.assertTrue(self.fake_targets[0] in self.fake_grouping.targets.all())
