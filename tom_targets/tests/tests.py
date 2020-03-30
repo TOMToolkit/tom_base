@@ -2,7 +2,8 @@ import pytz
 from datetime import datetime
 
 from django.contrib.auth.models import User, Group
-from django.core import serializers
+from django.contrib.messages import get_messages
+from django.contrib.messages.constants import SUCCESS, WARNING
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -68,7 +69,7 @@ class TestTargetDetail(TestCase):
     def setUp(self):
         user = User.objects.create(username='testuser')
         self.client.force_login(user)
-        self.st = SiderealTargetFactory.create()
+        self.st = SiderealTargetFactory.create(ra=123.456, dec=-32.1)
         self.nst = NonSiderealTargetFactory.create()
         assign_perm('tom_targets.view_target', user, self.st)
         assign_perm('tom_targets.view_target', user, self.nst)
@@ -435,6 +436,51 @@ class TestTargetImport(TestCase):
                 self.assertTrue(TargetName.objects.filter(target=target, name=alias).exists())
 
 
+class TestTargetExport(TestCase):
+    """
+    The use of a list to handle the map returned by StreamingHttpResponse.streaming_content is taken directly from
+    the Django httpwrappers tests, as seen here:
+    https://github.com/django/django/blob/00ff7a44dee91be59a64559cadeeba0f7386fd6f/tests/httpwrappers/tests.py#L569
+
+    Tests are included for targets with and without aliases due to the previous presence of a bug relating to aliases
+    and target export: https://github.com/TOMToolkit/tom_base/issues/265
+    """
+    def setUp(self):
+        self.st = SiderealTargetFactory.create(name='M42', ra=83.8221, dec=-5.3911)
+        self.st2 = SiderealTargetFactory.create(name='M52', ra=351.2, dec=61.593)
+
+        self.user = User.objects.create(username='testuser')
+        self.client.force_login(self.user)
+        assign_perm('tom_targets.view_target',  self.user, self.st)
+        assign_perm('tom_targets.view_target',  self.user, self.st2)
+
+    def test_export_all_targets_no_aliases(self):
+        response = self.client.get(reverse('targets:export'))
+        content = ''.join(line.decode('utf-8') for line in list(response.streaming_content))
+        self.assertIn('M42', content)
+        self.assertIn('M52', content)
+
+    def test_export_filtered_targets_no_aliases(self):
+        response = self.client.get(reverse('targets:export') + '?name=M42')
+        content = ''.join(line.decode('utf-8') for line in list(response.streaming_content))
+        self.assertIn('M42', content)
+        self.assertNotIn('M52', content)
+
+    def test_export_all_targets_with_aliases(self):
+        st_name = TargetNameFactory.create(name='Messier 42', target=self.st)
+        response = self.client.get(reverse('targets:export'))
+        content = ''.join(line.decode('utf-8') for line in list(response.streaming_content))
+        self.assertIn('M42', content)
+        self.assertIn('M52', content)
+
+    def test_export_filtered_targets_with_aliases(self):
+        st_name = TargetNameFactory.create(name='Messier 42', target=self.st)
+        response = self.client.get(reverse('targets:export') + '?name=M42')
+        content = ''.join(line.decode('utf-8') for line in list(response.streaming_content))
+        self.assertIn('M42', content)
+        self.assertNotIn('M52', content)
+
+
 class TestTargetSearch(TestCase):
     def setUp(self):
         self.st = SiderealTargetFactory.create(name='1337target', ra=269.9983, dec=-29.0698)
@@ -570,6 +616,12 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.assertTrue(self.fake_targets[0] in self.fake_grouping.targets.all())
         self.assertTrue(self.fake_targets[1] in self.fake_grouping.targets.all())
 
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertIn(('1 target(s) successfully added to group \'{}\'.'.format(self.fake_grouping.name),
+                       SUCCESS), messages)
+        self.assertIn(('1 target(s) already in group \'{}\': {}'.format(
+            self.fake_grouping.name, self.fake_targets[0].name), WARNING), messages)
+
     def test_add_to_invalid_grouping(self):
         data = {
             'grouping': -1,
@@ -578,9 +630,11 @@ class TestTargetAddRemoveGrouping(TestCase):
             'selected-target': self.fake_targets[1].id,
             'query_string': '',
         }
-        self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 1)
         self.assertTrue(self.fake_targets[0] in self.fake_grouping.targets.all())
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertTrue('Cannot find the target group with id=-1; ' in messages[0][0])
 
     # Remove target[0] and [1] from grouping;
     def test_remove_selected_from_grouping(self):
@@ -591,8 +645,13 @@ class TestTargetAddRemoveGrouping(TestCase):
             'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
             'query_string': '',
         }
-        self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 0)
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertIn(('1 target(s) successfully removed from group \'{}\'.'.format(self.fake_grouping.name),
+                       SUCCESS), messages)
+        self.assertIn(('1 target(s) not in group \'{}\': {}'.format(self.fake_grouping.name, self.fake_targets[1].name),
+                       WARNING), messages)
 
     def test_empty_data(self):
         self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': ''})
@@ -621,6 +680,13 @@ class TestTargetAddRemoveGrouping(TestCase):
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 3)
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertIn(('2 target(s) successfully added to group \'{}\'.'.format(self.fake_grouping.name),
+                       SUCCESS), messages)
+        self.assertIn((
+            '1 target(s) already in group \'{}\': {}'.format(self.fake_grouping.name, self.fake_targets[0].name),
+            WARNING), messages
+        )
 
     def test_remove_all_from_grouping_filtered_by_sidereal(self):
         data = {
@@ -632,6 +698,12 @@ class TestTargetAddRemoveGrouping(TestCase):
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 0)
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertIn(('1 target(s) successfully removed from group \'{}\'.'.format(self.fake_grouping.name),
+                       SUCCESS), messages)
+        self.assertIn(('2 target(s) not in group \'{}\': {}'.format(
+            self.fake_grouping.name, self.fake_targets[1].name + ', ' + self.fake_targets[2].name
+        ), WARNING), messages)
 
     def test_remove_all_from_grouping_filtered_by_grouping(self):
         data = {
@@ -643,6 +715,9 @@ class TestTargetAddRemoveGrouping(TestCase):
         }
         response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 0)
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertIn(('1 target(s) successfully removed from group \'{}\'.'.format(self.fake_grouping.name),
+                       SUCCESS), messages)
 
     def test_add_remove_with_random_query_string(self):
         data = {
@@ -662,11 +737,17 @@ class TestTargetAddRemoveGrouping(TestCase):
             'isSelectAll': 'True',
             'selected-target': [],
         }
-        self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
         self.assertEqual(self.fake_grouping.targets.count(), 0)
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertIn(('1 target(s) successfully removed from group \'{}\'.'.format(self.fake_grouping.name),
+                       SUCCESS), messages)
+        self.assertIn(('2 target(s) not in group \'{}\': {}'.format(
+            self.fake_grouping.name, self.fake_targets[1].name + ', ' + self.fake_targets[2].name
+        ), WARNING), messages)
 
     def test_persist_filter(self):
-        data = {'query_string': "type=SIDEREAL&name=B&key=C&value=123&targetlist__name=1"}
+        data = {'query_string': 'type=SIDEREAL&name=B&key=C&value=123&targetlist__name=1'}
         expected_query_dict = {
             'type': 'SIDEREAL',
             'name': 'B',
@@ -678,8 +759,7 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.assertEqual(response_query_dict, expected_query_dict)
 
     def test_persist_filter_empty(self):
-        data = {}
         expected_query_dict = {}
-        response = self.client.post(reverse('targets:add-remove-grouping'), data=data, follow=True)
+        response = self.client.post(reverse('targets:add-remove-grouping'), data={}, follow=True)
         response_query_dict = response.context['filter'].data
         self.assertEqual(response_query_dict, expected_query_dict)

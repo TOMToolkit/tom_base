@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 from django import forms, template
@@ -9,6 +10,7 @@ import plotly.graph_objs as go
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_classes
 from tom_observations.observing_strategy import RunStrategyForm
+from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target
 
 
@@ -41,19 +43,38 @@ def observation_type_tabs(context):
     }
 
 
-@register.inclusion_tag('tom_observations/partials/observation_list.html', takes_context=True)
-def observation_list(context, target=None):
+@register.inclusion_tag('tom_observations/partials/observation_plan.html')
+def observation_plan(target, facility, length=7, interval=60, airmass_limit=None):
+    """
+    Displays form and renders plot for visibility calculation. Using this templatetag to render a plot requires that
+    the context of the parent view have values for start_time, end_time, and airmass.
+    """
+
+    visibility_graph = ''
+    start_time = datetime.now()
+    end_time = start_time + timedelta(days=length)
+
+    visibility_data = get_sidereal_visibility(target, start_time, end_time, interval, airmass_limit)
+    plot_data = [
+        go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()
+    ]
+    layout = go.Layout(yaxis=dict(autorange='reversed'))
+    visibility_graph = offline.plot(
+        go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False
+    )
+
+    return {
+        'visibility_graph': visibility_graph
+    }
+
+
+@register.inclusion_tag('tom_observations/partials/observation_list.html')
+def observation_list(target=None):
     """
     Displays a list of all observations in the TOM, limited to an individual target if specified.
     """
     if target:
-        if settings.TARGET_PERMISSIONS_ONLY:
-            observations = target.observationrecord_set.all()
-        else:
-            observations = get_objects_for_user(
-                                context['request'].user,
-                                'tom_observations.view_observationrecord'
-                            ).filter(target=target)
+        observations = target.observationrecord_set.all()
     else:
         observations = ObservationRecord.objects.all().order_by('-created')
     return {'observations': observations}
