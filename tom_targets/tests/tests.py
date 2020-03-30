@@ -384,6 +384,51 @@ class TestTargetImport(TestCase):
                 self.assertTrue(TargetName.objects.filter(target=target, name=alias).exists())
 
 
+class TestTargetExport(TestCase):
+    """
+    The use of a list to handle the map returned by StreamingHttpResponse.streaming_content is taken directly from 
+    the Django httpwrappers tests, as seen here:
+    https://github.com/django/django/blob/00ff7a44dee91be59a64559cadeeba0f7386fd6f/tests/httpwrappers/tests.py#L569
+
+    Tests are included for targets with and without aliases due to the previous presence of a bug relating to aliases
+    and target export: https://github.com/TOMToolkit/tom_base/issues/265
+    """
+    def setUp(self):
+        self.st = SiderealTargetFactory.create(name='M42', ra=83.8221, dec=-5.3911)
+        self.st2 = SiderealTargetFactory.create(name='M52', ra=351.2, dec=61.593)
+
+        self.user = User.objects.create(username='testuser')
+        self.client.force_login(self.user)
+        assign_perm('tom_targets.view_target',  self.user, self.st)
+        assign_perm('tom_targets.view_target',  self.user, self.st2)
+
+    def test_export_all_targets_no_aliases(self):
+        response = self.client.get(reverse('targets:export'))
+        content = ''.join(line.decode('utf-8') for line in list(response.streaming_content))
+        self.assertIn('M42', content)
+        self.assertIn('M52', content)
+
+    def test_export_filtered_targets_no_aliases(self):
+        response = self.client.get(reverse('targets:export') + '?name=M42')
+        content = ''.join(line.decode('utf-8') for line in list(response.streaming_content))
+        self.assertIn('M42', content)
+        self.assertNotIn('M52', content)
+
+    def test_export_all_targets_with_aliases(self):
+        st_name = TargetNameFactory.create(name='Messier 42', target=self.st)
+        response = self.client.get(reverse('targets:export'))
+        content = ''.join(line.decode('utf-8') for line in list(response.streaming_content))
+        self.assertIn('M42', content)
+        self.assertIn('M52', content)
+
+    def test_export_filtered_targets_with_aliases(self):
+        st_name = TargetNameFactory.create(name='Messier 42', target=self.st)
+        response = self.client.get(reverse('targets:export') + '?name=M42')
+        content = ''.join(line.decode('utf-8') for line in list(response.streaming_content))
+        self.assertIn('M42', content)
+        self.assertNotIn('M52', content)
+
+
 class TestTargetSearch(TestCase):
     def setUp(self):
         self.st = SiderealTargetFactory.create(name='1337target', ra=269.9983, dec=-29.0698)
