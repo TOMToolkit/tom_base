@@ -176,6 +176,7 @@ def select_target_js():
 @register.inclusion_tag('tom_targets/partials/aladin.html')
 def aladin(target):
     """
-    Displays Aladin skyview of the given target.
+    Displays Aladin skyview of the given target along with basic finder chart annotations including a compass
+    and a scale bar. The resulting image is downloadable. This templatetag only works for sidereal targets.
     """
     return {'target': target}
