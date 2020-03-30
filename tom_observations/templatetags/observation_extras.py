@@ -3,12 +3,13 @@ from urllib.parse import urlencode
 
 from django import forms, template
 from django.conf import settings
+from django.urls import reverse
 from guardian.shortcuts import get_objects_for_user
 from plotly import offline
 import plotly.graph_objs as go
 
 from tom_observations.models import ObservationRecord
-from tom_observations.facility import get_service_classes
+from tom_observations.facility import get_service_class, get_service_classes
 from tom_observations.observing_strategy import RunStrategyForm
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target
@@ -41,6 +42,20 @@ def observation_type_tabs(context):
         'facility': context['form']['facility'].value,
         'target_id': request.GET.get('target_id')
     }
+
+
+@register.inclusion_tag('tom_observations/partials/facility_observation_form.html')
+def facility_observation_form(target, facility, observation_type):
+    facility_class = get_service_class(facility)()
+    initial_fields = {
+        'target_id': target.id,
+        'facility': facility,
+        'observation_type': observation_type
+    }
+    obs_form = facility_class.get_form(observation_type)(initial=initial_fields)
+    obs_form.helper.form_action = reverse('tom_observations:create', kwargs={'facility': facility})
+
+    return {'obs_form': obs_form}
 
 
 @register.inclusion_tag('tom_observations/partials/observation_plan.html')
