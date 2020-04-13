@@ -1,9 +1,10 @@
 from django import forms
+from django.contrib.auth.models import Group
 from django.conf import settings
 
-from .models import DataProductGroup, DataProduct
-from tom_targets.models import Target
+from tom_dataproducts.models import DataProductGroup, DataProduct
 from tom_observations.models import ObservationRecord
+from tom_targets.models import Target
 
 
 class AddProductToGroupForm(forms.Form):
@@ -38,3 +39,10 @@ class DataProductUploadForm(forms.Form):
     referrer = forms.CharField(
         widget=forms.HiddenInput()
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not settings.TARGET_PERMISSIONS_ONLY:
+            self.fields['groups'] = forms.ModelMultipleChoiceField(Group.objects.none(),
+                                                                   required=False,
+                                                                   widget=forms.CheckboxSelectMultiple)

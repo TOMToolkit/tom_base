@@ -1,0 +1,7 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 crispy_forms_tags %}
+{% block title %}Create an Observation Strategy{% endblock %}
+{% block content %}
+<h2>Create a new Observation Strategy for {{ form.facility.value }}</h2>
+{% crispy form %}
+{% endblock %}

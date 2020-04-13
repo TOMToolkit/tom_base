@@ -1,14 +1,22 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 crispy_forms_tags %}
+{% load bootstrap4 crispy_forms_tags observation_extras targets_extras %}
 {% block title %}Submit Observation{% endblock %}
 {% block content %}
 <h3>Submit an observation to {{ form.facility.value }}</h3>
-<ul class="nav nav-tabs">
-  {% for k, v in type_choices %}
-    <li class="nav-item">
-      <a class="nav-link {% if request.GET.observation_type == k or 'observation_type' not in request.GET and forloop.first %} active {% endif %}" href="{% url 'observations:create' facility=form.facility.value %}?target_id={{ form.target_id.value }}&observation_type={{ k }}">{{ v }}</a>
-    </li>
-  {% endfor %}
-</ul>
-{% crispy form %}
+{% if target.type == 'SIDEREAL' %}
+<div class="row">
+    <div class="col">
+    {% observation_plan target form.facility.value %}
+    </div>
+</div>
+{% endif %}
+<div class="row">
+    <div class="col-md-4">
+        {% target_data target %}
+    </div>
+    <div class="col-md-8">
+        {% observation_type_tabs %}
+        {% crispy form %}
+    </div>
+</div>
 {% endblock %}

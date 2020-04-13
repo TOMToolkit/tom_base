@@ -1,11 +1,19 @@
-from django import template
+from datetime import datetime, timedelta
+from urllib.parse import urlencode
 
-from tom_observations.models import ObservationRecord
-from tom_observations.facility import get_service_classes
-from tom_targets.models import Target
-
+from django import forms, template
+from django.conf import settings
+from django.urls import reverse
+from guardian.shortcuts import get_objects_for_user
 from plotly import offline
 import plotly.graph_objs as go
+
+from tom_observations.models import ObservationRecord
+from tom_observations.facility import get_service_class, get_service_classes
+from tom_observations.observing_strategy import RunStrategyForm
+from tom_observations.utils import get_sidereal_visibility
+from tom_targets.models import Target
+
 
 register = template.Library()
 
@@ -19,16 +27,101 @@ def observing_buttons(target):
     return {'target': target, 'facilities': facilities}
 
 
-@register.inclusion_tag('tom_observations/partials/observation_list.html')
-def observation_list(target=None):
+@register.inclusion_tag('tom_observations/partials/observation_type_tabs.html', takes_context=True)
+def observation_type_tabs(context):
+    """
+    Displays tabs in observation creation form representing each available observation type.
+    """
+    request = context['request']
+    query_params = request.GET.copy()
+    observation_type = query_params.pop('observation_type', None)
+    return {
+        'params': urlencode(query_params),
+        'type_choices': context['type_choices'],
+        'observation_type': observation_type,
+        'facility': context['form']['facility'].value,
+        'target_id': request.GET.get('target_id')
+    }
+
+
+@register.inclusion_tag('tom_observations/partials/facility_observation_form.html')
+def facility_observation_form(target, facility, observation_type):
+    facility_class = get_service_class(facility)()
+    initial_fields = {
+        'target_id': target.id,
+        'facility': facility,
+        'observation_type': observation_type
+    }
+    obs_form = facility_class.get_form(observation_type)(initial=initial_fields)
+    obs_form.helper.form_action = reverse('tom_observations:create', kwargs={'facility': facility})
+
+    return {'obs_form': obs_form}
+
+
+@register.inclusion_tag('tom_observations/partials/observation_plan.html')
+def observation_plan(target, facility, length=7, interval=60, airmass_limit=None):
+    """
+    Displays form and renders plot for visibility calculation. Using this templatetag to render a plot requires that
+    the context of the parent view have values for start_time, end_time, and airmass.
+    """
+
+    visibility_graph = ''
+    start_time = datetime.now()
+    end_time = start_time + timedelta(days=length)
+
+    visibility_data = get_sidereal_visibility(target, start_time, end_time, interval, airmass_limit)
+    plot_data = [
+        go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()
+    ]
+    layout = go.Layout(yaxis=dict(autorange='reversed'))
+    visibility_graph = offline.plot(
+        go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False
+    )
+
+    return {
+        'visibility_graph': visibility_graph
+    }
+
+
+@register.inclusion_tag('tom_observations/partials/observation_list.html', takes_context=True)
+def observation_list(context, target=None):
     """
     Displays a list of all observations in the TOM, limited to an individual target if specified.
     """
     if target:
-        observations = target.observationrecord_set.all()
+        if settings.TARGET_PERMISSIONS_ONLY:
+            observations = target.observationrecord_set.all()
+        else:
+            observations = get_objects_for_user(
+                                context['request'].user,
+                                'tom_observations.view_observationrecord'
+                            ).filter(target=target)
     else:
         observations = ObservationRecord.objects.all().order_by('-created')
     return {'observations': observations}
+
+
+@register.inclusion_tag('tom_observations/partials/observingstrategy_run.html')
+def observingstrategy_run(target):
+    """
+    Renders the form for running an observing strategy.
+    """
+    form = RunStrategyForm(initial={'target': target})
+    form.fields['target'].widget = forms.HiddenInput()
+    return {'form': form}
+
+
+@register.inclusion_tag('tom_observations/partials/observingstrategy_from_record.html')
+def observingstrategy_from_record(obsr):
+    """
+    Renders a button that will pre-populate and observing strategy form with parameters from the specified
+    ``ObservationRecord``.
+    """
+    params = urlencode(obsr.parameters_as_dict)
+    return {
+        'facility': obsr.facility,
+        'params': params
+    }
 
 
 @register.inclusion_tag('tom_observations/partials/observation_distribution.html')

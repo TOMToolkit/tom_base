@@ -3,16 +3,176 @@
 <!-- insert this snippet where you want Aladin Lite viewer to appear and after the loading of jQuery -->
 <h3>Survey View</h3>
 <div id="aladin-lite-div" style="width:300px;height:300px;"></div>
+<div id="chart-form-div" style="width:300px;">
+  <form id="chart-form">
+    <div class="form-group mt-1 mb-1">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text bg-transparent" style="font-family: inherit;">Field of view</span>
+        </div>
+        <input type="number" class="form-control" aria-label="Field of view" id="fov" min="0" value="10">
+        <div class="input-group-append">
+          <select id="fov-units-select" class="form-control">
+            <option>arcsec</option>
+            <option selected>arcmin</option>
+            <option>deg</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group mt-1 mb-1">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <label class="input-group-text bg-transparent" style="font-family: inherit;" for="scale-bar-units-select">Scale bar</label>
+        </div>
+        <input type="number" class="form-control" aria-label="Scale bar size" id="scale-bar-size" min="0" value="1">
+        <div class="input-group-append">
+          <select id="scale-bar-units-select" class="form-control">
+            <option>arcsec</option>
+            <option selected>arcmin</option>
+            <option>deg</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group mt-1 mb-1">
+      <input class="btn btn-primary" type="button" onclick="updateFromForm({{ target.ra }}, {{ target.dec }})" value="Update">
+      <a class="btn btn-primary" id="download-chart" href="" download="chart.png" onclick="downloadImage()">Save Image</a>
+    </div>
+  </form>
+</div>
 <script type="text/javascript" src="//aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.js" charset="utf-8"></script>
 <script type="text/javascript">
-    var aladin = A.aladin('#aladin-lite-div', {
+
+    let aladin = A.aladin('#aladin-lite-div', {
       survey: "P/DSS2/color",
-      fov:5,
+      fov: getFovAsDegreesFromForm(),
+      showReticle: false,
       target: "{{ target.ra }} {{ target.dec }}",
       showGotoControl: false,
+      showZoomControl: false
     });
-    var target_cat = A.catalog({name: '{{ target.name }}', sourceSize: 10, color: 'red'});
-    aladin.addCatalog(target_cat, {shape: 'circle'});
-    target_cat.addSources([A.marker({{ target.ra }}, {{ target.dec }}, 
-      {popupTitle: '{{ target.name }}'})]);
+
+    aladin.on('positionChanged', function() {
+      annotateChart({{ target.ra }}, {{ target.dec }});
+    });
+
+    aladin.on('zoomChanged', function() {
+      annotateChart({{ target.ra }}, {{ target.dec }});
+    });
+
+    function getScaleBarFromForm() {
+      let size = Number($('#scale-bar-size').val());
+      if (size < 0) {
+        size = 0;
+      }
+      const units = $('#scale-bar-units-select option:selected').val();
+      const label = String(size) + ' ' + units;
+      const sizeAsDegrees = toDegrees(size, units);
+      return {size: size, units: units, label: label, sizeAsDegrees: sizeAsDegrees};
+    }
+
+    function getFovAsDegreesFromForm() {
+      const fov = Number($('#fov').val());
+      const units = $('#fov-units-select option:selected').val();
+      let fovAsDegrees;
+      if (fov >= 0) {
+        fovAsDegrees = toDegrees(fov, units);
+      }
+      return fovAsDegrees;
+    }
+
+    function toDegrees(value, units) {
+      if (units === 'arcmin') {
+        return value / 60;
+      } else if (units === 'arcsec') {
+        return value / 3600;
+      } else {
+        return value;
+      }
+    }
+
+    function annotateChart(targetRa, targetDec) {
+      const fovDegrees = aladin.getFov()[0];
+      const scaleBar = getScaleBarFromForm();
+      // Pixel position (0,0) is the top left corner of the view
+      const viewSizePix = aladin.getSize();
+      const offsetPixFromEdge = 30;
+      const scaleBarStartPix = [offsetPixFromEdge, viewSizePix[1] - offsetPixFromEdge]; // Bottom left corner
+      const compassCenterPix = [viewSizePix[0] - offsetPixFromEdge, viewSizePix[1] - offsetPixFromEdge]; // Bottom right corner
+      // Compass position
+      const cosDec = Math.cos(targetDec * Math.PI / 180);
+      const compassArmLength = fovDegrees / 10;
+      const compassCenter = aladin.pix2world(compassCenterPix[0], compassCenterPix[1]);
+      const compassNorthArm = [compassCenter[0], compassCenter[1] + compassArmLength];
+      const compassNorthArmPix = aladin.world2pix(compassNorthArm[0], compassNorthArm[1]);
+      const compassEastArm = [compassCenter[0] + compassArmLength / cosDec, compassCenter[1]];
+      const compassEastArmPix = aladin.world2pix(compassEastArm[0], compassEastArm[1]);
+      // Scale bar position
+      const scaleBarStart = aladin.pix2world(scaleBarStartPix[0], scaleBarStartPix[1]);
+      const scaleBarEnd = [scaleBarStart[0] - scaleBar.sizeAsDegrees / cosDec, scaleBarStart[1]];
+      const scaleBarEndPix = aladin.world2pix(scaleBarEnd[0], scaleBarEnd[1]);
+      const scaleBarLength = Math.abs(scaleBarEndPix[0] - scaleBarStartPix[0]);
+      // Re-draw the annotations on the chart
+      const color = '#f72525';
+      const scaleBarTextSpacing = 7;
+      const compassTextSpacing = 3;
+      aladin.removeLayers();
+      let layer = A.graphicOverlay({name: 'chart annotations', color: color, lineWidth: 2});
+      aladin.addOverlay(layer);
+      layer.add(A.polyline([compassNorthArm, compassCenter, compassEastArm]));
+      layer.add(A.polyline([scaleBarStart, scaleBarEnd]));
+      layer.add(A.circle(targetRa, targetDec, fovDegrees / 30));
+      layer.add(new Text(scaleBarStartPix[0] + scaleBarLength / 2, scaleBarStartPix[1] - scaleBarTextSpacing, scaleBar.label, {color: color}));
+      layer.add(new Text(compassNorthArmPix[0], compassNorthArmPix[1] - compassTextSpacing, 'N', {color: color}));
+      layer.add(new Text(compassEastArmPix[0] - compassTextSpacing, compassEastArmPix[1], 'E', {color: color, align: 'end', baseline: 'middle'}));
+    }
+
+    function downloadImage() {
+      // Update the data that the link that was clicked will download
+      $('#download-chart').attr('href', aladin.getViewDataURL());
+      return true;
+    }
+
+    function updateFromForm(ra, dec) {
+      const fov = getFovAsDegreesFromForm();
+      if (fov !== undefined) {
+        aladin.setFov(fov);
+        annotateChart(ra, dec);
+      }
+    }
+
+    Text = (function() {
+      // The AladinLite API does not provide a way to draw arbitrary text at an arbitrary location in an overlay layer.
+      // This implements the methods necessary to do so when provided as an input to layer.add(). This approach was
+      // preferable to the others (possibilities included directly getting and drawing on the actual canvas element that the
+      // other overlay elements are drawn on, or creating another canvas element and placing it directly on top of
+      // the others) as the text that is drawn will then be integrated with the draw/destroy/redraw loops within aladin,
+      // and the text will show up in the generated data url that is used for saving an image without having to do anything extra.
+
+      Text = function(x, y, text, options) {
+        options = options || {};
+        this.x = x || undefined;
+        this.y = y || undefined;
+        this.text = text || '';
+        this.color = options['color'] || undefined;
+        this.align = options['align'] || 'center';
+        this.baseline = options['baseline'] || 'alphabetic';
+        this.overlay = null;
+      };
+
+      Text.prototype.setOverlay = function(overlay) {
+        this.overlay = overlay;
+      };
+
+      Text.prototype.draw = function(ctx) {
+        ctx.fillStyle = this.color;
+        ctx.font = '15px Arial';
+        ctx.textAlign = this.align;
+        ctx.textBaseline = this.baseline;
+        ctx.fillText(this.text, this.x, this.y);
+      };
+
+      return Text;
+    })();
 </script>

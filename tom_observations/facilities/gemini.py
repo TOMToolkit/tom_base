@@ -466,6 +466,9 @@ class GEMFacility(GenericObservationFacility):
         # return PORTAL_URL + '/requests/' + observation_id
         return ''
 
+    def get_start_end_keywords(self):
+        return ('window_start', 'window_end')
+
     @classmethod
     def get_terminal_observing_states(clz):
         return TERMINAL_OBSERVING_STATES

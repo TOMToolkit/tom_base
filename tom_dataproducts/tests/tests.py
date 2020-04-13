@@ -4,7 +4,7 @@ import tempfile
 
 from django.test import TestCase, override_settings
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from unittest.mock import patch
@@ -39,7 +39,7 @@ def mock_is_fits_image_file(filename):
     return True
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], TARGET_PERMISSIONS_ONLY=True)
 @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
 class Views(TestCase):
     def setUp(self):
@@ -146,7 +146,74 @@ class Views(TestCase):
         self.assertEqual(products.count(), 1)
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], TARGET_PERMISSIONS_ONLY=False)
+@patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
+class TestViewsWithPermissions(TestCase):
+    def setUp(self):
+        self.target = TargetFactory.create()
+        self.observation_record = ObservingRecordFactory.create(
+            target_id=self.target.id,
+            facility=FakeFacility.name,
+            parameters='{}'
+        )
+        self.data_product = DataProduct.objects.create(
+            product_id='testproductid',
+            target=self.target,
+            observation_record=self.observation_record,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+        self.user = User.objects.create_user(username='aaronrodgers', email='aaron.rodgers@packers.com')
+        self.user2 = User.objects.create_user(username='timboyle', email='tim.boyle@packers.com')
+        assign_perm('tom_targets.view_target', self.user, self.target)
+        assign_perm('tom_targets.view_target', self.user2, self.target)
+        assign_perm('tom_targets.view_dataproduct', self.user, self.data_product)
+        self.client.force_login(self.user)
+
+    def test_dataproduct_list_on_target(self, dp_mock):
+        response = self.client.get(reverse('tom_targets:detail', kwargs={'pk': self.target.id}))
+        self.assertContains(response, 'afile.fits')
+        self.client.force_login(self.user2)
+
+    def test_dataproduct_list_on_target_unauthorized(self, dp_mock):
+        self.client.force_login(self.user2)
+        response = self.client.get(reverse('tom_targets:detail', kwargs={'pk': self.target.id}))
+        self.assertNotContains(response, 'afile.fits')
+
+    def test_dataproduct_list(self, dp_mock):
+        response = self.client.get(reverse('tom_dataproducts:list'))
+        self.assertContains(response, 'afile.fits')
+
+    def test_dataproduct_list_unauthorized(self, dp_mock):
+        self.client.force_login(self.user2)
+        response = self.client.get(reverse('tom_dataproducts:list'))
+        self.assertNotContains(response, 'afile.fits')
+
+    @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'],
+                       TARGET_PERMISSIONS_ONLY=False)
+    def test_upload_data_extended_permissions(self, dp_mock):
+        group = Group.objects.create(name='permitted')
+        group.user_set.add(self.user)
+        response = self.client.post(
+            reverse('dataproducts:upload'),
+            {
+                'facility': 'LCO',
+                'files': SimpleUploadedFile('afile.fits', b'afile'),
+                'target': self.target.id,
+                'groups': Group.objects.filter(name='permitted'),
+                'data_product_type': settings.DATA_PRODUCT_TYPES['spectroscopy'][0],
+                'observation_timestamp_0': date(2019, 6, 1),
+                'observation_timestamp_1': time(12, 0, 0),
+                'referrer': reverse('targets:detail', kwargs={'pk': self.target.id})
+            },
+            follow=True
+        )
+        self.assertContains(response, 'afile.fits')
+        self.client.force_login(self.user2)
+        response = self.client.get(reverse('targets:detail', kwargs={'pk': self.target.id}))
+        self.assertNotContains(response, 'afile.fits')
+
+
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], TARGET_PERMISSIONS_ONLY=True)
 @patch('tom_dataproducts.views.run_data_processor')
 class TestUploadDataProducts(TestCase):
     def setUp(self):
@@ -162,9 +229,9 @@ class TestUploadDataProducts(TestCase):
             observation_record=self.observation_record,
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
-        user = User.objects.create_user(username='test', email='test@example.com')
-        assign_perm('tom_targets.view_target', user, self.target)
-        self.client.force_login(user)
+        self.user = User.objects.create_user(username='test', email='test@example.com')
+        assign_perm('tom_targets.view_target', self.user, self.target)
+        self.client.force_login(self.user)
 
     def test_upload_data_for_target(self, run_data_processor_mock):
         response = self.client.post(
@@ -199,6 +266,42 @@ class TestUploadDataProducts(TestCase):
         self.assertContains(response, 'Successfully uploaded: {0}/{1}/bfile.fits'.format(
             self.target.name, FakeFacility.name)
         )
+
+
+class TestDeleteDataProducts(TestCase):
+    def setUp(self):
+        self.target = TargetFactory.create()
+        self.data_product = DataProduct.objects.create(
+            product_id='testproductid',
+            target=self.target,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+        self.user = User.objects.create_user(username='aaronrodgers', email='aaron.rodgers@packers.com')
+        self.user2 = User.objects.create_user(username='timboyle', email='tim.boyle@packers.com')
+        assign_perm('tom_targets.view_target', self.user, self.target)
+        assign_perm('tom_targets.view_target', self.user2, self.target)
+        assign_perm('tom_targets.view_dataproduct', self.user, self.data_product)
+        assign_perm('tom_targets.view_dataproduct', self.user2, self.data_product)
+        assign_perm('tom_targets.delete_dataproduct', self.user, self.data_product)
+        self.client.force_login(self.user)
+
+    def test_delete_data_product_target_permissions_only(self):
+        response = self.client.post(reverse('dataproducts:delete', kwargs={'pk': self.data_product.id}), follow=True)
+        self.assertRedirects(response, reverse('home'))
+        self.assertFalse(DataProduct.objects.filter(product_id='testproductid').exists())
+
+    @override_settings(TARGET_PERMISSIONS_ONLY=False)
+    def test_delete_data_product_unauthorized(self):
+        self.client.force_login(self.user2)
+        response = self.client.post(reverse('dataproducts:delete', kwargs={'pk': self.data_product.id}), follow=True)
+        self.assertRedirects(response, reverse('login') + f'?next=/dataproducts/data/{self.data_product.id}/delete/')
+        self.assertTrue(DataProduct.objects.filter(product_id='testproductid').exists())
+
+    @override_settings(TARGET_PERMISSIONS_ONLY=False)
+    def test_delete_data_product_authorized(self):
+        response = self.client.post(reverse('dataproducts:delete', kwargs={'pk': self.data_product.id}), follow=True)
+        self.assertRedirects(response, reverse('home'))
+        self.assertFalse(DataProduct.objects.filter(product_id='testproductid').exists())
 
 
 class TestDataUploadForms(TestCase):

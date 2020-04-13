@@ -1,24 +1,31 @@
+from datetime import datetime, timedelta
+
+from astroplan import moon_illumination
+from astropy import units as u
+from astropy.coordinates import Angle, get_moon, SkyCoord
+from astropy.time import Time
+from dateutil.parser import parse
 from django import template
 from django.conf import settings
-from dateutil.parser import parse
+from guardian.shortcuts import get_objects_for_user
+import numpy as np
 from plotly import offline
-import plotly.graph_objs as go
-from astropy import units as u
-from astropy.coordinates import Angle
+from plotly import graph_objs as go
 
+from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target, TargetExtra, TargetList
 from tom_targets.forms import TargetVisibilityForm
-from tom_observations.utils import get_sidereal_visibility
 
 register = template.Library()
 
 
-@register.inclusion_tag('tom_targets/partials/recent_targets.html')
-def recent_targets(limit=10):
+@register.inclusion_tag('tom_targets/partials/recent_targets.html', takes_context=True)
+def recent_targets(context, limit=10):
     """
     Displays a list of the most recently created targets in the TOM up to the given limit, or 10 if not specified.
     """
-    return {'targets': Target.objects.all().order_by('-created')[:limit]}
+    user = context['request'].user
+    return {'targets': get_objects_for_user(user, 'tom_targets.view_target').order_by('-created')[:limit]}
 
 
 @register.inclusion_tag('tom_targets/partials/target_feature.html')
@@ -29,14 +36,23 @@ def target_feature(target):
     return {'target': target}
 
 
+@register.inclusion_tag('tom_targets/partials/target_buttons.html')
+def target_buttons(target):
+    """
+    Displays the Update and Delete buttons for a target.
+    """
+    return {'target': target}
+
+
 @register.inclusion_tag('tom_targets/partials/target_data.html')
 def target_data(target):
     """
     Displays the data of a target.
     """
+    extras = {k['name']: target.extra_fields.get(k['name'], '') for k in settings.EXTRA_FIELDS if not k.get('hidden')}
     return {
         'target': target,
-        'display_extras': [ex['name'] for ex in settings.EXTRA_FIELDS if not ex.get('hidden')]
+        'extras': extras
     }
 
 
@@ -86,6 +102,58 @@ def target_plan(context):
         'target': context['object'],
         'visibility_graph': visibility_graph
     }
+
+
+@register.inclusion_tag('tom_targets/partials/moon_distance.html')
+def moon_distance(target, day_range=30):
+    """
+    Renders plot for lunar distance from target.
+
+    Adapted from Jamison Frost Burke's moon visibility code in Supernova Exchange 2.0, as seen here:
+    https://github.com/jfrostburke/snex2/blob/0c1eb184c942cb10f7d54084e081d8ac11700edf/custom_code/templatetags/custom_code_tags.py#L196
+
+    :param target: Target object for which moon distance is calculated
+    :type target: tom_targets.models.Target
+
+    :param day_range: Number of days to plot lunar distance
+    :type day_range: int
+    """
+
+    day_range = 30
+    times = Time(
+        [str(datetime.utcnow() + timedelta(days=delta)) for delta in np.arange(0, day_range, 0.2)],
+        format='iso', scale='utc'
+    )
+
+    obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
+    moon_pos = get_moon(times)
+
+    separations = moon_pos.separation(obj_pos).deg
+    phases = moon_illumination(times)
+
+    distance_color = 'rgb(0, 0, 255)'
+    phase_color = 'rgb(255, 0, 0)'
+    plot_data = [
+        go.Scatter(x=times.mjd-times[0].mjd, y=separations, mode='lines', name='Moon distance (degrees)',
+                   line=dict(color=distance_color)),
+        go.Scatter(x=times.mjd-times[0].mjd, y=phases, mode='lines', name='Moon phase', yaxis='y2',
+                   line=dict(color=phase_color))
+    ]
+    layout = go.Layout(
+                xaxis={'title': 'Days from now'},
+                yaxis={'range': [0, 180], 'tick0': 0, 'dtick': 45, 'tickfont': {'color': distance_color}},
+                yaxis2={'range': [0, 1], 'tick0': 0, 'dtick': 0.25, 'overlaying': 'y', 'side': 'right',
+                        'tickfont': {'color': phase_color}},
+                margin={'l': 20, 'r': 10, 'b': 30, 't': 40},
+                width=600,
+                height=300,
+                autosize=True
+            )
+    moon_distance_plot = offline.plot(
+        go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False
+    )
+
+    return {'plot': moon_distance_plot}
 
 
 @register.inclusion_tag('tom_targets/partials/target_distribution.html')
@@ -173,6 +241,7 @@ def select_target_js():
 @register.inclusion_tag('tom_targets/partials/aladin.html')
 def aladin(target):
     """
-    Displays Aladin skyview of the given target.
+    Displays Aladin skyview of the given target along with basic finder chart annotations including a compass
+    and a scale bar. The resulting image is downloadable. This templatetag only works for sidereal targets.
     """
     return {'target': target}

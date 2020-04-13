@@ -4,6 +4,7 @@ from django.utils import timezone
 from astropy import units
 
 from tom_observations.facility import GenericObservationFacility, GenericObservationForm
+from tom_observations.observing_strategy import GenericStrategyForm
 
 # Site data matches built-in pyephem observer data for Los Angeles
 SITES = {
@@ -25,12 +26,19 @@ class FakeFacilityForm(GenericObservationForm):
     test_input = forms.CharField(help_text='fake form input')
 
 
+class FakeFacilityStrategyForm(GenericStrategyForm):
+    pass
+
+
 class FakeFacility(GenericObservationFacility):
     name = 'FakeFacility'
     observation_types = [('FakeFacility Observation', 'OBSERVATION')]
 
     def get_form(self, observation_type):
         return FakeFacilityForm
+
+    def get_strategy_form(self, observation_type):
+        return FakeFacilityStrategyForm
 
     def get_observing_sites(self):
         return SITES

@@ -16,6 +16,9 @@ def run_data_processor(dp):
 
     :param dp: DataProduct which will be processed into a list
     :type dp: DataProduct
+
+    :returns: QuerySet of `ReducedDatum` objects created by the `run_data_processor` call
+    :rtype: `QuerySet` of `ReducedDatum`
     """
 
     try:
@@ -33,14 +36,11 @@ def run_data_processor(dp):
     data_processor = clazz()
     data = data_processor.process_data(dp)
 
-    for datum in data:
-        ReducedDatum.objects.create(
-            target=dp.target,
-            data_product=dp,
-            data_type=dp.data_product_type,
-            timestamp=datum[0],
-            value=datum[1]
-        )
+    reduced_datums = [ReducedDatum(target=dp.target, data_product=dp, data_type=dp.data_product_type,
+                                   timestamp=datum[0], value=datum[1]) for datum in data]
+    ReducedDatum.objects.bulk_create(reduced_datums)
+
+    return ReducedDatum.objects.filter(data_product=dp)
 
 
 class DataProcessor():

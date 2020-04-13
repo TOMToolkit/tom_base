@@ -11,7 +11,7 @@
     <p><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
     <p><strong>Status:</strong> {{ object.status }}</p>
     <p></p>
-    {% include 'tom_dataproducts/upload_dataproduct.html' %}
+    {% upload_dataproduct object %}
   </div>
   <div class="col-md-6">
     {% if image %}
@@ -63,6 +63,7 @@
   </div>
   <div class="col-md-4">
     <h4>Request Parameters</h4>
+    {% observingstrategy_from_record object %}
     <dl class="row">
       {% for k,v in object.parameters_as_dict.items %}
       <dt class="col-sm-6">{{ k }}</dt>

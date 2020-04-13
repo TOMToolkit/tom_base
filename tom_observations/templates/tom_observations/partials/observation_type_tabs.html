@@ -1,0 +1,10 @@
+{% load bootstrap4 observation_extras %}
+{% if type_choices|length > 1 %}
+<ul class="nav nav-tabs">
+  {% for k, v in type_choices %}
+    <li class="nav-item">
+      <a class="nav-link {% if observation_type == k or not observation_type and forloop.first %} active {% endif %}" href="{% url 'observations:create' facility=facility %}?observation_type={{ k }}&{{ params }}">{{ v }}</a>
+    </li>
+  {% endfor %}
+</ul>
+{% endif %}

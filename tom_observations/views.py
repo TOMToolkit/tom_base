@@ -1,38 +1,43 @@
 from io import StringIO
-import django_filters
+from urllib.parse import urlparse
+import json
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.management import call_command
+from django_filters import (CharFilter, ChoiceFilter, DateTimeFromToRangeFilter, FilterSet, ModelMultipleChoiceFilter,
+                            OrderingFilter)
+from django_filters.views import FilterView
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
+from django.views.generic import View
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import FormView, DeleteView
-from django_filters.views import FilterView
 from django.views.generic.list import ListView
 from guardian.shortcuts import get_objects_for_user, assign_perm
 from guardian.mixins import PermissionListMixin
 
-from .models import ObservationRecord, ObservationGroup
-from .forms import ManualObservationForm
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
+from tom_observations.facility import get_service_class, get_service_classes
+from tom_observations.forms import ManualObservationForm
+from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
 from tom_targets.models import Target
-from tom_observations.facility import get_service_class
 
 
-class ObservationFilter(django_filters.FilterSet):
+class ObservationFilter(FilterSet):
     """
     Defines the available fields for filtering the list of ``ObservationRecord`` objects.
     """
-    ordering = django_filters.OrderingFilter(
+    ordering = OrderingFilter(
         fields=['scheduled_start', 'scheduled_end', 'status', 'created', 'modified']
     )
-    scheduled_start = django_filters.DateTimeFromToRangeFilter()
-    scheduled_end = django_filters.DateTimeFromToRangeFilter
-    observationgroup = django_filters.ModelMultipleChoiceFilter(
+    scheduled_start = DateTimeFromToRangeFilter()
+    scheduled_end = DateTimeFromToRangeFilter
+    observationgroup = ModelMultipleChoiceFilter(
         label='Observation Groups', queryset=ObservationGroup.objects.all()
     )
 
@@ -58,9 +63,12 @@ class ObservationListView(FilterView):
         :returns: set of ObservationRecords
         :rtype: QuerySet
         """
-        return ObservationRecord.objects.filter(
-            target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
-        )
+        if settings.TARGET_PERMISSIONS_ONLY:
+            return ObservationRecord.objects.filter(
+                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+            )
+        else:
+            return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
 
     def get(self, request, *args, **kwargs):
         """
@@ -166,6 +174,8 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         """
         context = super(ObservationCreateView, self).get_context_data(**kwargs)
         context['type_choices'] = self.get_facility_class().observation_types
+        target = Target.objects.get(pk=self.get_target_id())
+        context['target'] = target
         return context
 
     def get_form_class(self):
@@ -175,6 +185,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :returns: observation form
         :rtype: subclass of GenericObservationForm
         """
+        observation_type = None
         if self.request.GET:
             observation_type = self.request.GET.get('observation_type')
         elif self.request.POST:
@@ -189,6 +200,8 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :rtype: subclass of GenericObservationForm
         """
         form = super().get_form()
+        if not settings.TARGET_PERMISSIONS_ONLY:
+            form.fields['groups'].queryset = self.request.user.groups.all()
         form.helper.form_action = reverse(
             'tom_observations:create', kwargs=self.kwargs
         )
@@ -208,6 +221,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         initial['target_id'] = self.get_target_id()
         initial['facility'] = self.get_facility()
         initial['observation_type'] = self.get_observation_type()
+        initial.update(self.request.GET.dict())
         return initial
 
     def form_valid(self, form):
@@ -237,17 +251,50 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             )
             records.append(record)
 
-        if len(records) > 1:
+        if len(records) > 1 or form.cleaned_data.get('cadence_strategy'):
             group_name = form.cleaned_data['name']
-            observation_group = ObservationGroup.objects.create(name=group_name)
+            observation_group = ObservationGroup.objects.create(
+                name=group_name, cadence_strategy=form.cleaned_data.get('cadence_strategy'),
+                cadence_parameters=json.dumps({'cadence_frequency': form.cleaned_data.get('cadence_frequency')})
+            )
             observation_group.observation_records.add(*records)
             assign_perm('tom_observations.view_observationgroup', self.request.user, observation_group)
             assign_perm('tom_observations.change_observationgroup', self.request.user, observation_group)
             assign_perm('tom_observations.delete_observationgroup', self.request.user, observation_group)
 
+        if not settings.TARGET_PERMISSIONS_ONLY:
+            groups = form.cleaned_data['groups']
+            for record in records:
+                assign_perm('tom_observations.view_observationrecord', groups, record)
+                assign_perm('tom_observations.change_observationrecord', groups, record)
+                assign_perm('tom_observations.delete_observationrecord', groups, record)
+
         return redirect(
             reverse('tom_targets:detail', kwargs={'pk': target.id})
         )
+
+
+class ObservationGroupCancelView(LoginRequiredMixin, View):
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['next'] = self.request.META.get('HTTP_REFERER', '/')
+        return context
+
+    def get(self, request, *args, **kwargs):
+        obsr_id = self.kwargs.get('pk')
+        obsr = ObservationRecord.objects.get(id=obsr_id)
+        facility = get_service_class(obsr.facility)()
+        errors = facility.cancel_observation(obsr.observation_id)
+        if errors:
+            messages.error(
+                self.request,
+                f'Unable to cancel observation: {errors}'
+            )
+
+        referer = self.request.GET('next', None)
+        referer = urlparse(referer).path if referer else '/'
+        return redirect(referer)
 
 
 class ManualObservationCreateView(LoginRequiredMixin, FormView):
@@ -323,9 +370,12 @@ class ObservationRecordDetailView(DetailView):
         :returns: set of ObservationRecords
         :rtype: QuerySet
         """
-        return ObservationRecord.objects.filter(
-            target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
-        )
+        if settings.TARGET_PERMISSIONS_ONLY:
+            return ObservationRecord.objects.filter(
+                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+            )
+        else:
+            return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -341,6 +391,7 @@ class ObservationRecordDetailView(DetailView):
         context['form'] = AddProductToGroupForm()
         service_class = get_service_class(self.object.facility)
         context['data_products'] = service_class().all_data_products(self.object)
+        context['can_be_cancelled'] = self.object.status not in service_class().get_terminal_observing_states()
         newest_image = None
         for data_product in context['data_products']['saved']:
             newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and \
@@ -374,3 +425,106 @@ class ObservationGroupDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     permission_required = 'tom_observations.delete_observationgroup'
     model = ObservationGroup
     success_url = reverse_lazy('tom_observations:group-list')
+
+
+class ObservingStrategyFilter(FilterSet):
+    """
+    Defines the available fields for filtering the list of ``ObservingStrategy`` objects.
+    """
+    facility = ChoiceFilter(
+        choices=[(k, k) for k in get_service_classes().keys()]
+    )
+    name = CharFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = ObservingStrategy
+        fields = ['name', 'facility']
+
+
+class ObservingStrategyListView(FilterView):
+    """
+    Displays the observing strategies that exist in the TOM.
+    """
+    model = ObservingStrategy
+    filterset_class = ObservingStrategyFilter
+    template_name = 'tom_observations/observingstrategy_list.html'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['installed_facilities'] = get_service_classes()
+        return context
+
+
+class ObservingStrategyCreateView(FormView):
+    """
+    Displays the form for creating a new observing strategy. Uses the observing strategy form specified in the
+    respective facility class.
+    """
+    template_name = 'tom_observations/observingstrategy_form.html'
+
+    def get_facility_name(self):
+        return self.kwargs['facility']
+
+    def get_form_class(self):
+        facility_name = self.get_facility_name()
+
+        if not facility_name:
+            raise ValueError('Must provide a facility name')
+
+        # TODO: modify this to work with both LCO forms
+        return get_service_class(facility_name)().get_strategy_form(None)
+
+    def get_form(self, form_class=None):
+        form = super().get_form()
+        form.helper.form_action = reverse('tom_observations:strategy-create',
+                                          kwargs={'facility': self.get_facility_name()})
+        return form
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['facility'] = self.get_facility_name()
+        initial.update(self.request.GET.dict())
+        return initial
+
+    def form_valid(self, form):
+        form.save()
+        return redirect(reverse('tom_observations:strategy-list'))
+
+
+class ObservingStrategyUpdateView(LoginRequiredMixin, FormView):
+    """
+    View for updating an existing observing strategy.
+    """
+    template_name = 'tom_observations/observingstrategy_form.html'
+
+    def get_object(self):
+        return ObservingStrategy.objects.get(pk=self.kwargs['pk'])
+
+    def get_form_class(self):
+        self.object = self.get_object()
+        return get_service_class(self.object.facility)().get_strategy_form(None)
+
+    def get_form(self):
+        form = super().get_form()
+        form.helper.form_action = reverse(
+            'tom_observations:strategy-update', kwargs={'pk': self.object.id}
+        )
+        return form
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial.update(self.object.parameters_as_dict)
+        initial['facility'] = self.object.facility
+        return initial
+
+    def form_valid(self, form):
+        form.save(strategy_id=self.object.id)
+        return redirect(reverse('tom_observations:strategy-list'))
+
+
+class ObservingStrategyDeleteView(LoginRequiredMixin, DeleteView):
+    """
+    Deletes an observing strategy.
+    """
+    model = ObservingStrategy
+    success_url = reverse_lazy('tom_observations:strategy-list')
