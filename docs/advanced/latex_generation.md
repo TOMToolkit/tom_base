@@ -1,6 +1,4 @@
-****************
-LaTeX Generation
-****************
+# LaTeX Generation
 
 One of the features the TOM Toolkit offers is automated generation of LaTeX-formatted data tables. The LaTeX table tool
 allows the user to select the parameters for an entity in their TOM--for example, a Target--and generate a table of
@@ -18,9 +16,7 @@ TOM_LATEX_PROCESSORS = {
 }
 ```
 
-*****************
-Custom Processing
-*****************
+## Custom Processing
 
 The built-in LaTeX table generation is good, but it certainly has some shortcomings, and can't be expected to cover
 every or even most use cases. As such, the implementation allows for smooth addition of any custom processing.

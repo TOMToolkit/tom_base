@@ -86,6 +86,12 @@ within your TOM (for example, an observation completes).
 :doc:`Scripting your TOM with Jupyter Notebooks <advanced/scripts>` - Use a Jupyter notebook (or just a python
 console/scripts) to interact directly with your TOM.
 
+:doc:`Observing and cadence strategies <advanced/strategies>` - Learn about observing and cadence strategies and how to write a
+custom cadence strategy to automate a series of observations.
+
+:doc:`LaTeX table generation <advanced/latex_generation>` - Learn how to generate LaTeX for certain models and add LaTeX 
+generators for other models.
+
 Deployment
 ----------
 
