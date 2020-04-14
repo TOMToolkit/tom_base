@@ -95,7 +95,10 @@ def upload_dataproduct(context, obj):
 
 
 @register.inclusion_tag('tom_dataproducts/partials/recent_photometry.html')
-def recent_photometry(target, num_points=1):
+def recent_photometry(target, limit=1):
+    """
+    Displays a table of the most recent photometric points for a target.
+    """
     photometry = ReducedDatum.objects.filter(data_type='photometry').order_by('-timestamp')[:num_points]
     return {'data': [{'timestamp': rd.timestamp, 'magnitude': json.loads(rd.value)['magnitude']} for rd in photometry]}
 

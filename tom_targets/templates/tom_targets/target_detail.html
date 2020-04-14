@@ -17,7 +17,7 @@
       {% endif %}
       {% target_buttons object %}
       {% target_data object %}
-      {% recent_photometry object num_points=3 %}
+      {% recent_photometry object limit=3 %}
       {% if object.type == 'SIDEREAL' %}
       {% aladin object %}
       {% endif %}
