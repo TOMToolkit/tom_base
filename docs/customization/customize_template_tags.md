@@ -253,8 +253,8 @@ template context) and the desired number of photometry points:
 {% target_data object %}
 {% if object.type == 'SIDEREAL' %}
 {% aladin object %}
-{% recent_photometry object num_points=3 %}
 {% endif %}
+{% recent_photometry object num_points=3 %}
 ...
 ```
 
