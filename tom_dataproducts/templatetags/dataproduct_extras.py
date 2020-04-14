@@ -97,7 +97,7 @@ def upload_dataproduct(context, obj):
 @register.inclusion_tag('tom_dataproducts/partials/recent_photometry.html')
 def recent_photometry(target, num_points=1):
     photometry = ReducedDatum.objects.filter(data_type='photometry').order_by('-timestamp')[:num_points]
-    return {'recent_photometry': [(datum.timestamp, json.loads(datum.value)['magnitude']) for datum in photometry]}
+    return {'data': [{'timestamp': rd.timestamp, 'magnitude': json.loads(rd.value)['magnitude']} for rd in photometry]}
 
 
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html', takes_context=True)

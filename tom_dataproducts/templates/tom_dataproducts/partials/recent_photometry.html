@@ -6,10 +6,10 @@
     <table class="table">
         <thead><tr><th>Timestamp</th><th>Magnitude</th></tr></thead>
         <tbody>
-        {% for datum in recent_photometry %}
+        {% for datum in data %}
         <tr>
-            <td>{{ datum.0 }}</td>
-            <td>{{ datum.1|truncate_number }}</td>
+            <td>{{ datum.timestamp }}</td>
+            <td>{{ datum.magnitude|truncate_number }}</td>
         </tr>
         {% empty %}
         <tr>
