@@ -1,0 +1,23 @@
+<table class="table">
+  <thead><tr><th>ID</th><th>Modified</th></tr></thead>
+  <tbody>
+    {% for target in targets %}
+    <tr>
+      <td>
+        <a href="{% url 'targets:detail' target.id %}" title="Detail for {{ target.name }}">
+          {{ target.name }}
+        </a>
+      </td>
+      <td>
+        {{ target.modified|date }}
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="2">
+        No targets. <a href="{% url 'tom_targets:create' %}">Create a target</a>.
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

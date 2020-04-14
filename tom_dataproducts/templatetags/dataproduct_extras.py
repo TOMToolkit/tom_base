@@ -99,7 +99,7 @@ def recent_photometry(target, limit=1):
     """
     Displays a table of the most recent photometric points for a target.
     """
-    photometry = ReducedDatum.objects.filter(data_type='photometry').order_by('-timestamp')[:num_points]
+    photometry = ReducedDatum.objects.filter(data_type='photometry').order_by('-timestamp')[:limit]
     return {'data': [{'timestamp': rd.timestamp, 'magnitude': json.loads(rd.value)['magnitude']} for rd in photometry]}
 
 
