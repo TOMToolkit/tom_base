@@ -47,6 +47,9 @@ configure.
 :doc:`Customizing TOM Templates <customization/customize_templates>` - Learn how to override built in TOM templates to
 change the look and feel of your TOM.
 
+:doc:`Customizing Template Tag <customization/customize_template_tags>` - Learn how to write your own template tags to display 
+the data you need.
+
 :doc:`Adding new Pages to your TOM <customization/adding_pages>` - Learn how to add entirely new pages to your TOM,
 displaying static html pages or dynamic database-driven content.
 

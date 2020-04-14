@@ -31,7 +31,9 @@ Django
 
 `Classy Class-Based Views <https://ccbv.co.uk/projects/Django/2.2/>`_ - Inheritance can be confusing. The CCBV reference page shows the class hierarchy of Django's built-in class-based views, along with the available attributes and methods, and the class they each come from.
 
-`Security in Django <https://docs.djangoproject.com/en/2.2/topics/security/>`_ - Take special note of
+`Databases <https://docs.djangoproject.com/en/3.0/ref/databases/>`_ - Information on setting up different database backends in Django.
+
+`Security in Django <https://docs.djangoproject.com/en/2.2/topics/security/>`_ - Make sure your Django application is secure.
 
 
 Python
