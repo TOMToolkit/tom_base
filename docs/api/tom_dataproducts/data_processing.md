@@ -1,6 +1,4 @@
-***************
-Data Processing
-***************
+# Data Processing
 
 The TOM is configured with built-in data processing on the upload of Data Products. This processing is broken up into
 three components.
@@ -22,7 +20,7 @@ For photometry, the default behavior is simply to read the CSV and convert it to
 Data Serializers
 ----------------
 
-.. autoclass:: tom_dataproducts.data_serializers.SpectrumSerializer
+.. autoclass:: tom_dataproducts.processors.data_serializers.SpectrumSerializer
     :members:
 
 

@@ -1,6 +1,4 @@
-********************************
-Cadence and Observing Strategies
-********************************
+# Cadence and Observing Strategies
 
 The TOM has a couple of unique concepts that may be unfamiliar to some at first, that will be describe here before going
 into detail.
@@ -20,9 +18,7 @@ cadence to submit observations depending on the success of a prior observation o
 observation.
 
 
-*********************************
-Writing a custom cadence strategy
-*********************************
+## Writing a custom cadence strategy
 
 Many of the TOM modules leverage a plugin architecture that enables you to write your own implementation, and the
 cadence strategy plugin is no different. If you're familiar with the other modules, you've already seen examples of this
@@ -209,8 +205,7 @@ def run(self):
 ```
 
 
-Configuring the cadence strategy to run automatically
------------------------------------------------------
+## Configuring the cadence strategy to run automatically
 
 As you may have noticed, the cadence strategies act on updates to the status of an ``ObservationRecord``. Ideally, we want
 the cadence strategies to run as soon as an observation status changes--so, we need to automate that and have it run
