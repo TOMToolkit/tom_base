@@ -19,8 +19,8 @@ class ExternalServiceMiddleware:
         if isinstance(exception, ImproperCredentialsException):
             msg = (
                     'There was a problem authenticating with {}. Please check you have the correct '
-                    'credentials entered into your FACILITIES setting. '
-                    'https://tomtoolkit.github.io/docs/customsettings#facilities '
+                    'credentials the corresponding settings variable. '
+                    'https://tomtoolkit.github.io/docs/customsettings '
                 ).format(
                 str(exception)
             )
