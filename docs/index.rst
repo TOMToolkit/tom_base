@@ -99,6 +99,9 @@ generators for other models.
 
 :doc: `Advanced Querying <advanced/querying>` - Get a couple of tips on programmatic querying with Django's QuerySet API
 
+:doc: `Authentication exceptions for external services <advanced/exceptions>` - Ensure that your custom external services have 
+  appropriate and visible errors.
+
 Deployment
 ----------
 
