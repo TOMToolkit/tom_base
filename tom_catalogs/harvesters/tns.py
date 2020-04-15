@@ -12,7 +12,7 @@ from tom_common.exceptions import ImproperCredentialsException
 TNS_URL = 'https://wis-tns.weizmann.ac.il'
 
 try:
-    TNS_CREDENTIALS = settings.BROKER_CREDENTIALS['TNS']
+    TNS_CREDENTIALS = settings.ALERT_CREDENTIALS['TNS']
 except (AttributeError, KeyError):
     TNS_CREDENTIALS = {
         'api_key': ''

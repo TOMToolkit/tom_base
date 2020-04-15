@@ -5,6 +5,21 @@ The following is a list of TOM Specific settings to be added/edited in your
 project's `settings.py`. For explanations of Django specific settings, see the
 [official documentation](https://docs.djangoproject.com/en/2.1/ref/settings/).
 
+
+### [ALERT_CREDENTIALS](#alert_credentials)
+
+Default: 
+
+    {
+        'TNS': {
+            'api_key': ''
+        }
+    }
+
+Credentials for any brokers that require them. At the moment, the only built-in TOM Toolkit broker module that 
+requires credentials is the TNS.
+
+
 ### [AUTH_STRATEGY](#auth_strategy)
 
 Default: 'READ_ONLY'
@@ -15,13 +30,27 @@ anything. A value of **LOCKED** requires all users to login before viewing any
 page. Use the [**OPEN_URLS**](#open_urls) setting for adding exemptions.
 
 
+### [DATA_PROCESSORS](#data_processors)
+
+Default:
+
+    {
+        'photometry': 'tom_dataproducts.processors.photometry_processor.PhotometryProcessor',
+        'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
+    }
+
+The `DATA_PROCESSORS` dict specifies the subclasses of `DataProcessor` that should be used for processing the 
+corresponding `data_type`s.
+
 ### [DATA_PRODUCT_TYPES](#data_types)
 
 Default:
 
     {
         'spectroscopy': ('spectroscopy', 'Spectroscopy'),
-        'photometry': ('photometry', 'Photometry')
+        'photometry': ('photometry', 'Photometry'),
+        'spectroscopy': ('spectroscopy', 'Spectroscopy'),
+        'image_file': ('image_file', 'Image File')
     }
 
 A list of machine readable, human readable tuples which determine the choices
@@ -92,11 +121,21 @@ With an [**AUTH_STRATEGY**](#auth_strategy) value of **LOCKED**, urls in this li
 visible to unauthenticated users. You might add the homepage ('/'), for example.
 
 
+### [TARGET_PERMISSIONS_ONLY](#target_permissions_only)
+
+Default: True
+
+This settings determines the permissions strategy of the TOM. When set to True, authorization permissions will be set 
+on Targets and cascade from there--that is, a group that can see a Target can see all ObservationRecords and Data 
+associated with the Target. When set to False, permissions can be set for a group at the Target level, the 
+ObservationRecord level, or the DataProduct level.
+
+
 ### [TARGET_TYPE](#target_type)
 
 Default: No default
 
-Can be either **SIDEREAL** or **NON_SIDEREAL**. This settings determines the
+Can be either **SIDEREAL** or **NON_SIDEREAL**. This setting determines the
 default target type for your TOM. TOMs can still create and work with targets of
 both types even after this option is set, but setting it to one of the values will
 optimize the workflow for that target type.
@@ -109,7 +148,10 @@ Default:
     [
         'tom_alerts.brokers.mars.MARSBroker',
         'tom_alerts.brokers.lasair.LasairBroker',
-        'tom_alerts.brokers.scout.ScoutBroker'
+        'tom_alerts.brokers.scout.ScoutBroker',
+        'tom_alerts.brokers.tns.TNSBroker',
+        'tom_alerts.brokers.antares.ANTARESBroker',
+        'tom_alerts.brokers.gaia.GaiaBroker'
     ]
 
 A list of tom alert classes to make available to your TOM. If you have written or
@@ -125,6 +167,8 @@ Default:
     [
         'tom_observations.facilities.lco.LCOFacility',
         'tom_observations.facilities.gemini.GEMFacility',
+        'tom_observations.facilities.soar.SOARFacility',
+        'tom_observations.facilities.lt.LTFacility'
     ]
 
 A list of observation facility classes to make available to your TOM. If you have
@@ -147,3 +191,16 @@ Default:
 A list of TOM harverster classes to make available to your TOM. If you have
 written or downloaded additional harvester classes you would make them available
 here.
+
+
+### [TOM_LATEX_PROCESSORS](#tom_latex_processors)
+
+Default:
+
+    {
+        'ObservationGroup': 'tom_publications.processors.latex_processor.ObservationGroupLatexProcessor',
+        'TargetList': 'tom_publications.processors.target_list_latex_processor.TargetListLatexProcessor'
+    }
+
+A dictionary with the keys being TOM models classes and the values being the modules that should be used to generate 
+latex tables for those models.

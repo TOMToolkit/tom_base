@@ -246,9 +246,14 @@ TOM_ALERT_CLASSES = [
     'tom_alerts.brokers.lasair.LasairBroker',
     'tom_alerts.brokers.scout.ScoutBroker',
     'tom_alerts.brokers.tns.TNSBroker',
+    'tom_alerts.brokers.antares.ANTARESBroker',
+    'tom_alerts.brokers.gaia.GaiaBroker'
 ]
 
-BROKER_CREDENTIALS = {
+ALERT_CREDENTIALS = {
+    'TNS': {
+        'api_key': ''
+    }
 }
 
 # Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"
