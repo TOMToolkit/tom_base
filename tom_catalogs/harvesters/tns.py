@@ -1,5 +1,4 @@
 import json
-import os
 import requests
 
 from astropy import units as u
@@ -8,29 +7,38 @@ from collections import OrderedDict
 from django.conf import settings
 
 from tom_catalogs.harvester import AbstractHarvester
+from tom_common.exceptions import ImproperCredentialsException
+
+TNS_URL = 'https://wis-tns.weizmann.ac.il'
+
+try:
+    TNS_CREDENTIALS = settings.ALERT_CREDENTIALS['TNS']
+except (AttributeError, KeyError):
+    TNS_CREDENTIALS = {
+        'api_key': ''
+    }
 
 
 def get(term):
-    api_key = settings.BROKER_CREDENTIALS['TNS_APIKEY']
-    url = "https://wis-tns.weizmann.ac.il/api/get"
+    # url = "https://wis-tns.weizmann.ac.il/api/get"
 
-    try:
-        get_url = url + '/object'
+    get_url = TNS_URL + '/api/get/object'
 
-        # change term to json format
-        json_list = [("objname", term)]
-        json_file = OrderedDict(json_list)
+    # change term to json format
+    json_list = [("objname", term)]
+    json_file = OrderedDict(json_list)
 
-        # construct the list of (key,value) pairs
-        get_data = [('api_key', (None, api_key)),
-                    ('data', (None, json.dumps(json_file)))]
+    # construct the list of (key,value) pairs
+    get_data = [('api_key', (None, TNS_CREDENTIALS['api_key'])),
+                ('data', (None, json.dumps(json_file)))]
 
-        response = requests.post(get_url, files=get_data)
-        response = json.loads(response.text)['data']['reply']
-        return response
+    response = requests.post(get_url, files=get_data)
+    response_data = json.loads(response.text)
 
-    except Exception as e:
-        return [None, 'Error message : \n' + str(e)]
+    if 400 <= response_data.get('id_code') <= 403:
+        raise ImproperCredentialsException('TNS: ' + str(response_data.get('id_message')))
+
+    return response_data['data']['reply']
 
 
 class TNSHarvester(AbstractHarvester):
