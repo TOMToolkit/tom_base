@@ -36,6 +36,8 @@ HTML, CSS, Python, and Django
 
 :doc:`Frequently Asked Questions <introduction/faqs>` - Look here for a potential quick answer to a common question.
 
+:doc:`Troubleshooting <introduction/troubleshooting>` - Find solutions to common problems or information on how to debug an issue.
+
 Extending and Customizing
 -------------------------
 
