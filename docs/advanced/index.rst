@@ -12,6 +12,8 @@ Advanced Topics
   scripts
   strategies
   latex_generation
+  querying
+
 
 :doc:`Background Tasks <backgroundtasks>` - Learn how to set up an asynchronous task library to handle long
 running and/or concurrent functions.
@@ -29,3 +31,5 @@ console/scripts) to interact directly with your TOM.
 custom cadence strategy to automate a series of observations
 
 :doc:`LaTeX table generation <latex_generation>` - Learn how to generate LaTeX for certain models and add LaTeX generators for other models
+
+:doc: `Advanced Querying <querying>` - Get a couple of tips on programmatic querying with Django's QuerySet API
