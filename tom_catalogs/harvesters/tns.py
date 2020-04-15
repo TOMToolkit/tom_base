@@ -34,7 +34,6 @@ def get(term):
 
     response = requests.post(get_url, files=get_data)
     response_data = json.loads(response.text)
-    print(response_data)
 
     if 400 <= response_data.get('id_code') <= 403:
         raise ImproperCredentialsException('TNS: ' + str(response_data.get('id_message')))
