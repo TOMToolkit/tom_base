@@ -10,6 +10,7 @@ Introduction
   workflow
   resources
   faqs
+  troubleshooting
 
 :doc:`Architecture <tomarchitecture>` - This document describes the architecture of the TOM Toolkit at a
 high level. Read this first if you're interested in how the TOM Toolkit works.
@@ -22,3 +23,5 @@ high level. Read this first if you're interested in how the TOM Toolkit works.
 HTML, CSS, Python, and Django
 
 :doc:`Frequently Asked Questions <faqs>` - Look here for a potential quick answer to a common question.
+
+:doc:`Troubleshooting <troubleshooting>` - Find solutions to common problems or information on how to debug an issue.
