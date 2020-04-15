@@ -1,5 +1,4 @@
 import json
-import os
 import requests
 
 from astropy import units as u
