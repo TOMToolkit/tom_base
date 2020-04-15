@@ -97,9 +97,9 @@ custom cadence strategy to automate a series of observations.
 :doc:`LaTeX table generation <advanced/latex_generation>` - Learn how to generate LaTeX for certain models and add LaTeX 
 generators for other models.
 
-:doc: `Advanced Querying <advanced/querying>` - Get a couple of tips on programmatic querying with Django's QuerySet API
+:doc:`Advanced Querying <advanced/querying>` - Get a couple of tips on programmatic querying with Django's QuerySet API
 
-:doc: `Authentication exceptions for external services <advanced/exceptions>` - Ensure that your custom external services have 
+:doc:`Authentication exceptions for external services <advanced/exceptions>` - Ensure that your custom external services have 
   appropriate and visible errors.
 
 Deployment
