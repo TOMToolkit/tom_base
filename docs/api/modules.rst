@@ -16,3 +16,4 @@ API Documentation
   tom_dataproducts/index
   tom_observations/index
   tom_targets/index
+  management_commands
