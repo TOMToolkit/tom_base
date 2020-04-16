@@ -7,7 +7,7 @@ from tom_observations import facility
 
 class Command(BaseCommand):
     """
-    Updates the status of each observation request in the TOM. Target id can be specified to update the status for all 
+    Updates the status of each observation request in the TOM. Target id can be specified to update the status for all
     observations for a single target.
     """
 
