@@ -1,4 +1,3 @@
-from abc import abstractmethod
 import logging
 import requests
 
@@ -101,30 +100,29 @@ class GenericManualFacility(GenericObservationFacility):
             final_products.append(dp)
         return final_products
 
-    @abstractmethod
     def get_form(self, observation_type):
         """
         This method takes in an observation type and returns the form type that matches it.
         """
-        pass
+        # TODO: implement me
+        raise NotImplementedError
 
-    @abstractmethod
     def submit_observation(self, observation_payload):
         """
         This method takes in the serialized data from the form and actually
         submits the observation to the remote api
         """
-        pass
+        # TODO: implement me
+        raise NotImplementedError
 
-    @abstractmethod
     def validate_observation(self, observation_payload):
         """
         Same thing as submit_observation, but a dry run. You can
         skip this in different modules by just using "pass"
         """
-        pass
+        # TODO: implement me
+        raise NotImplementedError
 
-    @abstractmethod
     def get_observation_url(self, observation_id):
         """
         Takes an observation id and return the url for which a user
@@ -132,6 +130,8 @@ class GenericManualFacility(GenericObservationFacility):
         we return a URL to the LCO observation portal's observation
         record page.
         """
+        # TODO: implement me
+        raise NotImplementedError
         pass
 
     def get_flux_constant(self):
@@ -160,15 +160,14 @@ class GenericManualFacility(GenericObservationFacility):
         """
         return 'start', 'end'
 
-    @abstractmethod
     def get_terminal_observing_states(self):
         """
         Returns the states for which an observation is not expected
         to change.
         """
-        pass
+        # TODO: implement me
+        raise NotImplementedError
 
-    @abstractmethod
     def get_observing_sites(self):
         """
         Return a list of dictionaries that contain the information
@@ -176,17 +175,17 @@ class GenericManualFacility(GenericObservationFacility):
         list should contain dictionaries each that contain sitecode,
         latitude, longitude and elevation.
         """
-        pass
+        # TODO: implement me
+        raise NotImplementedError
 
-    @abstractmethod
     def get_observation_status(self, observation_id):
         """
         Return the status for a single observation. observation_id should
         be able to be used to retrieve the status from the external service.
         """
-        pass
+        # TODO: implement me
+        raise NotImplementedError
 
-    @abstractmethod
     def data_products(self, observation_id, product_id=None):
         """
         Using an observation_id, retrieve a list of the data
@@ -194,4 +193,5 @@ class GenericManualFacility(GenericObservationFacility):
         the LCO module retrieves a list of frames from the LCO
         data archive.
         """
-        pass
+        # TODO: implement me
+        raise NotImplementedError
