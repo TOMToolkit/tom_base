@@ -67,3 +67,9 @@ We recommend that you use a linter, as all pull requests must pass a `pycodestyl
 ```
 pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
 ```
+
+### Testing
+
+Before PRing, at a minimum you should make sure you run all the tests with `./manage.py test`. If you're modifying a particular module, 
+you should ensure that the existing tests cover all the paths of the code you're writing, and, if they don't, we encourage you to expand 
+them. If you're relatively new to writing tests, or have questions, Django has [https://docs.djangoproject.com/en/3.0/topics/testing/](multiple guides on testing), or you can take a look at the existing tests in the TOM Toolkit.
