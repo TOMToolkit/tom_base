@@ -68,6 +68,7 @@ class GenericObservationFacility(ABC):
     For an implementation example, please see
     https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py
     """
+    name = "Generic"  # rename in concrete subclasses
 
     def update_observation_status(self, observation_id):
         from tom_observations.models import ObservationRecord
