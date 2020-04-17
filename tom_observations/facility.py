@@ -200,7 +200,7 @@ class GenericObservationFacility(ABC):
         Returns the keywords representing the start and end of an observation window for a facility. Defaults to
         ``start`` and ``end``.
         """
-        return ('start', 'end')
+        return 'start', 'end'
 
     @abstractmethod
     def get_terminal_observing_states(self):
