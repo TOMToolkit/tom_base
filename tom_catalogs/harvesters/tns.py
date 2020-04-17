@@ -20,8 +20,6 @@ except (AttributeError, KeyError):
 
 
 def get(term):
-    # url = "https://wis-tns.weizmann.ac.il/api/get"
-
     get_url = TNS_URL + '/api/get/object'
 
     # change term to json format
