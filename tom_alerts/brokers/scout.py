@@ -1,9 +1,10 @@
 import requests
-from urllib.parse import urlencode
 from dateutil.parser import parse
+from urllib.parse import urlencode
+
 from astropy import units as u
 from astropy.coordinates import Angle
-
+from crispy_forms.layout import Fieldset, HTML, Layout
 
 from tom_alerts.alerts import GenericAlert, GenericQueryForm, GenericBroker
 from tom_targets.models import Target
@@ -12,7 +13,17 @@ SCOUT_URL = 'https://ssd-api.jpl.nasa.gov/scout.api'
 
 
 class ScoutQueryForm(GenericQueryForm):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            HTML('''
+                <p>
+                Please see the <a href="https://ssd-api.jpl.nasa.gov/doc/scout.html">Scout API Reference</a>
+                for a detailed description of the service.
+                </p>
+            '''),
+            self.common_layout,
+        )
 
 
 def hours_min_to_decimal(val):
@@ -22,6 +33,11 @@ def hours_min_to_decimal(val):
 
 
 class ScoutBroker(GenericBroker):
+    """
+    The ``ScoutBroker`` is the interface to the Scout alert broker. For information regarding the Scout Broker,
+    please see https://cneos.jpl.nasa.gov/scout/intro.html, as well as https://ssd-api.jpl.nasa.gov/doc/scout.html.
+    """
+
     name = 'Scout'
     form = ScoutQueryForm
 

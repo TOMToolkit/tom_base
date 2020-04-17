@@ -4,11 +4,11 @@ from django.conf import settings
 import requests
 import json
 from datetime import datetime, timedelta
-from crispy_forms.layout import Layout, Div, Fieldset
+from crispy_forms.layout import Div, Fieldset, HTML, Layout
 
 
-tns_search_url = 'https://wis-tns.weizmann.ac.il/api/get/search'
-tns_object_url = 'https://wis-tns.weizmann.ac.il/api/get/object'
+tns_base_url = 'https://wis-tns.weizmann.ac.il/api/get'
+tns_api_url = tns_base_url + '/api/get'
 
 
 class TNSForm(GenericQueryForm):
@@ -41,6 +41,12 @@ class TNSForm(GenericQueryForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper.layout = Layout(
+            HTML('''
+                <p>
+                Please see <a href="https://wis-tns.weizmann.ac.il/sites/default/files/api/TNS_APIs_manual.pdf">
+                the TNS API Manual</a> for a detailed description of available filters.
+                </p>
+            '''),
             self.common_layout,
             'target_name',
             'internal_name',
@@ -74,7 +80,7 @@ class TNSForm(GenericQueryForm):
 
 class TNSBroker(GenericBroker):
     """
-    The ``TNSBroker`` is the interface to the Transient Name Server. For information regarding the TNS, please see \
+    The ``TNSBroker`` is the interface to the Transient Name Server. For information regarding the TNS, please see
     https://wis-tns.weizmann.ac.il/
     """
 
@@ -102,7 +108,7 @@ class TNSBroker(GenericBroker):
                 'public_timestamp': public_timestamp,
             })
          }
-        response = requests.post(tns_search_url, data)
+        response = requests.post(tns_api_url + '/search', data)
         response.raise_for_status()
         transients = response.json()
         alerts = []
@@ -115,7 +121,7 @@ class TNSBroker(GenericBroker):
                     'spectroscopy': 0,
                 })
             }
-            response = requests.post(tns_object_url, data)
+            response = requests.post(tns_api_url + '/object', data)
             response.raise_for_status()
             alert = response.json()['data']['reply']
 
@@ -137,7 +143,7 @@ class TNSBroker(GenericBroker):
     def to_generic_alert(cls, alert):
         return GenericAlert(
             timestamp=alert['discoverydate'],
-            url='https://wis-tns.weizmann.ac.il/object/' + alert['name'],
+            url=tns_base_url + '/object' + alert['name'],
             id=alert['name'],
             name=alert['name_prefix'] + alert['name'],
             ra=alert['radeg'],

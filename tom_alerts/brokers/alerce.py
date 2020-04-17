@@ -1,7 +1,7 @@
 import requests
 
 from django import forms
-from crispy_forms.layout import Layout, Div, Fieldset
+from crispy_forms.layout import HTML, Layout, Div, Fieldset
 from astropy.time import Time, TimezoneInfo
 import datetime
 
@@ -121,6 +121,11 @@ class ALeRCEQueryForm(GenericQueryForm):
         self.fields["classrf"].choices = LATE_CHOICES
 
         self.helper.layout = Layout(
+            HTML('''
+                <p>
+                Please see the <a href="http://alerce.science/">ALeRCE homepage</a> for information about the ALeRCE
+                filters.
+            '''),
             self.common_layout,
             Fieldset(
                 'Number of Epochs',
@@ -220,6 +225,11 @@ class ALeRCEQueryForm(GenericQueryForm):
 
 
 class ALeRCEBroker(GenericBroker):
+    """
+    The ``ALeRCEBroker`` is the interface to the ALeRCE alert broker. For information regarding the ALeRCE objects
+    and classification, please see http://alerce.science.
+    """
+
     name = 'ALeRCE'
     form = ALeRCEQueryForm
 

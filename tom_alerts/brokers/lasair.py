@@ -1,15 +1,33 @@
+import requests
+
+from crispy_forms.layout import Fieldset, HTML, Layout
+from django import forms
+
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
 from tom_targets.models import Target
-from django import forms
-import requests
 
 LASAIR_URL = 'https://lasair.roe.ac.uk'
 
 
 class LasairBrokerForm(GenericQueryForm):
-    name = forms.CharField(required=True)
     cone = forms.CharField(required=False, label='Object Cone Search', help_text='Object RA and Dec')
     sqlquery = forms.CharField(required=False, label='Freeform SQL query', help_text='SQL query')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            HTML('''
+                <p>
+                Please see the <a href="https://lasair.roe.ac.uk/objlist/">Lasair website</a> for more detailed
+                instructions on querying the broker.
+            '''),
+            self.common_layout,
+            Fieldset(
+                None,
+                'cone',
+                'sqlquery'
+            ),
+        )
 
 
 def get_lasair_object(objectId):

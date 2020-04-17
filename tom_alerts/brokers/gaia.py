@@ -1,27 +1,44 @@
-from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
-from tom_alerts.models import BrokerQuery
-from tom_targets.models import Target
-from tom_dataproducts.models import ReducedDatum
-from dateutil.parser import parse
-from django import forms
+import json
+from os import path
+import requests
+from requests.exceptions import HTTPError
+
 from astropy.coordinates import SkyCoord
 from astropy.time import Time, TimezoneInfo
 import astropy.units as u
-import requests
-from requests.exceptions import HTTPError
-import json
-from os import path
+from crispy_forms.layout import Fieldset, HTML, Layout
+from dateutil.parser import parse
+from django import forms
+
+from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
+from tom_dataproducts.models import ReducedDatum
 
 BROKER_URL = 'http://gsaweb.ast.cam.ac.uk/alerts/alertsindex'
 
 
 class GaiaQueryForm(GenericQueryForm):
-    target_name = forms.CharField(required=False)
+    target_name = forms.CharField(required=False, label='Target Name')
     cone = forms.CharField(
         required=False,
         label='Cone Search',
         help_text='RA,Dec,radius in degrees'
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            HTML('''
+                <p>
+                Please see the <a href="http://gsaweb.ast.cam.ac.uk/alerts/tableinfo">Gaia homepage</a> for a detailed
+                description of this broker.
+            '''),
+            self.common_layout,
+            Fieldset(
+                None,
+                'target_name',
+                'cone'
+            )
+        )
 
     def clean(self):
         if len(self.cleaned_data['target_name']) == 0 and \
@@ -32,6 +49,11 @@ class GaiaQueryForm(GenericQueryForm):
 
 
 class GaiaBroker(GenericBroker):
+    """
+    The ``GaiaBroker`` is the interface to the Gaia alert broker. For information regarding the Gaia Science Alerts
+    Project, please see http://gsaweb.ast.cam.ac.uk/alerts/about.
+    """
+
     name = 'Gaia'
     form = GaiaQueryForm
 
