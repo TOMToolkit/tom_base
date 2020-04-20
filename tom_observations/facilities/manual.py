@@ -1,132 +1,44 @@
 import logging
-import requests
 
-from crispy_forms.layout import Layout, HTML
-from django.core.files.base import ContentFile
+from django.conf import settings
 
-from tom_observations.facility import GenericObservationFacility, GenericObservationForm, AUTO_THUMBNAILS
+from tom_observations.facility import BaseManualFacility, BaseManualObservationForm
 
 logger = logging.getLogger(__name__)
 
+try:
+    ZZZ_SETTINGS = settings.FACILITIES['ZZZ']
+except KeyError:
+    ZZZ_SETTINGS = {
+    }
 
-class ManualObservationForm(GenericObservationForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        target_id = self.initial.get('target_id')
-        self.helper.inputs.pop()
-        self.helper.layout = Layout(
-            HTML('''
-                <div>
-                  <p>A Manual Observation Form must be defined.
-                  </p>
-                </div>
-            '''),
-            HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>Back</a>''')
-        )
+SITES = {
+    'Zero-zero Island': {
+        'sitecode': 'zzz',  # top-secret observing site on Zero-zero Island
+        'latitude': 0.0,
+        'longitude': 0.0,
+        'elevation': 0.0
+    },
+}
 
 
-class GenericManualFacility(GenericObservationFacility):
+class GenericManualFacility(BaseManualFacility):
     """
-    The facility class contains all the logic specific to the facility it is
-    written for. Some methods are used only internally (starting with an
-    underscore) but some need to be implemented by all facility classes.
-    All facilities should inherit from  this class which
-    provides some base functionality.
-    In order to make use of a facility class, add the path to
-    ``TOM_FACILITY_CLASSES`` in your ``settings.py``.
-
-    For an implementation example, please see
-    https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py
     """
 
-    name = 'MAN'
-    observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy')]
-    SITES = {}
-
-    def update_observation_status(self, observation_id):
-        from tom_observations.models import ObservationRecord
-        try:
-            record = ObservationRecord.objects.get(observation_id=observation_id)
-            status = self.get_observation_status(observation_id)
-            record.status = status['state']
-            record.scheduled_start = status['scheduled_start']
-            record.scheduled_end = status['scheduled_end']
-            record.save()
-        except ObservationRecord.DoesNotExist:
-            raise Exception('No record exists for that observation id')
-
-    def update_all_observation_statuses(self, target=None):
-        from tom_observations.models import ObservationRecord
-        failed_records = []
-        records = ObservationRecord.objects.filter(facility=self.name)
-        if target:
-            records = records.filter(target=target)
-        records = records.exclude(status__in=self.get_terminal_observing_states())
-        for record in records:
-            try:
-                self.update_observation_status(record.observation_id)
-            except Exception as e:
-                failed_records.append((record.observation_id, str(e)))
-        return failed_records
-
-    def all_data_products(self, observation_record):
-        from tom_dataproducts.models import DataProduct
-        products = {'saved': [], 'unsaved': []}
-        for product in self.data_products(observation_record.observation_id):
-            try:
-                dp = DataProduct.objects.get(product_id=product['id'])
-                products['saved'].append(dp)
-            except DataProduct.DoesNotExist:
-                products['unsaved'].append(product)
-        # Obtain products uploaded manually by users
-        user_products = DataProduct.objects.filter(
-            observation_record_id=observation_record.id, product_id=None
-        )
-        for product in user_products:
-            products['saved'].append(product)
-
-        # Add any JPEG images created from DataProducts
-        image_products = DataProduct.objects.filter(
-            observation_record_id=observation_record.id, data_product_type='image_file'
-        )
-        for product in image_products:
-            products['saved'].append(product)
-        return products
-
-    def save_data_products(self, observation_record, product_id=None):
-        from tom_dataproducts.models import DataProduct
-        from tom_dataproducts.utils import create_image_dataproduct
-        final_products = []
-        products = self.data_products(observation_record.observation_id, product_id)
-
-        for product in products:
-            dp, created = DataProduct.objects.get_or_create(
-                product_id=product['id'],
-                target=observation_record.target,
-                observation_record=observation_record,
-            )
-            if created:
-                product_data = requests.get(product['url']).content
-                dfile = ContentFile(product_data)
-                dp.data.save(product['filename'], dfile)
-                dp.save()
-                logger.info('Saved new dataproduct: {}'.format(dp.data))
-            if AUTO_THUMBNAILS:
-                create_image_dataproduct(dp)
-                dp.get_preview()
-            final_products.append(dp)
-        return final_products
+    name = 'ZZZ'
+    observation_types = [('IMAGING', 'Imaging')]
 
     def get_form(self, observation_type):
         """
         This method takes in an observation type and returns the form type that matches it.
         """
-        return ManualObservationForm
+        return BaseManualObservationForm
 
     def submit_observation(self, observation_payload):
         """
-        This method takes in the serialized data from the form and actually
-        submits the observation to the remote api
+        This method takes in the serialized data from the form.
+
         """
         # TODO: implement me
         raise NotImplementedError
@@ -138,29 +50,6 @@ class GenericManualFacility(GenericObservationFacility):
         """
         # TODO: implement me
         raise NotImplementedError
-
-    def get_observation_url(self, observation_id):
-        """
-        Takes an observation id and return the url for which a user
-        can view the observation at an external location. In this case,
-        we return a URL to the LCO observation portal's observation
-        record page.
-        """
-        # TODO: implement me
-        raise NotImplementedError
-        pass
-
-    def get_flux_constant(self):
-        """
-        Returns the astropy quantity that a facility uses for its spectral flux conversion.
-        """
-        pass
-
-    def get_wavelength_units(self):
-        """
-        Returns the astropy units that a facility uses for its spectral wavelengths
-        """
-        pass
 
     def is_fits_facility(self, header):
         """
@@ -191,7 +80,7 @@ class GenericManualFacility(GenericObservationFacility):
         list should contain dictionaries each that contain sitecode,
         latitude, longitude and elevation.
         """
-        return {}
+        return SITES
 
     def get_observation_status(self, observation_id):
         """
