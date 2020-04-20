@@ -12,7 +12,7 @@ except KeyError:
     ZZZ_SETTINGS = {
     }
 
-SITES = {
+ZZZ_SITES = {
     'Zero-zero Island': {
         'sitecode': 'zzz',  # top-secret observing site on Zero-zero Island
         'latitude': 0.0,
@@ -80,7 +80,7 @@ class GenericManualFacility(BaseManualFacility):
         list should contain dictionaries each that contain sitecode,
         latitude, longitude and elevation.
         """
-        return SITES
+        return ZZZ_SITES
 
     def get_observation_status(self, observation_id):
         """

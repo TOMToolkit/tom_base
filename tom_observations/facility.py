@@ -305,7 +305,7 @@ class BaseManualObservationForm(GenericObservationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.target_id = self.initial.get('target_id')
-        self.helper.inputs.pop()
+
         self.helper.layout = Layout(
             self.common_layout,
             self.layout()
