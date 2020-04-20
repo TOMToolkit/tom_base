@@ -27,6 +27,11 @@ def observing_buttons(target):
     return {'target': target, 'facilities': facilities}
 
 
+@register.inclusion_tag('tom_observations/partials/existing_observation_button.html')
+def existing_observation_button(target):
+    return {'target_id': target.id}
+
+
 @register.inclusion_tag('tom_observations/partials/observation_type_tabs.html', takes_context=True)
 def observation_type_tabs(context):
     """
