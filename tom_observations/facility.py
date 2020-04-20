@@ -6,7 +6,7 @@ import logging
 import requests
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit
+from crispy_forms.layout import Layout, Submit, Div, HTML
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -285,3 +285,120 @@ class GenericObservationForm(forms.Form):
             'target_id': target.id,
             'params': self.serialize_parameters()
         }
+
+
+# TODO: refactor GenericObservationFacility to GenericRoboticFacility (or BaseRoboticFacility)
+# TODO: create new BaseObservationFacility from common parts of Base{Manual, Robotic}Facility classes
+# TODO: refactor BaseManualFacility to be subclass of BaseObservationFacility
+
+#
+# Manual Observing Base Classes
+#
+class BaseManualObservationForm(GenericObservationForm):
+    name = forms.CharField()
+    observation_id = forms.CharField(required=False)
+    observation_params = forms.CharField(
+        widget=forms.TextInput(attrs={'type': 'json'}))
+    start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
+    end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.target_id = self.initial.get('target_id')
+        self.helper.inputs.pop()
+        self.helper.layout = Layout(
+            self.common_layout,
+            self.layout()
+        )
+
+    def layout(self):
+        return Div(
+            Div(
+                Div('name', 'observation_id', 'observation_params', 'start', 'end',
+                    css_class='col'),
+                css_class='form-row'),
+            HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {self.target_id} %}}>Back</a>''')
+        )
+
+
+class BaseManualFacility(ABC):
+    """
+    """
+    name = "BaseManual"  # rename in concrete subclasses
+
+    @abstractmethod
+    def get_form(self, observation_type):
+        """
+        This method takes in an observation type and returns the form type that matches it.
+        """
+        pass
+
+    @abstractmethod
+    def submit_observation(self, observation_payload):
+        """
+        This method takes in the serialized data from the form and actually
+        submits the observation to manual facility (perhaps my email?)
+        """
+        pass
+
+    @abstractmethod
+    def validate_observation(self, observation_payload):
+        """
+        Same thing as submit_observation, but a dry run. You can
+        skip this in different modules by just using "pass"
+        """
+        pass
+
+    def get_flux_constant(self):
+        """
+        Returns the astropy quantity that a facility uses for its spectral flux conversion.
+        """
+        pass
+
+    def get_wavelength_units(self):
+        """
+        Returns the astropy units that a facility uses for its spectral wavelengths
+        """
+        pass
+
+    def is_fits_facility(self, header):
+        """
+        Returns True if the FITS header is from this facility based on valid keywords and associated
+        values, False otherwise.
+        """
+        return False
+
+    def get_start_end_keywords(self):
+        """
+        Returns the keywords representing the start and end of an observation window for a facility. Defaults to
+        ``start`` and ``end``.
+        """
+        return 'start', 'end'
+
+    @abstractmethod
+    def get_terminal_observing_states(self):
+        """
+        Returns the states for which an observation is not expected
+        to change.
+        """
+        pass
+
+    @abstractmethod
+    def get_observing_sites(self):
+        """
+        Return a list of dictionaries that contain the information
+        necessary to be used in the planning (visibility) tool. The
+        list should contain dictionaries each that contain sitecode,
+        latitude, longitude and elevation.
+        """
+        pass
+
+    @abstractmethod
+    def data_products(self, observation_id, product_id=None):
+        """
+        Using an observation_id, retrieve a list of the data
+        products that belong to this observation. In this case,
+        the LCO module retrieves a list of frames from the LCO
+        data archive.
+        """
+        pass
