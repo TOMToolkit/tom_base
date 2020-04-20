@@ -1,11 +1,28 @@
 import logging
 import requests
 
+from crispy_forms.layout import Layout, HTML
 from django.core.files.base import ContentFile
 
-from tom_observations.facility import GenericObservationFacility, AUTO_THUMBNAILS
+from tom_observations.facility import GenericObservationFacility, GenericObservationForm, AUTO_THUMBNAILS
 
 logger = logging.getLogger(__name__)
+
+
+class ManualObservationForm(GenericObservationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        target_id = self.initial.get('target_id')
+        self.helper.inputs.pop()
+        self.helper.layout = Layout(
+            HTML('''
+                <div>
+                  <p>A Manual Observation Form must be defined.
+                  </p>
+                </div>
+            '''),
+            HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>Back</a>''')
+        )
 
 
 class GenericManualFacility(GenericObservationFacility):
@@ -104,8 +121,7 @@ class GenericManualFacility(GenericObservationFacility):
         """
         This method takes in an observation type and returns the form type that matches it.
         """
-        # TODO: implement me
-        raise NotImplementedError
+        return ManualObservationForm
 
     def submit_observation(self, observation_payload):
         """
@@ -175,8 +191,7 @@ class GenericManualFacility(GenericObservationFacility):
         list should contain dictionaries each that contain sitecode,
         latitude, longitude and elevation.
         """
-        # TODO: implement me
-        raise NotImplementedError
+        return {}
 
     def get_observation_status(self, observation_id):
         """
