@@ -11,12 +11,6 @@ def facility_choices():
     return [(k, k) for k in get_service_classes().keys()]
 
 
-class ManualObservationForm(forms.Form):
-    target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
-    facility = forms.ChoiceField(choices=facility_choices)
-    observation_id = forms.CharField()
-
-
 class AddExistingObservationForm(forms.Form):
     target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
     facility = forms.ChoiceField(required=True, choices=facility_choices, label=False)
@@ -50,12 +44,11 @@ class AddExistingObservationForm(forms.Form):
 class ConfirmExistingObservationForm(AddExistingObservationForm):
     # TODO: Should this inherit from AddExistingObservationForm or be its own thing?
     def __init__(self, *args, **kwargs):
-        target_id = kwargs['data']['target_id']
         super().__init__(*args, **kwargs)
         self.fields['facility'].widget = forms.HiddenInput()
         self.fields['observation_id'].widget = forms.HiddenInput()
+        target_id = kwargs['data']['target_id']
         cancel_url = reverse('home')
-        print(target_id)
         if target_id:
             cancel_url = reverse('tom_targets:detail', kwargs={'pk': target_id})
         self.helper.layout = Layout(

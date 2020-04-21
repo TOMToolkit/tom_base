@@ -313,7 +313,13 @@ class ManualObservationCreateView(LoginRequiredMixin, FormView):
     """
     View for associating a pre-existing observation with a target. Requires authentication.
 
-    The GET view returns a confirmation
+    The GET view returns a confirmation page for adding duplicate ObservationRecords. Two duplicates are any two
+    ObservationRecords with the same target_id, facility, and observation_id.
+
+    The POST view validates the form and redirects to the confirmation page if the confirm flag isn't set.
+
+    This view is intended to be navigated to via the existing_observation_button templatetag, as the
+    ConfirmExistingObservationForm has a hidden confirmation checkbox selected by default.
     """
     template_name = 'tom_observations/existing_observation_confirm.html'
     form_class = ConfirmExistingObservationForm
