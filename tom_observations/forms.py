@@ -19,17 +19,21 @@ class ManualObservationForm(forms.Form):
 class AddExistingObservationForm(forms.Form):
     target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
     facility = forms.ChoiceField(required=True, choices=facility_choices, label=False)
+    observation_id = forms.CharField(required=True, label=False,
+                                     widget=forms.TextInput(attrs={'placeholder': 'Observation ID'}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_method = 'GET'
         self.helper.form_action = reverse('tom_observations:manual')
         self.helper.layout = Layout(
             'target_id',
             Row(
                 Column(
                     'facility'
+                ),
+                Column(
+                    'observation_id'
                 ),
                 Column(
                     ButtonHolder(

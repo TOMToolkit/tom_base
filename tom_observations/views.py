@@ -298,10 +298,11 @@ class ObservationGroupCancelView(LoginRequiredMixin, View):
 
 
 class ManualObservationCreateView(LoginRequiredMixin, FormView):
+    # TODO: Add confirmation page for existing conflicting observation
     """
     View for associating a pre-existing observation with a target. Requires authentication.
 
-    This view is not currently exposed in the out-of-the-box TOM Toolkit.
+    The GET view returns a confirmation
     """
     template_name = 'tom_observations/observation_form_manual.html'
     form_class = ManualObservationForm
