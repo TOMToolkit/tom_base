@@ -283,6 +283,11 @@ class ObservationUpdateView(LoginRequiredMixin, UpdateView):
     """
     model = ObservationRecord
     fields = ['observation_id', 'status', 'scheduled_start', 'scheduled_end']
+    template_name = 'tom_observations/observationupdate_form.html'
+
+    def get_form(self):
+        facility_class = get_service_class(self.object.facility)()
+        return facility_class.get_update_form(None)
 
 
 class ObservationGroupCancelView(LoginRequiredMixin, View):
@@ -309,7 +314,6 @@ class ObservationGroupCancelView(LoginRequiredMixin, View):
 
 
 class ManualObservationCreateView(LoginRequiredMixin, FormView):
-    # TODO: Add confirmation page for existing conflicting observation
     """
     View for associating a pre-existing observation with a target. Requires authentication.
 

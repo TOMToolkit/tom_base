@@ -16,7 +16,7 @@ class AddExistingObservationForm(forms.Form):
     facility = forms.ChoiceField(required=True, choices=facility_choices, label=False)
     observation_id = forms.CharField(required=True, label=False,
                                      widget=forms.TextInput(attrs={'placeholder': 'Observation ID'}))
-    confirm = forms.BooleanField(widget=forms.HiddenInput())
+    confirm = forms.BooleanField(widget=forms.HiddenInput(), required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
