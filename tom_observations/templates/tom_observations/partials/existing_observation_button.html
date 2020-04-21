@@ -1,1 +1,3 @@
-<a href="{% url 'observations:manual' %}?target_id={{ target_id }}" title="Add existing observation from facility" class="btn btn-primary">Add Observation From Facility</a>
+{% load crispy_forms_tags %}
+<h4>Add an Existing Observation</h3>
+{% crispy form %}

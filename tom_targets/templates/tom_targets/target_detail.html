@@ -59,9 +59,9 @@
         {% endif %}
       </div>
       <div class="tab-pane" id="observations">
+        {% existing_observation_button object %}
         <h4>Observations</h4>
         <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations Status</a>
-        {% existing_observation_button object %}
         {% observation_list object %}
       </div>
       <div class="tab-pane" id="manage-data">

@@ -1,4 +1,7 @@
 from django import forms
+from django.urls import reverse
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import ButtonHolder, Column, Layout, Row, Submit
 
 from tom_observations.facility import get_service_classes
 
@@ -11,3 +14,27 @@ class ManualObservationForm(forms.Form):
     target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
     facility = forms.ChoiceField(choices=facility_choices)
     observation_id = forms.CharField()
+
+
+class AddExistingObservationForm(forms.Form):
+    target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
+    facility = forms.ChoiceField(required=True, choices=facility_choices, label=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'GET'
+        self.helper.form_action = reverse('tom_observations:manual')
+        self.helper.layout = Layout(
+            'target_id',
+            Row(
+                Column(
+                    'facility'
+                ),
+                Column(
+                    ButtonHolder(
+                        Submit('submit', 'Add Existing Observation')
+                    )
+                )
+            )
+        )
