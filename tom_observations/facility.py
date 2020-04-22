@@ -70,6 +70,15 @@ class GenericObservationFacility(ABC):
     """
     name = "Generic"  # rename in concrete subclasses
 
+# TODO: 4 methods: update_observation_status, update_all_observation_statuses,
+# TODO: all_data_products, and save_data_products are duplicated (via C&P) in
+# TODO: BaseManualFacility(ABC) and GenericObservationFacility(ABC)
+# TODO:
+# TODO: Refactor these methods common into a BaseObservationFacility class
+# TODO: and have  BaseManualFacility and BaseRoboticFacility inherit from that.
+# TODO: (along the way, GenericObservationFacility should be renamed to
+# TODO: BaseRoboticFacility)
+
     def update_observation_status(self, observation_id):
         from tom_observations.models import ObservationRecord
         try:
@@ -325,6 +334,90 @@ class BaseManualFacility(ABC):
     """
     """
     name = "BaseManual"  # rename in concrete subclasses
+
+# TODO: 4 methods: update_observation_status, update_all_observation_statuses,
+# TODO: all_data_products, and save_data_products are duplicated (via C&P) in
+# TODO: BaseManualFacility(ABC) and GenericObservationFacility(ABC)
+# TODO:
+# TODO: Refactor these methods common into a BaseObservationFacility class
+# TODO: and have  BaseManualFacility and BaseRoboticFacility inherit from that.
+# TODO: (along the way, GenericObservationFacility should be renamed to
+# TODO: BaseRoboticFacility)
+
+    def update_observation_status(self, observation_id):
+        from tom_observations.models import ObservationRecord
+        try:
+            record = ObservationRecord.objects.get(observation_id=observation_id)
+            status = self.get_observation_status(observation_id)
+            record.status = status['state']
+            record.scheduled_start = status['scheduled_start']
+            record.scheduled_end = status['scheduled_end']
+            record.save()
+        except ObservationRecord.DoesNotExist:
+            raise Exception('No record exists for that observation id')
+
+    def update_all_observation_statuses(self, target=None):
+        from tom_observations.models import ObservationRecord
+        failed_records = []
+        records = ObservationRecord.objects.filter(facility=self.name)
+        if target:
+            records = records.filter(target=target)
+        records = records.exclude(status__in=self.get_terminal_observing_states())
+        for record in records:
+            try:
+                self.update_observation_status(record.observation_id)
+            except Exception as e:
+                failed_records.append((record.observation_id, str(e)))
+        return failed_records
+
+    def all_data_products(self, observation_record):
+        from tom_dataproducts.models import DataProduct
+        products = {'saved': [], 'unsaved': []}
+        for product in self.data_products(observation_record.observation_id):
+            try:
+                dp = DataProduct.objects.get(product_id=product['id'])
+                products['saved'].append(dp)
+            except DataProduct.DoesNotExist:
+                products['unsaved'].append(product)
+        # Obtain products uploaded manually by users
+        user_products = DataProduct.objects.filter(
+            observation_record_id=observation_record.id, product_id=None
+        )
+        for product in user_products:
+            products['saved'].append(product)
+
+        # Add any JPEG images created from DataProducts
+        image_products = DataProduct.objects.filter(
+            observation_record_id=observation_record.id, data_product_type='image_file'
+        )
+        for product in image_products:
+            products['saved'].append(product)
+        return products
+
+    def save_data_products(self, observation_record, product_id=None):
+        from tom_dataproducts.models import DataProduct
+        from tom_dataproducts.utils import create_image_dataproduct
+        final_products = []
+        products = self.data_products(observation_record.observation_id, product_id)
+
+        for product in products:
+            dp, created = DataProduct.objects.get_or_create(
+                product_id=product['id'],
+                target=observation_record.target,
+                observation_record=observation_record,
+            )
+            if created:
+                product_data = requests.get(product['url']).content
+                dfile = ContentFile(product_data)
+                dp.data.save(product['filename'], dfile)
+                dp.save()
+                logger.info('Saved new dataproduct: {}'.format(dp.data))
+            if AUTO_THUMBNAILS:
+                create_image_dataproduct(dp)
+                dp.get_preview()
+            final_products.append(dp)
+        return final_products
+
 
     @abstractmethod
     def get_form(self, observation_type):
