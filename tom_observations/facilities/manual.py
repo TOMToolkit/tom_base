@@ -6,6 +6,13 @@ from tom_observations.facility import BaseManualFacility, BaseManualObservationF
 
 logger = logging.getLogger(__name__)
 
+
+#
+# facility properties needed by both the Facility and Form classes
+# are candidates for module-level definitions. If the property is just
+# for the Facility, put it in the class definition
+#
+
 try:
     ZZZ_SETTINGS = settings.FACILITIES['ZZZ']
 except KeyError:
@@ -20,6 +27,7 @@ ZZZ_SITES = {
         'elevation': 0.0
     },
 }
+ZZZ_TERMINAL_OBSERVING_STATES = ['Completed']
 
 
 class GenericManualFacility(BaseManualFacility):
@@ -70,8 +78,10 @@ class GenericManualFacility(BaseManualFacility):
         Returns the states for which an observation is not expected
         to change.
         """
-        # TODO: implement me
-        raise NotImplementedError
+        return ZZZ_TERMINAL_OBSERVING_STATES
+
+    def get_observation_url(self, observation_id):
+        return
 
     def get_observing_sites(self):
         """
@@ -97,5 +107,4 @@ class GenericManualFacility(BaseManualFacility):
         the LCO module retrieves a list of frames from the LCO
         data archive.
         """
-        # TODO: implement me
-        raise NotImplementedError
+        return []
