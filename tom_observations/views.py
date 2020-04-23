@@ -254,6 +254,9 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             )
             records.append(record)
 
+        print(f'records: {records}')
+        print(f'observation_ids: {observation_ids}')
+
         if len(records) > 1 or form.cleaned_data.get('cadence_strategy'):
             group_name = form.cleaned_data['name']
             observation_group = ObservationGroup.objects.create(
