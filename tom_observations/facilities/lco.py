@@ -162,12 +162,11 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
         self.helper.layout = Layout(
             self.common_layout,
             self.layout(),
-            self.extra_layout(),
-            self.cadence_layout
+            self.cadence_layout,
+            self.button_layout()
         )
 
     def layout(self):
-
         return Div(
             Div(
                 Div(
@@ -195,10 +194,6 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
                 css_class='form-row'
             ),
         )
-
-    def extra_layout(self):
-        # If you just want to add some fields to the end of the form, add them here.
-        return Div()
 
     def clean_start(self):
         start = self.cleaned_data['start']

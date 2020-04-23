@@ -253,10 +253,15 @@ class GEMObservationForm(BaseRoboticObservationForm):
                                    label='UT Timing Window Start [Date Time]')
     window_duration = forms.IntegerField(required=False, min_value=1, label='Timing Window Duration [hr]')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper.layout = Layout(
-            self.common_layout,
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.helper.layout = Layout(
+    #         self.common_layout,,
+    #         self.button_layout()
+    #     )
+
+    def layout(self):
+        return Div(
             HTML('<big>Observation Parameters</big>'),
             Div(
                 Div(

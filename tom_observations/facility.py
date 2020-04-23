@@ -75,7 +75,6 @@ class BaseObservationForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.add_input(Submit('submit', 'Submit'))
         if settings.TARGET_PERMISSIONS_ONLY:
             self.common_layout = Layout('facility', 'target_id', 'observation_type')
         else:
@@ -83,6 +82,21 @@ class BaseObservationForm(forms.Form):
                                                                    required=False,
                                                                    widget=forms.CheckboxSelectMultiple)
             self.common_layout = Layout('facility', 'target_id', 'observation_type', 'groups')
+        self.helper.layout = Layout(
+            self.common_layout,
+            self.layout(),
+            self.button_layout()
+        )
+
+    def layout(self):
+        return
+
+    def button_layout(self):
+        target_id = self.initial.get('target_id')
+        return ButtonHolder(
+                Submit('submit', 'Submit'),
+                HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>Back</a>''')
+            )
 
     def serialize_parameters(self):
         parameters = copy.deepcopy(self.cleaned_data)
@@ -121,31 +135,28 @@ class BaseManualObservationForm(BaseObservationForm):
     observation_params = forms.CharField(required=False,
                                          widget=forms.Textarea(attrs={'type': 'json'}))
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.target_id = self.initial.get('target_id')
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+        # self.target_id = self.initial.get('target_id')
 
-        # TODO: get Back button horizontally adjacent to Submit
-        # self.helper.add_input(('back', 'Back'))  # FIXME: this is wrong
+        # # TODO: Make the layout common to the parent class
 
-        self.helper.layout = Layout(
-            self.common_layout,
-            self.layout()
-        )
+        # self.helper.layout = Layout(
+        #     self.common_layout,
+        #     self.layout()
+        # )
 
     def layout(self):
-        self.helper.inputs = []
+        # self.helper.inputs = []
 
         return Div(
-            Div(
-                Div('name', 'observation_id', 'start', 'end', 'filter', 'grating',
-                    'instrument', 'annotation', 'observation_params',
-                    css_class='col'),
-                css_class='form-row'),
-            ButtonHolder(
-                Submit('submit', 'Submit'),
-                HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {self.target_id} %}}>Back</a>''')
-            )
+            Div('name', 'observation_id', 'start', 'end', 'observation_params',
+                css_class='col'),
+            css_class='form-row',
+            # ButtonHolder(
+            #     Submit('submit', 'Submit'),
+            #     HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {self.target_id} %}}>Back</a>''')
+            # )
         )
 
     def observation_payload(self):
@@ -331,7 +342,6 @@ class BaseRoboticObservationFacility(BaseFacility):
         record page.
         """
         pass
-
 
     @abstractmethod
     def get_observation_status(self, observation_id):
