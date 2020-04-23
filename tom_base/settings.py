@@ -211,7 +211,9 @@ TOM_LATEX_PROCESSORS = {
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
-    'tom_observations.facilities.manual.GenericManualFacility'
+    'tom_observations.facilities.manual.GenericManualFacility',
+    # 'tom_observations.facility.BaseManualFacility'
+    # FIXME: sort out Base/ManualFacility hierarchy
 ]
 
 TOM_CADENCE_STRATEGIES = [

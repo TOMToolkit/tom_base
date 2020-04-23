@@ -337,6 +337,9 @@ class BaseManualObservationForm(GenericObservationForm):
             HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {self.target_id} %}}>Back</a>''')
         )
 
+    def observation_payload(self):
+        pass
+
 
 class BaseManualFacility(ABC):
     """

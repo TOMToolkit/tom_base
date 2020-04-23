@@ -48,8 +48,13 @@ class GenericManualFacility(BaseManualFacility):
         This method takes in the serialized data from the form.
 
         """
-        # TODO: implement me
-        raise NotImplementedError
+        # TODO: finish implementation
+        print(f'observation_payload: {observation_payload}')
+        obs_ids = []
+        for payload in observation_payload:
+            obs_ids.append(f'{payload}')
+
+        return obs_ids
 
     def validate_observation(self, observation_payload):
         """
