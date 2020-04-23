@@ -2,7 +2,7 @@ import logging
 
 from django.conf import settings
 
-from tom_observations.facility import BaseManualFacility, BaseManualObservationForm
+from tom_observations.facility import BaseManualObservationFacility, BaseManualObservationForm
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ ZZZ_SITES = {
 ZZZ_TERMINAL_OBSERVING_STATES = ['Completed']
 
 
-class GenericManualFacility(BaseManualFacility):
+class TestManualFacility(BaseManualObservationFacility):
     """
     """
 

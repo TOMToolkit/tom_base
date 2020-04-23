@@ -6,7 +6,7 @@ import logging
 import requests
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, Div, HTML
+from crispy_forms.layout import ButtonHolder, Layout, Submit, Div, HTML
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -55,7 +55,176 @@ def get_service_class(name):
         raise ImportError('Could not a find a facility with that name. Did you add it to TOM_FACILITY_CLASSES?')
 
 
-class GenericObservationFacility(ABC):
+class BaseObservationForm(forms.Form):
+    """
+    This is the class that is responsible for displaying the observation request form.
+    Facility classes that provide a form should subclass this form. It provides
+    some base shared functionality. Extra fields are provided below.
+    The layout is handled by Django crispy forms which allows customizability of the
+    form layout without needing to write html templates:
+    https://django-crispy-forms.readthedocs.io/en/d-0/layouts.html
+    See the documentation on Django forms for more information.
+
+    For an implementation example please see
+    https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py#L132
+    """
+    facility = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
+    target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
+    observation_type = forms.CharField(required=False, max_length=50, widget=forms.HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.add_input(Submit('submit', 'Submit'))
+        if settings.TARGET_PERMISSIONS_ONLY:
+            self.common_layout = Layout('facility', 'target_id', 'observation_type')
+        else:
+            self.fields['groups'] = forms.ModelMultipleChoiceField(Group.objects.none(),
+                                                                   required=False,
+                                                                   widget=forms.CheckboxSelectMultiple)
+            self.common_layout = Layout('facility', 'target_id', 'observation_type', 'groups')
+
+    def serialize_parameters(self):
+        parameters = copy.deepcopy(self.cleaned_data)
+        parameters.pop('groups', None)
+        return json.dumps(parameters)
+
+    def observation_payload(self):
+        """
+        This method is called to extract the data from the form into a dictionary that
+        can be used by the rest of the module. In the base implementation it simply dumps
+        the form into a json string.
+        """
+        target = Target.objects.get(pk=self.cleaned_data['target_id'])
+        return {
+            'target_id': target.id,
+            'params': self.serialize_parameters()
+        }
+
+
+class BaseRoboticObservationForm(BaseObservationForm):
+    pass
+
+
+# TODO: refactor GenericObservationFacility to GenericRoboticFacility (or BaseRoboticFacility)
+# TODO: create new BaseObservationFacility from common parts of Base{Manual, Robotic}Facility classes
+# TODO: refactor BaseManualFacility to be subclass of BaseObservationFacility
+
+#
+# Manual Observing Base Classes
+#
+class BaseManualObservationForm(BaseObservationForm):
+    name = forms.CharField()
+    start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
+    end = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'date'}))
+    observation_id = forms.CharField(required=False)
+    observation_params = forms.CharField(required=False,
+                                         widget=forms.Textarea(attrs={'type': 'json'}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.target_id = self.initial.get('target_id')
+
+        # TODO: get Back button horizontally adjacent to Submit
+        # self.helper.add_input(('back', 'Back'))  # FIXME: this is wrong
+
+        self.helper.layout = Layout(
+            self.common_layout,
+            self.layout()
+        )
+
+    def layout(self):
+        self.helper.inputs = []
+
+        return Div(
+            Div(
+                Div('name', 'observation_id', 'start', 'end', 'filter', 'grating',
+                    'instrument', 'annotation', 'observation_params',
+                    css_class='col'),
+                css_class='form-row'),
+            ButtonHolder(
+                Submit('submit', 'Submit'),
+                HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {self.target_id} %}}>Back</a>''')
+            )
+        )
+
+    def observation_payload(self):
+        print(self.cleaned_data)
+        return self.serialize_parameters()
+
+
+class BaseFacility(ABC):
+    name = 'Generic'
+
+    @abstractmethod
+    def get_form(self, observation_type):
+        """
+        This method takes in an observation type and returns the form type that matches it.
+        """
+        pass
+
+    @abstractmethod
+    def submit_observation(self, observation_payload):
+        """
+        This method takes in the serialized data from the form and actually
+        submits the observation to the remote api
+        """
+        pass
+
+    @abstractmethod
+    def validate_observation(self, observation_payload):
+        """
+        Same thing as submit_observation, but a dry run. You can
+        skip this in different modules by just using "pass"
+        """
+        pass
+
+    def get_flux_constant(self):
+        """
+        Returns the astropy quantity that a facility uses for its spectral flux conversion.
+        """
+        pass
+
+    def get_wavelength_units(self):
+        """
+        Returns the astropy units that a facility uses for its spectral wavelengths
+        """
+        pass
+
+    def is_fits_facility(self, header):
+        """
+        Returns True if the FITS header is from this facility based on valid keywords and associated
+        values, False otherwise.
+        """
+        return False
+
+    def get_start_end_keywords(self):
+        """
+        Returns the keywords representing the start and end of an observation window for a facility. Defaults to
+        ``start`` and ``end``.
+        """
+        return 'start', 'end'
+
+    @abstractmethod
+    def get_terminal_observing_states(self):
+        """
+        Returns the states for which an observation is not expected
+        to change.
+        """
+        pass
+
+    @abstractmethod
+    def get_observing_sites(self):
+        """
+        Return a list of dictionaries that contain the information
+        necessary to be used in the planning (visibility) tool. The
+        list should contain dictionaries each that contain sitecode,
+        latitude, longitude and elevation.
+        """
+        pass
+
+
+class BaseRoboticObservationFacility(BaseFacility):
     """
     The facility class contains all the logic specific to the facility it is
     written for. Some methods are used only internally (starting with an
@@ -154,29 +323,6 @@ class GenericObservationFacility(ABC):
         return final_products
 
     @abstractmethod
-    def get_form(self, observation_type):
-        """
-        This method takes in an observation type and returns the form type that matches it.
-        """
-        pass
-
-    @abstractmethod
-    def submit_observation(self, observation_payload):
-        """
-        This method takes in the serialized data from the form and actually
-        submits the observation to the remote api
-        """
-        pass
-
-    @abstractmethod
-    def validate_observation(self, observation_payload):
-        """
-        Same thing as submit_observation, but a dry run. You can
-        skip this in different modules by just using "pass"
-        """
-        pass
-
-    @abstractmethod
     def get_observation_url(self, observation_id):
         """
         Takes an observation id and return the url for which a user
@@ -186,49 +332,6 @@ class GenericObservationFacility(ABC):
         """
         pass
 
-    def get_flux_constant(self):
-        """
-        Returns the astropy quantity that a facility uses for its spectral flux conversion.
-        """
-        pass
-
-    def get_wavelength_units(self):
-        """
-        Returns the astropy units that a facility uses for its spectral wavelengths
-        """
-        pass
-
-    def is_fits_facility(self, header):
-        """
-        Returns True if the FITS header is from this facility based on valid keywords and associated
-        values, False otherwise.
-        """
-        return False
-
-    def get_start_end_keywords(self):
-        """
-        Returns the keywords representing the start and end of an observation window for a facility. Defaults to
-        ``start`` and ``end``.
-        """
-        return 'start', 'end'
-
-    @abstractmethod
-    def get_terminal_observing_states(self):
-        """
-        Returns the states for which an observation is not expected
-        to change.
-        """
-        pass
-
-    @abstractmethod
-    def get_observing_sites(self):
-        """
-        Return a list of dictionaries that contain the information
-        necessary to be used in the planning (visibility) tool. The
-        list should contain dictionaries each that contain sitecode,
-        latitude, longitude and elevation.
-        """
-        pass
 
     @abstractmethod
     def get_observation_status(self, observation_id):
@@ -249,102 +352,10 @@ class GenericObservationFacility(ABC):
         pass
 
 
-class GenericObservationForm(forms.Form):
-    """
-    This is the class that is responsible for displaying the observation request form.
-    Facility classes that provide a form should subclass this form. It provides
-    some base shared functionality. Extra fields are provided below.
-    The layout is handled by Django crispy forms which allows customizability of the
-    form layout without needing to write html templates:
-    https://django-crispy-forms.readthedocs.io/en/d-0/layouts.html
-    See the documentation on Django forms for more information.
-
-    For an implementation example please see
-    https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py#L132
-    """
-    facility = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
-    target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
-    observation_type = forms.CharField(required=False, max_length=50, widget=forms.HiddenInput())
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.add_input(Submit('submit', 'Submit'))
-        if settings.TARGET_PERMISSIONS_ONLY:
-            self.common_layout = Layout('facility', 'target_id', 'observation_type')
-        else:
-            self.fields['groups'] = forms.ModelMultipleChoiceField(Group.objects.none(),
-                                                                   required=False,
-                                                                   widget=forms.CheckboxSelectMultiple)
-            self.common_layout = Layout('facility', 'target_id', 'observation_type', 'groups')
-
-    def serialize_parameters(self):
-        parameters = copy.deepcopy(self.cleaned_data)
-        parameters.pop('groups', None)
-        return json.dumps(parameters)
-
-    def observation_payload(self):
-        """
-        This method is called to extract the data from the form into a dictionary that
-        can be used by the rest of the module. In the base implementation it simply dumps
-        the form into a json string.
-        """
-        target = Target.objects.get(pk=self.cleaned_data['target_id'])
-        return {
-            'target_id': target.id,
-            'params': self.serialize_parameters()
-        }
-
-
-# TODO: refactor GenericObservationFacility to GenericRoboticFacility (or BaseRoboticFacility)
-# TODO: create new BaseObservationFacility from common parts of Base{Manual, Robotic}Facility classes
-# TODO: refactor BaseManualFacility to be subclass of BaseObservationFacility
-
-#
-# Manual Observing Base Classes
-#
-class BaseManualObservationForm(GenericObservationForm):
-    name = forms.CharField()
-    start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
-    end = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'date'}))
-    observation_id = forms.CharField(required=False)
-    filter = forms.CharField(required=False)
-    grating = forms.CharField(required=False)
-    instrument = forms.CharField(required=False)
-    annotation = forms.CharField(required=False, widget=forms.Textarea())
-    observation_params = forms.CharField(required=False,
-                                         widget=forms.Textarea(attrs={'type': 'json'}))
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.target_id = self.initial.get('target_id')
-
-        # TODO: get Back button horizontally adjacent to Submit
-        # self.helper.add_input(('back', 'Back'))  # FIXME: this is wrong
-
-        self.helper.layout = Layout(
-            self.common_layout,
-            self.layout()
-        )
-
-    def layout(self):
-        return Div(
-            Div(
-                Div('name', 'observation_id', 'start', 'end', 'filter', 'grating',
-                    'instrument', 'annotation', 'observation_params',
-                    css_class='col'),
-                css_class='form-row'),
-            HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {self.target_id} %}}>Back</a>''')
-        )
-
-    def observation_payload(self):
-        pass
-
-
-class BaseManualFacility(ABC):
+class BaseManualObservationFacility(BaseFacility):
     """
     """
-    name = "BaseManual"  # rename in concrete subclasses
+    name = 'GenericManual'  # rename in concrete subclasses
 
 # TODO: 4 methods: update_observation_status, update_all_observation_statuses,
 # TODO: all_data_products, and save_data_products are duplicated (via C&P) in
@@ -354,155 +365,3 @@ class BaseManualFacility(ABC):
 # TODO: and have  BaseManualFacility and BaseRoboticFacility inherit from that.
 # TODO: (along the way, GenericObservationFacility should be renamed to
 # TODO: BaseRoboticFacility)
-
-    def update_observation_status(self, observation_id):
-        from tom_observations.models import ObservationRecord
-        try:
-            record = ObservationRecord.objects.get(observation_id=observation_id)
-            status = self.get_observation_status(observation_id)
-            record.status = status['state']
-            record.scheduled_start = status['scheduled_start']
-            record.scheduled_end = status['scheduled_end']
-            record.save()
-        except ObservationRecord.DoesNotExist:
-            raise Exception('No record exists for that observation id')
-
-    def update_all_observation_statuses(self, target=None):
-        from tom_observations.models import ObservationRecord
-        failed_records = []
-        records = ObservationRecord.objects.filter(facility=self.name)
-        if target:
-            records = records.filter(target=target)
-        records = records.exclude(status__in=self.get_terminal_observing_states())
-        for record in records:
-            try:
-                self.update_observation_status(record.observation_id)
-            except Exception as e:
-                failed_records.append((record.observation_id, str(e)))
-        return failed_records
-
-    def all_data_products(self, observation_record):
-        from tom_dataproducts.models import DataProduct
-        products = {'saved': [], 'unsaved': []}
-        for product in self.data_products(observation_record.observation_id):
-            try:
-                dp = DataProduct.objects.get(product_id=product['id'])
-                products['saved'].append(dp)
-            except DataProduct.DoesNotExist:
-                products['unsaved'].append(product)
-        # Obtain products uploaded manually by users
-        user_products = DataProduct.objects.filter(
-            observation_record_id=observation_record.id, product_id=None
-        )
-        for product in user_products:
-            products['saved'].append(product)
-
-        # Add any JPEG images created from DataProducts
-        image_products = DataProduct.objects.filter(
-            observation_record_id=observation_record.id, data_product_type='image_file'
-        )
-        for product in image_products:
-            products['saved'].append(product)
-        return products
-
-    def save_data_products(self, observation_record, product_id=None):
-        from tom_dataproducts.models import DataProduct
-        from tom_dataproducts.utils import create_image_dataproduct
-        final_products = []
-        products = self.data_products(observation_record.observation_id, product_id)
-
-        for product in products:
-            dp, created = DataProduct.objects.get_or_create(
-                product_id=product['id'],
-                target=observation_record.target,
-                observation_record=observation_record,
-            )
-            if created:
-                product_data = requests.get(product['url']).content
-                dfile = ContentFile(product_data)
-                dp.data.save(product['filename'], dfile)
-                dp.save()
-                logger.info('Saved new dataproduct: {}'.format(dp.data))
-            if AUTO_THUMBNAILS:
-                create_image_dataproduct(dp)
-                dp.get_preview()
-            final_products.append(dp)
-        return final_products
-
-
-    @abstractmethod
-    def get_form(self, observation_type):
-        """
-        This method takes in an observation type and returns the form type that matches it.
-        """
-        pass
-
-    @abstractmethod
-    def submit_observation(self, observation_payload):
-        """
-        This method takes in the serialized data from the form and actually
-        submits the observation to manual facility (perhaps my email?)
-        """
-        pass
-
-    @abstractmethod
-    def validate_observation(self, observation_payload):
-        """
-        Same thing as submit_observation, but a dry run. You can
-        skip this in different modules by just using "pass"
-        """
-        pass
-
-    def get_flux_constant(self):
-        """
-        Returns the astropy quantity that a facility uses for its spectral flux conversion.
-        """
-        pass
-
-    def get_wavelength_units(self):
-        """
-        Returns the astropy units that a facility uses for its spectral wavelengths
-        """
-        pass
-
-    def is_fits_facility(self, header):
-        """
-        Returns True if the FITS header is from this facility based on valid keywords and associated
-        values, False otherwise.
-        """
-        return False
-
-    def get_start_end_keywords(self):
-        """
-        Returns the keywords representing the start and end of an observation window for a facility. Defaults to
-        ``start`` and ``end``.
-        """
-        return 'start', 'end'
-
-    @abstractmethod
-    def get_terminal_observing_states(self):
-        """
-        Returns the states for which an observation is not expected
-        to change.
-        """
-        pass
-
-    @abstractmethod
-    def get_observing_sites(self):
-        """
-        Return a list of dictionaries that contain the information
-        necessary to be used in the planning (visibility) tool. The
-        list should contain dictionaries each that contain sitecode,
-        latitude, longitude and elevation.
-        """
-        pass
-
-    @abstractmethod
-    def data_products(self, observation_id, product_id=None):
-        """
-        Using an observation_id, retrieve a list of the data
-        products that belong to this observation. In this case,
-        the LCO module retrieves a list of frames from the LCO
-        data archive.
-        """
-        pass

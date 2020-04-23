@@ -9,7 +9,7 @@ from django.core.cache import cache
 
 from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.cadence import CadenceForm
-from tom_observations.facility import GenericObservationFacility, GenericObservationForm, get_service_class
+from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
 from tom_observations.observing_strategy import GenericStrategyForm
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
@@ -136,7 +136,7 @@ class LCOBaseForm(forms.Form):
         return choices
 
 
-class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm, CadenceForm):
+class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceForm):
     name = forms.CharField()
     ipp_value = forms.FloatField(label='Intra Proposal Priority (IPP factor)',
                                  min_value=0.5,
@@ -445,7 +445,7 @@ class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
         )
 
 
-class LCOFacility(GenericObservationFacility):
+class LCOFacility(BaseRoboticObservationFacility):
     """
     The ``LCOFacility`` is the interface to the Las Cumbres Observatory Observation Portal. For information regarding
     LCO observing and the available parameters, please see https://observe.lco.global/help/.

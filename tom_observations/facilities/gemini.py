@@ -5,9 +5,8 @@ from dateutil.parser import parse
 from crispy_forms.layout import Layout, Div, HTML
 from astropy import units as u
 
-from tom_observations.facility import GenericObservationForm
+from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.facility import GenericObservationFacility
 from tom_targets.models import Target
 
 try:
@@ -117,7 +116,7 @@ def get_site(progid, location=False):
     return site
 
 
-class GEMObservationForm(GenericObservationForm):
+class GEMObservationForm(BaseRoboticObservationForm):
     """
     The GEMObservationForm defines and collects the parameters for the Gemini
     Target of Opportunity (ToO) observation request API. The Gemini ToO process is described at
@@ -412,7 +411,7 @@ class GEMObservationForm(GenericObservationForm):
         return payloads
 
 
-class GEMFacility(GenericObservationFacility):
+class GEMFacility(BaseRoboticObservationFacility):
     """
     The ``GEMFacility`` is the interface to the Gemini Telescope. For information regarding Gemini observing and the
     available parameters, please see https://www.gemini.edu/sciops/observing-gemini.
