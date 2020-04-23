@@ -132,31 +132,17 @@ class BaseManualObservationForm(BaseObservationForm):
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     end = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'date'}))
     observation_id = forms.CharField(required=False)
-    observation_params = forms.CharField(required=False,
-                                         widget=forms.Textarea(attrs={'type': 'json'}))
-
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-        # self.target_id = self.initial.get('target_id')
-
-        # # TODO: Make the layout common to the parent class
-
-        # self.helper.layout = Layout(
-        #     self.common_layout,
-        #     self.layout()
-        # )
+    observation_params = forms.CharField(required=False, widget=forms.Textarea(attrs={'type': 'json'}))
 
     def layout(self):
-        # self.helper.inputs = []
-
         return Div(
-            Div('name', 'observation_id', 'start', 'end', 'observation_params',
-                css_class='col'),
-            css_class='form-row',
-            # ButtonHolder(
-            #     Submit('submit', 'Submit'),
-            #     HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {self.target_id} %}}>Back</a>''')
-            # )
+            Div('name', 'observation_id'),
+            Div(
+                Div('start', css_class='col'),
+                Div('end', css_class='col'),
+                css_class='form-row'
+            ),
+            Div('observation_params')
         )
 
     def observation_payload(self):
