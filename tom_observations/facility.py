@@ -120,8 +120,10 @@ class BaseRoboticObservationForm(BaseObservationForm):
     pass
 
 
-# TODO: refactor GenericObservationFacility to GenericRoboticFacility (or BaseRoboticFacility)
-# TODO: create new BaseObservationFacility from common parts of Base{Manual, Robotic}Facility classes
+# This aliasing exists to support backwards compatibility
+GenericObservationForm = BaseRoboticObservationForm
+
+
 # TODO: refactor BaseManualFacility to be subclass of BaseObservationFacility
 
 #
@@ -144,10 +146,6 @@ class BaseManualObservationForm(BaseObservationForm):
             ),
             Div('observation_params')
         )
-
-    def observation_payload(self):
-        print(self.cleaned_data)
-        return self.serialize_parameters()
 
 
 class BaseFacility(ABC):
@@ -235,15 +233,6 @@ class BaseRoboticObservationFacility(BaseFacility):
     https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py
     """
     name = "Generic"  # rename in concrete subclasses
-
-# TODO: 4 methods: update_observation_status, update_all_observation_statuses,
-# TODO: all_data_products, and save_data_products are duplicated (via C&P) in
-# TODO: BaseManualFacility(ABC) and GenericObservationFacility(ABC)
-# TODO:
-# TODO: Refactor these methods common into a BaseObservationFacility class
-# TODO: and have  BaseManualFacility and BaseRoboticFacility inherit from that.
-# TODO: (along the way, GenericObservationFacility should be renamed to
-# TODO: BaseRoboticFacility)
 
     def update_observation_status(self, observation_id):
         from tom_observations.models import ObservationRecord
@@ -348,16 +337,11 @@ class BaseRoboticObservationFacility(BaseFacility):
         pass
 
 
+# This aliasing exists to support backwards compatibility
+GenericObservationFacility = BaseRoboticObservationFacility
+
+
 class BaseManualObservationFacility(BaseFacility):
     """
     """
     name = 'GenericManual'  # rename in concrete subclasses
-
-# TODO: 4 methods: update_observation_status, update_all_observation_statuses,
-# TODO: all_data_products, and save_data_products are duplicated (via C&P) in
-# TODO: BaseManualFacility(ABC) and GenericObservationFacility(ABC)
-# TODO:
-# TODO: Refactor these methods common into a BaseObservationFacility class
-# TODO: and have  BaseManualFacility and BaseRoboticFacility inherit from that.
-# TODO: (along the way, GenericObservationFacility should be renamed to
-# TODO: BaseRoboticFacility)
