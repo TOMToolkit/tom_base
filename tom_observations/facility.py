@@ -305,15 +305,22 @@ class GenericObservationForm(forms.Form):
 #
 class BaseManualObservationForm(GenericObservationForm):
     name = forms.CharField()
-    observation_id = forms.CharField(required=False)
-    observation_params = forms.CharField(
-        widget=forms.TextInput(attrs={'type': 'json'}))
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
-    end = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
+    end = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'date'}))
+    observation_id = forms.CharField(required=False)
+    filter = forms.CharField(required=False)
+    grating = forms.CharField(required=False)
+    instrument = forms.CharField(required=False)
+    annotation = forms.CharField(required=False, widget=forms.Textarea())
+    observation_params = forms.CharField(required=False,
+                                         widget=forms.Textarea(attrs={'type': 'json'}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.target_id = self.initial.get('target_id')
+
+        # TODO: get Back button horizontally adjacent to Submit
+        # self.helper.add_input(('back', 'Back'))  # FIXME: this is wrong
 
         self.helper.layout = Layout(
             self.common_layout,
@@ -323,7 +330,8 @@ class BaseManualObservationForm(GenericObservationForm):
     def layout(self):
         return Div(
             Div(
-                Div('name', 'observation_id', 'observation_params', 'start', 'end',
+                Div('name', 'observation_id', 'start', 'end', 'filter', 'grating',
+                    'instrument', 'annotation', 'observation_params',
                     css_class='col'),
                 css_class='form-row'),
             HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {self.target_id} %}}>Back</a>''')
