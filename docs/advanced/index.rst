@@ -11,6 +11,7 @@ Advanced Topics
   custom_code
   scripts
   strategies
+  latex_generation
 
 :doc:`Background Tasks <backgroundtasks>` - Learn how to set up an asynchronous task library to handle long
 running and/or concurrent functions.

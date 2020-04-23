@@ -30,6 +30,7 @@ def find_fits_img_size(filename):
     :returns: Tuple of horizontal/vertical dimensions
     :rtype: tuple
     """
+
     try:
         return settings.THUMBNAIL_MAX_SIZE
     except AttributeError:
@@ -55,6 +56,7 @@ def is_fits_image_file(file):
     :returns: True if the file is a FITS image, False otherwise
     :rtype: boolean
     """
+
     with file.open() as f:
         try:
             hdul = fits.open(f)
@@ -143,7 +145,7 @@ class DataProduct(models.Model):
     :type modified: datetime
 
     :param data_product_type: The type of data referred to by this object. Default options are photometry, fits_file,
-    spectroscopy, or image_file. Can be configured in settings.py.
+        spectroscopy, or image_file. Can be configured in settings.py.
     :type data_product_type: str
 
     :param featured: Whether or not the data product is intended to be featured, used by default on the target detail
@@ -151,6 +153,7 @@ class DataProduct(models.Model):
     :type featured: boolean
 
     :param thumbnail: The thumbnail file associated with this object. Only generated for FITS image files.
+    :type thumbnail: FileField
     """
 
     FITS_EXTENSIONS = {
@@ -279,7 +282,7 @@ class ReducedDatum(models.Model):
     :param data_product: The ``DataProduct`` with which this object is optionally associated.
 
     :param data_type: The type of data this datum represents. Default choices are the default values found in
-    DATA_PRODUCT_TYPES in settings.py.
+        DATA_PRODUCT_TYPES in settings.py.
     :type data_type: str
 
     :param source_name: The original source of this datum. The current major use of this field is to track the broker a
@@ -316,8 +319,8 @@ class ReducedDatum(models.Model):
                   It should be noted that when storing a dict in a ``ReducedDatum`` value field, it should always be
                   converted with ``json.dumps`` before saving, as certain functions in the TOM Toolkit call
                   ``json.loads`` with ``ReducedDatum`` value fields.
-
     :type value: str
+
     """
 
     target = models.ForeignKey(Target, null=False, on_delete=models.CASCADE)
