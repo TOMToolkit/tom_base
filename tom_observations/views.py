@@ -26,7 +26,7 @@ from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.facility import get_service_class, get_service_classes
-from tom_observations.forms import ConfirmExistingObservationForm
+from tom_observations.forms import AddExistingObservationForm
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
 from tom_targets.models import Target
 
@@ -330,7 +330,32 @@ class ManualObservationCreateView(LoginRequiredMixin, FormView):
     ConfirmExistingObservationForm has a hidden confirmation checkbox selected by default.
     """
     template_name = 'tom_observations/existing_observation_confirm.html'
-    form_class = ConfirmExistingObservationForm
+    form_class = AddExistingObservationForm
+
+    def get_form(self):
+        form = super().get_form()
+        form.fields['facility'].widget = forms.HiddenInput()
+        form.fields['observation_id'].widget = forms.HiddenInput()
+        if self.request.method == 'GET':
+            target_id = self.request.GET.get('target_id')
+        elif self.request.method == 'POST':
+            target_id = self.request.POST.get('target_id')
+        cancel_url = reverse('home')
+        if target_id:
+            cancel_url = reverse('tom_targets:detail', kwargs={'pk': target_id})
+        form.helper.layout = Layout(
+            HTML('''<p>An observation record already exists in your TOM for this combination of observation ID,
+                 facility, and target. Are you sure you want to create this record?</p>'''),
+            'target_id',
+            'facility',
+            'observation_id',
+            'confirm',
+            FormActions(
+                Submit('confirm', 'Confirm'),
+                HTML(f'<a class="btn btn-outline-primary" href={cancel_url}>Cancel</a>')
+            )
+        )
+        return form
 
     def get_initial(self):
         """
