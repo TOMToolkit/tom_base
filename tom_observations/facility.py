@@ -153,6 +153,30 @@ class BaseManualObservationForm(BaseObservationForm):
 class BaseObservationFacility(ABC):
     name = 'Generic'
 
+    def all_data_products(self, observation_record):
+        from tom_dataproducts.models import DataProduct
+        products = {'saved': [], 'unsaved': []}
+        for product in self.data_products(observation_record.observation_id):
+            try:
+                dp = DataProduct.objects.get(product_id=product['id'])
+                products['saved'].append(dp)
+            except DataProduct.DoesNotExist:
+                products['unsaved'].append(product)
+        # Obtain products uploaded manually by users
+        user_products = DataProduct.objects.filter(
+            observation_record_id=observation_record.id, product_id=None
+        )
+        for product in user_products:
+            products['saved'].append(product)
+
+        # Add any JPEG images created from DataProducts
+        image_products = DataProduct.objects.filter(
+            observation_record_id=observation_record.id, data_product_type='image_file'
+        )
+        for product in image_products:
+            products['saved'].append(product)
+        return products
+
     @abstractmethod
     def get_form(self, observation_type):
         """
@@ -261,30 +285,6 @@ class BaseRoboticObservationFacility(BaseObservationFacility):
             except Exception as e:
                 failed_records.append((record.observation_id, str(e)))
         return failed_records
-
-    def all_data_products(self, observation_record):
-        from tom_dataproducts.models import DataProduct
-        products = {'saved': [], 'unsaved': []}
-        for product in self.data_products(observation_record.observation_id):
-            try:
-                dp = DataProduct.objects.get(product_id=product['id'])
-                products['saved'].append(dp)
-            except DataProduct.DoesNotExist:
-                products['unsaved'].append(product)
-        # Obtain products uploaded manually by users
-        user_products = DataProduct.objects.filter(
-            observation_record_id=observation_record.id, product_id=None
-        )
-        for product in user_products:
-            products['saved'].append(product)
-
-        # Add any JPEG images created from DataProducts
-        image_products = DataProduct.objects.filter(
-            observation_record_id=observation_record.id, data_product_type='image_file'
-        )
-        for product in image_products:
-            products['saved'].append(product)
-        return products
 
     def save_data_products(self, observation_record, product_id=None):
         from tom_dataproducts.models import DataProduct

@@ -256,6 +256,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
 
         print(f'records: {records}')
         print(f'observation_ids: {observation_ids}')
+        # TODO: redirect to observation list for multiple observations, observation detail otherwise
 
         if len(records) > 1 or form.cleaned_data.get('cadence_strategy'):
             group_name = form.cleaned_data['name']

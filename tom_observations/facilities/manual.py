@@ -88,9 +88,6 @@ class TestManualFacility(BaseManualObservationFacility):
         """
         return ZZZ_TERMINAL_OBSERVING_STATES
 
-    def get_observation_url(self, observation_id):
-        return
-
     def get_observing_sites(self):
         """
         Return a list of dictionaries that contain the information
@@ -99,14 +96,6 @@ class TestManualFacility(BaseManualObservationFacility):
         latitude, longitude and elevation.
         """
         return ZZZ_SITES
-
-    def get_observation_status(self, observation_id):
-        """
-        Return the status for a single observation. observation_id should
-        be able to be used to retrieve the status from the external service.
-        """
-        # TODO: implement me
-        raise NotImplementedError
 
     def data_products(self, observation_id, product_id=None):
         """
