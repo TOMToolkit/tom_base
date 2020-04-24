@@ -151,7 +151,7 @@ class BaseManualObservationForm(BaseObservationForm):
 
 
 class BaseObservationFacility(ABC):
-    name = 'Generic'
+    name = 'BaseObservation'
 
     def all_data_products(self, observation_record):
         from tom_dataproducts.models import DataProduct
@@ -258,7 +258,7 @@ class BaseRoboticObservationFacility(BaseObservationFacility):
     For an implementation example, please see
     https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py
     """
-    name = "Generic"  # rename in concrete subclasses
+    name = "BaseRobotic"  # rename in concrete subclasses
 
     def update_observation_status(self, observation_id):
         from tom_observations.models import ObservationRecord
@@ -346,4 +346,4 @@ GenericObservationFacility = BaseRoboticObservationFacility
 class BaseManualObservationFacility(BaseObservationFacility):
     """
     """
-    name = 'GenericManual'  # rename in concrete subclasses
+    name = 'BaseManual'  # rename in concrete subclasses

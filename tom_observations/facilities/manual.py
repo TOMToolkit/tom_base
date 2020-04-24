@@ -15,28 +15,28 @@ logger = logging.getLogger(__name__)
 #
 
 try:
-    ZZZ_SETTINGS = settings.FACILITIES['ZZZ']
+    EXAMPLE_MANUAL_SETTINGS = settings.FACILITIES['EXAMPLE_MANUAL']
 except KeyError:
-    ZZZ_SETTINGS = {
+    EXAMPLE_MANUAL_SETTINGS = {
     }
 
-ZZZ_SITES = {
-    'Zero-zero Island': {
-        'sitecode': 'zzz',  # top-secret observing site on Zero-zero Island
+EXAMPLE_SITES = {
+    'Example Manual Facility': {
+        'sitecode': 'Example',
         'latitude': 0.0,
         'longitude': 0.0,
         'elevation': 0.0
     },
 }
-ZZZ_TERMINAL_OBSERVING_STATES = ['Completed']
+EXAMPLE_TERMINAL_OBSERVING_STATES = ['Completed']
 
 
-class TestManualFacility(BaseManualObservationFacility):
+class ExampleManualFacility(BaseManualObservationFacility):
     """
     """
 
-    name = 'ZZZ'
-    observation_types = [('IMAGING', 'Imaging')]
+    name = 'Example'
+    observation_types = [('OBSERVATION', 'Manual Observation')]
 
     def get_form(self, observation_type):
         """
@@ -86,7 +86,7 @@ class TestManualFacility(BaseManualObservationFacility):
         Returns the states for which an observation is not expected
         to change.
         """
-        return ZZZ_TERMINAL_OBSERVING_STATES
+        return EXAMPLE_TERMINAL_OBSERVING_STATES
 
     def get_observing_sites(self):
         """
@@ -95,7 +95,7 @@ class TestManualFacility(BaseManualObservationFacility):
         list should contain dictionaries each that contain sitecode,
         latitude, longitude and elevation.
         """
-        return ZZZ_SITES
+        return EXAMPLE_SITES
 
     def data_products(self, observation_id, product_id=None):
         """

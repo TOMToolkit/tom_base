@@ -211,7 +211,7 @@ TOM_LATEX_PROCESSORS = {
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
-    'tom_observations.facilities.manual.TestManualFacility',
+    'tom_observations.facilities.manual.ExampleManualFacility',
 ]
 
 TOM_CADENCE_STRATEGIES = [
