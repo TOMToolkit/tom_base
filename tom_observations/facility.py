@@ -103,7 +103,7 @@ class BaseObservationForm(forms.Form):
 
     def is_valid(self):
         # TODO: Make this call the validate_observation method in facility
-        super().is_valid()
+        return super().is_valid()
 
     def serialize_parameters(self):
         parameters = copy.deepcopy(self.cleaned_data)

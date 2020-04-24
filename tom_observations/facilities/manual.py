@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from django.conf import settings
 
@@ -52,8 +53,10 @@ class TestManualFacility(BaseManualObservationFacility):
         # TODO: explore adding logic to send email to tom-demo
         print(f'observation_payload: {observation_payload}')
         obs_ids = []
-        for payload in observation_payload:
-            obs_ids.append(f'{payload}')
+        # for payload in observation_payload:
+        #     obs_ids.append(f'{payload}')
+
+        obs_ids.append(datetime.now())
 
         return obs_ids
 
