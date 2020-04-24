@@ -205,7 +205,6 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
 
     def is_valid(self):
         super().is_valid()
-        # TODO this is a bit leaky and should be done without the need of get_service_class
         obs_module = get_service_class(self.cleaned_data['facility'])
         errors = obs_module().validate_observation(self.observation_payload())
         if errors:

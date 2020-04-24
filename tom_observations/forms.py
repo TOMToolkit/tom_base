@@ -42,7 +42,7 @@ class AddExistingObservationForm(forms.Form):
 
 
 class ConfirmExistingObservationForm(AddExistingObservationForm):
-    # TODO: Should this inherit from AddExistingObservationForm or be its own thing?
+    # TODO: Attempt to put this logic in ManualObservationCreateView.get_form
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['facility'].widget = forms.HiddenInput()

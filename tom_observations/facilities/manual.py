@@ -48,7 +48,8 @@ class TestManualFacility(BaseManualObservationFacility):
         This method takes in the serialized data from the form.
 
         """
-        # TODO: finish implementation
+        # TODO: update to generate ID from payload, potentially move to super class
+        # TODO: explore adding logic to send email to tom-demo
         print(f'observation_payload: {observation_payload}')
         obs_ids = []
         for payload in observation_payload:
@@ -61,7 +62,6 @@ class TestManualFacility(BaseManualObservationFacility):
         Same thing as submit_observation, but a dry run. You can
         skip this in different modules by just using "pass"
         """
-        # TODO: implement me
         raise NotImplementedError
 
     def is_fits_facility(self, header):

@@ -55,6 +55,9 @@ def get_service_class(name):
         raise ImportError('Could not a find a facility with that name. Did you add it to TOM_FACILITY_CLASSES?')
 
 
+# TODO: Ensure docstrings are up to date
+
+
 class BaseObservationForm(forms.Form):
     """
     This is the class that is responsible for displaying the observation request form.
@@ -98,6 +101,10 @@ class BaseObservationForm(forms.Form):
                 HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>Back</a>''')
             )
 
+    def is_valid(self):
+        # TODO: Make this call the validate_observation method in facility
+        super().is_valid()
+
     def serialize_parameters(self):
         parameters = copy.deepcopy(self.cleaned_data)
         parameters.pop('groups', None)
@@ -124,11 +131,6 @@ class BaseRoboticObservationForm(BaseObservationForm):
 GenericObservationForm = BaseRoboticObservationForm
 
 
-# TODO: refactor BaseManualFacility to be subclass of BaseObservationFacility
-
-#
-# Manual Observing Base Classes
-#
 class BaseManualObservationForm(BaseObservationForm):
     name = forms.CharField()
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
@@ -148,7 +150,7 @@ class BaseManualObservationForm(BaseObservationForm):
         )
 
 
-class BaseFacility(ABC):
+class BaseObservationFacility(ABC):
     name = 'Generic'
 
     @abstractmethod
@@ -219,7 +221,7 @@ class BaseFacility(ABC):
         pass
 
 
-class BaseRoboticObservationFacility(BaseFacility):
+class BaseRoboticObservationFacility(BaseObservationFacility):
     """
     The facility class contains all the logic specific to the facility it is
     written for. Some methods are used only internally (starting with an
@@ -341,7 +343,7 @@ class BaseRoboticObservationFacility(BaseFacility):
 GenericObservationFacility = BaseRoboticObservationFacility
 
 
-class BaseManualObservationFacility(BaseFacility):
+class BaseManualObservationFacility(BaseObservationFacility):
     """
     """
     name = 'GenericManual'  # rename in concrete subclasses
