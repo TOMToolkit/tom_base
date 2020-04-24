@@ -98,7 +98,8 @@ class BaseObservationForm(forms.Form):
         target_id = self.initial.get('target_id')
         return ButtonHolder(
                 Submit('submit', 'Submit'),
-                HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>Back</a>''')
+                HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>
+                         Back</a>''')
             )
 
     def is_valid(self):
