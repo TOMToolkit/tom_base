@@ -244,6 +244,16 @@ class BaseObservationFacility(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_observation_url(self, observation_id):
+        """
+        Takes an observation id and return the url for which a user
+        can view the observation at an external location. In this case,
+        we return a URL to the LCO observation portal's observation
+        record page.
+        """
+        pass
+
 
 class BaseRoboticObservationFacility(BaseObservationFacility):
     """
@@ -309,16 +319,6 @@ class BaseRoboticObservationFacility(BaseObservationFacility):
                 dp.get_preview()
             final_products.append(dp)
         return final_products
-
-    @abstractmethod
-    def get_observation_url(self, observation_id):
-        """
-        Takes an observation id and return the url for which a user
-        can view the observation at an external location. In this case,
-        we return a URL to the LCO observation portal's observation
-        record page.
-        """
-        pass
 
     @abstractmethod
     def get_observation_status(self, observation_id):
