@@ -107,4 +107,4 @@ class ExampleManualFacility(BaseManualObservationFacility):
         return []
 
     def get_observation_url(self, observation_id):
-        return
+        return ''
