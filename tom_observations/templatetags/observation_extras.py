@@ -28,8 +28,8 @@ def observing_buttons(target):
     return {'target': target, 'facilities': facilities}
 
 
-@register.inclusion_tag('tom_observations/partials/existing_observation_button.html')
-def existing_observation_button(target):
+@register.inclusion_tag('tom_observations/partials/existing_observation_form.html')
+def existing_observation_form(target):
     return {'form': AddExistingObservationForm(initial={'target_id': target.id})}
 
 
