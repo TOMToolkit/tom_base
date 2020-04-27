@@ -13,8 +13,11 @@
       <a class="btn btn-success" href="{{ object.url }}">View at observatory »</a>
       {% endif %}
     </h2>
-    <p><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
-    <p><strong>Status:</strong> {{ object.status }}</p>
+    <div class="col-md-6">
+      <p class="my-auto"><strong>Observation ID:</strong> {{ object.observation_id }}</p>
+      <p class="my-auto"><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
+      <p class="my-auto"><strong>Status:</strong> {{ object.status }}</p>
+    </div>
     <p></p>
     {% upload_dataproduct object %}
   </div>
