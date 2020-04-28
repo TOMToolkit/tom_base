@@ -281,7 +281,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
 
 class ObservationRecordUpdateView(LoginRequiredMixin, UpdateView):
     """
-    This view will eventually allow updating solely the observation id and status, and possibly the parameters
+    This view allows for the updating of the observation id, which will eventually be expanded to more fields.
     """
     model = ObservationRecord
     fields = ['observation_id']
@@ -314,7 +314,7 @@ class ObservationGroupCancelView(LoginRequiredMixin, View):
         return redirect(referer)
 
 
-class ManualObservationCreateView(LoginRequiredMixin, FormView):
+class AddExistingObservationView(LoginRequiredMixin, FormView):
     """
     View for associating a pre-existing observation with a target. Requires authentication.
 
@@ -324,7 +324,7 @@ class ManualObservationCreateView(LoginRequiredMixin, FormView):
     The POST view validates the form and redirects to the confirmation page if the confirm flag isn't set.
 
     This view is intended to be navigated to via the existing_observation_button templatetag, as the
-    ConfirmExistingObservationForm has a hidden confirmation checkbox selected by default.
+    AddExistingObservationForm has a hidden confirmation checkbox selected by default.
     """
     template_name = 'tom_observations/existing_observation_confirm.html'
     form_class = AddExistingObservationForm
@@ -376,7 +376,7 @@ class ManualObservationCreateView(LoginRequiredMixin, FormView):
                                                    observation_id=form.cleaned_data['observation_id'])
 
         if records and not form.cleaned_data.get('confirm'):
-            return redirect(reverse('tom_observations:manual') + '?' + self.request.POST.urlencode())
+            return redirect(reverse('tom_observations:add-existing') + '?' + self.request.POST.urlencode())
         else:
             ObservationRecord.objects.create(
                 target_id=form.cleaned_data['target_id'],

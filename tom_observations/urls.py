@@ -1,6 +1,6 @@
 from django.urls import path
 
-from tom_observations.views import (ManualObservationCreateView, ObservationCreateView, ObservationRecordUpdateView,
+from tom_observations.views import (AddExistingObservationView, ObservationCreateView, ObservationRecordUpdateView,
                                     ObservationGroupDeleteView, ObservationGroupListView, ObservationListView,
                                     ObservationRecordDetailView, ObservingStrategyCreateView,
                                     ObservingStrategyDeleteView, ObservingStrategyListView,
@@ -9,7 +9,7 @@ from tom_observations.views import (ManualObservationCreateView, ObservationCrea
 app_name = 'tom_observations'
 
 urlpatterns = [
-    path('manual/', ManualObservationCreateView.as_view(), name='manual'),
+    path('add/', AddExistingObservationView.as_view(), name='add-existing'),
     path('list/', ObservationListView.as_view(), name='list'),
     path('strategy/list/', ObservingStrategyListView.as_view(), name='strategy-list'),
     path('strategy/<str:facility>/create/', ObservingStrategyCreateView.as_view(), name='strategy-create'),
