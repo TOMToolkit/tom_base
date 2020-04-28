@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.utils import timezone
 from astropy import units
 
-from tom_observations.facility import GenericObservationFacility, GenericObservationForm
+from tom_observations.facility import BaseRoboticObservationFacility, GenericObservationForm
 from tom_observations.observing_strategy import GenericStrategyForm
 
 # Site data matches built-in pyephem observer data for Los Angeles
@@ -30,9 +30,9 @@ class FakeFacilityStrategyForm(GenericStrategyForm):
     pass
 
 
-class FakeFacility(GenericObservationFacility):
-    name = 'FakeFacility'
-    observation_types = [('FakeFacility Observation', 'OBSERVATION')]
+class FakeRoboticFacility(BaseRoboticObservationFacility):
+    name = 'FakeRoboticFacility'
+    observation_types = [('FakeRoboticFacility Observation', 'OBSERVATION')]
 
     def get_form(self, observation_type):
         return FakeFacilityForm
