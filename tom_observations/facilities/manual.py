@@ -1,9 +1,11 @@
+import json
 import logging
-from datetime import datetime
+
 
 from django.conf import settings
 
 from tom_observations.facility import BaseManualObservationFacility, BaseManualObservationForm
+from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 
@@ -48,15 +50,30 @@ class ExampleManualFacility(BaseManualObservationFacility):
         """
         This method takes in the serialized data from the form.
 
-        """
-        # TODO: update to generate ID from payload, potentially move to super class
-        # TODO: explore adding logic to send email to tom-demo
-        print(f'observation_payload: {observation_payload}')
-        obs_ids = []
-        # for payload in observation_payload:
-        #     obs_ids.append(f'{payload}')
+        The BaseManualObservationForm(BaseObservationForm) does not require an observation_id.
+        In this example, if no observation_id is given, we construct one to return from the
+        other required form fields.
 
-        obs_ids.append(datetime.now())
+        """
+        # TODO: explore adding logic to send email to tom-demo
+
+        obs_ids = []
+        # params comes as JSON string, to turn it back into a dictionary
+        obs_params = json.loads(observation_payload['params'])
+
+        # if the Observation id was supplied then use it
+        if obs_params['observation_id']:
+            obs_ids.append(obs_params['observation_id'])
+        else:
+            # observation_id was empty string, so construct reasonable default
+            # such as name:target-facility-start
+            target = Target.objects.get(pk=observation_payload['target_id']).name
+            obs_name = obs_params['name']
+            facility = obs_params['facility']
+            start = obs_params[self.get_start_end_keywords()[0]]
+
+            obs_id = f'{obs_name}:{target}-{facility}-{start}'
+            obs_ids.append(obs_id)
 
         return obs_ids
 
@@ -107,4 +124,4 @@ class ExampleManualFacility(BaseManualObservationFacility):
         return []
 
     def get_observation_url(self, observation_id):
-        return
+        return ''
