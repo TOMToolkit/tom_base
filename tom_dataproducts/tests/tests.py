@@ -39,7 +39,8 @@ def mock_is_fits_image_file(filename):
     return True
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'], TARGET_PERMISSIONS_ONLY=True)
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+                   TARGET_PERMISSIONS_ONLY=True)
 @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
 class Views(TestCase):
     def setUp(self):
@@ -146,7 +147,8 @@ class Views(TestCase):
         self.assertEqual(products.count(), 1)
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'], TARGET_PERMISSIONS_ONLY=False)
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+                   TARGET_PERMISSIONS_ONLY=False)
 @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
 class TestViewsWithPermissions(TestCase):
     def setUp(self):
@@ -213,7 +215,8 @@ class TestViewsWithPermissions(TestCase):
         self.assertNotContains(response, 'afile.fits')
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'], TARGET_PERMISSIONS_ONLY=True)
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+                   TARGET_PERMISSIONS_ONLY=True)
 @patch('tom_dataproducts.views.run_data_processor')
 class TestUploadDataProducts(TestCase):
     def setUp(self):

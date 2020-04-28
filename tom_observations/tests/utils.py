@@ -121,4 +121,3 @@ class FakeManualFacility(BaseManualObservationFacility):
     # class, it assumes that it's a BaseRoboticFacility subclass.
     def update_all_observation_statuses(self, target):
         return []
-

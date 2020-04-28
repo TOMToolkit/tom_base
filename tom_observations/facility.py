@@ -61,8 +61,8 @@ def get_service_class(name):
 class BaseObservationForm(forms.Form):
     """
     This is the class that is responsible for displaying the observation request form.
-    This form is meant to be subclassed by more specific BaseForm classes that represent a 
-    form for a particular type of facility. For implementing your own form, please look to 
+    This form is meant to be subclassed by more specific BaseForm classes that represent a
+    form for a particular type of facility. For implementing your own form, please look to
     the other BaseObservationForms.
 
     For an implementation example please see

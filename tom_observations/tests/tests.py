@@ -18,7 +18,8 @@ from guardian.shortcuts import assign_perm
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility',
-                                         'tom_observations.tests.utils.FakeManualFacility'], TARGET_PERMISSIONS_ONLY=True)
+                                         'tom_observations.tests.utils.FakeManualFacility'],
+                   TARGET_PERMISSIONS_ONLY=True)
 class TestObservationViews(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()
@@ -70,7 +71,8 @@ class TestObservationViews(TestCase):
         self.assertContains(response, 'COMPLETED')
 
     def test_get_observation_form(self):
-        url = f"{reverse('tom_observations:create', kwargs={'facility': 'FakeRoboticFacility'})}?target_id={self.target.id}"
+        url = f"{reverse('tom_observations:create', kwargs={'facility': 'FakeRoboticFacility'})}" \
+              f"?target_id={self.target.id}"
         response = self.client.get(url)
         # self.assertContains(response, 'fake form input')
         self.assertContains(response, 'FakeRoboticFacility')
@@ -122,12 +124,14 @@ class TestObservationViews(TestCase):
             'test_input': 'elves',
             'facility': 'FakeManualFacility',
         }
-        url = f"{reverse('tom_observations:create', kwargs={'facility': 'FakeManualFacility'})}?target_id={self.target.id}"
+        url = f"{reverse('tom_observations:create', kwargs={'facility': 'FakeManualFacility'})}" \
+              f"?target_id={self.target.id}"
         self.client.post(url, data=form_data, follow=True)
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'], TARGET_PERMISSIONS_ONLY=False)
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+                   TARGET_PERMISSIONS_ONLY=False)
 class TestObservationViewsRowLevelPermissions(TestCase):
     def setUp(self):
         self.target = TargetFactory.create()
@@ -196,7 +200,8 @@ class TestObservingStrategyViews(TestCase):
         )
 
     def test_observing_strategy_create(self):
-        response = self.client.get(reverse('tom_observations:strategy-create', kwargs={'facility': 'FakeRoboticFacility'}))
+        response = self.client.get(reverse('tom_observations:strategy-create',
+                                           kwargs={'facility': 'FakeRoboticFacility'}))
         self.assertContains(response, 'Strategy name')
 
     def test_observing_strategy_delete(self):
