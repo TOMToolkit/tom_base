@@ -69,13 +69,10 @@ class TestObservationViews(TestCase):
         self.assertContains(response, 'COMPLETED')
 
     def test_get_observation_form(self):
-        response = self.client.get(
-            '{}?target_id={}'.format(
-                reverse('tom_observations:create', kwargs={'facility': 'FakeFacility'}),
-                self.target.id
-            )
-        )
-        self.assertContains(response, 'fake form input')
+        url = f"{reverse('tom_observations:create', kwargs={'facility': 'FakeFacility'})}?target_id={self.target.id}"
+        response = self.client.get(url)
+        # self.assertContains(response, 'fake form input')
+        self.assertContains(response, 'FakeFacility')
 
     def test_add_observations_to_group(self):
         obs_group = ObservationGroup.objects.create(name='testgroup')
