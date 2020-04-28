@@ -501,13 +501,6 @@ class LCOFacility(BaseRoboticObservationFacility):
     def get_strategy_form(self, observation_type):
         return LCOObservingStrategyForm
 
-    def get_update_form(self, observation_type):
-        form = self.get_form(observation_type)()
-        form.fields['observation_type'].widget = forms.HiddenInput()
-        form.fields['period'].widget = forms.HiddenInput()
-        form.fields['jitter'].widget = forms.HiddenInput()
-        return form
-
     def submit_observation(self, observation_payload):
         response = make_request(
             'POST',

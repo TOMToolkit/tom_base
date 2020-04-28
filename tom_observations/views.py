@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 import json
 
 from crispy_forms.bootstrap import FormActions
-from crispy_forms.layout import Button, HTML, Layout, Submit
+from crispy_forms.layout import HTML, Layout, Submit
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -25,7 +25,7 @@ from guardian.mixins import PermissionListMixin
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
-from tom_observations.facility import get_service_class, get_service_classes
+from tom_observations.facility import get_service_class, get_service_classes, BaseManualObservationFacility
 from tom_observations.forms import AddExistingObservationForm
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
 from tom_targets.models import Target
@@ -254,8 +254,6 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             )
             records.append(record)
 
-        print(f'records: {records}')
-        print(f'observation_ids: {observation_ids}')
         # TODO: redirect to observation list for multiple observations, observation detail otherwise
 
         if len(records) > 1 or form.cleaned_data.get('cadence_strategy'):
@@ -281,17 +279,16 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         )
 
 
-class ObservationUpdateView(LoginRequiredMixin, UpdateView):
+class ObservationRecordUpdateView(LoginRequiredMixin, UpdateView):
     """
     This view will eventually allow updating solely the observation id and status, and possibly the parameters
     """
     model = ObservationRecord
-    fields = ['observation_id', 'status', 'scheduled_start', 'scheduled_end']
+    fields = ['observation_id']
     template_name = 'tom_observations/observationupdate_form.html'
 
-    def get_form(self):
-        facility_class = get_service_class(self.object.facility)()
-        return facility_class.get_update_form(None)
+    def get_success_url(self):
+        return reverse('tom_observations:detail', kwargs={'pk': self.get_object().id})
 
 
 class ObservationGroupCancelView(LoginRequiredMixin, View):
@@ -428,6 +425,7 @@ class ObservationRecordDetailView(DetailView):
         context = super().get_context_data(*args, **kwargs)
         context['form'] = AddProductToGroupForm()
         service_class = get_service_class(self.object.facility)
+        context['editable'] = isinstance(service_class(), BaseManualObservationFacility)
         context['data_products'] = service_class().all_data_products(self.object)
         context['can_be_cancelled'] = self.object.status not in service_class().get_terminal_observing_states()
         newest_image = None

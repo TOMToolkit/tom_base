@@ -11,6 +11,7 @@ def facility_choices():
 
 
 class AddExistingObservationForm(forms.Form):
+    ""
     target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
     facility = forms.ChoiceField(required=True, choices=facility_choices, label=False)
     observation_id = forms.CharField(required=True, label=False,
@@ -35,6 +36,30 @@ class AddExistingObservationForm(forms.Form):
                     ButtonHolder(
                         Submit('submit', 'Add Existing Observation')
                     )
+                )
+            )
+        )
+
+
+class UpdateObservationId(forms.Form):
+    obsr_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
+    observation_id = forms.CharField(required=True, label=False,
+                                     widget=forms.TextInput(attrs={'placeholder': 'Observation ID'}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_action = reverse('tom_observations:update', kwargs={'pk': self.initial.get('obsr_id')})
+        self.helper.layout = Layout(
+            'obsr_id',
+            Row(
+                Column(
+                    'observation_id'
+                ),
+                Column(
+                    ButtonHolder(
+                        Submit('submit', 'Update Observation Id')
+                    ),
                 )
             )
         )

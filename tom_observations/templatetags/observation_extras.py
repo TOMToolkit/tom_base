@@ -8,7 +8,7 @@ from guardian.shortcuts import get_objects_for_user
 from plotly import offline
 import plotly.graph_objs as go
 
-from tom_observations.forms import AddExistingObservationForm
+from tom_observations.forms import AddExistingObservationForm, UpdateObservationId
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class, get_service_classes
 from tom_observations.observing_strategy import RunStrategyForm
@@ -31,6 +31,11 @@ def observing_buttons(target):
 @register.inclusion_tag('tom_observations/partials/existing_observation_form.html')
 def existing_observation_form(target):
     return {'form': AddExistingObservationForm(initial={'target_id': target.id})}
+
+
+@register.inclusion_tag('tom_observations/partials/update_observation_id_form.html')
+def update_observation_id_form(obsr):
+    return {'form': UpdateObservationId(initial={'obsr_id': obsr.id, 'observation_id': obsr.observation_id})}
 
 
 @register.inclusion_tag('tom_observations/partials/observation_type_tabs.html', takes_context=True)

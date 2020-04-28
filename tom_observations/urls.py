@@ -1,6 +1,6 @@
 from django.urls import path
 
-from tom_observations.views import (ManualObservationCreateView, ObservationCreateView, ObservationUpdateView,
+from tom_observations.views import (ManualObservationCreateView, ObservationCreateView, ObservationRecordUpdateView,
                                     ObservationGroupDeleteView, ObservationGroupListView, ObservationListView,
                                     ObservationRecordDetailView, ObservingStrategyCreateView,
                                     ObservingStrategyDeleteView, ObservingStrategyListView,
@@ -17,7 +17,7 @@ urlpatterns = [
     path('strategy/<int:pk>/delete/', ObservingStrategyDeleteView.as_view(), name='strategy-delete'),
     path('strategy/<int:pk>/', ObservingStrategyUpdateView.as_view(), name='strategy-detail'),
     path('<str:facility>/create/', ObservationCreateView.as_view(), name='create'),
-    path('<int:pk>/update/', ObservationUpdateView.as_view(), name='update'),
+    path('<int:pk>/update/', ObservationRecordUpdateView.as_view(), name='update'),
     path('<int:pk>/', ObservationRecordDetailView.as_view(), name='detail'),
     path('groups/list/', ObservationGroupListView.as_view(), name='group-list'),
     path('groups/<int:pk>/delete/', ObservationGroupDeleteView.as_view(), name='group-delete'),
