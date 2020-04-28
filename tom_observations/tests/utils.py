@@ -3,7 +3,8 @@ from datetime import timedelta
 from django.utils import timezone
 from astropy import units
 
-from tom_observations.facility import GenericObservationFacility, GenericObservationForm
+from tom_observations.facility import BaseRoboticObservationFacility, GenericObservationForm
+from tom_observations.facility import BaseManualObservationFacility
 from tom_observations.observing_strategy import GenericStrategyForm
 
 # Site data matches built-in pyephem observer data for Los Angeles
@@ -30,9 +31,9 @@ class FakeFacilityStrategyForm(GenericStrategyForm):
     pass
 
 
-class FakeFacility(GenericObservationFacility):
-    name = 'FakeFacility'
-    observation_types = [('FakeFacility Observation', 'OBSERVATION')]
+class FakeRoboticFacility(BaseRoboticObservationFacility):
+    name = 'FakeRoboticFacility'
+    observation_types = [('FakeRoboticFacility Observation', 'OBSERVATION')]
 
     def get_form(self, observation_type):
         return FakeFacilityForm
@@ -46,7 +47,7 @@ class FakeFacility(GenericObservationFacility):
     def get_observation_url(self, observation_id):
         return ''
 
-    def data_products(self, observation_record):
+    def data_products(self, observation_id, product_id=None):
         return [{'id': 'testdpid'}]
 
     def get_observation_status(self, observation_id):
@@ -70,3 +71,53 @@ class FakeFacility(GenericObservationFacility):
 
     def validate_observation(self, observation_payload):
         return True
+
+
+class FakeManualFacility(BaseManualObservationFacility):
+    name = 'FakeManualFacility'
+    observation_types = [('FakeManualFacility Observation', 'OBSERVATION')]
+
+    def get_form(self, observation_type):
+        return FakeFacilityForm
+
+    def get_strategy_form(self, observation_type):
+        return FakeFacilityStrategyForm
+
+    def get_observing_sites(self):
+        return SITES
+
+    def get_observation_url(self, observation_id):
+        return ''
+
+    def data_products(self, observation_id, product_id=None):
+        return [{'id': 'testdpid'}]
+
+    def get_observation_status(self, observation_id):
+        return {
+            'state': 'COMPLETED',
+            'scheduled_start': timezone.now() + timedelta(hours=1),
+            'scheduled_end': timezone.now() + timedelta(hours=2)
+        }
+
+    def get_terminal_observing_states(self):
+        return ['COMPLETED', 'FAILED', 'CANCELED', 'WINDOW_EXPIRED']
+
+    def submit_observation(self, payload):
+        return ['fakeid']
+
+    def get_flux_constant(self):
+        return units.erg / units.angstrom
+
+    def get_wavelength_units(self):
+        return units.angstrom
+
+    def validate_observation(self, observation_payload):
+        return True
+
+    # TOOD: this method does not belong to this Subclass of BaseObservationFacility
+    # it's only here to satisfy tests.test_update_observations() which makes a (now)
+    # invalid assumption that all facilities are robotic and have this method
+    # The underlying problem is that when an ObservationRecord gets it's facility
+    # class, it assumes that it's a BaseRoboticFacility subclass.
+    def update_all_observation_statuses(self, target):
+        return []

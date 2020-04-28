@@ -6,10 +6,20 @@
 {% endblock %}
 {% block content %}
 <div class="row">
-  <div class="col-md-6">
-    <h2>{{ object }} <a class="btn btn-success" href="{{ object.url }}">View at observatory »</a></h2>
-    <p><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
-    <p><strong>Status:</strong> {{ object.status }}</p>
+  <div class="col-md-12">
+    <h2>{{ object }}
+      {% if object.url %}
+      <a class="btn btn-success" href="{{ object.url }}">View at observatory »</a>
+      {% endif %}
+    </h2>
+    <div class="col-md-6">
+      {% if editable %}
+        <p>{% update_observation_id_form object %}</p>
+      {% endif %}
+      <p class="my-auto"><strong>Observation ID:</strong> {{ object.observation_id }}</p>
+      <p class="my-auto"><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
+      <p class="my-auto"><strong>Status:</strong> {{ object.status }}</p>
+    </div>
     <p></p>
     {% upload_dataproduct object %}
   </div>

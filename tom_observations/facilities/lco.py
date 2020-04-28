@@ -9,7 +9,7 @@ from django.core.cache import cache
 
 from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.cadence import CadenceForm
-from tom_observations.facility import GenericObservationFacility, GenericObservationForm, get_service_class
+from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
 from tom_observations.observing_strategy import GenericStrategyForm
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
@@ -136,7 +136,7 @@ class LCOBaseForm(forms.Form):
         return choices
 
 
-class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm, CadenceForm):
+class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceForm):
     name = forms.CharField()
     ipp_value = forms.FloatField(label='Intra Proposal Priority (IPP factor)',
                                  min_value=0.5,
@@ -162,12 +162,11 @@ class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm, CadenceForm):
         self.helper.layout = Layout(
             self.common_layout,
             self.layout(),
-            self.extra_layout(),
-            self.cadence_layout
+            self.cadence_layout,
+            self.button_layout()
         )
 
     def layout(self):
-
         return Div(
             Div(
                 Div(
@@ -196,10 +195,6 @@ class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm, CadenceForm):
             ),
         )
 
-    def extra_layout(self):
-        # If you just want to add some fields to the end of the form, add them here.
-        return Div()
-
     def clean_start(self):
         start = self.cleaned_data['start']
         return parse(start).isoformat()
@@ -210,7 +205,6 @@ class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm, CadenceForm):
 
     def is_valid(self):
         super().is_valid()
-        # TODO this is a bit leaky and should be done without the need of get_service_class
         obs_module = get_service_class(self.cleaned_data['facility'])
         errors = obs_module().validate_observation(self.observation_payload())
         if errors:
@@ -445,7 +439,7 @@ class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
         )
 
 
-class LCOFacility(GenericObservationFacility):
+class LCOFacility(BaseRoboticObservationFacility):
     """
     The ``LCOFacility`` is the interface to the Las Cumbres Observatory Observation Portal. For information regarding
     LCO observing and the available parameters, please see https://observe.lco.global/help/.
