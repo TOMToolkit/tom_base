@@ -61,12 +61,9 @@ def get_service_class(name):
 class BaseObservationForm(forms.Form):
     """
     This is the class that is responsible for displaying the observation request form.
-    Facility classes that provide a form should subclass this form. It provides
-    some base shared functionality. Extra fields are provided below.
-    The layout is handled by Django crispy forms which allows customizability of the
-    form layout without needing to write html templates:
-    https://django-crispy-forms.readthedocs.io/en/d-0/layouts.html
-    See the documentation on Django forms for more information.
+    This form is meant to be subclassed by more specific BaseForm classes that represent a 
+    form for a particular type of facility. For implementing your own form, please look to 
+    the other BaseObservationForms.
 
     For an implementation example please see
     https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py#L132
@@ -125,6 +122,20 @@ class BaseObservationForm(forms.Form):
 
 
 class BaseRoboticObservationForm(BaseObservationForm):
+    """
+    This is the class that is responsible for displaying the observation request form.
+    Facility classes that provide a form should subclass this form. It provides
+    some base shared functionality. Extra fields are provided below.
+    The layout is handled by Django crispy forms which allows customizability of the
+    form layout without needing to write html templates:
+    https://django-crispy-forms.readthedocs.io/en/d-0/layouts.html
+    See the documentation on Django forms for more information.
+
+    This specific class is intended for use with robotic facilities, such as LCO, Gemini, and SOAR.
+
+    For an implementation example please see
+    https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py#L132
+    """
     pass
 
 
@@ -133,6 +144,20 @@ GenericObservationForm = BaseRoboticObservationForm
 
 
 class BaseManualObservationForm(BaseObservationForm):
+    """
+    This is the class that is responsible for displaying the observation request form.
+    Facility classes that provide a form should subclass this form. It provides
+    some base shared functionality. Extra fields are provided below.
+    The layout is handled by Django crispy forms which allows customizability of the
+    form layout without needing to write html templates:
+    https://django-crispy-forms.readthedocs.io/en/d-0/layouts.html
+    See the documentation on Django forms for more information.
+
+    This specific class is intended for use with classical-style manual facilities.
+
+    For an implementation example please see
+    https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py#L132
+    """
     name = forms.CharField()
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
     end = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'date'}))
@@ -152,6 +177,12 @@ class BaseManualObservationForm(BaseObservationForm):
 
 
 class BaseObservationFacility(ABC):
+    """
+    This is the class that is responsible for defining the base facility class.
+    This form is meant to be subclassed by more specific BaseFacility classes that represent a
+    form for a particular type of facility. For implementing your own form, please look to
+    the other BaseObservationFacilities.
+    """
     name = 'BaseObservation'
 
     def all_data_products(self, observation_record):
@@ -266,6 +297,8 @@ class BaseRoboticObservationFacility(BaseObservationFacility):
     In order to make use of a facility class, add the path to
     ``TOM_FACILITY_CLASSES`` in your ``settings.py``.
 
+    This specific class is intended for use with robotic facilities, such as LCO, Gemini, and SOAR.
+
     For an implementation example, please see
     https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py
     """
@@ -346,5 +379,16 @@ GenericObservationFacility = BaseRoboticObservationFacility
 
 class BaseManualObservationFacility(BaseObservationFacility):
     """
+    The facility class contains all the logic specific to the facility it is
+    written for. Some methods are used only internally (starting with an
+    underscore) but some need to be implemented by all facility classes.
+    All facilities should inherit from  this class which
+    provides some base functionality.
+    In order to make use of a facility class, add the path to
+    ``TOM_FACILITY_CLASSES`` in your ``settings.py``.
+
+    This specific class is intended for use with classical-style manual facilities.
+
+    TODO: Add an implementation example.
     """
     name = 'BaseManual'  # rename in concrete subclasses
