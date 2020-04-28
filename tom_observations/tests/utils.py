@@ -46,7 +46,7 @@ class FakeRoboticFacility(BaseRoboticObservationFacility):
     def get_observation_url(self, observation_id):
         return ''
 
-    def data_products(self, observation_record):
+    def data_products(self, observation_id, product_id=None):
         return [{'id': 'testdpid'}]
 
     def get_observation_status(self, observation_id):
