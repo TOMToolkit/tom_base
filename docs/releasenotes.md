@@ -1,6 +1,8 @@
 ### 1.5.0
 
 - Introduced a manual facility interface for classical observing.
+- Introduced a view and corresponding form to add existing API-based observations to a Target.
+- Introduced a view and corresponding form to update an existing manual observation with an API-based observation ID.
 
 
 #### What to watch out for
