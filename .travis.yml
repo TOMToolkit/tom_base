@@ -9,45 +9,45 @@ before_install:
     - pip uninstall -y numpy
 install:
     - pip install -I -r requirements.txt pycodestyle
-# script:
-#     - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
-#     - python3 manage.py test
+script:
+    - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
+    - python3 manage.py test
 
 # before_deploy:
 #     if ! [[ $TRAVIS_BRANCH ]]
 
-stages:
-    - style_check
-    - test
-    - name: deploy_alpha
-      if: branch = development
+# stages:
+#     - style_check
+#     - test
+#     - name: deploy_alpha
+#       if: branch = development
 
-jobs:
-    - stage: style_check
-      script: pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
-    - stage: test
-      script: python3 manage.py test
-    - stage: deploy_alpha
-      deploy:
-        provider: pypi
-        branch: development
-        on:
-            tags: false
-        user: "__token__"
-        password:
-            secure: "QK0IxvFGrZsA4mJK/MWQ34kXmpDEpH1ckuq1HPP/Kr3p/11VgEsNWwkkXY8kFiOS35S073XYJo4VrUUxZ9xeRNIvG1JgySfqiO+GGUsp3Lx4AP7pOcsb9NfgSVt8ekq/HS1/gzJaFuXvx7CZk3aR/RLKWoHZ1PHzxq2010QGtIRcMMKXOtk6pIE8rveoTe9hHG+cwdEDvuI7q485y9Wop1nN58QcFxIvf8DBhdXDXov50iWleLQzPXIDShuYJGQMfK68JUqGXZrXdEA6oyGU+VGTGgyXPPRvRQLZqZtXsI3Ex8fwyaFN7z1BtiJXgnp84viA03lAlLofTSAwFkS/1krAvz9LKTzv/HwynkcMZtNAFWBytaugFpkLbSA3S+jDnVUgMP6RE4dQSo39l3+LDGyl04u2rgy8GcWJJdlup0Z4NFhKKIm6eBaZw6Yzedk+VVahglEHFlOnWZejvWoz1m57Sj54eh2TKeLXT7wVnVeI4vEl3WdBO2/MZagfWfTjRai3N/TPoq7kNlkgUPKM960VTbG0jVupm+IVYmLCKTtkcpWQbX+Rk8kZv/ujQYg/cqTvJr5rjL7OvxEurzXMSDDi0BmCEFyq5WbYWRi93hgsNSph9HrDZl5VAIKEnEgbL7FvAslX+b1OwPMJh8DukSWVZs2a+UYxOEyd1BCpxZo="
+# jobs:
+#     - stage: style_check
+#       script: pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
+#     - stage: test
+#       script: python3 manage.py test
+#     - stage: deploy_alpha
+#       deploy:
+#         provider: pypi
+#         branch: development
+#         on:
+#             tags: false
+#         user: "__token__"
+#         password:
+#             secure: "QK0IxvFGrZsA4mJK/MWQ34kXmpDEpH1ckuq1HPP/Kr3p/11VgEsNWwkkXY8kFiOS35S073XYJo4VrUUxZ9xeRNIvG1JgySfqiO+GGUsp3Lx4AP7pOcsb9NfgSVt8ekq/HS1/gzJaFuXvx7CZk3aR/RLKWoHZ1PHzxq2010QGtIRcMMKXOtk6pIE8rveoTe9hHG+cwdEDvuI7q485y9Wop1nN58QcFxIvf8DBhdXDXov50iWleLQzPXIDShuYJGQMfK68JUqGXZrXdEA6oyGU+VGTGgyXPPRvRQLZqZtXsI3Ex8fwyaFN7z1BtiJXgnp84viA03lAlLofTSAwFkS/1krAvz9LKTzv/HwynkcMZtNAFWBytaugFpkLbSA3S+jDnVUgMP6RE4dQSo39l3+LDGyl04u2rgy8GcWJJdlup0Z4NFhKKIm6eBaZw6Yzedk+VVahglEHFlOnWZejvWoz1m57Sj54eh2TKeLXT7wVnVeI4vEl3WdBO2/MZagfWfTjRai3N/TPoq7kNlkgUPKM960VTbG0jVupm+IVYmLCKTtkcpWQbX+Rk8kZv/ujQYg/cqTvJr5rjL7OvxEurzXMSDDi0BmCEFyq5WbYWRi93hgsNSph9HrDZl5VAIKEnEgbL7FvAslX+b1OwPMJh8DukSWVZs2a+UYxOEyd1BCpxZo="
 
-# # Deploy alpha releases to PyPi on pushes/merges to dev branch
-# deploy:
-#     provider: pypi
-#     branch: development
-#     before_deploy:
-#         - ./before_deploy_development.sh
-#     on:
-#         tags: false
-#     user: "__token__"
-#     password:
-#         secure: "QK0IxvFGrZsA4mJK/MWQ34kXmpDEpH1ckuq1HPP/Kr3p/11VgEsNWwkkXY8kFiOS35S073XYJo4VrUUxZ9xeRNIvG1JgySfqiO+GGUsp3Lx4AP7pOcsb9NfgSVt8ekq/HS1/gzJaFuXvx7CZk3aR/RLKWoHZ1PHzxq2010QGtIRcMMKXOtk6pIE8rveoTe9hHG+cwdEDvuI7q485y9Wop1nN58QcFxIvf8DBhdXDXov50iWleLQzPXIDShuYJGQMfK68JUqGXZrXdEA6oyGU+VGTGgyXPPRvRQLZqZtXsI3Ex8fwyaFN7z1BtiJXgnp84viA03lAlLofTSAwFkS/1krAvz9LKTzv/HwynkcMZtNAFWBytaugFpkLbSA3S+jDnVUgMP6RE4dQSo39l3+LDGyl04u2rgy8GcWJJdlup0Z4NFhKKIm6eBaZw6Yzedk+VVahglEHFlOnWZejvWoz1m57Sj54eh2TKeLXT7wVnVeI4vEl3WdBO2/MZagfWfTjRai3N/TPoq7kNlkgUPKM960VTbG0jVupm+IVYmLCKTtkcpWQbX+Rk8kZv/ujQYg/cqTvJr5rjL7OvxEurzXMSDDi0BmCEFyq5WbYWRi93hgsNSph9HrDZl5VAIKEnEgbL7FvAslX+b1OwPMJh8DukSWVZs2a+UYxOEyd1BCpxZo="
+# Deploy alpha releases to PyPi on pushes/merges to dev branch
+deploy:
+    provider: pypi
+    branch: development
+    before_deploy:
+        - ./before_deploy_development.sh
+    on:
+        tags: false
+    user: "__token__"
+    password:
+        secure: "QK0IxvFGrZsA4mJK/MWQ34kXmpDEpH1ckuq1HPP/Kr3p/11VgEsNWwkkXY8kFiOS35S073XYJo4VrUUxZ9xeRNIvG1JgySfqiO+GGUsp3Lx4AP7pOcsb9NfgSVt8ekq/HS1/gzJaFuXvx7CZk3aR/RLKWoHZ1PHzxq2010QGtIRcMMKXOtk6pIE8rveoTe9hHG+cwdEDvuI7q485y9Wop1nN58QcFxIvf8DBhdXDXov50iWleLQzPXIDShuYJGQMfK68JUqGXZrXdEA6oyGU+VGTGgyXPPRvRQLZqZtXsI3Ex8fwyaFN7z1BtiJXgnp84viA03lAlLofTSAwFkS/1krAvz9LKTzv/HwynkcMZtNAFWBytaugFpkLbSA3S+jDnVUgMP6RE4dQSo39l3+LDGyl04u2rgy8GcWJJdlup0Z4NFhKKIm6eBaZw6Yzedk+VVahglEHFlOnWZejvWoz1m57Sj54eh2TKeLXT7wVnVeI4vEl3WdBO2/MZagfWfTjRai3N/TPoq7kNlkgUPKM960VTbG0jVupm+IVYmLCKTtkcpWQbX+Rk8kZv/ujQYg/cqTvJr5rjL7OvxEurzXMSDDi0BmCEFyq5WbYWRi93hgsNSph9HrDZl5VAIKEnEgbL7FvAslX+b1OwPMJh8DukSWVZs2a+UYxOEyd1BCpxZo="
 
 # # Deploy release candidates to PyPi on pushes/merges to master branch
 # deploy:
