@@ -13,7 +13,7 @@ setup(
     long_description_content_type='text/markdown',
     url='https://tomtoolkit.github.io',
     author='TOM Toolkit Project',
-    author_email='ariba@lco.global',
+    author_email='dcollom@lco.global',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
@@ -27,7 +27,7 @@ setup(
     keywords=['tomtoolkit', 'astronomy', 'astrophysics', 'cosmology', 'science', 'fits', 'observatory'],
     packages=find_packages(),
     use_scm_version=True,
-    setup_requires=['setuptools_scm'],
+    setup_requires=['setuptools_scm', 'wheel'],
     install_requires=[
         'django>=2.2',  # TOM Toolkit requires db math functions
         'django-bootstrap4==1.1.1',
