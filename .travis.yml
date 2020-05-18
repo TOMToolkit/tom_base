@@ -2,6 +2,10 @@ language: python
 python:
     - '3.6'
     - '3.7'
+    - '3.8'
+os:
+  - linux
+  - osx
 dist: xenial
 sudo: true
 before_install:
@@ -9,18 +13,27 @@ before_install:
     - pip uninstall -y numpy
 install:
     - pip install -I -r requirements.txt pycodestyle
-script:
-    # - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
-    - python3 manage.py test
+
+stages:
+    - style_check
+    - test
+    # - name: deploy_alpha
+    #   if: branch = development
+
+jobs:
+  include:
+      - stage: test
+      - python: 3.8
+        script:
+          - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
+      - stage: test
+        script:
+          - python3 manage.py test
+      # - stage: deploy
+  
 
 # before_deploy:
 #     if ! [[ $TRAVIS_BRANCH ]]
-
-# stages:
-#     - style_check
-#     - test
-#     - name: deploy_alpha
-#       if: branch = development
 
 # jobs:
 #     - stage: style_check
