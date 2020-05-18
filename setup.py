@@ -47,7 +47,6 @@ setup(
         # 'matplotlib',
         'pillow==7.1.0',
         'fits2image==0.4.3',
-        'setuptools-scm',
         'specutils==1.0',
         'dataclasses; python_version < "3.7"',
     ],
