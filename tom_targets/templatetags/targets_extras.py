@@ -173,9 +173,9 @@ def target_distribution(targets):
     locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
     data = [
         dict(
-            lon=[l[0] for l in locations],
-            lat=[l[1] for l in locations],
-            text=[l[2] for l in locations],
+            lon=[location[0] for location in locations],
+            lat=[location[1] for location in locations],
+            text=[location[2] for location in locations],
             hoverinfo='lon+lat+text',
             mode='markers',
             type='scattergeo'
