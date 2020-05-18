@@ -10,10 +10,7 @@ sudo: true
 
 before_install:
     - sudo apt-get install -y gfortran
-    - pip uninstall -y numpy
-
-install:
-    - pip install -I -r requirements.txt pycodestyle
+    - pip uninstall -y numpy    
 
 stages:
     - style_check
@@ -24,10 +21,14 @@ stages:
 jobs:
   include:
       - stage: style_check
-      - python: 3.8
+        name: "Code style check"
+        python: 3.8
+        install:
+          - pip install -I -r requirements.txt pycodestyle
         script:
           - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
       - stage: test
+        name: "Unit tests"
         script:
           - python3 manage.py test
       # - stage: deploy

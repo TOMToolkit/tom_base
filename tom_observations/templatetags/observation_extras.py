@@ -175,27 +175,27 @@ def observation_distribution(observations):
 
     data = [
         dict(
-            lon=[l[0] for l in locations_no_status],
-            lat=[l[1] for l in locations_no_status],
-            text=[l[2] for l in locations_no_status],
+            lon=[location[0] for location in locations_no_status],
+            lat=[location[1] for location in locations_no_status],
+            text=[location[2] for location in locations_no_status],
             hoverinfo='lon+lat+text',
             mode='markers',
             marker=dict(color='rgba(90, 90, 90, .8)'),
             type='scattergeo'
         ),
         dict(
-            lon=[l[0] for l in locations_non_terminal],
-            lat=[l[1] for l in locations_non_terminal],
-            text=[l[2] for l in locations_non_terminal],
+            lon=[location[0] for location in locations_non_terminal],
+            lat=[location[1] for location in locations_non_terminal],
+            text=[location[2] for location in locations_non_terminal],
             hoverinfo='lon+lat+text',
             mode='markers',
             marker=dict(color='rgba(152, 0, 0, .8)'),
             type='scattergeo'
         ),
         dict(
-            lon=[l[0] for l in locations_terminal],
-            lat=[l[1] for l in locations_terminal],
-            text=[l[2] for l in locations_terminal],
+            lon=[location[0] for location in locations_terminal],
+            lat=[location[1] for location in locations_terminal],
+            text=[location[2] for location in locations_terminal],
             hoverinfo='lon+lat+text',
             mode='markers',
             marker=dict(color='rgba(0, 152, 0, .8)'),
