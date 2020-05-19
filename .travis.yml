@@ -15,14 +15,18 @@ before_install:
 install:
   - pip install -I -r requirements.txt pycodestyle
 
+script: skip
+
 # Deploy alpha releases to PyPi on tags of dev branch and full releases on tags of master branch
 jobs:
   include:
     - stage: "Style Checks"
+      python: 3.8
       script: pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
     - stage: "Test"
       script: python3 manage.py test
     - stage: "Deploy Development"
+      script: skip
       deploy:
         provider: pypi
         branch: development
@@ -48,6 +52,7 @@ jobs:
     #   draft: true
     #   prerelease: true
     - stage: "Deploy Master"
+      script: skip
       deploy:
         provider: pypi
         branch: master
