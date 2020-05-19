@@ -7,7 +7,6 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='tomtoolkit',
-    # version='1.4.0',
     description='The TOM Toolkit and base modules',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -44,7 +43,6 @@ setup(
         'astropy==4.0',
         'astroplan==0.6',
         'plotly==4.6.0',
-        # 'matplotlib',
         'pillow==7.1.0',
         'fits2image==0.4.3',
         'specutils==1.0',

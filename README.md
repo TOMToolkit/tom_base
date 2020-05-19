@@ -24,6 +24,9 @@ have a [contribution guide](https://tom-toolkit.readthedocs.io/en/latest/contrib
 you might find helpful. We are particularly interested in the contribution of
 observation and alert modules.
 
+## Developer information
+For development information targeted at the maintainers of the project, please see [README-dev.md](README-dev.md).
+
 
 ## Plugins
 
