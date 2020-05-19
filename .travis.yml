@@ -11,8 +11,9 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -y gfortran; fi
   - pip uninstall -y numpy
 
-script:
-  - python3 manage.py test
+install: pip install -r requirements.txt
+
+script: python3 manage.py test
 
 stages:
   - "Style Checks"
