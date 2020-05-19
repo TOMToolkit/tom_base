@@ -1,5 +1,6 @@
 # TOM Toolkit
 [![Build Status](https://travis-ci.org/TOMToolkit/tom_base.svg?branch=master)](https://travis-ci.org/TOMToolkit/tom_base)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/9846cee7c4904cae8864525101030169)](https://www.codacy.com/gh/observatorycontrolsystem/observation-portal?utm_source=github.com&utm_medium=referral&utm_content=observatorycontrolsystem/observation-portal&utm_campaign=Badge_Grade)
 [Documentation](https://tom-toolkit.readthedocs.io/en/latest/)
 
 ![logo](tom_common/static/tom_common/img/logo-color.png)
