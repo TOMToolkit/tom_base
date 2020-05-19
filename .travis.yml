@@ -1,42 +1,30 @@
 language: python
-# python:
-#   - '3.8'
-#   - '3.7'
-#   - '3.6'
-# os:
-#   - linux
-# dist: bionic
+python:
+  - '3.8'
+  - '3.7'
+  - '3.6'
+os:
+  - linux
+dist: bionic
 
-# before_install:
-#   - sudo apt-get install -y gfortran
-#   - pip uninstall -y numpy   
+before_install:
+  - sudo apt-get install -y gfortran
+  - pip uninstall -y numpy   
 
-# script:
-#   - python3 manage.py test
+script:
+  - python3 manage.py test
 
-# Deploy alpha releases to PyPi on tags of dev branch and full releases on tags of master branch
 jobs:
-  python:
-    - 3.8
-    - 3.7
-    - 3.6
-  os:
-    - linux
-  dist: bionic
-
-  before_install:
-    - sudo apt-get install -y gfortran
-    - pip uninstall -y numpy
-
   include:
     - stage: "Style Checks"
       install: pip install -I pycodestyle
       script: pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
 
-    - stage: "Unit Tests"
-      script: python3 manage.py test
+    - stage: "Tests on MacOS"
+      os: osx
+      language: shell
 
-    # Deploy alpha releases to PyPi and generate draft release on Github Releases
+    # Deploy alpha releases to PyPi and generate draft release on Github Releases (incomplete)
     - stage: "Deploy Development"
       script: skip
       deploy:
@@ -67,7 +55,7 @@ jobs:
     #     draft: true
     #     prerelease: true
 
-    # Deploy full releases to PyPi and generate draft release on Github Releases
+    # Deploy full releases to PyPi and generate draft release on Github Releases (incomplete)
     - stage: "Deploy Master"
       python: 3.8
       script: skip
