@@ -8,7 +8,7 @@ os:
 dist: bionic
 
 before_install:
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -y gfortran
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -y gfortran; fi
   - pip uninstall -y numpy
 
 script:
@@ -32,6 +32,7 @@ jobs:
 
     # Deploy alpha releases to PyPi and generate draft release on Github Releases (incomplete)
     - stage: "Deploy Development"
+      if: branch = development
       script: skip
       deploy:
         provider: pypi
@@ -63,6 +64,7 @@ jobs:
 
     # Deploy full releases to PyPi and generate draft release on Github Releases (incomplete)
     - stage: "Deploy Master"
+      if: branch = master
       python: 3.8
       script: skip
       deploy:
