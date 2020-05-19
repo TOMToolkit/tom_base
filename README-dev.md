@@ -19,7 +19,8 @@ matches the correct version format. The version formats are as follows:
 | Tagged      | Push to PyPi | Push to PyPi | No effect          |
 | Not tagged  | No effect    | No effect    | No effect          |
 
-Tagged branches must follow the following [semantic versioning syntax](https://semver.org/):
+Tagged branches must follow the [semantic versioning syntax](https://semver.org/). Tagged versions will not be 
+deployed unless they match the validation regex. The version format is as follows:
 
 |   | Development   | Master |
 |---|---------------|--------|

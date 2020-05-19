@@ -12,19 +12,12 @@ before_install:
   - sudo apt-get install -y gfortran
   - pip uninstall -y numpy   
 
-jobs:
-  include:
-      - name: "Code style check"
-        python: 3.8
-        install:
-          - pip install -I pycodestyle
-        script:
-          - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
-      - name: "Unit tests"
-        install:
-          - pip install -I -r requirements.txt
-        script:
-          - python3 manage.py test
+install:
+  - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
+  - pip install -I -r requirements.txt pycodestyle
+
+script:
+  - python3 manage.py test
 
 # Deploy alpha releases to PyPi on tags of dev branch
 deploy:
