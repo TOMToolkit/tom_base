@@ -5,7 +5,7 @@ python:
     - '3.8'
 os:
   - linux
-dist: xenial
+dist: bionic
 sudo: true
 
 before_install:
@@ -15,13 +15,13 @@ before_install:
 install:
   - pip install -I -r requirements.txt pycodestyle
 
-script:
-  # - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
-  - python3 manage.py test
-
 # Deploy alpha releases to PyPi on tags of dev branch and full releases on tags of master branch
 jobs:
   include:
+    - stage: "Style Checks"
+      script: pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
+    - stage: "Test"
+      script: python3 manage.py test
     - stage: "Deploy Development"
       deploy:
         provider: pypi
