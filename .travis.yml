@@ -8,7 +8,8 @@ os:
 dist: bionic
 
 before_install:
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -y gfortran; fi
+  # - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -y gfortran; fi
+  - sudo apt-get install -y gfortran
   - pip uninstall -y numpy
 
 install: pip install -r requirements.txt
@@ -30,6 +31,7 @@ jobs:
     - stage: "test"
       os: osx
       language: shell
+      before_install: pip3 install -U pip
 
     # Deploy alpha releases to PyPi and generate draft release on Github Releases (incomplete)
     - stage: "Deploy Development"
