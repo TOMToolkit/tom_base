@@ -11,9 +11,9 @@ before_install:
   - sudo apt-get install -y gfortran
   - pip uninstall -y numpy
 
-install: pip install -r requirements.txt
+install: pip install -r requirements.txt coverage coveralls
 
-script: python3 manage.py test
+script: coverage run manage.py test
 
 after_success: coveralls
 
