@@ -8,7 +8,6 @@ os:
 dist: bionic
 
 before_install:
-  # - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -y gfortran; fi
   - sudo apt-get install -y gfortran
   - pip uninstall -y numpy
 
