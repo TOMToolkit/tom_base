@@ -53,6 +53,7 @@ jobs:
 
     - stage: "Deploy Development"
       python: 3.8
+      script: skip
       deploy:
         provider: releases
         api_key:
@@ -87,6 +88,7 @@ jobs:
 
     - stage: "Deploy Master"
       python: 3.8
+      script: skip
       deploy:
         provider: releases
         api_key:
