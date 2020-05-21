@@ -57,11 +57,10 @@ jobs:
       script: skip
       deploy:
         provider: releases
-        api_key:
+        token:
           secure: "V5t/Rk0jK6ggR6Oc2sk6Kr8+mC4vcKD4Vh1/CVhFoB+/QJTJR4wR1ZzdmxSTHVqyYRWMhtbQg4GEenVu3CCE6Aqcpb8FuXagBGDjrydYMvBz0QV0tGpc0QfAGFgihoMxRXYYy8x0qJoImpIgweIcBP6qCIbWlHNn7uSbJgQAcpHI1KP5//SJbiZ5+h1tYa3AImfhuRIjtw5X5XCkbNe04DpJZZrR7et4BnZwjBKmkPBHAoDhfuGzA5PF1S6jHCpWIddhRQ60v6T7yp8jcBEn5yvQSmusfUju61GI0+irFV8LksaWMaLFkxdR2ne8DtHGuXoRs8G/hOLlYZGBMM/JkV2VcuX9F61vspQW2bDrNgAzMEHknYKeTamvt5HV+zYly7X/OnBMAdbDl3ZOjP5h7zYjdeDza+t6dG1+iJKfCjz5dekT20NDVlwJvIMGhqxNOxDRfnlHopoTT/16/Jd7SPDOY2gpDoZxA8uPGZJR52y6T8tZqrR/tamoXRZk5WR4zeIW2rFK85hZwmz59dWQywlhzcIxMHhBcH6r6O3p1NwFA1LPIzgEQHKig/5DxFk52reU70fA9L2nZ1AHSES2RtG9kDQZLx7gbnOaOGx7Jbd6mECFMzliEBKiSnYxN404bNVAoTBEwcuxTho9zJRccQVeIdTD617K4sAqPWWhFwk="
-        branch:
-          - development
         on:
+          branch: development
           tags: true
         file_glob: true
         file: dist/*
@@ -93,11 +92,10 @@ jobs:
       script: skip
       deploy:
         provider: releases
-        api_key:
+        token:
           secure: "V5t/Rk0jK6ggR6Oc2sk6Kr8+mC4vcKD4Vh1/CVhFoB+/QJTJR4wR1ZzdmxSTHVqyYRWMhtbQg4GEenVu3CCE6Aqcpb8FuXagBGDjrydYMvBz0QV0tGpc0QfAGFgihoMxRXYYy8x0qJoImpIgweIcBP6qCIbWlHNn7uSbJgQAcpHI1KP5//SJbiZ5+h1tYa3AImfhuRIjtw5X5XCkbNe04DpJZZrR7et4BnZwjBKmkPBHAoDhfuGzA5PF1S6jHCpWIddhRQ60v6T7yp8jcBEn5yvQSmusfUju61GI0+irFV8LksaWMaLFkxdR2ne8DtHGuXoRs8G/hOLlYZGBMM/JkV2VcuX9F61vspQW2bDrNgAzMEHknYKeTamvt5HV+zYly7X/OnBMAdbDl3ZOjP5h7zYjdeDza+t6dG1+iJKfCjz5dekT20NDVlwJvIMGhqxNOxDRfnlHopoTT/16/Jd7SPDOY2gpDoZxA8uPGZJR52y6T8tZqrR/tamoXRZk5WR4zeIW2rFK85hZwmz59dWQywlhzcIxMHhBcH6r6O3p1NwFA1LPIzgEQHKig/5DxFk52reU70fA9L2nZ1AHSES2RtG9kDQZLx7gbnOaOGx7Jbd6mECFMzliEBKiSnYxN404bNVAoTBEwcuxTho9zJRccQVeIdTD617K4sAqPWWhFwk="
-        branch:
-          - master
         on:
+          branch: development
           tags: true
         file_glob: true
         file: dist/*
