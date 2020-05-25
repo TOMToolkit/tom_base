@@ -358,9 +358,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
         run_strategy_form = RunStrategyForm(request.GET)
         if run_strategy_form.is_valid():
             obs_strat = ObservingStrategy.objects.get(pk=run_strategy_form.cleaned_data['observing_strategy'].id)
-            target_id = kwargs.get('pk', None)
             params = urlencode(obs_strat.parameters_as_dict)
-            params += urlencode(request.GET)
             return redirect(
                 reverse('tom_observations:create',
                         args=(obs_strat.facility,)) + f'?target_id={self.get_object().id}&' + params)
