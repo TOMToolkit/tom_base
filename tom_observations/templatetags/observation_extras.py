@@ -138,7 +138,7 @@ def observingstrategy_from_record(obsr):
     ``ObservationRecord``.
     """
     obs_params = obsr.parameters_as_dict
-    obs_params.pop('target_id')
+    obs_params.pop('target_id', None)
     strategy_params = urlencode(obs_params)
     return {
         'facility': obsr.facility,
