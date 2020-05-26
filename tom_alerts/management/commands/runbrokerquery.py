@@ -6,7 +6,7 @@ from time import sleep
 
 
 class Command(BaseCommand):
-    help = 'Run saved alert queries and save the results as Targets'
+    help = 'Runs saved alert queries and saves the results as Targets'
 
     def add_arguments(self, parser):
         parser.add_argument(

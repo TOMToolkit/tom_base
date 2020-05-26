@@ -2,6 +2,9 @@ from io import StringIO
 from urllib.parse import urlparse
 import json
 
+from crispy_forms.bootstrap import FormActions
+from crispy_forms.layout import HTML, Layout, Submit
+from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -14,7 +17,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic import View
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import FormView, DeleteView
+from django.views.generic.edit import DeleteView, FormView, UpdateView
 from django.views.generic.list import ListView
 from guardian.shortcuts import get_objects_for_user, assign_perm
 from guardian.mixins import PermissionListMixin
@@ -22,8 +25,8 @@ from guardian.mixins import PermissionListMixin
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
-from tom_observations.facility import get_service_class, get_service_classes
-from tom_observations.forms import ManualObservationForm
+from tom_observations.facility import get_service_class, get_service_classes, BaseManualObservationFacility
+from tom_observations.forms import AddExistingObservationForm
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
 from tom_targets.models import Target
 
@@ -251,6 +254,8 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             )
             records.append(record)
 
+        # TODO: redirect to observation list for multiple observations, observation detail otherwise
+
         if len(records) > 1 or form.cleaned_data.get('cadence_strategy'):
             group_name = form.cleaned_data['name']
             observation_group = ObservationGroup.objects.create(
@@ -272,6 +277,18 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         return redirect(
             reverse('tom_targets:detail', kwargs={'pk': target.id})
         )
+
+
+class ObservationRecordUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    This view allows for the updating of the observation id, which will eventually be expanded to more fields.
+    """
+    model = ObservationRecord
+    fields = ['observation_id']
+    template_name = 'tom_observations/observationupdate_form.html'
+
+    def get_success_url(self):
+        return reverse('tom_observations:detail', kwargs={'pk': self.get_object().id})
 
 
 class ObservationGroupCancelView(LoginRequiredMixin, View):
@@ -297,26 +314,45 @@ class ObservationGroupCancelView(LoginRequiredMixin, View):
         return redirect(referer)
 
 
-class ManualObservationCreateView(LoginRequiredMixin, FormView):
+class AddExistingObservationView(LoginRequiredMixin, FormView):
     """
     View for associating a pre-existing observation with a target. Requires authentication.
 
-    This view is not currently exposed in the out-of-the-box TOM Toolkit.
+    The GET view returns a confirmation page for adding duplicate ObservationRecords. Two duplicates are any two
+    ObservationRecords with the same target_id, facility, and observation_id.
+
+    The POST view validates the form and redirects to the confirmation page if the confirm flag isn't set.
+
+    This view is intended to be navigated to via the existing_observation_button templatetag, as the
+    AddExistingObservationForm has a hidden confirmation checkbox selected by default.
     """
-    template_name = 'tom_observations/observation_form_manual.html'
-    form_class = ManualObservationForm
+    template_name = 'tom_observations/existing_observation_confirm.html'
+    form_class = AddExistingObservationForm
 
-    def get_target_id(self):
-        """
-        Gets the id of the target of the observation from the query parameters.
-
-        :returns: target id
-        :rtype: int
-        """
+    def get_form(self):
+        form = super().get_form()
+        form.fields['facility'].widget = forms.HiddenInput()
+        form.fields['observation_id'].widget = forms.HiddenInput()
         if self.request.method == 'GET':
-            return self.request.GET.get('target_id')
+            target_id = self.request.GET.get('target_id')
         elif self.request.method == 'POST':
-            return self.request.POST.get('target_id')
+            target_id = self.request.POST.get('target_id')
+        cancel_url = reverse('home')
+        if target_id:
+            cancel_url = reverse('tom_targets:detail', kwargs={'pk': target_id})
+        form.helper.layout = Layout(
+            HTML('''<p>An observation record already exists in your TOM for this combination of observation ID,
+                 facility, and target. Are you sure you want to create this record?</p>'''),
+            'target_id',
+            'facility',
+            'observation_id',
+            'confirm',
+            FormActions(
+                Submit('confirm', 'Confirm'),
+                HTML(f'<a class="btn btn-outline-primary" href={cancel_url}>Cancel</a>')
+            )
+        )
+        return form
 
     def get_initial(self):
         """
@@ -325,34 +361,33 @@ class ManualObservationCreateView(LoginRequiredMixin, FormView):
         :returns: initial form data
         :rtype: dict
         """
-        initial = super().get_initial()
-        if not self.get_target_id():
-            raise Exception('Must provide target_id')
-        initial['target_id'] = self.get_target_id()
-        return initial
-
-    def get_target(self):
-        """
-        Gets the ``Target`` associated with the specified target_id from the database.
-
-        :returns: target instance to be associated with an observation
-        :rtype: Target
-        """
-        return Target.objects.get(pk=self.get_target_id())
+        if self.request.method == 'GET':
+            params = self.request.GET.dict()
+            params['confirm'] = True
+            return params
 
     def form_valid(self, form):
         """
         Runs after form validation. Creates a new ``ObservationRecord`` associated with the specified target and
         facility.
         """
-        ObservationRecord.objects.create(
-            target=self.get_target(),
-            facility=form.cleaned_data['facility'],
-            parameters={},
-            observation_id=form.cleaned_data['observation_id']
-        )
+        records = ObservationRecord.objects.filter(target_id=form.cleaned_data['target_id'],
+                                                   facility=form.cleaned_data['facility'],
+                                                   observation_id=form.cleaned_data['observation_id'])
+
+        if records and not form.cleaned_data.get('confirm'):
+            return redirect(reverse('tom_observations:add-existing') + '?' + self.request.POST.urlencode())
+        else:
+            ObservationRecord.objects.create(
+                target_id=form.cleaned_data['target_id'],
+                facility=form.cleaned_data['facility'],
+                parameters={},
+                observation_id=form.cleaned_data['observation_id']
+            )
+            observation_id = form.cleaned_data['observation_id']
+            messages.success(self.request, f'Successfully associated observation record {observation_id}')
         return redirect(reverse(
-            'tom_targets:detail', kwargs={'pk': self.get_target().id})
+            'tom_targets:detail', kwargs={'pk': form.cleaned_data['target_id']})
         )
 
 
@@ -390,6 +425,7 @@ class ObservationRecordDetailView(DetailView):
         context = super().get_context_data(*args, **kwargs)
         context['form'] = AddProductToGroupForm()
         service_class = get_service_class(self.object.facility)
+        context['editable'] = isinstance(service_class(), BaseManualObservationFacility)
         context['data_products'] = service_class().all_data_products(self.object)
         context['can_be_cancelled'] = self.object.status not in service_class().get_terminal_observing_states()
         newest_image = None

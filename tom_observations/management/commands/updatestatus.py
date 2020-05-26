@@ -6,7 +6,12 @@ from tom_observations import facility
 
 
 class Command(BaseCommand):
-    help = 'Updates the status of each observation requests in the TOM'
+    """
+    Updates the status of each observation request in the TOM. Target id can be specified to update the status for all
+    observations for a single target.
+    """
+
+    help = 'Updates the status of each observation request in the TOM'
 
     def add_arguments(self, parser):
         parser.add_argument(

@@ -36,6 +36,8 @@ HTML, CSS, Python, and Django
 
 :doc:`Frequently Asked Questions <introduction/faqs>` - Look here for a potential quick answer to a common question.
 
+:doc:`Troubleshooting <introduction/troubleshooting>` - Find solutions to common problems or information on how to debug an issue.
+
 Extending and Customizing
 -------------------------
 
@@ -46,6 +48,9 @@ configure.
 
 :doc:`Customizing TOM Templates <customization/customize_templates>` - Learn how to override built in TOM templates to
 change the look and feel of your TOM.
+
+:doc:`Customizing Template Tag <customization/customize_template_tags>` - Learn how to write your own template tags to display 
+the data you need.
 
 :doc:`Adding new Pages to your TOM <customization/adding_pages>` - Learn how to add entirely new pages to your TOM,
 displaying static html pages or dynamic database-driven content.
@@ -91,6 +96,11 @@ custom cadence strategy to automate a series of observations.
 
 :doc:`LaTeX table generation <advanced/latex_generation>` - Learn how to generate LaTeX for certain models and add LaTeX 
 generators for other models.
+
+:doc:`Advanced Querying <advanced/querying>` - Get a couple of tips on programmatic querying with Django's QuerySet API
+
+:doc:`Authentication exceptions for external services <advanced/exceptions>` - Ensure that your custom external services have 
+  appropriate and visible errors.
 
 Deployment
 ----------

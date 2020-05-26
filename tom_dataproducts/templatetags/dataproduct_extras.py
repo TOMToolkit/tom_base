@@ -94,6 +94,15 @@ def upload_dataproduct(context, obj):
     return {'data_product_form': form}
 
 
+@register.inclusion_tag('tom_dataproducts/partials/recent_photometry.html')
+def recent_photometry(target, limit=1):
+    """
+    Displays a table of the most recent photometric points for a target.
+    """
+    photometry = ReducedDatum.objects.filter(data_type='photometry').order_by('-timestamp')[:limit]
+    return {'data': [{'timestamp': rd.timestamp, 'magnitude': json.loads(rd.value)['magnitude']} for rd in photometry]}
+
+
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html', takes_context=True)
 def photometry_for_target(context, target):
     """

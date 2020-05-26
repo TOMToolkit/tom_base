@@ -7,7 +7,7 @@ from tom_observations.models import ObservationGroup
 
 
 class Command(BaseCommand):
-    help = 'Entry point for running cadence strategies'
+    help = 'Entry point for running cadence strategies.'
 
     def handle(self, *args, **kwargs):
         cadenced_groups = ObservationGroup.objects.exclude(cadence_strategy='')

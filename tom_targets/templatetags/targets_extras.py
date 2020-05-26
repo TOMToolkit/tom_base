@@ -28,6 +28,15 @@ def recent_targets(context, limit=10):
     return {'targets': get_objects_for_user(user, 'tom_targets.view_target').order_by('-created')[:limit]}
 
 
+@register.inclusion_tag('tom_targets/partials/recently_updated_targets.html', takes_context=True)
+def recently_updated_targets(context, limit=10):
+    """
+    Displays a list of the most recently updated targets in the TOM up to the given limit, or 10 if not specified.
+    """
+    user = context['request'].user
+    return {'targets': get_objects_for_user(user, 'tom_targets.view_target').order_by('-modified')[:limit]}
+
+
 @register.inclusion_tag('tom_targets/partials/target_feature.html')
 def target_feature(target):
     """
@@ -164,9 +173,9 @@ def target_distribution(targets):
     locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
     data = [
         dict(
-            lon=[l[0] for l in locations],
-            lat=[l[1] for l in locations],
-            text=[l[2] for l in locations],
+            lon=[location[0] for location in locations],
+            lat=[location[1] for location in locations],
+            text=[location[2] for location in locations],
             hoverinfo='lon+lat+text',
             mode='markers',
             type='scattergeo'
