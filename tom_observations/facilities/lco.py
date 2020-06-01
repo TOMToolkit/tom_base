@@ -564,6 +564,93 @@ class LCOFacility(BaseRoboticObservationFacility):
     def get_observing_sites(self):
         return self.SITES
 
+    def get_facility_status(self):
+        """Get the telescope_states from the LCO API endpoint and simply
+        transform the returned JSON into the following dictionary hierarchy
+        for use by the facility_status.html template partial.
+
+        facility_dict = {'code': 'LCO', 'sites': [ site_dict, ... ]}
+        site_dict = {'code': 'XYZ', 'telescopes': [ telescope_dict, ... ]}
+        telescope_dict = {'code': 'XYZ', 'status': 'AVAILABILITY'}
+
+        Here's an example of the returned dictionary
+        ```
+        literal_facility_status_example = {
+            'code': 'LCO',
+            'sites': [
+                {
+                    'code': 'BPL',
+                    'telescopes': [
+                        {
+                            'code': 'bpl.doma.1m0a',
+                            'status': 'AVAILABLE'
+                        },
+                    ],
+                },
+                {
+                    'code': 'ELP',
+                    'telescopes': [
+                        {
+                            'code': 'elp.doma.1m0a',
+                            'status': 'AVAILABLE'
+                        },
+                        {
+                            'code': 'elp.domb.1m0a',
+                            'status': 'AVAILABLE'
+                        },
+                    ]
+                }
+            ]
+        }
+        ```
+
+        :return: facility_dict
+        """
+
+        # make the request to the LCO API for the telescope_states
+        response = make_request(
+            'GET',
+            PORTAL_URL + '/api/telescope_states/',
+            headers=self._portal_headers()
+        )
+        telescope_states = response.json()
+
+        # Now, transform the telescopes_state dictionary in a dictionary suitable
+        # for the facility_status.html template partial.
+
+        # set up the return value to be populated by the for loop below
+        facility_status = {
+            'code': 'LCO',
+            'sites': []
+        }
+
+        for telescope_key, telescope_value in telescope_states.items():
+            [site_code, enclosure_code, telescope_code] = telescope_key.split('.')
+
+            # extract this telescope and it's status from the response
+            telescope = {
+                'code': telescope_code,
+                'status': telescope_value[0]['event_type']
+            }
+
+            # get the site dictionary from the facilities list of sites
+            # filter by site_code and provide a default (None) for new sites
+            site = next((site_ix for site_ix in facility_status['sites']
+                         if site_ix['code'] == site_code), None)
+            # create the site if it's new and not yet in the facility_status['sites] list
+            if site is None:
+                new_site = {
+                    'code': site_code,
+                    'telescopes': []
+                }
+                facility_status['sites'].append(new_site)
+                site = new_site
+
+            # Now, add the telescope to the site's telescopes
+            site['telescopes'].append(telescope)
+
+        return facility_status
+
     def get_observation_status(self, observation_id):
         response = make_request(
             'GET',
