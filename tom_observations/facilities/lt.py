@@ -32,6 +32,9 @@ class LTFacility(GenericObservationFacility):
     def validate_observation(self, observation_payload):
         return
 
+    def get_facility_status(self):
+        return {}
+
     def get_observation_url(self, observation_id):
         return
 
