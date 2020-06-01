@@ -280,15 +280,23 @@ class BaseObservationFacility(ABC):
     @abstractmethod
     def get_facility_status(self):
         """
-        Return a dictionary hierarchy of the form:
+        Returns a dictionary describing the current availability of the Facility
+        telescopes. This is intended to be useful in observation planning.
+        The top-level (Facility) dictionary has a list of sites. Each site
+        is represented by a site dictionary which has a list of telescopes.
+        Each telescope has an identifier (code) and an status string.
 
-        facility_dict = {'code': 'XYZ', 'sites': [ site_dict, ... ]}
-        site_dict = {'code': 'XYZ', 'telescopes': [ telescope_dict, ... ]}
-        telescope_dict = {'code': 'XYZ', 'status': 'AVAILABILITY'}
+        The dictionary hierarchy is of the form:
 
-        See lco.py for a concrete implementation example
+        `facility_dict = {'code': 'XYZ', 'sites': [ site_dict, ... ]}`
+        where
+        `site_dict = {'code': 'XYZ', 'telescopes': [ telescope_dict, ... ]}`
+        where
+        `telescope_dict = {'code': 'XYZ', 'status': 'AVAILABILITY'}`
+
+        See lco.py for a concrete implementation example.
         """
-        pass
+        return {}
 
     @abstractmethod
     def get_observation_url(self, observation_id):
