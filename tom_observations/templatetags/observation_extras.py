@@ -232,3 +232,20 @@ def observation_distribution(observations):
     }
     figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
     return {'figure': figure}
+
+
+@register.inclusion_tag('tom_observations/partials/facility_status.html')
+def facility_status():
+    """
+    Collect the facility status from the registered facilities and pass them
+    to the facility_status.html partial template.
+    See lco.py Facility implementation for example.
+    :return:
+    """
+
+    facility_statuses = []
+    for facility_code, facility_class in get_service_classes().items():
+        status = facility_class().get_facility_status()
+        facility_statuses.append(status)
+
+    return {'facilities': facility_statuses}
