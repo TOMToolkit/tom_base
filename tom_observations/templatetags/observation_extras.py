@@ -137,10 +137,12 @@ def observingstrategy_from_record(obsr):
     Renders a button that will pre-populate and observing strategy form with parameters from the specified
     ``ObservationRecord``.
     """
-    params = urlencode(obsr.parameters_as_dict)
+    obs_params = obsr.parameters_as_dict
+    obs_params.pop('target_id', None)
+    strategy_params = urlencode(obs_params)
     return {
         'facility': obsr.facility,
-        'params': params
+        'params': strategy_params
     }
 
 
@@ -175,27 +177,27 @@ def observation_distribution(observations):
 
     data = [
         dict(
-            lon=[l[0] for l in locations_no_status],
-            lat=[l[1] for l in locations_no_status],
-            text=[l[2] for l in locations_no_status],
+            lon=[location[0] for location in locations_no_status],
+            lat=[location[1] for location in locations_no_status],
+            text=[location[2] for location in locations_no_status],
             hoverinfo='lon+lat+text',
             mode='markers',
             marker=dict(color='rgba(90, 90, 90, .8)'),
             type='scattergeo'
         ),
         dict(
-            lon=[l[0] for l in locations_non_terminal],
-            lat=[l[1] for l in locations_non_terminal],
-            text=[l[2] for l in locations_non_terminal],
+            lon=[location[0] for location in locations_non_terminal],
+            lat=[location[1] for location in locations_non_terminal],
+            text=[location[2] for location in locations_non_terminal],
             hoverinfo='lon+lat+text',
             mode='markers',
             marker=dict(color='rgba(152, 0, 0, .8)'),
             type='scattergeo'
         ),
         dict(
-            lon=[l[0] for l in locations_terminal],
-            lat=[l[1] for l in locations_terminal],
-            text=[l[2] for l in locations_terminal],
+            lon=[location[0] for location in locations_terminal],
+            lat=[location[1] for location in locations_terminal],
+            text=[location[2] for location in locations_terminal],
             hoverinfo='lon+lat+text',
             mode='markers',
             marker=dict(color='rgba(0, 152, 0, .8)'),

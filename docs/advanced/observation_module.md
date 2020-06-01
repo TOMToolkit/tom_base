@@ -1,10 +1,12 @@
 # Writing an observation module to interface with observatories
 
 This guide will walk you through how to create a custom observation facility
-module using some mocked up endpoints to simulate a real observatory interface.
+module using some mocked up endpoints to simulate a real observatory interface. It will also 
+provide information on creating a custom manual observation facility for tracking observations that 
+were not created through an API.
 
 You can use this example as the foundation to build an observing facility module
-to connect to a real observatory.
+to connect to a real observatory or track observations on non-API supported facilities.
 
 Be sure you've followed the [Getting Started](/introduction/getting_started) guide before continuing onto this tutorial.
 
@@ -24,6 +26,9 @@ observatories through a TOM.
 You should have a working TOM already. You can start where the [Getting
 Started](/introduction/getting_started) guide leaves off. You should also be familiar with
 the observing facility's API that you would like to work with.
+
+
+## Creating a custom robotic facility
 
 ### Defining the minimal implementation
 
@@ -47,14 +52,14 @@ We'll place our `myfacility.py` file inside the `mytom` directory, next to
 `settings.py`. For now, copy the following lines into `myfacility.py`:
 
 ```python
-from tom_observations.facility import GenericObservationFacility, GenericObservationForm
+from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 
 
-class MyObservationFacilityForm(GenericObservationForm):
+class MyObservationFacilityForm(BaseRoboticObservationForm):
     pass
 
 
-class MyObservationFacility(GenericObservationFacility):
+class MyObservationFacility(BaseRoboticObservationFacility):
     name = 'MyFacility'
     observation_types = [('OBSERVATION', 'Custom Observation')]
 ```
@@ -77,7 +82,7 @@ Now go ahead and view a target in your TOM, you should see something like this:
 This means our new observation facility module has been successfully loaded.
 
 
-### GenericObservationFacility and GenericObservationForm
+### BaseRoboticObservationFacility and BaseRoboticObservationForm
 
 You will have noticed our module consists of two classes that inherit from two
 other classes.
@@ -85,12 +90,12 @@ other classes.
 `MyObservationFacility` is the class that will contain the "business logic"
 for interacting with the remote observatory. This includes methods to submit
 observations, check observation status, etc. It inherits from
-`GenericObservationFacility`, which contains some functionality that all
+`BaseRoboticObservationFacility`, which contains some functionality that all
 observation facility classes will want.
 
 `MyObservationFacilityForm` is the class that will display a GUI form for our
 users to create an observation. We can submit observations programmatically, but it
-is also nice to have a GUI for our users to use.  The `GenericObservationForm`
+is also nice to have a GUI for our users to use.  The `BaseRoboticObservationForm`
 class, just like the previous super class, contains logic and layout that all
 observation facility form classes should contain.
 
@@ -109,7 +114,7 @@ To start, let's define new functions in `MyObservationFacility`
 for each missing function like so:
 
 ```python
-class MyObservationFacility(GenericObservationFacility):
+class MyObservationFacility(BaseRoboticObservationFacility):
     name = 'MyFacility'
     observation_types = [('OBSERVATION', 'Custom Observation')]
 
@@ -185,13 +190,13 @@ submit the observation request:
 
 ```python
 from django import forms
-from tom_observations.facility import GenericObservationFacility, GenericObservationForm
+from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 
-class MyObservationFacilityForm(GenericObservationForm):
+class MyObservationFacilityForm(BaseRoboticObservationForm):
     exposure_time = forms.IntegerField()
     exposure_count = forms.IntegerField()
 
-class MyObservationFacility(GenericObservationFacility):
+class MyObservationFacility(BaseRoboticObservationFacility):
     name = 'MyFacility'
     observation_types = [('OBSERVATION', 'Custom Observation')]
 
@@ -259,7 +264,7 @@ Modeling our `SITES` on the one defined for
 we can easily put new sites into the airmass plots:
 
 ```python
-class MyObservationFacility(GenericObservationFacility):
+class MyObservationFacility(BaseRoboticObservationFacility):
     name = 'MyFacility'
     observation_types = [('OBSERVATION', 'Custom Observation')]
 
@@ -287,3 +292,8 @@ API-accessible, you can still add them to your TOM's airmass plots
 to judge what targets to observe when.
 
 Happy developing!
+
+
+## Creating a custom manual facility
+
+

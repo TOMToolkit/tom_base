@@ -420,6 +420,8 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
 class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for field_name in ['groups', 'target_id']:
+            self.fields.pop(field_name, None)
         for field in self.fields:
             if field != 'strategy_name':
                 self.fields[field].required = False

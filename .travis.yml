@@ -1,14 +1,103 @@
 language: python
 python:
-    - '3.6'
-    - '3.7'
-dist: xenial
-sudo: true
+  - '3.8'
+  - '3.7'
+  - '3.6'
+os:
+  - linux
+dist: bionic
+
 before_install:
-    - sudo apt-get install -y gfortran
-    - pip uninstall -y numpy
-install:
-    - pip install -I -r requirements.txt pycodestyle
-script:
-    - pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
-    - python3 manage.py test
+  - sudo apt-get install -y gfortran
+  - pip uninstall -y numpy
+
+install: pip install -r requirements.txt coverage coveralls
+
+script: coverage run manage.py test
+
+after_success: coveralls
+
+stages:
+  - "Style Checks"
+  - "test"
+  - "Deploy Development"
+  - "Deploy Master"
+
+jobs:
+  include:
+    - stage: "Style Checks"
+      install: pip install -I pycodestyle
+      script: pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
+
+    - stage: "test"
+      os: osx
+      language: shell
+      before_install: pip3 install -U pip
+
+    # Deploy alpha releases to PyPi and generate draft release on Github Releases (incomplete)
+    - stage: "Deploy Development"
+      if: tag IS present
+      script: skip
+      deploy:
+        provider: pypi
+        skip_existing: true
+        cleanup: false
+        on:
+          branch: development
+          tags: true
+          condition: $TRAVIS_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+\-(alpha)\.[0-9]+$
+        username: "__token__"
+        password:
+           secure: "W11OdJOvj9hvdEsJB48SuPOvylT0awsSG2wScYdtM+mnFx6u5pv7/0oxz0nyhr2/1xD+Mz7QBy5wH2ijXcpruhHwm7loopaB9Lc28au3vnVuDgwdU3yUttXjjzmPHh+q3ggsjAJS7aV4X4CKl0/cM9h3MTsr91MiIvta0cjiPYBTn/3YTrVyO+VypQnsnC2bV7bj1H/c6hYi6mzq4xKtpM1QSMs5baWo7vui1LqbHGeZSID+r9Z3Zx8c8UyAbDG9Qhqi2+TyZxhond1R13IrGtIlvjey87aCnlOFwnA+CXPAbTWsUxq+gE+QO7BCAA2oMZGkLgVeCgHmEHf8gPU/N+XEpdh9FEmgaoU7LIrPOjQI+4ijhEoadhpUxHaQG0j2qhHeE4THz+dfV0XQVPUlzAwX5ZQyLwbAHje8E1wdeqS+pPzodIB18Vtw6Lz0c2ppmieXB1IiSSG0nnxcuLgyFJ/tYJyp63+5fCLK/Itafn3SLT1HRNS/PccbZdUo5L4oFKQsMXgIU9v33Z59CyXpPiNruC+AEwujuEcDrZN1/pYc8+Zmgh42fx+qHZ3/2QitKopl+XMRMnz6X7JIS2QTgY74aLBp/djv5DHtTJnN1cdZ8wMo8K515R/p+C5HboMh9bNEM+imL8pk6Whw9QMGapNoNst99aQz4fUz3n6sPr0="
+        distributions: "sdist bdist_wheel"
+
+    - stage: "Deploy Development"
+      if: tag IS present
+      python: 3.8
+      script: skip
+      deploy:
+        provider: releases
+        token:
+          secure: "V5t/Rk0jK6ggR6Oc2sk6Kr8+mC4vcKD4Vh1/CVhFoB+/QJTJR4wR1ZzdmxSTHVqyYRWMhtbQg4GEenVu3CCE6Aqcpb8FuXagBGDjrydYMvBz0QV0tGpc0QfAGFgihoMxRXYYy8x0qJoImpIgweIcBP6qCIbWlHNn7uSbJgQAcpHI1KP5//SJbiZ5+h1tYa3AImfhuRIjtw5X5XCkbNe04DpJZZrR7et4BnZwjBKmkPBHAoDhfuGzA5PF1S6jHCpWIddhRQ60v6T7yp8jcBEn5yvQSmusfUju61GI0+irFV8LksaWMaLFkxdR2ne8DtHGuXoRs8G/hOLlYZGBMM/JkV2VcuX9F61vspQW2bDrNgAzMEHknYKeTamvt5HV+zYly7X/OnBMAdbDl3ZOjP5h7zYjdeDza+t6dG1+iJKfCjz5dekT20NDVlwJvIMGhqxNOxDRfnlHopoTT/16/Jd7SPDOY2gpDoZxA8uPGZJR52y6T8tZqrR/tamoXRZk5WR4zeIW2rFK85hZwmz59dWQywlhzcIxMHhBcH6r6O3p1NwFA1LPIzgEQHKig/5DxFk52reU70fA9L2nZ1AHSES2RtG9kDQZLx7gbnOaOGx7Jbd6mECFMzliEBKiSnYxN404bNVAoTBEwcuxTho9zJRccQVeIdTD617K4sAqPWWhFwk="
+        on:
+          branch: development
+          tags: true
+        file_glob: true
+        file: dist/*
+        cleanup: false
+        draft: true
+        prerelease: true
+
+    # Deploy full releases to PyPi and generate draft release on Github Releases (incomplete)
+    - stage: "Deploy Master"
+      if: tag IS present
+      python: 3.8
+      script: skip
+      deploy:
+        provider: pypi
+        skip_existing: true
+        cleanup: false
+        on:
+          branch: master
+          tags: true
+          condition: $TRAVIS_TAG =~ ^[0-9]+\.[0-9]+\.[0-9]+$
+        username: "__token__"
+        password:
+          secure: "W11OdJOvj9hvdEsJB48SuPOvylT0awsSG2wScYdtM+mnFx6u5pv7/0oxz0nyhr2/1xD+Mz7QBy5wH2ijXcpruhHwm7loopaB9Lc28au3vnVuDgwdU3yUttXjjzmPHh+q3ggsjAJS7aV4X4CKl0/cM9h3MTsr91MiIvta0cjiPYBTn/3YTrVyO+VypQnsnC2bV7bj1H/c6hYi6mzq4xKtpM1QSMs5baWo7vui1LqbHGeZSID+r9Z3Zx8c8UyAbDG9Qhqi2+TyZxhond1R13IrGtIlvjey87aCnlOFwnA+CXPAbTWsUxq+gE+QO7BCAA2oMZGkLgVeCgHmEHf8gPU/N+XEpdh9FEmgaoU7LIrPOjQI+4ijhEoadhpUxHaQG0j2qhHeE4THz+dfV0XQVPUlzAwX5ZQyLwbAHje8E1wdeqS+pPzodIB18Vtw6Lz0c2ppmieXB1IiSSG0nnxcuLgyFJ/tYJyp63+5fCLK/Itafn3SLT1HRNS/PccbZdUo5L4oFKQsMXgIU9v33Z59CyXpPiNruC+AEwujuEcDrZN1/pYc8+Zmgh42fx+qHZ3/2QitKopl+XMRMnz6X7JIS2QTgY74aLBp/djv5DHtTJnN1cdZ8wMo8K515R/p+C5HboMh9bNEM+imL8pk6Whw9QMGapNoNst99aQz4fUz3n6sPr0="
+        distributions: "sdist bdist_wheel"
+
+    - stage: "Deploy Master"
+      if: tag IS present
+      python: 3.8
+      script: skip
+      deploy:
+        provider: releases
+        token:
+          secure: "V5t/Rk0jK6ggR6Oc2sk6Kr8+mC4vcKD4Vh1/CVhFoB+/QJTJR4wR1ZzdmxSTHVqyYRWMhtbQg4GEenVu3CCE6Aqcpb8FuXagBGDjrydYMvBz0QV0tGpc0QfAGFgihoMxRXYYy8x0qJoImpIgweIcBP6qCIbWlHNn7uSbJgQAcpHI1KP5//SJbiZ5+h1tYa3AImfhuRIjtw5X5XCkbNe04DpJZZrR7et4BnZwjBKmkPBHAoDhfuGzA5PF1S6jHCpWIddhRQ60v6T7yp8jcBEn5yvQSmusfUju61GI0+irFV8LksaWMaLFkxdR2ne8DtHGuXoRs8G/hOLlYZGBMM/JkV2VcuX9F61vspQW2bDrNgAzMEHknYKeTamvt5HV+zYly7X/OnBMAdbDl3ZOjP5h7zYjdeDza+t6dG1+iJKfCjz5dekT20NDVlwJvIMGhqxNOxDRfnlHopoTT/16/Jd7SPDOY2gpDoZxA8uPGZJR52y6T8tZqrR/tamoXRZk5WR4zeIW2rFK85hZwmz59dWQywlhzcIxMHhBcH6r6O3p1NwFA1LPIzgEQHKig/5DxFk52reU70fA9L2nZ1AHSES2RtG9kDQZLx7gbnOaOGx7Jbd6mECFMzliEBKiSnYxN404bNVAoTBEwcuxTho9zJRccQVeIdTD617K4sAqPWWhFwk="
+        on:
+          branch: development
+          tags: true
+        file_glob: true
+        file: dist/*
+        cleanup: false
+        draft: true

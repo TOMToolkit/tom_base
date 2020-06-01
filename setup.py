@@ -7,13 +7,12 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='tomtoolkit',
-    version='1.4.0',
     description='The TOM Toolkit and base modules',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://tomtoolkit.github.io',
     author='TOM Toolkit Project',
-    author_email='ariba@lco.global',
+    author_email='dcollom@lco.global',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
@@ -26,6 +25,8 @@ setup(
     ],
     keywords=['tomtoolkit', 'astronomy', 'astrophysics', 'cosmology', 'science', 'fits', 'observatory'],
     packages=find_packages(),
+    use_scm_version=True,
+    setup_requires=['setuptools_scm', 'wheel'],
     install_requires=[
         'django>=2.2',  # TOM Toolkit requires db math functions
         'django-bootstrap4==1.1.1',
@@ -42,7 +43,6 @@ setup(
         'astropy==4.0',
         'astroplan==0.6',
         'plotly==4.6.0',
-        # 'matplotlib',
         'pillow==7.1.0',
         'fits2image==0.4.3',
         'specutils==1.0',
