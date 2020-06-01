@@ -269,10 +269,24 @@ class BaseObservationFacility(ABC):
     @abstractmethod
     def get_observing_sites(self):
         """
-        Return a list of dictionaries that contain the information
+        Return an iterable of dictionaries that contain the information
         necessary to be used in the planning (visibility) tool. The
-        list should contain dictionaries each that contain sitecode,
-        latitude, longitude and elevation.
+        iterable should contain dictionaries each that contain sitecode,
+        latitude, longitude and elevation. This is the static information
+        about a site.
+        """
+        pass
+
+    @abstractmethod
+    def get_facility_status(self):
+        """
+        Return a dictionary hierarchy of the form:
+
+        facility_dict = {'code': 'XYZ', 'sites': [ site_dict, ... ]}
+        site_dict = {'code': 'XYZ', 'telescopes': [ telescope_dict, ... ]}
+        telescope_dict = {'code': 'XYZ', 'status': 'AVAILABILITY'}
+
+        See lco.py for a concrete implementation example
         """
         pass
 
