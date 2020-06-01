@@ -458,9 +458,6 @@ class GEMFacility(BaseRoboticObservationFacility):
 
         return errors
 
-    def get_facility_status(self):
-        return {}
-
     @classmethod
     def get_observation_url(clz, observation_id):
         # return PORTAL_URL + '/requests/' + observation_id

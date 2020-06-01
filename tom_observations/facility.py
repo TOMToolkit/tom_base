@@ -277,7 +277,6 @@ class BaseObservationFacility(ABC):
         """
         pass
 
-    @abstractmethod
     def get_facility_status(self):
         """
         Returns a dictionary describing the current availability of the Facility
