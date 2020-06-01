@@ -631,7 +631,7 @@ class LCOFacility(BaseRoboticObservationFacility):
 
             # extract this telescope and it's status from the response
             telescope = {
-                'code': telescope_code,
+                'code': telescope_key,
                 'status': telescope_value[0]['event_type']
             }
 
