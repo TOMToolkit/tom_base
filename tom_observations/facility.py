@@ -277,6 +277,19 @@ class BaseObservationFacility(ABC):
         """
         pass
 
+    def get_facility_weather_urls(self):
+        """
+        Returns a dictionary containing a URL for weather information
+        for each site in the Facility SITES. This is intended to be useful
+        in observation planning.
+
+        `facility_weather = {'code': 'XYZ', 'sites': [ site_dict, ... ]}`
+        where
+        `site_dict = {'code': 'XYZ', 'weather_url': 'http://path/to/weather'}`
+
+        """
+        return {}
+
     def get_facility_status(self):
         """
         Returns a dictionary describing the current availability of the Facility
