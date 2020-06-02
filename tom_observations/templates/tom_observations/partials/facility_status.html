@@ -10,6 +10,7 @@
               <th>Site</th>
               <th>Telescope</th>
               <th>Status</th>
+              <th>Weather URL</th>
           </tr>
         </thead>
         <tbody>
@@ -21,6 +22,7 @@
               <td>{{ site.code }}</td>
               <td>{{ telescope.code }}</td>
               <td>{{ telescope.status }}</td>
+              <td><a href="{{ site.weather_url }}">link</a></td>
           </tr>
         {% endfor %}
         {% endfor %}

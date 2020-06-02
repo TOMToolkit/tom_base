@@ -247,7 +247,17 @@ def facility_status():
 
     facility_statuses = []
     for facility_code, facility_class in get_service_classes().items():
-        status = facility_class().get_facility_status()
+        facility = facility_class()
+        weather_urls = facility.get_facility_weather_urls()
+        status = facility.get_facility_status()
+
+        # add the weather_url to the site dictionary
+        for site in status.get('sites', []):
+            url = next((site_url['weather_url'] for site_url in weather_urls.get('sites', [])
+                        if site_url['code'] == site['code']), None)
+            if url is not None:
+                site['weather_url'] = url
+
         facility_statuses.append(status)
 
     return {'facilities': facility_statuses}
