@@ -586,7 +586,6 @@ class LCOFacility(BaseRoboticObservationFacility):
 
         return facility_weather_urls
 
-    @staticmethod
     def get_facility_status(self):
         """Get the telescope_states from the LCO API endpoint and simply
         transform the returned JSON into the following dictionary hierarchy
