@@ -1,0 +1,36 @@
+{% load tom_common_extras %}
+<div class="card">
+    <div class="card-header">
+      Facility Status
+    </div>
+    <table class="table">
+        <thead>
+          <tr>
+              <th>Facility</th>
+              <th>Site</th>
+              <th>Telescope</th>
+              <th>Status</th>
+              <th>Weather URL</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for facility in facilities %}
+        {% for site in facility.sites %}
+        {% for telescope in site.telescopes %}
+          <tr>
+              <td>{{ facility.code }}</td>
+              <td>{{ site.code }}</td>
+              <td>{{ telescope.code }}</td>
+              <td>{{ telescope.status }}</td>
+              <td><a href="{{ site.weather_url }}">link</a></td>
+          </tr>
+        {% endfor %}
+        {% endfor %}
+        {% empty %}
+          <tr>
+              <td colspan="2">Facility status unknown.</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

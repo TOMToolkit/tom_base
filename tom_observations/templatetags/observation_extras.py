@@ -234,3 +234,30 @@ def observation_distribution(observations):
     }
     figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
     return {'figure': figure}
+
+
+@register.inclusion_tag('tom_observations/partials/facility_status.html')
+def facility_status():
+    """
+    Collect the facility status from the registered facilities and pass them
+    to the facility_status.html partial template.
+    See lco.py Facility implementation for example.
+    :return:
+    """
+
+    facility_statuses = []
+    for _, facility_class in get_service_classes().items():
+        facility = facility_class()
+        weather_urls = facility.get_facility_weather_urls()
+        status = facility.get_facility_status()
+
+        # add the weather_url to the site dictionary
+        for site in status.get('sites', []):
+            url = next((site_url['weather_url'] for site_url in weather_urls.get('sites', [])
+                        if site_url['code'] == site['code']), None)
+            if url is not None:
+                site['weather_url'] = url
+
+        facility_statuses.append(status)
+
+    return {'facilities': facility_statuses}
