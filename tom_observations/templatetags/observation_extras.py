@@ -246,7 +246,7 @@ def facility_status():
     """
 
     facility_statuses = []
-    for facility_code, facility_class in get_service_classes().items():
+    for _, facility_class in get_service_classes().items():
         facility = facility_class()
         weather_urls = facility.get_facility_weather_urls()
         status = facility.get_facility_status()
