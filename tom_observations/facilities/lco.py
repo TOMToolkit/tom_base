@@ -453,6 +453,7 @@ class LCOFacility(BaseRoboticObservationFacility):
     # planning tool. All entries should contain latitude, longitude, elevation
     # and a code.
     # TODO: Flip sitecode and site name
+    # TODO: Why is tlv not represented here?
     SITES = {
         'Siding Spring': {
             'sitecode': 'coj',
@@ -565,6 +566,25 @@ class LCOFacility(BaseRoboticObservationFacility):
 
     def get_observing_sites(self):
         return self.SITES
+
+    def get_facility_weather_urls(self):
+        """
+        `facility_weather_urls = {'code': 'XYZ', 'sites': [ site_dict, ... ]}`
+        where
+        `site_dict = {'code': 'XYZ', 'weather_url': 'http://path/to/weather'}`
+        """
+        # TODO: manually add a weather url for tlv
+        facility_weather_urls = {
+            'code': 'LCO',
+            'sites': [
+                {
+                    'code': site['sitecode'],
+                    'weather_url': f'https://weather.lco.global/#/{site["sitecode"]}'
+                }
+                for site in self.SITES.values()]
+            }
+
+        return facility_weather_urls
 
     def get_facility_status(self):
         """Get the telescope_states from the LCO API endpoint and simply
