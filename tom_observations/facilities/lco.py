@@ -586,7 +586,8 @@ class LCOFacility(BaseRoboticObservationFacility):
 
         return facility_weather_urls
 
-    def get_facility_status(self):
+    @staticmethod
+    def get_facility_status():
         """Get the telescope_states from the LCO API endpoint and simply
         transform the returned JSON into the following dictionary hierarchy
         for use by the facility_status.html template partial.
@@ -595,8 +596,8 @@ class LCOFacility(BaseRoboticObservationFacility):
         site_dict = {'code': 'XYZ', 'telescopes': [ telescope_dict, ... ]}
         telescope_dict = {'code': 'XYZ', 'status': 'AVAILABILITY'}
 
-        Here's an example of the returned dictionary
-        ```
+        Here's an example of the returned dictionary:
+
         literal_facility_status_example = {
             'code': 'LCO',
             'sites': [
@@ -624,7 +625,6 @@ class LCOFacility(BaseRoboticObservationFacility):
                 }
             ]
         }
-        ```
 
         :return: facility_dict
         """
@@ -646,7 +646,7 @@ class LCOFacility(BaseRoboticObservationFacility):
         }
 
         for telescope_key, telescope_value in telescope_states.items():
-            [site_code, _, telescope_code] = telescope_key.split('.')
+            [site_code, _, _] = telescope_key.split('.')
 
             # extract this telescope and it's status from the response
             telescope = {

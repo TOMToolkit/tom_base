@@ -290,7 +290,8 @@ class BaseObservationFacility(ABC):
         """
         return {}
 
-    def get_facility_status(self):
+    @staticmethod
+    def get_facility_status():
         """
         Returns a dictionary describing the current availability of the Facility
         telescopes. This is intended to be useful in observation planning.
