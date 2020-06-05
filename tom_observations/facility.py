@@ -269,12 +269,46 @@ class BaseObservationFacility(ABC):
     @abstractmethod
     def get_observing_sites(self):
         """
-        Return a list of dictionaries that contain the information
+        Return an iterable of dictionaries that contain the information
         necessary to be used in the planning (visibility) tool. The
-        list should contain dictionaries each that contain sitecode,
-        latitude, longitude and elevation.
+        iterable should contain dictionaries each that contain sitecode,
+        latitude, longitude and elevation. This is the static information
+        about a site.
         """
         pass
+
+    def get_facility_weather_urls(self):
+        """
+        Returns a dictionary containing a URL for weather information
+        for each site in the Facility SITES. This is intended to be useful
+        in observation planning.
+
+        `facility_weather = {'code': 'XYZ', 'sites': [ site_dict, ... ]}`
+        where
+        `site_dict = {'code': 'XYZ', 'weather_url': 'http://path/to/weather'}`
+
+        """
+        return {}
+
+    def get_facility_status(self):
+        """
+        Returns a dictionary describing the current availability of the Facility
+        telescopes. This is intended to be useful in observation planning.
+        The top-level (Facility) dictionary has a list of sites. Each site
+        is represented by a site dictionary which has a list of telescopes.
+        Each telescope has an identifier (code) and an status string.
+
+        The dictionary hierarchy is of the form:
+
+        `facility_dict = {'code': 'XYZ', 'sites': [ site_dict, ... ]}`
+        where
+        `site_dict = {'code': 'XYZ', 'telescopes': [ telescope_dict, ... ]}`
+        where
+        `telescope_dict = {'code': 'XYZ', 'status': 'AVAILABILITY'}`
+
+        See lco.py for a concrete implementation example.
+        """
+        return {}
 
     @abstractmethod
     def get_observation_url(self, observation_id):
