@@ -260,12 +260,10 @@ class GEMObservationForm(BaseRoboticObservationForm):
     def layout(self):
         return Div(
             HTML('<big>Observation Parameters</big>'),
-            HTML('<p>Select the Obsids of one or more templates. <br>' 
-                 'Setting Ready=No will keep the new observation(s) On Hold. <br>'
-                 'If a value is not set, then the template default is used. <br>'
-                 'If setting Exptime, then provide a list of values if selecting more than one Obsid.</p>'),
-            HTML('<p></p>'),
-            HTML('<p></p>'),
+            HTML('<p>Select the Obsids of one or more templates. <br>'),
+            HTML('Setting Ready=No will keep the new observation(s) On Hold. <br>'),
+            HTML('If a value is not set, then the template default is used. <br>'),
+            HTML('If setting Exptime, then provide a list of values if selecting more than one Obsid.</p>'),
             Div(
                 Div(
                     'obsid',
