@@ -1,18 +1,23 @@
-from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
-from tom_alerts.models import BrokerQuery
-from tom_targets.models import Target
-from tom_dataproducts.models import ReducedDatum
 from dateutil.parser import parse
-from django import forms
+import json
+from os import path
+import re
+import requests
+from requests.exceptions import HTTPError
+
 from astropy.coordinates import SkyCoord
 from astropy.time import Time, TimezoneInfo
 import astropy.units as u
-import requests
-from requests.exceptions import HTTPError
-import json
-from os import path
+from bs4 import BeautifulSoup
+from django import forms
+
+from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
+from tom_alerts.models import BrokerQuery
+from tom_dataproducts.models import ReducedDatum
+from tom_targets.models import Target
 
 BROKER_URL = 'http://gsaweb.ast.cam.ac.uk/alerts/alertsindex'
+BASE_BROKER_URL = 'http://gsaweb.ast.cam.ac.uk'
 
 
 class GaiaQueryForm(GenericQueryForm):
@@ -23,21 +28,72 @@ class GaiaQueryForm(GenericQueryForm):
         help_text='RA,Dec,radius in degrees'
     )
 
+    def clean_cone(self):
+        cone = self.cleaned_data['cone']
+        if cone:
+            cone_params = cone.split(',')
+            if len(cone_params) != 3:
+                raise forms.ValidationError('Cone search parameters must be in the format \'RA,Dec,Radius\'.')
+        return cone
+
     def clean(self):
-        if len(self.cleaned_data['target_name']) == 0 and \
-                        len(self.cleaned_data['cone']) == 0:
-            raise forms.ValidationError(
-                "Please enter either a target name or cone search parameters"
-                )
+        super().clean()
+        if not (self.cleaned_data.get('target_name') or self.cleaned_data.get('cone')):
+            raise forms.ValidationError('Please enter either a target name or cone search parameters.')
+        elif self.cleaned_data.get('target_name') and self.cleaned_data.get('cone'):
+            raise forms.ValidationError('Please only enter one of target name or cone search parameters.')
 
 
 class GaiaBroker(GenericBroker):
     name = 'Gaia'
     form = GaiaQueryForm
 
+    # def fetch_alerts(self, parameters):
+    #     response = requests.get(f'{BASE_BROKER_URL}/alerts/alertsindex')
+    #     response.raise_for_status()
+
+    #     soup = BeautifulSoup(response.content)
+    #     script_tags = soup.find_all('script')
+    #     alerts = []
+
+    #     alerts_pattern = re.compile(r'var alerts = (.*?);')
+    #     for script in script_tags:
+    #         alerts = alerts_pattern.match(str(script.string).strip())
+    #         if alerts:
+    #             break
+        
+    #     print(alerts[0])
+    #     alert_list = json.loads(alerts[0].replace('var_alerts = ', '').replace(';', ''))
+
+    #     cone_params = parameters.get('cone').split(',')
+    #     parameters['cone_ra'] = float(cone_params[0])
+    #     parameters['cone_dec'] = float(cone_params[1])
+    #     parameters['cone_radius'] = float(cone_params[2])*u.deg
+    #     parameters['cone_centre'] = SkyCoord(float(cone_params[0]),
+    #                                             float(cone_params[1]),
+    #                                             frame="icrs", unit="deg")
+
+    #     filtered_alerts = []
+    #     if parameters.get('target_name'):
+    #         for alert in alert_list:
+    #             if parameters['target_name'] in alert['name']:
+    #                 filtered_alerts.append(alert)
+
+    #     elif 'cone_radius' in parameters.keys():
+    #         for alert in alert_list:
+    #             c = SkyCoord(float(alert['ra']), float(alert['dec']),
+    #                          frame="icrs", unit="deg")
+    #             if parameters['cone_centre'].separation(c) <= parameters['cone_radius']:
+    #                 filtered_alerts.append(alert)
+
+    #     else:
+    #         filtered_alerts = alert_list
+
+    #     return iter(filtered_alerts)
+
     def fetch_alerts(self, parameters):
         """Must return an iterator"""
-        response = requests.get(BROKER_URL)
+        response = requests.get(f'{BASE_BROKER_URL}/alerts/alertsindex')
         response.raise_for_status()
 
         html_data = response.text.split('\n')
@@ -58,8 +114,7 @@ class GaiaBroker(GenericBroker):
                                                  frame="icrs", unit="deg")
 
         filtered_alerts = []
-        if parameters['target_name'] is not None and \
-                len(parameters['target_name']) > 0:
+        if parameters.get('target_name'):
             for alert in alert_list:
                 if parameters['target_name'] in alert['name']:
                     filtered_alerts.append(alert)
@@ -87,6 +142,8 @@ class GaiaBroker(GenericBroker):
 
     def to_generic_alert(self, alert):
         timestamp = parse(alert['obstime'])
+        alert_link = alert.get('per_alert', {})['link']
+        url = f'{BASE_BROKER_URL}/{alert_link}'
         url = BROKER_URL.replace('/alerts/alertsindex', alert['per_alert']['link'])
 
         return GenericAlert(
@@ -103,6 +160,7 @@ class GaiaBroker(GenericBroker):
     def process_reduced_data(self, target, alert=None):
 
         base_url = BROKER_URL.replace('/alertsindex', '/alert')
+        query_url = f'{BASE_BROKER_URL}/alert'
 
         if not alert:
             try:

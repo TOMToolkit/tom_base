@@ -21,3 +21,12 @@ class ANTARESQueryForm(GenericQueryForm):
 class ANTARESBroker(GenericBroker):
     name = 'ANTARES'
     form = ANTARESQueryForm
+
+    def fetch_alerts(self, parameters):
+        return iter([])
+    
+    def process_reduced_data(self, target, alert=None):
+        return
+
+    def to_generic_alert(self, alert):
+        return GenericAlert()
