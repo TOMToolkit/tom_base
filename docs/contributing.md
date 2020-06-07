@@ -67,3 +67,7 @@ We recommend that you use a linter, as all pull requests must pass a `pycodestyl
 ```
 pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
 ```
+
+### Documentation
+
+We require any new features to 

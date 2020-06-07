@@ -16,6 +16,32 @@ Introduction
 
 The TOM (Target and Observation Manager) Toolkit project was started in early 2018 with the goal of simplifying the development of next generation software for the rapidly evolving field of astronomy. Read more :doc:`about TOMs<about>` and the motivation for them.
 
+:doc:`TOM  Toolkit Architecture <introduction/tomarchitecture>` - This document describes the architecture of the TOM Toolkit at a
+high level. Read this first if you're interested in how the TOM Toolkit works.
+
+:doc:`Getting Started with the TOM Toolkit<introduction/getting_started>` - First steps for getting a TOM up and running.
+
+:doc:`TOM Workflow <introduction/workflow>` - The general workflow used with TOMs.
+
+:doc:`Programming Resources <introduction/resources>` - Resources for learning the core components of the TOM Toolkit:
+HTML, CSS, Python, and Django
+
+:doc:`Frequently Asked Questions <introduction/faqs>` - Look here for a potential quick answer to a common question.
+
+
+Targets
+-------
+
+:doc:`Adding Custom Target Fields <customization/target_fields>` - Learn how to add custom fields to your TOM Targets if the
+defaults do not suffice.
+
+`Target API <api/modules/targets>` - Take a look at available properties of Targets and 
+
+
+
+
+
+
 Interested in seeing what a TOM can do? Take a look at our `demonstration TOM <https://tom-demo.lco.global>`_, where we show off the features of the TOM Toolkit.
 
 Are you looking to run a TOM of your own? This documentation is a good place to get started. The source code for the project is also available on Github.
@@ -23,18 +49,6 @@ Are you looking to run a TOM of your own? This documentation is a good place to 
 Start with the :doc:`introduction<introduction/index>` if you are new to using the TOM Toolkit.
 
 If you'd like to know what we're working on, check out the `TOM Toolkit project board <https://github.com/TOMToolkit/tom_base/projects/1>`_.
-
-:doc:`Architecture <introduction/tomarchitecture>` - This document describes the architecture of the TOM Toolkit at a
-high level. Read this first if you're interested in how the TOM Toolkit works.
-
-:doc:`Getting Started <introduction/getting_started>` - First steps for getting a TOM up and running.
-
-:doc:`Workflow <introduction/workflow>` - The general workflow used with TOMs.
-
-:doc:`Programming Resources <introduction/resources>` - Resources for learning the core components of the TOM Toolkit:
-HTML, CSS, Python, and Django
-
-:doc:`Frequently Asked Questions <introduction/faqs>` - Look here for a potential quick answer to a common question.
 
 :doc:`Troubleshooting <introduction/troubleshooting>` - Find solutions to common problems or information on how to debug an issue.
 
@@ -54,9 +68,6 @@ the data you need.
 
 :doc:`Adding new Pages to your TOM <customization/adding_pages>` - Learn how to add entirely new pages to your TOM,
 displaying static html pages or dynamic database-driven content.
-
-:doc:`Adding Custom Target Fields <customization/target_fields>` - Learn how to add custom fields to your TOM Targets if the
-defaults do not suffice.
 
 :doc:`Adding Custom Data Processing <customization/customizing_data_processing>` - Learn how you can process data into your
 TOM from uploaded data products.
