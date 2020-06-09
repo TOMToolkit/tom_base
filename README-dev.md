@@ -70,28 +70,39 @@ Following deployment of a release, a Github Release is created, and this should 
    Repo watchers are notified by email.
 
 ### Public release deployment
+The public release deployment workflow parallels the pre-release deployment work flow
+and more details for a particular step may be found above.
+ 
+1. Create PR: `master <- development`
+2. Meet pre-deployment criteria.
+   * Include docstrings for any new or updated methods
+   * Include tutorial documentation for any new major features as needed
+   * Pass [Codacy code quality check](https://app.codacy.com/gh/TOMToolkit/tom_base/dashboard?bid=18204585).
+   * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base?branch=development).
+   * Passes [Travis tests and code style check](https://travis-ci.com/github/TOMToolkit/tom_base/branches).
+   * Successfully builds [ReadTheDocs documentation](https://readthedocs.org/projects/tom-toolkit/builds/) (not an automated check) (TODO: fix webhook).
 
-* Create PR: `master <- development`
-* Meet pre-deployment criteria.
-  * Include docstrings for any new or updated methods
-  * Include tutorial documentation for any new major features as needed
-  * Pass [Codacy code quality check](https://app.codacy.com/gh/TOMToolkit/tom_base/dashboard?bid=18204585).
-  * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base?branch=development).
-  * Passes [Travis tests and code style check](https://travis-ci.com/github/TOMToolkit/tom_base/branches).
-  * Successfully builds [ReadTheDocs documentation](https://readthedocs.org/projects/tom-toolkit/builds/) (not an automated check) (TODO: fix webhook).
-* Merge PR
-  * Must be a repository owner to merge.
-* `git tag -a x.y.z -m "Release x.y.z"` -- must follow semantic versioning
-* `git push --tags` Triggers Travis to:
-  * build, build
-  * push release to PyPI  
-  * create GitHub draft release
-* deploy `tom-demo` with new features demonstrated, pulling `tomtoolkit==x.y.z` from PyPI
-* Update Release Notes in GitHub draft release. (This should be the accumulation of the all
-  the development-release release notes:  For example, release notes for releases x.y.z-alpha.1,
-  x.y.z-alpha.2, etc. should be combined into release notes for release x.y.z.
-* Publish Release
-* Post notification to Slack, Tom Toolkit workspace, #general channel. (In the future, we hope to
+3. Merge PR
+   * Must be a repository owner to merge.
+
+4. Tag the release, triggering GitHub and PyPI actions:
+   * `git tag -a x.y.z -m "Release x.y.z"` -- must follow semantic versioning
+   * `git push --tags` Triggers Travis to:
+   * build, build
+   * push release to PyPI  
+   * create GitHub draft release
+    
+5. deploy `tom-demo` with new features demonstrated, pulling `tomtoolkit==x.y.z` from PyPI
+
+6. Update Release Notes in GitHub draft release.
+   
+   This should be the accumulation of the all
+   the development-release release notes:  For example, release notes for releases x.y.z-alpha.1,
+    x.y.z-alpha.2, etc. should be combined into release notes for release x.y.z.
+
+7.  Publish Release
+
+8.  Post notification to Slack, Tom Toolkit workspace, #general channel. (In the future, we hope to
 have automated release notification to a dedicated #releases slack channel).
 
 ## Development Notes - Doing checks locally
