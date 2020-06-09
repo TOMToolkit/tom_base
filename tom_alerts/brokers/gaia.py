@@ -1,6 +1,4 @@
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
-from tom_alerts.models import BrokerQuery
-from tom_targets.models import Target
 from tom_dataproducts.models import ReducedDatum
 from dateutil.parser import parse
 from django import forms
