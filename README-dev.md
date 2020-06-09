@@ -24,7 +24,8 @@ Following deployment of a release, a Github Release is created, and this should 
 
 ## Deployment Workflow
   _**This section of this document is a work-in-progress**_
-#### Pre-release deployment
+
+### Pre-release deployment
 * Meet pre-deployment criteria.
   * Pass [Codacy code quality check](https://app.codacy.com/gh/TOMToolkit/tom_base/pullRequests).
   * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base).
@@ -48,7 +49,7 @@ Following deployment of a release, a Github Release is created, and this should 
 * When satisfied, `Publish Release` Repo watchers are notified by email.
 
 
-#### Public release deployment
+### Public release deployment
 
 * Create PR: `master <- development`
 * Meet pre-deployment criteria.
@@ -74,19 +75,19 @@ Following deployment of a release, a Github Release is created, and this should 
 have automated release notification to a dedicated #releases slack channel).
 
 
-### Development Notes - Doing checks locally
+## Development Notes - Doing checks locally
 
-#### Preview Read the Docs doc strings
+### Preview Read the Docs doc strings
 * `cd /path/to/tom_base/docs`
 * `pip install -r requirements.txt  # make sure sphinx is installed to your venv`
 * `make html  # make clean first, if things are weird`
 * point a browser to the html files in `./_build/html/` to proof read before deployment 
 
-#### Run code style checks
+### Run code style checks
 * `pip install pycodestyle`
 * `pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120`
 
-#### Run tests
+### Run tests
 * `./manage.py test`
 * Examples for running specific tests or test suites:
   * `./manage.py test tom_targets.tests`
