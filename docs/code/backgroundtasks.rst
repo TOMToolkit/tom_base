@@ -129,7 +129,7 @@ your virtualenv:
 offer us some conveniences while working with tasks in our TOM.
 
 Install django-dramatiq to your ``INSTALLED_APPS`` setting, above the
-tom_\* apps:
+tom_* apps:
 
 .. code:: python
 

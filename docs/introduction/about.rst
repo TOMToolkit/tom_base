@@ -68,5 +68,5 @@ support from the `Heising-Simons
 Foundation <https://hsfoundation.org>`_ and the `Zegar Family
 Foundation <https://sites.google.com/zegarff.org/site>`_.
 
-.. container:: partners
-
+.. image:: /_static/hs.jpg
+.. image:: /_static/zff.png
