@@ -63,7 +63,7 @@ Default: []
 
 A list of extra fields to add to your targets. These can be used if the predefined
 target fields do not match your needs. Please see the documentation on [Adding
-Custom Fields to Targets](/customization/target_fields) for an explanation of how to use
+Custom Fields to Targets](/targets/target_fields) for an explanation of how to use
 this feature.
 
 
@@ -110,7 +110,7 @@ Default:
 A dictionary of action, method code hooks to run. These hooks allow running
 arbitrary python code when specific actions happen within a TOM, such as an
 observation changing state. See the documentation on [Running Custom Code on
-Actions in your TOM](/advanced/custom_code) for more details and available hooks.
+Actions in your TOM](/code/custom_code) for more details and available hooks.
 
 
 ### [OPEN_URLS](#open_urls)
@@ -157,7 +157,7 @@ Default:
 A list of tom alert classes to make available to your TOM. If you have written or
 downloaded additional alert classes you would make them available here. If you'd
 like to write your own alert module please see the documentation on [Creating an
-Alert Module for the TOM Toolkit](/customization/create_broker).
+Alert Module for the TOM Toolkit](/brokers/create_broker).
 
 
 ### [TOM_FACILITY_CLASSES](#tom_facility_classes)

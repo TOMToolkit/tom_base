@@ -1,4 +1,4 @@
-# Troubleshooting your TOM Toolkit
+# Troubleshooting your TOM
 
 When first installing or later updating your TOM, you may run into a few common issues. Fortunately, you can stand on our 
 shoulders and hopefully find a solution here!

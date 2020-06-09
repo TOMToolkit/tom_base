@@ -15,7 +15,7 @@ notebook server:
 Under the new notebook menu, choose "Django Shell-Plus". This will create a new
 notebook in the correct TOM context.
 
-There is also a [tutorial](/advanced/scripts) on interacting with your TOM using
+There is also a [tutorial](../common/scripts) on interacting with your TOM using
 Jupyter notebooks.
 
 ### What are tags on the Target form?
@@ -26,12 +26,12 @@ You can then search for targets via tags on the target list page, by entering th
 target detail pages.
 
 If you'd like to have more control over extra target data, see the documentation
-on [Adding Custom Target Fields](/customization/target_fields).
+on [Adding Custom Target Fields](../targets/target_fields).
 
 ### I try to observe a target with LCO but get an error.
 
 You might not have added your LCO api key to your settings file under the
-`FACILITIES` settings. See [Custom Settings](/customization/customsettings#facilities) for
+`FACILITIES` settings. See [Custom Settings](../uncategorized/customsettings#facilities) for
 more details.
 
 ### How do I create a super user (PI)?
@@ -48,13 +48,13 @@ in as a superuser by visiting the admin page for users:
 
 ### My science requires more parameters than are provided by the TOM Toolkit.
 It is possible to add additional parameters to your targets within the TOM. See
-the documentation on [Adding Custom Target Fields](/customization/target_fields).
+the documentation on [Adding Custom Target Fields](../targets/target_fields).
 
 
 ### Yuck! My TOM is ugly. How do I change how it looks?
 You have a few options. If you'd like to rearrange the layout or information on
 the page, you can follow the tutorial on
-[Customizing your TOM](/customization/customize_templates). If you'd like to modify colors,
+[Customizing your TOM](../customization/customize_templates). If you'd like to modify colors,
 typography, etc you'll want to use CSS.
 [W3Schools](https://www.w3schools.com/Css/) is a good resource if you are
 unfamiliar with Cascading Style Sheets.
@@ -88,3 +88,10 @@ AnonymousUser is a special profile that django-guardian, our permissions library
 represents an unauthenticated user. The user has no first name, last name, or password, and allows unauthenticated 
 users to view unprotected pages within your TOM. You can choose to delete the user if you don't want any pages to be 
 visible without logging in.
+
+### How can I display an error message when authentication to an external facility fails?
+
+For any modules exposing external services, such as brokers, harvesters, or facilities, a failed authentication should 
+raise an `ImproperCredentialsException`. Exceptions of this type are caught by the TOM Toolkit's built-in 
+`ExternalServiceMiddleware`. This middleware will display an error at the top of the page and redirect the user to the 
+home page.

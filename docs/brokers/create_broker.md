@@ -12,10 +12,6 @@ alert broker.
 
 Be sure you've followed the [Getting Started](/introduction/getting_started) guide before continuing onto this tutorial.
 
-### What is an Alert Broker Module?
-A TOM Toolkit Alert Broker Module is an object which contains the logic for querying a remote broker
-(e.g [MARS](https://mars.lco.global)), and transforming the returned data into TOM Toolkit Targets.
-
 #### TOM Alerts module
 The TOM Alerts module is a Django app which provides the methods and
 classes needed to create a custom TOM alert broker module. A module may be created to ingest
