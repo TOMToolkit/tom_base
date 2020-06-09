@@ -26,44 +26,63 @@ Following deployment of a release, a Github Release is created, and this should 
   _**This section of this document is a work-in-progress**_
 
 ### Pre-release deployment
-* Meet pre-deployment criteria.
-  * Pass [Codacy code quality check](https://app.codacy.com/gh/TOMToolkit/tom_base/pullRequests).
-  * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base).
-  * Passes [Travis tests and code style check](https://travis-ci.com/github/TOMToolkit/tom_base/branches).
-  * Successfully builds [ReadTheDocs documentation](https://readthedocs.org/projects/tom-toolkit/builds/) (not an automated check) (TODO: fix webhook).
-  * One review approval by a repository owner.
-* merge to `development`
-* `git tag -a x.y.z-alpha.w -m "x.y.z-alpha.w"` -- must follow semantic versioning
-* `git push --tags`
-* This causes Travis to create a draft release in GitHub and push to PyPI
-* deploy `tom-demo-dev` with new features demonstrated, pulling `tomtoolkit==x.y.z-alpha.w` from PyPI
-  Examples:
-  * Release of observing strategies should include saving an observing strategy and submitting an observation via the observing strategy
-  * Release of manual facility interface should include an implementation of the new interface
-  * Release of a new template tag should include that template tag in a template
-* Edit the release notes in GitHub; Update, edit; repeat until satisfied. Release notes should contain (as needed):
-  * Links to Read the Docs API (docstring) docs
-  * Links to Read the Docs higher level docs
-  * Link to Tom Demo feature demonstration
-  * Links to issues that have been fixed
-* When satisfied, `Publish Release` Repo watchers are notified by email.
+1. Meet pre-deployment criteria.
+   * Pass [Codacy code quality check](https://app.codacy.com/gh/TOMToolkit/tom_base/pullRequests).
+   * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base).
+   * Passes [Travis tests and code style check](https://travis-ci.com/github/TOMToolkit/tom_base/branches).
+   * Successfully builds [ReadTheDocs documentation](https://readthedocs.org/projects/tom-toolkit/builds/) (not an automated check) (TODO: fix webhook).
+   * One review approval by a repository owner.
+  
+2. Merge your feature branch into the `development` branch
+   * `git checkout development`
+   * `git merge feature/your_feature_branch`
+
+3. Tag the release, triggering GitHub and PyPI actions:
+
+   Release tags must follow [semantic versioning](https://semver.org) syntax.
+   * `git tag -a x.y.z-alpha.w -m "x.y.z-alpha.w"`
+   * `git push --tags`
+      * Pushing the tags causes Travis to create a draft release in GitHub and push to PyPI
+      
+4. Deploy `tom-demo-dev` with new features demonstrated, pulling `tomtoolkit==x.y.z-alpha.w` from PyPI.
+
+   Examples:
+     * Release of observing strategies should include saving an observing strategy and submitting an observation via the observing strategy
+     * Release of manual facility interface should include an implementation of the new interface
+     * Release of a new template tag should include that template tag in a template
+
+5. Edit the Release Notes in GitHub
+
+   When the tags were pushed above, GitHub created draft Release Notes
+   which need to be filled out. (These can be found by following the `releases` link on the [front page](https://github.com/TOMToolkit/tom_base) of the repo.
+   Or, [here](https://github.com/TOMToolkit/tom_base/releases)).
+   
+   Edit, Update, and repeat until satisfied.
+   Release notes should contain (as needed):
+   * Links to Read the Docs API (docstring) docs
+   * Links to Read the Docs higher level docs
+   * Link to Tom Demo feature demonstration
+   * Links to issues that have been fixed
+  
+6. Publish the Release 
+
+   When satisfied with the Release Notes, `Publish Release`.
+   Repo watchers are notified by email.
 
 ### Public release deployment
 
-1. Create PR: `master <- development`
-2. Meet pre-deployment criteria.
-     * Include docstrings for any new or updated methods
-     * Include tutorial documentation for any new major features as needed
-     * Pass [Codacy code quality check](https://app.codacy.com/gh/TOMToolkit/tom_base/dashboard?bid=18204585).
-     * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base?branch=development).
-     * Passes [Travis tests and code style check](https://travis-ci.com/github/TOMToolkit/tom_base/branches).
-     * Successfully builds [ReadTheDocs documentation](https://readthedocs.org/projects/tom-toolkit/builds/) (not an automated check) (TODO: fix webhook).
-     
-3. Merge PR
+* Create PR: `master <- development`
+* Meet pre-deployment criteria.
+  * Include docstrings for any new or updated methods
+  * Include tutorial documentation for any new major features as needed
+  * Pass [Codacy code quality check](https://app.codacy.com/gh/TOMToolkit/tom_base/dashboard?bid=18204585).
+  * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base?branch=development).
+  * Passes [Travis tests and code style check](https://travis-ci.com/github/TOMToolkit/tom_base/branches).
+  * Successfully builds [ReadTheDocs documentation](https://readthedocs.org/projects/tom-toolkit/builds/) (not an automated check) (TODO: fix webhook).
+* Merge PR
   * Must be a repository owner to merge.
 * `git tag -a x.y.z -m "Release x.y.z"` -- must follow semantic versioning
 * `git push --tags` Triggers Travis to:
-
   * build, build
   * push release to PyPI  
   * create GitHub draft release
