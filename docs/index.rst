@@ -66,9 +66,9 @@ Topics
 
 :doc:`The Permissions System <common/permissions>` - Use the permissions system to limit access to targets in your TOM.
 
-:doc:`LaTeX Generation <common/latex_generation>`
+:doc:`LaTeX Generation <common/latex_generation>` - Generate data tables for your targets and observations
 
-:doc:`Interacting with your TOM through code <code/index>`
+:doc:`Interacting with your TOM through code <code/index>` - Learn how to programmatically interact with your TOM.
 
 :doc:`Deploying your TOM Online <deployment/index>` - Resources for deploying your TOM to a cloud provider
 
