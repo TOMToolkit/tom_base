@@ -94,7 +94,7 @@ If you just need an idea, checkout out the :doc:`examples<examples>` of existing
 
   examples
   introduction/contributing
-  common/releasenotes
+  Release Notes <https://github.com/TOMToolkit/tom_base/releases>
   Github <https://github.com/TOMToolkit>
 
 API Documentation
