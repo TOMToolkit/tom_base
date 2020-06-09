@@ -6,30 +6,22 @@ Welcome to the TOM Toolkit's documentation!
   :hidden:
 
   introduction/index
-  customization/index
-  advanced/index
-  deployment/index
-  introduction/faqs
+  introduction/about
+  introduction/support
+  introduction/troubleshooting
+
 
 Introduction
 ------------
 
-The TOM (Target and Observation Manager) Toolkit project was started in early 2018 with the goal of simplifying the development of next generation software for the rapidly evolving field of astronomy. Read more :doc:`about TOMs<about>` and the motivation for them.
+The TOM (Target and Observation Manager) Toolkit project was started in early 2018 with the goal of simplifying the development of next generation software for the rapidly evolving field of astronomy. Read more :doc:`about TOMs<introduction/about>` and the motivation for them.
 
-Interested in seeing what a TOM can do? Take a look at our `demonstration TOM <https://tom-demo.lco.global>`_, where we show off the features of the TOM Toolkit.
-
-Are you looking to run a TOM of your own? This documentation is a good place to get started. The source code for the project is also available on Github.
-
-Start with the :doc:`introduction<introduction/index>` if you are new to using the TOM Toolkit.
-
-If you'd like to know what we're working on, check out the `TOM Toolkit project board <https://github.com/TOMToolkit/tom_base/projects/1>`_.
-
-:doc:`Architecture <introduction/tomarchitecture>` - This document describes the architecture of the TOM Toolkit at a
+:doc:`TOM  Toolkit Architecture <introduction/tomarchitecture>` - This document describes the architecture of the TOM Toolkit at a
 high level. Read this first if you're interested in how the TOM Toolkit works.
 
-:doc:`Getting Started <introduction/getting_started>` - First steps for getting a TOM up and running.
+:doc:`Getting Started with the TOM Toolkit<introduction/getting_started>` - First steps for getting a TOM up and running.
 
-:doc:`Workflow <introduction/workflow>` - The general workflow used with TOMs.
+:doc:`TOM Workflow <introduction/workflow>` - The general workflow used with TOMs.
 
 :doc:`Programming Resources <introduction/resources>` - Resources for learning the core components of the TOM Toolkit:
 HTML, CSS, Python, and Django
@@ -38,93 +30,61 @@ HTML, CSS, Python, and Django
 
 :doc:`Troubleshooting <introduction/troubleshooting>` - Find solutions to common problems or information on how to debug an issue.
 
-Extending and Customizing
--------------------------
+Interested in seeing what a TOM can do? Take a look at our `demonstration TOM <https://tom-demo.lco.global>`_, where we show off the features of the TOM Toolkit.
 
-Start here to learn how to customize the look and feel of your TOM or add new functionality.
+If you'd like to know what we're working on, check out the `TOM Toolkit project board <https://github.com/TOMToolkit/tom_base/projects/1>`_.
 
-:doc:`Custom Settings <customization/customsettings>` - Settings available to the TOM Toolkit which you may want to
-configure.
 
-:doc:`Customizing TOM Templates <customization/customize_templates>` - Learn how to override built in TOM templates to
-change the look and feel of your TOM.
+Topics
+------
 
-:doc:`Customizing Template Tag <customization/customize_template_tags>` - Learn how to write your own template tags to display 
-the data you need.
+.. toctree::
+  :maxdepth: 2
+  :hidden:
 
-:doc:`Adding new Pages to your TOM <customization/adding_pages>` - Learn how to add entirely new pages to your TOM,
-displaying static html pages or dynamic database-driven content.
+  targets/index
+  brokers/index
+  observing/index
+  managing_data/index
+  customization/index
+  common/permissions
+  common/latex_generation
+  code/index
+  deployment/index
+  common/customsettings
 
-:doc:`Adding Custom Target Fields <customization/target_fields>` - Learn how to add custom fields to your TOM Targets if the
-defaults do not suffice.
 
-:doc:`Adding Custom Data Processing <customization/customizing_data_processing>` - Learn how you can process data into your
-TOM from uploaded data products.
+:doc:`Targets <targets/index>` - Learn all about how to manage Targets in a TOM.
 
-:doc:`Building a TOM Alert Broker <customization/create_broker>` - Learn how to build an Alert Broker module to add new
-sources of targets to your TOM.
+:doc:`Brokers <brokers/index>` - Find out about querying brokers in the TOM, which are available, and writing your own.
 
-:doc:`Changing Request Submission Behavior <customization/customize_observations>` - Learn how to customize the LCO
-Observation Module in order to add additional parameters to observation requests sent to the LCO Network.
+:doc:`Observing <observing/index>` - Tutorials on submitting observations, customizing submission, and the available facilities.
 
-:doc:`Creating Plots from TOM Data <customization/plotting_data>` - Learn how to create plots using plot.ly and your TOM
-data to display anywhere in your TOM.
+:doc:`Managing Data <managing_data/index>` - Customize plots, upload data, and even integrate a data reduction pipeline.
 
-:doc:`The Permissions System <customization/permissions>` - Use the permissions system to limit access to targets in your
-TOM.
+:doc:`Customization <customization/index>` - Customize and create new views in your TOM.
 
-:doc:`Automating Tasks <customization/automation>` - Run commands automatically to keep your TOM working even when you
-aren’t
+:doc:`The Permissions System <common/permissions>` - Use the permissions system to limit access to targets in your TOM.
 
-Advanced Topics
----------------
+:doc:`LaTeX Generation <common/latex_generation>`
 
-:doc:`Background Tasks <advanced/backgroundtasks>` - Learn how to set up an asynchronous task library to handle long
-running and/or concurrent functions.
+:doc:`Interacting with your TOM through code <code/index>`
 
-:doc:`Building a TOM Observation Facility Module <advanced/observation_module>` - Learn to build a module which will
-allow your TOM to submit observation requests to observatories.
+:doc:`Deploying your TOM Online <deployment/index>` - Resources for deploying your TOM to a cloud provider
 
-:doc:`Running Custom Code Hooks <advanced/custom_code>` - Learn how to run your own scripts when certain actions happen
-within your TOM (for example, an observation completes).
-
-:doc:`Scripting your TOM with Jupyter Notebooks <advanced/scripts>` - Use a Jupyter notebook (or just a python
-console/scripts) to interact directly with your TOM.
-
-:doc:`Observing and cadence strategies <advanced/strategies>` - Learn about observing and cadence strategies and how to write a
-custom cadence strategy to automate a series of observations.
-
-:doc:`LaTeX table generation <advanced/latex_generation>` - Learn how to generate LaTeX for certain models and add LaTeX 
-generators for other models.
-
-:doc:`Advanced Querying <advanced/querying>` - Get a couple of tips on programmatic querying with Django's QuerySet API
-
-:doc:`Authentication exceptions for external services <advanced/exceptions>` - Ensure that your custom external services have 
-  appropriate and visible errors.
-
-Deployment
-----------
-
-Once you’ve got a TOM up and running on your machine, you’ll probably want to deploy it somewhere so it is permanently
-accessible by you and your colleagues.
-
-:doc:`General Deployment Tips <deployment/deployment_tips>` - Read this first before deploying your TOM for others to use.
-
-:doc:`Deploy to Heroku <deployment/deployment_heroku>` - Heroku is a PaaS that allows you to publicly deploy your web applications without the need for managing the infrastructure yourself.
-
-:doc:`Using Amazon S3 to Store Data for a TOM <deployment/amazons3>` - Enable storing data on the cloud storage service Amazon S3 instead of your local disk.
+:doc:`TOM Settings <common/customsettings>` - Reference and description for the available settings values to be added to/edited in your project's ``settings.py``.
 
 Contributing
 ------------
 
 If you find an issue, you need help with your TOM, you have a useful idea, or you wrote a module you'd like to be
-included in the TOM Toolkit, start with the :doc:`Contribution Guide <contributing>`.
+included in the TOM Toolkit, start with the :doc:`Contribution Guide <introduction/contributing>`.
 
 Support
 -------
 
 Looking for help? Want to request a feature? Have questions about Github Issues? Take a look at the :doc:`support guide
-<support>`.
+<introduction/support>`.
 
 If you just need an idea, checkout out the :doc:`examples<examples>` of existing TOMs built with the TOM Toolkit.
 
@@ -132,10 +92,9 @@ If you just need an idea, checkout out the :doc:`examples<examples>` of existing
   :maxdepth: 1
   :hidden:
 
-  contributing
-  support
   examples
-  about
+  introduction/contributing
+  Release Notes <https://github.com/TOMToolkit/tom_base/releases>
   Github <https://github.com/TOMToolkit>
 
 API Documentation
@@ -162,4 +121,4 @@ About the TOM Toolkit
 The TOM Toolkit is managed by Las Cumbres Observatory, with generous financial support from the `Heising-Simons Foundation <https://hsfoundation.org>`_ and the `Zegar Family Foundation <https://sites.google.com/zegarff.org/site>`_.
 
 
-Read about the project and the motivations behind it on the :doc:`About page <about>`.
+Read about the project and the motivations behind it on the :doc:`About page <introduction/about>`.
