@@ -67,25 +67,41 @@ Following deployment of a release, a Github Release is created, and this should 
 ### Public release deployment
 
 * Create PR: `master <- development`
+
 * Meet pre-deployment criteria.
   * Include docstrings for any new or updated methods
+  
   * Include tutorial documentation for any new major features as needed
+  
   * Pass [Codacy code quality check](https://app.codacy.com/gh/TOMToolkit/tom_base/dashboard?bid=18204585).
+  
   * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base?branch=development).
+  
   * Passes [Travis tests and code style check](https://travis-ci.com/github/TOMToolkit/tom_base/branches).
+  
   * Successfully builds [ReadTheDocs documentation](https://readthedocs.org/projects/tom-toolkit/builds/) (not an automated check) (TODO: fix webhook).
+
 * Merge PR
+  
   * Must be a repository owner to merge.
+
 * `git tag -a x.y.z -m "Release x.y.z"` -- must follow semantic versioning
+
 * `git push --tags` Triggers Travis to:
   * build, build
+  
   * push release to PyPI
+  
   * create GitHub draft release
+
 * deploy `tom-demo` with new features demonstrated, pulling `tomtoolkit==x.y.z` from PyPI
+
 * Update Release Notes in GitHub draft release. (This should be the accumulation of the all
   the development-release release notes:  For example, release notes for releases x.y.z-alpha.1,
   x.y.z-alpha.2, etc. should be combined into release notes for release x.y.z.
+
 * Publish Release
+
 * Post notification to Slack, Tom Toolkit workspace, #general channel. (In the future, we hope to
 have automated release notification to a dedicated #releases slack channel).
 
@@ -93,18 +109,24 @@ have automated release notification to a dedicated #releases slack channel).
 
 ### Preview Read the Docs doc strings
 * `cd /path/to/tom_base/docs`
+
 * `pip install -r requirements.txt  # make sure sphinx is installed to your venv`
+
 * `make html  # make clean first, if things are weird`
+
 * point a browser to the html files in `./_build/html/` to proof read before deployment 
 
 ### Run code style checks
 * `pip install pycodestyle`
+
 * `pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120`
 
 ### Run tests
 * `./manage.py test`
+
 * Examples for running specific tests or test suites:
   * `./manage.py test tom_targets.tests`
-  * `./manage.py test tom_targets.tests.tests.TestTargetDetail`
-  * `./manage.py test tom_targets.tests.tests.TestTargetDetail.test_sidereal_target_detail`
   
+  * `./manage.py test tom_targets.tests.tests.TestTargetDetail`
+  
+  * `./manage.py test tom_targets.tests.tests.TestTargetDetail.test_sidereal_target_detail`
