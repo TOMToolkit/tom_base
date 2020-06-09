@@ -50,18 +50,20 @@ Following deployment of a release, a Github Release is created, and this should 
 
 ### Public release deployment
 
-* Create PR: `master <- development`
-* Meet pre-deployment criteria.
-  * Include docstrings for any new or updated methods
-  * Include tutorial documentation for any new major features as needed
-  * Pass [Codacy code quality check](https://app.codacy.com/gh/TOMToolkit/tom_base/dashboard?bid=18204585).
-  * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base?branch=development).
-  * Passes [Travis tests and code style check](https://travis-ci.com/github/TOMToolkit/tom_base/branches).
-  * Successfully builds [ReadTheDocs documentation](https://readthedocs.org/projects/tom-toolkit/builds/) (not an automated check) (TODO: fix webhook).
-* Merge PR
+1. Create PR: `master <- development`
+2. Meet pre-deployment criteria.
+     * Include docstrings for any new or updated methods
+     * Include tutorial documentation for any new major features as needed
+     * Pass [Codacy code quality check](https://app.codacy.com/gh/TOMToolkit/tom_base/dashboard?bid=18204585).
+     * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base?branch=development).
+     * Passes [Travis tests and code style check](https://travis-ci.com/github/TOMToolkit/tom_base/branches).
+     * Successfully builds [ReadTheDocs documentation](https://readthedocs.org/projects/tom-toolkit/builds/) (not an automated check) (TODO: fix webhook).
+     
+3. Merge PR
   * Must be a repository owner to merge.
 * `git tag -a x.y.z -m "Release x.y.z"` -- must follow semantic versioning
 * `git push --tags` Triggers Travis to:
+
   * build, build
   * push release to PyPI  
   * create GitHub draft release
