@@ -1,8 +1,8 @@
-Deployment
-==========
+Deploying your TOM Online
+=========================
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
   :hidden:
 
   deployment_tips

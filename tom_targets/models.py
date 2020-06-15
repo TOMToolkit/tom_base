@@ -442,7 +442,7 @@ class TargetExtra(models.Model):
                 self.time_value = self.value
             else:
                 self.time_value = parse(self.value)
-        except (TypeError, ValueError, OverflowError) as e:
+        except (TypeError, ValueError, OverflowError):
             self.time_value = None
 
         super().save(*args, **kwargs)
