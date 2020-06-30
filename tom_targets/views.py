@@ -21,6 +21,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django.views.generic import TemplateView, View
 from django_filters.views import FilterView
+from rest_framework import viewsets
 
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
@@ -30,14 +31,15 @@ from tom_common.hooks import run_hook
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_observations.observing_strategy import RunStrategyForm
 from tom_observations.models import ObservingStrategy
-from tom_targets.models import Target, TargetList
+from tom_targets.filters import TargetFilter
 from tom_targets.forms import (
     SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset
 )
+from tom_targets.groups import (
+    add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping
+)
+from tom_targets.models import Target, TargetList
 from tom_targets.utils import import_targets, export_targets
-from tom_targets.filters import TargetFilter
-from tom_targets.groups import add_all_to_grouping, add_selected_to_grouping
-from tom_targets.groups import remove_all_from_grouping, remove_selected_from_grouping
 
 logger = logging.getLogger(__name__)
 

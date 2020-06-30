@@ -28,7 +28,7 @@ class TargetSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """DRF requires explicitly handling writeable nested serializers,
-        here we pop the alias/tag data and save it using thier respective
+        here we pop the alias/tag data and save it using their respective
         serializers
         """
         aliases = validated_data.pop('aliases', [])
