@@ -10,5 +10,11 @@
       <td>{{ observation.dataproduct_set.count }}</td>
       <td><a href="{% url 'tom_observations:detail' observation.id %}">View</a></td>
     </tr>
+  {% empty %}
+    <tr>
+      <td colspan="6">
+        No observations yet for this target.
+      </td>
+    </tr>
   {% endfor %}
 </table>

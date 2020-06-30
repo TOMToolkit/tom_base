@@ -9,7 +9,7 @@ from django.core.cache import cache
 
 from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.cadence import CadenceForm
-from tom_observations.facility import GenericObservationFacility, GenericObservationForm, get_service_class
+from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
 from tom_observations.observing_strategy import GenericStrategyForm
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
@@ -136,7 +136,7 @@ class LCOBaseForm(forms.Form):
         return choices
 
 
-class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm, CadenceForm):
+class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceForm):
     name = forms.CharField()
     ipp_value = forms.FloatField(label='Intra Proposal Priority (IPP factor)',
                                  min_value=0.5,
@@ -162,12 +162,11 @@ class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm, CadenceForm):
         self.helper.layout = Layout(
             self.common_layout,
             self.layout(),
-            self.extra_layout(),
-            self.cadence_layout
+            self.cadence_layout,
+            self.button_layout()
         )
 
     def layout(self):
-
         return Div(
             Div(
                 Div(
@@ -196,10 +195,6 @@ class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm, CadenceForm):
             ),
         )
 
-    def extra_layout(self):
-        # If you just want to add some fields to the end of the form, add them here.
-        return Div()
-
     def clean_start(self):
         start = self.cleaned_data['start']
         return parse(start).isoformat()
@@ -210,7 +205,6 @@ class LCOBaseObservationForm(GenericObservationForm, LCOBaseForm, CadenceForm):
 
     def is_valid(self):
         super().is_valid()
-        # TODO this is a bit leaky and should be done without the need of get_service_class
         obs_module = get_service_class(self.cleaned_data['facility'])
         errors = obs_module().validate_observation(self.observation_payload())
         if errors:
@@ -426,6 +420,8 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
 class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for field_name in ['groups', 'target_id']:
+            self.fields.pop(field_name, None)
         for field in self.fields:
             if field != 'strategy_name':
                 self.fields[field].required = False
@@ -445,7 +441,7 @@ class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
         )
 
 
-class LCOFacility(GenericObservationFacility):
+class LCOFacility(BaseRoboticObservationFacility):
     """
     The ``LCOFacility`` is the interface to the Las Cumbres Observatory Observation Portal. For information regarding
     LCO observing and the available parameters, please see https://observe.lco.global/help/.
@@ -457,6 +453,7 @@ class LCOFacility(GenericObservationFacility):
     # planning tool. All entries should contain latitude, longitude, elevation
     # and a code.
     # TODO: Flip sitecode and site name
+    # TODO: Why is tlv not represented here?
     SITES = {
         'Siding Spring': {
             'sitecode': 'coj',
@@ -569,6 +566,110 @@ class LCOFacility(GenericObservationFacility):
 
     def get_observing_sites(self):
         return self.SITES
+
+    def get_facility_weather_urls(self):
+        """
+        `facility_weather_urls = {'code': 'XYZ', 'sites': [ site_dict, ... ]}`
+        where
+        `site_dict = {'code': 'XYZ', 'weather_url': 'http://path/to/weather'}`
+        """
+        # TODO: manually add a weather url for tlv
+        facility_weather_urls = {
+            'code': 'LCO',
+            'sites': [
+                {
+                    'code': site['sitecode'],
+                    'weather_url': f'https://weather.lco.global/#/{site["sitecode"]}'
+                }
+                for site in self.SITES.values()]
+            }
+
+        return facility_weather_urls
+
+    def get_facility_status(self):
+        """Get the telescope_states from the LCO API endpoint and simply
+        transform the returned JSON into the following dictionary hierarchy
+        for use by the facility_status.html template partial.
+
+        facility_dict = {'code': 'LCO', 'sites': [ site_dict, ... ]}
+        site_dict = {'code': 'XYZ', 'telescopes': [ telescope_dict, ... ]}
+        telescope_dict = {'code': 'XYZ', 'status': 'AVAILABILITY'}
+
+        Here's an example of the returned dictionary:
+
+        literal_facility_status_example = {
+            'code': 'LCO',
+            'sites': [
+                {
+                    'code': 'BPL',
+                    'telescopes': [
+                        {
+                            'code': 'bpl.doma.1m0a',
+                            'status': 'AVAILABLE'
+                        },
+                    ],
+                },
+                {
+                    'code': 'ELP',
+                    'telescopes': [
+                        {
+                            'code': 'elp.doma.1m0a',
+                            'status': 'AVAILABLE'
+                        },
+                        {
+                            'code': 'elp.domb.1m0a',
+                            'status': 'AVAILABLE'
+                        },
+                    ]
+                }
+            ]
+        }
+
+        :return: facility_dict
+        """
+        # make the request to the LCO API for the telescope_states
+        response = make_request(
+            'GET',
+            PORTAL_URL + '/api/telescope_states/',
+            headers=self._portal_headers()
+        )
+        telescope_states = response.json()
+
+        # Now, transform the telescopes_state dictionary in a dictionary suitable
+        # for the facility_status.html template partial.
+
+        # set up the return value to be populated by the for loop below
+        facility_status = {
+            'code': 'LCO',
+            'sites': []
+        }
+
+        for telescope_key, telescope_value in telescope_states.items():
+            [site_code, _, _] = telescope_key.split('.')
+
+            # extract this telescope and it's status from the response
+            telescope = {
+                'code': telescope_key,
+                'status': telescope_value[0]['event_type']
+            }
+
+            # get the site dictionary from the facilities list of sites
+            # filter by site_code and provide a default (None) for new sites
+            site = next((site_ix for site_ix in facility_status['sites']
+                         if site_ix['code'] == site_code), None)
+            # create the site if it's new and not yet in the facility_status['sites] list
+            if site is None:
+                new_site = {
+                    'code': site_code,
+                    'telescopes': []
+                }
+                facility_status['sites'].append(new_site)
+                site = new_site
+
+            # Now, add the telescope to the site's telescopes
+            site['telescopes'].append(telescope)
+
+        return facility_status
 
     def get_observation_status(self, observation_id):
         response = make_request(

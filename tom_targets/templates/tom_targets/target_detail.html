@@ -17,9 +17,11 @@
       {% endif %}
       {% target_buttons object %}
       {% target_data object %}
+      {% recent_photometry object limit=3 %}
       {% if object.type == 'SIDEREAL' %}
       {% aladin object %}
       {% endif %}
+      
     </div>
   </div>
   <div class="col-md-8">
@@ -42,6 +44,9 @@
       <li class="nav-item">
         <span class="nav-link" data-target="#spectroscopy" data-toggle="tab">Spectroscopy</span>
       </li>
+      <li class="nav-item">
+        <span class="nav-link" data-target="#facility-status" data-toggle="tab">Facility Status</span>
+      </li>
     </ul>
     <div class="tab-content">
       <div class="tab-pane active" id="observe">
@@ -59,6 +64,7 @@
         {% endif %}
       </div>
       <div class="tab-pane" id="observations">
+        {% existing_observation_form object %}
         <h4>Observations</h4>
         <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations Status</a>
         {% observation_list object %}
@@ -78,6 +84,10 @@
       <div class="tab-pane" id="spectroscopy">
         {% spectroscopy_for_target target %}
       </div>
+      <div class="tab-pane" id="facility-status">
+        {% facility_status %}
+      </div>
+
       {% comments_enabled as comments_are_enabled %}
       <hr/>
       <h5>Comments</h5>

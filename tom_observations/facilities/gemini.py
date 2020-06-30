@@ -5,9 +5,8 @@ from dateutil.parser import parse
 from crispy_forms.layout import Layout, Div, HTML
 from astropy import units as u
 
-from tom_observations.facility import GenericObservationForm
+from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.facility import GenericObservationFacility
 from tom_targets.models import Target
 
 try:
@@ -117,7 +116,7 @@ def get_site(progid, location=False):
     return site
 
 
-class GEMObservationForm(GenericObservationForm):
+class GEMObservationForm(BaseRoboticObservationForm):
     """
     The GEMObservationForm defines and collects the parameters for the Gemini
     Target of Opportunity (ToO) observation request API. The Gemini ToO process is described at
@@ -141,6 +140,7 @@ class GEMObservationForm(GenericObservationForm):
     ra             - target RA [J2000], format 'HH:MM:SS.SS'
     dec            - target Dec[J2000], format 'DD:MM:SS.SSS'
     mags           - target magnitude information (optional)
+    noteTitle      - title for the note, "Finding Chart" if not provided (optional)
     note           - text to include in a "Finding Chart" note (optional)
     posangle       - position angle [degrees E of N], defaults to 0 (optional)
     exptime        - exposure time [seconds], if not given then value in template used (optional)
@@ -202,12 +202,14 @@ class GEMObservationForm(GenericObservationForm):
     # Form fields
     obsid = forms.MultipleChoiceField(choices=obs_choices())
     ready = forms.ChoiceField(initial='true', choices=(('true', 'Yes'), ('false', 'No')))
-    brightness = forms.FloatField(required=False, label='Target brightness')
+    brightness = forms.FloatField(required=False, label='Target Brightness')
     brightness_system = forms.ChoiceField(required=False,
                                           initial='AB',
+                                          label='Brightness System',
                                           choices=(('Vega', 'Vega'), ('AB', 'AB'), ('Jy', 'Jy')))
     brightness_band = forms.ChoiceField(required=False,
                                         initial='r',
+                                        label='Brightness Band',
                                         choices=(('u', 'u'), ('U', 'U'), ('B', 'B'), ('g', 'g'), ('V', 'V'),
                                                  ('UC', 'UC'), ('r', 'r'), ('R', 'R'), ('i', 'i'), ('I', 'I'),
                                                  ('z', 'z'), ('Y', 'Y'), ('J', 'J'), ('H', 'H'), ('K', 'K'),
@@ -216,12 +218,13 @@ class GEMObservationForm(GenericObservationForm):
                                 max_value=360.,
                                 required=False,
                                 initial=0.0,
-                                label='Position Angle in degrees [0-360]')
+                                label='Position Angle [0-360]')
 
-    exptimes = forms.CharField(required=False, label='Exptime [sec]. If multiple, comma separate')
+    exptimes = forms.CharField(required=False, label='Exptime [s], comma separate')
 
-    group = forms.CharField(required=False)
-    note = forms.CharField(required=False)
+    group = forms.CharField(required=False, label='Group Name')
+    notetitle = forms.CharField(required=False, initial='Finding Chart', label='Note Title')
+    note = forms.CharField(required=False, label='Note Text')
 
     eltype = forms.ChoiceField(required=False, label='Airmass/Hour Angle Constraint',
                                choices=(('none', 'None'), ('airmass', 'Airmass'), ('hourAngle', 'Hour Angle')))
@@ -251,14 +254,16 @@ class GEMObservationForm(GenericObservationForm):
                                          ('PWFS2', 'PWFS2'),
                                          ('AOWFS', 'AOWFS')))  # GS probe (PWFS1/PWFS2/OIWFS/AOWFS)
     window_start = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'date'}),
-                                   label='UT Timing Window Start [Date Time]')
+                                   label='Timing Window [Date Time]')
     window_duration = forms.IntegerField(required=False, min_value=1, label='Timing Window Duration [hr]')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper.layout = Layout(
-            self.common_layout,
+    def layout(self):
+        return Div(
             HTML('<big>Observation Parameters</big>'),
+            HTML('<p>Select the Obsids of one or more templates. <br>'),
+            HTML('Setting Ready=No will keep the new observation(s) On Hold. <br>'),
+            HTML('If a value is not set, then the template default is used. <br>'),
+            HTML('If setting Exptime, then provide a list of values if selecting more than one Obsid.</p>'),
             Div(
                 Div(
                     'obsid',
@@ -269,27 +274,28 @@ class GEMObservationForm(GenericObservationForm):
                     css_class='col'
                 ),
                 Div(
-                    'group',
+                    'notetitle',
                     css_class='col'
                 ),
                 css_class='form-row'
             ),
             Div(
                 Div(
-                    'posangle', 'brightness', 'eltype', 'window_start',
+                    'posangle', 'brightness', 'eltype', 'group',
                     css_class='col'
                 ),
                 Div(
-                    'exptimes', 'brightness_band', 'elmin', 'window_duration',
+                    'exptimes', 'brightness_band', 'elmin', 'window_start',
                     css_class='col'
                 ),
                 Div(
-                    'note', 'brightness_system', 'elmax',
+                    'note', 'brightness_system', 'elmax', 'window_duration',
                     css_class='col'
                 ),
                 css_class='form-row'
             ),
-            HTML('<big>Optional Guide Star Parameters: If any one of Name/RA/Dec is given, then all must be.</big>'),
+            HTML('<big>Optional Guide Star Parameters</big>'),
+            HTML('<p>If any one of Name/RA/Dec is given, then all must be.</p>'),
             Div(
                 Div(
                     'gstarg', 'gsbrightness', 'gsprobe',
@@ -351,17 +357,18 @@ class GEMObservationForm(GenericObservationForm):
             obsnum = obs[ii+1:]
             payload = {
                 "prog": progid,
-                # "password": self.cleaned_data['userkey'],
                 "password": GEM_SETTINGS['api_key'][get_site(obs)],
-                # "email": self.cleaned_data['email'],
                 "email": GEM_SETTINGS['user_email'],
                 "obsnum": obsnum,
                 "target": target.name,
                 "ra": target.ra,
                 "dec": target.dec,
-                "note": self.cleaned_data['note'],
                 "ready": self.cleaned_data['ready']
             }
+
+            if self.cleaned_data['notetitle'] != 'Finding Chart' or self.cleaned_data['note'] != '':
+                payload["noteTitle"] = self.cleaned_data['notetitle']
+                payload["note"] = self.cleaned_data['note']
 
             if self.cleaned_data['brightness'] is not None:
                 smags = str(self.cleaned_data['brightness']).strip() + '/' + \
@@ -412,10 +419,10 @@ class GEMObservationForm(GenericObservationForm):
         return payloads
 
 
-class GEMFacility(GenericObservationFacility):
+class GEMFacility(BaseRoboticObservationFacility):
     """
     The ``GEMFacility`` is the interface to the Gemini Telescope. For information regarding Gemini observing and the
-    available parameters, please see https://www.gemini.edu/sciops/observing-gemini.
+    available parameters, please see https://www.gemini.edu/observing/start-here
     """
 
     name = 'GEM'

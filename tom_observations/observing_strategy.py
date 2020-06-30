@@ -46,6 +46,7 @@ class RunStrategyForm(forms.Form):
     observing_strategy = forms.ModelChoiceField(queryset=ObservingStrategy.objects.all())
     cadence_strategy = forms.ChoiceField(
         choices=[('', '')] + [(k, k) for k in get_cadence_strategies().keys()],
+        required=False
     )
     cadence_frequency = forms.IntegerField(
         required=False,

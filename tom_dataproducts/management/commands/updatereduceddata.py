@@ -8,12 +8,11 @@ from tom_dataproducts.models import ReducedDatum
 
 
 class Command(BaseCommand):
-    help = 'Gets and updates time-series data for targets from the original source'
+    help = 'Gets and updates time-series data for alert-generated targets from the original alert source.'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--target_id',
-            help='Gets and updates time-series data for targets from the original source'
         )
 
     def handle(self, *args, **options):
