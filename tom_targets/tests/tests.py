@@ -392,7 +392,7 @@ class TestTargetCreate(TestCase):
         self.client.post(reverse('targets:create'), data=target_data, follow=True)
         target_data['name'] = 'multiple_names_target2'
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(second_response, 'Target name with this Alias for target already exists.')
+        self.assertContains(second_response, 'Target name with this Alias already exists.')
 
 
 class TestTargetImport(TestCase):
