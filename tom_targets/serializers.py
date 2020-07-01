@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import Target, TargetExtra, TargetName
+
+from tom_targets.models import Target, TargetExtra, TargetName
+from tom_targets.validators import RequiredFieldsTogetherValidator
 
 
 class TargetNameSerializer(serializers.ModelSerializer):
@@ -25,10 +27,18 @@ class TargetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Target
         fields = '__all__'
+        validators = [RequiredFieldsTogetherValidator('type', 'SIDEREAL', 'ra', 'dec'),
+                      RequiredFieldsTogetherValidator('type', 'NON_SIDEREAL', 'epoch_of_elements', 'inclination', 
+                                                      'lng_asc_node', 'arg_of_perihelion', 'eccentricity'),
+                      RequiredFieldsTogetherValidator('scheme', 'MPC_COMET', 'perihdist', 'epoch_of_perihelion'),
+                      RequiredFieldsTogetherValidator('scheme', 'MPC_MINOR_PLANET', 'mean_anomaly', 'semimajor_axis'),
+                      RequiredFieldsTogetherValidator('scheme', 'JPL_MAJOR_PLANET', 'mean_daily_motion', 'mean_anomaly',
+                                                      'semimajor_axis')
+                     ]
 
     def create(self, validated_data):
         """DRF requires explicitly handling writeable nested serializers,
-        here we pop the alias/tag data and save it using their respective
+        here we pop the alias/tag data and save it using thier respective
         serializers
         """
         aliases = validated_data.pop('aliases', [])
