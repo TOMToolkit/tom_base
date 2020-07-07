@@ -27,6 +27,8 @@ class TargetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Target
         fields = '__all__'
+        # TODO: We should investigate if this validator logic can be reused in the forms to reduce code duplication.
+        # TODO: Try to put validators in settings to allow user changes
         validators = [RequiredFieldsTogetherValidator('type', 'SIDEREAL', 'ra', 'dec'),
                       RequiredFieldsTogetherValidator('type', 'NON_SIDEREAL', 'epoch_of_elements', 'inclination', 
                                                       'lng_asc_node', 'arg_of_perihelion', 'eccentricity'),

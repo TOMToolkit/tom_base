@@ -8,17 +8,13 @@ class RequiredFieldsTogetherValidator(object):
         self.required_fields = args
 
     def __call__(self, attrs):
-        print(attrs)
         values = dict(attrs)
-        print(values)
         if self.type_value != values.get(self.type_name):
             return
 
         missing_fields = []
 
-        print(self.required_fields)
         for field in self.required_fields:
-            print(field)
             if not values.get(field):
                 missing_fields.append(field)
         

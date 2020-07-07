@@ -50,6 +50,41 @@ class TestTargetViewset(APITestCase):
         self.assertEqual(response.json()['name'], target_data['name'])
         self.assertEqual(response.json()['aliases'][0]['name'], target_data['aliases'][0]['name'])
 
+    def test_target_create_sidereal_missing_parameters(self):
+        target_data = {
+            'name': 'test_target_name_wtf',
+            'type': Target.SIDEREAL,
+            'ra': 123.456,
+            'targetextra_set': [
+                {'key': 'foo', 'value': 5}
+            ],
+            'aliases': [
+                {'name': 'alternative name'}
+            ]
+        }
+        response = self.client.post(reverse('api:targets-list'), data=target_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.json()['name'], target_data['name'])
+        self.assertEqual(response.json()['aliases'][0]['name'], target_data['aliases'][0]['name'])
+
+    def test_target_create_non_sidereal_missing_parameters(self):
+        target_data = {
+            'name': 'test_target_name_wtf',
+            'type': Target.SIDEREAL,
+            'ra': 123.456,
+            'dec': -32.1,
+            'targetextra_set': [
+                {'key': 'foo', 'value': 5}
+            ],
+            'aliases': [
+                {'name': 'alternative name'}
+            ]
+        }
+        response = self.client.post(reverse('api:targets-list'), data=target_data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.json()['name'], target_data['name'])
+        self.assertEqual(response.json()['aliases'][0]['name'], target_data['aliases'][0]['name'])
+
     def test_target_update(self):
         updates = {'ra': 123.456}
         response = self.client.patch(reverse('api:targets-detail', args=(self.st.id,)), data=updates)
