@@ -26,7 +26,7 @@ SECRET_KEY = 'dxja^_6p35x46dx0rx+c$(^31(10^n(twe1#ax3o8xl=n^p37q'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['']
 
 
 # Application definition
@@ -123,6 +123,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# TODO: Release notes MUST document this change!!
+LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
@@ -263,7 +265,10 @@ THUMBNAIL_DEFAULT_SIZE = (200, 200)
 HINTS_ENABLED = False
 HINT_LEVEL = 20
 
+# TODO: Release notes MUST document this change!!
 REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+    ],
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 100

@@ -101,6 +101,7 @@ class TargetSerializer(serializers.ModelSerializer):
         instance.save()
 
         # TODO: updating an existing TargetName with the same value results in an integrity error
+        # TODO: validate_unique is not called on TargetName
         for alias_data in aliases:
             alias = dict(alias_data)
             if alias.get('id'):
