@@ -1,16 +1,17 @@
 import requests
 
 from astropy import units as u
-from crispy_forms.layout import Div, HTML, Layout
+from crispy_forms.layout import Column, Div, HTML, Layout, Row
 from dateutil.parser import parse
 from django import forms
 from django.conf import settings
 from django.core.cache import cache
 
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.cadence import CadenceForm
+from tom_observations.cadence import CadenceForm, DelayedCadenceForm
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
 from tom_observations.observing_strategy import GenericStrategyForm
+from tom_observations.widgets import FilterMultiExposureWidget
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
 # Determine settings for this module.
@@ -417,6 +418,64 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
         return instrument_config
 
 
+class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
+    U_filter = forms.CharField(widget=FilterMultiExposureWidget())
+    B_filter = forms.CharField(widget=FilterMultiExposureWidget())
+    v_filter = forms.CharField(widget=FilterMultiExposureWidget())
+    R_filter = forms.CharField(widget=FilterMultiExposureWidget())
+    I_filter = forms.CharField(widget=FilterMultiExposureWidget())
+    u_filter = forms.CharField(widget=FilterMultiExposureWidget())
+    g_filter = forms.CharField(widget=FilterMultiExposureWidget())
+    r_filter = forms.CharField(widget=FilterMultiExposureWidget())
+    i_filter = forms.CharField(widget=FilterMultiExposureWidget())
+    z_filter = forms.CharField(widget=FilterMultiExposureWidget())
+    w_filter = forms.CharField(widget=FilterMultiExposureWidget())
+    moon_distance = forms.IntegerField(min_value=0)
+
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            self.common_layout,
+            self.cadence_layout,
+            self.layout(),
+            self.button_layout()
+        )
+        print(self.fields)
+
+    def instrument_choices(self):
+        return [i for i in super().instrument_choices() if i[0] in ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']]
+
+    def layout(self):
+        return Div(
+            Row(),
+            Row(
+                Column('U_filter'), Column('max_airmass')
+            ),
+            Row(
+                Column('B_filter'), Column('instrument_type')
+            ),
+            Row(
+                Column('v_filter'), Column('proposal')
+            ),
+            Row(
+                Column('R_filter'), Column('ipp_value')
+            ),
+            Row(
+                Column('I_filter'), Column('')
+            ),
+            Row('u_filter'),
+            Row('g_filter'),
+            Row('r_filter'),
+            Row('i_filter'),
+            Row('z_filter'),
+            Row('w_filter')
+        )
+
+    def observation_payload(self):
+        pass
+
+
 class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -448,7 +507,7 @@ class LCOFacility(BaseRoboticObservationFacility):
     """
 
     name = 'LCO'
-    observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy')]
+    observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy'), ('SEQUENCE', 'Photometric Sequence')]
     # The SITES dictionary is used to calculate visibility intervals in the
     # planning tool. All entries should contain latitude, longitude, elevation
     # and a code.
@@ -498,6 +557,8 @@ class LCOFacility(BaseRoboticObservationFacility):
             return LCOImagingObservationForm
         elif observation_type == 'SPECTRA':
             return LCOSpectroscopyObservationForm
+        elif observation_type == 'SEQUENCE':
+            return LCOPhotometricSequenceForm
         else:
             return LCOBaseObservationForm
 

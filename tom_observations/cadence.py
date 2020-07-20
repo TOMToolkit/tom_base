@@ -195,13 +195,15 @@ class CadenceForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['cadence_strategy'].widget.attrs['readonly'] = True
         self.fields['cadence_frequency'].widget.attrs['readonly'] = True
+        self.cadence_layout = self.cadence_layout()
 
+    def cadence_layout(self):
         # If cadence strategy or cadence frequency aren't set, this is a normal observation and the widgets shouldn't
         # be rendered
         if not (self.initial.get('cadence_strategy') or self.initial.get('cadence_frequency')):
-            self.cadence_layout = Layout()
+            return Layout()
         else:
-            self.cadence_layout = Layout(
+            return Layout(
                 Div(
                     HTML('<p>Reactive cadencing parameters. Leave blank if no reactive cadencing is desired.</p>'),
                 ),
@@ -217,3 +219,18 @@ class CadenceForm(forms.Form):
                     css_class='form-row'
                 )
             )
+
+
+class DelayedCadenceForm(CadenceForm):
+    delay = forms.IntegerField(min_value=0)
+    cadence_type = forms.ChoiceField(choices=[('repeat', 'Repeating every'), ('once', 'Once in the next')])
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args ,**kwargs)
+        self.fields['cadence_strategy'].widget.attrs['readonly'] = False
+        self.fields['cadence_frequency'].widget.attrs['readonly'] = False
+
+    def cadence_layout(self):
+        return Layout(
+            'delay', 'cadence_type'
+        )
