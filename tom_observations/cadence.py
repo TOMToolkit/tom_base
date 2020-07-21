@@ -222,17 +222,16 @@ class CadenceForm(forms.Form):
 
 
 class DelayedCadenceForm(CadenceForm):
-    cadence_type = forms.ChoiceField(choices=[('repeat', 'Repeating every'), ('once', 'Once in the next')])
-    delay = forms.IntegerField(min_value=0, help_text='Delay is in days')
+    cadence_type = forms.ChoiceField(choices=[('', ''), ('repeat', 'Repeating every')])
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args ,**kwargs)
-        self.fields['cadence_strategy'].widget.attrs['readonly'] = False
+        super().__init__(*args, **kwargs)
+        self.fields['cadence_strategy'].widget = forms.HiddenInput()
         self.fields['cadence_frequency'].widget.attrs['readonly'] = False
 
     def cadence_layout(self):
         return Layout(
             Row(
-                Column('cadence_type'), Column('delay')
+                Column('cadence_type'), Column('cadence_frequency')
             )
         )

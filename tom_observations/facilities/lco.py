@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+import json
 import requests
 
 from astropy import units as u
@@ -139,6 +141,12 @@ class LCOBaseForm(forms.Form):
 
 
 class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceForm):
+    """
+    The LCOBaseObservationForm provides the base set of utilities to construct an observation at Las Cumbres 
+    Observatory. While the forms that inherit from it provide a subset of instruments and filters, the 
+    LCOBaseObservationForm presents the user with all of the instrument and filter options that the facility has to
+    offer.
+    """
     name = forms.CharField()
     ipp_value = forms.FloatField(label='Intra Proposal Priority (IPP factor)',
                                  min_value=0.5,
@@ -353,6 +361,10 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
 
 
 class LCOImagingObservationForm(LCOBaseObservationForm):
+    """
+    The LCOImagingObservationForm allows the selection of parameters for observing using LCO's Imagers. The list of
+    Imagers and their details can be found here: https://lco.global/observatory/instruments/
+    """
     def instrument_choices(self):
         return [(k, v['name']) for k, v in self._get_instruments().items() if 'IMAGE' in v['type']]
 
@@ -364,6 +376,10 @@ class LCOImagingObservationForm(LCOBaseObservationForm):
 
 
 class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
+    """
+    The LCOSpectroscopyObservationForm allows the selection of parameters for observing using LCO's Spectrographs. The
+    list of spectrographs and their details can be found here: https://lco.global/observatory/instruments/
+    """
     rotator_angle = forms.FloatField(min_value=0.0, initial=0.0)
 
     def layout(self):
@@ -421,6 +437,11 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
 
 
 class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
+    """
+    The LCOPhotometricSequenceForm provides a form offering a subset of the parameters in the LCOImagingObservationForm. 
+    The form is modeled after the Supernova Exchange application's Photometric Sequence Request Form, and allows the 
+    configuration of multiple filters, as well as a more intuitive proactive cadence form.
+    """
     U_filter = FilterField(label='U', required=False)
     B_filter = FilterField(label='B', required=False)
     V_filter = FilterField(label='V', required=False)
@@ -446,22 +467,24 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
         'w_filter': 'w'
     }
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper.layout = Layout(
+            Div(
+                Column('name'), 
+                Column('cadence_type'),
+                Column('cadence_frequency'),
+                css_class='form-row'
+            ),
             self.common_layout,
-            self.cadence_layout,
             self.layout(),
             self.button_layout()
         )
         self.fields['cadence_type'].required = False
-        self.fields['delay'].required = False
+        self.fields['cadence_strategy'].required = False
+        self.fields['cadence_frequency'].required = False
 
-    def instrument_choices(self):
-        return [i for i in super().instrument_choices() if i[0] in ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']]
-
-    def _build_instrument_configs(self):
+    def _build_instrument_config(self):
         instrument_config = []
         for label, filter in self.filter_mapping.items():
             filter_parameters = list(self.cleaned_data[label])
@@ -470,11 +493,25 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
                     'exposure_count': self.cleaned_data[label][1],
                     'exposure_time': self.cleaned_data[label][0],
                     'optical_elements': {
-                        self.filter_mapping[label]
+                        'filter': self.filter_mapping[label]
                     }
                 })
 
         return instrument_config
+
+    def clean(self):
+        cleaned_data = super().clean()
+        now = datetime.now()
+        cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
+        cadence_frequency = 24 if not cleaned_data.get('cadence_frequency') else cleaned_data.get('cadence_frequency')
+        cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cadence_frequency), '%Y-%m-%dT%H:%M:%S')
+        if cleaned_data['cadence_type'] == 'repeat':
+            cleaned_data['cadence_strategy'] = 'Resume Cadence After Failure'
+
+        return cleaned_data
+
+    def instrument_choices(self):
+        return [i for i in super().instrument_choices() if i[0] in ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']]
 
     def layout(self):
         return Div(
@@ -510,14 +547,6 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
             ),
             css_class='form-row'
         )
-
-    def observation_payload(self):
-        print(self.cleaned_data)
-        print(self.cleaned_data['U_filter'])
-        print(type(self.cleaned_data['U_filter']))
-        print(self.cleaned_data['R_filter'])
-        print(self._build_instrument_configs())
-        # return super().observation_payload()
 
 
 class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
@@ -697,7 +726,8 @@ class LCOFacility(BaseRoboticObservationFacility):
         return facility_weather_urls
 
     def get_facility_status(self):
-        """Get the telescope_states from the LCO API endpoint and simply
+        """
+        Get the telescope_states from the LCO API endpoint and simply
         transform the returned JSON into the following dictionary hierarchy
         for use by the facility_status.html template partial.
 
