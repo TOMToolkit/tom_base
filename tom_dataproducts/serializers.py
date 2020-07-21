@@ -2,13 +2,13 @@ from rest_framework import serializers
 from .models import DataProductGroup, DataProduct, ReducedDatum
 
 
-class DataProductGroupSerializer(serializers.HyperlinkedModelSerializer):
+class DataProductGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = DataProductGroup
         fields = ('name', 'created', 'modified')
 
 
-class DataProductSerializer(serializers.HyperlinkedModelSerializer):
+class DataProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = DataProduct
         fields = (
@@ -25,8 +25,17 @@ class DataProductSerializer(serializers.HyperlinkedModelSerializer):
             'thumbnail'
         )
 
+        # TODO: use HyperlinkedModelSerializer
+        #   for the HyperlinkedModelSerializer use something like this
+        #   extra_kwargs = {
+        #       "url": {
+        #           "view_name": ":targets:detail",
+        #           "lookup_field": "pk",
+        #       }
+        #   }
 
-class ReducedDatumSerializer(serializers.HyperlinkedModelSerializer):
+
+class ReducedDatumSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReducedDatum
         fields = (
