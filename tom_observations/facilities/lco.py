@@ -476,13 +476,14 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
                 Column('cadence_frequency'),
                 css_class='form-row'
             ),
-            self.common_layout,
+            Layout('facility', 'target_id', 'observation_type'),
             self.layout(),
             self.button_layout()
         )
         self.fields['cadence_type'].required = False
         self.fields['cadence_strategy'].required = False
         self.fields['cadence_frequency'].required = False
+        self.fields['groups'].label = 'Data granted to'
 
     def _build_instrument_config(self):
         instrument_config = []
@@ -515,6 +516,10 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
                 if i[0] in ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']]
 
     def layout(self):
+        if settings.TARGET_PERMISSIONS_ONLY:
+            groups = Row('')
+        else:
+            groups = Row('groups')
         return Div(
             Div(
                 Row(
@@ -544,6 +549,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
                 Row('proposal'),
                 Row('observation_mode'),
                 Row('ipp_value'),
+                groups,
                 css_class='col-md-6'
             ),
             css_class='form-row'
@@ -581,6 +587,7 @@ class LCOFacility(BaseRoboticObservationFacility):
     """
 
     name = 'LCO'
+    default_form_class = LCOBaseObservationForm
     observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy'), ('SEQUENCE', 'Photometric Sequence')]
     # The SITES dictionary is used to calculate visibility intervals in the
     # planning tool. All entries should contain latitude, longitude, elevation
@@ -631,7 +638,7 @@ class LCOFacility(BaseRoboticObservationFacility):
         #     form_class = settings['LCO']['observation_types'][observation_type]['form_class']
         #     return form_class
         # except:
-        #     return LCOBaseObservationForm
+        #     return default_form_class
         if observation_type == 'IMAGING':
             return LCOImagingObservationForm
         elif observation_type == 'SPECTRA':
@@ -640,6 +647,9 @@ class LCOFacility(BaseRoboticObservationFacility):
             return LCOPhotometricSequenceForm
         else:
             return LCOBaseObservationForm
+
+    # def get_observation_types(self):
+
 
     def get_strategy_form(self, observation_type):
         return LCOObservingStrategyForm

@@ -10,8 +10,7 @@ from .models import (
     Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
     REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 )
-from tom_targets.serializers import TargetSerializer
-from tom_targets.validators import RequiredFieldsTogetherValidator
+
 
 def extra_field_to_form_field(field_type):
     if field_type == 'number':
@@ -128,9 +127,6 @@ class NonSiderealTargetCreateForm(TargetForm):
         specified field have been given
         """
         cleaned_data = super().clean()
-        # serializer = TargetSerializer(data=self.cleaned_data)
-        # print(serializer)
-        # serializer.is_valid(raise_exception=True)
         scheme = cleaned_data['scheme']  # scheme is a required field, so this should be safe
         required_fields = REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME[scheme]
 

@@ -176,7 +176,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :rtype: dict
         """
         context = super(ObservationCreateView, self).get_context_data(**kwargs)
-        context['type_choices'] = self.get_facility_class().observation_types
+        context['type_choices'] = self.get_facility_class().observation_types  # TODO: get from settings
         target = Target.objects.get(pk=self.get_target_id())
         context['target'] = target
         return context
