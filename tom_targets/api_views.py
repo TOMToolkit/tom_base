@@ -6,6 +6,9 @@ from tom_targets.filters import TargetFilter
 from tom_targets.models import Target
 from tom_targets.serializers import TargetSerializer
 
+# TODO: The GenericViewSet (and ModelViewSet?) subclass docstrings appear on the /api/<router.prefix>/
+#   endpoint page. Rewrite these docstring to be useful to API consumers.
+
 
 # Until we have the bandwidth to add the appropriate validation and ensure that DRF will 
 # properly respect permissions, this class will inherit from GenericViewSet and the necessary 
