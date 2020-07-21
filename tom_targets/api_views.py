@@ -10,9 +10,9 @@ from tom_targets.serializers import TargetSerializer
 #   endpoint page. Rewrite these docstring to be useful to API consumers.
 
 
-# Until we have the bandwidth to add the appropriate validation and ensure that DRF will 
-# properly respect permissions, this class will inherit from GenericViewSet and the necessary 
-# mixins for the supported actions. Once we add the appropriate logic for all actions, we 
+# Until we have the bandwidth to add the appropriate validation and ensure that DRF will
+# properly respect permissions, this class will inherit from GenericViewSet and the necessary
+# mixins for the supported actions. Once we add the appropriate logic for all actions, we
 # can update it to just inherit from ModelViewSet.
 class TargetViewSet(CreateModelMixin, PermissionListMixin, GenericViewSet):
     """Viewset for Target objects. By default supports CRUD operations.
