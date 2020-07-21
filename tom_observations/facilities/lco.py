@@ -1,6 +1,7 @@
 import requests
 
 from astropy import units as u
+from crispy_forms.bootstrap import PrependedText
 from crispy_forms.layout import Column, Div, HTML, Layout, Row
 from dateutil.parser import parse
 from django import forms
@@ -11,7 +12,7 @@ from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.cadence import CadenceForm, DelayedCadenceForm
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
 from tom_observations.observing_strategy import GenericStrategyForm
-from tom_observations.widgets import FilterMultiExposureWidget
+from tom_observations.widgets import FilterField
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
 # Determine settings for this module.
@@ -151,6 +152,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
                                      widget=forms.TextInput(attrs={'placeholder': 'Seconds'}),
                                      help_text=exposure_time_help)
     max_airmass = forms.FloatField(help_text=max_airmass_help)
+    min_lunar_distance = forms.IntegerField(min_value=0, label='Minimum Lunar Distance', required=False)
     period = forms.FloatField(required=False)
     jitter = forms.FloatField(required=False)
     observation_mode = forms.ChoiceField(
@@ -175,7 +177,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
                     css_class='col'
                 ),
                 Div(
-                    'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass',
+                    'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass', 'min_lunar_distance',
                     css_class='col'
                 ),
                 css_class='form-row',
@@ -287,14 +289,14 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
             }
         }
 
-        return instrument_config
+        return [instrument_config]
 
     def _build_configuration(self):
         return {
             'type': self.instrument_to_type(self.cleaned_data['instrument_type']),
             'instrument_type': self.cleaned_data['instrument_type'],
             'target': self._build_target_fields(),
-            'instrument_configs': [self._build_instrument_config()],
+            'instrument_configs': self._build_instrument_config(),
             'acquisition_config': {
 
             },
@@ -405,32 +407,44 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
     def _build_instrument_config(self):
         instrument_config = super()._build_instrument_config()
         if self.cleaned_data['filter'] != 'None':
-            instrument_config['optical_elements'] = {
+            instrument_config[0]['optical_elements'] = {
                 'slit': self.cleaned_data['filter']
             }
         else:
-            instrument_config.pop('optical_elements')
-        instrument_config['rotator_mode'] = 'VFLOAT'  # TODO: Should be a distinct field, SKY & VFLOAT are both valid
-        instrument_config['extra_params'] = {
+            instrument_config[0].pop('optical_elements')
+        instrument_config[0]['rotator_mode'] = 'VFLOAT'  # TODO: Should be a distinct field, SKY & VFLOAT are both valid
+        instrument_config[0]['extra_params'] = {
             'rotator_angle': self.cleaned_data['rotator_angle']
         }
 
-        return instrument_config
+        return [instrument_config]
 
 
 class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
-    U_filter = forms.CharField(widget=FilterMultiExposureWidget())
-    B_filter = forms.CharField(widget=FilterMultiExposureWidget())
-    v_filter = forms.CharField(widget=FilterMultiExposureWidget())
-    R_filter = forms.CharField(widget=FilterMultiExposureWidget())
-    I_filter = forms.CharField(widget=FilterMultiExposureWidget())
-    u_filter = forms.CharField(widget=FilterMultiExposureWidget())
-    g_filter = forms.CharField(widget=FilterMultiExposureWidget())
-    r_filter = forms.CharField(widget=FilterMultiExposureWidget())
-    i_filter = forms.CharField(widget=FilterMultiExposureWidget())
-    z_filter = forms.CharField(widget=FilterMultiExposureWidget())
-    w_filter = forms.CharField(widget=FilterMultiExposureWidget())
-    moon_distance = forms.IntegerField(min_value=0)
+    U_filter = FilterField(label='U', required=False)
+    B_filter = FilterField(label='B', required=False)
+    V_filter = FilterField(label='V', required=False)
+    R_filter = FilterField(label='R', required=False)
+    I_filter = FilterField(label='I', required=False)
+    u_filter = FilterField(label='u', required=False)
+    g_filter = FilterField(label='g', required=False)
+    r_filter = FilterField(label='r', required=False)
+    i_filter = FilterField(label='i', required=False)
+    z_filter = FilterField(label='z', required=False)
+    w_filter = FilterField(label='w', required=False)
+    filter_mapping = {
+        'U_filter': 'U',
+        'B_filter': 'B',
+        'V_filter': 'v',
+        'R_filter': 'R',
+        'I_filter': 'I',
+        'u_filter': 'up',
+        'g_filter': 'gp',
+        'r_filter': 'rp',
+        'i_filter': 'ip',
+        'z_filter': 'zs',
+        'w_filter': 'w'
+    }
 
 
     def __init__(self, *args, **kwargs):
@@ -441,39 +455,69 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
             self.layout(),
             self.button_layout()
         )
-        print(self.fields)
+        self.fields['cadence_type'].required = False
+        self.fields['delay'].required = False
 
     def instrument_choices(self):
         return [i for i in super().instrument_choices() if i[0] in ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']]
 
+    def _build_instrument_configs(self):
+        instrument_config = []
+        for label, filter in self.filter_mapping.items():
+            filter_parameters = list(self.cleaned_data[label])
+            if len(self.cleaned_data[label]) > 0:
+                instrument_config.append({
+                    'exposure_count': self.cleaned_data[label][1],
+                    'exposure_time': self.cleaned_data[label][0],
+                    'optical_elements': {
+                        self.filter_mapping[label]
+                    }
+                })
+
+        return instrument_config
+
     def layout(self):
         return Div(
-            Row(),
-            Row(
-                Column('U_filter'), Column('max_airmass')
+            Div(
+                Row(
+                    Column(HTML('Exposure Time')),
+                    Column(HTML('No. of Exposures')),
+                    Column(HTML('Block No.')),
+                ),
+                Row('U_filter'), 
+                Row('B_filter'),
+                Row('V_filter'),
+                Row('R_filter'),
+                Row('I_filter'),
+                Row('u_filter'),
+                Row('g_filter'),
+                Row('r_filter'),
+                Row('i_filter'),
+                Row('z_filter'),
+                Row('w_filter'), 
+                css_class='col-md-6'
             ),
-            Row(
-                Column('B_filter'), Column('instrument_type')
+            Div(
+                Row('max_airmass'),
+                Row(
+                    PrependedText('min_lunar_distance', '>')
+                ),
+                Row('instrument_type'),
+                Row('proposal'),
+                Row('observation_mode'),
+                Row('ipp_value'), 
+                css_class='col-md-6'
             ),
-            Row(
-                Column('v_filter'), Column('proposal')
-            ),
-            Row(
-                Column('R_filter'), Column('ipp_value')
-            ),
-            Row(
-                Column('I_filter'), Column('')
-            ),
-            Row('u_filter'),
-            Row('g_filter'),
-            Row('r_filter'),
-            Row('i_filter'),
-            Row('z_filter'),
-            Row('w_filter')
+            css_class='form-row'
         )
 
     def observation_payload(self):
-        pass
+        print(self.cleaned_data)
+        print(self.cleaned_data['U_filter'])
+        print(type(self.cleaned_data['U_filter']))
+        print(self.cleaned_data['R_filter'])
+        print(self._build_instrument_configs())
+        # return super().observation_payload()
 
 
 class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
@@ -553,6 +597,11 @@ class LCOFacility(BaseRoboticObservationFacility):
     }
 
     def get_form(self, observation_type):
+        # try:
+        #     form_class = settings['LCO']['observation_types'][observation_type]['form_class']
+        #     return form_class
+        # except:
+        #     return LCOBaseObservationForm
         if observation_type == 'IMAGING':
             return LCOImagingObservationForm
         elif observation_type == 'SPECTRA':

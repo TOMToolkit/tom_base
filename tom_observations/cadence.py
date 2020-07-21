@@ -4,7 +4,7 @@ from dateutil.parser import parse
 from importlib import import_module
 import json
 
-from crispy_forms.layout import Div, HTML, Layout
+from crispy_forms.layout import Column, Div, HTML, Layout, Row
 from django import forms
 from django.conf import settings
 
@@ -222,8 +222,8 @@ class CadenceForm(forms.Form):
 
 
 class DelayedCadenceForm(CadenceForm):
-    delay = forms.IntegerField(min_value=0)
     cadence_type = forms.ChoiceField(choices=[('repeat', 'Repeating every'), ('once', 'Once in the next')])
+    delay = forms.IntegerField(min_value=0, help_text='Delay is in days')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args ,**kwargs)
@@ -232,5 +232,7 @@ class DelayedCadenceForm(CadenceForm):
 
     def cadence_layout(self):
         return Layout(
-            'delay', 'cadence_type'
+            Row(
+                Column('cadence_type'), Column('delay')
+            )
         )
