@@ -142,8 +142,8 @@ class LCOBaseForm(forms.Form):
 
 class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceForm):
     """
-    The LCOBaseObservationForm provides the base set of utilities to construct an observation at Las Cumbres 
-    Observatory. While the forms that inherit from it provide a subset of instruments and filters, the 
+    The LCOBaseObservationForm provides the base set of utilities to construct an observation at Las Cumbres
+    Observatory. While the forms that inherit from it provide a subset of instruments and filters, the
     LCOBaseObservationForm presents the user with all of the instrument and filter options that the facility has to
     offer.
     """
@@ -438,8 +438,8 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
 
 class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
     """
-    The LCOPhotometricSequenceForm provides a form offering a subset of the parameters in the LCOImagingObservationForm. 
-    The form is modeled after the Supernova Exchange application's Photometric Sequence Request Form, and allows the 
+    The LCOPhotometricSequenceForm provides a form offering a subset of the parameters in the LCOImagingObservationForm.
+    The form is modeled after the Supernova Exchange application's Photometric Sequence Request Form, and allows the
     configuration of multiple filters, as well as a more intuitive proactive cadence form.
     """
     U_filter = FilterField(label='U', required=False)
@@ -471,7 +471,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
         super().__init__(*args, **kwargs)
         self.helper.layout = Layout(
             Div(
-                Column('name'), 
+                Column('name'),
                 Column('cadence_type'),
                 Column('cadence_frequency'),
                 css_class='form-row'
@@ -511,7 +511,8 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
         return cleaned_data
 
     def instrument_choices(self):
-        return [i for i in super().instrument_choices() if i[0] in ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']]
+        return [i for i in super().instrument_choices()
+                if i[0] in ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']]
 
     def layout(self):
         return Div(
@@ -521,7 +522,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
                     Column(HTML('No. of Exposures')),
                     Column(HTML('Block No.')),
                 ),
-                Row('U_filter'), 
+                Row('U_filter'),
                 Row('B_filter'),
                 Row('V_filter'),
                 Row('R_filter'),
@@ -531,7 +532,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
                 Row('r_filter'),
                 Row('i_filter'),
                 Row('z_filter'),
-                Row('w_filter'), 
+                Row('w_filter'),
                 css_class='col-md-6'
             ),
             Div(
@@ -542,7 +543,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
                 Row('instrument_type'),
                 Row('proposal'),
                 Row('observation_mode'),
-                Row('ipp_value'), 
+                Row('ipp_value'),
                 css_class='col-md-6'
             ),
             css_class='form-row'

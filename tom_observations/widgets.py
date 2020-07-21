@@ -5,11 +5,12 @@ from django.forms.widgets import MultiWidget, NumberInput
 class FilterConfigurationWidget(forms.widgets.MultiWidget):
 
     def __init__(self, attrs={}):
+        _default_attrs = {'class': 'form-control col-md-3', 'style': 'margin-right: 10px; display: inline-block'}
         _widgets = (
-            forms.widgets.NumberInput(attrs={'class': 'form-control col-md-3', 'style': 'margin-right: 10px; display: inline-block'}),
-            forms.widgets.NumberInput(attrs={'class': 'form-control col-md-3', 'style': 'margin-right: 10px; display: inline-block'}),
-            forms.widgets.NumberInput(attrs={'class': 'form-control col-md-3', 'style': 'margin-right: 10px; display: inline-block'})
-        )  
+            forms.widgets.NumberInput(attrs=_default_attrs),
+            forms.widgets.NumberInput(attrs=_default_attrs),
+            forms.widgets.NumberInput(attrs=_default_attrs)
+        )
 
         super().__init__(_widgets, attrs)
 
