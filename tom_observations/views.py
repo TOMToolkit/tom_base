@@ -155,19 +155,6 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         """
         return get_service_class(self.get_facility())
 
-    def get_observation_type(self):
-        """
-        Gets the observation type from the query parameters of the request.
-
-        :returns: observation type
-        :rtype: str
-        """
-        if self.request.method == 'GET':
-            # TODO: This appears to not work as intended.
-            return self.request.GET.get('observation_type', self.get_facility_class().observation_types[0])
-        elif self.request.method == 'POST':
-            return self.request.POST.get('observation_type')
-
     def get_context_data(self, **kwargs):
         """
         Adds the available observation types for the observing facility to the context object.
@@ -176,8 +163,16 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :rtype: dict
         """
         context = super(ObservationCreateView, self).get_context_data(**kwargs)
-        context['type_choices'] = self.get_facility_class().observation_types  # TODO: get from settings
+        print(context['form'])
+        # TODO: only update initial values for active form
+        # observation_type_choices = []
+        # initial = self.get_initial()
+        # for k, v in self.get_facility_class().observation_forms.items():
+        #     observation_type_choices.append()
+        context['observation_type_choices'] = [(k, v(initial={**self.get_initial(), **{'observation_type': k}})) for k, v in self.get_facility_class().observation_forms.items()]
         target = Target.objects.get(pk=self.get_target_id())
+        # TODO: add active to context and plumb through to template
+        # context['active'] = 
         context['target'] = target
         return context
 
@@ -189,9 +184,9 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :rtype: subclass of GenericObservationForm
         """
         observation_type = None
-        if self.request.GET:
+        if self.request.method == 'GET':
             observation_type = self.request.GET.get('observation_type')
-        elif self.request.POST:
+        elif self.request.method == 'POST':
             observation_type = self.request.POST.get('observation_type')
         return self.get_facility_class()().get_form(observation_type)
 
@@ -202,6 +197,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :returns: observation form
         :rtype: subclass of GenericObservationForm
         """
+        print(self.request)
         form = super().get_form()
         if not settings.TARGET_PERMISSIONS_ONLY:
             form.fields['groups'].queryset = self.request.user.groups.all()
@@ -218,13 +214,18 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :returns: initial form data
         :rtype: dict
         """
+        print('get initial')
+        if self.request.method == 'POST':
+            print(self.request.POST)
         initial = super().get_initial()
         if not self.get_target_id():
             raise Exception('Must provide target_id')
         initial['target_id'] = self.get_target_id()
         initial['facility'] = self.get_facility()
-        initial['observation_type'] = self.get_observation_type()
-        initial.update(self.request.GET.dict())
+        if self.request.method == 'GET':
+            initial.update(self.request.GET.dict())
+        elif self.request.method == 'POST':
+            initial.update(self.request.POST.dict())
         return initial
 
     def form_valid(self, form):
@@ -238,10 +239,13 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :param form: form containing observating request parameters
         :type form: subclass of GenericObservationForm
         """
+        print('form_valid')
+        print(form.cleaned_data)
+        # TODO: Render errors properly, probably in form_invalid
         # Submit the observation
         facility = self.get_facility_class()
         target = self.get_target()
-        observation_ids = facility().submit_observation(form.observation_payload())
+        # observation_ids = facility().submit_observation(form.observation_payload())
         records = []
 
         for observation_id in observation_ids:
