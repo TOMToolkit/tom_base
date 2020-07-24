@@ -61,7 +61,7 @@ class GaiaBroker(GenericBroker):
     #         alerts = alerts_pattern.match(str(script.string).strip())
     #         if alerts:
     #             break
-        
+
     #     print(alerts[0])
     #     alert_list = json.loads(alerts[0].replace('var_alerts = ', '').replace(';', ''))
 
@@ -96,13 +96,18 @@ class GaiaBroker(GenericBroker):
         response = requests.get(f'{BASE_BROKER_URL}/alerts/alertsindex')
         response.raise_for_status()
 
-        html_data = response.text.split('\n')
-        for line in html_data:
-            if 'var alerts' in line:
-                alerts_data = line.replace('var alerts = ', '')
-                alerts_data = alerts_data.replace('\n', '').replace(';', '')
+        soup = BeautifulSoup(response.content, 'html.parser')
+        script_tags = soup.find_all('script')
+        alerts = None
 
-        alert_list = json.loads(alerts_data)
+        alerts_pattern = re.compile(r'var alerts = \[(.*?)];')
+        for script in script_tags:
+            m = alerts_pattern.match(str(script.string).strip())
+            if m is not None:
+                alerts = '['+m.group(1)+']'
+                break
+
+        alert_list = json.loads(alerts)
 
         if parameters['cone'] is not None and len(parameters['cone']) > 0:
             cone_params = parameters['cone'].split(',')
@@ -169,13 +174,14 @@ class GaiaBroker(GenericBroker):
             except HTTPError:
                 raise Exception('Unable to retrieve alert information from broker')
 
-        alert_url = BROKER_URL.replace('/alerts/alertsindex',
-                                       alert['per_alert']['link'])
-
-        if alert:
+        if alert is not None:
             lc_url = path.join(base_url, alert['name'], 'lightcurve.csv')
+            alert_url = BROKER_URL.replace('/alerts/alertsindex',
+                                        alert['per_alert']['link'])
         elif target:
             lc_url = path.join(base_url, target.name, 'lightcurve.csv')
+            alert_url = BROKER_URL.replace('/alerts/alertsindex',
+                                        'alerts/alert/'+target.name+'/')
         else:
             return
 
