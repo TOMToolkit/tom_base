@@ -12,9 +12,7 @@ from bs4 import BeautifulSoup
 from django import forms
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
-from tom_alerts.models import BrokerQuery
 from tom_dataproducts.models import ReducedDatum
-from tom_targets.models import Target
 
 BROKER_URL = 'http://gsaweb.ast.cam.ac.uk/alerts/alertsindex'
 BASE_BROKER_URL = 'http://gsaweb.ast.cam.ac.uk'
