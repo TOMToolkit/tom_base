@@ -120,7 +120,6 @@ class GaiaBroker(GenericBroker):
     def process_reduced_data(self, target, alert=None):
 
         base_url = BROKER_URL.replace('/alertsindex', '/alert')
-        query_url = f'{BASE_BROKER_URL}/alert'
 
         if not alert:
             try:
