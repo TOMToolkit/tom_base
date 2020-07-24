@@ -1,6 +1,5 @@
 from dateutil.parser import parse
 import json
-from os import path
 import re
 import requests
 from requests.exceptions import HTTPError
@@ -11,10 +10,9 @@ import astropy.units as u
 from bs4 import BeautifulSoup
 from django import forms
 
-from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
+from tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
 from tom_dataproducts.models import ReducedDatum
 
-BROKER_URL = 'http://gsaweb.ast.cam.ac.uk/alerts/alertsindex'
 BASE_BROKER_URL = 'http://gsaweb.ast.cam.ac.uk'
 
 
@@ -104,7 +102,6 @@ class GaiaBroker(GenericBroker):
         timestamp = parse(alert['obstime'])
         alert_link = alert.get('per_alert', {})['link']
         url = f'{BASE_BROKER_URL}/{alert_link}'
-        url = BROKER_URL.replace('/alerts/alertsindex', alert['per_alert']['link'])
 
         return GenericAlert(
             timestamp=timestamp,
@@ -119,9 +116,6 @@ class GaiaBroker(GenericBroker):
 
     def process_reduced_data(self, target, alert=None):
 
-        base_url = BROKER_URL.replace('/alertsindex', '/alert')
-        query_url = f'{BASE_BROKER_URL}/alert'
-
         if not alert:
             try:
                 alert = self.fetch_alert(target.name)
@@ -130,13 +124,13 @@ class GaiaBroker(GenericBroker):
                 raise Exception('Unable to retrieve alert information from broker')
 
         if alert is not None:
-            lc_url = path.join(base_url, alert['name'], 'lightcurve.csv')
-            alert_url = BROKER_URL.replace('/alerts/alertsindex',
-                                        alert['per_alert']['link'])
+            alert_name = alert['name']
+            alert_link = alert.get('per_alert', {})['link']
+            lc_url = f'{BASE_BROKER_URL}/alerts/alert/{alert_name}/lightcurve.csv'
+            alert_url = f'{BASE_BROKER_URL}/{alert_link}'
         elif target:
-            lc_url = path.join(base_url, target.name, 'lightcurve.csv')
-            alert_url = BROKER_URL.replace('/alerts/alertsindex',
-                                        'alerts/alert/'+target.name+'/')
+            lc_url = f'{BASE_BROKER_URL}/{target.name}/lightcurve.csv'
+            alert_url = f'{BASE_BROKER_URL}/alerts/alert/{target.name}/'
         else:
             return
 

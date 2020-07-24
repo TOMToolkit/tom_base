@@ -10,6 +10,7 @@ from tom_alerts.brokers.gaia import GaiaBroker
 from tom_targets.models import Target
 from tom_dataproducts.models import ReducedDatum
 
+
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.brokers.gaia.GaiaBroker'])
 class TestGaiaQueryForm(TestCase):
     def setUp(self):
@@ -63,50 +64,41 @@ class TestGaiaBroker(TestCase):
         self.test_html = """
             <html>
                 <script charset="utf-8" type="text/javascript">
-	                var alerts = [{"name": "Gaia20cpu", "tnsid": "AT2020lto", "obstime": "2020-06-04 17:25:08", "ra": "291.61247",
-				        "dec": "13.36801", "alertMag": "20.54", "historicMag": "17.79", "historicStdDev": "0.24",
-				        "classification": "CV", "published": "2020-06-06 12:26:16", "comment": "test comment",
-				        "per_alert": {"link": "/alerts/alert/Gaia20cpu/", "name": "Gaia20cpu"}, "rvs": false},
-                        {"name": "Gaia16aau", "tnsid": "AT2016dbu", "obstime": "2016-01-25 18:25:07", "ra": "12.54460",
-                        "dec": "-69.73271", "alertMag": "15.13", "historicMag": "", "historicStdDev": "", "classification": "RCrB",
-                        "published": "2016-01-30 13:46:16", "comment": "5mag change in 400days in Carbon Star [MH95]580,
-                        but spectrum rather blue. Candidate RCrB ?", "per_alert": {"link": "/alerts/alert/Gaia16aau/",
-                        "name": "Gaia16aau"}, "rvs": false}, {"name": "Gaia16aat", "tnsid": "AT2016dbx", "obstime": "2016-01-22 03:39:40",
-                        "ra": "246.20861", "dec": "65.68363", "alertMag": "19.36", "historicMag": "", "historicStdDev": "",
-                        "classification": "unknown", "published": "2016-01-30 13:22:05", "comment":
-                        "long-term rise on a blue star seen in DSS2 and Galex", "per_alert": {"link": "/alerts/alert/Gaia16aat/",
-                        "name": "Gaia16aat"}, "rvs": false}, {"name": "Gaia20bph", "tnsid": "AT2020ftt", "obstime": "2020-04-01 12:52:23",
-                        "ra": "34.02266", "dec": "68.65102", "alertMag": "16.21", "historicMag": "18.39", "historicStdDev": "1.22",
-                        "classification": "unknown", "published": "2020-04-03 09:47:04",
+                    var alerts = [{"name": "Gaia20cpu", "tnsid": "AT2020lto", "obstime": "2020-06-04 17:25:08",
+                        "ra": "291.61247", "dec": "13.36801", "alertMag": "20.54", "historicMag": "17.79",
+                        "historicStdDev": "0.24", "classification": "CV", "published": "2020-06-06 12:26:16",
+                        "comment": "test comment", "per_alert": {"link": "/alerts/alert/Gaia20cpu/", "name":
+                        "Gaia20cpu"}, "rvs": false},
+                        {"name": "Gaia20bph", "tnsid": "AT2020ftt", "obstime": "2020-04-01 12:52:23",
+                        "ra": "34.02266", "dec": "68.65102", "alertMag": "16.21", "historicMag": "18.39",
+                        "historicStdDev": "1.22", "classification": "unknown", "published": "2020-04-03 09:47:04",
                         "comment": "candidate CV; several previous outbursts in lightcurve",
                         "per_alert": {"link": "/alerts/alert/Gaia20bph/", "name": "Gaia20bph"}, "rvs": false}];
 
-	                $(document).ready(function() {
-		                var index_table = $('#alertsindex').dataTable( {
-			                "data": alerts,
-		                });
-	                });
+                    $(document).ready(function() {
+                        var index_table = $('#alertsindex').dataTable( {
+                            "data": alerts,
+                        });
+                    });
                 </script>
             </html>"""
-        self.test_html = self.test_html.replace('\n','')
-        self.alert_list = [ {"name": "Gaia20cpu", "tnsid": "AT2020lto", "obstime": "2020-06-04 17:25:08", "ra": "291.61247",
-            "dec": "13.36801", "alertMag": "20.54", "historicMag": "17.79", "historicStdDev": "0.24",
-            "classification": "CV", "published": "2020-06-06 12:26:16", "comment": "test comment",
-            "per_alert": {"link": "/alerts/alert/Gaia20cpu/", "name": "Gaia20cpu"}, "rvs": 'false'},
-                        {"name": "Gaia16aau", "tnsid": "AT2016dbu", "obstime": "2016-01-25 18:25:07", "ra": "12.54460",
-            "dec": "-69.73271", "alertMag": "15.13", "historicMag": "", "historicStdDev": "", "classification": "RCrB",
-            "published": "2016-01-30 13:46:16", "comment": "5mag change in 400days in Carbon Star [MH95]580, but spectrum rather blue. Candidate RCrB ?",
-            "per_alert": {"link": "/alerts/alert/Gaia16aau/","name": "Gaia16aau"}, "rvs": 'false'},
-                        {"name": "Gaia16aat", "tnsid": "AT2016dbx", "obstime": "2016-01-22 03:39:40",
-            "ra": "246.20861", "dec": "65.68363", "alertMag": "19.36", "historicMag": "", "historicStdDev": "",
-            "classification": "unknown", "published": "2016-01-30 13:22:05", "comment":
-            "long-term rise on a blue star seen in DSS2 and Galex", "per_alert": {"link": "/alerts/alert/Gaia16aat/",
-            "name": "Gaia16aat"}, "rvs": 'false'},
-                        {"name": "Gaia20bph", "tnsid": "AT2020ftt", "obstime": "2020-04-01 12:52:23",
-            "ra": "34.02266", "dec": "68.65102", "alertMag": "16.21", "historicMag": "18.39", "historicStdDev": "1.22",
-            "classification": "unknown", "published": "2020-04-03 09:47:04",
-            "comment": "candidate CV; several previous outbursts in lightcurve",
-            "per_alert": {"link": "/alerts/alert/Gaia20bph/", "name": "Gaia20bph"}, "rvs": 'false'}
+        self.test_html = self.test_html.replace('\n', '')
+        self.alert_list = [
+                            {
+                                "name": "Gaia20cpu", "tnsid": "AT2020lto", "obstime": "2020-06-04 17:25:08",
+                                "ra": "291.61247", "dec": "13.36801", "alertMag": "20.54", "historicMag": "17.79",
+                                "historicStdDev": "0.24", "classification": "CV", "published": "2020-06-06 12:26:16",
+                                "comment": "test comment", "per_alert": {
+                                    "link": "/alerts/alert/Gaia20cpu/", "name": "Gaia20cpu"
+                                }, "rvs": 'false'},
+                            {
+                                "name": "Gaia20bph", "tnsid": "AT2020ftt", "obstime": "2020-04-01 12:52:23",
+                                "ra": "34.02266", "dec": "68.65102", "alertMag": "16.21", "historicMag": "18.39",
+                                "historicStdDev": "1.22", "classification": "unknown",
+                                "published": "2020-04-03 09:47:04",
+                                "comment": "candidate CV; several previous outbursts in lightcurve", "per_alert": {
+                                    "link": "/alerts/alert/Gaia20bph/", "name": "Gaia20bph"},
+                                "rvs": 'false'}
                         ]
         self.test_target = Target.objects.create(name=self.alert_list[0]['name'])
         ReducedDatum.objects.create(
@@ -129,7 +121,7 @@ class TestGaiaBroker(TestCase):
         alerts = GaiaBroker().fetch_alerts(search_params)
         self.assertEqual(1, sum(1 for _ in alerts))
 
-        search_params = {'target_name': None, 'cone': '291.61247, 13.36801, 0.002' }
+        search_params = {'target_name': None, 'cone': '291.61247, 13.36801, 0.002'}
         alerts = GaiaBroker().fetch_alerts(search_params)
         self.assertEqual(1, sum(1 for _ in alerts))
 
@@ -137,12 +129,20 @@ class TestGaiaBroker(TestCase):
         alert = GaiaBroker().to_generic_alert(self.alert_list[0])
         self.assertEqual(alert.name, self.alert_list[0]['name'])
 
+    # @mock.patch('tom_alerts.brokers.gaia.requests.get')
     @mock.patch('tom_alerts.brokers.gaia.GaiaBroker.fetch_alert')
+    # def test_process_reduced_data_with_alert(self, mock_fetch_alert, mock_requests_get):
     def test_process_reduced_data_with_alert(self, mock_fetch_alert):
         mock_response = Response()
         mock_response._content = self.test_html
         mock_response.status_code = 200
         mock_fetch_alert.return_value = mock_response
+
+        # mock_photometry_response = Response()
+        # mock_response._content = str.encode('''Gaia19dzu\n#Date,JD,averagemag.\n
+        #                             2014-08-01 00:05:24,2456870.504,19.48\n2014-08-01 06:05:38,2456870.754,19.48\n\n''')
+        # mock_response.status_code = 200
+        # mock_requests_get.return_value = mock_photometry_response
 
         GaiaBroker().process_reduced_data(self.test_target, alert=self.alert_list[0])
 
