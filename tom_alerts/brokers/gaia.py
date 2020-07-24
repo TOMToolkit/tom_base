@@ -48,49 +48,6 @@ class GaiaBroker(GenericBroker):
     name = 'Gaia'
     form = GaiaQueryForm
 
-    # def fetch_alerts(self, parameters):
-    #     response = requests.get(f'{BASE_BROKER_URL}/alerts/alertsindex')
-    #     response.raise_for_status()
-
-    #     soup = BeautifulSoup(response.content)
-    #     script_tags = soup.find_all('script')
-    #     alerts = []
-
-    #     alerts_pattern = re.compile(r'var alerts = (.*?);')
-    #     for script in script_tags:
-    #         alerts = alerts_pattern.match(str(script.string).strip())
-    #         if alerts:
-    #             break
-
-    #     print(alerts[0])
-    #     alert_list = json.loads(alerts[0].replace('var_alerts = ', '').replace(';', ''))
-
-    #     cone_params = parameters.get('cone').split(',')
-    #     parameters['cone_ra'] = float(cone_params[0])
-    #     parameters['cone_dec'] = float(cone_params[1])
-    #     parameters['cone_radius'] = float(cone_params[2])*u.deg
-    #     parameters['cone_centre'] = SkyCoord(float(cone_params[0]),
-    #                                             float(cone_params[1]),
-    #                                             frame="icrs", unit="deg")
-
-    #     filtered_alerts = []
-    #     if parameters.get('target_name'):
-    #         for alert in alert_list:
-    #             if parameters['target_name'] in alert['name']:
-    #                 filtered_alerts.append(alert)
-
-    #     elif 'cone_radius' in parameters.keys():
-    #         for alert in alert_list:
-    #             c = SkyCoord(float(alert['ra']), float(alert['dec']),
-    #                          frame="icrs", unit="deg")
-    #             if parameters['cone_centre'].separation(c) <= parameters['cone_radius']:
-    #                 filtered_alerts.append(alert)
-
-    #     else:
-    #         filtered_alerts = alert_list
-
-    #     return iter(filtered_alerts)
-
     def fetch_alerts(self, parameters):
         """Must return an iterator"""
         response = requests.get(f'{BASE_BROKER_URL}/alerts/alertsindex')
