@@ -65,6 +65,11 @@ class TestTargetListGroupPermissions(TestCase):
         self.assertNotContains(response, self.st1.name)
 
 
+# Because the target detail page has a templatetag that tries to get the facility status, these tests fail without
+# network. While the preferred solution would be to create a mock facility class, in order to avoid any potential
+# circular imports, we're simply disabling the facility classes for these tests. This can be revisited if need be at a
+# future time, but currently the target tests don't do anything with ObservationRecords anyway.
+@override_settings(TOM_FACILITY_CLASSES=[])
 class TestTargetDetail(TestCase):
     def setUp(self):
         user = User.objects.create(username='testuser')
@@ -100,6 +105,7 @@ class TestTargetDetail(TestCase):
         self.assertContains(response, 'You do not have permission to access this page')
 
 
+@override_settings(TOM_FACILITY_CLASSES=[])
 class TestTargetCreate(TestCase):
     def setUp(self):
         user = User.objects.create(username='testuser')
