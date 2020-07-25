@@ -147,7 +147,7 @@ class TestGaiaBroker(TestCase):
     @mock.patch('tom_alerts.brokers.gaia.GaiaBroker.fetch_alerts')
     def test_process_reduced_data_without_alert(self, mock_fetch_alerts, mock_requests_get):
         mock_fetch_alerts.return_value = iter([self.alert_list[1]])
-        
+
         mock_photometry_response = Response()
         mock_photometry_response._content = str.encode('''Gaia20bph\n#Date,JD,averagemag.\n
                                     2014-08-01 00:05:24,2456870.504,19.48\n2014-08-01 06:05:38,2456870.754,19.48\n\n''')
