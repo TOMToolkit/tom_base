@@ -333,7 +333,6 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
         return response.json()
 
     def observation_payload(self):
-        print(self.cleaned_data)
         payload = {
             "name": self.cleaned_data['name'],
             "proposal": self.cleaned_data['proposal'],
@@ -358,7 +357,6 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
         if self.cleaned_data.get('period') and self.cleaned_data.get('jitter'):
             payload = self._expand_cadence_request(payload)
 
-        print(payload)
         return payload
 
 
@@ -490,7 +488,8 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
         self.fields['cadence_type'].required = False
         self.fields['cadence_strategy'].required = False
         self.fields['cadence_frequency'].required = False
-        self.fields['groups'].label = 'Data granted to'
+        if self.fields.get('groups'):
+            self.fields['groups'].label = 'Data granted to'
 
     def _build_instrument_config(self):
         instrument_config = []
@@ -523,7 +522,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
 
     def layout(self):
         if settings.TARGET_PERMISSIONS_ONLY:
-            groups = Row('')
+            groups = Div()
         else:
             groups = Row('groups')
         return Div(
@@ -645,9 +644,7 @@ class LCOFacility(BaseRoboticObservationFacility):
     }
 
     def get_form(self, observation_type):
-        print(observation_type)
         try:
-            print(self.observation_forms[observation_type])
             return self.observation_forms[observation_type]
         except KeyError:
             return LCOBaseObservationForm

@@ -24,7 +24,7 @@
         <ul class="nav nav-tabs" id="tabs">
         {% for observation_type, observation_form in observation_type_choices %}
             <li class="nav-item">
-                <span class="nav-link {% if forloop.first %}active{% endif %}" data-target="#{{ observation_type }}" data-toggle="tab"">
+                <span class="nav-link {% if observation_type == active %}active{% endif %}" data-target="#{{ observation_type }}" data-toggle="tab"">
                     {{ observation_type }}
                 </span>
             </li>
@@ -32,7 +32,7 @@
         </ul>
         <div class="tab-content">
         {% for observation_type, observation_form in observation_type_choices %}
-            <div class="tab-pane {% if forloop.first %}active{% endif %}" id="{{ observation_type }}">
+            <div class="tab-pane {% if observation_type == active %}active{% endif %}" id="{{ observation_type }}">
                 {% crispy observation_form %}
             </div>
         {% endfor %}
