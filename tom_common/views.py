@@ -142,7 +142,7 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         else:
             return reverse_lazy('user-update', kwargs={'pk': self.request.user.id})
 
-    def get_form(self):
+    def get_form(self, form_class=None):
         """
         Gets the user update form and removes the password requirement. Removes the groups field if the user is not a
         superuser.

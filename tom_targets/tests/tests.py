@@ -473,7 +473,7 @@ class TestTargetExport(TestCase):
         self.assertNotIn('M52', content)
 
     def test_export_all_targets_with_aliases(self):
-        st_name = TargetNameFactory.create(name='Messier 42', target=self.st)
+        TargetNameFactory.create(name='Messier 42', target=self.st)
         response = self.client.get(reverse('targets:export'))
         content = ''.join(line.decode('utf-8') for line in list(response.streaming_content))
         self.assertIn('M42', content)
