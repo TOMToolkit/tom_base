@@ -1,6 +1,6 @@
 from crispy_forms.layout import Layout, HTML
 
-from tom_alerts.alerts import GenericBroker, GenericQueryForm
+from tom_alerts.alerts import GenericBroker, GenericQueryForm, GenericAlert
 
 
 class ANTARESQueryForm(GenericQueryForm):
@@ -21,3 +21,12 @@ class ANTARESQueryForm(GenericQueryForm):
 class ANTARESBroker(GenericBroker):
     name = 'ANTARES'
     form = ANTARESQueryForm
+
+    def fetch_alerts(self, parameters):
+        return iter([])
+
+    def process_reduced_data(self, target, alert=None):
+        return
+
+    def to_generic_alert(self, alert):
+        return GenericAlert()

@@ -230,7 +230,7 @@ class MARSBroker(GenericBroker):
                     'magnitude': candidate['candidate']['magpsf'],
                     'filter': filters[candidate['candidate']['fid']]
                 }
-                rd, created = ReducedDatum.objects.get_or_create(
+                rd, _ = ReducedDatum.objects.get_or_create(
                     timestamp=jd.to_datetime(timezone=TimezoneInfo()),
                     value=json.dumps(value),
                     source_name=self.name,
