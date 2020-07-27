@@ -28,6 +28,7 @@ setup(
     use_scm_version=True,
     setup_requires=['setuptools_scm', 'wheel'],
     install_requires=[
+        'beautifulsoup4==4.9.1',
         'django>=3.0.7',  # TOM Toolkit requires db math functions
         'django-bootstrap4==1.1.1',
         'django-extensions==2.2.9',
