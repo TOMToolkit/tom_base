@@ -1,3 +1,4 @@
+from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 
 from tom_targets.models import Target, TargetExtra, TargetName
@@ -62,7 +63,6 @@ class TargetSerializer(serializers.ModelSerializer):
 
         return target
 
-
     def update(self, instance, validated_data):
         """
         For TargetExtra and TargetName objects, if the ID is present, it will update the corresponding row. If the ID is 
@@ -123,3 +123,15 @@ class TargetSerializer(serializers.ModelSerializer):
                 tes.save(target=instance)
 
         return instance
+
+
+class TargetFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    # This PrimaryKeyRelatedField subclass is used to implement get_queryset based on the permissions of the user
+    # submitting the request. The pattern was taken from this StackOverflow answer: https://stackoverflow.com/a/32683066
+
+    def get_queryset(self):
+        request = self.context.get('request', None)
+        queryset = super().get_queryset()
+        if not (request and queryset):
+            return None
+        return get_objects_for_user(request.user, 'tom_targets.change_target')

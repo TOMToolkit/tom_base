@@ -1,11 +1,11 @@
-from rest_framework.test import APITestCase
-from rest_framework import status
-from guardian.shortcuts import assign_perm
-from django.urls import reverse
 from django.contrib.auth.models import User
+from django.urls import reverse
+from guardian.shortcuts import assign_perm
+from rest_framework import status
+from rest_framework.test import APITestCase
 
+from tom_targets.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
 from tom_targets.models import Target
-from .factories import SiderealTargetFactory, NonSiderealTargetFactory
 
 
 class TestTargetViewset(APITestCase):
