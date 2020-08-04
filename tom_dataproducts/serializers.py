@@ -21,7 +21,7 @@ class DataProductSerializer(serializers.ModelSerializer):
                                                                          required=False)
     group = DataProductGroupSerializer(many=True, required=False)
     data_product_type = serializers.CharField(allow_blank=False)
-    
+
     class Meta:
         model = DataProduct
         fields = (
@@ -49,13 +49,13 @@ class DataProductSerializer(serializers.ModelSerializer):
     #     return super().create(validated_data)
 
     def validate_data_product_type(self, value):
-        for dp_type, dp_values in settings.DATA_PRODUCT_TYPES.keys():
-            if not value or value == dp_values[0]:
+        for dp_type in settings.DATA_PRODUCT_TYPES.keys():
+            if not value or value == dp_type:
                 break
         else:
             raise serializers.ValidationError('Not a valid data_product_type. Valid data_product_types are {0}.'
                                               .format(', '.join(k for k in settings.DATA_PRODUCT_TYPES.keys())))
-        return False
+        return value
 
 
 # class DataProductGroupFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
