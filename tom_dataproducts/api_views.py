@@ -1,6 +1,5 @@
 from django.conf import settings
 from django_filters import rest_framework as drf_filters
-from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import status
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, ListModelMixin
@@ -12,35 +11,19 @@ from rest_framework.viewsets import GenericViewSet
 from tom_common.hooks import run_hook
 from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.filters import DataProductFilter
-from tom_dataproducts.models import DataProductGroup, DataProduct, ReducedDatum
-from tom_dataproducts.serializers import DataProductGroupSerializer, DataProductSerializer
-
-# TODO: see Davids comment in tom_targets/api_views.py
-
-# TODO: The GenericViewSet (and ModelViewset?) subclass docstrings appear on the /api/<router.prefix>/
-#   endpoint page. Rewrite these docstring to be useful to API consumers.
-
-
-# class DataProductGroupViewSet(CreateModelMixin, PermissionListMixin, GenericViewSet):
-#     """Viewset for Target objects. By default supports CRUD operations.
-#     See the docs on viewsets: https://www.django-rest-framework.org/api-guide/viewsets/
-#     """
-#     queryset = DataProductGroup.objects.all()
-#     serializer_class = DataProductGroupSerializer
-#     # TODO: define filterset_class
-#     # TODO: define permission_required
+from tom_dataproducts.models import DataProduct, ReducedDatum
+from tom_dataproducts.serializers import DataProductSerializer
 
 
 class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, GenericViewSet):
-    """Viewset for Target objects. By default supports CRUD operations.
-    See the docs on viewsets: https://www.django-rest-framework.org/api-guide/viewsets/
+    """
+    Viewset for DataProduct objects. Supports list, create, and delete.
     """
     queryset = DataProduct.objects.all()
     serializer_class = DataProductSerializer
     filter_backends = (drf_filters.DjangoFilterBackend,)
     filterset_class = DataProductFilter
     permission_classes = [IsAuthenticated & DjangoObjectPermissions]
-    # TODO: define permission required or ensure get_queryset is doing the right thing
     # TODO: attempting to delete with no auth results in infinite redirect
     parser_classes = [MultiPartParser]
 
