@@ -67,7 +67,7 @@ class TestDataProductViewset(APITestCase):
             response = self.client.post(reverse('api:dataproducts-list'), self.dp_data, format='multipart')
 
             self.assertContains(
-                response.data,
-                'There was an error in processing your DataProduct into individual ReducedDatum objects.',
+                response,
+                'There was an error in processing your DataProduct',
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
