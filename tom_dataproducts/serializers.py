@@ -15,17 +15,17 @@ class DataProductGroupSerializer(serializers.ModelSerializer):
 
 
 # The ReducedDatumSerializer is not necessary until we implement the DataProductDetailAPIView and DataProductListAPIView
-# class ReducedDatumSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = ReducedDatum
-#         fields = (
-#             'data_product',
-#             'data_type',
-#             'source_name',
-#             'source_location',
-#             'timestamp',
-#             'value'
-#         )
+class ReducedDatumSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReducedDatum
+        fields = (
+            'data_product',
+            'data_type',
+            'source_name',
+            'source_location',
+            'timestamp',
+            'value'
+        )
 
 
 class DataProductSerializer(serializers.ModelSerializer):
@@ -33,7 +33,7 @@ class DataProductSerializer(serializers.ModelSerializer):
     observation_record = ObservationRecordFilteredPrimaryKeyRelatedField(queryset=ObservationRecord.objects.all(),
                                                                          required=False)
     group = DataProductGroupSerializer(many=True, required=False)
-    # reduced_datum_set = ReducedDatumSerializer(many=True, required=False)
+    reduceddatum_set = ReducedDatumSerializer(many=True, required=False)
     data_product_type = serializers.CharField(allow_blank=False)
 
     class Meta:
@@ -46,7 +46,8 @@ class DataProductSerializer(serializers.ModelSerializer):
             'data',
             'extra_data',
             'data_product_type',
-            'group'
+            'group',
+            'reduceddatum_set'
         )
 
         # TODO: use HyperlinkedModelSerializer
