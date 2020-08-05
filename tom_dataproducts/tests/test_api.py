@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from guardian.shortcuts import assign_perm
 from rest_framework import status
@@ -11,8 +12,8 @@ from tom_targets.tests.factories import SiderealTargetFactory
 
 class TestDataProductViewset(APITestCase):
     def setUp(self):
-        user = User.objects.create(username='testuser')
-        self.client.force_login(user)
+        self.user = User.objects.create(username='testuser')
+        self.client.force_login(self.user)
         self.st = SiderealTargetFactory.create()
         self.obsr = ObservingRecordFactory.create(target_id=self.st.id)
         self.dp_data = {
@@ -21,10 +22,10 @@ class TestDataProductViewset(APITestCase):
             'data_product_type': 'photometry'
         }
 
-        assign_perm('tom_dataproducts.add_dataproduct', user)
-        assign_perm('tom_targets.add_target', user, self.st)
-        assign_perm('tom_targets.view_target', user, self.st)
-        assign_perm('tom_targets.change_target', user, self.st)
+        assign_perm('tom_dataproducts.add_dataproduct', self.user)
+        assign_perm('tom_targets.add_target', self.user, self.st)
+        assign_perm('tom_targets.view_target', self.user, self.st)
+        assign_perm('tom_targets.change_target', self.user, self.st)
 
     def test_data_product_upload_for_target(self):
         with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
@@ -71,3 +72,25 @@ class TestDataProductViewset(APITestCase):
                 'There was an error in processing your DataProduct',
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    # TODO: Test currently returns a 302, indicating redirection to login due to lack of AuthZ
+    def test_data_product_delete(self):
+        dp = DataProduct.objects.create(
+            product_id='testproductid',
+            target=self.st,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+        assign_perm('tom_dataproducts.delete_dataproduct', self.user, dp)
+
+        response = self.client.delete(reverse('api:dataproducts-detail', args=(dp.id,)))
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_data_product_list(self):
+        dp = DataProduct.objects.create(
+            product_id='testproductid',
+            target=self.st,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+
+        response = self.client.get(reverse('api:dataproducts-list'))
+        self.assertContains(response, dp.product_id, status_code=status.HTTP_200_OK)
