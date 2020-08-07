@@ -1,5 +1,6 @@
 from django.conf import settings
 from django_filters import rest_framework as drf_filters
+from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import status
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, ListModelMixin
@@ -15,7 +16,7 @@ from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.serializers import DataProductSerializer
 
 
-class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, GenericViewSet):
+class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, GenericViewSet, PermissionListMixin):
     """
     Viewset for DataProduct objects. Supports list, create, and delete.
     """
@@ -23,8 +24,7 @@ class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, Ge
     serializer_class = DataProductSerializer
     filter_backends = (drf_filters.DjangoFilterBackend,)
     filterset_class = DataProductFilter
-    permission_classes = [IsAuthenticated & DjangoObjectPermissions]
-    # TODO: attempting to delete with no auth results in infinite redirect
+    permission_required = 'tom_dataproducts.view_dataproduct'
     parser_classes = [MultiPartParser]
 
     def create(self, request, *args, **kwargs):

@@ -35,13 +35,12 @@ class TargetSerializer(serializers.ModelSerializer):
         # TODO: We should investigate if this validator logic can be reused in the forms to reduce code duplication.
         # TODO: Try to put validators in settings to allow user changes
         validators = [RequiredFieldsTogetherValidator('type', 'SIDEREAL', 'ra', 'dec'),
-                      RequiredFieldsTogetherValidator('type', 'NON_SIDEREAL', 'epoch_of_elements', 'inclination', 
+                      RequiredFieldsTogetherValidator('type', 'NON_SIDEREAL', 'epoch_of_elements', 'inclination',
                                                       'lng_asc_node', 'arg_of_perihelion', 'eccentricity'),
                       RequiredFieldsTogetherValidator('scheme', 'MPC_COMET', 'perihdist', 'epoch_of_perihelion'),
                       RequiredFieldsTogetherValidator('scheme', 'MPC_MINOR_PLANET', 'mean_anomaly', 'semimajor_axis'),
                       RequiredFieldsTogetherValidator('scheme', 'JPL_MAJOR_PLANET', 'mean_daily_motion', 'mean_anomaly',
-                                                      'semimajor_axis')
-                     ]
+                                                      'semimajor_axis')]
 
     def create(self, validated_data):
         """DRF requires explicitly handling writeable nested serializers,
@@ -65,7 +64,7 @@ class TargetSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """
-        For TargetExtra and TargetName objects, if the ID is present, it will update the corresponding row. If the ID is 
+        For TargetExtra and TargetName objects, if the ID is present, it will update the corresponding row. If the ID is
         not present, it will attempt to create a new TargetExtra or TargetName associated with this Target.
         """
         aliases = validated_data.pop('aliases', [])

@@ -387,7 +387,7 @@ class TargetName(models.Model):
         """
         super().validate_unique(*args, **kwargs)
         if self.name == self.target.name:
-            raise ValidationError(f'''Alias {self.name} has a conflict with the primary name of the target 
+            raise ValidationError(f'''Alias {self.name} has a conflict with the primary name of the target
                                       {self.target.name} (id={self.target.id})''')
 
 

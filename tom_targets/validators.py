@@ -1,5 +1,6 @@
 from rest_framework.serializers import ValidationError
 
+
 class RequiredFieldsTogetherValidator(object):
 
     def __init__(self, type_name, type_value, *args):
@@ -17,6 +18,6 @@ class RequiredFieldsTogetherValidator(object):
         for field in self.required_fields:
             if not values.get(field):
                 missing_fields.append(field)
-        
+
         if missing_fields:
             raise ValidationError(f'The following fields are required for {self.type_value} targets: {missing_fields}')
