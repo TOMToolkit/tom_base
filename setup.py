@@ -31,8 +31,9 @@ setup(
         'astroquery==0.4',
         'astroplan==0.6',
         'astropy==4.0',
+        'beautifulsoup4==4.9.1',
         'dataclasses; python_version < "3.7"',
-        'django>=3.0.7',  # TOM Toolkit requires db math functions
+        'django==3.0.7',  # TOM Toolkit requires db math functions
         'djangorestframework',
         'django-bootstrap4==1.1.1',
         'django-contrib-comments>=1.9.2',  # Earlier version are incompatible with Django >= 3.0

@@ -159,7 +159,6 @@ class GenericBroker(ABC):
         :param parameters: JSON string of query parameters
         :type parameters: str
         """
-        pass
 
     def fetch_alert(self, id):
         """

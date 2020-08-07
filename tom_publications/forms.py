@@ -1,6 +1,5 @@
 from django import forms
 from django.apps import apps
-from django.db.models.fields import Field
 
 from tom_publications.models import LatexConfiguration
 
