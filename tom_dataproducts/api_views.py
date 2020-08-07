@@ -5,7 +5,6 @@ from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import status
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, ListModelMixin
 from rest_framework.parsers import MultiPartParser
-from rest_framework.permissions import DjangoObjectPermissions, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 

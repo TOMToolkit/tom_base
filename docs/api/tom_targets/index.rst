@@ -9,3 +9,4 @@ Targets
   templatetags
   utils
   views
+  api_views

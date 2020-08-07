@@ -26,7 +26,7 @@ permissions_map = {  # TODO: Use the built-in DRF mapping or just switch to DRF 
 # For whatever reason, get_queryset has to be explicitly defined, and can't be set as a property, else the API won't
 # respect permissions.
 #
-# At present, create is restricted at all. This appears to be a limitation of django-guardian and should be revisited.
+# At present, create is not restricted at all. This seems to be a limitation of django-guardian and should be revisited.
 class TargetViewSet(ModelViewSet, PermissionListMixin):
     """
     Viewset for Target objects. By default supports CRUD operations.

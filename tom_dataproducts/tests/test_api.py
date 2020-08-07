@@ -73,7 +73,6 @@ class TestDataProductViewset(APITestCase):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    # TODO: Test currently returns a 302, indicating redirection to login due to lack of AuthZ
     def test_data_product_delete(self):
         dp = DataProduct.objects.create(
             product_id='testproductid',

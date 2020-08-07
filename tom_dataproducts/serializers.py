@@ -14,7 +14,6 @@ class DataProductGroupSerializer(serializers.ModelSerializer):
         fields = ('name', 'created', 'modified')
 
 
-# The ReducedDatumSerializer is not necessary until we implement the DataProductDetailAPIView and DataProductListAPIView
 class ReducedDatumSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReducedDatum
@@ -49,15 +48,6 @@ class DataProductSerializer(serializers.ModelSerializer):
             'group',
             'reduceddatum_set'
         )
-
-        # TODO: use HyperlinkedModelSerializer
-        #   for the HyperlinkedModelSerializer use something like this
-        #   extra_kwargs = {
-        #       "url": {
-        #           "view_name": ":targets:detail",
-        #           "lookup_field": "pk",
-        #       }
-        #   }
 
     def validate_data_product_type(self, value):
         for dp_type in settings.DATA_PRODUCT_TYPES.keys():
