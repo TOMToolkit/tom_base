@@ -422,7 +422,5 @@ class BaseManualObservationFacility(BaseObservationFacility):
     ``TOM_FACILITY_CLASSES`` in your ``settings.py``.
 
     This specific class is intended for use with classical-style manual facilities.
-
-    TODO: Add an implementation example.
     """
     name = 'BaseManual'  # rename in concrete subclasses

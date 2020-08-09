@@ -1,6 +1,8 @@
-from guardian.shortcuts import get_objects_for_user
+from django.contrib.auth.models import Group
+from guardian.shortcuts import assign_perm, get_groups_with_perms, get_objects_for_user, remove_perm
 from rest_framework import serializers
 
+from tom_common.serializers import GroupSerializer
 from tom_targets.models import Target, TargetExtra, TargetName
 from tom_targets.validators import RequiredFieldsTogetherValidator
 
@@ -28,6 +30,8 @@ class TargetSerializer(serializers.ModelSerializer):
     """
     targetextra_set = TargetExtraSerializer(many=True)
     aliases = TargetNameSerializer(many=True)
+    groups = GroupSerializer(many=True, required=False)  # TODO: return groups in detail and list
+    # groups = serializers.SerializerMethodField()
 
     class Meta:
         model = Target
@@ -42,18 +46,40 @@ class TargetSerializer(serializers.ModelSerializer):
                       RequiredFieldsTogetherValidator('scheme', 'JPL_MAJOR_PLANET', 'mean_daily_motion', 'mean_anomaly',
                                                       'semimajor_axis')]
 
+    def get_groups(self, obj):
+        print('get groups')
+        print(obj.id)
+        return get_groups_with_perms(obj)
+
     def create(self, validated_data):
         """DRF requires explicitly handling writeable nested serializers,
         here we pop the alias/tag data and save it using their respective
         serializers
         """
+
         aliases = validated_data.pop('aliases', [])
         targetextras = validated_data.pop('targetextra_set', [])
+        groups = validated_data.pop('groups', [])
 
         target = Target.objects.create(**validated_data)
 
+        # Save groups for this target
+        group_serializer = GroupSerializer(data=groups, many=True)
+        if group_serializer.is_valid():
+            for group in groups:
+                group_instance = Group.objects.get(pk=group['id'])
+                assign_perm('tom_targets.view_target', group_instance, target)
+                assign_perm('tom_targets.change_target', group_instance, target)
+                assign_perm('tom_targets.delete_target', group_instance, target)
+
         tns = TargetNameSerializer(data=aliases, many=True)
         if tns.is_valid():
+            for alias in aliases:
+                if alias['name'] == target.name:
+                    target.delete()
+                    alias_value = alias['name']
+                    raise serializers.ValidationError(
+                        f'Alias \'{alias_value}\' conflicts with Target name \'{target.name}\'.')
             tns.save(target=target)
 
         tes = TargetExtraSerializer(data=targetextras, many=True)
@@ -69,42 +95,30 @@ class TargetSerializer(serializers.ModelSerializer):
         """
         aliases = validated_data.pop('aliases', [])
         targetextras = validated_data.pop('targetextra_set', [])
+        groups = validated_data.pop('groups', [])
 
-        instance.name = validated_data.get('name', instance.name)
-        instance.type = validated_data.get('type', instance.type)
-        instance.ra = validated_data.get('ra', instance.ra)
-        instance.dec = validated_data.get('dec', instance.dec)
-        instance.epoch = validated_data.get('epoch', instance.epoch)
-        instance.parallax = validated_data.get('parallax', instance.parallax)
-        instance.pm_ra = validated_data.get('pm_ra', instance.pm_ra)
-        instance.pm_dec = validated_data.get('pm_dec', instance.pm_dec)
-        instance.galactic_lng = validated_data.get('galactic_lng', instance.galactic_lng)
-        instance.galactic_lat = validated_data.get('galactic_lat', instance.galactic_lat)
-        instance.distance = validated_data.get('distance', instance.distance)
-        instance.distance_err = validated_data.get('distance_err', instance.distance_err)
-        instance.scheme = validated_data.get('scheme', instance.scheme)
-        instance.epoch_of_elements = validated_data.get('epoch_of_elements', instance.epoch_of_elements)
-        instance.mean_anomaly = validated_data.get('mean_anomaly', instance.mean_anomaly)
-        instance.arg_of_perihelion = validated_data.get('arg_of_perihelion', instance.arg_of_perihelion)
-        instance.eccentricity = validated_data.get('eccentricity', instance.eccentricity)
-        instance.lng_asc_node = validated_data.get('lng_asc_node', instance.lng_asc_node)
-        instance.inclination = validated_data.get('inclination', instance.inclination)
-        instance.mean_daily_motion = validated_data.get('mean_daily_motion', instance.mean_daily_motion)
-        instance.semimajor_axis = validated_data.get('semimajor_axis', instance.semimajor_axis)
-        instance.epoch_of_perihelion = validated_data.get('epoch_of_perihelion', instance.epoch_of_perihelion)
-        instance.ephemeris_period = validated_data.get('ephemeris_period', instance.ephemeris_period)
-        instance.ephemeris_period_err = validated_data.get('ephemeris_period_err', instance.ephemeris_period_err)
-        instance.ephemeris_epoch = validated_data.get('ephemeris_epoch', instance.ephemeris_epoch)
-        instance.ephemeris_epoch_err = validated_data.get('ephemeris_epoch_err', instance.ephemeris_epoch_err)
-        instance.perihdist = validated_data.get('perihdist', instance.perihdist)
-        instance.save()
+        # Save groups for this target
+        group_serializer = GroupSerializer(data=groups, many=True)
+        if group_serializer.is_valid():
+            for group in groups:
+                group_instance = Group.objects.get(pk=group['id'])
+                assign_perm('tom_targets.view_target', group_instance, instance)
+                assign_perm('tom_targets.change_target', group_instance, instance)
+                assign_perm('tom_targets.delete_target', group_instance, instance)  # TODO: add tests
 
-        # TODO: updating an existing TargetName with the same value results in an integrity error
-        # TODO: validate_unique is not called on TargetName
         for alias_data in aliases:
             alias = dict(alias_data)
+            if alias['name'] == instance.name:  # Alias shouldn't conflict with target name
+                alias_name = alias['name']
+                raise serializers.ValidationError(
+                    f'Alias \'{alias_name}\' conflicts with Target name \'{instance.name}\'.')
             if alias.get('id'):
                 tn_instance = TargetName.objects.get(pk=alias['id'])
+                if tn_instance.target != instance:  # Alias should correspond with target to be updated
+                    raise serializers.ValidationError(f'''TargetName identified by id \'{tn_instance.id}\' is not an
+                        alias of Target \'{instance.name}\'''')
+                elif alias['name'] == tn_instance.name:
+                    break  # Don't update if value doesn't change, because it will throw an error
                 tns = TargetNameSerializer(tn_instance, data=alias_data)
             else:
                 tns = TargetNameSerializer(data=alias_data)
@@ -120,6 +134,15 @@ class TargetSerializer(serializers.ModelSerializer):
                 tes = TargetExtraSerializer(data=te_data)
             if tes.is_valid():
                 tes.save(target=instance)
+
+        fields_to_validate = ['name', 'type', 'ra', 'dec', 'epoch', 'parallax', 'pm_ra', 'pm_dec', 'galactic_lng',
+                              'galactic_lat', 'distance', 'distance_err', 'scheme', 'epoch_of_elements',
+                              'mean_anomaly', 'arg_of_perihelion', 'eccentricity', 'lng_asc_node', 'inclination',
+                              'mean_daily_motion', 'semimajor_axis', 'epoch_of_perihelion', 'ephemeris_period',
+                              'ephemeris_period_err', 'ephemeris_epoch', 'ephemeris_epoch_err', 'perihdist']
+        for field in fields_to_validate:
+            setattr(instance, field, validated_data.get(field, getattr(instance, field)))
+        instance.save()
 
         return instance
 
