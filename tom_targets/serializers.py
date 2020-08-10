@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Group
-from guardian.shortcuts import assign_perm, get_groups_with_perms, get_objects_for_user, remove_perm
+from guardian.shortcuts import assign_perm, get_groups_with_perms, get_objects_for_user
 from rest_framework import serializers
 
 from tom_common.serializers import GroupSerializer
@@ -53,7 +53,7 @@ class TargetSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """DRF requires explicitly handling writeable nested serializers,
-        here we pop the alias/tag data and save it using their respective
+        here we pop the alias/tag/group data and save it using their respective
         serializers
         """
 

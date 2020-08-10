@@ -1,6 +1,9 @@
 from django.conf import settings
+from django.contrib.auth.models import Group
+from guardian.shortcuts import assign_perm
 from rest_framework import serializers
 
+from tom_common.serializers import GroupSerializer
 from tom_dataproducts.models import DataProductGroup, DataProduct, ReducedDatum
 from tom_observations.models import ObservationRecord
 from tom_observations.serializers import ObservationRecordFilteredPrimaryKeyRelatedField
@@ -31,7 +34,8 @@ class DataProductSerializer(serializers.ModelSerializer):
     target = TargetFilteredPrimaryKeyRelatedField(queryset=Target.objects.all())
     observation_record = ObservationRecordFilteredPrimaryKeyRelatedField(queryset=ObservationRecord.objects.all(),
                                                                          required=False)
-    group = DataProductGroupSerializer(many=True, required=False)
+    groups = GroupSerializer(many=True, required=False)
+    data_product_group = DataProductGroupSerializer(many=True, required=False)
     reduceddatum_set = ReducedDatumSerializer(many=True, required=False)
     data_product_type = serializers.CharField(allow_blank=False)
 
@@ -45,9 +49,46 @@ class DataProductSerializer(serializers.ModelSerializer):
             'data',
             'extra_data',
             'data_product_type',
-            'group',
+            'groups',
+            'data_product_group',
             'reduceddatum_set'
         )
+
+    def create(self, validated_data):
+        """DRF requires explicitly handling writeable nested serializers,
+        here we pop the groups data and save it using its serializer.
+        """
+
+        groups = validated_data.pop('groups', [])
+
+        dp = DataProduct.objects.create(**validated_data)
+
+        # Save groups for this target
+        group_serializer = GroupSerializer(data=groups, many=True)
+        if group_serializer.is_valid() and not settings.TARGET_PERMISSIONS_ONLY:
+            for group in groups:
+                group_instance = Group.objects.get(pk=group['id'])
+                assign_perm('tom_dataproducts.view_dataproduct', group_instance, dp)
+                assign_perm('tom_dataproducts.change_dataproduct', group_instance, dp)
+                assign_perm('tom_dataproducts.delete_dataproduct', group_instance, dp)
+
+        return dp
+
+    def update(self, instance, validated_data):
+        groups = validated_data.pop('groups', [])
+
+        super().save(instance, validated_data)
+
+        # Save groups for this dataproduct
+        group_serializer = GroupSerializer(data=groups, many=True)
+        if group_serializer.is_valid() and not settings.TARGET_PERMISSIONS_ONLY:
+            for group in groups:
+                group_instance = Group.objects.get(pk=group['id'])
+                assign_perm('tom_dataproducts.view_dataproduct', group_instance, instance)
+                assign_perm('tom_dataproducts.change_dataproduct', group_instance, instance)
+                assign_perm('tom_dataproducts.delete_dataproduct', group_instance, instance)
+
+        return instance
 
     def validate_data_product_type(self, value):
         for dp_type in settings.DATA_PRODUCT_TYPES.keys():
