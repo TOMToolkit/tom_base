@@ -31,7 +31,6 @@ class TargetSerializer(serializers.ModelSerializer):
     targetextra_set = TargetExtraSerializer(many=True)
     aliases = TargetNameSerializer(many=True)
     groups = GroupSerializer(many=True, required=False)  # TODO: return groups in detail and list
-    # groups = serializers.SerializerMethodField()
 
     class Meta:
         model = Target
@@ -45,11 +44,6 @@ class TargetSerializer(serializers.ModelSerializer):
                       RequiredFieldsTogetherValidator('scheme', 'MPC_MINOR_PLANET', 'mean_anomaly', 'semimajor_axis'),
                       RequiredFieldsTogetherValidator('scheme', 'JPL_MAJOR_PLANET', 'mean_daily_motion', 'mean_anomaly',
                                                       'semimajor_axis')]
-
-    def get_groups(self, obj):
-        print('get groups')
-        print(obj.id)
-        return get_groups_with_perms(obj)
 
     def create(self, validated_data):
         """DRF requires explicitly handling writeable nested serializers,
@@ -87,6 +81,14 @@ class TargetSerializer(serializers.ModelSerializer):
             tes.save(target=target)
 
         return target
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        groups = []
+        for group in get_groups_with_perms(instance):
+            groups.append(GroupSerializer(group).data)
+        representation['groups'] = groups
+        return representation
 
     def update(self, instance, validated_data):
         """

@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import Group
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, get_groups_with_perms
 from rest_framework import serializers
 
 from tom_common.serializers import GroupSerializer
@@ -73,6 +73,14 @@ class DataProductSerializer(serializers.ModelSerializer):
                 assign_perm('tom_dataproducts.delete_dataproduct', group_instance, dp)
 
         return dp
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        groups = []
+        for group in get_groups_with_perms(instance):
+            groups.append(GroupSerializer(group).data)
+        representation['groups'] = groups
+        return representation
 
     def update(self, instance, validated_data):
         groups = validated_data.pop('groups', [])

@@ -1,7 +1,7 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -28,6 +28,11 @@ class TestDataProductViewset(APITestCase):
         assign_perm('tom_targets.change_target', self.user, self.st)
 
     def test_data_product_upload_for_target(self):
+        collaborator = User.objects.create(username='test collaborator')
+        group = Group.objects.create(name='bourgeoisie')
+        group.user_set.add(self.user)
+        group.user_set.add(collaborator)
+
         with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
             self.dp_data['file'] = lightcurve_file
             response = self.client.post(reverse('api:dataproducts-list'), self.dp_data, format='multipart')
@@ -36,6 +41,10 @@ class TestDataProductViewset(APITestCase):
             self.assertEqual(ReducedDatum.objects.count(), 3)
             dp = DataProduct.objects.get(pk=response.data['id'])
             self.assertEqual(dp.target_id, self.st.id)
+
+        # Test that group permissions are respected
+        response = self.client.get(reverse('api:dataproducts-list'))
+        self.assertContains(response, self.dp_data['product_id'], status_code=status.HTTP_200_OK)
 
     def test_data_product_upload_for_observation(self):
         self.dp_data['observation_record'] = self.obsr.id
