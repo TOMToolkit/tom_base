@@ -9,6 +9,7 @@ django-extensions
 django-filter
 django-gravatar2
 django-guardian
+djangorestframework
 fits2image
 numpy
 plotly
