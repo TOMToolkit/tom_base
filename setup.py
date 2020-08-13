@@ -34,7 +34,7 @@ setup(
         'beautifulsoup4==4.9.1',
         'dataclasses; python_version < "3.7"',
         'django==3.0.7',  # TOM Toolkit requires db math functions
-        'djangorestframework',
+        'djangorestframework==3.11.0',
         'django-bootstrap4==1.1.1',
         'django-contrib-comments>=1.9.2',  # Earlier version are incompatible with Django >= 3.0
         'django-crispy-forms==1.9.0',
@@ -43,6 +43,7 @@ setup(
         'django-gravatar2==1.4.3',
         'django-guardian==2.2.0',
         'fits2image==0.4.3',
+        'Markdown==3.2.2',  # django-rest-framework doc headers require this to support Markdown
         'numpy==1.18.2',
         'pillow==7.1.0',
         'plotly==4.6.0',

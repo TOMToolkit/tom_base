@@ -32,6 +32,12 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
     Viewset for Target objects. By default supports CRUD operations.
     See the docs on viewsets: https://www.django-rest-framework.org/api-guide/viewsets/
 
+    To view supported query parameters, please use the ``OPTIONS`` endpoint, which can be accessed through the web UI.
+
+    **Please note that ``groups`` are an accepted query parameters for the ``CREATE`` endpoint. The ``groups`` parameter
+    will specify which ``groups`` can view the created Target. If no ``groups`` are specified, the ``Target`` will only
+    be visible to the user that created the ``Target``. Make sure to check your ``groups``!!**
+
     In order to create new ``TargetName`` or ``TargetExtra`` objects, a dictionary with the new values must be appended
     to the ``aliases`` or ``targetextra_set`` lists. If ``id`` is included, the API will attempt to update an existing
     ``TargetName`` or ``TargetExtra``. If no ``id`` is provided, the API will attempt to create new entries.
@@ -51,6 +57,8 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
 class TargetNameViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMixin, GenericViewSet):
     """
     Viewset for TargetName objects. Only ``GET`` and ``DELETE`` operations are permitted.
+
+    To view available query parameters, please use the OPTIONS endpoint, which can be accessed through the web UI.
     """
     serializer_class = TargetNameSerializer
 
@@ -64,6 +72,8 @@ class TargetNameViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMix
 class TargetExtraViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMixin, GenericViewSet):
     """
     Viewset for TargetExtra objects. Only ``GET`` and ``DELETE`` operations are permitted.
+
+    To view available query parameters, please use the OPTIONS endpoint, which can be accessed through the web UI.
     """
     serializer_class = TargetExtraSerializer
 
