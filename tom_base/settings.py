@@ -123,7 +123,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# TODO: Release notes MUST document this change!!
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
@@ -265,7 +264,6 @@ THUMBNAIL_DEFAULT_SIZE = (200, 200)
 HINTS_ENABLED = False
 HINT_LEVEL = 20
 
-# TODO: Release notes MUST document this change!!
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
     ],
