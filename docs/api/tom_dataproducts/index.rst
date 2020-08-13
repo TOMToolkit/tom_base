@@ -9,3 +9,4 @@ Data Products
   templatetags
   utils
   views
+  api_views

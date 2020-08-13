@@ -24,6 +24,18 @@ from django.conf.urls.static import static
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
 from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
 
+from rest_framework import routers
+from tom_targets.api_views import TargetViewSet, TargetNameViewSet, TargetExtraViewSet
+from tom_dataproducts.api_views import DataProductViewSet
+
+# For all applications, set up the DRF router, its router.urls is included in urlpatterns below
+router = routers.DefaultRouter()
+router.register(r'targets', TargetViewSet, 'targets')
+router.register(r'targetextra', TargetExtraViewSet, 'targetextra')
+router.register(r'targetname', TargetNameViewSet, 'targetname')
+router.register(r'dataproducts', DataProductViewSet, 'dataproducts')
+
+
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'), name='home'),
     path('targets/', include('tom_targets.urls', namespace='targets')),
@@ -45,6 +57,8 @@ urlpatterns = [
     path('accounts/logout/', LogoutView.as_view(), name='logout'),
     path('comment/<int:pk>/delete', CommentDeleteView.as_view(), name='comment-delete'),
     path('admin/', admin.site.urls),
+    path('api-auth/', include('rest_framework.urls')),
+    path('api/', include((router.urls, 'api'), namespace='api')),
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
  ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

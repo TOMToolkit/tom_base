@@ -28,29 +28,31 @@ setup(
     use_scm_version=True,
     setup_requires=['setuptools_scm', 'wheel'],
     install_requires=[
+        'astroquery==0.4',
+        'astroplan==0.6',
+        'astropy==4.0',
         'beautifulsoup4==4.9.1',
-        'django==3.0.7',  # TOM Toolkit requires db math functions
+        'dataclasses; python_version < "3.7"',
+        'django==3.1.0',  # TOM Toolkit requires db math functions
+        'djangorestframework==3.11.1',
         'django-bootstrap4==1.1.1',
-        'django-extensions==2.2.9',
-        'django-filter==2.2.0',
         'django-contrib-comments==1.9.2',  # Earlier version are incompatible with Django >= 3.0
-        'django-gravatar2==1.4.3',
         'django-crispy-forms==1.9.0',
+        'django-extensions==2.2.9',
+        'django-gravatar2==1.4.3',
+        'django-filter==2.3.0',
         'django-guardian==2.2.0',
+        'fits2image==0.4.3',
+        'Markdown==3.2.2',  # django-rest-framework doc headers require this to support Markdown
         'numpy==1.18.2',
+        'pillow==7.1.0',
+        'plotly==4.6.0',
         'python-dateutil==2.8.1',
         'requests==2.23.0',
-        'astroquery==0.4',
-        'astropy==4.0',
-        'astroplan==0.6',
-        'plotly==4.6.0',
-        'pillow==7.1.0',
-        'fits2image==0.4.3',
         'specutils==1.0',
-        'dataclasses; python_version < "3.7"',
     ],
     extras_require={
-        'test': ['factory_boy']
+        'test': ['factory_boy==3.0.1']
     },
     include_package_data=True,
 )
