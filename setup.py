@@ -33,13 +33,13 @@ setup(
         'astropy==4.0',
         'beautifulsoup4==4.9.1',
         'dataclasses; python_version < "3.7"',
-        'django==3.0.7',  # TOM Toolkit requires db math functions
-        'djangorestframework==3.11.0',
+        'django==3.1.0',  # TOM Toolkit requires db math functions
+        'djangorestframework==3.11.1',
         'django-bootstrap4==1.1.1',
         'django-contrib-comments>=1.9.2',  # Earlier version are incompatible with Django >= 3.0
         'django-crispy-forms==1.9.0',
         'django-extensions==2.2.9',
-        'django-filter==2.2.0',
+        'django-filter==2.3.0',
         'django-gravatar2==1.4.3',
         'django-guardian==2.2.0',
         'fits2image==0.4.3',
@@ -52,7 +52,7 @@ setup(
         'specutils==1.0',
     ],
     extras_require={
-        'test': ['factory_boy']
+        'test': ['factory_boy==3.0.1']
     },
     include_package_data=True,
 )
