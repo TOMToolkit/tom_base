@@ -36,7 +36,7 @@ setup(
         'django==3.1.0',  # TOM Toolkit requires db math functions
         'djangorestframework==3.11.1',
         'django-bootstrap4==1.1.1',
-        'django-contrib-comments>=1.9.2',  # Earlier version are incompatible with Django >= 3.0
+        'django-contrib-comments==1.9.2',  # Earlier version are incompatible with Django >= 3.0
         'django-crispy-forms==1.9.0',
         'django-extensions==2.2.9',
         'django-gravatar2==1.4.3',
