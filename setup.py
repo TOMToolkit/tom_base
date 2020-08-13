@@ -28,7 +28,7 @@ setup(
     use_scm_version=True,
     setup_requires=['setuptools_scm', 'wheel'],
     install_requires=[
-        'astroquery==0.4',
+        'astroquery==0.4.1',
         'astroplan==0.6',
         'astropy==4.0',
         'beautifulsoup4==4.9.1',
