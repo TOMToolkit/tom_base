@@ -28,16 +28,16 @@ setup(
     use_scm_version=True,
     setup_requires=['setuptools_scm', 'wheel'],
     install_requires=[
-        'astroquery==0.4',
+        'astroquery==0.4.1',
         'astroplan==0.6',
-        'astropy==4.0',
+        'astropy==4.0.1.post1',
         'beautifulsoup4==4.9.1',
         'dataclasses; python_version < "3.7"',
         'django==3.1.0',  # TOM Toolkit requires db math functions
         'djangorestframework==3.11.1',
         'django-bootstrap4==2.2.0',
         'django-contrib-comments==1.9.2',  # Earlier version are incompatible with Django >= 3.0
-        'django-crispy-forms==1.9.0',
+        'django-crispy-forms==1.9.2',
         'django-extensions==3.0.5',
         'django-gravatar2==1.4.3',
         'django-filter==2.3.0',
@@ -48,7 +48,7 @@ setup(
         'pillow==7.1.0',
         'plotly==4.6.0',
         'python-dateutil==2.8.1',
-        'requests==2.23.0',
+        'requests==2.24.0',
         'specutils==1.0',
     ],
     extras_require={
