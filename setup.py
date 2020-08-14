@@ -39,7 +39,7 @@ setup(
         'django-contrib-comments==1.9.2',  # Earlier version are incompatible with Django >= 3.0
         'django-crispy-forms==1.9.2',
         'django-extensions==3.0.5',
-        'django-gravatar2==1.4.3',
+        'django-gravatar2==1.4.4',
         'django-filter==2.3.0',
         'django-guardian==2.3.0',
         'fits2image==0.4.3',
