@@ -162,7 +162,6 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :returns: context dictionary
         :rtype: dict
         """
-        # TODO: ensure one form is active at least
         # TODO: add spectroscopic sequence form
         # TODO: style form pointers properly
         # TODO: add display tab title for form

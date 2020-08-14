@@ -432,7 +432,7 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
             }
         else:
             instrument_configs[0].pop('optical_elements')
-        instrument_configs[0]['rotator_mode'] = 'VFLOAT'  # TODO: Should be a distinct field, SKY & VFLOAT are both valid
+        instrument_configs[0]['rotator_mode'] = 'VFLOAT'  # TODO: Should be distinct field, SKY & VFLOAT are both valid
         instrument_configs[0]['extra_params'] = {
             'rotator_angle': self.cleaned_data['rotator_angle']
         }
