@@ -1,7 +1,7 @@
 from math import radians
 
 from django.conf import settings
-from django.db.models import ExpressionWrapper, F, FloatField, Q
+from django.db.models import ExpressionWrapper, FloatField, Q
 from django.db.models.functions.math import ACos, Cos, Radians, Pi, Sin
 import django_filters
 
