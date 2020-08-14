@@ -30,7 +30,7 @@ setup(
     install_requires=[
         'astroquery==0.4',
         'astroplan==0.6',
-        'astropy==4.0',
+        'astropy==4.0.1.post1',
         'beautifulsoup4==4.9.1',
         'dataclasses; python_version < "3.7"',
         'django==3.1.0',  # TOM Toolkit requires db math functions
