@@ -41,7 +41,7 @@ setup(
         'django-extensions==3.0.5',
         'django-gravatar2==1.4.3',
         'django-filter==2.3.0',
-        'django-guardian==2.2.0',
+        'django-guardian==2.3.0',
         'fits2image==0.4.3',
         'Markdown==3.2.2',  # django-rest-framework doc headers require this to support Markdown
         'numpy==1.18.2',
