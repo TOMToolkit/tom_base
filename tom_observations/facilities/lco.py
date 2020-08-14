@@ -485,9 +485,10 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
             self.layout(),
             self.button_layout()
         )
-        self.fields['cadence_type'].required = False
-        self.fields['cadence_strategy'].required = False
-        self.fields['cadence_frequency'].required = False
+        for field_name in ['cadence_type', 'cadence_strategy', 'cadence_frequency']:
+            self.fields[field_name].required = False
+        for field_name in ['exposure_time', 'exposure_count', 'start', 'end', 'filter']:
+            self.fields.pop(field_name)
         if self.fields.get('groups'):
             self.fields['groups'].label = 'Data granted to'
 

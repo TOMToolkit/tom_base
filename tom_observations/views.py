@@ -162,9 +162,13 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :returns: context dictionary
         :rtype: dict
         """
+        # TODO: ensure one form is active at least
+        # TODO: add spectroscopic sequence form
+        # TODO: style form pointers properly
+        # TODO: add display tab title for form
         context = super(ObservationCreateView, self).get_context_data(**kwargs)
-        
-        # Populate initial values for each form and add them to the context. If the page 
+
+        # Populate initial values for each form and add them to the context. If the page
         # reloaded due to form errors, only repopulate the form that was submitted.
         observation_type_choices = []
         initial = self.get_initial()
@@ -194,7 +198,6 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             observation_type = self.request.GET.get('observation_type')
         elif self.request.method == 'POST':
             observation_type = self.request.POST.get('observation_type')
-        print(self.get_facility_class()().get_form(observation_type))
         return self.get_facility_class()().get_form(observation_type)
 
     def get_form(self):
@@ -204,6 +207,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :returns: observation form
         :rtype: subclass of GenericObservationForm
         """
+
         form = super().get_form()
         if not settings.TARGET_PERMISSIONS_ONLY:
             form.fields['groups'].queryset = self.request.user.groups.all()
@@ -227,14 +231,6 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         initial['facility'] = self.get_facility()
         return initial
 
-    def form_invalid(self, form):
-        print('form_invalid')
-        print(form.cleaned_data['observation_type'])
-        print(type(form))
-        # print(form)
-        print(form.errors)
-        return super().form_invalid(form)
-
     def form_valid(self, form):
         """
         Runs after form validation. Submits the observation to the desired facility and creates an associated
@@ -246,13 +242,10 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :param form: form containing observating request parameters
         :type form: subclass of GenericObservationForm
         """
-        print('form_valid')
-        print(form.cleaned_data)
-        # TODO: Render errors properly, probably in form_invalid
         # Submit the observation
         facility = self.get_facility_class()
         target = self.get_target()
-        # observation_ids = facility().submit_observation(form.observation_payload())
+        observation_ids = facility().submit_observation(form.observation_payload())
         records = []
 
         for observation_id in observation_ids:

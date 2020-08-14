@@ -2,6 +2,7 @@
 {% load bootstrap4 crispy_forms_tags observation_extras targets_extras %}
 {% block title %}Submit Observation{% endblock %}
 {% block content %}
+{{ form|as_crispy_errors }}
 <h3>Submit an observation to {{ form.facility.value }}</h3>
 {% if target.type == 'SIDEREAL' %}
 <div class="row">
