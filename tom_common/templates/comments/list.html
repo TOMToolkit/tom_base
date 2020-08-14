@@ -7,9 +7,9 @@
       <small class="mt-0 mb-1">
         {{ comment.user.first_name }} {{ comment.user.last_name }}
         {% if not object %}
-        on <a href="{{ comment.content_object.get_absolute_url }}">{{ comment.content_object.identifier }}</a>
+        about <a href="{{ comment.content_object.get_absolute_url }}">{{ comment.content_object.name }}</a>
         {% endif %}
-        {{ comment.submit_date|date }}
+        on {{ comment.submit_date|date }}
         {% if comment.user == user or user.is_superuser %}
           <a href="{% url 'comment-delete' comment.id %}" class="btn btn-sm btn-danger float-right">✖</a>
         {% endif %}

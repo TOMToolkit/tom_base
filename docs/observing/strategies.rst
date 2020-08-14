@@ -251,7 +251,7 @@ Fortunately, the TOM Toolkit comes with a built-in management command to
 update all cadences in the TOM. If you’ve perused the TOM Toolkit
 documentation previously, you may have noticed a section about
 automation of tasks, and, more specifically, a subsection about
-:doc:``Using cron with a management command <../customization/automation>``.
+:doc:`Using cron with a management command <../code/automation>`.
 You can simply apply the instructions here, but use the management
 command ``runcadencestrategies.py`` in place of the example. If you set
 your cron to run every few minutes or so, you’ll ensure that your
