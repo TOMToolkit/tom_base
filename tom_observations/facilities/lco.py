@@ -593,7 +593,6 @@ class LCOFacility(BaseRoboticObservationFacility):
     """
 
     name = 'LCO'
-    default_form_class = LCOBaseObservationForm
     observation_forms = {
         'IMAGING': LCOImagingObservationForm,
         'SPECTRA': LCOSpectroscopyObservationForm,

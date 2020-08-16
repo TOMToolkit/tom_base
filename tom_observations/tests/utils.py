@@ -33,10 +33,12 @@ class FakeFacilityStrategyForm(GenericStrategyForm):
 
 class FakeRoboticFacility(BaseRoboticObservationFacility):
     name = 'FakeRoboticFacility'
-    observation_types = [('FakeRoboticFacility Observation', 'OBSERVATION')]
+    observation_forms = {
+        'OBSERVATION': FakeFacilityForm
+    }
 
     def get_form(self, observation_type):
-        return FakeFacilityForm
+        return self.observation_forms[observation_type]
 
     def get_strategy_form(self, observation_type):
         return FakeFacilityStrategyForm
