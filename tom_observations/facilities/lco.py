@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import json
 import requests
 
 from astropy import units as u
@@ -437,7 +436,6 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
             'rotator_angle': self.cleaned_data['rotator_angle']
         }
 
-        return []
         return instrument_configs
 
 
@@ -494,7 +492,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
 
     def _build_instrument_config(self):
         instrument_config = []
-        for label, filter in self.filter_mapping.items():
+        for label, _ in self.filter_mapping.items():
             if len(self.cleaned_data[label]) > 0:
                 instrument_config.append({
                     'exposure_count': self.cleaned_data[label][1],
