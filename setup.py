@@ -39,14 +39,14 @@ setup(
         'django-contrib-comments==1.9.2',  # Earlier version are incompatible with Django >= 3.0
         'django-crispy-forms==1.9.2',
         'django-extensions==3.0.5',
-        'django-gravatar2==1.4.3',
+        'django-gravatar2==1.4.4',
         'django-filter==2.3.0',
         'django-guardian==2.3.0',
         'fits2image==0.4.3',
         'Markdown==3.2.2',  # django-rest-framework doc headers require this to support Markdown
         'numpy==1.19.1',
-        'pillow==7.1.0',
-        'plotly==4.6.0',
+        'pillow==7.2.0',
+        'plotly==4.9.0',
         'python-dateutil==2.8.1',
         'requests==2.24.0',
         'specutils==1.0',
