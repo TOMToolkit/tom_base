@@ -382,6 +382,10 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
     """
     rotator_angle = forms.FloatField(min_value=0.0, initial=0.0)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['filter'].label = 'Slit'
+
     def layout(self):
         return Div(
             Div(
@@ -421,19 +425,20 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
             ] + [('None', 'None')])
 
     def _build_instrument_config(self):
-        instrument_config = super()._build_instrument_config()
+        instrument_configs = super()._build_instrument_config()
         if self.cleaned_data['filter'] != 'None':
-            instrument_config[0]['optical_elements'] = {
+            instrument_configs[0]['optical_elements'] = {
                 'slit': self.cleaned_data['filter']
             }
         else:
-            instrument_config[0].pop('optical_elements')
-        instrument_config[0]['rotator_mode'] = 'VFLOAT'  # TODO: Should be a distinct field, SKY & VFLOAT are both valid
-        instrument_config[0]['extra_params'] = {
+            instrument_configs[0].pop('optical_elements')
+        instrument_configs[0]['rotator_mode'] = 'VFLOAT'  # TODO: Should be distinct field, SKY & VFLOAT are both valid
+        instrument_configs[0]['extra_params'] = {
             'rotator_angle': self.cleaned_data['rotator_angle']
         }
 
-        return [instrument_config]
+        return []
+        return instrument_configs
 
 
 class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
@@ -480,15 +485,16 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
             self.layout(),
             self.button_layout()
         )
-        self.fields['cadence_type'].required = False
-        self.fields['cadence_strategy'].required = False
-        self.fields['cadence_frequency'].required = False
-        self.fields['groups'].label = 'Data granted to'
+        for field_name in ['cadence_type', 'cadence_strategy', 'cadence_frequency']:
+            self.fields[field_name].required = False
+        for field_name in ['exposure_time', 'exposure_count', 'start', 'end', 'filter']:
+            self.fields.pop(field_name)
+        if self.fields.get('groups'):
+            self.fields['groups'].label = 'Data granted to'
 
     def _build_instrument_config(self):
         instrument_config = []
         for label, filter in self.filter_mapping.items():
-            filter_parameters = list(self.cleaned_data[label])
             if len(self.cleaned_data[label]) > 0:
                 instrument_config.append({
                     'exposure_count': self.cleaned_data[label][1],
@@ -517,7 +523,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
 
     def layout(self):
         if settings.TARGET_PERMISSIONS_ONLY:
-            groups = Row('')
+            groups = Div()
         else:
             groups = Row('groups')
         return Div(
@@ -587,8 +593,11 @@ class LCOFacility(BaseRoboticObservationFacility):
     """
 
     name = 'LCO'
-    default_form_class = LCOBaseObservationForm
-    observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy'), ('SEQUENCE', 'Photometric Sequence')]
+    observation_forms = {
+        'IMAGING': LCOImagingObservationForm,
+        'SPECTRA': LCOSpectroscopyObservationForm,
+        'PHOTOMETRIC_SEQUENCE': LCOPhotometricSequenceForm
+    }
     # The SITES dictionary is used to calculate visibility intervals in the
     # planning tool. All entries should contain latitude, longitude, elevation
     # and a code.
@@ -634,22 +643,10 @@ class LCOFacility(BaseRoboticObservationFacility):
     }
 
     def get_form(self, observation_type):
-        # try:
-        #     form_class = settings['LCO']['observation_types'][observation_type]['form_class']
-        #     return form_class
-        # except:
-        #     return default_form_class
-        if observation_type == 'IMAGING':
-            return LCOImagingObservationForm
-        elif observation_type == 'SPECTRA':
-            return LCOSpectroscopyObservationForm
-        elif observation_type == 'SEQUENCE':
-            return LCOPhotometricSequenceForm
-        else:
+        try:
+            return self.observation_forms[observation_type]
+        except KeyError:
             return LCOBaseObservationForm
-
-    # def get_observation_types(self):
-
 
     def get_strategy_form(self, observation_type):
         return LCOObservingStrategyForm

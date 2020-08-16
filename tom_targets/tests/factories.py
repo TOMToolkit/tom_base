@@ -24,8 +24,8 @@ class SiderealTargetFactory(factory.django.DjangoModelFactory):
 
     name = factory.Faker('pystr')
     type = Target.SIDEREAL
-    ra = factory.Faker('pyfloat')
-    dec = factory.Faker('pyfloat')
+    ra = factory.Faker('pyfloat', min_value=-90, max_value=90)
+    dec = factory.Faker('pyfloat', min_value=-90, max_value=90)
     epoch = factory.Faker('pyfloat')
     pm_ra = factory.Faker('pyfloat')
     pm_dec = factory.Faker('pyfloat')

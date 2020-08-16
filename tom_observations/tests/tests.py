@@ -72,7 +72,7 @@ class TestObservationViews(TestCase):
 
     def test_get_observation_form(self):
         url = f"{reverse('tom_observations:create', kwargs={'facility': 'FakeRoboticFacility'})}" \
-              f"?target_id={self.target.id}"
+              f"?target_id={self.target.id}&observation_type=OBSERVATION"
         response = self.client.get(url)
         # self.assertContains(response, 'fake form input')
         self.assertContains(response, 'FakeRoboticFacility')
@@ -107,6 +107,7 @@ class TestObservationViews(TestCase):
             'target_id': self.target.id,
             'test_input': 'gnomes',
             'facility': 'FakeRoboticFacility',
+            'observation_type': 'OBSERVATION'
         }
         self.client.post(
             '{}?target_id={}'.format(

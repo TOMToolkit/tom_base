@@ -12,10 +12,6 @@ dl {
   padding: 2% 0 0 0;
 }
 
-.nav-item {
-  cursor: pointer;
-}
-
 .light-curve {
   height: 600px;
   width: inherit;
