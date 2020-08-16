@@ -162,9 +162,6 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :returns: context dictionary
         :rtype: dict
         """
-        # TODO: add spectroscopic sequence form
-        # TODO: style form pointers properly
-        # TODO: add display tab title for form
         context = super(ObservationCreateView, self).get_context_data(**kwargs)
 
         # Populate initial values for each form and add them to the context. If the page

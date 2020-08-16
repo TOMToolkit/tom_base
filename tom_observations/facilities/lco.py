@@ -594,11 +594,10 @@ class LCOFacility(BaseRoboticObservationFacility):
 
     name = 'LCO'
     default_form_class = LCOBaseObservationForm
-    # observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy'), ('SEQUENCE', 'Photometric Sequence')]
     observation_forms = {
         'IMAGING': LCOImagingObservationForm,
         'SPECTRA': LCOSpectroscopyObservationForm,
-        'PHOTSEQ': LCOPhotometricSequenceForm
+        'PHOTOMETRIC_SEQUENCE': LCOPhotometricSequenceForm
     }
     # The SITES dictionary is used to calculate visibility intervals in the
     # planning tool. All entries should contain latitude, longitude, elevation

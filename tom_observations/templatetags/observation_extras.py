@@ -19,6 +19,11 @@ from tom_targets.models import Target
 register = template.Library()
 
 
+@register.filter
+def display_obs_type(value):
+    return value.replace('_', ' ').title()
+
+
 @register.inclusion_tag('tom_observations/partials/observing_buttons.html')
 def observing_buttons(target):
     """
