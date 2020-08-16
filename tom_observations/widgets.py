@@ -3,12 +3,15 @@ from django import forms
 
 class FilterConfigurationWidget(forms.widgets.MultiWidget):
 
-    def __init__(self, attrs={}):
+    def __init__(self, attrs=None):
+        if not attrs:
+            attrs = {}
         _default_attrs = {'class': 'form-control col-md-3', 'style': 'margin-right: 10px; display: inline-block'}
+        attrs.update(_default_attrs)
         _widgets = (
-            forms.widgets.NumberInput(attrs=_default_attrs),
-            forms.widgets.NumberInput(attrs=_default_attrs),
-            forms.widgets.NumberInput(attrs=_default_attrs)
+            forms.widgets.NumberInput(attrs=attrs),
+            forms.widgets.NumberInput(attrs=attrs),
+            forms.widgets.NumberInput(attrs=attrs)
         )
 
         super().__init__(_widgets, attrs)

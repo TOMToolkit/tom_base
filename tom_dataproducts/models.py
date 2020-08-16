@@ -190,7 +190,7 @@ class DataProduct(models.Model):
         Saves the current `DataProduct` instance. Before saving, validates the `data_product_type` against those
         specified in `settings.py`.
         """
-        for dp_type, dp_values in settings.DATA_PRODUCT_TYPES.items():
+        for _, dp_values in settings.DATA_PRODUCT_TYPES.items():
             if not self.data_product_type or self.data_product_type == dp_values[0]:
                 break
         else:
