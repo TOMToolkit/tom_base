@@ -1,6 +1,9 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 crispy_forms_tags observation_extras targets_extras %}
+{% load bootstrap4 static crispy_forms_tags observation_extras targets_extras %}
 {% block title %}Submit Observation{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
+{% endblock %}
 {% block content %}
 {{ form|as_crispy_errors }}
 <h3>Submit an observation to {{ form.facility.value }}</h3>
