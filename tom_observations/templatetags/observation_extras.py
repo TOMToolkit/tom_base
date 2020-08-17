@@ -21,6 +21,10 @@ register = template.Library()
 
 @register.filter
 def display_obs_type(value):
+    """
+    This converts SAMPLE_TITLE into Sample Title. Used for display all-caps observation type in the
+    tabs as titles.
+    """
     return value.replace('_', ' ').title()
 
 
