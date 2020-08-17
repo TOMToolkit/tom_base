@@ -572,6 +572,75 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         )
 
 
+class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
+    site = forms.ChoiceField(choices=(('any', 'Any'), ('ogg', 'Hawaii'), ('coj', 'Australia')))
+    acquisition_radius = forms.FloatField(min_value=0)
+    guider_mode = forms.BooleanField(widget=forms.Select(choices=[(True, 'On'), (False, 'Optional')]), required=True)
+    guider_exposure_time = forms.IntegerField(min_value=0)
+    cadence_type = forms.ChoiceField(
+        choices=[('once', 'Once in the next'), ('repeat', 'Repeating every')],
+        required=True
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Massage cadence form to be SNEx-styled
+        self.fields['cadence_strategy'].widget = forms.HiddenInput()
+        self.fields['cadence_strategy'].required = False
+        self.fields['cadence_frequency'].required = True
+        self.fields['cadence_frequency'].widget.attrs['readonly'] = False
+        self.fields['cadence_frequency'].widget.attrs['help_text'] = 'in hours'
+
+        for field_name in ['exposure_count', 'start', 'end']:
+            self.fields.pop(field_name)
+        if self.fields.get('groups'):
+            self.fields['groups'].label = 'Data granted to'
+
+        self.helper.layout = Layout(
+            Div(
+                Column('name'),
+                Column('cadence_type'),
+                Column('cadence_frequency'),
+                css_class='form-row'
+            ),
+            Layout('facility', 'target_id', 'observation_type'),
+            self.layout(),
+            self.button_layout()
+        )
+
+    # def clean(self):
+    #     cleaned_data = super().clean()
+    #     now = datetime.now()
+    #     cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
+    #     cadence_frequency = 24 if not cleaned_data.get('cadence_frequency') else cleaned_data.get('cadence_frequency')
+    #     cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cadence_frequency), '%Y-%m-%dT%H:%M:%S')
+    #     if cleaned_data['cadence_type'] == 'repeat':
+    #         cleaned_data['cadence_strategy'] = 'Resume Cadence After Failure'
+
+    #     return cleaned_data
+
+    def layout(self):
+        if settings.TARGET_PERMISSIONS_ONLY:
+            groups = Div()
+        else:
+            groups = Row('groups')
+        return Div(
+            Row('exposure_time'),
+            Row('max_airmass'),
+            Row(PrependedText('min_lunar_distance', '>')),
+            Row('site'),
+            Row('filter'),  # TODO: convert this to slit, figure out what instrument to use
+            Row('acquisition_radius'),
+            Row('guider_mode'),  # TODO: ensure this gets the correct boolean value
+            Row('guider_exposure_time'),
+            Row('proposal'),
+            Row('observation_mode'),
+            Row('ipp_value'),
+            groups,
+        )
+
+
 class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -606,7 +675,8 @@ class LCOFacility(BaseRoboticObservationFacility):
     observation_forms = {
         'IMAGING': LCOImagingObservationForm,
         'SPECTRA': LCOSpectroscopyObservationForm,
-        'PHOTOMETRIC_SEQUENCE': LCOPhotometricSequenceForm
+        'PHOTOMETRIC_SEQUENCE': LCOPhotometricSequenceForm,
+        'SPECTROSCOPIC_SEQUENCE': LCOSpectroscopicSequenceForm
     }
     # The SITES dictionary is used to calculate visibility intervals in the
     # planning tool. All entries should contain latitude, longitude, elevation
