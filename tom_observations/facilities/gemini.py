@@ -426,7 +426,9 @@ class GEMFacility(BaseRoboticObservationFacility):
     """
 
     name = 'GEM'
-    observation_types = [('OBSERVATION', 'Gemini Observation')]
+    observation_forms = {
+        'OBSERVATION': GEMObservationForm
+    }
 
     def get_form(self, observation_type):
         return GEMObservationForm

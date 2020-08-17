@@ -4,7 +4,7 @@ from dateutil.parser import parse
 from importlib import import_module
 import json
 
-from crispy_forms.layout import Div, HTML, Layout
+from crispy_forms.layout import Column, Div, HTML, Layout, Row
 from django import forms
 from django.conf import settings
 
@@ -195,13 +195,15 @@ class CadenceForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['cadence_strategy'].widget.attrs['readonly'] = True
         self.fields['cadence_frequency'].widget.attrs['readonly'] = True
+        self.cadence_layout = self.cadence_layout()
 
+    def cadence_layout(self):
         # If cadence strategy or cadence frequency aren't set, this is a normal observation and the widgets shouldn't
         # be rendered
         if not (self.initial.get('cadence_strategy') or self.initial.get('cadence_frequency')):
-            self.cadence_layout = Layout()
+            return Layout()
         else:
-            self.cadence_layout = Layout(
+            return Layout(
                 Div(
                     HTML('<p>Reactive cadencing parameters. Leave blank if no reactive cadencing is desired.</p>'),
                 ),

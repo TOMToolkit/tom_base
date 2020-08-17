@@ -155,19 +155,6 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         """
         return get_service_class(self.get_facility())
 
-    def get_observation_type(self):
-        """
-        Gets the observation type from the query parameters of the request.
-
-        :returns: observation type
-        :rtype: str
-        """
-        if self.request.method == 'GET':
-            # TODO: This appears to not work as intended.
-            return self.request.GET.get('observation_type', self.get_facility_class().observation_types[0])
-        elif self.request.method == 'POST':
-            return self.request.POST.get('observation_type')
-
     def get_context_data(self, **kwargs):
         """
         Adds the available observation types for the observing facility to the context object.
@@ -176,7 +163,22 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :rtype: dict
         """
         context = super(ObservationCreateView, self).get_context_data(**kwargs)
-        context['type_choices'] = self.get_facility_class().observation_types
+
+        # Populate initial values for each form and add them to the context. If the page
+        # reloaded due to form errors, only repopulate the form that was submitted.
+        observation_type_choices = []
+        initial = self.get_initial()
+        for k, v in self.get_facility_class().observation_forms.items():
+            form_data = {**initial, **{'observation_type': k}}
+            # Repopulate the appropriate form with form data if the original submission was invalid
+            if k == self.request.POST.get('observation_type'):
+                form_data.update(**self.request.POST.dict())
+            observation_type_choices.append((k, v(initial=form_data)))
+        context['observation_type_choices'] = observation_type_choices
+
+        # Ensure correct tab is active if submission is unsuccessful
+        context['active'] = self.request.POST.get('observation_type')
+
         target = Target.objects.get(pk=self.get_target_id())
         context['target'] = target
         return context
@@ -189,9 +191,9 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :rtype: subclass of GenericObservationForm
         """
         observation_type = None
-        if self.request.GET:
+        if self.request.method == 'GET':
             observation_type = self.request.GET.get('observation_type')
-        elif self.request.POST:
+        elif self.request.method == 'POST':
             observation_type = self.request.POST.get('observation_type')
         return self.get_facility_class()().get_form(observation_type)
 
@@ -202,6 +204,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :returns: observation form
         :rtype: subclass of GenericObservationForm
         """
+
         form = super().get_form()
         if not settings.TARGET_PERMISSIONS_ONLY:
             form.fields['groups'].queryset = self.request.user.groups.all()
@@ -223,8 +226,6 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             raise Exception('Must provide target_id')
         initial['target_id'] = self.get_target_id()
         initial['facility'] = self.get_facility()
-        initial['observation_type'] = self.get_observation_type()
-        initial.update(self.request.GET.dict())
         return initial
 
     def form_valid(self, form):

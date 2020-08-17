@@ -1,7 +1,9 @@
+from datetime import datetime, timedelta
 import requests
 
 from astropy import units as u
-from crispy_forms.layout import Div, HTML, Layout
+from crispy_forms.bootstrap import PrependedText
+from crispy_forms.layout import Column, Div, HTML, Layout, Row
 from dateutil.parser import parse
 from django import forms
 from django.conf import settings
@@ -11,6 +13,7 @@ from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.cadence import CadenceForm
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
 from tom_observations.observing_strategy import GenericStrategyForm
+from tom_observations.widgets import FilterField
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
 # Determine settings for this module.
@@ -137,6 +140,12 @@ class LCOBaseForm(forms.Form):
 
 
 class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceForm):
+    """
+    The LCOBaseObservationForm provides the base set of utilities to construct an observation at Las Cumbres
+    Observatory. While the forms that inherit from it provide a subset of instruments and filters, the
+    LCOBaseObservationForm presents the user with all of the instrument and filter options that the facility has to
+    offer.
+    """
     name = forms.CharField()
     ipp_value = forms.FloatField(label='Intra Proposal Priority (IPP factor)',
                                  min_value=0.5,
@@ -150,6 +159,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
                                      widget=forms.TextInput(attrs={'placeholder': 'Seconds'}),
                                      help_text=exposure_time_help)
     max_airmass = forms.FloatField(help_text=max_airmass_help)
+    min_lunar_distance = forms.IntegerField(min_value=0, label='Minimum Lunar Distance', required=False)
     period = forms.FloatField(required=False)
     jitter = forms.FloatField(required=False)
     observation_mode = forms.ChoiceField(
@@ -174,7 +184,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
                     css_class='col'
                 ),
                 Div(
-                    'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass',
+                    'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass', 'min_lunar_distance',
                     css_class='col'
                 ),
                 css_class='form-row',
@@ -286,14 +296,14 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
             }
         }
 
-        return instrument_config
+        return [instrument_config]
 
     def _build_configuration(self):
         return {
             'type': self.instrument_to_type(self.cleaned_data['instrument_type']),
             'instrument_type': self.cleaned_data['instrument_type'],
             'target': self._build_target_fields(),
-            'instrument_configs': [self._build_instrument_config()],
+            'instrument_configs': self._build_instrument_config(),
             'acquisition_config': {
 
             },
@@ -350,6 +360,10 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
 
 
 class LCOImagingObservationForm(LCOBaseObservationForm):
+    """
+    The LCOImagingObservationForm allows the selection of parameters for observing using LCO's Imagers. The list of
+    Imagers and their details can be found here: https://lco.global/observatory/instruments/
+    """
     def instrument_choices(self):
         return [(k, v['name']) for k, v in self._get_instruments().items() if 'IMAGE' in v['type']]
 
@@ -361,7 +375,15 @@ class LCOImagingObservationForm(LCOBaseObservationForm):
 
 
 class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
+    """
+    The LCOSpectroscopyObservationForm allows the selection of parameters for observing using LCO's Spectrographs. The
+    list of spectrographs and their details can be found here: https://lco.global/observatory/instruments/
+    """
     rotator_angle = forms.FloatField(min_value=0.0, initial=0.0)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['filter'].label = 'Slit'
 
     def layout(self):
         return Div(
@@ -402,19 +424,152 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
             ] + [('None', 'None')])
 
     def _build_instrument_config(self):
-        instrument_config = super()._build_instrument_config()
+        instrument_configs = super()._build_instrument_config()
         if self.cleaned_data['filter'] != 'None':
-            instrument_config['optical_elements'] = {
+            instrument_configs[0]['optical_elements'] = {
                 'slit': self.cleaned_data['filter']
             }
         else:
-            instrument_config.pop('optical_elements')
-        instrument_config['rotator_mode'] = 'VFLOAT'  # TODO: Should be a distinct field, SKY & VFLOAT are both valid
-        instrument_config['extra_params'] = {
+            instrument_configs[0].pop('optical_elements')
+        instrument_configs[0]['rotator_mode'] = 'VFLOAT'  # TODO: Should be distinct field, SKY & VFLOAT are both valid
+        instrument_configs[0]['extra_params'] = {
             'rotator_angle': self.cleaned_data['rotator_angle']
         }
 
+        return instrument_configs
+
+
+class LCOPhotometricSequenceForm(LCOBaseObservationForm):
+    """
+    The LCOPhotometricSequenceForm provides a form offering a subset of the parameters in the LCOImagingObservationForm.
+    The form is modeled after the Supernova Exchange application's Photometric Sequence Request Form, and allows the
+    configuration of multiple filters, as well as a more intuitive proactive cadence form.
+    """
+    filters = ['U', 'B', 'V', 'R', 'I', 'u', 'g', 'r', 'i', 'z', 'w']
+    cadence_type = forms.ChoiceField(
+        choices=[('once', 'Once in the next'), ('repeat', 'Repeating every')],
+        required=True
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Add fields for each available filter as specified in the filters property
+        for filter_name in self.filters:
+            self.fields[filter_name] = FilterField(label=filter_name, required=False)
+
+        # Massage cadence form to be SNEx-styled
+        self.fields['cadence_strategy'].widget = forms.HiddenInput()
+        self.fields['cadence_strategy'].required = False
+        self.fields['cadence_frequency'].required = True
+        self.fields['cadence_frequency'].widget.attrs['readonly'] = False
+        self.fields['cadence_frequency'].widget.attrs['help_text'] = 'in hours'
+
+        for field_name in ['exposure_time', 'exposure_count', 'start', 'end', 'filter']:
+            self.fields.pop(field_name)
+        if self.fields.get('groups'):
+            self.fields['groups'].label = 'Data granted to'
+
+        self.helper.layout = Layout(
+            Div(
+                Column('name'),
+                Column('cadence_type'),
+                Column('cadence_frequency'),
+                css_class='form-row'
+            ),
+            Layout('facility', 'target_id', 'observation_type'),
+            self.layout(),
+            self.button_layout()
+        )
+
+    def _build_instrument_config(self):
+        """
+        Because the photometric sequence form provides form inputs for 10 different filters, they must be
+        constructed into a list of instrument configurations as per the LCO API. This method constructs the
+        instrument configurations in the appropriate manner.
+        """
+        instrument_config = []
+        for filter_name in self.filters:
+            if len(self.cleaned_data[filter_name]) > 0:
+                instrument_config.append({
+                    'exposure_count': self.cleaned_data[filter_name][1],
+                    'exposure_time': self.cleaned_data[filter_name][0],
+                    'optical_elements': {
+                        'filter': filter_name
+                    }
+                })
+
         return instrument_config
+
+    def clean(self):
+        """
+        This clean method does the following:
+            - Adds a start time of "right now", as the photometric sequence form does not allow for specification
+              of a start time.
+            - Adds an end time that corresponds with the cadence frequency
+            - Adds the cadence strategy to the form if "repeat" was the selected "cadence_type". If "once" was
+              selected, the observation is submitted as a single observation.
+        """
+        cleaned_data = super().clean()
+        now = datetime.now()
+        cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
+        cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
+                                                '%Y-%m-%dT%H:%M:%S')
+        if cleaned_data['cadence_type'] == 'repeat':
+            cleaned_data['cadence_strategy'] = 'Resume Cadence After Failure'
+
+        return cleaned_data
+
+    def instrument_choices(self):
+        """
+        This method returns only the instrument choices available in the current SNEx photometric sequence form.
+        """
+        return [i for i in super().instrument_choices()
+                if i[0] in ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']]
+
+    def cadence_layout(self):
+        return Layout(
+            Row(
+                Column('cadence_type'), Column('cadence_frequency')
+            )
+        )
+
+    def layout(self):
+        if settings.TARGET_PERMISSIONS_ONLY:
+            groups = Div()
+        else:
+            groups = Row('groups')
+
+        # Add filters to layout
+        filter_layout = Layout(
+            Row(
+                Column(HTML('Exposure Time')),
+                Column(HTML('No. of Exposures')),
+                Column(HTML('Block No.')),
+            )
+        )
+        for filter_name in self.filters:
+            filter_layout.append(Row(filter_name))
+
+        return Div(
+            Div(
+                filter_layout,
+                css_class='col-md-6'
+            ),
+            Div(
+                Row('max_airmass'),
+                Row(
+                    PrependedText('min_lunar_distance', '>')
+                ),
+                Row('instrument_type'),
+                Row('proposal'),
+                Row('observation_mode'),
+                Row('ipp_value'),
+                groups,
+                css_class='col-md-6'
+            ),
+            css_class='form-row'
+        )
 
 
 class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
@@ -448,7 +603,11 @@ class LCOFacility(BaseRoboticObservationFacility):
     """
 
     name = 'LCO'
-    observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy')]
+    observation_forms = {
+        'IMAGING': LCOImagingObservationForm,
+        'SPECTRA': LCOSpectroscopyObservationForm,
+        'PHOTOMETRIC_SEQUENCE': LCOPhotometricSequenceForm
+    }
     # The SITES dictionary is used to calculate visibility intervals in the
     # planning tool. All entries should contain latitude, longitude, elevation
     # and a code.
@@ -494,11 +653,9 @@ class LCOFacility(BaseRoboticObservationFacility):
     }
 
     def get_form(self, observation_type):
-        if observation_type == 'IMAGING':
-            return LCOImagingObservationForm
-        elif observation_type == 'SPECTRA':
-            return LCOSpectroscopyObservationForm
-        else:
+        try:
+            return self.observation_forms[observation_type]
+        except KeyError:
             return LCOBaseObservationForm
 
     def get_strategy_form(self, observation_type):
@@ -587,7 +744,8 @@ class LCOFacility(BaseRoboticObservationFacility):
         return facility_weather_urls
 
     def get_facility_status(self):
-        """Get the telescope_states from the LCO API endpoint and simply
+        """
+        Get the telescope_states from the LCO API endpoint and simply
         transform the returned JSON into the following dictionary hierarchy
         for use by the facility_status.html template partial.
 

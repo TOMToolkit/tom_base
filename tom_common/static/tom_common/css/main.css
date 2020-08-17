@@ -13,3 +13,7 @@ body {
 .input-group-text {
   font-family: monospace;
 }
+
+.nav-item {
+  cursor: pointer;
+}

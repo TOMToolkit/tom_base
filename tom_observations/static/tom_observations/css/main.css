@@ -10,3 +10,11 @@
   width: inherit;
   height: auto;
 }
+
+.nav-item {
+  cursor: pointer;
+}
+
+span.featured {
+  pointer-events: none;
+}
