@@ -170,6 +170,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         initial = self.get_initial()
         for k, v in self.get_facility_class().observation_forms.items():
             form_data = {**initial, **{'observation_type': k}}
+            # Repopulate the appropriate form with form data if the original submission was invalid
             if k == self.request.POST.get('observation_type'):
                 form_data.update(**self.request.POST.dict())
             observation_type_choices.append((k, v(initial=form_data)))

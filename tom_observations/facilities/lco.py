@@ -10,7 +10,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.cadence import CadenceForm, DelayedCadenceForm
+from tom_observations.cadence import CadenceForm
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
 from tom_observations.observing_strategy import GenericStrategyForm
 from tom_observations.widgets import FilterField
@@ -439,39 +439,37 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
         return instrument_configs
 
 
-class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
+class LCOPhotometricSequenceForm(LCOBaseObservationForm):
     """
     The LCOPhotometricSequenceForm provides a form offering a subset of the parameters in the LCOImagingObservationForm.
     The form is modeled after the Supernova Exchange application's Photometric Sequence Request Form, and allows the
     configuration of multiple filters, as well as a more intuitive proactive cadence form.
     """
-    U_filter = FilterField(label='U', required=False)
-    B_filter = FilterField(label='B', required=False)
-    V_filter = FilterField(label='V', required=False)
-    R_filter = FilterField(label='R', required=False)
-    I_filter = FilterField(label='I', required=False)
-    u_filter = FilterField(label='u', required=False)
-    g_filter = FilterField(label='g', required=False)
-    r_filter = FilterField(label='r', required=False)
-    i_filter = FilterField(label='i', required=False)
-    z_filter = FilterField(label='z', required=False)
-    w_filter = FilterField(label='w', required=False)
-    filter_mapping = {
-        'U_filter': 'U',
-        'B_filter': 'B',
-        'V_filter': 'v',
-        'R_filter': 'R',
-        'I_filter': 'I',
-        'u_filter': 'up',
-        'g_filter': 'gp',
-        'r_filter': 'rp',
-        'i_filter': 'ip',
-        'z_filter': 'zs',
-        'w_filter': 'w'
-    }
+    filters = ['U', 'B', 'V', 'R', 'I', 'u', 'g', 'r', 'i', 'z', 'w']
+    cadence_type = forms.ChoiceField(
+        choices=[('once', 'Once in the next'), ('repeat', 'Repeating every')],
+        required=True
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # Add fields for each available filter as specified in the filters property
+        for filter_name in self.filters:
+            self.fields[filter_name] = FilterField(label=filter_name, required=False)
+
+        # Massage cadence form to be SNEx-styled
+        self.fields['cadence_strategy'].widget = forms.HiddenInput()
+        self.fields['cadence_strategy'].required = False
+        self.fields['cadence_frequency'].required = True
+        self.fields['cadence_frequency'].widget.attrs['readonly'] = False
+        self.fields['cadence_frequency'].widget.attrs['help_text'] = 'in hours'
+
+        for field_name in ['exposure_time', 'exposure_count', 'start', 'end', 'filter']:
+            self.fields.pop(field_name)
+        if self.fields.get('groups'):
+            self.fields['groups'].label = 'Data granted to'
+
         self.helper.layout = Layout(
             Div(
                 Column('name'),
@@ -483,65 +481,79 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm, DelayedCadenceForm):
             self.layout(),
             self.button_layout()
         )
-        for field_name in ['cadence_type', 'cadence_strategy', 'cadence_frequency']:
-            self.fields[field_name].required = False
-        for field_name in ['exposure_time', 'exposure_count', 'start', 'end', 'filter']:
-            self.fields.pop(field_name)
-        if self.fields.get('groups'):
-            self.fields['groups'].label = 'Data granted to'
 
     def _build_instrument_config(self):
+        """
+        Because the photometric sequence form provides form inputs for 10 different filters, they must be
+        constructed into a list of instrument configurations as per the LCO API. This method constructs the
+        instrument configurations in the appropriate manner.
+        """
         instrument_config = []
-        for label, _ in self.filter_mapping.items():
-            if len(self.cleaned_data[label]) > 0:
+        for filter_name in self.filters:
+            if len(self.cleaned_data[filter_name]) > 0:
                 instrument_config.append({
-                    'exposure_count': self.cleaned_data[label][1],
-                    'exposure_time': self.cleaned_data[label][0],
+                    'exposure_count': self.cleaned_data[filter_name][1],
+                    'exposure_time': self.cleaned_data[filter_name][0],
                     'optical_elements': {
-                        'filter': self.filter_mapping[label]
+                        'filter': filter_name
                     }
                 })
 
         return instrument_config
 
     def clean(self):
+        """
+        This clean method does the following:
+            - Adds a start time of "right now", as the photometric sequence form does not allow for specification
+              of a start time.
+            - Adds an end time that corresponds with the cadence frequency
+            - Adds the cadence strategy to the form if "repeat" was the selected "cadence_type". If "once" was
+              selected, the observation is submitted as a single observation.
+        """
         cleaned_data = super().clean()
         now = datetime.now()
         cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
-        cadence_frequency = 24 if not cleaned_data.get('cadence_frequency') else cleaned_data.get('cadence_frequency')
-        cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cadence_frequency), '%Y-%m-%dT%H:%M:%S')
+        cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
+                                                '%Y-%m-%dT%H:%M:%S')
         if cleaned_data['cadence_type'] == 'repeat':
             cleaned_data['cadence_strategy'] = 'Resume Cadence After Failure'
 
         return cleaned_data
 
     def instrument_choices(self):
+        """
+        This method returns only the instrument choices available in the current SNEx photometric sequence form.
+        """
         return [i for i in super().instrument_choices()
                 if i[0] in ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']]
+
+    def cadence_layout(self):
+        return Layout(
+            Row(
+                Column('cadence_type'), Column('cadence_frequency')
+            )
+        )
 
     def layout(self):
         if settings.TARGET_PERMISSIONS_ONLY:
             groups = Div()
         else:
             groups = Row('groups')
+
+        # Add filters to layout
+        filter_layout = Layout(
+            Row(
+                Column(HTML('Exposure Time')),
+                Column(HTML('No. of Exposures')),
+                Column(HTML('Block No.')),
+            )
+        )
+        for filter_name in self.filters:
+            filter_layout.append(Row(filter_name))
+
         return Div(
             Div(
-                Row(
-                    Column(HTML('Exposure Time')),
-                    Column(HTML('No. of Exposures')),
-                    Column(HTML('Block No.')),
-                ),
-                Row('U_filter'),
-                Row('B_filter'),
-                Row('V_filter'),
-                Row('R_filter'),
-                Row('I_filter'),
-                Row('u_filter'),
-                Row('g_filter'),
-                Row('r_filter'),
-                Row('i_filter'),
-                Row('z_filter'),
-                Row('w_filter'),
+                filter_layout,
                 css_class='col-md-6'
             ),
             Div(

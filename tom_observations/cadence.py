@@ -219,19 +219,3 @@ class CadenceForm(forms.Form):
                     css_class='form-row'
                 )
             )
-
-
-class DelayedCadenceForm(CadenceForm):
-    cadence_type = forms.ChoiceField(choices=[('', ''), ('repeat', 'Repeating every')])
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['cadence_strategy'].widget = forms.HiddenInput()
-        self.fields['cadence_frequency'].widget.attrs['readonly'] = False
-
-    def cadence_layout(self):
-        return Layout(
-            Row(
-                Column('cadence_type'), Column('cadence_frequency')
-            )
-        )
