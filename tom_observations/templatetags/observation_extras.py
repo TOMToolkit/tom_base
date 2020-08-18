@@ -19,6 +19,15 @@ from tom_targets.models import Target
 register = template.Library()
 
 
+@register.filter
+def display_obs_type(value):
+    """
+    This converts SAMPLE_TITLE into Sample Title. Used for display all-caps observation type in the
+    tabs as titles.
+    """
+    return value.replace('_', ' ').title()
+
+
 @register.inclusion_tag('tom_observations/partials/observing_buttons.html')
 def observing_buttons(target):
     """
