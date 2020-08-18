@@ -116,7 +116,7 @@ def target_plan(context):
 @register.inclusion_tag('tom_targets/partials/moon_distance.html')
 def moon_distance(target, day_range=30):
     """
-    Renders plot for lunar distance from target.
+    Renders plot for lunar distance from sidereal target.
 
     Adapted from Jamison Frost Burke's moon visibility code in Supernova Exchange 2.0, as seen here:
     https://github.com/jfrostburke/snex2/blob/0c1eb184c942cb10f7d54084e081d8ac11700edf/custom_code/templatetags/custom_code_tags.py#L196
@@ -127,6 +127,8 @@ def moon_distance(target, day_range=30):
     :param day_range: Number of days to plot lunar distance
     :type day_range: int
     """
+    if target.type != 'SIDEREAL':
+        return {'plot': None}
 
     day_range = 30
     times = Time(
