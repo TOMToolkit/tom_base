@@ -249,6 +249,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             # Create Observation record
             record = ObservationRecord.objects.create(
                 target=target,
+                user=self.request.user,
                 facility=facility.name,
                 parameters=form.serialize_parameters(),
                 observation_id=observation_id

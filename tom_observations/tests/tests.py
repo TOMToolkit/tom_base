@@ -29,10 +29,10 @@ class TestObservationViews(TestCase):
             facility=FakeRoboticFacility.name,
             parameters='{}'
         )
-        user = User.objects.create_user(username='vincent_adultman', password='important')
+        self.user = User.objects.create_user(username='vincent_adultman', password='important')
         self.user2 = User.objects.create_user(username='peon', password='plebian')
-        assign_perm('tom_targets.view_target', user, self.target)
-        self.client.force_login(user)
+        assign_perm('tom_targets.view_target', self.user, self.target)
+        self.client.force_login(self.user)
 
     def test_observation_list(self):
         response = self.client.get(reverse('tom_observations:list'))
@@ -118,6 +118,7 @@ class TestObservationViews(TestCase):
             follow=True
         )
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
+        self.assertEqual(ObservationRecord.objects.filter(observation_id='fakeid').first().user, self.user)
 
     def test_submit_observation_manual(self):
         form_data = {
@@ -129,6 +130,7 @@ class TestObservationViews(TestCase):
               f"?target_id={self.target.id}"
         self.client.post(url, data=form_data, follow=True)
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
+        self.assertEqual(ObservationRecord.objects.filter(observation_id='fakeid').first().user, self.user)
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
