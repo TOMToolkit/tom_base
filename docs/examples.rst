@@ -43,6 +43,23 @@ LCO is rewriting an existing piece of software that automatically
 schedules nightly telescope calibrations using the TOM Toolkit called
 the `Calibration TOM <https://github.com/LCOGT/calibration-tom/>`__.
 
+PANOPTES TOM
+~~~~~~~~~~~~
+
+The `PANOPTES TOM <https://github.com/panoptes/panoptes-tom>`__ is being 
+built to enable their community to coordinate observations for the 
+`PANOPTES citizen science project <https://projectpanoptes.org/>`__, which 
+aims to detect transiting exoplanets.
+
+MOP
+~~~
+
+AMON TOM
+~~~~~~~~
+
+Black Hole TOM
+~~~~~~~~~~~~~~
+
 Others
 ~~~~~~
 
