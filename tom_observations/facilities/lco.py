@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from datetime import datetime, timedelta
 import requests
 
@@ -112,7 +113,7 @@ class LCOBaseForm(forms.Form):
                 PORTAL_URL + '/api/instruments/',
                 headers={'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
             )
-            cached_instruments = {k: v for k, v in response.json().items() if 'SOAR' not in k}
+            cached_instruments = OrderedDict((k, v) for k, v in response.json().items() if 'SOAR' not in k)
             cache.set('lco_instruments', cached_instruments)
 
         return cached_instruments
