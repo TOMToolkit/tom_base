@@ -298,6 +298,13 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
 
         return [instrument_config]
 
+    def _build_guiding_config(self):
+        guiding_config = {
+
+        }
+        
+        return guiding_config
+
     def _build_configuration(self):
         return {
             'type': self.instrument_to_type(self.cleaned_data['instrument_type']),
@@ -307,13 +314,14 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
             'acquisition_config': {
 
             },
-            'guiding_config': {
-
-            },
+            'guiding_config': self._build_guiding_config(),
             'constraints': {
                 'max_airmass': self.cleaned_data['max_airmass']
             }
         }
+
+    def _build_location(self):
+        return {'telescope_class': self._get_instruments()[self.cleaned_data['instrument_type']]['class']}
 
     def _expand_cadence_request(self, payload):
         payload['requests'][0]['cadence'] = {
@@ -347,16 +355,15 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
                             "end": self.cleaned_data['end']
                         }
                     ],
-                    "location": {
-                        "telescope_class": self._get_instruments()[self.cleaned_data['instrument_type']]['class']
-                    }
+                    "location": self._build_location()
                 }
             ]
         }
         if self.cleaned_data.get('period') and self.cleaned_data.get('jitter'):
             payload = self._expand_cadence_request(payload)
 
-        return payload
+        print(payload)
+        # return payload
 
 
 class LCOImagingObservationForm(LCOBaseObservationForm):
@@ -573,7 +580,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
 
 
 class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
-    site = forms.ChoiceField(choices=(('any', 'Any'), ('ogg', 'Hawaii'), ('coj', 'Australia')))
+    site = forms.ChoiceField(choices=(('None', 'Any'), ('ogg', 'Hawaii'), ('coj', 'Australia')))
     acquisition_radius = forms.FloatField(min_value=0)
     guider_mode = forms.BooleanField(widget=forms.Select(choices=[(True, 'On'), (False, 'Optional')]), required=True)
     guider_exposure_time = forms.IntegerField(min_value=0)
@@ -601,7 +608,7 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
             Div(
                 Column('name'),
                 Column('cadence_type'),
-                Column('cadence_frequency'),
+                Column('cadence_frequency'),  # TODO: Add placeholder text for "Once in the next", etc
                 css_class='form-row'
             ),
             Layout('facility', 'target_id', 'observation_type'),
@@ -609,16 +616,40 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
             self.button_layout()
         )
 
-    # def clean(self):
-    #     cleaned_data = super().clean()
-    #     now = datetime.now()
-    #     cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
-    #     cadence_frequency = 24 if not cleaned_data.get('cadence_frequency') else cleaned_data.get('cadence_frequency')
-    #     cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cadence_frequency), '%Y-%m-%dT%H:%M:%S')
-    #     if cleaned_data['cadence_type'] == 'repeat':
-    #         cleaned_data['cadence_strategy'] = 'Resume Cadence After Failure'
+    def _build_guiding_config(self):
+        # TODO: This
+        print(self.cleaned_data)
+        return {
+            
+        }
 
-    #     return cleaned_data
+    def _build_location(self):
+        location = super()._build_location()
+        site = self.cleaned_data['site']
+        if site:
+            location['site'] = site
+        return location
+
+    def clean(self):
+        """
+        This clean method does the following:
+            - Adds a start time of "right now", as the spectroscopic sequence form does not allow for specification
+              of a start time.
+            - Adds an end time that corresponds with the cadence frequency
+            - Adds the cadence strategy to the form if "repeat" was the selected "cadence_type". If "once" was
+              selected, the observation is submitted as a single observation.
+        """
+        cleaned_data = super().clean()
+        cleaned_data['instrument_type'] = '1M0-SCICAM-SINISTRO'
+        cleaned_data['exposure_count'] = 1
+        now = datetime.now()
+        cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
+        cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
+                                                '%Y-%m-%dT%H:%M:%S')
+        if cleaned_data['cadence_type'] == 'repeat':
+            cleaned_data['cadence_strategy'] = 'Resume Cadence After Failure'
+
+        return cleaned_data
 
     def layout(self):
         if settings.TARGET_PERMISSIONS_ONLY:
