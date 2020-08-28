@@ -364,8 +364,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
         if self.cleaned_data.get('period') and self.cleaned_data.get('jitter'):
             payload = self._expand_cadence_request(payload)
 
-        print(payload)
-        # return payload
+        return payload
 
 
 class LCOImagingObservationForm(LCOBaseObservationForm):
@@ -623,6 +622,14 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
             self.layout(),
             self.button_layout()
         )
+
+    def _build_instrument_config(self):
+        instrument_configs = super()._build_instrument_config()
+        instrument_configs[0]['optical_elements'] = {
+            'slit': self.cleaned_data['filter']
+        }
+
+        return instrument_configs
 
     def _build_acquisition_config(self):
         # SNEx uses WCS mode if no acquisition radius is specified, and BRIGHTEST otherwise
