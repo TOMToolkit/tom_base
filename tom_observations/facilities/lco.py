@@ -119,13 +119,13 @@ class LCOBaseForm(forms.Form):
         return cached_instruments
 
     def instrument_choices(self):
-        return [(k, v['name']) for k, v in self._get_instruments().items()]
+        return sorted([(k, v['name']) for k, v in self._get_instruments().items()], key=lambda inst: inst[1])
 
     def filter_choices(self):
-        return set([
+        return sorted(set([
             (f['code'], f['name']) for ins in self._get_instruments().values() for f in
             ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
-            ])
+            ]), key=lambda filter_tuple: filter_tuple[1])
 
     def proposal_choices(self):
         response = make_request(
@@ -373,13 +373,14 @@ class LCOImagingObservationForm(LCOBaseObservationForm):
     Imagers and their details can be found here: https://lco.global/observatory/instruments/
     """
     def instrument_choices(self):
-        return [(k, v['name']) for k, v in self._get_instruments().items() if 'IMAGE' in v['type']]
+        return sorted([(k, v['name']) for k, v in self._get_instruments().items() if 'IMAGE' in v['type']],
+                      key=lambda inst: inst[1])
 
     def filter_choices(self):
-        return set([
+        return sorted(set([
             (f['code'], f['name']) for ins in self._get_instruments().values() for f in
             ins['optical_elements'].get('filters', [])
-            ])
+            ]), key=lambda filter_tuple: filter_tuple[1])
 
 
 class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
@@ -422,14 +423,16 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
         )
 
     def instrument_choices(self):
-        return [(k, v['name']) for k, v in self._get_instruments().items() if 'SPECTRA' in v['type']]
+        return sorted([(k, v['name']) for k, v in self._get_instruments().items() if 'SPECTRA' in v['type']],
+                      key=lambda inst: inst[1])
 
     # NRES does not take a slit, and therefore needs an option of None
     def filter_choices(self):
-        return set([
+        return sorted(set([
             (f['code'], f['name']) for ins in self._get_instruments().values() for f in
             ins['optical_elements'].get('slits', [])
-            ] + [('None', 'None')])
+            ] + [('None', 'None')]),
+            key=lambda filter_tuple: filter_tuple[1])
 
     def _build_instrument_config(self):
         instrument_configs = super()._build_instrument_config()
@@ -453,6 +456,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
     The form is modeled after the Supernova Exchange application's Photometric Sequence Request Form, and allows the
     configuration of multiple filters, as well as a more intuitive proactive cadence form.
     """
+    valid_instruments = ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']
     filters = ['U', 'B', 'V', 'R', 'I', 'u', 'g', 'r', 'i', 'z', 'w']
     cadence_type = forms.ChoiceField(
         choices=[('once', 'Once in the next'), ('repeat', 'Repeating every')],
@@ -532,8 +536,8 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         """
         This method returns only the instrument choices available in the current SNEx photometric sequence form.
         """
-        return [i for i in super().instrument_choices()
-                if i[0] in ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']]
+        return sorted([(k, v['name']) for k, v in self._get_instruments().items() if k in self.valid_instruments],
+                      key=lambda inst: inst[1])
 
     def cadence_layout(self):
         return Layout(
@@ -681,14 +685,15 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
 
     def instrument_choices(self):
         # SNEx only uses the Spectroscopic Sequence Form with FLOYDS
+        # This doesn't need to be sorted because it will only return one instrument
         return [(k, v['name']) for k, v in self._get_instruments().items() if k == '2M0-FLOYDS-SCICAM']
 
     def filter_choices(self):
         # SNEx only uses the Spectroscopic Sequence Form with FLOYDS
-        return set([
+        return sorted(set([
             (f['code'], f['name']) for name, ins in self._get_instruments().items() for f in
             ins['optical_elements'].get('slits', []) if name == '2M0-FLOYDS-SCICAM'
-            ])
+            ]), key=lambda filter_tuple: filter_tuple[1])
 
     def layout(self):
         if settings.TARGET_PERMISSIONS_ONLY:
