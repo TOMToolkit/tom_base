@@ -94,11 +94,11 @@ new import and create a new class that will become the new form:
 .. code:: python
 
    # lcomultifilter.py
-   from tom_observations.facilities.lco import LCOFacility, LCOObservationForm, filter_choices
+   from tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm, filter_choices
    from django import forms
 
 
-   class LCOMultiFilterForm(LCOObservationForm):
+   class LCOMultiFilterForm(LCOBaseObservationForm):
        filter2 = forms.ChoiceField(choices=filter_choices)
        exposure_time2 = forms.FloatField(min_value=0.1)
        filter3 = forms.ChoiceField(choices=filter_choices)
@@ -110,7 +110,7 @@ new import and create a new class that will become the new form:
        form = LCOMultiFilterForm
 
 There is now a new class, ``LCOMultiFilterForm`` which inherits from
-``LCOObservationForm``, the form for the default interface. Additionally
+``LCOBaseObservationForm``, the form for the default interface. Additionally
 there are definitions for 4 fields: ``fiter2``, ``exposure_time2``,
 ``filter3``, and ``exposure_time3``.
 
@@ -129,7 +129,7 @@ another row for everything else. Note that the default form already has
 fields for ``filter`` and ``exposure_time``, so we’ll overwrite the
 entire layout so that they appear next to the new fields we added.
 
-The ``LCOObservationForm`` has a method ``layout()`` that returns the
+The ``LCOBaseObservationForm`` has a method ``layout()`` that returns the
 desired layout using the `crispy forms
 Layout <https://django-crispy-forms.readthedocs.io/en/d-0/layouts.html>`__
 class. Familiarizing yourself with the basic functionality of crispy
@@ -142,12 +142,12 @@ like this:
 .. code:: python
 
    # lcomultifilter.py
-   from tom_observations.facilities.lco import LCOFacility, LCOObservationForm, filter_choices
+   from tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm, filter_choices
    from django import forms
    from crispy_forms.layout import Div
 
 
-   class LCOMultiFilterForm(LCOObservationForm):
+   class LCOMultiFilterForm(LCOBaseObservationForm):
        filter2 = forms.ChoiceField(choices=filter_choices)
        exposure_time2 = forms.FloatField(min_value=0.1)
        filter3 = forms.ChoiceField(choices=filter_choices)
@@ -220,12 +220,12 @@ suit the needs of our ``LCOMultiFilter`` class:
 .. code:: python
 
    #lcomultifilter.py
-   from tom_observations.facilities.lco import LCOFacility, LCOObservationForm, filter_choices
+   from tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm, filter_choices
    from django import forms
    from crispy_forms.layout import Div
    from copy import deepcopy
 
-   class LCOMultiFilterForm(LCOObservationForm):
+   class LCOMultiFilterForm(LCOBaseObservationForm):
        filter2 = forms.ChoiceField(choices=filter_choices)
        exposure_time2 = forms.FloatField(min_value=0.1)
        filter3 = forms.ChoiceField(choices=filter_choices)
