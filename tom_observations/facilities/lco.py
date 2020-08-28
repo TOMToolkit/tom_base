@@ -572,8 +572,6 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         )
 
 
-<<<<<<< Updated upstream
-=======
 class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
     site = forms.ChoiceField(choices=(('any', 'Any'), ('ogg', 'Hawaii'), ('coj', 'Australia')))
     acquisition_radius = forms.FloatField(min_value=0)
@@ -706,7 +704,6 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
         )
 
 
->>>>>>> Stashed changes
 class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
