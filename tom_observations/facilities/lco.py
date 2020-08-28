@@ -106,7 +106,6 @@ class LCOBaseForm(forms.Form):
 
     def _get_instruments(self):
         cached_instruments = cache.get('lco_instruments')
-        cached_instruments = None
 
         if not cached_instruments:
             response = make_request(
