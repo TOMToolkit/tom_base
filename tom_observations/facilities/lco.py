@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import requests
 
 from astropy import units as u
-from crispy_forms.bootstrap import PrependedText
+from crispy_forms.bootstrap import AppendedText, PrependedText
 from crispy_forms.layout import Column, Div, HTML, Layout, Row
 from dateutil.parser import parse
 from django import forms
@@ -106,6 +106,7 @@ class LCOBaseForm(forms.Form):
 
     def _get_instruments(self):
         cached_instruments = cache.get('lco_instruments')
+        cached_instruments = None
 
         if not cached_instruments:
             response = make_request(
@@ -299,22 +300,31 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
 
         return [instrument_config]
 
+    def _build_acquisition_config(self):
+        acquisition_config = {}
+
+        return acquisition_config
+
+    def _build_guiding_config(self):
+        guiding_config = {}
+
+        return guiding_config
+
     def _build_configuration(self):
         return {
             'type': self.instrument_to_type(self.cleaned_data['instrument_type']),
             'instrument_type': self.cleaned_data['instrument_type'],
             'target': self._build_target_fields(),
             'instrument_configs': self._build_instrument_config(),
-            'acquisition_config': {
-
-            },
-            'guiding_config': {
-
-            },
+            'acquisition_config': self._build_acquisition_config(),
+            'guiding_config': self._build_guiding_config(),
             'constraints': {
                 'max_airmass': self.cleaned_data['max_airmass']
             }
         }
+
+    def _build_location(self):
+        return {'telescope_class': self._get_instruments()[self.cleaned_data['instrument_type']]['class']}
 
     def _expand_cadence_request(self, payload):
         payload['requests'][0]['cadence'] = {
@@ -348,9 +358,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
                             "end": self.cleaned_data['end']
                         }
                     ],
-                    "location": {
-                        "telescope_class": self._get_instruments()[self.cleaned_data['instrument_type']]['class']
-                    }
+                    "location": self._build_location()
                 }
             ]
         }
@@ -573,6 +581,138 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         )
 
 
+class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
+    site = forms.ChoiceField(choices=(('any', 'Any'), ('ogg', 'Hawaii'), ('coj', 'Australia')))
+    acquisition_radius = forms.FloatField(min_value=0)
+    guider_mode = forms.ChoiceField(choices=[('on', 'On'), ('off', 'Off'), ('optional', 'Optional')], required=True)
+    guider_exposure_time = forms.IntegerField(min_value=0)
+    cadence_type = forms.ChoiceField(
+        choices=[('once', 'Once in the next'), ('repeat', 'Repeating every')],
+        required=True,
+        label=''
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Massage cadence form to be SNEx-styled
+        self.fields['name'].label = ''
+        self.fields['name'].widget.attrs['placeholder'] = 'Name'
+        self.fields['min_lunar_distance'].widget.attrs['placeholder'] = 'Degrees'
+        self.fields['cadence_strategy'].widget = forms.HiddenInput()
+        self.fields['cadence_strategy'].required = False
+        self.fields['cadence_frequency'].required = True
+        self.fields['cadence_frequency'].label = ''
+        self.fields['cadence_frequency'].widget.attrs['readonly'] = False
+        self.fields['cadence_frequency'].widget.attrs['placeholder'] = 'Hours'
+        self.fields['cadence_frequency'].help_text = None
+
+        for field_name in ['start', 'end']:
+            self.fields.pop(field_name)
+        if self.fields.get('groups'):
+            self.fields['groups'].label = 'Data granted to'
+
+        self.helper.layout = Layout(
+            Div(
+                Column('name'),
+                Column('cadence_type'),
+                Column(AppendedText('cadence_frequency', 'Hours')),
+                css_class='form-row'
+            ),
+            Layout('facility', 'target_id', 'observation_type'),
+            self.layout(),
+            self.button_layout()
+        )
+
+    def _build_instrument_config(self):
+        instrument_configs = super()._build_instrument_config()
+        instrument_configs[0]['optical_elements'] = {
+            'slit': self.cleaned_data['filter']
+        }
+
+        return instrument_configs
+
+    def _build_acquisition_config(self):
+        # SNEx uses WCS mode if no acquisition radius is specified, and BRIGHTEST otherwise
+        acquisition_mode = 'BRIGHTEST'
+        if not self.cleaned_data['acquisition_radius']:
+            acquisition_mode = 'WCS'
+
+        return {
+            'mode': acquisition_mode,
+            'extra_params': {
+                'acquire_radius': self.cleaned_data['acquisition_radius']
+            }
+        }
+
+    def _build_guiding_config(self):
+        mode = 'ON' if self.cleaned_data['guider_mode'] in ['on', 'optional'] else 'OFF'
+        optional = 'true' if self.cleaned_data['guider_mode'] == 'optional' else 'false'
+        return {
+            'mode': mode,
+            'optional': optional
+        }
+
+    def _build_location(self):
+        location = super()._build_location()
+        site = self.cleaned_data['site']
+        if site != 'any':
+            location['site'] = site
+        return location
+
+    def clean(self):
+        """
+        This clean method does the following:
+            - Adds a start time of "right now", as the spectroscopic sequence form does not allow for specification
+              of a start time.
+            - Adds an end time that corresponds with the cadence frequency
+            - Adds the cadence strategy to the form if "repeat" was the selected "cadence_type". If "once" was
+              selected, the observation is submitted as a single observation.
+        """
+        cleaned_data = super().clean()
+        self.cleaned_data['instrument_type'] = '2M0-FLOYDS-SCICAM'  # SNEx only submits spectra to FLOYDS
+        now = datetime.now()
+        cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
+        cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
+                                                '%Y-%m-%dT%H:%M:%S')
+        if cleaned_data['cadence_type'] == 'repeat':
+            cleaned_data['cadence_strategy'] = 'Resume Cadence After Failure'
+
+        return cleaned_data
+
+    def instrument_choices(self):
+        # SNEx only uses the Spectroscopic Sequence Form with FLOYDS
+        return [(k, v['name']) for k, v in self._get_instruments().items() if k == '2M0-FLOYDS-SCICAM']
+
+    def filter_choices(self):
+        # SNEx only uses the Spectroscopic Sequence Form with FLOYDS
+        return set([
+            (f['code'], f['name']) for name, ins in self._get_instruments().items() for f in
+            ins['optical_elements'].get('slits', []) if name == '2M0-FLOYDS-SCICAM'
+            ])
+
+    def layout(self):
+        if settings.TARGET_PERMISSIONS_ONLY:
+            groups = Div()
+        else:
+            groups = Row('groups')
+        return Div(
+            Row('exposure_count'),
+            Row('exposure_time'),
+            Row('max_airmass'),
+            Row(PrependedText('min_lunar_distance', '>')),
+            Row('site'),
+            Row('filter'),
+            Row('acquisition_radius'),
+            Row('guider_mode'),
+            Row('guider_exposure_time'),
+            Row('proposal'),
+            Row('observation_mode'),
+            Row('ipp_value'),
+            groups,
+        )
+
+
 class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -607,7 +747,8 @@ class LCOFacility(BaseRoboticObservationFacility):
     observation_forms = {
         'IMAGING': LCOImagingObservationForm,
         'SPECTRA': LCOSpectroscopyObservationForm,
-        'PHOTOMETRIC_SEQUENCE': LCOPhotometricSequenceForm
+        'PHOTOMETRIC_SEQUENCE': LCOPhotometricSequenceForm,
+        'SPECTROSCOPIC_SEQUENCE': LCOSpectroscopicSequenceForm
     }
     # The SITES dictionary is used to calculate visibility intervals in the
     # planning tool. All entries should contain latitude, longitude, elevation
