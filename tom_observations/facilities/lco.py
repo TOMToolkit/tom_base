@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import requests
 
 from astropy import units as u
-from crispy_forms.bootstrap import PrependedText
+from crispy_forms.bootstrap import AppendedText, PrependedText
 from crispy_forms.layout import Column, Div, HTML, Layout, Row
 from dateutil.parser import parse
 from django import forms
@@ -105,6 +105,7 @@ class LCOBaseForm(forms.Form):
 
     def _get_instruments(self):
         cached_instruments = cache.get('lco_instruments')
+        cached_instruments = None
 
         if not cached_instruments:
             response = make_request(
@@ -298,11 +299,14 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
 
         return [instrument_config]
 
-    def _build_guiding_config(self):
-        guiding_config = {
+    def _build_acquisition_config(self):
+        acquisition_config = {}
 
-        }
-        
+        return acquisition_config
+
+    def _build_guiding_config(self):
+        guiding_config = {}
+
         return guiding_config
 
     def _build_configuration(self):
@@ -311,9 +315,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
             'instrument_type': self.cleaned_data['instrument_type'],
             'target': self._build_target_fields(),
             'instrument_configs': self._build_instrument_config(),
-            'acquisition_config': {
-
-            },
+            'acquisition_config': self._build_acquisition_config(),
             'guiding_config': self._build_guiding_config(),
             'constraints': {
                 'max_airmass': self.cleaned_data['max_airmass']
@@ -580,26 +582,32 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
 
 
 class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
-    site = forms.ChoiceField(choices=(('None', 'Any'), ('ogg', 'Hawaii'), ('coj', 'Australia')))
+    site = forms.ChoiceField(choices=(('any', 'Any'), ('ogg', 'Hawaii'), ('coj', 'Australia')))
     acquisition_radius = forms.FloatField(min_value=0)
-    guider_mode = forms.BooleanField(widget=forms.Select(choices=[(True, 'On'), (False, 'Optional')]), required=True)
+    guider_mode = forms.ChoiceField(choices=[('on', 'On'), ('off', 'Off'), ('optional', 'Optional')], required=True)
     guider_exposure_time = forms.IntegerField(min_value=0)
     cadence_type = forms.ChoiceField(
         choices=[('once', 'Once in the next'), ('repeat', 'Repeating every')],
-        required=True
+        required=True,
+        label=''
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Massage cadence form to be SNEx-styled
+        self.fields['name'].label = ''
+        self.fields['name'].widget.attrs['placeholder'] = 'Name'
+        self.fields['min_lunar_distance'].widget.attrs['placeholder'] = 'Degrees'
         self.fields['cadence_strategy'].widget = forms.HiddenInput()
         self.fields['cadence_strategy'].required = False
         self.fields['cadence_frequency'].required = True
+        self.fields['cadence_frequency'].label = ''
         self.fields['cadence_frequency'].widget.attrs['readonly'] = False
-        self.fields['cadence_frequency'].widget.attrs['help_text'] = 'in hours'
+        self.fields['cadence_frequency'].widget.attrs['placeholder'] = 'Hours'
+        self.fields['cadence_frequency'].help_text = None
 
-        for field_name in ['exposure_count', 'start', 'end']:
+        for field_name in ['start', 'end']:
             self.fields.pop(field_name)
         if self.fields.get('groups'):
             self.fields['groups'].label = 'Data granted to'
@@ -608,7 +616,7 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
             Div(
                 Column('name'),
                 Column('cadence_type'),
-                Column('cadence_frequency'),  # TODO: Add placeholder text for "Once in the next", etc
+                Column(AppendedText('cadence_frequency', 'Hours')),
                 css_class='form-row'
             ),
             Layout('facility', 'target_id', 'observation_type'),
@@ -616,17 +624,31 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
             self.button_layout()
         )
 
-    def _build_guiding_config(self):
-        # TODO: This
-        print(self.cleaned_data)
+    def _build_acquisition_config(self):
+        # SNEx uses WCS mode if no acquisition radius is specified, and BRIGHTEST otherwise
+        acquisition_mode = 'BRIGHTEST'
+        if not self.cleaned_data['acquisition_radius']:
+            acquisition_mode = 'WCS'
+
         return {
-            
+            'mode': acquisition_mode,
+            'extra_params': {
+                'acquire_radius': self.cleaned_data['acquisition_radius']
+            }
+        }
+
+    def _build_guiding_config(self):
+        mode = 'ON' if self.cleaned_data['guider_mode'] in ['on', 'optional'] else 'OFF'
+        optional = 'true' if self.cleaned_data['guider_mode'] == 'optional' else 'false'
+        return {
+            'mode': mode,
+            'optional': optional
         }
 
     def _build_location(self):
         location = super()._build_location()
         site = self.cleaned_data['site']
-        if site:
+        if site != 'any':
             location['site'] = site
         return location
 
@@ -640,8 +662,7 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
               selected, the observation is submitted as a single observation.
         """
         cleaned_data = super().clean()
-        cleaned_data['instrument_type'] = '1M0-SCICAM-SINISTRO'
-        cleaned_data['exposure_count'] = 1
+        self.cleaned_data['instrument_type'] = '2M0-FLOYDS-SCICAM'  # SNEx only submits spectra to FLOYDS
         now = datetime.now()
         cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
         cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
@@ -651,19 +672,31 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
 
         return cleaned_data
 
+    def instrument_choices(self):
+        # SNEx only uses the Spectroscopic Sequence Form with FLOYDS
+        return [(k, v['name']) for k, v in self._get_instruments().items() if k == '2M0-FLOYDS-SCICAM']
+
+    def filter_choices(self):
+        # SNEx only uses the Spectroscopic Sequence Form with FLOYDS
+        return set([
+            (f['code'], f['name']) for name, ins in self._get_instruments().items() for f in
+            ins['optical_elements'].get('slits', []) if name == '2M0-FLOYDS-SCICAM'
+            ])
+
     def layout(self):
         if settings.TARGET_PERMISSIONS_ONLY:
             groups = Div()
         else:
             groups = Row('groups')
         return Div(
+            Row('exposure_count'),
             Row('exposure_time'),
             Row('max_airmass'),
             Row(PrependedText('min_lunar_distance', '>')),
             Row('site'),
-            Row('filter'),  # TODO: convert this to slit, figure out what instrument to use
+            Row('filter'),
             Row('acquisition_radius'),
-            Row('guider_mode'),  # TODO: ensure this gets the correct boolean value
+            Row('guider_mode'),
             Row('guider_exposure_time'),
             Row('proposal'),
             Row('observation_mode'),
