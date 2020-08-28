@@ -37,3 +37,7 @@ minimally supported while its successor is in development. The library used for 
 This module provides the ability to submit observations to the Liverpool Telescope Phase 2 system. It is in a very
 alpha state, with little error handling and minimal instrument options, but can successfully submit well-formed
 observation requests.
+
+[Github](https://github.com/TOMToolkit/tom_lt)
+
+[Installation Instructions](https://github.com/TOMToolkit/tom_lt/blob/master/README.md)
