@@ -1,6 +1,7 @@
 from django import template
 from django.conf import settings
 from django_comments.models import Comment
+from guardian.shortcuts import get_objects_for_user
 
 register = template.Library()
 
@@ -24,12 +25,18 @@ def verbose_name(instance, field_name):
     return instance._meta.get_field(field_name).verbose_name.title()
 
 
-@register.inclusion_tag('comments/list.html')
-def recent_comments(limit=10):
+@register.inclusion_tag('comments/list.html', takes_context=True)
+def recent_comments(context, limit=10):
     """
     Displays a list of the most recent comments in the TOM up to the given limit, or 10 if not specified.
+
+    Comments will only be displayed for targets which the logged-in user has permission to view.
     """
-    return {'comment_list': Comment.objects.all().order_by('-submit_date')[:limit]}
+    user = context['request'].user
+    targets_for_user = get_objects_for_user(user, 'tom_targets.view_target')
+    return {
+        'comment_list': Comment.objects.filter(object_pk__in=targets_for_user).order_by('-submit_date')[:limit]
+    }
 
 
 @register.filter
