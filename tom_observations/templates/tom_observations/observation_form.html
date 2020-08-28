@@ -3,6 +3,7 @@
 {% block title %}Submit Observation{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
+<link rel="stylesheet" href="{% static 'tom_observations/css/main.css' %}">
 {% endblock %}
 {% block content %}
 {{ form|as_crispy_errors }}
@@ -34,7 +35,7 @@
             </li>
         {% endfor %}
         </ul>
-        <div class="tab-content">
+        <div class="tab-content observation-form">
         {% for observation_type, observation_form in observation_type_choices %}
             <div class="tab-pane {% if observation_type == active or not active and forloop.first %}active{% endif %}" id="{{ observation_type }}">
                 {% crispy observation_form %}

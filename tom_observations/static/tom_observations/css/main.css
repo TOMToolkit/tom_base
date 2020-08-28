@@ -18,3 +18,7 @@
 span.featured {
   pointer-events: none;
 }
+
+div.observation-form {
+  padding: 20px 0px;
+}
