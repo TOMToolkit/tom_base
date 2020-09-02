@@ -80,7 +80,7 @@ class TestBrokerClass(TestCase):
         self.assertEqual(ga.name, test_alerts[0]['name'])
 
     def test_to_target(self):
-        target = TestBroker().to_generic_alert(test_alerts[0]).to_target()
+        target, _, _ = TestBroker().to_generic_alert(test_alerts[0]).to_target()
         self.assertEqual(target.name, test_alerts[0]['name'])
 
 
