@@ -44,7 +44,7 @@ class Command(BaseCommand):
                     raise ValidationError(f'''TargetExtra {extra_field_name} must have a default value for this
                                               script to function.''')
                 te_defaults.append(extra_field)
-            
+
         # Create a TargetExtra for each Target that does not have one, and set it to the default value
         for extra_field in te_defaults:
             targets = Target.objects.exclude(targetextra__key=extra_field['name'])
