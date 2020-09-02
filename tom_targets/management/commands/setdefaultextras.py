@@ -3,7 +3,6 @@ from django.core.management.base import BaseCommand
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 
 from tom_targets.models import Target, TargetExtra
-from tom_observations import facility
 
 
 class Command(BaseCommand):
