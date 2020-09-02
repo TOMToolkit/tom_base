@@ -81,17 +81,24 @@ class GenericAlert:
 
     def to_target(self):
         """
-        Returns a Target instance for an object defined by an alert.
+        Returns a Target instance for an object defined by an alert, as well as
+        any TargetExtra or additional TargetNames.
 
         :returns: representation of object for an alert
         :rtype: `Target`
+
+        :returns: dict of extras to be added to the new Target
+        :rtype: `dict`
+
+        :returns: list of aliases to be added to the new Target
+        :rtype: `list`
         """
         return Target(
             name=self.name,
             type='SIDEREAL',
             ra=self.ra,
             dec=self.dec
-        )
+        ), {}, []
 
 
 class GenericQueryForm(forms.Form):
