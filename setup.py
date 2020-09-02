@@ -33,12 +33,12 @@ setup(
         'astropy==4.0.1.post1',
         'beautifulsoup4==4.9.1',
         'dataclasses; python_version < "3.7"',
-        'django==3.1.0',  # TOM Toolkit requires db math functions
+        'django==3.1.1',  # TOM Toolkit requires db math functions
         'djangorestframework==3.11.1',
         'django-bootstrap4==2.2.0',
         'django-contrib-comments==1.9.2',  # Earlier version are incompatible with Django >= 3.0
         'django-crispy-forms==1.9.2',
-        'django-extensions==3.0.5',
+        'django-extensions==3.0.7',
         'django-gravatar2==1.4.4',
         'django-filter==2.3.0',
         'django-guardian==2.3.0',
