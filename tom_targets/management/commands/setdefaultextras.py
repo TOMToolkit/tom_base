@@ -10,6 +10,8 @@ class Command(BaseCommand):
     This management command should be used after adding a new `EXTRA_FIELDS` value to `settings.py`. For each given
     `TargetExtra` name, the script will add a new `TargetExtra` for each `Target` that does not have one. The new
     `TargetExtra` will use the default value in `settings.EXTRA_FIELDS`.
+
+    Example: ./manage.py setdefaultextras --targetextra redshift discovery_date
     """
 
     help = 'Adds the default TargetExtra value to all Targets that do not have the provided TargetExtra'
