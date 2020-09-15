@@ -359,7 +359,10 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
         run_strategy_form = RunStrategyForm(request.GET)
         if run_strategy_form.is_valid():
             obs_strat = ObservingStrategy.objects.get(pk=run_strategy_form.cleaned_data['observing_strategy'].id)
-            params = urlencode(obs_strat.parameters_as_dict)
+            obs_strat_params = obs_strat.parameters_as_dict
+            obs_strat_params['cadence_strategy'] = request.GET.get('cadence_strategy', '')
+            obs_strat_params['cadence_frequency'] = request.GET.get('cadence_frequency', '')
+            params = urlencode(obs_strat_params)
             return redirect(
                 reverse('tom_observations:create',
                         args=(obs_strat.facility,)) + f'?target_id={self.get_object().id}&' + params)
