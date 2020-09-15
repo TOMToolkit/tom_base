@@ -112,7 +112,7 @@ class ObservationListView(FilterView):
 
 class ObservationCreateView(LoginRequiredMixin, FormView):
     """
-    View for creation/submission of an observation. Requries authentication.
+    View for creation/submission of an observation. Requires authentication.
     """
     template_name = 'tom_observations/observation_form.html'
 
@@ -226,6 +226,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             raise Exception('Must provide target_id')
         initial['target_id'] = self.get_target_id()
         initial['facility'] = self.get_facility()
+        initial.update(self.request.GET.dict())
         return initial
 
     def form_valid(self, form):
