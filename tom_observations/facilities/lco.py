@@ -12,7 +12,7 @@ from django.core.cache import cache
 from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.cadence import CadenceForm
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
-from tom_observations.observing_strategy import GenericStrategyForm
+from tom_observations.observation_template import GenericTemplateForm
 from tom_observations.widgets import FilterField
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
@@ -715,13 +715,19 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
         )
 
 
-class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
+class LCOObservationTemplateForm(GenericTemplateForm, LCOBaseForm):
+    """
+    The template form modifies the LCOBaseForm in order to only provide fields
+    that make sense to stay the same for the template. For example, there is no
+    point to making start_time an available field, as it will change between
+    observations.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name in ['groups', 'target_id']:
             self.fields.pop(field_name, None)
         for field in self.fields:
-            if field != 'strategy_name':
+            if field != 'template_name':
                 self.fields[field].required = False
         self.helper.layout = Layout(
             self.common_layout,
@@ -802,8 +808,8 @@ class LCOFacility(BaseRoboticObservationFacility):
         except KeyError:
             return LCOBaseObservationForm
 
-    def get_strategy_form(self, observation_type):
-        return LCOObservingStrategyForm
+    def get_template_form(self, observation_type):
+        return LCOObservationTemplateForm
 
     def submit_observation(self, observation_payload):
         response = make_request(

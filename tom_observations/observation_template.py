@@ -4,46 +4,46 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit
 from django import forms
 
-from tom_observations.models import ObservingStrategy
+from tom_observations.models import ObservationTemplate
 from tom_observations.cadence import get_cadence_strategies
 from tom_targets.models import Target
 
 
-class GenericStrategyForm(forms.Form):
+class GenericTemplateForm(forms.Form):
     """
-    Form used to create new observing strategy. Any facility-specific observing strategy form should inherit from
+    Form used to create new observation template. Any facility-specific observation template form should inherit from
     this form.
     """
     facility = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
-    strategy_name = forms.CharField()
+    template_name = forms.CharField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit('submit', 'Submit'))
-        self.common_layout = Layout('facility', 'strategy_name')
+        self.common_layout = Layout('facility', 'template_name')
 
     def serialize_parameters(self):
         return json.dumps(self.cleaned_data)
 
-    def save(self, strategy_id=None):
-        if strategy_id:
-            strategy = ObservingStrategy.objects.get(id=strategy_id)
+    def save(self, template_id=None):
+        if template_id:
+            template = ObservationTemplate.objects.get(id=template_id)
         else:
-            strategy = ObservingStrategy()
-        strategy.name = self.cleaned_data['strategy_name']
-        strategy.facility = self.cleaned_data['facility']
-        strategy.parameters = self.serialize_parameters()
-        strategy.save()
-        return strategy
+            template = ObservationTemplate()
+        template.name = self.cleaned_data['template_name']
+        template.facility = self.cleaned_data['facility']
+        template.parameters = self.serialize_parameters()
+        template.save()
+        return template
 
 
-class RunStrategyForm(forms.Form):
+class ApplyObservationTemplateForm(forms.Form):
     """
-    Form used for submission of parameters for pairing an observing strategy with a cadence strategy.
+    Form used for submission of parameters for pairing an observation template with a cadence strategy.
     """
     target = forms.ModelChoiceField(queryset=Target.objects.all())
-    observing_strategy = forms.ModelChoiceField(queryset=ObservingStrategy.objects.all())
+    observation_template = forms.ModelChoiceField(queryset=ObservationTemplate.objects.all())
     cadence_strategy = forms.ChoiceField(
         choices=[('', '')] + [(k, k) for k in get_cadence_strategies().keys()],
         required=False
@@ -58,7 +58,7 @@ class RunStrategyForm(forms.Form):
         self.helper = FormHelper()
         self.helper.layout = Layout(
             'target',
-            'observing_strategy',
+            'observation_template',
             'cadence_strategy',
             'cadence_frequency'
         )

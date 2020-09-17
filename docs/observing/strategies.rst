@@ -1,31 +1,30 @@
-Cadence and Observing Strategies
+Dynamic Cadences and Observation Templates
 ================================
 
 The TOM has a couple of unique concepts that may be unfamiliar to some
 at first, that will be describe here before going into detail.
 
-The first concept is that of an observing strategy. An observing
-strategy is something of a template. If an observer is consistently
+The first concept is that of an observation template. If an observer is consistently
 submitting observations with a lot of similar parameters, it may be
 useful to save those as a kind of template, which can just be loaded
 later. The TOM Toolkit offers an interface that allows facilities to
-define a strategy form, that will be saved as an observing strategy. The
-strategy can then be applied to an observation, with the remaining
-parameters filled in or changed. An observing strategy can also be
+define a template form, that will be saved as an observation template. The
+template can then be applied to an observation, with the remaining
+parameters filled in or changed. An observation template can also be
 creating from a past observation, with a button to do so that’s
 available on any ObservationRecord detail page.
 
-The second concept referred to is a cadence strategy. A cadence is as it
+The second concept referred to is a dynamic cadence. A cadence is as it
 sounds–a series of observations that are performed at regular intervals.
 However, most observatories don’t have built-in support for cadences,
 and, if they do, they may be limited to a predetermined cadence. The TOM
-Toolkit, on the other hand, allows for a *reactive* cadence. Because
+Toolkit, on the other hand, allows for a *dynamic* cadence. Because
 data is collected programmatically, and observations are submitted
-programmatically, a user can write their own cadence to submit
+programmatically, a user can write their own cadence strategy to submit
 observations depending on the success of a prior observation or the data
 collected from a prior observation.
 
-Writing a custom cadence strategy
+Writing a custom dynamic cadence
 ---------------------------------
 
 Many of the TOM modules leverage a plugin architecture that enables you
@@ -92,10 +91,10 @@ through the business logic of a built-in cadence strategy. We’re going
 to review the ``ResumeCadenceAfterFailureStrategy``.
 
 It should also be worth mentioning at this point that the
-``CadenceStrategy`` constructor takes an ``observation group``. The
-``observation_group`` is the set of observations that make up the
-cadence, and is created in the ``ObservationCreateView`` when the first
-observation of a cadence is submitted.
+``CadenceStrategy`` constructor takes a ``dynamic_cadence``. The
+``dynamic_cadence`` is the association of the cadence strategy and the 
+observation group that make up the cadence, and is created in the 
+``ObservationCreateView`` when the first observation of a cadence is submitted.
 
 The ``ResumeCadenceAfterFailureStrategy`` is designed to ensure that,
 even after an observation fails, the cadence remains consistent. If, for
@@ -107,7 +106,7 @@ Let’s look at the strategy piece by piece.
 
 .. code:: python
 
-   last_obs = self.observation_group.observation_records.order_by('-created').first()
+   last_obs = self.dynamic_cadence.observation_group.observation_records.order_by('-created').first()
    facility = get_service_class(last_obs.facility)()
    facility.update_observation_status(last_obs.observation_id)
    last_obs.refresh_from_db()
@@ -174,8 +173,8 @@ observation, using a utility method that’s part of the
            parameters=json.dumps(observation_payload),
            observation_id=observation_id
        )
-       self.observation_group.observation_records.add(record)
-       self.observation_group.save()
+       self.dynamic_cadence.observation_group.observation_records.add(record)
+       self.dynamic_cadence.observation_group.save()
        new_observations.append(record)
 
        for obsr in new_observations:
@@ -196,48 +195,48 @@ Just to review, here is the strategy’s ``run()`` in its entirety:
 .. code:: python
 
    def run(self):
-       last_obs = self.observation_group.observation_records.order_by('-created').first()
-       facility = get_service_class(last_obs.facility)()
-       facility.update_observation_status(last_obs.observation_id)
-       last_obs.refresh_from_db()
-       start_keyword, end_keyword = facility.get_start_end_keywords()
-       observation_payload = last_obs.parameters_as_dict
-       new_observations = []
-       if not last_obs.terminal:
-           return
-       elif last_obs.failed:
-           # Submit next observation to be taken as soon as possible
-           window_length = parse(observation_payload[end_keyword]) - parse(observation_payload[start_keyword])
-           observation_payload[start_keyword] = datetime.now().isoformat()
-           observation_payload[end_keyword] = (parse(observation_payload[start_keyword]) + window_length).isoformat()
-       else:
-           # Advance window normally according to cadence parameters
-           observation_payload = self.advance_window(
-               observation_payload, start_keyword=start_keyword, end_keyword=end_keyword
-           )
+        last_obs = self.dynamic_cadence.observation_group.observation_records.order_by('-created').first()
+        facility = get_service_class(last_obs.facility)()
+        facility.update_observation_status(last_obs.observation_id)
+        last_obs.refresh_from_db()
+        start_keyword, end_keyword = facility.get_start_end_keywords()
+        observation_payload = last_obs.parameters_as_dict
+        new_observations = []
+        if not last_obs.terminal:
+            return
+        elif last_obs.failed:
+            # Submit next observation to be taken as soon as possible
+            window_length = parse(observation_payload[end_keyword]) - parse(observation_payload[start_keyword])
+            observation_payload[start_keyword] = datetime.now().isoformat()
+            observation_payload[end_keyword] = (parse(observation_payload[start_keyword]) + window_length).isoformat()
+        else:
+            # Advance window normally according to cadence parameters
+            observation_payload = self.advance_window(
+                observation_payload, start_keyword=start_keyword, end_keyword=end_keyword
+            )
 
-       obs_type = last_obs.parameters_as_dict.get('observation_type')
-       form = facility.get_form(obs_type)(observation_payload)
-       form.is_valid()
-       observation_ids = facility.submit_observation(form.observation_payload())
+        obs_type = last_obs.parameters_as_dict.get('observation_type')
+        form = facility.get_form(obs_type)(observation_payload)
+        form.is_valid()
+        observation_ids = facility.submit_observation(form.observation_payload())
 
-       for observation_id in observation_ids:
-           # Create Observation record
-           record = ObservationRecord.objects.create(
-               target=last_obs.target,
-               facility=facility.name,
-               parameters=json.dumps(observation_payload),
-               observation_id=observation_id
-           )
-           self.observation_group.observation_records.add(record)
-           self.observation_group.save()
-           new_observations.append(record)
+        for observation_id in observation_ids:
+            # Create Observation record
+            record = ObservationRecord.objects.create(
+                target=last_obs.target,
+                facility=facility.name,
+                parameters=json.dumps(observation_payload),
+                observation_id=observation_id
+            )
+            self.dynamic_cadence.observation_group.observation_records.add(record)
+            self.dynamic_cadence.observation_group.save()
+            new_observations.append(record)
 
-       for obsr in new_observations:
-           facility = get_service_class(obsr.facility)()
-           facility.update_observation_status(obsr.observation_id)
+        for obsr in new_observations:
+            facility = get_service_class(obsr.facility)()
+            facility.update_observation_status(obsr.observation_id)
 
-       return new_observations
+        return new_observations
 
 Configuring the cadence strategy to run automatically
 -----------------------------------------------------

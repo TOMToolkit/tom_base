@@ -17,7 +17,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic import View
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import DeleteView, FormView, UpdateView
+from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
 from django.views.generic.list import ListView
 from guardian.shortcuts import get_objects_for_user, assign_perm
 from guardian.mixins import PermissionListMixin
@@ -27,7 +27,7 @@ from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.facility import get_service_class, get_service_classes, BaseManualObservationFacility
 from tom_observations.forms import AddExistingObservationForm
-from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
+from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
 from tom_targets.models import Target
 
 
@@ -260,15 +260,18 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         # TODO: redirect to observation list for multiple observations, observation detail otherwise
 
         if len(records) > 1 or form.cleaned_data.get('cadence_strategy'):
-            group_name = form.cleaned_data['name']
-            observation_group = ObservationGroup.objects.create(
-                name=group_name, cadence_strategy=form.cleaned_data.get('cadence_strategy'),
-                cadence_parameters=json.dumps({'cadence_frequency': form.cleaned_data.get('cadence_frequency')})
-            )
+            observation_group = ObservationGroup.objects.create(name=form.cleaned_data['name'])
             observation_group.observation_records.add(*records)
             assign_perm('tom_observations.view_observationgroup', self.request.user, observation_group)
             assign_perm('tom_observations.change_observationgroup', self.request.user, observation_group)
             assign_perm('tom_observations.delete_observationgroup', self.request.user, observation_group)
+
+            if form.cleaned_data.get('cadence_strategy'):
+                DynamicCadence.objects.create(
+                    observation_group=observation_group,
+                    cadence_strategy=form.cleaned_data.get('cadence_strategy'),
+                    cadence_parameters={'cadence_frequency': form.cleaned_data.get('cadence_frequency')}
+                )
 
         if not settings.TARGET_PERMISSIONS_ONLY:
             groups = form.cleaned_data['groups']
@@ -447,6 +450,29 @@ class ObservationRecordDetailView(DetailView):
         return context
 
 
+class ObservationGroupCreateView(LoginRequiredMixin, CreateView):
+    """
+    View that handles the creation of ``ObservationGroup`` objects. Requires authentication.
+    """
+    model = ObservationGroup
+    fields = ['name']
+    success_url = reverse_lazy('tom_observations:group-list')
+
+    def form_valid(self, form):
+        """
+        Runs after form validation. Saves the observation group and assigns the user's permissions to the group.
+
+        :param form: Form data for observation group creation
+        :type form: django.forms.ModelForm
+        """
+        obj = form.save(commit=False)
+        obj.save()
+        assign_perm('tom_observations.view_observationgroup', self.request.user, obj)
+        assign_perm('tom_observations.change_observationgroup', self.request.user, obj)
+        assign_perm('tom_observations.delete_observationgroup', self.request.user, obj)
+        return super().form_valid(form)
+
+
 class ObservationGroupListView(PermissionListMixin, ListView):
     """
     View that handles the display of ``ObservationGroup``.
@@ -466,9 +492,9 @@ class ObservationGroupDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     success_url = reverse_lazy('tom_observations:group-list')
 
 
-class ObservingStrategyFilter(FilterSet):
+class ObservationTemplateFilter(FilterSet):
     """
-    Defines the available fields for filtering the list of ``ObservingStrategy`` objects.
+    Defines the available fields for filtering the list of ``ObservationTemplate`` objects.
     """
     facility = ChoiceFilter(
         choices=[(k, k) for k in get_service_classes().keys()]
@@ -476,17 +502,17 @@ class ObservingStrategyFilter(FilterSet):
     name = CharFilter(lookup_expr='icontains')
 
     class Meta:
-        model = ObservingStrategy
+        model = ObservationTemplate
         fields = ['name', 'facility']
 
 
-class ObservingStrategyListView(FilterView):
+class ObservationTemplateListView(FilterView):
     """
     Displays the observing strategies that exist in the TOM.
     """
-    model = ObservingStrategy
-    filterset_class = ObservingStrategyFilter
-    template_name = 'tom_observations/observingstrategy_list.html'
+    model = ObservationTemplate
+    filterset_class = ObservationTemplateFilter
+    template_name = 'tom_observations/observationtemplate_list.html'
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -494,12 +520,12 @@ class ObservingStrategyListView(FilterView):
         return context
 
 
-class ObservingStrategyCreateView(FormView):
+class ObservationTemplateCreateView(FormView):
     """
-    Displays the form for creating a new observing strategy. Uses the observing strategy form specified in the
+    Displays the form for creating a new observation template. Uses the observation template form specified in the
     respective facility class.
     """
-    template_name = 'tom_observations/observingstrategy_form.html'
+    template_name = 'tom_observations/observationtemplate_form.html'
 
     def get_facility_name(self):
         return self.kwargs['facility']
@@ -511,11 +537,11 @@ class ObservingStrategyCreateView(FormView):
             raise ValueError('Must provide a facility name')
 
         # TODO: modify this to work with both LCO forms
-        return get_service_class(facility_name)().get_strategy_form(None)
+        return get_service_class(facility_name)().get_template_form(None)
 
     def get_form(self, form_class=None):
         form = super().get_form()
-        form.helper.form_action = reverse('tom_observations:strategy-create',
+        form.helper.form_action = reverse('tom_observations:template-create',
                                           kwargs={'facility': self.get_facility_name()})
         return form
 
@@ -527,26 +553,26 @@ class ObservingStrategyCreateView(FormView):
 
     def form_valid(self, form):
         form.save()
-        return redirect(reverse('tom_observations:strategy-list'))
+        return redirect(reverse('tom_observations:template-list'))
 
 
-class ObservingStrategyUpdateView(LoginRequiredMixin, FormView):
+class ObservationTemplateUpdateView(LoginRequiredMixin, FormView):
     """
-    View for updating an existing observing strategy.
+    View for updating an existing observation template.
     """
-    template_name = 'tom_observations/observingstrategy_form.html'
+    template_name = 'tom_observations/observationtemplate_form.html'
 
     def get_object(self):
-        return ObservingStrategy.objects.get(pk=self.kwargs['pk'])
+        return ObservationTemplate.objects.get(pk=self.kwargs['pk'])
 
     def get_form_class(self):
         self.object = self.get_object()
-        return get_service_class(self.object.facility)().get_strategy_form(None)
+        return get_service_class(self.object.facility)().get_template_form(None)
 
     def get_form(self):
         form = super().get_form()
         form.helper.form_action = reverse(
-            'tom_observations:strategy-update', kwargs={'pk': self.object.id}
+            'tom_observations:template-update', kwargs={'pk': self.object.id}
         )
         return form
 
@@ -557,13 +583,13 @@ class ObservingStrategyUpdateView(LoginRequiredMixin, FormView):
         return initial
 
     def form_valid(self, form):
-        form.save(strategy_id=self.object.id)
-        return redirect(reverse('tom_observations:strategy-list'))
+        form.save(template_id=self.object.id)
+        return redirect(reverse('tom_observations:template-list'))
 
 
-class ObservingStrategyDeleteView(LoginRequiredMixin, DeleteView):
+class ObservationTemplateDeleteView(LoginRequiredMixin, DeleteView):
     """
-    Deletes an observing strategy.
+    Deletes an observation template.
     """
-    model = ObservingStrategy
-    success_url = reverse_lazy('tom_observations:strategy-list')
+    model = ObservationTemplate
+    success_url = reverse_lazy('tom_observations:template-list')

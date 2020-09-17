@@ -9,10 +9,10 @@ from astroplan import FixedTarget
 from astropy.coordinates import get_sun, SkyCoord
 from astropy.time import Time
 
-from .factories import ObservingRecordFactory, ObservingStrategyFactory, TargetFactory, TargetNameFactory
+from .factories import ObservingRecordFactory, ObservationTemplateFactory, TargetFactory, TargetNameFactory
 from tom_observations.utils import get_astroplan_sun_and_time, get_sidereal_visibility
 from tom_observations.tests.utils import FakeRoboticFacility
-from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
+from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate
 from tom_targets.models import Target
 from guardian.shortcuts import assign_perm
 
@@ -189,30 +189,30 @@ class TestObservationGroupViews(TestCase):
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
-class TestObservingStrategyViews(TestCase):
+class TestObservationTemplateViews(TestCase):
     def setUp(self):
-        self.observing_strategy = ObservingStrategyFactory.create(name='Test Strategy')
+        self.observation_template = ObservationTemplateFactory.create(name='Test Template')
         self.user = User.objects.create_user(username='test', password='test')
         self.client.force_login(self.user)
 
-    def test_observing_strategy_list(self):
-        response = self.client.get(reverse('tom_observations:strategy-list'))
+    def test_observation_template_list(self):
+        response = self.client.get(reverse('tom_observations:template-list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, reverse('tom_observations:strategy-update', kwargs={'pk': self.observing_strategy.id})
+            response, reverse('tom_observations:template-update', kwargs={'pk': self.observation_template.id})
         )
 
-    def test_observing_strategy_create(self):
-        response = self.client.get(reverse('tom_observations:strategy-create',
+    def test_observation_template_create(self):
+        response = self.client.get(reverse('tom_observations:template-create',
                                            kwargs={'facility': 'FakeRoboticFacility'}))
-        self.assertContains(response, 'Strategy name')
+        self.assertContains(response, 'Template name')
 
-    def test_observing_strategy_delete(self):
-        response = self.client.post(reverse('tom_observations:strategy-delete',
-                                    args=(self.observing_strategy.id,)),
+    def test_observation_template_delete(self):
+        response = self.client.post(reverse('tom_observations:template-delete',
+                                    args=(self.observation_template.id,)),
                                     follow=True)
-        self.assertRedirects(response, reverse('tom_observations:strategy-list'), status_code=302)
-        self.assertFalse(ObservingStrategy.objects.filter(pk=self.observing_strategy.id).exists())
+        self.assertRedirects(response, reverse('tom_observations:template-list'), status_code=302)
+        self.assertFalse(ObservationTemplate.objects.filter(pk=self.observation_template.id).exists())
 
 
 class TestUpdatingObservations(TestCase):

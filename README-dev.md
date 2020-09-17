@@ -47,7 +47,7 @@ Following deployment of a release, a Github Release is created, and this should 
 4. Deploy `tom-demo-dev` with new features demonstrated, pulling `tomtoolkit==x.y.z-alpha.w` from PyPI.
 
    Examples:
-     * Release of observing strategies should include saving an observing strategy and submitting an observation via the observing strategy
+     * Release of observation templates should include saving an observation template and submitting an observation via the observation_template
      * Release of manual facility interface should include an implementation of the new interface
      * Release of a new template tag should include that template tag in a template
 

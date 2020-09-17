@@ -1,0 +1,9 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
+{% block title %}New Observation Group{% endblock %}
+{% block content %}
+<form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Create">
+</form>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
+{% block title %}Query List{% endblock %}
+{% block content %}
+<h3>Manage Observation Templates</h3>
+<div class="row">
+  <div class="col-md-10">
+    <p>
+      Create a new observation template using
+      {% for facility in installed_facilities %}
+      <a href="{% url 'tom_observations:template-create' facility %}" title="{{ facility }}" class="btn btn-outline-primary">{{ facility }}</a>
+      {% endfor %}
+    </p>
+    <table class="table table-striped">
+      <thead><tr><th>Name</th><th>Facility</th><th>Created</th><th>Delete</th></tr></thead>
+      <tbody>
+        {% for template in filter.qs %}
+        <tr>
+          <td><a href="{% url 'tom_observations:template-update' template.id %}" title="Update {{ template.name }}">{{ template.name }}</a></td>
+          <td>{{ template.facility }}</td>
+          <td>{{ template.created }}</td>
+          {% comment %}
+          <td><a href="{% url 'tom_observations:run-strategy' template.id %}" title="Run query" class="btn btn-primary">Run</a></td>
+          {% endcomment %}
+          <td><a href="{% url 'tom_observations:template-delete' template.id %}" title="Delete strategy" class="btn btn-danger">Delete</a></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5">
+            No saved templates yet, Try creating a template from one of the facilities listed above.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-2">
+    <h4>Filter Saved Observation Templates</h4>
+    <form action="" method="get" class="form">
+      {% bootstrap_form filter.form %}
+      {% buttons %}
+        <button type="submit" class="btn btn-primary">
+          Filter
+        </button>
+        <a href="{% url 'tom_observations:template-list' %}" class="btn btn-secondary" title="Reset">Reset</a>
+      {% endbuttons %}
+    </form>
+  </div>
+</div>
+{% endblock %}

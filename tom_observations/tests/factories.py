@@ -2,7 +2,7 @@ import factory
 import json
 
 from tom_targets.models import Target, TargetName
-from tom_observations.models import ObservationRecord, ObservingStrategy
+from tom_observations.models import ObservationRecord, ObservationTemplate
 
 
 class TargetNameFactory(factory.django.DjangoModelFactory):
@@ -50,9 +50,9 @@ class ObservingRecordFactory(factory.django.DjangoModelFactory):
     })
 
 
-class ObservingStrategyFactory(factory.django.DjangoModelFactory):
+class ObservationTemplateFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = ObservingStrategy
+        model = ObservationTemplate
 
     facility = 'LCO'
     parameters = json.dumps({
