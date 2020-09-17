@@ -3,17 +3,17 @@ import json
 from django.core.management.base import BaseCommand
 
 from tom_observations.cadence import get_cadence_strategy
-from tom_observations.models import ObservationGroup
+from tom_observations.models import ObservationGroup, RegisteredCadence
 
 
 class Command(BaseCommand):
     help = 'Entry point for running cadence strategies.'
 
     def handle(self, *args, **kwargs):
-        cadenced_groups = ObservationGroup.objects.exclude(cadence_strategy='')
+        cadenced_groups = RegisteredCadence.objects.exclude(active=False)
 
         for cg in cadenced_groups:
-            cadence_frequency = json.loads(cg.cadence_parameters)['cadence_frequency']
+            cadence_frequency = cg.cadence_parameters.get('cadence_frequency', -1)
             strategy = get_cadence_strategy(cg.cadence_strategy)(cg, cadence_frequency)
             new_observations = strategy.run()
             if not new_observations:

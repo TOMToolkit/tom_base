@@ -113,13 +113,27 @@ class ObservationGroup(models.Model):
     """
     name = models.CharField(max_length=50)
     observation_records = models.ManyToManyField(ObservationRecord)
-    cadence_strategy = models.CharField(max_length=100, blank=True, default='')
-    cadence_parameters = models.TextField(blank=False, default='')
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ('-created',)
+        ordering = ('-created', 'name',)
+
+    def __str__(self):
+        return self.name
+
+
+class RegisteredCadence(models.Model):
+    name = models.CharField(max_length=100, unique=True, help_text='Name of this RegisteredCadence',
+                            verbose_name='Name of this RegisteredCadence')  # TODO: Does this need to exist, if so, what do with ObservationCreateView.is_valid()?
+    observation_group = models.ForeignKey(ObservationGroup, null=False, default=None, on_delete=models.CASCADE)
+    cadence_strategy = models.CharField(max_length=100, verbose_name='Cadence strategy used for this RegisteredCadence')
+    cadence_parameters = models.JSONField(verbose_name='Cadence-specific parameters')
+    active = models.BooleanField(verbose_name='Active',
+                                 help_text='''Whether or not this RegisteredCadence should
+                                           continue to submit observations.''')
+    created = models.DateTimeField(auto_now_add=True, help_text='The time which this RegisteredCadence was created.')
+    modified = models.DateTimeField(auto_now=True, help_text='The time which this RegisteredCadence was modified.')
 
     def __str__(self):
         return self.name

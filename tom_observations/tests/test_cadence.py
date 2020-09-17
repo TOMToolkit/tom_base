@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from dateutil.parser import parse
 
 from .factories import ObservingRecordFactory, TargetFactory
-from tom_observations.models import ObservationGroup
+from tom_observations.models import ObservationGroup, RegisteredCadence
 from tom_observations.cadence import RetryFailedObservationsStrategy, ResumeCadenceAfterFailureStrategy
 
 
@@ -30,6 +30,9 @@ class TestReactiveCadencing(TestCase):
         self.group = ObservationGroup.objects.create()
         self.group.observation_records.add(*observing_records)
         self.group.save()
+        # TODO: why doesn't this fail without cadence_strategy and name?
+        self.registered_cadence = RegisteredCadence.objects.create(
+            cadence_parameters={}, active=True, observation_group=self.group)
 
     def test_retry_when_failed_cadence(self, patch1, patch2, patch3, patch4):
         num_records = self.group.observation_records.count()
@@ -37,7 +40,7 @@ class TestReactiveCadencing(TestCase):
         observing_record.status = 'CANCELED'
         observing_record.save()
 
-        strategy = RetryFailedObservationsStrategy(self.group, 72)
+        strategy = RetryFailedObservationsStrategy(self.registered_cadence, 72)
         new_records = strategy.run()
         self.group.refresh_from_db()
         # Make sure the candence run created a new observation.
@@ -54,7 +57,7 @@ class TestReactiveCadencing(TestCase):
     def test_resume_when_failed_cadence_failed_obs(self, patch1, patch2, patch3, patch4, patch5):
         num_records = self.group.observation_records.count()
 
-        strategy = ResumeCadenceAfterFailureStrategy(self.group, 72)
+        strategy = ResumeCadenceAfterFailureStrategy(self.registered_cadence, 72)
         new_records = strategy.run()
         self.group.refresh_from_db()
         self.assertEqual(num_records + 1, self.group.observation_records.count())
@@ -69,7 +72,7 @@ class TestReactiveCadencing(TestCase):
         num_records = self.group.observation_records.count()
         observing_record = self.group.observation_records.order_by('-created').first()
 
-        strategy = ResumeCadenceAfterFailureStrategy(self.group, 72)
+        strategy = ResumeCadenceAfterFailureStrategy(self.registered_cadence, 72)
         new_records = strategy.run()
         self.group.refresh_from_db()
         self.assertEqual(num_records + 1, self.group.observation_records.count())

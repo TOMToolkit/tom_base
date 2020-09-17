@@ -716,6 +716,12 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
 
 
 class LCOObservingStrategyForm(GenericStrategyForm, LCOBaseForm):
+    """
+    The strategy form modifies the LCOBaseForm in order to only provide fields
+    that make sense to stay the same for the template. For example, there is no
+    point to making start_time an available field, as it will change between
+    observations.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name in ['groups', 'target_id']:

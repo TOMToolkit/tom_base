@@ -27,7 +27,7 @@ from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.facility import get_service_class, get_service_classes, BaseManualObservationFacility
 from tom_observations.forms import AddExistingObservationForm
-from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
+from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy, RegisteredCadence
 from tom_targets.models import Target
 
 
@@ -260,15 +260,18 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         # TODO: redirect to observation list for multiple observations, observation detail otherwise
 
         if len(records) > 1 or form.cleaned_data.get('cadence_strategy'):
-            group_name = form.cleaned_data['name']
-            observation_group = ObservationGroup.objects.create(
-                name=group_name, cadence_strategy=form.cleaned_data.get('cadence_strategy'),
-                cadence_parameters=json.dumps({'cadence_frequency': form.cleaned_data.get('cadence_frequency')})
-            )
+            observation_group = ObservationGroup.objects.create(name=form.cleaned_data['name'])
             observation_group.observation_records.add(*records)
             assign_perm('tom_observations.view_observationgroup', self.request.user, observation_group)
             assign_perm('tom_observations.change_observationgroup', self.request.user, observation_group)
             assign_perm('tom_observations.delete_observationgroup', self.request.user, observation_group)
+
+            if form.cleaned_data.get('cadence_strategy'):
+                registered_cadence = RegisteredCadence.objects.create(
+                    observation_group=observation_group,
+                    cadence_strategy=form.cleaned_data.get('cadence_strategy'),
+                    cadence_parameters={'cadence_frequency': form.cleaned_data.get('cadence_frequency')}
+                )
 
         if not settings.TARGET_PERMISSIONS_ONLY:
             groups = form.cleaned_data['groups']

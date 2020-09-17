@@ -52,9 +52,9 @@ class CadenceStrategy(ABC):
     In order to make use of a custom CadenceStrategy, add the path to ``TOM_CADENCE_STRATEGIES`` in your
     ``settings.py``.
     """
-    def __init__(self, observation_group, *args, **kwargs):
+    def __init__(self, registered_cadence, *args, **kwargs):
         self.cadence_strategy = type(self).__name__
-        self.observation_group = observation_group
+        self.registered_cadence = registered_cadence
 
     @abstractmethod
     def run(self):
@@ -70,12 +70,14 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
     description = """This strategy immediately re-submits a cadenced observation without amending any other part of the
                      cadence."""
 
-    def __init__(self, observation_group, advance_window_hours, *args, **kwargs):
+    def __init__(self, registered_cadence, advance_window_hours, *args, **kwargs):
         self.advance_window_hours = advance_window_hours
-        super().__init__(observation_group, *args, **kwargs)
+        super().__init__(registered_cadence, *args, **kwargs)
 
     def run(self):
-        failed_observations = [obsr for obsr in self.observation_group.observation_records.all() if obsr.failed]
+        failed_observations = [obsr for obsr
+                               in self.registered_cadence.observation_group.observation_records.all()
+                               if obsr.failed]
         new_observations = []
         for obs in failed_observations:
             observation_payload = obs.parameters_as_dict
@@ -97,8 +99,8 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
                     parameters=json.dumps(observation_payload),
                     observation_id=observation_id
                 )
-                self.observation_group.observation_records.add(record)
-                self.observation_group.save()
+                self.registered_cadence.observation_group.observation_records.add(record)
+                self.registered_cadence.observation_group.save()
                 new_observations.append(record)
 
         return new_observations
@@ -124,12 +126,12 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
                      re-submits the observation until it succeeds. If it succeeds, it submits the next observation on
                      the same cadence."""
 
-    def __init__(self, observation_group, advance_window_hours, *args, **kwargs):
+    def __init__(self, registered_cadence, advance_window_hours, *args, **kwargs):
         self.advance_window_hours = advance_window_hours
-        super().__init__(observation_group, *args, **kwargs)
+        super().__init__(registered_cadence, *args, **kwargs)
 
     def run(self):
-        last_obs = self.observation_group.observation_records.order_by('-created').first()
+        last_obs = self.registered_cadence.observation_group.observation_records.order_by('-created').first()
         facility = get_service_class(last_obs.facility)()
         facility.update_observation_status(last_obs.observation_id)
         last_obs.refresh_from_db()
@@ -162,8 +164,8 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
                 parameters=json.dumps(observation_payload),
                 observation_id=observation_id
             )
-            self.observation_group.observation_records.add(record)
-            self.observation_group.save()
+            self.registered_cadence.observation_group.observation_records.add(record)
+            self.registered_cadence.observation_group.save()
             new_observations.append(record)
 
         for obsr in new_observations:
