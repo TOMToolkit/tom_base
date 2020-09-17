@@ -322,11 +322,11 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
         :rtype: dict
         """
         context = super().get_context_data(*args, **kwargs)
-        observation_template_form = RunStrategyForm(initial={'target': self.get_object()})
+        observation_template_form = ApplyObservationTemplateForm(initial={'target': self.get_object()})
         if any(self.request.GET.get(x) for x in ['observation_template', 'cadence_strategy', 'cadence_frequency']):
             initial = {'target': self.object}
             initial.update(self.request.GET)
-            observation_template_form = RunStrategyForm(
+            observation_template_form = ApplyObservationTemplateForm(
                 initial=initial
             )
         observation_template_form.fields['target'].widget = HiddenInput()
