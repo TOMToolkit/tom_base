@@ -139,23 +139,23 @@ class RegisteredCadence(models.Model):
         return self.name
 
 
-class ObservingStrategy(models.Model):
+class ObservationTemplate(models.Model):
     """
-    Class representing an observing strategy, or template.
+    Class representing an observation template.
 
-    :param name: The name of the ``ObservingStrategy``
+    :param name: The name of the ``ObservationTemplate``
     :type name: str
 
-    :param facility: The module-specified facility name for which the strategy is valid
+    :param facility: The module-specified facility name for which the template is valid
     :type facility: str
 
     :param parameters: JSON string of observing parameters
     :type parameters: str
 
-    :param created: The time at which this ``ObservationGroup`` was created.
+    :param created: The time at which this ``ObservationTemplate`` was created.
     :type created: datetime
 
-    :param modified: The time at which this ``ObservationGroup`` was modified.
+    :param modified: The time at which this ``ObservationTemplate`` was modified.
     :type modified: datetime
     """
     name = models.CharField(max_length=200)

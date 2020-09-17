@@ -11,7 +11,7 @@ import plotly.graph_objs as go
 from tom_observations.forms import AddExistingObservationForm, UpdateObservationId
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class, get_service_classes
-from tom_observations.observing_strategy import RunStrategyForm
+from tom_observations.observation_template import RunStrategyForm
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target
 
@@ -130,28 +130,28 @@ def observation_list(context, target=None):
     return {'observations': observations}
 
 
-@register.inclusion_tag('tom_observations/partials/observingstrategy_run.html')
-def observingstrategy_run(target):
+@register.inclusion_tag('tom_observations/partials/observationtemplate_run.html')
+def observationtemplate_run(target):
     """
-    Renders the form for running an observing strategy.
+    Renders the form for running an observation template.
     """
     form = RunStrategyForm(initial={'target': target})
     form.fields['target'].widget = forms.HiddenInput()
     return {'form': form}
 
 
-@register.inclusion_tag('tom_observations/partials/observingstrategy_from_record.html')
-def observingstrategy_from_record(obsr):
+@register.inclusion_tag('tom_observations/partials/observationtemplate_from_record.html')
+def observationtemplate_from_record(obsr):
     """
-    Renders a button that will pre-populate and observing strategy form with parameters from the specified
+    Renders a button that will pre-populate and observation template form with parameters from the specified
     ``ObservationRecord``.
     """
     obs_params = obsr.parameters_as_dict
     obs_params.pop('target_id', None)
-    strategy_params = urlencode(obs_params)
+    template_params = urlencode(obs_params)
     return {
         'facility': obsr.facility,
-        'params': strategy_params
+        'params': template_params
     }
 
 

@@ -4,14 +4,13 @@ Cadence and Observing Strategies
 The TOM has a couple of unique concepts that may be unfamiliar to some
 at first, that will be describe here before going into detail.
 
-The first concept is that of an observing strategy. An observing
-strategy is something of a template. If an observer is consistently
+The first concept is that of an observation template. If an observer is consistently
 submitting observations with a lot of similar parameters, it may be
 useful to save those as a kind of template, which can just be loaded
 later. The TOM Toolkit offers an interface that allows facilities to
-define a strategy form, that will be saved as an observing strategy. The
-strategy can then be applied to an observation, with the remaining
-parameters filled in or changed. An observing strategy can also be
+define a template form, that will be saved as an observation template. The
+template can then be applied to an observation, with the remaining
+parameters filled in or changed. An observation template can also be
 creating from a past observation, with a button to do so that’s
 available on any ObservationRecord detail page.
 
