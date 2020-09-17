@@ -3,7 +3,7 @@ import json
 from django.core.management.base import BaseCommand
 
 from tom_observations.cadence import get_cadence_strategy
-from tom_observations.models import ObservationGroup, DynamicCadence
+from tom_observations.models import DynamicCadence
 
 
 class Command(BaseCommand):
