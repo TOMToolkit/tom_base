@@ -27,7 +27,7 @@ from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.facility import get_service_class, get_service_classes, BaseManualObservationFacility
 from tom_observations.forms import AddExistingObservationForm
-from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, RegisteredCadence
+from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
 from tom_targets.models import Target
 
 
@@ -267,7 +267,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             assign_perm('tom_observations.delete_observationgroup', self.request.user, observation_group)
 
             if form.cleaned_data.get('cadence_strategy'):
-                registered_cadence = RegisteredCadence.objects.create(
+                dynamic_cadence = DynamicCadence.objects.create(
                     observation_group=observation_group,
                     cadence_strategy=form.cleaned_data.get('cadence_strategy'),
                     cadence_parameters={'cadence_frequency': form.cleaned_data.get('cadence_frequency')}

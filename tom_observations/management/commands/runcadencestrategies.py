@@ -3,14 +3,14 @@ import json
 from django.core.management.base import BaseCommand
 
 from tom_observations.cadence import get_cadence_strategy
-from tom_observations.models import ObservationGroup, RegisteredCadence
+from tom_observations.models import ObservationGroup, DynamicCadence
 
 
 class Command(BaseCommand):
     help = 'Entry point for running cadence strategies.'
 
     def handle(self, *args, **kwargs):
-        cadenced_groups = RegisteredCadence.objects.exclude(active=False)
+        cadenced_groups = DynamicCadence.objects.exclude(active=False)
 
         for cg in cadenced_groups:
             cadence_frequency = cg.cadence_parameters.get('cadence_frequency', -1)

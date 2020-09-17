@@ -38,8 +38,7 @@ class GenericTemplateForm(forms.Form):
         return template
 
 
-# TODO: should this be ApplyTemplate? RunTemplate wouldn't make sense
-class RunStrategyForm(forms.Form):
+class ApplyObservationTemplateForm(forms.Form):
     """
     Form used for submission of parameters for pairing an observation template with a cadence strategy.
     """

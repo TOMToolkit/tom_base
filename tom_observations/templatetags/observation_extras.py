@@ -11,7 +11,7 @@ import plotly.graph_objs as go
 from tom_observations.forms import AddExistingObservationForm, UpdateObservationId
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class, get_service_classes
-from tom_observations.observation_template import RunStrategyForm
+from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target
 
@@ -135,7 +135,7 @@ def observationtemplate_run(target):
     """
     Renders the form for running an observation template.
     """
-    form = RunStrategyForm(initial={'target': target})
+    form = ApplyObservationTemplateForm(initial={'target': target})
     form.fields['target'].widget = forms.HiddenInput()
     return {'form': form}
 

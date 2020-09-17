@@ -28,7 +28,7 @@ from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assi
 from tom_common.hints import add_hint
 from tom_common.hooks import run_hook
 from tom_common.mixins import Raise403PermissionRequiredMixin
-from tom_observations.observation_template import RunStrategyForm
+from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import (
@@ -356,9 +356,9 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
                               ' the docs.</a>'))
             return redirect(reverse('tom_targets:detail', args=(target_id,)))
 
-        run_strategy_form = RunStrategyForm(request.GET)
-        if run_strategy_form.is_valid():
-            obs_template = ObservationTemplate.objects.get(pk=run_strategy_form.cleaned_data['observation_template'].id)
+        obs_template_form = ApplyObservationTemplateForm(request.GET)
+        if obs_template_form.is_valid():
+            obs_template = ObservationTemplate.objects.get(pk=obs_template_form.cleaned_data['observation_template'].id)
             obs_template_params = obs_template.parameters_as_dict
             obs_template_params['cadence_strategy'] = request.GET.get('cadence_strategy', '')
             obs_template_params['cadence_frequency'] = request.GET.get('cadence_frequency', '')

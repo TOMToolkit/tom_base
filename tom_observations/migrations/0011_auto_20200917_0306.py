@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tom_observations', '0010_manual_create_registered_cadence'),
+        ('tom_observations', '0010_manual_create_dynamic_cadence'),
     ]
 
     operations = [
@@ -19,8 +19,8 @@ class Migration(migrations.Migration):
             options={'ordering': ('-created', 'name')},
         ),
         migrations.AlterField(
-            model_name='registeredcadence',
+            model_name='dynamiccadence',
             name='active',
-            field=models.BooleanField(help_text='Whether or not this RegisteredCadence should\n                                           continue to submit observations.', verbose_name='Active'),
+            field=models.BooleanField(help_text='Whether or not this DynamicCadence should\n                                           continue to submit observations.', verbose_name='Active'),
         ),
     ]

@@ -1,0 +1,4 @@
+- Unify the format of the namespacing for TargetLists and ObservationGroups
+- Rename TargetLists to TargetGroups
+- Rename TargetName to Alias
+- Update TextFields used for JSON to be actual JSONFields. This will require a migration script.

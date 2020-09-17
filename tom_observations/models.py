@@ -123,17 +123,38 @@ class ObservationGroup(models.Model):
         return self.name
 
 
-class RegisteredCadence(models.Model):
-    name = models.CharField(max_length=100, unique=True, help_text='Name of this RegisteredCadence',
-                            verbose_name='Name of this RegisteredCadence')  # TODO: Does this need to exist, if so, what do with ObservationCreateView.is_valid()?
+class DynamicCadence(models.Model):
+    """
+    Class representing a dynamic cadence--that is, a cadence that follows a pattern but modifies its behavior
+    depending on the result of prior observations.
+
+    :param observation_group: The ``ObservationGroup`` containing the observations that were created by this cadence.
+    :type observation_group: ``ObservationGroup``
+
+    :param cadence_strategy: The name of the cadence strategy this cadence is using.
+    :type cadence_strategy: str
+
+    :param cadence_parameters: The parameters for this cadence, e.g. cadence period
+    :type cadence_parameters: JSON
+
+    :param active: Whether or not this cadence should continue to submit observations
+    :type active: boolean
+
+    :param created: The time at which this ``DynamicCadence`` was created.
+    :type created: datetime
+
+    :param modified: The time at which this ``DynamicCadence`` was modified.
+    :type modified: datetime
+    """
     observation_group = models.ForeignKey(ObservationGroup, null=False, default=None, on_delete=models.CASCADE)
-    cadence_strategy = models.CharField(max_length=100, verbose_name='Cadence strategy used for this RegisteredCadence')
-    cadence_parameters = models.JSONField(verbose_name='Cadence-specific parameters')
+    cadence_strategy = models.CharField(max_length=100, blank=False, default=None,
+                                        verbose_name='Cadence strategy used for this DynamicCadence')
+    cadence_parameters = models.JSONField(blank=False, null=False, verbose_name='Cadence-specific parameters')
     active = models.BooleanField(verbose_name='Active',
-                                 help_text='''Whether or not this RegisteredCadence should
+                                 help_text='''Whether or not this DynamicCadence should
                                            continue to submit observations.''')
-    created = models.DateTimeField(auto_now_add=True, help_text='The time which this RegisteredCadence was created.')
-    modified = models.DateTimeField(auto_now=True, help_text='The time which this RegisteredCadence was modified.')
+    created = models.DateTimeField(auto_now_add=True, help_text='The time which this DynamicCadence was created.')
+    modified = models.DateTimeField(auto_now=True, help_text='The time which this DynamicCadence was modified.')
 
     def __str__(self):
         return self.name
