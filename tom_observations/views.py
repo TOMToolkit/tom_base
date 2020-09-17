@@ -17,7 +17,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic import View
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import DeleteView, FormView, UpdateView
+from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
 from django.views.generic.list import ListView
 from guardian.shortcuts import get_objects_for_user, assign_perm
 from guardian.mixins import PermissionListMixin
@@ -448,6 +448,29 @@ class ObservationRecordDetailView(DetailView):
         )
         context['data_product_form'] = data_product_upload_form
         return context
+
+
+class ObservationGroupCreateView(LoginRequiredMixin, CreateView):
+    """
+    View that handles the creation of ``ObservationGroup`` objects. Requires authentication.
+    """
+    model = ObservationGroup
+    fields = ['name']
+    success_url = reverse_lazy('tom_observations:group-list')
+
+    def form_valid(self, form):
+        """
+        Runs after form validation. Saves the observation group and assigns the user's permissions to the group.
+
+        :param form: Form data for observation group creation
+        :type form: django.forms.ModelForm
+        """
+        obj = form.save(commit=False)
+        obj.save()
+        assign_perm('tom_observations.view_observationgroup', self.request.user, obj)
+        assign_perm('tom_observations.change_observationgroup', self.request.user, obj)
+        assign_perm('tom_observations.delete_observationgroup', self.request.user, obj)
+        return super().form_valid(form)
 
 
 class ObservationGroupListView(PermissionListMixin, ListView):
