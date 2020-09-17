@@ -266,11 +266,13 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             assign_perm('tom_observations.change_observationgroup', self.request.user, observation_group)
             assign_perm('tom_observations.delete_observationgroup', self.request.user, observation_group)
 
+            # TODO: Add a test case that includes a dynamic cadence submission
             if form.cleaned_data.get('cadence_strategy'):
                 DynamicCadence.objects.create(
                     observation_group=observation_group,
                     cadence_strategy=form.cleaned_data.get('cadence_strategy'),
-                    cadence_parameters={'cadence_frequency': form.cleaned_data.get('cadence_frequency')}
+                    cadence_parameters={'cadence_frequency': form.cleaned_data.get('cadence_frequency')},
+                    active=True
                 )
 
         if not settings.TARGET_PERMISSIONS_ONLY:
