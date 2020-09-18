@@ -49,7 +49,7 @@ setup(
         'plotly==4.10.0',
         'python-dateutil==2.8.1',
         'requests==2.24.0',
-        'specutils==1.0',
+        'specutils==1.1',
     ],
     extras_require={
         'test': ['factory_boy==3.0.1']
