@@ -99,10 +99,18 @@ def observation_plan(target, facility, length=7, interval=60, airmass_limit=None
     end_time = start_time + timedelta(days=length)
 
     visibility_data = get_sidereal_visibility(target, start_time, end_time, interval, airmass_limit)
-    plot_data = [
-        go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()
-    ]
-    layout = go.Layout(yaxis=dict(autorange='reversed'))
+    i = 0
+    plot_data = []
+    for site, data in visibility_data.items():
+        plot_data.append(go.Scatter(x=data[0], y=data[1], mode='markers+lines', marker={'symbol': i}, name=site))
+        i += 1
+    # plot_data = [
+    #     go.Scatter(x=data[0], y=data[1], mode='markers', marker={'symbol': 'line-ew-open'}, name=site) for site, data in visibility_data.items()
+    # ]
+    layout = go.Layout(
+        xaxis={'title': 'Date'},
+        yaxis={'autorange': 'reversed', 'title': 'Airmass'}
+    )
     visibility_graph = offline.plot(
         go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False
     )

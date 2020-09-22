@@ -70,8 +70,8 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
     description = """This strategy immediately re-submits a cadenced observation without amending any other part of the
                      cadence."""
 
-    def __init__(self, dynamic_cadence, advance_window_hours, *args, **kwargs):
-        self.advance_window_hours = advance_window_hours
+    def __init__(self, dynamic_cadence, *args, **kwargs):
+        self.advance_window_hours = kwargs.pop('advance_window_hours')
         super().__init__(dynamic_cadence, *args, **kwargs)
 
     def run(self):
@@ -125,10 +125,31 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
     description = """This strategy schedules one observation in the cadence at a time. If the observation fails, it
                      re-submits the observation until it succeeds. If it succeeds, it submits the next observation on
                      the same cadence."""
+    form_parameters = {
+        'site': {
+            'field': forms.ChoiceField,
+            'kwargs': {
+                'choices': (('cpt', 'cpt'), ('tlv', 'tlv'))
+            }
+        },
+        'period': forms.IntegerField
+    }
 
-    def __init__(self, dynamic_cadence, advance_window_hours, *args, **kwargs):
-        self.advance_window_hours = advance_window_hours
+    # for key, value in form_parameters.items:
+        # form[key] = value['field'](**value['kwargs'])
+
+    class ResumeCadenceForm(forms.Form):
+        site = forms.CharField()
+
+    def __init__(self, dynamic_cadence, *args, **kwargs):
+        self.advance_window_hours = kwargs.pop('advance_window_hours')
         super().__init__(dynamic_cadence, *args, **kwargs)
+
+    def update_observation_parameters(self):
+        update_observation_payload()
+
+    def submit_next_observation(self):
+        submit()
 
     def run(self):
         last_obs = self.dynamic_cadence.observation_group.observation_records.order_by('-created').first()
@@ -147,9 +168,11 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
             observation_payload[end_keyword] = (parse(observation_payload[start_keyword]) + window_length).isoformat()
         else:
             # Advance window normally according to cadence parameters
-            observation_payload = self.advance_window(
-                observation_payload, start_keyword=start_keyword, end_keyword=end_keyword
-            )
+            self.update_observation_parameters()
+            self.submit_next_observation()
+            # observation_payload = self.advance_window(
+            #     observation_payload, start_keyword=start_keyword, end_keyword=end_keyword
+            # )
 
         obs_type = last_obs.parameters_as_dict.get('observation_type')
         form = facility.get_form(obs_type)(observation_payload)
@@ -194,6 +217,7 @@ class CadenceForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        print(kwargs)
         super().__init__(*args, **kwargs)
         self.fields['cadence_strategy'].widget.attrs['readonly'] = True
         self.fields['cadence_frequency'].widget.attrs['readonly'] = True
@@ -205,9 +229,11 @@ class CadenceForm(forms.Form):
         if not (self.initial.get('cadence_strategy') or self.initial.get('cadence_frequency')):
             return Layout()
         else:
+            # TODO: Clarify dynamic vs. static cadencing in form
+            # TODO: Present layout for selected cadence strategy
             return Layout(
                 Div(
-                    HTML('<p>Reactive cadencing parameters. Leave blank if no reactive cadencing is desired.</p>'),
+                    HTML('<p>Dynamic cadencing parameters. Leave blank if no dynamic cadencing is desired.</p>'),
                 ),
                 Div(
                     Div(
