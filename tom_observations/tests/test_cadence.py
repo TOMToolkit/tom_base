@@ -5,7 +5,8 @@ from dateutil.parser import parse
 
 from .factories import ObservingRecordFactory, TargetFactory
 from tom_observations.models import ObservationGroup, DynamicCadence
-from tom_observations.cadence import RetryFailedObservationsStrategy, ResumeCadenceAfterFailureStrategy
+from tom_observations.cadences.resume_cadence_after_failure import ResumeCadenceAfterFailureStrategy
+from tom_observations.cadences.retry_failed_observations import RetryFailedObservationsStrategy
 
 
 mock_filters = {'1M0-SCICAM-SINISTRO': {

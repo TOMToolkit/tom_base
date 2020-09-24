@@ -10,7 +10,6 @@ from django.conf import settings
 from django.core.cache import cache
 
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.cadence import CadenceForm
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
 from tom_observations.observation_template import GenericTemplateForm
 from tom_observations.widgets import FilterField
@@ -139,7 +138,7 @@ class LCOBaseForm(forms.Form):
         return choices
 
 
-class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceForm):
+class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     """
     The LCOBaseObservationForm provides the base set of utilities to construct an observation at Las Cumbres
     Observatory. While the forms that inherit from it provide a subset of instruments and filters, the
@@ -802,12 +801,14 @@ class LCOFacility(BaseRoboticObservationFacility):
         }
     }
 
+    # TODO: this should be called get_form_class
     def get_form(self, observation_type):
         try:
             return self.observation_forms[observation_type]
         except KeyError:
             return LCOBaseObservationForm
 
+    # TODO: this should be called get_template_form_class
     def get_template_form(self, observation_type):
         return LCOObservationTemplateForm
 
