@@ -34,7 +34,7 @@ setup(
         'beautifulsoup4==4.9.1',
         'dataclasses; python_version < "3.7"',
         'django==3.1.1',  # TOM Toolkit requires db math functions
-        'djangorestframework==3.11.1',
+        'djangorestframework==3.12.0',
         'django-bootstrap4==2.2.0',
         'django-contrib-comments==1.9.2',  # Earlier version are incompatible with Django >= 3.0
         'django-crispy-forms==1.9.2',
