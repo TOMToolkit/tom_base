@@ -40,7 +40,7 @@ setup(
         'django-crispy-forms==1.9.2',
         'django-extensions==3.0.9',
         'django-gravatar2==1.4.4',
-        'django-filter==2.3.0',
+        'django-filter==2.4.0',
         'django-guardian==2.3.0',
         'fits2image==0.4.3',
         'Markdown==3.2.2',  # django-rest-framework doc headers require this to support Markdown
