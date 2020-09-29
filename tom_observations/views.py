@@ -24,8 +24,7 @@ from guardian.mixins import PermissionListMixin
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
-from tom_observations.cadence import get_cadence_strategy
-from tom_observations.cadences.resume_cadence_after_failure import ResumeCadenceAfterFailureForm
+from tom_observations.cadence import CadenceForm, get_cadence_strategy
 from tom_observations.facility import get_service_class, get_service_classes, BaseManualObservationFacility
 from tom_observations.forms import AddExistingObservationForm
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
@@ -111,6 +110,7 @@ class ObservationListView(FilterView):
         return super().get(request, *args, **kwargs)
 
 
+# TODO: Ensure this template includes the ApplyObservationTemplate form at the top
 class ObservationCreateView(LoginRequiredMixin, FormView):
     """
     View for creation/submission of an observation. Requires authentication.
@@ -159,7 +159,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     def get_cadence_strategy_form(self):
         cadence_strategy = self.request.GET.get('cadence_strategy')
         if not cadence_strategy:
-            return None
+            return CadenceForm
         return get_cadence_strategy(cadence_strategy).form
 
     def get_context_data(self, **kwargs):
@@ -180,10 +180,8 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             # Repopulate the appropriate form with form data if the original submission was invalid
             if observation_type == self.request.POST.get('observation_type'):
                 form_data.update(**self.request.POST.dict())
-            form_class = observation_form_class
-            if self.get_cadence_strategy_form():
-                form_class = type(f'Composite{observation_type}Form',
-                                  (observation_form_class, self.get_cadence_strategy_form()), {})
+            form_class = type(f'Composite{observation_type}Form',
+                              (observation_form_class, self.get_cadence_strategy_form()), {})
             observation_type_choices.append((observation_type, form_class(initial=form_data)))
         context['observation_type_choices'] = observation_type_choices
 
@@ -201,18 +199,14 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :returns: observation form
         :rtype: subclass of GenericObservationForm
         """
-        print(self.request.GET)
-        # cadence_strategy = self.request.GET.get('cadence_strategy')
-        # cadence_form_class = get_cadence_strategy(cadence_strategy).form
         observation_type = None
         if self.request.method == 'GET':
             observation_type = self.request.GET.get('observation_type')
         elif self.request.method == 'POST':
             observation_type = self.request.POST.get('observation_type')
-        form_class = self.get_facility_class()().get_form(observation_type)
-        print(form_class)
-        if self.get_cadence_strategy_form():
-            form_class = type(f'Composite{observation_type}Form', (form_class, self.get_cadence_strategy_form()), {})
+        form_class = type(f'Composite{observation_type}Form',
+                          (self.get_facility_class()().get_form(observation_type), self.get_cadence_strategy_form()),
+                          {})
         return form_class
 
     def get_form(self):
@@ -246,6 +240,13 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         initial.update(self.request.GET.dict())
         return initial
 
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
     def form_valid(self, form):
         """
         Runs after form validation. Submits the observation to the desired facility and creates an associated
@@ -260,8 +261,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         # Submit the observation
         facility = self.get_facility_class()
         target = self.get_target()
-        print(f'form data: {form.cleaned_data}')
-        # observation_ids = facility().submit_observation(form.observation_payload())
+        observation_ids = facility().submit_observation(form.observation_payload())
         records = []
 
         for observation_id in observation_ids:
@@ -286,14 +286,14 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
 
             # TODO: Add a test case that includes a dynamic cadence submission
             if form.cleaned_data.get('cadence_strategy'):
-                # cadence_parameters = {}
-                # cadence_form = get_cadence_strategy(form.cleaned_data.get('cadence_strategy')).form
-                # for field in cadence_form()['fields']:
-                #     cadence_parameters[field] = form.cleaned_data.get(field)
+                cadence_parameters = {}
+                cadence_form = get_cadence_strategy(form.cleaned_data.get('cadence_strategy')).form
+                for field in cadence_form().cadence_fields:
+                    cadence_parameters[field] = form.cleaned_data.get(field)
                 DynamicCadence.objects.create(
                     observation_group=observation_group,
                     cadence_strategy=form.cleaned_data.get('cadence_strategy'),
-                    cadence_parameters={'cadence_frequency': form.cleaned_data.get('cadence_frequency')},
+                    cadence_parameters=cadence_parameters,
                     active=True
                 )
 
@@ -560,7 +560,7 @@ class ObservationTemplateCreateView(FormView):
         if not facility_name:
             raise ValueError('Must provide a facility name')
 
-        # TODO: modify this to work with both LCO forms
+        # TODO: modify this to work with all LCO forms
         return get_service_class(facility_name)().get_template_form(None)
 
     def get_form(self, form_class=None):

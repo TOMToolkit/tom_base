@@ -1,10 +1,7 @@
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
-from dateutil.parser import parse
 from importlib import import_module
-import json
 
-from crispy_forms.layout import Column, Div, HTML, Layout, Row
+from crispy_forms.layout import Div, HTML, Layout, Row
 from django import forms
 from django.conf import settings
 
@@ -50,7 +47,6 @@ class CadenceStrategy(ABC):
     ``settings.py``.
     """
     def __init__(self, dynamic_cadence, *args, **kwargs):
-        self.cadence_strategy = type(self).__name__
         self.dynamic_cadence = dynamic_cadence
 
     @abstractmethod
@@ -59,43 +55,28 @@ class CadenceStrategy(ABC):
 
 
 class CadenceForm(forms.Form):
-    # TODO: review this
-    cadence_strategy = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
-    # cadence_strategy = forms.ChoiceField(
-    #     required=False,
-    #     choices=[('', '---------')] + [(k, k) for k, v in get_cadence_strategies().items()]
-    # )
-    cadence_frequency = forms.IntegerField(
-        required=False,
-        help_text='Frequency of observations, in hours'
-    )
-
-    def __init__(self, *args, **kwargs):
-        print(kwargs)
-        super().__init__(*args, **kwargs)
-        # self.fields['cadence_strategy'].widget.attrs['readonly'] = True
-        self.fields['cadence_frequency'].widget.attrs['readonly'] = True
-        self.cadence_layout = self.cadence_layout()
+    cadence_strategy = forms.CharField(required=False, max_length=50, widget=forms.HiddenInput())
 
     def cadence_layout(self):
-        # If cadence strategy or cadence frequency aren't set, this is a normal observation and the widgets shouldn't
-        # be rendered
-        if not (self.initial.get('cadence_strategy') or self.initial.get('cadence_frequency')):
-            return Layout()
-        else:
-            # TODO: Clarify dynamic vs. static cadencing in form
-            # TODO: Present layout for selected cadence strategy
-            return Layout(
-                Div(
-                    HTML('<p>Dynamic cadencing parameters. Leave blank if no dynamic cadencing is desired.</p>'),
-                ),
-                Div(
-                    Div(
-                        'cadence_frequency',
-                        css_class='col'
-                    ),
-                    css_class='form-row'
-                )
-            )
+        return Layout('cadence_strategy')
 
-    extra_layout = cadence_layout
+
+class BaseCadenceForm(CadenceForm):
+    cadence_frequency = forms.IntegerField(
+        required=True,
+        help_text='Frequency of observations, in hours'
+    )
+    cadence_fields = ['cadence_frequency']
+
+    # TODO: find more elegant way of extending cadence layout
+    def cadence_layout(self):
+        return Layout(
+            Div(
+                HTML('''<p>Dynamic cadencing parameters. Leave blank if no dynamic cadencing is desired.
+                        For more information on dynamic cadencing, see
+                        <a href=\'https://tom-toolkit.readthedocs.io/en/stable/observing/strategies.html\'>
+                        here.</a></p>'''),
+            ),
+            Row('cadence_strategy'),
+            Row('cadence_frequency'),
+        )

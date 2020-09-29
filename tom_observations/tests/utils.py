@@ -77,7 +77,9 @@ class FakeRoboticFacility(BaseRoboticObservationFacility):
 
 class FakeManualFacility(BaseManualObservationFacility):
     name = 'FakeManualFacility'
-    observation_types = [('FakeManualFacility Observation', 'OBSERVATION')]
+    observation_forms = {
+        'OBSERVATION': FakeFacilityForm
+    }
 
     def get_form(self, observation_type):
         return FakeFacilityForm

@@ -48,11 +48,6 @@ class ApplyObservationTemplateForm(forms.Form):
         choices=[('', '')] + [(k, k) for k in get_cadence_strategies().keys()],
         required=False
     )
-    # TODO: Remove non-cadence_strategy fields from this form
-    cadence_frequency = forms.IntegerField(
-        required=False,
-        help_text='Frequency of observations, in hours'
-    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -61,7 +56,6 @@ class ApplyObservationTemplateForm(forms.Form):
             'target',
             'observation_template',
             'cadence_strategy',
-            'cadence_frequency'
         )
         self.helper.form_method = 'GET'
         self.helper.add_input(Submit('run', 'Apply'))

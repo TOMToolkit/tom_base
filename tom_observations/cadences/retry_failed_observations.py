@@ -2,12 +2,12 @@ from datetime import timedelta
 from dateutil.parser import parse
 import json
 
-from tom_observations.cadence import CadenceForm, CadenceStrategy
+from tom_observations.cadence import BaseCadenceForm, CadenceStrategy
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 
 
-class RetryFailedObservationsForm(CadenceForm):
+class RetryFailedObservationsForm(BaseCadenceForm):
     pass
 
 
@@ -15,15 +15,13 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
     """
     The RetryFailedObservationsStrategy immediately re-submits all observations within an observation group a certain
     number of hours later, as specified by ``advance_window_hours``.
+
+    This strategy requires the DynamicCadence to have a parameter ``cadence_frequency``.
     """
     name = 'Retry Failed Observations'
     description = """This strategy immediately re-submits a cadenced observation without amending any other part of the
                      cadence."""
     form = RetryFailedObservationsForm
-
-    def __init__(self, dynamic_cadence, *args, **kwargs):
-        self.advance_window_hours = kwargs.pop('advance_window_hours')
-        super().__init__(dynamic_cadence, *args, **kwargs)
 
     def run(self):
         failed_observations = [obsr for obsr
@@ -57,8 +55,10 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
         return new_observations
 
     def advance_window(self, observation_payload, start_keyword='start', end_keyword='end'):
-        new_start = parse(observation_payload[start_keyword]) + timedelta(hours=self.advance_window_hours)
-        new_end = parse(observation_payload[end_keyword]) + timedelta(hours=self.advance_window_hours)
+        # TODO: validate that cadence frequency actually exists, throw an appropriate error
+        advance_window_hours = self.dynamic_cadence.cadence_parameters.get('cadence_frequency')
+        new_start = parse(observation_payload[start_keyword]) + timedelta(hours=advance_window_hours)
+        new_end = parse(observation_payload[end_keyword]) + timedelta(hours=advance_window_hours)
         observation_payload[start_keyword] = new_start.isoformat()
         observation_payload[end_keyword] = new_end.isoformat()
 

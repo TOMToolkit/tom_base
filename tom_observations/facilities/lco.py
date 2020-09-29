@@ -81,6 +81,16 @@ max_airmass_help = """
     </a>
 """
 
+static_cadencing_help = """
+    For information on static cadencing with LCO,
+    <a href="https://s3.us-west-2.amazonaws.com/www.lco.global/documents/GettingStartedontheLCONetwork.latest.pdf?
+             X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA6FT4CXR4ZJRYWHNN%2F20200928%2Fus-west-2%2Fs3%2F
+             aws4_request&X-Amz-Date=20200928T221218Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=
+             328a99283fed8b98a3ffa3a035f3effe2b1c0b6ea4e84e266b7662abec9cc2e4">
+        check the Observation Portal getting started guide, starting on page 18.
+    </a>
+"""
+
 
 def make_request(*args, **kwargs):
     response = requests.request(*args, **kwargs)
@@ -171,7 +181,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
         self.helper.layout = Layout(
             self.common_layout,
             self.layout(),
-            self.cadence_layout,
+            self.cadence_layout(),  # TODO: this will break when instantiating the form manually
             self.button_layout()
         )
 
@@ -189,7 +199,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
                 css_class='form-row',
             ),
             Div(
-                HTML('<p>Cadence parameters. Leave blank if no cadencing is desired.</p>'),
+                HTML(f'''<br/><p>Static cadence parameters. Leave blank if no cadencing is desired.
+                         {static_cadencing_help} </p>'''),
             ),
             Div(
                 Div(
@@ -594,6 +605,7 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
     )
 
     def __init__(self, *args, **kwargs):
+        kwargs['cadence_strategy'] = 'ResumeCadenceAfterFailure'
         super().__init__(*args, **kwargs)
 
         # Massage cadence form to be SNEx-styled
@@ -754,8 +766,9 @@ class LCOFacility(BaseRoboticObservationFacility):
     observation_forms = {
         'IMAGING': LCOImagingObservationForm,
         'SPECTRA': LCOSpectroscopyObservationForm,
-        'PHOTOMETRIC_SEQUENCE': LCOPhotometricSequenceForm,
-        'SPECTROSCOPIC_SEQUENCE': LCOSpectroscopicSequenceForm
+        # TODO: Fix these forms
+        # 'PHOTOMETRIC_SEQUENCE': LCOPhotometricSequenceForm,
+        # 'SPECTROSCOPIC_SEQUENCE': LCOSpectroscopicSequenceForm
     }
     # The SITES dictionary is used to calculate visibility intervals in the
     # planning tool. All entries should contain latitude, longitude, elevation
