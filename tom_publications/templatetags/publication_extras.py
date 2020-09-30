@@ -1,7 +1,5 @@
 from django import template
 
-from tom_publications.forms import LatexTableForm
-
 register = template.Library()
 
 

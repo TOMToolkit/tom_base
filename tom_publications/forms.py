@@ -1,7 +1,5 @@
 from django import forms
 
-from tom_publications.models import LatexConfiguration
-
 
 class LatexTableForm(forms.Form):
 
