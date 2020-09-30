@@ -11,10 +11,7 @@ class Command(BaseCommand):
         cadenced_groups = DynamicCadence.objects.filter(active=True)
 
         for cg in cadenced_groups:
-            cadence_frequency = cg.cadence_parameters.get('cadence_frequency', -1)
-            # TODO: pass cadence parameters in as kwargs or access them in the strategy
-            # TODO: make cadence form strategy-specific
-            strategy = get_cadence_strategy(cg.cadence_strategy)(cg, cadence_frequency)
+            strategy = get_cadence_strategy(cg.cadence_strategy)(cg)
             new_observations = strategy.run()
             if not new_observations:
                 return 'No changes from cadence strategy.'

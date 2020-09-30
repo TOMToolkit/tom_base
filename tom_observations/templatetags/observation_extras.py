@@ -104,9 +104,6 @@ def observation_plan(target, facility, length=7, interval=60, airmass_limit=None
     for site, data in visibility_data.items():
         plot_data.append(go.Scatter(x=data[0], y=data[1], mode='markers+lines', marker={'symbol': i}, name=site))
         i += 1
-    # plot_data = [
-    #     go.Scatter(x=data[0], y=data[1], mode='markers', marker={'symbol': 'line-ew-open'}, name=site) for site, data in visibility_data.items()
-    # ]
     layout = go.Layout(
         xaxis={'title': 'Date'},
         yaxis={'autorange': 'reversed', 'title': 'Airmass'}
