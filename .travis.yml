@@ -13,7 +13,7 @@ before_install:
 
 install: pip install -r requirements.txt coverage coveralls
 
-script: coverage run manage.py test
+script: coverage run --include=tom_* manage.py test
 
 after_success: coveralls
 
@@ -26,8 +26,8 @@ stages:
 jobs:
   include:
     - stage: "Style Checks"
-      install: pip install -I pycodestyle
-      script: pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
+      install: pip install -I flake8
+      script: flake8 tom_* --exclude=*/migrations/* --max-line-length=120
 
     - stage: "test"
       os: osx

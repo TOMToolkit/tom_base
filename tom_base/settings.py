@@ -226,7 +226,7 @@ TOM_CADENCE_STRATEGIES = [
 # For example:
 # EXTRA_FIELDS = [
 #     {'name': 'redshift', 'type': 'number', 'default': 0},
-#     {'name': 'discoverer', 'type': 'string'}
+#     {'name': 'discoverer', 'type': 'string'},
 #     {'name': 'eligible', 'type': 'boolean', 'hidden': True},
 #     {'name': 'dicovery_date', 'type': 'datetime'}
 # ]

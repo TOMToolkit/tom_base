@@ -51,7 +51,7 @@ astronomers.
 
 No two TOM systems are identical, as astronomers strongly prefer to
 directly control the science-specific aspects of their projects such as
-target selection, observing strategy and analysis techniques. At the
+target selection, observation templates and analysis techniques. At the
 same time, while all of these systems are customized for the science
 goals of the projects they support, much of their underlying
 infrastructure and functions are very similar.
