@@ -469,10 +469,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
     """
     valid_instruments = ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']
     filters = ['U', 'B', 'V', 'R', 'I', 'u', 'g', 'r', 'i', 'z', 'w']
-    cadence_type = forms.ChoiceField(
-        choices=[('once', 'Once in the next'), ('repeat', 'Repeating every')],
-        required=True
-    )
+    cadence_frequency = forms.IntegerField(required=True, help_text='in hours')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -482,12 +479,10 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
             self.fields[filter_name] = FilterField(label=filter_name, required=False)
 
         # Massage cadence form to be SNEx-styled
-        self.fields['cadence_strategy'].widget = forms.HiddenInput()
-        self.fields['cadence_strategy'].required = False
-        self.fields['cadence_frequency'].required = True
-        self.fields['cadence_frequency'].widget.attrs['readonly'] = False
-        self.fields['cadence_frequency'].widget.attrs['help_text'] = 'in hours'
-
+        self.fields['cadence_strategy'] = forms.ChoiceField(
+            choices=[('', 'Once in the next'), ('ResumeCadenceAfterFailureStrategy', 'Repeating every')],
+            required=False,
+        )
         for field_name in ['exposure_time', 'exposure_count', 'start', 'end', 'filter']:
             self.fields.pop(field_name)
         if self.fields.get('groups'):
@@ -496,7 +491,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         self.helper.layout = Layout(
             Div(
                 Column('name'),
-                Column('cadence_type'),
+                Column('cadence_strategy'),
                 Column('cadence_frequency'),
                 css_class='form-row'
             ),
@@ -538,8 +533,6 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
         cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
                                                 '%Y-%m-%dT%H:%M:%S')
-        if cleaned_data['cadence_type'] == 'repeat':
-            cleaned_data['cadence_strategy'] = 'Resume Cadence After Failure'
 
         return cleaned_data
 
@@ -600,27 +593,22 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
     acquisition_radius = forms.FloatField(min_value=0)
     guider_mode = forms.ChoiceField(choices=[('on', 'On'), ('off', 'Off'), ('optional', 'Optional')], required=True)
     guider_exposure_time = forms.IntegerField(min_value=0)
-    cadence_type = forms.ChoiceField(
-        choices=[('once', 'Once in the next'), ('repeat', 'Repeating every')],
-        required=True,
-        label=''
-    )
+    cadence_frequency = forms.IntegerField(required=True,
+                                           widget=forms.NumberInput(attrs={'placeholder': 'Hours'}))
 
     def __init__(self, *args, **kwargs):
-        kwargs['cadence_strategy'] = 'ResumeCadenceAfterFailure'
         super().__init__(*args, **kwargs)
 
         # Massage cadence form to be SNEx-styled
         self.fields['name'].label = ''
         self.fields['name'].widget.attrs['placeholder'] = 'Name'
         self.fields['min_lunar_distance'].widget.attrs['placeholder'] = 'Degrees'
-        self.fields['cadence_strategy'].widget = forms.HiddenInput()
-        self.fields['cadence_strategy'].required = False
-        self.fields['cadence_frequency'].required = True
+        self.fields['cadence_strategy'] = forms.ChoiceField(
+            choices=[('', 'Once in the next'), ('ResumeCadenceAfterFailureStrategy', 'Repeating every')],
+            required=False,
+            label=''
+        )
         self.fields['cadence_frequency'].label = ''
-        self.fields['cadence_frequency'].widget.attrs['readonly'] = False
-        self.fields['cadence_frequency'].widget.attrs['placeholder'] = 'Hours'
-        self.fields['cadence_frequency'].help_text = None
 
         # Remove start and end because those are determined by the cadence
         for field_name in ['start', 'end']:
@@ -631,7 +619,7 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
         self.helper.layout = Layout(
             Div(
                 Column('name'),
-                Column('cadence_type'),
+                Column('cadence_strategy'),
                 Column(AppendedText('cadence_frequency', 'Hours')),
                 css_class='form-row'
             ),
@@ -689,8 +677,6 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
         cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
         cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
                                                 '%Y-%m-%dT%H:%M:%S')
-        if cleaned_data['cadence_type'] == 'repeat':
-            cleaned_data['cadence_strategy'] = 'Resume Cadence After Failure'
 
         return cleaned_data
 
@@ -768,9 +754,8 @@ class LCOFacility(BaseRoboticObservationFacility):
     observation_forms = {
         'IMAGING': LCOImagingObservationForm,
         'SPECTRA': LCOSpectroscopyObservationForm,
-        # TODO: Fix these forms
-        # 'PHOTOMETRIC_SEQUENCE': LCOPhotometricSequenceForm,
-        # 'SPECTROSCOPIC_SEQUENCE': LCOSpectroscopicSequenceForm
+        'PHOTOMETRIC_SEQUENCE': LCOPhotometricSequenceForm,
+        'SPECTROSCOPIC_SEQUENCE': LCOSpectroscopicSequenceForm
     }
     # The SITES dictionary is used to calculate visibility intervals in the
     # planning tool. All entries should contain latitude, longitude, elevation
