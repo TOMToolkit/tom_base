@@ -13,7 +13,7 @@ before_install:
 
 install: pip install -r requirements.txt coverage coveralls
 
-script: coverage run manage.py test
+script: coverage run manage.py test --include=tom_*
 
 after_success: coveralls
 
