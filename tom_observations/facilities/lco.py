@@ -173,7 +173,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     period = forms.FloatField(required=False)
     jitter = forms.FloatField(required=False)
     observation_mode = forms.ChoiceField(
-        choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response')),
+        choices=(('NORMAL', 'Normal'), ('RAPID_RESPONSE', 'Rapid-Response'), ('TIME_CRITICAL', 'Time-Critical')),
         help_text=observation_mode_help
     )  # TODO: Update this to support current observation modes
 

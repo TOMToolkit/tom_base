@@ -26,8 +26,8 @@ stages:
 jobs:
   include:
     - stage: "Style Checks"
-      install: pip install -I pycodestyle
-      script: pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
+      install: pip install -I flake8
+      script: flake8 tom_* --exclude=*/migrations/* --max-line-length=120
 
     - stage: "test"
       os: osx

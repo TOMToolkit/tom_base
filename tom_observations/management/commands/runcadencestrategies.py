@@ -1,5 +1,3 @@
-import json
-
 from django.core.management.base import BaseCommand
 
 from tom_observations.cadence import get_cadence_strategy
