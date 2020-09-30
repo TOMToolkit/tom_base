@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 from tom_common.exceptions import ImproperCredentialsException
+from tom_observations.cadence import CadenceForm
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
 from tom_observations.observation_template import GenericTemplateForm
 from tom_observations.widgets import FilterField
@@ -174,16 +175,17 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     observation_mode = forms.ChoiceField(
         choices=(('NORMAL', 'Normal'), ('TARGET_OF_OPPORTUNITY', 'Rapid Response')),
         help_text=observation_mode_help
-    )
+    )  # TODO: Update this to support current observation modes
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper.layout = Layout(
             self.common_layout,
             self.layout(),
-            self.cadence_layout(),  # TODO: this will break when instantiating the form manually
             self.button_layout()
         )
+        if isinstance(self, CadenceForm):
+            self.helper.layout.insert(2, self.cadence_layout())
 
     def layout(self):
         return Div(

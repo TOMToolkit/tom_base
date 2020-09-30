@@ -27,18 +27,6 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
                      re-submits the observation until it succeeds. If it succeeds, it submits the next observation on
                      the same cadence."""
     form = ResumeCadenceAfterFailureForm
-    form_parameters = {
-        'site': {
-            'field': forms.ChoiceField,
-            'kwargs': {
-                'choices': (('cpt', 'cpt'), ('tlv', 'tlv'))
-            }
-        },
-        'period': forms.IntegerField
-    }
-
-    # for key, value in form_parameters.items:
-    #   form[key] = value['field'](**value['kwargs'])
 
     class ResumeCadenceForm(forms.Form):
         site = forms.CharField()

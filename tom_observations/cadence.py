@@ -35,7 +35,8 @@ def get_cadence_strategy(name):
     try:
         return available_classes[name]
     except KeyError:
-        raise ImportError('Could not a find a facility with that name. Did you add it to TOM_FACILITY_CLASSES?')
+        raise ImportError('''Could not a find a cadence strategy with that name.
+                              Did you add it to TOM_CADENCE_STRATEGIES?''')
 
 
 class CadenceStrategy(ABC):
@@ -58,7 +59,7 @@ class CadenceForm(forms.Form):
     cadence_strategy = forms.CharField(required=False, max_length=50, widget=forms.HiddenInput())
 
     def cadence_layout(self):
-        return Layout('cadence_strategy')
+        return Layout()
 
 
 class BaseCadenceForm(CadenceForm):
@@ -68,7 +69,6 @@ class BaseCadenceForm(CadenceForm):
     )
     cadence_fields = ['cadence_frequency']
 
-    # TODO: find more elegant way of extending cadence layout
     def cadence_layout(self):
         return Layout(
             Div(

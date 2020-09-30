@@ -25,7 +25,8 @@ from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_observations.cadence import CadenceForm, get_cadence_strategy
-from tom_observations.facility import get_service_class, get_service_classes, BaseManualObservationFacility
+from tom_observations.facility import get_service_class, get_service_classes
+from tom_observations.facility import BaseManualObservationFacility
 from tom_observations.forms import AddExistingObservationForm
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
 from tom_targets.models import Target
@@ -180,9 +181,9 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             # Repopulate the appropriate form with form data if the original submission was invalid
             if observation_type == self.request.POST.get('observation_type'):
                 form_data.update(**self.request.POST.dict())
-            form_class = type(f'Composite{observation_type}Form',
-                              (observation_form_class, self.get_cadence_strategy_form()), {})
-            observation_type_choices.append((observation_type, form_class(initial=form_data)))
+            observation_form_class = type(f'Composite{observation_type}Form',
+                                          (self.get_cadence_strategy_form(), observation_form_class), {})
+            observation_type_choices.append((observation_type, observation_form_class(initial=form_data)))
         context['observation_type_choices'] = observation_type_choices
 
         # Ensure correct tab is active if submission is unsuccessful
