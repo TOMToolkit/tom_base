@@ -213,6 +213,7 @@ class BaseObservationFacility(ABC):
         """
         pass
 
+    # TODO: consider making submit_observation create ObservationRecords as well
     @abstractmethod
     def submit_observation(self, observation_payload):
         """

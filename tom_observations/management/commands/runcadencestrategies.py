@@ -5,6 +5,12 @@ from tom_observations.models import DynamicCadence
 
 
 class Command(BaseCommand):
+    """
+    This management command ensures that all cadences are kept up to date. It is intended to be run
+    by a cron job, and the frequency should be whatever is determined to be the desired frequency
+    by the PI.
+    """
+
     help = 'Entry point for running cadence strategies.'
 
     def handle(self, *args, **kwargs):
