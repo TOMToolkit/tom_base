@@ -55,8 +55,10 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
         return new_observations
 
     def advance_window(self, observation_payload, start_keyword='start', end_keyword='end'):
-        # TODO: validate that cadence frequency actually exists, throw an appropriate error
-        advance_window_hours = self.dynamic_cadence.cadence_parameters.get('cadence_frequency')
+        cadence_frequency = self.dynamic_cadence.cadence_parameters.get('cadence_frequency')
+        if not cadence_frequency:
+            raise Exception(f'The {self.name} strategy requires a cadence_frequency cadence_parameter.')
+        advance_window_hours = cadence_frequency
         new_start = parse(observation_payload[start_keyword]) + timedelta(hours=advance_window_hours)
         new_end = parse(observation_payload[end_keyword]) + timedelta(hours=advance_window_hours)
         observation_payload[start_keyword] = new_start.isoformat()
