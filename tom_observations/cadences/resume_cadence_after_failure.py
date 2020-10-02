@@ -35,7 +35,7 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
 
     def update_observation_payload(self, observation_payload):
         """
-        :param observation_payload: Payload 
+        :param observation_payload: form parameters for facility observation form
         :type observation_payload: dict
         """
         return observation_payload
