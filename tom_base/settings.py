@@ -217,8 +217,8 @@ TOM_FACILITY_CLASSES = [
 ]
 
 TOM_CADENCE_STRATEGIES = [
-    'tom_observations.cadence.RetryFailedObservationsStrategy',
-    'tom_observations.cadence.ResumeCadenceAfterFailureStrategy'
+    'tom_observations.cadences.retry_failed_observations.RetryFailedObservationsStrategy',
+    'tom_observations.cadences.resume_cadence_after_failure.ResumeCadenceAfterFailureStrategy'
 ]
 
 # Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"

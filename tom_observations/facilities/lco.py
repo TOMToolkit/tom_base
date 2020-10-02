@@ -82,6 +82,16 @@ max_airmass_help = """
     </a>
 """
 
+static_cadencing_help = """
+    For information on static cadencing with LCO,
+    <a href="https://s3.us-west-2.amazonaws.com/www.lco.global/documents/GettingStartedontheLCONetwork.latest.pdf?
+             X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA6FT4CXR4ZJRYWHNN%2F20200928%2Fus-west-2%2Fs3%2F
+             aws4_request&X-Amz-Date=20200928T221218Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=
+             328a99283fed8b98a3ffa3a035f3effe2b1c0b6ea4e84e266b7662abec9cc2e4">
+        check the Observation Portal getting started guide, starting on page 18.
+    </a>
+"""
+
 
 def make_request(*args, **kwargs):
     response = requests.request(*args, **kwargs)
@@ -139,7 +149,7 @@ class LCOBaseForm(forms.Form):
         return choices
 
 
-class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceForm):
+class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     """
     The LCOBaseObservationForm provides the base set of utilities to construct an observation at Las Cumbres
     Observatory. While the forms that inherit from it provide a subset of instruments and filters, the
@@ -165,16 +175,17 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
     observation_mode = forms.ChoiceField(
         choices=(('NORMAL', 'Normal'), ('RAPID_RESPONSE', 'Rapid-Response'), ('TIME_CRITICAL', 'Time-Critical')),
         help_text=observation_mode_help
-    )
+    )  # TODO: Update this to support current observation modes
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper.layout = Layout(
             self.common_layout,
             self.layout(),
-            self.cadence_layout,
             self.button_layout()
         )
+        if isinstance(self, CadenceForm):
+            self.helper.layout.insert(2, self.cadence_layout())
 
     def layout(self):
         return Div(
@@ -190,7 +201,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
                 css_class='form-row',
             ),
             Div(
-                HTML('<p>Cadence parameters. Leave blank if no cadencing is desired.</p>'),
+                HTML(f'''<br/><p>Static cadence parameters. Leave blank if no cadencing is desired.
+                         {static_cadencing_help} </p>'''),
             ),
             Div(
                 Div(
@@ -457,10 +469,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
     """
     valid_instruments = ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']
     filters = ['U', 'B', 'V', 'R', 'I', 'u', 'g', 'r', 'i', 'z', 'w']
-    cadence_type = forms.ChoiceField(
-        choices=[('once', 'Once in the next'), ('repeat', 'Repeating every')],
-        required=True
-    )
+    cadence_frequency = forms.IntegerField(required=True, help_text='in hours')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -470,12 +479,10 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
             self.fields[filter_name] = FilterField(label=filter_name, required=False)
 
         # Massage cadence form to be SNEx-styled
-        self.fields['cadence_strategy'].widget = forms.HiddenInput()
-        self.fields['cadence_strategy'].required = False
-        self.fields['cadence_frequency'].required = True
-        self.fields['cadence_frequency'].widget.attrs['readonly'] = False
-        self.fields['cadence_frequency'].widget.attrs['help_text'] = 'in hours'
-
+        self.fields['cadence_strategy'] = forms.ChoiceField(
+            choices=[('', 'Once in the next'), ('ResumeCadenceAfterFailureStrategy', 'Repeating every')],
+            required=False,
+        )
         for field_name in ['exposure_time', 'exposure_count', 'start', 'end', 'filter']:
             self.fields.pop(field_name)
         if self.fields.get('groups'):
@@ -484,7 +491,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         self.helper.layout = Layout(
             Div(
                 Column('name'),
-                Column('cadence_type'),
+                Column('cadence_strategy'),
                 Column('cadence_frequency'),
                 css_class='form-row'
             ),
@@ -526,8 +533,6 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
         cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
                                                 '%Y-%m-%dT%H:%M:%S')
-        if cleaned_data['cadence_type'] == 'repeat':
-            cleaned_data['cadence_strategy'] = 'Resume Cadence After Failure'
 
         return cleaned_data
 
@@ -588,11 +593,8 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
     acquisition_radius = forms.FloatField(min_value=0)
     guider_mode = forms.ChoiceField(choices=[('on', 'On'), ('off', 'Off'), ('optional', 'Optional')], required=True)
     guider_exposure_time = forms.IntegerField(min_value=0)
-    cadence_type = forms.ChoiceField(
-        choices=[('once', 'Once in the next'), ('repeat', 'Repeating every')],
-        required=True,
-        label=''
-    )
+    cadence_frequency = forms.IntegerField(required=True,
+                                           widget=forms.NumberInput(attrs={'placeholder': 'Hours'}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -601,13 +603,12 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
         self.fields['name'].label = ''
         self.fields['name'].widget.attrs['placeholder'] = 'Name'
         self.fields['min_lunar_distance'].widget.attrs['placeholder'] = 'Degrees'
-        self.fields['cadence_strategy'].widget = forms.HiddenInput()
-        self.fields['cadence_strategy'].required = False
-        self.fields['cadence_frequency'].required = True
+        self.fields['cadence_strategy'] = forms.ChoiceField(
+            choices=[('', 'Once in the next'), ('ResumeCadenceAfterFailureStrategy', 'Repeating every')],
+            required=False,
+            label=''
+        )
         self.fields['cadence_frequency'].label = ''
-        self.fields['cadence_frequency'].widget.attrs['readonly'] = False
-        self.fields['cadence_frequency'].widget.attrs['placeholder'] = 'Hours'
-        self.fields['cadence_frequency'].help_text = None
 
         # Remove start and end because those are determined by the cadence
         for field_name in ['start', 'end']:
@@ -618,7 +619,7 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
         self.helper.layout = Layout(
             Div(
                 Column('name'),
-                Column('cadence_type'),
+                Column('cadence_strategy'),
                 Column(AppendedText('cadence_frequency', 'Hours')),
                 css_class='form-row'
             ),
@@ -676,8 +677,6 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
         cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
         cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
                                                 '%Y-%m-%dT%H:%M:%S')
-        if cleaned_data['cadence_type'] == 'repeat':
-            cleaned_data['cadence_strategy'] = 'Resume Cadence After Failure'
 
         return cleaned_data
 
@@ -802,12 +801,14 @@ class LCOFacility(BaseRoboticObservationFacility):
         }
     }
 
+    # TODO: this should be called get_form_class
     def get_form(self, observation_type):
         try:
             return self.observation_forms[observation_type]
         except KeyError:
             return LCOBaseObservationForm
 
+    # TODO: this should be called get_template_form_class
     def get_template_form(self, observation_type):
         return LCOObservationTemplateForm
 
