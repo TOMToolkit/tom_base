@@ -55,9 +55,6 @@ def get_service_class(name):
         raise ImportError('Could not a find a facility with that name. Did you add it to TOM_FACILITY_CLASSES?')
 
 
-# TODO: Ensure docstrings are up to date
-
-
 class BaseObservationForm(forms.Form):
     """
     This is the class that is responsible for displaying the observation request form.
@@ -216,6 +213,7 @@ class BaseObservationFacility(ABC):
         """
         pass
 
+    # TODO: consider making submit_observation create ObservationRecords as well
     @abstractmethod
     def submit_observation(self, observation_payload):
         """
