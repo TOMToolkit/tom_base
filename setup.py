@@ -31,7 +31,7 @@ setup(
         'astroquery==0.4.1',
         'astroplan==0.6',
         'astropy==4.0.1.post1',
-        'beautifulsoup4==4.9.2',
+        'beautifulsoup4==4.9.3',
         'dataclasses; python_version < "3.7"',
         'django==3.1.2',  # TOM Toolkit requires db math functions
         'djangorestframework==3.12.1',
@@ -52,7 +52,7 @@ setup(
         'specutils==1.1',
     ],
     extras_require={
-        'test': ['factory_boy==3.0.1']
+        'test': ['factory_boy==3.1.0']
     },
     include_package_data=True,
 )
