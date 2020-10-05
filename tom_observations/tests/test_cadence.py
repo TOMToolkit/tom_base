@@ -1,3 +1,5 @@
+import json
+
 from django.test import TestCase
 from unittest.mock import patch
 from datetime import datetime, timedelta
@@ -17,6 +19,22 @@ mock_filters = {'1M0-SCICAM-SINISTRO': {
                     }
                 }
 
+obs_params = {
+        'facility': 'LCO',
+        'observation_type': 'IMAGING',
+        'name': 'With Perms',
+        'ipp_value': 1.05,
+        'start': '2020-01-01T00:00:00',
+        'end': '2020-01-02T00:00:00',
+        'exposure_count': 1,
+        'exposure_time': 2.0,
+        'max_airmass': 4.0,
+        'observation_mode': 'NORMAL',
+        'proposal': 'LCOSchedulerTest',
+        'filter': 'I',
+        'instrument_type': '1M0-SCICAM-SINISTRO'
+    }
+
 
 @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments', return_value=mock_filters)
 @patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices',
@@ -26,7 +44,10 @@ mock_filters = {'1M0-SCICAM-SINISTRO': {
 class TestReactiveCadencing(TestCase):
     def setUp(self):
         target = TargetFactory.create()
-        observing_records = ObservingRecordFactory.create_batch(5, target_id=target.id)
+        obs_params['target_id'] = target.id
+        observing_records = ObservingRecordFactory.create_batch(5,
+                                                                target_id=target.id,
+                                                                parameters=json.dumps(obs_params))
         self.group = ObservationGroup.objects.create()
         self.group.observation_records.add(*observing_records)
         self.group.save()
