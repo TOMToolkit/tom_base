@@ -168,7 +168,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     exposure_time = forms.FloatField(min_value=0.1,
                                      widget=forms.TextInput(attrs={'placeholder': 'Seconds'}),
                                      help_text=exposure_time_help)
-    max_airmass = forms.FloatField(help_text=max_airmass_help)
+    max_airmass = forms.FloatField(help_text=max_airmass_help, min_value=0)
     min_lunar_distance = forms.IntegerField(min_value=0, label='Minimum Lunar Distance', required=False)
     period = forms.FloatField(required=False)
     jitter = forms.FloatField(required=False)
@@ -530,7 +530,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         """
         cleaned_data = super().clean()
         now = datetime.now()
-        cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
+        cleaned_data['start'] = datetime.strftime(now, '%Y-%m-%dT%H:%M:%S')
         cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
                                                 '%Y-%m-%dT%H:%M:%S')
 
@@ -751,6 +751,7 @@ class LCOFacility(BaseRoboticObservationFacility):
     """
 
     name = 'LCO'
+    # TODO: make the keys the display values instead
     observation_forms = {
         'IMAGING': LCOImagingObservationForm,
         'SPECTRA': LCOSpectroscopyObservationForm,

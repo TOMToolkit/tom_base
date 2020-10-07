@@ -67,7 +67,7 @@ class BaseCadenceForm(CadenceForm):
         required=True,
         help_text='Frequency of observations, in hours'
     )
-    cadence_fields = ['cadence_frequency']
+    cadence_fields = set(['cadence_frequency'])
 
     def cadence_layout(self):
         return Layout(
