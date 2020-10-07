@@ -168,7 +168,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     exposure_time = forms.FloatField(min_value=0.1,
                                      widget=forms.TextInput(attrs={'placeholder': 'Seconds'}),
                                      help_text=exposure_time_help)
-    max_airmass = forms.FloatField(help_text=max_airmass_help)
+    max_airmass = forms.FloatField(help_text=max_airmass_help, min_value=0)
     min_lunar_distance = forms.IntegerField(min_value=0, label='Minimum Lunar Distance', required=False)
     period = forms.FloatField(required=False)
     jitter = forms.FloatField(required=False)
@@ -476,7 +476,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
 
         # Add fields for each available filter as specified in the filters property
         for filter_name in self.filters:
-            self.fields[filter_name] = FilterField(label=filter_name, required=False)
+            self.fields[filter_name] = FilterField(label=filter_name, required=False, min_value=0)
 
         # Massage cadence form to be SNEx-styled
         self.fields['cadence_strategy'] = forms.ChoiceField(
@@ -751,6 +751,7 @@ class LCOFacility(BaseRoboticObservationFacility):
     """
 
     name = 'LCO'
+    # TODO: make the keys the display values instead
     observation_forms = {
         'IMAGING': LCOImagingObservationForm,
         'SPECTRA': LCOSpectroscopyObservationForm,
