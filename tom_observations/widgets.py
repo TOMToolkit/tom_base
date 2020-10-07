@@ -5,7 +5,6 @@ from django.core.validators import MinValueValidator
 class FilterConfigurationWidget(forms.widgets.MultiWidget):
 
     def __init__(self, attrs=None):
-        print(attrs)
         if not attrs:
             attrs = {}
         _default_attrs = {'class': 'form-control col-md-3', 'style': 'margin-right: 10px; display: inline-block'}
@@ -26,10 +25,7 @@ class FilterField(forms.MultiValueField):
     widget = FilterConfigurationWidget
 
     def __init__(self, *args, **kwargs):
-        min_value = kwargs.pop('min_value', 0)
-        fields = (forms.IntegerField(validators=[MinValueValidator(min_value)]),
-                  forms.IntegerField(validators=[MinValueValidator(min_value)]),
-                  forms.IntegerField(validators=[MinValueValidator(min_value)]))
+        fields = (forms.IntegerField(), forms.IntegerField(), forms.IntegerField())
         super().__init__(fields=fields, *args, **kwargs)
 
     def compress(self, data_list):
