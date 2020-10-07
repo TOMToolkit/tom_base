@@ -476,7 +476,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
 
         # Add fields for each available filter as specified in the filters property
         for filter_name in self.filters:
-            self.fields[filter_name] = FilterField(label=filter_name, required=False, min_value=0)
+            self.fields[filter_name] = FilterField(label=filter_name, required=False)
 
         # Massage cadence form to be SNEx-styled
         self.fields['cadence_strategy'] = forms.ChoiceField(
