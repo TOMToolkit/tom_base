@@ -26,7 +26,7 @@ class FilterField(forms.MultiValueField):
 
     def __init__(self, *args, **kwargs):
         fields = (forms.IntegerField(), forms.IntegerField(), forms.IntegerField())
-        super().__init__(fields=fields, *args, **kwargs)
+        super().__init__(fields, *args, **kwargs)
 
     def compress(self, data_list):
         return data_list
