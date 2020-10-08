@@ -182,6 +182,7 @@ LOGGING = {
         }
     }
 }
+logging.config.dictConfig(LOGGING)
 
 TARGET_TYPE = 'SIDEREAL'
 FACILITIES = {
