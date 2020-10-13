@@ -223,6 +223,7 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
         broker_name = self.request.POST['broker']
         broker_class = get_service_class(broker_name)
         alerts = self.request.POST.getlist('alerts')
+        successes = []
         errors = []
         if not alerts:
             messages.warning(request, 'Please select at least one alert from which to create a target.')
@@ -235,22 +236,37 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             target, extras, aliases = broker_class().to_target(json.loads(cached_alert))
             try:
                 target.save()
+            except IntegrityError as ie:  # TODO: check what happens if target causes integrity error
+                print(ie)
+                messages.warning(request, f'Unable to save {target.name}, target with that name already exists.')
+                errors.append(target.name)
+                continue
+            try:
                 for extra in extras:
                     extra.target = target
                     extra.save()
                 for alias in aliases:
                     alias.target = target
                     alias.save()
+            except IntegrityError:
+                # Because TargetExtra and TargetName models are set to cascade on Target delete, this is sufficient
+                target.delete()
+                messages.warning(request, f'Unable to save {target.name}, target with that name already exists.')
+                errors.append(target.name)
+                continue
+            try:
                 broker_class().process_reduced_data(target, json.loads(cached_alert))
                 for group in request.user.groups.all().exclude(name='Public'):
                     assign_perm('tom_targets.view_target', group, target)
                     assign_perm('tom_targets.change_target', group, target)
                     assign_perm('tom_targets.delete_target', group, target)
-            except IntegrityError:  # TODO: check what happens if target causes integrity error
+                successes.append(target.name)
+            except IntegrityError:
                 # Because TargetExtra and TargetName models are set to cascade on Target delete, this is sufficient
                 target.delete()
                 messages.warning(request, f'Unable to save {target.name}, target with that name already exists.')
                 errors.append(target.name)
+
         if (len(alerts) == len(errors)):
             return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
         elif (len(alerts) == 1):
@@ -258,6 +274,8 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
                 'tom_targets:update', kwargs={'pk': target.id})
             )
         else:
+            messages.success(request, 
+                             'Successfully saved target(s) {0}.'.format(', '.join([name for name in successes])))
             return redirect(reverse(
                 'tom_targets:list')
             )

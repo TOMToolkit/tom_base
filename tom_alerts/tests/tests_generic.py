@@ -2,23 +2,15 @@ import json
 
 from django import forms
 from django.contrib.auth.models import User, Group
+from django.contrib.messages import get_messages
 from django.core.cache import cache
 from django.db import IntegrityError, transaction
-from django.test import TestCase, override_settings
+from django.test import override_settings, TestCase, TransactionTestCase
 from django.urls import reverse
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, get_service_class
 from tom_alerts.models import BrokerQuery
 from tom_targets.models import Target, TargetExtra, TargetName
-
-
-# Test alert data. Normally this would come from a remote source.
-test_alerts = [
-    {'id': 1, 'name': 'Tatooine', 'timestamp': '2019-07-01', 'ra': 32, 'dec': -20, 'mag': 8,
-     'score': 20, 'testextra': 'testvalue', 'alias': 'testalias'},
-    {'id': 2, 'name': 'Hoth', 'timestamp': '2019-07-02', 'ra': 66, 'dec': 50, 'mag': 3,
-     'score': 66, 'testextra': 'testvalue', 'alias': 'testalias'},
-]
 
 
 class TestBrokerForm(GenericQueryForm):
@@ -41,6 +33,14 @@ class TestBroker:
     def fetch_alerts(self, parameters):
         """ All brokers must implement this method. It must return a list of alerts.
         """
+        # Test alert data. Normally this would come from a remote source.
+        test_alerts = [
+            {'id': 1, 'name': 'Tatooine', 'timestamp': '2019-07-01', 'ra': 32, 'dec': -20, 'mag': 8,
+             'score': 20, 'testextra': 'testvalue', 'alias': 'testalias'},
+            {'id': 2, 'name': 'Hoth', 'timestamp': '2019-07-02', 'ra': 66, 'dec': 50, 'mag': 3,
+             'score': 66, 'testextra': 'testvalue', 'alias': 'testalias2'},
+        ]
+
         # Here we simply return a list of `GenericAlert`s that match the name passed in via `parameters`.
         return iter([alert for alert in test_alerts if alert['name'] == parameters['name']])
 
@@ -234,33 +234,6 @@ class TestBrokerViews(TestCase):
         self.assertEqual(Target.objects.all().count(), 2)
         self.assertRedirects(response, reverse('tom_targets:list'))
 
-    def test_create_conflicting_targets(self):
-        self.test_alerts[1]['alias'] = 'testalias'
-        cache.set('alert_1', json.dumps(self.test_alerts[0]))
-        cache.set('alert_2', json.dumps(self.test_alerts[1]))
-        query = BrokerQuery.objects.create(
-            name='find anything',
-            broker='TEST',
-            parameters='{"score__gt": "19"}',
-        )
-        post_data = {
-            'broker': 'TEST',
-            'query_id': query.id,
-            'alerts': [1, 2]
-        }
-        try:
-            with transaction.atomic():
-                response = self.client.post(reverse('tom_alerts:create-target'), data=post_data)
-            self.fail('Duplicate target created.')
-        except IntegrityError:
-            pass
-
-        messages = list(response.context['messages'])
-        self.assertEqual(Target.objects.all().count(), 1)
-        self.assertEqual(str(messages[0]),
-                         f"Unable to save {self.test_alerts[1]['name']}, target with that name already exists.")
-        self.assertRedirects(response, reverse('tom_targets:list'))
-
     def test_create_no_targets(self):
         query = BrokerQuery.objects.create(
             name='find anything',
@@ -275,3 +248,45 @@ class TestBrokerViews(TestCase):
         response = self.client.post(reverse('tom_alerts:create-target'), data=post_data, follow=True)
         self.assertEqual(Target.objects.count(), 0)
         self.assertRedirects(response, reverse('tom_alerts:run', kwargs={'pk': query.id}))
+
+
+@override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
+class TestCreateTargetFromAlertNonAtomic(TransactionTestCase):
+    """ Test the views that use the broker classes
+    """
+    def setUp(self):
+        # Test alert data. Normally this would come from a remote source.
+        self.test_alerts = [
+            {'id': 1, 'name': 'Tatooine', 'timestamp': '2019-07-01', 'ra': 32, 'dec': -20, 'mag': 8,
+             'score': 20, 'testextra': 'testvalue', 'alias': 'testalias'},
+            {'id': 2, 'name': 'Hoth', 'timestamp': '2019-07-02', 'ra': 66, 'dec': 50, 'mag': 3,
+             'score': 66, 'testextra': 'testvalue', 'alias': 'testalias2'},
+        ]
+
+        self.user = User.objects.create(username='Han', email='han@example.com')
+        group = Group.objects.create(name='test')
+        group.user_set.add(self.user)
+        group.save()
+        self.client.force_login(self.user)
+
+    def test_create_conflicting_targets(self):
+        self.test_alerts[1]['alias'] = 'testalias'
+        cache.set('alert_1', json.dumps(self.test_alerts[0]))
+        cache.set('alert_2', json.dumps(self.test_alerts[1]))
+        query = BrokerQuery.objects.create(
+            name='find anything',
+            broker='TEST',
+            parameters='{"score__gt": "19"}',
+        )
+        post_data = {
+            'broker': 'TEST',
+            'query_id': query.id,
+            'alerts': [1, 2]
+        }
+
+        response = self.client.post(reverse('tom_alerts:create-target'), data=post_data)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(Target.objects.all().count(), 1)
+        self.assertEqual(str(messages[0]),
+                         f"Unable to save {self.test_alerts[1]['name']}, target with that name already exists.")
+        self.assertRedirects(response, reverse('tom_targets:list'))
