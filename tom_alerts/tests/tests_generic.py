@@ -58,6 +58,14 @@ class TestBroker:
             score=alert['score']
         )
 
+    def to_target(self, alert):
+        return Target(
+            name=alert['name'],
+            type='SIDEREAL',
+            ra=alert['ra'],
+            dec=alert['dec']
+        ), [], []
+
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
 class TestBrokerClass(TestCase):
@@ -80,7 +88,7 @@ class TestBrokerClass(TestCase):
         self.assertEqual(ga.name, test_alerts[0]['name'])
 
     def test_to_target(self):
-        target, _, _ = TestBroker().to_generic_alert(test_alerts[0]).to_target()
+        target, _, _ = TestBroker().to_target(test_alerts[0])
         self.assertEqual(target.name, test_alerts[0]['name'])
 
 
@@ -165,6 +173,7 @@ class TestBrokerViews(TestCase):
             }
         })
     def test_create_target(self):
+        # TODO: test that this creates aliases/extras
         cache.set('alert_2', json.dumps(test_alerts[1]))
         query = BrokerQuery.objects.create(
             name='find hoth',
