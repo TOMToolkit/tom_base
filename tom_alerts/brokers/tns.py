@@ -1,11 +1,13 @@
-from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
+from datetime import datetime, timedelta
+import json
+import requests
+
+from crispy_forms.layout import Layout, Div, Fieldset
 from django import forms
 from django.conf import settings
-import requests
-import json
-from datetime import datetime, timedelta
-from crispy_forms.layout import Layout, Div, Fieldset
 
+from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
+from tom_targets.models import Target
 
 tns_search_url = 'https://wis-tns.weizmann.ac.il/api/get/search'
 tns_object_url = 'https://wis-tns.weizmann.ac.il/api/get/object'
@@ -133,8 +135,7 @@ class TNSBroker(GenericBroker):
                 alerts.append(alert)
         return iter(alerts)
 
-    @classmethod
-    def to_generic_alert(cls, alert):
+    def to_generic_alert(self, alert):
         return GenericAlert(
             timestamp=alert['discoverydate'],
             url='https://wis-tns.weizmann.ac.il/object/' + alert['name'],
@@ -145,3 +146,11 @@ class TNSBroker(GenericBroker):
             mag=alert['discoverymag'],
             score=alert['name_prefix'] == 'SN'
         )
+
+    def to_target(self, alert):
+        return Target(
+            name=alert['name'],
+            type='SIDEREAL',
+            ra=alert['radeg'],
+            dec=alert['decdeg']
+        ), [], []

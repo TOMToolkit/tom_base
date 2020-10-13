@@ -51,14 +51,13 @@ class ScoutBroker(GenericBroker):
         pass
 
     def to_target(self, alert):
-        target = Target.objects.create(
+        return Target(
             name=alert['objectName'],
             type='NON_SIDEREAL',
             ra=hours_min_to_decimal(alert['ra']),
             dec=alert['dec'],
             eccentricity=alert['elong']
-        )
-        return target
+        ), [], []
 
     def to_generic_alert(self, alert):
         timestamp = parse(alert['lastRun'])

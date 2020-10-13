@@ -12,6 +12,7 @@ from django import forms
 
 from tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
 from tom_dataproducts.models import ReducedDatum
+from tom_targets.models import Target
 
 BASE_BROKER_URL = 'http://gsaweb.ast.cam.ac.uk'
 
@@ -113,6 +114,14 @@ class GaiaBroker(GenericBroker):
             mag=alert['alertMag'],
             score=1.0
         )
+
+    def to_target(self, alert):
+        return Target(
+            name=alert['name'],
+            type='SIDEREAL',
+            ra=alert['ra'],
+            dec=alert['dec']
+        ), [], []
 
     def process_reduced_data(self, target, alert=None):
 

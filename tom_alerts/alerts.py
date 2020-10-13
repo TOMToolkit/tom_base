@@ -1,15 +1,17 @@
-from django.conf import settings
-from django import forms
-from importlib import import_module
-from datetime import datetime
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import datetime
+from importlib import import_module
+import json
+from typing import List
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout
-import json
-from abc import ABC, abstractmethod
+from django import forms
+from django.conf import settings
 
 from tom_alerts.models import BrokerQuery
-from tom_targets.models import Target
+from tom_targets.models import Target, TargetExtra, TargetName
 
 
 DEFAULT_ALERT_CLASSES = [
@@ -78,27 +80,6 @@ class GenericAlert:
     mag: float
     score: float
     url: str
-
-    def to_target(self):
-        """
-        Returns a Target instance for an object defined by an alert, as well as
-        any TargetExtra or additional TargetNames.
-
-        :returns: representation of object for an alert
-        :rtype: `Target`
-
-        :returns: dict of extras to be added to the new Target
-        :rtype: `dict`
-
-        :returns: list of aliases to be added to the new Target
-        :rtype: `list`
-        """
-        return Target(
-            name=self.name,
-            type='SIDEREAL',
-            ra=self.ra,
-            dec=self.dec
-        ), {}, []
 
 
 class GenericQueryForm(forms.Form):
@@ -190,12 +171,21 @@ class GenericBroker(ABC):
         """
         pass
 
-    def to_target(self, alert):
+    def to_target(self, alert: dict) -> (Target, List[TargetExtra], List[TargetName]):
         """
         Creates ``Target`` object from the broker-specific alert data.
 
         :param alert: alert data from a particular ``BrokerQuery``
         :type alert: str
+
+        :returns: target object based on broker alert
+        :rtype: ``Target``
+
+        :returns: target extras based on broker alert
+        :rtype: list of ``TargetExtra``s
+
+        :returns: target names based on broker alert
+        :rtype: list of ``TargetName``s
         """
         pass
 

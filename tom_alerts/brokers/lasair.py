@@ -99,4 +99,4 @@ class LasairBroker(GenericBroker):
             dec=c['decl'],
             galactic_lng=alert['objectData']['glonmean'],
             galactic_lat=alert['objectData']['glatmean'],
-        )
+        ), [], []

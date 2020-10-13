@@ -241,7 +241,7 @@ class MARSBroker(GenericBroker):
 
     def to_target(self, alert):
         alert_copy = alert.copy()
-        target = Target.objects.create(
+        target = Target(
             name=alert_copy['objectId'],
             type='SIDEREAL',
             ra=alert_copy['candidate'].pop('ra'),
@@ -249,7 +249,7 @@ class MARSBroker(GenericBroker):
             galactic_lng=alert_copy['candidate'].pop('l'),
             galactic_lat=alert_copy['candidate'].pop('b'),
         )
-        return target
+        return target, [], []
 
     def to_generic_alert(self, alert):
         timestamp = parse(alert['candidate']['wall_time'])

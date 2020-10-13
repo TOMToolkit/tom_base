@@ -313,12 +313,12 @@ class ALeRCEBroker(GenericBroker):
         return response.json()['result'][0]
 
     def to_target(self, alert):
-        return Target.objects.create(
+        return Target(
             name=alert['oid'],
             type='SIDEREAL',
             ra=alert['meanra'],
             dec=alert['meandec']
-        )
+        ), [], []
 
     def to_generic_alert(self, alert):
         if alert['lastmjd']:

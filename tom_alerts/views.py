@@ -213,13 +213,11 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
     """
     View that handles the creation of ``Target`` objects from a ``BrokerQuery`` result. Requires authentication.
     """
-
-    # TODO: Change the order of the docstring to emphasize if before then
     def post(self, request, *args, **kwargs):
         """
-        Handles the POST requests to this view. Creates a ``Target`` for each alert sent in the POST. Redirects to the
-        ``TargetListView`` if multiple targets were created, and the ``TargetUpdateView`` if only one was created.
-        Redirects to the ``RunQueryView`` if no ``Target`` objects. were successfully created.
+        Handles the POST requests to this view. Creates a ``Target`` for each alert sent in the POST. If multiple
+        targets were created, redirects to the ``TargetListView``. If only one target was created, redirects to the
+        ``TargetUpdateView``. If no targets were successfully created, redirects to the ``RunQueryView``.
         """
         query_id = self.request.POST['query_id']
         broker_name = self.request.POST['broker']
@@ -234,11 +232,15 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             if not cached_alert:
                 messages.error(request, 'Could not create targets. Try re running the query again.')
                 return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
-            generic_alert = broker_class().to_generic_alert(json.loads(cached_alert))
-            target, extras, aliases = generic_alert.to_target()
-            # target = broker_class().to_target(json.loads(cached_alert))
+            target, extras, aliases = broker_class().to_target(json.loads(cached_alert))
             try:
-                target.save(extras=extras, names=aliases)
+                target.save()
+                for extra in extras:
+                    extra.target = target
+                    extra.save()
+                for alias in aliases:
+                    alias.target = target
+                    alias.save()
                 broker_class().process_reduced_data(target, json.loads(cached_alert))
                 for group in request.user.groups.all().exclude(name='Public'):
                     assign_perm('tom_targets.view_target', group, target)
