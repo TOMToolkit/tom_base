@@ -214,6 +214,7 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
     View that handles the creation of ``Target`` objects from a ``BrokerQuery`` result. Requires authentication.
     """
 
+    # TODO: Change the order of the docstring to emphasize if before then
     def post(self, request, *args, **kwargs):
         """
         Handles the POST requests to this view. Creates a ``Target`` for each alert sent in the POST. Redirects to the
@@ -235,6 +236,7 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
                 return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
             generic_alert = broker_class().to_generic_alert(json.loads(cached_alert))
             target, extras, aliases = generic_alert.to_target()
+            # target = broker_class().to_target(json.loads(cached_alert))
             try:
                 target.save(extras=extras, names=aliases)
                 broker_class().process_reduced_data(target, json.loads(cached_alert))
