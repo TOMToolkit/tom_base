@@ -1,18 +1,23 @@
-from django.test import TestCase, override_settings
+import json
+
 from django import forms
 from django.contrib.auth.models import User, Group
-from django.urls import reverse
 from django.core.cache import cache
-import json
+from django.db import IntegrityError, transaction
+from django.test import TestCase, override_settings
+from django.urls import reverse
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, get_service_class
 from tom_alerts.models import BrokerQuery
-from tom_targets.models import Target
+from tom_targets.models import Target, TargetExtra, TargetName
+
 
 # Test alert data. Normally this would come from a remote source.
 test_alerts = [
-    {'id': 1, 'name': 'Tatooine', 'timestamp': '2019-07-01', 'ra': 32, 'dec': -20, 'mag': 8, 'score': 20},
-    {'id': 2, 'name': 'Hoth', 'timestamp': '2019-07-02', 'ra': 66, 'dec': 50, 'mag': 3, 'score': 66},
+    {'id': 1, 'name': 'Tatooine', 'timestamp': '2019-07-01', 'ra': 32, 'dec': -20, 'mag': 8,
+     'score': 20, 'testextra': 'testvalue', 'alias': 'testalias'},
+    {'id': 2, 'name': 'Hoth', 'timestamp': '2019-07-02', 'ra': 66, 'dec': 50, 'mag': 3,
+     'score': 66, 'testextra': 'testvalue', 'alias': 'testalias'},
 ]
 
 
@@ -64,7 +69,7 @@ class TestBroker:
             type='SIDEREAL',
             ra=alert['ra'],
             dec=alert['dec']
-        ), [], []
+        ), [TargetExtra(key='testkey', value=alert['testextra'])], [TargetName(name=alert['alias'])]
 
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
@@ -72,6 +77,15 @@ class TestBrokerClass(TestCase):
     """ Test the functionality of the TestBroker, we modify the django settings to make sure
     it is the only installed broker.
     """
+    def setUp(self):
+        # Test alert data. Normally this would come from a remote source.
+        self.test_alerts = [
+            {'id': 1, 'name': 'Tatooine', 'timestamp': '2019-07-01', 'ra': 32, 'dec': -20, 'mag': 8,
+             'score': 20, 'testextra': 'testvalue', 'alias': 'testalias'},
+            {'id': 2, 'name': 'Hoth', 'timestamp': '2019-07-02', 'ra': 66, 'dec': 50, 'mag': 3,
+             'score': 66, 'testextra': 'testvalue', 'alias': 'testalias2'},
+        ]
+
     def test_get_broker_class(self):
         self.assertEqual(TestBroker, get_service_class('TEST'))
 
@@ -81,15 +95,15 @@ class TestBrokerClass(TestCase):
 
     def test_fetch_alerts(self):
         alerts = TestBroker().fetch_alerts({'name': 'Hoth'})
-        self.assertEqual(test_alerts[1], list(alerts)[0])
+        self.assertEqual(self.test_alerts[1], list(alerts)[0])
 
     def test_to_generic_alert(self):
         ga = TestBroker().to_generic_alert(test_alerts[0])
-        self.assertEqual(ga.name, test_alerts[0]['name'])
+        self.assertEqual(ga.name, self.test_alerts[0]['name'])
 
     def test_to_target(self):
         target, _, _ = TestBroker().to_target(test_alerts[0])
-        self.assertEqual(target.name, test_alerts[0]['name'])
+        self.assertEqual(target.name, self.test_alerts[0]['name'])
 
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
@@ -97,6 +111,14 @@ class TestBrokerViews(TestCase):
     """ Test the views that use the broker classes
     """
     def setUp(self):
+        # Test alert data. Normally this would come from a remote source.
+        self.test_alerts = [
+            {'id': 1, 'name': 'Tatooine', 'timestamp': '2019-07-01', 'ra': 32, 'dec': -20, 'mag': 8,
+             'score': 20, 'testextra': 'testvalue', 'alias': 'testalias'},
+            {'id': 2, 'name': 'Hoth', 'timestamp': '2019-07-02', 'ra': 66, 'dec': 50, 'mag': 3,
+             'score': 66, 'testextra': 'testvalue', 'alias': 'testalias2'},
+        ]
+
         self.user = User.objects.create(username='Han', email='han@example.com')
         group = Group.objects.create(name='test')
         group.user_set.add(self.user)
@@ -174,7 +196,7 @@ class TestBrokerViews(TestCase):
         })
     def test_create_target(self):
         # TODO: test that this creates aliases/extras
-        cache.set('alert_2', json.dumps(test_alerts[1]))
+        cache.set('alert_2', json.dumps(self.test_alerts[1]))
         query = BrokerQuery.objects.create(
             name='find hoth',
             broker='TEST',
@@ -196,8 +218,8 @@ class TestBrokerViews(TestCase):
             }
         })
     def test_create_multiple_targets(self):
-        cache.set('alert_1', json.dumps(test_alerts[0]))
-        cache.set('alert_2', json.dumps(test_alerts[1]))
+        cache.set('alert_1', json.dumps(self.test_alerts[0]))
+        cache.set('alert_2', json.dumps(self.test_alerts[1]))
         query = BrokerQuery.objects.create(
             name='find anything',
             broker='TEST',
@@ -209,7 +231,34 @@ class TestBrokerViews(TestCase):
             'alerts': [1, 2]
         }
         response = self.client.post(reverse('tom_alerts:create-target'), data=post_data)
-        self.assertEqual(Target.objects.count(), 2)
+        self.assertEqual(Target.objects.all().count(), 2)
+        self.assertRedirects(response, reverse('tom_targets:list'))
+
+    def test_create_conflicting_targets(self):
+        self.test_alerts[1]['alias'] = 'testalias'
+        cache.set('alert_1', json.dumps(self.test_alerts[0]))
+        cache.set('alert_2', json.dumps(self.test_alerts[1]))
+        query = BrokerQuery.objects.create(
+            name='find anything',
+            broker='TEST',
+            parameters='{"score__gt": "19"}',
+        )
+        post_data = {
+            'broker': 'TEST',
+            'query_id': query.id,
+            'alerts': [1, 2]
+        }
+        try:
+            with transaction.atomic():
+                response = self.client.post(reverse('tom_alerts:create-target'), data=post_data)
+            self.fail('Duplicate target created.')
+        except IntegrityError:
+            pass
+
+        messages = list(response.context['messages'])
+        self.assertEqual(Target.objects.all().count(), 1)
+        self.assertEqual(str(messages[0]),
+                         f"Unable to save {self.test_alerts[1]['name']}, target with that name already exists.")
         self.assertRedirects(response, reverse('tom_targets:list'))
 
     def test_create_no_targets(self):

@@ -247,6 +247,8 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
                     assign_perm('tom_targets.change_target', group, target)
                     assign_perm('tom_targets.delete_target', group, target)
             except IntegrityError:
+                # Because TargetExtra and TargetName models are set to cascade on Target delete, this is sufficient
+                target.delete()
                 messages.warning(request, f'Unable to save {target.name}, target with that name already exists.')
                 errors.append(target.name)
         if (len(alerts) == len(errors)):
