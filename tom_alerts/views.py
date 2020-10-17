@@ -274,7 +274,7 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
                 'tom_targets:update', kwargs={'pk': target.id})
             )
         else:
-            messages.success(request, 
+            messages.success(request,
                              'Successfully saved target(s) {0}.'.format(', '.join([name for name in successes])))
             return redirect(reverse(
                 'tom_targets:list')

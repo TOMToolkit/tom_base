@@ -4,7 +4,6 @@ from django import forms
 from django.contrib.auth.models import User, Group
 from django.contrib.messages import get_messages
 from django.core.cache import cache
-from django.db import IntegrityError, transaction
 from django.test import override_settings, TestCase, TransactionTestCase
 from django.urls import reverse
 
@@ -98,11 +97,11 @@ class TestBrokerClass(TestCase):
         self.assertEqual(self.test_alerts[1], list(alerts)[0])
 
     def test_to_generic_alert(self):
-        ga = TestBroker().to_generic_alert(test_alerts[0])
+        ga = TestBroker().to_generic_alert(self.test_alerts[0])
         self.assertEqual(ga.name, self.test_alerts[0]['name'])
 
     def test_to_target(self):
-        target, _, _ = TestBroker().to_target(test_alerts[0])
+        target, _, _ = TestBroker().to_target(self.test_alerts[0])
         self.assertEqual(target.name, self.test_alerts[0]['name'])
 
 
