@@ -113,4 +113,4 @@ class SOARFacility(LCOFacility):
     }
 
     def get_form(self, observation_type):
-        return self.observation_forms.get('observation_type', SOARBaseObservationForm)
+        return self.observation_forms.get(observation_type, SOARBaseObservationForm)
