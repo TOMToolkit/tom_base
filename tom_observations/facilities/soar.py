@@ -95,7 +95,6 @@ class SOARFacility(LCOFacility):
     """
 
     name = 'SOAR'
-    observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy')]
     observation_forms = {
         'IMAGING': SOARImagingObservationForm,
         'SPECTRA': SOARSpectroscopyObservationForm
