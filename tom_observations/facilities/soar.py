@@ -113,7 +113,4 @@ class SOARFacility(LCOFacility):
     }
 
     def get_form(self, observation_type):
-        try:
-            return self.observation_forms[observation_type]
-        except KeyError:
-            return SOARBaseObservationForm
+        return self.observation_forms.get('observation_type', SOARBaseObservationForm)
