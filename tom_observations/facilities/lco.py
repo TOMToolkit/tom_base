@@ -804,10 +804,7 @@ class LCOFacility(BaseRoboticObservationFacility):
 
     # TODO: this should be called get_form_class
     def get_form(self, observation_type):
-        try:
-            return self.observation_forms[observation_type]
-        except KeyError:
-            return LCOBaseObservationForm
+        return self.observation_forms.get(observation_type, LCOBaseObservationForm)
 
     # TODO: this should be called get_template_form_class
     def get_template_form(self, observation_type):

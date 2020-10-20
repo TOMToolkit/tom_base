@@ -95,7 +95,10 @@ class SOARFacility(LCOFacility):
     """
 
     name = 'SOAR'
-    observation_types = [('IMAGING', 'Imaging'), ('SPECTRA', 'Spectroscopy')]
+    observation_forms = {
+        'IMAGING': SOARImagingObservationForm,
+        'SPECTRA': SOARSpectroscopyObservationForm
+    }
     # The SITES dictionary is used to calculate visibility intervals in the
     # planning tool. All entries should contain latitude, longitude, elevation
     # and a code.
@@ -109,9 +112,4 @@ class SOARFacility(LCOFacility):
     }
 
     def get_form(self, observation_type):
-        if observation_type == 'IMAGING':
-            return SOARImagingObservationForm
-        elif observation_type == 'SPECTRA':
-            return SOARSpectroscopyObservationForm
-        else:
-            return SOARBaseObservationForm
+        return self.observation_forms.get(observation_type, SOARBaseObservationForm)
