@@ -7,6 +7,7 @@ from astropy.time import Time
 from dateutil.parser import parse
 from django import template
 from django.conf import settings
+from django.db.models import Q
 from guardian.shortcuts import get_objects_for_user
 import numpy as np
 from plotly import offline
@@ -62,6 +63,13 @@ def target_data(target):
     return {
         'target': target,
         'extras': extras
+    }
+
+
+@register.inclusion_tag('tom_targets/partials/target_unknown_statuses.html')
+def target_unknown_statuses(target):
+    return {
+        'num_unknown_statuses': len(target.observationrecord_set.filter(Q(status='') | Q(status=None)))
     }
 
 
