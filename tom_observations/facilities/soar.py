@@ -69,20 +69,15 @@ class SOARSpectroscopyObservationForm(SOARBaseObservationForm, LCOSpectroscopyOb
             ])
 
     def _build_instrument_config(self):
-        instrument_config = {
-                'exposure_count': self.cleaned_data['exposure_count'],
-                'exposure_time': self.cleaned_data['exposure_time'],
-                'rotator_mode': 'SKY',
-                'extra_params': {
-                    'rotator_angle': self.cleaned_data['rotator_angle']
-                },
-                'optical_elements': {
-                    'slit': self.cleaned_data['filter'],
-                    'grating': SPECTRAL_GRATING
-                }
-        }
+        instrument_configs = super()._build_instrument_config()
 
-        return instrument_config
+        instrument_configs[0]['optical_elements'] = {
+            'slit': self.cleaned_data['filter'],
+            'grating': SPECTRAL_GRATING
+        }
+        instrument_configs[0]['rotator_mode'] = 'SKY'
+
+        return instrument_configs
 
 
 class SOARFacility(LCOFacility):
