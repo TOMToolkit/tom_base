@@ -1,10 +1,12 @@
-from django.db import models, transaction
-from django.core.exceptions import ValidationError
-from django.urls import reverse
-from django.forms.models import model_to_dict
-from django.conf import settings
-from dateutil.parser import parse
 from datetime import datetime
+from dateutil.parser import parse
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
+from django.db.models import Q
+from django.forms.models import model_to_dict
+from django.urls import reverse
 
 from tom_common.hooks import run_hook
 
@@ -306,7 +308,7 @@ class Target(models.Model):
         :rtype: list
         """
         return [
-            obs for obs in self.observationrecord_set.all().order_by('scheduled_start') if not obs.terminal
+            obs for obs in self.observationrecord_set.exclude(status='').order_by('scheduled_start') if not obs.terminal
         ]
 
     @property
