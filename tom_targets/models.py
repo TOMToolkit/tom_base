@@ -4,7 +4,6 @@ from dateutil.parser import parse
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.db.models import Q
 from django.forms.models import model_to_dict
 from django.urls import reverse
 
