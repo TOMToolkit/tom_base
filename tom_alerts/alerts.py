@@ -8,6 +8,7 @@ from crispy_forms.layout import Submit, Layout
 import json
 from abc import ABC, abstractmethod
 
+from tom_alerts.exceptions import AlertSubmissionException
 from tom_alerts.models import BrokerQuery
 from tom_targets.models import Target
 
@@ -198,6 +199,24 @@ class GenericBroker(ABC):
         :type alert: str
         """
         pass
+
+    def submit_upstream_alert(self, target=None, observation_record=None, **kwargs):
+        """
+        Submits an alert upstream back to the broker. At least one of a target or an
+        observation record must be provided.
+
+        :param target: ``Target`` object to be converted to an alert and submitted upstream
+        :type target: ``Target``
+
+        :param observation_record: ``ObservationRecord`` object to be converted to an alert and submitted upstream
+        :type observation_record: ``ObservationRecord``
+
+        :returns: True or False depending on success of message submission
+        :rtype: bool
+        """
+        if not (target or observation_record):
+            raise AlertSubmissionException('Must provide either Target or ObservationRecord to be submitted upstream.')
+        return
 
     @abstractmethod
     def to_generic_alert(self, alert):

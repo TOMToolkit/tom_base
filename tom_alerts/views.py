@@ -1,7 +1,8 @@
 import json
+import logging
 
 from django.views.generic.edit import FormView, DeleteView
-from django.views.generic.base import TemplateView, View
+from django.views.generic.base import TemplateView, View, RedirectView
 from django.db import IntegrityError
 from django.shortcuts import redirect, get_object_or_404
 from django.utils import timezone
@@ -13,8 +14,13 @@ from guardian.shortcuts import assign_perm
 from django_filters.views import FilterView
 from django_filters import FilterSet, ChoiceFilter, CharFilter
 
-from tom_alerts.models import BrokerQuery
 from tom_alerts.alerts import get_service_class, get_service_classes
+from tom_alerts.models import BrokerQuery
+from tom_alerts.exceptions import AlertSubmissionException
+from tom_observations.models import ObservationRecord
+from tom_targets.models import Target
+
+logger = logging.getLogger(__name__)
 
 
 class BrokerQueryCreateView(LoginRequiredMixin, FormView):
@@ -255,3 +261,30 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             return redirect(reverse(
                 'tom_targets:list')
             )
+
+
+class SubmitAlertUpstreamView(LoginRequiredMixin, RedirectView):
+
+    def get(self, request, *args, **kwargs):
+        target_id = request.GET.get('target_id')
+        target = Target.objects.get(pk=target_id) if target_id else None
+
+        observation_id = request.GET.get('observation_id')
+        obsr = ObservationRecord.objects.get(pk=observation_id) if observation_id else None
+
+        topic = request.GET.get('topic')
+
+        broker_name = kwargs.get('broker')
+        broker_class = get_service_class(kwargs.get('broker'))()
+        try:
+            broker_class.submit_upstream_alert(target=target, observation_record=obsr, topic=topic)
+        except AlertSubmissionException as e:
+            logger.log(msg=f'Failed to submit alert: {e}', level=logging.WARN)
+            messages.warning(request, f'Unable to submit one or more alerts to {broker_name}')
+        super().get(request, *args, **kwargs)
+
+    def get_redirect_url(self, *args, **kwargs):
+        # TODO: more elegant redirection
+        redirect_url = self.request.GET.get('next')
+        if not redirect_url:
+            redirect_url = self.request.META.get('HTTP_REFERER')
