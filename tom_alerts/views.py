@@ -2,7 +2,7 @@ import json
 import logging
 
 from django.views.generic.edit import FormView, DeleteView
-from django.views.generic.base import TemplateView, View, RedirectView
+from django.views.generic.base import TemplateView, View
 from django.db import IntegrityError
 from django.shortcuts import redirect, get_object_or_404
 from django.utils import timezone
@@ -263,7 +263,7 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             )
 
 
-class SubmitAlertUpstreamView(LoginRequiredMixin, RedirectView):
+class SubmitAlertUpstreamView(LoginRequiredMixin, FormView):
     """
     View used to submit alerts to an upstream broker, such as SCIMMA's Hopskotch or the Transient Name Server.
 
@@ -271,25 +271,20 @@ class SubmitAlertUpstreamView(LoginRequiredMixin, RedirectView):
     send any additional query parameters to the broker, allowing a broker to use any arbitrary parameters.
     """
 
-    def get(self, request, *args, **kwargs):
-        query_params = request.GET.dict()
+    def get_broker_name(self):
+        return self.kwargs['broker']
 
-        target_id = query_params.pop('target_id', None)
-        target = Target.objects.get(pk=target_id) if target_id else None
+    def get_form_class(self):
+        broker_name = self.get_broker_name()
+        return get_service_class(broker_name).alert_submission_form
 
-        obsr_id = query_params.pop('observation_record_id', None)
-        obsr = ObservationRecord.objects.get(pk=obsr_id) if obsr_id else None
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({
+            'broker': self.get_broker_name()
+        })
 
-        broker_name = kwargs['broker']
-        broker_class = get_service_class(broker_name)()
-        try:
-            # Pass non-standard fields from query parameters as kwargs
-            broker_class.submit_upstream_alert(target=target, observation_record=obsr, **query_params)
-        except AlertSubmissionException as e:
-            logger.log(msg=f'Failed to submit alert: {e}', level=logging.WARN)
-            messages.warning(request, f'Unable to submit one or more alerts to {broker_name}')
-
-        return super().get(request, *args, **kwargs)
+        return kwargs
 
     def get_redirect_url(self, *args, **kwargs):
         """
@@ -305,3 +300,40 @@ class SubmitAlertUpstreamView(LoginRequiredMixin, RedirectView):
             redirect_url = reverse('home')
 
         return redirect_url
+
+    def form_valid(self, form):
+        broker_name = self.get_broker_name()
+        broker = get_service_class(broker_name)()
+
+        target = form.cleaned_data.pop('target')
+        obsr = form.cleaned_data.pop('observation_record')
+        redirect_url = form.cleaned_data.pop('redirect_url')
+
+        try:
+            # Pass non-standard fields from query parameters as kwargs
+            broker.submit_upstream_alert(target=target, observation_record=obsr, **form.cleaned_data)
+        except AlertSubmissionException as e:
+            logger.log(msg=f'Failed to submit alert: {e}', level=logging.WARN)
+            messages.warning(self.request, f'Unable to submit one or more alerts to {broker_name}')
+
+        return redirect(self.get_redirect_url(redirect_url))
+
+    # def get(self, request, *args, **kwargs):
+    #     query_params = request.GET.dict()
+
+    #     target_id = query_params.pop('target_id', None)
+    #     target = Target.objects.get(pk=target_id) if target_id else None
+
+    #     obsr_id = query_params.pop('observation_record_id', None)
+    #     obsr = ObservationRecord.objects.get(pk=obsr_id) if obsr_id else None
+
+    #     broker_name = kwargs['broker']
+    #     broker_class = get_service_class(broker_name)()
+    #     try:
+    #         # Pass non-standard fields from query parameters as kwargs
+    #         broker_class.submit_upstream_alert(target=target, observation_record=obsr, **query_params)
+    #     except AlertSubmissionException as e:
+    #         logger.log(msg=f'Failed to submit alert: {e}', level=logging.WARN)
+    #         messages.warning(request, f'Unable to submit one or more alerts to {broker_name}')
+
+    #     return super().get(request, *args, **kwargs)

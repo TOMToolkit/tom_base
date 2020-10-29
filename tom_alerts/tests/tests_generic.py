@@ -61,8 +61,8 @@ class TestBroker(GenericBroker):
             score=alert['score']
         )
 
-    def submit_upstream_alert(self, **kwargs):
-        return super().submit_upstream_alert(**kwargs)
+    def submit_upstream_alert(self, target=None, observation_record=None):
+        return super().submit_upstream_alert(target=target, observation_record=observation_record)
 
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])

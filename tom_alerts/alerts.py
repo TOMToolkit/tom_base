@@ -1,15 +1,18 @@
-from django.conf import settings
-from django import forms
-from importlib import import_module
-from datetime import datetime
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import datetime
+from importlib import import_module
+import json
+
+from django import forms
+from django.conf import settings
+from django.shortcuts import reverse
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout
-import json
-from abc import ABC, abstractmethod
 
 from tom_alerts.exceptions import AlertSubmissionException
 from tom_alerts.models import BrokerQuery
+from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
 
@@ -147,6 +150,23 @@ class GenericQueryForm(forms.Form):
         return query
 
 
+class GenericUpstreamSubmissionForm(forms.Form):
+    target = forms.ModelChoiceField(required=False, queryset=Target.objects.all(), widget=forms.HiddenInput())
+    observation_record = forms.ModelChoiceField(required=False, queryset=ObservationRecord.objects.all(),
+                                                widget=forms.HiddenInput())
+    redirect_url = forms.CharField(required=False, max_length=100, widget=forms.HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+        broker_name = kwargs.pop('broker')
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        # TODO: this needs to look not like a submit button
+        # TODO: for some reason at present the css class affects the text and not the button
+        self.helper.add_input(Submit('submit', f'Submit to {broker_name}', css_class='btn btn-outline-primary'))
+        self.helper.form_action = reverse('tom_alerts:submit-alert', kwargs={'broker': broker_name})
+        self.common_layout = Layout('broker', 'target', 'observation_record')
+
+
 class GenericBroker(ABC):
     """
     The ``GenericBroker`` provides an interface for implementing a broker module. It contains a number of methods to be
@@ -156,6 +176,7 @@ class GenericBroker(ABC):
     For an implementation example, please see
     https://github.com/TOMToolkit/tom_base/blob/master/tom_alerts/brokers/mars.py
     """
+    alert_submission_form = GenericUpstreamSubmissionForm
 
     @abstractmethod
     def fetch_alerts(self, parameters):

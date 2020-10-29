@@ -1,5 +1,6 @@
 from django import template
 
+from tom_alerts.alerts import get_service_class
 
 register = template.Library()
 
@@ -27,4 +28,19 @@ def submit_upstream_button(broker, target=None, observation_record=None, redirec
         'target': target,
         'observation_record': observation_record,
         'redirect_url': redirect_url
+    }
+
+
+@register.inclusion_tag('tom_alerts/partials/submit_upstream_form.html')
+def submit_upstream_form(broker, target=None, observation_record=None, redirect_url=None):
+    broker_class = get_service_class(broker)
+    form_class = broker_class.alert_submission_form
+    form = form_class(broker=broker, initial={
+        'target': target,
+        'observation_record': observation_record,
+        'redirect_url': redirect_url
+    })
+
+    return {
+        'submit_upstream_form': form
     }
