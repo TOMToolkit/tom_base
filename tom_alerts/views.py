@@ -1,4 +1,3 @@
-from copy import copy
 import json
 import logging
 
@@ -267,7 +266,6 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
 class SubmitAlertUpstreamView(LoginRequiredMixin, RedirectView):
 
     def get(self, request, *args, **kwargs):
-        # TODO: This should be a FormView and a POST
         query_params = request.GET.dict()
 
         target_id = query_params.pop('target_id', None)
