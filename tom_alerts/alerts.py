@@ -10,7 +10,6 @@ from django.shortcuts import reverse
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout
 
-from tom_alerts.exceptions import AlertSubmissionException
 from tom_alerts.models import BrokerQuery
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
@@ -166,6 +165,14 @@ class GenericUpstreamSubmissionForm(forms.Form):
         self.helper.form_action = reverse('tom_alerts:submit-alert', kwargs={'broker': broker_name})
         self.common_layout = Layout('broker', 'target', 'observation_record')
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if not (cleaned_data.get('target') or cleaned_data.get('observation_record')):
+            raise forms.ValidationError('Must provide either Target or ObservationRecord to be submitted upstream.')
+
+        return cleaned_data
+
 
 class GenericBroker(ABC):
     """
@@ -235,9 +242,7 @@ class GenericBroker(ABC):
         :returns: True or False depending on success of message submission
         :rtype: bool
         """
-        if not (target or observation_record):
-            raise AlertSubmissionException('Must provide either Target or ObservationRecord to be submitted upstream.')
-        return
+        pass
 
     @abstractmethod
     def to_generic_alert(self, alert):

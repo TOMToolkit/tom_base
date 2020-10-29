@@ -1,7 +1,7 @@
 import json
 import logging
 
-from django.views.generic.edit import FormView, DeleteView
+from django.views.generic.edit import DeleteView, FormMixin, FormView, ProcessFormView
 from django.views.generic.base import TemplateView, View
 from django.db import IntegrityError
 from django.shortcuts import redirect, get_object_or_404
@@ -17,8 +17,6 @@ from django_filters import FilterSet, ChoiceFilter, CharFilter
 from tom_alerts.alerts import get_service_class, get_service_classes
 from tom_alerts.models import BrokerQuery
 from tom_alerts.exceptions import AlertSubmissionException
-from tom_observations.models import ObservationRecord
-from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 
@@ -263,7 +261,7 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             )
 
 
-class SubmitAlertUpstreamView(LoginRequiredMixin, FormView):
+class SubmitAlertUpstreamView(LoginRequiredMixin, FormMixin, ProcessFormView, View):
     """
     View used to submit alerts to an upstream broker, such as SCIMMA's Hopskotch or the Transient Name Server.
 
@@ -294,12 +292,18 @@ class SubmitAlertUpstreamView(LoginRequiredMixin, FormView):
         :returns: url to redirect to
         :rtype: str
         """
-        next_url = self.request.GET.get('next')
+        # TODO: this needs to work with the new POST flow
+        next_url = self.request.POST.get('redirect_url')
         redirect_url = next_url if next_url else self.request.META.get('HTTP_REFERER')
         if not redirect_url:
             redirect_url = reverse('home')
 
         return redirect_url
+
+    def form_invalid(self, form):
+        logger.log(msg=f'Form invalid: {form.errors}', level=logging.WARN)
+        messages.warning(self.request, f'Unable to submit one or more alerts to {self.get_broker_name()}')
+        return redirect(self.get_redirect_url())  # TODO: fix this
 
     def form_valid(self, form):
         broker_name = self.get_broker_name()
@@ -317,23 +321,3 @@ class SubmitAlertUpstreamView(LoginRequiredMixin, FormView):
             messages.warning(self.request, f'Unable to submit one or more alerts to {broker_name}')
 
         return redirect(self.get_redirect_url(redirect_url))
-
-    # def get(self, request, *args, **kwargs):
-    #     query_params = request.GET.dict()
-
-    #     target_id = query_params.pop('target_id', None)
-    #     target = Target.objects.get(pk=target_id) if target_id else None
-
-    #     obsr_id = query_params.pop('observation_record_id', None)
-    #     obsr = ObservationRecord.objects.get(pk=obsr_id) if obsr_id else None
-
-    #     broker_name = kwargs['broker']
-    #     broker_class = get_service_class(broker_name)()
-    #     try:
-    #         # Pass non-standard fields from query parameters as kwargs
-    #         broker_class.submit_upstream_alert(target=target, observation_record=obsr, **query_params)
-    #     except AlertSubmissionException as e:
-    #         logger.log(msg=f'Failed to submit alert: {e}', level=logging.WARN)
-    #         messages.warning(request, f'Unable to submit one or more alerts to {broker_name}')
-
-    #     return super().get(request, *args, **kwargs)
