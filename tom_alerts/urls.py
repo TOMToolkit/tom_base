@@ -12,5 +12,5 @@ urlpatterns = [
     path('query/<int:pk>/run/', RunQueryView.as_view(), name='run'),
     path('query/<int:pk>/delete/', BrokerQueryDeleteView.as_view(), name='delete'),
     path('alert/create/', CreateTargetFromAlertView.as_view(), name='create-target'),
-    path('alert/<str:broker>/submit/', SubmitAlertUpstreamView.as_view(), name='submit-alert')
+    path('<str:broker>/submit/', SubmitAlertUpstreamView.as_view(), name='submit-alert')
 ]

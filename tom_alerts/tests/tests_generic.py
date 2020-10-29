@@ -1,12 +1,15 @@
-from django.test import TestCase, override_settings
-from django import forms
-from django.contrib.auth.models import User, Group
-from django.urls import reverse
-from django.core.cache import cache
 import json
 
-from tom_alerts.alerts import GenericQueryForm, GenericAlert, get_service_class
+from django import forms
+from django.contrib.auth.models import User, Group
+from django.contrib.messages import get_messages
+from django.core.cache import cache
+from django.test import TestCase, override_settings
+from django.urls import reverse
+
+from tom_alerts.alerts import GenericBroker, GenericQueryForm, GenericAlert, get_service_class
 from tom_alerts.models import BrokerQuery
+from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
 # Test alert data. Normally this would come from a remote source.
@@ -25,7 +28,7 @@ class TestBrokerForm(GenericQueryForm):
     name = forms.CharField(required=True)
 
 
-class TestBroker:
+class TestBroker(GenericBroker):
     """ The broker class encapsulates the logic for querying remote brokers and transforming
     the returned data into TOM Toolkit Targets so they can be used elsewhere in the system. The
     following methods and attributes are all required, but a broker can be as complex as needed.
@@ -57,6 +60,9 @@ class TestBroker:
             mag=alert['mag'],
             score=alert['score']
         )
+
+    def submit_upstream_alert(self, **kwargs):
+        return super().submit_upstream_alert(**kwargs)
 
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
@@ -217,3 +223,30 @@ class TestBrokerViews(TestCase):
         response = self.client.post(reverse('tom_alerts:create-target'), data=post_data, follow=True)
         self.assertEqual(Target.objects.count(), 0)
         self.assertRedirects(response, reverse('tom_alerts:run', kwargs={'pk': query.id}))
+
+    def test_submit_alert_success(self):
+        """Test submission of an alert to a broker."""
+        target = Target.objects.create(name='test_target', ra=1, dec=2)
+        response = self.client.get('{0}?{1}'.format(
+            reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}), f'target_id={target.id}'
+        ))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('home'))
+
+        obsr = ObservationRecord.objects.create(target=target, facility='Test', parameters={}, observation_id=1)
+        response = self.client.get('{0}?{1}&{2}'.format(
+            reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
+            f'observation_record_id={obsr.id}',
+            f'next={reverse("tom_targets:list")}'
+        ))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('tom_targets:list'))
+
+    def test_submit_alert_failure(self):
+        """Test that an alert submission fails when neither target_id nor observation_id are included."""
+        response = self.client.get(reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}))
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST')

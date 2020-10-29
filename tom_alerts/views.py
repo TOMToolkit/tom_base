@@ -1,3 +1,4 @@
+from copy import copy
 import json
 import logging
 
@@ -266,25 +267,37 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
 class SubmitAlertUpstreamView(LoginRequiredMixin, RedirectView):
 
     def get(self, request, *args, **kwargs):
-        target_id = request.GET.get('target_id')
+        # TODO: This should be a FormView and a POST
+        query_params = request.GET.dict()
+
+        target_id = query_params.pop('target_id', None)
         target = Target.objects.get(pk=target_id) if target_id else None
 
-        observation_id = request.GET.get('observation_id')
-        obsr = ObservationRecord.objects.get(pk=observation_id) if observation_id else None
+        obsr_id = query_params.pop('observation_record_id', None)
+        obsr = ObservationRecord.objects.get(pk=obsr_id) if obsr_id else None
 
-        topic = request.GET.get('topic')
-
-        broker_name = kwargs.get('broker')
-        broker_class = get_service_class(kwargs.get('broker'))()
+        broker_name = kwargs['broker']
+        broker_class = get_service_class(broker_name)()
         try:
-            broker_class.submit_upstream_alert(target=target, observation_record=obsr, topic=topic)
+            # Pass non-standard fields from query parameters as kwargs
+            broker_class.submit_upstream_alert(target=target, observation_record=obsr, **query_params)
         except AlertSubmissionException as e:
             logger.log(msg=f'Failed to submit alert: {e}', level=logging.WARN)
             messages.warning(request, f'Unable to submit one or more alerts to {broker_name}')
-        super().get(request, *args, **kwargs)
+
+        return super().get(request, *args, **kwargs)
 
     def get_redirect_url(self, *args, **kwargs):
-        # TODO: more elegant redirection
-        redirect_url = self.request.GET.get('next')
+        """
+        If ``next`` is provided in the query params, redirects to ``next``. If ``HTTP_REFERER`` is present on the
+        ``META`` property of the request, redirects to ``HTTP_REFERER``. Else redirects to /.
+
+        :returns: url to redirect to
+        :rtype: str
+        """
+        next_url = self.request.GET.get('next')
+        redirect_url = next_url if next_url else self.request.META.get('HTTP_REFERER')
         if not redirect_url:
-            redirect_url = self.request.META.get('HTTP_REFERER')
+            redirect_url = reverse('home')
+
+        return redirect_url
