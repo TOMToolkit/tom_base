@@ -264,6 +264,12 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
 
 
 class SubmitAlertUpstreamView(LoginRequiredMixin, RedirectView):
+    """
+    View used to submit alerts to an upstream broker, such as SCIMMA's Hopskotch or the Transient Name Server.
+
+    While this view handles the query parameters for target_id and observation_record_id by default, it will
+    send any additional query parameters to the broker, allowing a broker to use any arbitrary parameters.
+    """
 
     def get(self, request, *args, **kwargs):
         query_params = request.GET.dict()
