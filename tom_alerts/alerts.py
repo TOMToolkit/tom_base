@@ -158,7 +158,7 @@ class GenericUpstreamSubmissionForm(forms.Form):
     redirect_url = forms.CharField(required=False, max_length=100, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
-        broker_name = kwargs.pop('broker')
+        broker_name = kwargs.pop('broker')  # NOTE: parent constructor is not expecting broker and will fail
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_action = reverse('tom_alerts:submit-alert', kwargs={'broker': broker_name})
