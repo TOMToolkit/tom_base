@@ -22,7 +22,8 @@ DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.scout.ScoutBroker',
     'tom_alerts.brokers.alerce.ALeRCEBroker',
     'tom_alerts.brokers.antares.ANTARESBroker',
-    'tom_alerts.brokers.gaia.GaiaBroker'
+    'tom_alerts.brokers.gaia.GaiaBroker',
+    'tom_alerts.brokers.scimma.SCIMMABroker',
 ]
 
 
