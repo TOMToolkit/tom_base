@@ -301,7 +301,7 @@ class SubmitAlertUpstreamView(LoginRequiredMixin, FormMixin, ProcessFormView, Vi
 
     def form_invalid(self, form):
         logger.log(msg=f'Form invalid: {form.errors}', level=logging.WARN)
-        messages.warning(self.request, f'Unable to submit one or more alerts to {self.get_broker_name()}')
+        messages.warning(self.request, f'Unable to submit one or more alerts to {self.get_broker_name()}.')
         return redirect(self.get_redirect_url())  # TODO: fix this
 
     def form_valid(self, form):

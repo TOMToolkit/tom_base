@@ -266,18 +266,30 @@ class TestBrokerViews(TestCase):
 
     @patch('tom_alerts.tests.tests_generic.TestBroker.submit_upstream_alert')
     def test_submit_alert_failure(self, mock_submit_upstream_alert):
-        """Test that an alert submission returns an appropriate message when alert submission fails."""
+        """Test that a failed alert submission returns an appropriate message."""
+        target = Target.objects.create(name='test_target', ra=1, dec=2)
+        mock_submit_upstream_alert.return_value = False
+        response = self.client.post(reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
+                                    data={'target': target.id})
+
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST.')
+
+    @patch('tom_alerts.tests.tests_generic.TestBroker.submit_upstream_alert')
+    def test_submit_alert_exception(self, mock_submit_upstream_alert):
+        """Test that an alert submission returns an appropriate message when alert submission raises an exception."""
         mock_submit_upstream_alert.side_effect = AlertSubmissionException()
 
         response = self.client.post(reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}), data={})
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 1)
-        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST')
+        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST.')
 
     def test_submit_alert_invalid_form(self):
         """Test that an alert submission failed when form is invalid."""
         response = self.client.post(reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}), data={})
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 1)
-        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST')
+        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST.')
         self.assertRedirects(response, reverse('home'))
