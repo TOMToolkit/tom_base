@@ -1,14 +1,18 @@
-from django.conf import settings
-from django import forms
-from importlib import import_module
-from datetime import datetime
-from dataclasses import dataclass
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit, Layout
-import json
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from datetime import datetime
+from importlib import import_module
+import json
+
+from django import forms
+from django.conf import settings
+from django.shortcuts import reverse
+from crispy_forms.bootstrap import StrictButton
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Submit
 
 from tom_alerts.models import BrokerQuery
+from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
 
@@ -18,7 +22,8 @@ DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.scout.ScoutBroker',
     'tom_alerts.brokers.alerce.ALeRCEBroker',
     'tom_alerts.brokers.antares.ANTARESBroker',
-    'tom_alerts.brokers.gaia.GaiaBroker'
+    'tom_alerts.brokers.gaia.GaiaBroker',
+    'tom_alerts.brokers.scimma.SCIMMABroker',
 ]
 
 
@@ -146,6 +151,32 @@ class GenericQueryForm(forms.Form):
         return query
 
 
+class GenericUpstreamSubmissionForm(forms.Form):
+    target = forms.ModelChoiceField(required=False, queryset=Target.objects.all(), widget=forms.HiddenInput())
+    observation_record = forms.ModelChoiceField(required=False, queryset=ObservationRecord.objects.all(),
+                                                widget=forms.HiddenInput())
+    redirect_url = forms.CharField(required=False, max_length=100, widget=forms.HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+        broker_name = kwargs.pop('broker')  # NOTE: parent constructor is not expecting broker and will fail
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_action = reverse('tom_alerts:submit-alert', kwargs={'broker': broker_name})
+        self.helper.layout = Layout(
+            'target',
+            'observation_record',
+            'redirect_url',
+            StrictButton(f'Submit to {broker_name}', type='submit', css_class='btn-outline-primary'))
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if not (cleaned_data.get('target') or cleaned_data.get('observation_record')):
+            raise forms.ValidationError('Must provide either Target or ObservationRecord to be submitted upstream.')
+
+        return cleaned_data
+
+
 class GenericBroker(ABC):
     """
     The ``GenericBroker`` provides an interface for implementing a broker module. It contains a number of methods to be
@@ -155,6 +186,7 @@ class GenericBroker(ABC):
     For an implementation example, please see
     https://github.com/TOMToolkit/tom_base/blob/master/tom_alerts/brokers/mars.py
     """
+    alert_submission_form = GenericUpstreamSubmissionForm
 
     @abstractmethod
     def fetch_alerts(self, parameters):
@@ -196,6 +228,22 @@ class GenericBroker(ABC):
 
         :param alert: alert data from a particular ``BrokerQuery``
         :type alert: str
+        """
+        pass
+
+    def submit_upstream_alert(self, target=None, observation_record=None, **kwargs):
+        """
+        Submits an alert upstream back to the broker. At least one of a target or an
+        observation record must be provided.
+
+        :param target: ``Target`` object to be converted to an alert and submitted upstream
+        :type target: ``Target``
+
+        :param observation_record: ``ObservationRecord`` object to be converted to an alert and submitted upstream
+        :type observation_record: ``ObservationRecord``
+
+        :returns: True or False depending on success of message submission
+        :rtype: bool
         """
         pass
 
