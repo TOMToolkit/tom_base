@@ -310,12 +310,16 @@ class SubmitAlertUpstreamView(LoginRequiredMixin, FormMixin, ProcessFormView, Vi
 
         target = form.cleaned_data.pop('target')
         obsr = form.cleaned_data.pop('observation_record')
+        form.cleaned_data.pop('redirect_url')  # redirect_url doesn't need to be passed to submit_upstream_alert
 
         try:
             # Pass non-standard fields from query parameters as kwargs
-            broker.submit_upstream_alert(target=target, observation_record=obsr, **form.cleaned_data)
+            success = broker.submit_upstream_alert(target=target, observation_record=obsr, **form.cleaned_data)
         except AlertSubmissionException as e:
             logger.log(msg=f'Failed to submit alert: {e}', level=logging.WARN)
-            messages.warning(self.request, f'Unable to submit one or more alerts to {broker_name}')
+            messages.warning(self.request, f'Unable to submit one or more alerts to {broker_name}.')
+
+        if success:
+            messages.success(self.request, f'Successfully submitted alerts to {broker_name}!')
 
         return redirect(self.get_redirect_url())

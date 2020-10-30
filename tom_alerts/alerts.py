@@ -7,8 +7,9 @@ import json
 from django import forms
 from django.conf import settings
 from django.shortcuts import reverse
+from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit, Layout
+from crispy_forms.layout import Layout, Submit
 
 from tom_alerts.models import BrokerQuery
 from tom_observations.models import ObservationRecord
@@ -159,11 +160,12 @@ class GenericUpstreamSubmissionForm(forms.Form):
         broker_name = kwargs.pop('broker')
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        # TODO: this needs to look not like a submit button
-        # TODO: for some reason at present the css class affects the text and not the button
-        self.helper.add_input(Submit('submit', f'Submit to {broker_name}', css_class='btn btn-outline-primary'))
         self.helper.form_action = reverse('tom_alerts:submit-alert', kwargs={'broker': broker_name})
-        self.common_layout = Layout('broker', 'target', 'observation_record')
+        self.helper.layout = Layout(
+            'target',
+            'observation_record',
+            'redirect_url',
+            StrictButton(f'Submit to {broker_name}', type='submit', css_class='btn-outline-primary'))
 
     def clean(self):
         cleaned_data = super().clean()
