@@ -284,7 +284,7 @@ class SubmitAlertUpstreamView(LoginRequiredMixin, FormMixin, ProcessFormView, Vi
 
         return kwargs
 
-    def get_redirect_url(self, *args, **kwargs):
+    def get_redirect_url(self):
         """
         If ``next`` is provided in the query params, redirects to ``next``. If ``HTTP_REFERER`` is present on the
         ``META`` property of the request, redirects to ``HTTP_REFERER``. Else redirects to /.
@@ -292,7 +292,6 @@ class SubmitAlertUpstreamView(LoginRequiredMixin, FormMixin, ProcessFormView, Vi
         :returns: url to redirect to
         :rtype: str
         """
-        # TODO: this needs to work with the new POST flow
         next_url = self.request.POST.get('redirect_url')
         redirect_url = next_url if next_url else self.request.META.get('HTTP_REFERER')
         if not redirect_url:
@@ -311,7 +310,6 @@ class SubmitAlertUpstreamView(LoginRequiredMixin, FormMixin, ProcessFormView, Vi
 
         target = form.cleaned_data.pop('target')
         obsr = form.cleaned_data.pop('observation_record')
-        redirect_url = form.cleaned_data.pop('redirect_url')
 
         try:
             # Pass non-standard fields from query parameters as kwargs
@@ -320,4 +318,4 @@ class SubmitAlertUpstreamView(LoginRequiredMixin, FormMixin, ProcessFormView, Vi
             logger.log(msg=f'Failed to submit alert: {e}', level=logging.WARN)
             messages.warning(self.request, f'Unable to submit one or more alerts to {broker_name}')
 
-        return redirect(self.get_redirect_url(redirect_url))
+        return redirect(self.get_redirect_url())
