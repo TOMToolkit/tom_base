@@ -274,7 +274,7 @@ class TestBrokerViews(TestCase):
 
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 1)
-        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST.')
+        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST. See logs for details.')
 
     @patch('tom_alerts.tests.tests_generic.TestBroker.submit_upstream_alert')
     def test_submit_alert_exception(self, mock_submit_upstream_alert):
@@ -284,12 +284,12 @@ class TestBrokerViews(TestCase):
         response = self.client.post(reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}), data={})
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 1)
-        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST.')
+        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST. See logs for details.')
 
     def test_submit_alert_invalid_form(self):
         """Test that an alert submission failed when form is invalid."""
         response = self.client.post(reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}), data={})
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 1)
-        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST.')
+        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST. See logs for details.')
         self.assertRedirects(response, reverse('home'))
