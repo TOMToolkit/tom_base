@@ -321,5 +321,7 @@ class SubmitAlertUpstreamView(LoginRequiredMixin, FormMixin, ProcessFormView, Vi
 
         if success:
             messages.success(self.request, f'Successfully submitted alerts to {broker_name}!')
+        else:
+            messages.warning(self.request, f'Unable to submit one or more alerts to {broker_name}.')
 
         return redirect(self.get_redirect_url())
