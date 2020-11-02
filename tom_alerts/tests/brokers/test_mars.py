@@ -2,7 +2,7 @@ import json
 from requests import Response
 
 from django.utils import timezone
-from django.test import TestCase, override_settings
+from django.test import override_settings, tag, TestCase
 from unittest import mock
 
 from tom_alerts.brokers.mars import MARSBroker
@@ -115,3 +115,18 @@ class TestMARSBrokerClass(TestCase):
 
         created_alert = MARSBroker().to_generic_alert(test_alert)
         self.assertEqual(created_alert.name, 'ZTF18aberpsh')
+
+
+@tag('canary')
+class TestMARSModuleCanary(TestCase):
+    def setUp(self):
+        pass
+
+    def test_fetch_alerts(self):
+        pass
+
+    def test_fetch_alert(self):
+        pass
+
+    def test_process_reduced_data(self):
+        pass
