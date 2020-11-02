@@ -1,10 +1,10 @@
+from datetime import datetime, timedelta
 import requests
 
+from astropy.time import Time, TimezoneInfo
+from crispy_forms.layout import Layout, Div, Fieldset
 from django import forms
 from django.core.cache import cache
-from crispy_forms.layout import Layout, Div, Fieldset
-from astropy.time import Time, TimezoneInfo
-import datetime
 
 from tom_alerts.alerts import GenericQueryForm, GenericBroker, GenericAlert
 from tom_targets.models import Target
@@ -29,9 +29,6 @@ RECORDS_CHOICES = [
 
 class ALeRCEQueryForm(GenericQueryForm):
 
-    RF_CLASSIFIERS = []
-    STAMP_CLASSIFIERS = []
-
     nobs__gt = forms.IntegerField(
         required=False,
         label='Detections Lower',
@@ -42,19 +39,21 @@ class ALeRCEQueryForm(GenericQueryForm):
         label='Detections Upper',
         widget=forms.TextInput(attrs={'placeholder': 'Max number of epochs'})
     )
-    classrf = forms.ChoiceField(
+    classrf = forms.TypedChoiceField(
         required=False,
         label='Late Classifier (Random Forest)',
-        choices=RF_CLASSIFIERS
+        choices=[],  # Choices are populated dynamically in the constructor
+        coerce=int
     )
     pclassrf = forms.FloatField(
         required=False,
         label='Classifier Probability (Random Forest)'
     )
-    classearly = forms.ChoiceField(
+    classearly = forms.TypedChoiceField(
         required=False,
         label='Early Classifier (Stamp Classifier)',
-        choices=STAMP_CLASSIFIERS
+        choices=[],  # Choices are populated dynamically in the constructor
+        coerce=int
     )
     pclassearly = forms.FloatField(
         required=False,
@@ -78,17 +77,20 @@ class ALeRCEQueryForm(GenericQueryForm):
     mjd__gt = forms.FloatField(
         required=False,
         label='Min date of first detection ',
-        widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'})
+        widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'}),
+        min_value=0.0
     )
     mjd__lt = forms.FloatField(
         required=False,
         label='Max date of first detection',
-        widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'})
+        widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'}),
+        min_value=0.0
     )
     relative_mjd__gt = forms.FloatField(
         required=False,
         label='Relative date of object discovery.',
-        widget=forms.TextInput(attrs={'placeholder': 'Hours'})
+        widget=forms.TextInput(attrs={'placeholder': 'Hours'}),
+        min_value=0.0
     )
     sort_by = forms.ChoiceField(
             choices=SORT_CHOICES,
@@ -98,12 +100,14 @@ class ALeRCEQueryForm(GenericQueryForm):
     max_pages = forms.TypedChoiceField(
             choices=PAGES_CHOICES,
             required=False,
-            label='Max Number of Pages'
+            label='Max Number of Pages',
+            coerce=int
     )
-    records = forms.ChoiceField(
+    records = forms.TypedChoiceField(
             choices=RECORDS_CHOICES,
             required=False,
-            label='Records per page'
+            label='Records per page',
+            coerce=int
     )
 
     def __init__(self, *args, **kwargs):
@@ -220,74 +224,107 @@ class ALeRCEQueryForm(GenericQueryForm):
 
         return cached_classifiers
 
+    def clean_relative_mjd__gt(self):
+        if self.cleaned_data['relative_mjd__gt']:
+            return Time(datetime.now() - timedelta(hours=self.cleaned_data['relative_mjd__gt'])).mjd
+        return None
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        print(cleaned_data)
+
+        # Ensure that all cone search fields are present
+        if any(cleaned_data[k] for k in ['ra', 'dec', 'sr']) and not all(cleaned_data[k] for k in ['ra', 'dec', 'sr']):
+            raise forms.ValidationError('All of RA, Dec, and Search Radius must be included to execute a cone search.')
+
+        # Ensure that both relative and absolute time filters are not present
+        if any(cleaned_data[k] for k in ['mjd__lt', 'mjd__gt']) and cleaned_data.get('relative_mjd__gt'):
+            raise forms.ValidationError('Cannot filter by both relative and absolute time.')
+
+        # Ensure that absolute time filters have sensible values
+        if all(cleaned_data[k] for k in ['mjd__lt', 'mjd__gt']) and cleaned_data['mjd__lt'] <= cleaned_data['mjd__gt']:
+            raise forms.ValidationError('Min date of first detection must be earlier than max date of first detection.')
+
+        return cleaned_data
+
     def early_classifier_choices(self):
-        return [(None, '')] + [(c['id'], c['name']) for c in self._get_classifiers()['early']]
+        return [(None, '')] + sorted([(c['id'], c['name']) for c in self._get_classifiers()['early']],
+                                     key=lambda classifier: classifier[1])
 
     def late_classifier_choices(self):
-        return [(None, '')] + [(c['id'], c['name']) for c in self._get_classifiers()['late']]
+        return [(None, '')] + sorted([(c['id'], c['name']) for c in self._get_classifiers()['late']],
+                                     key=lambda classifier: classifier[1])
 
 
 class ALeRCEBroker(GenericBroker):
     name = 'ALeRCE'
     form = ALeRCEQueryForm
 
-    def _fetch_alerts_payload(self, parameters):
-        payload = {
-            'page': parameters.get('page', 1),
-            'records_per_pages': int(parameters.get('records', 20)),
-            'sortBy': parameters.get('sort_by'),
-            'query_parameters': {
-            }
-        }
-        if parameters.get('total'):
-            payload['total'] = parameters.get('total')
-
-        if any(parameters[k] for k in ['nobs__gt', 'nobs__lt', 'classrf', 'pclassrf', 'classearly', 'pclassearly']):
-            filters = {}
-            if any(parameters[k] for k in ['nobs__gt', 'nobs__lt']):
-                filters['nobs'] = {}
-                if parameters['nobs__gt']:
-                    filters['nobs']['min'] = parameters['nobs__gt']
-                if parameters['nobs__lt']:
-                    filters['nobs']['max'] = parameters['nobs__lt']
-            if parameters['classrf']:
-                filters['classrf'] = int(parameters['classrf'])
-            if parameters['pclassrf']:
-                filters['pclassrf'] = parameters['pclassrf']
-            if parameters['classearly']:
-                filters['classearly'] = int(parameters['classearly'])
-            if parameters['pclassearly']:
-                filters['pclassearly'] = parameters['pclassearly']
-            payload['query_parameters']['filters'] = filters
-
+    def _clean_coordinate_parameters(self, parameters):
         if all([parameters['ra'], parameters['dec'], parameters['sr']]):
-            coordinates = {}
-            if parameters['ra']:
-                coordinates['ra'] = parameters['ra']
-            if parameters['dec']:
-                coordinates['dec'] = parameters['dec']
-            if parameters['sr']:
-                coordinates['sr'] = parameters['sr']
-            payload['query_parameters']['coordinates'] = coordinates
+            return {
+                'ra': parameters['ra'],
+                'dec': parameters['dec'],
+                'sr': parameters['sr']
+            }
+        else:
+            return None
 
-        if any(parameters[k] for k in ['mjd__gt', 'mjd__lt', 'relative_mjd__gt']):
+    def _clean_date_parameters(self, parameters):
+        dates = {}
+
+        if any(parameters[k] for k in ['mjd__gt', 'mjd__lt']):
             dates = {'firstmjd': {}}
             if parameters['mjd__gt']:
                 dates['firstmjd']['min'] = parameters['mjd__gt']
-            elif parameters['relative_mjd__gt']:
-                now = datetime.datetime.utcnow()
-                relative = now - datetime.timedelta(hours=parameters['relative_mjd__gt'])
-                relative_astro = Time(relative)
-                dates['firstmjd']['min'] = relative_astro.mjd
-
             if parameters['mjd__lt']:
                 dates['firstmjd']['max'] = parameters['mjd__lt']
-            payload['query_parameters']['dates'] = dates
+        elif parameters['relative_mjd__gt']:
+            dates = {'firstmjd': {'min': parameters['relative_mjd__gt']}}
+
+        return dates
+
+    def _clean_filter_parameters(self, parameters):
+        filters = {}
+
+        if any(parameters[k] is not None for k in ['nobs__gt', 'nobs__lt']):
+            filters['nobs'] = {}
+            if parameters['nobs__gt']:
+                filters['nobs']['min'] = parameters['nobs__gt']
+            if parameters['nobs__lt']:
+                filters['nobs']['max'] = parameters['nobs__lt']
+        filters.update({k: parameters[k]
+                        for k in ['classrf', 'pclassrf', 'classearly', 'pclassearly']
+                        if parameters[k]})
+
+        return filters
+
+    def _clean_parameters(self, parameters):
+        payload = {
+            'page': parameters.get('page', 1),
+            'records_per_pages': parameters.get('records', 20),
+            'sortBy': parameters.get('sort_by'),
+            'query_parameters': {}
+        }
+
+        if parameters.get('total'):
+            payload['total'] = parameters.get('total')
+
+        payload['query_parameters']['filters'] = self._clean_filter_parameters(parameters)
+
+        coordinates = self._clean_coordinate_parameters(parameters)
+        if coordinates:
+            payload['query_parameters']['coordinates'] = coordinates
+
+        payload['query_parameters']['dates'] = self._clean_date_parameters(parameters)
 
         return payload
 
     def fetch_alerts(self, parameters):
-        payload = self._fetch_alerts_payload(parameters)
+        print(parameters)
+        payload = self._clean_parameters(parameters)
+        print(payload)
         response = requests.post(ALERCE_SEARCH_URL, json=payload)
         response.raise_for_status()
         parsed = response.json()
