@@ -1,4 +1,5 @@
-from django.tests import override_settings, tag, TestCase
+from django.test import tag, TestCase
+
 
 class TestALeRCEBrokerClass(TestCase):
     def setUp(self):

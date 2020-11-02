@@ -1,6 +1,7 @@
 import requests
 
 from django import forms
+from django.core.cache import cache
 from crispy_forms.layout import Layout, Div, Fieldset
 from astropy.time import Time, TimezoneInfo
 import datetime
@@ -12,10 +13,10 @@ ALERCE_URL = 'https://alerce.online'
 ALERCE_SEARCH_URL = 'https://ztf.alerce.online/query'
 ALERCE_CLASSES_URL = 'https://ztf.alerce.online/get_current_classes'
 
-SORT_CHOICES = [("nobs", "Number Of Epochs"),
-                ("lastmjd", "Last Detection"),
-                ("pclassrf", "Late Probability"),
-                ("pclassearly", "Early Probability")]
+SORT_CHOICES = [('nobs', 'Number Of Epochs'),
+                ('lastmjd', 'Last Detection'),
+                ('pclassrf', 'Late Probability'),
+                ('pclassearly', 'Early Probability')]
 
 PAGES_CHOICES = [
     (i, i) for i in [1, 5, 10, 15]
@@ -108,17 +109,8 @@ class ALeRCEQueryForm(GenericQueryForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        response = requests.post(ALERCE_CLASSES_URL)
-        response.raise_for_status()
-        parsed = response.json()
-
-        EARLY_CHOICES = [(c["id"], c["name"]) for c in parsed["early"]]
-        EARLY_CHOICES.insert(0, (None, ""))
-        LATE_CHOICES = [(c["id"], c["name"]) for c in parsed["late"]]
-        LATE_CHOICES.insert(0, (None, ""))
-
-        self.fields["classearly"].choices = EARLY_CHOICES
-        self.fields["classrf"].choices = LATE_CHOICES
+        self.fields['classearly'].choices = self.early_classifier_choices()
+        self.fields['classrf'].choices = self.late_classifier_choices()
 
         self.helper.layout = Layout(
             self.common_layout,
@@ -133,7 +125,7 @@ class ALeRCEQueryForm(GenericQueryForm):
                         'nobs__lt',
                         css_class='col',
                     ),
-                    css_class="form-row",
+                    css_class='form-row',
                 )
             ),
             Fieldset(
@@ -149,7 +141,7 @@ class ALeRCEQueryForm(GenericQueryForm):
                         'pclassearly',
                         css_class='col',
                     ),
-                    css_class="form-row",
+                    css_class='form-row',
                 )
             ),
             Fieldset(
@@ -157,7 +149,7 @@ class ALeRCEQueryForm(GenericQueryForm):
                 Div(
                     Div(
                         'ra',
-                        css_class="col"
+                        css_class='col'
                     ),
                     Div(
                         'dec',
@@ -167,14 +159,14 @@ class ALeRCEQueryForm(GenericQueryForm):
                         'sr',
                         css_class='col'
                     ),
-                    css_class="form-row"
+                    css_class='form-row'
                 )
             ),
             Fieldset(
                 'Time Filters',
                 Div(
                     Fieldset(
-                        "Relative time",
+                        'Relative time',
                         Div(
                             'relative_mjd__gt',
                             css_class='col',
@@ -182,7 +174,7 @@ class ALeRCEQueryForm(GenericQueryForm):
                         css_class='col'
                     ),
                     Fieldset(
-                        "Absolute time",
+                        'Absolute time',
                         Div(
                             Div(
                                 'mjd__gt',
@@ -192,31 +184,47 @@ class ALeRCEQueryForm(GenericQueryForm):
                                 'mjd__lt',
                                 css_class='col',
                             ),
-                            css_class="form-row"
+                            css_class='form-row'
                         )
                     ),
-                    css_class="form-row"
+                    css_class='form-row'
                 )
             ),
             Fieldset(
                 'General Parameters',
                 Div(
                     Div(
-                        "sort_by",
-                        css_class="col"
+                        'sort_by',
+                        css_class='col'
                     ),
                     Div(
-                        "records",
-                        css_class="col"
+                        'records',
+                        css_class='col'
                     ),
                     Div(
-                        "max_pages",
-                        css_class="col"
+                        'max_pages',
+                        css_class='col'
                     ),
-                    css_class="form-row"
+                    css_class='form-row'
                 )
             ),
         )
+
+    def _get_classifiers(self):
+        cached_classifiers = cache.get('alerce_classifiers')
+
+        if not cached_classifiers:
+            response = requests.get(ALERCE_CLASSES_URL)
+            response.raise_for_status()
+            cached_classifiers = response.json()
+
+        return cached_classifiers
+
+    def early_classifier_choices(self):
+        return [(None, '')] + [(c['id'], c['name']) for c in self._get_classifiers()['early']]
+
+    def late_classifier_choices(self):
+        return [(None, '')] + [(c['id'], c['name']) for c in self._get_classifiers()['late']]
 
 
 class ALeRCEBroker(GenericBroker):
@@ -234,15 +242,9 @@ class ALeRCEBroker(GenericBroker):
         if parameters.get('total'):
             payload['total'] = parameters.get('total')
 
-        if any([parameters['nobs__gt'],
-                parameters['nobs__lt'],
-                parameters['classrf'],
-                parameters['pclassrf'],
-                parameters['classearly'],
-                parameters['pclassearly']]):
+        if any(parameters[k] for k in ['nobs__gt', 'nobs__lt', 'classrf', 'pclassrf', 'classearly', 'pclassearly']):
             filters = {}
-            if any([parameters['nobs__gt'],
-                    parameters['nobs__lt']]):
+            if any(parameters[k] for k in ['nobs__gt', 'nobs__lt']):
                 filters['nobs'] = {}
                 if parameters['nobs__gt']:
                     filters['nobs']['min'] = parameters['nobs__gt']
@@ -258,9 +260,7 @@ class ALeRCEBroker(GenericBroker):
                 filters['pclassearly'] = parameters['pclassearly']
             payload['query_parameters']['filters'] = filters
 
-        if all([parameters['ra'],
-                parameters['dec'],
-                parameters['sr']]):
+        if all([parameters['ra'], parameters['dec'], parameters['sr']]):
             coordinates = {}
             if parameters['ra']:
                 coordinates['ra'] = parameters['ra']
@@ -270,9 +270,7 @@ class ALeRCEBroker(GenericBroker):
                 coordinates['sr'] = parameters['sr']
             payload['query_parameters']['coordinates'] = coordinates
 
-        if any([parameters['mjd__gt'],
-                parameters['mjd__lt'],
-                parameters['relative_mjd__gt']]):
+        if any(parameters[k] for k in ['mjd__gt', 'mjd__lt', 'relative_mjd__gt']):
             dates = {'firstmjd': {}}
             if parameters['mjd__gt']:
                 dates['firstmjd']['min'] = parameters['mjd__gt']
@@ -294,7 +292,7 @@ class ALeRCEBroker(GenericBroker):
         response.raise_for_status()
         parsed = response.json()
         alerts = [alert_data for alert, alert_data in parsed['result'].items()]
-        if parsed['page'] < parsed['num_pages'] and parsed['page'] != int(parameters["max_pages"]):
+        if parsed['page'] < parsed['num_pages'] and parsed['page'] != int(parameters['max_pages']):
             parameters['page'] = parameters.get('page', 1) + 1
             parameters['total'] = parsed.get('total')
             alerts += self.fetch_alerts(parameters)
@@ -335,7 +333,7 @@ class ALeRCEBroker(GenericBroker):
         max_mag = alert['mean_magpsf_r'] if is_r else alert['mean_magpsf_g']
 
         if alert['pclassrf']:
-            score = alert["pclassrf"]
+            score = alert['pclassrf']
         elif alert['pclassearly']:
             score = alert['pclassearly']
         else:

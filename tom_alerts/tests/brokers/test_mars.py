@@ -166,4 +166,5 @@ class TestMARSModuleCanary(TestCase):
         alert = self.broker.fetch_alert(1065519)
         t = Target.objects.create(name='test target', ra=1, dec=2)
         self.broker.process_reduced_data(t, alert=alert)
-        self.assertGreaterEqual(ReducedDatum.objects.filter(target=t, timestamp__lte=datetime(2020, 11, 3)).count(), 526)
+        self.assertGreaterEqual(ReducedDatum.objects.filter(target=t, timestamp__lte=datetime(2020, 11, 3)).count(),
+                                526)
