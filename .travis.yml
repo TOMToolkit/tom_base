@@ -41,7 +41,7 @@ jobs:
     - stage: "Canary Tests"
       python: 3.8
       if: type = cron
-      script: manage.py test --tag=canary
+      script: python manage.py test --tag=canary
 
     # Deploy alpha releases to PyPi and generate draft release on Github Releases (incomplete)
     - stage: "Deploy Development"
