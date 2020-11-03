@@ -115,8 +115,6 @@ class ALeRCEQueryForm(GenericQueryForm):
 
         self.fields['classearly'].choices = self.early_classifier_choices()
         self.fields['classrf'].choices = self.late_classifier_choices()
-        # self.fields['records'].initial = 20
-        # self.fields['sort_by'].initial = 'nobs'
 
         self.helper.layout = Layout(
             self.common_layout,
