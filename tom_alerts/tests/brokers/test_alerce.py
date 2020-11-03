@@ -1,9 +1,36 @@
-from datetime import datetime
+from datetime import datetime, timezone
+import json
+from requests import Response
+from unittest.mock import patch
 
 from astropy.time import Time
 from django.test import tag, TestCase
+from faker import Faker
 
 from tom_alerts.brokers.alerce import ALeRCEBroker, ALeRCEQueryForm
+from tom_targets.models import Target
+
+
+def create_alerce_alert(lastmjd=None, mean_magpsf_g=None, mean_magpsf_r=None, pclassrf=None, pclassearly=None):
+    fake = Faker()
+
+    return {'oid': fake.pystr_format(string_format='ZTF##???????', letters='abcdefghijklmnopqrstuvwxyz'),
+            'meanra': fake.pyfloat(min_value=0, max_value=360),
+            'meandec': fake.pyfloat(min_value=0, max_value=360),
+            'lastmjd': lastmjd if lastmjd else fake.pyfloat(min_value=56000, max_value=59000, right_digits=1),
+            'mean_magpsf_g': mean_magpsf_g if mean_magpsf_g else fake.pyfloat(min_value=16, max_value=25),
+            'mean_magpsf_r': mean_magpsf_r if mean_magpsf_r else fake.pyfloat(min_value=16, max_value=25),
+            'pclassrf': pclassrf if pclassrf else fake.pyfloat(min_value=0, max_value=1),
+            'pclassearly': pclassearly if pclassearly else fake.pyfloat(min_value=0, max_value=1)}
+
+
+def create_alerce_query_response(num_alerts):
+    alerts = [create_alerce_alert() for i in range(0, num_alerts)]
+
+    return {
+        'total': num_alerts, 'num_pages': 1, 'page': 1,
+        'result': {alert['oid']: alert for alert in alerts}
+    }
 
 
 class TestALeRCEBrokerForm(TestCase):
@@ -140,28 +167,89 @@ class TestALeRCEBrokerClass(TestCase):
                     else:
                         self.assertNotIn(key, filters)
 
-    # def test_clean_parameters(self):
-    #     form = ALeRCEQueryForm(self.base_form_data)
-    #     form.is_valid()
-    #     print(form.cleaned_data)
-    #     query = form.save()
-    #     print(query.parameters_as_dict)
-    #     cleaned_params = self.broker._clean_parameters(query.parameters_as_dict)
-    #     payload = self.broker._fetch_alerts_payload(query.parameters_as_dict)
-    #     print(cleaned_params)
-    #     print(payload)
+    @patch('tom_alerts.brokers.alerce.requests.post')
+    @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_parameters')
+    def test_fetch_alerts(self, mock_clean_parameters, mock_requests_post):
+        """Test fetch_alerts broker method."""
+        mock_response = Response()
+        mock_response_content = create_alerce_query_response(25)
+        mock_response._content = str.encode(json.dumps(mock_response_content))
+        mock_response.status_code = 200
+        mock_requests_post.return_value = mock_response
 
-    def test_fetch_alerts(self):
-        pass
+        response = self.broker.fetch_alerts({})
+        alerts = []
+        for alert in response:
+            alerts.append(alert)
+            self.assertDictEqual(alert, mock_response_content['result'][alert['oid']])
+        self.assertEqual(25, len(alerts))
 
-    def test_fetch_alert(self):
-        pass
+    @patch('tom_alerts.brokers.alerce.requests.post')
+    def test_fetch_alert(self, mock_requests_post):
+        """Test fetch_alert broker method."""
+        mock_response = Response()
+        mock_response_content = create_alerce_query_response(1)
+        mock_response._content = str.encode(json.dumps(mock_response_content))
+        mock_response.status_code = 200
+        mock_requests_post.return_value = mock_response
 
-    def test_to_target(self, alert):
-        pass
+        alert = self.broker.fetch_alert(list(mock_response_content['result'])[0])
+        self.assertDictEqual(list(mock_response_content['result'].items())[0][1], alert)
 
-    def test_to_generic_alert(self, alert):
-        pass
+    def test_to_target(self):
+        """Test to_target broker method."""
+        mock_alert = create_alerce_alert()
+        self.broker.to_target(mock_alert)
+        t = Target.objects.first()
+
+        self.assertEqual(mock_alert['oid'], t.name)
+        self.assertEqual(mock_alert['meanra'], t.ra)
+        self.assertEqual(mock_alert['meandec'], t.dec)
+
+    def test_to_generic_alert(self):
+        """Test to_generic_alert broker method."""
+
+        # Test that timestamp is populated correctly.
+        mock_alert = create_alerce_alert()
+        mock_alert['lastmjd'] = None
+        self.assertEqual('', self.broker.to_generic_alert(mock_alert).timestamp)
+
+        mock_alert = create_alerce_alert(lastmjd=59155)
+        self.assertEqual(datetime(2020, 11, 2, tzinfo=timezone.utc), 
+                         self.broker.to_generic_alert(mock_alert).timestamp)
+
+        # Test that the url is created properly.
+        mock_alert = create_alerce_alert()
+        self.assertEqual(f'https://alerce.online/object/{mock_alert["oid"]}',
+                         self.broker.to_generic_alert(mock_alert).url)
+
+        # Test that the magnitude is selected correctly
+        mock_alert = create_alerce_alert(mean_magpsf_g=20, mean_magpsf_r=18)
+        self.assertEqual(mock_alert['mean_magpsf_r'], self.broker.to_generic_alert(mock_alert).mag)
+
+        mock_alert = create_alerce_alert(mean_magpsf_g=18, mean_magpsf_r=20)
+        self.assertEqual(mock_alert['mean_magpsf_g'], self.broker.to_generic_alert(mock_alert).mag)
+
+        mock_alert = create_alerce_alert(mean_magpsf_r=18)
+        mock_alert['mean_magpsf_g'] = None
+        self.assertEqual(mock_alert['mean_magpsf_r'], self.broker.to_generic_alert(mock_alert).mag)
+
+        mock_alert = create_alerce_alert(mean_magpsf_g=18, mean_magpsf_r=20)
+        mock_alert['mean_magpsf_r'] = None
+        self.assertEqual(mock_alert['mean_magpsf_g'], self.broker.to_generic_alert(mock_alert).mag)
+
+        # Test that the classification is selected correctly
+        mock_alert = create_alerce_alert()
+        self.assertEqual(mock_alert['pclassrf'], self.broker.to_generic_alert(mock_alert).score)
+
+        mock_alert = create_alerce_alert()
+        mock_alert['pclassrf'] = None
+        self.assertEqual(mock_alert['pclassearly'], self.broker.to_generic_alert(mock_alert).score)
+
+        mock_alert = create_alerce_alert()
+        mock_alert['pclassrf'] = None
+        mock_alert['pclassearly'] = None
+        self.assertEqual(None, self.broker.to_generic_alert(mock_alert).score)
 
 
 @tag('canary')

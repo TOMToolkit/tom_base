@@ -322,20 +322,33 @@ class ALeRCEBroker(GenericBroker):
         return payload
 
     def fetch_alerts(self, parameters):
-        print(parameters)
         payload = self._clean_parameters(parameters)
-        print(payload)
         response = requests.post(ALERCE_SEARCH_URL, json=payload)
         response.raise_for_status()
         parsed = response.json()
         alerts = [alert_data for alert, alert_data in parsed['result'].items()]
-        if parsed['page'] < parsed['num_pages'] and parsed['page'] != int(parameters['max_pages']):
+        if parsed['page'] < parsed['num_pages'] and parsed['page'] != parameters['max_pages']:
             parameters['page'] = parameters.get('page', 1) + 1
             parameters['total'] = parsed.get('total')
             alerts += self.fetch_alerts(parameters)
         return iter(alerts)
 
     def fetch_alert(self, id):
+        """
+        The response for a single alert is as follows:
+
+        {
+            "total": 1,
+            "num_pages": 1,
+            "page": 1,
+            "result": {
+                "ZTF20acnsdjd": {
+                  "oid": "ZTF20acnsdjd",
+                  other alert values
+                }
+            }
+        }
+        """
         payload = {
             'query_parameters': {
                 'filters': {
@@ -345,7 +358,7 @@ class ALeRCEBroker(GenericBroker):
         }
         response = requests.post(ALERCE_SEARCH_URL, json=payload)
         response.raise_for_status()
-        return response.json()['result'][0]
+        return list(response.json()['result'].items())[0][1]
 
     def to_target(self, alert):
         return Target.objects.create(
@@ -360,14 +373,16 @@ class ALeRCEBroker(GenericBroker):
             timestamp = Time(alert['lastmjd'], format='mjd', scale='utc').to_datetime(timezone=TimezoneInfo())
         else:
             timestamp = ''
-        url = '{0}/{1}/{2}'.format(ALERCE_URL, 'object', alert['oid'])
+        url = f'{ALERCE_URL}/object/{alert["oid"]}'
 
-        exits = (alert['mean_magpsf_g'] is None and alert['mean_magpsf_r'] is not None)
-        both_exists = (alert['mean_magpsf_g'] is not None and alert['mean_magpsf_r'] is not None)
-        bigger = (both_exists and (alert['mean_magpsf_r'] < alert['mean_magpsf_g'] is not None))
-        is_r = any([exits, bigger])
-
-        max_mag = alert['mean_magpsf_r'] if is_r else alert['mean_magpsf_g']
+        # Use the smaller value between r and g if both are present, else use the value that is present
+        mag = None
+        if alert['mean_magpsf_r'] is not None and alert['mean_magpsf_g'] is not None:
+            mag = alert['mean_magpsf_g'] if alert['mean_magpsf_r'] > alert['mean_magpsf_g'] else alert['mean_magpsf_r']
+        elif alert['mean_magpsf_r'] is not None:
+            mag = alert['mean_magpsf_r']
+        elif alert['mean_magpsf_g'] is not None:
+            mag = alert['mean_magpsf_g']
 
         if alert['pclassrf']:
             score = alert['pclassrf']
@@ -383,6 +398,6 @@ class ALeRCEBroker(GenericBroker):
             name=alert['oid'],
             ra=alert['meanra'],
             dec=alert['meandec'],
-            mag=max_mag,
+            mag=mag,
             score=score
         )
