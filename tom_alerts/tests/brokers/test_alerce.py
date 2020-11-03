@@ -92,9 +92,7 @@ class TestALeRCEBrokerForm(TestCase):
         for parameters in parameters_list:
             with self.subTest():
                 parameters.update(self.base_form_data)
-                print(parameters)
                 form = ALeRCEQueryForm(parameters)
-                print(form.errors)
                 self.assertTrue(form.is_valid())
 
         # Test that form validation succeeds when absolute time field is used on its own.
@@ -215,7 +213,7 @@ class TestALeRCEBrokerClass(TestCase):
         self.assertEqual('', self.broker.to_generic_alert(mock_alert).timestamp)
 
         mock_alert = create_alerce_alert(lastmjd=59155)
-        self.assertEqual(datetime(2020, 11, 2, tzinfo=timezone.utc), 
+        self.assertEqual(datetime(2020, 11, 2, tzinfo=timezone.utc),
                          self.broker.to_generic_alert(mock_alert).timestamp)
 
         # Test that the url is created properly.
@@ -255,19 +253,39 @@ class TestALeRCEBrokerClass(TestCase):
 @tag('canary')
 class TestALeRCEModuleCanary(TestCase):
     def setUp(self):
-        pass
+        self.broker = ALeRCEBroker()
 
-    def test_early_classifier_choices(self):
-        pass
+    @patch('tom_alerts.brokers.alerce.cache.get')
+    def test_get_classifiers(self, mock_cache_get):
+        mock_cache_get.return_value = None  # Ensure cache is not used
 
-    def test_late_classifier_choices(self):
-        pass
+        classifiers = ALeRCEQueryForm._get_classifiers()
+        self.assertIn('early', classifiers.keys())
+        self.assertIn('late', classifiers.keys())
+        for classifier in classifiers['early'] + classifiers['late']:
+            self.assertIn('name', classifier.keys())
+            self.assertIn('id', classifier.keys())
 
+    # TODO: form should be okay without including records or sort_by
     def test_fetch_alerts(self):
-        pass
+        form = ALeRCEQueryForm({'query_name': 'Test', 'broker': 'ALeRCE', 'records': 20, 'sort_by': 'nobs',
+                                'nobs__gt': 1, 'classearly': 19, 'pclassearly': 0.7,
+                                'mjd__gt': 59148.78219219812})
+        form.is_valid()
+        query = form.save()
+
+        alerts = [alert for alert in self.broker.fetch_alerts(query.parameters_as_dict)]
+
+        self.assertGreaterEqual(len(alerts), 6)
+        for k in ['oid', 'lastmjd', 'mean_magpsf_r', 'mean_magpsf_g', 'pclassrf', 'pclassearly', 'meanra', 'meandec']:
+            self.assertIn(k, alerts[0])
 
     def test_fetch_alert(self):
-        pass
+        alert = self.broker.fetch_alert('ZTF20acnsdjd')
 
-    def test_process_reduced_data(self):
-        pass
+        self.assertDictContainsSubset({
+            'oid': 'ZTF20acnsdjd',
+            'last_magpsf_r': 17.8492107391357,
+            'first_magpsf_r': 17.0198993682861,
+            'firstmjd': 59149.1119328998,
+        }, alert)

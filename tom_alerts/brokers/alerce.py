@@ -214,7 +214,8 @@ class ALeRCEQueryForm(GenericQueryForm):
             ),
         )
 
-    def _get_classifiers(self):
+    @staticmethod
+    def _get_classifiers():
         cached_classifiers = cache.get('alerce_classifiers')
 
         if not cached_classifiers:
@@ -231,8 +232,6 @@ class ALeRCEQueryForm(GenericQueryForm):
 
     def clean(self):
         cleaned_data = super().clean()
-
-        print(cleaned_data)
 
         # Ensure that all cone search fields are present
         if any(cleaned_data[k] for k in ['ra', 'dec', 'sr']) and not all(cleaned_data[k] for k in ['ra', 'dec', 'sr']):
