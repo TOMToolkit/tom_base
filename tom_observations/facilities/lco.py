@@ -113,7 +113,8 @@ class LCOBaseForm(forms.Form):
         self.fields['filter'] = forms.ChoiceField(choices=self.filter_choices())
         self.fields['instrument_type'] = forms.ChoiceField(choices=self.instrument_choices())
 
-    def _get_instruments(self):
+    @staticmethod
+    def _get_instruments():
         cached_instruments = cache.get('lco_instruments')
 
         if not cached_instruments:
@@ -127,16 +128,19 @@ class LCOBaseForm(forms.Form):
 
         return cached_instruments
 
-    def instrument_choices(self):
-        return sorted([(k, v['name']) for k, v in self._get_instruments().items()], key=lambda inst: inst[1])
+    @staticmethod
+    def instrument_choices():
+        return sorted([(k, v['name']) for k, v in LCOBaseForm._get_instruments().items()], key=lambda inst: inst[1])
 
-    def filter_choices(self):
+    @staticmethod
+    def filter_choices():
         return sorted(set([
-            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            (f['code'], f['name']) for ins in LCOBaseForm._get_instruments().values() for f in
             ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
             ]), key=lambda filter_tuple: filter_tuple[1])
 
-    def proposal_choices(self):
+    @staticmethod
+    def proposal_choices():
         response = make_request(
             'GET',
             PORTAL_URL + '/api/profile/',
@@ -383,13 +387,17 @@ class LCOImagingObservationForm(LCOBaseObservationForm):
     The LCOImagingObservationForm allows the selection of parameters for observing using LCO's Imagers. The list of
     Imagers and their details can be found here: https://lco.global/observatory/instruments/
     """
-    def instrument_choices(self):
-        return sorted([(k, v['name']) for k, v in self._get_instruments().items() if 'IMAGE' in v['type']],
-                      key=lambda inst: inst[1])
+    @staticmethod
+    def instrument_choices():
+        return sorted(
+            [(k, v['name']) for k, v in LCOImagingObservationForm._get_instruments().items() if 'IMAGE' in v['type']],
+            key=lambda inst: inst[1]
+        )
 
-    def filter_choices(self):
+    @staticmethod
+    def filter_choices():
         return sorted(set([
-            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            (f['code'], f['name']) for ins in LCOImagingObservationForm._get_instruments().values() for f in
             ins['optical_elements'].get('filters', [])
             ]), key=lambda filter_tuple: filter_tuple[1])
 
