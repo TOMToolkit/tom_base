@@ -389,9 +389,9 @@ class ALeRCEBroker(GenericBroker):
         elif alert['mean_magpsf_g'] is not None:
             mag = alert['mean_magpsf_g']
 
-        if alert['pclassrf']:
+        if alert['pclassrf'] is not None:
             score = alert['pclassrf']
-        elif alert['pclassearly']:
+        elif alert['pclassearly'] is not None:
             score = alert['pclassearly']
         else:
             score = None
