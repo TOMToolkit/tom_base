@@ -229,7 +229,6 @@ class ALeRCEQueryForm(GenericQueryForm):
 
     def clean_sort_by(self):
         return self.cleaned_data['sort_by'] if self.cleaned_data['sort_by'] else 'nobs'
-            
 
     def clean_records(self):
         return self.cleaned_data['records'] if self.cleaned_data['records'] else 20
