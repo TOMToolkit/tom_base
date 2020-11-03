@@ -115,6 +115,8 @@ class ALeRCEQueryForm(GenericQueryForm):
 
         self.fields['classearly'].choices = self.early_classifier_choices()
         self.fields['classrf'].choices = self.late_classifier_choices()
+        # self.fields['records'].initial = 20
+        # self.fields['sort_by'].initial = 'nobs'
 
         self.helper.layout = Layout(
             self.common_layout,
@@ -225,6 +227,13 @@ class ALeRCEQueryForm(GenericQueryForm):
 
         return cached_classifiers
 
+    def clean_sort_by(self):
+        return self.cleaned_data['sort_by'] if self.cleaned_data['sort_by'] else 'nobs'
+            
+
+    def clean_records(self):
+        return self.cleaned_data['records'] if self.cleaned_data['records'] else 20
+
     def clean_relative_mjd__gt(self):
         if self.cleaned_data['relative_mjd__gt']:
             return Time(datetime.now() - timedelta(hours=self.cleaned_data['relative_mjd__gt'])).mjd
@@ -303,7 +312,7 @@ class ALeRCEBroker(GenericBroker):
         payload = {
             'page': parameters.get('page', 1),
             'records_per_pages': parameters.get('records', 20),
-            'sortBy': parameters.get('sort_by'),
+            'sortBy': parameters.get('sort_by', 'nobs'),
             'query_parameters': {}
         }
 

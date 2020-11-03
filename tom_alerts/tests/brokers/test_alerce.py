@@ -174,7 +174,7 @@ class TestALeRCEBrokerClass(TestCase):
         mock_filter.return_value = {'nobs__gt': 1}
 
         # Ensure that passed in values are used to populate the payload
-        parameters = {'page': 2, 'records': 25, 'sort_by': 'nobs', 'total': 30}
+        parameters = {'page': 2, 'records': 25, 'sort_by': 'lastmjd', 'total': 30}
         payload = self.broker._clean_parameters(parameters)
         with self.subTest():
             self.assertEqual(payload['page'], parameters['page'])
@@ -191,7 +191,7 @@ class TestALeRCEBrokerClass(TestCase):
         with self.subTest():
             self.assertEqual(payload['page'], 1)
             self.assertEqual(payload['records_per_pages'], 20)
-            self.assertEqual(payload['sortBy'], None)
+            self.assertEqual(payload['sortBy'], 'nobs')
             self.assertNotIn('total', payload)
             self.assertNotIn('coordinates', payload['query_parameters'])
 
@@ -296,11 +296,9 @@ class TestALeRCEModuleCanary(TestCase):
             self.assertIn('name', classifier.keys())
             self.assertIn('id', classifier.keys())
 
-    # TODO: form should be okay without including records or sort_by
     def test_fetch_alerts(self):
-        form = ALeRCEQueryForm({'query_name': 'Test', 'broker': 'ALeRCE', 'records': 20, 'sort_by': 'nobs',
-                                'nobs__gt': 1, 'classearly': 19, 'pclassearly': 0.7,
-                                'mjd__gt': 59148.78219219812})
+        form = ALeRCEQueryForm({'query_name': 'Test', 'broker': 'ALeRCE', 'nobs__gt': 1, 'classearly': 19,
+                                'pclassearly': 0.7, 'mjd__gt': 59148.78219219812})
         form.is_valid()
         query = form.save()
 
