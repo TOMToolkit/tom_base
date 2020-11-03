@@ -165,6 +165,36 @@ class TestALeRCEBrokerClass(TestCase):
                     else:
                         self.assertNotIn(key, filters)
 
+    @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_filter_parameters')
+    @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_date_parameters')
+    @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_coordinate_parameters')
+    def test_clean_parameters(self, mock_coordinate, mock_date, mock_filter):
+        mock_coordinate.return_value = {'ra': 10, 'dec': 10, 'sr': 10}
+        mock_date.return_value = {'firstmjd': {'min': 58000}}
+        mock_filter.return_value = {'nobs__gt': 1}
+
+        # Ensure that passed in values are used to populate the payload
+        parameters = {'page': 2, 'records': 25, 'sort_by': 'nobs', 'total': 30}
+        payload = self.broker._clean_parameters(parameters)
+        with self.subTest():
+            self.assertEqual(payload['page'], parameters['page'])
+            self.assertEqual(payload['records_per_pages'], parameters['records'])
+            self.assertEqual(payload['sortBy'], parameters['sort_by'])
+            self.assertEqual(payload['total'], parameters['total'])
+            self.assertIn('firstmjd', payload['query_parameters']['dates'])
+            self.assertIn('nobs__gt', payload['query_parameters']['filters'])
+            self.assertIn('coordinates', payload['query_parameters'])
+
+        # Ensure that missing values result in default values being used to populate the payload
+        mock_coordinate.return_value = None
+        payload = self.broker._clean_parameters({})
+        with self.subTest():
+            self.assertEqual(payload['page'], 1)
+            self.assertEqual(payload['records_per_pages'], 20)
+            self.assertEqual(payload['sortBy'], None)
+            self.assertNotIn('total', payload)
+            self.assertNotIn('coordinates', payload['query_parameters'])
+
     @patch('tom_alerts.brokers.alerce.requests.post')
     @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_parameters')
     def test_fetch_alerts(self, mock_clean_parameters, mock_requests_post):
