@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import json
 from requests import Response
 from unittest.mock import patch
@@ -7,7 +8,7 @@ from django.test import TestCase
 from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.facilities.lco import make_request
 from tom_observations.facilities.lco import LCOBaseForm, LCOBaseObservationForm, LCOImagingObservationForm
-from tom_observations.facilities.lco import LCOSpectroscopyObservationForm
+from tom_observations.facilities.lco import LCOPhotometricSequenceForm, LCOSpectroscopyObservationForm
 from tom_observations.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
 
 
@@ -122,9 +123,9 @@ class TestLCOBaseForm(TestCase):
         self.assertNotIn(('InactiveProposal', 'Inactive (InactiveProposal)'), proposal_choices)
 
 
-@patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices')
-@patch('tom_observations.facilities.lco.LCOBaseForm.filter_choices')
-@patch('tom_observations.facilities.lco.LCOBaseForm.instrument_choices')
+@patch('tom_observations.facilities.lco.LCOBaseObservationForm.proposal_choices')
+@patch('tom_observations.facilities.lco.LCOBaseObservationForm.filter_choices')
+@patch('tom_observations.facilities.lco.LCOBaseObservationForm.instrument_choices')
 @patch('tom_observations.facilities.lco.LCOBaseObservationForm.validate_at_facility')
 class TestLCOBaseObservationForm(TestCase):
 
@@ -411,7 +412,74 @@ class TestLCOSpectroscopyObservationForm(TestCase):
 
 
 class TestLCOPhotometricSequenceForm(TestCase):
-    pass
+
+    def setUp(self):
+        self.st = SiderealTargetFactory.create()
+        self.valid_form_data = {
+            'name': 'test', 'facility': 'LCO', 'target_id': self.st.id, 'ipp_value': 0.5, 'max_airmass': 3,
+            'min_lunar_distance': 20, 'observation_mode': 'NORMAL', 'proposal': 'sampleproposal',
+            'instrument_type': '0M4-SCICAM-SBIG', 'cadence_frequency': 24,
+            'U_0': 30.0, 'U_1': 1, 'U_2': 1, 'B_0': 60.0, 'B_1': 2, 'B_2': 1,
+        }
+        self.instrument_choices = [(k, v['name']) for k, v in instrument_response.items() if 'SOAR' not in k]
+        self.filter_choices = set([
+            (f['code'], f['name']) for ins in instrument_response.values() for f in
+            ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
+        ])
+        self.proposal_choices = [('sampleproposal', 'Sample Proposal')]
+
+    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm._get_instruments')
+    def test_instrument_choices(self, mock_get_instruments):
+        """Test LCOPhotometricSequenceForm._instrument_choices."""
+        mock_get_instruments.return_value = {k: v for k, v in instrument_response.items() if 'SOAR' not in k}
+
+        inst_choices = LCOPhotometricSequenceForm.instrument_choices()
+        self.assertIn(('0M4-SCICAM-SBIG', '0.4 meter SBIG'), inst_choices)
+        self.assertNotIn(('2M0-FLOYDS-SCICAM', '2.0 meter FLOYDS'), inst_choices)
+        self.assertEqual(len(inst_choices), 1)
+
+    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.proposal_choices')
+    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.filter_choices')
+    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.instrument_choices')
+    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.validate_at_facility')
+    def test_build_instrument_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
+        mock_validate.return_value = []
+        mock_insts.return_value = self.instrument_choices
+        mock_filters.return_value = self.filter_choices
+        mock_proposals.return_value = self.proposal_choices
+
+        form = LCOPhotometricSequenceForm(self.valid_form_data)
+        self.assertTrue(form.is_valid())
+        inst_config = form._build_instrument_config()
+        self.assertEqual(len(inst_config), 2)
+        self.assertIn({'exposure_count': 1, 'exposure_time': 30.0, 'optical_elements': {'filter': 'U'}}, inst_config)
+        self.assertIn({'exposure_count': 2, 'exposure_time': 60.0, 'optical_elements': {'filter': 'B'}}, inst_config)
+
+    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.proposal_choices')
+    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.filter_choices')
+    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.instrument_choices')
+    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.validate_at_facility')
+    def test_clean(self, mock_validate, mock_insts, mock_filters, mock_proposals):
+        mock_validate.return_value = []
+        mock_insts.return_value = self.instrument_choices
+        mock_filters.return_value = self.filter_choices
+        mock_proposals.return_value = self.proposal_choices
+
+        # Test that a valid form returns True, and that start and end are cleaned properly
+        form = LCOPhotometricSequenceForm(self.valid_form_data)
+        self.assertTrue(form.is_valid())
+        self.assertAlmostEqual(datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S'), form.cleaned_data['start'])
+        self.assertAlmostEqual(
+            datetime.strftime(
+                datetime.now() + timedelta(hours=form.cleaned_data['cadence_frequency']), '%Y-%m-%dT%H:%M:%S'
+            ),
+            form.cleaned_data['end']
+        )
+
+        # Test that an invalid form returns False
+        self.valid_form_data.pop('target_id')
+        form = LCOPhotometricSequenceForm(self.valid_form_data)
+        self.assertFalse(form.is_valid())
 
 
 class TestLCOSpectroscopicSequenceForm(TestCase):

@@ -112,7 +112,6 @@ class LCOBaseForm(forms.Form):
 
     @staticmethod
     def _get_instruments():
-        print('bad')
         cached_instruments = cache.get('lco_instruments')
 
         if not cached_instruments:
@@ -551,11 +550,14 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
 
         return cleaned_data
 
-    def instrument_choices(self):
+    @staticmethod
+    def instrument_choices():
         """
         This method returns only the instrument choices available in the current SNEx photometric sequence form.
         """
-        return sorted([(k, v['name']) for k, v in self._get_instruments().items() if k in self.valid_instruments],
+        return sorted([(k, v['name'])
+                       for k, v in LCOPhotometricSequenceForm._get_instruments().items()
+                       if k in LCOPhotometricSequenceForm.valid_instruments],
                       key=lambda inst: inst[1])
 
     def cadence_layout(self):
