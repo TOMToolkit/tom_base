@@ -91,7 +91,7 @@ class TNSBroker(GenericBroker):
         else:
             public_timestamp = ''
         data = {
-            'api_key': settings.BROKER_CREDENTIALS['TNS_APIKEY'],
+            'api_key': settings.BROKERS['TNS']['api_key'],
             'data': json.dumps({
                 'name': parameters['target_name'],
                 'internal_name': parameters['internal_name'],
@@ -108,7 +108,7 @@ class TNSBroker(GenericBroker):
         alerts = []
         for transient in transients['data']['reply']:
             data = {
-                'api_key': settings.BROKER_CREDENTIALS['TNS_APIKEY'],
+                'api_key': settings.BROKERS['TNS']['api_key'],
                 'data': json.dumps({
                     'objname': transient['objname'],
                     'photometry': 1,
@@ -137,9 +137,9 @@ class TNSBroker(GenericBroker):
     def to_generic_alert(cls, alert):
         return GenericAlert(
             timestamp=alert['discoverydate'],
-            url='https://wis-tns.weizmann.ac.il/object/' + alert['name'],
-            id=alert['name'],
-            name=alert['name_prefix'] + alert['name'],
+            url='https://wis-tns.weizmann.ac.il/object/' + alert['objname'],
+            id=alert['objname'],
+            name=alert['name_prefix'] + alert['objname'],
             ra=alert['radeg'],
             dec=alert['decdeg'],
             mag=alert['discoverymag'],

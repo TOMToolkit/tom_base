@@ -1,4 +1,6 @@
+import logging
 import requests
+
 from django.conf import settings
 from django import forms
 from dateutil.parser import parse
@@ -8,6 +10,8 @@ from astropy import units as u
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 from tom_common.exceptions import ImproperCredentialsException
 from tom_targets.models import Target
+
+logger = logging.getLogger(__name__)
 
 try:
     GEM_SETTINGS = settings.FACILITIES['GEM']
@@ -60,7 +64,7 @@ SITES = {
 def make_request(*args, **kwargs):
     response = requests.request(*args, **kwargs)
     if 400 <= response.status_code < 500:
-        print('Request failed: {}'.format(response.content))
+        logger.log(msg=f'Gemini request failed: {response.content}', level=logging.WARN)
         raise ImproperCredentialsException('GEM')
     response.raise_for_status()
     return response

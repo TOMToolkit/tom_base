@@ -1,9 +1,10 @@
+from datetime import datetime, timedelta
 import requests
 
-from django import forms
-from crispy_forms.layout import Layout, Div, Fieldset
 from astropy.time import Time, TimezoneInfo
-import datetime
+from crispy_forms.layout import Layout, Div, Fieldset
+from django import forms
+from django.core.cache import cache
 
 from tom_alerts.alerts import GenericQueryForm, GenericBroker, GenericAlert
 from tom_targets.models import Target
@@ -12,10 +13,10 @@ ALERCE_URL = 'https://alerce.online'
 ALERCE_SEARCH_URL = 'https://ztf.alerce.online/query'
 ALERCE_CLASSES_URL = 'https://ztf.alerce.online/get_current_classes'
 
-SORT_CHOICES = [("nobs", "Number Of Epochs"),
-                ("lastmjd", "Last Detection"),
-                ("pclassrf", "Late Probability"),
-                ("pclassearly", "Early Probability")]
+SORT_CHOICES = [('nobs', 'Number Of Epochs'),
+                ('lastmjd', 'Last Detection'),
+                ('pclassrf', 'Late Probability'),
+                ('pclassearly', 'Early Probability')]
 
 PAGES_CHOICES = [
     (i, i) for i in [1, 5, 10, 15]
@@ -28,9 +29,6 @@ RECORDS_CHOICES = [
 
 class ALeRCEQueryForm(GenericQueryForm):
 
-    RF_CLASSIFIERS = []
-    STAMP_CLASSIFIERS = []
-
     nobs__gt = forms.IntegerField(
         required=False,
         label='Detections Lower',
@@ -41,19 +39,21 @@ class ALeRCEQueryForm(GenericQueryForm):
         label='Detections Upper',
         widget=forms.TextInput(attrs={'placeholder': 'Max number of epochs'})
     )
-    classrf = forms.ChoiceField(
+    classrf = forms.TypedChoiceField(
         required=False,
         label='Late Classifier (Random Forest)',
-        choices=RF_CLASSIFIERS
+        choices=[],  # Choices are populated dynamically in the constructor
+        coerce=int
     )
     pclassrf = forms.FloatField(
         required=False,
         label='Classifier Probability (Random Forest)'
     )
-    classearly = forms.ChoiceField(
+    classearly = forms.TypedChoiceField(
         required=False,
         label='Early Classifier (Stamp Classifier)',
-        choices=STAMP_CLASSIFIERS
+        choices=[],  # Choices are populated dynamically in the constructor
+        coerce=int
     )
     pclassearly = forms.FloatField(
         required=False,
@@ -77,17 +77,20 @@ class ALeRCEQueryForm(GenericQueryForm):
     mjd__gt = forms.FloatField(
         required=False,
         label='Min date of first detection ',
-        widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'})
+        widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'}),
+        min_value=0.0
     )
     mjd__lt = forms.FloatField(
         required=False,
         label='Max date of first detection',
-        widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'})
+        widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'}),
+        min_value=0.0
     )
     relative_mjd__gt = forms.FloatField(
         required=False,
         label='Relative date of object discovery.',
-        widget=forms.TextInput(attrs={'placeholder': 'Hours'})
+        widget=forms.TextInput(attrs={'placeholder': 'Hours'}),
+        min_value=0.0
     )
     sort_by = forms.ChoiceField(
             choices=SORT_CHOICES,
@@ -97,28 +100,21 @@ class ALeRCEQueryForm(GenericQueryForm):
     max_pages = forms.TypedChoiceField(
             choices=PAGES_CHOICES,
             required=False,
-            label='Max Number of Pages'
+            label='Max Number of Pages',
+            coerce=int
     )
-    records = forms.ChoiceField(
+    records = forms.TypedChoiceField(
             choices=RECORDS_CHOICES,
             required=False,
-            label='Records per page'
+            label='Records per page',
+            coerce=int
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        response = requests.post(ALERCE_CLASSES_URL)
-        response.raise_for_status()
-        parsed = response.json()
-
-        EARLY_CHOICES = [(c["id"], c["name"]) for c in parsed["early"]]
-        EARLY_CHOICES.insert(0, (None, ""))
-        LATE_CHOICES = [(c["id"], c["name"]) for c in parsed["late"]]
-        LATE_CHOICES.insert(0, (None, ""))
-
-        self.fields["classearly"].choices = EARLY_CHOICES
-        self.fields["classrf"].choices = LATE_CHOICES
+        self.fields['classearly'].choices = self.early_classifier_choices()
+        self.fields['classrf'].choices = self.late_classifier_choices()
 
         self.helper.layout = Layout(
             self.common_layout,
@@ -133,7 +129,7 @@ class ALeRCEQueryForm(GenericQueryForm):
                         'nobs__lt',
                         css_class='col',
                     ),
-                    css_class="form-row",
+                    css_class='form-row',
                 )
             ),
             Fieldset(
@@ -149,7 +145,7 @@ class ALeRCEQueryForm(GenericQueryForm):
                         'pclassearly',
                         css_class='col',
                     ),
-                    css_class="form-row",
+                    css_class='form-row',
                 )
             ),
             Fieldset(
@@ -157,7 +153,7 @@ class ALeRCEQueryForm(GenericQueryForm):
                 Div(
                     Div(
                         'ra',
-                        css_class="col"
+                        css_class='col'
                     ),
                     Div(
                         'dec',
@@ -167,14 +163,14 @@ class ALeRCEQueryForm(GenericQueryForm):
                         'sr',
                         css_class='col'
                     ),
-                    css_class="form-row"
+                    css_class='form-row'
                 )
             ),
             Fieldset(
                 'Time Filters',
                 Div(
                     Fieldset(
-                        "Relative time",
+                        'Relative time',
                         Div(
                             'relative_mjd__gt',
                             css_class='col',
@@ -182,7 +178,7 @@ class ALeRCEQueryForm(GenericQueryForm):
                         css_class='col'
                     ),
                     Fieldset(
-                        "Absolute time",
+                        'Absolute time',
                         Div(
                             Div(
                                 'mjd__gt',
@@ -192,115 +188,172 @@ class ALeRCEQueryForm(GenericQueryForm):
                                 'mjd__lt',
                                 css_class='col',
                             ),
-                            css_class="form-row"
+                            css_class='form-row'
                         )
                     ),
-                    css_class="form-row"
+                    css_class='form-row'
                 )
             ),
             Fieldset(
                 'General Parameters',
                 Div(
                     Div(
-                        "sort_by",
-                        css_class="col"
+                        'sort_by',
+                        css_class='col'
                     ),
                     Div(
-                        "records",
-                        css_class="col"
+                        'records',
+                        css_class='col'
                     ),
                     Div(
-                        "max_pages",
-                        css_class="col"
+                        'max_pages',
+                        css_class='col'
                     ),
-                    css_class="form-row"
+                    css_class='form-row'
                 )
             ),
         )
+
+    @staticmethod
+    def _get_classifiers():
+        cached_classifiers = cache.get('alerce_classifiers')
+
+        if not cached_classifiers:
+            response = requests.get(ALERCE_CLASSES_URL)
+            response.raise_for_status()
+            cached_classifiers = response.json()
+
+        return cached_classifiers
+
+    def clean_sort_by(self):
+        return self.cleaned_data['sort_by'] if self.cleaned_data['sort_by'] else 'nobs'
+
+    def clean_records(self):
+        return self.cleaned_data['records'] if self.cleaned_data['records'] else 20
+
+    def clean_relative_mjd__gt(self):
+        if self.cleaned_data['relative_mjd__gt']:
+            return Time(datetime.now() - timedelta(hours=self.cleaned_data['relative_mjd__gt'])).mjd
+        return None
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Ensure that all cone search fields are present
+        if any(cleaned_data[k] for k in ['ra', 'dec', 'sr']) and not all(cleaned_data[k] for k in ['ra', 'dec', 'sr']):
+            raise forms.ValidationError('All of RA, Dec, and Search Radius must be included to execute a cone search.')
+
+        # Ensure that both relative and absolute time filters are not present
+        if any(cleaned_data[k] for k in ['mjd__lt', 'mjd__gt']) and cleaned_data.get('relative_mjd__gt'):
+            raise forms.ValidationError('Cannot filter by both relative and absolute time.')
+
+        # Ensure that absolute time filters have sensible values
+        if all(cleaned_data[k] for k in ['mjd__lt', 'mjd__gt']) and cleaned_data['mjd__lt'] <= cleaned_data['mjd__gt']:
+            raise forms.ValidationError('Min date of first detection must be earlier than max date of first detection.')
+
+        return cleaned_data
+
+    def early_classifier_choices(self):
+        return [(None, '')] + sorted([(c['id'], c['name']) for c in self._get_classifiers()['early']],
+                                     key=lambda classifier: classifier[1])
+
+    def late_classifier_choices(self):
+        return [(None, '')] + sorted([(c['id'], c['name']) for c in self._get_classifiers()['late']],
+                                     key=lambda classifier: classifier[1])
 
 
 class ALeRCEBroker(GenericBroker):
     name = 'ALeRCE'
     form = ALeRCEQueryForm
 
-    def _fetch_alerts_payload(self, parameters):
-        payload = {
-            'page': parameters.get('page', 1),
-            'records_per_pages': int(parameters.get('records', 20)),
-            'sortBy': parameters.get('sort_by'),
-            'query_parameters': {
+    def _clean_coordinate_parameters(self, parameters):
+        if all([parameters['ra'], parameters['dec'], parameters['sr']]):
+            return {
+                'ra': parameters['ra'],
+                'dec': parameters['dec'],
+                'sr': parameters['sr']
             }
-        }
-        if parameters.get('total'):
-            payload['total'] = parameters.get('total')
+        else:
+            return None
 
-        if any([parameters['nobs__gt'],
-                parameters['nobs__lt'],
-                parameters['classrf'],
-                parameters['pclassrf'],
-                parameters['classearly'],
-                parameters['pclassearly']]):
-            filters = {}
-            if any([parameters['nobs__gt'],
-                    parameters['nobs__lt']]):
-                filters['nobs'] = {}
-                if parameters['nobs__gt']:
-                    filters['nobs']['min'] = parameters['nobs__gt']
-                if parameters['nobs__lt']:
-                    filters['nobs']['max'] = parameters['nobs__lt']
-            if parameters['classrf']:
-                filters['classrf'] = int(parameters['classrf'])
-            if parameters['pclassrf']:
-                filters['pclassrf'] = parameters['pclassrf']
-            if parameters['classearly']:
-                filters['classearly'] = int(parameters['classearly'])
-            if parameters['pclassearly']:
-                filters['pclassearly'] = parameters['pclassearly']
-            payload['query_parameters']['filters'] = filters
+    def _clean_date_parameters(self, parameters):
+        dates = {}
 
-        if all([parameters['ra'],
-                parameters['dec'],
-                parameters['sr']]):
-            coordinates = {}
-            if parameters['ra']:
-                coordinates['ra'] = parameters['ra']
-            if parameters['dec']:
-                coordinates['dec'] = parameters['dec']
-            if parameters['sr']:
-                coordinates['sr'] = parameters['sr']
-            payload['query_parameters']['coordinates'] = coordinates
-
-        if any([parameters['mjd__gt'],
-                parameters['mjd__lt'],
-                parameters['relative_mjd__gt']]):
+        if any(parameters[k] for k in ['mjd__gt', 'mjd__lt']):
             dates = {'firstmjd': {}}
             if parameters['mjd__gt']:
                 dates['firstmjd']['min'] = parameters['mjd__gt']
-            elif parameters['relative_mjd__gt']:
-                now = datetime.datetime.utcnow()
-                relative = now - datetime.timedelta(hours=parameters['relative_mjd__gt'])
-                relative_astro = Time(relative)
-                dates['firstmjd']['min'] = relative_astro.mjd
-
             if parameters['mjd__lt']:
                 dates['firstmjd']['max'] = parameters['mjd__lt']
-            payload['query_parameters']['dates'] = dates
+        elif parameters['relative_mjd__gt']:
+            dates = {'firstmjd': {'min': parameters['relative_mjd__gt']}}
+
+        return dates
+
+    def _clean_filter_parameters(self, parameters):
+        filters = {}
+
+        if any(parameters[k] is not None for k in ['nobs__gt', 'nobs__lt']):
+            filters['nobs'] = {}
+            if parameters['nobs__gt']:
+                filters['nobs']['min'] = parameters['nobs__gt']
+            if parameters['nobs__lt']:
+                filters['nobs']['max'] = parameters['nobs__lt']
+        filters.update({k: parameters[k]
+                        for k in ['classrf', 'pclassrf', 'classearly', 'pclassearly']
+                        if parameters[k]})
+
+        return filters
+
+    def _clean_parameters(self, parameters):
+        payload = {
+            'page': parameters.get('page', 1),
+            'records_per_pages': parameters.get('records', 20),
+            'sortBy': parameters.get('sort_by', 'nobs'),
+            'query_parameters': {}
+        }
+
+        if parameters.get('total'):
+            payload['total'] = parameters.get('total')
+
+        payload['query_parameters']['filters'] = self._clean_filter_parameters(parameters)
+
+        coordinates = self._clean_coordinate_parameters(parameters)
+        if coordinates:
+            payload['query_parameters']['coordinates'] = coordinates
+
+        payload['query_parameters']['dates'] = self._clean_date_parameters(parameters)
 
         return payload
 
     def fetch_alerts(self, parameters):
-        payload = self._fetch_alerts_payload(parameters)
+        payload = self._clean_parameters(parameters)
         response = requests.post(ALERCE_SEARCH_URL, json=payload)
         response.raise_for_status()
         parsed = response.json()
         alerts = [alert_data for alert, alert_data in parsed['result'].items()]
-        if parsed['page'] < parsed['num_pages'] and parsed['page'] != int(parameters["max_pages"]):
+        if parsed['page'] < parsed['num_pages'] and parsed['page'] != parameters['max_pages']:
             parameters['page'] = parameters.get('page', 1) + 1
             parameters['total'] = parsed.get('total')
             alerts += self.fetch_alerts(parameters)
         return iter(alerts)
 
     def fetch_alert(self, id):
+        """
+        The response for a single alert is as follows:
+
+        {
+            "total": 1,
+            "num_pages": 1,
+            "page": 1,
+            "result": {
+                "ZTF20acnsdjd": {
+                  "oid": "ZTF20acnsdjd",
+                  other alert values
+                }
+            }
+        }
+        """
         payload = {
             'query_parameters': {
                 'filters': {
@@ -310,7 +363,7 @@ class ALeRCEBroker(GenericBroker):
         }
         response = requests.post(ALERCE_SEARCH_URL, json=payload)
         response.raise_for_status()
-        return response.json()['result'][0]
+        return list(response.json()['result'].items())[0][1]
 
     def to_target(self, alert):
         return Target.objects.create(
@@ -325,18 +378,20 @@ class ALeRCEBroker(GenericBroker):
             timestamp = Time(alert['lastmjd'], format='mjd', scale='utc').to_datetime(timezone=TimezoneInfo())
         else:
             timestamp = ''
-        url = '{0}/{1}/{2}'.format(ALERCE_URL, 'object', alert['oid'])
+        url = f'{ALERCE_URL}/object/{alert["oid"]}'
 
-        exits = (alert['mean_magpsf_g'] is None and alert['mean_magpsf_r'] is not None)
-        both_exists = (alert['mean_magpsf_g'] is not None and alert['mean_magpsf_r'] is not None)
-        bigger = (both_exists and (alert['mean_magpsf_r'] < alert['mean_magpsf_g'] is not None))
-        is_r = any([exits, bigger])
+        # Use the smaller value between r and g if both are present, else use the value that is present
+        mag = None
+        if alert['mean_magpsf_r'] is not None and alert['mean_magpsf_g'] is not None:
+            mag = alert['mean_magpsf_g'] if alert['mean_magpsf_r'] > alert['mean_magpsf_g'] else alert['mean_magpsf_r']
+        elif alert['mean_magpsf_r'] is not None:
+            mag = alert['mean_magpsf_r']
+        elif alert['mean_magpsf_g'] is not None:
+            mag = alert['mean_magpsf_g']
 
-        max_mag = alert['mean_magpsf_r'] if is_r else alert['mean_magpsf_g']
-
-        if alert['pclassrf']:
-            score = alert["pclassrf"]
-        elif alert['pclassearly']:
+        if alert['pclassrf'] is not None:
+            score = alert['pclassrf']
+        elif alert['pclassearly'] is not None:
             score = alert['pclassearly']
         else:
             score = None
@@ -348,6 +403,6 @@ class ALeRCEBroker(GenericBroker):
             name=alert['oid'],
             ra=alert['meanra'],
             dec=alert['meandec'],
-            mag=max_mag,
+            mag=mag,
             score=score
         )
