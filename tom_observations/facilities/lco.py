@@ -84,10 +84,7 @@ max_airmass_help = """
 
 static_cadencing_help = """
     For information on static cadencing with LCO,
-    <a href="https://s3.us-west-2.amazonaws.com/www.lco.global/documents/GettingStartedontheLCONetwork.latest.pdf?
-             X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA6FT4CXR4ZJRYWHNN%2F20200928%2Fus-west-2%2Fs3%2F
-             aws4_request&X-Amz-Date=20200928T221218Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=
-             328a99283fed8b98a3ffa3a035f3effe2b1c0b6ea4e84e266b7662abec9cc2e4">
+    <a href="https://lco.global/documentation/">
         check the Observation Portal getting started guide, starting on page 18.
     </a>
 """
@@ -141,6 +138,7 @@ class LCOBaseForm(forms.Form):
 
     @staticmethod
     def proposal_choices():
+        print('here')
         response = make_request(
             'GET',
             PORTAL_URL + '/api/profile/',
@@ -179,7 +177,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     observation_mode = forms.ChoiceField(
         choices=(('NORMAL', 'Normal'), ('RAPID_RESPONSE', 'Rapid-Response'), ('TIME_CRITICAL', 'Time-Critical')),
         help_text=observation_mode_help
-    )  # TODO: Update this to support current observation modes
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -229,13 +227,16 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
         end = self.cleaned_data['end']
         return parse(end).isoformat()
 
-    def is_valid(self):
-        super().is_valid()
+    def validate_at_facility(self):
         obs_module = get_service_class(self.cleaned_data['facility'])
         errors = obs_module().validate_observation(self.observation_payload())
         if errors:
             self.add_error(None, self._flatten_error_dict(errors))
-        return not errors
+
+    def is_valid(self):
+        super().is_valid()
+        self.validate_at_facility()
+        return not self._errors
 
     def _flatten_error_dict(self, error_dict):
         non_field_errors = []
@@ -259,7 +260,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
 
         return non_field_errors
 
-    def instrument_to_type(self, instrument_type):
+    @staticmethod
+    def instrument_to_type(instrument_type):
         if 'FLOYDS' in instrument_type:
             return 'SPECTRUM'
         elif 'NRES' in instrument_type:
