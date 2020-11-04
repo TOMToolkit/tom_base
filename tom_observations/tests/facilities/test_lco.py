@@ -406,7 +406,7 @@ class TestLCOSpectroscopyObservationForm(TestCase):
                 [{'exposure_count': valid_form_data['exposure_count'],
                   'exposure_time': valid_form_data['exposure_time'],
                   'rotator_mode': 'VFLOAT', 'extra_params': {'rotator_angle': valid_form_data['rotator_angle']}
-                 }], form._build_instrument_config()
+                  }], form._build_instrument_config()
             )
 
 
