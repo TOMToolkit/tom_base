@@ -138,7 +138,6 @@ class LCOBaseForm(forms.Form):
 
     @staticmethod
     def proposal_choices():
-        print('here')
         response = make_request(
             'GET',
             PORTAL_URL + '/api/profile/',
@@ -360,21 +359,21 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
 
     def observation_payload(self):
         payload = {
-            "name": self.cleaned_data['name'],
-            "proposal": self.cleaned_data['proposal'],
-            "ipp_value": self.cleaned_data['ipp_value'],
-            "operator": "SINGLE",
-            "observation_type": self.cleaned_data['observation_mode'],
-            "requests": [
+            'name': self.cleaned_data['name'],
+            'proposal': self.cleaned_data['proposal'],
+            'ipp_value': self.cleaned_data['ipp_value'],
+            'operator': 'SINGLE',
+            'observation_type': self.cleaned_data['observation_mode'],
+            'requests': [
                 {
-                    "configurations": [self._build_configuration()],
-                    "windows": [
+                    'configurations': [self._build_configuration()],
+                    'windows': [
                         {
-                            "start": self.cleaned_data['start'],
-                            "end": self.cleaned_data['end']
+                            'start': self.cleaned_data['start'],
+                            'end': self.cleaned_data['end']
                         }
                     ],
-                    "location": self._build_location()
+                    'location': self._build_location()
                 }
             ]
         }

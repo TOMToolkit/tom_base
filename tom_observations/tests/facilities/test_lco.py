@@ -132,7 +132,7 @@ class TestLCOBaseObservationFormPayload(TestCase):
         self.valid_form_data = {
             'name': 'test', 'facility': 'LCO', 'target_id': self.st.id, 'ipp_value': 0.5, 'start': '2020-11-03',
             'end': '2020-11-04', 'exposure_count': 1, 'exposure_time': 30, 'max_airmass': 3,
-            'min_lunar_distance': 20, 'period': 60, 'jitter': 15, 'observation_mode': 'NORMAL',
+            'min_lunar_distance': 20, 'observation_mode': 'NORMAL',
             'proposal': 'sampleproposal', 'filter': 'opaque', 'instrument_type': '0M4-SCICAM-SBIG'
         }
         self.instrument_choices = [(k, v['name']) for k, v in instrument_response.items() if 'SOAR' not in k]
@@ -272,8 +272,42 @@ class TestLCOBaseObservationFormPayload(TestCase):
     def test_expand_cadence_request(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         pass
 
-    def test_observation_payload(self, mock_validate, mock_insts, mock_filters, mock_proposals):
-        pass
+    @patch('tom_observations.facilities.lco.LCOBaseObservationForm._build_location')
+    @patch('tom_observations.facilities.lco.LCOBaseObservationForm._build_configuration')
+    @patch('tom_observations.facilities.lco.make_request')
+    def test_observation_payload(self, mock_make_request, mock_build_configuration, mock_build_location, mock_validate,
+                                 mock_insts, mock_filters, mock_proposals):
+        """Test observation_payload method."""
+        mock_build_configuration.return_value = {}
+        mock_build_location.return_value = {}
+        mock_validate.return_value = []
+        mock_insts.return_value = self.instrument_choices
+        mock_filters.return_value = self.filter_choices
+        mock_proposals.return_value = self.proposal_choices
+
+        # Test a non-static cadenced form
+        with self.subTest():
+            form = LCOBaseObservationForm(self.valid_form_data)
+            self.assertTrue(form.is_valid())
+            obs_payload = form.observation_payload()
+            self.assertDictContainsSubset(
+                {'name': 'test', 'proposal': 'sampleproposal', 'ipp_value': 0.5, 'operator': 'SINGLE',
+                 'observation_type': 'NORMAL'}, obs_payload
+            )
+            self.assertNotIn('cadence', obs_payload['requests'][0])
+
+        # Test a static cadence form
+        with self.subTest():
+            mock_response = Response()
+            mock_response._content = str.encode(json.dumps({'test': 'test_static_cadence'}))
+            mock_response.status_code = 200
+            mock_make_request.return_value = mock_response
+
+            self.valid_form_data['period'] = 60
+            self.valid_form_data['jitter'] = 15
+            form = LCOBaseObservationForm(self.valid_form_data)
+            self.assertTrue(form.is_valid())
+            self.assertDictEqual({'test': 'test_static_cadence'}, form.observation_payload())
 
 
 class TestLCOImagingObservationForm(TestCase):
