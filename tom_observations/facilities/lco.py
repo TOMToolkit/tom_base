@@ -112,6 +112,7 @@ class LCOBaseForm(forms.Form):
 
     @staticmethod
     def _get_instruments():
+        print('bad')
         cached_instruments = cache.get('lco_instruments')
 
         if not cached_instruments:
@@ -442,14 +443,19 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
             )
         )
 
-    def instrument_choices(self):
-        return sorted([(k, v['name']) for k, v in self._get_instruments().items() if 'SPECTRA' in v['type']],
-                      key=lambda inst: inst[1])
+    @staticmethod
+    def instrument_choices():
+        return sorted(
+            [(k, v['name'])
+             for k, v in LCOSpectroscopyObservationForm._get_instruments().items()
+             if 'SPECTRA' in v['type']],
+            key=lambda inst: inst[1])
 
     # NRES does not take a slit, and therefore needs an option of None
-    def filter_choices(self):
+    @staticmethod
+    def filter_choices():
         return sorted(set([
-            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            (f['code'], f['name']) for ins in LCOSpectroscopyObservationForm._get_instruments().values() for f in
             ins['optical_elements'].get('slits', [])
             ] + [('None', 'None')]),
             key=lambda filter_tuple: filter_tuple[1])
