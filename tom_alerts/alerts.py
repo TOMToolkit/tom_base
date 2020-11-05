@@ -276,3 +276,6 @@ class GenericBroker(ABC):
             targets.append(target)
 
         return targets
+
+
+# TODO: Add a generic dash broker interface class
