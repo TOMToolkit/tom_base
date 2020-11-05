@@ -180,7 +180,7 @@ class MARSBroker(GenericBroker):
     def _clean_parameters(self, parameters):
         return {k: v for k, v in parameters.items() if v and k != 'page'}
 
-    def fetch_alerts(self, parameters):
+    def _request_alerts(self, parameters):
         if not parameters.get('page'):
             parameters['page'] = 1
         args = urlencode(self._clean_parameters(parameters))
@@ -189,12 +189,14 @@ class MARSBroker(GenericBroker):
             parameters['page'],
             args
         )
-        alerts = []
         response = requests.get(url)
         response.raise_for_status()
-        parsed = response.json()
-        alerts = parsed['results']
-        if parsed['has_next'] and parameters['page'] < 10:
+        return response.json()
+
+    def fetch_alerts(self, parameters):
+        response = self._request_alerts(parameters)
+        alerts = response['results']
+        if response['has_next'] and parameters['page'] < 10:
             parameters['page'] += 1
             alerts += self.fetch_alerts(parameters)
         return iter(alerts)
@@ -265,3 +267,25 @@ class MARSBroker(GenericBroker):
             mag=alert['candidate']['magpsf'],
             score=alert['candidate']['rb']
         )
+
+    def get_dash_columns(self):
+        return [
+            {'id': 'objectId', 'name': 'Name', 'type': 'text', 'presentation': 'markdown'},
+            {'id': 'ra', 'name': 'Right Ascension', 'type': 'text'},
+            {'id': 'dec', 'name': 'Declination', 'type': 'text'},
+            {'id': 'magpsf', 'name': 'Magnitude', 'type': 'text'},
+            {'id': 'rb', 'name': 'Real-Bogus Score', 'type': 'text'},
+        ]
+
+    def get_dash_data(self, parameters):
+        alerts = self.fetch_alerts(parameters)
+        flattened_alerts = []
+        for alert in alerts:
+            flattened_alerts.append({
+                'objectId': alert['objectId'],
+                'ra': alert['candidate']['ra'],
+                'dec': alert['candidate']['dec'],
+                'magpsf': alert['candidate']['magpsf'],
+                'rb': alert['candidate']['magpsf']
+            })
+        return flattened_alerts

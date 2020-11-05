@@ -351,3 +351,35 @@ class ALeRCEBroker(GenericBroker):
             mag=max_mag,
             score=score
         )
+
+    def get_dash_columns(self):
+        return [
+            {'id': 'oid', 'name': 'Object ID', 'type': 'text', 'presentation': 'markdown'},
+            {'id': 'meanra', 'name': 'Right Ascension', 'type': 'text'},
+            {'id': 'meandec', 'name': 'Declination', 'type': 'text'},
+            {'id': 'classifier', 'name': 'Classifier', 'type': 'text'},
+            {'id': 'classifier_type', 'name': 'Classifier Type', 'type': 'text'},
+            {'id': 'classifier_probability', 'name': 'Classifier Probability', 'type': 'text'},
+        ]
+
+    def get_dash_data(self, parameters):
+        test_parameters = {'query_name': 'Test Alerce', 'broker': 'ALeRCE', 'nobs__gt': None, 'nobs__lt': None,
+                           'classrf': '', 'pclassrf': None, 'classearly': 21, 'pclassearly': 0.7, 'ra': None,
+                           'dec': None, 'sr': None, 'mjd__gt': 57000.0, 'mjd__lt': None, 'relative_mjd__gt': None,
+                           'sort_by': 'nobs', 'max_pages': 1, 'records': 20}
+        alerts = self.fetch_alerts(test_parameters)
+        flattened_alerts = []
+        for alert in alerts:
+            if alert['pclassrf']:
+                classifier_suffix = 'classrf'
+            else:
+                classifier_suffix = 'classearly'
+            flattened_alerts.append({
+                'oid': alert['oid'],
+                'meanra': alert['meanra'],
+                'meandec': alert['meandec'],
+                'classifier': alert[f'{classifier_suffix}'],
+                'classifier_type': 'Stamp' if classifier_suffix == 'classearly' else 'Light Curve',
+                'classifier_probability': alert[f'p{classifier_suffix}']
+            })
+        return flattened_alerts
