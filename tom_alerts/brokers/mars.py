@@ -278,7 +278,8 @@ class MARSBroker(GenericBroker):
                 'ra': deg_to_sexigesimal(alert['candidate']['ra'], 'hms'),
                 'dec': deg_to_sexigesimal(alert['candidate']['dec'], 'dms'),
                 'magpsf': truncate_number(alert['candidate']['magpsf']),
-                'rb': truncate_number(alert['candidate']['rb'])
+                'rb': truncate_number(alert['candidate']['rb']),
+                'alert': alert
             })
         return flattened_alerts
 

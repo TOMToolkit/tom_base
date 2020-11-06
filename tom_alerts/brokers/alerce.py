@@ -428,7 +428,8 @@ class ALeRCEBroker(GenericBroker):
                 'meandec': deg_to_sexigesimal(alert['meandec'], 'dms') if alert['meandec'] else None,
                 'classifier': classifier_name,
                 'classifier_type': 'Stamp' if classifier_suffix == 'classearly' else 'Light Curve',
-                'classifier_probability': truncate_number(alert[f'p{classifier_suffix}'])
+                'classifier_probability': truncate_number(alert[f'p{classifier_suffix}']),
+                'alert': alert
             })
         return flattened_alerts
 
