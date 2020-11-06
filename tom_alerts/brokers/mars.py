@@ -8,6 +8,8 @@ from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from astropy.time import Time, TimezoneInfo
 
 from tom_alerts.alerts import GenericAlert, GenericBroker, GenericDashBroker, GenericQueryForm
+from tom_common.templatetags.tom_common_extras import truncate_number
+from tom_targets.templatetags.targets_extras import deg_to_sexigesimal
 from tom_targets.models import Target
 from tom_dataproducts.models import ReducedDatum
 
@@ -273,15 +275,24 @@ class MARSBroker(GenericBroker):
         for alert in alerts:
             flattened_alerts.append({
                 'objectId': alert['objectId'],
-                'ra': alert['candidate']['ra'],
-                'dec': alert['candidate']['dec'],
-                'magpsf': alert['candidate']['magpsf'],
-                'rb': alert['candidate']['rb']
+                'ra': deg_to_sexigesimal(alert['candidate']['ra'], 'hms'),
+                'dec': deg_to_sexigesimal(alert['candidate']['dec'], 'dms'),
+                'magpsf': truncate_number(alert['candidate']['magpsf']),
+                'rb': truncate_number(alert['candidate']['rb'])
             })
         return flattened_alerts
 
     def filter_alerts(self, filters):
-        alerts = self.fetch_alerts(filters)
+        parameters = {}
+        filter_mapping = {'>': 'gt', '>=': 'gt', '<': 'lt', '<=': 'lt'}
+        parameters['objectId'] = filters.get('objectId', '')
+        for key in ['ra', 'dec', 'magpsf']:
+            if key in filters:
+                filter_expression = filter_mapping[filters[key][0]]
+                parameters[f'{key}__{filter_expression}'] = filters[key][1]
+        parameters['rb__gte'] = filters.get('rb', '')
+
+        alerts = self.fetch_alerts(parameters)
         return alerts
 
     def get_dash_columns(self):
@@ -293,6 +304,6 @@ class MARSBroker(GenericBroker):
             {'id': 'rb', 'name': 'Real-Bogus Score', 'type': 'text'},
         ]
 
-    def get_dash_data(self, parameters):
-        alerts = self.fetch_alerts(parameters)
+    def get_dash_data(self, filters):
+        alerts = self.filter_alerts(filters)
         return self.flatten_dash_alerts(alerts)

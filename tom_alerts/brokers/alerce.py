@@ -6,6 +6,7 @@ from astropy.time import Time, TimezoneInfo
 import datetime
 
 from tom_alerts.alerts import GenericQueryForm, GenericBroker, GenericAlert
+from tom_common.templatetags.tom_common_extras import truncate_number
 from tom_targets.models import Target
 
 ALERCE_URL = 'https://alerce.online'
@@ -357,7 +358,7 @@ class ALeRCEBroker(GenericBroker):
             {'id': 'oid', 'name': 'Object ID', 'type': 'text', 'presentation': 'markdown'},
             {'id': 'meanra', 'name': 'Right Ascension', 'type': 'text'},
             {'id': 'meandec', 'name': 'Declination', 'type': 'text'},
-            {'id': 'classifier', 'name': 'Classifier', 'type': 'text'},
+            {'id': 'classifier', 'name': 'Class', 'type': 'text'},
             {'id': 'classifier_type', 'name': 'Classifier Type', 'type': 'text'},
             {'id': 'classifier_probability', 'name': 'Classifier Probability', 'type': 'text'},
         ]
@@ -370,6 +371,7 @@ class ALeRCEBroker(GenericBroker):
         alerts = self.fetch_alerts(test_parameters)
         flattened_alerts = []
         for alert in alerts:
+            print(alert)
             if alert['pclassrf']:
                 classifier_suffix = 'classrf'
             else:
@@ -380,6 +382,7 @@ class ALeRCEBroker(GenericBroker):
                 'meandec': alert['meandec'],
                 'classifier': alert[f'{classifier_suffix}'],
                 'classifier_type': 'Stamp' if classifier_suffix == 'classearly' else 'Light Curve',
-                'classifier_probability': alert[f'p{classifier_suffix}']
+                'classifier_probability': truncate_number(alert[f'p{classifier_suffix}'])
             })
+            break
         return flattened_alerts
