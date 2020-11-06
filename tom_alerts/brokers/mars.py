@@ -7,7 +7,7 @@ from django import forms
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from astropy.time import Time, TimezoneInfo
 
-from tom_alerts.alerts import GenericAlert, GenericBroker, GenericDashBroker, GenericQueryForm
+from tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
 from tom_common.templatetags.tom_common_extras import truncate_number
 from tom_targets.templatetags.targets_extras import deg_to_sexigesimal
 from tom_targets.models import Target
@@ -285,11 +285,11 @@ class MARSBroker(GenericBroker):
     def filter_alerts(self, filters):
         parameters = {}
         filter_mapping = {'>': 'gt', '>=': 'gt', '<': 'lt', '<=': 'lt'}
-        parameters['objectId'] = filters.get('objectId', '')
+        parameters['objectId'] = filters.get('objectId', {}).get('value')
         for key in ['ra', 'dec', 'magpsf']:
             if key in filters:
-                filter_expression = filter_mapping[filters[key][0]]
-                parameters[f'{key}__{filter_expression}'] = filters[key][1]
+                filter_expression = filter_mapping[filters[key]['operator']]
+                parameters[f'{key}__{filter_expression}'] = filters[key]['value']
         parameters['rb__gte'] = filters.get('rb', '')
 
         alerts = self.fetch_alerts(parameters)

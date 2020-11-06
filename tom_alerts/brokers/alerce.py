@@ -9,6 +9,7 @@ from django.core.cache import cache
 from tom_alerts.alerts import GenericQueryForm, GenericBroker, GenericAlert
 from tom_common.templatetags.tom_common_extras import truncate_number
 from tom_targets.models import Target
+from tom_targets.templatetags.targets_extras import deg_to_sexigesimal
 
 ALERCE_URL = 'https://alerce.online'
 ALERCE_SEARCH_URL = 'https://ztf.alerce.online/query'
@@ -408,6 +409,57 @@ class ALeRCEBroker(GenericBroker):
             score=score
         )
 
+    def flatten_dash_alerts(self, alerts):
+        flattened_alerts = []
+        for alert in alerts:
+            if alert['pclassrf']:
+                classifier_suffix = 'classrf'
+                classifier_type = 'late'
+            else:
+                classifier_suffix = 'classearly'
+                classifier_type = 'early'
+            classifier_name = ''
+            for classifier_dict in ALeRCEQueryForm._get_classifiers()[classifier_type]:
+                if classifier_dict['id'] == alert[classifier_suffix]:
+                    classifier_name = classifier_dict['name']
+            flattened_alerts.append({
+                'oid': alert['oid'],
+                'meanra': deg_to_sexigesimal(alert['meanra'], 'hms') if alert['meanra'] else None,
+                'meandec': deg_to_sexigesimal(alert['meandec'], 'dms') if alert['meandec'] else None,
+                'classifier': classifier_name,
+                'classifier_type': 'Stamp' if classifier_suffix == 'classearly' else 'Light Curve',
+                'classifier_probability': truncate_number(alert[f'p{classifier_suffix}'])
+            })
+        return flattened_alerts
+
+    def filter_alerts(self, filters):
+        parameters = {'query_name': 'Dash Query', 'broker': self.name, 'nobs__gt': None, 'nobs__lt': None,
+                      'classrf': '', 'pclassrf': None, 'classearly': '', 'pclassearly': None, 'ra': None,
+                      'dec': None, 'sr': None, 'mjd__gt': None, 'mjd__lt': None, 'relative_mjd__gt': None,
+                      'sort_by': 'lastmjd', 'max_pages': 1, 'records': 20}
+
+        parameters['oid'] = filters['oid']['value'] if 'oid' in filters else ''
+        if all(k in filters for k in ['ra', 'dec']):
+            parameters['ra'] = filters['ra']['value']
+            parameters['dec'] = filters['dec']['value']
+            parameters['sr'] = 1
+        if 'classifier' in filters:
+            classifier_id = None
+            classifier_type = ''
+            for key, classifier_list in ALeRCEQueryForm._get_classifiers().items():
+                for classifier_dict in classifier_list:
+                    if filters['classifier']['value'] == classifier_dict['name']:
+                        classifier_id = classifier_dict['id']
+                        classifier_type = key
+                        break
+            parameters['classrf'] = classifier_id if classifier_type == 'late' else ''
+            parameters['classearly'] = classifier_id if classifier_type == 'early' else ''
+        if 'classifier_probability' in filters and filters['classifier_probability']['operator'] in ['>', '>=']:
+            parameters['classrf'] = filters['classifier_probability']['value']
+            parameters['classearly'] = filters['classifier_probability']['value']  # TODO: this will return nothing
+
+        return self.fetch_alerts(parameters)
+
     def get_dash_columns(self):
         return [
             {'id': 'oid', 'name': 'Object ID', 'type': 'text', 'presentation': 'markdown'},
@@ -418,26 +470,6 @@ class ALeRCEBroker(GenericBroker):
             {'id': 'classifier_probability', 'name': 'Classifier Probability', 'type': 'text'},
         ]
 
-    def get_dash_data(self, parameters):
-        test_parameters = {'query_name': 'Test Alerce', 'broker': 'ALeRCE', 'nobs__gt': None, 'nobs__lt': None,
-                           'classrf': '', 'pclassrf': None, 'classearly': 21, 'pclassearly': 0.7, 'ra': None,
-                           'dec': None, 'sr': None, 'mjd__gt': 57000.0, 'mjd__lt': None, 'relative_mjd__gt': None,
-                           'sort_by': 'nobs', 'max_pages': 1, 'records': 20}
-        alerts = self.fetch_alerts(test_parameters)
-        flattened_alerts = []
-        for alert in alerts:
-            print(alert)
-            if alert['pclassrf']:
-                classifier_suffix = 'classrf'
-            else:
-                classifier_suffix = 'classearly'
-            flattened_alerts.append({
-                'oid': alert['oid'],
-                'meanra': alert['meanra'],
-                'meandec': alert['meandec'],
-                'classifier': alert[f'{classifier_suffix}'],
-                'classifier_type': 'Stamp' if classifier_suffix == 'classearly' else 'Light Curve',
-                'classifier_probability': truncate_number(alert[f'p{classifier_suffix}'])
-            })
-            break
-        return flattened_alerts
+    def get_dash_data(self, filters):
+        alerts = self.filter_alerts(filters)
+        return self.flatten_dash_alerts(alerts)
