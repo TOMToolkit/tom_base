@@ -7,7 +7,7 @@ from django import forms
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from astropy.time import Time, TimezoneInfo
 
-from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
+from tom_alerts.alerts import GenericAlert, GenericBroker, GenericDashBroker, GenericQueryForm
 from tom_targets.models import Target
 from tom_dataproducts.models import ReducedDatum
 
@@ -268,6 +268,22 @@ class MARSBroker(GenericBroker):
             score=alert['candidate']['rb']
         )
 
+    def flatten_dash_alerts(self, alerts):
+        flattened_alerts = []
+        for alert in alerts:
+            flattened_alerts.append({
+                'objectId': alert['objectId'],
+                'ra': alert['candidate']['ra'],
+                'dec': alert['candidate']['dec'],
+                'magpsf': alert['candidate']['magpsf'],
+                'rb': alert['candidate']['rb']
+            })
+        return flattened_alerts
+
+    def filter_alerts(self, filters):
+        alerts = self.fetch_alerts(filters)
+        return alerts
+
     def get_dash_columns(self):
         return [
             {'id': 'objectId', 'name': 'Name', 'type': 'text', 'presentation': 'markdown'},
@@ -279,13 +295,4 @@ class MARSBroker(GenericBroker):
 
     def get_dash_data(self, parameters):
         alerts = self.fetch_alerts(parameters)
-        flattened_alerts = []
-        for alert in alerts:
-            flattened_alerts.append({
-                'objectId': alert['objectId'],
-                'ra': alert['candidate']['ra'],
-                'dec': alert['candidate']['dec'],
-                'magpsf': alert['candidate']['magpsf'],
-                'rb': alert['candidate']['magpsf']
-            })
-        return flattened_alerts
+        return self.flatten_dash_alerts(alerts)

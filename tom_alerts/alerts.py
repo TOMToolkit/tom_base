@@ -279,3 +279,11 @@ class GenericBroker(ABC):
 
 
 # TODO: Add a generic dash broker interface class
+class GenericDashBroker(ABC):
+    @abstractmethod
+    def get_dash_columns(self):
+        pass
+
+    @abstractmethod
+    def get_dash_data(self):
+        pass
