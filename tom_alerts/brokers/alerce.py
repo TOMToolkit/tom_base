@@ -6,7 +6,7 @@ from crispy_forms.layout import Layout, Div, Fieldset
 from django import forms
 from django.core.cache import cache
 
-from tom_alerts.alerts import GenericQueryForm, GenericBroker, GenericAlert
+from tom_alerts.alerts import GenericAlert, GenericBroker, GenericDashBroker, GenericQueryForm
 from tom_common.templatetags.tom_common_extras import truncate_number
 from tom_targets.models import Target
 from tom_targets.templatetags.targets_extras import deg_to_sexigesimal
@@ -438,6 +438,8 @@ class ALeRCEBroker(GenericBroker):
                       'classrf': '', 'pclassrf': None, 'classearly': '', 'pclassearly': None, 'ra': None,
                       'dec': None, 'sr': None, 'mjd__gt': None, 'mjd__lt': None, 'relative_mjd__gt': None,
                       'sort_by': 'lastmjd', 'max_pages': 1, 'records': 20}
+
+        parameters['page'] = filters.get('page_num', 0) + 1  # Dash pages are 0-indexed, ALeRCE is 1-indexed
 
         parameters['oid'] = filters['oid']['value'] if 'oid' in filters else ''
         if all(k in filters for k in ['ra', 'dec']):

@@ -278,12 +278,15 @@ class GenericBroker(ABC):
         return targets
 
 
-# TODO: Add a generic dash broker interface class
 class GenericDashBroker(ABC):
+
+    def flatten_dash_alerts(self, alerts):
+        pass
+
     @abstractmethod
     def get_dash_columns(self):
         pass
 
     @abstractmethod
-    def get_dash_data(self):
+    def get_dash_data(self, filters):
         pass
