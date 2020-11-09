@@ -161,6 +161,7 @@ class GenericUpstreamSubmissionForm(forms.Form):
         broker_name = kwargs.pop('broker')  # NOTE: parent constructor is not expecting broker and will fail
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_class = 'form-inline'
         self.helper.form_action = reverse('tom_alerts:submit-alert', kwargs={'broker': broker_name})
         self.helper.layout = Layout(
             'target',

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from dateutil.parser import parse
 import requests
 
 from astropy.time import Time, TimezoneInfo
@@ -264,7 +265,7 @@ class ALeRCEQueryForm(GenericQueryForm):
                                      key=lambda classifier: classifier[1])
 
 
-class ALeRCEBroker(GenericBroker):
+class ALeRCEBroker(GenericBroker, GenericDashBroker):
     name = 'ALeRCE'
     form = ALeRCEQueryForm
 
@@ -330,6 +331,7 @@ class ALeRCEBroker(GenericBroker):
 
     def fetch_alerts(self, parameters):
         payload = self._clean_parameters(parameters)
+        print(payload)
         response = requests.post(ALERCE_SEARCH_URL, json=payload)
         response.raise_for_status()
         parsed = response.json()
@@ -411,7 +413,9 @@ class ALeRCEBroker(GenericBroker):
 
     def flatten_dash_alerts(self, alerts):
         flattened_alerts = []
+        count = 0
         for alert in alerts:
+            count += 1
             url = f'{ALERCE_URL}/object/{alert["oid"]}'
             if alert['pclassrf']:
                 classifier_suffix = 'classrf'
@@ -427,11 +431,13 @@ class ALeRCEBroker(GenericBroker):
                 'oid': f'[{alert["oid"]}]({url})',
                 'meanra': deg_to_sexigesimal(alert['meanra'], 'hms') if alert['meanra'] else None,
                 'meandec': deg_to_sexigesimal(alert['meandec'], 'dms') if alert['meandec'] else None,
+                'discovery_date': Time(alert['firstmjd'], format='mjd', scale='utc').to_datetime(),
                 'classifier': classifier_name,
                 'classifier_type': 'Stamp' if classifier_suffix == 'classearly' else 'Light Curve',
                 'classifier_probability': truncate_number(alert[f'p{classifier_suffix}']),
                 'alert': alert
             })
+        print(count)
         return flattened_alerts
 
     def filter_alerts(self, filters):
@@ -442,11 +448,22 @@ class ALeRCEBroker(GenericBroker):
 
         parameters['page'] = filters.get('page_num', 0) + 1  # Dash pages are 0-indexed, ALeRCE is 1-indexed
 
+        if all(k not in filters
+               for k in ['oid', 'ra', 'dec', 'discovery_date', 'classifier', 'classifier_probability']):
+            parameters['relative_mjd__gt'] = Time(datetime.today() - timedelta(days=7), scale='utc').mjd
+            return self.fetch_alerts(parameters)
+
         parameters['oid'] = filters['oid']['value'] if 'oid' in filters else ''
         if all(k in filters for k in ['ra', 'dec']):
             parameters['ra'] = filters['ra']['value']
             parameters['dec'] = filters['dec']['value']
             parameters['sr'] = 1
+        if 'discovery_date' in filters:
+            date_range = filters['discovery_date']['value'].strip('\"').split(' - ')
+            print(date_range)
+            parameters['mjd__gt'] = Time(parse(date_range[0]), format='datetime', scale='utc').mjd
+            if len(date_range) >= 2:
+                parameters['mjd__lt'] = Time(parse(date_range[1]), format='datetime', scale='utc').mjd
         if 'classifier' in filters:
             classifier_id = None
             classifier_type = ''
@@ -458,7 +475,7 @@ class ALeRCEBroker(GenericBroker):
                         break
             parameters['classrf'] = classifier_id if classifier_type == 'late' else ''
             parameters['classearly'] = classifier_id if classifier_type == 'early' else ''
-        if 'classifier_probability' in filters and filters['classifier_probability']['operator'] in ['>', '>=']:
+        if 'classifier_probability' in filters:
             parameters['classrf'] = filters['classifier_probability']['value']
             parameters['classearly'] = filters['classifier_probability']['value']  # TODO: this will return nothing
 
@@ -469,6 +486,7 @@ class ALeRCEBroker(GenericBroker):
             {'id': 'oid', 'name': 'Object ID', 'type': 'text', 'presentation': 'markdown'},
             {'id': 'meanra', 'name': 'Right Ascension', 'type': 'text'},
             {'id': 'meandec', 'name': 'Declination', 'type': 'text'},
+            {'id': 'discovery_date', 'name': 'Discovery Date', 'type': 'datetime'},
             {'id': 'classifier', 'name': 'Class', 'type': 'text'},
             {'id': 'classifier_type', 'name': 'Classifier Type', 'type': 'text'},
             {'id': 'classifier_probability', 'name': 'Classifier Probability', 'type': 'text'},
