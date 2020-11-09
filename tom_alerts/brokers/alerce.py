@@ -412,6 +412,7 @@ class ALeRCEBroker(GenericBroker):
     def flatten_dash_alerts(self, alerts):
         flattened_alerts = []
         for alert in alerts:
+            url = f'{ALERCE_URL}/object/{alert["oid"]}'
             if alert['pclassrf']:
                 classifier_suffix = 'classrf'
                 classifier_type = 'late'
@@ -423,7 +424,7 @@ class ALeRCEBroker(GenericBroker):
                 if classifier_dict['id'] == alert[classifier_suffix]:
                     classifier_name = classifier_dict['name']
             flattened_alerts.append({
-                'oid': alert['oid'],
+                'oid': f'[{alert["oid"]}]({url})',
                 'meanra': deg_to_sexigesimal(alert['meanra'], 'hms') if alert['meanra'] else None,
                 'meandec': deg_to_sexigesimal(alert['meandec'], 'dms') if alert['meandec'] else None,
                 'classifier': classifier_name,
@@ -434,7 +435,7 @@ class ALeRCEBroker(GenericBroker):
         return flattened_alerts
 
     def filter_alerts(self, filters):
-        parameters = {'query_name': 'Dash Query', 'broker': self.name, 'nobs__gt': None, 'nobs__lt': None,
+        parameters = {'query_name': 'Dash Query', 'broker': self.name, 'nobs__gt': None, 'nobs__lt': 1,
                       'classrf': '', 'pclassrf': None, 'classearly': '', 'pclassearly': None, 'ra': None,
                       'dec': None, 'sr': None, 'mjd__gt': None, 'mjd__lt': None, 'relative_mjd__gt': None,
                       'sort_by': 'lastmjd', 'max_pages': 1, 'records': 20}
