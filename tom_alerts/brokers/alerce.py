@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from dateutil.parser import parse
+import logging
 import requests
 
 from astropy.time import Time, TimezoneInfo
@@ -11,6 +12,8 @@ from tom_alerts.alerts import GenericAlert, GenericBroker, GenericDashBroker, Ge
 from tom_common.templatetags.tom_common_extras import truncate_number
 from tom_targets.models import Target
 from tom_targets.templatetags.targets_extras import deg_to_sexigesimal
+
+logger = logging.getLogger(__name__)
 
 ALERCE_URL = 'https://alerce.online'
 ALERCE_SEARCH_URL = 'https://ztf.alerce.online/query'
@@ -331,7 +334,7 @@ class ALeRCEBroker(GenericBroker, GenericDashBroker):
 
     def fetch_alerts(self, parameters):
         payload = self._clean_parameters(parameters)
-        print(payload)
+        logger.log(msg=f'Fetching alerts from ALeRCE with payload {payload}', level=logging.INFO)
         response = requests.post(ALERCE_SEARCH_URL, json=payload)
         response.raise_for_status()
         parsed = response.json()
@@ -413,7 +416,6 @@ class ALeRCEBroker(GenericBroker, GenericDashBroker):
 
     def flatten_dash_alerts(self, alerts):
         flattened_alerts = []
-        count = 0
         for alert in alerts:
             count += 1
             url = f'{ALERCE_URL}/object/{alert["oid"]}'
@@ -437,7 +439,6 @@ class ALeRCEBroker(GenericBroker, GenericDashBroker):
                 'classifier_probability': truncate_number(alert[f'p{classifier_suffix}']),
                 'alert': alert
             })
-        print(count)
         return flattened_alerts
 
     def filter_alerts(self, filters):
@@ -460,7 +461,6 @@ class ALeRCEBroker(GenericBroker, GenericDashBroker):
             parameters['sr'] = 1
         if 'discovery_date' in filters:
             date_range = filters['discovery_date']['value'].strip('\"').split(' - ')
-            print(date_range)
             parameters['mjd__gt'] = Time(parse(date_range[0]), format='datetime', scale='utc').mjd
             if len(date_range) >= 2:
                 parameters['mjd__lt'] = Time(parse(date_range[1]), format='datetime', scale='utc').mjd
