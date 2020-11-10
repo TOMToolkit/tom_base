@@ -417,7 +417,6 @@ class ALeRCEBroker(GenericBroker, GenericDashBroker):
     def flatten_dash_alerts(self, alerts):
         flattened_alerts = []
         for alert in alerts:
-            count += 1
             url = f'{ALERCE_URL}/object/{alert["oid"]}'
             if alert['pclassrf']:
                 classifier_suffix = 'classrf'
