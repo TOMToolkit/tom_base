@@ -16,7 +16,7 @@ from astropy.table import Table
 import numpy as np
 
 from tom_observations.tests.utils import FakeRoboticFacility
-from tom_observations.tests.factories import TargetFactory, ObservingRecordFactory
+from tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory
 from tom_dataproducts.models import DataProduct, is_fits_image_file
 from tom_dataproducts.forms import DataProductUploadForm
 from tom_dataproducts.processors.photometry_processor import PhotometryProcessor
@@ -44,7 +44,7 @@ def mock_is_fits_image_file(filename):
 @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
 class Views(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
@@ -152,7 +152,7 @@ class Views(TestCase):
 @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
 class TestViewsWithPermissions(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
@@ -220,7 +220,7 @@ class TestViewsWithPermissions(TestCase):
 @patch('tom_dataproducts.views.run_data_processor')
 class TestUploadDataProducts(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
@@ -273,7 +273,7 @@ class TestUploadDataProducts(TestCase):
 
 class TestDeleteDataProducts(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.data_product = DataProduct.objects.create(
             product_id='testproductid',
             target=self.target,
@@ -309,7 +309,7 @@ class TestDeleteDataProducts(TestCase):
 
 class TestDataUploadForms(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
@@ -383,7 +383,7 @@ class TestDataSerializer(TestCase):
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
 class TestDataProcessor(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.data_product = DataProduct.objects.create(
             target=self.target
         )

@@ -24,7 +24,7 @@ class FilterField(forms.MultiValueField):
     widget = FilterConfigurationWidget
 
     def __init__(self, *args, **kwargs):
-        fields = (forms.IntegerField(), forms.IntegerField(), forms.IntegerField())
+        fields = (forms.FloatField(), forms.IntegerField(), forms.IntegerField())
         super().__init__(fields, *args, **kwargs)
 
     def compress(self, data_list):

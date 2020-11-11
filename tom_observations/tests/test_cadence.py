@@ -5,7 +5,7 @@ from unittest.mock import patch
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 
-from .factories import ObservingRecordFactory, TargetFactory
+from .factories import ObservingRecordFactory, SiderealTargetFactory
 from tom_observations.models import ObservationGroup, DynamicCadence
 from tom_observations.cadences.resume_cadence_after_failure import ResumeCadenceAfterFailureStrategy
 from tom_observations.cadences.retry_failed_observations import RetryFailedObservationsStrategy
@@ -44,7 +44,7 @@ obs_params = {
 @patch('tom_observations.facilities.lco.LCOFacility.validate_observation')
 class TestReactiveCadencing(TestCase):
     def setUp(self):
-        target = TargetFactory.create()
+        target = SiderealTargetFactory.create()
         obs_params['target_id'] = target.id
         observing_records = ObservingRecordFactory.create_batch(5,
                                                                 target_id=target.id,
