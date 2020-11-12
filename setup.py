@@ -48,7 +48,7 @@ setup(
         'pillow==8.0.1',
         'plotly==4.12.0',
         'python-dateutil==2.8.1',
-        'requests==2.24.0',
+        'requests==2.25.0',
         'specutils==1.1',
     ],
     extras_require={
