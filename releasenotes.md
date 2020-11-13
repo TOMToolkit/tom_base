@@ -1,5 +1,9 @@
 # Release Notes
 
+### 1.13.0
+
+- 
+
 ### 1.6.1
 
 - This release pins the Django version in order to address a security vulnerability.

@@ -22,6 +22,8 @@ ALeRCE
 ANTARES
 *******
 
+.. automodule:: tom_antares.antares
+    :members:
 
 ******
 Lasair
@@ -43,7 +45,8 @@ MARS
 SCIMMA
 ******
 
-
+.. automodule:: tom_scimma.scimma
+    :members:
 
 *****
 Scout
