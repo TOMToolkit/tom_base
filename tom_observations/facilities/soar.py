@@ -37,6 +37,7 @@ class SOARBaseObservationForm(LCOBaseObservationForm):
     @staticmethod
     def _get_instruments():
         cached_instruments = cache.get('soar_instruments')
+        cached_instruments = None
 
         if not cached_instruments:
             response = make_request(
@@ -63,14 +64,14 @@ class SOARImagingObservationForm(SOARBaseObservationForm, LCOImagingObservationF
     @staticmethod
     def instrument_choices():
         return sorted(
-            [(k, v['name']) for k, v in SOARBaseObservationForm._get_instruments().items() if 'IMAGE' in v['type']],
+            [(k, v['name']) for k, v in SOARImagingObservationForm._get_instruments().items() if 'IMAGE' in v['type']],
             key=lambda inst: inst[1]
         )
 
     @staticmethod
     def filter_choices():
         return sorted(set([
-            (f['code'], f['name']) for ins in SOARBaseObservationForm._get_instruments().values() for f in
+            (f['code'], f['name']) for ins in SOARImagingObservationForm._get_instruments().values() for f in
             ins['optical_elements'].get('filters', [])
             ]), key=lambda filter_tuple: filter_tuple[1])
 
