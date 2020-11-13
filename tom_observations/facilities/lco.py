@@ -607,7 +607,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
 
 class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
     site = forms.ChoiceField(choices=(('any', 'Any'), ('ogg', 'Hawaii'), ('coj', 'Australia')))
-    acquisition_radius = forms.FloatField(min_value=0)
+    acquisition_radius = forms.FloatField(min_value=0, required=False)
     guider_mode = forms.ChoiceField(choices=[('on', 'On'), ('off', 'Off'), ('optional', 'Optional')], required=True)
     guider_exposure_time = forms.IntegerField(min_value=0)
     cadence_frequency = forms.IntegerField(required=True,
@@ -655,13 +655,13 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
     def _build_acquisition_config(self):
         acquisition_config = super()._build_acquisition_config()
         # SNEx uses WCS mode if no acquisition radius is specified, and BRIGHTEST otherwise
-        acquisition_mode = 'BRIGHTEST'
         if not self.cleaned_data['acquisition_radius']:
-            acquisition_mode = 'WCS'
-        acquisition_config['mode'] = acquisition_mode
-        acquisition_config['extra_params'] = {
-            'acquire_radius': self.cleaned_data['acquisition_radius']
-        }
+            acquisition_config['mode'] = 'WCS'
+        else:
+            acquisition_config['mode'] = 'BRIGHTEST'
+            acquisition_config['extra_params'] = {
+                'acquire_radius': self.cleaned_data['acquisition_radius']
+            }
 
         return acquisition_config
 
@@ -697,15 +697,19 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
 
         return cleaned_data
 
-    def instrument_choices(self):
+    @staticmethod
+    def instrument_choices():
         # SNEx only uses the Spectroscopic Sequence Form with FLOYDS
         # This doesn't need to be sorted because it will only return one instrument
-        return [(k, v['name']) for k, v in self._get_instruments().items() if k == '2M0-FLOYDS-SCICAM']
+        return [(k, v['name'])
+                for k, v in LCOSpectroscopicSequenceForm._get_instruments().items()
+                if k == '2M0-FLOYDS-SCICAM']
 
-    def filter_choices(self):
+    @staticmethod
+    def filter_choices():
         # SNEx only uses the Spectroscopic Sequence Form with FLOYDS
         return sorted(set([
-            (f['code'], f['name']) for name, ins in self._get_instruments().items() for f in
+            (f['code'], f['name']) for name, ins in LCOSpectroscopicSequenceForm._get_instruments().items() for f in
             ins['optical_elements'].get('slits', []) if name == '2M0-FLOYDS-SCICAM'
             ]), key=lambda filter_tuple: filter_tuple[1])
 

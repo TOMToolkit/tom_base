@@ -8,7 +8,8 @@ from django.test import TestCase
 from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.facilities.lco import make_request
 from tom_observations.facilities.lco import LCOBaseForm, LCOBaseObservationForm, LCOImagingObservationForm
-from tom_observations.facilities.lco import LCOPhotometricSequenceForm, LCOSpectroscopyObservationForm
+from tom_observations.facilities.lco import LCOPhotometricSequenceForm, LCOSpectroscopicSequenceForm
+from tom_observations.facilities.lco import LCOSpectroscopyObservationForm
 from tom_observations.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
 
 
@@ -483,7 +484,161 @@ class TestLCOPhotometricSequenceForm(TestCase):
 
 
 class TestLCOSpectroscopicSequenceForm(TestCase):
-    pass
+    def setUp(self):
+        self.st = SiderealTargetFactory.create()
+        self.valid_form_data = {
+            'name': 'test', 'facility': 'LCO', 'target_id': self.st.id, 'exposure_count': 1, 'exposure_time': 30,
+            'max_airmass': 3, 'min_lunar_distance': 20, 'site': 'any', 'ipp_value': 0.5, 'filter': 'slit_1.2as',
+            'observation_mode': 'NORMAL', 'proposal': 'sampleproposal', 'acquisition_radius': 1,
+            'guider_mode': 'on', 'guider_exposure_time': 30, 'instrument_type': '0M4-SCICAM-SBIG',
+            'cadence_frequency': 24
+        }
+        self.instrument_choices = [(k, v['name']) for k, v in instrument_response.items() if 'SOAR' not in k]
+        self.filter_choices = set([
+            (f['code'], f['name']) for ins in instrument_response.values() for f in
+            ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
+        ])
+        self.proposal_choices = [('sampleproposal', 'Sample Proposal')]
+
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm._get_instruments')
+    def test_instrument_choices(self, mock_get_instruments):
+        """Test LCOSpectroscopicSequenceForm._instrument_choices."""
+        mock_get_instruments.return_value = {k: v for k, v in instrument_response.items() if 'SOAR' not in k}
+
+        inst_choices = LCOSpectroscopicSequenceForm.instrument_choices()
+        self.assertIn(('2M0-FLOYDS-SCICAM', '2.0 meter FLOYDS'), inst_choices)
+        self.assertNotIn(('0M4-SCICAM-SBIG', '0.4 meter SBIG'), inst_choices)
+        self.assertEqual(len(inst_choices), 1)
+
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm._get_instruments')
+    def test_filter_choices(self, mock_get_instruments):
+        """Test LCOSpectroscopicSequenceForm._instrument_choices."""
+        mock_get_instruments.return_value = {k: v for k, v in instrument_response.items() if 'SOAR' not in k}
+
+        filter_choices = LCOSpectroscopicSequenceForm.filter_choices()
+        for expected in [('slit_6.0as', '6.0 arcsec slit'), ('slit_1.6as', '1.6 arcsec slit'),
+                         ('slit_2.0as', '2.0 arcsec slit'), ('slit_1.2as', '1.2 arcsec slit')]:
+            self.assertIn(expected, filter_choices)
+        for not_expected in [('opaque', 'Opaque'), ('100um-Pinhole', '100um Pinhole')]:
+            self.assertNotIn(not_expected, filter_choices)
+        self.assertEqual(len(filter_choices), 4)
+
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
+    def test_build_instrument_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
+        mock_validate.return_value = []
+        mock_insts.return_value = self.instrument_choices
+        mock_filters.return_value = self.filter_choices
+        mock_proposals.return_value = self.proposal_choices
+
+        form = LCOSpectroscopicSequenceForm(self.valid_form_data)
+        self.assertTrue(form.is_valid())
+        inst_config = form._build_instrument_config()
+        self.assertEqual(len(inst_config), 1)
+        self.assertIn({'exposure_count': 1, 'exposure_time': 30.0, 'optical_elements': {'slit': 'slit_1.2as'}},
+                      inst_config)
+        self.assertNotIn('filter', inst_config[0]['optical_elements'])
+
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
+    def test_build_acquisition_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
+        mock_validate.return_value = []
+        mock_insts.return_value = self.instrument_choices
+        mock_filters.return_value = self.filter_choices
+        mock_proposals.return_value = self.proposal_choices
+
+        with self.subTest():
+            form = LCOSpectroscopicSequenceForm(self.valid_form_data)
+            self.assertTrue(form.is_valid())
+            acquisition_config = form._build_acquisition_config()
+            self.assertDictEqual({'mode': 'BRIGHTEST', 'extra_params': {'acquire_radius': 1}},
+                                 acquisition_config)
+
+        with self.subTest():
+            self.valid_form_data.pop('acquisition_radius')
+            form = LCOSpectroscopicSequenceForm(self.valid_form_data)
+            self.assertTrue(form.is_valid())
+            acquisition_config = form._build_acquisition_config()
+            self.assertDictEqual({'mode': 'WCS'}, acquisition_config)
+
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
+    def test_build_guiding_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
+        mock_validate.return_value = []
+        mock_insts.return_value = self.instrument_choices
+        mock_filters.return_value = self.filter_choices
+        mock_proposals.return_value = self.proposal_choices
+
+        test_params = [
+            ({'guider_mode': 'on'}, {'mode': 'ON', 'optional': 'false'}),
+            ({'guider_mode': 'off'}, {'mode': 'OFF', 'optional': 'false'}),
+            ({'guider_mode': 'optional'}, {'mode': 'ON', 'optional': 'true'})
+        ]
+        for params in test_params:
+            with self.subTest():
+                self.valid_form_data.update(params[0])
+                form = LCOSpectroscopicSequenceForm(self.valid_form_data)
+                self.assertTrue(form.is_valid())
+                guiding_config = form._build_guiding_config()
+                self.assertDictEqual(params[1], guiding_config)
+
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm._get_instruments')
+    def test_build_location(self, mock_get_instruments, mock_validate, mock_insts, mock_filters, mock_proposals):
+        mock_get_instruments.return_value = {k: v for k, v in instrument_response.items() if 'SOAR' not in k}
+        mock_validate.return_value = []
+        mock_insts.return_value = self.instrument_choices
+        mock_filters.return_value = self.filter_choices
+        mock_proposals.return_value = self.proposal_choices
+
+        test_params = [
+            ({'site': 'ogg'}, {'site': 'ogg'}),
+            ({'site': 'coj'}, {'site': 'coj'}),
+            ({'site': 'any'}, {})
+        ]
+        for params in test_params:
+            with self.subTest():
+                self.valid_form_data.update(params[0])
+                form = LCOSpectroscopicSequenceForm(self.valid_form_data)
+                self.assertTrue(form.is_valid())
+                location = form._build_location()
+                self.assertDictContainsSubset(params[1], location)
+
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
+    def test_clean(self, mock_validate, mock_insts, mock_filters, mock_proposals):
+        mock_validate.return_value = []
+        mock_insts.return_value = self.instrument_choices
+        mock_filters.return_value = self.filter_choices
+        mock_proposals.return_value = self.proposal_choices
+
+        # Test that a valid form returns True, and that start and end are cleaned properly
+        form = LCOSpectroscopicSequenceForm(self.valid_form_data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['instrument_type'], '2M0-FLOYDS-SCICAM')
+        self.assertAlmostEqual(datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S'), form.cleaned_data['start'])
+        self.assertAlmostEqual(
+            datetime.strftime(
+                datetime.now() + timedelta(hours=form.cleaned_data['cadence_frequency']), '%Y-%m-%dT%H:%M:%S'
+            ),
+            form.cleaned_data['end']
+        )
+
+        # Test that an invalid form returns False
+        self.valid_form_data.pop('target_id')
+        form = LCOSpectroscopicSequenceForm(self.valid_form_data)
+        self.assertFalse(form.is_valid())
 
 
 class TestLCOObservationTemplateForm(TestCase):
