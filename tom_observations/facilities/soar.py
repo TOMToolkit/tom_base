@@ -101,7 +101,7 @@ class SOARSpectroscopyObservationForm(SOARBaseObservationForm, LCOSpectroscopyOb
         }
         instrument_configs[0]['rotator_mode'] = 'SKY'
 
-        return [instrument_config]
+        return instrument_configs
 
 
 class SOARFacility(LCOFacility):
