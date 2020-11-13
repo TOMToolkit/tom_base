@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
-    'tom_publications'
 ]
 
 SITE_ID = 1
@@ -228,11 +227,6 @@ DATA_PRODUCT_TYPES = {
 DATA_PROCESSORS = {
     'photometry': 'tom_dataproducts.processors.photometry_processor.PhotometryProcessor',
     'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
-}
-
-TOM_LATEX_PROCESSORS = {
-    'ObservationGroup': 'tom_publications.processors.latex_processor.ObservationGroupLatexProcessor',
-    'TargetList': 'tom_publications.processors.target_list_latex_processor.TargetListLatexProcessor'
 }
 
 TOM_FACILITY_CLASSES = [
