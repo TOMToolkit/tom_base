@@ -157,7 +157,7 @@ class DynamicCadence(models.Model):
     modified = models.DateTimeField(auto_now=True, help_text='The time which this DynamicCadence was modified.')
 
     def __str__(self):
-        return self.name
+        return f'{self.cadence_strategy} with parameters {self.cadence_parameters}'
 
 
 class ObservationTemplate(models.Model):

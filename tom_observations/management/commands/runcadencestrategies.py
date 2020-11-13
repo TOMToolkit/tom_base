@@ -1,22 +1,41 @@
+import logging
+
 from django.core.management.base import BaseCommand
 
 from tom_observations.cadence import get_cadence_strategy
 from tom_observations.models import DynamicCadence
 
 
+logger = logging.getLogger(__name__)
+
+
 class Command(BaseCommand):
+    """
+    This management command ensures that all cadences are kept up to date. It is intended to be run
+    by a cron job, and the frequency should be whatever is determined to be the desired frequency
+    by the PI.
+    """
+
     help = 'Entry point for running cadence strategies.'
 
     def handle(self, *args, **kwargs):
         cadenced_groups = DynamicCadence.objects.filter(active=True)
 
+        updated_cadences = []
+
         for cg in cadenced_groups:
-            cadence_frequency = cg.cadence_parameters.get('cadence_frequency', -1)
-            # TODO: pass cadence parameters in as kwargs or access them in the strategy
-            # TODO: make cadence form strategy-specific
-            strategy = get_cadence_strategy(cg.cadence_strategy)(cg, cadence_frequency)
+            strategy = get_cadence_strategy(cg.cadence_strategy)(cg)
             new_observations = strategy.run()
             if not new_observations:
-                return 'No changes from cadence strategy.'
+                logger.log(msg=f'No changes from dynamic cadence {cg}', level=logging.INFO)
             else:
-                return 'Cadence update completed, {0} new observations created.'.format(len(new_observations))
+                logger.log(msg=f'''Cadence update completed for dynamic cadence {cg},
+                                   {len(new_observations)} new observations created.''',
+                           level=logging.INFO)
+                updated_cadences.append(cg.observation_group)
+
+        if updated_cadences:
+            msg = 'Created new observations for dynamic cadences with observation groups: {0}.'
+            return msg.format(', '.join([str(cg) for cg in updated_cadences]))
+        else:
+            return 'No new observations for any dynamic cadences.'

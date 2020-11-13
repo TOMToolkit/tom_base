@@ -6,22 +6,6 @@ your project’s ``settings.py``. For explanations of Django specific
 settings, see the `official
 documentation <https://docs.djangoproject.com/en/2.1/ref/settings/>`__.
 
-`ALERT_CREDENTIALS <#alert_credentials>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Default:
-
-.. code-block::
-
-   {
-       'TNS': {
-           'api_key': ''
-       }
-   }
-
-Credentials for any brokers that require them. At the moment, the only
-built-in TOM Toolkit broker module that requires credentials is the TNS.
-
 `AUTH_STRATEGY <#auth_strategy>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -32,6 +16,31 @@ Determines how your TOM treats unauthenticated users. A value of
 TOM, but not to change anything. A value of **LOCKED** requires all
 users to login before viewing any page. Use the
 `OPEN_URLS <#open_urls>`__ setting for adding exemptions.
+
+`BROKERS <#brokers>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default:
+
+.. code-block::
+
+   {
+        'TNS': {
+           'api_key': ''
+        },
+        'SCIMMA': {
+            'url': 'http://skip.dev.hop.scimma.org',
+            'api_key': os.getenv('SKIP_API_KEY', ''),
+            'hopskotch_url': 'dev.hop.scimma.org',
+            'hopskotch_username': os.getenv('HOPSKOTCH_USERNAME', ''),
+            'hopskotch_password': os.getenv('HOPSKOTCH_PASSWORD', ''),
+            'default_hopskotch_topic': ''
+        }
+   }
+
+Credentials and settings for any brokers that require them. At the moment, the only
+built-in TOM Toolkit broker module that requires credentials is the TNS. SCIMMA and
+ANTARES, which are available as add-on modules, also use this setting.
 
 `DATA_PROCESSORS <#data_processors>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -96,6 +105,22 @@ dictionary. Although each facility is different, if you plan on using
 one you’ll probably have to configure it here first. For example the LCO
 facility requires you to provide a value for the ``api_key``
 configuration value.
+
+`HARVESTERS <#harvesters>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default:
+
+.. code-block::
+
+   {
+        'TNS': {
+           'api_key': ''
+        },
+   }
+
+Credentials and settings for any harvesters that require them. At the moment, the only
+built-in TOM Toolkit broker module that requires credentials is the TNS.
 
 `HINTS <#hints>`__
 ~~~~~~~~~~~~~~~~~~
