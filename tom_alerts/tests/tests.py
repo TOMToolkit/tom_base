@@ -1,12 +1,18 @@
-from django.test import TestCase, override_settings
+import json
+from unittest.mock import patch
+
 from django import forms
 from django.contrib.auth.models import User, Group
-from django.urls import reverse
+from django.contrib.messages import get_messages
 from django.core.cache import cache
-import json
+from django.test import TestCase, override_settings
+from django.urls import reverse
 
-from tom_alerts.alerts import GenericQueryForm, GenericAlert, get_service_class
+from tom_alerts.alerts import GenericBroker, GenericQueryForm, GenericUpstreamSubmissionForm, GenericAlert
+from tom_alerts.alerts import get_service_class
+from tom_alerts.exceptions import AlertSubmissionException
 from tom_alerts.models import BrokerQuery
+from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
 # Test alert data. Normally this would come from a remote source.
@@ -18,20 +24,30 @@ test_alerts = [
 
 class TestBrokerForm(GenericQueryForm):
     """ All brokers must have a form which will be used to construct and save queries
-    to the broker. They should sublcass `GenericQueryForm` which includes some required
+    to the broker. They should subclass `GenericQueryForm` which includes some required
     fields and contains logic for serializing and persisting the query parameters to the
     database. This test form will only have one field.
     """
     name = forms.CharField(required=True)
 
 
-class TestBroker:
+class TestUpstreamSubmissionForm(GenericUpstreamSubmissionForm):
+    """
+    Brokers supporting upstream submission can have a form used for constructing the submission. If should subclass
+    GenericUpstreamSubmissionForm. This test form will have only one additional field in order to test that the
+    additional field value is submitted to the broker correctly.
+    """
+    topic = forms.CharField(required=False)
+
+
+class TestBroker(GenericBroker):
     """ The broker class encapsulates the logic for querying remote brokers and transforming
     the returned data into TOM Toolkit Targets so they can be used elsewhere in the system. The
     following methods and attributes are all required, but a broker can be as complex as needed.
     """
     name = 'TEST'  # The name of this broker.
     form = TestBrokerForm  # The form that will be used to write and save queries.
+    alert_submission_form = TestUpstreamSubmissionForm
 
     def fetch_alerts(self, parameters):
         """ All brokers must implement this method. It must return a list of alerts.
@@ -58,8 +74,11 @@ class TestBroker:
             score=alert['score']
         )
 
+    def submit_upstream_alert(self, target=None, observation_record=None, **kwargs):
+        return super().submit_upstream_alert(target=target, observation_record=observation_record)
 
-@override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
+
+@override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests.TestBroker'])
 class TestBrokerClass(TestCase):
     """ Test the functionality of the TestBroker, we modify the django settings to make sure
     it is the only installed broker.
@@ -84,7 +103,7 @@ class TestBrokerClass(TestCase):
         self.assertEqual(target.name, test_alerts[0]['name'])
 
 
-@override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests_generic.TestBroker'])
+@override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests.TestBroker'])
 class TestBrokerViews(TestCase):
     """ Test the views that use the broker classes
     """
@@ -217,3 +236,60 @@ class TestBrokerViews(TestCase):
         response = self.client.post(reverse('tom_alerts:create-target'), data=post_data, follow=True)
         self.assertEqual(Target.objects.count(), 0)
         self.assertRedirects(response, reverse('tom_alerts:run', kwargs={'pk': query.id}))
+
+    @patch('tom_alerts.tests.tests.TestBroker.submit_upstream_alert')
+    def test_submit_alert_success(self, mock_submit_upstream_alert):
+        """Test submission of an alert to a broker."""
+
+        # Tests that an alert is submitted with just a target, and that no redirect_url results in redirect to home
+        target = Target.objects.create(name='test_target', ra=1, dec=2)
+        response = self.client.post(reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
+                                    data={'target': target.id})
+
+        mock_submit_upstream_alert.assert_called_with(target=target, observation_record=None, topic='')
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('home'))
+
+        # Tests that an alert is submitted with just an observation, and that redirect is to redirect_url
+        obsr = ObservationRecord.objects.create(target=target, facility='Test', parameters={}, observation_id=1)
+        response = self.client.post(reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
+                                    data={'observation_record': obsr.id, 'redirect_url': reverse('tom_targets:list')})
+
+        mock_submit_upstream_alert.assert_called_with(target=None, observation_record=obsr, topic='')
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('tom_targets:list'))
+
+        # Tests that an alert submitted with additional parameters calls submit_upstream_alert correctly.
+        response = self.client.post(reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
+                                    data={'observation_record': obsr.id, 'topic': 'test topic'})
+        mock_submit_upstream_alert.assert_called_with(target=None, observation_record=obsr, topic='test topic')
+
+    @patch('tom_alerts.tests.tests.TestBroker.submit_upstream_alert')
+    def test_submit_alert_failure(self, mock_submit_upstream_alert):
+        """Test that a failed alert submission returns an appropriate message."""
+        target = Target.objects.create(name='test_target', ra=1, dec=2)
+        mock_submit_upstream_alert.return_value = False
+        response = self.client.post(reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
+                                    data={'target': target.id})
+
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST. See logs for details.')
+
+    @patch('tom_alerts.tests.tests.TestBroker.submit_upstream_alert')
+    def test_submit_alert_exception(self, mock_submit_upstream_alert):
+        """Test that an alert submission returns an appropriate message when alert submission raises an exception."""
+        mock_submit_upstream_alert.side_effect = AlertSubmissionException()
+
+        response = self.client.post(reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}), data={})
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST. See logs for details.')
+
+    def test_submit_alert_invalid_form(self):
+        """Test that an alert submission failed when form is invalid."""
+        response = self.client.post(reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}), data={})
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST. See logs for details.')
+        self.assertRedirects(response, reverse('home'))

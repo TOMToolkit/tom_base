@@ -44,7 +44,6 @@ urlpatterns = [
     path('catalogs/', include('tom_catalogs.urls')),
     path('observations/', include('tom_observations.urls', namespace='observations')),
     path('dataproducts/', include('tom_dataproducts.urls', namespace='dataproducts')),
-    path('publications/', include('tom_publications.urls', namespace='publications')),
     path('users/', UserListView.as_view(), name='user-list'),
     path('users/<int:pk>/changepassword/', UserPasswordChangeView.as_view(), name='admin-user-change-password'),
     path('users/create/', UserCreateView.as_view(), name='user-create'),

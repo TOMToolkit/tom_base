@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
-    'tom_publications'
 ]
 
 SITE_ID = 1
@@ -230,11 +229,6 @@ DATA_PROCESSORS = {
     'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
 }
 
-TOM_LATEX_PROCESSORS = {
-    'ObservationGroup': 'tom_publications.processors.latex_processor.ObservationGroupLatexProcessor',
-    'TargetList': 'tom_publications.processors.target_list_latex_processor.TargetListLatexProcessor'
-}
-
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
@@ -243,15 +237,23 @@ TOM_FACILITY_CLASSES = [
 ]
 
 TOM_ALERT_CLASSES = [
-    'tom_alerts.brokers.mars.MARSBroker',
+    'tom_alerts.brokers.alerce.ALeRCEBroker',
+    'tom_alerts.brokers.antares.ANTARESBroker',
+    'tom_alerts.brokers.gaia.GaiaBroker',
     'tom_alerts.brokers.lasair.LasairBroker',
+    'tom_alerts.brokers.mars.MARSBroker',
+    'tom_alerts.brokers.scimma.SCIMMABroker',
     'tom_alerts.brokers.scout.ScoutBroker',
     'tom_alerts.brokers.tns.TNSBroker',
-    'tom_alerts.brokers.antares.ANTARESBroker',
-    'tom_alerts.brokers.gaia.GaiaBroker'
 ]
 
-ALERT_CREDENTIALS = {
+BROKERS = {
+    'TNS': {
+        'api_key': ''
+    }
+}
+
+HARVESTERS = {
     'TNS': {
         'api_key': ''
     }

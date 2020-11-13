@@ -9,7 +9,7 @@ from astroplan import FixedTarget
 from astropy.coordinates import get_sun, SkyCoord
 from astropy.time import Time
 
-from .factories import ObservingRecordFactory, ObservationTemplateFactory, TargetFactory, TargetNameFactory
+from .factories import ObservingRecordFactory, ObservationTemplateFactory, SiderealTargetFactory, TargetNameFactory
 from tom_observations.utils import get_astroplan_sun_and_time, get_sidereal_visibility
 from tom_observations.tests.utils import FakeRoboticFacility
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate
@@ -22,7 +22,7 @@ from guardian.shortcuts import assign_perm
                    TARGET_PERMISSIONS_ONLY=True)
 class TestObservationViews(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.target_name = TargetNameFactory.create(target=self.target)
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
@@ -137,7 +137,7 @@ class TestObservationViews(TestCase):
                    TARGET_PERMISSIONS_ONLY=False)
 class TestObservationViewsRowLevelPermissions(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.target_name = TargetNameFactory.create(target=self.target)
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
@@ -217,11 +217,11 @@ class TestObservationTemplateViews(TestCase):
 
 class TestUpdatingObservations(TestCase):
     def setUp(self):
-        self.t1 = TargetFactory.create()
+        self.t1 = SiderealTargetFactory.create()
         self.or1 = ObservingRecordFactory.create(target_id=self.t1.id, facility='FakeRoboticFacility', status='PENDING')
         self.or2 = ObservingRecordFactory.create(target_id=self.t1.id, status='COMPLETED')
         self.or3 = ObservingRecordFactory.create(target_id=self.t1.id, facility='FakeRoboticFacility', status='PENDING')
-        self.t2 = TargetFactory.create()
+        self.t2 = SiderealTargetFactory.create()
         self.or4 = ObservingRecordFactory.create(target_id=self.t2.id, status='PENDING')
 
     # Tests that only 2 of the three created observing records are updated, as

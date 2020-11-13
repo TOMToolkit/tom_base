@@ -13,6 +13,9 @@ class TestCommonViews(TestCase):
         self.client.force_login(self.admin)
 
         response = self.client.get(reverse('home'))
+        # TODO: Use python http status enumerator in place of magic number everywhere
+        # from http import HTTPStatus
+        # assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.status_code, 200)
 
 

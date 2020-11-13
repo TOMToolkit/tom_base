@@ -91,7 +91,7 @@ class TNSBroker(GenericBroker):
         else:
             public_timestamp = ''
         data = {
-            'api_key': settings.ALERT_CREDENTIALS['TNS']['api_key'],
+            'api_key': settings.BROKERS['TNS']['api_key'],
             'data': json.dumps({
                 'name': parameters['target_name'],
                 'internal_name': parameters['internal_name'],
@@ -102,16 +102,13 @@ class TNSBroker(GenericBroker):
                 'public_timestamp': public_timestamp,
             })
          }
-        print("About to send payload to TNS", data)
         response = requests.post(tns_search_url, data)
-        print("Response received", response)
         response.raise_for_status()
         transients = response.json()
-        print("Contents: ", transients)
         alerts = []
         for transient in transients['data']['reply']:
             data = {
-                'api_key': settings.ALERT_CREDENTIALS['TNS']['api_key'],
+                'api_key': settings.BROKERS['TNS']['api_key'],
                 'data': json.dumps({
                     'objname': transient['objname'],
                     'photometry': 1,
@@ -134,7 +131,7 @@ class TNSBroker(GenericBroker):
                     alerts.append(alert)
             else:
                 alerts.append(alert)
-        print("\n\n\n", alert)
+
         return iter(alerts)
 
     @classmethod

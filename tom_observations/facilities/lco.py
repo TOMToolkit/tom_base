@@ -85,6 +85,13 @@ max_airmass_help = """
     </a>
 """
 
+static_cadencing_help = """
+    For information on static cadencing with LCO,
+    <a href="https://lco.global/documentation/">
+        check the Observation Portal getting started guide, starting on page 18.
+    </a>
+"""
+
 
 def make_request(*args, **kwargs):
     response = requests.request(*args, **kwargs)
@@ -106,7 +113,8 @@ class LCOBaseForm(forms.Form):
         self.fields['filter'] = forms.ChoiceField(choices=self.filter_choices())
         self.fields['instrument_type'] = forms.ChoiceField(choices=self.instrument_choices())
 
-    def _get_instruments(self):
+    @staticmethod
+    def _get_instruments():
         cached_instruments = cache.get('lco_instruments')
 
         if not cached_instruments:
@@ -120,16 +128,19 @@ class LCOBaseForm(forms.Form):
 
         return cached_instruments
 
-    def instrument_choices(self):
-        return sorted([(k, v['name']) for k, v in self._get_instruments().items()], key=lambda inst: inst[1])
+    @staticmethod
+    def instrument_choices():
+        return sorted([(k, v['name']) for k, v in LCOBaseForm._get_instruments().items()], key=lambda inst: inst[1])
 
-    def filter_choices(self):
+    @staticmethod
+    def filter_choices():
         return sorted(set([
-            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            (f['code'], f['name']) for ins in LCOBaseForm._get_instruments().values() for f in
             ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
             ]), key=lambda filter_tuple: filter_tuple[1])
 
-    def proposal_choices(self):
+    @staticmethod
+    def proposal_choices():
         response = make_request(
             'GET',
             PORTAL_URL + '/api/profile/',
@@ -142,7 +153,7 @@ class LCOBaseForm(forms.Form):
         return choices
 
 
-class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceForm):
+class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     """
     The LCOBaseObservationForm provides the base set of utilities to construct an observation at Las Cumbres
     Observatory. While the forms that inherit from it provide a subset of instruments and filters, the
@@ -161,7 +172,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
     exposure_time = forms.FloatField(min_value=0.1,
                                      widget=forms.TextInput(attrs={'placeholder': 'Seconds'}),
                                      help_text=exposure_time_help)
-    max_airmass = forms.FloatField(help_text=max_airmass_help)
+    max_airmass = forms.FloatField(help_text=max_airmass_help, min_value=0)
     min_lunar_distance = forms.IntegerField(min_value=0, label='Minimum Lunar Distance', required=False)
     period = forms.FloatField(required=False)
     jitter = forms.FloatField(required=False)
@@ -175,9 +186,10 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
         self.helper.layout = Layout(
             self.common_layout,
             self.layout(),
-            self.cadence_layout,
             self.button_layout()
         )
+        if isinstance(self, CadenceForm):
+            self.helper.layout.insert(2, self.cadence_layout())
 
     def layout(self):
         return Div(
@@ -193,7 +205,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
                 css_class='form-row',
             ),
             Div(
-                HTML('<p>Cadence parameters. Leave blank if no cadencing is desired.</p>'),
+                HTML(f'''<br/><p>Static cadence parameters. Leave blank if no cadencing is desired.
+                         {static_cadencing_help} </p>'''),
             ),
             Div(
                 Div(
@@ -216,13 +229,16 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
         end = self.cleaned_data['end']
         return parse(end).isoformat()
 
-    def is_valid(self):
-        super().is_valid()
+    def validate_at_facility(self):
         obs_module = get_service_class(self.cleaned_data['facility'])
         errors = obs_module().validate_observation(self.observation_payload())
         if errors:
             self.add_error(None, self._flatten_error_dict(errors))
-        return not errors
+
+    def is_valid(self):
+        super().is_valid()
+        self.validate_at_facility()
+        return not self._errors
 
     def _flatten_error_dict(self, error_dict):
         non_field_errors = []
@@ -246,7 +262,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
 
         return non_field_errors
 
-    def instrument_to_type(self, instrument_type):
+    @staticmethod
+    def instrument_to_type(instrument_type):
         if 'FLOYDS' in instrument_type:
             return 'SPECTRUM'
         elif 'NRES' in instrument_type:
@@ -345,21 +362,21 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm, CadenceFor
 
     def observation_payload(self):
         payload = {
-            "name": self.cleaned_data['name'],
-            "proposal": self.cleaned_data['proposal'],
-            "ipp_value": self.cleaned_data['ipp_value'],
-            "operator": "SINGLE",
-            "observation_type": self.cleaned_data['observation_mode'],
-            "requests": [
+            'name': self.cleaned_data['name'],
+            'proposal': self.cleaned_data['proposal'],
+            'ipp_value': self.cleaned_data['ipp_value'],
+            'operator': 'SINGLE',
+            'observation_type': self.cleaned_data['observation_mode'],
+            'requests': [
                 {
-                    "configurations": [self._build_configuration()],
-                    "windows": [
+                    'configurations': [self._build_configuration()],
+                    'windows': [
                         {
-                            "start": self.cleaned_data['start'],
-                            "end": self.cleaned_data['end']
+                            'start': self.cleaned_data['start'],
+                            'end': self.cleaned_data['end']
                         }
                     ],
-                    "location": self._build_location()
+                    'location': self._build_location()
                 }
             ]
         }
@@ -374,13 +391,17 @@ class LCOImagingObservationForm(LCOBaseObservationForm):
     The LCOImagingObservationForm allows the selection of parameters for observing using LCO's Imagers. The list of
     Imagers and their details can be found here: https://lco.global/observatory/instruments/
     """
-    def instrument_choices(self):
-        return sorted([(k, v['name']) for k, v in self._get_instruments().items() if 'IMAGE' in v['type']],
-                      key=lambda inst: inst[1])
+    @staticmethod
+    def instrument_choices():
+        return sorted(
+            [(k, v['name']) for k, v in LCOImagingObservationForm._get_instruments().items() if 'IMAGE' in v['type']],
+            key=lambda inst: inst[1]
+        )
 
-    def filter_choices(self):
+    @staticmethod
+    def filter_choices():
         return sorted(set([
-            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            (f['code'], f['name']) for ins in LCOImagingObservationForm._get_instruments().values() for f in
             ins['optical_elements'].get('filters', [])
             ]), key=lambda filter_tuple: filter_tuple[1])
 
@@ -424,14 +445,19 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
             )
         )
 
-    def instrument_choices(self):
-        return sorted([(k, v['name']) for k, v in self._get_instruments().items() if 'SPECTRA' in v['type']],
-                      key=lambda inst: inst[1])
+    @staticmethod
+    def instrument_choices():
+        return sorted(
+            [(k, v['name'])
+             for k, v in LCOSpectroscopyObservationForm._get_instruments().items()
+             if 'SPECTRA' in v['type']],
+            key=lambda inst: inst[1])
 
     # NRES does not take a slit, and therefore needs an option of None
-    def filter_choices(self):
+    @staticmethod
+    def filter_choices():
         return sorted(set([
-            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            (f['code'], f['name']) for ins in LCOSpectroscopyObservationForm._get_instruments().values() for f in
             ins['optical_elements'].get('slits', [])
             ] + [('None', 'None')]),
             key=lambda filter_tuple: filter_tuple[1])
@@ -460,10 +486,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
     """
     valid_instruments = ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']
     filters = ['U', 'B', 'V', 'R', 'I', 'u', 'g', 'r', 'i', 'z', 'w']
-    cadence_type = forms.ChoiceField(
-        choices=[('once', 'Once in the next'), ('repeat', 'Repeating every')],
-        required=True
-    )
+    cadence_frequency = forms.IntegerField(required=True, help_text='in hours')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -473,12 +496,10 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
             self.fields[filter_name] = FilterField(label=filter_name, required=False)
 
         # Massage cadence form to be SNEx-styled
-        self.fields['cadence_strategy'].widget = forms.HiddenInput()
-        self.fields['cadence_strategy'].required = False
-        self.fields['cadence_frequency'].required = True
-        self.fields['cadence_frequency'].widget.attrs['readonly'] = False
-        self.fields['cadence_frequency'].widget.attrs['help_text'] = 'in hours'
-
+        self.fields['cadence_strategy'] = forms.ChoiceField(
+            choices=[('', 'Once in the next'), ('ResumeCadenceAfterFailureStrategy', 'Repeating every')],
+            required=False,
+        )
         for field_name in ['exposure_time', 'exposure_count', 'start', 'end', 'filter']:
             self.fields.pop(field_name)
         if self.fields.get('groups'):
@@ -487,7 +508,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         self.helper.layout = Layout(
             Div(
                 Column('name'),
-                Column('cadence_type'),
+                Column('cadence_strategy'),
                 Column('cadence_frequency'),
                 css_class='form-row'
             ),
@@ -526,19 +547,20 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         """
         cleaned_data = super().clean()
         now = datetime.now()
-        cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
+        cleaned_data['start'] = datetime.strftime(now, '%Y-%m-%dT%H:%M:%S')
         cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
                                                 '%Y-%m-%dT%H:%M:%S')
-        if cleaned_data['cadence_type'] == 'repeat':
-            cleaned_data['cadence_strategy'] = 'Resume Cadence After Failure'
 
         return cleaned_data
 
-    def instrument_choices(self):
+    @staticmethod
+    def instrument_choices():
         """
         This method returns only the instrument choices available in the current SNEx photometric sequence form.
         """
-        return sorted([(k, v['name']) for k, v in self._get_instruments().items() if k in self.valid_instruments],
+        return sorted([(k, v['name'])
+                       for k, v in LCOPhotometricSequenceForm._get_instruments().items()
+                       if k in LCOPhotometricSequenceForm.valid_instruments],
                       key=lambda inst: inst[1])
 
     def cadence_layout(self):
@@ -588,14 +610,11 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
 
 class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
     site = forms.ChoiceField(choices=(('any', 'Any'), ('ogg', 'Hawaii'), ('coj', 'Australia')))
-    acquisition_radius = forms.FloatField(min_value=0)
+    acquisition_radius = forms.FloatField(min_value=0, required=False)
     guider_mode = forms.ChoiceField(choices=[('on', 'On'), ('off', 'Off'), ('optional', 'Optional')], required=True)
     guider_exposure_time = forms.IntegerField(min_value=0)
-    cadence_type = forms.ChoiceField(
-        choices=[('once', 'Once in the next'), ('repeat', 'Repeating every')],
-        required=True,
-        label=''
-    )
+    cadence_frequency = forms.IntegerField(required=True,
+                                           widget=forms.NumberInput(attrs={'placeholder': 'Hours'}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -604,13 +623,12 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
         self.fields['name'].label = ''
         self.fields['name'].widget.attrs['placeholder'] = 'Name'
         self.fields['min_lunar_distance'].widget.attrs['placeholder'] = 'Degrees'
-        self.fields['cadence_strategy'].widget = forms.HiddenInput()
-        self.fields['cadence_strategy'].required = False
-        self.fields['cadence_frequency'].required = True
+        self.fields['cadence_strategy'] = forms.ChoiceField(
+            choices=[('', 'Once in the next'), ('ResumeCadenceAfterFailureStrategy', 'Repeating every')],
+            required=False,
+            label=''
+        )
         self.fields['cadence_frequency'].label = ''
-        self.fields['cadence_frequency'].widget.attrs['readonly'] = False
-        self.fields['cadence_frequency'].widget.attrs['placeholder'] = 'Hours'
-        self.fields['cadence_frequency'].help_text = None
 
         # Remove start and end because those are determined by the cadence
         for field_name in ['start', 'end']:
@@ -621,7 +639,7 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
         self.helper.layout = Layout(
             Div(
                 Column('name'),
-                Column('cadence_type'),
+                Column('cadence_strategy'),
                 Column(AppendedText('cadence_frequency', 'Hours')),
                 css_class='form-row'
             ),
@@ -640,13 +658,13 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
     def _build_acquisition_config(self):
         acquisition_config = super()._build_acquisition_config()
         # SNEx uses WCS mode if no acquisition radius is specified, and BRIGHTEST otherwise
-        acquisition_mode = 'BRIGHTEST'
         if not self.cleaned_data['acquisition_radius']:
-            acquisition_mode = 'WCS'
-        acquisition_config['mode'] = acquisition_mode
-        acquisition_config['extra_params'] = {
-            'acquire_radius': self.cleaned_data['acquisition_radius']
-        }
+            acquisition_config['mode'] = 'WCS'
+        else:
+            acquisition_config['mode'] = 'BRIGHTEST'
+            acquisition_config['extra_params'] = {
+                'acquire_radius': self.cleaned_data['acquisition_radius']
+            }
 
         return acquisition_config
 
@@ -679,20 +697,22 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
         cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
         cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
                                                 '%Y-%m-%dT%H:%M:%S')
-        if cleaned_data['cadence_type'] == 'repeat':
-            cleaned_data['cadence_strategy'] = 'Resume Cadence After Failure'
 
         return cleaned_data
 
-    def instrument_choices(self):
+    @staticmethod
+    def instrument_choices():
         # SNEx only uses the Spectroscopic Sequence Form with FLOYDS
         # This doesn't need to be sorted because it will only return one instrument
-        return [(k, v['name']) for k, v in self._get_instruments().items() if k == '2M0-FLOYDS-SCICAM']
+        return [(k, v['name'])
+                for k, v in LCOSpectroscopicSequenceForm._get_instruments().items()
+                if k == '2M0-FLOYDS-SCICAM']
 
-    def filter_choices(self):
+    @staticmethod
+    def filter_choices():
         # SNEx only uses the Spectroscopic Sequence Form with FLOYDS
         return sorted(set([
-            (f['code'], f['name']) for name, ins in self._get_instruments().items() for f in
+            (f['code'], f['name']) for name, ins in LCOSpectroscopicSequenceForm._get_instruments().items() for f in
             ins['optical_elements'].get('slits', []) if name == '2M0-FLOYDS-SCICAM'
             ]), key=lambda filter_tuple: filter_tuple[1])
 
@@ -755,6 +775,7 @@ class LCOFacility(BaseRoboticObservationFacility):
     """
 
     name = 'LCO'
+    # TODO: make the keys the display values instead
     observation_forms = {
         'IMAGING': LCOImagingObservationForm,
         'SPECTRA': LCOSpectroscopyObservationForm,
@@ -805,9 +826,11 @@ class LCOFacility(BaseRoboticObservationFacility):
         }
     }
 
+    # TODO: this should be called get_form_class
     def get_form(self, observation_type):
         return self.observation_forms.get(observation_type, LCOBaseObservationForm)
 
+    # TODO: this should be called get_template_form_class
     def get_template_form(self, observation_type):
         return LCOObservationTemplateForm
 

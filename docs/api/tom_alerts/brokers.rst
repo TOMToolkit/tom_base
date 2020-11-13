@@ -22,6 +22,8 @@ ALeRCE
 ANTARES
 *******
 
+.. automodule:: tom_antares.antares
+    :members:
 
 ******
 Lasair
@@ -38,6 +40,13 @@ MARS
 .. automodule:: tom_alerts.brokers.mars
     :members:
 
+
+******
+SCIMMA
+******
+
+.. automodule:: tom_scimma.scimma
+    :members:
 
 *****
 Scout
