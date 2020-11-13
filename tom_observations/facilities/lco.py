@@ -27,6 +27,9 @@ except (AttributeError, KeyError):
 
 # Module specific settings.
 PORTAL_URL = LCO_SETTINGS['portal_url']
+# Valid observing states at LCO are defined here: https://developers.lco.global/#data-format-definition
+VALID_OBSERVING_STATES = ['PENDING', 'COMPLETED', 'WINDOW_EXPIRED', 'CANCELED']
+PENDING_OBSERVING_STATES = ['PENDING']
 SUCCESSFUL_OBSERVING_STATES = ['COMPLETED']
 FAILED_OBSERVING_STATES = ['WINDOW_EXPIRED', 'CANCELED']
 TERMINAL_OBSERVING_STATES = SUCCESSFUL_OBSERVING_STATES + FAILED_OBSERVING_STATES
