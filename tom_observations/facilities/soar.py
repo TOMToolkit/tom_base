@@ -34,7 +34,8 @@ def make_request(*args, **kwargs):
 
 class SOARBaseObservationForm(LCOBaseObservationForm):
 
-    def _get_instruments(self):
+    @staticmethod
+    def _get_instruments():
         cached_instruments = cache.get('soar_instruments')
 
         if not cached_instruments:
@@ -49,7 +50,8 @@ class SOARBaseObservationForm(LCOBaseObservationForm):
 
         return cached_instruments
 
-    def instrument_to_type(self, instrument_type):
+    @staticmethod
+    def instrument_to_type(instrument_type):
         if 'IMAGER' in instrument_type:
             return 'EXPOSE'
         else:
@@ -57,32 +59,49 @@ class SOARBaseObservationForm(LCOBaseObservationForm):
 
 
 class SOARImagingObservationForm(SOARBaseObservationForm, LCOImagingObservationForm):
-    pass
+
+    @staticmethod
+    def instrument_choices():
+        return sorted(
+            [(k, v['name']) for k, v in SOARImagingObservationForm._get_instruments().items() if 'IMAGE' in v['type']],
+            key=lambda inst: inst[1]
+        )
+
+    @staticmethod
+    def filter_choices():
+        return sorted(set([
+            (f['code'], f['name']) for ins in SOARImagingObservationForm._get_instruments().values() for f in
+            ins['optical_elements'].get('filters', [])
+            ]), key=lambda filter_tuple: filter_tuple[1])
 
 
 class SOARSpectroscopyObservationForm(SOARBaseObservationForm, LCOSpectroscopyObservationForm):
 
-    def filter_choices(self):
+    @staticmethod
+    def instrument_choices():
+        return sorted(
+            [(k, v['name'])
+             for k, v in SOARSpectroscopyObservationForm._get_instruments().items()
+             if 'SPECTRA' in v['type']],
+            key=lambda inst: inst[1])
+
+    @staticmethod
+    def filter_choices():
         return set([
-            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            (f['code'], f['name']) for ins in SOARSpectroscopyObservationForm._get_instruments().values() for f in
             ins['optical_elements'].get('slits', [])
             ])
 
     def _build_instrument_config(self):
-        instrument_config = {
-                'exposure_count': self.cleaned_data['exposure_count'],
-                'exposure_time': self.cleaned_data['exposure_time'],
-                'rotator_mode': 'SKY',
-                'extra_params': {
-                    'rotator_angle': self.cleaned_data['rotator_angle']
-                },
-                'optical_elements': {
-                    'slit': self.cleaned_data['filter'],
-                    'grating': SPECTRAL_GRATING
-                }
-        }
+        instrument_configs = super()._build_instrument_config()
 
-        return instrument_config
+        instrument_configs[0]['optical_elements'] = {
+            'slit': self.cleaned_data['filter'],
+            'grating': SPECTRAL_GRATING
+        }
+        instrument_configs[0]['rotator_mode'] = 'SKY'
+
+        return instrument_configs
 
 
 class SOARFacility(LCOFacility):

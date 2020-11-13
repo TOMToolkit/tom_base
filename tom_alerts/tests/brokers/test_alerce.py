@@ -313,7 +313,7 @@ class TestALeRCEModuleCanary(TestCase):
 
         self.assertDictContainsSubset({
             'oid': 'ZTF20acnsdjd',
-            'last_magpsf_r': 17.8492107391357,
+            'first_magpsf_g': 17.3446006774902,
             'first_magpsf_r': 17.0198993682861,
             'firstmjd': 59149.1119328998,
         }, alert)
