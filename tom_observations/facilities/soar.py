@@ -34,7 +34,8 @@ def make_request(*args, **kwargs):
 
 class SOARBaseObservationForm(LCOBaseObservationForm):
 
-    def _get_instruments(self):
+    @staticmethod
+    def _get_instruments():
         cached_instruments = cache.get('soar_instruments')
 
         if not cached_instruments:
@@ -49,7 +50,8 @@ class SOARBaseObservationForm(LCOBaseObservationForm):
 
         return cached_instruments
 
-    def instrument_to_type(self, instrument_type):
+    @staticmethod
+    def instrument_to_type(instrument_type):
         if 'IMAGER' in instrument_type:
             return 'EXPOSE'
         else:
@@ -57,14 +59,36 @@ class SOARBaseObservationForm(LCOBaseObservationForm):
 
 
 class SOARImagingObservationForm(SOARBaseObservationForm, LCOImagingObservationForm):
-    pass
+
+    @staticmethod
+    def instrument_choices():
+        return sorted(
+            [(k, v['name']) for k, v in SOARBaseObservationForm._get_instruments().items() if 'IMAGE' in v['type']],
+            key=lambda inst: inst[1]
+        )
+
+    @staticmethod
+    def filter_choices():
+        return sorted(set([
+            (f['code'], f['name']) for ins in SOARBaseObservationForm._get_instruments().values() for f in
+            ins['optical_elements'].get('filters', [])
+            ]), key=lambda filter_tuple: filter_tuple[1])
 
 
 class SOARSpectroscopyObservationForm(SOARBaseObservationForm, LCOSpectroscopyObservationForm):
 
-    def filter_choices(self):
+    @staticmethod
+    def instrument_choices():
+        return sorted(
+            [(k, v['name'])
+             for k, v in SOARSpectroscopyObservationForm._get_instruments().items()
+             if 'SPECTRA' in v['type']],
+            key=lambda inst: inst[1])
+
+    @staticmethod
+    def filter_choices():
         return set([
-            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            (f['code'], f['name']) for ins in SOARSpectroscopyObservationForm._get_instruments().values() for f in
             ins['optical_elements'].get('slits', [])
             ])
 
@@ -82,7 +106,7 @@ class SOARSpectroscopyObservationForm(SOARBaseObservationForm, LCOSpectroscopyOb
                 }
         }
 
-        return instrument_config
+        return [instrument_config]
 
 
 class SOARFacility(LCOFacility):
