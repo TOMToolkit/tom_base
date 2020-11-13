@@ -11,6 +11,15 @@ class LasairBrokerForm(GenericQueryForm):
     cone = forms.CharField(required=False, label='Object Cone Search', help_text='Object RA and Dec')
     sqlquery = forms.CharField(required=False, label='Freeform SQL query', help_text='SQL query')
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Ensure that either cone search or sqlquery are populated
+        if not (cleaned_data['cone'] or cleaned_data['sqlquery']):
+            raise forms.ValidationError('One of either Object Cone Search or Freeform SQL Query must be populated.')
+
+        return cleaned_data
+
 
 def get_lasair_object(objectId):
     url = LASAIR_URL + '/object/' + objectId + '/json/'
