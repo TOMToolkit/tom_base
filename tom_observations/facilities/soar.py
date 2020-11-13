@@ -37,7 +37,6 @@ class SOARBaseObservationForm(LCOBaseObservationForm):
     @staticmethod
     def _get_instruments():
         cached_instruments = cache.get('soar_instruments')
-        cached_instruments = None
 
         if not cached_instruments:
             response = make_request(
