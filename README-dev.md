@@ -27,6 +27,7 @@ Following deployment of a release, a Github Release is created, and this should 
 
 ### Pre-release deployment
 1. Meet pre-deployment criteria.
+   * Includes appropriate release notes, including breaking changes, in `releasenotes.md`.
    * Pass [Codacy code quality check](https://app.codacy.com/gh/TOMToolkit/tom_base/pullRequests).
    * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base).
    * Passes [Travis tests and code style check](https://travis-ci.com/github/TOMToolkit/tom_base/branches).
