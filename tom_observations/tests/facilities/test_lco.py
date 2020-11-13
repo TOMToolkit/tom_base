@@ -592,7 +592,9 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
     @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
     @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
     @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
-    def test_build_location(self, mock_validate, mock_insts, mock_filters, mock_proposals):
+    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm._get_instruments')
+    def test_build_location(self, mock_get_instruments, mock_validate, mock_insts, mock_filters, mock_proposals):
+        mock_get_instruments.return_value = {k: v for k, v in instrument_response.items() if 'SOAR' not in k}
         mock_validate.return_value = []
         mock_insts.return_value = self.instrument_choices
         mock_filters.return_value = self.filter_choices
