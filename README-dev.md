@@ -3,12 +3,12 @@ isn't pertinent to the wider community.
 
 ## Deployment
 The [PyPi](https://pypi.org/project/tomtoolkit/) package is kept under the Las Cumbres Observatory PyPi account. The 
-development and master branches are deployed automatically by TravisCI upon tagging either branch.
+development and main branches are deployed automatically by TravisCI upon tagging either branch.
 
-In order to trigger a PyPi deployment of either development or master, the branch must be given an annotated tag that 
+In order to trigger a PyPi deployment of either development or main, the branch must be given an annotated tag that 
 matches the correct version format. The version formats are as follows:
  
-|             | Development  | Master       | All other branches |
+|             | Development  | Main         | All other branches |
 |-------------|--------------|--------------|--------------------|
 | Tagged      | Push to PyPi | Push to PyPi | No effect          |
 | Not tagged  | No effect    | No effect    | No effect          |
@@ -16,7 +16,7 @@ matches the correct version format. The version formats are as follows:
 Tagged branches must follow the [semantic versioning syntax](https://semver.org/). Tagged versions will not be 
 deployed unless they match the validation regex. The version format is as follows:
 
-|   | Development   | Master |
+|   | Development   | Main   |
 |---|---------------|--------|
 |   | x.y.z-alpha.w | x.y.z  |
 
@@ -74,7 +74,7 @@ Following deployment of a release, a Github Release is created, and this should 
 The public release deployment workflow parallels the pre-release deployment work flow
 and more details for a particular step may be found above.
  
-1. Create PR: `master <- development`
+1. Create PR: `main <- dev`
 2. Meet pre-deployment criteria.
    * Include docstrings for any new or updated methods
    * Include tutorial documentation for any new major features as needed

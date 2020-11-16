@@ -35,7 +35,7 @@ Since the template we want to override is already part of the TOM
 Toolkit source code, we can use it as a starting point for our
 customized template. In fact, we’ll copy and paste the entire thing from
 the `source code of TOM
-Toolkit <https://github.com/TOMToolkit/tom_base/blob/master/tom_common/templates/tom_common/index.html>`__.
+Toolkit <https://github.com/TOMToolkit/tom_base/blob/main/tom_common/templates/tom_common/index.html>`__.
 and place it in our project. The template we are looking for is
 ``tom_common/index.html``
 
