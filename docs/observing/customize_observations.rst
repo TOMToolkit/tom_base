@@ -189,7 +189,7 @@ like this:
        form = LCOMultiFilterForm
 
 Take a look at the layout and compare it to the `existing lco
-layout <https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py#L169>`__.
+layout <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py#L169>`__.
 A second row has been added that includes all the filter choices. Note
 that the original ``filter`` and ``exposure_time`` have been moved from
 their original location to the new row.

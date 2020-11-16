@@ -1,7 +1,7 @@
 # TOM Toolkit
-[![Build Status](https://travis-ci.com/TOMToolkit/tom_base.svg?branch=master)](https://travis-ci.com/TOMToolkit/tom_base)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/9846cee7c4904cae8864525101030169)](https://www.codacy.com/gh/observatorycontrolsystem/observation-portal?utm_source=github.com&utm_medium=referral&utm_content=observatorycontrolsystem/observation-portal&utm_campaign=Badge_Grade)
-[![Coverage Status](https://coveralls.io/repos/github/TOMToolkit/tom_base/badge.svg?branch=master)](https://coveralls.io/github/TOMToolkit/tom_base?branch=master)
+[![Build Status](https://travis-ci.com/TOMToolkit/tom_base.svg?branch=main)](https://travis-ci.com/TOMToolkit/tom_base)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/578e468dbd01494696d4446288858252)](https://www.codacy.com/gh/TOMToolkit/tom_base/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=TOMToolkit/tom_base&amp;utm_campaign=Badge_Grade)
+[![Coverage Status](https://coveralls.io/repos/github/TOMToolkit/tom_base/badge.svg?branch=main)](https://coveralls.io/github/TOMToolkit/tom_base?branch=main)
 [![Documentation Status](https://readthedocs.org/projects/tom-toolkit/badge/?version=stable)](https://tom-toolkit.readthedocs.io/en/stable/?badge=stable)
 [Documentation](https://tom-toolkit.readthedocs.io/en/latest/)
 

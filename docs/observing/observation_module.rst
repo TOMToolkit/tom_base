@@ -22,9 +22,9 @@ A TOM Toolkit observing facility module is a python module which
 contains the code necessary to provide an interface to an observing
 facility in a TOM. Some examples of existing modules are the `Las
 Cumbres
-Observatory <https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py>`__
+Observatory <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__
 and the
-`Gemini <https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/gemini.py>`__
+`Gemini <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/gemini.py>`__
 modules. Both allow the submission of observation requests to their
 respective observatories through a TOM.
 
@@ -174,7 +174,7 @@ second value of each tuple is what will be displayed on the webpage, as
 different tabs of observation types to submit. The first value of each
 tuple is what should be used to distinguish different observation types
 in your code. To see a demonstration of this, check out the `Las Cumbres
-Observatory <https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py>`__
+Observatory <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__
 facility’s ``observation_types`` and ``get_form``.
 
 Now let’s populate the form. Let’s assume our observatory only requires
@@ -270,7 +270,7 @@ data, but when you adapt it to work with a real observatory you should
 fill them in with the correct logic so that the whole module works
 correctly with the TOM. You can view explanations of each method `in the
 source
-code <https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facility.py#L142>`__
+code <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facility.py#L142>`__
 
 ###Airmass plotting for new facilities The last step in adding a new
 facility is to get it to appear on airmass plots. If you input two dates
@@ -281,7 +281,7 @@ at LCO and Gemini sites.
 In our ``MyObservationFacility`` class, let’s define a new variable
 called ``SITES``. Modeling our ``SITES`` on the one defined for `Las
 Cumbres
-Observatory <https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py>`__,
+Observatory <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__,
 we can easily put new sites into the airmass plots:
 
 .. code:: python
