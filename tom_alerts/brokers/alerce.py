@@ -256,12 +256,14 @@ class ALeRCEQueryForm(GenericQueryForm):
 
         return cleaned_data
 
-    def early_classifier_choices(self):
-        return [(None, '')] + sorted([(c['id'], c['name']) for c in self._get_classifiers()['early']],
+    @staticmethod
+    def early_classifier_choices():
+        return [(None, '')] + sorted([(c['id'], c['name']) for c in ALeRCEQueryForm._get_classifiers()['early']],
                                      key=lambda classifier: classifier[1])
 
-    def late_classifier_choices(self):
-        return [(None, '')] + sorted([(c['id'], c['name']) for c in self._get_classifiers()['late']],
+    @staticmethod
+    def late_classifier_choices():
+        return [(None, '')] + sorted([(c['id'], c['name']) for c in ALeRCEQueryForm._get_classifiers()['late']],
                                      key=lambda classifier: classifier[1])
 
 
@@ -329,16 +331,19 @@ class ALeRCEBroker(GenericBroker):
 
         return payload
 
-    def fetch_alerts(self, parameters):
+    def _request_alerts(self, parameters):
         payload = self._clean_parameters(parameters)
         logger.log(msg=f'Fetching alerts from ALeRCE with payload {payload}', level=logging.INFO)
         response = requests.post(ALERCE_SEARCH_URL, json=payload)
         response.raise_for_status()
-        parsed = response.json()
-        alerts = [alert_data for alert, alert_data in parsed['result'].items()]
-        if parsed['page'] < parsed['num_pages'] and parsed['page'] != parameters['max_pages']:
+        return response.json()
+
+    def fetch_alerts(self, parameters):
+        response = self._request_alerts(parameters)
+        alerts = [alert_data for alert, alert_data in response['result'].items()]
+        if response['page'] < response['num_pages'] and response['page'] != parameters['max_pages']:
             parameters['page'] = parameters.get('page', 1) + 1
-            parameters['total'] = parsed.get('total')
+            parameters['total'] = response.get('total')
             alerts += self.fetch_alerts(parameters)
         return iter(alerts)
 
