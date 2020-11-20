@@ -185,7 +185,7 @@ class GenericBroker(ABC):
     make use of a broker module, add the path to ``TOM_ALERT_CLASSES`` in your ``settings.py``.
 
     For an implementation example, please see
-    https://github.com/TOMToolkit/tom_base/blob/master/tom_alerts/brokers/mars.py
+    https://github.com/TOMToolkit/tom_base/blob/main/tom_alerts/brokers/mars.py
     """
     alert_submission_form = GenericUpstreamSubmissionForm
 

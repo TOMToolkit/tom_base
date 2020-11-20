@@ -65,7 +65,7 @@ That’s progress, but our new page is pretty ugly. The navigation bar is
 missing and we don’t have any of the nice CSS that makes the rest of the
 TOM pages look good! But wait, before you start copying in lines of
 HTML, know that all we need to do is extend
-`tom_common/base.html <https://github.com/TOMToolkit/tom_base/blob/master/tom_common/templates/tom_common/base.html>`__
+`tom_common/base.html <https://github.com/TOMToolkit/tom_base/blob/main/tom_common/templates/tom_common/base.html>`__
 to get all that back. You can read more about extending templates from
 the guide on `Customizing TOM
 Templates </customization/customize_templates>`__. Let’s modify

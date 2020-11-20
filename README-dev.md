@@ -3,12 +3,12 @@ isn't pertinent to the wider community.
 
 ## Deployment
 The [PyPi](https://pypi.org/project/tomtoolkit/) package is kept under the Las Cumbres Observatory PyPi account. The 
-development and master branches are deployed automatically by TravisCI upon tagging either branch.
+dev and main branches are deployed automatically by TravisCI upon tagging either branch.
 
-In order to trigger a PyPi deployment of either development or master, the branch must be given an annotated tag that 
+In order to trigger a PyPi deployment of either dev or main, the branch must be given an annotated tag that 
 matches the correct version format. The version formats are as follows:
  
-|             | Development  | Master       | All other branches |
+|             | Dev  | Main         | All other branches |
 |-------------|--------------|--------------|--------------------|
 | Tagged      | Push to PyPi | Push to PyPi | No effect          |
 | Not tagged  | No effect    | No effect    | No effect          |
@@ -16,7 +16,7 @@ matches the correct version format. The version formats are as follows:
 Tagged branches must follow the [semantic versioning syntax](https://semver.org/). Tagged versions will not be 
 deployed unless they match the validation regex. The version format is as follows:
 
-|   | Development   | Master |
+|   | Dev   | Main   |
 |---|---------------|--------|
 |   | x.y.z-alpha.w | x.y.z  |
 
@@ -27,14 +27,15 @@ Following deployment of a release, a Github Release is created, and this should 
 
 ### Pre-release deployment
 1. Meet pre-deployment criteria.
+   * Includes appropriate release notes, including breaking changes, in `releasenotes.md`.
    * Pass [Codacy code quality check](https://app.codacy.com/gh/TOMToolkit/tom_base/pullRequests).
    * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base).
    * Passes [Travis tests and code style check](https://travis-ci.com/github/TOMToolkit/tom_base/branches).
    * Successfully builds [ReadTheDocs documentation](https://readthedocs.org/projects/tom-toolkit/builds/) (not an automated check) (TODO: fix webhook).
    * One review approval by a repository owner.
   
-2. Merge your feature branch into the `development` branch
-   * `git checkout development`
+2. Merge your feature branch into the `dev` branch
+   * `git checkout dev`
    * `git merge feature/your_feature_branch`
 
 3. Tag the release, triggering GitHub and PyPI actions:
@@ -73,12 +74,12 @@ Following deployment of a release, a Github Release is created, and this should 
 The public release deployment workflow parallels the pre-release deployment work flow
 and more details for a particular step may be found above.
  
-1. Create PR: `master <- development`
+1. Create PR: `main <- dev`
 2. Meet pre-deployment criteria.
    * Include docstrings for any new or updated methods
    * Include tutorial documentation for any new major features as needed
    * Pass [Codacy code quality check](https://app.codacy.com/gh/TOMToolkit/tom_base/dashboard?bid=18204585).
-   * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base?branch=development).
+   * Doesn't decrease [Coveralls test coverage](https://coveralls.io/github/TOMToolkit/tom_base?branch=dev).
    * Passes [Travis tests and code style check](https://travis-ci.com/github/TOMToolkit/tom_base/branches).
    * Successfully builds [ReadTheDocs documentation](https://readthedocs.org/projects/tom-toolkit/builds/) (not an automated check) (TODO: fix webhook).
 
@@ -97,7 +98,7 @@ and more details for a particular step may be found above.
 6. Update Release Notes in GitHub draft release.
    
    This should be the accumulation of the all
-   the development-release release notes:  For example, release notes for releases x.y.z-alpha.1,
+   the dev-release release notes:  For example, release notes for releases x.y.z-alpha.1,
     x.y.z-alpha.2, etc. should be combined into release notes for release x.y.z.
 
 7.  Publish Release

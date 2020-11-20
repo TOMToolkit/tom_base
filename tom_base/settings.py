@@ -21,7 +21,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'dxja^_6p35x46dx0rx+c$(^31(10^n(twe1#ax3o8xl=n^p37q'
+SECRET_KEY = os.getenv('SECRET_KEY', 'testkey')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -53,7 +53,6 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
-    'tom_publications',
 ]
 
 SITE_ID = 1
@@ -204,11 +203,6 @@ DATA_PRODUCT_TYPES = {
 DATA_PROCESSORS = {
     'photometry': 'tom_dataproducts.processors.photometry_processor.PhotometryProcessor',
     'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
-}
-
-TOM_LATEX_PROCESSORS = {
-    'ObservationGroup': 'tom_publications.processors.observation_group_latex_processor.ObservationGroupLatexProcessor',
-    'TargetList': 'tom_publications.processors.target_list_latex_processor.TargetListLatexProcessor'
 }
 
 TOM_FACILITY_CLASSES = [

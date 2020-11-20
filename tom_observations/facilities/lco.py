@@ -27,6 +27,9 @@ except (AttributeError, KeyError):
 
 # Module specific settings.
 PORTAL_URL = LCO_SETTINGS['portal_url']
+# Valid observing states at LCO are defined here: https://developers.lco.global/#data-format-definition
+VALID_OBSERVING_STATES = ['PENDING', 'COMPLETED', 'WINDOW_EXPIRED', 'CANCELED']
+PENDING_OBSERVING_STATES = ['PENDING']
 SUCCESSFUL_OBSERVING_STATES = ['COMPLETED']
 FAILED_OBSERVING_STATES = ['WINDOW_EXPIRED', 'CANCELED']
 TERMINAL_OBSERVING_STATES = SUCCESSFUL_OBSERVING_STATES + FAILED_OBSERVING_STATES
@@ -84,10 +87,7 @@ max_airmass_help = """
 
 static_cadencing_help = """
     For information on static cadencing with LCO,
-    <a href="https://s3.us-west-2.amazonaws.com/www.lco.global/documents/GettingStartedontheLCONetwork.latest.pdf?
-             X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA6FT4CXR4ZJRYWHNN%2F20200928%2Fus-west-2%2Fs3%2F
-             aws4_request&X-Amz-Date=20200928T221218Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=
-             328a99283fed8b98a3ffa3a035f3effe2b1c0b6ea4e84e266b7662abec9cc2e4">
+    <a href="https://lco.global/documentation/">
         check the Observation Portal getting started guide, starting on page 18.
     </a>
 """
@@ -113,7 +113,8 @@ class LCOBaseForm(forms.Form):
         self.fields['filter'] = forms.ChoiceField(choices=self.filter_choices())
         self.fields['instrument_type'] = forms.ChoiceField(choices=self.instrument_choices())
 
-    def _get_instruments(self):
+    @staticmethod
+    def _get_instruments():
         cached_instruments = cache.get('lco_instruments')
 
         if not cached_instruments:
@@ -127,16 +128,19 @@ class LCOBaseForm(forms.Form):
 
         return cached_instruments
 
-    def instrument_choices(self):
-        return sorted([(k, v['name']) for k, v in self._get_instruments().items()], key=lambda inst: inst[1])
+    @staticmethod
+    def instrument_choices():
+        return sorted([(k, v['name']) for k, v in LCOBaseForm._get_instruments().items()], key=lambda inst: inst[1])
 
-    def filter_choices(self):
+    @staticmethod
+    def filter_choices():
         return sorted(set([
-            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            (f['code'], f['name']) for ins in LCOBaseForm._get_instruments().values() for f in
             ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
             ]), key=lambda filter_tuple: filter_tuple[1])
 
-    def proposal_choices(self):
+    @staticmethod
+    def proposal_choices():
         response = make_request(
             'GET',
             PORTAL_URL + '/api/profile/',
@@ -175,7 +179,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     observation_mode = forms.ChoiceField(
         choices=(('NORMAL', 'Normal'), ('RAPID_RESPONSE', 'Rapid-Response'), ('TIME_CRITICAL', 'Time-Critical')),
         help_text=observation_mode_help
-    )  # TODO: Update this to support current observation modes
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -225,13 +229,16 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
         end = self.cleaned_data['end']
         return parse(end).isoformat()
 
-    def is_valid(self):
-        super().is_valid()
+    def validate_at_facility(self):
         obs_module = get_service_class(self.cleaned_data['facility'])
         errors = obs_module().validate_observation(self.observation_payload())
         if errors:
             self.add_error(None, self._flatten_error_dict(errors))
-        return not errors
+
+    def is_valid(self):
+        super().is_valid()
+        self.validate_at_facility()
+        return not self._errors
 
     def _flatten_error_dict(self, error_dict):
         non_field_errors = []
@@ -255,7 +262,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
 
         return non_field_errors
 
-    def instrument_to_type(self, instrument_type):
+    @staticmethod
+    def instrument_to_type(instrument_type):
         if 'FLOYDS' in instrument_type:
             return 'SPECTRUM'
         elif 'NRES' in instrument_type:
@@ -354,21 +362,21 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
 
     def observation_payload(self):
         payload = {
-            "name": self.cleaned_data['name'],
-            "proposal": self.cleaned_data['proposal'],
-            "ipp_value": self.cleaned_data['ipp_value'],
-            "operator": "SINGLE",
-            "observation_type": self.cleaned_data['observation_mode'],
-            "requests": [
+            'name': self.cleaned_data['name'],
+            'proposal': self.cleaned_data['proposal'],
+            'ipp_value': self.cleaned_data['ipp_value'],
+            'operator': 'SINGLE',
+            'observation_type': self.cleaned_data['observation_mode'],
+            'requests': [
                 {
-                    "configurations": [self._build_configuration()],
-                    "windows": [
+                    'configurations': [self._build_configuration()],
+                    'windows': [
                         {
-                            "start": self.cleaned_data['start'],
-                            "end": self.cleaned_data['end']
+                            'start': self.cleaned_data['start'],
+                            'end': self.cleaned_data['end']
                         }
                     ],
-                    "location": self._build_location()
+                    'location': self._build_location()
                 }
             ]
         }
@@ -383,13 +391,17 @@ class LCOImagingObservationForm(LCOBaseObservationForm):
     The LCOImagingObservationForm allows the selection of parameters for observing using LCO's Imagers. The list of
     Imagers and their details can be found here: https://lco.global/observatory/instruments/
     """
-    def instrument_choices(self):
-        return sorted([(k, v['name']) for k, v in self._get_instruments().items() if 'IMAGE' in v['type']],
-                      key=lambda inst: inst[1])
+    @staticmethod
+    def instrument_choices():
+        return sorted(
+            [(k, v['name']) for k, v in LCOImagingObservationForm._get_instruments().items() if 'IMAGE' in v['type']],
+            key=lambda inst: inst[1]
+        )
 
-    def filter_choices(self):
+    @staticmethod
+    def filter_choices():
         return sorted(set([
-            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            (f['code'], f['name']) for ins in LCOImagingObservationForm._get_instruments().values() for f in
             ins['optical_elements'].get('filters', [])
             ]), key=lambda filter_tuple: filter_tuple[1])
 
@@ -433,14 +445,19 @@ class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
             )
         )
 
-    def instrument_choices(self):
-        return sorted([(k, v['name']) for k, v in self._get_instruments().items() if 'SPECTRA' in v['type']],
-                      key=lambda inst: inst[1])
+    @staticmethod
+    def instrument_choices():
+        return sorted(
+            [(k, v['name'])
+             for k, v in LCOSpectroscopyObservationForm._get_instruments().items()
+             if 'SPECTRA' in v['type']],
+            key=lambda inst: inst[1])
 
     # NRES does not take a slit, and therefore needs an option of None
-    def filter_choices(self):
+    @staticmethod
+    def filter_choices():
         return sorted(set([
-            (f['code'], f['name']) for ins in self._get_instruments().values() for f in
+            (f['code'], f['name']) for ins in LCOSpectroscopyObservationForm._get_instruments().values() for f in
             ins['optical_elements'].get('slits', [])
             ] + [('None', 'None')]),
             key=lambda filter_tuple: filter_tuple[1])
@@ -536,11 +553,14 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
 
         return cleaned_data
 
-    def instrument_choices(self):
+    @staticmethod
+    def instrument_choices():
         """
         This method returns only the instrument choices available in the current SNEx photometric sequence form.
         """
-        return sorted([(k, v['name']) for k, v in self._get_instruments().items() if k in self.valid_instruments],
+        return sorted([(k, v['name'])
+                       for k, v in LCOPhotometricSequenceForm._get_instruments().items()
+                       if k in LCOPhotometricSequenceForm.valid_instruments],
                       key=lambda inst: inst[1])
 
     def cadence_layout(self):
@@ -590,7 +610,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
 
 class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
     site = forms.ChoiceField(choices=(('any', 'Any'), ('ogg', 'Hawaii'), ('coj', 'Australia')))
-    acquisition_radius = forms.FloatField(min_value=0)
+    acquisition_radius = forms.FloatField(min_value=0, required=False)
     guider_mode = forms.ChoiceField(choices=[('on', 'On'), ('off', 'Off'), ('optional', 'Optional')], required=True)
     guider_exposure_time = forms.IntegerField(min_value=0)
     cadence_frequency = forms.IntegerField(required=True,
@@ -638,13 +658,13 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
     def _build_acquisition_config(self):
         acquisition_config = super()._build_acquisition_config()
         # SNEx uses WCS mode if no acquisition radius is specified, and BRIGHTEST otherwise
-        acquisition_mode = 'BRIGHTEST'
         if not self.cleaned_data['acquisition_radius']:
-            acquisition_mode = 'WCS'
-        acquisition_config['mode'] = acquisition_mode
-        acquisition_config['extra_params'] = {
-            'acquire_radius': self.cleaned_data['acquisition_radius']
-        }
+            acquisition_config['mode'] = 'WCS'
+        else:
+            acquisition_config['mode'] = 'BRIGHTEST'
+            acquisition_config['extra_params'] = {
+                'acquire_radius': self.cleaned_data['acquisition_radius']
+            }
 
         return acquisition_config
 
@@ -680,15 +700,19 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
 
         return cleaned_data
 
-    def instrument_choices(self):
+    @staticmethod
+    def instrument_choices():
         # SNEx only uses the Spectroscopic Sequence Form with FLOYDS
         # This doesn't need to be sorted because it will only return one instrument
-        return [(k, v['name']) for k, v in self._get_instruments().items() if k == '2M0-FLOYDS-SCICAM']
+        return [(k, v['name'])
+                for k, v in LCOSpectroscopicSequenceForm._get_instruments().items()
+                if k == '2M0-FLOYDS-SCICAM']
 
-    def filter_choices(self):
+    @staticmethod
+    def filter_choices():
         # SNEx only uses the Spectroscopic Sequence Form with FLOYDS
         return sorted(set([
-            (f['code'], f['name']) for name, ins in self._get_instruments().items() for f in
+            (f['code'], f['name']) for name, ins in LCOSpectroscopicSequenceForm._get_instruments().items() for f in
             ins['optical_elements'].get('slits', []) if name == '2M0-FLOYDS-SCICAM'
             ]), key=lambda filter_tuple: filter_tuple[1])
 
