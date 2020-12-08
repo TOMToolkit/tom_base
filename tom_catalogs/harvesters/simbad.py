@@ -31,5 +31,8 @@ class SimbadHarvester(AbstractHarvester):
         target.pm_ra = result.get('PMRA')
         target.pm_dec = result.get('PMDEC')
         target.distance = result.get('Distance_distance')
-        target.name = result.get('ID', b'').decode('UTF-8').split(',')[0].replace(' ', '')
+        result_id = result.get('ID', b'')
+        if isinstance(result_id, bytes):  # NOTE: SIMBAD used to return a bytestring, we leave this here in case
+            result_id = result_id.decode('UTF-8')
+        target.name = result_id.split(',')[0].replace(' ', '')
         return target
