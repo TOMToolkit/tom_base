@@ -210,6 +210,24 @@ available here. If you’d like to write your own alert module please see
 the documentation on `Creating an Alert Module for the TOM
 Toolkit </brokers/create_broker>`__.
 
+`TOM_ALERT_DASH_CLASSES <#tom_alert_dash_classes>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default:
+
+.. code-block:: python
+
+   [
+      'tom_alerts_dash.brokers.alerce.ALeRCEDashBroker',
+      'tom_alerts_dash.brokers.mars.MARSDashBroker',
+      'tom_alerts_dash.brokers.scimma.SCIMMADashBroker',
+   ]
+
+A list of tom alert dash classes to make available to your TOM. If you have
+written or downloaded additional alert classes you would make them
+available here. If you’d like to write your own dash alert module, please see
+the documentation on `Plotly Dash Broker Modules in the TOM Toolkit </brokers/create_dash_broker>`__.
+
 `TOM_FACILITY_CLASSES <#tom_facility_classes>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -218,10 +236,10 @@ Default:
 .. code-block
 
    [
-       'tom_observations.facilities.lco.LCOFacility',
-       'tom_observations.facilities.gemini.GEMFacility',
-       'tom_observations.facilities.soar.SOARFacility',
-       'tom_observations.facilities.lt.LTFacility'
+      'tom_observations.facilities.lco.LCOFacility',
+      'tom_observations.facilities.gemini.GEMFacility',
+      'tom_observations.facilities.soar.SOARFacility',
+      'tom_observations.facilities.lt.LTFacility'
    ]
 
 A list of observation facility classes to make available to your TOM. If
