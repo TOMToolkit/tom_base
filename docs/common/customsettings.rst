@@ -220,7 +220,6 @@ Default:
    [
       'tom_alerts_dash.brokers.alerce.ALeRCEDashBroker',
       'tom_alerts_dash.brokers.mars.MARSDashBroker',
-      'tom_alerts_dash.brokers.scimma.SCIMMADashBroker',
    ]
 
 A list of tom alert dash classes to make available to your TOM. If you have
