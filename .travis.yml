@@ -22,13 +22,8 @@ stages:
   - "Style Checks"
   - "test"
   - "Canary Tests"
-<<<<<<< HEAD
   - "Deploy Dev"
   - "Deploy Master"
-=======
-  - "Deploy Development"
-  - "Deploy Main"
->>>>>>> main
 
 jobs:
   include:
