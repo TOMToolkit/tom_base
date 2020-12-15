@@ -265,6 +265,9 @@ The MARS example also does some further data transformation. The objectId value 
 embedded link in the DataTable. The example also uses a couple of TOM Toolkit utility methods to convert RA/Declination to 
 sexagesimal and to truncate decimals to 4 places.
 
+It should be noted that in this example, and in all built-in Dash broker modules, ``flatten_dash_alerts`` includes the
+original alert with the key ``alert``. This is critical in order to enable creation of targets from alerts.
+
 .. code-block:: python
 
     from tom_alerts.brokers.mars import MARSBroker, MARSQueryForm, MARS_URL
