@@ -16,6 +16,7 @@ filters = {0: 'g', 1: 'r', 2: 'i'}
 
 
 class MARSQueryForm(GenericQueryForm):
+    objectId = forms.CharField(required=False, label='ZTF Object ID')
     time__gt = forms.CharField(
         required=False,
         label='Time Lower',
@@ -96,6 +97,7 @@ class MARSQueryForm(GenericQueryForm):
                 </p>
             '''),
             self.common_layout,
+            'objectId',
             Fieldset(
                 'Time based filters',
                 'time__since',
