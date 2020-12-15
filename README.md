@@ -33,13 +33,17 @@ For development information targeted at the maintainers of the project, please s
 
 ## Plugins
 
+### tom_alerts_dash
+The [tom_alerts_dash](https://github.com/TOMToolkit/tom_alerts_dash) plugin adds responsive ReactJS views to the 
+`tom_alerts` module for supported brokers.
+
 ### Antares
 The [tom-antares](https://github.com/TOMToolkit/tom_antares) plugin adds support
 for querying the Antares broker for targets of interest.
 
-### tom-nonsidereal-airmass
+### tom_nonsidereal_airmass
 
-The [tom-nonsidereal-airmass](https://github.com/TOMToolkit/tom_nonsidereal_airmass) plugin provides a templatetag
+The [tom_nonsidereal_airmass](https://github.com/TOMToolkit/tom_nonsidereal_airmass) plugin provides a templatetag
 that supports plotting for non-sidereal objects. The plugin is fully supported by the TOM Toolkit team; however,
 non-sidereal visibility calculations require the PyEphem library, which is minimally supported while its successor
 is in development. The library used for the TOM Toolkit sidereal visibility, astroplan, does not yet support

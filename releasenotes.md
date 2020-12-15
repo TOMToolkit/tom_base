@@ -1,5 +1,15 @@
 # Release Notes
 
+## 2.1.0
+
+- Updated MARS and ALeRCE modules to support Dash Broker changes.
+- Various documentation improvements.
+
+## 2.0.1
+
+- Fixed a bug in SimbadHarvester due to changes in the Simbad API.
+- Added a Simbad canary test.
+
 ## 2.0.0
 
 - Renamed `ALERT_CREDENTIALS` and `BROKER_CREDENTIALS` to `BROKERS` as a catchall for any broker-specific values.
