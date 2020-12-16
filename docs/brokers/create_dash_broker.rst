@@ -291,6 +291,55 @@ original alert with the key ``alert``. This is critical in order to enable creat
                 })
             return flattened_alerts
 
+``validate_filters`` method
+---------------------------
+
+The ``validate_filters`` method provides a way to propogate error messages from input validation up to the user. It is 
+wired as a callback to a front-end component that creates alert boxes, but can also be called from a broker's 
+``callback`` method in order to do validation prior to attempting a query.
+
+In addition to all of the input parameters for ``callback()``, this method accepts a ``list`` of ``dbc.Alert`` objects 
+that are currently rendered, so that they can be appended to and will not be inadvertently overwritten for the end user.
+
+.. code-block:: python
+
+    import dash_bootstrap_components
+
+    from tom_alerts.brokers.mars import MARSQueryForm
+
+
+    class MARSDashBroker(MARSBroker, GenericDashBroker):
+
+        def validate_filters(self, page_current, page_size, objectId, cone_ra, cone_dec, cone_radius, magpsf_lte, rb_gte,
+                         errors_state):
+        errors = []
+
+        cone_search = ''
+        if any([cone_ra, cone_dec, cone_radius]):
+            if all([cone_ra, cone_dec, cone_radius]):
+                cone_search = ','.join([cone_ra, cone_dec, cone_radius])
+            else:
+                errors.append('All of RA, Dec, and Radius are required for a cone search.')
+
+        form = MARSQueryForm({
+            'query_name': 'dash query',
+            'broker': self.name,
+            'objectId': objectId,
+            'magpsf__lte': magpsf_lte,
+            'rb__gte': rb_gte,
+            'cone': cone_search
+        })
+        form.is_valid()
+
+        for field, field_errors in form.errors.items():
+            for field_error in field_errors.get_json_data():
+                errors.append(f'{field}: {field_error["message"]}')
+
+        for error in errors:
+            errors_state.append(dbc.Alert(error, dismissable=True, is_open=True, duration=5000, color='warning'))
+
+        return errors_state
+
 Add custom Dash broker module to ``settings.py``
 ================================================
 
