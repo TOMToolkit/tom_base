@@ -29,6 +29,15 @@ class LasairBrokerForm(GenericQueryForm):
             ),
         )
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Ensure that either cone search or sqlquery are populated
+        if not (cleaned_data['cone'] or cleaned_data['sqlquery']):
+            raise forms.ValidationError('One of either Object Cone Search or Freeform SQL Query must be populated.')
+
+        return cleaned_data
+
 
 def get_lasair_object(objectId):
     url = LASAIR_URL + '/object/' + objectId + '/json/'
@@ -61,11 +70,14 @@ class LasairBroker(GenericBroker):
     form = LasairBrokerForm
 
     def fetch_alerts(self, parameters):
+        print(parameters)
         if 'cone' in parameters and len(parameters['cone'].strip()) > 0:
             response = requests.post(
                 LASAIR_URL + '/conesearch/',
                 data={'cone': parameters['cone'], 'json': 'on'}
             )
+            response.raise_for_status()
+            print(response.content)
             cone_result = response.json()
             alerts = []
             for objectId in cone_result['hitlist']:

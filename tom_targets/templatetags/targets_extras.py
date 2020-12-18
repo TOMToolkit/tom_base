@@ -7,6 +7,7 @@ from astropy.time import Time
 from dateutil.parser import parse
 from django import template
 from django.conf import settings
+from django.db.models import Q
 from guardian.shortcuts import get_objects_for_user
 import numpy as np
 from plotly import offline
@@ -65,6 +66,13 @@ def target_data(target):
     }
 
 
+@register.inclusion_tag('tom_targets/partials/target_unknown_statuses.html')
+def target_unknown_statuses(target):
+    return {
+        'num_unknown_statuses': len(target.observationrecord_set.filter(Q(status='') | Q(status=None)))
+    }
+
+
 @register.inclusion_tag('tom_targets/partials/target_groups.html')
 def target_groups(target):
     """
@@ -116,7 +124,7 @@ def target_plan(context):
 @register.inclusion_tag('tom_targets/partials/moon_distance.html')
 def moon_distance(target, day_range=30):
     """
-    Renders plot for lunar distance from target.
+    Renders plot for lunar distance from sidereal target.
 
     Adapted from Jamison Frost Burke's moon visibility code in Supernova Exchange 2.0, as seen here:
     https://github.com/jfrostburke/snex2/blob/0c1eb184c942cb10f7d54084e081d8ac11700edf/custom_code/templatetags/custom_code_tags.py#L196
@@ -127,6 +135,8 @@ def moon_distance(target, day_range=30):
     :param day_range: Number of days to plot lunar distance
     :type day_range: int
     """
+    if target.type != 'SIDEREAL':
+        return {'plot': None}
 
     day_range = 30
     times = Time(
@@ -173,9 +183,9 @@ def target_distribution(targets):
     locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
     data = [
         dict(
-            lon=[l[0] for l in locations],
-            lat=[l[1] for l in locations],
-            text=[l[2] for l in locations],
+            lon=[location[0] for location in locations],
+            lat=[location[1] for location in locations],
+            text=[location[2] for location in locations],
             hoverinfo='lon+lat+text',
             mode='markers',
             type='scattergeo'

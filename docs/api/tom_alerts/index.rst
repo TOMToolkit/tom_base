@@ -5,5 +5,6 @@ Alerts
   :maxdepth: 2
 
   brokers
+  exceptions
   models
   views

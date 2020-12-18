@@ -31,7 +31,7 @@ For customization instructions, see tom_common/base.html
             <a class="nav-link" href="{% url 'tom_observations:group-list' %}" style="color:black">Observation Groups</a>
         </li>
         <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
-            <a class="nav-link" href="{% url 'tom_observations:strategy-list' %}" style="color:black">Observation Strategies</a>
+            <a class="nav-link" href="{% url 'tom_observations:template-list' %}" style="color:black">Observation Templates</a>
         </li>
     </ul>
 </li>

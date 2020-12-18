@@ -10,3 +10,15 @@
   width: inherit;
   height: auto;
 }
+
+.nav-item {
+  cursor: pointer;
+}
+
+span.featured {
+  pointer-events: none;
+}
+
+div.observation-form {
+  padding-top: 20px;
+}

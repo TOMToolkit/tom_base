@@ -65,6 +65,11 @@ class TestTargetListGroupPermissions(TestCase):
         self.assertNotContains(response, self.st1.name)
 
 
+# Because the target detail page has a templatetag that tries to get the facility status, these tests fail without
+# network. While the preferred solution would be to create a mock facility class, in order to avoid any potential
+# circular imports, we're simply disabling the facility classes for these tests. This can be revisited if need be at a
+# future time, but currently the target tests don't do anything with ObservationRecords anyway.
+@override_settings(TOM_FACILITY_CLASSES=[])
 class TestTargetDetail(TestCase):
     def setUp(self):
         user = User.objects.create(username='testuser')
@@ -100,6 +105,7 @@ class TestTargetDetail(TestCase):
         self.assertContains(response, 'You do not have permission to access this page')
 
 
+@override_settings(TOM_FACILITY_CLASSES=[])
 class TestTargetCreate(TestCase):
     def setUp(self):
         user = User.objects.create(username='testuser')
@@ -392,7 +398,7 @@ class TestTargetCreate(TestCase):
         self.client.post(reverse('targets:create'), data=target_data, follow=True)
         target_data['name'] = 'multiple_names_target2'
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(second_response, 'Target name with this Alias for target already exists.')
+        self.assertContains(second_response, 'Target name with this Alias already exists.')
 
 
 class TestTargetImport(TestCase):
@@ -467,14 +473,14 @@ class TestTargetExport(TestCase):
         self.assertNotIn('M52', content)
 
     def test_export_all_targets_with_aliases(self):
-        st_name = TargetNameFactory.create(name='Messier 42', target=self.st)
+        TargetNameFactory.create(name='Messier 42', target=self.st)
         response = self.client.get(reverse('targets:export'))
         content = ''.join(line.decode('utf-8') for line in list(response.streaming_content))
         self.assertIn('M42', content)
         self.assertIn('M52', content)
 
     def test_export_filtered_targets_with_aliases(self):
-        st_name = TargetNameFactory.create(name='Messier 42', target=self.st)
+        TargetNameFactory.create(name='Messier 42', target=self.st)
         response = self.client.get(reverse('targets:export') + '?name=M42')
         content = ''.join(line.decode('utf-8') for line in list(response.streaming_content))
         self.assertIn('M42', content)

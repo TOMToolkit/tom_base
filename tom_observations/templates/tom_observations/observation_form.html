@@ -1,7 +1,12 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 crispy_forms_tags observation_extras targets_extras %}
+{% load bootstrap4 static crispy_forms_tags observation_extras targets_extras %}
 {% block title %}Submit Observation{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
+<link rel="stylesheet" href="{% static 'tom_observations/css/main.css' %}">
+{% endblock %}
 {% block content %}
+{{ form|as_crispy_errors }}
 <h3>Submit an observation to {{ form.facility.value }}</h3>
 {% if target.type == 'SIDEREAL' %}
 <div class="row">
@@ -11,12 +16,32 @@
 </div>
 {% endif %}
 <div class="row">
-    <div class="col-md-4">
-        {% target_data target %}
+    <div class="col-md-6">
+        <div class="row">
+            {% target_data target %}
+        </div>
+        <div class="row">
+            Lunar Distance
+            {% moon_distance target %}
+        </div>
     </div>
-    <div class="col-md-8">
-        {% observation_type_tabs %}
-        {% crispy form %}
+    <div class="col-md-6">
+        <ul class="nav nav-tabs" id="tabs">
+        {% for observation_type, observation_form in observation_type_choices %}
+            <li class="nav-item">
+                <span class="nav-link {% if observation_type == active or not active and forloop.first %}active{% endif %}" data-target="#{{ observation_type }}" data-toggle="tab"">
+                    {{ observation_type|display_obs_type }}
+                </span>
+            </li>
+        {% endfor %}
+        </ul>
+        <div class="tab-content observation-form">
+        {% for observation_type, observation_form in observation_type_choices %}
+            <div class="tab-pane {% if observation_type == active or not active and forloop.first %}active{% endif %}" id="{{ observation_type }}">
+                {% crispy observation_form %}
+            </div>
+        {% endfor %}
+        </div>
     </div>
 </div>
 {% endblock %}

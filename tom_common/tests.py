@@ -4,6 +4,21 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 
 
+class TestCommonViews(TestCase):
+    def setUp(self):
+        pass
+
+    def test_index(self):
+        self.admin = User.objects.create_superuser(username='admin', password='admin', email='test@example.com')
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse('home'))
+        # TODO: Use python http status enumerator in place of magic number everywhere
+        # from http import HTTPStatus
+        # assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response.status_code, 200)
+
+
 class TestUserManagement(TestCase):
     def setUp(self):
         self.admin = User.objects.create_superuser(username='admin', password='admin', email='test@example.com')

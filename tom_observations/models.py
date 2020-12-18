@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 import json
 
@@ -41,6 +42,7 @@ class ObservationRecord(models.Model):
     :type modified: datetime
     """
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, null=True, default=None, on_delete=models.DO_NOTHING)
     facility = models.CharField(max_length=50)
     parameters = models.TextField()
     observation_id = models.CharField(max_length=255)
@@ -111,35 +113,70 @@ class ObservationGroup(models.Model):
     """
     name = models.CharField(max_length=50)
     observation_records = models.ManyToManyField(ObservationRecord)
-    cadence_strategy = models.CharField(max_length=100, blank=True, default='')
-    cadence_parameters = models.TextField(blank=False, default='')
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ('-created',)
+        ordering = ('-created', 'name',)
 
     def __str__(self):
         return self.name
 
 
-class ObservingStrategy(models.Model):
+class DynamicCadence(models.Model):
     """
-    Class representing an observing strategy, or template.
+    Class representing a dynamic cadence--that is, a cadence that follows a pattern but modifies its behavior
+    depending on the result of prior observations.
 
-    :param name: The name of the ``ObservingStrategy``
+    :param observation_group: The ``ObservationGroup`` containing the observations that were created by this cadence.
+    :type observation_group: ``ObservationGroup``
+
+    :param cadence_strategy: The name of the cadence strategy this cadence is using.
+    :type cadence_strategy: str
+
+    :param cadence_parameters: The parameters for this cadence, e.g. cadence period
+    :type cadence_parameters: JSON
+
+    :param active: Whether or not this cadence should continue to submit observations
+    :type active: boolean
+
+    :param created: The time at which this ``DynamicCadence`` was created.
+    :type created: datetime
+
+    :param modified: The time at which this ``DynamicCadence`` was modified.
+    :type modified: datetime
+    """
+    observation_group = models.ForeignKey(ObservationGroup, null=False, default=None, on_delete=models.CASCADE)
+    cadence_strategy = models.CharField(max_length=100, blank=False, default=None,
+                                        verbose_name='Cadence strategy used for this DynamicCadence')
+    cadence_parameters = models.JSONField(blank=False, null=False, verbose_name='Cadence-specific parameters')
+    active = models.BooleanField(verbose_name='Active',
+                                 help_text='''Whether or not this DynamicCadence should
+                                           continue to submit observations.''')
+    created = models.DateTimeField(auto_now_add=True, help_text='The time which this DynamicCadence was created.')
+    modified = models.DateTimeField(auto_now=True, help_text='The time which this DynamicCadence was modified.')
+
+    def __str__(self):
+        return f'{self.cadence_strategy} with parameters {self.cadence_parameters}'
+
+
+class ObservationTemplate(models.Model):
+    """
+    Class representing an observation template.
+
+    :param name: The name of the ``ObservationTemplate``
     :type name: str
 
-    :param facility: The module-specified facility name for which the strategy is valid
+    :param facility: The module-specified facility name for which the template is valid
     :type facility: str
 
     :param parameters: JSON string of observing parameters
     :type parameters: str
 
-    :param created: The time at which this ``ObservationGroup`` was created.
+    :param created: The time at which this ``ObservationTemplate`` was created.
     :type created: datetime
 
-    :param modified: The time at which this ``ObservationGroup`` was modified.
+    :param modified: The time at which this ``ObservationTemplate`` was modified.
     :type modified: datetime
     """
     name = models.CharField(max_length=200)

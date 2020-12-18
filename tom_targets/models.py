@@ -1,10 +1,11 @@
-from django.db import models, transaction
-from django.core.exceptions import ValidationError
-from django.urls import reverse
-from django.forms.models import model_to_dict
-from django.conf import settings
-from dateutil.parser import parse
 from datetime import datetime
+from dateutil.parser import parse
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
+from django.forms.models import model_to_dict
+from django.urls import reverse
 
 from tom_common.hooks import run_hook
 
@@ -306,7 +307,7 @@ class Target(models.Model):
         :rtype: list
         """
         return [
-            obs for obs in self.observationrecord_set.all().order_by('scheduled_start') if not obs.terminal
+            obs for obs in self.observationrecord_set.exclude(status='').order_by('scheduled_start') if not obs.terminal
         ]
 
     @property
@@ -369,7 +370,7 @@ class TargetName(models.Model):
     :type modified: datetime
     """
     target = models.ForeignKey(Target, on_delete=models.CASCADE, related_name='aliases')
-    name = models.CharField(max_length=100, unique=True, verbose_name='Alias for target')
+    name = models.CharField(max_length=100, unique=True, verbose_name='Alias')
     created = models.DateTimeField(
         auto_now_add=True, help_text='The time which this target name was created.'
     )
@@ -387,7 +388,8 @@ class TargetName(models.Model):
         """
         super().validate_unique(*args, **kwargs)
         if self.name == self.target.name:
-            raise ValidationError('Target name and target aliases must be unique')
+            raise ValidationError(f'''Alias {self.name} has a conflict with the primary name of the target
+                                      {self.target.name} (id={self.target.id})''')
 
 
 class TargetExtra(models.Model):
@@ -442,7 +444,7 @@ class TargetExtra(models.Model):
                 self.time_value = self.value
             else:
                 self.time_value = parse(self.value)
-        except (TypeError, ValueError, OverflowError) as e:
+        except (TypeError, ValueError, OverflowError):
             self.time_value = None
 
         super().save(*args, **kwargs)

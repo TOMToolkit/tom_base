@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django_comments',
     'bootstrap4',
     'crispy_forms',
+    'rest_framework',
     'django_filters',
     'django_gravatar',
     'tom_targets',
@@ -53,7 +54,6 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
-    'tom_publications'
 ]
 
 SITE_ID = 1
@@ -123,7 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
@@ -229,11 +229,6 @@ DATA_PROCESSORS = {
     'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
 }
 
-TOM_LATEX_PROCESSORS = {
-    'ObservationGroup': 'tom_publications.processors.latex_processor.ObservationGroupLatexProcessor',
-    'TargetList': 'tom_publications.processors.target_list_latex_processor.TargetListLatexProcessor'
-}
-
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
@@ -242,15 +237,23 @@ TOM_FACILITY_CLASSES = [
 ]
 
 TOM_ALERT_CLASSES = [
-    'tom_alerts.brokers.mars.MARSBroker',
+    'tom_alerts.brokers.alerce.ALeRCEBroker',
+    'tom_alerts.brokers.antares.ANTARESBroker',
+    'tom_alerts.brokers.gaia.GaiaBroker',
     'tom_alerts.brokers.lasair.LasairBroker',
+    'tom_alerts.brokers.mars.MARSBroker',
+    'tom_alerts.brokers.scimma.SCIMMABroker',
     'tom_alerts.brokers.scout.ScoutBroker',
     'tom_alerts.brokers.tns.TNSBroker',
-    'tom_alerts.brokers.antares.ANTARESBroker',
-    'tom_alerts.brokers.gaia.GaiaBroker'
 ]
 
-ALERT_CREDENTIALS = {
+BROKERS = {
+    'TNS': {
+        'api_key': ''
+    }
+}
+
+HARVESTERS = {
     'TNS': {
         'api_key': ''
     }
@@ -295,6 +298,14 @@ THUMBNAIL_DEFAULT_SIZE = (200, 200)
 
 HINTS_ENABLED = {{ HINTS_ENABLED }}
 HINT_LEVEL = 20
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+    ],
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100
+}
 
 try:
     from local_settings import * # noqa

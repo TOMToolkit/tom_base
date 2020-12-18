@@ -8,14 +8,24 @@ from guardian.shortcuts import get_objects_for_user
 from plotly import offline
 import plotly.graph_objs as go
 
+from tom_observations.forms import AddExistingObservationForm, UpdateObservationId
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class, get_service_classes
-from tom_observations.observing_strategy import RunStrategyForm
+from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target
 
 
 register = template.Library()
+
+
+@register.filter
+def display_obs_type(value):
+    """
+    This converts SAMPLE_TITLE into Sample Title. Used for display all-caps observation type in the
+    tabs as titles.
+    """
+    return value.replace('_', ' ').title()
 
 
 @register.inclusion_tag('tom_observations/partials/observing_buttons.html')
@@ -25,6 +35,22 @@ def observing_buttons(target):
     """
     facilities = get_service_classes()
     return {'target': target, 'facilities': facilities}
+
+
+@register.inclusion_tag('tom_observations/partials/existing_observation_form.html')
+def existing_observation_form(target):
+    """
+    Renders a form for adding an existing API-based observation to a Target.
+    """
+    return {'form': AddExistingObservationForm(initial={'target_id': target.id})}
+
+
+@register.inclusion_tag('tom_observations/partials/update_observation_id_form.html')
+def update_observation_id_form(obsr):
+    """
+    Renders a form for updating the observation ID for an ObservationRecord.
+    """
+    return {'form': UpdateObservationId(initial={'obsr_id': obsr.id, 'observation_id': obsr.observation_id})}
 
 
 @register.inclusion_tag('tom_observations/partials/observation_type_tabs.html', takes_context=True)
@@ -46,6 +72,9 @@ def observation_type_tabs(context):
 
 @register.inclusion_tag('tom_observations/partials/facility_observation_form.html')
 def facility_observation_form(target, facility, observation_type):
+    """
+    Displays a form for submitting an observation for a specific facility and observation type, e.g., imaging.
+    """
     facility_class = get_service_class(facility)()
     initial_fields = {
         'target_id': target.id,
@@ -70,10 +99,15 @@ def observation_plan(target, facility, length=7, interval=60, airmass_limit=None
     end_time = start_time + timedelta(days=length)
 
     visibility_data = get_sidereal_visibility(target, start_time, end_time, interval, airmass_limit)
-    plot_data = [
-        go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()
-    ]
-    layout = go.Layout(yaxis=dict(autorange='reversed'))
+    i = 0
+    plot_data = []
+    for site, data in visibility_data.items():
+        plot_data.append(go.Scatter(x=data[0], y=data[1], mode='markers+lines', marker={'symbol': i}, name=site))
+        i += 1
+    layout = go.Layout(
+        xaxis={'title': 'Date'},
+        yaxis={'autorange': 'reversed', 'title': 'Airmass'}
+    )
     visibility_graph = offline.plot(
         go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False
     )
@@ -101,26 +135,28 @@ def observation_list(context, target=None):
     return {'observations': observations}
 
 
-@register.inclusion_tag('tom_observations/partials/observingstrategy_run.html')
-def observingstrategy_run(target):
+@register.inclusion_tag('tom_observations/partials/observationtemplate_run.html')
+def observationtemplate_run(target):
     """
-    Renders the form for running an observing strategy.
+    Renders the form for running an observation template.
     """
-    form = RunStrategyForm(initial={'target': target})
+    form = ApplyObservationTemplateForm(initial={'target': target})
     form.fields['target'].widget = forms.HiddenInput()
     return {'form': form}
 
 
-@register.inclusion_tag('tom_observations/partials/observingstrategy_from_record.html')
-def observingstrategy_from_record(obsr):
+@register.inclusion_tag('tom_observations/partials/observationtemplate_from_record.html')
+def observationtemplate_from_record(obsr):
     """
-    Renders a button that will pre-populate and observing strategy form with parameters from the specified
+    Renders a button that will pre-populate and observation template form with parameters from the specified
     ``ObservationRecord``.
     """
-    params = urlencode(obsr.parameters_as_dict)
+    obs_params = obsr.parameters_as_dict
+    obs_params.pop('target_id', None)
+    template_params = urlencode(obs_params)
     return {
         'facility': obsr.facility,
-        'params': params
+        'params': template_params
     }
 
 
@@ -155,27 +191,27 @@ def observation_distribution(observations):
 
     data = [
         dict(
-            lon=[l[0] for l in locations_no_status],
-            lat=[l[1] for l in locations_no_status],
-            text=[l[2] for l in locations_no_status],
+            lon=[location[0] for location in locations_no_status],
+            lat=[location[1] for location in locations_no_status],
+            text=[location[2] for location in locations_no_status],
             hoverinfo='lon+lat+text',
             mode='markers',
             marker=dict(color='rgba(90, 90, 90, .8)'),
             type='scattergeo'
         ),
         dict(
-            lon=[l[0] for l in locations_non_terminal],
-            lat=[l[1] for l in locations_non_terminal],
-            text=[l[2] for l in locations_non_terminal],
+            lon=[location[0] for location in locations_non_terminal],
+            lat=[location[1] for location in locations_non_terminal],
+            text=[location[2] for location in locations_non_terminal],
             hoverinfo='lon+lat+text',
             mode='markers',
             marker=dict(color='rgba(152, 0, 0, .8)'),
             type='scattergeo'
         ),
         dict(
-            lon=[l[0] for l in locations_terminal],
-            lat=[l[1] for l in locations_terminal],
-            text=[l[2] for l in locations_terminal],
+            lon=[location[0] for location in locations_terminal],
+            lat=[location[1] for location in locations_terminal],
+            text=[location[2] for location in locations_terminal],
             hoverinfo='lon+lat+text',
             mode='markers',
             marker=dict(color='rgba(0, 152, 0, .8)'),
@@ -212,3 +248,30 @@ def observation_distribution(observations):
     }
     figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
     return {'figure': figure}
+
+
+@register.inclusion_tag('tom_observations/partials/facility_status.html')
+def facility_status():
+    """
+    Collect the facility status from the registered facilities and pass them
+    to the facility_status.html partial template.
+    See lco.py Facility implementation for example.
+    :return:
+    """
+
+    facility_statuses = []
+    for _, facility_class in get_service_classes().items():
+        facility = facility_class()
+        weather_urls = facility.get_facility_weather_urls()
+        status = facility.get_facility_status()
+
+        # add the weather_url to the site dictionary
+        for site in status.get('sites', []):
+            url = next((site_url['weather_url'] for site_url in weather_urls.get('sites', [])
+                        if site_url['code'] == site['code']), None)
+            if url is not None:
+                site['weather_url'] = url
+
+        facility_statuses.append(status)
+
+    return {'facilities': facility_statuses}

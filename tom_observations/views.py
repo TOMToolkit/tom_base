@@ -1,7 +1,9 @@
 from io import StringIO
 from urllib.parse import urlparse
-import json
 
+from crispy_forms.bootstrap import FormActions
+from crispy_forms.layout import HTML, Layout, Submit
+from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -14,7 +16,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic import View
 from django.views.generic.detail import DetailView
-from django.views.generic.edit import FormView, DeleteView
+from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
 from django.views.generic.list import ListView
 from guardian.shortcuts import get_objects_for_user, assign_perm
 from guardian.mixins import PermissionListMixin
@@ -22,9 +24,11 @@ from guardian.mixins import PermissionListMixin
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
+from tom_observations.cadence import CadenceForm, get_cadence_strategy
 from tom_observations.facility import get_service_class, get_service_classes
-from tom_observations.forms import ManualObservationForm
-from tom_observations.models import ObservationRecord, ObservationGroup, ObservingStrategy
+from tom_observations.facility import BaseManualObservationFacility
+from tom_observations.forms import AddExistingObservationForm
+from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
 from tom_targets.models import Target
 
 
@@ -107,9 +111,10 @@ class ObservationListView(FilterView):
         return super().get(request, *args, **kwargs)
 
 
+# TODO: Ensure this template includes the ApplyObservationTemplate form at the top
 class ObservationCreateView(LoginRequiredMixin, FormView):
     """
-    View for creation/submission of an observation. Requries authentication.
+    View for creation/submission of an observation. Requires authentication.
     """
     template_name = 'tom_observations/observation_form.html'
 
@@ -152,18 +157,11 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         """
         return get_service_class(self.get_facility())
 
-    def get_observation_type(self):
-        """
-        Gets the observation type from the query parameters of the request.
-
-        :returns: observation type
-        :rtype: str
-        """
-        if self.request.method == 'GET':
-            # TODO: This appears to not work as intended.
-            return self.request.GET.get('observation_type', self.get_facility_class().observation_types[0])
-        elif self.request.method == 'POST':
-            return self.request.POST.get('observation_type')
+    def get_cadence_strategy_form(self):
+        cadence_strategy = self.request.GET.get('cadence_strategy')
+        if not cadence_strategy:
+            return CadenceForm
+        return get_cadence_strategy(cadence_strategy).form
 
     def get_context_data(self, **kwargs):
         """
@@ -173,7 +171,24 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :rtype: dict
         """
         context = super(ObservationCreateView, self).get_context_data(**kwargs)
-        context['type_choices'] = self.get_facility_class().observation_types
+
+        # Populate initial values for each form and add them to the context. If the page
+        # reloaded due to form errors, only repopulate the form that was submitted.
+        observation_type_choices = []
+        initial = self.get_initial()
+        for observation_type, observation_form_class in self.get_facility_class().observation_forms.items():
+            form_data = {**initial, **{'observation_type': observation_type}}
+            # Repopulate the appropriate form with form data if the original submission was invalid
+            if observation_type == self.request.POST.get('observation_type'):
+                form_data.update(**self.request.POST.dict())
+            observation_form_class = type(f'Composite{observation_type}Form',
+                                          (self.get_cadence_strategy_form(), observation_form_class), {})
+            observation_type_choices.append((observation_type, observation_form_class(initial=form_data)))
+        context['observation_type_choices'] = observation_type_choices
+
+        # Ensure correct tab is active if submission is unsuccessful
+        context['active'] = self.request.POST.get('observation_type')
+
         target = Target.objects.get(pk=self.get_target_id())
         context['target'] = target
         return context
@@ -186,11 +201,14 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :rtype: subclass of GenericObservationForm
         """
         observation_type = None
-        if self.request.GET:
+        if self.request.method == 'GET':
             observation_type = self.request.GET.get('observation_type')
-        elif self.request.POST:
+        elif self.request.method == 'POST':
             observation_type = self.request.POST.get('observation_type')
-        return self.get_facility_class()().get_form(observation_type)
+        form_class = type(f'Composite{observation_type}Form',
+                          (self.get_facility_class()().get_form(observation_type), self.get_cadence_strategy_form()),
+                          {})
+        return form_class
 
     def get_form(self):
         """
@@ -220,9 +238,15 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             raise Exception('Must provide target_id')
         initial['target_id'] = self.get_target_id()
         initial['facility'] = self.get_facility()
-        initial['observation_type'] = self.get_observation_type()
         initial.update(self.request.GET.dict())
         return initial
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
 
     def form_valid(self, form):
         """
@@ -245,22 +269,34 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             # Create Observation record
             record = ObservationRecord.objects.create(
                 target=target,
+                user=self.request.user,
                 facility=facility.name,
                 parameters=form.serialize_parameters(),
                 observation_id=observation_id
             )
             records.append(record)
 
+        # TODO: redirect to observation list for multiple observations, observation detail otherwise
+
         if len(records) > 1 or form.cleaned_data.get('cadence_strategy'):
-            group_name = form.cleaned_data['name']
-            observation_group = ObservationGroup.objects.create(
-                name=group_name, cadence_strategy=form.cleaned_data.get('cadence_strategy'),
-                cadence_parameters=json.dumps({'cadence_frequency': form.cleaned_data.get('cadence_frequency')})
-            )
+            observation_group = ObservationGroup.objects.create(name=form.cleaned_data['name'])
             observation_group.observation_records.add(*records)
             assign_perm('tom_observations.view_observationgroup', self.request.user, observation_group)
             assign_perm('tom_observations.change_observationgroup', self.request.user, observation_group)
             assign_perm('tom_observations.delete_observationgroup', self.request.user, observation_group)
+
+            # TODO: Add a test case that includes a dynamic cadence submission
+            if form.cleaned_data.get('cadence_strategy'):
+                cadence_parameters = {}
+                cadence_form = get_cadence_strategy(form.cleaned_data.get('cadence_strategy')).form
+                for field in cadence_form().cadence_fields:
+                    cadence_parameters[field] = form.cleaned_data.get(field)
+                DynamicCadence.objects.create(
+                    observation_group=observation_group,
+                    cadence_strategy=form.cleaned_data.get('cadence_strategy'),
+                    cadence_parameters=cadence_parameters,
+                    active=True
+                )
 
         if not settings.TARGET_PERMISSIONS_ONLY:
             groups = form.cleaned_data['groups']
@@ -272,6 +308,18 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         return redirect(
             reverse('tom_targets:detail', kwargs={'pk': target.id})
         )
+
+
+class ObservationRecordUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    This view allows for the updating of the observation id, which will eventually be expanded to more fields.
+    """
+    model = ObservationRecord
+    fields = ['observation_id']
+    template_name = 'tom_observations/observationupdate_form.html'
+
+    def get_success_url(self):
+        return reverse('tom_observations:detail', kwargs={'pk': self.get_object().id})
 
 
 class ObservationGroupCancelView(LoginRequiredMixin, View):
@@ -297,26 +345,45 @@ class ObservationGroupCancelView(LoginRequiredMixin, View):
         return redirect(referer)
 
 
-class ManualObservationCreateView(LoginRequiredMixin, FormView):
+class AddExistingObservationView(LoginRequiredMixin, FormView):
     """
     View for associating a pre-existing observation with a target. Requires authentication.
 
-    This view is not currently exposed in the out-of-the-box TOM Toolkit.
+    The GET view returns a confirmation page for adding duplicate ObservationRecords. Two duplicates are any two
+    ObservationRecords with the same target_id, facility, and observation_id.
+
+    The POST view validates the form and redirects to the confirmation page if the confirm flag isn't set.
+
+    This view is intended to be navigated to via the existing_observation_button templatetag, as the
+    AddExistingObservationForm has a hidden confirmation checkbox selected by default.
     """
-    template_name = 'tom_observations/observation_form_manual.html'
-    form_class = ManualObservationForm
+    template_name = 'tom_observations/existing_observation_confirm.html'
+    form_class = AddExistingObservationForm
 
-    def get_target_id(self):
-        """
-        Gets the id of the target of the observation from the query parameters.
-
-        :returns: target id
-        :rtype: int
-        """
+    def get_form(self):
+        form = super().get_form()
+        form.fields['facility'].widget = forms.HiddenInput()
+        form.fields['observation_id'].widget = forms.HiddenInput()
         if self.request.method == 'GET':
-            return self.request.GET.get('target_id')
+            target_id = self.request.GET.get('target_id')
         elif self.request.method == 'POST':
-            return self.request.POST.get('target_id')
+            target_id = self.request.POST.get('target_id')
+        cancel_url = reverse('home')
+        if target_id:
+            cancel_url = reverse('tom_targets:detail', kwargs={'pk': target_id})
+        form.helper.layout = Layout(
+            HTML('''<p>An observation record already exists in your TOM for this combination of observation ID,
+                 facility, and target. Are you sure you want to create this record?</p>'''),
+            'target_id',
+            'facility',
+            'observation_id',
+            'confirm',
+            FormActions(
+                Submit('confirm', 'Confirm'),
+                HTML(f'<a class="btn btn-outline-primary" href={cancel_url}>Cancel</a>')
+            )
+        )
+        return form
 
     def get_initial(self):
         """
@@ -325,34 +392,33 @@ class ManualObservationCreateView(LoginRequiredMixin, FormView):
         :returns: initial form data
         :rtype: dict
         """
-        initial = super().get_initial()
-        if not self.get_target_id():
-            raise Exception('Must provide target_id')
-        initial['target_id'] = self.get_target_id()
-        return initial
-
-    def get_target(self):
-        """
-        Gets the ``Target`` associated with the specified target_id from the database.
-
-        :returns: target instance to be associated with an observation
-        :rtype: Target
-        """
-        return Target.objects.get(pk=self.get_target_id())
+        if self.request.method == 'GET':
+            params = self.request.GET.dict()
+            params['confirm'] = True
+            return params
 
     def form_valid(self, form):
         """
         Runs after form validation. Creates a new ``ObservationRecord`` associated with the specified target and
         facility.
         """
-        ObservationRecord.objects.create(
-            target=self.get_target(),
-            facility=form.cleaned_data['facility'],
-            parameters={},
-            observation_id=form.cleaned_data['observation_id']
-        )
+        records = ObservationRecord.objects.filter(target_id=form.cleaned_data['target_id'],
+                                                   facility=form.cleaned_data['facility'],
+                                                   observation_id=form.cleaned_data['observation_id'])
+
+        if records and not form.cleaned_data.get('confirm'):
+            return redirect(reverse('tom_observations:add-existing') + '?' + self.request.POST.urlencode())
+        else:
+            ObservationRecord.objects.create(
+                target_id=form.cleaned_data['target_id'],
+                facility=form.cleaned_data['facility'],
+                parameters={},
+                observation_id=form.cleaned_data['observation_id']
+            )
+            observation_id = form.cleaned_data['observation_id']
+            messages.success(self.request, f'Successfully associated observation record {observation_id}')
         return redirect(reverse(
-            'tom_targets:detail', kwargs={'pk': self.get_target().id})
+            'tom_targets:detail', kwargs={'pk': form.cleaned_data['target_id']})
         )
 
 
@@ -390,6 +456,7 @@ class ObservationRecordDetailView(DetailView):
         context = super().get_context_data(*args, **kwargs)
         context['form'] = AddProductToGroupForm()
         service_class = get_service_class(self.object.facility)
+        context['editable'] = isinstance(service_class(), BaseManualObservationFacility)
         context['data_products'] = service_class().all_data_products(self.object)
         context['can_be_cancelled'] = self.object.status not in service_class().get_terminal_observing_states()
         newest_image = None
@@ -406,6 +473,29 @@ class ObservationRecordDetailView(DetailView):
         )
         context['data_product_form'] = data_product_upload_form
         return context
+
+
+class ObservationGroupCreateView(LoginRequiredMixin, CreateView):
+    """
+    View that handles the creation of ``ObservationGroup`` objects. Requires authentication.
+    """
+    model = ObservationGroup
+    fields = ['name']
+    success_url = reverse_lazy('tom_observations:group-list')
+
+    def form_valid(self, form):
+        """
+        Runs after form validation. Saves the observation group and assigns the user's permissions to the group.
+
+        :param form: Form data for observation group creation
+        :type form: django.forms.ModelForm
+        """
+        obj = form.save(commit=False)
+        obj.save()
+        assign_perm('tom_observations.view_observationgroup', self.request.user, obj)
+        assign_perm('tom_observations.change_observationgroup', self.request.user, obj)
+        assign_perm('tom_observations.delete_observationgroup', self.request.user, obj)
+        return super().form_valid(form)
 
 
 class ObservationGroupListView(PermissionListMixin, ListView):
@@ -427,9 +517,9 @@ class ObservationGroupDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     success_url = reverse_lazy('tom_observations:group-list')
 
 
-class ObservingStrategyFilter(FilterSet):
+class ObservationTemplateFilter(FilterSet):
     """
-    Defines the available fields for filtering the list of ``ObservingStrategy`` objects.
+    Defines the available fields for filtering the list of ``ObservationTemplate`` objects.
     """
     facility = ChoiceFilter(
         choices=[(k, k) for k in get_service_classes().keys()]
@@ -437,17 +527,17 @@ class ObservingStrategyFilter(FilterSet):
     name = CharFilter(lookup_expr='icontains')
 
     class Meta:
-        model = ObservingStrategy
+        model = ObservationTemplate
         fields = ['name', 'facility']
 
 
-class ObservingStrategyListView(FilterView):
+class ObservationTemplateListView(FilterView):
     """
     Displays the observing strategies that exist in the TOM.
     """
-    model = ObservingStrategy
-    filterset_class = ObservingStrategyFilter
-    template_name = 'tom_observations/observingstrategy_list.html'
+    model = ObservationTemplate
+    filterset_class = ObservationTemplateFilter
+    template_name = 'tom_observations/observationtemplate_list.html'
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -455,12 +545,12 @@ class ObservingStrategyListView(FilterView):
         return context
 
 
-class ObservingStrategyCreateView(FormView):
+class ObservationTemplateCreateView(FormView):
     """
-    Displays the form for creating a new observing strategy. Uses the observing strategy form specified in the
+    Displays the form for creating a new observation template. Uses the observation template form specified in the
     respective facility class.
     """
-    template_name = 'tom_observations/observingstrategy_form.html'
+    template_name = 'tom_observations/observationtemplate_form.html'
 
     def get_facility_name(self):
         return self.kwargs['facility']
@@ -471,12 +561,12 @@ class ObservingStrategyCreateView(FormView):
         if not facility_name:
             raise ValueError('Must provide a facility name')
 
-        # TODO: modify this to work with both LCO forms
-        return get_service_class(facility_name)().get_strategy_form(None)
+        # TODO: modify this to work with all LCO forms
+        return get_service_class(facility_name)().get_template_form(None)
 
     def get_form(self, form_class=None):
         form = super().get_form()
-        form.helper.form_action = reverse('tom_observations:strategy-create',
+        form.helper.form_action = reverse('tom_observations:template-create',
                                           kwargs={'facility': self.get_facility_name()})
         return form
 
@@ -488,26 +578,26 @@ class ObservingStrategyCreateView(FormView):
 
     def form_valid(self, form):
         form.save()
-        return redirect(reverse('tom_observations:strategy-list'))
+        return redirect(reverse('tom_observations:template-list'))
 
 
-class ObservingStrategyUpdateView(LoginRequiredMixin, FormView):
+class ObservationTemplateUpdateView(LoginRequiredMixin, FormView):
     """
-    View for updating an existing observing strategy.
+    View for updating an existing observation template.
     """
-    template_name = 'tom_observations/observingstrategy_form.html'
+    template_name = 'tom_observations/observationtemplate_form.html'
 
     def get_object(self):
-        return ObservingStrategy.objects.get(pk=self.kwargs['pk'])
+        return ObservationTemplate.objects.get(pk=self.kwargs['pk'])
 
     def get_form_class(self):
         self.object = self.get_object()
-        return get_service_class(self.object.facility)().get_strategy_form(None)
+        return get_service_class(self.object.facility)().get_template_form(None)
 
     def get_form(self):
         form = super().get_form()
         form.helper.form_action = reverse(
-            'tom_observations:strategy-update', kwargs={'pk': self.object.id}
+            'tom_observations:template-update', kwargs={'pk': self.object.id}
         )
         return form
 
@@ -518,13 +608,13 @@ class ObservingStrategyUpdateView(LoginRequiredMixin, FormView):
         return initial
 
     def form_valid(self, form):
-        form.save(strategy_id=self.object.id)
-        return redirect(reverse('tom_observations:strategy-list'))
+        form.save(template_id=self.object.id)
+        return redirect(reverse('tom_observations:template-list'))
 
 
-class ObservingStrategyDeleteView(LoginRequiredMixin, DeleteView):
+class ObservationTemplateDeleteView(LoginRequiredMixin, DeleteView):
     """
-    Deletes an observing strategy.
+    Deletes an observation template.
     """
-    model = ObservingStrategy
-    success_url = reverse_lazy('tom_observations:strategy-list')
+    model = ObservationTemplate
+    success_url = reverse_lazy('tom_observations:template-list')

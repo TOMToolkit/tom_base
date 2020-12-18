@@ -1,6 +1,7 @@
 import json
+import logging
 
-from django.views.generic.edit import FormView, DeleteView
+from django.views.generic.edit import DeleteView, FormMixin, FormView, ProcessFormView
 from django.views.generic.base import TemplateView, View
 from django.db import IntegrityError
 from django.shortcuts import redirect, get_object_or_404
@@ -13,8 +14,11 @@ from guardian.shortcuts import assign_perm
 from django_filters.views import FilterView
 from django_filters import FilterSet, ChoiceFilter, CharFilter
 
-from tom_alerts.models import BrokerQuery
 from tom_alerts.alerts import get_service_class, get_service_classes
+from tom_alerts.models import BrokerQuery
+from tom_alerts.exceptions import AlertSubmissionException
+
+logger = logging.getLogger(__name__)
 
 
 class BrokerQueryCreateView(LoginRequiredMixin, FormView):
@@ -234,9 +238,9 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
                 messages.error(request, 'Could not create targets. Try re running the query again.')
                 return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
             generic_alert = broker_class().to_generic_alert(json.loads(cached_alert))
-            target = generic_alert.to_target()
+            target, extras, aliases = generic_alert.to_target()
             try:
-                target.save()
+                target.save(extras=extras, names=aliases)
                 broker_class().process_reduced_data(target, json.loads(cached_alert))
                 for group in request.user.groups.all().exclude(name='Public'):
                     assign_perm('tom_targets.view_target', group, target)
@@ -255,3 +259,71 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             return redirect(reverse(
                 'tom_targets:list')
             )
+
+
+class SubmitAlertUpstreamView(LoginRequiredMixin, FormMixin, ProcessFormView, View):
+    """
+    View used to submit alerts to an upstream broker, such as SCIMMA's Hopskotch or the Transient Name Server.
+
+    While this view handles the query parameters for target_id and observation_record_id by default, it will
+    send any additional query parameters to the broker, allowing a broker to use any arbitrary parameters.
+    """
+
+    def get_broker_name(self):
+        return self.kwargs['broker']
+
+    def get_form_class(self):
+        broker_name = self.get_broker_name()
+        return get_service_class(broker_name).alert_submission_form
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({
+            'broker': self.get_broker_name()
+        })
+
+        return kwargs
+
+    def get_redirect_url(self):
+        """
+        If ``next`` is provided in the query params, redirects to ``next``. If ``HTTP_REFERER`` is present on the
+        ``META`` property of the request, redirects to ``HTTP_REFERER``. Else redirects to /.
+
+        :returns: url to redirect to
+        :rtype: str
+        """
+        next_url = self.request.POST.get('redirect_url')
+        redirect_url = next_url if next_url else self.request.META.get('HTTP_REFERER')
+        if not redirect_url:
+            redirect_url = reverse('home')
+
+        return redirect_url
+
+    def form_invalid(self, form):
+        logger.log(msg=f'Form invalid: {form.errors}', level=logging.WARN)
+        messages.warning(self.request,
+                         f'Unable to submit one or more alerts to {self.get_broker_name()}. See logs for details.')
+        return redirect(self.get_redirect_url())
+
+    def form_valid(self, form):
+        broker_name = self.get_broker_name()
+        broker = get_service_class(broker_name)()
+
+        target = form.cleaned_data.pop('target')
+        obsr = form.cleaned_data.pop('observation_record')
+        form.cleaned_data.pop('redirect_url')  # redirect_url doesn't need to be passed to submit_upstream_alert
+
+        try:
+            # Pass non-standard fields from query parameters as kwargs
+            success = broker.submit_upstream_alert(target=target, observation_record=obsr, **form.cleaned_data)
+        except AlertSubmissionException as e:
+            logger.log(msg=f'Failed to submit alert: {e}', level=logging.WARN)
+            success = False
+
+        if success:
+            messages.success(self.request, f'Successfully submitted alerts to {broker_name}!')
+        else:
+            messages.warning(self.request,
+                             f'Unable to submit one or more alerts to {self.get_broker_name()}. See logs for details.')
+
+        return redirect(self.get_redirect_url())

@@ -22,7 +22,7 @@ def add_all_to_grouping(filter_data, grouping_object, request):
     failure_targets = []
     try:
         target_queryset = TargetFilter(request=request, data=filter_data, queryset=Target.objects.all()).qs
-    except Exception as e:
+    except Exception:
         messages.error(request, "Error with filter parameters. No target(s) were added to group '{}'."
                                 .format(grouping_object.name))
         return
@@ -105,7 +105,7 @@ def remove_all_from_grouping(filter_data, grouping_object, request):
     failure_targets = []
     try:
         target_queryset = TargetFilter(request=request, data=filter_data, queryset=Target.objects.all()).qs
-    except Exception as e:
+    except Exception:
         messages.error(request, "Error with filter parameters. No target(s) were removed from group '{}'."
                                 .format(grouping_object.name))
         return

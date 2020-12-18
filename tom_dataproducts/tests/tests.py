@@ -15,8 +15,8 @@ from astropy.io import fits
 from astropy.table import Table
 import numpy as np
 
-from tom_observations.tests.utils import FakeFacility
-from tom_observations.tests.factories import TargetFactory, ObservingRecordFactory
+from tom_observations.tests.utils import FakeRoboticFacility
+from tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory
 from tom_dataproducts.models import DataProduct, is_fits_image_file
 from tom_dataproducts.forms import DataProductUploadForm
 from tom_dataproducts.processors.photometry_processor import PhotometryProcessor
@@ -39,14 +39,15 @@ def mock_is_fits_image_file(filename):
     return True
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], TARGET_PERMISSIONS_ONLY=True)
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+                   TARGET_PERMISSIONS_ONLY=True)
 @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
 class Views(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
-            facility=FakeFacility.name,
+            facility=FakeRoboticFacility.name,
             parameters='{}'
         )
         self.data_product = DataProduct.objects.create(
@@ -73,10 +74,10 @@ class Views(TestCase):
 
     def test_save_dataproduct(self, dp_mock):
         mock_return = [DataProduct(product_id='testdpid', data=SimpleUploadedFile('afile.fits', b'afile'))]
-        with patch.object(FakeFacility, 'save_data_products', return_value=mock_return) as mock:
+        with patch.object(FakeRoboticFacility, 'save_data_products', return_value=mock_return) as mock:
             response = self.client.post(
                 reverse('dataproducts:save', kwargs={'pk': self.observation_record.id}),
-                data={'facility': 'FakeFacility', 'products': ['testdpid']},
+                data={'facility': 'FakeRoboticFacility', 'products': ['testdpid']},
                 follow=True
             )
             self.assertTrue(mock.called)
@@ -146,14 +147,15 @@ class Views(TestCase):
         self.assertEqual(products.count(), 1)
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], TARGET_PERMISSIONS_ONLY=False)
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+                   TARGET_PERMISSIONS_ONLY=False)
 @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
 class TestViewsWithPermissions(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
-            facility=FakeFacility.name,
+            facility=FakeRoboticFacility.name,
             parameters='{}'
         )
         self.data_product = DataProduct.objects.create(
@@ -188,7 +190,7 @@ class TestViewsWithPermissions(TestCase):
         response = self.client.get(reverse('tom_dataproducts:list'))
         self.assertNotContains(response, 'afile.fits')
 
-    @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'],
+    @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
                        TARGET_PERMISSIONS_ONLY=False)
     def test_upload_data_extended_permissions(self, dp_mock):
         group = Group.objects.create(name='permitted')
@@ -213,14 +215,15 @@ class TestViewsWithPermissions(TestCase):
         self.assertNotContains(response, 'afile.fits')
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'], TARGET_PERMISSIONS_ONLY=True)
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+                   TARGET_PERMISSIONS_ONLY=True)
 @patch('tom_dataproducts.views.run_data_processor')
 class TestUploadDataProducts(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
-            facility=FakeFacility.name,
+            facility=FakeRoboticFacility.name,
             parameters='{}'
         )
         self.data_product = DataProduct.objects.create(
@@ -264,13 +267,13 @@ class TestUploadDataProducts(TestCase):
             follow=True
         )
         self.assertContains(response, 'Successfully uploaded: {0}/{1}/bfile.fits'.format(
-            self.target.name, FakeFacility.name)
+            self.target.name, FakeRoboticFacility.name)
         )
 
 
 class TestDeleteDataProducts(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.data_product = DataProduct.objects.create(
             product_id='testproductid',
             target=self.target,
@@ -306,10 +309,10 @@ class TestDeleteDataProducts(TestCase):
 
 class TestDataUploadForms(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
-            facility=FakeFacility.name,
+            facility=FakeRoboticFacility.name,
             parameters='{}'
         )
         self.spectroscopy_form_data = {
@@ -348,7 +351,7 @@ class TestDataSerializer(TestCase):
         spectrum = Spectrum1D(spectral_axis=wavelength, flux=flux)
         serialized = self.serializer.serialize(spectrum)
 
-        self.assertTrue(type(serialized) is str)
+        self.assertTrue(isinstance(serialized, str))
         serialized = json.loads(serialized)
         self.assertTrue(serialized['photon_flux'])
         self.assertTrue(serialized['photon_flux_units'])
@@ -377,10 +380,10 @@ class TestDataSerializer(TestCase):
             self.serializer.deserialize(json.dumps({'invalid_key': 'value'}))
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeFacility'])
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
 class TestDataProcessor(TestCase):
     def setUp(self):
-        self.target = TargetFactory.create()
+        self.target = SiderealTargetFactory.create()
         self.data_product = DataProduct.objects.create(
             target=self.target
         )
@@ -412,15 +415,15 @@ class TestDataProcessor(TestCase):
     def test_process_spectrum_from_fits(self):
         with open('tom_dataproducts/tests/test_data/test_spectrum.fits', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.fits', spectrum_file)
-            spectrum, date_obs = self.spectrum_data_processor._process_spectrum_from_fits(self.data_product)
-            self.assertTrue(type(spectrum) is Spectrum1D)
+            spectrum, _ = self.spectrum_data_processor._process_spectrum_from_fits(self.data_product)
+            self.assertTrue(isinstance(spectrum, Spectrum1D))
             self.assertAlmostEqual(spectrum.flux.mean().value, 2.295068e-14, places=19)
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 6600.478789, places=5)
 
     def test_process_spectrum_from_plaintext(self):
         with open('tom_dataproducts/tests/test_data/test_spectrum.csv', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.csv', spectrum_file)
-            spectrum, date_obs = self.spectrum_data_processor._process_spectrum_from_plaintext(self.data_product)
+            spectrum, _ = self.spectrum_data_processor._process_spectrum_from_plaintext(self.data_product)
             self.assertTrue(type(spectrum) is Spectrum1D)
             self.assertAlmostEqual(spectrum.flux.mean().value, 1.166619e-14, places=19)
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 3250.744489, places=5)
@@ -440,5 +443,5 @@ class TestDataProcessor(TestCase):
         with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
             self.data_product.data.save('lightcurve.csv', lightcurve_file)
             lightcurve = self.photometry_data_processor._process_photometry_from_plaintext(self.data_product)
-            self.assertTrue(type(lightcurve) is list)
+            self.assertTrue(isinstance(lightcurve, list))
             self.assertEqual(len(lightcurve), 3)

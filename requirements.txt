@@ -1,1 +1,2 @@
 -e .[test]
+# see setup.py install_requires for list

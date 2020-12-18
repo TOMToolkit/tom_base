@@ -2,7 +2,7 @@ import factory
 import json
 
 from tom_targets.models import Target, TargetName
-from tom_observations.models import ObservationRecord, ObservingStrategy
+from tom_observations.models import ObservationRecord, ObservationTemplate
 
 
 class TargetNameFactory(factory.django.DjangoModelFactory):
@@ -12,23 +12,43 @@ class TargetNameFactory(factory.django.DjangoModelFactory):
     name = factory.Faker('pystr')
 
 
-class TargetFactory(factory.django.DjangoModelFactory):
+class SiderealTargetFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Target
 
     name = factory.Faker('pystr')
-    ra = factory.Faker('pyfloat')
-    dec = factory.Faker('pyfloat')
+    type = Target.SIDEREAL
+    ra = factory.Faker('pyfloat', min_value=-90, max_value=90)
+    dec = factory.Faker('pyfloat', min_value=-90, max_value=90)
     epoch = factory.Faker('pyfloat')
     pm_ra = factory.Faker('pyfloat')
     pm_dec = factory.Faker('pyfloat')
+
+
+class NonSiderealTargetFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Target
+
+    name = factory.Faker('pystr')
+    type = Target.NON_SIDEREAL
+    scheme = factory.Faker('random_element', elements=[s[0] for s in Target.TARGET_SCHEMES])
+    mean_anomaly = factory.Faker('pyfloat')
+    arg_of_perihelion = factory.Faker('pyfloat')
+    lng_asc_node = factory.Faker('pyfloat')
+    inclination = factory.Faker('pyfloat')
+    mean_daily_motion = factory.Faker('pyfloat')
+    semimajor_axis = factory.Faker('pyfloat')
+    ephemeris_period = factory.Faker('pyfloat')
+    ephemeris_period_err = factory.Faker('pyfloat')
+    ephemeris_epoch = factory.Faker('pyfloat')
+    ephemeris_epoch_err = factory.Faker('pyfloat')
 
 
 class ObservingRecordFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ObservationRecord
 
-    target = factory.RelatedFactory(TargetFactory)
+    target = factory.RelatedFactory(SiderealTargetFactory)
     facility = 'LCO'
     observation_id = factory.Faker('pydecimal', right_digits=0, left_digits=7)
     status = 'PENDING'
@@ -50,9 +70,9 @@ class ObservingRecordFactory(factory.django.DjangoModelFactory):
     })
 
 
-class ObservingStrategyFactory(factory.django.DjangoModelFactory):
+class ObservationTemplateFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = ObservingStrategy
+        model = ObservationTemplate
 
     facility = 'LCO'
     parameters = json.dumps({

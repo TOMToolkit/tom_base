@@ -1,7 +1,8 @@
 {% extends 'tom_common/base.html' %}
-{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras publication_extras static cache %}
+{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras static cache %}
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
 {% endblock %}
 {% bootstrap_javascript jquery='True' %}
@@ -14,6 +15,7 @@
       <div class="alert alert-success">
         {{ object.future_observations|length }} upcoming observation{{ object.future_observations|pluralize }}
       </div>
+      {% target_unknown_statuses object %}
       {% endif %}
       {% target_buttons object %}
       {% target_data object %}
@@ -44,13 +46,16 @@
       <li class="nav-item">
         <span class="nav-link" data-target="#spectroscopy" data-toggle="tab">Spectroscopy</span>
       </li>
+      <li class="nav-item">
+        <span class="nav-link" data-target="#facility-status" data-toggle="tab">Facility Status</span>
+      </li>
     </ul>
     <div class="tab-content">
       <div class="tab-pane active" id="observe">
         <h4>Observe</h4>
         {% observing_buttons object %}
         <hr/>
-        {% observingstrategy_run object %}
+        {% observationtemplate_run object %}
         <hr/>
         <h4>Plan</h4>
         {% if object.type == 'SIDEREAL' %}
@@ -61,6 +66,7 @@
         {% endif %}
       </div>
       <div class="tab-pane" id="observations">
+        {% existing_observation_form object %}
         <h4>Observations</h4>
         <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations Status</a>
         {% observation_list object %}
@@ -80,6 +86,10 @@
       <div class="tab-pane" id="spectroscopy">
         {% spectroscopy_for_target target %}
       </div>
+      <div class="tab-pane" id="facility-status">
+        {% facility_status %}
+      </div>
+
       {% comments_enabled as comments_are_enabled %}
       <hr/>
       <h5>Comments</h5>
