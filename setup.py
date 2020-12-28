@@ -52,7 +52,7 @@ setup(
         'specutils==1.1',
     ],
     extras_require={
-        'test': ['factory_boy==3.1.0']
+        'test': ['factory_boy==3.2.0']
     },
     include_package_data=True,
 )
