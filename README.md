@@ -11,7 +11,7 @@ The TOM Toolkit is a web framework for building TOMs: Target and Observation
 Managers. TOMs are meant to facilitate collaborative astronomical observing
 projects. A typical TOM allows it's users to curate target lists, request
 observations of those targets at various observatories as well as manage and
-organize their data. [Read more](https://tom-toolkit.readthedocs.io/en/latest/about.html) about TOMs.
+organize their data. [Read more](https://tom-toolkit.readthedocs.io/en/stable/introduction/about.html) about TOMs.
 
 ## Getting started with the TOM Toolkit
 The [getting started guide](https://tom-toolkit.readthedocs.io/en/latest/introduction/getting_started.html)
