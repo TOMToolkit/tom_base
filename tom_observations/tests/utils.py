@@ -121,7 +121,7 @@ class FakeManualFacility(BaseManualObservationFacility):
     # TOOD: this method does not belong to this Subclass of BaseObservationFacility
     # it's only here to satisfy tests.test_update_observations() which makes a (now)
     # invalid assumption that all facilities are robotic and have this method
-    # The underlying problem is that when an ObservationRecord gets it's facility
+    # The underlying problem is that when an ObservationRecord gets its facility
     # class, it assumes that it's a BaseRoboticFacility subclass.
     def update_all_observation_statuses(self, target):
         return []

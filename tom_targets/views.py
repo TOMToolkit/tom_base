@@ -10,7 +10,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.db import transaction
-from django.http import QueryDict, StreamingHttpResponse
+from django.db.models import Q
+from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse
 from django.forms import HiddenInput
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
@@ -19,7 +20,7 @@ from django.utils.safestring import mark_safe
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
-from django.views.generic import TemplateView, View
+from django.views.generic import RedirectView, TemplateView, View
 from django_filters.views import FilterView
 
 from guardian.mixins import PermissionListMixin
@@ -70,6 +71,26 @@ class TargetListView(PermissionListMixin, FilterView):
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
         return context
+
+
+class TargetNameSearchView(RedirectView):
+    """
+    View for searching by target name. If one result, redirects to the target detail page. Otherwise, redirects to the
+    target list page.
+    """
+
+    def get(self, request, *args, **kwargs):
+        target_name = self.kwargs['name']
+        # Tests fail without distinct but it works in practice, it is unclear as to why
+        # The Django query planner shows different results between in practice and unit tests
+        # django-guardian related querying is present in the test planner, but not in practice
+        targets = get_objects_for_user(request.user, 'tom_targets.view_target').filter(
+            Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name)
+        ).distinct()
+        if targets.count() == 1:
+            return HttpResponseRedirect(reverse('targets:detail', kwargs={'pk': targets.first().id}))
+        else:
+            return HttpResponseRedirect(reverse('targets:list') + f'?name={target_name}')
 
 
 class TargetCreateView(LoginRequiredMixin, CreateView):

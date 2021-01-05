@@ -161,6 +161,7 @@ class GenericUpstreamSubmissionForm(forms.Form):
         broker_name = kwargs.pop('broker')  # NOTE: parent constructor is not expecting broker and will fail
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_class = 'form-inline'
         self.helper.form_action = reverse('tom_alerts:submit-alert', kwargs={'broker': broker_name})
         self.helper.layout = Layout(
             'target',
@@ -184,7 +185,7 @@ class GenericBroker(ABC):
     make use of a broker module, add the path to ``TOM_ALERT_CLASSES`` in your ``settings.py``.
 
     For an implementation example, please see
-    https://github.com/TOMToolkit/tom_base/blob/master/tom_alerts/brokers/mars.py
+    https://github.com/TOMToolkit/tom_base/blob/main/tom_alerts/brokers/mars.py
     """
     alert_submission_form = GenericUpstreamSubmissionForm
 

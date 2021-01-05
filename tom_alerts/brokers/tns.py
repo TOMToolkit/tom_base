@@ -131,6 +131,7 @@ class TNSBroker(GenericBroker):
                     alerts.append(alert)
             else:
                 alerts.append(alert)
+
         return iter(alerts)
 
     @classmethod
