@@ -166,6 +166,7 @@ class TestTargetNameSearch(TestCase):
         self.assertRedirects(response, reverse('targets:detail', kwargs={'pk': self.st1.id}))
         self.assertContains(response, self.st1.name)
 
+
 @override_settings(TOM_FACILITY_CLASSES=[])
 class TestTargetCreate(TestCase):
     def setUp(self):
