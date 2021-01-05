@@ -77,11 +77,16 @@ class TargetSearchView(RedirectView):
 
     def get(self, request, *args, **kwargs):
         target_name = self.kwargs['name']
-        targets = Target.objects.filter(Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name))
-        if targets.count() > 1:
-            return HttpResponseRedirect(reverse('targets:list') + f'?name={target_name}')
-        else:
+        print(target_name)
+        targets = get_objects_for_user(request.user, 'tom_targets.view_target').filter(
+            Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name)
+        )
+        print(Target.objects.all())
+        print(targets)
+        if targets.count() == 1:
             return HttpResponseRedirect(reverse('targets:detail', kwargs={'pk': targets.first().id}))
+        else:
+            return HttpResponseRedirect(reverse('targets:list') + f'?name={target_name}')
 
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
