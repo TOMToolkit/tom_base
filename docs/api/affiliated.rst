@@ -3,6 +3,17 @@ Affiliated Packages
 
 As a community project, our goal is to provide a base package that gives users something useful out of the box, but enables them to improve upon what we've delivered as needed. As such, we're hope that the community will take their creations and feed them back into the TOM ecosystem. We've set up this page to keep track of any community-developed tools and interesting ideas--if you happen to have a project with any custom code that the community would find useful, please let us know and we can add it here!
 
+*******
+tom_iag
+*******
+
+The `tom_iag <https://github.com/thusser/tom_iag>`_ plugin provides and interface to the MONET IAG telescopes, and was developed by Tim-Oliver Husser.
+
+********************
+tom_gemini_community
+********************
+
+The `tom_gemini_community <https://github.com/TOMToolkit/tom_gemini_community>`_ plugin provides additional features for making observation requests to Gemini, and includes support for guide star selection via `tom_gemini_community <https://github.com/bryanmiller/gsselect>`_. The plugin was developed by Bryan Miller.
 
 ****************
 SNEx Custom Code

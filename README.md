@@ -1,7 +1,7 @@
 # TOM Toolkit
-[![Build Status](https://travis-ci.com/TOMToolkit/tom_base.svg?branch=master)](https://travis-ci.com/TOMToolkit/tom_base)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/9846cee7c4904cae8864525101030169)](https://www.codacy.com/gh/observatorycontrolsystem/observation-portal?utm_source=github.com&utm_medium=referral&utm_content=observatorycontrolsystem/observation-portal&utm_campaign=Badge_Grade)
-[![Coverage Status](https://coveralls.io/repos/github/TOMToolkit/tom_base/badge.svg?branch=master)](https://coveralls.io/github/TOMToolkit/tom_base?branch=master)
+[![Build Status](https://travis-ci.com/TOMToolkit/tom_base.svg?branch=main)](https://travis-ci.com/TOMToolkit/tom_base)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/578e468dbd01494696d4446288858252)](https://www.codacy.com/gh/TOMToolkit/tom_base/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=TOMToolkit/tom_base&amp;utm_campaign=Badge_Grade)
+[![Coverage Status](https://coveralls.io/repos/github/TOMToolkit/tom_base/badge.svg?branch=main)](https://coveralls.io/github/TOMToolkit/tom_base?branch=main)
 [![Documentation Status](https://readthedocs.org/projects/tom-toolkit/badge/?version=stable)](https://tom-toolkit.readthedocs.io/en/stable/?badge=stable)
 [Documentation](https://tom-toolkit.readthedocs.io/en/latest/)
 
@@ -11,7 +11,7 @@ The TOM Toolkit is a web framework for building TOMs: Target and Observation
 Managers. TOMs are meant to facilitate collaborative astronomical observing
 projects. A typical TOM allows it's users to curate target lists, request
 observations of those targets at various observatories as well as manage and
-organize their data. [Read more](https://tom-toolkit.readthedocs.io/en/latest/about.html) about TOMs.
+organize their data. [Read more](https://tom-toolkit.readthedocs.io/en/stable/introduction/about.html) about TOMs.
 
 ## Getting started with the TOM Toolkit
 The [getting started guide](https://tom-toolkit.readthedocs.io/en/latest/introduction/getting_started.html)
@@ -33,13 +33,17 @@ For development information targeted at the maintainers of the project, please s
 
 ## Plugins
 
+### tom_alerts_dash
+The [tom_alerts_dash](https://github.com/TOMToolkit/tom_alerts_dash) plugin adds responsive ReactJS views to the 
+`tom_alerts` module for supported brokers.
+
 ### Antares
 The [tom-antares](https://github.com/TOMToolkit/tom_antares) plugin adds support
 for querying the Antares broker for targets of interest.
 
-### tom-nonsidereal-airmass
+### tom_nonsidereal_airmass
 
-The [tom-nonsidereal-airmass](https://github.com/TOMToolkit/tom_nonsidereal_airmass) plugin provides a templatetag
+The [tom_nonsidereal_airmass](https://github.com/TOMToolkit/tom_nonsidereal_airmass) plugin provides a templatetag
 that supports plotting for non-sidereal objects. The plugin is fully supported by the TOM Toolkit team; however,
 non-sidereal visibility calculations require the PyEphem library, which is minimally supported while its successor
 is in development. The library used for the TOM Toolkit sidereal visibility, astroplan, does not yet support

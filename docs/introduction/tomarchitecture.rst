@@ -59,7 +59,7 @@ Django, and by extension the toolkit, rely heavily on object oriented
 programming, especially inheritance. Most customization in the TOM toolkit comes
 from subclassing classes that provide generic functionality and overriding or
 extending methods. An experienced Django developer would feel right at home. For example, the
-`ObservationRecordDetailView <https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/views.py#L143>`_
+`ObservationRecordDetailView <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/views.py#L143>`_
 in the ``tom_observations`` module of the toolkit inherits from Django's
 `DetailView <https://docs.djangoproject.com/en/2.2/ref/class-based-views/generic-display/#detailview>`_.
 This means TOM developers are able to take full advantage of the power of Django
@@ -81,7 +81,7 @@ fills in its own logic.
 
 This structure makes it easy for developers to write their own plugins which can
 then be shared and installed by others or even contributed to the main codebase.
-The `gemini.py module <https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/gemini.py>`_
+The `gemini.py module <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/gemini.py>`_
 is an observation module plugin contributed by Bryan Miller to enable the
 triggering of observation requests on the Gemini telescope via the TOM Toolkit.
 Thanks Bryan!
@@ -144,7 +144,7 @@ The following describes each app that ships with the toolkit and its purpose.
 TOM Targets
 -----------
 
-The `tom_targets <https://github.com/TOMToolkit/tom_base/tree/master/tom_targets>`_
+The `tom_targets <https://github.com/TOMToolkit/tom_base/tree/main/tom_targets>`_
 app is central to the entire TOM Toolkit project. It provides the database
 definitions for the storage and retrieval of targets and target lists. It also
 provides the views (pages) for viewing, creating, modifying and visualizing
@@ -157,23 +157,23 @@ Nearly every app depends on the ``tom_targets`` module in some way.
 TOM Observations
 ----------------
 
-The `tom_observations <https://github.com/TOMToolkit/tom_base/tree/master/tom_observations>`_
+The `tom_observations <https://github.com/TOMToolkit/tom_base/tree/main/tom_observations>`_
 app handles all the logic for submitting and querying observations of targets at
 observatories. It defines the database models for observation requests and
 provides some views for working with them.
-`facility.py <https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facility.py>`_
+`facility.py <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facility.py>`_
 defines an interface that external facilities (observatories) can implement in
 order to integrate with the toolkit:
-`gemini.py <https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/gemini.py>`_
+`gemini.py <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/gemini.py>`_
 and
-`lco.py <https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py>`_
+`lco.py <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`_
 are two examples, and we expect more in the future.
 
 TOM Data Products
 -----------------
 
 Straddling both the ``tom_targets`` and ``tom_observations`` packages is
-`tom_dataproducts <https://github.com/TOMToolkit/tom_base/tree/master/tom_dataproducts>`_.
+`tom_dataproducts <https://github.com/TOMToolkit/tom_base/tree/main/tom_dataproducts>`_.
 This package contains the logic required for storing data related to targets and
 observations within the toolkit. Some data products are fetched from on-line
 archives (handled by an observatory's observation module) but data can also be
@@ -187,12 +187,12 @@ specialized data processing, analytics or pipelining is required.
 TOM Alerts
 ----------
 
-The `tom_alerts <https://github.com/TOMToolkit/tom_base/tree/master/tom_alerts>`_
+The `tom_alerts <https://github.com/TOMToolkit/tom_base/tree/main/tom_alerts>`_
 app contains modules related to the functionality of ingesting targets from
 various external services. These services, usually called brokers, provide
 rapidly changing target lists that are of interest to time domain astronomers.
 The
-`alerts.py <https://github.com/TOMToolkit/tom_base/blob/master/tom_alerts/alerts.py>`_
+`alerts.py <https://github.com/TOMToolkit/tom_base/blob/main/tom_alerts/alerts.py>`_
 module provides a generic interface that other modules can implement, giving
 them the ability to integrate these brokers with the toolkit. Currently, there are
 modules available for `Lasair <https://lasair.roe.ac.uk>`_,
@@ -203,22 +203,22 @@ TOM Catalogs
 ------------
 
 The
-`tom_catalogs <https://github.com/TOMToolkit/tom_base/tree/master/tom_catalogs>`_
+`tom_catalogs <https://github.com/TOMToolkit/tom_base/tree/main/tom_catalogs>`_
 app contains functionality related to querying astronomical catalogs. These
 "harvester" modules enable the querying and translation of targets found in
 databases such as Simbad and JPL Horizons directly into targets within the
 toolkit. The
-`harvester.py <https://github.com/TOMToolkit/tom_base/blob/master/tom_catalogs/harvester.py>`_
+`harvester.py <https://github.com/TOMToolkit/tom_base/blob/main/tom_catalogs/harvester.py>`_
 module provides the basic interface, and there are several modules already
 written for Simbad, NED, the MPC, JPL Horizons and the Transient Name Server.
 
 TOM Setup and TOM Common
 ------------------------
 
-The `tom_setup <https://github.com/TOMToolkit/tom_base/tree/master/tom_setup>`_
+The `tom_setup <https://github.com/TOMToolkit/tom_base/tree/main/tom_setup>`_
 package is special in that its sole purpose is to help TOM developers bootstrap
 new TOMs. See the :doc:`getting started <getting_started>` guide for an example.
-The `tom_common <https://github.com/TOMToolkit/tom_base/tree/master/tom_common>`_
+The `tom_common <https://github.com/TOMToolkit/tom_base/tree/main/tom_common>`_
 package contains logic and data that doesn't fit anywhere else.
 
 Database Layout
