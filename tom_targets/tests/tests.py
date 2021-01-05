@@ -105,7 +105,6 @@ class TestTargetDetail(TestCase):
         self.assertContains(response, 'You do not have permission to access this page')
 
 
-# @override_settings(TOM_FACILITY_CLASSES=[])
 class TestTargetNameSearch(TestCase):
     def setUp(self):
         self.user = User.objects.create(username='testuser')

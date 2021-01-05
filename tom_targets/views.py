@@ -81,9 +81,12 @@ class TargetNameSearchView(RedirectView):
 
     def get(self, request, *args, **kwargs):
         target_name = self.kwargs['name']
+        # Tests fail without distinct but it works in practice, it is unclear as to why
+        # The Django query planner shows different results between in practice and unit tests
+        # django-guardian related querying is present in the test planner, but not in practice
         targets = get_objects_for_user(request.user, 'tom_targets.view_target').filter(
             Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name)
-        ).distinct()  # Talk to Lindy about the necessity of distinct
+        ).distinct()
         if targets.count() == 1:
             return HttpResponseRedirect(reverse('targets:detail', kwargs={'pk': targets.first().id}))
         else:
