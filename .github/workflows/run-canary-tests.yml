@@ -1,7 +1,7 @@
 name: run-canary-tests
 on:
   schedule:
-    - cron: '40 * * * *'
+    - cron: '0 8 * * *'
 jobs:
   canary_tests:
     runs-on: ubuntu-latest
