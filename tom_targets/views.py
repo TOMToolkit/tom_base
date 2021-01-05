@@ -73,15 +73,24 @@ class TargetListView(PermissionListMixin, FilterView):
         return context
 
 
-class TargetSearchView(RedirectView):
+class TargetNameSearchView(RedirectView):
+    """
+    View for searching by target name. If one result, redirects to the target detail page. Otherwise, redirects to the
+    target list page.
+    """
 
     def get(self, request, *args, **kwargs):
         target_name = self.kwargs['name']
-        targets = Target.objects.filter(Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name))
-        if targets.count() > 1:
-            return HttpResponseRedirect(reverse('targets:list') + f'?name={target_name}')
-        else:
+        # Tests fail without distinct but it works in practice, it is unclear as to why
+        # The Django query planner shows different results between in practice and unit tests
+        # django-guardian related querying is present in the test planner, but not in practice
+        targets = get_objects_for_user(request.user, 'tom_targets.view_target').filter(
+            Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name)
+        ).distinct()
+        if targets.count() == 1:
             return HttpResponseRedirect(reverse('targets:detail', kwargs={'pk': targets.first().id}))
+        else:
+            return HttpResponseRedirect(reverse('targets:list') + f'?name={target_name}')
 
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
