@@ -15,4 +15,4 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
     - name: Run Canary Tests
-      run: python manage.py test --tag=canar
+      run: python manage.py test --tag=canary
