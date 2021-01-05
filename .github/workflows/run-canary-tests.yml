@@ -1,7 +1,7 @@
 name: run-canary-tests
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '5 * * * *'
 jobs:
   canary_tests:
     runs-on: ubuntu-latest
@@ -15,4 +15,4 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
     - name: Run Canary Tests
-      run: python manage.py test --tag=canary
+      run: python manage.py test --tag=canar
