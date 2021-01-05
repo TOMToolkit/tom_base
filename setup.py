@@ -44,7 +44,7 @@ setup(
         'django-guardian==2.3.0',
         'fits2image==0.4.3',
         'Markdown==3.3.3',  # django-rest-framework doc headers require this to support Markdown
-        'numpy==1.19.4',
+        'numpy==1.19.5',
         'pillow==8.1.0',
         'plotly==4.14.1',
         'python-dateutil==2.8.1',
