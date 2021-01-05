@@ -122,7 +122,6 @@ class TestTargetNameSearch(TestCase):
 
     def test_search_one_result(self):
         """Test that a search with one result returns the target detail page."""
-        print(Target.objects.all())
         self.client.force_login(self.user)
         response = self.client.get(reverse('targets:name-search', kwargs={'name': self.st1.name}), follow=True)
         self.assertRedirects(response, reverse('targets:detail', kwargs={'pk': self.st1.id}))

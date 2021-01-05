@@ -77,12 +77,9 @@ class TargetNameSearchView(RedirectView):
 
     def get(self, request, *args, **kwargs):
         target_name = self.kwargs['name']
-        print(target_name)
         targets = get_objects_for_user(request.user, 'tom_targets.view_target').filter(
             Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name)
-        )
-        print(Target.objects.all())
-        print(targets)
+        ).distinct()  # Talk to Lindy about the necessity of distinct
         if targets.count() == 1:
             return HttpResponseRedirect(reverse('targets:detail', kwargs={'pk': targets.first().id}))
         else:
