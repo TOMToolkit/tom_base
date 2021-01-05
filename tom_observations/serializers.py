@@ -1,8 +1,21 @@
+import json
+
 from django.conf import settings
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 
 from tom_observations.models import ObservationRecord
+
+
+class ObservationRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ObservationRecord
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['parameters'] = json.loads(representation['parameters'])
+        return representation
 
 
 class ObservationRecordFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
