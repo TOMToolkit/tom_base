@@ -7,7 +7,7 @@ from django import forms
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from astropy.time import Time, TimezoneInfo
 
-from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
+from tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
 from tom_targets.models import Target
 from tom_dataproducts.models import ReducedDatum
 
@@ -16,6 +16,7 @@ filters = {0: 'g', 1: 'r', 2: 'i'}
 
 
 class MARSQueryForm(GenericQueryForm):
+    objectId = forms.CharField(required=False, label='ZTF Object ID')
     time__gt = forms.CharField(
         required=False,
         label='Time Lower',
@@ -96,6 +97,7 @@ class MARSQueryForm(GenericQueryForm):
                 </p>
             '''),
             self.common_layout,
+            'objectId',
             Fieldset(
                 'Time based filters',
                 'time__since',
@@ -180,7 +182,7 @@ class MARSBroker(GenericBroker):
     def _clean_parameters(self, parameters):
         return {k: v for k, v in parameters.items() if v and k != 'page'}
 
-    def fetch_alerts(self, parameters):
+    def _request_alerts(self, parameters):
         if not parameters.get('page'):
             parameters['page'] = 1
         args = urlencode(self._clean_parameters(parameters))
@@ -189,12 +191,14 @@ class MARSBroker(GenericBroker):
             parameters['page'],
             args
         )
-        alerts = []
         response = requests.get(url)
         response.raise_for_status()
-        parsed = response.json()
-        alerts = parsed['results']
-        if parsed['has_next'] and parameters['page'] < 10:
+        return response.json()
+
+    def fetch_alerts(self, parameters):
+        response = self._request_alerts(parameters)
+        alerts = response['results']
+        if response['has_next'] and parameters['page'] < 10:
             parameters['page'] += 1
             alerts += self.fetch_alerts(parameters)
         return iter(alerts)
