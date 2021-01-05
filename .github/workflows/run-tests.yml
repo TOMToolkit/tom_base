@@ -55,3 +55,4 @@ jobs:
         run: coverage run --include=tom_* manage.py test --exclude-tag=canary
       - name: Report Coverage
         run: coveralls
+        env: GITHUB_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
