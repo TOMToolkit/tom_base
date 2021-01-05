@@ -9,6 +9,8 @@ jobs:
       with:
         python-version: 3.8
     - name: Style Checks
+      run: pip install -r requirements.txt
+      run: pip install -I flake8
       run: flake8 tom_* --exclude=*/migrations/* --max-line-length=120
   run_tests:
     runs-on: ubuntu-latest
