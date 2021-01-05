@@ -124,14 +124,14 @@ class TestTargetNameSearch(TestCase):
         """Test that a search with one result returns the target detail page."""
         print(Target.objects.all())
         self.client.force_login(self.user)
-        response = self.client.get(reverse('targets:by-name', kwargs={'name': self.st1.name}), follow=True)
+        response = self.client.get(reverse('targets:name-search', kwargs={'name': self.st1.name}), follow=True)
         self.assertRedirects(response, reverse('targets:detail', kwargs={'pk': self.st1.id}))
         self.assertContains(response, self.st1.name)
 
     def test_search_no_results(self):
         """Test that a search with no results returns the target list page."""
         self.client.force_login(self.user)
-        response = self.client.get(reverse('targets:by-name', kwargs={'name': 'fakename'}), follow=True)
+        response = self.client.get(reverse('targets:name-search', kwargs={'name': 'fakename'}), follow=True)
         self.assertRedirects(response, reverse('targets:list') + '?name=fakename')
         self.assertNotContains(response, self.st1.name)
         self.assertNotContains(response, self.st2.name)
@@ -139,7 +139,7 @@ class TestTargetNameSearch(TestCase):
     def test_search_multiple_results(self):
         """Test that a search with multiple results returns the target list page."""
         self.client.force_login(self.user)
-        response = self.client.get(reverse('targets:by-name', kwargs={'name': 'testtarget'}), follow=True)
+        response = self.client.get(reverse('targets:name-search', kwargs={'name': 'testtarget'}), follow=True)
         self.assertRedirects(response, reverse('targets:list') + '?name=testtarget')
         self.assertContains(response, self.st1.name)
         self.assertContains(response, self.st3.name)
@@ -147,7 +147,7 @@ class TestTargetNameSearch(TestCase):
     def test_search_one_result_unauthorized(self):
         """Test that a search with one result that the user is not allowed to view returns an empty target list page."""
         self.client.force_login(self.user2)
-        response = self.client.get(reverse('targets:by-name', kwargs={'name': 'testtarget3'}), follow=True)
+        response = self.client.get(reverse('targets:name-search', kwargs={'name': 'testtarget3'}), follow=True)
         self.assertRedirects(response, reverse('targets:list') + '?name=testtarget3')
         self.assertContains(response, 'No targets match those filters.')
 
@@ -156,7 +156,7 @@ class TestTargetNameSearch(TestCase):
            the user is not allowed to view."""
         assign_perm('tom_targets.view_target', self.user2, self.st2)
         self.client.force_login(self.user2)
-        response = self.client.get(reverse('targets:by-name', kwargs={'name': 'testtarget'}), follow=True)
+        response = self.client.get(reverse('targets:name-search', kwargs={'name': 'testtarget'}), follow=True)
         self.assertRedirects(response, reverse('targets:list') + '?name=testtarget')
         self.assertContains(response, self.st1.name)
         self.assertNotContains(response, self.st3.name)
@@ -164,7 +164,7 @@ class TestTargetNameSearch(TestCase):
     def test_search_one_result_authorized(self):
         """Test that a search with only one result that the user is allowed to view returns the target detail page."""
         self.client.force_login(self.user2)
-        response = self.client.get(reverse('targets:by-name', kwargs={'name': 'testtarget'}), follow=True)
+        response = self.client.get(reverse('targets:name-search', kwargs={'name': 'testtarget'}), follow=True)
         self.assertRedirects(response, reverse('targets:detail', kwargs={'pk': self.st1.id}))
         self.assertContains(response, self.st1.name)
 

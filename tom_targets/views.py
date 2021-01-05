@@ -73,7 +73,7 @@ class TargetListView(PermissionListMixin, FilterView):
         return context
 
 
-class TargetSearchView(RedirectView):
+class TargetNameSearchView(RedirectView):
 
     def get(self, request, *args, **kwargs):
         target_name = self.kwargs['name']
