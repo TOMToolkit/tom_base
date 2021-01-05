@@ -16,11 +16,12 @@ Asteroid Tracker
 ~~~~~~~~~~~~~~~~
 
 `Asteroid Tracker <https://asteroidtracker.lco.global/>`__ is an
-educational TOM built for Asteroid Day. It allows students and teachers
-to submit one-click observations of specific asteroids and see the
-resulting images. Originally built from scratch, it’s being rewritten
-using the TOM Toolkit, which will allow the underlying TOM to be used
-with multiple front-ends for completely different educational purposes.
+educational TOM built by Edward Gomez for Asteroid Day. It allows 
+students and teachers to submit one-click observations of specific 
+asteroids and see the resulting images. Originally built from scratch, 
+it’s being rewritten using the TOM Toolkit, which will allow the 
+underlying TOM to be used with multiple front-ends for completely 
+different educational purposes.
 
 Microlensing TOM (MOP)
 ~~~~~~~~~~~~~~~~~~~~~~

@@ -22,13 +22,13 @@ class TestHarvester(AbstractHarvester):
         return target
 
 
-@override_settings(TOM_HARVESTER_CLASSES=['tom_catalogs.tests.TestHarvester'])
+@override_settings(TOM_HARVESTER_CLASSES=['tom_catalogs.tests.tests.TestHarvester'])
 class TestHarvesterClass(TestCase):
     def test_get_broker_class(self):
         self.assertIn(TestHarvester, get_service_classes().values())
 
 
-@override_settings(TOM_HARVESTER_CLASSES=['tom_catalogs.tests.TestHarvester'])
+@override_settings(TOM_HARVESTER_CLASSES=['tom_catalogs.tests.tests.TestHarvester'])
 class TestHarvesterViews(TestCase):
     def setUp(self):
         user = User.objects.create_user(username='test', password='test')

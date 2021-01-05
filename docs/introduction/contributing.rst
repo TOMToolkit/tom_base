@@ -53,7 +53,7 @@ following:
 ::
 
    git fetch upstream
-   git merge upstream/master
+   git merge upstream/main
 
 5. Create and checkout a branch for your changes (see `Branch
    Naming <#branch-naming>`__).
@@ -63,7 +63,7 @@ following:
    git checkout -b <New Branch Name>
 
 6. Commit frequently, and push your changes to Github. Be sure to merge
-   master in before submitting your pull request.
+   main in before submitting your pull request.
 
 ::
 

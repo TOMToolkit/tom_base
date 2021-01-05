@@ -63,7 +63,7 @@ class BaseObservationForm(forms.Form):
     the other BaseObservationForms.
 
     For an implementation example please see
-    https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py#L132
+    https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py#L132
     """
     facility = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
     target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
@@ -131,7 +131,7 @@ class BaseRoboticObservationForm(BaseObservationForm):
     This specific class is intended for use with robotic facilities, such as LCO, Gemini, and SOAR.
 
     For an implementation example please see
-    https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py#L132
+    https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py#L132
     """
     pass
 
@@ -153,7 +153,7 @@ class BaseManualObservationForm(BaseObservationForm):
     This specific class is intended for use with classical-style manual facilities.
 
     For an implementation example please see
-    https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py#L132
+    https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py#L132
     """
     name = forms.CharField()
     start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
@@ -332,7 +332,7 @@ class BaseRoboticObservationFacility(BaseObservationFacility):
     This specific class is intended for use with robotic facilities, such as LCO, Gemini, and SOAR.
 
     For an implementation example, please see
-    https://github.com/TOMToolkit/tom_base/blob/master/tom_observations/facilities/lco.py
+    https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py
     """
     name = 'BaseRobotic'  # rename in concrete subclasses
 
