@@ -75,7 +75,7 @@ class TargetListView(PermissionListMixin, FilterView):
 
 class TargetNameSearchView(RedirectView):
     """
-    View for searching by target name. If the search returns one result, the view redirects to the corresponding 
+    View for searching by target name. If the search returns one result, the view redirects to the corresponding
     TargetDetailView. Otherwise, the view redirects to the TargetListView.
     """
 
