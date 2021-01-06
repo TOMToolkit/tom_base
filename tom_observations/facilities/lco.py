@@ -393,6 +393,7 @@ class LCOImagingObservationForm(LCOBaseObservationForm):
     """
     @staticmethod
     def instrument_choices():
+        # Support for the Muscat instrument is provided by a different form, so exclude it here.
         return sorted(
             [
                 (k, v['name']) for k, v in LCOImagingObservationForm._get_instruments().items()
@@ -410,6 +411,10 @@ class LCOImagingObservationForm(LCOBaseObservationForm):
 
 
 class LCOMuscatImagingObservationForm(LCOBaseObservationForm):
+    """
+    The LCOMuscatImagingObservationForm allows the selection of parameter for observing using LCO's Muscat imaging
+    instrument. More information can be found here: https://lco.global/observatory/instruments/muscat3/
+    """
     exposure_time_g = forms.FloatField(min_value=0)
     exposure_time_r = forms.FloatField(min_value=0)
     exposure_time_i = forms.FloatField(min_value=0)
@@ -417,7 +422,7 @@ class LCOMuscatImagingObservationForm(LCOBaseObservationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # `filter` and `exposure_time` are in the parent form but the muscat form does not need them
+        # `filter` and `exposure_time` are in the parent form but the Muscat form does not need them
         self.fields.pop('filter', None)
         self.fields.pop('exposure_time', None)
         self.fields['guider_mode'] = forms.ChoiceField(choices=self.mode_choices('guiding'))
@@ -431,14 +436,14 @@ class LCOMuscatImagingObservationForm(LCOBaseObservationForm):
         return Div(
             Div(
                 Div(
-                    'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
+                    'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end', 'max_airmass',
+                    'min_lunar_distance',
                     css_class='col'
                 ),
                 Div(
                     'instrument_type', 'guider_mode', 'exposure_mode', 'exposure_count', 'exposure_time_g',
                     'exposure_time_r', 'exposure_time_i', 'exposure_time_z', 'diffuser_g_position',
-                    'diffuser_r_position', 'diffuser_i_position', 'diffuser_z_position', 'max_airmass',
-                    'min_lunar_distance',
+                    'diffuser_r_position', 'diffuser_i_position', 'diffuser_z_position',
                     css_class='col'
                 ),
                 css_class='form-row',
@@ -462,22 +467,14 @@ class LCOMuscatImagingObservationForm(LCOBaseObservationForm):
 
     @staticmethod
     def _get_muscat_instrument():
-        instruments = LCOMuscatImagingObservationForm._get_instruments()
-        muscat_instruments = {}
-        for k, v in instruments.items():
-            if 'MUSCAT' in k and 'IMAGE' in v['type']:
-                muscat_instruments[k] = v
-        return muscat_instruments
+        all_instruments = LCOMuscatImagingObservationForm._get_instruments()
+        return {k: v for k, v in all_instruments.items() if 'MUSCAT' in k and 'IMAGE' in v['type']}
 
     @staticmethod
     def instrument_choices():
-        return sorted(
-            [
-                (k, v['name']) for k, v in LCOMuscatImagingObservationForm._get_muscat_instrument().items()
-                if 'IMAGE' in v['type'] and 'MUSCAT' in k
-            ],
-            key=lambda inst: inst[1]
-        )
+        return sorted(set([
+            (k, v['name']) for k, v in LCOMuscatImagingObservationForm._get_muscat_instrument().items()]),
+            key=lambda inst: inst[1])
 
     @staticmethod
     def mode_choices(mode_type):
@@ -502,6 +499,7 @@ class LCOMuscatImagingObservationForm(LCOBaseObservationForm):
         return guiding_config
 
     def _build_instrument_config(self):
+        # Refer to the 'MUSCAT instrument configuration' section on this page: https://developers.lco.global/
         instrument_config = {
             'exposure_count': self.cleaned_data['exposure_count'],
             'exposure_time': max(
@@ -524,7 +522,6 @@ class LCOMuscatImagingObservationForm(LCOBaseObservationForm):
                 'exposure_time_z': self.cleaned_data['exposure_time_z'],
             }
         }
-
         return [instrument_config]
 
 
