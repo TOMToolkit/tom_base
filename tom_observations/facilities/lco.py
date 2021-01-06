@@ -394,7 +394,10 @@ class LCOImagingObservationForm(LCOBaseObservationForm):
     @staticmethod
     def instrument_choices():
         return sorted(
-            [(k, v['name']) for k, v in LCOImagingObservationForm._get_instruments().items() if 'IMAGE' in v['type']],
+            [
+                (k, v['name']) for k, v in LCOImagingObservationForm._get_instruments().items()
+                if 'IMAGE' in v['type'] and 'MUSCAT' not in k
+            ],
             key=lambda inst: inst[1]
         )
 
@@ -404,6 +407,125 @@ class LCOImagingObservationForm(LCOBaseObservationForm):
             (f['code'], f['name']) for ins in LCOImagingObservationForm._get_instruments().values() for f in
             ins['optical_elements'].get('filters', [])
             ]), key=lambda filter_tuple: filter_tuple[1])
+
+
+class LCOMuscatImagingObservationForm(LCOBaseObservationForm):
+    exposure_time_g = forms.FloatField(min_value=0)
+    exposure_time_r = forms.FloatField(min_value=0)
+    exposure_time_i = forms.FloatField(min_value=0)
+    exposure_time_z = forms.FloatField(min_value=0)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # `filter` and `exposure_time` are in the parent form but the muscat form does not need them
+        self.fields.pop('filter', None)
+        self.fields.pop('exposure_time', None)
+        self.fields['guider_mode'] = forms.ChoiceField(choices=self.mode_choices('guiding'))
+        self.fields['exposure_mode'] = forms.ChoiceField(choices=self.mode_choices('exposure'))
+        self.fields['diffuser_g_position'] = forms.ChoiceField(choices=self.diffuser_position_choices(channel='g'))
+        self.fields['diffuser_r_position'] = forms.ChoiceField(choices=self.diffuser_position_choices(channel='r'))
+        self.fields['diffuser_i_position'] = forms.ChoiceField(choices=self.diffuser_position_choices(channel='i'))
+        self.fields['diffuser_z_position'] = forms.ChoiceField(choices=self.diffuser_position_choices(channel='z'))
+
+    def layout(self):
+        return Div(
+            Div(
+                Div(
+                    'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
+                    css_class='col'
+                ),
+                Div(
+                    'instrument_type', 'guider_mode', 'exposure_mode', 'exposure_count', 'exposure_time_g',
+                    'exposure_time_r', 'exposure_time_i', 'exposure_time_z', 'diffuser_g_position',
+                    'diffuser_r_position', 'diffuser_i_position', 'diffuser_z_position', 'max_airmass',
+                    'min_lunar_distance',
+                    css_class='col'
+                ),
+                css_class='form-row',
+            ),
+            Div(
+                HTML(f'''<br/><p>Static cadence parameters. Leave blank if no cadencing is desired.
+                         {static_cadencing_help} </p>'''),
+            ),
+            Div(
+                Div(
+                    'period',
+                    css_class='col'
+                ),
+                Div(
+                    'jitter',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            ),
+        )
+
+    @staticmethod
+    def _get_muscat_instrument():
+        instruments = LCOMuscatImagingObservationForm._get_instruments()
+        muscat_instruments = {}
+        for k, v in instruments.items():
+            if 'MUSCAT' in k and 'IMAGE' in v['type']:
+                muscat_instruments[k] = v
+        return muscat_instruments
+
+    @staticmethod
+    def instrument_choices():
+        return sorted(
+            [
+                (k, v['name']) for k, v in LCOMuscatImagingObservationForm._get_muscat_instrument().items()
+                if 'IMAGE' in v['type'] and 'MUSCAT' in k
+            ],
+            key=lambda inst: inst[1]
+        )
+
+    @staticmethod
+    def mode_choices(mode_type):
+        return sorted(set([
+            (f['code'], f['name']) for ins in LCOMuscatImagingObservationForm._get_muscat_instrument().values() for f in
+            ins['modes'].get(mode_type, {}).get('modes', [])
+            ]), key=lambda filter_tuple: filter_tuple[1])
+
+    @staticmethod
+    def diffuser_position_choices(channel):
+        diffuser_key = f'diffuser_{channel}_positions'
+        return sorted(set([
+            (f['code'], f['name']) for ins in LCOMuscatImagingObservationForm._get_muscat_instrument().values() for f in
+            ins['optical_elements'].get(diffuser_key, []) if f.get('schedulable', False)
+        ]), key=lambda filter_tuple: filter_tuple[1])
+
+    def _build_guiding_config(self):
+        guiding_config = super()._build_guiding_config()
+        guiding_config['mode'] = self.cleaned_data['guider_mode']
+        # Muscat guiding `optional` setting only makes sense set to true from the telescope software perspective
+        guiding_config['optional'] = True
+        return guiding_config
+
+    def _build_instrument_config(self):
+        instrument_config = {
+            'exposure_count': self.cleaned_data['exposure_count'],
+            'exposure_time': max(
+                self.cleaned_data['exposure_time_g'],
+                self.cleaned_data['exposure_time_r'],
+                self.cleaned_data['exposure_time_i'],
+                self.cleaned_data['exposure_time_z']
+            ),
+            'optical_elements': {
+                'diffuser_g_position': self.cleaned_data['diffuser_g_position'],
+                'diffuser_r_position': self.cleaned_data['diffuser_r_position'],
+                'diffuser_i_position': self.cleaned_data['diffuser_i_position'],
+                'diffuser_z_position': self.cleaned_data['diffuser_z_position']
+            },
+            'extra_params': {
+                'exposure_mode': self.cleaned_data['exposure_mode'],
+                'exposure_time_g': self.cleaned_data['exposure_time_g'],
+                'exposure_time_r': self.cleaned_data['exposure_time_r'],
+                'exposure_time_i': self.cleaned_data['exposure_time_i'],
+                'exposure_time_z': self.cleaned_data['exposure_time_z'],
+            }
+        }
+
+        return [instrument_config]
 
 
 class LCOSpectroscopyObservationForm(LCOBaseObservationForm):
@@ -778,6 +900,7 @@ class LCOFacility(BaseRoboticObservationFacility):
     # TODO: make the keys the display values instead
     observation_forms = {
         'IMAGING': LCOImagingObservationForm,
+        'MUSCAT_IMAGING': LCOMuscatImagingObservationForm,
         'SPECTRA': LCOSpectroscopyObservationForm,
         'PHOTOMETRIC_SEQUENCE': LCOPhotometricSequenceForm,
         'SPECTROSCOPIC_SEQUENCE': LCOSpectroscopicSequenceForm
