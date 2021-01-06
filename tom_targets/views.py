@@ -75,8 +75,8 @@ class TargetListView(PermissionListMixin, FilterView):
 
 class TargetNameSearchView(RedirectView):
     """
-    View for searching by target name. If one result, redirects to the target detail page. Otherwise, redirects to the
-    target list page.
+    View for searching by target name. If the search returns one result, the view redirects to the corresponding 
+    TargetDetailView. Otherwise, the view redirects to the TargetListView.
     """
 
     def get(self, request, *args, **kwargs):
