@@ -3,7 +3,7 @@ import requests
 
 from astropy import units as u
 from crispy_forms.bootstrap import AppendedText, PrependedText
-from crispy_forms.layout import Column, Div, HTML, Layout, Row
+from crispy_forms.layout import Column, Div, HTML, Layout, Row, MultiWidgetField
 from dateutil.parser import parse
 from django import forms
 from django.conf import settings
@@ -704,7 +704,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
             )
         )
         for filter_name in self.filters:
-            filter_layout.append(Row(filter_name))
+            filter_layout.append(Row(MultiWidgetField(filter_name, attrs={'min': 0})))
 
         return Div(
             Div(

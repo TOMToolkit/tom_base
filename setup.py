@@ -33,26 +33,26 @@ setup(
         'astropy==4.1',
         'beautifulsoup4==4.9.3',
         'dataclasses; python_version < "3.7"',
-        'django==3.1.3',  # TOM Toolkit requires db math functions
+        'django==3.1.5',  # TOM Toolkit requires db math functions
         'djangorestframework==3.12.2',
         'django-bootstrap4==2.3.1',
-        'django-contrib-comments==1.9.2',  # Earlier version are incompatible with Django >= 3.0
-        'django-crispy-forms==1.9.2',
-        'django-extensions==3.0.9',
+        'django-contrib-comments==2.0.0',  # Earlier version are incompatible with Django >= 3.0
+        'django-crispy-forms==1.10.0',
+        'django-extensions==3.1.0',
         'django-gravatar2==1.4.4',
         'django-filter==2.4.0',
         'django-guardian==2.3.0',
         'fits2image==0.4.3',
         'Markdown==3.3.3',  # django-rest-framework doc headers require this to support Markdown
-        'numpy==1.19.4',
-        'pillow==8.0.1',
-        'plotly==4.12.0',
+        'numpy==1.19.5',
+        'pillow==8.1.0',
+        'plotly==4.14.1',
         'python-dateutil==2.8.1',
-        'requests==2.25.0',
+        'requests==2.25.1',
         'specutils==1.1',
     ],
     extras_require={
-        'test': ['factory_boy==3.1.0']
+        'test': ['factory_boy==3.2.0']
     },
     include_package_data=True,
 )
