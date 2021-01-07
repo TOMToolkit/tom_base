@@ -472,9 +472,10 @@ class LCOMuscatImagingObservationForm(LCOBaseObservationForm):
 
     @staticmethod
     def instrument_choices():
-        return sorted(set([
-            (k, v['name']) for k, v in LCOMuscatImagingObservationForm._get_muscat_instrument().items()]),
-            key=lambda inst: inst[1])
+        return sorted([
+            (k, v['name']) for k, v in LCOMuscatImagingObservationForm._get_muscat_instrument().items()],
+            key=lambda inst: inst[1]
+        )
 
     @staticmethod
     def mode_choices(mode_type):
