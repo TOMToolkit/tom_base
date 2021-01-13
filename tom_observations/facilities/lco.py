@@ -3,7 +3,7 @@ import requests
 
 from astropy import units as u
 from crispy_forms.bootstrap import AppendedText, PrependedText
-from crispy_forms.layout import Column, Div, HTML, Layout, Row, MultiWidgetField
+from crispy_forms.layout import Column, Div, HTML, Layout, Row, MultiWidgetField, Fieldset
 from dateutil.parser import parse
 from django import forms
 from django.conf import settings
@@ -49,7 +49,7 @@ ipp_value_help = """
         Value between 0.5 to 2.0.
         <a href="https://lco.global/documents/20/the_new_priority_factor.pdf">
             More information about Intra Proprosal Priority (IPP).
-        </a>.
+        </a>
 """
 
 observation_mode_help = """
@@ -91,6 +91,11 @@ static_cadencing_help = """
     <a href="https://lco.global/documentation/">
         check the Observation Portal getting started guide, starting on page 18.
     </a>
+"""
+
+muscat_exposure_mode_help = """
+    Synchronous syncs the start time of exposures on all 4 cameras while asynchronous takes 
+    exposures as quickly as possible on each camera.
 """
 
 
@@ -415,10 +420,10 @@ class LCOMuscatImagingObservationForm(LCOBaseObservationForm):
     The LCOMuscatImagingObservationForm allows the selection of parameter for observing using LCO's Muscat imaging
     instrument. More information can be found here: https://lco.global/observatory/instruments/muscat3/
     """
-    exposure_time_g = forms.FloatField(min_value=0)
-    exposure_time_r = forms.FloatField(min_value=0)
-    exposure_time_i = forms.FloatField(min_value=0)
-    exposure_time_z = forms.FloatField(min_value=0)
+    exposure_time_g = forms.FloatField(min_value=0, label='g')
+    exposure_time_r = forms.FloatField(min_value=0, label='r')
+    exposure_time_i = forms.FloatField(min_value=0, label='i')
+    exposure_time_z = forms.FloatField(min_value=0, label='z')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -426,42 +431,102 @@ class LCOMuscatImagingObservationForm(LCOBaseObservationForm):
         self.fields.pop('filter', None)
         self.fields.pop('exposure_time', None)
         self.fields['guider_mode'] = forms.ChoiceField(choices=self.mode_choices('guiding'))
-        self.fields['exposure_mode'] = forms.ChoiceField(choices=self.mode_choices('exposure'))
-        self.fields['diffuser_g_position'] = forms.ChoiceField(choices=self.diffuser_position_choices(channel='g'))
-        self.fields['diffuser_r_position'] = forms.ChoiceField(choices=self.diffuser_position_choices(channel='r'))
-        self.fields['diffuser_i_position'] = forms.ChoiceField(choices=self.diffuser_position_choices(channel='i'))
-        self.fields['diffuser_z_position'] = forms.ChoiceField(choices=self.diffuser_position_choices(channel='z'))
+        self.fields['exposure_mode'] = forms.ChoiceField(
+            choices=self.mode_choices('exposure'),
+            help_text=muscat_exposure_mode_help
+        )
+        self.fields['diffuser_g_position'] = forms.ChoiceField(
+            choices=self.diffuser_position_choices(channel='g'),
+            label='g'
+        )
+        self.fields['diffuser_r_position'] = forms.ChoiceField(
+            choices=self.diffuser_position_choices(channel='r'),
+            label='r'
+        )
+        self.fields['diffuser_i_position'] = forms.ChoiceField(
+            choices=self.diffuser_position_choices(channel='i'),
+            label='i'
+        )
+        self.fields['diffuser_z_position'] = forms.ChoiceField(
+            choices=self.diffuser_position_choices(channel='z'),
+            label='z'
+        )
 
     def layout(self):
         return Div(
             Div(
                 Div(
-                    'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end', 'max_airmass',
-                    'min_lunar_distance',
+                    'name', 'proposal', 'ipp_value', 'observation_mode', 'start', 'end',
                     css_class='col'
                 ),
                 Div(
-                    'instrument_type', 'guider_mode', 'exposure_mode', 'exposure_count', 'exposure_time_g',
-                    'exposure_time_r', 'exposure_time_i', 'exposure_time_z', 'diffuser_g_position',
-                    'diffuser_r_position', 'diffuser_i_position', 'diffuser_z_position',
+                    'instrument_type', 'guider_mode', 'exposure_mode', 'exposure_count', 'max_airmass',
+                    'min_lunar_distance',
                     css_class='col'
                 ),
                 css_class='form-row',
             ),
-            Div(
-                HTML(f'''<br/><p>{static_cadencing_help}</p>'''),
-            ),
-            Div(
+            Fieldset(
+                'Diffuser Positions',
+                HTML('''<p>Select the diffuser position for each channel.</p>'''),
                 Div(
-                    'period',
-                    css_class='col'
-                ),
-                Div(
-                    'jitter',
-                    css_class='col'
-                ),
-                css_class='form-row'
+                    Div(
+                        'diffuser_g_position',
+                        css_class='col'
+                    ),
+                    Div(
+                        'diffuser_r_position',
+                        css_class='col'
+                    ),
+                    Div(
+                        'diffuser_i_position',
+                        css_class='col'
+                    ),
+                    Div(
+                        'diffuser_z_position',
+                        css_class='col'
+                    ),
+                    css_class='form-row'
+                )
             ),
+            Fieldset(
+                'Exposure Times',
+                HTML('''<p>Set an exposure time for each channel.</p>'''),
+                Div(
+                    Div(
+                        'exposure_time_g',
+                        css_class='col'
+                    ),
+                    Div(
+                        'exposure_time_r',
+                        css_class='col'
+                    ),
+                    Div(
+                        'exposure_time_i',
+                        css_class='col'
+                    ),
+                    Div(
+                        'exposure_time_z',
+                        css_class='col'
+                    ),
+                    css_class='form-row'
+                )
+            ),
+            Fieldset(
+                'Cadence',
+                HTML(f'''<p>{static_cadencing_help}</p>'''),
+                Div(
+                    Div(
+                        'period',
+                        css_class='col'
+                    ),
+                    Div(
+                        'jitter',
+                        css_class='col'
+                    ),
+                    css_class='form-row'
+                )
+            )
         )
 
     @staticmethod
