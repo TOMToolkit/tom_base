@@ -86,6 +86,7 @@ max_airmass_help = """
 """
 
 static_cadencing_help = """
+    Static cadence parameters. Leave blank if no cadencing is desired.
     For information on static cadencing with LCO,
     <a href="https://lco.global/documentation/">
         check the Observation Portal getting started guide, starting on page 18.
@@ -205,8 +206,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
                 css_class='form-row',
             ),
             Div(
-                HTML(f'''<br/><p>Static cadence parameters. Leave blank if no cadencing is desired.
-                         {static_cadencing_help} </p>'''),
+                HTML(f'''<br/><p>{static_cadencing_help}</p>'''),
             ),
             Div(
                 Div(
@@ -449,8 +449,7 @@ class LCOMuscatImagingObservationForm(LCOBaseObservationForm):
                 css_class='form-row',
             ),
             Div(
-                HTML(f'''<br/><p>Static cadence parameters. Leave blank if no cadencing is desired.
-                         {static_cadencing_help} </p>'''),
+                HTML(f'''<br/><p>{static_cadencing_help}</p>'''),
             ),
             Div(
                 Div(
