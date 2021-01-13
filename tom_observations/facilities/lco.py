@@ -94,7 +94,7 @@ static_cadencing_help = """
 """
 
 muscat_exposure_mode_help = """
-    Synchronous syncs the start time of exposures on all 4 cameras while asynchronous takes 
+    Synchronous syncs the start time of exposures on all 4 cameras while asynchronous takes
     exposures as quickly as possible on each camera.
 """
 
