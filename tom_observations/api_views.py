@@ -96,6 +96,27 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
             })
         print(f'records: {records}')
 
+        if len(records) > 1 or form.cleaned_data.get('cadence_strategy'):
+            observation_group = ObservationGroup.objects.create(name=form.cleaned_data['name'])
+            observation_group.observation_records.add(*records)
+            assign_perm('tom_observations.view_observationgroup', self.request.user, observation_group)
+            assign_perm('tom_observations.change_observationgroup', self.request.user, observation_group)
+            assign_perm('tom_observations.delete_observationgroup', self.request.user, observation_group)
+
+            # TODO: Add a test case that includes a dynamic cadence submission
+            if form.cleaned_data.get('cadence_strategy'):
+                cadence_parameters = {}
+                cadence_form = get_cadence_strategy(form.cleaned_data.get('cadence_strategy')).form
+                for field in cadence_form().cadence_fields:
+                    cadence_parameters[field] = form.cleaned_data.get(field)
+                DynamicCadence.objects.create(
+                    observation_group=observation_group,
+                    cadence_strategy=form.cleaned_data.get('cadence_strategy'),
+                    cadence_parameters=cadence_parameters,
+                    active=True
+                )
+
+
         serializer = self.get_serializer(data=records, many=True)
         print('here0')
         serializer.is_valid(raise_exception=True)
