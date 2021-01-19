@@ -1,9 +1,11 @@
 import logging
 
 from django.conf import settings
+from django.db.models import Q
 from django_filters import rest_framework as drf_filters
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user
+from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin
 from rest_framework.response import Response
@@ -28,7 +30,8 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
     def get_queryset(self):
         print(get_objects_for_user(self.request.user, 'tom_targets.view_target'))
         print(ObservationRecord.objects.filter(
-            target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+            Q(target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')) |
+            Q(user=self.request.user)
         ))
         if settings.TARGET_PERMISSIONS_ONLY:
             return super().get_queryset().filter(
@@ -38,11 +41,11 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
             return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
 
     def retrieve(self, request, *args, **kwargs):
-        print('retrieve')
-        print(request, args, kwargs)
-        print(ObservationRecord.objects.get(pk=kwargs['pk']))
+        # print('retrieve')
+        # print(request, args, kwargs)
+        # print(ObservationRecord.objects.get(pk=kwargs['pk']))
         instance = self.get_object()
-        print(instance)
+        # print(instance)
         return super().retrieve(request, *args, **kwargs)
 
     # /api/observations/
@@ -75,15 +78,29 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
 
         records = []
         for obsr_id in observation_ids:
-            print(obsr_id)
-            record = ObservationRecord.objects.create(
-                target=target,
-                user=self.request.user,
-                facility=facility.name,
-                parameters=observation_form.serialize_parameters(),
-                observation_id=obsr_id
-            )
-            records.append(record)
-        print(records)
+            print(f'obsr_id: {obsr_id}')
+            # record = ObservationRecord.objects.create(
+            #     target=target,
+            #     user=self.request.user,
+            #     facility=facility.name,
+            #     parameters=observation_form.serialize_parameters(),
+            #     observation_id=obsr_id
+            # )
+            records.append({
+                'target': target.id,
+                'user': self.request.user.id,
+                'facility': facility.name,
+                'parameters': observation_form.serialize_parameters(),
+                'observation_id': obsr_id,
+                'status': 'PENDING'  # why can't this be blank
+            })
+        print(f'records: {records}')
 
-        return super().create(request, *args, **kwargs)
+        serializer = self.get_serializer(data=records, many=True)
+        print('here0')
+        serializer.is_valid(raise_exception=True)
+        print('here1')
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)

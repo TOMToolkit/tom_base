@@ -4,7 +4,13 @@ from django.conf import settings
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 
-from tom_observations.models import ObservationRecord
+from tom_observations.models import DynamicCadence, ObservationGroup, ObservationRecord
+
+
+class ObservationGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ObservationGroup
+        fields = '__all__'
 
 
 class ObservationRecordSerializer(serializers.ModelSerializer):
@@ -16,6 +22,12 @@ class ObservationRecordSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['parameters'] = json.loads(representation['parameters'])
         return representation
+
+
+class DynamicCadenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DynamicCadence
+        fields = '__all__'
 
 
 class ObservationRecordFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
