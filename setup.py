@@ -29,7 +29,7 @@ setup(
     setup_requires=['setuptools_scm', 'wheel'],
     install_requires=[
         'astroquery==0.4.1',
-        'astroplan==0.7',
+        'astroplan==0.8',
         'astropy==4.1',
         'beautifulsoup4==4.9.3',
         'dataclasses; python_version < "3.7"',
