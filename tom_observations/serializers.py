@@ -25,7 +25,7 @@ class ObservationGroupSerializer(serializers.ModelSerializer):
 
 
 class ObservationRecordSerializer(serializers.ModelSerializer):
-    observationgroup_set = serializers.StringRelatedField(many=True)
+    observationgroup_set = serializers.StringRelatedField(many=True, required=False)
 
     class Meta:
         model = ObservationRecord

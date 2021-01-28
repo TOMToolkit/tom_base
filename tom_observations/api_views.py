@@ -60,7 +60,6 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
         except KeyError as ke:
             raise ValidationError(f'Missing required field {ke}.')
         except Exception as e:
-
             raise ValidationError(e)
 
         observing_parameters.update(
@@ -75,6 +74,8 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
                              {observation_form.errors} and exception {e}.''')
             raise ValidationError(observation_form.errors)
 
+        print('here1')
+
         observation_record_data = []
         for obsr_id in observation_ids:
             observation_record_data.append({
@@ -83,14 +84,19 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
                 'facility': facility.name,
                 'parameters': observation_form.serialize_parameters(),
                 'observation_id': obsr_id,
-                'status': 'PENDING'  # why can't this be blank
+                'status': 'PENDING'  # TODO: why can't this be blank
             })
 
         serializer = self.get_serializer(data=observation_record_data, many=True)
+        print(serializer.is_valid())
+        print(serializer.errors)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         observation_records = serializer.instance
+        print(serializer.data)
+        print(observation_records)
 
+        print('here0')
         cadence = self.request.data.get('cadence')
         if len(observation_records) > 1 or cadence:
             cadence_parameters = cadence
@@ -108,7 +114,10 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
                         raise ValidationError(cadence_form.errors)
 
             # Create the observation group
-            observation_group = ObservationGroup.objects.create(name=observation_form.cleaned_data['name'])
+            observation_group_name = observation_form.cleaned_data.get('name', f'{target.name} at {facility.name}')
+            print(observation_group_name)
+            observation_group = ObservationGroup.objects.create(name=observation_group_name)
+            print(observation_group)
             # Add the created instances of ObservationRecords to the new ObservationGroup
             observation_group.observation_records.add(*observation_records)
             assign_perm('tom_observations.view_observationgroup', self.request.user, observation_group)

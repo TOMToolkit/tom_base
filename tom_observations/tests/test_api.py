@@ -49,13 +49,14 @@ class TestObservationViewset(APITestCase):
         response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
         self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
         self.assertDictContainsSubset({'test_input': 'gnomes'}, response.json()[0]['parameters'])
-        print(response.json())
+        print(response.content)
 
-    @patch('tom_observations.tests.utils.FakeRoboticFacility.submit_observation')
-    def test_observation_submit_cadence(self, mock_submit_observation):
-        mock_submit_observation.return_value = ['fakeid1', 'fakeid2']
+    # @patch('tom_observations.tests.utils.FakeRoboticFacility.submit_observation')
+    def test_observation_submit_cadence(self):
+        # mock_submit_observation.return_value = ['fakeid1', 'fakeid2']
 
         form_data = {
+            'name': 'Test Cadence',
             'target_id': self.st.id,
             'facility': 'FakeRoboticFacility',
             'observation_type': 'OBSERVATION',
@@ -67,3 +68,10 @@ class TestObservationViewset(APITestCase):
                 'cadence_frequency': 24,
             }
         }
+
+        response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
+        self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
+        print(response.json())
+        self.assertDictContainsSubset(
+            {'cadence_strategy': 'ResumeCadenceAfterFailureStrategy'},
+            response.json()[0].get('observationgroup_set', [])[0].get('dyanmiccadence_set', []))
