@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth.models import User, Group
 from django.test import override_settings
 from django.urls import reverse
@@ -45,5 +47,23 @@ class TestObservationViewset(APITestCase):
             }
         }
         response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
+        self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
+        self.assertDictContainsSubset({'test_input': 'gnomes'}, response.json()[0]['parameters'])
         print(response.json())
-        print(response.status_code)
+
+    @patch('tom_observations.tests.utils.FakeRoboticFacility.submit_observation')
+    def test_observation_submit_cadence(self, mock_submit_observation):
+        mock_submit_observation.return_value = ['fakeid1', 'fakeid2']
+
+        form_data = {
+            'target_id': self.st.id,
+            'facility': 'FakeRoboticFacility',
+            'observation_type': 'OBSERVATION',
+            'observing_parameters': {
+                'test_input': 'gnomes',
+            },
+            'cadence': {
+                'cadence_strategy': 'ResumeCadenceAfterFailureStrategy',
+                'cadence_frequency': 24,
+            }
+        }

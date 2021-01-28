@@ -7,13 +7,26 @@ from rest_framework import serializers
 from tom_observations.models import DynamicCadence, ObservationGroup, ObservationRecord
 
 
+class DynamicCadenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DynamicCadence
+        fields = '__all__'
+
+    def to_representation(self, value):
+        return f'{value.cadence_strategy} with parameters {value.cadence_parameters}'
+
+
 class ObservationGroupSerializer(serializers.ModelSerializer):
+    dynamiccadence_set = DynamicCadenceSerializer(many=True, required=False)
+
     class Meta:
         model = ObservationGroup
         fields = '__all__'
 
 
 class ObservationRecordSerializer(serializers.ModelSerializer):
+    observationgroup_set = serializers.StringRelatedField(many=True)
+
     class Meta:
         model = ObservationRecord
         fields = '__all__'
@@ -22,12 +35,6 @@ class ObservationRecordSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['parameters'] = json.loads(representation['parameters'])
         return representation
-
-
-class DynamicCadenceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DynamicCadence
-        fields = '__all__'
 
 
 class ObservationRecordFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):

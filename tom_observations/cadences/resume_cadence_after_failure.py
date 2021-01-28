@@ -30,9 +30,6 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
                      the same cadence."""
     form = ResumeCadenceAfterFailureForm
 
-    class ResumeCadenceForm(forms.Form):
-        site = forms.CharField()
-
     def update_observation_payload(self, observation_payload):
         """
         :param observation_payload: form parameters for facility observation form
