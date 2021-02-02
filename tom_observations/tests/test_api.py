@@ -71,8 +71,10 @@ class TestObservationViewset(APITestCase):
 
         response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
         self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
-        # print(response.json())
+        print(response.json())
         # print(DynamicCadence.objects.all())
+        self.assertDictContainsSubset({'observation_groups': [f'{self.st.name} at FakeRoboticFacility']},
+                                      response.json()[0])
         self.assertDictContainsSubset(
             {'cadence_strategy': 'ResumeCadenceAfterFailureStrategy'},
-            response.json()[0].get('observationgroup_set', [])[0].get('dyanmiccadence_set', []))
+            response.json()[0].get('observation_groups', [])[0].get('dynamic_cadences', []))

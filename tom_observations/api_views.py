@@ -52,6 +52,8 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
     # /api/observations/
     def create(self, request, *args, **kwargs):
 
+        # Initialize the observation form, validate the form data, and submit to the observatory
+        observation_ids = []
         try:
             facility = get_service_class(self.request.data['facility'])()
             observation_form_class = facility.observation_forms[self.request.data['observation_type']]
@@ -68,17 +70,34 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
         try:
             observation_form = observation_form_class(self.request.data['observing_parameters'])
             if observation_form.is_valid():
+                logger.info(
+                    f'Submitting observation to {facility} with parameters {observation_form.observation_payload}'
+                )
                 observation_ids = facility.submit_observation(observation_form.observation_payload())
+                logger.info(f'Successfully submitted to {facility}, received observation ids {observation_ids}')
+            else:
+                logger.warning(f'Unable to submit observation due to errors: {observation_form.errors}')
+                raise ValidationError(observation_form.errors)
         except Exception as e:
             logger.error(f'''The submission with parameters {observing_parameters} failed with validation errors
                              {observation_form.errors} and exception {e}.''')
             raise ValidationError(observation_form.errors)
 
-        print('here1')
-
-        print('here0')
+        # Normally related objects would be created in the serializer--however, because the ObservationRecordSerializer
+        # may need to create multiple objects that are related to the same ObservationGroup and DynamicCadence, we are
+        # creating the related objects in the ViewSet.
         cadence = self.request.data.get('cadence')
+        observation_group = None
+
         if len(observation_ids) > 1 or cadence:
+            # Create the observation group
+            observation_group_name = observation_form.cleaned_data.get('name', f'{target.name} at {facility.name}')
+            observation_group = ObservationGroup.objects.create(name=observation_group_name)
+            assign_perm('tom_observations.view_observationgroup', self.request.user, observation_group)
+            assign_perm('tom_observations.change_observationgroup', self.request.user, observation_group)
+            assign_perm('tom_observations.delete_observationgroup', self.request.user, observation_group)
+            logger.info(f'Created ObservationGroup {observation_group}.')
+
             cadence_parameters = cadence
             # Cadence strategy is not used for the cadence form
             cadence_strategy = cadence_parameters.pop('cadence_strategy', None)
@@ -90,44 +109,47 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
                     # Validate the cadence parameters against the cadence strategy that gets passed in
                     cadence_form_class = get_cadence_strategy(cadence_strategy).form
                     cadence_form = cadence_form_class(cadence_parameters)
-                    if not cadence_form.is_valid():
+                    if cadence_form.is_valid():
+                        dynamic_cadence = DynamicCadence.objects.create(
+                            observation_group=observation_group,
+                            cadence_strategy=cadence_strategy,
+                            cadence_parameters=cadence_parameters,
+                            active=True
+                        )
+                        logger.info(f'Created DynamicCadence {dynamic_cadence}.')
+                    else:
+                        observation_group.delete()
                         raise ValidationError(cadence_form.errors)
-
-            # Create the observation group
-            observation_group_name = observation_form.cleaned_data.get('name', f'{target.name} at {facility.name}')
-            print(observation_group_name)
-
-            # TODO: Add a test case that includes a dynamic cadence submission
-            # Create the dynamic cadence IF cadence parameters were submitted and valid and
-            # associate the observation group with the dynamic cadence
-            dynamic_cadences = []
-            if cadence_strategy is not None:
-                dynamic_cadences.append({
-                    'cadence_strategy': cadence_strategy,
-                    'cadence_parameters': cadence_parameters,
-                    'active': True
-                })
 
         serializer_data = []
         for obsr_id in observation_ids:
-            serializer_data.append({
+            obsr_data = {
                 'target': target.id,
                 'user': self.request.user.id,
                 'facility': facility.name,
                 'parameters': observation_form.serialize_parameters(),
                 'observation_id': obsr_id,
                 'status': 'PENDING',  # TODO: why can't this be blank
-            })
+            }
+            serializer_data.append(obsr_data)
 
-        print(serializer_data)
-        many = len(serializer_data) > 1
-        serializer = self.get_serializer(data=serializer_data, many=many)
-        print(serializer.is_valid())
-        print(serializer.errors)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        observation_records = serializer.instance
-        print(serializer.data)
+        print(f'serializer_data {serializer_data}')
+        serializer = self.get_serializer(data=serializer_data, many=True)
+        print(f'serializer is_valid: {serializer.is_valid()}')
+        print(f'serializer errors {serializer.errors}')
+        try:  # TODO: Add test for invalid serializer
+            serializer.is_valid(raise_exception=True)  # TODO: should serializer be created and validated prior to submission, then updated with observation_ids?
+            self.perform_create(serializer)
+            observation_records = serializer.instance
+            if observation_group is not None:
+                observation_group.observation_records.add(*serializer.instance)
+        except ValidationError as ve:
+            observation_group.delete()
+            logger.error(f'Failed to create ObservationRecord due to exception {ve}')
+            raise ValidationError(f'''Observation submission successful, but failed to create a corresponding
+                                      ObservationRecord due to exception {ve}.''')
+
+        print(f'serializer data: {serializer.data}')
         print(observation_records[0])
         print(observation_records[0].observationgroup_set.all())
         print(DynamicCadence.objects.all())
