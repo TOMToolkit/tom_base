@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 from crispy_forms.layout import Layout, Div, Fieldset
 
 
-tns_search_url = 'https://wis-tns.weizmann.ac.il/api/get/search'
-tns_object_url = 'https://wis-tns.weizmann.ac.il/api/get/object'
+tns_search_url = 'https://www.wis-tns.org/api/get/search'
+tns_object_url = 'https://www.wis-tns.org/api/get/object'
 
 
 class TNSForm(GenericQueryForm):
@@ -75,7 +75,7 @@ class TNSForm(GenericQueryForm):
 class TNSBroker(GenericBroker):
     """
     The ``TNSBroker`` is the interface to the Transient Name Server. For information regarding the TNS, please see \
-    https://wis-tns.weizmann.ac.il/
+    https://www.wis-tns.org/
     """
 
     name = 'TNS'
@@ -138,7 +138,7 @@ class TNSBroker(GenericBroker):
     def to_generic_alert(cls, alert):
         return GenericAlert(
             timestamp=alert['discoverydate'],
-            url='https://wis-tns.weizmann.ac.il/object/' + alert['objname'],
+            url='https://www.wis-tns.org/object/' + alert['objname'],
             id=alert['objname'],
             name=alert['name_prefix'] + alert['objname'],
             ra=alert['radeg'],
