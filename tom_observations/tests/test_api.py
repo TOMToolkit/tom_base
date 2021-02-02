@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from tom_observations.tests.factories import ObservingRecordFactory
-from tom_observations.models import ObservationRecord
+from tom_observations.models import ObservationRecord, DynamicCadence
 from tom_targets.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
 from tom_targets.tests.factories import TargetExtraFactory, TargetNameFactory
 from tom_targets.models import Target, TargetExtra, TargetName
@@ -71,7 +71,8 @@ class TestObservationViewset(APITestCase):
 
         response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
         self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
-        print(response.json())
+        # print(response.json())
+        # print(DynamicCadence.objects.all())
         self.assertDictContainsSubset(
             {'cadence_strategy': 'ResumeCadenceAfterFailureStrategy'},
             response.json()[0].get('observationgroup_set', [])[0].get('dyanmiccadence_set', []))
