@@ -7,8 +7,9 @@ from datetime import datetime, timedelta
 from crispy_forms.layout import Layout, Div, Fieldset
 
 
-tns_search_url = 'https://www.wis-tns.org/api/get/search'
-tns_object_url = 'https://www.wis-tns.org/api/get/object'
+TNS_BASE_URL = 'https://www.wis-tns.org/'
+TNS_OBJECT_URL = f'{TNS_BASE_URL}api/get/object'
+TNS_SEARCH_URL = f'{TNS_BASE_URL}api/get/search'
 
 
 class TNSForm(GenericQueryForm):
@@ -102,7 +103,7 @@ class TNSBroker(GenericBroker):
                 'public_timestamp': public_timestamp,
             })
          }
-        response = requests.post(tns_search_url, data)
+        response = requests.post(TNS_SEARCH_URL, data)
         response.raise_for_status()
         transients = response.json()
         alerts = []
@@ -115,7 +116,7 @@ class TNSBroker(GenericBroker):
                     'spectroscopy': 0,
                 })
             }
-            response = requests.post(tns_object_url, data)
+            response = requests.post(TNS_OBJECT_URL, data)
             response.raise_for_status()
             alert = response.json()['data']['reply']
 
@@ -138,7 +139,7 @@ class TNSBroker(GenericBroker):
     def to_generic_alert(cls, alert):
         return GenericAlert(
             timestamp=alert['discoverydate'],
-            url='https://www.wis-tns.org/object/' + alert['objname'],
+            url=f'{TNS_BASE_URL}object/' + alert['objname'],
             id=alert['objname'],
             name=alert['name_prefix'] + alert['objname'],
             ra=alert['radeg'],
