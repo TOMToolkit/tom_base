@@ -100,7 +100,7 @@ def recent_photometry(target, limit=1):
     Displays a table of the most recent photometric points for a target.
     """
     photometry = ReducedDatum.objects.filter(data_type='photometry').order_by('-timestamp')[:limit]
-    return {'data': [{'timestamp': rd.timestamp, 'magnitude': json.loads(rd.value)['magnitude']} for rd in photometry]}
+    return {'data': [{'timestamp': rd.timestamp, 'magnitude': rd.value['magnitude']} for rd in photometry]}
 
 
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html', takes_context=True)
@@ -122,11 +122,11 @@ def photometry_for_target(context, target):
                                         data_type=settings.DATA_PRODUCT_TYPES['photometry'][0]))
 
     for datum in datums:
-        values = json.loads(datum.value)
-        photometry_data.setdefault(values['filter'], {})
-        photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
-        photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
-        photometry_data[values['filter']].setdefault('error', []).append(values.get('error'))
+        # values = json.loads(datum.value)
+        photometry_data.setdefault(datum.value['filter'], {})
+        photometry_data[datum.value['filter']].setdefault('time', []).append(datum.timestamp)
+        photometry_data[datum.value['filter']].setdefault('magnitude', []).append(datum.value.get('magnitude'))
+        photometry_data[datum.value['filter']].setdefault('error', []).append(datum.value.get('error'))
     plot_data = [
         go.Scatter(
             x=filter_values['time'],

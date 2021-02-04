@@ -351,8 +351,7 @@ class TestDataSerializer(TestCase):
         spectrum = Spectrum1D(spectral_axis=wavelength, flux=flux)
         serialized = self.serializer.serialize(spectrum)
 
-        self.assertTrue(isinstance(serialized, str))
-        serialized = json.loads(serialized)
+        self.assertTrue(isinstance(serialized, dict))
         self.assertTrue(serialized['photon_flux'])
         self.assertTrue(serialized['photon_flux_units'])
         self.assertTrue(serialized['wavelength'])
@@ -363,12 +362,12 @@ class TestDataSerializer(TestCase):
             self.serializer.serialize({'flux': [1, 2], 'wavelength': [1, 2]})
 
     def test_deserialize_spectrum(self):
-        serialized_spectrum = json.dumps({
+        serialized_spectrum = {
             'photon_flux': [1, 2],
             'photon_flux_units': 'ph / (Angstrom cm2 s)',
             'wavelength': [1, 2],
             'wavelength_units': 'Angstrom'
-        })
+        }
         deserialized = self.serializer.deserialize(serialized_spectrum)
 
         self.assertTrue(type(deserialized) is Spectrum1D)

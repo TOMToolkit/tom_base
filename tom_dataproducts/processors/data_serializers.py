@@ -1,5 +1,3 @@
-import json
-
 from specutils import Spectrum1D
 from astropy.units import Quantity
 
@@ -22,7 +20,7 @@ class SpectrumSerializer():
         serialized['photon_flux_units'] = spectrum.photon_flux.unit.to_string()
         serialized['wavelength'] = spectrum.wavelength.value.tolist()
         serialized['wavelength_units'] = spectrum.wavelength.unit.to_string()
-        return json.dumps(serialized)
+        return serialized
 
     def deserialize(self, spectrum):
         """
@@ -34,8 +32,7 @@ class SpectrumSerializer():
         :returns: Spectrum1D representing the spectrum information
         :rtype: specutil.Spectrum1D
         """
-        data = json.loads(spectrum)
-        flux = Quantity(value=data['photon_flux'], unit=data['photon_flux_units'])
-        wavelength = Quantity(value=data['wavelength'], unit=data['wavelength_units'])
+        flux = Quantity(value=spectrum['photon_flux'], unit=spectrum['photon_flux_units'])
+        wavelength = Quantity(value=spectrum['wavelength'], unit=spectrum['wavelength_units'])
         spectrum = Spectrum1D(flux=flux, spectral_axis=wavelength)
         return spectrum
