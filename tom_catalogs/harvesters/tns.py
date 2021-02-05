@@ -9,7 +9,7 @@ from django.conf import settings
 from tom_catalogs.harvester import AbstractHarvester
 from tom_common.exceptions import ImproperCredentialsException
 
-TNS_URL = 'https://wis-tns.weizmann.ac.il'
+TNS_URL = 'https://www.wis-tns.org'
 
 try:
     TNS_CREDENTIALS = settings.HARVESTERS['TNS']
@@ -20,8 +20,6 @@ except (AttributeError, KeyError):
 
 
 def get(term):
-    # url = "https://wis-tns.weizmann.ac.il/api/get"
-
     get_url = TNS_URL + '/api/get/object'
 
     # change term to json format
@@ -44,7 +42,7 @@ def get(term):
 class TNSHarvester(AbstractHarvester):
     """
     The ``TNSBroker`` is the interface to the Transient Name Server. For information regarding the TNS, please see
-    https://wis-tns.weizmann.ac.il/.
+    https://www.wis-tns.org/.
     """
 
     name = 'TNS'
