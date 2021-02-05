@@ -124,15 +124,6 @@ class GenericQueryForm(forms.Form):
         self.helper.add_input(Submit('submit', 'Submit'))
         self.common_layout = Layout('query_name', 'broker')
 
-    def serialize_parameters(self):
-        """
-        Returns a JSON-serialized representation of the form data.
-
-        :returns: JSON-ified form parameters
-        :rtype: str
-        """
-        return json.dumps(self.cleaned_data)
-
     def save(self, query_id=None):
         """
         Saves the form data in the database as a ``BrokerQuery``.
@@ -146,7 +137,7 @@ class GenericQueryForm(forms.Form):
             query = BrokerQuery()
         query.name = self.cleaned_data['query_name']
         query.broker = self.cleaned_data['broker']
-        query.parameters = self.serialize_parameters()
+        query.parameters = self.cleaned_data
         query.save()
         return query
 

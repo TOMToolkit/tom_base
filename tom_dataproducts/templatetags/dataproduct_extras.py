@@ -1,5 +1,3 @@
-import json
-
 from django import template
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -122,7 +120,6 @@ def photometry_for_target(context, target):
                                         data_type=settings.DATA_PRODUCT_TYPES['photometry'][0]))
 
     for datum in datums:
-        # values = json.loads(datum.value)
         photometry_data.setdefault(datum.value['filter'], {})
         photometry_data[datum.value['filter']].setdefault('time', []).append(datum.timestamp)
         photometry_data[datum.value['filter']].setdefault('magnitude', []).append(datum.value.get('magnitude'))
