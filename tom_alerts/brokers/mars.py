@@ -1,5 +1,4 @@
 import requests
-import json
 from requests.exceptions import HTTPError
 from urllib.parse import urlencode
 from dateutil.parser import parse
@@ -236,7 +235,7 @@ class MARSBroker(GenericBroker):
                 }
                 rd, _ = ReducedDatum.objects.get_or_create(
                     timestamp=jd.to_datetime(timezone=TimezoneInfo()),
-                    value=json.dumps(value),
+                    value=value,
                     source_name=self.name,
                     source_location=alert['lco_id'],
                     data_type='photometry',

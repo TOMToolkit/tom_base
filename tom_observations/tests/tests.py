@@ -27,7 +27,7 @@ class TestObservationViews(TestCase):
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
-            parameters='{}'
+            parameters={}
         )
         self.user = User.objects.create_user(username='vincent_adultman', password='important')
         self.user2 = User.objects.create_user(username='peon', password='plebian')
@@ -142,7 +142,7 @@ class TestObservationViewsRowLevelPermissions(TestCase):
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
-            parameters='{}'
+            parameters={}
         )
         user = User.objects.create_user(username='vincent_adultman', password='important')
         self.user2 = User.objects.create_user(username='peon', password='plebian')

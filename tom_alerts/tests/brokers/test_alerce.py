@@ -302,7 +302,7 @@ class TestALeRCEModuleCanary(TestCase):
         form.is_valid()
         query = form.save()
 
-        alerts = [alert for alert in self.broker.fetch_alerts(query.parameters_as_dict)]
+        alerts = [alert for alert in self.broker.fetch_alerts(query.parameters)]
 
         self.assertGreaterEqual(len(alerts), 6)
         for k in ['oid', 'lastmjd', 'mean_magpsf_r', 'mean_magpsf_g', 'pclassrf', 'pclassearly', 'meanra', 'meandec']:
