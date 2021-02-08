@@ -94,6 +94,10 @@ defined using the ``dash_bootstrap_components`` and ``dash_html_components`` mod
 the ``dash_core_components`` method. It's important to take note of the ``id`` property on each ``dcc.Input`` element, 
 as they will be needed for the ``get_callback_inputs`` method.
 
+.. important::
+    Your input ids MUST be unique, or they may conflict with other broker inputs! It's recommended that your ids be 
+    prefixed with the name of your broker, i.e. mars-objname-search.
+
 .. code-block:: python
 
     import dash_bootstrap_components as dbc
@@ -109,19 +113,19 @@ as they will be needed for the ``get_callback_inputs`` method.
             filters = dhc.Div([
                 dbc.Row([
                     dbc.Col(dcc.Input(
-                        id='objname-search',
+                        id='mars-objname-search',
                         type='text',
                         placeholder='Object Name Search',
                         debounce=True
                     ), width=3),
                     dbc.Col(dcc.Input(
-                        id='magpsf-min',
+                        id='mars-magpsf-min',
                         type='number',
                         placeholder='Magnitude Minimum',
                         debounce=True
                     ), width=3),
                     dbc.Col(dcc.Input(
-                        id='rb-min',
+                        id='mars-rb-min',
                         type='number',
                         placeholder='Real-Bogus Minimum',
                         debounce=True
@@ -129,19 +133,19 @@ as they will be needed for the ``get_callback_inputs`` method.
                 ], style={'padding-bottom': '10px'}, justify='start'),
                 dbc.Row([
                     dbc.Col(dcc.Input(
-                        id='cone-ra',
+                        id='mars-cone-ra',
                         type='text',
                         placeholder='Right Ascension',
                         debounce=True
                     ), width=3),
                     dbc.Col(dcc.Input(
-                        id='cone-dec',
+                        id='mars-cone-dec',
                         type='text',
                         placeholder='Declination',
                         debounce=True
                     ), width=3),
                     dbc.Col(dcc.Input(
-                        id='cone-radius',
+                        id='mars-cone-radius',
                         type='text',
                         placeholder='Radius',
                         debounce=True
@@ -179,12 +183,12 @@ implementation of ``get_callback_inputs``, which provides the two inputs for ``p
         def get_callback_inputs(self):
             inputs = super().get_callback_inputs()
             inputs += [
-                Input('objname-search', 'value'),
-                Input('cone-ra', 'value'),
-                Input('cone-dec', 'value'),
-                Input('cone-radius', 'value'),
-                Input('magpsf-min', 'value'),
-                Input('rb-min', 'value'),
+                Input('mars-objname-search', 'value'),
+                Input('mars-cone-ra', 'value'),
+                Input('mars-cone-dec', 'value'),
+                Input('mars-cone-radius', 'value'),
+                Input('mars-magpsf-min', 'value'),
+                Input('mars-rb-min', 'value'),
             ]
             return inputs
 

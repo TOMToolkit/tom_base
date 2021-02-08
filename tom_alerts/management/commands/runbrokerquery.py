@@ -19,7 +19,7 @@ class Command(BaseCommand):
             query = BrokerQuery.objects.get(name=options['query_name'])
             broker_class = get_service_class(query.broker)
             broker = broker_class()
-            alerts = broker.fetch_alerts(query.parameters_as_dict)
+            alerts = broker.fetch_alerts(query.parameters)
             while True:
                 try:
                     generic_alert = broker.to_generic_alert(next(alerts))
