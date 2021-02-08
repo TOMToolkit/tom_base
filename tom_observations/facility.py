@@ -103,7 +103,7 @@ class BaseObservationForm(forms.Form):
     def serialize_parameters(self):
         parameters = copy.deepcopy(self.cleaned_data)
         parameters.pop('groups', None)
-        return json.dumps(parameters)
+        return parameters
 
     def observation_payload(self):
         """

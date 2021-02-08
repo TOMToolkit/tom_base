@@ -48,7 +48,7 @@ class TestReactiveCadencing(TestCase):
         obs_params['target_id'] = target.id
         observing_records = ObservingRecordFactory.create_batch(5,
                                                                 target_id=target.id,
-                                                                parameters=json.dumps(obs_params))
+                                                                parameters=obs_params)
         self.group = ObservationGroup.objects.create()
         self.group.observation_records.add(*observing_records)
         self.group.save()
@@ -70,8 +70,8 @@ class TestReactiveCadencing(TestCase):
         # assert that the newly added observation record has a window of exactly 3 days
         # later than the canceled observation.
         self.assertEqual(
-            parse(observing_record.parameters_as_dict['start']),
-            parse(new_records[0].parameters_as_dict['start']) - timedelta(days=3)
+            parse(observing_record.parameters['start']),
+            parse(new_records[0].parameters['start']) - timedelta(days=3)
         )
 
     @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'CANCELED',
@@ -85,7 +85,7 @@ class TestReactiveCadencing(TestCase):
         self.assertEqual(num_records + 1, self.group.observation_records.count())
         self.assertEqual(
             datetime.now().replace(second=0, microsecond=0),
-            parse(new_records[0].parameters_as_dict['start']).replace(second=0, microsecond=0)
+            parse(new_records[0].parameters['start']).replace(second=0, microsecond=0)
         )
 
     @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'COMPLETED',
@@ -99,6 +99,6 @@ class TestReactiveCadencing(TestCase):
         self.group.refresh_from_db()
         self.assertEqual(num_records + 1, self.group.observation_records.count())
         self.assertAlmostEqual(
-            parse(observing_record.parameters_as_dict['start']),
-            parse(new_records[0].parameters_as_dict['start']) - timedelta(days=3)
+            parse(observing_record.parameters['start']),
+            parse(new_records[0].parameters['start']) - timedelta(days=3)
         )

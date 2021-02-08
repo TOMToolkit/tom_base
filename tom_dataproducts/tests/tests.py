@@ -48,7 +48,7 @@ class Views(TestCase):
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
-            parameters='{}'
+            parameters={}
         )
         self.data_product = DataProduct.objects.create(
             product_id='testproductid',
@@ -156,7 +156,7 @@ class TestViewsWithPermissions(TestCase):
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
-            parameters='{}'
+            parameters={}
         )
         self.data_product = DataProduct.objects.create(
             product_id='testproductid',
@@ -224,7 +224,7 @@ class TestUploadDataProducts(TestCase):
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
-            parameters='{}'
+            parameters={}
         )
         self.data_product = DataProduct.objects.create(
             product_id='testproductid',
@@ -313,7 +313,7 @@ class TestDataUploadForms(TestCase):
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
-            parameters='{}'
+            parameters={}
         )
         self.spectroscopy_form_data = {
             'target': self.target.id,
@@ -376,7 +376,7 @@ class TestDataSerializer(TestCase):
 
     def test_deserialize_spectrum_invalid(self):
         with self.assertRaises(Exception):
-            self.serializer.deserialize(json.dumps({'invalid_key': 'value'}))
+            self.serializer.deserialize({'invalid_key': 'value'})
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])

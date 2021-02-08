@@ -13,7 +13,7 @@ class BrokerQuery(models.Model):
     :type broker: str
 
     :param parameters: Parameters for this ``BrokerQuery``, stored as a JSON string.
-    :type parameters: str
+    :type parameters: dict
 
     :param created: The time at which this ``BrokerQuery`` was created in the TOM database.
     :type created: datetime

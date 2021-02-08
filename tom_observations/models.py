@@ -21,9 +21,8 @@ class ObservationRecord(models.Model):
         TOM facility module, if one exists.
     :type facility: str
 
-    :param parameters: The set of parameters used in the API request made to create the observation, usually stored as
-        JSON.
-    :type parameters: str
+    :param parameters: The set of parameters used in the API request made to create the observation
+    :type parameters: dict
 
     :param status: The current status of the observation. Should be a valid status in the corresponding TOM facility
         module, if one exists.
@@ -44,7 +43,7 @@ class ObservationRecord(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     user = models.ForeignKey(User, null=True, default=None, on_delete=models.DO_NOTHING)
     facility = models.CharField(max_length=50)
-    parameters = models.TextField()
+    parameters = models.JSONField()
     observation_id = models.CharField(max_length=255)
     status = models.CharField(max_length=200)
     scheduled_start = models.DateTimeField(null=True)
@@ -65,9 +64,9 @@ class ObservationRecord(models.Model):
             super().save(*args, **kwargs)
             run_hook('observation_change_state', self, None)
 
-    @property
-    def parameters_as_dict(self):
-        return json.loads(self.parameters)
+    # @property
+    # def parameters_as_dict(self):
+    #     return json.loads(self.parameters)
 
     @property
     def terminal(self):
@@ -170,8 +169,8 @@ class ObservationTemplate(models.Model):
     :param facility: The module-specified facility name for which the template is valid
     :type facility: str
 
-    :param parameters: JSON string of observing parameters
-    :type parameters: str
+    :param parameters: Observing parameters
+    :type parameters: dict
 
     :param created: The time at which this ``ObservationTemplate`` was created.
     :type created: datetime
@@ -181,13 +180,13 @@ class ObservationTemplate(models.Model):
     """
     name = models.CharField(max_length=200)
     facility = models.CharField(max_length=50)
-    parameters = models.TextField()
+    parameters = models.JSONField()
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
-    @property
-    def parameters_as_dict(self):
-        return json.loads(self.parameters)
+    # @property
+    # def parameters_as_dict(self):
+    #     return json.loads(self.parameters)
 
     def __str__(self):
         return self.name

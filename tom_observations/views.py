@@ -603,7 +603,7 @@ class ObservationTemplateUpdateView(LoginRequiredMixin, FormView):
 
     def get_initial(self):
         initial = super().get_initial()
-        initial.update(self.object.parameters_as_dict)
+        initial.update(self.object.parameters)
         initial['facility'] = self.object.facility
         return initial
 

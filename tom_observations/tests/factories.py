@@ -52,7 +52,7 @@ class ObservingRecordFactory(factory.django.DjangoModelFactory):
     facility = 'LCO'
     observation_id = factory.Faker('pydecimal', right_digits=0, left_digits=7)
     status = 'PENDING'
-    parameters = json.dumps({
+    parameters = {
         'facility': 'LCO',
         'target_id': 1,
         'observation_type': 'IMAGING',
@@ -67,7 +67,7 @@ class ObservingRecordFactory(factory.django.DjangoModelFactory):
         'proposal': 'LCOSchedulerTest',
         'filter': 'I',
         'instrument_type': '1M0-SCICAM-SINISTRO'
-    })
+    }
 
 
 class ObservationTemplateFactory(factory.django.DjangoModelFactory):
@@ -75,7 +75,7 @@ class ObservationTemplateFactory(factory.django.DjangoModelFactory):
         model = ObservationTemplate
 
     facility = 'LCO'
-    parameters = json.dumps({
+    parameters = {
         'facility': 'LCO',
         'target_id': 1,
         'observation_type': 'IMAGING',
@@ -90,4 +90,4 @@ class ObservationTemplateFactory(factory.django.DjangoModelFactory):
         'proposal': 'LCOSchedulerTest',
         'filter': 'I',
         'instrument_type': '1M0-SCICAM-SINISTRO'
-    })
+    }

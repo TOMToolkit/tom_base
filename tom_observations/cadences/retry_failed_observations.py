@@ -29,13 +29,13 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
                                if obsr.failed]
         new_observations = []
         for obs in failed_observations:
-            observation_payload = obs.parameters_as_dict
+            observation_payload = obs.parameters
             facility = get_service_class(obs.facility)()
             start_keyword, end_keyword = facility.get_start_end_keywords()
             observation_payload = self.advance_window(
                 observation_payload, start_keyword=start_keyword, end_keyword=end_keyword
             )
-            obs_type = obs.parameters_as_dict.get('observation_type', None)
+            obs_type = obs.parameters.get('observation_type', None)
             form = facility.get_form(obs_type)(observation_payload)
             form.is_valid()
             observation_ids = facility.submit_observation(form.observation_payload())
@@ -45,7 +45,7 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
                 record = ObservationRecord.objects.create(
                     target=obs.target,
                     facility=facility.name,
-                    parameters=json.dumps(observation_payload),
+                    parameters=observation_payload,
                     observation_id=observation_id
                 )
                 self.dynamic_cadence.observation_group.observation_records.add(record)

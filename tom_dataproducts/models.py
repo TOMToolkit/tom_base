@@ -296,7 +296,7 @@ class ReducedDatum(models.Model):
     :param timestamp: The timestamp of this datum.
     :type timestamp: datetime
 
-    :param value: The value of the datum. This is generally a JSON string, intended to store data with a variety of
+    :param value: The value of the datum. This is a dict, intended to store data with a variety of
                   scopes. As an example, a photometry value might contain the following:
 
                   ::
@@ -315,7 +315,7 @@ class ReducedDatum(models.Model):
                       'magnitude_error': .5,
                       'filter': 'r'
                     }
-    :type value: str
+    :type value: dict
 
     """
 

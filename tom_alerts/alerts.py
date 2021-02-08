@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from importlib import import_module
-import json
 
 from django import forms
 from django.conf import settings
