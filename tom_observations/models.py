@@ -63,10 +63,6 @@ class ObservationRecord(models.Model):
             super().save(*args, **kwargs)
             run_hook('observation_change_state', self, None)
 
-    # @property
-    # def parameters_as_dict(self):
-    #     return json.loads(self.parameters)
-
     @property
     def terminal(self):
         facility = get_service_class(self.facility)
@@ -182,10 +178,6 @@ class ObservationTemplate(models.Model):
     parameters = models.JSONField()
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-
-    # @property
-    # def parameters_as_dict(self):
-    #     return json.loads(self.parameters)
 
     def __str__(self):
         return self.name

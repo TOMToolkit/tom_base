@@ -4,7 +4,7 @@ from astropy.units import Quantity
 
 class SpectrumSerializer():
 
-    def serialize(self, spectrum):
+    def serialize(self, spectrum: Spectrum1D) -> dict:
         """
         Serializes a Spectrum1D in order to store in a ReducedDatum object. The serialization stores only what's
         necessary to rebuild the Spectrum1D--namely, photon_flux and wavelength, and their respective units.
@@ -13,7 +13,7 @@ class SpectrumSerializer():
         :type spectrum: specutils.Spectrum1D
 
         :returns: JSON representation of spectrum
-        :rtype: str
+        :rtype: dict
         """
         serialized = {}
         serialized['photon_flux'] = spectrum.photon_flux.value.tolist()
@@ -22,12 +22,12 @@ class SpectrumSerializer():
         serialized['wavelength_units'] = spectrum.wavelength.unit.to_string()
         return serialized
 
-    def deserialize(self, spectrum):
+    def deserialize(self, spectrum: dict) -> Spectrum1D:
         """
         Constructs a Spectrum1D from the spectrum value stored in a ReducedDatum
 
         :param spectrum: JSON representation used to construct the Spectrum1D
-        :type spectrum: str
+        :type spectrum: dict
 
         :returns: Spectrum1D representing the spectrum information
         :rtype: specutil.Spectrum1D

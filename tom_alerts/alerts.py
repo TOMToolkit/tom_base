@@ -180,14 +180,14 @@ class GenericBroker(ABC):
     alert_submission_form = GenericUpstreamSubmissionForm
 
     @abstractmethod
-    def fetch_alerts(self, parameters):
+    def fetch_alerts(self, parameters: dict):
         """
         This method takes in the query parameters needed to filter
         alerts for a broker and makes the GET query to the broker
         endpoint.
 
         :param parameters: JSON string of query parameters
-        :type parameters: str
+        :type parameters: dict
         """
 
     def fetch_alert(self, id):
