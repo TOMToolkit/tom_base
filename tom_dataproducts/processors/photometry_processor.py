@@ -1,5 +1,4 @@
 import mimetypes
-import json
 
 from astropy import units
 from astropy.io import ascii

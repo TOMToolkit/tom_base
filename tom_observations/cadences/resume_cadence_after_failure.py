@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from dateutil.parser import parse
-import json
 
 from django import forms
 

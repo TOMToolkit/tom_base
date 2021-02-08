@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User
 from django.db import models
-import json
 
 from tom_targets.models import Target
 from tom_observations.facility import get_service_class

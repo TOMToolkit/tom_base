@@ -1,5 +1,4 @@
 import factory
-import json
 
 from tom_targets.models import Target, TargetName
 from tom_observations.models import ObservationRecord, ObservationTemplate

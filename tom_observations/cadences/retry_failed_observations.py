@@ -1,6 +1,5 @@
 from datetime import timedelta
 from dateutil.parser import parse
-import json
 
 from tom_observations.cadence import BaseCadenceForm, CadenceStrategy
 from tom_observations.models import ObservationRecord
