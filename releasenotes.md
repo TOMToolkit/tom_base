@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.5.0
+
+- Added API endpoints for submit, list, and detail for ``ObservationRecord``s.
+
 ## 2.4.0
 
 - Updated TNS URL to the new URL used by TNS in the broker and harvester modules.
