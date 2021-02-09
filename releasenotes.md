@@ -9,6 +9,7 @@
 ### What to watch out for
 
 - This release requires running ``./manage.py migrate``.
+- Any uses of ``ObservationRecord.serialize_parameters()``, ``ObservationRecord.parameters_as_dict``, ``BrokerQuery.parameters_as_dict``, ``ObservationTemplate.serialize_parameters()`` should be replaced with ``<ModelName>.parameters``.
 
 ## 2.3.0
 
