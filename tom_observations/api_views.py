@@ -14,7 +14,7 @@ from rest_framework.viewsets import GenericViewSet
 from tom_observations.cadence import get_cadence_strategy
 from tom_observations.facility import get_service_class
 from tom_observations.models import DynamicCadence, ObservationGroup, ObservationRecord
-from tom_observations.serializers import DynamicCadenceSerializer, ObservationGroupSerializer, ObservationRecordSerializer
+from tom_observations.serializers import ObservationRecordSerializer
 from tom_observations.views import ObservationFilter
 from tom_targets.models import Target
 
@@ -29,25 +29,18 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
     queryset = ObservationRecord.objects.all()
 
     def get_queryset(self):
-        print(get_objects_for_user(self.request.user, 'tom_targets.view_target'))
-        print(ObservationRecord.objects.filter(
-            Q(target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')) |
-            Q(user=self.request.user)
-        ))
         if settings.TARGET_PERMISSIONS_ONLY:
+            # Though it's next to impossible for a user to observe a target they don't have permission to view, this
+            # queryset ensures that such an edge case is covered.
             return super().get_queryset().filter(
-                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+                Q(target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')) |
+                Q(user=self.request.user.id)
             )
         else:
-            return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
-
-    def retrieve(self, request, *args, **kwargs):
-        # print('retrieve')
-        # print(request, args, kwargs)
-        # print(ObservationRecord.objects.get(pk=kwargs['pk']))
-        instance = self.get_object()
-        # print(instance)
-        return super().retrieve(request, *args, **kwargs)
+            return super().get_queryset().filter(
+                Q(id__in=get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')) |
+                Q(user=self.request.user)
+            )
 
     # /api/observations/
     def create(self, request, *args, **kwargs):
@@ -67,20 +60,15 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
         observing_parameters.update(
             {k: v for k, v in self.request.data.items() if k in ['name', 'target_id', 'facility']}
         )
-        try:
-            observation_form = observation_form_class(self.request.data['observing_parameters'])
-            if observation_form.is_valid():
-                logger.info(
-                    f'Submitting observation to {facility} with parameters {observation_form.observation_payload}'
-                )
-                observation_ids = facility.submit_observation(observation_form.observation_payload())
-                logger.info(f'Successfully submitted to {facility}, received observation ids {observation_ids}')
-            else:
-                logger.warning(f'Unable to submit observation due to errors: {observation_form.errors}')
-                raise ValidationError(observation_form.errors)
-        except Exception as e:
-            logger.error(f'''The submission with parameters {observing_parameters} failed with validation errors
-                             {observation_form.errors} and exception {e}.''')
+        observation_form = observation_form_class(self.request.data['observing_parameters'])
+        if observation_form.is_valid():
+            logger.info(
+                f'Submitting observation to {facility} with parameters {observation_form.observation_payload}'
+            )
+            observation_ids = facility.submit_observation(observation_form.observation_payload())
+            logger.info(f'Successfully submitted to {facility}, received observation ids {observation_ids}')
+        else:
+            logger.warning(f'Unable to submit observation due to errors: {observation_form.errors}')
             raise ValidationError(observation_form.errors)
 
         # Normally related objects would be created in the serializer--however, because the ObservationRecordSerializer
@@ -99,10 +87,9 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
             logger.info(f'Created ObservationGroup {observation_group}.')
 
             cadence_parameters = cadence
-            # Cadence strategy is not used for the cadence form
-            cadence_strategy = cadence_parameters.pop('cadence_strategy', None)
-
             if cadence_parameters is not None:
+                # Cadence strategy is not used for the cadence form
+                cadence_strategy = cadence_parameters.pop('cadence_strategy', None)
                 if cadence_strategy is None:
                     raise ValidationError('cadence_strategy must be included to initiate a DynamicCadence.')
                 else:
@@ -133,12 +120,9 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
             }
             serializer_data.append(obsr_data)
 
-        print(f'serializer_data {serializer_data}')
         serializer = self.get_serializer(data=serializer_data, many=True)
-        print(f'serializer is_valid: {serializer.is_valid()}')
-        print(f'serializer errors {serializer.errors}')
-        try:  # TODO: Add test for invalid serializer
-            serializer.is_valid(raise_exception=True)  # TODO: should serializer be created and validated prior to submission, then updated with observation_ids?
+        try:
+            serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
             observation_records = serializer.instance
             if observation_group is not None:
@@ -148,11 +132,6 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
             logger.error(f'Failed to create ObservationRecord due to exception {ve}')
             raise ValidationError(f'''Observation submission successful, but failed to create a corresponding
                                       ObservationRecord due to exception {ve}.''')
-
-        print(f'serializer data: {serializer.data}')
-        print(observation_records[0])
-        print(observation_records[0].observationgroup_set.all())
-        print(DynamicCadence.objects.all())
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)

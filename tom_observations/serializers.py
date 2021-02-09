@@ -7,38 +7,26 @@ from rest_framework import serializers
 from tom_observations.models import DynamicCadence, ObservationGroup, ObservationRecord
 
 
-class DynamicCadenceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DynamicCadence
-        fields = '__all__'
-
-    def to_representation(self, value):
-        return f'{value.cadence_strategy} with parameters {value.cadence_parameters}'
-
-
-class ObservationGroupSerializer(serializers.ModelSerializer):
-    dynamic_cadences = serializers.StringRelatedField(many=True, read_only=True, source='dynamiccadence_set')
-
-    class Meta:
-        model = ObservationGroup
-        fields = '__all__'
+class ObservationGroupField(serializers.RelatedField):
+    """
+    ``RelatedField`` used to display ObservationGroups and DynamicCadences in a prettier fashion than offered by default
+    DRF implementations.
+    """
+    def to_representation(self, instance: ObservationGroup) -> dict:
+        return {
+            'name': instance.name,
+            'dynamic_cadences': [dc.__str__() for dc in instance.dynamiccadence_set.all()]
+        }
 
 
 class ObservationRecordSerializer(serializers.ModelSerializer):
-    # TODO: display cadences with observation groups
-    observation_groups = serializers.StringRelatedField(many=True, read_only=True, source='observationgroup_set')
+    observation_groups = ObservationGroupField(many=True, read_only=True, source='observationgroup_set')
 
     class Meta:
         model = ObservationRecord
         fields = '__all__'
 
-    # def create(self, validated_data):
-
-    #     observation_record = ObservationRecord.objects.create(**validated_data)
-
-    #     return observation_record
-
-    def to_representation(self, instance):
+    def to_representation(self, instance):  # TODO: would it be better to just prettify the observation groups here
         representation = super().to_representation(instance)
         representation['parameters'] = json.loads(representation['parameters'])
         return representation
