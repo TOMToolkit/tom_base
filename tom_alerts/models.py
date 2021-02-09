@@ -1,5 +1,4 @@
 from django.db import models
-import json
 
 
 class BrokerQuery(models.Model):
@@ -14,7 +13,7 @@ class BrokerQuery(models.Model):
     :type broker: str
 
     :param parameters: Parameters for this ``BrokerQuery``, stored as a JSON string.
-    :type parameters: str
+    :type parameters: dict
 
     :param created: The time at which this ``BrokerQuery`` was created in the TOM database.
     :type created: datetime
@@ -27,20 +26,10 @@ class BrokerQuery(models.Model):
     """
     name = models.CharField(max_length=500)
     broker = models.CharField(max_length=50)
-    parameters = models.TextField()
+    parameters = models.JSONField()
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     last_run = models.DateTimeField(blank=True, null=True, default=None)
-
-    @property
-    def parameters_as_dict(self):
-        """
-        Converts the query parameters to a dictionary.
-
-        :returns: Dictionary representation of query parameters
-        :rtype: dict
-        """
-        return json.loads(self.parameters)
 
     def __str__(self):
         return self.name

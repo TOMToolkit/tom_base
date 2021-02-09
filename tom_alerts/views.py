@@ -1,3 +1,4 @@
+from copy import deepcopy
 import json
 import logging
 
@@ -126,7 +127,7 @@ class BrokerQueryUpdateView(LoginRequiredMixin, FormView):
         :rtype: dict
         """
         initial = super().get_initial()
-        initial.update(self.object.parameters_as_dict)
+        initial.update(self.object.parameters)
         initial['broker'] = self.object.broker
         return initial
 
@@ -197,7 +198,7 @@ class RunQueryView(TemplateView):
         context = super().get_context_data()
         query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
         broker_class = get_service_class(query.broker)()
-        alerts = broker_class.fetch_alerts(query.parameters_as_dict)
+        alerts = broker_class.fetch_alerts(deepcopy(query.parameters))  # TODO: Should the deepcopy be in the brokers?
         context['alerts'] = []
         query.last_run = timezone.now()
         query.save()
