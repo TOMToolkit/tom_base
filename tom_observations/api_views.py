@@ -23,12 +23,30 @@ logger = logging.getLogger(__name__)
 
 class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin, PermissionListMixin,
                                RetrieveModelMixin):
+    """
+    Viewset for Target objects. By default supports create for observation submission, list, and detail.
+    See the docs on viewsets: https://www.django-rest-framework.org/api-guide/viewsets/
+
+    To view supported query parameters, please use the ``OPTIONS`` endpoint, which can be accessed through the web UI.
+
+    In order to submit an observation, the required parameters are ``facility``, ``observation_type``, ``target_id``,
+    and ``observing_parameters``, where ``observing_parameters`` correspond with the form fields for the
+    ``observation_type`` being submitted.
+    """
     filter_backends = (drf_filters.DjangoFilterBackend,)
     filterset_class = ObservationFilter
     serializer_class = ObservationRecordSerializer
     queryset = ObservationRecord.objects.all()
 
     def get_queryset(self):
+        """
+        Returns the ObservationRecords that a user is allowed to view. If ``TARGET_PERMISSIONS_ONLY`` is set, returns
+        all observations submitted by a user or belonging to a target that the user can view. Otherwise, returns
+        all observations submitted by a user or observations that the user can view.
+
+        :returns: ``QuerySet`` of ObservationRecords
+        :rtype: ``QuerySet``
+        """
         if settings.TARGET_PERMISSIONS_ONLY:
             # Though it's next to impossible for a user to observe a target they don't have permission to view, this
             # queryset ensures that such an edge case is covered.
@@ -44,6 +62,9 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
 
     # /api/observations/
     def create(self, request, *args, **kwargs):
+        """
+
+        """
 
         # Initialize the observation form, validate the form data, and submit to the observatory
         observation_ids = []
@@ -123,7 +144,6 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
         try:
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
-            observation_records = serializer.instance
             if observation_group is not None:
                 observation_group.observation_records.add(*serializer.instance)
         except ValidationError as ve:

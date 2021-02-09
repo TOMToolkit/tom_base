@@ -1,20 +1,18 @@
 from copy import deepcopy
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.test import override_settings
 from django.urls import reverse
-from guardian.shortcuts import assign_perm, get_objects_for_user
+from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
 from tom_observations.api_views import ObservationRecordViewSet
-from tom_observations.models import DynamicCadence, ObservationGroup, ObservationRecord
+from tom_observations.models import ObservationGroup
 from tom_observations.tests.factories import ObservingRecordFactory
-from tom_targets.models import Target, TargetExtra, TargetName
-from tom_targets.tests.factories import NonSiderealTargetFactory, SiderealTargetFactory
-from tom_targets.tests.factories import TargetExtraFactory, TargetNameFactory
+from tom_targets.tests.factories import SiderealTargetFactory
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility',

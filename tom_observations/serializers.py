@@ -1,10 +1,8 @@
-import json
-
 from django.conf import settings
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 
-from tom_observations.models import DynamicCadence, ObservationGroup, ObservationRecord
+from tom_observations.models import ObservationGroup, ObservationRecord
 
 
 class ObservationGroupField(serializers.RelatedField):
