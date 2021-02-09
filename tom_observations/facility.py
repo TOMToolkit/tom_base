@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from importlib import import_module
 import copy
-import json
 import logging
 import requests
 
@@ -100,10 +99,10 @@ class BaseObservationForm(forms.Form):
         # TODO: Make this call the validate_observation method in facility
         return super().is_valid()
 
-    def serialize_parameters(self):
+    def serialize_parameters(self) -> dict:
         parameters = copy.deepcopy(self.cleaned_data)
         parameters.pop('groups', None)
-        return json.dumps(parameters)
+        return parameters
 
     def observation_payload(self):
         """

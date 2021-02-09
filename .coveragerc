@@ -1,0 +1,9 @@
+[run]
+omit = env
+
+[report]
+omit =
+    */env/*
+    */migrations/*
+    *wsgi.py
+    *apps.py

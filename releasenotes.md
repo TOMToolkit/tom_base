@@ -1,5 +1,39 @@
 # Release Notes
 
+## 2.5.0
+
+- Added API endpoints for submit, list, and detail for ``ObservationRecord``s.
+
+## 2.4.0
+
+- Updated TNS URL to the new URL used by TNS in the broker and harvester modules.
+- Modified ``ObservationRecord``, ``ObservationTemplate``, ``BrokerQuery``, and ``ReducedDatum`` to use ``JSONField`` instead of ``TextField``.
+- Dependency updates.
+
+### What to watch out for
+
+- This release requires running ``./manage.py migrate``.
+- Any uses of ``ObservationRecord.serialize_parameters()``, ``ObservationRecord.parameters_as_dict``, ``BrokerQuery.parameters_as_dict``, ``ObservationTemplate.serialize_parameters()`` should be replaced with ``<ModelName>.parameters``.
+
+## 2.3.0
+
+- Added a new observing form for MUSCAT submissions to LCO.
+- Fixed a bug resulting in observations with unknown status not showing up in alert bubble on target detail page.
+
+### What to watch out for
+
+- If you have customized your ``target_detail.html``, the line ``{% target_unknown_statuses object %}`` was moved to be outside of the ``{% if %}`` block, and will need to be updated to correct the bug.
+
+## 2.2.0
+
+- Added a new ``TargetNameSearchView`` that allows a user to search for a target name and be redirected to the target detail page for that name, provided there's only one result.
+
+## 2.1.1
+
+- Fixed a bug that allowed negative exposure time and exposure count in the LCOPhotometricSequenceForm.
+- Fixed out-of-date references to LCOObservationForm in documentation.
+- Added links and descriptions of new supported modules to documentation.
+
 ## 2.1.0
 
 - Updated MARS and ALeRCE modules to support Dash Broker changes.

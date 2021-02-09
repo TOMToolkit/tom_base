@@ -151,7 +151,7 @@ def observationtemplate_from_record(obsr):
     Renders a button that will pre-populate and observation template form with parameters from the specified
     ``ObservationRecord``.
     """
-    obs_params = obsr.parameters_as_dict
+    obs_params = obsr.parameters
     obs_params.pop('target_id', None)
     template_params = urlencode(obs_params)
     return {

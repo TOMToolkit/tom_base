@@ -380,7 +380,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
         obs_template_form = ApplyObservationTemplateForm(request.GET)
         if obs_template_form.is_valid():
             obs_template = ObservationTemplate.objects.get(pk=obs_template_form.cleaned_data['observation_template'].id)
-            obs_template_params = obs_template.parameters_as_dict
+            obs_template_params = obs_template.parameters
             obs_template_params['cadence_strategy'] = request.GET.get('cadence_strategy', '')
             obs_template_params['cadence_frequency'] = request.GET.get('cadence_frequency', '')
             params = urlencode(obs_template_params)

@@ -1,5 +1,4 @@
 import mimetypes
-import json
 
 from astropy import units
 from astropy.io import ascii
@@ -26,7 +25,7 @@ class PhotometryProcessor(DataProcessor):
         mimetype = mimetypes.guess_type(data_product.data.path)[0]
         if mimetype in self.PLAINTEXT_MIMETYPES:
             photometry = self._process_photometry_from_plaintext(data_product)
-            return [(datum.pop('timestamp'), json.dumps(datum)) for datum in photometry]
+            return [(datum.pop('timestamp'), datum) for datum in photometry]
         else:
             raise InvalidFileFormatException('Unsupported file type')
 
