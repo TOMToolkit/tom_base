@@ -116,7 +116,6 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
                 'facility': facility.name,
                 'parameters': observation_form.serialize_parameters(),
                 'observation_id': obsr_id,
-                'status': 'PENDING',  # TODO: why can't this be blank
             }
             serializer_data.append(obsr_data)
 

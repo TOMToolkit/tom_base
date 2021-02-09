@@ -21,15 +21,11 @@ class ObservationGroupField(serializers.RelatedField):
 
 class ObservationRecordSerializer(serializers.ModelSerializer):
     observation_groups = ObservationGroupField(many=True, read_only=True, source='observationgroup_set')
+    status = serializers.CharField(required=False)
 
     class Meta:
         model = ObservationRecord
         fields = '__all__'
-
-    def to_representation(self, instance):  # TODO: would it be better to just prettify the observation groups here
-        representation = super().to_representation(instance)
-        representation['parameters'] = json.loads(representation['parameters'])
-        return representation
 
 
 class ObservationRecordFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):

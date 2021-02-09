@@ -181,7 +181,7 @@ class TestObservationViewset(APITestCase):
                 response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
                 self.assertContains(response,
                                     'Observation submission successful, but failed to create a corresponding',
-                                    status_code=status.HTTP_400_BAD_REQUEST)  # TODO: should this be a 400 or 500?
+                                    status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @override_settings(TARGET_PERMISSIONS_ONLY=False)
