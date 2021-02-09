@@ -32,6 +32,15 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
     In order to submit an observation, the required parameters are ``facility``, ``observation_type``, ``target_id``,
     and ``observing_parameters``, where ``observing_parameters`` correspond with the form fields for the
     ``observation_type`` being submitted.
+
+    To submit a reactive cadence, the submission must also include the following:
+
+    {
+        'cadence': {
+            'cadence_strategy': ResumeCadenceAfterFailureStrategy,
+            'cadence_frequency': 24  # Replace with the parameters appropriate for the selected Cadence Strategy
+        }
+    }
     """
     filter_backends = (drf_filters.DjangoFilterBackend,)
     filterset_class = ObservationFilter
@@ -63,7 +72,7 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
     # /api/observations/
     def create(self, request, *args, **kwargs):
         """
-
+        Endpoint for submitting a new observation. Please see ObservationRecordViewSet for details on submission.
         """
 
         # Initialize the observation form, validate the form data, and submit to the observatory
@@ -99,7 +108,7 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
         observation_group = None
 
         if len(observation_ids) > 1 or cadence:
-            # Create the observation group
+            # Create the observation group and assign permissions
             observation_group_name = observation_form.cleaned_data.get('name', f'{target.name} at {facility.name}')
             observation_group = ObservationGroup.objects.create(name=observation_group_name)
             assign_perm('tom_observations.view_observationgroup', self.request.user, observation_group)
@@ -129,6 +138,7 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
                         observation_group.delete()
                         raise ValidationError(cadence_form.errors)
 
+        # Create the serializer data used to create the observation records
         serializer_data = []
         for obsr_id in observation_ids:
             obsr_data = {
@@ -142,6 +152,7 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
 
         serializer = self.get_serializer(data=serializer_data, many=True)
         try:
+            # Validate the serializer data, create the observation records, and add them to the group, if necessary
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
             if observation_group is not None:

@@ -33,6 +33,7 @@ class TestObservationViewset(APITestCase):
         self.client.force_login(self.user)
 
     def test_observation_detail(self):
+        """Test observation API detail endpoint."""
         with self.subTest('Test that a user can view an ObservationRecord for an ObservationRecord they submitted.'):
             response = self.client.get(reverse('api:observations-detail', args=(self.obsr.id,)))
             self.assertEqual(response.json()['id'], self.obsr.id)
@@ -46,6 +47,7 @@ class TestObservationViewset(APITestCase):
             self.assertContains(response, 'Not found.', status_code=status.HTTP_404_NOT_FOUND)
 
     def test_observation_list(self):
+        """Test observation API list endpoint."""
         response = self.client.get(reverse('api:observations-list'))
         self.assertEqual(response.json()['count'], 2)
         self.assertContains(response, f'"id":{self.obsr.id}')
@@ -53,6 +55,7 @@ class TestObservationViewset(APITestCase):
         self.assertNotContains(response, f'"id":{self.obsr3.id}')
 
     def test_observation_submit(self):
+        """Test observation API submit endpoint."""
         form_data = {
             'target_id': self.st.id,
             'facility': 'FakeRoboticFacility',
@@ -66,6 +69,7 @@ class TestObservationViewset(APITestCase):
         self.assertDictContainsSubset({'test_input': 'gnomes'}, response.json()[0]['parameters'])
 
     def test_observation_submit_invalid_parameters(self):
+        """Test observation API submit endpoint with unsuccessful submissions."""
         form_data = {
             'target_id': self.st.id,
             'facility': 'FakeRoboticFacility',
@@ -100,6 +104,7 @@ class TestObservationViewset(APITestCase):
                                 status_code=status.HTTP_400_BAD_REQUEST)
 
     def test_observation_submit_cadence(self):
+        """Test observation API submit endpoint with cadences."""
         form_data = {
             'name': 'Test Cadence',
             'target_id': self.st.id,
@@ -124,6 +129,7 @@ class TestObservationViewset(APITestCase):
 
     @patch('tom_observations.tests.utils.FakeRoboticFacility.submit_observation')
     def test_observation_multiple_records(self, mock_submit_observation):
+        """Test observation API submit endpoint with multiple returned records."""
         mock_submit_observation.return_value = ['fakeid1', 'fakeid2']
 
         form_data = {
@@ -142,6 +148,7 @@ class TestObservationViewset(APITestCase):
                                       response.json()[0].get('observation_groups', [])[0])
 
     def test_observation_submit_cadence_invalid_parameters(self):
+        """Test observation API submit endpoint with cadences that are unsuccessful submissions."""
         form_data = {
             'name': 'Test Cadence',
             'target_id': self.st.id,
@@ -197,10 +204,12 @@ class TestObservationViewsetRowLevelPermissions(APITestCase):
         self.client.force_login(self.user)
 
     def test_observation_list_with_permissions(self):
+        """Test observation API list endpoint with row-level permissions."""
         response = self.client.get(reverse('api:observations-list'))
         self.assertEqual(response.json()['count'], 2)
 
     def test_observation_detail_with_permissions(self):
+        """Test observation API detail endpoint with row-level permissions."""
         with self.subTest('Test that an ObservationRecord submitted by a user is visible to them.'):
             response = self.client.get(reverse('api:observations-detail', args=(self.obsr.id,)))
             self.assertEqual(response.json()['id'], self.obsr.id)

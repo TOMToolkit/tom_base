@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db.models.query import QuerySet
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 
@@ -30,7 +31,7 @@ class ObservationRecordFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRela
     # This PrimaryKeyRelatedField subclass is used to implement get_queryset based on the permissions of the user
     # submitting the request. The pattern was taken from this StackOverflow answer: https://stackoverflow.com/a/32683066
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         request = self.context.get('request', None)
         queryset = super().get_queryset()
         if not (request and queryset):
