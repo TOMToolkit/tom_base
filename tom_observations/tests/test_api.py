@@ -9,11 +9,12 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
-from tom_observations.tests.factories import ObservingRecordFactory
+from tom_observations.api_views import ObservationRecordViewSet
 from tom_observations.models import DynamicCadence, ObservationGroup, ObservationRecord
-from tom_targets.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
-from tom_targets.tests.factories import TargetExtraFactory, TargetNameFactory
+from tom_observations.tests.factories import ObservingRecordFactory
 from tom_targets.models import Target, TargetExtra, TargetName
+from tom_targets.tests.factories import NonSiderealTargetFactory, SiderealTargetFactory
+from tom_targets.tests.factories import TargetExtraFactory, TargetNameFactory
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility',
@@ -175,12 +176,12 @@ class TestObservationViewset(APITestCase):
             self.assertTrue(len(ObservationGroup.objects.all()), 0)
 
         with self.subTest('Test that a serializer failure returns a 400 and deletes objects.'):
-            pass  # TODO: mock serializer.is_valid() somehow
-            # with patch.object('tom_observations.api_views.ObservationRecordViewSet', 'perform_create') as mock_serializer:
-            #     print(mock_serializer)
-            #     mock_serializer.side_effect = ValidationError('test')
-            #     response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
-            #     print(response.json())
+            with patch.object(ObservationRecordViewSet, 'perform_create') as mock_serializer:
+                mock_serializer.side_effect = ValidationError('test')
+                response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
+                self.assertContains(response,
+                                    'Observation submission successful, but failed to create a corresponding',
+                                    status_code=status.HTTP_400_BAD_REQUEST)  # TODO: should this be a 400 or 500?
 
 
 @override_settings(TARGET_PERMISSIONS_ONLY=False)
