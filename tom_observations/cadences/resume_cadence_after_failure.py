@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 
-from django import forms
-
 from tom_observations.cadence import BaseCadenceForm, CadenceStrategy
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
@@ -28,9 +26,6 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
                      re-submits the observation until it succeeds. If it succeeds, it submits the next observation on
                      the same cadence."""
     form = ResumeCadenceAfterFailureForm
-
-    class ResumeCadenceForm(forms.Form):
-        site = forms.CharField()
 
     def update_observation_payload(self, observation_payload):
         """
