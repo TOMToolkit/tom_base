@@ -1,5 +1,24 @@
 # Release Notes
 
+## 2.3.0
+
+- Added a new observing form for MUSCAT submissions to LCO.
+- Fixed a bug resulting in observations with unknown status not showing up in alert bubble on target detail page.
+
+### What to watch out for
+
+- If you have customized your ``target_detail.html``, the line ``{% target_unknown_statuses object %}`` was moved to be outside of the ``{% if %}`` block, and will need to be updated to correct the bug.
+
+## 2.2.0
+
+- Added a new ``TargetNameSearchView`` that allows a user to search for a target name and be redirected to the target detail page for that name, provided there's only one result.
+
+## 2.1.1
+
+- Fixed a bug that allowed negative exposure time and exposure count in the LCOPhotometricSequenceForm.
+- Fixed out-of-date references to LCOObservationForm in documentation.
+- Added links and descriptions of new supported modules to documentation.
+
 ## 2.1.0
 
 - Updated MARS and ALeRCE modules to support Dash Broker changes.

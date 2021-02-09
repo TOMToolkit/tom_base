@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from dateutil.parser import parse
-import json
 
 from django import forms
 
@@ -48,7 +47,7 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
 
         # Boilerplate to get necessary properties for future calls
         start_keyword, end_keyword = facility.get_start_end_keywords()
-        observation_payload = last_obs.parameters_as_dict
+        observation_payload = last_obs.parameters
 
         # Cadence logic
         # If the observation hasn't finished, do nothing
@@ -68,7 +67,7 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         observation_payload = self.update_observation_payload(observation_payload)
 
         # Submission of the new observation to the facility
-        obs_type = last_obs.parameters_as_dict.get('observation_type')
+        obs_type = last_obs.parameters.get('observation_type')
         form = facility.get_form(obs_type)(observation_payload)
         form.is_valid()
         observation_ids = facility.submit_observation(form.observation_payload())
@@ -80,7 +79,7 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
             record = ObservationRecord.objects.create(
                 target=last_obs.target,
                 facility=facility.name,
-                parameters=json.dumps(observation_payload),
+                parameters=observation_payload,
                 observation_id=observation_id
             )
             # Add ObservationRecords to the DynamicCadence

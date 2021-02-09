@@ -1,5 +1,3 @@
-import json
-
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit
 from django import forms
@@ -23,9 +21,6 @@ class GenericTemplateForm(forms.Form):
         self.helper.add_input(Submit('submit', 'Submit'))
         self.common_layout = Layout('facility', 'template_name')
 
-    def serialize_parameters(self):
-        return json.dumps(self.cleaned_data)
-
     def save(self, template_id=None):
         if template_id:
             template = ObservationTemplate.objects.get(id=template_id)
@@ -33,7 +28,7 @@ class GenericTemplateForm(forms.Form):
             template = ObservationTemplate()
         template.name = self.cleaned_data['template_name']
         template.facility = self.cleaned_data['facility']
-        template.parameters = self.serialize_parameters()
+        template.parameters = self.cleaned_data
         template.save()
         return template
 

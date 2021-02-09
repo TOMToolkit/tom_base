@@ -296,7 +296,7 @@ class ReducedDatum(models.Model):
     :param timestamp: The timestamp of this datum.
     :type timestamp: datetime
 
-    :param value: The value of the datum. This is generally a JSON string, intended to store data with a variety of
+    :param value: The value of the datum. This is a dict, intended to store data with a variety of
                   scopes. As an example, a photometry value might contain the following:
 
                   ::
@@ -315,11 +315,7 @@ class ReducedDatum(models.Model):
                       'magnitude_error': .5,
                       'filter': 'r'
                     }
-
-                  It should be noted that when storing a dict in a ``ReducedDatum`` value field, it should always be
-                  converted with ``json.dumps`` before saving, as certain functions in the TOM Toolkit call
-                  ``json.loads`` with ``ReducedDatum`` value fields.
-    :type value: str
+    :type value: dict
 
     """
 
@@ -332,7 +328,7 @@ class ReducedDatum(models.Model):
     source_name = models.CharField(max_length=100, default='')
     source_location = models.CharField(max_length=200, default='')
     timestamp = models.DateTimeField(null=False, blank=False, default=datetime.now, db_index=True)
-    value = models.TextField(null=False, blank=False)
+    value = models.JSONField(null=False, blank=False)
 
     class Meta:
         get_latest_by = ('timestamp',)
