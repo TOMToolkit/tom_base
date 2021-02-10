@@ -9,7 +9,6 @@ on:
 jobs:
   run_tests:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
@@ -29,7 +28,6 @@ jobs:
   publish_to_pypi:
     needs: run_tests
     runs-on: ubuntu-latest
-    if: (github.event.base_ref == 'refs/heads/main' || github.event.base_ref == 'refs/heads/dev')
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -50,7 +48,6 @@ jobs:
   create_release:
     needs: publish_to_pypi
     runs-on: ubuntu-latest
-    if: (github.event.base_ref == 'refs/heads/main' || github.event.base_ref == 'refs/heads/dev')
     steps:
     - uses: actions/checkout@v2
     - uses: actions/create-release@v1
