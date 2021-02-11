@@ -101,8 +101,10 @@ muscat_exposure_mode_help = """
 
 def make_request(*args, **kwargs):
     response = requests.request(*args, **kwargs)
-    if 400 <= response.status_code < 500:
+    if 401 <= response.status_code < 500:
         raise ImproperCredentialsException('LCO: ' + str(response.content))
+    elif 400 == response.status_code:
+        raise forms.ValidationError(f'LCO: {str(response.content)}')
     response.raise_for_status()
     return response
 
