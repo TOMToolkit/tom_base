@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.4.1
+
+- Fixes a bug when submitting observations for dynamic cadences produced by the photometric sequence form.
+
 ## 2.4.0
 
 - Updated TNS URL to the new URL used by TNS in the broker and harvester modules.
