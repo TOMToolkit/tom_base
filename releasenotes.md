@@ -3,6 +3,7 @@
 ## 2.4.2
 
 - Fixes a bug when submitting observations for dynamic cadences produced by the photometric sequence form.
+- Fixes a bug showing an inappropriate error message when LCO validation fails.
 
 ## 2.4.1
 
