@@ -110,7 +110,7 @@ class TestReactiveCadencing(TestCase):
     @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'COMPLETED',
            'scheduled_start': None, 'scheduled_end': None})
     def test_resume_when_failed_cadence_invalid_date(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
-                                                    mock_proposal_choices, mock_get_insts):
+                                                     mock_proposal_choices, mock_get_insts):
         mock_validate_obs.return_value = []
         num_records = self.group.observation_records.count()
         obsr = self.group.observation_records.order_by('-created').first()
@@ -132,7 +132,7 @@ class TestReactiveCadencing(TestCase):
     def test_resume_when_failed_cadence_obs_invalid(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
                                                     mock_proposal_choices, mock_get_insts):
         mock_validate_obs.return_value = {'end': 'Window end time must be in the future'}
-        
+
         strategy = ResumeCadenceAfterFailureStrategy(self.dynamic_cadence)
         with self.assertRaises(Exception):
-            new_records = strategy.run()
+            strategy.run()
