@@ -322,27 +322,23 @@ class ObservationRecordUpdateView(LoginRequiredMixin, UpdateView):
         return reverse('tom_observations:detail', kwargs={'pk': self.get_object().id})
 
 
-class ObservationGroupCancelView(LoginRequiredMixin, View):
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context['next'] = self.request.META.get('HTTP_REFERER', '/')
-        return context
+class ObservationRecordCancelView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         obsr_id = self.kwargs.get('pk')
         obsr = ObservationRecord.objects.get(id=obsr_id)
         facility = get_service_class(obsr.facility)()
-        errors = facility.cancel_observation(obsr.observation_id)
-        if errors:
-            messages.error(
-                self.request,
-                f'Unable to cancel observation: {errors}'
-            )
+        try:
+            success = facility.cancel_observation(obsr.observation_id)
+            if success:
+                messages.success(self.request, f'Successfully cancelled observation {obsr}')
+                facility.update_observation_status(obsr.observation_id)
+            else:
+                messages.error(self.request, 'Unable to cancel observation.')
+        except forms.ValidationError as ve:
+            messages.error(self.request, f'Unable to cancel observation: {ve}')
 
-        referer = self.request.GET('next', None)
-        referer = urlparse(referer).path if referer else '/'
-        return redirect(referer)
+        return redirect(reverse('tom_observations:detail', kwargs={'pk': obsr.id}))
 
 
 class AddExistingObservationView(LoginRequiredMixin, FormView):
