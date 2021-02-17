@@ -1,11 +1,14 @@
 from datetime import datetime, timedelta
 from dateutil.parser import parse
+import logging
 
 from django import forms
 
 from tom_observations.cadence import BaseCadenceForm, CadenceStrategy
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
+
+logger = logging.getLogger(__name__)
 
 
 class ResumeCadenceAfterFailureForm(BaseCadenceForm):
@@ -72,8 +75,11 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         # Submission of the new observation to the facility
         obs_type = last_obs.parameters.get('observation_type')
         form = facility.get_form(obs_type)(observation_payload)
-        form.is_valid()
-        observation_ids = facility.submit_observation(form.observation_payload())
+        if form.is_valid():
+            observation_ids = facility.submit_observation(form.observation_payload())
+        else:
+            logger.error(msg=f'Unable to submit next cadenced observation: {form.errors}')
+            raise Exception(f'Unable to submit next cadenced observation: {form.errors}')
 
         # Creation of corresponding ObservationRecord objects for the observations
         new_observations = []
@@ -102,8 +108,12 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         if not cadence_frequency:
             raise Exception(f'The {self.name} strategy requires a cadence_frequency cadence_parameter.')
         advance_window_hours = cadence_frequency
+        window_length = parse(observation_payload[end_keyword]) - parse(observation_payload[start_keyword])
+
         new_start = parse(observation_payload[start_keyword]) + timedelta(hours=advance_window_hours)
-        new_end = parse(observation_payload[end_keyword]) + timedelta(hours=advance_window_hours)
+        if new_start < datetime.now():  # Ensure that the new window isn't in the past
+            new_start = datetime.now()
+        new_end = new_start + window_length
         observation_payload[start_keyword] = new_start.isoformat()
         observation_payload[end_keyword] = new_end.isoformat()
 

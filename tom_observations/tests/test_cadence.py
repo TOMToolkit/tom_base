@@ -44,6 +44,8 @@ class TestReactiveCadencing(TestCase):
     def setUp(self):
         target = SiderealTargetFactory.create()
         obs_params['target_id'] = target.id
+        obs_params['start'] = (datetime.now() - timedelta(hours=12)).strftime('%Y-%m-%dT%H:%M:%S')
+        obs_params['end'] = (datetime.now() + timedelta(hours=12)).strftime('%Y-%m-%dT%H:%M:%S')
         observing_records = ObservingRecordFactory.create_batch(5,
                                                                 target_id=target.id,
                                                                 parameters=obs_params)
@@ -74,7 +76,9 @@ class TestReactiveCadencing(TestCase):
 
     @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'CANCELED',
            'scheduled_start': None, 'scheduled_end': None})
-    def test_resume_when_failed_cadence_failed_obs(self, patch1, patch2, patch3, patch4, patch5):
+    def test_resume_when_failed_cadence_failed_obs(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
+                                                   mock_proposal_choices, mock_get_insts):
+        mock_validate_obs.return_value = []
         num_records = self.group.observation_records.count()
 
         strategy = ResumeCadenceAfterFailureStrategy(self.dynamic_cadence)
@@ -88,15 +92,47 @@ class TestReactiveCadencing(TestCase):
 
     @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'COMPLETED',
            'scheduled_start': None, 'scheduled_end': None})
-    def test_resume_when_failed_cadence_successful_obs(self, patch1, patch2, patch3, patch4, patch5):
+    def test_resume_when_failed_cadence_successful_obs(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
+                                                       mock_proposal_choices, mock_get_insts):
+        mock_validate_obs.return_value = []
         num_records = self.group.observation_records.count()
-        observing_record = self.group.observation_records.order_by('-created').first()
+        obsr = self.group.observation_records.order_by('-created').first()
 
         strategy = ResumeCadenceAfterFailureStrategy(self.dynamic_cadence)
         new_records = strategy.run()
         self.group.refresh_from_db()
         self.assertEqual(num_records + 1, self.group.observation_records.count())
         self.assertAlmostEqual(
-            parse(observing_record.parameters['start']),
-            parse(new_records[0].parameters['start']) - timedelta(days=3)
+            parse(obsr.parameters['start']).replace(second=0, microsecond=0),
+            parse(new_records[0].parameters['start']).replace(second=0, microsecond=0) - timedelta(days=3)
         )
+
+    @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'COMPLETED',
+           'scheduled_start': None, 'scheduled_end': None})
+    def test_resume_when_failed_cadence_invalid_date(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
+                                                    mock_proposal_choices, mock_get_insts):
+        mock_validate_obs.return_value = []
+        num_records = self.group.observation_records.count()
+        obsr = self.group.observation_records.order_by('-created').first()
+        obsr.parameters['start'] = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%S')
+        obsr.parameters['end'] = (datetime.now() - timedelta(days=6)).strftime('%Y-%m-%dT%H:%M:%S')
+        obsr.save()
+
+        strategy = ResumeCadenceAfterFailureStrategy(self.dynamic_cadence)
+        new_records = strategy.run()
+        self.group.refresh_from_db()
+        self.assertEqual(num_records + 1, self.group.observation_records.count())
+        self.assertAlmostEqual(
+            datetime.now().replace(second=0, microsecond=0),
+            parse(new_records[0].parameters['start']).replace(second=0, microsecond=0)
+        )
+
+    @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'COMPLETED',
+           'scheduled_start': None, 'scheduled_end': None})
+    def test_resume_when_failed_cadence_obs_invalid(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
+                                                    mock_proposal_choices, mock_get_insts):
+        mock_validate_obs.return_value = {'end': 'Window end time must be in the future'}
+        
+        strategy = ResumeCadenceAfterFailureStrategy(self.dynamic_cadence)
+        with self.assertRaises(Exception):
+            new_records = strategy.run()
