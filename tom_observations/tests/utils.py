@@ -24,7 +24,7 @@ SITES = {
 
 
 class FakeFacilityForm(GenericObservationForm):
-    test_input = forms.CharField(help_text='fake form input')
+    test_input = forms.CharField(help_text='fake form input', required=True)
 
 
 class FakeFacilityTemplateForm(GenericTemplateForm):
