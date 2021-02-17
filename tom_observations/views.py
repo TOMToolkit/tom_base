@@ -1,5 +1,4 @@
 from io import StringIO
-from urllib.parse import urlparse
 
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import HTML, Layout, Submit
