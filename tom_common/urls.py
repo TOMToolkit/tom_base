@@ -25,15 +25,17 @@ from tom_common.views import UserListView, UserPasswordChangeView, UserCreateVie
 from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
 
 from rest_framework import routers
-from tom_targets.api_views import TargetViewSet, TargetNameViewSet, TargetExtraViewSet
 from tom_dataproducts.api_views import DataProductViewSet
+from tom_observations.api_views import ObservationRecordViewSet
+from tom_targets.api_views import TargetViewSet, TargetNameViewSet, TargetExtraViewSet
 
 # For all applications, set up the DRF router, its router.urls is included in urlpatterns below
 router = routers.DefaultRouter()
+router.register(r'observations', ObservationRecordViewSet, 'observations')
+router.register(r'dataproducts', DataProductViewSet, 'dataproducts')
 router.register(r'targets', TargetViewSet, 'targets')
 router.register(r'targetextra', TargetExtraViewSet, 'targetextra')
 router.register(r'targetname', TargetNameViewSet, 'targetname')
-router.register(r'dataproducts', DataProductViewSet, 'dataproducts')
 
 
 urlpatterns = [
