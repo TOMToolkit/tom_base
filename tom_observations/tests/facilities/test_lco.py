@@ -827,4 +827,3 @@ class TestLCOFacility(TestCase):
             }))
             requestgroup_id = self.lco._get_requestgroup_id(1234567)
             self.assertIsNone(requestgroup_id)
-
