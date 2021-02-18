@@ -1,13 +1,10 @@
 name: Release to PyPi
 
 on:
-  push:
-    branches:
-      - main
-      - dev
+  create:
     tags:
-      - "[0-9]+.[0-9]+.[0-9]+$"
-      - "[0-9]+.[0-9]+.[0-9]+-alpha.[0-9]+$"
+      - "*.*.*"
+      - "*.*.*-alpha.*"
 
 jobs:
   run_tests:
