@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import requests
+from urllib.parse import urlencode
 
 from astropy import units as u
 from crispy_forms.bootstrap import AppendedText, PrependedText
@@ -1040,12 +1041,15 @@ class LCOFacility(BaseRoboticObservationFacility):
         return response.json()['errors']
 
     def cancel_observation(self, observation_id):
+        requestgroup_id = self._get_requestgroup_id(observation_id)
+
         response = make_request(
             'POST',
-            f'{PORTAL_URL}/api/requestgroups/{observation_id}/cancel/',
+            f'{PORTAL_URL}/api/requestgroups/{requestgroup_id}/cancel/',
             headers=self._portal_headers()
         )
-        return response.json()['errors']
+
+        return response.json()['state'] == 'CANCELED'
 
     def get_observation_url(self, observation_id):
         return PORTAL_URL + '/requests/' + observation_id
@@ -1237,6 +1241,19 @@ class LCOFacility(BaseRoboticObservationFacility):
             return {'Authorization': 'Token {0}'.format(LCO_SETTINGS['api_key'])}
         else:
             return {}
+
+    def _get_requestgroup_id(self, observation_id):
+        query_params = urlencode({'request_id': observation_id})
+
+        response = make_request(
+            'GET',
+            f'{PORTAL_URL}/api/requestgroups?{query_params}',
+            headers=self._portal_headers()
+        )
+        requestgroups = response.json()
+
+        if requestgroups['count'] == 1:
+            return requestgroups['results'][0]['id']
 
     def _archive_headers(self):
         if LCO_SETTINGS.get('api_key'):

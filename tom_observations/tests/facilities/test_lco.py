@@ -6,7 +6,7 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.facilities.lco import make_request
+from tom_observations.facilities.lco import make_request, LCOFacility
 from tom_observations.facilities.lco import LCOBaseForm, LCOBaseObservationForm, LCOImagingObservationForm
 from tom_observations.facilities.lco import LCOPhotometricSequenceForm, LCOSpectroscopicSequenceForm
 from tom_observations.facilities.lco import LCOSpectroscopyObservationForm, LCOMuscatImagingObservationForm
@@ -793,4 +793,37 @@ class TestLCOObservationTemplateForm(TestCase):
 
 
 class TestLCOFacility(TestCase):
-    pass
+    def setUp(self):
+        self.lco = LCOFacility()
+
+    @patch('tom_observations.facilities.lco.make_request')
+    def test_get_requestgroup_id(self, mock_make_request):
+        mock_response = Response()
+        mock_response._content = str.encode(json.dumps({
+            'count': 1,
+            'results': [{
+                'id': 1073496
+            }]
+        }))
+        mock_response.status_code = 200
+        mock_make_request.return_value = mock_response
+
+        with self.subTest('Test that a correct response results in a valid id.'):
+            requestgroup_id = self.lco._get_requestgroup_id(1234567)
+            self.assertEqual(requestgroup_id, 1073496)
+
+        with self.subTest('Test that an empty response results in no id.'):
+            mock_response._content = str.encode(json.dumps({
+                'count': 0,
+                'results': []
+            }))
+            requestgroup_id = self.lco._get_requestgroup_id(1234567)
+            self.assertIsNone(requestgroup_id)
+
+        with self.subTest('Test that multiple results returns no id.'):
+            mock_response._content = str.encode(json.dumps({
+                'count': 2,
+                'results': [{'id': 1073496}, {'id': 1073497}]
+            }))
+            requestgroup_id = self.lco._get_requestgroup_id(1234567)
+            self.assertIsNone(requestgroup_id)
