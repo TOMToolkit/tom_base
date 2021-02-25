@@ -43,7 +43,7 @@ setup(
         'django-filter~=2.4',
         'django-guardian~=2.3',
         'fits2image==0.4.3',
-        'Markdown==3.3.3',  # django-rest-framework doc headers require this to support Markdown
+        'Markdown==3.3.4',  # django-rest-framework doc headers require this to support Markdown
         'numpy==1.19.5',
         'pillow==8.1.0',
         'plotly==4.14.3',
