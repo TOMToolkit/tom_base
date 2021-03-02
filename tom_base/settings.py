@@ -230,6 +230,9 @@ EXTRA_FIELDS = []
 # Define custom DataProcessor class
 # DATA_PROCESSOR_CLASS = 'mytom.custom_data_processor.CustomDataProcessor'
 
+USER_SELF_REGISTRATION = True
+REGISTRATION_FLOW = 'OPEN'
+
 # Authentication strategy can either be LOCKED (required login for all views)
 # or READ_ONLY (read only access to views)
 AUTH_STRATEGY = 'READ_ONLY'
