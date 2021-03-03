@@ -21,6 +21,7 @@ class GroupForm(forms.ModelForm):
         return instance
 
 
+# TODO: document that this is used for user update as well
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
@@ -33,7 +34,8 @@ class CustomUserCreationForm(UserCreationForm):
 
     def save(self, commit=True):
         user = super(forms.ModelForm, self).save(commit=False)
-        if self.cleaned_data['password1']:  # TODO: what is this?
+        print(user)
+        if self.cleaned_data['password1']:  # TODO: comment on this wrt updating with/without password
             user.set_password(self.cleaned_data["password1"])
         if commit:
             user.save()

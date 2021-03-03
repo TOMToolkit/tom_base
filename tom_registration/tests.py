@@ -1,3 +1,11 @@
 from django.test import TestCase
 
-# Create your tests here.
+
+class TestOpenRegistrationViews(TestCase):
+    def setUp(self):
+        pass
+
+
+class TestApprovalRegistrationViews(TestCase):
+    def setUp(self):
+        pass

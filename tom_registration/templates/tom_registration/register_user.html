@@ -1,0 +1,15 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
+{% block title %}Sign up{% endblock %}
+{% block content %}
+<h2>Sign up</h2>
+<form action="{% url 'registration:register' %}" method="POST">
+{% csrf_token %}
+{% bootstrap_form form %}
+{% buttons %}
+  <button type="submit" class="btn btn-primary">
+    Register
+  </button>
+{% endbuttons %}
+</form>
+{% endblock %}

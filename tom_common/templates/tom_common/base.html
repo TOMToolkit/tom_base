@@ -1,4 +1,4 @@
-{% load static bootstrap4 %}
+{% load static bootstrap4 registration_extras %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -44,7 +44,7 @@
           {% include 'tom_common/navbar_content.html' %}
 
         </ul>
-        <ul class="navbar-nav ml-auto">
+        <ul class="navbar-nav ml-auto" id="login-buttons">
         {% if user.is_authenticated %}
           <li class="nav-item">
             {% if user.first_name or user.last_name %}
@@ -57,6 +57,7 @@
             <a class="btn btn-outline-success" title="logout" href="{% url 'logout' %}">Logout</a>
           </li>
         {% else %}
+          {% registration_button %}
           <li class="nav-item">
             <a class="btn btn-outline-success" title="logout" href="{% url 'login' %}">Login</a>
           </li>

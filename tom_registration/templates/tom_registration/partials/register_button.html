@@ -1,0 +1,6 @@
+{% load bootstrap4 %}
+{% if user_self_registration %}
+<li class="nav-item">
+    <a class="btn btn-outline-info" title="signup" href="{{ url_from_context }}">Register</a>
+</li>
+{% endif %}

@@ -17,3 +17,7 @@ body {
 .nav-item {
   cursor: pointer;
 }
+
+#login-buttons > li {
+  margin: 0px 2px 0px 2px;
+}

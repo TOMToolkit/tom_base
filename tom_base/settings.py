@@ -9,9 +9,26 @@ https://docs.djangoproject.com/en/2.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
+from enum import Enum, unique
 import logging.config
 import os
 import tempfile
+
+
+@unique
+class RegistrationFlow(Enum):
+    """
+    The RegistrationFlow enumerator is used to define the various registration flows in order to render the correct
+    registration view.
+    """
+    ADMIN_REGISTRATION_ONLY = 'ADMIN_REGISTRATION_ONLY'
+    OPEN = 'OPEN'
+    APPROVAL_REQUIRED = 'APPROVAL_REQUIRED'
+
+# Django settings must be all caps in order to be used in the application. This setting makes the RegistrationFlow
+# enumerator available in the installed apps.
+REGISTRATION_FLOWS = RegistrationFlow
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -53,6 +70,7 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
+    'tom_registration',
 ]
 
 SITE_ID = 1
@@ -130,6 +148,9 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'guardian.backends.ObjectPermissionBackend',
 )
+# In order to immediately log in a user after successful registration, the application needs to know the
+# preferred authentication backend to use for login. This setting should only be changed by advanced users.
+REGISTRATION_AUTHENTICATION_BACKEND = 'django.contrib.auth.backends.ModelBackend'
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
@@ -230,8 +251,9 @@ EXTRA_FIELDS = []
 # Define custom DataProcessor class
 # DATA_PROCESSOR_CLASS = 'mytom.custom_data_processor.CustomDataProcessor'
 
+# TODO: Document this setting, also in docs/customsettings.rst and settings.tmpl
 USER_SELF_REGISTRATION = True
-REGISTRATION_FLOW = 'OPEN'
+REGISTRATION_FLOW = REGISTRATION_FLOWS.OPEN
 
 # Authentication strategy can either be LOCKED (required login for all views)
 # or READ_ONLY (read only access to views)
