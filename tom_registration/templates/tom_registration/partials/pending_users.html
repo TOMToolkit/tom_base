@@ -1,0 +1,31 @@
+{% if request.user.is_superuser %}
+<h4>Pending Users</h4>
+<div class="row">
+    <div class="col-md-12">
+        <table class="table table-striped">
+          <thead>
+          <tr>
+            <th>Username</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Edit</th>
+            <th>Approve</th>
+            <th>Delete</th>
+        </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.first_name }} {{ user.last_name }}</td>
+                <td>{{ user.email }}</td>
+                <td><a href="{% url 'user-update' user.id %}" class="btn btn-primary">Edit</a></td>
+                <td><a href="{% url 'registration:approve' user.id %}" class="btn btn-primary">Approve</a></td>
+                <td><a href="{% url 'user-delete' user.id %}" class="btn btn-danger">Delete</a></td>
+            </tr>
+              {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}

@@ -34,7 +34,6 @@ class CustomUserCreationForm(UserCreationForm):
 
     def save(self, commit=True):
         user = super(forms.ModelForm, self).save(commit=False)
-        print(user)
         if self.cleaned_data['password1']:  # TODO: comment on this wrt updating with/without password
             user.set_password(self.cleaned_data["password1"])
         if commit:

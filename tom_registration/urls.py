@@ -13,8 +13,12 @@ except:
 
 urlpatterns = []
 
+print(REGISTRATION_FLOW)
+# TODO: make these paths available, but inaccessible if settings don't match
+# NOTE: these are untestable otherwise, as the urls are set before override_settings is called
 if REGISTRATION_FLOW == settings.REGISTRATION_FLOWS.OPEN:
+    print('open')
     urlpatterns += [path('register/', OpenRegistrationView.as_view(), name='register')]
 elif REGISTRATION_FLOW == settings.REGISTRATION_FLOWS.APPROVAL_REQUIRED:
     urlpatterns += [path('register/', ApprovalRegistrationView.as_view(), name='register')]
-    urlpatterns += [path('approve/', UserApprovalView.as_view(), name='approve')]
+    urlpatterns += [path('approve/<int:pk>/', UserApprovalView.as_view(), name='approve')]
