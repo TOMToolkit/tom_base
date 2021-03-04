@@ -11,7 +11,6 @@
     <a class="btn btn-outline-success" title="logout" href="{% url 'logout' %}">Logout</a>
 </li>
 {% else %}
-    {% registration_button %}
     <li class="nav-item">
         <a class="btn btn-outline-success" title="logout" href="{% url 'login' %}">Login</a>
     </li>

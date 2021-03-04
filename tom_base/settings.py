@@ -9,25 +9,9 @@ https://docs.djangoproject.com/en/2.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
-from enum import Enum, unique
 import logging.config
 import os
 import tempfile
-
-
-@unique
-class RegistrationFlow(Enum):
-    """
-    The RegistrationFlow enumerator is used to define the various registration flows in order to render the correct
-    registration view.
-    """
-    ADMIN_REGISTRATION_ONLY = 'ADMIN_REGISTRATION_ONLY'
-    OPEN = 'OPEN'
-    APPROVAL_REQUIRED = 'APPROVAL_REQUIRED'
-
-# Django settings must be all caps in order to be used in the application. This setting makes the RegistrationFlow
-# enumerator available in the installed apps.
-REGISTRATION_FLOWS = RegistrationFlow
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -148,9 +132,6 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'guardian.backends.ObjectPermissionBackend',
 )
-# In order to immediately log in a user after successful registration, the application needs to know the
-# preferred authentication backend to use for login. This setting should only be changed by advanced users.
-REGISTRATION_AUTHENTICATION_BACKEND = 'django.contrib.auth.backends.ModelBackend'
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
@@ -253,10 +234,9 @@ EXTRA_FIELDS = []
 
 # TODO: Document this setting, also in docs/customsettings.rst and settings.tmpl
 TOM_REGISTRATION = {
-    'REGISTRATION_FLOW': 'APPROVAL_REQUIRED',
-    'REGISTRATION_AUTHENTICATION_BACKEND': 'django.contrib.auth.backends.ModelBackend'
+    'REGISTRATION_AUTHENTICATION_BACKEND': 'django.contrib.auth.backends.ModelBackend',
+    'REGISTRATION_REDIRECT_PATTERN': 'home'
 }
-REGISTRATION_FLOW = REGISTRATION_FLOWS.APPROVAL_REQUIRED
 
 # Authentication strategy can either be LOCKED (required login for all views)
 # or READ_ONLY (read only access to views)
