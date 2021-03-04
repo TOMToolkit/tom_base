@@ -1,3 +1,2 @@
--e /home/david/projects/tom_registration
 -e .[test]
 # see setup.py install_requires for list
