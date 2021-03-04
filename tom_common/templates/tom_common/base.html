@@ -1,4 +1,4 @@
-{% load static bootstrap4 registration_extras %}
+{% load static bootstrap4 tom_common_extras %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -45,23 +45,7 @@
 
         </ul>
         <ul class="navbar-nav ml-auto" id="login-buttons">
-        {% if user.is_authenticated %}
-          <li class="nav-item">
-            {% if user.first_name or user.last_name %}
-            <a class="nav-link" href="{% url 'user-update' user.id %}">{{ user.first_name }} {{ user.last_name }} ({{ user.username }})</a>
-            {% else %}
-            <a class="nav-link" href="{% url 'user-update' user.id %}">{{ user.username }}</a>
-            {% endif %}
-          </li>
-          <li>
-            <a class="btn btn-outline-success" title="logout" href="{% url 'logout' %}">Logout</a>
-          </li>
-        {% else %}
-          {% registration_button %}
-          <li class="nav-item">
-            <a class="btn btn-outline-success" title="logout" href="{% url 'login' %}">Login</a>
-          </li>
-        {% endif %}
+        {% navbar_login %}
         </ul>
       </div>
     </nav>

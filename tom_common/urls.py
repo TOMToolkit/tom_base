@@ -28,7 +28,7 @@ from .api_router import collect_api_urls  # DRF routers are setup in each INSTAL
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'), name='home'),
-    path('', include('tom_registration.urls', namespace='registration')),
+    path('', include('tom_registration.registration_flows.approval_required.urls', namespace='registration')),
     path('targets/', include('tom_targets.urls', namespace='targets')),
     path('alerts/', include('tom_alerts.urls', namespace='alerts')),
     path('comments/', include('django_comments.urls')),

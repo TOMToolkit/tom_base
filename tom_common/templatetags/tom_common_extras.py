@@ -8,6 +8,14 @@ from guardian.shortcuts import get_objects_for_user
 register = template.Library()
 
 
+@register.inclusion_tag('tom_common/partials/navbar_login.html', takes_context=True)
+def navbar_login(context):
+    print(context)
+    return {
+        'user': context['user']
+    }
+
+
 @register.simple_tag
 def comments_enabled():
     """

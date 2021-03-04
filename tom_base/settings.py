@@ -252,8 +252,11 @@ EXTRA_FIELDS = []
 # DATA_PROCESSOR_CLASS = 'mytom.custom_data_processor.CustomDataProcessor'
 
 # TODO: Document this setting, also in docs/customsettings.rst and settings.tmpl
-USER_SELF_REGISTRATION = True
-REGISTRATION_FLOW = REGISTRATION_FLOWS.OPEN
+TOM_REGISTRATION = {
+    'REGISTRATION_FLOW': 'APPROVAL_REQUIRED',
+    'REGISTRATION_AUTHENTICATION_BACKEND': 'django.contrib.auth.backends.ModelBackend'
+}
+REGISTRATION_FLOW = REGISTRATION_FLOWS.APPROVAL_REQUIRED
 
 # Authentication strategy can either be LOCKED (required login for all views)
 # or READ_ONLY (read only access to views)
