@@ -10,10 +10,11 @@ register = template.Library()
 
 @register.inclusion_tag('tom_common/partials/navbar_login.html', takes_context=True)
 def navbar_login(context):
-    print(context)
-    return {
-        'user': context['user']
-    }
+    """
+    Renders the username as a link to the user page, as well as the login button. Can be overridden to render additional
+    account-related buttons.
+    """
+    return {'user': context['user']}
 
 
 @register.simple_tag

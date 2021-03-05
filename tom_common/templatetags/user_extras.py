@@ -7,7 +7,7 @@ register = template.Library()
 @register.inclusion_tag('auth/partials/group_list.html', takes_context=True)
 def group_list(context):
     """
-
+    Renders the list of groups in the TOM along with edit/delete buttons, as well as an Add Group button.
     """
     return {
         'request': context['request'],
@@ -18,7 +18,7 @@ def group_list(context):
 @register.inclusion_tag('auth/partials/user_list.html', takes_context=True)
 def user_list(context):
     """
-
+    Renders the list of users in the TOM along with edit/delete/change password buttons, as well as an Add User button.
     """
     return {
         'request': context['request'],

@@ -279,3 +279,17 @@ Default:
 A dictionary with the keys being TOM models classes and the values being
 the modules that should be used to generate latex tables for those
 models.
+
+`TOM_REGISTRATION <#tom_registration>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: None
+
+Example:
+
+.. code-block
+
+   {
+      'django.contrib.auth.backends.AllowAllUsersModelBackend',
+      'guardian.backends.ObjectPermissionBackend'
+   }
