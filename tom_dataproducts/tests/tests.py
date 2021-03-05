@@ -1,4 +1,3 @@
-import json
 import os
 import tempfile
 
@@ -48,7 +47,7 @@ class Views(TestCase):
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
-            parameters='{}'
+            parameters={}
         )
         self.data_product = DataProduct.objects.create(
             product_id='testproductid',
@@ -156,7 +155,7 @@ class TestViewsWithPermissions(TestCase):
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
-            parameters='{}'
+            parameters={}
         )
         self.data_product = DataProduct.objects.create(
             product_id='testproductid',
@@ -224,7 +223,7 @@ class TestUploadDataProducts(TestCase):
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
-            parameters='{}'
+            parameters={}
         )
         self.data_product = DataProduct.objects.create(
             product_id='testproductid',
@@ -313,7 +312,7 @@ class TestDataUploadForms(TestCase):
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
-            parameters='{}'
+            parameters={}
         )
         self.spectroscopy_form_data = {
             'target': self.target.id,
@@ -351,8 +350,7 @@ class TestDataSerializer(TestCase):
         spectrum = Spectrum1D(spectral_axis=wavelength, flux=flux)
         serialized = self.serializer.serialize(spectrum)
 
-        self.assertTrue(isinstance(serialized, str))
-        serialized = json.loads(serialized)
+        self.assertTrue(isinstance(serialized, dict))
         self.assertTrue(serialized['flux'])
         self.assertTrue(serialized['flux_units'])
         self.assertTrue(serialized['wavelength'])
@@ -363,12 +361,12 @@ class TestDataSerializer(TestCase):
             self.serializer.serialize({'flux': [1, 2], 'wavelength': [1, 2]})
 
     def test_deserialize_spectrum(self):
-        serialized_spectrum = json.dumps({
+        serialized_spectrum = {
             'flux': [1, 2],
-            'flux_units': 'erg / (Angstrom cm2 s)',
+            'flux_units': 'ph / (Angstrom cm2 s)',
             'wavelength': [1, 2],
             'wavelength_units': 'Angstrom'
-        })
+        }
         deserialized = self.serializer.deserialize(serialized_spectrum)
 
         self.assertTrue(type(deserialized) is Spectrum1D)
@@ -377,7 +375,7 @@ class TestDataSerializer(TestCase):
 
     def test_deserialize_spectrum_invalid(self):
         with self.assertRaises(Exception):
-            self.serializer.deserialize(json.dumps({'invalid_key': 'value'}))
+            self.serializer.deserialize({'invalid_key': 'value'})
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])

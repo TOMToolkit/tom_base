@@ -4,6 +4,14 @@ from .views import TargetCreateView, TargetUpdateView, TargetDetailView, TargetN
 from .views import TargetDeleteView, TargetListView, TargetImportView, TargetExportView
 from .views import TargetGroupingView, TargetGroupingDeleteView, TargetGroupingCreateView, TargetAddRemoveGroupingView
 
+from .api_views import TargetViewSet, TargetExtraViewSet, TargetNameViewSet
+from tom_common.api_router import SharedAPIRootRouter
+
+router = SharedAPIRootRouter()
+router.register(r'targets', TargetViewSet, 'targets')
+router.register(r'targetextra', TargetExtraViewSet, 'targetextra')
+router.register(r'targetname', TargetNameViewSet, 'targetname')
+
 app_name = 'tom_targets'
 
 urlpatterns = [

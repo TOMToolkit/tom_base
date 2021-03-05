@@ -1,5 +1,29 @@
 # Release Notes
 
+## 2.5.0
+
+- Added API endpoints for submit, list, and detail for ``ObservationRecord``s.
+
+## 2.4.2
+
+- Fixes a bug when submitting observations for dynamic cadences produced by the photometric sequence form.
+- Fixes a bug showing an inappropriate error message when LCO validation fails.
+
+## 2.4.1
+
+Release 2.4.1 was yanked and should not be installed.
+
+## 2.4.0
+
+- Updated TNS URL to the new URL used by TNS in the broker and harvester modules.
+- Modified ``ObservationRecord``, ``ObservationTemplate``, ``BrokerQuery``, and ``ReducedDatum`` to use ``JSONField`` instead of ``TextField``.
+- Dependency updates.
+
+### What to watch out for
+
+- This release requires running ``./manage.py migrate``.
+- Any uses of ``ObservationRecord.serialize_parameters()``, ``ObservationRecord.parameters_as_dict``, ``BrokerQuery.parameters_as_dict``, ``ObservationTemplate.serialize_parameters()`` should be replaced with ``<ModelName>.parameters``.
+
 ## 2.3.0
 
 - Added a new observing form for MUSCAT submissions to LCO.

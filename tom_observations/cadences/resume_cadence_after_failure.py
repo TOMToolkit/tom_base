@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 from dateutil.parser import parse
-import json
-
-from django import forms
+import logging
 
 from tom_observations.cadence import BaseCadenceForm, CadenceStrategy
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
+
+logger = logging.getLogger(__name__)
 
 
 class ResumeCadenceAfterFailureForm(BaseCadenceForm):
@@ -30,9 +30,6 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
                      the same cadence."""
     form = ResumeCadenceAfterFailureForm
 
-    class ResumeCadenceForm(forms.Form):
-        site = forms.CharField()
-
     def update_observation_payload(self, observation_payload):
         """
         :param observation_payload: form parameters for facility observation form
@@ -51,7 +48,7 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
 
         # Boilerplate to get necessary properties for future calls
         start_keyword, end_keyword = facility.get_start_end_keywords()
-        observation_payload = last_obs.parameters_as_dict
+        observation_payload = last_obs.parameters
 
         # Cadence logic
         # If the observation hasn't finished, do nothing
@@ -71,10 +68,13 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         observation_payload = self.update_observation_payload(observation_payload)
 
         # Submission of the new observation to the facility
-        obs_type = last_obs.parameters_as_dict.get('observation_type')
+        obs_type = last_obs.parameters.get('observation_type')
         form = facility.get_form(obs_type)(observation_payload)
-        form.is_valid()
-        observation_ids = facility.submit_observation(form.observation_payload())
+        if form.is_valid():
+            observation_ids = facility.submit_observation(form.observation_payload())
+        else:
+            logger.error(msg=f'Unable to submit next cadenced observation: {form.errors}')
+            raise Exception(f'Unable to submit next cadenced observation: {form.errors}')
 
         # Creation of corresponding ObservationRecord objects for the observations
         new_observations = []
@@ -83,7 +83,7 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
             record = ObservationRecord.objects.create(
                 target=last_obs.target,
                 facility=facility.name,
-                parameters=json.dumps(observation_payload),
+                parameters=observation_payload,
                 observation_id=observation_id
             )
             # Add ObservationRecords to the DynamicCadence
@@ -103,8 +103,12 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         if not cadence_frequency:
             raise Exception(f'The {self.name} strategy requires a cadence_frequency cadence_parameter.')
         advance_window_hours = cadence_frequency
+        window_length = parse(observation_payload[end_keyword]) - parse(observation_payload[start_keyword])
+
         new_start = parse(observation_payload[start_keyword]) + timedelta(hours=advance_window_hours)
-        new_end = parse(observation_payload[end_keyword]) + timedelta(hours=advance_window_hours)
+        if new_start < datetime.now():  # Ensure that the new window isn't in the past
+            new_start = datetime.now()
+        new_end = new_start + window_length
         observation_payload[start_keyword] = new_start.isoformat()
         observation_payload[end_keyword] = new_end.isoformat()
 
