@@ -29,10 +29,9 @@ setup(
     setup_requires=['setuptools_scm', 'wheel'],
     install_requires=[
         'astroquery==0.4.1',
-        'astroplan==0.7',
-        'astropy==4.1',
+        'astroplan==0.8',
+        'astropy==4.2',
         'beautifulsoup4~=4.9',
-        'dataclasses; python_version < "3.7"',
         'django~=3.1',  # TOM Toolkit requires db math functions
         'djangorestframework~=3.12',
         'django-bootstrap4~=2.3',
@@ -44,7 +43,7 @@ setup(
         'django-guardian~=2.3',
         'fits2image==0.4.3',
         'Markdown==3.3.4',  # django-rest-framework doc headers require this to support Markdown
-        'numpy==1.19.5',
+        'numpy~=1.20',
         'pillow==8.1.1',
         'plotly==4.14.3',
         'python-dateutil~=2.8',
