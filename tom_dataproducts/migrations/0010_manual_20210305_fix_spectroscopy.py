@@ -24,7 +24,7 @@ def photon_spectrum_to_energy_spectrum(apps, schema_editor):
         photon_spectrum = Spectrum1D(flux=photon_counts, spectral_axis=wavelength)
         energy_spectrum = photon_spectrum.flux * (photon_spectrum.energy / photon)
         energy_spectrum_object = Spectrum1D(
-                                    spectral_axis=wavelength, 
+                                    spectral_axis=wavelength,
                                     flux=energy_spectrum.to('erg / (s cm2 AA)', spectral_density(wavelength)))
         row.value = spectrum_serializer.serialize(energy_spectrum_object)
         row.save()
