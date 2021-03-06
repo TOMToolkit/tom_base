@@ -1,5 +1,5 @@
 from astropy.units import photon, Quantity, spectral_density
-from django.db import migrations, models
+from django.db import migrations
 from specutils import Spectrum1D
 
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
@@ -11,7 +11,8 @@ of this code.
 def photon_spectrum_to_energy_spectrum(wavelength, photon_counts):
     photon_spectrum = specutils.Spectrum1D(flux=photon_counts, spectral_axis=wavelength)
     energy_spectrum = photon_spectrum.flux * (photon_spectrum.energy / u.photon)
-    return specutils.Spectrum1D(spectral_axis=wavelength, flux=energy_spectrum.to('erg / (s cm2 AA)', u.spectral_density(wavelength)))
+    return specutils.Spectrum1D(spectral_axis=wavelength,
+                                flux=energy_spectrum.to('erg / (s cm2 AA)', u.spectral_density(wavelength)))
 """
 
 def photon_spectrum_to_energy_spectrum(apps, schema_editor):
@@ -26,7 +27,7 @@ def photon_spectrum_to_energy_spectrum(apps, schema_editor):
                                     spectral_axis=wavelength, 
                                     flux=energy_spectrum.to('erg / (s cm2 AA)', spectral_density(wavelength)))
         row.value = spectrum_serializer.serialize(energy_spectrum_object)
-        row.save() 
+        row.save()
 
 
 class Migration(migrations.Migration):
