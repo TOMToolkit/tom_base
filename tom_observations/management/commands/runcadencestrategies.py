@@ -24,15 +24,18 @@ class Command(BaseCommand):
         updated_cadences = []
 
         for cg in cadenced_groups:
-            strategy = get_cadence_strategy(cg.cadence_strategy)(cg)
-            new_observations = strategy.run()
-            if not new_observations:
-                logger.log(msg=f'No changes from dynamic cadence {cg}', level=logging.INFO)
-            else:
-                logger.log(msg=f'''Cadence update completed for dynamic cadence {cg},
-                                   {len(new_observations)} new observations created.''',
-                           level=logging.INFO)
-                updated_cadences.append(cg.observation_group)
+            try:
+                strategy = get_cadence_strategy(cg.cadence_strategy)(cg)
+                new_observations = strategy.run()
+                if not new_observations:
+                    logger.log(msg=f'No changes from dynamic cadence {cg}', level=logging.INFO)
+                else:
+                    logger.log(msg=f'''Cadence update completed for dynamic cadence {cg},
+                                       {len(new_observations)} new observations created.''',
+                               level=logging.INFO)
+                    updated_cadences.append(cg.observation_group)
+            except Exception as e:
+                logger.error(msg=f'Unable to run strategy {cg} with id {cg.id} due to error: {e}')
 
         if updated_cadences:
             msg = 'Created new observations for dynamic cadences with observation groups: {0}.'

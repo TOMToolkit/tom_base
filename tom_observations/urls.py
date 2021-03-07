@@ -5,6 +5,11 @@ from tom_observations.views import (AddExistingObservationView, ObservationCreat
                                     ObservationListView, ObservationRecordCancelView, ObservationRecordDetailView,
                                     ObservationTemplateCreateView, ObservationTemplateDeleteView,
                                     ObservationTemplateListView, ObservationTemplateUpdateView)
+from tom_observations.api_views import ObservationRecordViewSet
+from tom_common.api_router import SharedAPIRootRouter
+
+router = SharedAPIRootRouter()
+router.register(r'observations', ObservationRecordViewSet, 'observations')
 
 app_name = 'tom_observations'
 
