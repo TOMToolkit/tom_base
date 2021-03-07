@@ -290,6 +290,7 @@ Example:
 .. code-block
 
    {
-      'django.contrib.auth.backends.AllowAllUsersModelBackend',
-      'guardian.backends.ObjectPermissionBackend'
+      'REGISTRATION_AUTHENTICATION_BACKEND': 'django.contrib.auth.backends.ModelBackend',
+      'REGISTRATION_REDIRECT_PATTERN': 'home',
+      'SEND_APPROVAL_EMAILS': True
    }
