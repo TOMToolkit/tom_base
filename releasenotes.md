@@ -1,5 +1,18 @@
 # Release Notes
 
+## 2.5.2
+
+- Fixes the erroneous use of ``photon_flux`` and replaces it with ``flux`` for spectroscopic data processing. It also fixes past usage of ``photon_flux`` using a migration script.
+
+### What to watch out for
+
+- This release requires running ``./manage.py migrate``.
+- This release will modify all ``ReducedDatum`` objects with a ``data_type`` of ``'spectroscopy'``. It is highly recommended that you back up your data prior to running the migration script.
+
+## 2.5.1
+
+- Fixes the ObservationRecordCancelView and adds a path to it to urls.py. It is now accessible via tom_observations:cancel.
+
 ## 2.5.0
 
 - Added API endpoints for submit, list, and detail for ``ObservationRecord``s.
