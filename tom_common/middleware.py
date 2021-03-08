@@ -1,8 +1,8 @@
-from django.urls import reverse
-from django.shortcuts import redirect
-from django.contrib import messages
 from django.conf import settings
+from django.contrib import messages
 from django.http import HttpResponseForbidden
+from django.shortcuts import redirect
+from django.urls import reverse
 
 from tom_common.exceptions import ImproperCredentialsException
 
