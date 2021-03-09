@@ -7,9 +7,11 @@
 {% endblock %}
 {% block content %}
 <script>
+// This script maintains the selected tab upon reload
 $(document).ready(function(){
-  // This script maintains the selected tab upon reload
-  $.noConflict();  // This is required due to the apparent redefinition of $ in another library: https://api.jquery.com/jquery.noconflict/
+  // This is required due to the apparent redefinition of $ in another library: https://api.jquery.com/jquery.noconflict/
+  // Based on trial and error, the offending script appears to be JS9, which is used in dataproduct_list_for_target
+  $.noConflict();
   $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
     localStorage.setItem('activeTab', $(e.target).attr('href'));
   });
