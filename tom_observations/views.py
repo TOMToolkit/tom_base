@@ -82,7 +82,7 @@ class ObservationListView(FilterView):
         :param request: request object for this GET request
         :type request: HTTPRequest
         """
-        query_params = request.GET.copy()
+        query_params = request.GET.copy()  # QueryDict is immutable, and we want to append the remaining parameters to the redirect URL
         update_status = query_params.pop('update_status', False)
         if update_status:
             if not request.user.is_authenticated:

@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from django import template
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -5,7 +7,6 @@ from django.core.paginator import Paginator
 from django.shortcuts import reverse
 from datetime import datetime
 from guardian.shortcuts import get_objects_for_user
-
 from plotly import offline
 import plotly.graph_objs as go
 
@@ -186,3 +187,7 @@ def spectroscopy_for_target(context, target, dataproduct=None):
         'target': target,
         'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
     }
+
+@register.inclusion_tag('tom_dataproducts/partials/update_broker_data_button.html', takes_context=True)
+def update_broker_data_button(context):
+    return {'query_params': urlencode(context['request'].GET.dict())}
