@@ -188,6 +188,7 @@ def spectroscopy_for_target(context, target, dataproduct=None):
         'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
     }
 
+
 @register.inclusion_tag('tom_dataproducts/partials/update_broker_data_button.html', takes_context=True)
 def update_broker_data_button(context):
     return {'query_params': urlencode(context['request'].GET.dict())}

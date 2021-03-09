@@ -349,7 +349,8 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
         Method that handles the GET requests for this view. Calls the management command to update the reduced data and
         adds a hint using the messages framework about automation.
         """
-        query_params = request.GET.copy()  # QueryDict is immutable, and we want to append the remaining parameters to the redirect URL
+        # QueryDict is immutable, and we want to append the remaining params to the redirect URL
+        query_params = request.GET.copy()
         target_id = query_params.pop('target_id', None)
         out = StringIO()
         if target_id:
