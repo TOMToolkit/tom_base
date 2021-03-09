@@ -19,6 +19,15 @@ from tom_targets.models import Target
 register = template.Library()
 
 
+@register.inclusion_tag('tom_observations/partials/update_status_button.html', takes_context=True)
+def update_status_button(context):
+    """
+    An inelegant way of passing filters in query parameters while updating observation statuses.
+    Used in ObservationListView to retain filters.
+    """
+    return {'query_params': urlencode(context['request'].GET.dict())}
+
+
 @register.filter
 def display_obs_type(value):
     """
