@@ -5,8 +5,21 @@
 <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
 {% endblock %}
-{% bootstrap_javascript jquery='True' %}
 {% block content %}
+<script>
+$(document).ready(function(){
+  // This script maintains the selected tab upon reload
+  $.noConflict();  // This is required due to the apparent redefinition of $ in another library: https://api.jquery.com/jquery.noconflict/
+  $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+    localStorage.setItem('activeTab', $(e.target).attr('href'));
+  });
+
+  var activeTab = localStorage.getItem('activeTab');
+  if(activeTab){
+    $('#tabs a[href="' + activeTab + '"]').tab('show');
+  }
+});
+</script>
 <div class="row">
   <div class="col-md-4">
     <div id="target-info">
@@ -27,27 +40,27 @@
     </div>
   </div>
   <div class="col-md-8">
-    <ul class="nav nav-tabs" id="tabs">
+    <ul class="nav nav-tabs" role="tablist" id="tabs">
       <li class="nav-item">
-        <span class="nav-link active" data-target="#observe" data-toggle="tab">Observe</span>
+        <a class="nav-link active" id="observe-tab" href="#observe" role="tab" data-toggle="tab">Observe</a>
       </li>
       <li class="nav-item">
-        <span class="nav-link" data-target="#observations" data-toggle="tab">Observations</span>
+        <a class="nav-link" id="observations-tab" href="#observations" role="tab" data-toggle="tab">Observations</a>
       </li>
       <li class="nav-item">
-        <span class="nav-link" data-target="#manage-data" data-toggle="tab">Manage Data</span>
+        <a class="nav-link" id="manage-data-tab" href="#manage-data" role="tab" data-toggle="tab">Manage Data</a>
       </li>
       <li class="nav-item">
-        <span class="nav-link" data-target="#manage-groups" data-toggle="tab">Manage Groups</span>
+        <a class="nav-link" id="manage-groups-tab" href="#manage-groups" role="tab" data-toggle="tab">Manage Groups</a>
       </li>
       <li class="nav-item">
-        <span class="nav-link" data-target="#photometry" data-toggle="tab">Photometry</span>
+        <a class="nav-link" id="photometry-tab" href="#photometry" role="tab" data-toggle="tab">Photometry</a>
       </li>
       <li class="nav-item">
-        <span class="nav-link" data-target="#spectroscopy" data-toggle="tab">Spectroscopy</span>
+        <a class="nav-link" id="spectroscopy-tab" href="#spectroscopy" role="tab" data-toggle="tab">Spectroscopy</a>
       </li>
       <li class="nav-item">
-        <span class="nav-link" data-target="#facility-status" data-toggle="tab">Facility Status</span>
+        <a class="nav-link" id="facility-status-tab" href="#facility-status" role="tab" data-toggle="tab">Facility Status</a>
       </li>
     </ul>
     <div class="tab-content">
