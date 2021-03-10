@@ -6,6 +6,7 @@ from django_filters import rest_framework as drf_filters
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin
 from rest_framework.response import Response
@@ -165,3 +166,17 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    @action(detail=True, methods=['patch'])
+    def cancel(self, request, *args, **kwargs):
+        instance = self.get_object()
+        facility = get_service_class(instance.facility)()
+        try:
+            success = facility.cancel_observation(instance.observation_id)
+            if success:
+                facility.update_observation_status(instance.observation_id)
+                instance.refresh_from_db()
+                serializer = self.get_serializer(instance)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(e, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
