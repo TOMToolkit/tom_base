@@ -1,0 +1,33 @@
+<h4>Active Users</h4>
+<div class="row">
+    <div class="col-md-12">
+      {% if request.user.is_superuser %}
+      <a href="{% url 'user-create' %}" title="Create User" class="btn btn-outline-primary">Add User</a>
+      {% endif %}
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Username</th><th>Name</th><th>Email</th><th>Admin</th>
+            {% if request.user.is_superuser %}
+            <th>Edit</th><th>Delete</th><th>Change Password</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td>{{ user.username }}</td>
+            <td>{{ user.first_name }} {{ user.last_name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{% if user.is_superuser %} yes {% endif %}</td>
+            {% if request.user.is_superuser %}
+            <td><a href="{% url 'user-update' user.id %}" class="btn btn-primary">Edit</a></td>
+            <td><a href="{% url 'user-delete' user.id %}" class="btn btn-danger">Delete</a></td>
+            <td><a href="{% url 'admin-user-change-password' user.id %}" class="btn btn-primary">Change</a></td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
