@@ -1,5 +1,5 @@
 from io import StringIO
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
 from django.conf import settings
 from django.contrib import messages
@@ -349,7 +349,9 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
         Method that handles the GET requests for this view. Calls the management command to update the reduced data and
         adds a hint using the messages framework about automation.
         """
-        target_id = request.GET.get('target_id', None)
+        # QueryDict is immutable, and we want to append the remaining params to the redirect URL
+        query_params = request.GET.copy()
+        target_id = query_params.pop('target_id', None)
         out = StringIO()
         if target_id:
             call_command('updatereduceddata', target_id=target_id, stdout=out)
@@ -360,7 +362,7 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
                           'Did you know updating observation statuses can be automated? Learn how in '
                           '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
                           'the docs.</a>'))
-        return HttpResponseRedirect(self.get_redirect_url(*args, **kwargs))
+        return HttpResponseRedirect(f'{self.get_redirect_url(*args, **kwargs)}?{urlencode(query_params)}')
 
     def get_redirect_url(self):
         """

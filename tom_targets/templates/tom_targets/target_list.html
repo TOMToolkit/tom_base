@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 targets_extras %}
+{% load bootstrap4 targets_extras dataproduct_extras %}
 {% block title %}Targets{% endblock %}
 {% block content %}
 <div class="row">
@@ -16,7 +16,7 @@
           <a class="dropdown-item" href="{% url 'targets:import' %}" title="Import Targets">Import Targets</a>
           <a class="dropdown-item" href="{% url 'tom_catalogs:query' %}" title="Catalog Search">Catalog Search</a>
         </div>
-        <a href="{% url 'dataproducts:update-reduced-data' %}" class="btn btn-primary" title="Update Targets">Update Targets</a>
+        {% update_broker_data_button %}
         <button onclick="document.getElementById('invisible-export-button').click()" class="btn btn-primary">Export Filtered Targets</button>
          <!-- use an invisible button, because the key "Enter" event will triggered the first submit button and we want the default action to be applying filter -->
       </span>

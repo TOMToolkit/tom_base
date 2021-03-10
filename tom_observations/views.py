@@ -1,4 +1,5 @@
 from io import StringIO
+from urllib.parse import urlencode
 
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import HTML, Layout, Submit
@@ -81,7 +82,9 @@ class ObservationListView(FilterView):
         :param request: request object for this GET request
         :type request: HTTPRequest
         """
-        update_status = request.GET.get('update_status', False)
+        # QueryDict is immutable, and we want to append the remaining parameters to the redirect URL
+        query_params = request.GET.copy()
+        update_status = query_params.pop('update_status', False)
         if update_status:
             if not request.user.is_authenticated:
                 return redirect(reverse('login'))
@@ -92,7 +95,7 @@ class ObservationListView(FilterView):
                               'Did you know updating observation statuses can be automated? Learn how in '
                               '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
                               'the docs.</a>'))
-            return redirect(reverse('tom_observations:list'))
+            return redirect(f'{reverse("tom_observations:list")}?{urlencode(query_params)}')
 
         selected = request.GET.getlist('selected')
         observationgroups = request.GET.getlist('observationgroup')
