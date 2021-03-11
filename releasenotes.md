@@ -1,6 +1,5 @@
 # Release Notes
 
-<<<<<<< Updated upstream
 ## 2.5.2
 
 - Fixes the erroneous use of ``photon_flux`` and replaces it with ``flux`` for spectroscopic data processing. It also fixes past usage of ``photon_flux`` using a migration script.
@@ -13,12 +12,6 @@
 ## 2.5.1
 
 - Fixes the ObservationRecordCancelView and adds a path to it to urls.py. It is now accessible via tom_observations:cancel.
-=======
-## 2.5.1
-
-- Fixes the ObservationRecordCancelView and adds a path to it to urls.py. It is now accessible via 
-tom_observations:cancel.
->>>>>>> Stashed changes
 
 ## 2.5.0
 
