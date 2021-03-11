@@ -25,7 +25,8 @@ logger = logging.getLogger(__name__)
 class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin, PermissionListMixin,
                                RetrieveModelMixin):
     """
-    Viewset for Target objects. By default supports create for observation submission, list, and detail.
+    Viewset for Target objects. By default supports create for observation submission, list, and detail. Also supports
+    cancelling observations at ``/api/observations/<pk>/cancel/``.
     See the docs on viewsets: https://www.django-rest-framework.org/api-guide/viewsets/
 
     To view supported query parameters, please use the ``OPTIONS`` endpoint, which can be accessed through the web UI.
@@ -70,7 +71,7 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
                 Q(user=self.request.user)
             )
 
-    # /api/observations/
+    # POST /api/observations/
     def create(self, request, *args, **kwargs):
         """
         Endpoint for submitting a new observation. Please see ObservationRecordViewSet for details on submission.
@@ -169,9 +170,11 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+    # PATCH /api/observations/<pk>/cancel/
     # TODO: write tests
     @action(detail=True, methods=['patch'])
     def cancel(self, request, *args, **kwargs):
+        # TODO: don't allow users without permission to cancel this observation
         instance = self.get_object()
         facility = get_service_class(instance.facility)()
         try:
