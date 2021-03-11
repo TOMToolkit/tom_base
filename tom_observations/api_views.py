@@ -71,6 +71,7 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
             )
 
     # /api/observations/
+    #  TODO: write tests for submission with groups
     def create(self, request, *args, **kwargs):
         """
         Endpoint for submitting a new observation. Please see ObservationRecordViewSet for details on submission.
@@ -142,10 +143,12 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
         # Create the serializer data used to create the observation records
         serializer_data = []
         for obsr_id in observation_ids:
-            obsr_data = {
+            obsr_data = {  # TODO: at present, submitted fields have to be added to this dict manually, maybe fix?
+                'name': self.request.data.get('name', ''),
                 'target': target.id,
                 'user': self.request.user.id,
                 'facility': facility.name,
+                'groups': self.request.data.get('groups', []),
                 'parameters': observation_form.serialize_parameters(),
                 'observation_id': obsr_id,
             }
@@ -167,6 +170,7 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+    # TODO: write tests
     @action(detail=True, methods=['patch'])
     def cancel(self, request, *args, **kwargs):
         instance = self.get_object()
