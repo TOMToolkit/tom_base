@@ -71,7 +71,6 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
             )
 
     # /api/observations/
-    #  TODO: write tests for submission with groups
     def create(self, request, *args, **kwargs):
         """
         Endpoint for submitting a new observation. Please see ObservationRecordViewSet for details on submission.

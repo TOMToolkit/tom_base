@@ -65,7 +65,7 @@ class DataProductSerializer(serializers.ModelSerializer):
 
         # Save groups for this target
         group_serializer = GroupSerializer(data=groups, many=True)
-        if group_serializer.is_valid() and settings.TARGET_PERMISSIONS_ONLY == False:
+        if group_serializer.is_valid() and settings.TARGET_PERMISSIONS_ONLY is False:
             for group in groups:
                 group_instance = Group.objects.get(pk=group['id'])
                 assign_perm('tom_dataproducts.view_dataproduct', group_instance, dp)

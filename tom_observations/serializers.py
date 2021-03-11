@@ -29,16 +29,13 @@ class ObservationRecordSerializer(serializers.ModelSerializer):
         model = ObservationRecord
         fields = '__all__'
 
-    # TODO: write tests
     def create(self, validated_data):
-        print(validated_data)
         groups = validated_data.pop('groups', [])
-        print(groups)
 
         obsr = ObservationRecord.objects.create(**validated_data)
 
         group_serializer = GroupSerializer(data=groups, many=True)
-        if group_serializer.is_valid():
+        if group_serializer.is_valid() and settings.TARGET_PERMISSIONS_ONLY is False:
             for group in groups:
                 group_instance = Group.objects.get(pk=group['id'])
                 assign_perm('tom_observations.view_observationrecord', group_instance, obsr)

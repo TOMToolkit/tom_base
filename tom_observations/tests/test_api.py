@@ -1,7 +1,7 @@
 from copy import deepcopy
 from unittest.mock import patch
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.test import override_settings
 from django.urls import reverse
 from guardian.shortcuts import assign_perm
@@ -16,7 +16,8 @@ from tom_targets.tests.factories import SiderealTargetFactory
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility',
-                                         'tom_observations.tests.utils.FakeManualFacility'])
+                                         'tom_observations.tests.utils.FakeManualFacility'],
+                   TARGET_PERMISSIONS_ONLY=True)
 class TestObservationViewset(APITestCase):
     def setUp(self):
         self.user = User.objects.create(username='testuser')
@@ -188,6 +189,9 @@ class TestObservationViewset(APITestCase):
                                     'Observation submission successful, but failed to create a corresponding',
                                     status_code=status.HTTP_400_BAD_REQUEST)
 
+    def test_observation_cancel(self):
+        pass
+
 
 @override_settings(TARGET_PERMISSIONS_ONLY=False)
 class TestObservationViewsetRowLevelPermissions(APITestCase):
@@ -221,3 +225,32 @@ class TestObservationViewsetRowLevelPermissions(APITestCase):
         with self.subTest('Test that a user cannot view an ObservationRecord for which they lack permissions.'):
             response = self.client.get(reverse('api:observations-detail', args=(self.obsr3.id,)))
             self.assertContains(response, 'Not found.', status_code=status.HTTP_404_NOT_FOUND)
+
+    def test_observation_submit_with_permissions(self):
+        """Test observation API submit endpoint with groups."""
+        group = Group.objects.create(name='testgroup')
+        group.user_set.add(self.user)
+        user2 = User.objects.create(username='testuser2')
+        form_data = {
+            'target_id': self.st.id,
+            'facility': 'FakeRoboticFacility',
+            'observation_type': 'OBSERVATION',
+            'groups': [{'id': group.id}],
+            'observing_parameters': {
+                'test_input': 'gnomes'
+            }
+        }
+
+        response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
+        self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
+        self.assertDictContainsSubset({'test_input': 'gnomes'}, response.json()[0]['parameters'])
+
+        # Test that user in testgroup can see observation
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('api:observations-list'))
+        self.assertContains(response, 'fakeid', status_code=status.HTTP_200_OK)
+
+        # Test that user not in testgroup can't see observation
+        self.client.force_login(user2)
+        response = self.client.get(reverse('api:observations-list'))
+        self.assertEqual(response.json()['count'], 0)
