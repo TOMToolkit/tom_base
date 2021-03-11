@@ -313,7 +313,7 @@ class BaseObservationFacility(ABC):
 
         If the cancellation was successful, return True. Otherwise, return False.
         """
-        return False
+        raise NotImplementedError('This facility has not implemented cancel observation.')
 
     @abstractmethod
     def get_observation_url(self, observation_id):

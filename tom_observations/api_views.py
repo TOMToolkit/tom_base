@@ -171,10 +171,8 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     # PATCH /api/observations/<pk>/cancel/
-    # TODO: write tests
     @action(detail=True, methods=['patch'])
     def cancel(self, request, *args, **kwargs):
-        # TODO: don't allow users without permission to cancel this observation
         instance = self.get_object()
         facility = get_service_class(instance.facility)()
         try:
@@ -185,4 +183,4 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
                 serializer = self.get_serializer(instance)
                 return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response(e, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            raise ValidationError(f'Unable to cancel observation due to: {e}')

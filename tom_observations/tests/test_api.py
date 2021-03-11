@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.contrib.auth.models import Group, User
 from django.test import override_settings
 from django.urls import reverse
+from django.utils import timezone
 from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -189,21 +190,37 @@ class TestObservationViewset(APITestCase):
                                     'Observation submission successful, but failed to create a corresponding',
                                     status_code=status.HTTP_400_BAD_REQUEST)
 
-    def test_observation_cancel(self):
-        pass
+    @patch('tom_observations.tests.utils.FakeRoboticFacility.get_observation_status')
+    def test_observation_cancel(self, mock_get_status):
+        mock_get_status.return_value = {'state': 'CANCELED',
+                                        'scheduled_start': timezone.now(),
+                                        'scheduled_end': timezone.now()}
+        user2 = User.objects.create(username='testuser2')
+        self.obsr2.facility = 'FakeRoboticFacility'
+        self.obsr2.save()
+
+        response = self.client.patch(reverse('api:observations-cancel', kwargs={'pk': self.obsr2.id}))
+        self.assertContains(response, 'CANCELED')
+
+        self.client.force_login(user2)
+        response = self.client.patch(reverse('api:observations-cancel', kwargs={'pk': self.obsr2.id}))
+        self.assertContains(response, 'Not found.', status_code=status.HTTP_404_NOT_FOUND)
 
 
-@override_settings(TARGET_PERMISSIONS_ONLY=False)
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility',
+                                         'tom_observations.tests.utils.FakeManualFacility'],
+                   TARGET_PERMISSIONS_ONLY=False)
 class TestObservationViewsetRowLevelPermissions(APITestCase):
     def setUp(self):
         self.user = User.objects.create(username='testuser')
         self.st = SiderealTargetFactory.create(name='testtarget')
 
-        self.obsr = ObservingRecordFactory.create(target_id=self.st.id, user=self.user)
-        self.obsr2 = ObservingRecordFactory.create(target_id=self.st.id)
-        self.obsr3 = ObservingRecordFactory.create(target_id=self.st.id)
+        self.obsr = ObservingRecordFactory.create(target_id=self.st.id, user=self.user, status='PENDING')
+        self.obsr2 = ObservingRecordFactory.create(target_id=self.st.id, status='PENDING')
+        self.obsr3 = ObservingRecordFactory.create(target_id=self.st.id, status='PENDING')
 
         assign_perm('tom_observations.view_observationrecord', self.user, self.obsr2)
+        assign_perm('tom_observations.change_observationrecord', self.user, self.obsr2)
 
         self.client.force_login(self.user)
 
@@ -254,3 +271,19 @@ class TestObservationViewsetRowLevelPermissions(APITestCase):
         self.client.force_login(user2)
         response = self.client.get(reverse('api:observations-list'))
         self.assertEqual(response.json()['count'], 0)
+
+    @patch('tom_observations.tests.utils.FakeRoboticFacility.get_observation_status')
+    def test_observation_cancel(self, mock_get_status):
+        mock_get_status.return_value = {'state': 'CANCELED',
+                                        'scheduled_start': timezone.now(),
+                                        'scheduled_end': timezone.now()}
+        user2 = User.objects.create(username='testuser2')
+        self.obsr2.facility = 'FakeRoboticFacility'
+        self.obsr2.save()
+
+        response = self.client.patch(reverse('api:observations-cancel', kwargs={'pk': self.obsr2.id}))
+        self.assertContains(response, 'CANCELED')
+
+        self.client.force_login(user2)
+        response = self.client.patch(reverse('api:observations-cancel', kwargs={'pk': self.obsr2.id}))
+        self.assertContains(response, 'Not found.', status_code=status.HTTP_404_NOT_FOUND)
