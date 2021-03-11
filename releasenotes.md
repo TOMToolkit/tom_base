@@ -1,5 +1,14 @@
 # Release Notes
 
+## 2.5.3
+
+- Retains the selected tab on reload for target detail page, as well as selected filters on target list and observation list when updating statuses.
+- Adds new statuses supported by the LCO facility.
+
+### What to watch out for
+
+- In order to leverage the tab retention, you'll need to copy the changes in ``tom_targets/target_detail.html``, ``tom_observations/observation_list``, and ``tom_targets/target_list.html``. You can review [this pull request](https://github.com/TOMToolkit/tom_base/pull/436/files) to see what has changed.
+
 ## 2.5.2
 
 - Fixes the erroneous use of ``photon_flux`` and replaces it with ``flux`` for spectroscopic data processing. It also fixes past usage of ``photon_flux`` using a migration script.
