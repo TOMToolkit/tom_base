@@ -1,8 +1,10 @@
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.db.models.query import QuerySet
-from guardian.shortcuts import get_objects_for_user
+from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import serializers
 
+from tom_common.serializers import GroupSerializer
 from tom_observations.models import ObservationGroup, ObservationRecord
 
 
@@ -19,12 +21,28 @@ class ObservationGroupField(serializers.RelatedField):
 
 
 class ObservationRecordSerializer(serializers.ModelSerializer):
+    groups = GroupSerializer(many=True, required=False)  # TODO: return groups in detail and list
     observation_groups = ObservationGroupField(many=True, read_only=True, source='observationgroup_set')
     status = serializers.CharField(required=False)
 
     class Meta:
         model = ObservationRecord
         fields = '__all__'
+
+    def create(self, validated_data):
+        groups = validated_data.pop('groups', [])
+
+        obsr = ObservationRecord.objects.create(**validated_data)
+
+        group_serializer = GroupSerializer(data=groups, many=True)
+        if group_serializer.is_valid() and settings.TARGET_PERMISSIONS_ONLY is False:
+            for group in groups:
+                group_instance = Group.objects.get(pk=group['id'])
+                assign_perm('tom_observations.view_observationrecord', group_instance, obsr)
+                assign_perm('tom_observations.change_observationrecord', group_instance, obsr)
+                assign_perm('tom_observations.delete_observationrecord', group_instance, obsr)
+
+        return obsr
 
 
 class ObservationRecordFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):

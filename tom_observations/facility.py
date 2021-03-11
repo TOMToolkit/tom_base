@@ -307,6 +307,14 @@ class BaseObservationFacility(ABC):
         """
         return {}
 
+    def cancel_observation(self, observation_id):
+        """
+        Takes an observation id and submits a request to the observatory that the observation be cancelled.
+
+        If the cancellation was successful, return True. Otherwise, return False.
+        """
+        raise NotImplementedError('This facility has not implemented cancel observation.')
+
     @abstractmethod
     def get_observation_url(self, observation_id):
         """

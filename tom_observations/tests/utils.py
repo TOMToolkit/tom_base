@@ -1,10 +1,12 @@
-from django import forms
 from datetime import timedelta
+
+from django import forms
 from django.utils import timezone
 from astropy import units
 
 from tom_observations.facility import BaseRoboticObservationFacility, GenericObservationForm
 from tom_observations.facility import BaseManualObservationFacility
+from tom_observations.models import ObservationRecord
 from tom_observations.observation_template import GenericTemplateForm
 
 # Site data matches built-in pyephem observer data for Los Angeles
@@ -64,6 +66,12 @@ class FakeRoboticFacility(BaseRoboticObservationFacility):
 
     def submit_observation(self, payload):
         return ['fakeid']
+
+    def cancel_observation(self, observation_id):
+        obsr = ObservationRecord.objects.get(observation_id=observation_id)
+        obsr.status = 'CANCELED'
+        obsr.save()
+        return True
 
     def get_flux_constant(self):
         return units.erg / units.angstrom
