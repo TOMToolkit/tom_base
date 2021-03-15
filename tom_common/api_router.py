@@ -1,7 +1,8 @@
+import logging
+
 from django.conf import settings
 from rest_framework.routers import DefaultRouter, SimpleRouter
 
-import logging
 logger = logging.getLogger(__name__)
 
 

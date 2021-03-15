@@ -6,6 +6,7 @@ from django_filters import rest_framework as drf_filters
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin
 from rest_framework.response import Response
@@ -24,7 +25,8 @@ logger = logging.getLogger(__name__)
 class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin, PermissionListMixin,
                                RetrieveModelMixin):
     """
-    Viewset for Target objects. By default supports create for observation submission, list, and detail.
+    Viewset for Target objects. By default supports create for observation submission, list, and detail. Also supports
+    cancelling observations at ``/api/observations/<pk>/cancel/``.
     See the docs on viewsets: https://www.django-rest-framework.org/api-guide/viewsets/
 
     To view supported query parameters, please use the ``OPTIONS`` endpoint, which can be accessed through the web UI.
@@ -69,7 +71,7 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
                 Q(user=self.request.user)
             )
 
-    # /api/observations/
+    # POST /api/observations/
     def create(self, request, *args, **kwargs):
         """
         Endpoint for submitting a new observation. Please see ObservationRecordViewSet for details on submission.
@@ -141,10 +143,12 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
         # Create the serializer data used to create the observation records
         serializer_data = []
         for obsr_id in observation_ids:
-            obsr_data = {
+            obsr_data = {  # TODO: at present, submitted fields have to be added to this dict manually, maybe fix?
+                'name': self.request.data.get('name', ''),
                 'target': target.id,
                 'user': self.request.user.id,
                 'facility': facility.name,
+                'groups': self.request.data.get('groups', []),
                 'parameters': observation_form.serialize_parameters(),
                 'observation_id': obsr_id,
             }
@@ -165,3 +169,18 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    # PATCH /api/observations/<pk>/cancel/
+    @action(detail=True, methods=['patch'])
+    def cancel(self, request, *args, **kwargs):
+        instance = self.get_object()
+        facility = get_service_class(instance.facility)()
+        try:
+            success = facility.cancel_observation(instance.observation_id)
+            if success:
+                facility.update_observation_status(instance.observation_id)
+                instance.refresh_from_db()
+                serializer = self.get_serializer(instance)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            raise ValidationError(f'Unable to cancel observation due to: {e}')

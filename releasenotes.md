@@ -21,12 +21,6 @@
 ## 2.5.1
 
 - Fixes the ObservationRecordCancelView and adds a path to it to urls.py. It is now accessible via tom_observations:cancel.
-=======
-## 2.5.1
-
-- Fixes the ObservationRecordCancelView and adds a path to it to urls.py. It is now accessible via 
-tom_observations:cancel.
->>>>>>> Stashed changes
 
 ## 2.5.0
 

@@ -50,6 +50,14 @@ observation requests.
 
 [Installation Instructions](https://github.com/TOMToolkit/tom_lt/blob/main/README.md#installation-and-setup)
 
+### tom-registration
+
+This module provides two registration flows for users to self-register--either requiring approval, or not.
+
+[Github](https://github.com/TOMToolkit/tom_registration)
+
+[Installation Instructions](https://github.com/TOMToolkit/tom_registration#installation)
+
 ### tom-scimma
 
 This module provides an interface to query the [Skip alert broker](http://skip.dev.hop.scimma.org) provided by [SCIMMA](https://scimma.org).
