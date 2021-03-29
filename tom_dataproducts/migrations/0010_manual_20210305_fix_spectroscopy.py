@@ -19,6 +19,8 @@ def photon_spectrum_to_energy_spectrum(apps, schema_editor):
     reduced_datum = apps.get_model('tom_dataproducts', 'ReducedDatum')
     spectrum_serializer = SpectrumSerializer()
     for row in reduced_datum.objects.filter(data_type='spectroscopy'):
+        # In order to avoid a KeyError on already-corrected data or data that has no need to be corrected, we only
+        # perform the spectroscopy correction on values that have photon_flux/photon_flux_units
         if all(k in row.value.keys() for k in ['photon_flux', 'photon_flux_units', 'wavelength', 'wavelength_units']):
             photon_counts = Quantity(value=row.value['photon_flux'], unit=row.value['photon_flux_units'])
             wavelength = Quantity(value=row.value['wavelength'], unit=row.value['wavelength_units'])
