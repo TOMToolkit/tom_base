@@ -19,15 +19,16 @@ def photon_spectrum_to_energy_spectrum(apps, schema_editor):
     reduced_datum = apps.get_model('tom_dataproducts', 'ReducedDatum')
     spectrum_serializer = SpectrumSerializer()
     for row in reduced_datum.objects.filter(data_type='spectroscopy'):
-        photon_counts = Quantity(value=row.value['photon_flux'], unit=row.value['photon_flux_units'])
-        wavelength = Quantity(value=row.value['wavelength'], unit=row.value['wavelength_units'])
-        photon_spectrum = Spectrum1D(flux=photon_counts, spectral_axis=wavelength)
-        energy_spectrum = photon_spectrum.flux * (photon_spectrum.energy / photon)
-        energy_spectrum_object = Spectrum1D(
-                                    spectral_axis=wavelength,
-                                    flux=energy_spectrum.to('erg / (s cm2 AA)', spectral_density(wavelength)))
-        row.value = spectrum_serializer.serialize(energy_spectrum_object)
-        row.save()
+        if all(k in row.value.keys() for k in ['photon_flux', 'photon_flux_units', 'wavelength', 'wavelength_units']):
+            photon_counts = Quantity(value=row.value['photon_flux'], unit=row.value['photon_flux_units'])
+            wavelength = Quantity(value=row.value['wavelength'], unit=row.value['wavelength_units'])
+            photon_spectrum = Spectrum1D(flux=photon_counts, spectral_axis=wavelength)
+            energy_spectrum = photon_spectrum.flux * (photon_spectrum.energy / photon)
+            energy_spectrum_object = Spectrum1D(
+                                        spectral_axis=wavelength,
+                                        flux=energy_spectrum.to('erg / (s cm2 AA)', spectral_density(wavelength)))
+            row.value = spectrum_serializer.serialize(energy_spectrum_object)
+            row.save()
 
 
 class Migration(migrations.Migration):
