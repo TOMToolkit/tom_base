@@ -34,10 +34,12 @@ For development information targeted at the maintainers of the project, please s
 ## Plugins
 
 ### tom_alerts_dash
+
 The [tom_alerts_dash](https://github.com/TOMToolkit/tom_alerts_dash) plugin adds responsive ReactJS views to the 
 `tom_alerts` module for supported brokers.
 
 ### Antares
+
 The [tom-antares](https://github.com/TOMToolkit/tom_antares) plugin adds support
 for querying the Antares broker for targets of interest.
 
@@ -56,3 +58,8 @@ state, with little error handling and minimal instrument options, but can succes
 requests.
 
 [Github](https://github.com/TOMToolkit/tom_lt)
+
+### tom_registration
+
+The [tom_registration](https://github.com/TOMToolkit/tom_registration) plugin introduces support for two TOM registration 
+flows--an open registration, and a registration that requires administrator approval.
