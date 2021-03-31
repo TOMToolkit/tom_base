@@ -45,18 +45,18 @@ jobs:
   #       python setup.py sdist bdist_wheel
   #       twine upload dist/*
 
-  create_release:
-    needs: publish_to_pypi
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: true
+  # create_release:
+  #   needs: publish_to_pypi
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - uses: actions/create-release@v1
+  #     env:
+  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     with:
+  #       tag_name: ${{ github.ref }}
+  #       release_name: Release ${{ github.ref }}
+  #       draft: true
 
   one:
     runs-on: ubuntu-latest
