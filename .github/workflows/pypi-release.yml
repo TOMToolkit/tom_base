@@ -11,6 +11,7 @@ jobs:
       - name: Dump GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
   # publish_to_pypi:
   #   needs: run_tests
   #   runs-on: ubuntu-latest
