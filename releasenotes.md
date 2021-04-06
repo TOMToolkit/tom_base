@@ -1,5 +1,18 @@
 # Release Notes
 
+## 2.6.0
+
+- Refactors user_list to use templatetags in order to facilitate introduction of new [tom_registration](https://github.com/TOMToolkit/tom_registration) installable app.
+- Adds django-rest-framework API endpoint for cancelling observations.
+- Adds support for assigning group permissions to observations submitted via the django-rest-framework API endpoint.
+- Upgrades ``numpy``, ``astropy``, and ``astroplan``, and removes support for Python 3.6.
+
+### What to watch out for
+
+- HTML in ``user_list.html`` has been replaced by templatetags, so anyone overriding the ``user_list.html`` template should copy the changes. They can be reviewed in [this pull request](https://github.com/TOMToolkit/tom_base/pull/430/files).
+- HTML for login buttons in ``base.html`` has been replaced by a templatetag. Changes can be reviewed in the above pull request.
+- Support for Python 3.6 has been removed.
+
 ## 2.5.3
 
 - Retains the selected tab on reload for target detail page, as well as selected filters on target list and observation list when updating statuses.

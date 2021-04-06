@@ -1,6 +1,6 @@
 # TOM Toolkit
-[![Build Status](https://travis-ci.com/TOMToolkit/tom_base.svg?branch=main)](https://travis-ci.com/TOMToolkit/tom_base)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/578e468dbd01494696d4446288858252)](https://www.codacy.com/gh/TOMToolkit/tom_base/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=TOMToolkit/tom_base&amp;utm_campaign=Badge_Grade)
+[![run-tests](https://github.com/TOMToolkit/tom_base/actions/workflows/run-tests.yml/badge.svg)](https://github.com/TOMToolkit/tom_base/actions/workflows/run-tests.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/a09d330b4dca4a4a86e68755268b7da3)](https://www.codacy.com/gh/TOMToolkit/tom_base/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=TOMToolkit/tom_base&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://coveralls.io/repos/github/TOMToolkit/tom_base/badge.svg?branch=main)](https://coveralls.io/github/TOMToolkit/tom_base?branch=main)
 [![Documentation Status](https://readthedocs.org/projects/tom-toolkit/badge/?version=stable)](https://tom-toolkit.readthedocs.io/en/stable/?badge=stable)
 [Documentation](https://tom-toolkit.readthedocs.io/en/latest/)
@@ -34,10 +34,12 @@ For development information targeted at the maintainers of the project, please s
 ## Plugins
 
 ### tom_alerts_dash
+
 The [tom_alerts_dash](https://github.com/TOMToolkit/tom_alerts_dash) plugin adds responsive ReactJS views to the 
 `tom_alerts` module for supported brokers.
 
 ### Antares
+
 The [tom-antares](https://github.com/TOMToolkit/tom_antares) plugin adds support
 for querying the Antares broker for targets of interest.
 
@@ -56,3 +58,8 @@ state, with little error handling and minimal instrument options, but can succes
 requests.
 
 [Github](https://github.com/TOMToolkit/tom_lt)
+
+### tom_registration
+
+The [tom_registration](https://github.com/TOMToolkit/tom_registration) plugin introduces support for two TOM registration 
+flows--an open registration, and a registration that requires administrator approval.
