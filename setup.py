@@ -38,8 +38,8 @@ setup(
         'django-contrib-comments~=2.0',  # Earlier version are incompatible with Django >= 3.0
         'django-crispy-forms~=1.11',
         'django-extensions~=3.1',
-        'django-gravatar2~=1.4',
         'django-filter~=2.4',
+        'django-gravatar2~=1.4',
         'django-guardian~=2.3',
         'fits2image==0.4.3',
         'Markdown==3.3.4',  # django-rest-framework doc headers require this to support Markdown
@@ -51,7 +51,13 @@ setup(
         'specutils==1.1.1',
     ],
     extras_require={
-        'test': ['factory_boy==3.2.0']
+        'test': ['factory_boy==3.2.0'],
+        'docs': [
+            'recommonmark~=0.7',
+            'sphinx~=3.5',
+            'tom_antares',
+            'tom_scimma'
+        ]
     },
     include_package_data=True,
 )
