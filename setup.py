@@ -30,7 +30,7 @@ setup(
     install_requires=[
         'astroquery==0.4.1',
         'astroplan==0.8',
-        'astropy==4.2',
+        'astropy==4.2.1',
         'beautifulsoup4~=4.9',
         'django~=3.1',  # TOM Toolkit requires db math functions
         'djangorestframework~=3.12',
@@ -44,7 +44,7 @@ setup(
         'fits2image==0.4.3',
         'Markdown==3.3.4',  # django-rest-framework doc headers require this to support Markdown
         'numpy~=1.20',
-        'pillow==8.1.2',
+        'pillow==8.2.0',
         'plotly==4.14.3',
         'python-dateutil~=2.8',
         'requests~=2.25',
