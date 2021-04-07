@@ -369,7 +369,7 @@ class TestDataSerializer(TestCase):
         }
         deserialized = self.serializer.deserialize(serialized_spectrum)
 
-        self.assertTrue(type(deserialized) is Spectrum1D)
+        self.assertTrue(isinstance(deserialized, Spectrum1D))
         self.assertEqual(deserialized.flux.mean().value, 1.5)
         self.assertEqual(deserialized.wavelength.mean().value, 1.5)
 
@@ -422,7 +422,7 @@ class TestDataProcessor(TestCase):
         with open('tom_dataproducts/tests/test_data/test_spectrum.csv', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.csv', spectrum_file)
             spectrum, _ = self.spectrum_data_processor._process_spectrum_from_plaintext(self.data_product)
-            self.assertTrue(type(spectrum) is Spectrum1D)
+            self.assertTrue(isinstance(spectrum, Spectrum1D))
             self.assertAlmostEqual(spectrum.flux.mean().value, 1.166619e-14, places=19)
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 3250.744489, places=5)
 

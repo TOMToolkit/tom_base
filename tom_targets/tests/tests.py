@@ -692,7 +692,7 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.client.force_login(user)
         # create targets
         self.fake_targets = []
-        for i in range(3):
+        for _ in range(3):
             ft = SiderealTargetFactory.create()
             self.fake_targets.append(ft)
             assign_perm('tom_targets.view_target', user, ft)

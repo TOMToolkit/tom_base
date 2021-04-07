@@ -19,8 +19,7 @@ from tom_targets.models import Target
 from guardian.shortcuts import assign_perm
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility',
-                                         'tom_observations.tests.utils.FakeManualFacility'],
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
                    TARGET_PERMISSIONS_ONLY=True)
 class TestObservationViews(TestCase):
     def setUp(self):
@@ -108,6 +107,24 @@ class TestObservationViews(TestCase):
         obs_group.refresh_from_db()
         self.assertNotIn(self.observation_record, obs_group.observation_records.all())
 
+
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility',
+                                         'tom_observations.tests.utils.FakeManualFacility'],
+                   TARGET_PERMISSIONS_ONLY=True)
+class TestObservationCreateView(TestCase):
+    def setUp(self):
+        self.target = SiderealTargetFactory.create()
+        self.target_name = TargetNameFactory.create(target=self.target)
+        self.observation_record = ObservingRecordFactory.create(
+            target_id=self.target.id,
+            facility=FakeRoboticFacility.name,
+            parameters={}
+        )
+        self.user = User.objects.create_user(username='vincent_adultman', password='important')
+        self.user2 = User.objects.create_user(username='peon', password='plebian')
+        assign_perm('tom_targets.view_target', self.user, self.target)
+        self.client.force_login(self.user)
+
     def test_submit_observation_robotic(self):
         form_data = {
             'target_id': self.target.id,
@@ -125,6 +142,16 @@ class TestObservationViews(TestCase):
         )
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
         self.assertEqual(ObservationRecord.objects.filter(observation_id='fakeid').first().user, self.user)
+    
+    def test_submit_observation_cadence(self):
+        form_data = {
+            'target_id': self.target.id,
+            'test_input': 'gnomes',
+            'facility': 'FakeRoboticFacility',
+            'observation_type': 'OBSERVATION',
+            'cadence_strategy': 'RetryFailedObservationsStrategy',
+            'cadence_frequency': 24,
+        }
 
     def test_submit_observation_manual(self):
         form_data = {
@@ -355,8 +382,8 @@ class TestGetVisibility(TestCase):
         expected_time_range = [58400.58074074052, 58400.92796296533,
                                58401.27518519014, 58401.62240741495,
                                58401.96962963976, 58402.31685186457]
-        for i in range(0, len(expected_time_range)):
-            self.assertEqual(check_time_range[i], expected_time_range[i])
+        for i, value in enumerate(expected_time_range):
+            self.assertEqual(check_time_range[i], value)
 
     def test_get_astroplan_sun_and_time_small_range(self):
         end = self.start + timedelta(hours=10)
@@ -366,8 +393,8 @@ class TestGetVisibility(TestCase):
         check_time_range = [time.mjd for time in time_range[::20]]
         expected_time_range = [58400.58074074052, 58400.71962963045,
                                58400.85851852037, 58400.997407410294]
-        for i in range(0, len(expected_time_range)):
-            self.assertEqual(check_time_range[i], expected_time_range[i])
+        for i, value in enumerate(expected_time_range):
+            self.assertEqual(check_time_range[i], value)
 
     def test_get_visibility_invalid_target_type(self):
         invalid_target = self.target

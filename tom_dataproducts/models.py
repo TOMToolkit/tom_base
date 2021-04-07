@@ -334,7 +334,7 @@ class ReducedDatum(models.Model):
         get_latest_by = ('timestamp',)
 
     def save(self, *args, **kwargs):
-        for dp_type, dp_values in settings.DATA_PRODUCT_TYPES.items():
+        for _, dp_values in settings.DATA_PRODUCT_TYPES.items():
             if self.data_type and self.data_type == dp_values[0]:
                 break
         else:
