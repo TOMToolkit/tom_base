@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
 from unittest import mock
 
+from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
+from django.forms import ValidationError
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.contrib.auth.models import User
 
 from astroplan import FixedTarget
 from astropy.coordinates import get_sun, SkyCoord
@@ -67,8 +69,12 @@ class TestObservationViews(TestCase):
 
     def test_update_observations(self):
         response = self.client.get(reverse('tom_observations:list') + '?update_status=True', follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'COMPLETED')
+        self.assertContains(response, 'COMPLETED', status_code=200)
+
+    def test_update_observations_not_authenticated(self):
+        """Test that an unauthenticated user is redirected to the login screen if they attempt to update observations."""
+        response = self.client.get(reverse('tom_observations:list') + '?update_status=True')
+        self.assertEqual(response.status_code, 302)
 
     def test_get_observation_form(self):
         url = f"{reverse('tom_observations:create', kwargs={'facility': 'FakeRoboticFacility'})}" \
@@ -131,6 +137,96 @@ class TestObservationViews(TestCase):
         self.client.post(url, data=form_data, follow=True)
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
         self.assertEqual(ObservationRecord.objects.filter(observation_id='fakeid').first().user, self.user)
+
+
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+                   TARGET_PERMISSIONS_ONLY=True)
+class TestObservationCancelView(TestCase):
+    def setUp(self):
+        self.target = SiderealTargetFactory.create()
+        self.observation_record = ObservingRecordFactory.create(
+            target_id=self.target.id,
+            facility=FakeRoboticFacility.name,
+            parameters={},
+            status='PENDING'
+        )
+        self.user = User.objects.create_user(username='vincent_adultman', password='important')
+        self.client.force_login(self.user)
+
+    @mock.patch('tom_observations.tests.utils.FakeRoboticFacility.get_observation_status')
+    def test_cancel_observation(self, mock_get_status):
+        mock_get_status.return_value = {'state': 'CANCELED',
+                                        'scheduled_start': datetime.now(),
+                                        'scheduled_end': datetime.now()}
+        self.observation_record.status = 'PENDING'
+        self.observation_record.save()
+
+        self.client.get(reverse('tom_observations:cancel', kwargs={'pk': self.observation_record.id}))
+        self.observation_record.refresh_from_db()
+        self.assertEqual(self.observation_record.status, 'CANCELED')
+
+    @mock.patch('tom_observations.tests.utils.FakeRoboticFacility.cancel_observation')
+    def test_cancel_observation_failure(self, mock_cancel_observation):
+        mock_cancel_observation.return_value = False
+        response = self.client.get(reverse('tom_observations:cancel', kwargs={'pk': self.observation_record.id}))
+
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertEqual(messages[0][0], 'Unable to cancel observation.')
+
+    @mock.patch('tom_observations.tests.utils.FakeRoboticFacility.cancel_observation')
+    def test_cancel_observation_exception(self, mock_cancel_observation):
+        mock_cancel_observation.side_effect = ValidationError('mock error')
+        response = self.client.get(reverse('tom_observations:cancel', kwargs={'pk': self.observation_record.id}))
+
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertEqual(messages[0][0], 'Unable to cancel observation: [\'mock error\']')
+
+
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+                   TARGET_PERMISSIONS_ONLY=True)
+class TestAddExistingObservationView(TestCase):
+    def setUp(self):
+        self.target = SiderealTargetFactory.create()
+        self.user = User.objects.create_user(username='vincent_adultman', password='important')
+        self.client.force_login(self.user)
+
+    def test_add_existing_observation(self):
+        form_data = {
+            'facility': 'FakeRoboticFacility',
+            'target_id': self.target.id,
+            'observation_id': '1234567890'
+        }
+        response = self.client.post(reverse('tom_observations:add-existing'), data=form_data, follow=True)
+
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertEqual(messages[0][0], 'Successfully associated observation record 1234567890')
+
+        self.assertTrue(ObservationRecord.objects.filter(observation_id=form_data['observation_id']).exists())
+
+    def test_add_existing_observation_duplicate(self):
+        obsr = ObservingRecordFactory.create(
+            target_id=self.target.id,
+            facility=FakeRoboticFacility.name,
+            parameters={},
+            observation_id='1234567890'
+        )
+
+        form_data = {
+            'facility': 'FakeRoboticFacility',
+            'target_id': self.target.id,
+            'observation_id': obsr.observation_id
+        }
+        response = self.client.post(reverse('tom_observations:add-existing'), data=form_data, follow=True)
+        self.assertContains(response,
+                            'An observation record already exists in your TOM for this combination')
+        self.assertEqual(ObservationRecord.objects.filter(observation_id=obsr.observation_id).count(), 1)
+
+        form_data['confirm'] = True
+        response = self.client.post(reverse('tom_observations:add-existing'), data=form_data, follow=True)
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertEqual(messages[0][0], f'Successfully associated observation record {obsr.observation_id}')
+
+        self.assertEqual(ObservationRecord.objects.filter(observation_id=obsr.observation_id).count(), 2)
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
