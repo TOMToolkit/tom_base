@@ -72,7 +72,7 @@ class TestObservationViews(TestCase):
         self.assertContains(response, 'COMPLETED', status_code=200)
 
     def test_update_observations_not_authenticated(self):
-        """Test that an unauthenticated user is redirected to the login screen if they attempt to update observations."""
+        """Test that an unauthenticated user is redirected to login screen if they attempt to update observations."""
         response = self.client.get(reverse('tom_observations:list') + '?update_status=True')
         self.assertEqual(response.status_code, 302)
 
