@@ -142,16 +142,17 @@ class TestObservationCreateView(TestCase):
         )
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
         self.assertEqual(ObservationRecord.objects.filter(observation_id='fakeid').first().user, self.user)
-    
-    def test_submit_observation_cadence(self):
-        form_data = {
-            'target_id': self.target.id,
-            'test_input': 'gnomes',
-            'facility': 'FakeRoboticFacility',
-            'observation_type': 'OBSERVATION',
-            'cadence_strategy': 'RetryFailedObservationsStrategy',
-            'cadence_frequency': 24,
-        }
+
+    # TODO: this test
+    # def test_submit_observation_cadence(self):
+    #     form_data = {
+    #         'target_id': self.target.id,
+    #         'test_input': 'gnomes',
+    #         'facility': 'FakeRoboticFacility',
+    #         'observation_type': 'OBSERVATION',
+    #         'cadence_strategy': 'RetryFailedObservationsStrategy',
+    #         'cadence_frequency': 24,
+    #     }
 
     def test_submit_observation_manual(self):
         form_data = {
