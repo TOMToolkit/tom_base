@@ -74,21 +74,21 @@ def make_request(*args, **kwargs):
 def flatten_error_dict(form, error_dict):
     non_field_errors = []
     for k, v in error_dict.items():
-        if type(v) == list:
+        if isinstance(v, list):
             for i in v:
-                if type(i) == str:
+                if isinstance(i, str):
                     if k in form.fields:
                         form.add_error(k, i)
                     else:
                         non_field_errors.append('{}: {}'.format(k, i))
-                if type(i) == dict:
+                if isinstance(i, dict):
                     non_field_errors.append(flatten_error_dict(form, i))
-        elif type(v) == str:
+        elif isinstance(v, str):
             if k in form.fields:
                 form.add_error(k, v)
             else:
                 non_field_errors.append('{}: {}'.format(k, v))
-        elif type(v) == dict:
+        elif isinstance(v, dict):
             non_field_errors.append(flatten_error_dict(form, v))
 
     return non_field_errors
