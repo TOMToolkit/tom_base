@@ -260,7 +260,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
                             self.add_error(k, i)
                         else:
                             non_field_errors.append('{}: {}'.format(k, i))
-                    if type(i) == dict:
+                    if isinstance(i, dict):
                         non_field_errors.append(self._flatten_error_dict(i))
             elif isinstance(v, str):
                 if k in self.fields:
@@ -270,7 +270,6 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
             elif isinstance(v, dict):
                 non_field_errors.append(self._flatten_error_dict(v))
 
-        print(non_field_errors)
         return non_field_errors
 
     @staticmethod
