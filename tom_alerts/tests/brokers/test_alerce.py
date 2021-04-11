@@ -309,11 +309,13 @@ class TestALeRCEModuleCanary(TestCase):
             self.assertIn(k, alerts[0])
 
     def test_fetch_alert(self):
+        """
+        Test fetching a single alert from ALeRCE. The two response values tested are the only ones that are not derived,
+        and are therefore consistent.
+        """
         alert = self.broker.fetch_alert('ZTF20acnsdjd')
 
         self.assertDictContainsSubset({
             'oid': 'ZTF20acnsdjd',
-            'first_magpsf_g': 17.3446006774902,
-            'first_magpsf_r': 17.0198993682861,
             'firstmjd': 59149.1119328998,
         }, alert)
