@@ -250,7 +250,7 @@ class ALeRCEBroker(GenericBroker):
         if class_type in parameters and parameters[class_type] is not None:
             classifier_parameters['class'] = parameters[class_type]
         if f'p_{class_type}' in parameters and parameters[f'p_{class_type}'] is not None:
-            classifier_parameters[f'probability'] = parameters[f'p_{class_type}']
+            classifier_parameters['probability'] = parameters[f'p_{class_type}']
 
         return classifier_parameters
 
