@@ -1,10 +1,9 @@
-from datetime import datetime, timedelta
 import logging
 import requests
 from urllib.parse import urlencode
 
 from astropy.time import Time, TimezoneInfo
-from crispy_forms.layout import Column, Div, Fieldset, Layout, Row
+from crispy_forms.layout import Column, Fieldset, HTML, Layout, Row
 from django import forms
 from django.core.cache import cache
 
@@ -95,19 +94,20 @@ class ALeRCEQueryForm(GenericQueryForm):
         label='Sort By'
     )
     order_mode = forms.ChoiceField(
-        choices = SORT_ORDER,
-        required = False,
-        label = 'Sort Order'
+        choices=SORT_ORDER,
+        required=False,
+        label='Sort Order'
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        classifiers = self._get_classifiers()
-        self.fields['lc_classifier'].choices = self._get_light_curve_classifier_fields()
-        self.fields['stamp_classifier'].choices = self._get_stamp_classifier_fields()
+        self.fields['lc_classifier'].choices = self._get_light_curve_classifier_choices()
+        self.fields['stamp_classifier'].choices = self._get_stamp_classifier_choices()
 
         self.helper.layout = Layout(
+            HTML('<i>Note: ALeRCE recently introduced a new API. While we upgrade this module to leverage that new API'
+                 ', this broker interface to ALeRCE should be considered to be in beta.</i>'),
             self.common_layout,
             'oid',
             Fieldset(
@@ -164,17 +164,17 @@ class ALeRCEQueryForm(GenericQueryForm):
         return cached_classifiers
 
     @staticmethod
-    def _get_light_curve_classifier_fields():
+    def _get_light_curve_classifier_choices():
         light_curve_classifiers = []
         for classifier in ALeRCEQueryForm._get_classifiers():
             if (any(x in classifier['classifier_name'] for x in ['transient', 'stochastic', 'periodic'])):
                 classifier_name = classifier['classifier_name'].split('_')[-1]
                 light_curve_classifiers += [(c, f'{c} - {classifier_name}') for c in classifier['classes']]
-        
+
         return [(None, '')] + light_curve_classifiers
 
     @staticmethod
-    def _get_stamp_classifier_fields():
+    def _get_stamp_classifier_choices():
         version = '0.0.0'
         stamp_classifiers = []
 
@@ -194,15 +194,16 @@ class ALeRCEQueryForm(GenericQueryForm):
         for classifier in classifiers:
             if any(x in classifier['classifier_name'] for x in ['transient', 'stochastic', 'periodic']):
                 classifier_name = classifier['classifier_name'].split('-')[-1]
-                classifier_fields['Light Curve Classifiers'] += [f'{class_name} - {classifier_name}' for class_name in classifier['classes']]
+                classifier_fields['Light Curve Classifiers'] += [f'{class_name} - {classifier_name}'
+                                                                 for class_name in classifier['classes']]
             elif classifier['classifier_name'] == 'stamp_classifier':
                 if classifier['classifier_version'] > stamp_classifier_version:
                     version = stamp_classifier_version.split('_')[-1]
-                    classifier_fields['Stamp Classifiers'] = [f'{class_name} - Stamp - {version}' for class_name in classifier['classes']]
+                    classifier_fields['Stamp Classifiers'] = [f'{class_name} - Stamp - {version}'
+                                                              for class_name in classifier['classes']]
                     stamp_classifier_version = classifier['classifier_version']
 
         return classifier_fields
-
 
     def clean_sort_by(self):
         return self.cleaned_data['sort_by'] if self.cleaned_data['sort_by'] else 'nobs'
@@ -214,29 +215,22 @@ class ALeRCEQueryForm(GenericQueryForm):
         cleaned_data = super().clean()
 
         # Ensure that all cone search fields are present
-        if any(cleaned_data[k] for k in ['ra', 'dec', 'radius']) and not all(cleaned_data[k] for k in ['ra', 'dec', 'radius']):
+        if (any(cleaned_data[k] for k in ['ra', 'dec', 'radius'])
+                and not all(cleaned_data[k] for k in ['ra', 'dec', 'radius'])):
             raise forms.ValidationError('All of RA, Dec, and Search Radius must be included to execute a cone search.')
 
-        # TODO: Ensure that only one classification set is filled in
-        if any(cleaned_data[k] for k in ['lc_classifier', 'p_lc_classifier']) and any(cleaned_data[k] for k in ['stamp_classifier', 'p_stamp_classifier']):
+        # Ensure that only one classification set is filled in
+        if (any(cleaned_data[k] for k in ['lc_classifier', 'p_lc_classifier'])
+                and any(cleaned_data[k] for k in ['stamp_classifier', 'p_stamp_classifier'])):
             raise forms.ValidationError('Only one of either light curve or stamp classification may be used as a '
                                         'filter.')
 
         # Ensure that absolute time filters have sensible values
-        if all(cleaned_data[k] for k in ['lastmjd', 'firstmjd']) and cleaned_data['lastmjd'] <= cleaned_data['firstmjd']:
+        if (all(cleaned_data[k] for k in ['lastmjd', 'firstmjd'])
+                and cleaned_data['lastmjd'] <= cleaned_data['firstmjd']):
             raise forms.ValidationError('Min date of first detection must be earlier than max date of first detection.')
 
         return cleaned_data
-
-    @staticmethod
-    def early_classifier_choices():
-        return [(None, '')] + sorted([(c['id'], c['name']) for c in ALeRCEQueryForm._get_classifiers()['early']],
-                                     key=lambda classifier: classifier[1])
-
-    @staticmethod
-    def late_classifier_choices():
-        return [(None, '')] + sorted([(c['id'], c['name']) for c in ALeRCEQueryForm._get_classifiers()['late']],
-                                     key=lambda classifier: classifier[1])
 
 
 class ALeRCEBroker(GenericBroker):
@@ -246,16 +240,17 @@ class ALeRCEBroker(GenericBroker):
     def _clean_classifier_parameters(self, parameters):
         classifier_parameters = {}
         class_type = ''
-        if 'stamp_classifier' in parameters.keys():
+        if parameters['stamp_classifier']:
             class_type = 'stamp_classifier'
-        elif 'lc_classifier' in parameters.keys():
+        elif parameters['lc_classifier']:
             class_type = 'lc_classifier'
 
-        classifier_parameters['classifier'] = class_type
-        if parameters[class_type] is not None:
-            classifier_parameters[class_type] = parameters[class_type]
-        if parameters[f'p_{class_type}'] is not None:
-            classifier_parameters[f'p_{class_type}'] = parameters[f'p_{class_type}']
+        if class_type:
+            classifier_parameters['classifier'] = class_type
+        if class_type in parameters and parameters[class_type] is not None:
+            classifier_parameters['class'] = parameters[class_type]
+        if f'p_{class_type}' in parameters and parameters[f'p_{class_type}'] is not None:
+            classifier_parameters[f'probability'] = parameters[f'p_{class_type}']
 
         return classifier_parameters
 
@@ -297,17 +292,15 @@ class ALeRCEBroker(GenericBroker):
     def _request_alerts(self, parameters):
         payload = self._clean_parameters(parameters)
         logger.log(msg=f'Fetching alerts from ALeRCE with payload {payload}', level=logging.INFO)
-        print('here')
         args = urlencode(self._clean_parameters(parameters))
-        print(args)
         response = requests.get(f'{ALERCE_SEARCH_URL}/objects/?count=false&{args}')
         response.raise_for_status()
         return response.json()
 
     def fetch_alerts(self, parameters):
-        print(parameters)
         response = self._request_alerts(parameters)
         alerts = response['items']
+        # TODO: fix pagination
         # print(f"max pages {parameters['max_pages']}")
         # print(response['page'] <= parameters['max_pages'])
         if response['page'] <= 1:
@@ -327,13 +320,6 @@ class ALeRCEBroker(GenericBroker):
             ...
         }
         """
-        payload = {
-            'query_parameters': {
-                'filters': {
-                    'oid': id
-                }
-            }
-        }
         response = requests.get(f'{ALERCE_SEARCH_URL}/objects/{id}')
         response.raise_for_status()
         return response.json()
@@ -346,6 +332,7 @@ class ALeRCEBroker(GenericBroker):
             dec=alert['meandec']
         )
 
+    # TODO: the generic alert is clearly not sufficient for ALeRCE's classifications
     def to_generic_alert(self, alert):
         if alert['lastmjd']:
             timestamp = Time(alert['lastmjd'], format='mjd', scale='utc').to_datetime(timezone=TimezoneInfo())
@@ -353,14 +340,7 @@ class ALeRCEBroker(GenericBroker):
             timestamp = ''
         url = f'{ALERCE_URL}/object/{alert["oid"]}'
 
-        # Use the smaller value between r and g if both are present, else use the value that is present
-        mag = None
-        # if alert['mean_magpsf_r'] is not None and alert['mean_magpsf_g'] is not None:
-        #     mag = alert['mean_magpsf_g'] if alert['mean_magpsf_r'] > alert['mean_magpsf_g'] else alert['mean_magpsf_r']
-        # elif alert['mean_magpsf_r'] is not None:
-        #     mag = alert['mean_magpsf_r']
-        # elif alert['mean_magpsf_g'] is not None:
-        #     mag = alert['mean_magpsf_g']
+        mag = None  # mag is no longer returned in the object list
 
         score = alert['probability']
 
