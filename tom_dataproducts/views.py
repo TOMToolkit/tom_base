@@ -53,15 +53,18 @@ class DataProductSaveView(LoginRequiredMixin, View):
             products = service_class().save_data_products(observation_record)
             messages.success(request, 'Saved all available data products')
         else:
+            total_saved_products = []
             for product in products:
-                products = service_class().save_data_products(
+                saved_products = service_class().save_data_products(
                     observation_record,
                     product
                 )
+                total_saved_products += saved_products
+                run_hook('data_product_post_save', saved_products)
                 messages.success(
                     request,
                     'Successfully saved: {0}'.format('\n'.join(
-                        [str(p) for p in products]
+                        [str(p) for p in saved_products]
                     ))
                 )
         return redirect(reverse(
