@@ -95,16 +95,16 @@ Code Style
 ~~~~~~~~~~
 
 We recommend that you use a linter, as all pull requests must pass a
-``pycodestyle`` check. We also recommend configuring your editor to
+``flake8`` check. We also recommend configuring your editor to
 automatically remove trailing whitespace, add newlines on save, and
 other such helpful style corrections. You can check if your styling will
 meet standards before submitting a pull request by doing a
-``pip install pycodestyle`` and running the same command our Travis
+``pip install flake8`` and running the same command our Github Actions
 build does:
 
 ::
 
-   pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120
+   flake8 tom_* --exclude=*/migrations/* --max-line-length=120
 
 Documentation
 ~~~~~~~~~~~~~
