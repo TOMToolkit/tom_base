@@ -67,6 +67,7 @@ class DataProductSaveView(LoginRequiredMixin, View):
                         [str(p) for p in saved_products]
                     ))
                 )
+            run_hook('multiple_data_products_post_save', total_saved_products)
         return redirect(reverse(
             'tom_observations:detail',
             kwargs={'pk': observation_record.id})
