@@ -7,7 +7,6 @@ DEFAULT_HARVESTER_CLASSES = [
     'tom_catalogs.harvesters.simbad.SimbadHarvester',
     'tom_catalogs.harvesters.ned.NEDHarvester',
     'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
-    'tom_catalogs.harvesters.mpc.MPCHarvester',
     'tom_catalogs.harvesters.tns.TNSHarvester',
 ]
 
@@ -72,6 +71,10 @@ def get_service_classes():
             mod = import_module(mod_name)
             clazz = getattr(mod, class_name)
         except (ImportError, AttributeError):
-            raise ImportError('Could not import {}. Did you provide the correct path?'.format(service))
+            if class_name == 'MPCHarvester':
+                raise ImportError(f'Could not import {service}. Please consult the TOM Toolkit harvester API docs and '
+                                  f'ensure that your version of astroquery is at least 0.4.2.dev0.')
+            else:
+                raise ImportError(f'Could not import {service}. Did you provide the correct path?')
         service_choices[clazz.name] = clazz
     return service_choices
