@@ -18,16 +18,12 @@ ALERCE_CLASSES_URL = f'{ALERCE_SEARCH_URL}/classifiers'
 
 SORT_CHOICES = [('None', 'None'),
                 ('oid', 'Object ID'),
-                ('class_name', 'Class Name'),
-                ('classifier_name', 'Classifier Name'),
                 ('probability', 'Classifier Probability'),
-                ('ndethist', 'Number of Detections'),
+                ('ndet', 'Number of Detections'),
                 ('firstmjd', 'First Detection'),
                 ('lastmjd', 'Last Detection'),
-                ('ranking', 'Ranking'),
                 ('meanra', 'Mean Right Ascension'),
-                ('meandec', 'Mean Declination'),
-                ('ranking', 'Ranking')]
+                ('meandec', 'Mean Declination'),]
 
 SORT_ORDER = [('None', 'None'),
               ('ASC', 'Ascending'),
@@ -68,12 +64,12 @@ class ALeRCEQueryForm(GenericQueryForm):
         required=False,
         label='Stamp Classifier Probability'
     )
-    ra = forms.IntegerField(
+    ra = forms.FloatField(
         required=False,
         label='RA',
         widget=forms.TextInput(attrs={'placeholder': 'RA (Degrees)'})
     )
-    dec = forms.IntegerField(
+    dec = forms.FloatField(
         required=False,
         label='Dec',
         widget=forms.TextInput(attrs={'placeholder': 'Dec (Degrees)'})
