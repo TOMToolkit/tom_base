@@ -16,15 +16,22 @@ ALERCE_URL = 'https://alerce.online'
 ALERCE_SEARCH_URL = 'https://api.alerce.online/ztf/v1'
 ALERCE_CLASSES_URL = f'{ALERCE_SEARCH_URL}/classifiers'
 
-# TODO: add all sort choices
-SORT_CHOICES = [('ndet', 'Number Of Epochs'),
+SORT_CHOICES = [('None', 'None'),
+                ('oid', 'Object ID'),
+                ('class_name', 'Class Name'),
+                ('classifier_name', 'Classifier Name'),
+                ('probability', 'Classifier Probability'),
+                ('ndethist', 'Number of Detections'),
+                ('firstmjd', 'First Detection'),
                 ('lastmjd', 'Last Detection'),
-                ('pclassrf', 'Late Probability'),
-                ('pclassearly', 'Early Probability')]
+                ('ranking', 'Ranking'),
+                ('meanra', 'Mean Right Ascension'),
+                ('meandec', 'Mean Declination'),
+                ('ranking', 'Ranking')]
 
 SORT_ORDER = [('None', 'None'),
-              ('DESC', 'Descending'),
-              ('ASC', 'Ascending')]
+              ('ASC', 'Ascending'),
+              ('DESC', 'Descending')]
 
 
 class ALeRCEQueryForm(GenericQueryForm):
@@ -186,28 +193,11 @@ class ALeRCEQueryForm(GenericQueryForm):
 
         return [(None, '')] + stamp_classifiers
 
-    @staticmethod
-    def _get_classifier_fields(classifiers):
-        classifier_fields = {'Light Curve Classifiers': [], 'Stamp Classifiers': []}
-
-        stamp_classifier_version = '0.0.0'
-        for classifier in classifiers:
-            if any(x in classifier['classifier_name'] for x in ['transient', 'stochastic', 'periodic']):
-                classifier_name = classifier['classifier_name'].split('-')[-1]
-                classifier_fields['Light Curve Classifiers'] += [f'{class_name} - {classifier_name}'
-                                                                 for class_name in classifier['classes']]
-            elif classifier['classifier_name'] == 'stamp_classifier':
-                if classifier['classifier_version'] > stamp_classifier_version:
-                    version = stamp_classifier_version.split('_')[-1]
-                    classifier_fields['Stamp Classifiers'] = [f'{class_name} - Stamp - {version}'
-                                                              for class_name in classifier['classes']]
-                    stamp_classifier_version = classifier['classifier_version']
-
-        return classifier_fields
-
+    # TODO: is this necessary?
     def clean_sort_by(self):
         return self.cleaned_data['sort_by'] if self.cleaned_data['sort_by'] else 'nobs'
 
+    # TODO: is this necessary?
     def clean_records(self):
         return self.cleaned_data['records'] if self.cleaned_data['records'] else 20
 
@@ -220,8 +210,8 @@ class ALeRCEQueryForm(GenericQueryForm):
             raise forms.ValidationError('All of RA, Dec, and Search Radius must be included to execute a cone search.')
 
         # Ensure that only one classification set is filled in
-        if (any(cleaned_data[k] for k in ['lc_classifier', 'p_lc_classifier'])
-                and any(cleaned_data[k] for k in ['stamp_classifier', 'p_stamp_classifier'])):
+        if (any(cleaned_data.get(k) for k in ['lc_classifier', 'p_lc_classifier'])
+                and any(cleaned_data.get(k) for k in ['stamp_classifier', 'p_stamp_classifier'])):
             raise forms.ValidationError('Only one of either light curve or stamp classification may be used as a '
                                         'filter.')
 
@@ -276,10 +266,14 @@ class ALeRCEBroker(GenericBroker):
         return dates
 
     def _clean_parameters(self, parameters):
-        payload = {}
+        payload = {
+            k: v for k, v in parameters.items() if k in ['oid', 'ndet', 'ranking', 'order_by', 'order_mode'] and v
+        }
 
-        payload['page'] = parameters.get('page', 1)
-        payload['page_size'] = 20
+        payload.update({
+            'page': parameters.get('page', 1),
+            'page_size': 20,
+        })
 
         payload.update(self._clean_classifier_parameters(parameters))
 

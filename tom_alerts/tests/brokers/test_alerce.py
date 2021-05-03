@@ -10,6 +10,40 @@ from tom_alerts.brokers.alerce import ALeRCEBroker, ALeRCEQueryForm
 from tom_targets.models import Target
 
 
+alerce_classifiers_response = [
+    {
+        'classifier_name': 'lc_classifier',
+        'classifier_version': 'hierarchical_random_forest_1.0.0',
+        'classes': ['SNIa', 'QSO', 'LPV']
+    },
+    {
+        'classifier_name': 'lc_classifier_top',
+        'classifier_version': 'hierarchical_random_forest_1.0.0',
+        'classes': ['Transient', 'Stochastic', 'Periodic']
+    },
+    {
+        'classifier_name': 'lc_classifier_transient',
+        'classifier_version': 'hierarchical_random_forest_1.0.0',
+        'classes': ['SNIa']
+    },
+    {
+        'classifier_name': 'lc_classifier_stochastic',
+        'classifier_version': 'hierarchical_random_forest_1.0.0',
+        'classes': ['QSO']
+    },
+    {
+        'classifier_name': 'lc_classifier_periodic',
+        'classifier_version': 'hierarchical_random_forest_1.0.0',
+        'classes': ['LPV']
+    },
+    {
+        'classifier_name': 'stamp_classifier',
+        'classifier_version': 'stamp_classifier_1.0.4',
+        'classes': ['SN']
+    },
+]
+
+
 def create_alerce_alert(firstmjd=None, lastmjd=None, class_name=None, classifier=None, probability=None):
     fake = Faker()
 
@@ -41,7 +75,8 @@ class TestALeRCEBrokerForm(TestCase):
             'broker': 'ALeRCE'
         }
 
-    def test_cone_search_validation(self):
+    @patch('tom_alerts.brokers.alerce.cache')
+    def test_cone_search_validation(self, mock_cache):
         """Test cross-field validation for cone search filters."""
 
         # Test that validation fails if not all fields are present
@@ -61,7 +96,8 @@ class TestALeRCEBrokerForm(TestCase):
         form = ALeRCEQueryForm(self.base_form_data)
         self.assertTrue(form.is_valid())
 
-    def test_time_filters_validation(self):
+    @patch('tom_alerts.brokers.alerce.cache')
+    def test_time_filters_validation(self, mock_cache):
         """Test validation for time filters."""
 
         # Test that mjd__lt and mjd__gt fail when mjd__lt is less than mjd__gt
@@ -82,6 +118,75 @@ class TestALeRCEBrokerForm(TestCase):
                 parameters.update(self.base_form_data)
                 form = ALeRCEQueryForm(parameters)
                 self.assertTrue(form.is_valid())
+
+    @patch('tom_alerts.brokers.alerce.cache.get')
+    def test_classifier_filters_validation(self, mock_cache_get):
+        mock_cache_get.return_value = alerce_classifiers_response
+
+        parameters_list = [
+            {'lc_classifier': 'SNIa', 'p_lc_classifier': 0.5},
+            {'stamp_classifier': 'SN', 'p_stamp_classifier': 0.5}
+        ]
+        for parameters in parameters_list:
+            with self.subTest():
+                parameters.update(self.base_form_data)
+                form = ALeRCEQueryForm(parameters)
+                form.is_valid()
+                self.assertTrue(form.is_valid())
+
+        invalid_parameters_list = [
+            {'lc_classifier': 'SNIa', 'p_stamp_classifier': 0.5},
+            {'stamp_classifier': 'SN', 'p_lc_classifier': 0.5}
+        ]
+        for parameters in invalid_parameters_list:
+            with self.subTest():
+                parameters.update(self.base_form_data)
+                form = ALeRCEQueryForm(parameters)
+                self.assertFalse(form.is_valid())
+                self.assertIn('Only one of either light curve or stamp classification may be used as a filter.',
+                              form.errors['__all__'])
+
+    @patch('tom_alerts.brokers.alerce.cache.get')
+    @patch('tom_alerts.brokers.alerce.requests.get')
+    def test_get_classifiers(self, mock_requests_get, mock_cache_get):
+        mock_response = Response()
+        mock_response._content = str.encode(json.dumps(alerce_classifiers_response))
+        mock_response.status_code = 200
+        mock_requests_get.return_value = mock_response
+
+        with self.subTest('Test that cached response avoids request.'):
+            mock_cache_get.return_value = alerce_classifiers_response
+            classifiers = ALeRCEQueryForm._get_classifiers()
+            mock_requests_get.assert_not_called()
+            for classifier_group in classifiers:
+                self.assertTrue(
+                    all(k in classifier_group.keys() for k in ['classifier_name', 'classifier_version', 'classes'])
+                )
+
+        with self.subTest('Test that no cached response results in HTTP request.'):
+            mock_cache_get.return_value = None
+            classifiers = ALeRCEQueryForm._get_classifiers()
+            mock_requests_get.assert_called_once()
+
+    def test_get_light_curve_classifier_choices(self):
+        lc_classifiers = ALeRCEQueryForm._get_light_curve_classifier_choices()
+        expected_classifiers = [
+            (None, ''),
+            ('SNIa', 'SNIa - transient'),
+            ('QSO', 'QSO - stochastic'),
+            ('LPV', 'LPV - periodic')
+        ]
+        for classifier in expected_classifiers:
+            self.assertIn(classifier, lc_classifiers)
+
+    def test_get_stamp_classifier_choices(self):
+        stamp_classifiers = ALeRCEQueryForm._get_stamp_classifier_choices()
+        expected_classifiers = {
+            (None, ''),
+            ('SN', 'SN')
+        }
+        for classifier in expected_classifiers:
+            self.assertIn(classifier, stamp_classifiers)
 
 
 class TestALeRCEBrokerClass(TestCase):
@@ -229,6 +334,10 @@ class TestALeRCEBrokerClass(TestCase):
 class TestALeRCEModuleCanary(TestCase):
     def setUp(self):
         self.broker = ALeRCEBroker()
+        self.base_form_parameters = {
+            'query_name': 'Test ALeRCE',
+            'broker': 'ALeRCE',
+        }
 
     @patch('tom_alerts.brokers.alerce.cache.get')
     def test_get_classifiers(self, mock_cache_get):
@@ -244,16 +353,32 @@ class TestALeRCEModuleCanary(TestCase):
                 self.fail(f'Did not find {expected} in classifiers.')
 
     def test_fetch_alerts(self):
-        form = ALeRCEQueryForm({'query_name': 'Test', 'broker': 'ALeRCE', 'ndet': 1, 'classifier': 'stamp_classifier',
-                                'class': 'SN', 'probability': 0.7, 'mjd__gt': 59148.78219219812})
+        form = ALeRCEQueryForm(self.base_form_parameters)
+        # form = ALeRCEQueryForm({'query_name': 'Test', 'broker': 'ALeRCE', 'ndet': 1, 'classifier': 'stamp_classifier',
+        # 'class': 'SN', 'probability': 0.7, 'mjd__gt': 59148.78219219812})
         form.is_valid()
         query = form.save()
 
         alerts = [alert for alert in self.broker.fetch_alerts(query.parameters)]
 
-        self.assertGreaterEqual(len(alerts), 6)
+        self.assertGreaterEqual(len(alerts), 1)
         for k in ['oid', 'firstmjd', 'lastmjd', 'class', 'classifier', 'probability', 'meanra', 'meandec']:
             self.assertIn(k, alerts[0])
+
+    def test_fetch_alerts_cone_search(self):
+        pass
+
+    def test_fetch_alerts_classification_search(self):
+        pass
+
+    def test_fetch_alerts_time_filters(self):
+        pass
+
+    def test_other_filters(self):
+        pass
+
+    def test_ordering(self):
+        pass
 
     def test_fetch_alert(self):
         """
