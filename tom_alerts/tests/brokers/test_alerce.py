@@ -59,11 +59,11 @@ def create_alerce_alert(firstmjd=None, lastmjd=None, class_name=None, classifier
             'probability': probability if probability else fake.pyfloat(min_value=0, max_value=1)}
 
 
-def create_alerce_query_response(num_alerts):
+def create_alerce_query_response(num_alerts, page=1):
     alerts = [create_alerce_alert() for i in range(0, num_alerts)]
 
     return {
-        'total': None, 'page': 1, 'next': None, 'has_next': False, 'prev': None, 'has_prev': False,
+        'total': None, 'page': page, 'next': None, 'has_next': False, 'prev': None, 'has_prev': False,
         'items': alerts
     }
 
@@ -100,18 +100,9 @@ class TestALeRCEBrokerForm(TestCase):
     def test_time_filters_validation(self, mock_cache):
         """Test validation for time filters."""
 
-        # # Test that mjd__lt and mjd__gt fail when mjd__lt is less than mjd__gt
-        # with self.subTest():
-        #     parameters = {'lastmjd': 57000, 'firstmjd': 57001}
-        #     parameters.update(self.base_form_data)
-        #     form = ALeRCEQueryForm(parameters)
-        #     self.assertFalse(form.is_valid())
-        #     self.assertIn('Min date of first detection must be earlier than max date of first detection.',
-        #                   form.non_field_errors())
-
-        # Test that form validation succeeds when relative time fields make sense and absolute time field is used alone.
+        # Test that form validation succeeds when relative time fields make sense.
         parameters_list = [
-            {'firstmjd': 57000, 'lastmjd': 58000},
+            {'firstmjd__gt': 57000, 'firstmjd__lt': 58000, 'lastmjd__gt': 58000, 'lastmjd__lt': 59000},
         ]
         for parameters in parameters_list:
             with self.subTest():
@@ -276,24 +267,37 @@ class TestALeRCEBrokerClass(TestCase):
 
     @patch('tom_alerts.brokers.alerce.requests.get')
     @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_parameters')
-    def test_fetch_alerts(self, mock_clean_parameters, mock_requests_post):
+    def test_fetch_alerts(self, mock_clean_parameters, mock_requests_get):
         """Test fetch_alerts broker method."""
-        mock_response = Response()
-        mock_response_content = create_alerce_query_response(25)
-        # TODO: without setting 'page' to a value greater than 1, an infinite recursion depth error occurs.
-        # This should be addressed when there isn't a demo in 24 hours.
-        mock_response_content['page'] = 2
-        mock_response._content = str.encode(json.dumps(mock_response_content))
-        mock_response.status_code = 200
-        mock_requests_post.return_value = mock_response
+        first_mock_response_content = create_alerce_query_response(20, page=1)
+        first_mock_response = Response()
+        first_mock_response._content = str.encode(json.dumps(first_mock_response_content))
+        first_mock_response.status_code = 200
 
-        response = self.broker.fetch_alerts({})
-        alerts = []
-        for alert in response:
-            alerts.append(alert)
-        self.assertEqual(25, len(alerts))
+        second_mock_response = Response()
+        second_mock_response._content = str.encode(json.dumps(create_alerce_query_response(5, page=2)))
+        second_mock_response.status_code = 200
 
-        self.assertEqual(alerts[0], mock_response_content['items'][0])
+        third_mock_response = Response()
+        third_mock_response._content = str.encode(json.dumps(create_alerce_query_response(0, page=3)))
+        third_mock_response.status_code = 200
+
+        with self.subTest():
+            mock_requests_get.side_effect = [first_mock_response, second_mock_response, third_mock_response]
+            response = self.broker.fetch_alerts({'max_pages': 5})
+            alerts = []
+            for alert in response:
+                alerts.append(alert)
+            self.assertEqual(25, len(alerts))
+            self.assertEqual(alerts[0], first_mock_response_content['items'][0])
+
+        with self.subTest():
+            mock_requests_get.side_effect = [first_mock_response]
+            response = self.broker.fetch_alerts({'max_pages': 1})
+            alerts = []
+            for alert in response:
+                alerts.append(alert)
+            self.assertEqual(20, len(alerts))
 
     @patch('tom_alerts.brokers.alerce.requests.get')
     def test_fetch_alert(self, mock_requests_post):

@@ -113,6 +113,12 @@ class ALeRCEQueryForm(GenericQueryForm):
         required=False,
         label='Sort Order'
     )
+    max_pages = forms.TypedChoiceField(
+        choices=[(1, 1), (5, 5), (10, 10), (20, 20)],
+        required=False,
+        coerce=int,
+        label='Maximum pages to retrieve'
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -121,8 +127,6 @@ class ALeRCEQueryForm(GenericQueryForm):
         self.fields['stamp_classifier'].choices = self._get_stamp_classifier_choices()
 
         self.helper.layout = Layout(
-            HTML('<i>Note: ALeRCE recently introduced a new API. While we upgrade this module to leverage that new API'
-                 ', this broker interface to ALeRCE should be considered to be in beta.</i>'),
             self.common_layout,
             'oid',
             Fieldset(
@@ -167,6 +171,9 @@ class ALeRCEQueryForm(GenericQueryForm):
                 Row(
                     Column('order_by'),
                     Column('order_mode'),
+                ),
+                Row(
+                    Column('max_pages')
                 )
             ),
         )
@@ -207,6 +214,7 @@ class ALeRCEQueryForm(GenericQueryForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        print(cleaned_data)
 
         # Ensure that all cone search fields are present
         if (any(cleaned_data[k] for k in ['ra', 'dec', 'radius'])
@@ -218,12 +226,6 @@ class ALeRCEQueryForm(GenericQueryForm):
                 and any(cleaned_data.get(k) for k in ['stamp_classifier', 'p_stamp_classifier'])):
             raise forms.ValidationError('Only one of either light curve or stamp classification may be used as a '
                                         'filter.')
-
-        # TODO: is this necessary?
-        # # Ensure that absolute time filters have sensible values
-        # if (all(cleaned_data[k] for k in ['lastmjd', 'firstmjd'])
-        #         and cleaned_data['lastmjd'] <= cleaned_data['firstmjd']):
-        #     raise forms.ValidationError('Min date of firstmjd must be earlier than max date of firstmjd.')
 
         return cleaned_data
 
@@ -297,12 +299,8 @@ class ALeRCEBroker(GenericBroker):
     def fetch_alerts(self, parameters):
         response = self._request_alerts(parameters)
         alerts = response['items']
-        # TODO: fix pagination
-        # print(f"max pages {parameters['max_pages']}")
-        # print(response['page'] <= parameters['max_pages'])
-        if response['page'] <= 1:
-            parameters['page'] = parameters.get('page', 1) + 1
-            parameters['total'] = response.get('total')
+        if len(alerts) > 0 and response['page'] < parameters.get('max_pages', 1):
+            parameters['page'] = response.get('page') + 1
             alerts += self.fetch_alerts(parameters)
         return iter(alerts)
 
