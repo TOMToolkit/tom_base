@@ -3,7 +3,7 @@ import requests
 from urllib.parse import urlencode
 
 from astropy.time import Time, TimezoneInfo
-from crispy_forms.layout import Column, Fieldset, HTML, Layout, Row
+from crispy_forms.layout import Column, Fieldset, Layout, Row
 from django import forms
 from django.core.cache import cache
 
@@ -16,15 +16,18 @@ ALERCE_URL = 'https://alerce.online'
 ALERCE_SEARCH_URL = 'https://api.alerce.online/ztf/v1'
 ALERCE_CLASSES_URL = f'{ALERCE_SEARCH_URL}/classifiers'
 
-# TODO: add all sort choices
-SORT_CHOICES = [('ndet', 'Number Of Epochs'),
+SORT_CHOICES = [('None', 'None'),
+                ('oid', 'Object ID'),
+                ('probability', 'Classifier Probability'),
+                ('ndet', 'Number of Detections'),
+                ('firstmjd', 'First Detection'),
                 ('lastmjd', 'Last Detection'),
-                ('pclassrf', 'Late Probability'),
-                ('pclassearly', 'Early Probability')]
+                ('meanra', 'Mean Right Ascension'),
+                ('meandec', 'Mean Declination')]
 
 SORT_ORDER = [('None', 'None'),
-              ('DESC', 'Descending'),
-              ('ASC', 'Ascending')]
+              ('ASC', 'Ascending'),
+              ('DESC', 'Descending')]
 
 
 class ALeRCEQueryForm(GenericQueryForm):
@@ -61,12 +64,12 @@ class ALeRCEQueryForm(GenericQueryForm):
         required=False,
         label='Stamp Classifier Probability'
     )
-    ra = forms.IntegerField(
+    ra = forms.FloatField(
         required=False,
         label='RA',
         widget=forms.TextInput(attrs={'placeholder': 'RA (Degrees)'})
     )
-    dec = forms.IntegerField(
+    dec = forms.FloatField(
         required=False,
         label='Dec',
         widget=forms.TextInput(attrs={'placeholder': 'Dec (Degrees)'})
@@ -76,15 +79,27 @@ class ALeRCEQueryForm(GenericQueryForm):
         label='Search Radius',
         widget=forms.TextInput(attrs={'placeholder': 'Radius (Arcseconds)'})
     )
-    firstmjd = forms.FloatField(
+    firstmjd__gt = forms.FloatField(
         required=False,
         label='Min date of first detection ',
         widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'}),
         min_value=0.0
     )
-    lastmjd = forms.FloatField(
+    firstmjd__lt = forms.FloatField(
         required=False,
-        label='Max date of first detection',
+        label='Max date of first detection ',
+        widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'}),
+        min_value=0.0
+    )
+    lastmjd__gt = forms.FloatField(
+        required=False,
+        label='Min date of last detection',
+        widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'}),
+        min_value=0.0
+    )
+    lastmjd__lt = forms.FloatField(
+        required=False,
+        label='Max date of last detection',
         widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'}),
         min_value=0.0
     )
@@ -98,6 +113,12 @@ class ALeRCEQueryForm(GenericQueryForm):
         required=False,
         label='Sort Order'
     )
+    max_pages = forms.TypedChoiceField(
+        choices=[(1, 1), (5, 5), (10, 10), (20, 20)],
+        required=False,
+        coerce=int,
+        label='Maximum pages to retrieve'
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -106,8 +127,6 @@ class ALeRCEQueryForm(GenericQueryForm):
         self.fields['stamp_classifier'].choices = self._get_stamp_classifier_choices()
 
         self.helper.layout = Layout(
-            HTML('<i>Note: ALeRCE recently introduced a new API. While we upgrade this module to leverage that new API'
-                 ', this broker interface to ALeRCE should be considered to be in beta.</i>'),
             self.common_layout,
             'oid',
             Fieldset(
@@ -132,8 +151,12 @@ class ALeRCEQueryForm(GenericQueryForm):
             Fieldset(
                 'Time Filters',
                 Row(
-                    Column('firstmjd'),
-                    Column('lastmjd'),
+                    Column('firstmjd__gt'),
+                    Column('firstmjd__lt'),
+                ),
+                Row(
+                    Column('lastmjd__gt'),
+                    Column('lastmjd__lt'),
                 )
             ),
             Fieldset(
@@ -148,6 +171,9 @@ class ALeRCEQueryForm(GenericQueryForm):
                 Row(
                     Column('order_by'),
                     Column('order_mode'),
+                ),
+                Row(
+                    Column('max_pages')
                 )
             ),
         )
@@ -186,33 +212,9 @@ class ALeRCEQueryForm(GenericQueryForm):
 
         return [(None, '')] + stamp_classifiers
 
-    @staticmethod
-    def _get_classifier_fields(classifiers):
-        classifier_fields = {'Light Curve Classifiers': [], 'Stamp Classifiers': []}
-
-        stamp_classifier_version = '0.0.0'
-        for classifier in classifiers:
-            if any(x in classifier['classifier_name'] for x in ['transient', 'stochastic', 'periodic']):
-                classifier_name = classifier['classifier_name'].split('-')[-1]
-                classifier_fields['Light Curve Classifiers'] += [f'{class_name} - {classifier_name}'
-                                                                 for class_name in classifier['classes']]
-            elif classifier['classifier_name'] == 'stamp_classifier':
-                if classifier['classifier_version'] > stamp_classifier_version:
-                    version = stamp_classifier_version.split('_')[-1]
-                    classifier_fields['Stamp Classifiers'] = [f'{class_name} - Stamp - {version}'
-                                                              for class_name in classifier['classes']]
-                    stamp_classifier_version = classifier['classifier_version']
-
-        return classifier_fields
-
-    def clean_sort_by(self):
-        return self.cleaned_data['sort_by'] if self.cleaned_data['sort_by'] else 'nobs'
-
-    def clean_records(self):
-        return self.cleaned_data['records'] if self.cleaned_data['records'] else 20
-
     def clean(self):
         cleaned_data = super().clean()
+        print(cleaned_data)
 
         # Ensure that all cone search fields are present
         if (any(cleaned_data[k] for k in ['ra', 'dec', 'radius'])
@@ -220,15 +222,10 @@ class ALeRCEQueryForm(GenericQueryForm):
             raise forms.ValidationError('All of RA, Dec, and Search Radius must be included to execute a cone search.')
 
         # Ensure that only one classification set is filled in
-        if (any(cleaned_data[k] for k in ['lc_classifier', 'p_lc_classifier'])
-                and any(cleaned_data[k] for k in ['stamp_classifier', 'p_stamp_classifier'])):
+        if (any(cleaned_data.get(k) for k in ['lc_classifier', 'p_lc_classifier'])
+                and any(cleaned_data.get(k) for k in ['stamp_classifier', 'p_stamp_classifier'])):
             raise forms.ValidationError('Only one of either light curve or stamp classification may be used as a '
                                         'filter.')
-
-        # Ensure that absolute time filters have sensible values
-        if (all(cleaned_data[k] for k in ['lastmjd', 'firstmjd'])
-                and cleaned_data['lastmjd'] <= cleaned_data['firstmjd']):
-            raise forms.ValidationError('Min date of first detection must be earlier than max date of first detection.')
 
         return cleaned_data
 
@@ -238,7 +235,7 @@ class ALeRCEBroker(GenericBroker):
     form = ALeRCEQueryForm
 
     def _clean_classifier_parameters(self, parameters):
-        classifier_parameters = {}
+        classifier_parameters = []
         class_type = ''
         if parameters['stamp_classifier']:
             class_type = 'stamp_classifier'
@@ -246,46 +243,47 @@ class ALeRCEBroker(GenericBroker):
             class_type = 'lc_classifier'
 
         if class_type:
-            classifier_parameters['classifier'] = class_type
+            classifier_parameters.append(('classifier', class_type))
         if class_type in parameters and parameters[class_type] is not None:
-            classifier_parameters['class'] = parameters[class_type]
+            classifier_parameters.append(('class', parameters[class_type]))
         if f'p_{class_type}' in parameters and parameters[f'p_{class_type}'] is not None:
-            classifier_parameters['probability'] = parameters[f'p_{class_type}']
+            classifier_parameters.append(('probability', parameters[f'p_{class_type}']))
 
         return classifier_parameters
 
     def _clean_coordinate_parameters(self, parameters):
         if all([parameters['ra'], parameters['dec'], parameters['radius']]):
-            return {
-                'ra': parameters['ra'],
-                'dec': parameters['dec'],
-                'radius': parameters['radius']
-            }
+            return [
+                ('ra', parameters['ra']),
+                ('dec', parameters['dec']),
+                ('radius', parameters['radius'])
+            ]
         else:
-            return {}
+            return []
 
     def _clean_date_parameters(self, parameters):
-        dates = {}
+        dates = []
 
-        if any(parameters[k] for k in ['firstmjd', 'lastmjd']):
-            if parameters['firstmjd']:
-                dates['firstmjd'] = parameters['firstmjd']
-            if parameters['lastmjd']:
-                dates['lastmjd'] = parameters['lastmjd']
+        dates += [('firstmjd', v) for k, v in parameters.items() if 'firstmjd' in k and v]
+        dates += [('lastmjd', v) for k, v in parameters.items() if 'lastmjd' in k and v]
 
         return dates
 
     def _clean_parameters(self, parameters):
-        payload = {}
+        payload = [
+            (k, v) for k, v in parameters.items() if k in ['oid', 'ndet', 'ranking', 'order_by', 'order_mode'] and v
+        ]
 
-        payload['page'] = parameters.get('page', 1)
-        payload['page_size'] = 20
+        payload += [
+            ('page', parameters.get('page', 1)),
+            ('page_size', 20),
+        ]
 
-        payload.update(self._clean_classifier_parameters(parameters))
+        payload += self._clean_classifier_parameters(parameters)
 
-        payload.update(self._clean_coordinate_parameters(parameters))
+        payload += self._clean_coordinate_parameters(parameters)
 
-        payload.update(self._clean_date_parameters(parameters))
+        payload += self._clean_date_parameters(parameters)
 
         return payload
 
@@ -293,6 +291,7 @@ class ALeRCEBroker(GenericBroker):
         payload = self._clean_parameters(parameters)
         logger.log(msg=f'Fetching alerts from ALeRCE with payload {payload}', level=logging.INFO)
         args = urlencode(self._clean_parameters(parameters))
+        print(args)
         response = requests.get(f'{ALERCE_SEARCH_URL}/objects/?count=false&{args}')
         response.raise_for_status()
         return response.json()
@@ -300,12 +299,8 @@ class ALeRCEBroker(GenericBroker):
     def fetch_alerts(self, parameters):
         response = self._request_alerts(parameters)
         alerts = response['items']
-        # TODO: fix pagination
-        # print(f"max pages {parameters['max_pages']}")
-        # print(response['page'] <= parameters['max_pages'])
-        if response['page'] <= 1:
-            parameters['page'] = parameters.get('page', 1) + 1
-            parameters['total'] = response.get('total')
+        if len(alerts) > 0 and response['page'] < parameters.get('max_pages', 1):
+            parameters['page'] = response.get('page') + 1
             alerts += self.fetch_alerts(parameters)
         return iter(alerts)
 
