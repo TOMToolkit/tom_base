@@ -100,14 +100,14 @@ class TestALeRCEBrokerForm(TestCase):
     def test_time_filters_validation(self, mock_cache):
         """Test validation for time filters."""
 
-        # Test that mjd__lt and mjd__gt fail when mjd__lt is less than mjd__gt
-        with self.subTest():
-            parameters = {'lastmjd': 57000, 'firstmjd': 57001}
-            parameters.update(self.base_form_data)
-            form = ALeRCEQueryForm(parameters)
-            self.assertFalse(form.is_valid())
-            self.assertIn('Min date of first detection must be earlier than max date of first detection.',
-                          form.non_field_errors())
+        # # Test that mjd__lt and mjd__gt fail when mjd__lt is less than mjd__gt
+        # with self.subTest():
+        #     parameters = {'lastmjd': 57000, 'firstmjd': 57001}
+        #     parameters.update(self.base_form_data)
+        #     form = ALeRCEQueryForm(parameters)
+        #     self.assertFalse(form.is_valid())
+        #     self.assertIn('Min date of first detection must be earlier than max date of first detection.',
+        #                   form.non_field_errors())
 
         # Test that form validation succeeds when relative time fields make sense and absolute time field is used alone.
         parameters_list = [
@@ -200,23 +200,29 @@ class TestALeRCEBrokerClass(TestCase):
     def test_clean_coordinate_parameters(self):
         """Test that _clean_date_parameters results in the correct dict structure."""
         parameters_list = [
-            ({'ra': 10, 'dec': 10, 'radius': None}, {}),
-            ({'ra': 10, 'dec': 10, 'radius': 10}, {'ra': 10, 'dec': 10, 'radius': 10})
+            ({'ra': 10, 'dec': 10, 'radius': None}, []),
+            ({'ra': 10, 'dec': 10, 'radius': 10}, [('ra', 10), ('dec', 10), ('radius', 10)])
         ]
-        for parameters, expected in parameters_list:
+        for parameters, expected_list in parameters_list:
             with self.subTest():
-                self.assertDictEqual(self.broker._clean_coordinate_parameters(parameters), expected)
+                cleaned_coordinate_parameters = self.broker._clean_coordinate_parameters(parameters)
+                for expected in expected_list:
+                    self.assertIn(expected, cleaned_coordinate_parameters)
 
     def test_clean_date_parameters(self):
         """Test that _clean_date_parameters results in the correct dict structure."""
         parameters_list = [
-            ({'firstmjd': 57000, 'lastmjd': 58000}, {'firstmjd': 57000, 'lastmjd': 58000}),
-            ({'firstmjd': 57000, 'lastmjd': None}, {'firstmjd': 57000}),
-            ({'firstmjd': None, 'lastmjd': None}, {})
+            ({'firstmjd__gt': 57000, 'firstmjd__lt': 58000, 'lastmjd__gt': 58000, 'lastmjd__lt': 59000},
+             [('firstmjd', 57000), ('firstmjd', 58000), ('lastmjd', 58000), ('lastmjd', 59000)]),
+            ({'firstmjd__gt': 57000, 'firstmjd__lt': 58000, 'lastmjd__gt': None, 'lastmjd__lt': None},
+             [('firstmjd', 57000), ('firstmjd', 58000)]),
+            ({'firstmjd__gt': None, 'firstmjd__lt': None, 'lastmjd__gt': None, 'lastmjd__lt': None}, [])
         ]
-        for parameters, expected in parameters_list:
+        for parameters, expected_list in parameters_list:
             with self.subTest():
-                self.assertDictEqual(self.broker._clean_date_parameters(parameters), expected)
+                cleaned_date_parameters = self.broker._clean_date_parameters(parameters)
+                for expected in expected_list:
+                    self.assertIn(expected, cleaned_date_parameters)
 
     def test_clean_classifier_parameters(self):
         """Test that _clean_filter_parameters results in the correct dict structure."""
@@ -224,41 +230,49 @@ class TestALeRCEBrokerClass(TestCase):
         # Test that classifiers are populated correctly
         parameters_list = [
             ({'stamp_classifier': None, 'p_stamp_classifier': None, 'lc_classifier': None, 'p_lc_classifier': None},
-             {}),
+             []),
             ({'stamp_classifier': 'SN', 'p_stamp_classifier': None, 'lc_classifier': None, 'p_lc_classifier': None},
-             {'classifier': 'stamp_classifier', 'class': 'SN'}),
+             [('classifier', 'stamp_classifier'), ('class', 'SN')]),
             ({'stamp_classifier': 'SN', 'p_stamp_classifier': 0.5, 'lc_classifier': None, 'p_lc_classifier': None},
-             {'classifier': 'stamp_classifier', 'class': 'SN', 'probability': 0.5}),
+             [('classifier', 'stamp_classifier'), ('class', 'SN'), ('probability', 0.5)]),
             ({'stamp_classifier': None, 'p_stamp_classifier': None, 'lc_classifier': 'SNIa', 'p_lc_classifier': None},
-             {'classifier': 'lc_classifier', 'class': 'SNIa'}),
+             [('classifier', 'lc_classifier'), ('class', 'SNIa')]),
             ({'stamp_classifier': None, 'p_stamp_classifier': None, 'lc_classifier': 'SNIa', 'p_lc_classifier': 0.5},
-             {'classifier': 'lc_classifier', 'class': 'SNIa', 'probability': 0.5}),
+             [('classifier', 'lc_classifier'), ('class', 'SNIa'), ('probability', 0.5)]),
         ]
-        for parameters, expected in parameters_list:
+        for parameters, expected_list in parameters_list:
             with self.subTest():
-                self.assertDictEqual(expected, self.broker._clean_classifier_parameters(parameters))
+                for expected in expected_list:
+                    cleaned_classifier_parameters = self.broker._clean_classifier_parameters(parameters)
+                    self.assertIn(expected, cleaned_classifier_parameters)
 
     @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_classifier_parameters')
     @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_date_parameters')
     @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_coordinate_parameters')
     def test_clean_parameters(self, mock_coordinate, mock_date, mock_classifier):
-        mock_coordinate.return_value = {'ra': 10, 'dec': 10, 'radius': 10}
-        mock_date.return_value = {'firstmjd': 57000, 'lastmjd': 58000}
-        mock_classifier.return_value = {'classifier': 'stamp_classifier', 'class': 'SN', 'probability': 0.5}
+        mock_coordinate.return_value = [('ra', 10), ('dec', 10), ('radius', 10)]
+        mock_date.return_value = [('firstmjd', 57000), ('firstmjd', 58000), ('lastmjd', 58000), ('lastmjd', 59000)]
+        mock_classifier.return_value = [('classifier', 'stamp_classifier'), ('class', 'SN'), ('probability', 0.5)]
 
         # Ensure that passed in values are used to populate the payload
-        parameters = {'page': 2}
+        parameters = {'page': 2, 'oid': 'testoid', 'ndet': 10, 'ranking': 1, 'order_by': 'oid', 'order_mode': 'ASC'}
         payload = self.broker._clean_parameters(parameters)
         with self.subTest():
-            self.assertEqual(payload['page'], parameters['page'])
-            self.assertEqual(payload['page_size'], 20)
-            for k in ['ra', 'dec', 'radius', 'firstmjd', 'lastmjd', 'classifier', 'class', 'probability']:
-                self.assertIn(k, payload.keys())
+            self.assertIn(('page', 2), payload)
+            self.assertIn(('page_size', 20), payload)
+            for k, v in parameters.items():
+                self.assertIn((k, v), payload)
+            for expected in mock_coordinate.return_value:
+                self.assertIn(expected, payload)
+            for expected in mock_date.return_value:
+                self.assertIn(expected, payload)
+            for expected in mock_classifier.return_value:
+                self.assertIn(expected, payload)
 
         # Ensure that missing values result in default values being used to populate the payload
         payload = self.broker._clean_parameters({})
         with self.subTest():
-            self.assertEqual(payload['page'], 1)
+            self.assertIn(('page', 1), payload)
 
     @patch('tom_alerts.brokers.alerce.requests.get')
     @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_parameters')
@@ -354,8 +368,6 @@ class TestALeRCEModuleCanary(TestCase):
 
     def test_fetch_alerts(self):
         form = ALeRCEQueryForm(self.base_form_parameters)
-        # form = ALeRCEQueryForm({'query_name': 'Test', 'broker': 'ALeRCE', 'ndet': 1, 'classifier': 'stamp_classifier',
-        # 'class': 'SN', 'probability': 0.7, 'mjd__gt': 59148.78219219812})
         form.is_valid()
         query = form.save()
 
@@ -402,19 +414,21 @@ class TestALeRCEModuleCanary(TestCase):
                     self.assertEqual(alert['classifier'], expected['classifier'])
                     self.assertGreaterEqual(alert['probability'], expected['probability'])
 
-    # def test_fetch_alerts_time_filters(self):
-    #     parameters = {'firstmjd': 59000, 'lastmjd': 59100}
-    #     parameters.update(self.base_form_parameters)
-    #     form = ALeRCEQueryForm(parameters)
-    #     form.is_valid()
-    #     query = form.save()
+    def test_fetch_alerts_time_filters(self):
+        parameters = {'firstmjd__gt': 59000, 'firstmjd__lt': 59100, 'lastmjd__gt': 59300, 'lastmjd__lt': 59400}
+        parameters.update(self.base_form_parameters)
+        form = ALeRCEQueryForm(parameters)
+        form.is_valid()
+        query = form.save()
 
-    #     alerts = [alert for alert in self.broker.fetch_alerts(query.parameters)]
+        alerts = [alert for alert in self.broker.fetch_alerts(query.parameters)]
 
-    #     self.assertGreaterEqual(len(alerts), 1)
-    #     for alert in alerts:
-    #         self.assertGreaterEqual(alert['firstmjd'], 59000)
-    #         self.assertLessEqual(alert['lastmjd'], 59100)
+        self.assertGreaterEqual(len(alerts), 1)
+        for alert in alerts:
+            self.assertGreaterEqual(alert['firstmjd'], 59000)
+            self.assertLessEqual(alert['firstmjd'], 59100)
+            self.assertGreaterEqual(alert['lastmjd'], 59300)
+            self.assertLessEqual(alert['lastmjd'], 59400)
 
     def test_fetch_alerts_other_filters(self):
         parameters = {'ndet': 10}

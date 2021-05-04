@@ -23,7 +23,7 @@ SORT_CHOICES = [('None', 'None'),
                 ('firstmjd', 'First Detection'),
                 ('lastmjd', 'Last Detection'),
                 ('meanra', 'Mean Right Ascension'),
-                ('meandec', 'Mean Declination'),]
+                ('meandec', 'Mean Declination')]
 
 SORT_ORDER = [('None', 'None'),
               ('ASC', 'Ascending'),
@@ -79,15 +79,27 @@ class ALeRCEQueryForm(GenericQueryForm):
         label='Search Radius',
         widget=forms.TextInput(attrs={'placeholder': 'Radius (Arcseconds)'})
     )
-    firstmjd = forms.FloatField(
+    firstmjd__gt = forms.FloatField(
         required=False,
         label='Min date of first detection ',
         widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'}),
         min_value=0.0
     )
-    lastmjd = forms.FloatField(
+    firstmjd__lt = forms.FloatField(
         required=False,
-        label='Max date of first detection',
+        label='Max date of first detection ',
+        widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'}),
+        min_value=0.0
+    )
+    lastmjd__gt = forms.FloatField(
+        required=False,
+        label='Min date of last detection',
+        widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'}),
+        min_value=0.0
+    )
+    lastmjd__lt = forms.FloatField(
+        required=False,
+        label='Max date of last detection',
         widget=forms.TextInput(attrs={'placeholder': 'Date (MJD)'}),
         min_value=0.0
     )
@@ -135,8 +147,12 @@ class ALeRCEQueryForm(GenericQueryForm):
             Fieldset(
                 'Time Filters',
                 Row(
-                    Column('firstmjd'),
-                    Column('lastmjd'),
+                    Column('firstmjd__gt'),
+                    Column('firstmjd__lt'),
+                ),
+                Row(
+                    Column('lastmjd__gt'),
+                    Column('lastmjd__lt'),
                 )
             ),
             Fieldset(
@@ -189,14 +205,6 @@ class ALeRCEQueryForm(GenericQueryForm):
 
         return [(None, '')] + stamp_classifiers
 
-    # TODO: is this necessary?
-    def clean_sort_by(self):
-        return self.cleaned_data['sort_by'] if self.cleaned_data['sort_by'] else 'nobs'
-
-    # TODO: is this necessary?
-    def clean_records(self):
-        return self.cleaned_data['records'] if self.cleaned_data['records'] else 20
-
     def clean(self):
         cleaned_data = super().clean()
 
@@ -211,10 +219,11 @@ class ALeRCEQueryForm(GenericQueryForm):
             raise forms.ValidationError('Only one of either light curve or stamp classification may be used as a '
                                         'filter.')
 
-        # Ensure that absolute time filters have sensible values
-        if (all(cleaned_data[k] for k in ['lastmjd', 'firstmjd'])
-                and cleaned_data['lastmjd'] <= cleaned_data['firstmjd']):
-            raise forms.ValidationError('Min date of first detection must be earlier than max date of first detection.')
+        # TODO: is this necessary?
+        # # Ensure that absolute time filters have sensible values
+        # if (all(cleaned_data[k] for k in ['lastmjd', 'firstmjd'])
+        #         and cleaned_data['lastmjd'] <= cleaned_data['firstmjd']):
+        #     raise forms.ValidationError('Min date of firstmjd must be earlier than max date of firstmjd.')
 
         return cleaned_data
 
@@ -224,7 +233,7 @@ class ALeRCEBroker(GenericBroker):
     form = ALeRCEQueryForm
 
     def _clean_classifier_parameters(self, parameters):
-        classifier_parameters = {}
+        classifier_parameters = []
         class_type = ''
         if parameters['stamp_classifier']:
             class_type = 'stamp_classifier'
@@ -232,50 +241,47 @@ class ALeRCEBroker(GenericBroker):
             class_type = 'lc_classifier'
 
         if class_type:
-            classifier_parameters['classifier'] = class_type
+            classifier_parameters.append(('classifier', class_type))
         if class_type in parameters and parameters[class_type] is not None:
-            classifier_parameters['class'] = parameters[class_type]
+            classifier_parameters.append(('class', parameters[class_type]))
         if f'p_{class_type}' in parameters and parameters[f'p_{class_type}'] is not None:
-            classifier_parameters['probability'] = parameters[f'p_{class_type}']
+            classifier_parameters.append(('probability', parameters[f'p_{class_type}']))
 
         return classifier_parameters
 
     def _clean_coordinate_parameters(self, parameters):
         if all([parameters['ra'], parameters['dec'], parameters['radius']]):
-            return {
-                'ra': parameters['ra'],
-                'dec': parameters['dec'],
-                'radius': parameters['radius']
-            }
+            return [
+                ('ra', parameters['ra']),
+                ('dec', parameters['dec']),
+                ('radius', parameters['radius'])
+            ]
         else:
-            return {}
+            return []
 
     def _clean_date_parameters(self, parameters):
-        dates = {}
+        dates = []
 
-        if any(parameters[k] for k in ['firstmjd', 'lastmjd']):
-            if parameters['firstmjd']:
-                dates['firstmjd'] = parameters['firstmjd']
-            if parameters['lastmjd']:
-                dates['lastmjd'] = parameters['lastmjd']
+        dates += [('firstmjd', v) for k, v in parameters.items() if 'firstmjd' in k and v]
+        dates += [('lastmjd', v) for k, v in parameters.items() if 'lastmjd' in k and v]
 
         return dates
 
     def _clean_parameters(self, parameters):
-        payload = {
-            k: v for k, v in parameters.items() if k in ['oid', 'ndet', 'ranking', 'order_by', 'order_mode'] and v
-        }
+        payload = [
+            (k, v) for k, v in parameters.items() if k in ['oid', 'ndet', 'ranking', 'order_by', 'order_mode'] and v
+        ]
 
-        payload.update({
-            'page': parameters.get('page', 1),
-            'page_size': 20,
-        })
+        payload += [
+            ('page', parameters.get('page', 1)),
+            ('page_size', 20),
+        ]
 
-        payload.update(self._clean_classifier_parameters(parameters))
+        payload += self._clean_classifier_parameters(parameters)
 
-        payload.update(self._clean_coordinate_parameters(parameters))
+        payload += self._clean_coordinate_parameters(parameters)
 
-        payload.update(self._clean_date_parameters(parameters))
+        payload += self._clean_date_parameters(parameters)
 
         return payload
 
@@ -283,6 +289,7 @@ class ALeRCEBroker(GenericBroker):
         payload = self._clean_parameters(parameters)
         logger.log(msg=f'Fetching alerts from ALeRCE with payload {payload}', level=logging.INFO)
         args = urlencode(self._clean_parameters(parameters))
+        print(args)
         response = requests.get(f'{ALERCE_SEARCH_URL}/objects/?count=false&{args}')
         response.raise_for_status()
         return response.json()
