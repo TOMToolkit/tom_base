@@ -380,8 +380,26 @@ class TestALeRCEModuleCanary(TestCase):
             self.assertAlmostEqual(alert['meandec'], 5.5, 0)  # Test that Declination is near enough to 5 to be valid
 
 
-    # def test_fetch_alerts_classification_search(self):
-    #     pass
+    def test_fetch_alerts_classification_search(self):
+        parameters_list = [
+            ({'lc_classifier': 'SNIa', 'p_lc_classifier': 0.5}, {'class': 'SNIa', 'classifier': 'lc_classifier', 'probability': 0.5}),
+            ({'stamp_classifier': 'SN', 'p_stamp_classifier': 0.5}, {'class': 'SN', 'classifier': 'stamp_classifier', 'probability': 0.5})
+        ]
+
+        for parameters, expected in parameters_list:
+            with self.subTest():
+                parameters.update(self.base_form_parameters)
+                form = ALeRCEQueryForm(parameters)
+                form.is_valid()
+                query = form.save()
+
+                alerts = [alert for alert in self.broker.fetch_alerts(query.parameters)]
+
+                self.assertGreaterEqual(len(alerts), 1)
+                for alert in alerts:
+                    self.assertEqual(alert['class'], expected['class'])
+                    self.assertEqual(alert['classifier'], expected['classifier'])
+                    self.assertGreaterEqual(alert['probability'], expected['probability'])
 
     # def test_fetch_alerts_time_filters(self):
     #     parameters = {'firstmjd': 59000, 'lastmjd': 59100}
