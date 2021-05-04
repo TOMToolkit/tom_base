@@ -379,7 +379,6 @@ class TestALeRCEModuleCanary(TestCase):
             self.assertAlmostEqual(alert['meanra'], 174.5, 0)  # Test that RA is near enough to 174 to be valid
             self.assertAlmostEqual(alert['meandec'], 5.5, 0)  # Test that Declination is near enough to 5 to be valid
 
-
     # def test_fetch_alerts_classification_search(self):
     #     pass
 
@@ -436,7 +435,6 @@ class TestALeRCEModuleCanary(TestCase):
                                     self.assertGreaterEqual(alert[sorting_parameter], last_alert[sorting_parameter])
                                 elif sort_order == 'DESC':
                                     self.assertLessEqual(alert[sorting_parameter], last_alert[sorting_parameter])
-                
 
     def test_fetch_alert(self):
         """
