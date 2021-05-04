@@ -3,7 +3,7 @@ import requests
 from urllib.parse import urlencode
 
 from astropy.time import Time, TimezoneInfo
-from crispy_forms.layout import Column, Fieldset, HTML, Layout, Row
+from crispy_forms.layout import Column, Fieldset, Layout, Row
 from django import forms
 from django.core.cache import cache
 
