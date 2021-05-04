@@ -1,5 +1,13 @@
 # Release Notes
 
+## 2.6.5
+
+This release fixes the following:
+
+- Completes the upgrade to the ALeRCE v1 API.
+- Updates the TNS API URL to the updated value.
+- Adds ``DEFAULT_AUTO_FIELD`` to ``settings.tmpl`` for new TOMs. Existing TOMs should add ``DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'`` to their ``settings.py``, which will resolve any warning messages that include ``HINT: Configure the DEFAULT_AUTO_FIELD setting``, provided the existing TOM is on Django 3.2 or later.
+
 ## 2.6.4
 
 This release removes the MPC module as a default, given that the latest version of astroquery has an issue with it that will be fixed in the next release.
