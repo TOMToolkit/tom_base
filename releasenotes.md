@@ -1,5 +1,19 @@
 # Release Notes
 
+## 2.6.4
+
+This release removes the MPC module as a default, given that the latest version of astroquery has an issue with it that will be fixed in the next release.
+
+Users of the MPC should follow the instructions listed [here](https://tom-toolkit.readthedocs.io/en/stable/api/tom_catalogs/harvesters.html#minor-planet-center) in order to ensure that it works.
+
+## 2.6.3
+
+This release includes most, but not all, of the upgrade to the new ALeRCE API. It should be considered to be in beta as long as the disclaimer at the top of the ALeRCE query form is present.
+
+## 2.6.2
+
+This release supercedes the mistaken 2.6.1 release and includes the fix for spectroscopic migration alluded to in 2.6.1. It also includes a stub module for the Fink broker.
+
 ## 2.6.0
 
 - Refactors user_list to use templatetags in order to facilitate introduction of new [tom_registration](https://github.com/TOMToolkit/tom_registration) installable app.
