@@ -212,9 +212,14 @@ class ALeRCEQueryForm(GenericQueryForm):
 
         return [(None, '')] + stamp_classifiers
 
+    def clean_max_pages(self):
+        max_pages = self.cleaned_data['max_pages']
+        if not max_pages:
+            max_pages = 1
+        return max_pages
+
     def clean(self):
         cleaned_data = super().clean()
-        print(cleaned_data)
 
         # Ensure that all cone search fields are present
         if (any(cleaned_data[k] for k in ['ra', 'dec', 'radius'])
@@ -291,7 +296,6 @@ class ALeRCEBroker(GenericBroker):
         payload = self._clean_parameters(parameters)
         logger.log(msg=f'Fetching alerts from ALeRCE with payload {payload}', level=logging.INFO)
         args = urlencode(self._clean_parameters(parameters))
-        print(args)
         response = requests.get(f'{ALERCE_SEARCH_URL}/objects/?count=false&{args}')
         response.raise_for_status()
         return response.json()
