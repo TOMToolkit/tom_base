@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 import requests
 from urllib.parse import urlencode
 
@@ -16,6 +17,8 @@ from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboti
 from tom_observations.observation_template import GenericTemplateForm
 from tom_observations.widgets import FilterField
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
+
+logger = logging.getLogger(__name__)
 
 # Determine settings for this module.
 try:
@@ -248,6 +251,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     def is_valid(self):
         super().is_valid()
         self.validate_at_facility()
+        if self._errors:
+            logger.warn(f'Facility submission has errors {self._errors}')
         return not self._errors
 
     def _flatten_error_dict(self, error_dict):
@@ -693,15 +698,17 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
             self.fields.pop(field_name)
         if self.fields.get('groups'):
             self.fields['groups'].label = 'Data granted to'
+        # for field_name in ['start', 'end']:
+        #     self.fields[field_name].widget = forms.HiddenInput()
 
         self.helper.layout = Layout(
-            Div(
+            Row(
                 Column('name'),
                 Column('cadence_strategy'),
                 Column('cadence_frequency'),
-                css_class='form-row'
             ),
             Layout('facility', 'target_id', 'observation_type'),
+            # Layout('start', 'end'),  # Include hidden fields
             self.layout(),
             self.button_layout()
         )
@@ -735,9 +742,10 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
               selected, the observation is submitted as a single observation.
         """
         cleaned_data = super().clean()
-        now = datetime.now()
-        cleaned_data['start'] = datetime.strftime(now, '%Y-%m-%dT%H:%M:%S')
-        cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
+        print(cleaned_data)
+        start = cleaned_data.get('start', datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S'))
+        cleaned_data['start'] = start
+        cleaned_data['end'] = datetime.strftime(parse(start) + timedelta(hours=cleaned_data['cadence_frequency']),
                                                 '%Y-%m-%dT%H:%M:%S')
 
         return cleaned_data
@@ -776,12 +784,12 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         for filter_name in self.filters:
             filter_layout.append(Row(MultiWidgetField(filter_name, attrs={'min': 0})))
 
-        return Div(
-            Div(
+        return Row(
+            Column(
                 filter_layout,
                 css_class='col-md-6'
             ),
-            Div(
+            Column(
                 Row('max_airmass'),
                 Row(
                     PrependedText('min_lunar_distance', '>')
@@ -793,7 +801,6 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
                 groups,
                 css_class='col-md-6'
             ),
-            css_class='form-row'
         )
 
 
