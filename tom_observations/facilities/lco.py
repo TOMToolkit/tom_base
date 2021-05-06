@@ -694,12 +694,10 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
             choices=[('', 'Once in the next'), ('ResumeCadenceAfterFailureStrategy', 'Repeating every')],
             required=False,
         )
-        for field_name in ['exposure_time', 'exposure_count', 'start', 'end', 'filter']:
+        for field_name in ['exposure_time', 'exposure_count', 'filter']:
             self.fields.pop(field_name)
         if self.fields.get('groups'):
             self.fields['groups'].label = 'Data granted to'
-        # for field_name in ['start', 'end']:
-        #     self.fields[field_name].widget = forms.HiddenInput()
 
         self.helper.layout = Layout(
             Row(
@@ -708,7 +706,6 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
                 Column('cadence_frequency'),
             ),
             Layout('facility', 'target_id', 'observation_type'),
-            # Layout('start', 'end'),  # Include hidden fields
             self.layout(),
             self.button_layout()
         )
@@ -742,7 +739,6 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
               selected, the observation is submitted as a single observation.
         """
         cleaned_data = super().clean()
-        print(cleaned_data)
         start = cleaned_data.get('start', datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S'))
         cleaned_data['start'] = start
         cleaned_data['end'] = datetime.strftime(parse(start) + timedelta(hours=cleaned_data['cadence_frequency']),
@@ -827,7 +823,7 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
         self.fields['cadence_frequency'].label = ''
 
         # Remove start and end because those are determined by the cadence
-        for field_name in ['start', 'end']:
+        for field_name in ['instrument_type']:
             self.fields.pop(field_name)
         if self.fields.get('groups'):
             self.fields['groups'].label = 'Data granted to'
@@ -889,9 +885,9 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
         """
         cleaned_data = super().clean()
         self.cleaned_data['instrument_type'] = '2M0-FLOYDS-SCICAM'  # SNEx only submits spectra to FLOYDS
-        now = datetime.now()
-        cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
-        cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
+        start = cleaned_data.get('start', datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S'))
+        cleaned_data['start'] = start
+        cleaned_data['end'] = datetime.strftime(parse(start) + timedelta(hours=cleaned_data['cadence_frequency']),
                                                 '%Y-%m-%dT%H:%M:%S')
 
         return cleaned_data
