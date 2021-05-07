@@ -121,6 +121,8 @@ At present, there are three available code hooks.
    updated.
 -  data_product_post_upload: Runs after a data product is successfully
    uploaded to the TOM.
+-  data_product_post_save: Runs after a data product is saved from a facility.
+-  multiple_data_products_post_save: Runs for all data products saved from a facility.
 
 ..
 

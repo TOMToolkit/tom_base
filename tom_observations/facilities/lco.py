@@ -107,7 +107,7 @@ muscat_exposure_mode_help = """
 
 def make_request(*args, **kwargs):
     response = requests.request(*args, **kwargs)
-    if 401 <= response.status_code < 500:
+    if 401 <= response.status_code <= 403:
         raise ImproperCredentialsException('LCO: ' + str(response.content))
     elif 400 == response.status_code:
         raise forms.ValidationError(f'LCO: {str(response.content)}')
@@ -258,21 +258,21 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     def _flatten_error_dict(self, error_dict):
         non_field_errors = []
         for k, v in error_dict.items():
-            if type(v) == list:
+            if isinstance(v, list):
                 for i in v:
-                    if type(i) == str:
+                    if isinstance(i, str):
                         if k in self.fields:
                             self.add_error(k, i)
                         else:
                             non_field_errors.append('{}: {}'.format(k, i))
-                    if type(i) == dict:
+                    if isinstance(i, dict):
                         non_field_errors.append(self._flatten_error_dict(i))
-            elif type(v) == str:
+            elif isinstance(v, str):
                 if k in self.fields:
                     self.add_error(k, v)
                 else:
                     non_field_errors.append('{}: {}'.format(k, v))
-            elif type(v) == dict:
+            elif isinstance(v, dict):
                 non_field_errors.append(self._flatten_error_dict(v))
 
         return non_field_errors
