@@ -698,6 +698,9 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
             self.fields.pop(field_name)
         if self.fields.get('groups'):
             self.fields['groups'].label = 'Data granted to'
+        for field_name in ['start', 'end']:
+            self.fields[field_name].widget = forms.HiddenInput()
+            self.fields[field_name].required = False
 
         self.helper.layout = Layout(
             Row(
@@ -729,18 +732,28 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
 
         return instrument_config
 
+    def clean_start(self):
+        """
+        Unless included in the submission, set the start time to now.
+        """
+        start = self.cleaned_data.get('start')
+        if not start:  # Start is in cleaned_data as an empty string if it was not submitted, so check falsiness
+            start = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
+        return start
+
+    def clean_end(self):
+        """
+        Override clean_end in order to avoid the superclass attempting to date-parse an empty string.
+        """
+        return self.cleaned_data.get('end')
+
     def clean(self):
         """
         This clean method does the following:
-            - Adds a start time of "right now", as the photometric sequence form does not allow for specification
-              of a start time.
             - Adds an end time that corresponds with the cadence frequency
-            - Adds the cadence strategy to the form if "repeat" was the selected "cadence_type". If "once" was
-              selected, the observation is submitted as a single observation.
         """
         cleaned_data = super().clean()
-        start = cleaned_data.get('start', datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S'))
-        cleaned_data['start'] = start
+        start = cleaned_data.get('start')
         cleaned_data['end'] = datetime.strftime(parse(start) + timedelta(hours=cleaned_data['cadence_frequency']),
                                                 '%Y-%m-%dT%H:%M:%S')
 
