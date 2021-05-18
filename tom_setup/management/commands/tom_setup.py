@@ -48,12 +48,7 @@ class Command(BaseCommand):
         self.status('Checking Python version... ')
         major = sys.version_info.major
         minor = sys.version_info.minor
-        if major == 3 and minor == 6:
-            try:
-                import dataclasses  # noqa
-            except ImportError:
-                self.exit('Could not load dataclasses. Please use Python >= 3.7 or 3.6 with dataclasses installed')
-        elif major < 3 or minor < 7:
+        if major < 3 or minor < 7:
             self.exit('Incompatible Python version found. Please install Python >= 3.7')
         self.ok()
 

@@ -36,13 +36,13 @@ class Migration(migrations.Migration):
                                                       verbose_name='Cadence strategy used for this DynamicCadence')),
                 ('cadence_parameters', models.JSONField(blank=False, null=False,
                                                         verbose_name='Cadence-specific parameters')),
-                ('active', models.BooleanField(verbose_name='Active', 
-                                               help_text='''Whether or not this DynamicCadence should continue 
+                ('active', models.BooleanField(verbose_name='Active',
+                                               help_text='''Whether or not this DynamicCadence should continue
                                                           to submit observations.''')),
                 ('created', models.DateTimeField(auto_now_add=True,
                                                  help_text='The time which this DynamicCadence was created.')),
                 ('modified', models.DateTimeField(auto_now=True,
-                                                 help_text='The time which this DynamicCadence was modified.')),
+                                                  help_text='The time which this DynamicCadence was modified.')),
             ]
         ),
 
@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
         ),
 
         migrations.RunPython(copy_cadence_fields_to_dynamic_cadence, reverse_code=migrations.RunPython.noop),
-        
+
         migrations.RemoveField(
             model_name='observationgroup',
             name='cadence_strategy'
