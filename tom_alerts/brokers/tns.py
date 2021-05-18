@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from crispy_forms.layout import Layout, Div, Fieldset
 
 
-TNS_BASE_URL = 'https://www.wis-tns.org/'
+TNS_BASE_URL = 'https://wis-tns.weizmann.ac.il'
 TNS_OBJECT_URL = f'{TNS_BASE_URL}api/get/object'
 TNS_SEARCH_URL = f'{TNS_BASE_URL}api/get/search'
 

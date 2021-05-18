@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 import requests
 from urllib.parse import urlencode
 
@@ -16,6 +17,8 @@ from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboti
 from tom_observations.observation_template import GenericTemplateForm
 from tom_observations.widgets import FilterField
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
+
+logger = logging.getLogger(__name__)
 
 # Determine settings for this module.
 try:
@@ -104,7 +107,7 @@ muscat_exposure_mode_help = """
 
 def make_request(*args, **kwargs):
     response = requests.request(*args, **kwargs)
-    if 401 <= response.status_code < 500:
+    if 401 <= response.status_code <= 403:
         raise ImproperCredentialsException('LCO: ' + str(response.content))
     elif 400 == response.status_code:
         raise forms.ValidationError(f'LCO: {str(response.content)}')
@@ -248,26 +251,28 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     def is_valid(self):
         super().is_valid()
         self.validate_at_facility()
+        if self._errors:
+            logger.warn(f'Facility submission has errors {self._errors}')
         return not self._errors
 
     def _flatten_error_dict(self, error_dict):
         non_field_errors = []
         for k, v in error_dict.items():
-            if type(v) == list:
+            if isinstance(v, list):
                 for i in v:
-                    if type(i) == str:
+                    if isinstance(i, str):
                         if k in self.fields:
                             self.add_error(k, i)
                         else:
                             non_field_errors.append('{}: {}'.format(k, i))
-                    if type(i) == dict:
+                    if isinstance(i, dict):
                         non_field_errors.append(self._flatten_error_dict(i))
-            elif type(v) == str:
+            elif isinstance(v, str):
                 if k in self.fields:
                     self.add_error(k, v)
                 else:
                     non_field_errors.append('{}: {}'.format(k, v))
-            elif type(v) == dict:
+            elif isinstance(v, dict):
                 non_field_errors.append(self._flatten_error_dict(v))
 
         return non_field_errors
@@ -689,17 +694,19 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
             choices=[('', 'Once in the next'), ('ResumeCadenceAfterFailureStrategy', 'Repeating every')],
             required=False,
         )
-        for field_name in ['exposure_time', 'exposure_count', 'start', 'end', 'filter']:
+        for field_name in ['exposure_time', 'exposure_count', 'filter']:
             self.fields.pop(field_name)
         if self.fields.get('groups'):
             self.fields['groups'].label = 'Data granted to'
+        for field_name in ['start', 'end']:
+            self.fields[field_name].widget = forms.HiddenInput()
+            self.fields[field_name].required = False
 
         self.helper.layout = Layout(
-            Div(
+            Row(
                 Column('name'),
                 Column('cadence_strategy'),
                 Column('cadence_frequency'),
-                css_class='form-row'
             ),
             Layout('facility', 'target_id', 'observation_type'),
             self.layout(),
@@ -725,19 +732,29 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
 
         return instrument_config
 
+    def clean_start(self):
+        """
+        Unless included in the submission, set the start time to now.
+        """
+        start = self.cleaned_data.get('start')
+        if not start:  # Start is in cleaned_data as an empty string if it was not submitted, so check falsiness
+            start = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
+        return start
+
+    def clean_end(self):
+        """
+        Override clean_end in order to avoid the superclass attempting to date-parse an empty string.
+        """
+        return self.cleaned_data.get('end')
+
     def clean(self):
         """
         This clean method does the following:
-            - Adds a start time of "right now", as the photometric sequence form does not allow for specification
-              of a start time.
             - Adds an end time that corresponds with the cadence frequency
-            - Adds the cadence strategy to the form if "repeat" was the selected "cadence_type". If "once" was
-              selected, the observation is submitted as a single observation.
         """
         cleaned_data = super().clean()
-        now = datetime.now()
-        cleaned_data['start'] = datetime.strftime(now, '%Y-%m-%dT%H:%M:%S')
-        cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
+        start = cleaned_data.get('start')
+        cleaned_data['end'] = datetime.strftime(parse(start) + timedelta(hours=cleaned_data['cadence_frequency']),
                                                 '%Y-%m-%dT%H:%M:%S')
 
         return cleaned_data
@@ -776,12 +793,12 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         for filter_name in self.filters:
             filter_layout.append(Row(MultiWidgetField(filter_name, attrs={'min': 0})))
 
-        return Div(
-            Div(
+        return Row(
+            Column(
                 filter_layout,
                 css_class='col-md-6'
             ),
-            Div(
+            Column(
                 Row('max_airmass'),
                 Row(
                     PrependedText('min_lunar_distance', '>')
@@ -793,7 +810,6 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
                 groups,
                 css_class='col-md-6'
             ),
-            css_class='form-row'
         )
 
 
@@ -820,10 +836,13 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
         self.fields['cadence_frequency'].label = ''
 
         # Remove start and end because those are determined by the cadence
-        for field_name in ['start', 'end']:
+        for field_name in ['instrument_type']:
             self.fields.pop(field_name)
         if self.fields.get('groups'):
             self.fields['groups'].label = 'Data granted to'
+        for field_name in ['start', 'end']:
+            self.fields[field_name].widget = forms.HiddenInput()
+            self.fields[field_name].required = False
 
         self.helper.layout = Layout(
             Div(
@@ -870,6 +889,21 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
             location['site'] = site
         return location
 
+    def clean_start(self):
+        """
+        Unless included in the submission, set the start time to now.
+        """
+        start = self.cleaned_data.get('start')
+        if not start:  # Start is in cleaned_data as an empty string if it was not submitted, so check falsiness
+            start = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
+        return start
+
+    def clean_end(self):
+        """
+        Override clean_end in order to avoid the superclass attempting to date-parse an empty string.
+        """
+        return self.cleaned_data.get('end')
+
     def clean(self):
         """
         This clean method does the following:
@@ -881,10 +915,9 @@ class LCOSpectroscopicSequenceForm(LCOBaseObservationForm):
               selected, the observation is submitted as a single observation.
         """
         cleaned_data = super().clean()
-        self.cleaned_data['instrument_type'] = '2M0-FLOYDS-SCICAM'  # SNEx only submits spectra to FLOYDS
-        now = datetime.now()
-        cleaned_data['start'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
-        cleaned_data['end'] = datetime.strftime(now + timedelta(hours=cleaned_data['cadence_frequency']),
+        cleaned_data['instrument_type'] = '2M0-FLOYDS-SCICAM'  # SNEx only submits spectra to FLOYDS
+        start = cleaned_data.get('start')
+        cleaned_data['end'] = datetime.strftime(parse(start) + timedelta(hours=cleaned_data['cadence_frequency']),
                                                 '%Y-%m-%dT%H:%M:%S')
 
         return cleaned_data

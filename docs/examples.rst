@@ -51,13 +51,17 @@ built to enable their community to coordinate observations for the
 `PANOPTES citizen science project <https://projectpanoptes.org/>`__, which 
 aims to detect transiting exoplanets.
 
-
 AMON TOM
 ~~~~~~~~
 
 Black Hole TOM
 ~~~~~~~~~~~~~~
 Black Hole TOM (BHTOM) aims at coordinating the photometric and spectroscopic follow-up observations of targets requiring long-term monitoring. This includes long lasting microlensing events reported by Gaia and other surveys, likely caused by galactic black holes. The system lists targets according to their priorities and allows for triggering robotic observations. It also allows users of any partner observatory to submit their raw photometric and spectroscopic data, which gets automatically processed and calibrated. BHTOM is developed as part of the Time Domain Astronony work package of the European OPTICON grant by the team at the University of Warsaw, Poland, with support from LCO. Website: http://visata.astrouw.edu.pl:8080
+
+ALeRCE TOM
+~~~~~~~~~~
+
+The `ALeRCE TOM <https://tom.alerce.online/>`__ is used by the ALeRCE team to submit follow-up observations on ZTF targets from the ALeRCE broker module, which uses the `ALeRCE Database API <http://alerce.science/services/ztf-db-api/>`__.
 
 Others
 ~~~~~~

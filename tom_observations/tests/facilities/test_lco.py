@@ -228,7 +228,22 @@ class TestLCOBaseObservationForm(TestCase):
         # TODO: Add test for when validate_at_facility returns errors
 
     def test_flatten_error_dict(self, mock_validate, mock_insts, mock_filters, mock_proposals):
-        pass
+        test_error = {
+            'requests': [{'configurations': [
+                {'non_field_errors': ['Test configuration error']},
+                {'max_airmass': ['Invalid airmass']}
+            ]}],
+            'test_string': 'string error',
+            'ipp_value': 'Invalid ipp',
+            'test_dict': {'test_key': 'dict_error'}
+        }
+        form = LCOBaseObservationForm(self.valid_form_data)
+        flattened_errors = form._flatten_error_dict(test_error)
+        self.assertIn(['non_field_errors: Test configuration error'], flattened_errors[0])
+        self.assertIn('test_string: string error', flattened_errors)
+        self.assertIn('Invalid ipp', form.errors['ipp_value'])
+        self.assertIn('Invalid airmass', form.errors['max_airmass'])
+        self.assertIn(['test_key: dict_error'], flattened_errors)
 
     def test_instrument_to_type(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         """Test instrument_to_type method."""
