@@ -679,7 +679,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
     configuration of multiple filters, as well as a more intuitive proactive cadence form.
     """
     valid_instruments = ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']
-    filters = ['U', 'B', 'V', 'R', 'I', 'up', 'gp', 'rp',]  # 'i', 'z', 'w'
+    filters = ['U', 'B', 'V', 'R', 'I', 'up', 'gp', 'rp', 'ip', 'zs', 'w']
     cadence_frequency = forms.IntegerField(required=True, help_text='in hours')
 
     def __init__(self, *args, **kwargs):
