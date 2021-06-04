@@ -176,7 +176,7 @@ class TestLCOBaseForm(TestCase):
         filter_choices = LCOBaseForm.filter_choices()
         for expected in [('opaque', 'Opaque'), ('100um-Pinhole', '100um Pinhole'), ('slit_6.0as', '6.0 arcsec slit')]:
             self.assertIn(expected, filter_choices)
-        self.assertEqual(len(filter_choices), 6)
+        self.assertEqual(len(filter_choices), 17)
 
     @patch('tom_observations.facilities.lco.make_request')
     def test_proposal_choices(self, mock_make_request):
@@ -423,7 +423,7 @@ class TestLCOImagingObservationForm(TestCase):
         for not_expected in [('slit_6.0as', '6.0 arcsec slit'), ('slit_1.6as', '1.6 arcsec slit'),
                              ('slit_2.0as', '2.0 arcsec slit'), ('slit_1.2as', '1.2 arcsec slit')]:
             self.assertNotIn(not_expected, filter_choices)
-        self.assertEqual(len(filter_choices), 2)
+        self.assertEqual(len(filter_choices), 13)
 
 
 @patch('tom_observations.facilities.lco.LCOMuscatImagingObservationForm.validate_at_facility')
