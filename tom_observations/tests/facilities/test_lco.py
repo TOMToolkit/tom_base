@@ -586,9 +586,10 @@ class TestLCOPhotometricSequenceForm(TestCase):
         }
         self.instrument_choices = [(k, v['name']) for k, v in instrument_response.items() if 'SOAR' not in k]
         self.filter_choices = set([
-            (f['code'], f['name']) for ins in instrument_response.values() for f in
-            ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
-        ])
+            (f['code'], f['name']) for ins in LCOPhotometricSequenceForm._get_instruments().values() for f in
+            ins['optical_elements'].get('filters', [])
+            if f['code'] in LCOPhotometricSequenceForm.filters]
+        )
         self.proposal_choices = generate_lco_proposal_choices()
 
     @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm._get_instruments')
