@@ -27,6 +27,17 @@ instrument_response = {
     '0M4-SCICAM-SBIG': {
         'type': 'IMAGE', 'class': '0m4', 'name': '0.4 meter SBIG', 'optical_elements': {
             'filters': [
+                {"name": "Bessell-U", "code": "U", "schedulable": True, "default": False},
+                {"name": "Bessell-B", "code": "B", "schedulable": True, "default": False},
+                {"name": "Bessell-V", "code": "V", "schedulable": True, "default": False},
+                {"name": "Bessell-R", "code": "R", "schedulable": True, "default": False},
+                {"name": "Bessell-I", "code": "I", "schedulable": True, "default": False},
+                {"name": "SDSS-up", "code": "up", "schedulable": True, "default": False},
+                {"name": "SDSS-gp", "code": "gp", "schedulable": True, "default": False},
+                {"name": "SDSS-rp", "code": "rp", "schedulable": True, "default": False},
+                {"name": "SDSS-ip", "code": "ip", "schedulable": True, "default": False},
+                {"name": "PanSTARRS-Z", "code": "zs", "schedulable": True, "default": False},
+                {"name": "PanSTARRS-w", "code": "w", "schedulable": True, "default": False},
                 {'name': 'Opaque', 'code': 'opaque', 'schedulable': False, 'default': False},
                 {'name': '100um Pinhole', 'code': '100um-Pinhole', 'schedulable': False, 'default': False},
             ]
@@ -586,9 +597,9 @@ class TestLCOPhotometricSequenceForm(TestCase):
         }
         self.instrument_choices = [(k, v['name']) for k, v in instrument_response.items() if 'SOAR' not in k]
         self.filter_choices = set([
-            (f['code'], f['name']) for ins in LCOPhotometricSequenceForm._get_instruments().values() for f in
+            (f['code'], f['name']) for ins in instrument_response.values() for f in
             ins['optical_elements'].get('filters', [])
-            if f['code'] in LCOPhotometricSequenceForm.filters]
+            if f['code'] in LCOPhotometricSequenceForm.valid_filters]
         )
         self.proposal_choices = generate_lco_proposal_choices()
 
