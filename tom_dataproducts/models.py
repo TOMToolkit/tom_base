@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 import os
 import tempfile
 
@@ -8,11 +9,12 @@ from django.core.files import File
 from django.db import models
 from django.core.exceptions import ValidationError
 from fits2image.conversions import fits_to_jpg
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
 
+logger = logging.getLogger(__name__)
 
 try:
     THUMBNAIL_DEFAULT_SIZE = settings.THUMBNAIL_DEFAULT_SIZE
@@ -260,11 +262,21 @@ class DataProduct(models.Model):
         :rtype: file
         """
         if is_fits_image_file(self.data.file):
-            tmpfile = tempfile.NamedTemporaryFile()
-            if not width or not height:
-                width, height = find_fits_img_size(self.data.file)
-            resp = fits_to_jpg(self.data.file, tmpfile.name, width=width, height=height)
-            if resp:
+            tmpfile = tempfile.NamedTemporaryFile(suffix='.jpg')
+            try:
+                if not width or not height:
+                    width, height = find_fits_img_size(self.data.file)
+                resp = fits_to_jpg(self.data.file, tmpfile.name, width=width, height=height)
+                if resp:
+                    return tmpfile
+            except Exception as e:
+                logger.warn(f'Unable to create thumbnail for {self}: {e}')
+                img = Image.new('RGB', (width, height), color=(255, 255, 255))
+                font = ImageFont.truetype('tom_dataproducts/static/tom_dataproducts/segoe-ui.ttf', size=40)  # Should we scale font size with thumbnail size?
+                d = ImageDraw.Draw(img)
+                print(d.getfont().font)
+                d.text((0, 0), 'Unable to create thumbnail', font=font, fill=(0, 0, 0))
+                img.save(tmpfile.name, img.format)
                 return tmpfile
         return
 
