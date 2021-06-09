@@ -9,7 +9,7 @@ from django.core.files import File
 from django.db import models
 from django.core.exceptions import ValidationError
 from fits2image.conversions import fits_to_jpg
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
