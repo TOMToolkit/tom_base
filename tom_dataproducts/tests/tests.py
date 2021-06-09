@@ -225,11 +225,13 @@ class TestDataProductListView(TestCase):
 
     @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
     def test_dataproduct_list(self, dp_mock):
+        """Test that the data product list view renders correctly."""
         response = self.client.get(reverse('tom_dataproducts:list'))
         self.assertContains(response, 'afile.fits')
 
     @patch('tom_dataproducts.models.is_fits_image_file')
     def test_dataproduct_list_no_thumbnail(self, mock_is_fits_image_file):
+        """Test that a data product with a failed thumbnail creation does not raise an exception."""
         mock_is_fits_image_file.return_value = True
         response = self.client.get(reverse('tom_dataproducts:list'))
         self.assertEqual(response.status_code, HTTPStatus.OK)
@@ -477,6 +479,7 @@ class TestDataProductModel(TestCase):
 
     @patch('tom_dataproducts.models.is_fits_image_file')
     def test_create_thumbnail(self, mock_is_fits_image_file):
+        """Test that a failed thumbnail creation logs the correct message and does not break."""
         mock_is_fits_image_file.return_value = True
         with self.assertLogs('tom_dataproducts.models', level='WARN') as logs:
             self.data_product.create_thumbnail()
