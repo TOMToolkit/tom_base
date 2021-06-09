@@ -1,29 +1,30 @@
 import os
+from http import HTTPStatus
 import tempfile
 
+from astropy import units
+from astropy.io import fits
+from astropy.table import Table
+from datetime import date, time
 from django.test import TestCase, override_settings
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
-from unittest.mock import patch
-from datetime import date, time
-from specutils import Spectrum1D
-from astropy import units
-from astropy.io import fits
-from astropy.table import Table
+from guardian.shortcuts import assign_perm
 import numpy as np
+from specutils import Spectrum1D
+from unittest.mock import patch
 
-from tom_observations.tests.utils import FakeRoboticFacility
-from tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory
-from tom_dataproducts.models import DataProduct, is_fits_image_file
+from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import DataProductUploadForm
+from tom_dataproducts.models import DataProduct, is_fits_image_file
+from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_dataproducts.processors.photometry_processor import PhotometryProcessor
 from tom_dataproducts.processors.spectroscopy_processor import SpectroscopyProcessor
-from tom_dataproducts.processors.data_serializers import SpectrumSerializer
-from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.utils import create_image_dataproduct
-from guardian.shortcuts import assign_perm
+from tom_observations.tests.utils import FakeRoboticFacility
+from tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory
 
 
 def mock_fits2image(file1, file2, width, height):
@@ -61,10 +62,6 @@ class Views(TestCase):
 
     def test_dataproduct_list_on_target(self, dp_mock):
         response = self.client.get(reverse('tom_targets:detail', kwargs={'pk': self.target.id}))
-        self.assertContains(response, 'afile.fits')
-
-    def test_dataproduct_list(self, dp_mock):
-        response = self.client.get(reverse('tom_dataproducts:list'))
         self.assertContains(response, 'afile.fits')
 
     def test_get_dataproducts(self, dp_mock):
@@ -212,6 +209,32 @@ class TestViewsWithPermissions(TestCase):
         self.client.force_login(self.user2)
         response = self.client.get(reverse('targets:detail', kwargs={'pk': self.target.id}))
         self.assertNotContains(response, 'afile.fits')
+
+
+class TestDataProductListView(TestCase):
+    def setUp(self):
+        self.target = SiderealTargetFactory.create()
+        self.data_product = DataProduct.objects.create(
+            product_id='testproductid',
+            target=self.target,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+        user = User.objects.create_user(username='test', email='test@example.com')
+        assign_perm('tom_targets.view_target', user, self.target)
+        self.client.force_login(user)
+
+    @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
+    def test_dataproduct_list(self, dp_mock):
+        """Test that the data product list view renders correctly."""
+        response = self.client.get(reverse('tom_dataproducts:list'))
+        self.assertContains(response, 'afile.fits')
+
+    @patch('tom_dataproducts.models.is_fits_image_file')
+    def test_dataproduct_list_no_thumbnail(self, mock_is_fits_image_file):
+        """Test that a data product with a failed thumbnail creation does not raise an exception."""
+        mock_is_fits_image_file.return_value = True
+        response = self.client.get(reverse('tom_dataproducts:list'))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
@@ -443,3 +466,23 @@ class TestDataProcessor(TestCase):
             lightcurve = self.photometry_data_processor._process_photometry_from_plaintext(self.data_product)
             self.assertTrue(isinstance(lightcurve, list))
             self.assertEqual(len(lightcurve), 3)
+
+
+class TestDataProductModel(TestCase):
+    def setUp(self):
+        self.target = SiderealTargetFactory.create()
+        self.data_product = DataProduct.objects.create(
+            product_id='test_product_id',
+            target=self.target,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+
+    @patch('tom_dataproducts.models.is_fits_image_file')
+    def test_create_thumbnail(self, mock_is_fits_image_file):
+        """Test that a failed thumbnail creation logs the correct message and does not break."""
+        mock_is_fits_image_file.return_value = True
+        with self.assertLogs('tom_dataproducts.models', level='WARN') as logs:
+            self.data_product.create_thumbnail()
+            self.assertIn(
+                f'WARNING:tom_dataproducts.models:Unable to create thumbnail for {self.data_product}: Empty or corrupt '
+                'FITS file', logs.output)
