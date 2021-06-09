@@ -246,7 +246,7 @@ class DataProduct(models.Model):
                     self.thumbnail.save(filename, File(f), save=True)
                     self.save()
         if not self.thumbnail:
-            return ''
+            return None
         return self.thumbnail.url
 
     def create_thumbnail(self, width=None, height=None):
@@ -271,13 +271,6 @@ class DataProduct(models.Model):
                     return tmpfile
             except Exception as e:
                 logger.warn(f'Unable to create thumbnail for {self}: {e}')
-                img = Image.new('RGB', (width, height), color=(255, 255, 255))
-                font = ImageFont.truetype('tom_dataproducts/static/tom_dataproducts/segoe-ui.ttf', size=40)  # Should we scale font size with thumbnail size?
-                d = ImageDraw.Draw(img)
-                print(d.getfont().font)
-                d.text((0, 0), 'Unable to create thumbnail', font=font, fill=(0, 0, 0))
-                img.save(tmpfile.name, img.format)
-                return tmpfile
         return
 
 
