@@ -106,11 +106,6 @@ build does:
 
    flake8 tom_* --exclude=*/migrations/* --max-line-length=120
 
-Documentation
-~~~~~~~~~~~~~
-
-We require any new features to
-
 .. |image0| image:: /_static/fork.png
 .. |image1| image:: /_static/pull-request.png
 .. |image2| image:: /_static/compare-across-forks.png
