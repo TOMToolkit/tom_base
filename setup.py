@@ -54,7 +54,7 @@ setup(
         'test': ['factory_boy==3.2.0'],
         'docs': [
             'recommonmark~=0.7',
-            'sphinx~=3.5',
+            'sphinx>=3.5,<5.0',
             'tom_antares',
             'tom_scimma'
         ]
