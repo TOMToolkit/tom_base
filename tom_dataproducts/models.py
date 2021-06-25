@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 import os
 import tempfile
 
@@ -13,6 +14,7 @@ from PIL import Image
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
 
+logger = logging.getLogger(__name__)
 
 try:
     THUMBNAIL_DEFAULT_SIZE = settings.THUMBNAIL_DEFAULT_SIZE
@@ -244,7 +246,7 @@ class DataProduct(models.Model):
                     self.thumbnail.save(filename, File(f), save=True)
                     self.save()
         if not self.thumbnail:
-            return ''
+            return None
         return self.thumbnail.url
 
     def create_thumbnail(self, width=None, height=None):
@@ -260,12 +262,15 @@ class DataProduct(models.Model):
         :rtype: file
         """
         if is_fits_image_file(self.data.file):
-            tmpfile = tempfile.NamedTemporaryFile()
-            if not width or not height:
-                width, height = find_fits_img_size(self.data.file)
-            resp = fits_to_jpg(self.data.file, tmpfile.name, width=width, height=height)
-            if resp:
-                return tmpfile
+            tmpfile = tempfile.NamedTemporaryFile(suffix='.jpg')
+            try:
+                if not width or not height:
+                    width, height = find_fits_img_size(self.data.file)
+                resp = fits_to_jpg(self.data.file, tmpfile.name, width=width, height=height)
+                if resp:
+                    return tmpfile
+            except Exception as e:
+                logger.warn(f'Unable to create thumbnail for {self}: {e}')
         return
 
 

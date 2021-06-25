@@ -46,10 +46,14 @@
           </a></td>
           {% if product.get_file_extension == '.fz' or product.get_file_extension == '.fits' %}
           <td>
+            {% if product.get_preview %}
             {% cache None thumbnail product.id %}
             <img src="{{ product.get_preview }}" class="thumbnail"><br/>
             {% endcache %}
             {% include 'tom_dataproducts/partials/js9_button.html' with url=product.data.url only %}
+            {% else %}
+            <img src="{% static 'tom_dataproducts/img/placeholder.png' %}" class="thumbnail"><br/>
+            {% endif %}
           </td>
           {% else %}
           <td></td>
