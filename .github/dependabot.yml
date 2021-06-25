@@ -1,13 +1,8 @@
 version: 2
-registries:
-  python-index-pypi-python-org-simple:
-    type: python-index
-    url: https://pypi.python.org/simple/
 
 updates:
 - package-ecosystem: pip
   directory: "/"
-  insecure-external-code-execution: allow
   schedule:
     interval: daily
     time: "13:00"
@@ -27,5 +22,3 @@ updates:
   - dependency-name: astropy
     versions:
     - "4.2"
-  registries:
-  - python-index-pypi-python-org-simple
