@@ -1,0 +1,32 @@
+version: 2
+registries:
+  python-index-pypi-python-org-simple:
+    type: python-index
+    url: https://pypi.python.org/simple/
+    username: "${{secrets.PYTHON_INDEX_PYPI_PYTHON_ORG_SIMPLE_USERNAME}}"
+    password: "${{secrets.PYTHON_INDEX_PYPI_PYTHON_ORG_SIMPLE_PASSWORD}}"
+
+updates:
+- package-ecosystem: pip
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "13:00"
+  open-pull-requests-limit: 10
+  target-branch: dev
+  reviewers:
+  - dmcollom
+  - phycodurus
+  ignore:
+  - dependency-name: numpy
+    versions:
+    - 1.20.0
+    - 1.20.1
+  - dependency-name: astroplan
+    versions:
+    - "0.8"
+  - dependency-name: astropy
+    versions:
+    - "4.2"
+  registries:
+  - python-index-pypi-python-org-simple
