@@ -27,6 +27,17 @@ instrument_response = {
     '0M4-SCICAM-SBIG': {
         'type': 'IMAGE', 'class': '0m4', 'name': '0.4 meter SBIG', 'optical_elements': {
             'filters': [
+                {"name": "Bessell-U", "code": "U", "schedulable": True, "default": False},
+                {"name": "Bessell-B", "code": "B", "schedulable": True, "default": False},
+                {"name": "Bessell-V", "code": "V", "schedulable": True, "default": False},
+                {"name": "Bessell-R", "code": "R", "schedulable": True, "default": False},
+                {"name": "Bessell-I", "code": "I", "schedulable": True, "default": False},
+                {"name": "SDSS-up", "code": "up", "schedulable": True, "default": False},
+                {"name": "SDSS-gp", "code": "gp", "schedulable": True, "default": False},
+                {"name": "SDSS-rp", "code": "rp", "schedulable": True, "default": False},
+                {"name": "SDSS-ip", "code": "ip", "schedulable": True, "default": False},
+                {"name": "PanSTARRS-Z", "code": "zs", "schedulable": True, "default": False},
+                {"name": "PanSTARRS-w", "code": "w", "schedulable": True, "default": False},
                 {'name': 'Opaque', 'code': 'opaque', 'schedulable': False, 'default': False},
                 {'name': '100um Pinhole', 'code': '100um-Pinhole', 'schedulable': False, 'default': False},
             ]
@@ -165,7 +176,7 @@ class TestLCOBaseForm(TestCase):
         filter_choices = LCOBaseForm.filter_choices()
         for expected in [('opaque', 'Opaque'), ('100um-Pinhole', '100um Pinhole'), ('slit_6.0as', '6.0 arcsec slit')]:
             self.assertIn(expected, filter_choices)
-        self.assertEqual(len(filter_choices), 6)
+        self.assertEqual(len(filter_choices), 17)
 
     @patch('tom_observations.facilities.lco.make_request')
     def test_proposal_choices(self, mock_make_request):
@@ -228,7 +239,22 @@ class TestLCOBaseObservationForm(TestCase):
         # TODO: Add test for when validate_at_facility returns errors
 
     def test_flatten_error_dict(self, mock_validate, mock_insts, mock_filters, mock_proposals):
-        pass
+        test_error = {
+            'requests': [{'configurations': [
+                {'non_field_errors': ['Test configuration error']},
+                {'max_airmass': ['Invalid airmass']}
+            ]}],
+            'test_string': 'string error',
+            'ipp_value': 'Invalid ipp',
+            'test_dict': {'test_key': 'dict_error'}
+        }
+        form = LCOBaseObservationForm(self.valid_form_data)
+        flattened_errors = form._flatten_error_dict(test_error)
+        self.assertIn(['non_field_errors: Test configuration error'], flattened_errors[0])
+        self.assertIn('test_string: string error', flattened_errors)
+        self.assertIn('Invalid ipp', form.errors['ipp_value'])
+        self.assertIn('Invalid airmass', form.errors['max_airmass'])
+        self.assertIn(['test_key: dict_error'], flattened_errors)
 
     def test_instrument_to_type(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         """Test instrument_to_type method."""
@@ -397,7 +423,7 @@ class TestLCOImagingObservationForm(TestCase):
         for not_expected in [('slit_6.0as', '6.0 arcsec slit'), ('slit_1.6as', '1.6 arcsec slit'),
                              ('slit_2.0as', '2.0 arcsec slit'), ('slit_1.2as', '1.2 arcsec slit')]:
             self.assertNotIn(not_expected, filter_choices)
-        self.assertEqual(len(filter_choices), 2)
+        self.assertEqual(len(filter_choices), 13)
 
 
 @patch('tom_observations.facilities.lco.LCOMuscatImagingObservationForm.validate_at_facility')
@@ -572,8 +598,9 @@ class TestLCOPhotometricSequenceForm(TestCase):
         self.instrument_choices = [(k, v['name']) for k, v in instrument_response.items() if 'SOAR' not in k]
         self.filter_choices = set([
             (f['code'], f['name']) for ins in instrument_response.values() for f in
-            ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', [])
-        ])
+            ins['optical_elements'].get('filters', [])
+            if f['code'] in LCOPhotometricSequenceForm.valid_filters]
+        )
         self.proposal_choices = generate_lco_proposal_choices()
 
     @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm._get_instruments')
