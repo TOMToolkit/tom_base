@@ -8,6 +8,7 @@ updates:
     time: "13:00"
   open-pull-requests-limit: 10
   target-branch: dev
+  versioning-strategy: increase
   reviewers:
   - dmcollom
   - phycodurus
