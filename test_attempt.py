@@ -3,6 +3,7 @@ import sys
 
 import json
 from unittest.mock import patch
+from unittest.mock import MagicMock
 
 from django import forms
 from django.contrib.auth.models import User, Group
@@ -24,32 +25,12 @@ test_alerts = [
     {'id': 2, 'name': 'Hoth', 'timestamp': '2019-07-02', 'ra': 66, 'dec': 50, 'mag': 3, 'score': 66},
 ]
 
-#Example: can be found at https://github.com/TOMToolkit/tom_base/blob/e9dd9a3c74ddb34ce65f3d25c67e781fcd0ff588/tom_alerts/tests/tests.py
-@override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests.TestBroker'])
-class TestBrokerClass(TestCase):
-    """ Test the functionality of the TestBroker, we modify the django settings to make sure
-    it is the only installed broker.
-    """
-    def test_get_broker_class(self):
-        self.assertEqual(TestBroker, get_service_class('TEST')) #Check that the result = the service class 'TEST'
-
-    def test_get_invalid_broker(self):
-        with self.assertRaises(ImportError): #Raises an import error if:
-            get_service_class('MARS') #The invalid broker is returned
-
-
-#My attempt at a test
-modulename = 'one'
-nestedmodulename = 'two'
-#sys.modules['one']={}
-class TestModuleImport(unittest.TestCase):
+class TestModuleImport(TestCase):
 
 #Failure to import module
     def test_import_invalid_mod(self):
-        with self.assertRaises(ImportError): #Raises an import error if:
-            modulename not in sys.modules #The import_module command fails
-
-#Failure to import nested module from a package
-    def test_import_invalid_pkg(self):
-        with self.assertRaises(ImportError):
-            nestedmodulename not in sys.modules #stored as nestedmodulename=sys.modules['packagename.nestedmodulename']
+        with self.subTest('Test that an invalid import returns an import error.'):
+            with patch('tom_observations.api_views.get_service_class') as mock_get_service_class:
+                mock_get_service_class.side_effect = ImportError('Import failed. Did you provide the correct path?')
+                result = mock_get_service_class()
+                self.assertIn('Import failed. Did you provide the correct path?', result)
