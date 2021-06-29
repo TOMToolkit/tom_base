@@ -19,6 +19,8 @@ from tom_alerts.models import BrokerQuery
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
+env: GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 # Test alert data. Normally this would come from a remote source.
 test_alerts = [
     {'id': 1, 'name': 'Tatooine', 'timestamp': '2019-07-01', 'ra': 32, 'dec': -20, 'mag': 8, 'score': 20},
