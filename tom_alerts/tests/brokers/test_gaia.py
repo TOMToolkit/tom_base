@@ -158,3 +158,6 @@ class TestGaiaBroker(TestCase):
 
         reduced_data = ReducedDatum.objects.filter(target=self.test_target, source_name='Gaia')
         self.assertGreater(reduced_data.count(), 1)
+
+    def test_get_broker_class(self):
+        self.assertEqual(GaiaBroker, get_service_class('Gaia'))
