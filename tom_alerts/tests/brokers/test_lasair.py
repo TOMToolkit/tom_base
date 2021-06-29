@@ -3,12 +3,10 @@ from unittest import mock
 from django.test import override_settings, tag, TestCase
 
 from tom_alerts.alerts import get_service_class
-from tom_targets.models import Target
 from tom_alerts.brokers.lasair import LasairBroker, LasairBrokerForm
 
 alert1 = {
-    
-    'candidates': 
+    'candidates':
     {
        'decl': 30.5462915,
        'magpsf': 15.4319,
@@ -16,11 +14,12 @@ alert1 = {
        'candid': 1638483221215015008,
     },
     'objectData': {
-        'glonmean': 159.12011347419698, 
+        'glonmean': 159.12011347419698,
         'glatmean': -20.911037347147648,
     },
     'objectId': 'ZTF18aaaduje',
 }
+
 
 class TestLasairBrokerForm(TestCase):
     def setUp(self):
@@ -62,10 +61,8 @@ class TestLasairBrokerClass(TestCase):
     @mock.patch('tom_alerts.brokers.lasair.LasairBroker.fetch_alert')
     def test_to_target(self, alert):
         testalert = alert1
-        #uses to_target method
-        created_target = LasairBroker().to_target(testalert)
-        #checks to_target method works with assertEqual() method 
-        self.assertEqual(created_target.name, 'ZTF18aaaduje')
+        created_target = LasairBroker().to_target(testalert) #uses to_target method
+        self.assertEqual(created_target.name, 'ZTF18aaaduje') #checks to_target method works with assertEqual() method
 
     def test_to_generic_alert(self):
         pass
