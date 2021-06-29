@@ -102,10 +102,10 @@ class LasairBroker(GenericBroker):
             if 'candid' in c:
                 break
         return Target.objects.create(
-            name=c['candid'],
+            name=str(alert.get('objectId')),
             type='SIDEREAL',
-            ra=c['ra'],
-            dec=c['decl'],
-            galactic_lng=alert['objectData']['glonmean'],
-            galactic_lat=alert['objectData']['glatmean'],
+            ra=alert['candidates'].get('ra'),
+            dec=alert['candidates'].get('decl'),
+            #galactic_lng=alert['objectData']['glonmean'],
+            #galactic_lat=alert['objectData']['glatmean'],
         )
