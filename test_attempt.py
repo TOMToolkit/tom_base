@@ -32,5 +32,5 @@ class TestModuleImport(TestCase):
         with self.subTest('Test that an invalid import returns an import error.'):
             with patch('tom_observations.api_views.get_service_class') as mock_get_service_class:
                 mock_get_service_class.side_effect = ImportError('Import failed. Did you provide the correct path?')
-                result = mock_get_service_class()
-                self.assertIn('Import failed. Did you provide the correct path?', result)
+                with self.assertRaises(ImportError):
+                    mock_get_service_class()
