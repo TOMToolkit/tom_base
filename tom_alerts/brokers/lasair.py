@@ -106,6 +106,7 @@ class LasairBroker(GenericBroker):
             type='SIDEREAL',
             ra=alert['candidates'].get('ra'),
             dec=alert['candidates'].get('decl'),
-            #galactic_lng=alert['objectData']['glonmean'],
+            '''galactic_lng=alert['objectData']['glonmean'],
             #galactic_lat=alert['objectData']['glatmean'],
+            '''
         )
