@@ -1,5 +1,6 @@
-from django.test import TestCase
 from unittest.mock import patch
+
+from django.test import TestCase
 
 from tom_alerts.alerts import get_service_classes
 
