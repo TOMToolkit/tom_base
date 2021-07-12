@@ -7,13 +7,23 @@ from tom_alerts.brokers.lasair import LasairBroker, LasairBrokerForm
 
 alert1 = {
     'candidates':
-    {
-       'decl': 30.5462915,
-       'magpsf': 15.4319,
-       'ra': 52.6833968,
-       'candid': 1638483221215015008,
-    },
+    [
+        {
+        'decl': 30.5462915,
+        'magpsf': 15.4319,
+        'ra': 52.6833968,
+        'candid': 1638483221215015008,
+    }   ,
+        {
+        'decl': 30.5462627,
+        'magpsf': 16.5676,
+        'ra': 52.6833575,
+        'candid': 1649478961215015007,
+        }
+    ],
     'objectData': {
+        'ramean': 52.68339748783069,
+        'decmean': 30.546314428042333,
         'glonmean': 159.12011347419698,
         'glatmean': -20.911037347147648,
     },
@@ -44,10 +54,13 @@ class TestLasairBrokerForm(TestCase):
 
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.brokers.lasair.LasairBroker'])
+
 class TestLasairBrokerClass(TestCase):
+    
     """ Test the functionality of the LasairBroker, we modify the django settings to make sure
     it is the only installed broker.
     """
+    
     def setUp(self):
         pass
 
@@ -58,11 +71,16 @@ class TestLasairBrokerClass(TestCase):
     def test_fetch_alerts(self, mock_requests_get):
         pass
 
-    @mock.patch('tom_alerts.brokers.lasair.LasairBroker.fetch_alert')
-    def test_to_target(self, alert):
-        testalert = alert1
-        created_target = LasairBroker().to_target(testalert) #uses to_target method
-        self.assertEqual(created_target.name, 'ZTF18aaaduje') #checks to_target method works with assertEqual() method
+    def test_to_target(self):
+        created_target = LasairBroker().to_target(alert1)  # uses to_target method
+        '''
+        The following assertions check to_target() works properly 
+        '''
+        self.assertEqual(created_target.name, 'ZTF18aaaduje')
+        self.assertEqual(created_target.ra, 52.68339748783069)
+        self.assertEqual(created_target.dec, 30.546314428042333)
+        self.assertEqual(created_target.galactic_lng, 159.12011347419698)
+        self.assertEqual(created_target.galactic_lat, -20.911037347147648)
 
     def test_to_generic_alert(self):
         pass
