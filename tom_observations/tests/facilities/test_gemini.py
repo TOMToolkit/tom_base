@@ -1,18 +1,23 @@
-from django.test import TestCase
-from unittest.mock import patch
 import json
-from tom_observations.facilities.gemini import make_request
-from tom_common.exceptions import ImproperCredentialsException
+from unittest.mock import patch
+from requests import Response
 
-'''
-tests make_request function of the Gemini facility, modeled after test_lco
-'''
+from django.test import TestCase
+
+from tom_common.exceptions import ImproperCredentialsException
+from tom_observations.facilities.gemini import make_request
+
 
 class TestMakeRequest(TestCase):
+    '''
+    Tests make_request function of the Gemini facility, modeled after test_lco
+    '''
 
-    
     @patch('tom_observations.facilities.gemini.requests.request')
     def test_make_request(self, mock_request):
+        '''
+        Response object contains server's response to HTTP request
+        '''
         mock_response = Response()
         mock_response._content = str.encode(json.dumps({'test': 'test'}))
         mock_response.status_code = 200
@@ -24,4 +29,3 @@ class TestMakeRequest(TestCase):
         mock_request.return_value = mock_response
         with self.assertRaises(ImproperCredentialsException):
             make_request('GET', 'google.com', headers={'test': 'test'})
-            
