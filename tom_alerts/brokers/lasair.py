@@ -1,7 +1,9 @@
+import requests
+
+from django import forms
+
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
 from tom_targets.models import Target
-from django import forms
-import requests
 
 LASAIR_URL = 'https://lasair.roe.ac.uk'
 
