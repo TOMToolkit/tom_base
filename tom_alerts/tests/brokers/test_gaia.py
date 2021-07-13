@@ -5,6 +5,7 @@ from django.test import TestCase, override_settings
 from django.forms import ValidationError
 from unittest import mock
 
+from tom_alerts.alerts import get_service_class
 from tom_alerts.brokers.gaia import GaiaQueryForm
 from tom_alerts.brokers.gaia import GaiaBroker
 from tom_targets.models import Target
