@@ -9,7 +9,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from tom_alerts.alerts import GenericBroker, GenericQueryForm, GenericUpstreamSubmissionForm, GenericAlert
-from tom_alerts.alerts import get_service_class, get_service_classes, import_module
+from tom_alerts.alerts import get_service_class, get_service_classes
 from tom_alerts.exceptions import AlertSubmissionException
 from tom_alerts.models import BrokerQuery
 from tom_observations.models import ObservationRecord
@@ -104,11 +104,11 @@ class TestBrokerClass(TestCase):
         
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.fake_broker'])
-class TestModuleImport(TestCase):
+class TestAlertModule(TestCase):
     """Test that attempting to import a nonexistent broker module raises the appropriate errors.
     """
 
-    def test_import_invalid_mod(self):
+    def test_get_service_classes_import_error(self):
         with self.subTest('Invalid import returns an import error.'):
             with patch('tom_alerts.alerts.import_module') as mock_import_module:
                 mock_import_module.side_effect = ImportError()
@@ -290,7 +290,6 @@ class TestBrokerViews(TestCase):
         mock_submit_upstream_alert.return_value = False
         response = self.client.post(reverse('tom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
                                     data={'target': target.id})
-
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 1)
         self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST. See logs for details.')
