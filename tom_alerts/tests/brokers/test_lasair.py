@@ -13,7 +13,7 @@ alert1 = {
             'magpsf': 15.4319,
             'ra': 52.6833968,
             'candid': 1638483221215015008,
-    },
+        },
         {
             'decl': 30.5462627,
             'magpsf': 16.5676,
@@ -55,7 +55,7 @@ class TestLasairBrokerForm(TestCase):
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.brokers.lasair.LasairBroker'])
 class TestLasairBrokerClass(TestCase):
-    
+
     """ Test the functionality of the LasairBroker, we modify the django settings to make sure
     it is the only installed broker.
     """
