@@ -9,6 +9,7 @@ from tom_observations.facilities.gemini import make_request
 
 
 class TestMakeRequest(TestCase):
+
     '''
     Tests make_request function of the Gemini facility, modeled after test_lco
     '''
