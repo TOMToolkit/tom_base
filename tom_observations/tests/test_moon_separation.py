@@ -12,7 +12,7 @@ import numpy as np
 from django.test import TestCase
 
 from tom_observations.LCO_obs_locs import *
-from moon_separation import all_night_moon_sep
+from tom_observations.moon_separation import all_night_moon_sep
 
 test_target = ['M31', 10.6847083*u.deg, 41.2687500*u.deg]
 date = Time("2021-05-04 00:00:00", scale='utc')
