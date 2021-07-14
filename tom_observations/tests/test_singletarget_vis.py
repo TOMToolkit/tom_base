@@ -8,7 +8,7 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from tom_observations.LCO_obs_locs import *
-from singletarget_vis import calculate_visibility
+from tom_observations.singletarget_vis import calculate_visibility
 
 test_target = ['Sirius', 100.7362500*u.deg, -16.6459444*u.deg]
 date = Time("2019-12-25 00:00:00", scale='utc')
