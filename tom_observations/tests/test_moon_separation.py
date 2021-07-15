@@ -73,7 +73,7 @@ class MoonSepCalc(TestCase):
 
     def test_too_close(self):
         with self.subTest('Test that an object too close to the moon returns an exception.'):
-            with patch('moon_separation.all_night_moon_sep') as mock_all_night_moon_sep:
+            with patch('tom_observations.moon_separation.all_night_moon_sep') as mock_all_night_moon_sep:
                 mock_all_night_moon_sep.side_effect = Exception()
                 with self.assertRaisesRegex(Exception, 'Object is too close to the moon on this date.'):
                     all_night_moon_sep('HD 205033', 323.2651667, -19.8063111, Time("2021-05-04 00:00:00", scale='utc'), OGG)
