@@ -46,12 +46,8 @@ class TestVisibilityCalc(TestCase):
 
     def test_not_obs(self):
         with self.subTest('Test that an invalid object returns an exception.'):
-            with patch('tom_observations.singletarget_vis.calculate_visibility') as mock_calculate_visibility:
-<<<<<<< HEAD
+            with patch('singletarget_vis.calculate_visibility') as mock_calculate_visibility:
                 mock_calculate_visibility.side_effect = Exception()
                 with self.assertRaisesRegex(Exception, 'This object is not observable by MuSCAT on this date.'):
-=======
-                mock_calculate_visibility.side_effect = Exception('This object is not observable by MuSCAT on this date.')
-                with self.assertRaisesRegex(Exception, 'not observable'):
->>>>>>> e947084079d51103bb60b81df9241df7689708c9
-                    calculate_visibility('Polaris', 37.954, 89.264, Time("2019-12-25 00:00:00", scale='utc'), OGG)
+                    calculate_visibility('Polaris', 37.954, 89.264,
+                        Time("2019-12-25 00:00:00", scale='utc'), OGG)
