@@ -1,7 +1,6 @@
 from astroplan import FixedTarget
 from astroplan import moon_illumination as moon_illum
 from astroplan import moon_phase_angle as moon_phase_angle
-import astropy.coordinates
 import astropy.units as u
 from astropy.time import Time
 from astropy.coordinates import SkyCoord, AltAz
@@ -11,7 +10,7 @@ import numpy as np
 
 from django.test import TestCase
 
-from tom_observations.LCO_obs_locs import *
+from tom_observations.LCO_obs_locs import OGG
 from moon_separation import all_night_moon_sep
 
 test_target = ['M31', 10.6847083*u.deg, 41.2687500*u.deg]
@@ -25,20 +24,20 @@ lower_lim = (obs_begin - midnight).to(u.h)
 upper_lim = (obs_end - midnight).to(u.h)
 
 delta_midnight = np.linspace(lower_lim.value, upper_lim.value, 25)*u.hour
-frame_observing_night = AltAz(obstime=midnight+delta_midnight,
-                  location=OGG.location)
+frame_observing_night = AltAz(obstime=midnight+delta_midnight, location=OGG.location)
 targetaltaz_obsnight = coords.transform_to(frame_observing_night)
 moonaltaz_obsnight = get_moon(time=midnight+delta_midnight,
-                  location=OGG.location).transform_to(frame_observing_night)
+                                location=OGG.location).transform_to(frame_observing_night)
 
-moon_frac = moon_illum(time=midnight+delta_midnight) *100
+moon_frac = moon_illum(time=midnight+delta_midnight) * 100
 avg_moonill = np.mean(moon_frac)
 mphase = moon_phase_angle(time=midnight+delta_midnight).to(u.deg)
 avg_mphase = np.mean(mphase)
 
-sep_array = [y.separation(x) for x,y in zip(targetaltaz_obsnight, moonaltaz_obsnight)]
+sep_array = [y.separation(x) for x, y in zip(targetaltaz_obsnight, moonaltaz_obsnight)]
 sep_array_deg = [x.degree for x in sep_array]
 avg_sep = np.mean(sep_array_deg)
+
 
 class MoonSepCalc(TestCase):
 
@@ -73,7 +72,8 @@ class MoonSepCalc(TestCase):
 
     def test_too_close(self):
         with self.subTest('Test that an object too close to the moon returns an exception.'):
-            with patch('moon_separation.all_night_moon_sep') as mock_all_night_moon_sep:
+            with patch('tom_observations.moon_separation.all_night_moon_sep') as mock_all_night_moon_sep:
                 mock_all_night_moon_sep.side_effect = Exception()
                 with self.assertRaisesRegex(Exception, 'Object is too close to the moon on this date.'):
-                    all_night_moon_sep('HD 205033', 323.2651667, -19.8063111, Time("2021-05-04 00:00:00", scale='utc'), OGG)
+                    all_night_moon_sep('HD 205033', 323.2651667, -19.8063111,
+                                        Time("2021-05-04 00:00:00", scale='utc'), OGG)

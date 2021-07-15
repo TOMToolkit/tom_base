@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from tom_observations.LCO_obs_locs import *
+from tom_observations.LCO_obs_locs import OGG
 from singletarget_vis import calculate_visibility
 
 test_target = ['Sirius', 100.7362500*u.deg, -16.6459444*u.deg]
@@ -17,8 +17,10 @@ target = FixedTarget(name='Sirius', coord=coords)
 obs_begin = OGG.twilight_evening_astronomical(date, which='nearest')
 obs_end = OGG.twilight_morning_astronomical(date, which='next')
 observing_range = [obs_begin, obs_end]
-constraints = [AirmassConstraint(2.0), AltitudeConstraint(25*u.deg, 85*u.deg), AtNightConstraint.twilight_astronomical()]
+constraints = [AirmassConstraint(2.0), AltitudeConstraint(20*u.deg, 85*u.deg),
+                AtNightConstraint.twilight_astronomical()]
 ever_observable = is_observable(constraints, OGG, target, time_range=observing_range)
+
 
 class TestVisibilityCalc(TestCase):
 
@@ -44,7 +46,7 @@ class TestVisibilityCalc(TestCase):
 
     def test_not_obs(self):
         with self.subTest('Test that an invalid object returns an exception.'):
-            with patch('singletarget_vis.calculate_visibility') as mock_calculate_visibility:
-                mock_calculate_visibility.side_effect = Exception('This object is not observable by MuSCAT on this date.')
-                with self.assertRaisesRegex(Exception, 'not observable'):
+            with patch('tom_observations.singletarget_vis.calculate_visibility') as mock_calculate_visibility:
+                mock_calculate_visibility.side_effect = Exception()
+                with self.assertRaisesRegex(Exception, 'This object is not observable by MuSCAT on this date.'):
                     calculate_visibility('Polaris', 37.954, 89.264, Time("2019-12-25 00:00:00", scale='utc'), OGG)

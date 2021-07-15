@@ -1,14 +1,12 @@
 from astroplan import FixedTarget
 from astroplan import moon_illumination as moon_illum
 from astroplan import moon_phase_angle as moon_phase_angle
-import astropy.coordinates
 import astropy.units as u
-from astropy.coordinates import SkyCoord, AltAz
+from astropy.coordinates import AltAz, SkyCoord
 from astropy.coordinates import get_moon as get_moon
 import numpy as np
 import warnings
 
-from LCO_obs_locs import *
 
 def all_night_moon_sep(name, ra, dec, obs_night, obs_loc, sample_size=25):
     """
@@ -32,24 +30,23 @@ def all_night_moon_sep(name, ra, dec, obs_night, obs_loc, sample_size=25):
         upper_lim = (obs_end - midnight).to(u.h)
 
         delta_midnight = np.linspace(lower_lim.value, upper_lim.value, sample_size)*u.hour
-        frame_observing_night = AltAz(obstime=midnight+delta_midnight,
-                          location=obs_loc.location)
+        frame_observing_night = AltAz(obstime=midnight+delta_midnight, location=obs_loc.location)
         targetaltaz_obsnight = coords.transform_to(frame_observing_night)
         moonaltaz_obsnight = get_moon(time=midnight+delta_midnight,
-                          location=obs_loc.location).transform_to(frame_observing_night)
+                                    location=obs_loc.location).transform_to(frame_observing_night)
 
-        moon_frac = moon_illum(time=midnight+delta_midnight) *100
+        moon_frac = moon_illum(time=midnight+delta_midnight) * 100
         avg_moonill = np.mean(moon_frac)
         mphase = moon_phase_angle(time=midnight+delta_midnight).to(u.deg)
         avg_mphase = np.mean(mphase)
         # does not go to negatives: simply moves between 0 and 180 degrees, 0 being full moon and 180 being new moon
 
-        sep_array = [y.separation(x) for x,y in zip(targetaltaz_obsnight, moonaltaz_obsnight)]
+        sep_array = [y.separation(x) for x, y in zip(targetaltaz_obsnight, moonaltaz_obsnight)]
         sep_array_deg = [x.degree for x in sep_array]
         avg_sep = np.mean(sep_array_deg)
 
         if max(sep_array_deg) < 15:
-            raise Exception ('Object is too close to the moon on this date.')
+            raise Exception('Object is too close to the moon on this date.')
         if min(sep_array_deg) <= 15 and max(sep_array_deg) >= 15:
             warnings.warn('Warning: Object is very close to the moon on this date.')
             print('Average separation is {0:.1f} degrees'.format(avg_sep))

@@ -1,6 +1,5 @@
 from astroplan import AltitudeConstraint, AirmassConstraint, AtNightConstraint
-from astroplan import is_observable
-from astroplan import FixedTarget
+from astroplan import is_observable, FixedTarget
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
 import astropy.units as u
@@ -9,6 +8,7 @@ import astropy.units as u
 def timeobj(date):
     obs_night = Time(date, format='iso', scale='utc')
     return obs_night
+
 
 def calculate_visibility(name, ra, dec, obs_night, obs_location, max_airmass=2.0):
     """
@@ -24,7 +24,8 @@ def calculate_visibility(name, ra, dec, obs_night, obs_location, max_airmass=2.0
         obs_begin = obs_location.twilight_evening_astronomical(obs_night, which='nearest')
         obs_end = obs_location.twilight_morning_astronomical(obs_night, which='next')
         observing_range = [obs_begin, obs_end]
-        constraints = [AirmassConstraint(max_airmass), AltitudeConstraint(20*u.deg, 85*u.deg), AtNightConstraint.twilight_astronomical()]
+        constraints = [AirmassConstraint(max_airmass), AltitudeConstraint(20*u.deg, 85*u.deg),
+                        AtNightConstraint.twilight_astronomical()]
         ever_observable = is_observable(constraints, obs_location, target, time_range=observing_range)
         if ever_observable:
             pass
