@@ -7,6 +7,7 @@ from astropy.coordinates import get_moon as get_moon
 import numpy as np
 import warnings
 
+
 def all_night_moon_sep(name, ra, dec, obs_night, obs_loc, sample_size=25):
     """
     Determines the min and max separations of the target object and the moon over a full
@@ -31,8 +32,9 @@ def all_night_moon_sep(name, ra, dec, obs_night, obs_loc, sample_size=25):
         delta_midnight = np.linspace(lower_lim.value, upper_lim.value, sample_size)*u.hour
         frame_observing_night = AltAz(obstime=midnight+delta_midnight, location=obs_loc.location)
         targetaltaz_obsnight = coords.transform_to(frame_observing_night)
-        moonaltaz_obsnight = get_moon(time=midnight+delta_midnight,
-                                    location=obs_loc.location).transform_to(frame_observing_night)
+        moonaltaz_obsnight = get_moon(
+            time=midnight+delta_midnight,
+            location=obs_loc.location).transform_to(frame_observing_night)
 
         moon_frac = moon_illum(time=midnight+delta_midnight) * 100
         avg_moonill = np.mean(moon_frac)

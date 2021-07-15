@@ -26,8 +26,9 @@ upper_lim = (obs_end - midnight).to(u.h)
 delta_midnight = np.linspace(lower_lim.value, upper_lim.value, 25)*u.hour
 frame_observing_night = AltAz(obstime=midnight+delta_midnight, location=OGG.location)
 targetaltaz_obsnight = coords.transform_to(frame_observing_night)
-moonaltaz_obsnight = get_moon(time=midnight+delta_midnight,
-                                location=OGG.location).transform_to(frame_observing_night)
+moonaltaz_obsnight = get_moon(
+    time=midnight+delta_midnight,
+    location=OGG.location).transform_to(frame_observing_night)
 
 moon_frac = moon_illum(time=midnight+delta_midnight) * 100
 avg_moonill = np.mean(moon_frac)
@@ -76,4 +77,4 @@ class MoonSepCalc(TestCase):
                 mock_all_night_moon_sep.side_effect = Exception()
                 with self.assertRaisesRegex(Exception, 'Object is too close to the moon on this date.'):
                     all_night_moon_sep('HD 205033', 323.2651667, -19.8063111,
-                                        Time("2021-05-04 00:00:00", scale='utc'), OGG)
+                                       Time("2021-05-04 00:00:00", scale='utc'), OGG)

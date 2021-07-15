@@ -17,8 +17,9 @@ target = FixedTarget(name='Sirius', coord=coords)
 obs_begin = OGG.twilight_evening_astronomical(date, which='nearest')
 obs_end = OGG.twilight_morning_astronomical(date, which='next')
 observing_range = [obs_begin, obs_end]
-constraints = [AirmassConstraint(2.0), AltitudeConstraint(20*u.deg, 85*u.deg),
-                AtNightConstraint.twilight_astronomical()]
+constraints = [
+    AirmassConstraint(2.0), AltitudeConstraint(20*u.deg, 85*u.deg),
+    AtNightConstraint.twilight_astronomical()]
 ever_observable = is_observable(constraints, OGG, target, time_range=observing_range)
 
 
@@ -50,4 +51,4 @@ class TestVisibilityCalc(TestCase):
                 mock_calculate_visibility.side_effect = Exception()
                 with self.assertRaisesRegex(Exception, 'This object is not observable by MuSCAT on this date.'):
                     calculate_visibility('Polaris', 37.954, 89.264,
-                        Time("2019-12-25 00:00:00", scale='utc'), OGG)
+                                         Time("2019-12-25 00:00:00", scale='utc'), OGG)
