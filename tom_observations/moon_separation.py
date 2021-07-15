@@ -8,14 +8,12 @@ from astropy.coordinates import get_moon as get_moon
 import numpy as np
 import warnings
 
-from LCO_obs_locs import *
-
 def all_night_moon_sep(name, ra, dec, obs_night, obs_loc, sample_size=25):
     """
     Determines the min and max separations of the target object and the moon over a full
-    observing night at Haleakala observatory. If it registers <15 degree separation at
+    observing night at the desired observatory. If it registers <15 degree separation at
     minimum, it prints a warning that the target object is too close to the moon.
-    If it registers a <15 degree separation at maximum, it rejects the observation request.
+    If it registers a <15 degree separation at maximum, the observation request is rejected.
     """
     try:
         coords = SkyCoord(ra*u.deg, dec*u.deg, frame='icrs')
