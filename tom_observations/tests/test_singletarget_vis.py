@@ -1,5 +1,4 @@
-from astroplan import AltitudeConstraint, AirmassConstraint, AtNightConstraint
-from astroplan import is_observable, FixedTarget
+from astroplan import AltitudeConstraint, AirmassConstraint, AtNightConstraint, is_observable
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
 import astropy.units as u
@@ -7,20 +6,19 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from tom_observations.LCO_obs_locs import OGG
+from tom_observations.LCO_obs_locs import choose_loc
 from tom_observations.singletarget_vis import calculate_visibility
 
+OGG = choose_loc('OGG')
 test_target = ['Sirius', 100.7362500*u.deg, -16.6459444*u.deg]
 date = Time("2019-12-25 00:00:00", scale='utc')
 coords = SkyCoord(test_target[1], test_target[2], frame='icrs')
-target = FixedTarget(name='Sirius', coord=coords)
 obs_begin = OGG.twilight_evening_astronomical(date, which='nearest')
 obs_end = OGG.twilight_morning_astronomical(date, which='next')
 observing_range = [obs_begin, obs_end]
-constraints = [
-    AirmassConstraint(2.0), AltitudeConstraint(20*u.deg, 85*u.deg),
-    AtNightConstraint.twilight_astronomical()]
-ever_observable = is_observable(constraints, OGG, target, time_range=observing_range)
+constraints = [AirmassConstraint(2.0), AltitudeConstraint(20*u.deg, 85*u.deg),
+               AtNightConstraint.twilight_astronomical()]
+ever_observable = is_observable(constraints, OGG, coords, time_range=observing_range)
 
 
 class TestVisibilityCalc(TestCase):
@@ -33,9 +31,6 @@ class TestVisibilityCalc(TestCase):
         self.assertEqual(coords.ra, test_target[1])
         self.assertEqual(coords.dec, test_target[2])
 
-    def test_target(self):
-        self.assertEqual(target.name, test_target[0])
-
     def test_dates(self):
         t_obs_begin = obs_begin.to_value(format='iso')
         t_obs_end = obs_end.to_value(format='iso')
@@ -45,10 +40,15 @@ class TestVisibilityCalc(TestCase):
     def test_ever_obs(self):
         self.assertTrue(ever_observable)
 
-    def test_not_obs(self):
+    def test_raise_exceptions(self):
         with self.subTest('Test that an invalid object returns an exception.'):
             with patch('tom_observations.singletarget_vis.calculate_visibility') as mock_calculate_visibility:
                 mock_calculate_visibility.side_effect = Exception()
                 with self.assertRaisesRegex(Exception, 'This object is not observable by MuSCAT on this date.'):
-                    calculate_visibility('Polaris', 37.954, 89.264,
-                                         Time("2019-12-25 00:00:00", scale='utc'), OGG)
+                    calculate_visibility(37.954, 89.264, Time("2019-12-25 00:00:00", scale='utc'), 'OGG')
+
+        with self.subTest('Test that an exception is raised if the location is incorrect.'):
+            with patch('tom_observations.singletarget_vis.calculate_visibility') as mock_calculate_visibility:
+                mock_calculate_visibility.side_effect = Exception()
+                with self.assertRaisesRegex(Exception, 'Please input a valid LCO observatory in string format.'):
+                    calculate_visibility(37.954, 89.264, Time("2019-12-25 00:00:00", scale='utc'), OGG)

@@ -1,4 +1,3 @@
-from astroplan import FixedTarget
 from astroplan import moon_illumination as moon_illum
 from astroplan import moon_phase_angle as moon_phase_angle
 import astropy.units as u
@@ -7,8 +6,10 @@ from astropy.coordinates import get_moon as get_moon
 import numpy as np
 import warnings
 
+from LCO_obs_locs import choose_loc
 
-def all_night_moon_sep(name, ra, dec, obs_night, obs_loc, sample_size=25):
+
+def all_night_moon_sep(ra, dec, obs_night, observatory, sample_size=25):
     """
     Determines the min and max separations of the target object and the moon over a full
     observing night at the desired observatory. If it registers <15 degree separation at
@@ -18,10 +19,11 @@ def all_night_moon_sep(name, ra, dec, obs_night, obs_loc, sample_size=25):
     try:
         coords = SkyCoord(ra*u.deg, dec*u.deg, frame='icrs')
 
-        try:
-            target = FixedTarget.from_name(name)
-        except Exception:
-            target = FixedTarget(name=name, coord=coords)
+        obs_loc = choose_loc(observatory)
+        if obs_loc is None:
+            raise Exception('Please input a valid LCO observatory in string format.')
+        else:
+            pass
 
         obs_begin = obs_loc.twilight_evening_astronomical(obs_night, which='nearest')
         obs_end = obs_loc.twilight_morning_astronomical(obs_night, which='next')
@@ -48,14 +50,12 @@ def all_night_moon_sep(name, ra, dec, obs_night, obs_loc, sample_size=25):
 
         if max(sep_array_deg) < 15:
             raise Exception('Object is too close to the moon on this date.')
-        if min(sep_array_deg) <= 15 and max(sep_array_deg) >= 15:
-            warnings.warn('Warning: Object is very close to the moon on this date.')
-            print('Average separation is {0:.1f} degrees'.format(avg_sep))
         if min(sep_array_deg) >= 15:
             print('Average moon separation is {0:.1f} degrees'.format(avg_sep))
             print('{0:.1f} percent of the moon is illuminated'.format(avg_moonill))
             print('The average moon phase angle is {0:.1f}'.format(avg_mphase))
         else:
-            print('Something really weird just happened')
+            warnings.warn('Warning: Object is very close to the moon on this date.')
+            print('Average separation is {0:.1f} degrees'.format(avg_sep))
     except (ValueError, AttributeError):
         print('Your dates were not inputted correctly.')
