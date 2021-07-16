@@ -6,7 +6,7 @@ from astropy.coordinates import get_moon as get_moon
 import numpy as np
 import warnings
 
-from LCO_obs_locs import choose_loc
+from tom_observations.LCO_obs_locs import choose_loc
 
 
 def all_night_moon_sep(ra, dec, obs_night, observatory, sample_size=25):
