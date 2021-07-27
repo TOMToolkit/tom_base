@@ -104,7 +104,7 @@ class LasairBroker(GenericBroker):
             if 'candid' in c:
                 break
         return Target.objects.create(
-            name=str(alert.get('objectId')),
+            name=alert.get('objectId'),
             type='SIDEREAL',
             ra=alert['objectData']['ramean'],
             dec=alert['objectData']['decmean'],
