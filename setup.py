@@ -41,10 +41,10 @@ setup(
         'django-filter~=2.4',
         'django-gravatar2~=1.4',
         'django-guardian~=2.3',
-        'fits2image==0.4.3',
+        'fits2image==0.4.4',
         'Markdown==3.3.4',  # django-rest-framework doc headers require this to support Markdown
         'numpy~=1.20',
-        'pillow==8.2.0',
+        'pillow==8.3.1',
         'plotly~=5.0',
         'python-dateutil~=2.8',
         'requests~=2.25',
