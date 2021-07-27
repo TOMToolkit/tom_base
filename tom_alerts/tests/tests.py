@@ -122,6 +122,25 @@ class TestAlertModule(TestCase):
                     get_service_classes()
 
 
+@override_settings(TOM_ALERT_CLASSES=['tom_alerts.fake_broker'])
+class TestAlertModule(TestCase):
+    """Test that attempting to import a nonexistent broker module raises the appropriate errors.
+    """
+
+    def test_get_service_classes_import_error(self):
+        with self.subTest('Invalid import returns an import error.'):
+            with patch('tom_alerts.alerts.import_module') as mock_import_module:
+                mock_import_module.side_effect = ImportError()
+                with self.assertRaisesRegex(ImportError, 'Could not import tom_alerts.fake_broker.'):
+                    get_service_classes()
+
+        with self.subTest('Invalid import returns an attribute error.'):
+            with patch('tom_alerts.alerts.import_module') as mock_import_module:
+                mock_import_module.side_effect = AttributeError()
+                with self.assertRaisesRegex(ImportError, 'Could not import tom_alerts.fake_broker.'):
+                    get_service_classes()
+
+
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests.TestBroker'])
 class TestBrokerViews(TestCase):
     """ Test the views that use the broker classes

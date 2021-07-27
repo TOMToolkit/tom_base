@@ -325,6 +325,9 @@ class BaseObservationFacility(ABC):
         """
         pass
 
+    def get_date_obs_from_fits_header(self, header):
+        return None
+
 
 class BaseRoboticObservationFacility(BaseObservationFacility):
     """

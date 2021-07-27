@@ -679,15 +679,15 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
     configuration of multiple filters, as well as a more intuitive proactive cadence form.
     """
     valid_instruments = ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']
-    filters = ['U', 'B', 'V', 'R', 'I', 'u', 'g', 'r', 'i', 'z', 'w']
+    valid_filters = ['U', 'B', 'V', 'R', 'I', 'up', 'gp', 'rp', 'ip', 'zs', 'w']
     cadence_frequency = forms.IntegerField(required=True, help_text='in hours')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Add fields for each available filter as specified in the filters property
-        for filter_name in self.filters:
-            self.fields[filter_name] = FilterField(label=filter_name, required=False)
+        for filter_code, filter_name in LCOPhotometricSequenceForm.filter_choices():
+            self.fields[filter_code] = FilterField(label=filter_name, required=False)
 
         # Massage cadence form to be SNEx-styled
         self.fields['cadence_strategy'] = forms.ChoiceField(
@@ -720,7 +720,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
         instrument configurations in the appropriate manner.
         """
         instrument_config = []
-        for filter_name in self.filters:
+        for filter_name in self.valid_filters:
             if len(self.cleaned_data[filter_name]) > 0:
                 instrument_config.append({
                     'exposure_count': self.cleaned_data[filter_name][1],
@@ -769,6 +769,14 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
                        if k in LCOPhotometricSequenceForm.valid_instruments],
                       key=lambda inst: inst[1])
 
+    @staticmethod
+    def filter_choices():
+        return sorted(set([
+            (f['code'], f['name']) for ins in LCOPhotometricSequenceForm._get_instruments().values() for f in
+            ins['optical_elements'].get('filters', [])
+            if f['code'] in LCOPhotometricSequenceForm.valid_filters]),
+            key=lambda filter_tuple: filter_tuple[1])
+
     def cadence_layout(self):
         return Layout(
             Row(
@@ -790,7 +798,7 @@ class LCOPhotometricSequenceForm(LCOBaseObservationForm):
                 Column(HTML('Block No.')),
             )
         )
-        for filter_name in self.filters:
+        for filter_name in self.valid_filters:
             filter_layout.append(Row(MultiWidgetField(filter_name, attrs={'min': 0})))
 
         return Row(

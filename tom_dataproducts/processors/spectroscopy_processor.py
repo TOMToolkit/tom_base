@@ -68,7 +68,7 @@ class SpectroscopyProcessor(DataProcessor):
             facility = get_service_class(facility_class)()
             if facility.is_fits_facility(header):
                 flux_constant = facility.get_flux_constant()
-                date_obs = facility.get_date_obs(header)
+                date_obs = facility.get_date_obs_from_fits_header(header)
                 break
         else:
             flux_constant = self.DEFAULT_FLUX_CONSTANT
