@@ -101,7 +101,7 @@ class TestBrokerClass(TestCase):
     def test_to_target(self):
         target, _, _ = TestBroker().to_generic_alert(test_alerts[0]).to_target()
         self.assertEqual(target.name, test_alerts[0]['name'])
-        
+
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.fake_broker'])
 class TestAlertModule(TestCase):
