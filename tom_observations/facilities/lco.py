@@ -352,7 +352,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
             'acquisition_config': self._build_acquisition_config(),
             'guiding_config': self._build_guiding_config(),
             'constraints': {
-                'max_airmass': self.cleaned_data['max_airmass']
+                'max_airmass': self.cleaned_data['max_airmass'],
+                'min_lunar_distance': self.cleaned_data['min_lunar_distance']
             }
         }
 
