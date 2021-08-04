@@ -24,6 +24,7 @@ DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.gaia.GaiaBroker',
     'tom_alerts.brokers.scimma.SCIMMABroker',
     'tom_alerts.brokers.fink.FinkBroker',
+    'tom_alerts.brokers.lasair_iris.LasairIrisBroker'
 ]
 
 
