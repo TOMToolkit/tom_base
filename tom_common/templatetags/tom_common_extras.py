@@ -71,3 +71,8 @@ def truncate_number(value):
         return '%.4f' % value
     except Exception:
         return value
+
+
+@register.simple_tag
+def tom_name():
+    return getattr(settings, 'TOM_NAME', 'TOM Toolkit')
