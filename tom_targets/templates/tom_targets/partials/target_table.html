@@ -1,0 +1,43 @@
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th><input type="checkbox" id="selectPage" onClick="select_page(this, {{ targets|length }})" /></th>
+      <th>Name</th>
+      <th>Type</th>
+      {% if request.GET.type == 'SIDEREAL' %}
+      <th>RA</th>
+      <th>Dec</th>
+      {% endif %}
+      <th>Observations</th>
+      <th>Saved Data</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for target in targets %}
+    <tr>
+      <td><input type="checkbox" name="selected-target" value="{{ target.id }}" onClick="single_select()"/></td>
+      <td>
+          <a href="{% url 'targets:detail' target.id %}" title="{{ target.name }}">{{ target.names|join:", " }}</a>
+      </td>
+      <td>{{ target.get_type_display }}</td>
+      {% if request.GET.type == 'SIDEREAL' %}
+      <td>{{ target.ra }}</td>
+      <td>{{ target.dec }}</td>
+      {% endif %}
+      <td>{{ target.observationrecord_set.count }}</td>
+      <td>{{ target.dataproduct_set.count }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="5">
+        {% if target_count == 0 and not query_string %}
+        No targets yet. You might want to <a href="{% url 'tom_targets:create' %}">create a target manually</a>
+        or <a href="{% url 'tom_alerts:list' %}">import one from an alert broker</a>.
+        {% else %}
+        No targets match those filters.
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
