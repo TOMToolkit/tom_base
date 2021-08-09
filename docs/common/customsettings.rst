@@ -294,3 +294,11 @@ Example:
       'REGISTRATION_REDIRECT_PATTERN': 'home',
       'SEND_APPROVAL_EMAILS': True
    }
+
+`TOM_NAME <#tom_name>`__
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: TOM Toolkit
+
+Set the name of the TOM, used for display purposes such as the navbar
+and page titles.
