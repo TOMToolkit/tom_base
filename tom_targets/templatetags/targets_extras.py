@@ -264,3 +264,12 @@ def aladin(target):
     and a scale bar. The resulting image is downloadable. This templatetag only works for sidereal targets.
     """
     return {'target': target}
+
+
+@register.inclusion_tag('tom_targets/partials/target_table.html')
+def target_table(targets):
+    """
+    Returns a partial for a table of targets, used in the target_list.html template
+    by default
+    """
+    return {'targets': targets}

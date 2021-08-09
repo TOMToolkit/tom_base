@@ -344,7 +344,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
         return guiding_config
 
     def _build_configuration(self):
-        return {
+        configuration = {
             'type': self.instrument_to_type(self.cleaned_data['instrument_type']),
             'instrument_type': self.cleaned_data['instrument_type'],
             'target': self._build_target_fields(),
@@ -353,9 +353,13 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
             'guiding_config': self._build_guiding_config(),
             'constraints': {
                 'max_airmass': self.cleaned_data['max_airmass'],
-                'min_lunar_distance': self.cleaned_data['min_lunar_distance']
             }
         }
+
+        if 'min_lunar_distance' in self.cleaned_data:
+            configuration['constraints']['min_lunar_distance'] = self.cleaned_data['min_lunar_distance']
+
+        return configuration
 
     def _build_location(self):
         return {'telescope_class': self._get_instruments()[self.cleaned_data['instrument_type']]['class']}

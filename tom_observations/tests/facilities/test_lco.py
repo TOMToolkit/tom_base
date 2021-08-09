@@ -342,7 +342,8 @@ class TestLCOBaseObservationForm(TestCase):
         self.assertTrue(form.is_valid())
         configuration = form._build_configuration()
         self.assertDictContainsSubset(
-            {'type': 'EXPOSE', 'instrument_type': '0M4-SCICAM-SBIG', 'constraints': {'max_airmass': 3}},
+            {'type': 'EXPOSE', 'instrument_type': '0M4-SCICAM-SBIG',
+             'constraints': {'max_airmass': 3, 'min_lunar_distance': 20}},
             configuration)
         for key in ['target', 'instrument_configs', 'acquisition_config', 'guiding_config']:
             self.assertIn(key, configuration)
