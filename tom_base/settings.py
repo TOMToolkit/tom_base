@@ -32,6 +32,8 @@ ALLOWED_HOSTS = ['']
 
 # Application definition
 
+TOM_NAME = 'TOM Toolkit'
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
