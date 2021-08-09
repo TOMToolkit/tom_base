@@ -36,7 +36,8 @@ from tom_targets.forms import (
     SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset
 )
 from tom_targets.groups import (
-    add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping
+    add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
+    move_all_to_grouping, move_selected_to_grouping
 )
 from tom_targets.models import Target, TargetList
 from tom_targets.utils import import_targets, export_targets
@@ -476,6 +477,13 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
             else:
                 targets_ids = request.POST.getlist('selected-target')
                 remove_selected_from_grouping(targets_ids, grouping_object, request)
+        if 'move' in request.POST:
+            if request.POST.get('isSelectAll') == 'True':
+                move_all_to_grouping(filter_data, grouping_object, request)
+            else:
+                target_ids = request.POST.getlist('selected-target')
+                move_selected_to_grouping(target_ids, grouping_object, request)
+
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 
 
