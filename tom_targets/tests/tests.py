@@ -696,6 +696,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             ft = SiderealTargetFactory.create()
             self.fake_targets.append(ft)
             assign_perm('tom_targets.view_target', user, ft)
+            assign_perm('tom_targets.change_target', user, ft)
         # create grouping
         self.fake_grouping = TargetGroupingFactory.create()
         assign_perm('tom_targets.view_targetlist', user, self.fake_grouping)
