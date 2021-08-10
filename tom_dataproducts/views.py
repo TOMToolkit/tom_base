@@ -358,6 +358,8 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
         target_id = query_params.pop('target_id', None)
         out = StringIO()
         if target_id:
+            if isinstance(target_id, list):
+                target_id = target_id[-1]
             call_command('updatereduceddata', target_id=target_id, stdout=out)
         else:
             call_command('updatereduceddata', stdout=out)

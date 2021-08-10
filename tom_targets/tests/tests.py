@@ -696,6 +696,7 @@ class TestTargetAddRemoveGrouping(TestCase):
             ft = SiderealTargetFactory.create()
             self.fake_targets.append(ft)
             assign_perm('tom_targets.view_target', user, ft)
+            assign_perm('tom_targets.change_target', user, ft)
         # create grouping
         self.fake_grouping = TargetGroupingFactory.create()
         assign_perm('tom_targets.view_targetlist', user, self.fake_grouping)
@@ -753,6 +754,53 @@ class TestTargetAddRemoveGrouping(TestCase):
                        SUCCESS), messages)
         self.assertIn(('1 target(s) not in group \'{}\': {}'.format(self.fake_grouping.name, self.fake_targets[1].name),
                        WARNING), messages)
+
+    # Add target[0] and [1] to grouping; [0] already exists and [1] new
+    def test_move_selected_to_grouping(self):
+        data = {
+            'grouping': self.fake_grouping.id,
+            'move': True,
+            'isSelectAll': 'False',
+            'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
+            'query_string': '',
+        }
+        first_grouping = TargetGroupingFactory.create()
+        self.fake_targets[0].targetlist_set.add(first_grouping)
+        self.fake_targets[1].targetlist_set.add(first_grouping)
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+
+        self.assertEqual(self.fake_grouping.targets.count(), 2)
+        self.assertTrue(self.fake_targets[0] in self.fake_grouping.targets.all())
+        self.assertTrue(self.fake_targets[1] in self.fake_grouping.targets.all())
+        self.assertTrue(self.fake_targets[0] in first_grouping.targets.all())
+        self.assertFalse(self.fake_targets[1] in first_grouping.targets.all())
+
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertIn(('1 target(s) successfully moved to group \'{}\'.'.format(self.fake_grouping.name),
+                       SUCCESS), messages)
+        self.assertIn(('1 target(s) already in group \'{}\': {}'.format(
+            self.fake_grouping.name, self.fake_targets[0].name), WARNING), messages)
+
+    def test_move_all_to_grouping_filtered_by_sidereal(self):
+        data = {
+            'grouping': self.fake_grouping.id,
+            'move': True,
+            'isSelectAll': 'True',
+            'selected-target': [],
+            'query_string': 'type=SIDEREAL&name=&key=&value=&targetlist__name=',
+        }
+        first_grouping = TargetGroupingFactory.create()
+        first_grouping.targets.add(*self.fake_targets)
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        self.assertEqual(self.fake_grouping.targets.count(), 3)
+        self.assertEqual(first_grouping.targets.count(), 1)
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertIn(('2 target(s) successfully moved to group \'{}\'.'.format(self.fake_grouping.name),
+                       SUCCESS), messages)
+        self.assertIn((
+            '1 target(s) already in group \'{}\': {}'.format(self.fake_grouping.name, self.fake_targets[0].name),
+            WARNING), messages
+        )
 
     def test_empty_data(self):
         self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': ''})
