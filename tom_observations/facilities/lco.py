@@ -356,7 +356,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
             }
         }
 
-        if 'min_lunar_distance' in self.cleaned_data:
+        if 'min_lunar_distance' in self.cleaned_data and self.cleaned_data.get('min_lunar_distance') is not None:
             configuration['constraints']['min_lunar_distance'] = self.cleaned_data['min_lunar_distance']
 
         return configuration
