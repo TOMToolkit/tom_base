@@ -11,7 +11,7 @@ from tom_targets.models import Target
 from tom_dataproducts.models import ReducedDatum
 
 MARS_URL = 'https://mars.lco.global'
-filters = {0: 'g', 1: 'r', 2: 'i'}
+filters = {1: 'g', 2: 'r', 3: 'i'}
 
 
 class MARSQueryForm(GenericQueryForm):
@@ -226,11 +226,12 @@ class MARSBroker(GenericBroker):
 
         candidates = [{'candidate': alert.get('candidate')}] + alert.get('prv_candidate')
         for candidate in candidates:
-            if all([key in candidate['candidate'] for key in ['jd', 'magpsf', 'fid']]):
+            if all([key in candidate['candidate'] for key in ['jd', 'magpsf', 'fid', 'sigmapsf']]):
                 jd = Time(candidate['candidate']['jd'], format='jd', scale='utc')
                 jd.to_datetime(timezone=TimezoneInfo())
                 value = {
                     'magnitude': candidate['candidate']['magpsf'],
+                    'error': candidate['candidate']['sigmapsf'],
                     'filter': filters[candidate['candidate']['fid']]
                 }
                 rd, _ = ReducedDatum.objects.get_or_create(
