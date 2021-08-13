@@ -204,7 +204,7 @@ class RunQueryView(TemplateView):
         query.save()
         context['query'] = query
         try:
-            while len(context['alerts']) < 20:
+            while True:
                 alert = next(alerts)
                 generic_alert = broker_class.to_generic_alert(alert)
                 cache.set('alert_{}'.format(generic_alert.id), json.dumps(alert), 3600)
