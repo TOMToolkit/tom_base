@@ -3,7 +3,6 @@ from urllib.parse import urlencode
 from django import template
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.core.management import color
 from django.core.paginator import Paginator
 from django.shortcuts import reverse
 from datetime import datetime
