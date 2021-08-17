@@ -119,7 +119,7 @@ have automated release notification to a dedicated #releases slack channel).
 * `pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120`
 
 ### Run tests
-* `./manage.py test`
+* `./manage.py test --exclude-tag=canary` to run non-canary tests
 
 * Examples for running specific tests or test suites:
   * `./manage.py test tom_targets.tests`
