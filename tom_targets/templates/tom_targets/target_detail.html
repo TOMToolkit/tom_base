@@ -61,9 +61,6 @@ $(document).ready(function(){
       <li class="nav-item">
         <a class="nav-link" id="spectroscopy-tab" href="#spectroscopy" role="tab" data-toggle="tab">Spectroscopy</a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" id="facility-status-tab" href="#facility-status" role="tab" data-toggle="tab">Facility Status</a>
-      </li>
     </ul>
     <div class="tab-content">
       <div class="tab-pane active" id="observe">
@@ -100,9 +97,6 @@ $(document).ready(function(){
         </div>
       <div class="tab-pane" id="spectroscopy">
         {% spectroscopy_for_target target %}
-      </div>
-      <div class="tab-pane" id="facility-status">
-        {% facility_status %}
       </div>
 
       {% comments_enabled as comments_are_enabled %}

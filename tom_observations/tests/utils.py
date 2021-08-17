@@ -12,6 +12,7 @@ from tom_observations.observation_template import GenericTemplateForm
 # Site data matches built-in pyephem observer data for Los Angeles
 SITES = {
     'Los Angeles': {
+        'sitecode': 'lax',
         'latitude': 34.052222,
         'longitude': -117.756306,
         'elevation': 86.847092
@@ -82,6 +83,30 @@ class FakeRoboticFacility(BaseRoboticObservationFacility):
     def validate_observation(self, observation_payload):
         return True
 
+    def get_facility_weather_urls(self):
+        """
+        `facility_weather_urls = {'code': 'XYZ', 'sites': [ site_dict, ... ]}`
+        where
+        `site_dict = {'code': 'XYZ', 'weather_url': 'http://path/to/weather'}`
+        """
+        # TODO: manually add a weather url for tlv
+        facility_weather_urls = {
+            'code': 'FakeRoboticFacility',
+            'sites': [
+                {
+                    'code': site['sitecode'],
+                    'weather_url': f'https://example.com/#/{site["sitecode"]}'
+                }
+                for site in SITES.values()]
+            }
+
+        return facility_weather_urls
+
+    def get_facility_status(self):
+        return {
+            'code': 'LCO',
+            'sites': [{'code': 'coj', 'telescopes': [{'code': 'coj.domb.1m0a', 'status': 'NOT_OK_TO_OPEN'}]}]
+        }
 
 class FakeManualFacility(BaseManualObservationFacility):
     name = 'FakeManualFacility'
