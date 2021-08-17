@@ -1239,8 +1239,6 @@ class LCOFacility(BaseRoboticObservationFacility):
             # Now, add the telescope to the site's telescopes
             site['telescopes'].append(telescope)
 
-        print(facility_status)
-
         return facility_status
 
     def get_observation_status(self, observation_id):
