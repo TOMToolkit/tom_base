@@ -98,7 +98,7 @@ def recent_photometry(target, limit=1):
     """
     Displays a table of the most recent photometric points for a target.
     """
-    photometry = ReducedDatum.objects.filter(data_type='photometry').order_by('-timestamp')[:limit]
+    photometry = ReducedDatum.objects.filter(data_type='photometry', target=target).order_by('-timestamp')[:limit]
     return {'data': [{'timestamp': rd.timestamp, 'magnitude': rd.value['magnitude']} for rd in photometry]}
 
 
@@ -110,6 +110,12 @@ def photometry_for_target(context, target):
     This templatetag requires all ``ReducedDatum`` objects with a data_type of ``photometry`` to be structured with the
     following keys in the JSON representation: magnitude, error, filter
     """
+
+    color_map = {
+        'r': 'red',
+        'g': 'green',
+        'i': 'black'
+    }
     photometry_data = {}
     if settings.TARGET_PERMISSIONS_ONLY:
         datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
@@ -125,17 +131,36 @@ def photometry_for_target(context, target):
         photometry_data[datum.value['filter']].setdefault('time', []).append(datum.timestamp)
         photometry_data[datum.value['filter']].setdefault('magnitude', []).append(datum.value.get('magnitude'))
         photometry_data[datum.value['filter']].setdefault('error', []).append(datum.value.get('error'))
-    plot_data = [
-        go.Scatter(
-            x=filter_values['time'],
-            y=filter_values['magnitude'], mode='markers',
-            name=filter_name,
-            error_y=dict(
-                type='data',
-                array=filter_values['error'],
-                visible=True
+        photometry_data[datum.value['filter']].setdefault('limit', []).append(datum.value.get('limit'))
+
+    plot_data = []
+    for filter_name, filter_values in photometry_data.items():
+        if filter_values['magnitude']:
+            series = go.Scatter(
+                x=filter_values['time'],
+                y=filter_values['magnitude'],
+                mode='markers',
+                marker=dict(color=color_map[filter_name]),
+                name=filter_name,
+                error_y=dict(
+                    type='data',
+                    array=filter_values['error'],
+                    visible=True
+                )
             )
-        ) for filter_name, filter_values in photometry_data.items()]
+            plot_data.append(series)
+        if filter_values['limit']:
+            series = go.Scatter(
+                x=filter_values['time'],
+                y=filter_values['limit'],
+                mode='markers',
+                opacity=0.5,
+                marker=dict(color=color_map[filter_name]),
+                marker_symbol=6,  # upside down triangle
+                name=filter_name + ' non-detection',
+            )
+            plot_data.append(series)
+
     layout = go.Layout(
         yaxis=dict(autorange='reversed'),
         height=600,
