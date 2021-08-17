@@ -108,6 +108,7 @@ class FakeRoboticFacility(BaseRoboticObservationFacility):
             'sites': [{'code': 'coj', 'telescopes': [{'code': 'coj.domb.1m0a', 'status': 'NOT_OK_TO_OPEN'}]}]
         }
 
+
 class FakeManualFacility(BaseManualObservationFacility):
     name = 'FakeManualFacility'
     observation_forms = {

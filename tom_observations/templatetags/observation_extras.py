@@ -292,7 +292,10 @@ def facility_map():
     for facility_class in get_service_classes().values():
         facility = facility_class()
         sites = facility.get_observing_sites()
-        facility_locations += [[facility.name, site_name] + [value for value in site_data.values()] for site_name, site_data in sites.items()]
+        facility_locations += [
+            [facility.name, site_name] + [value for value in site_data.values()]
+            for site_name, site_data in sites.items()
+        ]
 
     data = [
         dict(
