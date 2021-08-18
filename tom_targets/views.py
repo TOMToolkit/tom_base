@@ -55,6 +55,7 @@ class TargetListView(PermissionListMixin, FilterView):
     model = Target
     filterset_class = TargetFilter
     permission_required = 'tom_targets.view_target'
+    ordering = ['-created']
 
     def get_context_data(self, *args, **kwargs):
         """

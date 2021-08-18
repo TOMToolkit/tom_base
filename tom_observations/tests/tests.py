@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from http import HTTPStatus
 from unittest import mock
 
 from django.contrib.auth.models import User
@@ -255,6 +256,17 @@ class TestAddExistingObservationView(TestCase):
         self.assertEqual(messages[0][0], f'Successfully associated observation record {obsr.observation_id}')
 
         self.assertEqual(ObservationRecord.objects.filter(observation_id=obsr.observation_id).count(), 2)
+
+
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
+class TestFacilityStatusView(TestCase):
+    def setUp(self):
+        pass
+
+    def test_facility_status(self):
+        response = self.client.get(reverse('tom_observations:facility-status'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'coj.domb.1m0a', status_code=HTTPStatus.OK)
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],

@@ -14,7 +14,7 @@ from django_filters.views import FilterView
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
-from django.views.generic import View
+from django.views.generic import View, TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
 from django.views.generic.list import ListView
@@ -616,3 +616,7 @@ class ObservationTemplateDeleteView(LoginRequiredMixin, DeleteView):
     """
     model = ObservationTemplate
     success_url = reverse_lazy('tom_observations:template-list')
+
+
+class FacilityStatusView(TemplateView):
+    template_name = 'tom_observations/facility_status.html'
