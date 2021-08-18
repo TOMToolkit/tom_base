@@ -1,7 +1,9 @@
+import requests
+
+from django import forms
+
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
 from tom_targets.models import Target
-from django import forms
-import requests
 
 LASAIR_URL = 'https://lasair.roe.ac.uk'
 
@@ -102,10 +104,10 @@ class LasairBroker(GenericBroker):
             if 'candid' in c:
                 break
         return Target.objects.create(
-            name=c['candid'],
+            name=alert.get('objectId'),
             type='SIDEREAL',
-            ra=c['ra'],
-            dec=c['decl'],
+            ra=alert['objectData']['ramean'],
+            dec=alert['objectData']['decmean'],
             galactic_lng=alert['objectData']['glonmean'],
             galactic_lat=alert['objectData']['glatmean'],
         )
