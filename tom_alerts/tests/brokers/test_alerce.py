@@ -159,7 +159,9 @@ class TestALeRCEBrokerForm(TestCase):
             classifiers = ALeRCEQueryForm._get_classifiers()
             mock_requests_get.assert_called_once()
 
-    def test_get_light_curve_classifier_choices(self):
+    @patch('tom_alerts.brokers.alerce.cache.get')
+    def test_get_light_curve_classifier_choices(self, mock_cache_get):
+        mock_cache_get.return_value = alerce_classifiers_response
         lc_classifiers = ALeRCEQueryForm._get_light_curve_classifier_choices()
         expected_classifiers = [
             (None, ''),
@@ -170,7 +172,9 @@ class TestALeRCEBrokerForm(TestCase):
         for classifier in expected_classifiers:
             self.assertIn(classifier, lc_classifiers)
 
-    def test_get_stamp_classifier_choices(self):
+    @patch('tom_alerts.brokers.alerce.cache.get')
+    def test_get_stamp_classifier_choices(self, mock_cache_get):
+        mock_cache_get.return_value = alerce_classifiers_response
         stamp_classifiers = ALeRCEQueryForm._get_stamp_classifier_choices()
         expected_classifiers = {
             (None, ''),

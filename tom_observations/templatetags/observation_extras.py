@@ -269,7 +269,7 @@ def facility_status():
     """
 
     facility_statuses = []
-    for _, facility_class in get_service_classes().items():
+    for facility_class in get_service_classes().values():
         facility = facility_class()
         weather_urls = facility.get_facility_weather_urls()
         status = facility.get_facility_status()
@@ -284,3 +284,51 @@ def facility_status():
         facility_statuses.append(status)
 
     return {'facilities': facility_statuses}
+
+
+@register.inclusion_tag('tom_observations/partials/facility_map.html')
+def facility_map():
+    facility_locations = []
+    for facility_class in get_service_classes().values():
+        facility = facility_class()
+        sites = facility.get_observing_sites()
+
+        # Flatten each facility site dictionary and add text label for use in facility map
+        # Resulting list is of the format [['LCO', 'Siding Spring', 'coj', -31.272, 149.07, 1116], ...]
+        facility_locations.extend([
+            [facility.name, site_name] + [value for value in site_data.values()]
+            for site_name, site_data in sites.items()
+        ])
+
+    data = [
+        dict(
+            lat=[site[3] for site in facility_locations],
+            lon=[site[4] for site in facility_locations],
+            text=[f'{site[0]}: {site[1]}' for site in facility_locations],
+            hoverinfo='text',
+            mode='markers',
+            type='scattergeo'
+        )
+    ]
+    layout = {
+        'title': 'Facility Sites',
+        'hovermode': 'closest',
+        'showlegend': False,
+        'geo': {
+            'projection': {
+                'type': 'mollweide',
+            },
+            'showcoastlines': False,
+            'showland': True,
+            'lonaxis': {
+                'showgrid': True,
+                'range': [0, 360],
+            },
+            'lataxis': {
+                'showgrid': True,
+                'range': [-90, 90],
+            },
+        }
+    }
+    figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
+    return {'figure': figure}

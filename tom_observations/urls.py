@@ -1,10 +1,11 @@
 from django.urls import path
 
-from tom_observations.views import (AddExistingObservationView, ObservationCreateView, ObservationRecordUpdateView,
-                                    ObservationGroupCreateView, ObservationGroupDeleteView, ObservationGroupListView,
-                                    ObservationListView, ObservationRecordCancelView, ObservationRecordDetailView,
-                                    ObservationTemplateCreateView, ObservationTemplateDeleteView,
-                                    ObservationTemplateListView, ObservationTemplateUpdateView)
+from tom_observations.views import (AddExistingObservationView, FacilityStatusView, ObservationCreateView,
+                                    ObservationRecordUpdateView, ObservationGroupCreateView, ObservationGroupDeleteView,
+                                    ObservationGroupListView, ObservationListView, ObservationRecordCancelView,
+                                    ObservationRecordDetailView, ObservationTemplateCreateView,
+                                    ObservationTemplateDeleteView, ObservationTemplateListView,
+                                    ObservationTemplateUpdateView)
 from tom_observations.api_views import ObservationRecordViewSet
 from tom_common.api_router import SharedAPIRootRouter
 
@@ -16,6 +17,7 @@ app_name = 'tom_observations'
 urlpatterns = [
     path('add/', AddExistingObservationView.as_view(), name='add-existing'),
     path('list/', ObservationListView.as_view(), name='list'),
+    path('status/', FacilityStatusView.as_view(), name='facility-status'),
     path('template/list/', ObservationTemplateListView.as_view(), name='template-list'),
     path('template/<str:facility>/create/', ObservationTemplateCreateView.as_view(), name='template-create'),
     path('template/<int:pk>/update/', ObservationTemplateUpdateView.as_view(), name='template-update'),

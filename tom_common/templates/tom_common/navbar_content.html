@@ -33,6 +33,9 @@ For customization instructions, see tom_common/base.html
         <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
             <a class="nav-link" href="{% url 'tom_observations:template-list' %}" style="color:black">Observation Templates</a>
         </li>
+        <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'tom_observations:facility-status' %}" style="color:black">Facility Status</a>
+        </li>
     </ul>
 </li>
 <li class="nav-item {% if request.resolver_match.namespace == 'dataproducts' %}active{% endif %}">
