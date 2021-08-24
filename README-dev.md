@@ -112,7 +112,7 @@ have automated release notification to a dedicated #releases slack channel).
 * `cd /path/to/tom_base/docs`
 * `pip install -r requirements.txt  # make sure sphinx is installed to your venv`
 * `make html  # make clean first, if things are weird`
-* point a browser to the html files in `./_build/html/` to proof read before deployment 
+* point a browser to the html files in `./_build/html/` to proofread before deployment 
 
 ### Run code style checks
 * `pip install pycodestyle`
