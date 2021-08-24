@@ -125,3 +125,74 @@ have automated release notification to a dedicated #releases slack channel).
   * `./manage.py test tom_targets.tests`
   * `./manage.py test tom_targets.tests.tests.TestTargetDetail`
   * `./manage.py test tom_targets.tests.tests.TestTargetDetail.test_sidereal_target_detail`
+
+
+## Project Information
+
+The TOM Toolkit consists of the following repositories and external resources.
+
+### Repositories
+
+Releases are managed by the TOM Toolkit team unless otherwise specified.
+
+#### Core module
+
+- `tom_base`
+
+#### Modules providing additional functionality
+
+- `tom-toolkit-component-lib` - VueJS component library.
+- `tom_nonsidereal_airmass` - Provides airmass plots for non-sidereal targets. 
+- `tom_registration` - Provides registration flows in the TOM Toolkit.
+- `tom_superevents` - Provides models and views for astronomical events.
+
+#### Third-party service modules
+
+- `tom_antares` - Provides ANTARES support. Primary contacts are [Chien-Hsiu Lee](https://github.com/lchjoel1031) and [Nicholas Wolf](https://github.com/nicwolf). Maintained outside of `tom_base` due to `elasticsearch` dependency.
+- `tom_fink` - Provides Fink support. Primary contact is [Julien Peloton](https://github.com/JulienPeloton). Releases are managed by Julien. Maintained outside of `tom_base` due to `elasticsearch` dependency.
+- `tom_lt` - Provides Liverpool Telescope support. Primary contact is [Doug Arnold](https://github.com/blancmatter). Maintained outside of `tom_base` due to `lxml` and `soap` dependencies.
+- `tom_gemini_community` - Provides additional Gemini support beyond the Gemini module that ships with `tom_base`. Primary contact is [Bryan Miller](https://github.com/bryanmiller).  Releases are managed by Bryan. Maintained outside of `tom_base` due to `gsselect`.
+- `tom_scimma` - Provides Skip support. Maintained outside of `tom_base` due to `hop-client` dependency.
+
+#### Example modules
+
+- `dockertom` - Example TOM using Docker - Unmaintained, should be brought up to date.
+- `herokutom` - Example TOM deployment using Heroku - Unmaintained, should be brought up to date.
+
+#### Experimental/prototype modules
+
+- `tom_calibrations` - Provides additional models (and potentially views) for keeping track of calibration-specific data. Currently a private repo.
+- `tom_publications` - Provides support for generating LaTeX summaries of target and observation data. Deprecated.
+- `skip-django` - Provides Plotly Dash Single-Page app for Skip interaction. Deprecated, to be replaced by VueJS components.
+- `tom-demo-frontend` - Prototype for implementation of pure VueJS app rather than using django-webpack. Patterned after `science-archive-frontend`.
+- `tom_alerts_dash` - Provides Plotly Dash single-page app for broker interaction. Deprecated, should be replaced by an Django app with simple plots instead. Also out of date with `django-plotly-dash`, and needs to be updated to use pattern-matching callbacks.
+
+#### Archived
+
+`tomtoolkit.github.io` - Documentation page predating ReadTheDocs.
+
+### Build resources
+
+- [Codacy](https://app.codacy.com/organizations/gh/TOMToolkit/repositories) - Provides code quality information.
+- [Coveralls](https://coveralls.io/github/TOMToolkit/) - Provides code coverage information. Current `tom_base` threshold is 89%, with no greater than 0.1% decrease per PR. No other repos have thresholds. Settings can be found on the Coveralls page for each specific repo.
+
+
+| Repository          | Codacy | Coveralls | PyPi Responsibility |
+|---------------------|--------|-----------|---------------------|
+| `dockertom`         | N/A    | N/A       | N/A                 |
+| `herokutom`         | N/A    | N/A       | N/A                 |
+| `skip-django`       | No     | No        | TOM-Team            |
+| `tom-demo-frontend` | N/A    | N/A       | N/A                 |
+| `tt-component-lib`  | No     | N/A       | N/A                 |
+| `tom_alerts_dash`   | Yes    | Yes       | TOM Team            |
+| `tom_antares`       | Yes    | Yes       | TOM Team            |
+| `tom_base`          | Yes    | >89%      | TOM Team            |
+| `tom_calibrations`  | No     | No        | TOM Team            |
+| `tom_fink`          | Yes    | Yes       | Julien Peloton      |
+| `tom_gemini_communi`| No     | No        | Bryan Miller        |
+| `tom_lt`            | No     | No        | TOM Team            |
+| `tom_nonsidereal`   | No     | No        | TOM Team            |
+| `tom_publications`  | No     | No        | TOM Team            |
+| `tom_registration`  | Yes    | Yes       | TOM Team            |
+| `tom_scimma`        | Yes    | Yes       | TOM Team            |
+| `tom_superevents`   | Yes    | Yes       | TOM Team            |
