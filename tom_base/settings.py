@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'bootstrap4',
     'crispy_forms',
     'rest_framework',
+    'rest_framework.authtoken',  # TODO: add to settings.tmpl
     'django_filters',
     'django_gravatar',
     'tom_targets',
