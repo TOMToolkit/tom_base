@@ -58,8 +58,7 @@ The created Github Release this should be filled in with the relevant release no
 
 5. Publish the Release
 
-   When satisfied with the Release Notes, `Publish Release`. This will trigger the PyPi release automatically. 
-   Repo watchers are notified by email.
+   - When satisfied with the Release Notes, `Publish Release`. This will trigger the PyPi release automatically. Repo watchers are notified by email.
 
 6. Deploy `tom-demo-dev` with new features demonstrated, pulling `tomtoolkit==x.y.z-alpha.w` from PyPI.
 
