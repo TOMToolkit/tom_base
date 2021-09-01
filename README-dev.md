@@ -117,6 +117,11 @@ have automated release notification to a dedicated #releases slack channel).
 * `pip install pycodestyle`
 * `pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120`
 
+### Run coverage checks
+* `coverage run --include=tom_* manage.py test --exclude-tag=canary`
+* `coverage html`
+* point a browser to `index.html` in your `htmlcov` directory
+
 ### Run tests
 * `./manage.py test --exclude-tag=canary` to run non-canary tests
 
