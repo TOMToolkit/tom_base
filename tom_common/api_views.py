@@ -1,4 +1,3 @@
-from django.contrib.auth.models import Group
 from rest_framework.viewsets import ModelViewSet
 
 from tom_common.serializers import GroupSerializer
