@@ -84,7 +84,12 @@ class TNSBroker(GenericBroker):
 
     @classmethod
     def tns_headers(cls):
-        return {'User-Agent': 'tns_marker{"tns_id": "' + settings.BROKERS['TNS']['bot_id'] + '", "type": "bot", "name": "' + settings.BROKERS['TNS']['bot_name'] + '"}'}
+        return {
+            'User-Agent': 'tns_marker{{"tns_id": "{0}", "type": "bot", "name": "{1}"}}'.format(
+                  settings.BROKERS['TNS']['bot_id'],
+                  settings.BROKERS['TNS']['bot_name']
+                )
+            }
 
     @classmethod
     def fetch_alerts(cls, parameters):
@@ -108,7 +113,6 @@ class TNSBroker(GenericBroker):
             })
          }
         response = requests.post(TNS_SEARCH_URL, data, headers=cls.tns_headers())
-        print(response.content)
         response.raise_for_status()
         transients = response.json()
         alerts = []
