@@ -84,6 +84,8 @@ class TNSBroker(GenericBroker):
 
     @classmethod
     def tns_headers(cls):
+        # More info about this user agent header can be found here.
+        # https://www.wis-tns.org/content/tns-newsfeed#comment-wrapper-23710
         return {
             'User-Agent': 'tns_marker{{"tns_id": "{0}", "type": "bot", "name": "{1}"}}'.format(
                   settings.BROKERS['TNS']['bot_id'],
