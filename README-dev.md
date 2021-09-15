@@ -117,6 +117,11 @@ have automated release notification to a dedicated #releases slack channel).
 * `pip install pycodestyle`
 * `pycodestyle tom_* --exclude=*/migrations/* --max-line-length=120`
 
+### Run coverage checks
+* `coverage run --include=tom_* manage.py test --exclude-tag=canary`
+* `coverage html`
+* point a browser to `index.html` in your `htmlcov` directory
+
 ### Run tests
 * `./manage.py test --exclude-tag=canary` to run non-canary tests
 
@@ -224,7 +229,7 @@ Following dependabot merges to dev, any subsequent TOM Toolkit release should fo
 
 #### Read the Docs
 
-The [documentation](https://tom-toolkit.readthedocs.io/en/stable/) is built on new Github releases of `main` for the `stable` version of the documentation, and on new pushes to `dev` for the `latest` version of the documentation. It is triggered by a Github webhook. Settings are maintained in the [RTD project page](https://readthedocs.org/projects/tom-toolkit/).
+The [documentation](https://tom-toolkit.readthedocs.io/en/stable/) is built on new Github releases of `main` for the `stable` version of the documentation, and on new pushes to `dev` for the `latest` version of the documentation. It is triggered by a Github webhook. Settings are maintained in the [RTD project page](https://readthedocs.org/projects/tom-toolkit/). Version-specific RTD pages have to be activated manually via the [versions](https://readthedocs.org/projects/tom-toolkit/versions/) page.
 
 
 | Repository          | Codacy | Coveralls | Dependabot | PyPi Responsibility |
