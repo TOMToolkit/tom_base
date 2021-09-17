@@ -103,7 +103,7 @@ def recent_photometry(target, limit=1):
 
 
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html', takes_context=True)
-def photometry_for_target(context, target):
+def photometry_for_target(context, target, width=700, height=600, background=None, label_color=None, grid=True):
     """
     Renders a photometric plot for a target.
 
@@ -116,6 +116,7 @@ def photometry_for_target(context, target):
         'g': 'green',
         'i': 'black'
     }
+
     photometry_data = {}
     if settings.TARGET_PERMISSIONS_ONLY:
         datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
@@ -140,7 +141,7 @@ def photometry_for_target(context, target):
                 x=filter_values['time'],
                 y=filter_values['magnitude'],
                 mode='markers',
-                marker=dict(color=color_map[filter_name]),
+                marker=dict(color=color_map.get(filter_name)),
                 name=filter_name,
                 error_y=dict(
                     type='data',
@@ -155,7 +156,7 @@ def photometry_for_target(context, target):
                 y=filter_values['limit'],
                 mode='markers',
                 opacity=0.5,
-                marker=dict(color=color_map[filter_name]),
+                marker=dict(color=color_map.get(filter_name)),
                 marker_symbol=6,  # upside down triangle
                 name=filter_name + ' non-detection',
             )
@@ -163,12 +164,19 @@ def photometry_for_target(context, target):
 
     layout = go.Layout(
         yaxis=dict(autorange='reversed'),
-        height=600,
-        width=700
+        height=height,
+        width=width,
+        paper_bgcolor=background,
+        plot_bgcolor=background
+
     )
+    layout.legend.font.color = label_color
+    fig = go.Figure(data=plot_data, layout=layout)
+    fig.update_yaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
+    fig.update_xaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
     return {
         'target': target,
-        'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
+        'plot': offline.plot(fig, output_type='div', show_link=False)
     }
 
 
