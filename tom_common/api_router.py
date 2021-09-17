@@ -24,8 +24,8 @@ def collect_api_urls():
     1. Your app is added to the INSTALLED_APPS list as '<your_app>' (and not using the django.apps.AppConfig subclass).
     2. Your app's `urls.py` is top-level and named `urls.py`
 
-    Upon `import` , your REST API urls and views will be registered with the singleton rest_framework.DefaultRouter
-    defined as `tom_common.api_router.SharedAPIRootRouter as long as you regester them in your `urls.py`.
+    Upon `import`, your REST API urls and views will be registered with the singleton rest_framework.DefaultRouter
+    defined as `tom_common.api_router.SharedAPIRootRouter as long as you register them in your `urls.py`.
     In the `<your_app>/urls.py` it should look like this:
 
     ```python
