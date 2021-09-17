@@ -22,10 +22,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.authtoken import views
 
+from tom_common.api_views import GroupViewSet
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
 from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
 
-from .api_router import collect_api_urls  # DRF routers are setup in each INSTALL_APPS url.py
+from .api_router import collect_api_urls, SharedAPIRootRouter  # DRF routers are setup in each INSTALL_APPS url.py
+
+router = SharedAPIRootRouter()
+router.register(r'groups', GroupViewSet, 'groups')
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'), name='home'),
