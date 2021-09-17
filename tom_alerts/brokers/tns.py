@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from crispy_forms.layout import Layout, Div, Fieldset
 
 
-TNS_BASE_URL = 'https://wis-tns.weizmann.ac.il'
+TNS_BASE_URL = 'https://www.wis-tns.org/'
 TNS_OBJECT_URL = f'{TNS_BASE_URL}api/get/object'
 TNS_SEARCH_URL = f'{TNS_BASE_URL}api/get/search'
 
@@ -83,6 +83,17 @@ class TNSBroker(GenericBroker):
     form = TNSForm
 
     @classmethod
+    def tns_headers(cls):
+        # More info about this user agent header can be found here.
+        # https://www.wis-tns.org/content/tns-newsfeed#comment-wrapper-23710
+        return {
+            'User-Agent': 'tns_marker{{"tns_id": "{0}", "type": "bot", "name": "{1}"}}'.format(
+                  settings.BROKERS['TNS']['bot_id'],
+                  settings.BROKERS['TNS']['bot_name']
+                )
+            }
+
+    @classmethod
     def fetch_alerts(cls, parameters):
         if parameters['days_ago'] is not None:
             public_timestamp = (datetime.utcnow() - timedelta(days=parameters['days_ago']))\
@@ -103,7 +114,7 @@ class TNSBroker(GenericBroker):
                 'public_timestamp': public_timestamp,
             })
          }
-        response = requests.post(TNS_SEARCH_URL, data)
+        response = requests.post(TNS_SEARCH_URL, data, headers=cls.tns_headers())
         response.raise_for_status()
         transients = response.json()
         alerts = []
@@ -116,7 +127,7 @@ class TNSBroker(GenericBroker):
                     'spectroscopy': 0,
                 })
             }
-            response = requests.post(TNS_OBJECT_URL, data)
+            response = requests.post(TNS_OBJECT_URL, data, headers=cls.tns_headers())
             response.raise_for_status()
             alert = response.json()['data']['reply']
 
