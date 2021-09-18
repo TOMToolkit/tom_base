@@ -12,11 +12,6 @@ dl {
   padding: 2% 0 0 0;
 }
 
-.light-curve {
-  height: 600px;
-  width: inherit;
-}
-
 span.featured {
   pointer-events: none;
 }

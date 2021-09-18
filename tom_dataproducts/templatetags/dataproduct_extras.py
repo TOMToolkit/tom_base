@@ -109,6 +109,21 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
 
     This templatetag requires all ``ReducedDatum`` objects with a data_type of ``photometry`` to be structured with the
     following keys in the JSON representation: magnitude, error, filter
+
+    :param width: Width of generated plot
+    :type width: int
+
+    :param height: Height of generated plot
+    :type width: int
+
+    :param background: Color of the background of generated plot. Can be rgba or hex string.
+    :type background: str
+
+    :param label_color: Color of labels/tick labels. Can be rgba or hex string.
+    :type label_color: str
+
+    :param grid: Whether to show grid lines.
+    :type grid: bool
     """
 
     color_map = {
