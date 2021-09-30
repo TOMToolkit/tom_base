@@ -4,7 +4,6 @@ from astroplan import moon_illumination
 from astropy import units as u
 from astropy.coordinates import Angle, get_moon, SkyCoord
 from astropy.time import Time
-from dateutil.parser import parse
 from django import template
 from django.conf import settings
 from django.db.models import Q
@@ -84,28 +83,28 @@ def target_groups(target):
 
 
 @register.inclusion_tag('tom_targets/partials/target_plan.html', takes_context=True)
-def target_plan(context):
+def target_plan(context, fast_render=False):
     """
     Displays form and renders plot for visibility calculation. Using this templatetag to render a plot requires that
     the context of the parent view have values for start_time, end_time, and airmass.
+
+    :param fast_render: Render the plot on page load, defaults to the next 24hrs and 2.5 airmass
+    :type fast_render: bool
     """
     request = context['request']
     plan_form = TargetVisibilityForm()
     visibility_graph = ''
-    if all(request.GET.get(x) for x in ['start_time', 'end_time']):
+    if all(request.GET.get(x) for x in ['start_time', 'end_time']) or fast_render:
         plan_form = TargetVisibilityForm({
-            'start_time': request.GET.get('start_time'),
-            'end_time': request.GET.get('end_time'),
-            'airmass': request.GET.get('airmass'),
+            'start_time': request.GET.get('start_time', datetime.utcnow()),
+            'end_time': request.GET.get('end_time', datetime.utcnow() + timedelta(days=1)),
+            'airmass': request.GET.get('airmass', 2.5),
             'target': context['object']
         })
         if plan_form.is_valid():
-            start_time = parse(request.GET['start_time'])
-            end_time = parse(request.GET['end_time'])
-            if request.GET.get('airmass'):
-                airmass_limit = float(request.GET.get('airmass'))
-            else:
-                airmass_limit = None
+            start_time = plan_form.cleaned_data['start_time']
+            end_time = plan_form.cleaned_data['end_time']
+            airmass_limit = plan_form.cleaned_data['airmass']
             visibility_data = get_sidereal_visibility(context['object'], start_time, end_time, 10, airmass_limit)
             plot_data = [
                 go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()
