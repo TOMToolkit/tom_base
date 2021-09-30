@@ -112,6 +112,15 @@ class TargetFilter(django_filters.FilterSet):
 
     targetlist__name = django_filters.ModelChoiceFilter(queryset=get_target_list_queryset, label="Target Grouping")
 
+    order = django_filters.OrderingFilter(
+        fields=['name', 'created', 'modified'],
+        field_labels={
+            'name': 'Name',
+            'created': 'Creation Date',
+            'modified': 'Last Update'
+        }
+    )
+
     class Meta:
         model = Target
         fields = ['type', 'name', 'key', 'value', 'cone_search', 'targetlist__name']
