@@ -1,11 +1,9 @@
-from math import radians
-
 from django.conf import settings
-from django.db.models import ExpressionWrapper, FloatField, Q
-from django.db.models.functions.math import ACos, Cos, Radians, Pi, Sin
+from django.db.models import Q
 import django_filters
 
 from tom_targets.models import Target, TargetList
+from tom_targets.utils import cone_search_filter
 
 
 def filter_for_field(field):
@@ -67,12 +65,9 @@ class TargetFilter(django_filters.FilterSet):
 
     def filter_cone_search(self, queryset, name, value):
         """
-        Executes cone search by annotating each target with separation distance from either the specified RA/Dec or
-        the RA/Dec of the specified target. Formula is from Wikipedia: https://en.wikipedia.org/wiki/Angular_distance
-        The result is converted to radians.
-
-        Cone search is preceded by a square search to reduce the search radius before annotating the queryset, in
-        order to make the query faster.
+        Perform a cone search filter on this filter's queryset,
+        using the cone search utlity method and either specified RA, DEC
+        or the RA/DEC from the named target.
         """
         if name == 'cone_search':
             ra, dec, radius = value.split(',')
@@ -86,22 +81,13 @@ class TargetFilter(django_filters.FilterSet):
                 dec = targets[0].dec
             else:
                 return queryset.filter(name=None)
+        else:
+            return queryset
 
         ra = float(ra)
         dec = float(dec)
 
-        double_radius = float(radius) * 2
-        queryset = queryset.filter(ra__gte=ra - double_radius, ra__lte=ra + double_radius,
-                                   dec__gte=dec - double_radius, dec__lte=dec + double_radius)
-
-        separation = ExpressionWrapper(
-            180 * ACos(
-                (Sin(radians(dec)) * Sin(Radians('dec'))) +
-                (Cos(radians(dec)) * Cos(Radians('dec')) * Cos(radians(ra) - Radians('ra')))
-            ) / Pi(), FloatField()
-        )
-
-        return queryset.annotate(separation=separation).filter(separation__lte=radius)
+        return cone_search_filter(queryset, ra, dec, radius)
 
     # hide target grouping list if user not logged in
     def get_target_list_queryset(request):
