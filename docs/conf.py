@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'TOM Toolkit'
-copyright = '2020, David Collom and Lindy Lindstrom'
+copyright = '2021, David Collom and Lindy Lindstrom'
 author = 'David Collom, Lindy Lindstrom, Austin Riba'
 
 # The full version, including alpha/beta/rc tags
