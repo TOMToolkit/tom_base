@@ -98,16 +98,18 @@ new import and create a new class that will become the new form:
    from django import forms
 
 
-   class LCOMultiFilterForm(LCOBaseObservationForm):
-       filter2 = forms.ChoiceField(choices=filter_choices)
-       exposure_time2 = forms.FloatField(min_value=0.1)
-       filter3 = forms.ChoiceField(choices=filter_choices)
-       exposure_time3 = forms.FloatField(min_value=0.1)
+    class LCOMultiFilterForm(LCOBaseObservationForm):
+        filter2 = forms.ChoiceField(choices=LCOBaseObservationForm.filter_choices())
+        exposure_time2 = forms.FloatField(min_value=0.1)
+        filter3 = forms.ChoiceField(choices=LCOBaseObservationForm.filter_choices())
+        exposure_time3 = forms.FloatField(min_value=0.1)
 
 
-   class LCOMultiFilterFacility(LCOFacility):
-       name = 'LCOMultiFilter'
-       form = LCOMultiFilterForm
+    class LCOMultiFilterFacility(LCOFacility):
+        name = 'LCOMultiFilter'
+        observation_forms = {
+            'MULTIFILTER': LCOMultiFilterForm
+        }
 
 There is now a new class, ``LCOMultiFilterForm`` which inherits from
 ``LCOBaseObservationForm``, the form for the default interface. Additionally
@@ -144,49 +146,48 @@ like this:
    # lcomultifilter.py
    from tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm, filter_choices
    from django import forms
-   from crispy_forms.layout import Div
+   from crispy_forms.layout import Column, Div, Row
 
 
-   class LCOMultiFilterForm(LCOBaseObservationForm):
-       filter2 = forms.ChoiceField(choices=filter_choices)
-       exposure_time2 = forms.FloatField(min_value=0.1)
-       filter3 = forms.ChoiceField(choices=filter_choices)
-       exposure_time3 = forms.FloatField(min_value=0.1)
+    class LCOMultiFilterForm(LCOBaseObservationForm):
+        filter2 = forms.ChoiceField(choices=LCOBaseObservationForm.filter_choices())
+        exposure_time2 = forms.FloatField(min_value=0.1)
+        exposure_count2 = forms.IntegerField(min_value=1)
+        filter3 = forms.ChoiceField(choices=LCOBaseObservationForm.filter_choices())
+        exposure_time3 = forms.FloatField(min_value=0.1)
+        exposure_count3 = forms.IntegerField(min_value=1)
 
-       def layout(self):
-           return Div(
-                   Div(
-                       Div(
-                           'name', 'proposal', 'ipp_value', 'observation_type', 'start', 'end',
-                           css_class='col'
-                       ),
-                       Div(
-                           'instrument_name', 'exposure_count', 'max_airmass',
-                           css_class='col'
-                       ),
-                       css_class='form-row'
-                   ),
-                   Div(
-                       Div(
-                           'filter', 'exposure_time',
-                           css_class='col'
-                       ),
-                       Div(
-                           'filter2', 'exposure_time2',
-                           css_class='col'
-                       ),
-                       Div(
-                           'filter3', 'exposure_time3',
-                           css_class='col'
-                       ),
-                       css_class='form-row'
-                   )
-           )
+        def layout(self):
+            return Div(
+                Row(
+                ),
+                Row(
+                    Column(
+                        'name', 'observation_mode', 'start', 'instrument_type'
+                    ),
+                    Column(
+                        'proposal', 'ipp_value', 'end', 'max_airmass'
+                    )
+                ),
+                Row(
+                    Column(
+                        'filter', 'exposure_count', 'exposure_time',
+                    ),
+                    Column(
+                        'filter2', 'exposure_count2', 'exposure_time2'
+                    ),
+                    Column(
+                        'filter3', 'exposure_count3', 'exposure_time3'
+                    )
+                )
+            )
 
 
    class LCOMultiFilterFacility(LCOFacility):
-       name = 'LCOMultiFilter'
-       form = LCOMultiFilterForm
+        name = 'LCOMultiFilter'
+        observation_forms = {
+            'MULTIFILTER': LCOMultiFilterForm
+        }
 
 Take a look at the layout and compare it to the `existing lco
 layout <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py#L169>`__.
@@ -219,81 +220,102 @@ suit the needs of our ``LCOMultiFilter`` class:
 
 .. code:: python
 
-   #lcomultifilter.py
-   from tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm, filter_choices
-   from django import forms
-   from crispy_forms.layout import Div
-   from copy import deepcopy
+    #lcomultifilter.py
+    from tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm
+    from django import forms
+    from crispy_forms.layout import Column, Div, Row
 
-   class LCOMultiFilterForm(LCOBaseObservationForm):
-       filter2 = forms.ChoiceField(choices=filter_choices)
-       exposure_time2 = forms.FloatField(min_value=0.1)
-       filter3 = forms.ChoiceField(choices=filter_choices)
-       exposure_time3 = forms.FloatField(min_value=0.1)
+    class LCOMultiFilterForm(LCOBaseObservationForm):
+        filter2 = forms.ChoiceField(choices=LCOBaseObservationForm.filter_choices())
+        exposure_time2 = forms.FloatField(min_value=0.1)
+        exposure_count2 = forms.IntegerField(min_value=1)
+        filter3 = forms.ChoiceField(choices=LCOBaseObservationForm.filter_choices())
+        exposure_time3 = forms.FloatField(min_value=0.1)
+        exposure_count3 = forms.IntegerField(min_value=1)
 
-       def layout(self):
-           return Div(
-                   Div(
-                       Div(
-                           'name', 'proposal', 'ipp_value', 'observation_type', 'start', 'end',
-                           css_class='col'
-                       ),
-                       Div(
-                           'instrument_type', 'exposure_count', 'max_airmass',
-                           css_class='col'
-                       ),
-                       css_class='form-row'
-                   ),
-                   Div(
-                       Div(
-                           'filter', 'exposure_time',
-                           css_class='col'
-                       ),
-                       Div(
-                           'filter2', 'exposure_time2',
-                           css_class='col'
-                       ),
-                       Div(
-                           'filter3', 'exposure_time3',
-                           css_class='col'
-                       ),
-                       css_class='form-row'
-                   )
-           )
+        def layout(self):
+            return Div(
+                Row(
+                ),
+                Row(
+                    Column(
+                        'name', 'observation_mode', 'start', 'instrument_type'
+                    ),
+                    Column(
+                        'proposal', 'ipp_value', 'end', 'max_airmass'
+                    )
+                ),
+                Row(
+                    Column(
+                        'filter', 'exposure_count', 'exposure_time',
+                    ),
+                    Column(
+                        'filter2', 'exposure_count2', 'exposure_time2'
+                    ),
+                    Column(
+                        'filter3', 'exposure_count3', 'exposure_time3'
+                    )
+                )
+            )
 
-       def observation_payload(self):
-           payload = super().observation_payload()
-           configuration2 = deepcopy(payload['requests'][0]['configurations'][0])
-           configuration3 = deepcopy(payload['requests'][0]['configurations'][0])
-           configuration2['instrument_configs'][0]['optical_elements']['filter'] = self.cleaned_data['filter2']
-           configuration2['instrument_configs'][0]['exposure_time'] = self.cleaned_data['exposure_time2']
-           configuration3['instrument_configs'][0]['optical_elements']['filter'] = self.cleaned_data['filter3']
-           configuration3['instrument_configs'][0]['exposure_time'] = self.cleaned_data['exposure_time3']
-           payload['requests'][0]['configurations'].extend([configuration2, configuration3])
-           return payload
+        def _build_instrument_config(self):
+            instrument_config = super()._build_instrument_config()
+
+            instrument_config.append({
+                'exposure_count': self.cleaned_data['exposure_count2'],
+                'exposure_time': self.cleaned_data['exposure_time2'],
+                'optical_elements': {
+                    'filter': self.cleaned_data['filter2']
+                }
+            })
+
+            instrument_config.append({
+                'exposure_count': self.cleaned_data['exposure_count3'],
+                'exposure_time': self.cleaned_data['exposure_time3'],
+                'optical_elements': {
+                    'filter': self.cleaned_data['filter3']
+                }
+            })
+
+            return instrument_config
 
 
-   class LCOMultiFilterFacility(LCOFacility):
-       name = 'LCOMultiFilter'
-       form = LCOMultiFilterForm
+    class LCOMultiFilterFacility(LCOFacility):
+        name = 'LCOMultiFilter'
+        observation_forms = {
+            'MULTIFILTER': LCOMultiFilterForm
+        }
 
-Let’s go over what we did in this new ``observation_payload()`` method:
+Let’s go over what we did in this new ``_build_instrument_config()`` method:
 
-1. Line 1: We call ``super().observation_payload()`` to get the
+1. Line 1: We call ``super()._build_instrument_config()`` to get the
    observation request which the parent class (LCOFacility) would have
-   called.
-2. Line 2-3 We copy the Request’s Configuration into two new
-   Configurations: ``configuration2`` and ``configuration3``. These will
-   be the additional Configuration we send to LCO.
-3. Lines 5-8: We set the value of these new Configuration ``filter`` and
-   ``exposure_time`` to the values we collected from our custom form.
-4. lines 10-11: Finally, we extend the original Request’s Configuration
-   array to include the 2 new Configuration we built. Return it and
-   we’re done!
+   called. This constructs a single-element list with a dictionary containing an 
+   instrument configuration built from the values in the ``exposure_count``,
+   ``exposure_time``, and ``filter`` fields from the form.
+2. Lines 3-8 We construct a second instrument configuration from the form values 
+    ``exposure_count2``, ``exposure_time2``, and ``filter2`` and append it to 
+    the list of configurations.
+3. Lines 10-16 We construct a third instrument configuration from the form values 
+    ``exposure_count3``, ``exposure_time3``, and ``filter3`` and append it to 
+    the list of configurations.
+4. Line 18: Finally, we return the instrument configurations that we added!
 
 If you submit an observation request with the ``LCOMultiFilter``
 observation module now you should see that it creates an observation
-request with LCO with three Configuration!
+request with LCO with three Configurations!
+
+Observation Utility Methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the example above, we modified the `_build_instrument_config()` method to manipulate 
+the instrument configuration. The LCO module in particular has a number of utility methods 
+to manipulate specific parts of the observation submission, and can be reviewed in 
+`the code <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py#L289>`__.
+
+However, the main entrypoint for a facility module is the `observation_payload()` function, which calls 
+all of the utility methods to construct a request. If it's unclear how a facility module constructs a request, 
+the simplest way to add custom functionality is to override `observation_payload()`.
 
 Summary
 ~~~~~~~
@@ -311,7 +333,7 @@ by:
 2. We added a few fields to ``LCOMultiFilterForm`` and modified it’s
    layout to include these new fields using ``layout()``.
 
-3. We implemented the ``LCOMultiFilterForm`` ``observation_payload()``
+3. We implemented the ``LCOMultiFilterForm`` ``_build_instrument_config()``
    which used the parent’s class return value and then modified it to
    suit our needs.
 
