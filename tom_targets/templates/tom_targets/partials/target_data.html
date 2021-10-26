@@ -29,10 +29,12 @@
   <dd class="col-sm-6">{{ value }}</dd>
 {% endfor %}
 </dl>
-<h4>Tags</h4>
+{% if target.tags %}
+<p>Tags</p>
 <dl class="row">
 {% for key, value in target.tags.items %}
   <dt class="col-sm-6">{{ key }}</dt>
   <dd class="col-sm-6">{{ value }}</dd>
 {% endfor %}
 </dl>
+{% endif %}
