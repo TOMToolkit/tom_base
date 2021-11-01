@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 
 from astropy import units as u
 from astropy.coordinates import Angle
-from crispy_forms.layout import Fieldset, HTML, Layout
+from crispy_forms.layout import HTML, Layout
 
 from tom_alerts.alerts import GenericAlert, GenericQueryForm, GenericBroker
 from tom_targets.models import Target
