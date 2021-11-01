@@ -10,7 +10,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.db import transaction
-from django.http import QueryDict, StreamingHttpResponse
+from django.db.models import Q
+from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse
 from django.forms import HiddenInput
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
@@ -19,7 +20,7 @@ from django.utils.safestring import mark_safe
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
-from django.views.generic import TemplateView, View
+from django.views.generic import RedirectView, TemplateView, View
 from django_filters.views import FilterView
 
 from guardian.mixins import PermissionListMixin
@@ -35,7 +36,8 @@ from tom_targets.forms import (
     SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset
 )
 from tom_targets.groups import (
-    add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping
+    add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
+    move_all_to_grouping, move_selected_to_grouping
 )
 from tom_targets.models import Target, TargetList
 from tom_targets.utils import import_targets, export_targets
@@ -53,6 +55,7 @@ class TargetListView(PermissionListMixin, FilterView):
     model = Target
     filterset_class = TargetFilter
     permission_required = 'tom_targets.view_target'
+    ordering = ['-created']
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -70,6 +73,26 @@ class TargetListView(PermissionListMixin, FilterView):
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
         return context
+
+
+class TargetNameSearchView(RedirectView):
+    """
+    View for searching by target name. If the search returns one result, the view redirects to the corresponding
+    TargetDetailView. Otherwise, the view redirects to the TargetListView.
+    """
+
+    def get(self, request, *args, **kwargs):
+        target_name = self.kwargs['name']
+        # Tests fail without distinct but it works in practice, it is unclear as to why
+        # The Django query planner shows different results between in practice and unit tests
+        # django-guardian related querying is present in the test planner, but not in practice
+        targets = get_objects_for_user(request.user, 'tom_targets.view_target').filter(
+            Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name)
+        ).distinct()
+        if targets.count() == 1:
+            return HttpResponseRedirect(reverse('targets:detail', kwargs={'pk': targets.first().id}))
+        else:
+            return HttpResponseRedirect(reverse('targets:list') + f'?name={target_name}')
 
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
@@ -359,7 +382,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
         obs_template_form = ApplyObservationTemplateForm(request.GET)
         if obs_template_form.is_valid():
             obs_template = ObservationTemplate.objects.get(pk=obs_template_form.cleaned_data['observation_template'].id)
-            obs_template_params = obs_template.parameters_as_dict
+            obs_template_params = obs_template.parameters
             obs_template_params['cadence_strategy'] = request.GET.get('cadence_strategy', '')
             obs_template_params['cadence_frequency'] = request.GET.get('cadence_frequency', '')
             params = urlencode(obs_template_params)
@@ -455,6 +478,13 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
             else:
                 targets_ids = request.POST.getlist('selected-target')
                 remove_selected_from_grouping(targets_ids, grouping_object, request)
+        if 'move' in request.POST:
+            if request.POST.get('isSelectAll') == 'True':
+                move_all_to_grouping(filter_data, grouping_object, request)
+            else:
+                target_ids = request.POST.getlist('selected-target')
+                move_selected_to_grouping(target_ids, grouping_object, request)
+
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 
 

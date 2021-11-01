@@ -8,15 +8,11 @@ For customization instructions, see tom_common/base.html
     <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
 </li>
 <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" data-toggle="dropdown">Targets</a>
-    <ul class="dropdown-menu">
-        <li class="nav-item {% if request.resolver_match.namespace == 'targets' %}active{% endif %}">
-            <a class="nav-link" href="{% url 'targets:list' %}"><font color="black">Targets</font></a>
-        </li>
-        <li class="nav-item {% if request.resolver_match.namespace == 'targets' %}active{% endif %}">
-            <a class="nav-link" href="{% url 'targets:targetgrouping' %}"><font color="black">Target Grouping</font></a>
-        </li>
-    </ul>
+    <a class="nav-link dropdown-toggle {% if request.resolver_match.namespace == 'targets' %}active{% endif %}" data-toggle="dropdown">Targets</a>
+    <div class="dropdown-menu">
+        <a class="dropdown-item" href="{% url 'targets:list' %}">Targets</a>
+        <a class="dropdown-item" href="{% url 'targets:targetgrouping' %}">Target Grouping</a>
+    </div>
 </li>
 <li class="nav-item {% if request.resolver_match.namespace == 'alerts' %}active{% endif %}">
     <a class="nav-link" href="{% url 'alerts:list' %}">Alerts</a>
@@ -32,6 +28,9 @@ For customization instructions, see tom_common/base.html
         </li>
         <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
             <a class="nav-link" href="{% url 'tom_observations:template-list' %}" style="color:black">Observation Templates</a>
+        </li>
+        <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'tom_observations:facility-status' %}" style="color:black">Facility Status</a>
         </li>
     </ul>
 </li>

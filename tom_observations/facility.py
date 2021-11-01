@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from importlib import import_module
 import copy
-import json
 import logging
 import requests
 
@@ -100,10 +99,10 @@ class BaseObservationForm(forms.Form):
         # TODO: Make this call the validate_observation method in facility
         return super().is_valid()
 
-    def serialize_parameters(self):
+    def serialize_parameters(self) -> dict:
         parameters = copy.deepcopy(self.cleaned_data)
         parameters.pop('groups', None)
-        return json.dumps(parameters)
+        return parameters
 
     def observation_payload(self):
         """
@@ -308,6 +307,14 @@ class BaseObservationFacility(ABC):
         """
         return {}
 
+    def cancel_observation(self, observation_id):
+        """
+        Takes an observation id and submits a request to the observatory that the observation be cancelled.
+
+        If the cancellation was successful, return True. Otherwise, return False.
+        """
+        raise NotImplementedError('This facility has not implemented cancel observation.')
+
     @abstractmethod
     def get_observation_url(self, observation_id):
         """
@@ -317,6 +324,9 @@ class BaseObservationFacility(ABC):
         record page.
         """
         pass
+
+    def get_date_obs_from_fits_header(self, header):
+        return None
 
 
 class BaseRoboticObservationFacility(BaseObservationFacility):

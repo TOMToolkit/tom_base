@@ -105,6 +105,68 @@ class TestTargetDetail(TestCase):
         self.assertContains(response, 'You do not have permission to access this page')
 
 
+class TestTargetNameSearch(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(username='testuser')
+        self.user2 = User.objects.create(username='testuser2')
+
+        self.st1 = SiderealTargetFactory.create(name='testtarget1')
+        self.st2 = SiderealTargetFactory.create(name='testtarget2')
+        self.st3 = SiderealTargetFactory.create(name='testtarget3')
+
+        assign_perm('tom_targets.view_target', self.user, self.st1)
+        assign_perm('tom_targets.view_target', self.user2, self.st1)
+        assign_perm('tom_targets.view_target', self.user, self.st2)
+        assign_perm('tom_targets.view_target', self.user, self.st3)
+
+    def test_search_one_result(self):
+        """Test that a search with one result returns the target detail page."""
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('targets:name-search', kwargs={'name': self.st1.name}), follow=True)
+        self.assertRedirects(response, reverse('targets:detail', kwargs={'pk': self.st1.id}))
+        self.assertContains(response, self.st1.name)
+
+    def test_search_no_results(self):
+        """Test that a search with no results returns the target list page."""
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('targets:name-search', kwargs={'name': 'fakename'}), follow=True)
+        self.assertRedirects(response, reverse('targets:list') + '?name=fakename')
+        self.assertNotContains(response, self.st1.name)
+        self.assertNotContains(response, self.st2.name)
+
+    def test_search_multiple_results(self):
+        """Test that a search with multiple results returns the target list page."""
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('targets:name-search', kwargs={'name': 'testtarget'}), follow=True)
+        self.assertRedirects(response, reverse('targets:list') + '?name=testtarget')
+        self.assertContains(response, self.st1.name)
+        self.assertContains(response, self.st3.name)
+
+    def test_search_one_result_unauthorized(self):
+        """Test that a search with one result that the user is not allowed to view returns an empty target list page."""
+        self.client.force_login(self.user2)
+        response = self.client.get(reverse('targets:name-search', kwargs={'name': 'testtarget3'}), follow=True)
+        self.assertRedirects(response, reverse('targets:list') + '?name=testtarget3')
+        self.assertContains(response, 'No targets match those filters.')
+
+    def test_search_multiple_results_unauthorized(self):
+        """Test that a search with multiple results returns the target list page, but without the targets that
+           the user is not allowed to view."""
+        assign_perm('tom_targets.view_target', self.user2, self.st2)
+        self.client.force_login(self.user2)
+        response = self.client.get(reverse('targets:name-search', kwargs={'name': 'testtarget'}), follow=True)
+        self.assertRedirects(response, reverse('targets:list') + '?name=testtarget')
+        self.assertContains(response, self.st1.name)
+        self.assertNotContains(response, self.st3.name)
+
+    def test_search_one_result_authorized(self):
+        """Test that a search with only one result that the user is allowed to view returns the target detail page."""
+        self.client.force_login(self.user2)
+        response = self.client.get(reverse('targets:name-search', kwargs={'name': 'testtarget'}), follow=True)
+        self.assertRedirects(response, reverse('targets:detail', kwargs={'pk': self.st1.id}))
+        self.assertContains(response, self.st1.name)
+
+
 @override_settings(TOM_FACILITY_CLASSES=[])
 class TestTargetCreate(TestCase):
     def setUp(self):
@@ -401,6 +463,39 @@ class TestTargetCreate(TestCase):
         self.assertContains(second_response, 'Target name with this Alias already exists.')
 
 
+class TestTargetUpdate(TestCase):
+    def setUp(self):
+        self.form_data = {
+            'name': 'testtarget',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1
+        }
+        user = User.objects.create(username='testuser')
+        self.target = Target.objects.create(**self.form_data)
+        assign_perm('tom_targets.change_target', user, self.target)
+        self.client.force_login(user)
+
+    def test_valid_update(self):
+        self.form_data.update({
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': 'redshift',
+            'targetextra_set-0-value': '3',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+            'aliases-0-name': 'testtargetname2'
+        })
+        self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.target.refresh_from_db()
+        self.assertTrue(self.target.targetextra_set.filter(key='redshift').exists())
+        self.assertTrue(self.target.aliases.filter(name='testtargetname2').exists())
+
+
 class TestTargetImport(TestCase):
     def setUp(self):
         user = User.objects.create(username='testuser')
@@ -597,10 +692,11 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.client.force_login(user)
         # create targets
         self.fake_targets = []
-        for i in range(3):
+        for _ in range(3):
             ft = SiderealTargetFactory.create()
             self.fake_targets.append(ft)
             assign_perm('tom_targets.view_target', user, ft)
+            assign_perm('tom_targets.change_target', user, ft)
         # create grouping
         self.fake_grouping = TargetGroupingFactory.create()
         assign_perm('tom_targets.view_targetlist', user, self.fake_grouping)
@@ -658,6 +754,53 @@ class TestTargetAddRemoveGrouping(TestCase):
                        SUCCESS), messages)
         self.assertIn(('1 target(s) not in group \'{}\': {}'.format(self.fake_grouping.name, self.fake_targets[1].name),
                        WARNING), messages)
+
+    # Add target[0] and [1] to grouping; [0] already exists and [1] new
+    def test_move_selected_to_grouping(self):
+        data = {
+            'grouping': self.fake_grouping.id,
+            'move': True,
+            'isSelectAll': 'False',
+            'selected-target': [self.fake_targets[0].id, self.fake_targets[1].id],
+            'query_string': '',
+        }
+        first_grouping = TargetGroupingFactory.create()
+        self.fake_targets[0].targetlist_set.add(first_grouping)
+        self.fake_targets[1].targetlist_set.add(first_grouping)
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+
+        self.assertEqual(self.fake_grouping.targets.count(), 2)
+        self.assertTrue(self.fake_targets[0] in self.fake_grouping.targets.all())
+        self.assertTrue(self.fake_targets[1] in self.fake_grouping.targets.all())
+        self.assertTrue(self.fake_targets[0] in first_grouping.targets.all())
+        self.assertFalse(self.fake_targets[1] in first_grouping.targets.all())
+
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertIn(('1 target(s) successfully moved to group \'{}\'.'.format(self.fake_grouping.name),
+                       SUCCESS), messages)
+        self.assertIn(('1 target(s) already in group \'{}\': {}'.format(
+            self.fake_grouping.name, self.fake_targets[0].name), WARNING), messages)
+
+    def test_move_all_to_grouping_filtered_by_sidereal(self):
+        data = {
+            'grouping': self.fake_grouping.id,
+            'move': True,
+            'isSelectAll': 'True',
+            'selected-target': [],
+            'query_string': 'type=SIDEREAL&name=&key=&value=&targetlist__name=',
+        }
+        first_grouping = TargetGroupingFactory.create()
+        first_grouping.targets.add(*self.fake_targets)
+        response = self.client.post(reverse('targets:add-remove-grouping'), data=data)
+        self.assertEqual(self.fake_grouping.targets.count(), 3)
+        self.assertEqual(first_grouping.targets.count(), 1)
+        messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
+        self.assertIn(('2 target(s) successfully moved to group \'{}\'.'.format(self.fake_grouping.name),
+                       SUCCESS), messages)
+        self.assertIn((
+            '1 target(s) already in group \'{}\': {}'.format(self.fake_grouping.name, self.fake_targets[0].name),
+            WARNING), messages
+        )
 
     def test_empty_data(self):
         self.client.post(reverse('targets:add-remove-grouping'), data={'query_string': ''})

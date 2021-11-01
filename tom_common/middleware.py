@@ -1,8 +1,8 @@
-from django.urls import reverse
-from django.shortcuts import redirect
-from django.contrib import messages
 from django.conf import settings
+from django.contrib import messages
 from django.http import HttpResponseForbidden
+from django.shortcuts import redirect
+from django.urls import reverse
 
 from tom_common.exceptions import ImproperCredentialsException
 
@@ -20,7 +20,7 @@ class ExternalServiceMiddleware:
             msg = (
                     'There was a problem authenticating with {}. Please check that you have the correct '
                     'credentials in the corresponding settings variable. '
-                    'https://tom-toolkit.readthedocs.io/en/stable/customization/customsettings.html '
+                    'https://tom-toolkit.readthedocs.io/en/stable/common/customsettings.html '
                 ).format(
                 str(exception)
             )

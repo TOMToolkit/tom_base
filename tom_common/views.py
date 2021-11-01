@@ -1,4 +1,4 @@
-from django.views.generic.list import ListView
+from django.views.generic import TemplateView
 from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.edit import UpdateView, CreateView
 from django.contrib.auth.models import User, Group
@@ -51,22 +51,11 @@ class GroupUpdateView(SuperuserRequiredMixin, UpdateView):
         return initial
 
 
-class UserListView(LoginRequiredMixin, ListView):
+class UserListView(LoginRequiredMixin, TemplateView):
     """
-    View that handles display of the list of ``User`` object. Requires authentication.
+    View that handles display of the list of ``User`` and ``Group`` objects. Requires authentication.
     """
-    model = User
-
-    def get_context_data(self, *args, **kwargs):
-        """
-        Adds the list of ``Group``s, excluding the public ``Group``, to the context.
-
-        :returns: context dictionary
-        :rtype: dict
-        """
-        context = super().get_context_data(*args, **kwargs)
-        context['groups'] = Group.objects.all().exclude(name='Public')
-        return context
+    template_name = 'auth/user_list.html'
 
 
 class UserDeleteView(SuperuserRequiredMixin, DeleteView):

@@ -28,31 +28,36 @@ setup(
     use_scm_version=True,
     setup_requires=['setuptools_scm', 'wheel'],
     install_requires=[
-        'astroquery==0.4.1',
-        'astroplan==0.7',
-        'astropy==4.1',
-        'beautifulsoup4==4.9.3',
-        'dataclasses; python_version < "3.7"',
-        'django==3.1.3',  # TOM Toolkit requires db math functions
-        'djangorestframework==3.12.2',
-        'django-bootstrap4==2.3.1',
-        'django-contrib-comments==1.9.2',  # Earlier version are incompatible with Django >= 3.0
-        'django-crispy-forms==1.9.2',
-        'django-extensions==3.0.9',
-        'django-gravatar2==1.4.4',
-        'django-filter==2.4.0',
-        'django-guardian==2.3.0',
-        'fits2image==0.4.3',
-        'Markdown==3.3.3',  # django-rest-framework doc headers require this to support Markdown
-        'numpy==1.19.4',
-        'pillow==8.0.1',
-        'plotly==4.12.0',
-        'python-dateutil==2.8.1',
-        'requests==2.25.0',
-        'specutils==1.1',
+        'astroquery>=0.4.2',
+        'astroplan==0.8',
+        'astropy==4.2.1',
+        'beautifulsoup4~=4.9',
+        'django~=3.1',  # TOM Toolkit requires db math functions
+        'djangorestframework~=3.12',
+        'django-bootstrap4~=3.0',
+        'django-contrib-comments~=2.0',  # Earlier version are incompatible with Django >= 3.0
+        'django-crispy-forms~=1.11',
+        'django-extensions~=3.1',
+        'django-filter~=2.4',
+        'django-gravatar2~=1.4',
+        'django-guardian~=2.3',
+        'fits2image==0.4.4',
+        'Markdown==3.3.4',  # django-rest-framework doc headers require this to support Markdown
+        'numpy~=1.20',
+        'pillow==8.3.2',
+        'plotly~=5.0',
+        'python-dateutil~=2.8',
+        'requests~=2.25',
+        'specutils==1.4.1',
     ],
     extras_require={
-        'test': ['factory_boy==3.1.0']
+        'test': ['factory_boy==3.2.0'],
+        'docs': [
+            'recommonmark~=0.7',
+            'sphinx~=4.0',
+            'tom_antares',
+            'tom_scimma'
+        ]
     },
     include_package_data=True,
 )

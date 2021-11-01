@@ -13,6 +13,7 @@ import logging.config
 import os
 import tempfile
 
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -31,6 +32,8 @@ ALLOWED_HOSTS = ['']
 
 # Application definition
 
+TOM_NAME = 'TOM Toolkit'
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -46,6 +49,7 @@ INSTALLED_APPS = [
     'bootstrap4',
     'crispy_forms',
     'rest_framework',
+    'rest_framework.authtoken',
     'django_filters',
     'django_gravatar',
     'tom_targets',
@@ -103,6 +107,7 @@ DATABASES = {
     }
 }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators

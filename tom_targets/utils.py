@@ -3,6 +3,9 @@ from django.db.models import Count
 import csv
 from .models import Target, TargetExtra, TargetName
 from io import StringIO
+from django.db.models import ExpressionWrapper, FloatField
+from django.db.models.functions.math import ACos, Cos, Radians, Pi, Sin
+from math import radians
 
 
 # NOTE: This saves locally. To avoid this, create file buffer.
@@ -95,3 +98,44 @@ def import_targets(targets):
             errors.append(error)
 
     return {'targets': targets, 'errors': errors}
+
+
+def cone_search_filter(queryset, ra, dec, radius):
+    """
+    Executes cone search by annotating each target with separation distance from the specified RA/Dec.
+    Formula is from Wikipedia: https://en.wikipedia.org/wiki/Angular_distance
+    The result is converted to radians.
+
+    Cone search is preceded by a square search to reduce the search radius before annotating the queryset, in
+    order to make the query faster.
+
+    :param queryset: Queryset of Target objects
+    :type queryset: Target
+
+    :param ra: Right ascension of center of cone.
+    :type ra: float
+
+    :param dec: Declination of center of cone.
+    :type dec: float
+
+    :param radius: Radius of cone search in degrees.
+    :type radius: float
+    """
+    ra = float(ra)
+    dec = float(dec)
+    radius = float(radius)
+
+    double_radius = radius * 2
+    queryset = queryset.filter(
+        ra__gte=ra - double_radius, ra__lte=ra + double_radius,
+        dec__gte=dec - double_radius, dec__lte=dec + double_radius
+    )
+
+    separation = ExpressionWrapper(
+            180 * ACos(
+                (Sin(radians(dec)) * Sin(Radians('dec'))) +
+                (Cos(radians(dec)) * Cos(Radians('dec')) * Cos(radians(ra) - Radians('ra')))
+            ) / Pi(), FloatField()
+        )
+
+    return queryset.annotate(separation=separation).filter(separation__lte=radius)

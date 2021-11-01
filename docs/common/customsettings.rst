@@ -279,3 +279,26 @@ Default:
 A dictionary with the keys being TOM models classes and the values being
 the modules that should be used to generate latex tables for those
 models.
+
+`TOM_REGISTRATION <#tom_registration>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: None
+
+Example:
+
+.. code-block
+
+   {
+      'REGISTRATION_AUTHENTICATION_BACKEND': 'django.contrib.auth.backends.ModelBackend',
+      'REGISTRATION_REDIRECT_PATTERN': 'home',
+      'SEND_APPROVAL_EMAILS': True
+   }
+
+`TOM_NAME <#tom_name>`__
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: TOM Toolkit
+
+Set the name of the TOM, used for display purposes such as the navbar
+and page titles.

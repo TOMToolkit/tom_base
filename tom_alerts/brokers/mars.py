@@ -1,5 +1,4 @@
 import requests
-import json
 from requests.exceptions import HTTPError
 from urllib.parse import urlencode
 from dateutil.parser import parse
@@ -12,7 +11,7 @@ from tom_targets.models import Target
 from tom_dataproducts.models import ReducedDatum
 
 MARS_URL = 'https://mars.lco.global'
-filters = {0: 'g', 1: 'r', 2: 'i'}
+filters = {1: 'g', 2: 'r', 3: 'i'}
 
 
 class MARSQueryForm(GenericQueryForm):
@@ -227,21 +226,29 @@ class MARSBroker(GenericBroker):
 
         candidates = [{'candidate': alert.get('candidate')}] + alert.get('prv_candidate')
         for candidate in candidates:
-            if all([key in candidate['candidate'] for key in ['jd', 'magpsf', 'fid']]):
-                jd = Time(candidate['candidate']['jd'], format='jd', scale='utc')
-                jd.to_datetime(timezone=TimezoneInfo())
-                value = {
-                    'magnitude': candidate['candidate']['magpsf'],
-                    'filter': filters[candidate['candidate']['fid']]
-                }
-                rd, _ = ReducedDatum.objects.get_or_create(
-                    timestamp=jd.to_datetime(timezone=TimezoneInfo()),
-                    value=json.dumps(value),
-                    source_name=self.name,
-                    source_location=alert['lco_id'],
-                    data_type='photometry',
-                    target=target)
-                rd.save()
+            if all([key in candidate['candidate'] for key in ['jd', 'magpsf', 'fid', 'sigmapsf']]):
+                nondetection = False
+            elif all(key in candidate['candidate'] for key in ['jd', 'diffmaglim', 'fid']):
+                nondetection = True
+            else:
+                continue
+            jd = Time(candidate['candidate']['jd'], format='jd', scale='utc')
+            jd.to_datetime(timezone=TimezoneInfo())
+            value = {
+                'filter': filters[candidate['candidate']['fid']]
+            }
+            if nondetection:
+                value['limit'] = candidate['candidate']['diffmaglim']
+            else:
+                value['magnitude'] = candidate['candidate']['magpsf']
+                value['error'] = candidate['candidate']['sigmapsf']
+            rd, _ = ReducedDatum.objects.get_or_create(
+                timestamp=jd.to_datetime(timezone=TimezoneInfo()),
+                value=value,
+                source_name=self.name,
+                source_location=alert['lco_id'],
+                data_type='photometry',
+                target=target)
 
     def to_target(self, alert):
         alert_copy = alert.copy()

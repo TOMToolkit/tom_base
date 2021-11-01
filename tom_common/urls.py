@@ -20,21 +20,16 @@ from django.views.generic import TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework.authtoken import views
 
+from tom_common.api_views import GroupViewSet
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
 from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
 
-from rest_framework import routers
-from tom_targets.api_views import TargetViewSet, TargetNameViewSet, TargetExtraViewSet
-from tom_dataproducts.api_views import DataProductViewSet
+from .api_router import collect_api_urls, SharedAPIRootRouter  # DRF routers are setup in each INSTALL_APPS url.py
 
-# For all applications, set up the DRF router, its router.urls is included in urlpatterns below
-router = routers.DefaultRouter()
-router.register(r'targets', TargetViewSet, 'targets')
-router.register(r'targetextra', TargetExtraViewSet, 'targetextra')
-router.register(r'targetname', TargetNameViewSet, 'targetname')
-router.register(r'dataproducts', DataProductViewSet, 'dataproducts')
-
+router = SharedAPIRootRouter()
+router.register(r'groups', GroupViewSet, 'groups')
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'), name='home'),
@@ -57,7 +52,8 @@ urlpatterns = [
     path('comment/<int:pk>/delete', CommentDeleteView.as_view(), name='comment-delete'),
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
-    path('api/', include((router.urls, 'api'), namespace='api')),
+    path('api/', include((collect_api_urls(), 'api'), namespace='api')),
+    path('api/token-auth/', views.obtain_auth_token)
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
  ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

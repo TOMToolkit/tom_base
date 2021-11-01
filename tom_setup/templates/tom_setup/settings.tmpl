@@ -10,9 +10,10 @@ https://docs.djangoproject.com/en/2.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
-
+import logging.config
 import os
 import tempfile
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,6 +33,8 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+TOM_NAME = 'TOM Toolkit'
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -47,6 +50,7 @@ INSTALLED_APPS = [
     'bootstrap4',
     'crispy_forms',
     'rest_framework',
+    'rest_framework.authtoken',
     'django_filters',
     'django_gravatar',
     'tom_targets',
@@ -104,6 +108,7 @@ DATABASES = {
     }
 }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
@@ -245,13 +250,23 @@ TOM_ALERT_CLASSES = [
     'tom_alerts.brokers.scimma.SCIMMABroker',
     'tom_alerts.brokers.scout.ScoutBroker',
     'tom_alerts.brokers.tns.TNSBroker',
+    'tom_alerts.brokers.fink.FinkBroker',
 ]
 
 BROKERS = {
     'TNS': {
-        'api_key': ''
+        'api_key': '',
+        'bot_id': '',
+        'bot_name': '',
     }
 }
+
+TOM_HARVESTER_CLASSES = [
+    'tom_catalogs.harvesters.simbad.SimbadHarvester',
+    'tom_catalogs.harvesters.ned.NEDHarvester',
+    'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
+    'tom_catalogs.harvesters.tns.TNSHarvester',
+]
 
 HARVESTERS = {
     'TNS': {
@@ -287,7 +302,9 @@ OPEN_URLS = []
 HOOKS = {
     'target_post_save': 'tom_common.hooks.target_post_save',
     'observation_change_state': 'tom_common.hooks.observation_change_state',
-    'data_product_post_upload': 'tom_dataproducts.hooks.data_product_post_upload'
+    'data_product_post_upload': 'tom_dataproducts.hooks.data_product_post_upload',
+    'data_product_post_save': 'tom_dataproducts.hooks.data_product_post_save',
+    'multiple_data_products_post_save': 'tom_dataproducts.hooks.multiple_data_products_post_save',
 }
 
 AUTO_THUMBNAILS = False

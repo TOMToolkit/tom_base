@@ -175,7 +175,7 @@ class GaiaBroker(GenericBroker):
 
                     rd, _ = ReducedDatum.objects.get_or_create(
                         timestamp=jd.to_datetime(timezone=TimezoneInfo()),
-                        value=json.dumps(value),
+                        value=value,
                         source_name=self.name,
                         source_location=alert_url,
                         data_type='photometry',

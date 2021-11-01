@@ -5,6 +5,12 @@ from tom_dataproducts.views import DataProductDeleteView, DataProductGroupCreate
 from tom_dataproducts.views import DataProductGroupDetailView, DataProductGroupDataView, DataProductGroupDeleteView
 from tom_dataproducts.views import DataProductUploadView, DataProductFeatureView, UpdateReducedDataView
 
+from tom_common.api_router import SharedAPIRootRouter
+from tom_dataproducts.api_views import DataProductViewSet
+
+router = SharedAPIRootRouter()
+router.register(r'dataproducts', DataProductViewSet, 'dataproducts')
+
 app_name = 'tom_dataproducts'
 
 urlpatterns = [

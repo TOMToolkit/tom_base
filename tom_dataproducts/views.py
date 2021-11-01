@@ -1,5 +1,5 @@
 from io import StringIO
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
 from django.conf import settings
 from django.contrib import messages
@@ -53,17 +53,21 @@ class DataProductSaveView(LoginRequiredMixin, View):
             products = service_class().save_data_products(observation_record)
             messages.success(request, 'Saved all available data products')
         else:
+            total_saved_products = []
             for product in products:
-                products = service_class().save_data_products(
+                saved_products = service_class().save_data_products(
                     observation_record,
                     product
                 )
+                total_saved_products += saved_products
+                run_hook('data_product_post_save', saved_products)
                 messages.success(
                     request,
                     'Successfully saved: {0}'.format('\n'.join(
-                        [str(p) for p in products]
+                        [str(p) for p in saved_products]
                     ))
                 )
+            run_hook('multiple_data_products_post_save', total_saved_products)
         return redirect(reverse(
             'tom_observations:detail',
             kwargs={'pk': observation_record.id})
@@ -349,9 +353,13 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
         Method that handles the GET requests for this view. Calls the management command to update the reduced data and
         adds a hint using the messages framework about automation.
         """
-        target_id = request.GET.get('target_id', None)
+        # QueryDict is immutable, and we want to append the remaining params to the redirect URL
+        query_params = request.GET.copy()
+        target_id = query_params.pop('target_id', None)
         out = StringIO()
         if target_id:
+            if isinstance(target_id, list):
+                target_id = target_id[-1]
             call_command('updatereduceddata', target_id=target_id, stdout=out)
         else:
             call_command('updatereduceddata', stdout=out)
@@ -360,7 +368,7 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
                           'Did you know updating observation statuses can be automated? Learn how in '
                           '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
                           'the docs.</a>'))
-        return HttpResponseRedirect(self.get_redirect_url(*args, **kwargs))
+        return HttpResponseRedirect(f'{self.get_redirect_url(*args, **kwargs)}?{urlencode(query_params)}')
 
     def get_redirect_url(self):
         """

@@ -1,6 +1,7 @@
 # TOM Toolkit
-[![Build Status](https://travis-ci.com/TOMToolkit/tom_base.svg?branch=main)](https://travis-ci.com/TOMToolkit/tom_base)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/578e468dbd01494696d4446288858252)](https://www.codacy.com/gh/TOMToolkit/tom_base/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=TOMToolkit/tom_base&amp;utm_campaign=Badge_Grade)
+[![pypi](https://img.shields.io/pypi/v/tomtoolkit.svg)](https://pypi.python.org/pypi/tomtoolkit)
+[![run-tests](https://github.com/TOMToolkit/tom_base/actions/workflows/run-tests.yml/badge.svg)](https://github.com/TOMToolkit/tom_base/actions/workflows/run-tests.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/a09d330b4dca4a4a86e68755268b7da3)](https://www.codacy.com/gh/TOMToolkit/tom_base/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=TOMToolkit/tom_base&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://coveralls.io/repos/github/TOMToolkit/tom_base/badge.svg?branch=main)](https://coveralls.io/github/TOMToolkit/tom_base?branch=main)
 [![Documentation Status](https://readthedocs.org/projects/tom-toolkit/badge/?version=stable)](https://tom-toolkit.readthedocs.io/en/stable/?badge=stable)
 [Documentation](https://tom-toolkit.readthedocs.io/en/latest/)
@@ -9,9 +10,9 @@
 
 The TOM Toolkit is a web framework for building TOMs: Target and Observation
 Managers. TOMs are meant to facilitate collaborative astronomical observing
-projects. A typical TOM allows it's users to curate target lists, request
+projects. A typical TOM allows its users to curate target lists, request
 observations of those targets at various observatories as well as manage and
-organize their data. [Read more](https://tom-toolkit.readthedocs.io/en/latest/about.html) about TOMs.
+organize their data. [Read more](https://tom-toolkit.readthedocs.io/en/stable/introduction/about.html) about TOMs.
 
 ## Getting started with the TOM Toolkit
 The [getting started guide](https://tom-toolkit.readthedocs.io/en/latest/introduction/getting_started.html)
@@ -23,7 +24,7 @@ report any issues or support questions.
 
 ## Contributing to the project
 If you'd like to contribute to the TOM Toolkit, first of all, thanks! Secondly, we
-have a [contribution guide](https://tom-toolkit.readthedocs.io/en/latest/contributing.html) that
+have a [contribution guide](https://tom-toolkit.readthedocs.io/en/stable/introduction/contributing.html) that
 you might find helpful. We are particularly interested in the contribution of
 observation and alert modules.
 
@@ -34,10 +35,12 @@ For development information targeted at the maintainers of the project, please s
 ## Plugins
 
 ### tom_alerts_dash
+
 The [tom_alerts_dash](https://github.com/TOMToolkit/tom_alerts_dash) plugin adds responsive ReactJS views to the 
 `tom_alerts` module for supported brokers.
 
 ### Antares
+
 The [tom-antares](https://github.com/TOMToolkit/tom_antares) plugin adds support
 for querying the Antares broker for targets of interest.
 
@@ -56,3 +59,8 @@ state, with little error handling and minimal instrument options, but can succes
 requests.
 
 [Github](https://github.com/TOMToolkit/tom_lt)
+
+### tom_registration
+
+The [tom_registration](https://github.com/TOMToolkit/tom_registration) plugin introduces support for two TOM registration 
+flows--an open registration, and a registration that requires administrator approval.

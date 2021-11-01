@@ -1,0 +1,10 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 observation_extras %}
+{% block title %}Facility Status{% endblock %}
+{% block content %}
+<h3>Facility Status</h3>
+{% facility_map %}
+<div>
+    {% facility_status %}
+</div>
+{% endblock %}

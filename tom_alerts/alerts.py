@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from importlib import import_module
-import json
 
 from django import forms
 from django.conf import settings
@@ -24,6 +23,7 @@ DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.antares.ANTARESBroker',
     'tom_alerts.brokers.gaia.GaiaBroker',
     'tom_alerts.brokers.scimma.SCIMMABroker',
+    'tom_alerts.brokers.fink.FinkBroker',
 ]
 
 
@@ -124,15 +124,6 @@ class GenericQueryForm(forms.Form):
         self.helper.add_input(Submit('submit', 'Submit'))
         self.common_layout = Layout('query_name', 'broker')
 
-    def serialize_parameters(self):
-        """
-        Returns a JSON-serialized representation of the form data.
-
-        :returns: JSON-ified form parameters
-        :rtype: str
-        """
-        return json.dumps(self.cleaned_data)
-
     def save(self, query_id=None):
         """
         Saves the form data in the database as a ``BrokerQuery``.
@@ -146,7 +137,7 @@ class GenericQueryForm(forms.Form):
             query = BrokerQuery()
         query.name = self.cleaned_data['query_name']
         query.broker = self.cleaned_data['broker']
-        query.parameters = self.serialize_parameters()
+        query.parameters = self.cleaned_data
         query.save()
         return query
 
@@ -190,14 +181,14 @@ class GenericBroker(ABC):
     alert_submission_form = GenericUpstreamSubmissionForm
 
     @abstractmethod
-    def fetch_alerts(self, parameters):
+    def fetch_alerts(self, parameters: dict):
         """
         This method takes in the query parameters needed to filter
         alerts for a broker and makes the GET query to the broker
         endpoint.
 
         :param parameters: JSON string of query parameters
-        :type parameters: str
+        :type parameters: dict
         """
 
     def fetch_alert(self, id):

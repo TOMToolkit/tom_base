@@ -228,9 +228,6 @@ class Target(models.Model):
         null=True, blank=True, verbose_name='Perihelion Distance', help_text='AU'
     )
 
-    class Meta:
-        ordering = ('id',)
-
     @transaction.atomic
     def save(self, *args, **kwargs):
         """

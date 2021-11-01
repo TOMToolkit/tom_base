@@ -1,5 +1,5 @@
 from io import StringIO
-from urllib.parse import urlparse
+from urllib.parse import urlencode
 
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import HTML, Layout, Submit
@@ -14,7 +14,7 @@ from django_filters.views import FilterView
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
-from django.views.generic import View
+from django.views.generic import View, TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
 from django.views.generic.list import ListView
@@ -82,7 +82,9 @@ class ObservationListView(FilterView):
         :param request: request object for this GET request
         :type request: HTTPRequest
         """
-        update_status = request.GET.get('update_status', False)
+        # QueryDict is immutable, and we want to append the remaining parameters to the redirect URL
+        query_params = request.GET.copy()
+        update_status = query_params.pop('update_status', False)
         if update_status:
             if not request.user.is_authenticated:
                 return redirect(reverse('login'))
@@ -93,7 +95,7 @@ class ObservationListView(FilterView):
                               'Did you know updating observation statuses can be automated? Learn how in '
                               '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
                               'the docs.</a>'))
-            return redirect(reverse('tom_observations:list'))
+            return redirect(f'{reverse("tom_observations:list")}?{urlencode(query_params)}')
 
         selected = request.GET.getlist('selected')
         observationgroups = request.GET.getlist('observationgroup')
@@ -322,27 +324,23 @@ class ObservationRecordUpdateView(LoginRequiredMixin, UpdateView):
         return reverse('tom_observations:detail', kwargs={'pk': self.get_object().id})
 
 
-class ObservationGroupCancelView(LoginRequiredMixin, View):
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context['next'] = self.request.META.get('HTTP_REFERER', '/')
-        return context
+class ObservationRecordCancelView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         obsr_id = self.kwargs.get('pk')
         obsr = ObservationRecord.objects.get(id=obsr_id)
         facility = get_service_class(obsr.facility)()
-        errors = facility.cancel_observation(obsr.observation_id)
-        if errors:
-            messages.error(
-                self.request,
-                f'Unable to cancel observation: {errors}'
-            )
+        try:
+            success = facility.cancel_observation(obsr.observation_id)
+            if success:
+                messages.success(self.request, f'Successfully cancelled observation {obsr}')
+                facility.update_observation_status(obsr.observation_id)
+            else:
+                messages.error(self.request, 'Unable to cancel observation.')
+        except forms.ValidationError as ve:
+            messages.error(self.request, f'Unable to cancel observation: {ve}')
 
-        referer = self.request.GET('next', None)
-        referer = urlparse(referer).path if referer else '/'
-        return redirect(referer)
+        return redirect(reverse('tom_observations:detail', kwargs={'pk': obsr.id}))
 
 
 class AddExistingObservationView(LoginRequiredMixin, FormView):
@@ -603,7 +601,7 @@ class ObservationTemplateUpdateView(LoginRequiredMixin, FormView):
 
     def get_initial(self):
         initial = super().get_initial()
-        initial.update(self.object.parameters_as_dict)
+        initial.update(self.object.parameters)
         initial['facility'] = self.object.facility
         return initial
 
@@ -618,3 +616,7 @@ class ObservationTemplateDeleteView(LoginRequiredMixin, DeleteView):
     """
     model = ObservationTemplate
     success_url = reverse_lazy('tom_observations:template-list')
+
+
+class FacilityStatusView(TemplateView):
+    template_name = 'tom_observations/facility_status.html'

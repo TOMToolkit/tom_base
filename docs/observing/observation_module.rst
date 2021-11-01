@@ -85,9 +85,11 @@ class:
 .. code:: python
 
    TOM_FACILITY_CLASSES = [
-       'tom_observations.facilities.lco.LCOFacility',
-       'tom_observations.facilities.gemini.GEMFacility',
-       'mytom.myfacility.MyObservationFacility'
+        'tom_observations.facilities.lco.LCOFacility',
+        'tom_observations.facilities.gemini.GEMFacility',
+        'tom_observations.facilities.soar.SOARFacility',
+        'tom_observations.facilities.lt.LTFacility'
+        'mytom.myfacility.MyObservationFacility'
    ]
 
 Now go ahead and view a target in your TOM, you should see something
@@ -136,7 +138,9 @@ each missing function like so:
 
    class MyObservationFacility(BaseRoboticObservationFacility):
        name = 'MyFacility'
-       observation_types = [('OBSERVATION', 'Custom Observation')]
+       observation_forms = {
+           'OBSERVATION': MyObservationFacilityForm
+       }
 
        def data_products(self):
            return
@@ -168,14 +172,13 @@ Some notes: 1. The form is empty, but we’ll fix that next. 2. The
 of the page says (``Submit an observation to MyFacility``). It also
 determines the name of the button under “Observe” on the target’s page.
 3. You should see a tab for ``Custom Observation`` as the only option on
-the page. This is read from the ``observation_types`` variable in
-``MyObservationFacility``. That variable is a list of 2-tuples. The
-second value of each tuple is what will be displayed on the webpage, as
-different tabs of observation types to submit. The first value of each
-tuple is what should be used to distinguish different observation types
-in your code. To see a demonstration of this, check out the `Las Cumbres
-Observatory <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__
-facility’s ``observation_types`` and ``get_form``.
+the page. This is read from the ``observation_forms`` variable in
+``MyObservationFacility``. That variable is a dict. The
+value of each dict item is the observation form class. The key of each
+dict item is what should be used to distinguish different observation types
+in your code, which will be displayed in Pascal Case in the observation form tabs.
+To see a demonstration of this, check out the `Las Cumbres Observatory <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__
+facility’s ``observation_forms`` and ``get_form``.
 
 Now let’s populate the form. Let’s assume our observatory only requires
 us to send 2 parameters (besides the target data): exposure_time and
@@ -183,16 +186,31 @@ exposure_count. Let’s start by adding them to our form class:
 
 .. code:: python
 
-   from django import forms
-   from tom_observations.facility import GenericObservationFacility, GenericObservationForm
+    from crispy_forms.layout import Layout
+    from django import forms
+    from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 
 
-   class MyObservationFacilityForm(GenericObservationForm):
-       exposure_time = forms.IntegerField()
-       exposure_count = forms.IntegerField()
+    class MyObservationFacilityForm(BaseRoboticObservationForm):
+        exposure_time = forms.IntegerField()
+        exposure_count = forms.IntegerField()
+
+        def layout(self):
+            return Layout(
+                'exposure_time',
+                'exposure_count'
+            )
 
 Notice that we’ve added the two field definitions on our form. We’ve
-also imported the django form module with ``from django import forms``.
+also imported the django form module with ``from django import forms`` and
+a crispy_forms class with ``from crispy_forms.layout import Layout``. Finally,
+we've defined a function ``layout(self)`` that is used to display the fields that 
+we've created.
+
+All fields must show be named in the ``layout`` function in order to be displayed, and 
+the ``layout`` function is also how we could make the layout more sophisticated. See the 
+`django-crispy-forms documentation <https://django-crispy-forms.readthedocs.io/en/latest/>`__ 
+and the `lco.py module <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__ for examples.
 
 Now if we reload the page, we should see something like this:
 
@@ -205,41 +223,44 @@ the observation request:
 
 .. code:: python
 
-   from django import forms
-   from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
+    from crispy_forms.layout import Layout
+    from django import forms
+    from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 
-   class MyObservationFacilityForm(BaseRoboticObservationForm):
-       exposure_time = forms.IntegerField()
-       exposure_count = forms.IntegerField()
+    class MyObservationFacilityForm(BaseRoboticObservationForm):
+        exposure_time = forms.IntegerField()
+        exposure_count = forms.IntegerField()
 
-   class MyObservationFacility(BaseRoboticObservationFacility):
-       name = 'MyFacility'
-       observation_types = [('OBSERVATION', 'Custom Observation')]
+    class MyObservationFacility(BaseRoboticObservationFacility):
+        name = 'MyFacility'
+        observation_types = observation_forms = {
+            'OBSERVATION': MyObservationFacilityForm
+        }
 
-       def data_products(self, observation_id, product_id=None):
+        def data_products(self, observation_id, product_id=None):
            return []
 
-       def get_form(self, observation_type):
-           return MyObservationFacilityForm
+        def get_form(self, observation_type):
+            return MyObservationFacilityForm
 
-       def get_observation_status(self, observation_id):
-           return ['IN_PROGRESS']
+        def get_observation_status(self, observation_id):
+            return ['IN_PROGRESS']
 
-       def get_observation_url(self, observation_id):
-           return ''
+        def get_observation_url(self, observation_id):
+            return ''
 
-       def get_observing_sites(self):
-           return {}
+        def get_observing_sites(self):
+            return {}
 
-       def get_terminal_observing_states(self):
-           return ['IN_PROGRESS', 'COMPLETED']
+        def get_terminal_observing_states(self):
+            return ['IN_PROGRESS', 'COMPLETED']
 
-       def submit_observation(self, observation_payload):
-           print(observation_payload)
-           return [1]
+        def submit_observation(self, observation_payload):
+            print(observation_payload)
+            return [1]
 
-       def validate_observation(self, observation_payload):
-           pass
+        def validate_observation(self, observation_payload):
+            pass
 
 The important method here is ``submit_observation``. This method, when
 implemented fully, will send the observation payload to the remote
@@ -288,7 +309,9 @@ we can easily put new sites into the airmass plots:
 
    class MyObservationFacility(BaseRoboticObservationFacility):
        name = 'MyFacility'
-       observation_types = [('OBSERVATION', 'Custom Observation')]
+       observation_types = observation_forms = {
+            'OBSERVATION': MyObservationFacilityForm
+        }
 
        SITES = {
            'Itagaki': {

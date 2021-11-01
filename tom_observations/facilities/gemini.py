@@ -74,21 +74,21 @@ def make_request(*args, **kwargs):
 def flatten_error_dict(form, error_dict):
     non_field_errors = []
     for k, v in error_dict.items():
-        if type(v) == list:
+        if isinstance(v, list):
             for i in v:
-                if type(i) == str:
+                if isinstance(i, str):
                     if k in form.fields:
                         form.add_error(k, i)
                     else:
                         non_field_errors.append('{}: {}'.format(k, i))
-                if type(i) == dict:
+                if isinstance(i, dict):
                     non_field_errors.append(flatten_error_dict(form, i))
-        elif type(v) == str:
+        elif isinstance(v, str):
             if k in form.fields:
                 form.add_error(k, v)
             else:
                 non_field_errors.append('{}: {}'.format(k, v))
-        elif type(v) == dict:
+        elif isinstance(v, dict):
             non_field_errors.append(flatten_error_dict(form, v))
 
     return non_field_errors
@@ -114,7 +114,7 @@ def obs_choices():
 
 def get_site(progid, location=False):
     values = progid.split('-')
-    gemloc = {'GS': 'Gemini South', 'GN': 'Gemini North'}
+    gemloc = {'GS': 'gemini_south', 'GN': 'gemini_north'}
     site = values[0].upper()
     if location:
         site = gemloc[site]
@@ -223,15 +223,15 @@ class GEMObservationForm(BaseRoboticObservationForm):
                                 max_value=360.,
                                 required=False,
                                 initial=0.0,
-                                label='Position Angle [0-360]')
+                                label='Position Angle')
 
-    exptimes = forms.CharField(required=False, label='Exptime [s], comma separate')
+    exptimes = forms.CharField(required=False, label='Exptime(s) [s]')
 
     group = forms.CharField(required=False, label='Group Name')
     notetitle = forms.CharField(required=False, initial='Finding Chart', label='Note Title')
     note = forms.CharField(required=False, label='Note Text')
 
-    eltype = forms.ChoiceField(required=False, label='Airmass/Hour Angle Constraint',
+    eltype = forms.ChoiceField(required=False, label='Airmass/Hour Angle',
                                choices=(('none', 'None'), ('airmass', 'Airmass'), ('hourAngle', 'Hour Angle')))
     elmin = forms.FloatField(required=False, min_value=-5.0, max_value=5.0, label='Min Airmass/HA', initial=1.0)
     elmax = forms.FloatField(required=False, min_value=-5.0, max_value=5.0, label='Max Airmass/HA', initial=2.0)
@@ -242,11 +242,11 @@ class GEMObservationForm(BaseRoboticObservationForm):
     gsbrightness = forms.FloatField(required=False, label='Guide Star Brightness')
     gsbrightness_system = forms.ChoiceField(required=False,
                                             initial='Vega',
-                                            label='Guide Star Brightness System',
+                                            label='Brightness System',
                                             choices=(('Vega', 'Vega'), ('AB', 'AB'), ('Jy', 'Jy')))
     gsbrightness_band = forms.ChoiceField(required=False,
                                           initial='UC',
-                                          label='Guide Star Brightness Band',
+                                          label='Brightness Band',
                                           choices=(('UP', 'u'), ('U', 'U'), ('B', 'B'), ('GP', 'g'), ('V', 'V'),
                                                    ('UC', 'UC'), ('RP', 'r'), ('R', 'R'), ('IP', 'i'), ('I', 'I'),
                                                    ('ZP', 'z'), ('Y', 'Y'), ('J', 'J'), ('H', 'H'), ('K', 'K'),
@@ -258,9 +258,11 @@ class GEMObservationForm(BaseRoboticObservationForm):
                                          ('PWFS1', 'PWFS1'),
                                          ('PWFS2', 'PWFS2'),
                                          ('AOWFS', 'AOWFS')))  # GS probe (PWFS1/PWFS2/OIWFS/AOWFS)
-    window_start = forms.CharField(required=False, widget=forms.TextInput(attrs={'type': 'date'}),
-                                   label='Timing Window [Date Time]')
-    window_duration = forms.IntegerField(required=False, min_value=1, label='Timing Window Duration [hr]')
+    window_start = forms.CharField(required=False,
+                                   # widget=forms.TextInput(attrs={'type': 'date'}),
+                                   widget=forms.DateTimeInput(attrs={'type': 'datetime'}, format='%Y-%m-%d %H:%M:%S'),
+                                   label='Timing Window')
+    window_duration = forms.IntegerField(required=False, min_value=1, label='Window Duration [hr]')
 
     def layout(self):
         return Div(

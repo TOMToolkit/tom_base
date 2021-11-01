@@ -1,6 +1,4 @@
-import json
 import logging
-
 
 from django.conf import settings
 
@@ -59,7 +57,7 @@ class ExampleManualFacility(BaseManualObservationFacility):
 
         obs_ids = []
         # params comes as JSON string, to turn it back into a dictionary
-        obs_params = json.loads(observation_payload['params'])
+        obs_params = observation_payload['params']
 
         # if the Observation id was supplied then use it
         if obs_params['observation_id']:

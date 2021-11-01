@@ -1,0 +1,23 @@
+{% if request.user.is_superuser %}
+<h4>Groups</h4>
+<div class="row">
+  <div class="col-md-12">
+    <a href="{% url 'group-create' %}" title="Add Group" class="btn btn-outline-primary">Add Group</a>
+    <table class="table table-striped">
+      <thead>
+        <tr><th>Name</th><th>Members</th><th>Update</th><th>Delete</th></tr>
+      </thead>
+      <tbody>
+        {% for group in groups %}
+        <tr>
+          <td>{{ group.name }}</td>
+          <td>{{ group.user_set.count }}</td>
+          <td><a href="{% url 'group-update' group.id %}" class="btn btn-primary">Update</a></td>
+          <td><a href="{% url 'group-delete' group.id %}" class="btn btn-danger">Delete</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}

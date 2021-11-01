@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 import os
 import tempfile
 
@@ -13,6 +14,7 @@ from PIL import Image
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
 
+logger = logging.getLogger(__name__)
 
 try:
     THUMBNAIL_DEFAULT_SIZE = settings.THUMBNAIL_DEFAULT_SIZE
@@ -244,7 +246,7 @@ class DataProduct(models.Model):
                     self.thumbnail.save(filename, File(f), save=True)
                     self.save()
         if not self.thumbnail:
-            return ''
+            return None
         return self.thumbnail.url
 
     def create_thumbnail(self, width=None, height=None):
@@ -260,12 +262,15 @@ class DataProduct(models.Model):
         :rtype: file
         """
         if is_fits_image_file(self.data.file):
-            tmpfile = tempfile.NamedTemporaryFile()
-            if not width or not height:
-                width, height = find_fits_img_size(self.data.file)
-            resp = fits_to_jpg(self.data.file, tmpfile.name, width=width, height=height)
-            if resp:
-                return tmpfile
+            tmpfile = tempfile.NamedTemporaryFile(suffix='.jpg')
+            try:
+                if not width or not height:
+                    width, height = find_fits_img_size(self.data.file)
+                resp = fits_to_jpg(self.data.file, tmpfile.name, width=width, height=height)
+                if resp:
+                    return tmpfile
+            except Exception as e:
+                logger.warn(f'Unable to create thumbnail for {self}: {e}')
         return
 
 
@@ -296,7 +301,7 @@ class ReducedDatum(models.Model):
     :param timestamp: The timestamp of this datum.
     :type timestamp: datetime
 
-    :param value: The value of the datum. This is generally a JSON string, intended to store data with a variety of
+    :param value: The value of the datum. This is a dict, intended to store data with a variety of
                   scopes. As an example, a photometry value might contain the following:
 
                   ::
@@ -315,11 +320,7 @@ class ReducedDatum(models.Model):
                       'magnitude_error': .5,
                       'filter': 'r'
                     }
-
-                  It should be noted that when storing a dict in a ``ReducedDatum`` value field, it should always be
-                  converted with ``json.dumps`` before saving, as certain functions in the TOM Toolkit call
-                  ``json.loads`` with ``ReducedDatum`` value fields.
-    :type value: str
+    :type value: dict
 
     """
 
@@ -332,13 +333,13 @@ class ReducedDatum(models.Model):
     source_name = models.CharField(max_length=100, default='')
     source_location = models.CharField(max_length=200, default='')
     timestamp = models.DateTimeField(null=False, blank=False, default=datetime.now, db_index=True)
-    value = models.TextField(null=False, blank=False)
+    value = models.JSONField(null=False, blank=False)
 
     class Meta:
         get_latest_by = ('timestamp',)
 
     def save(self, *args, **kwargs):
-        for dp_type, dp_values in settings.DATA_PRODUCT_TYPES.items():
+        for _, dp_values in settings.DATA_PRODUCT_TYPES.items():
             if self.data_type and self.data_type == dp_values[0]:
                 break
         else:
