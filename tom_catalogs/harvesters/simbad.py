@@ -1,6 +1,7 @@
 from tom_catalogs.harvester import AbstractHarvester
 
 from astroquery.simbad import Simbad
+from astroquery.exceptions import TableParseError
 
 
 class SimbadHarvester(AbstractHarvester):
@@ -16,7 +17,10 @@ class SimbadHarvester(AbstractHarvester):
         self.simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)', 'id', 'parallax', 'distance')
 
     def query(self, term):
-        self.catalog_data = self.simbad.query_object(term)
+        try:
+            self.catalog_data = self.simbad.query_object(term)
+        except TableParseError:
+            self.catalog_data = None
 
     def to_target(self):
         target = super().to_target()
