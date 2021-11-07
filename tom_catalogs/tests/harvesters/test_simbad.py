@@ -28,8 +28,8 @@ class TestSimbadHarvesterCanary(TestCase):
         self.broker = SimbadHarvester()
 
     def test_query(self):
-        self.broker.query('M31')
+        self.broker.query('HD 289002')
         target = self.broker.to_target()
-        self.assertEqual(target.name, 'M31')
-        self.assertAlmostEqual(target.ra, 10.684708, places=3)
-        self.assertAlmostEqual(target.dec, 41.26875, places=3)
+        self.assertEqual(target.name, 'HD289002')
+        self.assertAlmostEqual(target.ra, 101.306, places=3)
+        self.assertAlmostEqual(target.dec, 2.137, places=3)
