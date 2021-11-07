@@ -19,8 +19,8 @@ class SimbadHarvester(AbstractHarvester):
     def query(self, term):
         try:
             self.catalog_data = self.simbad.query_object(term)
-        except TableParseError:
-            self.catalog_data = None
+        except TableParseError:  # SIMBAD will raise a TableParseError if a result is not found
+            self.catalog_data = None  # The CatalogQueryView will display a proper error if catalog_data is None
 
     def to_target(self):
         target = super().to_target()

@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+from astroquery.exceptions import TableParseError
 from astropy.table import Table
 from django.test import tag, TestCase
 
@@ -11,6 +14,12 @@ class TestSimbadHarvester(TestCase):
                       'PMRA': ['--'], 'PMDEC': ['--'], 'ID': ['M 31, 2C 56, DA 21'],
                       'Distance_distance': [0.8200]}
         self.broker.catalog_data = Table(table_data)
+
+    @patch('tom_catalogs.harvesters.simbad.Simbad.query_object')
+    def test_query_failure(self, mock_query_object):
+        mock_query_object.side_effect = TableParseError()
+        self.broker.query('M31')
+        self.assertIsNone(self.broker.catalog_data)
 
     def test_to_target(self):
         target = self.broker.to_target()
