@@ -15,7 +15,7 @@ class TestSimbadHarvester(TestCase):
                       'Distance_distance': [0.8200]}
         self.broker.catalog_data = Table(table_data)
 
-    def test_query_failure(self, mock_simbad):
+    def test_query_failure(self):
         self.broker.simbad = MagicMock()
         self.broker.simbad.query_object.side_effect = TableParseError()
         self.broker.query('M31')
