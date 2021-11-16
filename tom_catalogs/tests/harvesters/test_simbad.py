@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock
 
 from astroquery.exceptions import TableParseError
 from astropy.table import Table
@@ -15,9 +15,9 @@ class TestSimbadHarvester(TestCase):
                       'Distance_distance': [0.8200]}
         self.broker.catalog_data = Table(table_data)
 
-    @patch('tom_catalogs.harvesters.simbad.Simbad.query_object')
-    def test_query_failure(self, mock_query_object):
-        mock_query_object.side_effect = TableParseError()
+    def test_query_failure(self, mock_simbad):
+        self.broker.simbad = MagicMock()
+        self.broker.simbad.query_object.side_effect = TableParseError()
         self.broker.query('M31')
         self.assertIsNone(self.broker.catalog_data)
 
