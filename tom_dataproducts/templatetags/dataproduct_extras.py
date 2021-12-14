@@ -318,9 +318,7 @@ def reduceddatum_sparkline(target, height, spacing=5, color_map=None, limit_y=Tr
         day_index = (val['timestamp'].replace(tzinfo=timezone.utc) - timezone.now()).days
         by_filter[val['value']['filter']][day_index] = (val['value'].get('magnitude'), val['value'].get('limit'))
 
-    graph_min = min_mag  # min(min_mag, min_limit)
-    graph_max = max_mag  # max(max_mag, max_limit)
-    val_range = graph_max - graph_min
+    val_range = max_mag - min_mag
     image_width = (spacing + 1) * (days - 1)
     image_height = height + 10
 
@@ -339,10 +337,10 @@ def reduceddatum_sparkline(target, height, spacing=5, color_map=None, limit_y=Tr
         color = color_map.get(d_filter, 'r')
         for (mag, limit) in day_mags:
             if mag:
-                y = ((mag - graph_min) * pixels_per_unit)
+                y = ((mag - min_mag) * pixels_per_unit)
                 draw_point(d, x, y, color)
             if limit:
-                y = ((limit - graph_min) * pixels_per_unit)
+                y = ((limit - min_mag) * pixels_per_unit)
                 draw_nodetection(d, x, y, color)
             x += spacing
 
