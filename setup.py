@@ -51,7 +51,7 @@ setup(
         'specutils==1.4.1',
     ],
     extras_require={
-        'test': ['factory_boy==3.2.0'],
+        'test': ['factory_boy==3.2.1'],
         'docs': [
             'recommonmark~=0.7',
             'sphinx~=4.0',
