@@ -34,24 +34,24 @@ setup(
         'beautifulsoup4~=4.9',
         'django~=3.1',  # TOM Toolkit requires db math functions
         'djangorestframework~=3.12',
-        'django-bootstrap4~=3.0',
+        'django-bootstrap4>=3,<22',
         'django-contrib-comments~=2.0',  # Earlier version are incompatible with Django >= 3.0
         'django-crispy-forms~=1.11',
         'django-extensions~=3.1',
-        'django-filter~=2.4',
+        'django-filter>=2.4,<22.0',
         'django-gravatar2~=1.4',
         'django-guardian~=2.3',
         'fits2image==0.4.4',
         'Markdown==3.3.6',  # django-rest-framework doc headers require this to support Markdown
         'numpy~=1.20',
-        'pillow==8.3.2',
+        'pillow==8.4.0',
         'plotly~=5.0',
         'python-dateutil~=2.8',
         'requests~=2.25',
         'specutils==1.4.1',
     ],
     extras_require={
-        'test': ['factory_boy==3.2.0'],
+        'test': ['factory_boy==3.2.1'],
         'docs': [
             'recommonmark~=0.7',
             'sphinx~=4.0',
