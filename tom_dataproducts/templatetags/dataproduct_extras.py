@@ -5,10 +5,14 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
 from django.shortcuts import reverse
-from datetime import datetime
+from django.utils import timezone
+from datetime import datetime, timedelta
 from guardian.shortcuts import get_objects_for_user
 from plotly import offline
 import plotly.graph_objs as go
+from io import BytesIO
+from PIL import Image, ImageDraw
+import base64
 
 from tom_dataproducts.forms import DataProductUploadForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
@@ -240,3 +244,106 @@ def spectroscopy_for_target(context, target, dataproduct=None):
 @register.inclusion_tag('tom_dataproducts/partials/update_broker_data_button.html', takes_context=True)
 def update_broker_data_button(context):
     return {'query_params': urlencode(context['request'].GET.dict())}
+
+
+def draw_point(draw, x, y, color):
+    draw.ellipse((x, y, x + 6, y + 6), fill=color, outline=color)
+
+
+def draw_nodetection(draw, x, y, color):
+    color = (*color, 200)
+    draw.polygon([(x - 2, y), (x + 2, y), (x, y + 2)], fill=color)
+
+
+def pil2datauri(img):
+    # converts PIL image to datauri
+    data = BytesIO()
+    img.save(data, "PNG")
+    data64 = base64.b64encode(data.getvalue())
+    return u'data:img/png;base64,' + data64.decode('utf-8')
+
+
+@register.inclusion_tag('tom_dataproducts/partials/reduceddatum_sparkline.html')
+def reduceddatum_sparkline(target, height, spacing=5, color_map=None, limit_y=True, days=32):
+    """
+    Renders a small lightcurve, sometimes referred to as a "sparkline", that is meant to be placed inline with other
+    elements on a page. The purpose is to give a quick visual representation of the general lightcurve of a target.
+    The plot will only consist of points. There are no axis labels.
+
+    :param height: Height of generated plot in pixels. No default.
+    :type height: int
+
+    :param spacing: Spacing between individual points in pixels. Default 5.
+    :type spacing: int
+
+    :param color_map: A map of 'r', 'g', 'i' to the colors rendered for that filter.
+    :type color_map: dict
+
+    :param limit_y: Whether to limit the y-axis to the min/max of detections. If false, the mix/max will also include
+    non-detections. Default True.
+    :type limit_y: bool
+
+    :param days: The number of days in the past, relative to today, of datapoints to render. Default is 32.
+    :type days: int
+
+    """
+    if not color_map:
+        color_map = {
+            'r': (200, 0, 0),
+            'g': (0, 200, 0),
+            'i': (0, 0, 0)
+        }
+
+    vals = target.reduceddatum_set.filter(
+        timestamp__gte=datetime.utcnow() - timedelta(days=days)
+    ).values('value', 'timestamp')
+
+    if len(vals) < 1:
+        return {'sparkline': None}
+
+    vals = [v for v in vals if v['value']]
+
+    min_mag = min([val['value']['magnitude'] for val in vals if val['value'].get('magnitude')])
+    max_mag = max([val['value']['magnitude'] for val in vals if val['value'].get('magnitude')])
+
+    if not limit_y:
+        # The following values are used if we want the graph's y range to extend to the values of non-detections
+        min_mag = min([min_mag, *[val['value']['limit'] for val in vals if val['value'].get('limit')]])
+        max_mag = max([max_mag, *[val['value']['limit'] for val in vals if val['value'].get('limit')]])
+
+    distinct_filters = set([val['value']['filter'] for val in vals])
+    by_filter = {f: [(None, None)] * days for f in distinct_filters}
+
+    for val in vals:
+        day_index = (val['timestamp'].replace(tzinfo=timezone.utc) - timezone.now()).days
+        by_filter[val['value']['filter']][day_index] = (val['value'].get('magnitude'), val['value'].get('limit'))
+
+    val_range = max_mag - min_mag
+    image_width = (spacing + 1) * (days - 1)
+    image_height = height + 10
+
+    image = Image.new("RGBA", (image_width, image_height), (255, 255, 255, 0))
+    try:
+        pixels_per_unit = height / val_range
+    except ZeroDivisionError:
+        # return blank image
+        data_uri = pil2datauri(image)
+
+        return {'sparkline': data_uri}
+
+    d = ImageDraw.Draw(image)
+    for d_filter, day_mags in by_filter.items():
+        x = 0
+        color = color_map.get(d_filter, 'r')
+        for (mag, limit) in day_mags:
+            if mag:
+                y = ((mag - min_mag) * pixels_per_unit)
+                draw_point(d, x, y, color)
+            if limit:
+                y = ((limit - min_mag) * pixels_per_unit)
+                draw_nodetection(d, x, y, color)
+            x += spacing
+
+    data_uri = pil2datauri(image)
+
+    return {'sparkline': data_uri}

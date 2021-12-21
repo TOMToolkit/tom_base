@@ -22,13 +22,13 @@ class Command(BaseCommand):
             broker_classes[broker] = alerts.get_service_class(broker)()
 
         target = None
+        sources = [s.source_name for s in ReducedDatum.objects.filter(source_name__in=broker_classes.keys()).distinct()]
         if options['target_id']:
             try:
                 targets = [Target.objects.get(pk=options['target_id'])]
             except ObjectDoesNotExist:
                 raise Exception('Invalid target id provided')
         else:
-            sources = ReducedDatum.objects.filter(source_name__in=broker_classes.keys()).distinct()
             targets = Target.objects.filter(
                 id__in=ReducedDatum.objects.filter(
                     source_name__in=sources
@@ -37,10 +37,11 @@ class Command(BaseCommand):
         failed_records = {}
         for target in targets:
             for class_name, clazz in broker_classes.items():
-                try:
-                    clazz.process_reduced_data(target)
-                except HTTPError:
-                    failed_records[class_name] = target.id
+                if class_name in sources:
+                    try:
+                        clazz.process_reduced_data(target)
+                    except HTTPError:
+                        failed_records[class_name] = target.id
 
         if len(failed_records) == 0:
             return 'Update completed successfully'
