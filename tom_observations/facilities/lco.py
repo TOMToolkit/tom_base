@@ -228,13 +228,11 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
                 css_class='form-row',
             ),
             Div(
-                Div(
-                    HTML(f'''<br/><p>{fractional_ephemeris_rate_help}</p>''')
-                ),
-                Div(
-                    'fractional_ephemeris_rate',
-                ),
-                css_class='form-row',
+                HTML(f'''<br/><p>{fractional_ephemeris_rate_help}</p>''')
+            ),
+            Div(
+                'fractional_ephemeris_rate',
+                css_class='form-col'
             ),
             Div(
                 HTML(f'''<br/><p>{static_cadencing_help}</p>'''),
