@@ -289,6 +289,17 @@ class TestLCOBaseObservationForm(TestCase):
                 'argofperih': self.nst.arg_of_perihelion, 'meananom': self.nst.mean_anomaly,
                 'meandist': self.nst.semimajor_axis
             }, form._build_target_fields())
+        
+        # Test that fractional_ephemeris_rate is handled correctly when present
+        with self.subTest():
+            self.valid_form_data['target_id'] = self.nst.id
+            fractional_ephemeris_rate = 0.5
+            self.valid_form_data['fractional_ephemeris_rate'] = fractional_ephemeris_rate
+            form = LCOBaseObservationForm(self.valid_form_data)
+            self.assertTrue(form.is_valid())
+            self.assertDictContainsSubset({
+                'extra_params': {'fractional_ephemeris_rate': fractional_ephemeris_rate}
+            }, form._build_target_fields())
 
     def test_build_instrument_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         """Test _build_instrument_config method."""
