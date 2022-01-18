@@ -188,6 +188,11 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
                                      help_text=exposure_time_help)
     max_airmass = forms.FloatField(help_text=max_airmass_help, min_value=0)
     min_lunar_distance = forms.IntegerField(min_value=0, label='Minimum Lunar Distance', required=False)
+    fractional_ephemeris_rate = forms.FloatField(min_value=0.0, max_value=1.0,
+                                                 label='Fractional Ephemeris Rate',
+                                                 help_text='help for fractional ephemeris rate',
+                                                 required=False)
+
     period = forms.FloatField(required=False)
     jitter = forms.FloatField(required=False)
     observation_mode = forms.ChoiceField(
@@ -319,6 +324,19 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
             for field in fields:
                 lco_field = field_mapping.get(field, field)
                 target_fields[lco_field] = getattr(target, field)
+
+            #
+            # Handle extra_params
+            #
+
+            # if a fractional_ephemeris_rate has been specified, add it as an extra_param
+            # to the target_fields
+            if 'fractional_ephemeris_rate' in self.cleaned_data:
+                # first, make sure extra_params dictionary exists for target_fields
+                if 'extra_params' not in target_fields:
+                    target_fields['extra_params'] = {}
+                target_fields['extra_params'].update(
+                    {'fractional_ephemeris_rate': self.cleaned_data['fractional_ephemeris_rate']})
 
         return target_fields
 
