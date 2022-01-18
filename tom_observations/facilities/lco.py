@@ -91,6 +91,10 @@ max_airmass_help = """
     </a>
 """
 
+fractional_ephemeris_rate_help = """
+    asldjflsajflsa;jflsajfd
+"""
+
 static_cadencing_help = """
     Static cadence parameters. Leave blank if no cadencing is desired.
     For information on static cadencing with LCO,
@@ -220,6 +224,15 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
                 Div(
                     'filter', 'instrument_type', 'exposure_count', 'exposure_time', 'max_airmass', 'min_lunar_distance',
                     css_class='col'
+                ),
+                css_class='form-row',
+            ),
+            Div(
+                Div(
+                    HTML(f'''<br/><p>{fractional_ephemeris_rate_help}</p>''')
+                ),
+                Div(
+                    'fractional_ephemeris_rate',
                 ),
                 css_class='form-row',
             ),
