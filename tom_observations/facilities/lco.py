@@ -403,6 +403,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
             'jitter': self.cleaned_data['jitter']
         }
         payload['requests'][0]['windows'] = []
+
+        # use the LCO Observation Portal candence builder to build the candence
         response = make_request(
             'POST',
             PORTAL_URL + '/api/requestgroups/cadence/',
@@ -431,6 +433,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
                 }
             ]
         }
+        # TODO: allow for a request of period=X and jitter=0 (this doe not at the moment)
         if self.cleaned_data.get('period') and self.cleaned_data.get('jitter'):
             payload = self._expand_cadence_request(payload)
 
