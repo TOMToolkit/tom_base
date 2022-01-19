@@ -92,7 +92,13 @@ max_airmass_help = """
 """
 
 fractional_ephemeris_rate_help = """
-    asldjflsajflsa;jflsajfd
+    Fractional Ephemeris Rate. Will track with target motion if left blank. <br/>
+    <b>WARNING:</b> Setting any value other than "1" will cause the target to slowly drift from the central
+    pointing. This could result in the target leaving the field of view WITHOUT WARNING for rapid targets, and/or
+    long observation blocks. <br/>
+    [We do not currently provide any viable solution to this problem either through the TOM Toolkit or the
+    Observing Portal. To overcome this, multiple configurations must be created to reset the target pointing, based
+    on the rate of motion of the target and the FOV of the instrument.]
 """
 
 static_cadencing_help = """
@@ -194,7 +200,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     min_lunar_distance = forms.IntegerField(min_value=0, label='Minimum Lunar Distance', required=False)
     fractional_ephemeris_rate = forms.FloatField(min_value=0.0, max_value=1.0,
                                                  label='Fractional Ephemeris Rate',
-                                                 help_text='help for fractional ephemeris rate',
+                                                 help_text='Value between 0 (Sidereal Tracking) '
+                                                           'and 1 (Target Tracking)',
                                                  required=False)
 
     period = forms.FloatField(required=False)
