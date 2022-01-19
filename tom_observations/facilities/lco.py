@@ -204,8 +204,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
                                                            'and 1 (Target Tracking)',
                                                  required=False)
 
-    period = forms.FloatField(required=False)
-    jitter = forms.FloatField(required=False)
+    period = forms.FloatField(required=False, min_value=0.0)
+    jitter = forms.FloatField(required=False, min_value=0.0)
     observation_mode = forms.ChoiceField(
         choices=(('NORMAL', 'Normal'), ('RAPID_RESPONSE', 'Rapid-Response'), ('TIME_CRITICAL', 'Time-Critical')),
         help_text=observation_mode_help
@@ -438,8 +438,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
                 }
             ]
         }
-        # TODO: allow for a request of period=X and jitter=0 (this doe not at the moment)
-        if self.cleaned_data.get('period') and self.cleaned_data.get('jitter'):
+        if self.cleaned_data.get('period') and self.cleaned_data.get('jitter') is not None:
             payload = self._expand_cadence_request(payload)
 
         return payload
