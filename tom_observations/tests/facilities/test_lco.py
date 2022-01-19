@@ -412,6 +412,26 @@ class TestLCOBaseObservationForm(TestCase):
             self.assertTrue(form.is_valid())
             self.assertDictEqual({'test': 'test_static_cadence'}, form.observation_payload())
 
+        # Test an invalid static cadence form
+        with self.subTest():
+            self.valid_form_data['period'] = -60
+            self.valid_form_data['jitter'] = 15
+            form = LCOBaseObservationForm(self.valid_form_data)
+            self.assertFalse(form.is_valid())
+
+        # Test an edge-case static cadence form
+        with self.subTest():
+            mock_response = Response()
+            mock_response._content = str.encode(json.dumps({'test': 'test_static_cadence'}))
+            mock_response.status_code = 200
+            mock_make_request.return_value = mock_response
+
+            self.valid_form_data['period'] = 60
+            self.valid_form_data['jitter'] = 0.0
+            form = LCOBaseObservationForm(self.valid_form_data)
+            self.assertTrue(form.is_valid())
+            self.assertDictEqual({'test': 'test_static_cadence'}, form.observation_payload())
+
 
 @patch('tom_observations.facilities.lco.LCOImagingObservationForm._get_instruments')
 class TestLCOImagingObservationForm(TestCase):
