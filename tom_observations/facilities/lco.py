@@ -92,17 +92,14 @@ max_airmass_help = """
 """
 
 fractional_ephemeris_rate_help = """
-    Fractional Ephemeris Rate. Will track with target motion if left blank. <br/>
-    <b>WARNING:</b> Setting any value other than "1" will cause the target to slowly drift from the central
-    pointing. This could result in the target leaving the field of view WITHOUT WARNING for rapid targets, and/or
+    <em>Fractional Ephemeris Rate.</em> Will track with target motion if left blank. <br/>
+    <b><em>Caution:</em></b> Setting any value other than "1" will cause the target to slowly drift from the central
+    pointing. This could result in the target leaving the field of view for rapid targets, and/or
     long observation blocks. <br/>
-    [We do not currently provide any viable solution to this problem either through the TOM Toolkit or the
-    Observing Portal. To overcome this, multiple configurations must be created to reset the target pointing, based
-    on the rate of motion of the target and the FOV of the instrument.]
 """
 
 static_cadencing_help = """
-    Static cadence parameters. Leave blank if no cadencing is desired.
+    <em>Static cadence parameters.</em> Leave blank if no cadencing is desired.
     For information on static cadencing with LCO,
     <a href="https://lco.global/documentation/">
         check the Observation Portal getting started guide, starting on page 27.
@@ -201,7 +198,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     fractional_ephemeris_rate = forms.FloatField(min_value=0.0, max_value=1.0,
                                                  label='Fractional Ephemeris Rate',
                                                  help_text='Value between 0 (Sidereal Tracking) '
-                                                           'and 1 (Target Tracking)',
+                                                           'and 1 (Target Tracking). If blank, Target Tracking.',
                                                  required=False)
 
     period = forms.FloatField(help_text='Decimal Hours', required=False, min_value=0.0)
