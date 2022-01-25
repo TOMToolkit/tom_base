@@ -8,6 +8,7 @@ from astropy.coordinates import SkyCoord
 from astropy.time import Time, TimezoneInfo
 import astropy.units as u
 from bs4 import BeautifulSoup
+from crispy_forms.layout import Fieldset, HTML, Layout
 from django import forms
 
 from tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
@@ -17,12 +18,28 @@ BASE_BROKER_URL = 'http://gsaweb.ast.cam.ac.uk'
 
 
 class GaiaQueryForm(GenericQueryForm):
-    target_name = forms.CharField(required=False)
+    target_name = forms.CharField(required=False, label='Target Name')
     cone = forms.CharField(
         required=False,
         label='Cone Search',
         help_text='RA,Dec,radius in degrees'
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            HTML('''
+                <p>
+                Please see the <a href="http://gsaweb.ast.cam.ac.uk/alerts/tableinfo">Gaia homepage</a> for a detailed
+                description of this broker.
+            '''),
+            self.common_layout,
+            Fieldset(
+                None,
+                'target_name',
+                'cone'
+            )
+        )
 
     def clean_cone(self):
         cone = self.cleaned_data['cone']
@@ -41,6 +58,11 @@ class GaiaQueryForm(GenericQueryForm):
 
 
 class GaiaBroker(GenericBroker):
+    """
+    The ``GaiaBroker`` is the interface to the Gaia alert broker. For information regarding the Gaia Science Alerts
+    Project, please see http://gsaweb.ast.cam.ac.uk/alerts/about.
+    """
+
     name = 'Gaia'
     form = GaiaQueryForm
 

@@ -83,13 +83,28 @@ def target_groups(target):
 
 
 @register.inclusion_tag('tom_targets/partials/target_plan.html', takes_context=True)
-def target_plan(context, fast_render=False):
+def target_plan(context, fast_render=False, width=600, height=400, background=None, label_color=None, grid=True):
     """
     Displays form and renders plot for visibility calculation. Using this templatetag to render a plot requires that
     the context of the parent view have values for start_time, end_time, and airmass.
 
     :param fast_render: Render the plot on page load, defaults to the next 24hrs and 2.5 airmass
     :type fast_render: bool
+
+    :param width: Width of generated plot
+    :type width: int
+
+    :param height: Height of generated plot
+    :type width: int
+
+    :param background: Color of the background of generated plot. Can be rgba or hex string.
+    :type background: str
+
+    :param label_color: Color of labels/tick labels. Can be rgba or hex string.
+    :type label_color: str
+
+    :param grid: Whether to show grid lines.
+    :type grid: bool
     """
     request = context['request']
     plan_form = TargetVisibilityForm()
@@ -109,9 +124,19 @@ def target_plan(context, fast_render=False):
             plot_data = [
                 go.Scatter(x=data[0], y=data[1], mode='lines', name=site) for site, data in visibility_data.items()
             ]
-            layout = go.Layout(yaxis=dict(autorange='reversed'))
+            layout = go.Layout(
+                yaxis=dict(autorange='reversed'),
+                width=width,
+                height=height,
+                paper_bgcolor=background,
+                plot_bgcolor=background
+            )
+            layout.legend.font.color = label_color
+            fig = go.Figure(data=plot_data, layout=layout)
+            fig.update_yaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
+            fig.update_xaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
             visibility_graph = offline.plot(
-                go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False
+                fig, output_type='div', show_link=False
             )
     return {
         'form': plan_form,
@@ -121,7 +146,7 @@ def target_plan(context, fast_render=False):
 
 
 @register.inclusion_tag('tom_targets/partials/moon_distance.html')
-def moon_distance(target, day_range=30):
+def moon_distance(target, day_range=30, width=600, height=400, background=None, label_color=None, grid=True):
     """
     Renders plot for lunar distance from sidereal target.
 
@@ -133,6 +158,21 @@ def moon_distance(target, day_range=30):
 
     :param day_range: Number of days to plot lunar distance
     :type day_range: int
+
+    :param width: Width of generated plot
+    :type width: int
+
+    :param height: Height of generated plot
+    :type width: int
+
+    :param background: Color of the background of generated plot. Can be rgba or hex string.
+    :type background: str
+
+    :param label_color: Color of labels/tick labels. Can be rgba or hex string.
+    :type label_color: str
+
+    :param grid: Whether to show grid lines.
+    :type grid: bool
     """
     if target.type != 'SIDEREAL':
         return {'plot': None}
@@ -163,12 +203,18 @@ def moon_distance(target, day_range=30):
                 yaxis2={'range': [0, 1], 'tick0': 0, 'dtick': 0.25, 'overlaying': 'y', 'side': 'right',
                         'tickfont': {'color': phase_color}},
                 margin={'l': 20, 'r': 10, 'b': 30, 't': 40},
-                width=600,
-                height=300,
-                autosize=True
+                width=width,
+                height=height,
+                autosize=True,
+                paper_bgcolor=background,
+                plot_bgcolor=background
             )
+    layout.legend.font.color = label_color
+    fig = go.Figure(data=plot_data, layout=layout)
+    fig.update_yaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
+    fig.update_xaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
     moon_distance_plot = offline.plot(
-        go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False
+        fig, output_type='div', show_link=False
     )
 
     return {'plot': moon_distance_plot}
