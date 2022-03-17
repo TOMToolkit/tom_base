@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          pip install -r requirements.txt coveralls
+          pip install -r requirements.txt coveralls -vvv
           pip install -I flake8
       - name: Run Tests
         run: python manage.py test --exclude-tag=canary
