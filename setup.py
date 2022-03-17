@@ -30,7 +30,7 @@ setup(
     install_requires=[
         # See https://github.com/pallets/markupsafe/issues/286 
         # MarkupSafe 2.1.0 causes jinja to break, so pin to previous version
-        'MarkupSafe==2.0.1',
+        # 'MarkupSafe==2.0.1',
 
         'astroquery>=0.4.2',
         'astroplan==0.8',
