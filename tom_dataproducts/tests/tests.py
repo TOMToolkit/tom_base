@@ -483,6 +483,9 @@ class TestDataProductModel(TestCase):
         mock_is_fits_image_file.return_value = True
         with self.assertLogs('tom_dataproducts.models', level='WARN') as logs:
             self.data_product.create_thumbnail()
-            self.assertIn(
-                f'WARNING:tom_dataproducts.models:Unable to create thumbnail for {self.data_product}: Empty or corrupt '
-                'FITS file', logs.output)
+            expected = ('WARNING:tom_dataproducts.models:Unable to create thumbnail '
+                f'for {self.data_product}: No SIMPLE card found, this file does not appear'
+                ' to be a valid FITS file. If this is really a FITS file, try with '
+                'ignore_missing_simple=True')
+
+            self.assertIn(expected, logs.output)
