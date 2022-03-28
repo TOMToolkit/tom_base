@@ -484,8 +484,8 @@ class TestDataProductModel(TestCase):
         with self.assertLogs('tom_dataproducts.models', level='WARN') as logs:
             self.data_product.create_thumbnail()
             expected = ('WARNING:tom_dataproducts.models:Unable to create thumbnail '
-                f'for {self.data_product}: No SIMPLE card found, this file does not appear'
-                ' to be a valid FITS file. If this is really a FITS file, try with '
-                'ignore_missing_simple=True')
+                        f'for {self.data_product}: No SIMPLE card found, this file does not appear'
+                        ' to be a valid FITS file. If this is really a FITS file, try with '
+                        'ignore_missing_simple=True')
 
             self.assertIn(expected, logs.output)
