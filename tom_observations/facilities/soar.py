@@ -107,7 +107,7 @@ class SOARSpectroscopyObservationForm(SOARBaseObservationForm, LCOSpectroscopyOb
 class SOARFacility(LCOFacility):
     """
     The ``SOARFacility`` is the interface to the SOAR Telescope. For information regarding SOAR observing and the
-    available parameters, please see http://www.ctio.noao.edu/soar/content/observing-soar.
+    available parameters, please see https://noirlab.edu/science/observing-noirlab/observing-ctio/observing-soar.
 
     Please note that SOAR is only available in AEON-mode. It also uses the LCO API key, so to use this module, the
     LCO dictionary in FACILITIES in `settings.py` will need to be completed.

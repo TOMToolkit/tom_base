@@ -91,11 +91,18 @@ max_airmass_help = """
     </a>
 """
 
+fractional_ephemeris_rate_help = """
+    <em>Fractional Ephemeris Rate.</em> Will track with target motion if left blank. <br/>
+    <b><em>Caution:</em></b> Setting any value other than "1" will cause the target to slowly drift from the central
+    pointing. This could result in the target leaving the field of view for rapid targets, and/or
+    long observation blocks. <br/>
+"""
+
 static_cadencing_help = """
-    Static cadence parameters. Leave blank if no cadencing is desired.
+    <em>Static cadence parameters.</em> Leave blank if no cadencing is desired.
     For information on static cadencing with LCO,
     <a href="https://lco.global/documentation/">
-        check the Observation Portal getting started guide, starting on page 18.
+        check the Observation Portal getting started guide, starting on page 27.
     </a>
 """
 
@@ -188,8 +195,14 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
                                      help_text=exposure_time_help)
     max_airmass = forms.FloatField(help_text=max_airmass_help, min_value=0)
     min_lunar_distance = forms.IntegerField(min_value=0, label='Minimum Lunar Distance', required=False)
-    period = forms.FloatField(required=False)
-    jitter = forms.FloatField(required=False)
+    fractional_ephemeris_rate = forms.FloatField(min_value=0.0, max_value=1.0,
+                                                 label='Fractional Ephemeris Rate',
+                                                 help_text='Value between 0 (Sidereal Tracking) '
+                                                           'and 1 (Target Tracking). If blank, Target Tracking.',
+                                                 required=False)
+
+    period = forms.FloatField(help_text='Decimal Hours', required=False, min_value=0.0)
+    jitter = forms.FloatField(help_text='Decimal Hours', required=False, min_value=0.0)
     observation_mode = forms.ChoiceField(
         choices=(('NORMAL', 'Normal'), ('RAPID_RESPONSE', 'Rapid-Response'), ('TIME_CRITICAL', 'Time-Critical')),
         help_text=observation_mode_help
@@ -217,6 +230,13 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
                     css_class='col'
                 ),
                 css_class='form-row',
+            ),
+            Div(
+                HTML(f'''<br/><p>{fractional_ephemeris_rate_help}</p>''')
+            ),
+            Div(
+                'fractional_ephemeris_rate',
+                css_class='form-col'
             ),
             Div(
                 HTML(f'''<br/><p>{static_cadencing_help}</p>'''),
@@ -320,6 +340,19 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
                 lco_field = field_mapping.get(field, field)
                 target_fields[lco_field] = getattr(target, field)
 
+            #
+            # Handle extra_params
+            #
+
+            # if a fractional_ephemeris_rate has been specified, add it as an extra_param
+            # to the target_fields
+            if 'fractional_ephemeris_rate' in self.cleaned_data:
+                # first, make sure extra_params dictionary exists for target_fields
+                if 'extra_params' not in target_fields:
+                    target_fields['extra_params'] = {}
+                target_fields['extra_params'].update(
+                    {'fractional_ephemeris_rate': self.cleaned_data['fractional_ephemeris_rate']})
+
         return target_fields
 
     def _build_instrument_config(self):
@@ -372,6 +405,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
             'jitter': self.cleaned_data['jitter']
         }
         payload['requests'][0]['windows'] = []
+
+        # use the LCO Observation Portal candence builder to build the candence
         response = make_request(
             'POST',
             PORTAL_URL + '/api/requestgroups/cadence/',
@@ -400,7 +435,7 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
                 }
             ]
         }
-        if self.cleaned_data.get('period') and self.cleaned_data.get('jitter'):
+        if self.cleaned_data.get('period') and self.cleaned_data.get('jitter') is not None:
             payload = self._expand_cadence_request(payload)
 
         return payload

@@ -20,7 +20,7 @@ targets into the TOM:
 
 -  The Alert Module provides the functionality to create targets from
    alert brokers such as ``MARS <https://mars.lco.global>``\ \_\_ and
-   ``ANTARES <https://antares.noao.edu/>``\ \__. These brokers generally
+   ``ANTARES <https://antares.noirlab.edu/>``\ \__. These brokers generally
    provide alerts from transient phenomena as soon as they happen, and a
    scientist who is interested in studying these phenomena can import
    these alerts as targets into their TOM to study in real time.

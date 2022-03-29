@@ -3,7 +3,7 @@ import requests
 from urllib.parse import urlencode
 
 from astropy.time import Time, TimezoneInfo
-from crispy_forms.layout import Column, Fieldset, Layout, Row
+from crispy_forms.layout import Column, Fieldset, HTML, Layout, Row
 from django import forms
 from django.core.cache import cache
 
@@ -127,6 +127,11 @@ class ALeRCEQueryForm(GenericQueryForm):
         self.fields['stamp_classifier'].choices = self._get_stamp_classifier_choices()
 
         self.helper.layout = Layout(
+            HTML('''
+                <p>
+                Please see the <a href="http://alerce.science/">ALeRCE homepage</a> for information about the ALeRCE
+                filters.
+            '''),
             self.common_layout,
             'oid',
             Fieldset(
@@ -236,6 +241,11 @@ class ALeRCEQueryForm(GenericQueryForm):
 
 
 class ALeRCEBroker(GenericBroker):
+    """
+    The ``ALeRCEBroker`` is the interface to the ALeRCE alert broker. For information regarding the ALeRCE objects
+    and classification, please see http://alerce.science.
+    """
+
     name = 'ALeRCE'
     form = ALeRCEQueryForm
 

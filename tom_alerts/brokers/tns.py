@@ -4,7 +4,7 @@ from django.conf import settings
 import requests
 import json
 from datetime import datetime, timedelta
-from crispy_forms.layout import Layout, Div, Fieldset
+from crispy_forms.layout import Div, Fieldset, HTML, Layout
 
 
 TNS_BASE_URL = 'https://www.wis-tns.org/'
@@ -42,6 +42,12 @@ class TNSForm(GenericQueryForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper.layout = Layout(
+            HTML('''
+                <p>
+                Please see <a href="https://wis-tns.weizmann.ac.il/sites/default/files/api/TNS_APIs_manual.pdf">
+                the TNS API Manual</a> for a detailed description of available filters.
+                </p>
+            '''),
             self.common_layout,
             'target_name',
             'internal_name',

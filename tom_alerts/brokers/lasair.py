@@ -1,5 +1,6 @@
 import requests
 
+from crispy_forms.layout import Fieldset, HTML, Layout
 from django import forms
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
@@ -9,9 +10,24 @@ LASAIR_URL = 'https://lasair.roe.ac.uk'
 
 
 class LasairBrokerForm(GenericQueryForm):
-    name = forms.CharField(required=True)
     cone = forms.CharField(required=False, label='Object Cone Search', help_text='Object RA and Dec')
     sqlquery = forms.CharField(required=False, label='Freeform SQL query', help_text='SQL query')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            HTML('''
+                <p>
+                Please see the <a href="https://lasair.roe.ac.uk/objlist/">Lasair website</a> for more detailed
+                instructions on querying the broker.
+            '''),
+            self.common_layout,
+            Fieldset(
+                None,
+                'cone',
+                'sqlquery'
+            ),
+        )
 
     def clean(self):
         cleaned_data = super().clean()
@@ -54,11 +70,14 @@ class LasairBroker(GenericBroker):
     form = LasairBrokerForm
 
     def fetch_alerts(self, parameters):
+        print(parameters)
         if 'cone' in parameters and len(parameters['cone'].strip()) > 0:
             response = requests.post(
                 LASAIR_URL + '/conesearch/',
                 data={'cone': parameters['cone'], 'json': 'on'}
             )
+            response.raise_for_status()
+            print(response.content)
             cone_result = response.json()
             alerts = []
             for objectId in cone_result['hitlist']:

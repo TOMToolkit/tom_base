@@ -72,7 +72,7 @@ In addition, the ANTARES TOM can gather public light curves from ZTF and spectra
 for each target in an automatic and programmatic manner
 (see `example notebook <https://github.com/lchjoel1031/ANTARES/blob/main/ANTARES-TOM-API.ipynb>`__).
 It is being used by the ANTARES team to share target information and coordinate follow-up with facilities
-from the Astronomical Event Observatory Network (`AEON <http://ast.noao.edu/data/aeon/>`__).
+from the Astronomical Event Observatory Network (`AEON <https://noirlab.edu/public/projects/aeon/>`__).
 
 Others
 ~~~~~~
