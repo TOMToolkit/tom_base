@@ -63,6 +63,17 @@ ALeRCE TOM
 
 The `ALeRCE TOM <https://tom.alerce.online/>`__ is used by the ALeRCE team to submit follow-up observations on ZTF targets from the ALeRCE broker module, which uses the `ALeRCE Database API <http://alerce.science/services/ztf-db-api/>`__.
 
+ANTARES TOM
+~~~~~~~~~~~
+
+The `ANTARES TOM <https://tom.antares.noirlab.edu/>`__ is built by the ANTARES team to connect to the
+`ANTARES alert broker <https://antares.noirlab.edu/>`__ via the ANTARES broker module.
+In addition, the ANTARES TOM can gather public light curves from ZTF and spectra from TNS
+for each target in an automatic and programmatic manner
+(see `example notebook <https://github.com/lchjoel1031/ANTARES/blob/main/ANTARES-TOM-API.ipynb>`__).
+It is being used by the ANTARES team to share target information and coordinate follow-up with facilities
+from the Astronomical Event Observatory Network (`AEON <https://noirlab.edu/public/projects/aeon/>`__).
+
 Others
 ~~~~~~
 
