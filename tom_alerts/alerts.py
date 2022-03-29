@@ -179,6 +179,7 @@ class GenericBroker(ABC):
     https://github.com/TOMToolkit/tom_base/blob/main/tom_alerts/brokers/mars.py
     """
     alert_submission_form = GenericUpstreamSubmissionForm
+    score_description = "The meaning of this field changes between brokers, please consult this broker's documentation."
 
     @abstractmethod
     def fetch_alerts(self, parameters: dict):
