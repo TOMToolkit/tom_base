@@ -1,7 +1,7 @@
 import factory
 
-from tom_targets.models import Target, TargetName
-from tom_observations.models import ObservationRecord, ObservationTemplate
+from bhtom_base.tom_targets.models import Target, TargetName
+from bhtom_base.tom_observations.models import ObservationRecord, ObservationTemplate
 
 
 class TargetNameFactory(factory.django.DjangoModelFactory):

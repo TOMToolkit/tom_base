@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class TomAlertsConfig(AppConfig):
-    name = 'tom_alerts'
+    name = 'bhtom_base.tom_alerts'

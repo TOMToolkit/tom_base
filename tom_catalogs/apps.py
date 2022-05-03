@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class TomCatalogsConfig(AppConfig):
-    name = 'tom_catalogs'
+    name = 'bhtom_base.tom_catalogs'

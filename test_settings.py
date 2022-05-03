@@ -1,4 +1,4 @@
-from tom_base.settings import *  # noqa
+from bhtom_base.tom_base.settings import *  # noqa
 
 DATABASES = {
    'default': {

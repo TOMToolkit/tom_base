@@ -4,10 +4,10 @@ from django import forms
 from django.utils import timezone
 from astropy import units
 
-from tom_observations.facility import BaseRoboticObservationFacility, GenericObservationForm
-from tom_observations.facility import BaseManualObservationFacility
-from tom_observations.models import ObservationRecord
-from tom_observations.observation_template import GenericTemplateForm
+from bhtom_base.tom_observations.facility import BaseRoboticObservationFacility, GenericObservationForm
+from bhtom_base.tom_observations.facility import BaseManualObservationFacility
+from bhtom_base.tom_observations.models import ObservationRecord
+from bhtom_base.tom_observations.observation_template import GenericTemplateForm
 
 # Site data matches built-in pyephem observer data for Los Angeles
 SITES = {

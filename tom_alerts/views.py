@@ -15,9 +15,9 @@ from guardian.shortcuts import assign_perm
 from django_filters.views import FilterView
 from django_filters import FilterSet, ChoiceFilter, CharFilter
 
-from tom_alerts.alerts import get_service_class, get_service_classes
-from tom_alerts.models import BrokerQuery
-from tom_alerts.exceptions import AlertSubmissionException
+from bhtom_base.tom_alerts.alerts import get_service_class, get_service_classes
+from bhtom_base.tom_alerts.models import BrokerQuery
+from bhtom_base.tom_alerts.exceptions import AlertSubmissionException
 
 logger = logging.getLogger(__name__)
 

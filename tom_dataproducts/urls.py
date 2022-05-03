@@ -1,12 +1,12 @@
 from django.urls import path
 
-from tom_dataproducts.views import DataProductListView, DataProductSaveView, DataProductGroupListView
-from tom_dataproducts.views import DataProductDeleteView, DataProductGroupCreateView
-from tom_dataproducts.views import DataProductGroupDetailView, DataProductGroupDataView, DataProductGroupDeleteView
-from tom_dataproducts.views import DataProductUploadView, DataProductFeatureView, UpdateReducedDataView
+from bhtom_base.tom_dataproducts.views import DataProductListView, DataProductSaveView, DataProductGroupListView
+from bhtom_base.tom_dataproducts.views import DataProductDeleteView, DataProductGroupCreateView
+from bhtom_base.tom_dataproducts.views import DataProductGroupDetailView, DataProductGroupDataView, DataProductGroupDeleteView
+from bhtom_base.tom_dataproducts.views import DataProductUploadView, DataProductFeatureView, UpdateReducedDataView
 
-from tom_common.api_router import SharedAPIRootRouter
-from tom_dataproducts.api_views import DataProductViewSet
+from bhtom_base.tom_common.api_router import SharedAPIRootRouter
+from bhtom_base.tom_dataproducts.api_views import DataProductViewSet
 
 router = SharedAPIRootRouter()
 router.register(r'dataproducts', DataProductViewSet, 'dataproducts')

@@ -5,7 +5,7 @@ from astroplan import Observer, FixedTarget, time_grid_from_range
 import numpy as np
 import logging
 
-from tom_observations import facility
+from bhtom_base.tom_observations import facility
 
 logger = logging.getLogger(__name__)
 

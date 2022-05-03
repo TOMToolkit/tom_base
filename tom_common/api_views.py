@@ -1,7 +1,7 @@
 from rest_framework.mixins import ListModelMixin
 from rest_framework.viewsets import GenericViewSet
 
-from tom_common.serializers import GroupSerializer
+from bhtom_base.tom_common.serializers import GroupSerializer
 
 
 class GroupViewSet(ListModelMixin, GenericViewSet):

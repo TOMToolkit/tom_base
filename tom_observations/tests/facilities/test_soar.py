@@ -4,10 +4,10 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.facilities.soar import make_request, SOARBaseObservationForm, SOARImagingObservationForm
-from tom_observations.facilities.soar import SOARSpectroscopyObservationForm
-from tom_observations.tests.factories import NonSiderealTargetFactory, SiderealTargetFactory
+from bhtom_base.tom_common.exceptions import ImproperCredentialsException
+from bhtom_base.tom_observations.facilities.soar import make_request, SOARBaseObservationForm, SOARImagingObservationForm
+from bhtom_base.tom_observations.facilities.soar import SOARSpectroscopyObservationForm
+from bhtom_base.tom_observations.tests.factories import NonSiderealTargetFactory, SiderealTargetFactory
 
 
 instrument_response = {
@@ -90,8 +90,8 @@ class TestSOARBaseObservationForm(TestCase):
         ])
         self.proposal_choices = [('sampleproposal', 'Sample Proposal')]
 
-    @patch('tom_observations.facilities.soar.make_request')
-    @patch('tom_observations.facilities.soar.cache')
+    @patch('bhtom_base.tom_observations.facilities.soar.make_request')
+    @patch('bhtom_base.tom_observations.facilities.soar.cache')
     def test_get_instruments(self, mock_cache, mock_make_request):
         mock_response = Response()
         mock_response._content = str.encode(json.dumps(instrument_response))
@@ -117,17 +117,17 @@ class TestSOARBaseObservationForm(TestCase):
             self.assertNotIn('0M4-SCICAM-SBIG', instruments)
             mock_cache.set.assert_called()
 
-    @patch('tom_observations.facilities.soar.SOARBaseObservationForm.proposal_choices')
-    @patch('tom_observations.facilities.soar.SOARBaseObservationForm.filter_choices')
-    @patch('tom_observations.facilities.soar.SOARBaseObservationForm.instrument_choices')
-    @patch('tom_observations.facilities.soar.SOARBaseObservationForm.validate_at_facility')
+    @patch('bhtom_base.tom_observations.facilities.soar.SOARBaseObservationForm.proposal_choices')
+    @patch('bhtom_base.tom_observations.facilities.soar.SOARBaseObservationForm.filter_choices')
+    @patch('bhtom_base.tom_observations.facilities.soar.SOARBaseObservationForm.instrument_choices')
+    @patch('bhtom_base.tom_observations.facilities.soar.SOARBaseObservationForm.validate_at_facility')
     def test_instrument_to_type(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         """Test instrument_to_type method."""
         self.assertEqual('EXPOSE', SOARBaseObservationForm.instrument_to_type('SOAR_GHTS_REDCAM_IMAGER'))
         self.assertEqual('SPECTRUM', SOARBaseObservationForm.instrument_to_type('SOAR_GHTS_REDCAM'))
 
 
-@patch('tom_observations.facilities.soar.SOARImagingObservationForm._get_instruments')
+@patch('bhtom_base.tom_observations.facilities.soar.SOARImagingObservationForm._get_instruments')
 class TestSOARImagingObservationForm(TestCase):
     def test_instrument_choices(self, mock_get_instruments):
         """Test SOARImagingObservationForm._instrument_choices."""
@@ -154,7 +154,7 @@ class TestSOARImagingObservationForm(TestCase):
 
 class TestSOARSpectroscopyObservationForm(TestCase):
 
-    @patch('tom_observations.facilities.soar.SOARSpectroscopyObservationForm._get_instruments')
+    @patch('bhtom_base.tom_observations.facilities.soar.SOARSpectroscopyObservationForm._get_instruments')
     def test_instrument_choices(self, mock_get_instruments):
         """Test SOARSpectroscopyObservationForm._instrument_choices."""
         mock_get_instruments.return_value = {k: v for k, v in instrument_response.items() if 'SOAR' in k}
@@ -164,7 +164,7 @@ class TestSOARSpectroscopyObservationForm(TestCase):
         self.assertNotIn(('SOAR_GHTS_REDCAM_IMAGER', 'Goodman Spectrograph RedCam Imager'), inst_choices)
         self.assertEqual(len(inst_choices), 1)
 
-    @patch('tom_observations.facilities.soar.SOARSpectroscopyObservationForm._get_instruments')
+    @patch('bhtom_base.tom_observations.facilities.soar.SOARSpectroscopyObservationForm._get_instruments')
     def test_filter_choices(self, mock_get_instruments):
         """Test SOARSpectroscopyObservationForm._filter_choices."""
         mock_get_instruments.return_value = {k: v for k, v in instrument_response.items() if 'SOAR' in k}
@@ -176,10 +176,10 @@ class TestSOARSpectroscopyObservationForm(TestCase):
             self.assertNotIn(not_expected, filter_choices)
         self.assertEqual(len(filter_choices), 1)
 
-    @patch('tom_observations.facilities.soar.SOARSpectroscopyObservationForm.proposal_choices')
-    @patch('tom_observations.facilities.soar.SOARSpectroscopyObservationForm.filter_choices')
-    @patch('tom_observations.facilities.soar.SOARSpectroscopyObservationForm.instrument_choices')
-    @patch('tom_observations.facilities.soar.SOARSpectroscopyObservationForm.validate_at_facility')
+    @patch('bhtom_base.tom_observations.facilities.soar.SOARSpectroscopyObservationForm.proposal_choices')
+    @patch('bhtom_base.tom_observations.facilities.soar.SOARSpectroscopyObservationForm.filter_choices')
+    @patch('bhtom_base.tom_observations.facilities.soar.SOARSpectroscopyObservationForm.instrument_choices')
+    @patch('bhtom_base.tom_observations.facilities.soar.SOARSpectroscopyObservationForm.validate_at_facility')
     def test_build_instrument_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         mock_validate.return_value = []
         mock_insts.return_value = [(k, v['name']) for k, v in instrument_response.items() if 'SPECTRA' in v['type']]

@@ -9,18 +9,20 @@ from astropy.time import Time
 from astropy.wcs import WCS
 from specutils import Spectrum1D
 
-from tom_dataproducts.data_processor import DataProcessor
-from tom_dataproducts.exceptions import InvalidFileFormatException
-from tom_dataproducts.processors.data_serializers import SpectrumSerializer
-from tom_observations.facility import get_service_class, get_service_classes
-
+from bhtom_base.tom_dataproducts.data_processor import DataProcessor
+from bhtom_base.tom_dataproducts.exceptions import InvalidFileFormatException
+from bhtom_base.tom_dataproducts.processors.data_serializers import SpectrumSerializer
+from bhtom_base.tom_observations.facility import get_service_class, get_service_classes
+from bhtom_base.tom_dataproducts.models import DatumValue
+from typing import List, Tuple
+from datetime import datetime
 
 class SpectroscopyProcessor(DataProcessor):
 
     DEFAULT_WAVELENGTH_UNITS = units.angstrom
     DEFAULT_FLUX_CONSTANT = units.erg / units.cm ** 2 / units.second / units.angstrom
 
-    def process_data(self, data_product):
+    def process_data(self, data_product) -> List[Tuple[datetime, DatumValue]]:
         """
         Routes a spectroscopy processing call to a method specific to a file-format, then serializes the returned data.
 
@@ -42,7 +44,20 @@ class SpectroscopyProcessor(DataProcessor):
 
         serialized_spectrum = SpectrumSerializer().serialize(spectrum)
 
-        return [(obs_date, serialized_spectrum)]
+        try:
+            datum: DatumValue = DatumValue(
+                mjd=Time(obs_date, format='datetime').mjd,
+                value=serialized_spectrum['flux'],
+                filter=serialized_spectrum['wavelength_units'],
+                extra_data={
+                    'flux_units': serialized_spectrum['flux_units'],
+                    'wavelength_units': serialized_spectrum['wavelength_units']
+                }
+            )
+        except Exception as e:
+            return []
+
+        return [(obs_date, datum)]
 
     def _process_spectrum_from_fits(self, data_product):
         """

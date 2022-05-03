@@ -1,7 +1,7 @@
 from django.urls import path
 
-from tom_alerts.views import BrokerQueryCreateView, BrokerQueryListView, BrokerQueryUpdateView, BrokerQueryDeleteView
-from tom_alerts.views import CreateTargetFromAlertView, RunQueryView, SubmitAlertUpstreamView
+from bhtom_base.tom_alerts.views import BrokerQueryCreateView, BrokerQueryListView, BrokerQueryUpdateView, BrokerQueryDeleteView
+from bhtom_base.tom_alerts.views import CreateTargetFromAlertView, RunQueryView, SubmitAlertUpstreamView
 
 app_name = 'tom_alerts'
 

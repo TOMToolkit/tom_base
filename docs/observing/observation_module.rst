@@ -67,7 +67,7 @@ next to ``settings.py``. For now, copy the following lines into
 
 .. code:: python
 
-   from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
+   from bhtom_base.tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 
 
    class MyObservationFacilityForm(BaseRoboticObservationForm):
@@ -188,7 +188,7 @@ exposure_count. Let’s start by adding them to our form class:
 
     from crispy_forms.layout import Layout
     from django import forms
-    from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
+    from bhtom_base.tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 
 
     class MyObservationFacilityForm(BaseRoboticObservationForm):
@@ -225,7 +225,7 @@ the observation request:
 
     from crispy_forms.layout import Layout
     from django import forms
-    from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
+    from bhtom_base.tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 
     class MyObservationFacilityForm(BaseRoboticObservationForm):
         exposure_time = forms.IntegerField()

@@ -5,12 +5,12 @@ from unittest.mock import patch
 
 from django.test import TestCase
 
-from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.facilities.lco import make_request, LCOFacility
-from tom_observations.facilities.lco import LCOBaseForm, LCOBaseObservationForm, LCOImagingObservationForm
-from tom_observations.facilities.lco import LCOPhotometricSequenceForm, LCOSpectroscopicSequenceForm
-from tom_observations.facilities.lco import LCOSpectroscopyObservationForm, LCOMuscatImagingObservationForm
-from tom_observations.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
+from bhtom_base.tom_common.exceptions import ImproperCredentialsException
+from bhtom_base.tom_observations.facilities.lco import make_request, LCOFacility
+from bhtom_base.tom_observations.facilities.lco import LCOBaseForm, LCOBaseObservationForm, LCOImagingObservationForm
+from bhtom_base.tom_observations.facilities.lco import LCOPhotometricSequenceForm, LCOSpectroscopicSequenceForm
+from bhtom_base.tom_observations.facilities.lco import LCOSpectroscopyObservationForm, LCOMuscatImagingObservationForm
+from bhtom_base.tom_observations.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
 
 
 instrument_response = {
@@ -115,7 +115,7 @@ def generate_lco_proposal_choices():
 
 class TestMakeRequest(TestCase):
 
-    @patch('tom_observations.facilities.lco.requests.request')
+    @patch('bhtom_base.tom_observations.facilities.lco.requests.request')
     def test_make_request(self, mock_request):
         mock_response = Response()
         mock_response._content = str.encode(json.dumps({'test': 'test'}))
@@ -132,8 +132,8 @@ class TestMakeRequest(TestCase):
 
 class TestLCOBaseForm(TestCase):
 
-    @patch('tom_observations.facilities.lco.make_request')
-    @patch('tom_observations.facilities.lco.cache')
+    @patch('bhtom_base.tom_observations.facilities.lco.make_request')
+    @patch('bhtom_base.tom_observations.facilities.lco.cache')
     def test_get_instruments(self, mock_cache, mock_make_request):
         mock_response = Response()
         mock_response._content = str.encode(json.dumps(instrument_response))
@@ -159,7 +159,7 @@ class TestLCOBaseForm(TestCase):
             self.assertNotIn('SOAR_GHTS_REDCAM', instruments)
             mock_cache.set.assert_called()
 
-    @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOBaseForm._get_instruments')
     def test_instrument_choices(self, mock_get_instruments):
         mock_get_instruments.return_value = generate_lco_instrument_choices()
 
@@ -169,7 +169,7 @@ class TestLCOBaseForm(TestCase):
         self.assertIn(('2M0-SCICAM-MUSCAT', '2.0 meter Muscat'), inst_choices)
         self.assertEqual(len(inst_choices), 3)
 
-    @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOBaseForm._get_instruments')
     def test_filter_choices(self, mock_get_instruments):
         mock_get_instruments.return_value = generate_lco_instrument_choices()
 
@@ -178,7 +178,7 @@ class TestLCOBaseForm(TestCase):
             self.assertIn(expected, filter_choices)
         self.assertEqual(len(filter_choices), 17)
 
-    @patch('tom_observations.facilities.lco.make_request')
+    @patch('bhtom_base.tom_observations.facilities.lco.make_request')
     def test_proposal_choices(self, mock_make_request):
         mock_response = Response()
         mock_response._content = str.encode(json.dumps({'proposals': [
@@ -193,10 +193,10 @@ class TestLCOBaseForm(TestCase):
         self.assertNotIn(('InactiveProposal', 'Inactive (InactiveProposal)'), proposal_choices)
 
 
-@patch('tom_observations.facilities.lco.LCOBaseObservationForm.proposal_choices')
-@patch('tom_observations.facilities.lco.LCOBaseObservationForm.filter_choices')
-@patch('tom_observations.facilities.lco.LCOBaseObservationForm.instrument_choices')
-@patch('tom_observations.facilities.lco.LCOBaseObservationForm.validate_at_facility')
+@patch('bhtom_base.tom_observations.facilities.lco.LCOBaseObservationForm.proposal_choices')
+@patch('bhtom_base.tom_observations.facilities.lco.LCOBaseObservationForm.filter_choices')
+@patch('bhtom_base.tom_observations.facilities.lco.LCOBaseObservationForm.instrument_choices')
+@patch('bhtom_base.tom_observations.facilities.lco.LCOBaseObservationForm.validate_at_facility')
 class TestLCOBaseObservationForm(TestCase):
 
     def setUp(self):
@@ -359,7 +359,7 @@ class TestLCOBaseObservationForm(TestCase):
         for key in ['target', 'instrument_configs', 'acquisition_config', 'guiding_config']:
             self.assertIn(key, configuration)
 
-    @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOBaseForm._get_instruments')
     def test_build_location(self, mock_get_instruments, mock_validate, mock_insts, mock_filters, mock_proposals):
         """Test _build_location method."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
@@ -375,9 +375,9 @@ class TestLCOBaseObservationForm(TestCase):
     def test_expand_cadence_request(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         pass
 
-    @patch('tom_observations.facilities.lco.LCOBaseObservationForm._build_location')
-    @patch('tom_observations.facilities.lco.LCOBaseObservationForm._build_configuration')
-    @patch('tom_observations.facilities.lco.make_request')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOBaseObservationForm._build_location')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOBaseObservationForm._build_configuration')
+    @patch('bhtom_base.tom_observations.facilities.lco.make_request')
     def test_observation_payload(self, mock_make_request, mock_build_configuration, mock_build_location, mock_validate,
                                  mock_insts, mock_filters, mock_proposals):
         """Test observation_payload method."""
@@ -433,7 +433,7 @@ class TestLCOBaseObservationForm(TestCase):
             self.assertDictEqual({'test': 'test_static_cadence'}, form.observation_payload())
 
 
-@patch('tom_observations.facilities.lco.LCOImagingObservationForm._get_instruments')
+@patch('bhtom_base.tom_observations.facilities.lco.LCOImagingObservationForm._get_instruments')
 class TestLCOImagingObservationForm(TestCase):
     def test_instrument_choices(self, mock_get_instruments):
         """Test LCOImagingObservationForm._instrument_choices."""
@@ -458,10 +458,10 @@ class TestLCOImagingObservationForm(TestCase):
         self.assertEqual(len(filter_choices), 13)
 
 
-@patch('tom_observations.facilities.lco.LCOMuscatImagingObservationForm.validate_at_facility')
-@patch('tom_observations.facilities.lco.LCOMuscatImagingObservationForm.filter_choices')
-@patch('tom_observations.facilities.lco.LCOMuscatImagingObservationForm.proposal_choices')
-@patch('tom_observations.facilities.lco.LCOMuscatImagingObservationForm._get_instruments')
+@patch('bhtom_base.tom_observations.facilities.lco.LCOMuscatImagingObservationForm.validate_at_facility')
+@patch('bhtom_base.tom_observations.facilities.lco.LCOMuscatImagingObservationForm.filter_choices')
+@patch('bhtom_base.tom_observations.facilities.lco.LCOMuscatImagingObservationForm.proposal_choices')
+@patch('bhtom_base.tom_observations.facilities.lco.LCOMuscatImagingObservationForm._get_instruments')
 class TestLCOMuscatImagingObservationForm(TestCase):
 
     def setUp(self):
@@ -547,7 +547,7 @@ class TestLCOMuscatImagingObservationForm(TestCase):
 
 
 class TestLCOSpectroscopyObservationForm(TestCase):
-    @patch('tom_observations.facilities.lco.LCOSpectroscopyObservationForm._get_instruments')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopyObservationForm._get_instruments')
     def test_instrument_choices(self, mock_get_instruments):
         """Test LCOSpectroscopyObservationForm._instrument_choices."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
@@ -557,7 +557,7 @@ class TestLCOSpectroscopyObservationForm(TestCase):
         self.assertNotIn(('0M4-SCICAM-SBIG', '0.4 meter SBIG'), inst_choices)
         self.assertEqual(len(inst_choices), 1)
 
-    @patch('tom_observations.facilities.lco.LCOSpectroscopyObservationForm._get_instruments')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopyObservationForm._get_instruments')
     def test_filter_choices(self, mock_get_instruments):
         """Test LCOSpectroscopyObservationForm._filter_choices."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
@@ -570,10 +570,10 @@ class TestLCOSpectroscopyObservationForm(TestCase):
             self.assertNotIn(not_expected, filter_choices)
         self.assertEqual(len(filter_choices), 5)
 
-    @patch('tom_observations.facilities.lco.LCOSpectroscopyObservationForm.proposal_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopyObservationForm.filter_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopyObservationForm.instrument_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopyObservationForm.validate_at_facility')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopyObservationForm.proposal_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopyObservationForm.filter_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopyObservationForm.instrument_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopyObservationForm.validate_at_facility')
     def test_build_instrument_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         mock_validate.return_value = []
         mock_insts.return_value = [(k, v['name']) for k, v in instrument_response.items() if 'SPECTRA' in v['type']]
@@ -635,7 +635,7 @@ class TestLCOPhotometricSequenceForm(TestCase):
         )
         self.proposal_choices = generate_lco_proposal_choices()
 
-    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm._get_instruments')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOPhotometricSequenceForm._get_instruments')
     def test_instrument_choices(self, mock_get_instruments):
         """Test LCOPhotometricSequenceForm._instrument_choices."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
@@ -645,10 +645,10 @@ class TestLCOPhotometricSequenceForm(TestCase):
         self.assertNotIn(('2M0-FLOYDS-SCICAM', '2.0 meter FLOYDS'), inst_choices)
         self.assertEqual(len(inst_choices), 1)
 
-    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.proposal_choices')
-    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.filter_choices')
-    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.instrument_choices')
-    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.validate_at_facility')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOPhotometricSequenceForm.proposal_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOPhotometricSequenceForm.filter_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOPhotometricSequenceForm.instrument_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOPhotometricSequenceForm.validate_at_facility')
     def test_build_instrument_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         mock_validate.return_value = []
         mock_insts.return_value = self.instrument_choices
@@ -662,10 +662,10 @@ class TestLCOPhotometricSequenceForm(TestCase):
         self.assertIn({'exposure_count': 1, 'exposure_time': 30.0, 'optical_elements': {'filter': 'U'}}, inst_config)
         self.assertIn({'exposure_count': 2, 'exposure_time': 60.0, 'optical_elements': {'filter': 'B'}}, inst_config)
 
-    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.proposal_choices')
-    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.filter_choices')
-    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.instrument_choices')
-    @patch('tom_observations.facilities.lco.LCOPhotometricSequenceForm.validate_at_facility')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOPhotometricSequenceForm.proposal_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOPhotometricSequenceForm.filter_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOPhotometricSequenceForm.instrument_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOPhotometricSequenceForm.validate_at_facility')
     def test_clean(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         mock_validate.return_value = []
         mock_insts.return_value = self.instrument_choices
@@ -706,7 +706,7 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
         ])
         self.proposal_choices = generate_lco_proposal_choices()
 
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm._get_instruments')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm._get_instruments')
     def test_instrument_choices(self, mock_get_instruments):
         """Test LCOSpectroscopicSequenceForm._instrument_choices."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
@@ -716,7 +716,7 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
         self.assertNotIn(('0M4-SCICAM-SBIG', '0.4 meter SBIG'), inst_choices)
         self.assertEqual(len(inst_choices), 1)
 
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm._get_instruments')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm._get_instruments')
     def test_filter_choices(self, mock_get_instruments):
         """Test LCOSpectroscopicSequenceForm._instrument_choices."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
@@ -729,10 +729,10 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
             self.assertNotIn(not_expected, filter_choices)
         self.assertEqual(len(filter_choices), 4)
 
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
     def test_build_instrument_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         mock_validate.return_value = []
         mock_insts.return_value = self.instrument_choices
@@ -747,10 +747,10 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
                       inst_config)
         self.assertNotIn('filter', inst_config[0]['optical_elements'])
 
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
     def test_build_acquisition_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         mock_validate.return_value = []
         mock_insts.return_value = self.instrument_choices
@@ -771,10 +771,10 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
             acquisition_config = form._build_acquisition_config()
             self.assertDictEqual({'mode': 'WCS'}, acquisition_config)
 
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
     def test_build_guiding_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         mock_validate.return_value = []
         mock_insts.return_value = self.instrument_choices
@@ -794,11 +794,11 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
                 guiding_config = form._build_guiding_config()
                 self.assertDictEqual(params[1], guiding_config)
 
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm._get_instruments')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm._get_instruments')
     def test_build_location(self, mock_get_instruments, mock_validate, mock_insts, mock_filters, mock_proposals):
         mock_get_instruments.return_value = generate_lco_instrument_choices()
         mock_validate.return_value = []
@@ -819,10 +819,10 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
                 location = form._build_location()
                 self.assertDictContainsSubset(params[1], location)
 
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.proposal_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.filter_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.instrument_choices')
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.validate_at_facility')
     def test_clean(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         mock_validate.return_value = []
         mock_insts.return_value = self.instrument_choices
@@ -855,7 +855,7 @@ class TestLCOFacility(TestCase):
     def setUp(self):
         self.lco = LCOFacility()
 
-    @patch('tom_observations.facilities.lco.make_request')
+    @patch('bhtom_base.tom_observations.facilities.lco.make_request')
     def test_get_requestgroup_id(self, mock_make_request):
         mock_response = Response()
         mock_response._content = str.encode(json.dumps({

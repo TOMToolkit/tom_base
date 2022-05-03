@@ -16,15 +16,15 @@ import numpy as np
 from specutils import Spectrum1D
 from unittest.mock import patch
 
-from tom_dataproducts.exceptions import InvalidFileFormatException
-from tom_dataproducts.forms import DataProductUploadForm
-from tom_dataproducts.models import DataProduct, is_fits_image_file
-from tom_dataproducts.processors.data_serializers import SpectrumSerializer
-from tom_dataproducts.processors.photometry_processor import PhotometryProcessor
-from tom_dataproducts.processors.spectroscopy_processor import SpectroscopyProcessor
-from tom_dataproducts.utils import create_image_dataproduct
-from tom_observations.tests.utils import FakeRoboticFacility
-from tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory
+from bhtom_base.tom_dataproducts.exceptions import InvalidFileFormatException
+from bhtom_base.tom_dataproducts.forms import DataProductUploadForm
+from bhtom_base.tom_dataproducts.models import DataProduct, is_fits_image_file
+from bhtom_base.tom_dataproducts.processors.data_serializers import SpectrumSerializer
+from bhtom_base.tom_dataproducts.processors.photometry_processor import PhotometryProcessor
+from bhtom_base.tom_dataproducts.processors.spectroscopy_processor import SpectroscopyProcessor
+from bhtom_base.tom_dataproducts.utils import create_image_dataproduct
+from bhtom_base.tom_observations.tests.utils import FakeRoboticFacility
+from bhtom_base.tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory
 
 
 def mock_fits2image(file1, file2, width, height):
@@ -39,9 +39,9 @@ def mock_is_fits_image_file(filename):
     return True
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.tom_observations.tests.utils.FakeRoboticFacility'],
                    TARGET_PERMISSIONS_ONLY=True)
-@patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
+@patch('bhtom_base.tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
 class Views(TestCase):
     def setUp(self):
         self.target = SiderealTargetFactory.create()
@@ -131,9 +131,9 @@ class Views(TestCase):
                 self.data_product.data = tabimg_file
                 self.assertTrue(is_fits_image_file(self.data_product.data.file))
 
-    @patch('tom_dataproducts.models.fits_to_jpg', mock_fits2image)
-    @patch('tom_dataproducts.models.find_fits_img_size', mock_find_fits_img_size)
-    @patch('tom_dataproducts.models.is_fits_image_file', mock_is_fits_image_file)
+    @patch('bhtom_base.tom_dataproducts.models.fits_to_jpg', mock_fits2image)
+    @patch('bhtom_base.tom_dataproducts.models.find_fits_img_size', mock_find_fits_img_size)
+    @patch('bhtom_base.tom_dataproducts.models.is_fits_image_file', mock_is_fits_image_file)
     def test_create_jpeg(self, dp_mock):
         products = DataProduct.objects.filter(data_product_type='image_file')
         self.assertEqual(products.count(), 0)
@@ -143,9 +143,9 @@ class Views(TestCase):
         self.assertEqual(products.count(), 1)
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.tom_observations.tests.utils.FakeRoboticFacility'],
                    TARGET_PERMISSIONS_ONLY=False)
-@patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
+@patch('bhtom_base.tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
 class TestViewsWithPermissions(TestCase):
     def setUp(self):
         self.target = SiderealTargetFactory.create()
@@ -186,7 +186,7 @@ class TestViewsWithPermissions(TestCase):
         response = self.client.get(reverse('tom_dataproducts:list'))
         self.assertNotContains(response, 'afile.fits')
 
-    @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+    @override_settings(TOM_FACILITY_CLASSES=['bhtom_base.tom_observations.tests.utils.FakeRoboticFacility'],
                        TARGET_PERMISSIONS_ONLY=False)
     def test_upload_data_extended_permissions(self, dp_mock):
         group = Group.objects.create(name='permitted')
@@ -223,13 +223,13 @@ class TestDataProductListView(TestCase):
         assign_perm('tom_targets.view_target', user, self.target)
         self.client.force_login(user)
 
-    @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
+    @patch('bhtom_base.tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
     def test_dataproduct_list(self, dp_mock):
         """Test that the data product list view renders correctly."""
         response = self.client.get(reverse('tom_dataproducts:list'))
         self.assertContains(response, 'afile.fits')
 
-    @patch('tom_dataproducts.models.is_fits_image_file')
+    @patch('bhtom_base.tom_dataproducts.models.is_fits_image_file')
     def test_dataproduct_list_no_thumbnail(self, mock_is_fits_image_file):
         """Test that a data product with a failed thumbnail creation does not raise an exception."""
         mock_is_fits_image_file.return_value = True
@@ -237,9 +237,9 @@ class TestDataProductListView(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.tom_observations.tests.utils.FakeRoboticFacility'],
                    TARGET_PERMISSIONS_ONLY=True)
-@patch('tom_dataproducts.views.run_data_processor')
+@patch('bhtom_base.tom_dataproducts.views.run_data_processor')
 class TestUploadDataProducts(TestCase):
     def setUp(self):
         self.target = SiderealTargetFactory.create()
@@ -401,7 +401,7 @@ class TestDataSerializer(TestCase):
             self.serializer.deserialize({'invalid_key': 'value'})
 
 
-@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.tom_observations.tests.utils.FakeRoboticFacility'])
 class TestDataProcessor(TestCase):
     def setUp(self):
         self.target = SiderealTargetFactory.create()
@@ -412,17 +412,17 @@ class TestDataProcessor(TestCase):
         self.photometry_data_processor = PhotometryProcessor()
         self.test_file = SimpleUploadedFile('afile.fits', b'somedata')
 
-    @patch('tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor._process_spectrum_from_fits',
+    @patch('bhtom_base.tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor._process_spectrum_from_fits',
            return_value=('', ''))
-    @patch('tom_dataproducts.processors.spectroscopy_processor.SpectrumSerializer.serialize', return_value={})
+    @patch('bhtom_base.tom_dataproducts.processors.spectroscopy_processor.SpectrumSerializer.serialize', return_value={})
     def test_process_spectroscopy_with_fits_file(self, serializer_mock, process_data_mock):
         self.data_product.data.save('spectrum.fits', self.test_file)
         self.spectrum_data_processor.process_data(self.data_product)
         process_data_mock.assert_called_with(self.data_product)
 
-    @patch('tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor._process_spectrum_from_plaintext',
+    @patch('bhtom_base.tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor._process_spectrum_from_plaintext',
            return_value=('', ''))
-    @patch('tom_dataproducts.processors.spectroscopy_processor.SpectrumSerializer.serialize', return_value={})
+    @patch('bhtom_base.tom_dataproducts.processors.spectroscopy_processor.SpectrumSerializer.serialize', return_value={})
     def test_process_spectroscopy_with_plaintext_file(self, serializer_mock, process_data_mock):
         self.data_product.data.save('spectrum.csv', self.test_file)
         self.spectrum_data_processor.process_data(self.data_product)
@@ -434,7 +434,7 @@ class TestDataProcessor(TestCase):
             self.spectrum_data_processor.process_data(self.data_product)
 
     def test_process_spectrum_from_fits(self):
-        with open('tom_dataproducts/tests/test_data/test_spectrum.fits', 'rb') as spectrum_file:
+        with open('bhtom_base/tom_dataproducts/tests/test_data/test_spectrum.fits', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.fits', spectrum_file)
             spectrum, _ = self.spectrum_data_processor._process_spectrum_from_fits(self.data_product)
             self.assertTrue(isinstance(spectrum, Spectrum1D))
@@ -442,14 +442,14 @@ class TestDataProcessor(TestCase):
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 6600.478789, places=5)
 
     def test_process_spectrum_from_plaintext(self):
-        with open('tom_dataproducts/tests/test_data/test_spectrum.csv', 'rb') as spectrum_file:
+        with open('bhtom_base/tom_dataproducts/tests/test_data/test_spectrum.csv', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.csv', spectrum_file)
             spectrum, _ = self.spectrum_data_processor._process_spectrum_from_plaintext(self.data_product)
             self.assertTrue(isinstance(spectrum, Spectrum1D))
             self.assertAlmostEqual(spectrum.flux.mean().value, 1.166619e-14, places=19)
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 3250.744489, places=5)
 
-    @patch('tom_dataproducts.processors.photometry_processor.PhotometryProcessor._process_photometry_from_plaintext')
+    @patch('bhtom_base.tom_dataproducts.processors.photometry_processor.PhotometryProcessor._process_photometry_from_plaintext')
     def test_process_photometry_with_plaintext_file(self, process_data_mock):
         self.data_product.data.save('lightcurve.csv', self.test_file)
         self.photometry_data_processor.process_data(self.data_product)
@@ -461,7 +461,7 @@ class TestDataProcessor(TestCase):
             self.photometry_data_processor.process_data(self.data_product)
 
     def test_process_photometry_from_plaintext(self):
-        with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
+        with open('bhtom_base/tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
             self.data_product.data.save('lightcurve.csv', lightcurve_file)
             lightcurve = self.photometry_data_processor._process_photometry_from_plaintext(self.data_product)
             self.assertTrue(isinstance(lightcurve, list))
@@ -477,13 +477,13 @@ class TestDataProductModel(TestCase):
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
 
-    @patch('tom_dataproducts.models.is_fits_image_file')
+    @patch('bhtom_base.tom_dataproducts.models.is_fits_image_file')
     def test_create_thumbnail(self, mock_is_fits_image_file):
         """Test that a failed thumbnail creation logs the correct message and does not break."""
         mock_is_fits_image_file.return_value = True
-        with self.assertLogs('tom_dataproducts.models', level='WARN') as logs:
+        with self.assertLogs('bhtom_base.tom_dataproducts.models', level='WARN') as logs:
             self.data_product.create_thumbnail()
-            expected = ('WARNING:tom_dataproducts.models:Unable to create thumbnail '
+            expected = ('WARNING:bhtom_base.tom_dataproducts.models:Unable to create thumbnail '
                         f'for {self.data_product}: No SIMPLE card found, this file does not appear'
                         ' to be a valid FITS file. If this is really a FITS file, try with '
                         'ignore_missing_simple=True')

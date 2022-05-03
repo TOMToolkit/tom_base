@@ -3,12 +3,12 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms
 from rest_framework import serializers
 
-from tom_common.serializers import GroupSerializer
-from tom_dataproducts.models import DataProductGroup, DataProduct, ReducedDatum
-from tom_observations.models import ObservationRecord
-from tom_observations.serializers import ObservationRecordFilteredPrimaryKeyRelatedField
-from tom_targets.models import Target
-from tom_targets.serializers import TargetFilteredPrimaryKeyRelatedField
+from bhtom_base.tom_common.serializers import GroupSerializer
+from bhtom_base.tom_dataproducts.models import DataProductGroup, DataProduct, ReducedDatum
+from bhtom_base.tom_observations.models import ObservationRecord
+from bhtom_base.tom_observations.serializers import ObservationRecordFilteredPrimaryKeyRelatedField
+from bhtom_base.tom_targets.models import Target
+from bhtom_base.tom_targets.serializers import TargetFilteredPrimaryKeyRelatedField
 
 
 class DataProductGroupSerializer(serializers.ModelSerializer):

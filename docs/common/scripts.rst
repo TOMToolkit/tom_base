@@ -50,7 +50,7 @@ create a target for M51 using the bare necessary information:
 
 .. code-block:: python
 
-    In [1]: from tom_targets.models import Target
+    In [1]: from bhtom_base.tom_targets.models import Target
        ...: t = Target.objects.create(name='m51', type='SIDEREAL', ra=123.3, dec=23.3)
        ...: print(t)
        ...:
@@ -120,8 +120,8 @@ Let's make some imports:
 .. code-block:: python
 
     In [16]:
-    from tom_targets.models import Target
-    from tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm
+    from bhtom_base.tom_targets.models import Target
+    from bhtom_base.tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm
 
 
 And since we are submitting to LCO, we will instantiate an LCO observation form:
@@ -166,7 +166,7 @@ And create records for them:
 
 .. code-block:: python
 
-    In [20]: from tom_observations.models import ObservationRecord
+    In [20]: from bhtom_base.tom_observations.models import ObservationRecord
     In [21]:
     for observation_id in observation_ids:
         record = ObservationRecord.objects.create(
@@ -192,7 +192,7 @@ It may be that we have some data we want to associate with our target. In that c
 
 .. code-block:: python
 
-    In [22]: from tom_dataproducts.models import DataProduct
+    In [22]: from bhtom_base.tom_dataproducts.models import DataProduct
     In [23]: from django.core.files import File
     In [24]: f = File(open('path/to/file.png'))
     In [25]:

@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class TomObservationsConfig(AppConfig):
-    name = 'tom_observations'
+    name = 'bhtom_base.tom_observations'

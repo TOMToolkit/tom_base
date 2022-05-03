@@ -1,18 +1,23 @@
-from datetime import datetime
 import logging
 import os
 import tempfile
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+from PIL import Image
+from astropy.time import Time
 
 from astropy.io import fits
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
-from django.core.exceptions import ValidationError
 from fits2image.conversions import fits_to_jpg
-from PIL import Image
 
-from tom_targets.models import Target
-from tom_observations.models import ObservationRecord
+from bhtom_base.tom_observations.models import ObservationRecord
+from bhtom_base.tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 
@@ -284,6 +289,8 @@ class ReducedDatum(models.Model):
 
     :param target: The ``Target`` with which this object is associated.
 
+    :param user: The ``User`` who added this reduced datum.
+
     :param data_product: The ``DataProduct`` with which this object is optionally associated.
 
     :param data_type: The type of data this datum represents. Default choices are the default values found in
@@ -298,44 +305,53 @@ class ReducedDatum(models.Model):
                             use of this field is the URL path to the alert that this datum came from.
     :type source_name: str
 
+    :param mjd: the MJD timestamp of this datum.
+    :type mjd: float
+
     :param timestamp: The timestamp of this datum.
     :type timestamp: datetime
 
-    :param value: The value of the datum. This is a dict, intended to store data with a variety of
-                  scopes. As an example, a photometry value might contain the following:
+    :param observer: The name of the observer or survey who took this datum.
+    :type observer: str
 
-                  ::
+    :param facility: The name of the facility this dataproduct was observed with.
+    :type facility: str
 
-                    {
-                      'magnitude': 18.5,
-                      'error': .5
-                    }
+    :param value: The value of the datum (e.g. magnitude, mag limit, flux, etc.)
+    :type value: float
 
-                  but could also contain a filter:
+    :param error: The value error of the datum (e.g. magnitude, flux, etc.)
+    :type error: float
 
-                  ::
+    :param filter: Filterband, but also wavelength for spectra etc.
+    :type filter: str
 
-                    {
-                      'magnitude': 18.5,
-                      'magnitude_error': .5,
-                      'filter': 'r'
-                    }
-    :type value: dict
+    :param extra_data: Additional value of the datum. This is a dict, intended to store data with a variety of scopes.
+                       For example, that could be HJD or a comment.
+    :type extra_data: dict
 
     """
 
-    target = models.ForeignKey(Target, null=False, on_delete=models.CASCADE)
-    data_product = models.ForeignKey(DataProduct, null=True, on_delete=models.CASCADE)
+    target = models.ForeignKey(Target, null=False, on_delete=models.CASCADE, db_index=True)
+    user = models.ForeignKey(User, null=True, default=None, on_delete=models.SET_NULL, db_index=True)
+    data_product = models.ForeignKey(DataProduct, null=True, on_delete=models.CASCADE, db_index=True)
     data_type = models.CharField(
         max_length=100,
         default=''
     )
     source_name = models.CharField(max_length=100, default='')
     source_location = models.CharField(max_length=200, default='')
+    mjd = models.FloatField(null=False, default=Time(datetime.utcnow(), scale='utc').mjd)
     timestamp = models.DateTimeField(null=False, blank=False, default=datetime.now, db_index=True)
-    value = models.JSONField(null=False, blank=False)
+    observer = models.CharField(null=True, max_length=100, default='')
+    facility = models.CharField(null=True, max_length=100, default='')
+    value = models.FloatField(null=False)
+    error = models.FloatField(null=True, default=0.)
+    filter = models.CharField(max_length=100, null=True, default=None)
+    extra_data = models.JSONField(null=True, blank=True)
 
     class Meta:
+        unique_together = (('target', 'data_type', 'mjd', 'value', 'filter'),)
         get_latest_by = ('timestamp',)
 
     def save(self, *args, **kwargs):
@@ -345,3 +361,18 @@ class ReducedDatum(models.Model):
         else:
             raise ValidationError('Not a valid DataProduct type.')
         return super().save()
+
+
+@dataclass(frozen=True)
+class DatumValue:
+    """
+    A helper class for data processor results
+    """
+    mjd: float
+    value: float
+    observer: Optional[str] = None
+    facility: Optional[str] = None
+    error: Optional[float] = None
+    filter: Optional[str] = None
+    data_type: Optional[str] = None
+    extra_data: Optional[Dict[str, Any]] = None

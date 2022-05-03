@@ -14,7 +14,7 @@ It’s fairly trivial to, for example, find a set of Targets by RA:
 
 .. code:: python
 
-   >>> from tom_targets.models import Target
+   >>> from bhtom_base.tom_targets.models import Target
    >>> Target.objects.filter(ra=356.58)
 
 However, this isn’t terribly helpful, as you need to know the exact
@@ -55,7 +55,7 @@ manner as well:
 
 .. code:: python
 
-   from tom_targets.models import TargetList
+   from bhtom_base.tom_targets.models import TargetList
    >>> Target.objects.all()
    <QuerySet [<Target: M51>, <Target: M31>]>
    >>> TargetList.objects.all()

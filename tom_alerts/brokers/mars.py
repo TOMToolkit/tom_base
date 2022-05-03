@@ -1,4 +1,8 @@
+from datetime import datetime
+from typing import Tuple, List
+
 import requests
+from django.db import transaction
 from requests.exceptions import HTTPError
 from urllib.parse import urlencode
 from dateutil.parser import parse
@@ -6,9 +10,9 @@ from django import forms
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from astropy.time import Time, TimezoneInfo
 
-from tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
-from tom_targets.models import Target
-from tom_dataproducts.models import ReducedDatum
+from bhtom_base.tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
+from bhtom_base.tom_targets.models import Target
+from bhtom_base.tom_dataproducts.models import ReducedDatum, DatumValue
 
 MARS_URL = 'https://mars.lco.global'
 filters = {1: 'g', 2: 'r', 3: 'i'}
@@ -225,6 +229,9 @@ class MARSBroker(GenericBroker):
             alert = self.fetch_alert(alert['lco_id'])
 
         candidates = [{'candidate': alert.get('candidate')}] + alert.get('prv_candidate')
+
+        data: List[Tuple[datetime, DatumValue]] = []
+
         for candidate in candidates:
             if all([key in candidate['candidate'] for key in ['jd', 'magpsf', 'fid', 'sigmapsf']]):
                 nondetection = False
@@ -233,22 +240,38 @@ class MARSBroker(GenericBroker):
             else:
                 continue
             jd = Time(candidate['candidate']['jd'], format='jd', scale='utc')
-            jd.to_datetime(timezone=TimezoneInfo())
-            value = {
-                'filter': filters[candidate['candidate']['fid']]
-            }
+
+            error = None
+
             if nondetection:
-                value['limit'] = candidate['candidate']['diffmaglim']
+                value = candidate['candidate']['diffmaglim']
+                data_type = 'photometry_nondetection'
             else:
-                value['magnitude'] = candidate['candidate']['magpsf']
-                value['error'] = candidate['candidate']['sigmapsf']
-            rd, _ = ReducedDatum.objects.get_or_create(
-                timestamp=jd.to_datetime(timezone=TimezoneInfo()),
-                value=value,
-                source_name=self.name,
-                source_location=alert['lco_id'],
-                data_type='photometry',
-                target=target)
+                value = candidate['candidate']['magpsf']
+                error = candidate['candidate']['sigmapsf']
+                data_type = 'photometry'
+
+            data.append((jd.to_datetime(timezone=TimezoneInfo()),
+                         DatumValue(mjd=jd.mjd,
+                                    value=value,
+                                    error=error,
+                                    data_type=data_type,
+                                    filter=filters[candidate['candidate']['fid']])))
+
+        data = list(set(data))
+        reduced_data = [ReducedDatum(target=target,
+                                     data_type=datum[1].data_type,
+                                     timestamp=datum[0],
+                                     mjd=datum[1].mjd,
+                                     value=datum[1].value,
+                                     source_name=self.name,
+                                     source_location=alert['lco_id'],
+                                     error=datum[1].error,
+                                     filter=datum[1].filter,
+                                     observer='ZTF',
+                                     facility='ZTF') for datum in data]
+        with transaction.atomic():
+            ReducedDatum.objects.bulk_create(reduced_data, ignore_conflicts=True)
 
     def to_target(self, alert):
         alert_copy = alert.copy()

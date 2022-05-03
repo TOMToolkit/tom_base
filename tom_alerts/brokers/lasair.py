@@ -3,8 +3,8 @@ import requests
 from crispy_forms.layout import Fieldset, HTML, Layout
 from django import forms
 
-from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
-from tom_targets.models import Target
+from bhtom_base.tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
+from bhtom_base.tom_targets.models import Target
 
 LASAIR_URL = 'https://lasair.roe.ac.uk'
 

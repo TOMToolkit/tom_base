@@ -1,6 +1,6 @@
 from crispy_forms.layout import Layout, HTML
 
-from tom_observations.facility import GenericObservationFacility, GenericObservationForm
+from bhtom_base.tom_observations.facility import GenericObservationFacility, GenericObservationForm
 
 
 class LTQueryForm(GenericObservationForm):

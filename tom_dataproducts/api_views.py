@@ -8,11 +8,11 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from tom_common.hooks import run_hook
-from tom_dataproducts.data_processor import run_data_processor
-from tom_dataproducts.filters import DataProductFilter
-from tom_dataproducts.models import DataProduct, ReducedDatum
-from tom_dataproducts.serializers import DataProductSerializer
+from bhtom_base.tom_common.hooks import run_hook
+from bhtom_base.tom_dataproducts.data_processor import run_data_processor
+from bhtom_base.tom_dataproducts.filters import DataProductFilter
+from bhtom_base.tom_dataproducts.models import DataProduct, ReducedDatum
+from bhtom_base.tom_dataproducts.serializers import DataProductSerializer
 
 
 class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, GenericViewSet, PermissionListMixin):

@@ -54,8 +54,8 @@ and the ``tom_alerts_dash`` ``GenericDashBroker`` interface.
 
 .. code-block:: python
 
-    from tom_alerts.brokers.mars import MARSBroker, MARSQueryForm, MARS_URL
-    from tom_alerts_dash.alerts import GenericDashBroker
+    from bhtom_base.tom_alerts.brokers.mars import MARSBroker, MARSQueryForm, MARS_URL
+    from bhtom_base.tom_alerts_dash.alerts import GenericDashBroker
 
 
     class MARSDashBroker(MARSBroker, GenericDashBroker):
@@ -219,7 +219,7 @@ exception simply prevents the callback from firing due to the incomplete data, b
 
     from dash.exceptions import PreventUpdate
 
-    from tom_alerts.brokers.mars import MARSBroker, MARSQueryForm
+    from bhtom_base.tom_alerts.brokers.mars import MARSBroker, MARSQueryForm
 
 
     class MARSDashBroker(MARSBroker, GenericDashBroker):
@@ -274,9 +274,9 @@ original alert with the key ``alert``. This is critical in order to enable creat
 
 .. code-block:: python
 
-    from tom_alerts.brokers.mars import MARSBroker, MARSQueryForm, MARS_URL
-    from tom_common.templatetags.tom_common_extras import truncate_number
-    from tom_targets.templatetags.targets_extras import deg_to_sexigesimal
+    from bhtom_base.tom_alerts.brokers.mars import MARSBroker, MARSQueryForm, MARS_URL
+    from bhtom_base.tom_common.templatetags.tom_common_extras import truncate_number
+    from bhtom_base.tom_targets.templatetags.targets_extras import deg_to_sexigesimal
 
 
     class MARSDashBroker(MARSBroker, GenericDashBroker):
@@ -309,7 +309,7 @@ that are currently rendered, so that they can be appended to and will not be ina
 
     import dash_bootstrap_components
 
-    from tom_alerts.brokers.mars import MARSQueryForm
+    from bhtom_base.tom_alerts.brokers.mars import MARSQueryForm
 
 
     class MARSDashBroker(MARSBroker, GenericDashBroker):

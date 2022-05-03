@@ -7,7 +7,7 @@ from django.db import models, transaction
 from django.forms.models import model_to_dict
 from django.urls import reverse
 
-from tom_common.hooks import run_hook
+from bhtom_base.tom_common.hooks import run_hook
 
 GLOBAL_TARGET_FIELDS = ['name', 'type']
 

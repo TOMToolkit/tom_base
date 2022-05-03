@@ -151,7 +151,7 @@ first is to create a class that implements ``DataProcessor``, like so:
 
 .. code:: python
 
-   from tom_dataproducts.data_processor import DataProcessor
+   from bhtom_base.tom_dataproducts.data_processor import DataProcessor
 
 
    class MyDataProcessor(DataProcessor):

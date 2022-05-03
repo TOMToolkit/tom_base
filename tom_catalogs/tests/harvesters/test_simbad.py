@@ -4,7 +4,7 @@ from astroquery.exceptions import TableParseError
 from astropy.table import Table
 from django.test import tag, TestCase
 
-from tom_catalogs.harvesters.simbad import SimbadHarvester
+from bhtom_base.tom_catalogs.harvesters.simbad import SimbadHarvester
 
 
 class TestSimbadHarvester(TestCase):

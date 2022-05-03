@@ -5,9 +5,9 @@ from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from tom_dataproducts.models import DataProduct, ReducedDatum
-from tom_observations.tests.factories import ObservingRecordFactory
-from tom_targets.tests.factories import SiderealTargetFactory
+from bhtom_base.tom_dataproducts.models import DataProduct, ReducedDatum
+from bhtom_base.tom_observations.tests.factories import ObservingRecordFactory
+from bhtom_base.tom_targets.tests.factories import SiderealTargetFactory
 
 
 class TestDataProductViewset(APITestCase):
@@ -33,7 +33,7 @@ class TestDataProductViewset(APITestCase):
         group.user_set.add(self.user)
         group.user_set.add(collaborator)
 
-        with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
+        with open('bhtom_base/tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
             self.dp_data['file'] = lightcurve_file
             response = self.client.post(reverse('api:dataproducts-list'), self.dp_data, format='multipart')
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -49,7 +49,7 @@ class TestDataProductViewset(APITestCase):
     def test_data_product_upload_for_observation(self):
         self.dp_data['observation_record'] = self.obsr.id
 
-        with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
+        with open('bhtom_base/tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
             self.dp_data['file'] = lightcurve_file
             response = self.client.post(reverse('api:dataproducts-list'), self.dp_data, format='multipart')
 
@@ -63,7 +63,7 @@ class TestDataProductViewset(APITestCase):
     def test_data_product_upload_invalid_type(self):
         self.dp_data['data_product_type'] = 'invalid'
 
-        with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
+        with open('bhtom_base/tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
             self.dp_data['file'] = lightcurve_file
             response = self.client.post(reverse('api:dataproducts-list'), self.dp_data, format='multipart')
 
@@ -72,7 +72,7 @@ class TestDataProductViewset(APITestCase):
     def test_data_product_upload_failed_processing(self):
         self.dp_data['data_product_type'] = 'spectroscopy'
 
-        with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
+        with open('bhtom_base/tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
             self.dp_data['file'] = lightcurve_file
             response = self.client.post(reverse('api:dataproducts-list'), self.dp_data, format='multipart')
 

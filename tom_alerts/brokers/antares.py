@@ -1,6 +1,6 @@
 from crispy_forms.layout import Layout, HTML
 
-from tom_alerts.alerts import GenericBroker, GenericQueryForm, GenericAlert
+from bhtom_base.tom_alerts.alerts import GenericBroker, GenericQueryForm, GenericAlert
 
 
 class ANTARESQueryForm(GenericQueryForm):

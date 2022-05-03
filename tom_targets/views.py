@@ -26,21 +26,21 @@ from django_filters.views import FilterView
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
 
-from tom_common.hints import add_hint
-from tom_common.hooks import run_hook
-from tom_common.mixins import Raise403PermissionRequiredMixin
-from tom_observations.observation_template import ApplyObservationTemplateForm
-from tom_observations.models import ObservationTemplate
-from tom_targets.filters import TargetFilter
-from tom_targets.forms import (
+from bhtom_base.tom_common.hints import add_hint
+from bhtom_base.tom_common.hooks import run_hook
+from bhtom_base.tom_common.mixins import Raise403PermissionRequiredMixin
+from bhtom_base.tom_observations.observation_template import ApplyObservationTemplateForm
+from bhtom_base.tom_observations.models import ObservationTemplate
+from bhtom_base.tom_targets.filters import TargetFilter
+from bhtom_base.tom_targets.forms import (
     SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset
 )
-from tom_targets.groups import (
+from bhtom_base.tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
     move_all_to_grouping, move_selected_to_grouping
 )
-from tom_targets.models import Target, TargetList
-from tom_targets.utils import import_targets, export_targets
+from bhtom_base.tom_targets.models import Target, TargetList
+from bhtom_base.tom_targets.utils import import_targets, export_targets
 
 logger = logging.getLogger(__name__)
 

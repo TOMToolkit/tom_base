@@ -156,7 +156,7 @@ take note of the imports in this step!
 
    from django import template
 
-   from tom_dataproducts.models import ReducedDatum
+   from bhtom_base.tom_dataproducts.models import ReducedDatum
 
 
    register = template.Library()

@@ -29,7 +29,7 @@ def collect_api_urls():
     In the `<your_app>/urls.py` it should look like this:
 
     ```python
-    from tom_common.api_router import SharedAPIRootRouter
+    from bhtom_base.tom_common.api_router import SharedAPIRootRouter
     router = SharedAPIRootRouter()
     router.register(r'your_app', YourAppModelViewSet)
     ```

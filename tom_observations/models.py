@@ -1,9 +1,9 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-from tom_targets.models import Target
-from tom_observations.facility import get_service_class
-from tom_common.hooks import run_hook
+from bhtom_base.tom_targets.models import Target
+from bhtom_base.tom_observations.facility import get_service_class
+from bhtom_base.tom_common.hooks import run_hook
 
 
 class ObservationRecord(models.Model):

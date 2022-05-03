@@ -6,8 +6,8 @@ from unittest.mock import patch
 from django.test import tag, TestCase
 from faker import Faker
 
-from tom_alerts.brokers.alerce import ALeRCEBroker, ALeRCEQueryForm
-from tom_targets.models import Target
+from bhtom_base.tom_alerts.brokers.alerce import ALeRCEBroker, ALeRCEQueryForm
+from bhtom_base.tom_targets.models import Target
 
 
 alerce_classifiers_response = [
@@ -75,7 +75,7 @@ class TestALeRCEBrokerForm(TestCase):
             'broker': 'ALeRCE'
         }
 
-    @patch('tom_alerts.brokers.alerce.cache')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.cache')
     def test_cone_search_validation(self, mock_cache):
         """Test cross-field validation for cone search filters."""
 
@@ -96,7 +96,7 @@ class TestALeRCEBrokerForm(TestCase):
         form = ALeRCEQueryForm(self.base_form_data)
         self.assertTrue(form.is_valid())
 
-    @patch('tom_alerts.brokers.alerce.cache')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.cache')
     def test_time_filters_validation(self, mock_cache):
         """Test validation for time filters."""
 
@@ -110,7 +110,7 @@ class TestALeRCEBrokerForm(TestCase):
                 form = ALeRCEQueryForm(parameters)
                 self.assertTrue(form.is_valid())
 
-    @patch('tom_alerts.brokers.alerce.cache.get')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.cache.get')
     def test_classifier_filters_validation(self, mock_cache_get):
         mock_cache_get.return_value = alerce_classifiers_response
 
@@ -137,8 +137,8 @@ class TestALeRCEBrokerForm(TestCase):
                 self.assertIn('Only one of either light curve or stamp classification may be used as a filter.',
                               form.errors['__all__'])
 
-    @patch('tom_alerts.brokers.alerce.cache.get')
-    @patch('tom_alerts.brokers.alerce.requests.get')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.cache.get')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.requests.get')
     def test_get_classifiers(self, mock_requests_get, mock_cache_get):
         mock_response = Response()
         mock_response._content = str.encode(json.dumps(alerce_classifiers_response))
@@ -159,7 +159,7 @@ class TestALeRCEBrokerForm(TestCase):
             classifiers = ALeRCEQueryForm._get_classifiers()
             mock_requests_get.assert_called_once()
 
-    @patch('tom_alerts.brokers.alerce.cache.get')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.cache.get')
     def test_get_light_curve_classifier_choices(self, mock_cache_get):
         mock_cache_get.return_value = alerce_classifiers_response
         lc_classifiers = ALeRCEQueryForm._get_light_curve_classifier_choices()
@@ -172,7 +172,7 @@ class TestALeRCEBrokerForm(TestCase):
         for classifier in expected_classifiers:
             self.assertIn(classifier, lc_classifiers)
 
-    @patch('tom_alerts.brokers.alerce.cache.get')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.cache.get')
     def test_get_stamp_classifier_choices(self, mock_cache_get):
         mock_cache_get.return_value = alerce_classifiers_response
         stamp_classifiers = ALeRCEQueryForm._get_stamp_classifier_choices()
@@ -241,9 +241,9 @@ class TestALeRCEBrokerClass(TestCase):
                     cleaned_classifier_parameters = self.broker._clean_classifier_parameters(parameters)
                     self.assertIn(expected, cleaned_classifier_parameters)
 
-    @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_classifier_parameters')
-    @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_date_parameters')
-    @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_coordinate_parameters')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.ALeRCEBroker._clean_classifier_parameters')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.ALeRCEBroker._clean_date_parameters')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.ALeRCEBroker._clean_coordinate_parameters')
     def test_clean_parameters(self, mock_coordinate, mock_date, mock_classifier):
         mock_coordinate.return_value = [('ra', 10), ('dec', 10), ('radius', 10)]
         mock_date.return_value = [('firstmjd', 57000), ('firstmjd', 58000), ('lastmjd', 58000), ('lastmjd', 59000)]
@@ -269,8 +269,8 @@ class TestALeRCEBrokerClass(TestCase):
         with self.subTest():
             self.assertIn(('page', 1), payload)
 
-    @patch('tom_alerts.brokers.alerce.requests.get')
-    @patch('tom_alerts.brokers.alerce.ALeRCEBroker._clean_parameters')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.requests.get')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.ALeRCEBroker._clean_parameters')
     def test_fetch_alerts(self, mock_clean_parameters, mock_requests_get):
         """Test fetch_alerts broker method."""
         first_mock_response_content = create_alerce_query_response(20, page=1)
@@ -303,7 +303,7 @@ class TestALeRCEBrokerClass(TestCase):
                 alerts.append(alert)
             self.assertEqual(20, len(alerts))
 
-    @patch('tom_alerts.brokers.alerce.requests.get')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.requests.get')
     def test_fetch_alert(self, mock_requests_post):
         """Test fetch_alert broker method."""
         alert = create_alerce_alert(1)
@@ -361,7 +361,7 @@ class TestALeRCEModuleCanary(TestCase):
             'broker': 'ALeRCE',
         }
 
-    @patch('tom_alerts.brokers.alerce.cache.get')
+    @patch('bhtom_base.tom_alerts.brokers.alerce.cache.get')
     def test_get_classifiers(self, mock_cache_get):
         mock_cache_get.return_value = None  # Ensure cache is not used
 

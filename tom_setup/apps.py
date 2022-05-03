@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class TomSetupConfig(AppConfig):
-    name = 'tom_setup'
+    name = 'bhtom_base.tom_setup'

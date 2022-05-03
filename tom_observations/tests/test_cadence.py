@@ -4,9 +4,9 @@ from datetime import datetime, timedelta
 from dateutil.parser import parse
 
 from .factories import ObservingRecordFactory, SiderealTargetFactory
-from tom_observations.models import ObservationGroup, DynamicCadence
-from tom_observations.cadences.resume_cadence_after_failure import ResumeCadenceAfterFailureStrategy
-from tom_observations.cadences.retry_failed_observations import RetryFailedObservationsStrategy
+from bhtom_base.tom_observations.models import ObservationGroup, DynamicCadence
+from bhtom_base.tom_observations.cadences.resume_cadence_after_failure import ResumeCadenceAfterFailureStrategy
+from bhtom_base.tom_observations.cadences.retry_failed_observations import RetryFailedObservationsStrategy
 
 
 mock_filters = {'1M0-SCICAM-SINISTRO': {
@@ -35,11 +35,11 @@ obs_params = {
     }
 
 
-@patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments', return_value=mock_filters)
-@patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices',
+@patch('bhtom_base.tom_observations.facilities.lco.LCOBaseForm._get_instruments', return_value=mock_filters)
+@patch('bhtom_base.tom_observations.facilities.lco.LCOBaseForm.proposal_choices',
        return_value=[('LCOSchedulerTest', 'LCOSchedulerTest')])
-@patch('tom_observations.facilities.lco.LCOFacility.submit_observation', return_value=[198132])
-@patch('tom_observations.facilities.lco.LCOFacility.validate_observation')
+@patch('bhtom_base.tom_observations.facilities.lco.LCOFacility.submit_observation', return_value=[198132])
+@patch('bhtom_base.tom_observations.facilities.lco.LCOFacility.validate_observation')
 class TestReactiveCadencing(TestCase):
     def setUp(self):
         target = SiderealTargetFactory.create()
@@ -74,7 +74,7 @@ class TestReactiveCadencing(TestCase):
             parse(new_records[0].parameters['start']) - timedelta(days=3)
         )
 
-    @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'CANCELED',
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'CANCELED',
            'scheduled_start': None, 'scheduled_end': None})
     def test_resume_when_failed_cadence_failed_obs(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
                                                    mock_proposal_choices, mock_get_insts):
@@ -90,7 +90,7 @@ class TestReactiveCadencing(TestCase):
             parse(new_records[0].parameters['start']).replace(second=0, microsecond=0)
         )
 
-    @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'COMPLETED',
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'COMPLETED',
            'scheduled_start': None, 'scheduled_end': None})
     def test_resume_when_failed_cadence_successful_obs(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
                                                        mock_proposal_choices, mock_get_insts):
@@ -107,7 +107,7 @@ class TestReactiveCadencing(TestCase):
             parse(new_records[0].parameters['start']).replace(second=0, microsecond=0) - timedelta(days=3)
         )
 
-    @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'COMPLETED',
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'COMPLETED',
            'scheduled_start': None, 'scheduled_end': None})
     def test_resume_when_failed_cadence_invalid_date(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
                                                      mock_proposal_choices, mock_get_insts):
@@ -127,7 +127,7 @@ class TestReactiveCadencing(TestCase):
             parse(new_records[0].parameters['start']).replace(second=0, microsecond=0)
         )
 
-    @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'COMPLETED',
+    @patch('bhtom_base.tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'COMPLETED',
            'scheduled_start': None, 'scheduled_end': None})
     def test_resume_when_failed_cadence_obs_invalid(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
                                                     mock_proposal_choices, mock_get_insts):
