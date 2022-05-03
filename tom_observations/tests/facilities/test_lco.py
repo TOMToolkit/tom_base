@@ -833,8 +833,8 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
         form = LCOSpectroscopicSequenceForm(self.valid_form_data)
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data['instrument_type'], '2M0-FLOYDS-SCICAM')
-        self.assertAlmostEqual(datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S'), form.cleaned_data['start'])
-        self.assertAlmostEqual(
+        self.assertEqual(datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S'), form.cleaned_data['start'])
+        self.assertEqual(
             datetime.strftime(
                 datetime.now() + timedelta(hours=form.cleaned_data['cadence_frequency']), '%Y-%m-%dT%H:%M:%S'
             ),
