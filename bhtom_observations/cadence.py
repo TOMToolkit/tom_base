@@ -7,8 +7,8 @@ from django.conf import settings
 
 
 DEFAULT_CADENCE_STRATEGIES = [
-    'bhtom_observations.cadences.retry_failed_observations.RetryFailedObservationsStrategy',
-    'bhtom_observations.cadences.resume_cadence_after_failure.ResumeCadenceAfterFailureStrategy'
+    'bhtom_base.bhtom_observations.cadences.retry_failed_observations.RetryFailedObservationsStrategy',
+    'bhtom_base.bhtom_observations.cadences.resume_cadence_after_failure.ResumeCadenceAfterFailureStrategy'
 ]
 
 

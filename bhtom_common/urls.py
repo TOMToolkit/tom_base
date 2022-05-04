@@ -33,12 +33,12 @@ router.register(r'groups', GroupViewSet, 'groups')
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='bhtom_common/index.html'), name='home'),
-    path('targets/', include('bhtom_targets.urls', namespace='targets')),
+    path('targets/', include('bhtom_base.bhtom_targets.urls', namespace='targets')),
     path('alerts/', include('bhtom_base.bhtom_alerts.urls', namespace='alerts')),
     path('comments/', include('django_comments.urls')),
-    path('catalogs/', include('bhtom_catalogs.urls')),
-    path('observations/', include('bhtom_observations.urls', namespace='observations')),
-    path('dataproducts/', include('bhtom_dataproducts.urls', namespace='dataproducts')),
+    path('catalogs/', include('bhtom_base.bhtom_catalogs.urls')),
+    path('observations/', include('bhtom_base.bhtom_observations.urls', namespace='observations')),
+    path('dataproducts/', include('bhtom_base.bhtom_dataproducts.urls', namespace='dataproducts')),
     path('users/', UserListView.as_view(), name='user-list'),
     path('users/<int:pk>/changepassword/', UserPasswordChangeView.as_view(), name='admin-user-change-password'),
     path('users/create/', UserCreateView.as_view(), name='user-create'),
