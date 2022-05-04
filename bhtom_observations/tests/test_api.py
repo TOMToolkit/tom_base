@@ -17,7 +17,7 @@ from bhtom_base.bhtom_targets.tests.factories import SiderealTargetFactory
 
 
 @override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility',
-                                         'bhtom_observations.tests.utils.FakeManualFacility'],
+                                         'bhtom_base.bhtom_observations.tests.utils.FakeManualFacility'],
                    TARGET_PERMISSIONS_ONLY=True)
 class TestObservationViewset(APITestCase):
     def setUp(self):
@@ -208,7 +208,7 @@ class TestObservationViewset(APITestCase):
 
 
 @override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility',
-                                         'bhtom_observations.tests.utils.FakeManualFacility'],
+                                         'bhtom_base.bhtom_observations.tests.utils.FakeManualFacility'],
                    TARGET_PERMISSIONS_ONLY=False)
 class TestObservationViewsetRowLevelPermissions(APITestCase):
     def setUp(self):

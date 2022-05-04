@@ -110,7 +110,7 @@ class TestObservationViews(TestCase):
 
 
 @override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility',
-                                         'bhtom_observations.tests.utils.FakeManualFacility'],
+                                         'bhtom_base.bhtom_observations.tests.utils.FakeManualFacility'],
                    TARGET_PERMISSIONS_ONLY=True)
 class TestObservationCreateView(TestCase):
     def setUp(self):
