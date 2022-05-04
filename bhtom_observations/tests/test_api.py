@@ -10,13 +10,13 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
-from bhtom_observations.api_views import ObservationRecordViewSet
-from bhtom_observations.models import ObservationGroup
-from bhtom_observations.tests.factories import ObservingRecordFactory
-from bhtom_targets.tests.factories import SiderealTargetFactory
+from bhtom_base.bhtom_observations.api_views import ObservationRecordViewSet
+from bhtom_base.bhtom_observations.models import ObservationGroup
+from bhtom_base.bhtom_observations.tests.factories import ObservingRecordFactory
+from bhtom_base.bhtom_targets.tests.factories import SiderealTargetFactory
 
 
-@override_settings(TOM_FACILITY_CLASSES=['bhtom_observations.tests.utils.FakeRoboticFacility',
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility',
                                          'bhtom_observations.tests.utils.FakeManualFacility'],
                    TARGET_PERMISSIONS_ONLY=True)
 class TestObservationViewset(APITestCase):
@@ -92,7 +92,7 @@ class TestObservationViewset(APITestCase):
                                     status_code=status.HTTP_400_BAD_REQUEST)
 
         with self.subTest('Test that a unexpected exception returns 400.'):
-            with patch('bhtom_observations.api_views.get_service_class') as mock_get_service_class:
+            with patch('bhtom_base.bhtom_observations.api_views.get_service_class') as mock_get_service_class:
                 mock_get_service_class.side_effect = Exception('An error occurred.')
                 response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
                 self.assertContains(response, 'An error occurred.', status_code=status.HTTP_400_BAD_REQUEST)
@@ -129,7 +129,7 @@ class TestObservationViewset(APITestCase):
             'ResumeCadenceAfterFailureStrategy with parameters {\'cadence_frequency\': 24}',
             response.json()[0].get('observation_groups', [])[0].get('dynamic_cadences', []))
 
-    @patch('bhtom_observations.tests.utils.FakeRoboticFacility.submit_observation')
+    @patch('bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility.submit_observation')
     def test_observation_multiple_records(self, mock_submit_observation):
         """Test observation API submit endpoint with multiple returned records."""
         mock_submit_observation.return_value = ['fakeid1', 'fakeid2']
@@ -190,7 +190,7 @@ class TestObservationViewset(APITestCase):
                                     'Observation submission successful, but failed to create a corresponding',
                                     status_code=status.HTTP_400_BAD_REQUEST)
 
-    @patch('bhtom_observations.tests.utils.FakeRoboticFacility.get_observation_status')
+    @patch('bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility.get_observation_status')
     def test_observation_cancel(self, mock_get_status):
         mock_get_status.return_value = {'state': 'CANCELED',
                                         'scheduled_start': timezone.now(),
@@ -207,7 +207,7 @@ class TestObservationViewset(APITestCase):
         self.assertContains(response, 'Not found.', status_code=status.HTTP_404_NOT_FOUND)
 
 
-@override_settings(TOM_FACILITY_CLASSES=['bhtom_observations.tests.utils.FakeRoboticFacility',
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility',
                                          'bhtom_observations.tests.utils.FakeManualFacility'],
                    TARGET_PERMISSIONS_ONLY=False)
 class TestObservationViewsetRowLevelPermissions(APITestCase):
@@ -272,7 +272,7 @@ class TestObservationViewsetRowLevelPermissions(APITestCase):
         response = self.client.get(reverse('api:observations-list'))
         self.assertEqual(response.json()['count'], 0)
 
-    @patch('bhtom_observations.tests.utils.FakeRoboticFacility.get_observation_status')
+    @patch('bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility.get_observation_status')
     def test_observation_cancel(self, mock_get_status):
         mock_get_status.return_value = {'state': 'CANCELED',
                                         'scheduled_start': timezone.now(),

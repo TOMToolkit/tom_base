@@ -7,10 +7,10 @@ from django.utils import timezone
 from django.test import override_settings, tag, TestCase
 from unittest import mock
 
-from bhtom_alerts.brokers.mars import MARSBroker
-from bhtom_alerts.alerts import get_service_class
-from bhtom_targets.models import Target
-from bhtom_dataproducts.models import ReducedDatum
+from bhtom_base.bhtom_alerts.brokers.mars import MARSBroker
+from bhtom_base.bhtom_alerts.alerts import get_service_class
+from bhtom_base.bhtom_targets.models import Target
+from bhtom_base.bhtom_dataproducts.models import ReducedDatum
 
 alert1 = {
     'candid': 617122521615015023,
@@ -29,7 +29,7 @@ alert1 = {
 }
 
 
-@override_settings(TOM_ALERT_CLASSES=['bhtom_alerts.brokers.mars.MARSBroker'])
+@override_settings(TOM_ALERT_CLASSES=['bhtom_base.bhtom_alerts.brokers.mars.MARSBroker'])
 class TestMARSBrokerClass(TestCase):
     """ Test the functionality of the MARSBroker, we modify the django settings to make sure
     it is the only installed broker.
@@ -56,7 +56,7 @@ class TestMARSBrokerClass(TestCase):
         with self.assertRaises(ImportError):
             get_service_class('LASAIR')
 
-    @mock.patch('bhtom_alerts.brokers.mars.requests.get')
+    @mock.patch('bhtom_base.bhtom_alerts.brokers.mars.requests.get')
     def test_fetch_alerts(self, mock_requests_get):
         mock_return_data = {
             "has_next": "false",
@@ -89,7 +89,7 @@ class TestMARSBrokerClass(TestCase):
         reduced_data = ReducedDatum.objects.filter(target=self.test_target, source_name='MARS')
         self.assertEqual(reduced_data.count(), 2)
 
-    @mock.patch('bhtom_alerts.brokers.mars.MARSBroker.fetch_alert')
+    @mock.patch('bhtom_base.bhtom_alerts.brokers.mars.MARSBroker.fetch_alert')
     def test_process_reduced_data_no_alert(self, mock_fetch_alert):
         self.test_data = self.test_data[1]
         self.test_data['prv_candidate'] = [

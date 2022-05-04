@@ -7,8 +7,8 @@ from crispy_forms.layout import Column, Fieldset, HTML, Layout, Row
 from django import forms
 from django.core.cache import cache
 
-from bhtom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
-from bhtom_targets.models import Target
+from bhtom_base.bhtom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
+from bhtom_base.bhtom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 

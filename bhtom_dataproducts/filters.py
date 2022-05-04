@@ -1,7 +1,7 @@
 import django_filters
 from django.db.models import Q
 
-from bhtom_dataproducts.models import DataProduct
+from bhtom_base.bhtom_dataproducts.models import DataProduct
 
 
 class DataProductFilter(django_filters.FilterSet):

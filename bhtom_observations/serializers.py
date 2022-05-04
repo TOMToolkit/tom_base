@@ -4,8 +4,8 @@ from django.db.models.query import QuerySet
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import serializers
 
-from bhtom_common.serializers import GroupSerializer
-from bhtom_observations.models import ObservationGroup, ObservationRecord
+from bhtom_base.bhtom_common.serializers import GroupSerializer
+from bhtom_base.bhtom_observations.models import ObservationGroup, ObservationRecord
 
 
 class ObservationGroupField(serializers.RelatedField):

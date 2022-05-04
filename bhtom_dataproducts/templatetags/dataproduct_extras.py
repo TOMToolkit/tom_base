@@ -14,11 +14,11 @@ from io import BytesIO
 from PIL import Image, ImageDraw
 import base64
 
-from bhtom_dataproducts.forms import DataProductUploadForm
-from bhtom_dataproducts.models import DataProduct, ReducedDatum
-from bhtom_dataproducts.processors.data_serializers import SpectrumSerializer
-from bhtom_observations.models import ObservationRecord
-from bhtom_targets.models import Target
+from bhtom_base.bhtom_dataproducts.forms import DataProductUploadForm
+from bhtom_base.bhtom_dataproducts.models import DataProduct, ReducedDatum
+from bhtom_base.bhtom_dataproducts.processors.data_serializers import SpectrumSerializer
+from bhtom_base.bhtom_observations.models import ObservationRecord
+from bhtom_base.bhtom_targets.models import Target
 
 register = template.Library()
 

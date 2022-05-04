@@ -59,9 +59,9 @@ to import the necessary modules.
 
 .. code-block:: python
 
-    from bhtom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
-    from bhtom_alerts.models import BrokerQuery
-    from bhtom_targets.models import Target
+    from bhtom_base.bhtom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
+    from bhtom_base.bhtom_alerts.models import BrokerQuery
+    from bhtom_base.bhtom_targets.models import Target
 
 In order to add custom forms to our broker module, we will also need Django's `forms` module, as well the Python module `requests`, which will allow us to fetch some remote broker test data.
 
@@ -200,7 +200,7 @@ broker classes, so we'll need to add ``MyBroker`` to that list.
 
     TOM_ALERT_CLASSES = [
         ...
-        'bhtom_alerts.brokers.mars.MARSBroker',
+        'bhtom_base.bhtom_alerts.brokers.mars.MARSBroker',
         'mytom.my_broker.MyBroker',
         ...
     ]

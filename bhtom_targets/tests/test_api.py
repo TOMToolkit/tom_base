@@ -6,9 +6,9 @@ from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from bhtom_targets.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
-from bhtom_targets.tests.factories import TargetExtraFactory, TargetNameFactory
-from bhtom_targets.models import Target, TargetExtra, TargetName
+from bhtom_base.bhtom_targets.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
+from bhtom_base.bhtom_targets.tests.factories import TargetExtraFactory, TargetNameFactory
+from bhtom_base.bhtom_targets.models import Target, TargetExtra, TargetName
 
 
 class TestTargetViewset(APITestCase):

@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
-from bhtom_observations import facility
-from bhtom_observations.models import ObservationRecord
+from bhtom_base.bhtom_observations import facility
+from bhtom_base.bhtom_observations.models import ObservationRecord
 
 
 class Command(BaseCommand):

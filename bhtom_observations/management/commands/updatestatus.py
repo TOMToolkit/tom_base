@@ -1,8 +1,8 @@
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 
-from bhtom_targets.models import Target
-from bhtom_observations import facility
+from bhtom_base.bhtom_targets.models import Target
+from bhtom_base.bhtom_observations import facility
 
 
 class Command(BaseCommand):

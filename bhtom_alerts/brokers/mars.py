@@ -10,9 +10,9 @@ from django import forms
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from astropy.time import Time, TimezoneInfo
 
-from bhtom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
-from bhtom_targets.models import Target
-from bhtom_dataproducts.models import ReducedDatum, DatumValue
+from bhtom_base.bhtom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
+from bhtom_base.bhtom_targets.models import Target
+from bhtom_base.bhtom_dataproducts.models import ReducedDatum, DatumValue
 
 MARS_URL = 'https://mars.lco.global'
 filters = {1: 'g', 2: 'r', 3: 'i'}

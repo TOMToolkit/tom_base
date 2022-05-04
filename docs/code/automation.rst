@@ -72,7 +72,7 @@ contains the logic for the command.
 .. code:: python
 
    from django.core.management.base import BaseCommand
-   from bhtom_observations.models import ObservationRecord
+   from bhtom_base.bhtom_observations.models import ObservationRecord
 
 
    class Command(BaseCommand):
@@ -99,7 +99,7 @@ So our final management command should look like this:
 .. code:: python
 
    from django.core.management.base import BaseCommand
-   from bhtom_observations.models import ObservationRecord
+   from bhtom_base.bhtom_observations.models import ObservationRecord
 
 
    class Command(BaseCommand):
@@ -162,8 +162,8 @@ And our final finished command looks as follows:
 .. code:: python
 
    from django.core.management.base import BaseCommand
-   from bhtom_observations.models import ObservationRecord
-   from bhtom_targets.models import Target
+   from bhtom_base.bhtom_observations.models import ObservationRecord
+   from bhtom_base.bhtom_targets.models import Target
 
 
    class Command(BaseCommand):

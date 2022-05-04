@@ -12,12 +12,12 @@ from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveMode
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from bhtom_observations.cadence import get_cadence_strategy
-from bhtom_observations.facility import get_service_class
-from bhtom_observations.models import DynamicCadence, ObservationGroup, ObservationRecord
-from bhtom_observations.serializers import ObservationRecordSerializer
-from bhtom_observations.views import ObservationFilter
-from bhtom_targets.models import Target
+from bhtom_base.bhtom_observations.cadence import get_cadence_strategy
+from bhtom_base.bhtom_observations.facility import get_service_class
+from bhtom_base.bhtom_observations.models import DynamicCadence, ObservationGroup, ObservationRecord
+from bhtom_base.bhtom_observations.serializers import ObservationRecordSerializer
+from bhtom_base.bhtom_observations.views import ObservationFilter
+from bhtom_base.bhtom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 

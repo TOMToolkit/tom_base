@@ -1,6 +1,6 @@
 import factory
 
-from bhtom_targets.models import Target, TargetName, TargetList, TargetExtra
+from bhtom_base.bhtom_targets.models import Target, TargetName, TargetList, TargetExtra
 
 
 class TargetExtraFactory(factory.django.DjangoModelFactory):

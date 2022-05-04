@@ -7,9 +7,9 @@ from dateutil.parser import parse
 from crispy_forms.layout import Div, HTML
 from astropy import units as u
 
-from bhtom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
-from bhtom_common.exceptions import ImproperCredentialsException
-from bhtom_targets.models import Target
+from bhtom_base.bhtom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
+from bhtom_base.bhtom_common.exceptions import ImproperCredentialsException
+from bhtom_base.bhtom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 

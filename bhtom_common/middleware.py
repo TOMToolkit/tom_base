@@ -4,7 +4,7 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django.urls import reverse
 
-from bhtom_common.exceptions import ImproperCredentialsException
+from bhtom_base.bhtom_common.exceptions import ImproperCredentialsException
 
 
 class ExternalServiceMiddleware:

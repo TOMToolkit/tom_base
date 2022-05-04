@@ -5,7 +5,7 @@ from .views import TargetDeleteView, TargetListView, TargetImportView, TargetExp
 from .views import TargetGroupingView, TargetGroupingDeleteView, TargetGroupingCreateView, TargetAddRemoveGroupingView
 
 from .api_views import TargetViewSet, TargetExtraViewSet, TargetNameViewSet
-from bhtom_common.api_router import SharedAPIRootRouter
+from bhtom_base.bhtom_common.api_router import SharedAPIRootRouter
 
 router = SharedAPIRootRouter()
 router.register(r'targets', TargetViewSet, 'targets')

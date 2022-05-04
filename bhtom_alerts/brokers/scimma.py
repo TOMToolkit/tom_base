@@ -1,6 +1,6 @@
 from crispy_forms.layout import Layout, HTML
 
-from bhtom_alerts.alerts import GenericBroker, GenericQueryForm, GenericAlert
+from bhtom_base.bhtom_alerts.alerts import GenericBroker, GenericQueryForm, GenericAlert
 
 
 class SCIMMAQueryForm(GenericQueryForm):

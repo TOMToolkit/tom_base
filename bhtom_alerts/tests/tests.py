@@ -8,12 +8,12 @@ from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from bhtom_alerts.alerts import GenericBroker, GenericQueryForm, GenericUpstreamSubmissionForm, GenericAlert
-from bhtom_alerts.alerts import get_service_class, get_service_classes
-from bhtom_alerts.exceptions import AlertSubmissionException
-from bhtom_alerts.models import BrokerQuery
-from bhtom_observations.models import ObservationRecord
-from bhtom_targets.models import Target
+from bhtom_base.bhtom_alerts.alerts import GenericBroker, GenericQueryForm, GenericUpstreamSubmissionForm, GenericAlert
+from bhtom_base.bhtom_alerts.alerts import get_service_class, get_service_classes
+from bhtom_base.bhtom_alerts.exceptions import AlertSubmissionException
+from bhtom_base.bhtom_alerts.models import BrokerQuery
+from bhtom_base.bhtom_observations.models import ObservationRecord
+from bhtom_base.bhtom_targets.models import Target
 
 # Test alert data. Normally this would come from a remote source.
 test_alerts = [
@@ -78,7 +78,7 @@ class TestBroker(GenericBroker):
         return super().submit_upstream_alert(target=target, observation_record=observation_record)
 
 
-@override_settings(TOM_ALERT_CLASSES=['bhtom_alerts.tests.tests.TestBroker'])
+@override_settings(TOM_ALERT_CLASSES=['bhtom_base.bhtom_alerts.tests.tests.TestBroker'])
 class TestBrokerClass(TestCase):
     """ Test the functionality of the TestBroker, we modify the django settings to make sure
     it is the only installed broker.
@@ -103,26 +103,26 @@ class TestBrokerClass(TestCase):
         self.assertEqual(target.name, test_alerts[0]['name'])
 
 
-@override_settings(TOM_ALERT_CLASSES=['bhtom_alerts.fake_broker'])
+@override_settings(TOM_ALERT_CLASSES=['bhtom_base.bhtom_alerts.fake_broker'])
 class TestAlertModule(TestCase):
     """Test that attempting to import a nonexistent broker module raises the appropriate errors.
     """
 
     def test_get_service_classes_import_error(self):
         with self.subTest('Invalid import returns an import error.'):
-            with patch('bhtom_alerts.alerts.import_module') as mock_import_module:
+            with patch('bhtom_base.bhtom_alerts.alerts.import_module') as mock_import_module:
                 mock_import_module.side_effect = ImportError()
-                with self.assertRaisesRegex(ImportError, 'Could not import bhtom_alerts.fake_broker.'):
+                with self.assertRaisesRegex(ImportError, 'Could not import bhtom_base.bhtom_alerts.fake_broker.'):
                     get_service_classes()
 
         with self.subTest('Invalid import returns an attribute error.'):
-            with patch('bhtom_alerts.alerts.import_module') as mock_import_module:
+            with patch('bhtom_base.bhtom_alerts.alerts.import_module') as mock_import_module:
                 mock_import_module.side_effect = AttributeError()
-                with self.assertRaisesRegex(ImportError, 'Could not import bhtom_alerts.fake_broker.'):
+                with self.assertRaisesRegex(ImportError, 'Could not import bhtom_base.bhtom_alerts.fake_broker.'):
                     get_service_classes()
 
 
-@override_settings(TOM_ALERT_CLASSES=['bhtom_alerts.tests.tests.TestBroker'])
+@override_settings(TOM_ALERT_CLASSES=['bhtom_base.bhtom_alerts.tests.tests.TestBroker'])
 class TestBrokerViews(TestCase):
     """ Test the views that use the broker classes
     """
@@ -256,7 +256,7 @@ class TestBrokerViews(TestCase):
         self.assertEqual(Target.objects.count(), 0)
         self.assertRedirects(response, reverse('bhtom_alerts:run', kwargs={'pk': query.id}))
 
-    @patch('bhtom_alerts.tests.tests.TestBroker.submit_upstream_alert')
+    @patch('bhtom_base.bhtom_alerts.tests.tests.TestBroker.submit_upstream_alert')
     def test_submit_alert_success(self, mock_submit_upstream_alert):
         """Test submission of an alert to a broker."""
 
@@ -283,7 +283,7 @@ class TestBrokerViews(TestCase):
                                     data={'observation_record': obsr.id, 'topic': 'test topic'})
         mock_submit_upstream_alert.assert_called_with(target=None, observation_record=obsr, topic='test topic')
 
-    @patch('bhtom_alerts.tests.tests.TestBroker.submit_upstream_alert')
+    @patch('bhtom_base.bhtom_alerts.tests.tests.TestBroker.submit_upstream_alert')
     def test_submit_alert_failure(self, mock_submit_upstream_alert):
         """Test that a failed alert submission returns an appropriate message."""
         target = Target.objects.create(name='test_target', ra=1, dec=2)
@@ -294,7 +294,7 @@ class TestBrokerViews(TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST. See logs for details.')
 
-    @patch('bhtom_alerts.tests.tests.TestBroker.submit_upstream_alert')
+    @patch('bhtom_base.bhtom_alerts.tests.tests.TestBroker.submit_upstream_alert')
     def test_submit_alert_exception(self, mock_submit_upstream_alert):
         """Test that an alert submission returns an appropriate message when alert submission raises an exception."""
         mock_submit_upstream_alert.side_effect = AlertSubmissionException()

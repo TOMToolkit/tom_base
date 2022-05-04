@@ -1,4 +1,4 @@
-from bhtom_base.settings import *  # noqa
+from bhtom_base.bhtom_base.settings import *  # noqa
 
 DATABASES = {
    'default': {

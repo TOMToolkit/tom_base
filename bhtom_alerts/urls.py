@@ -1,7 +1,7 @@
 from django.urls import path
 
-from bhtom_alerts.views import BrokerQueryCreateView, BrokerQueryListView, BrokerQueryUpdateView, BrokerQueryDeleteView
-from bhtom_alerts.views import CreateTargetFromAlertView, RunQueryView, SubmitAlertUpstreamView
+from bhtom_base.bhtom_alerts.views import BrokerQueryCreateView, BrokerQueryListView, BrokerQueryUpdateView, BrokerQueryDeleteView
+from bhtom_base.bhtom_alerts.views import CreateTargetFromAlertView, RunQueryView, SubmitAlertUpstreamView
 
 app_name = 'bhtom_alerts'
 

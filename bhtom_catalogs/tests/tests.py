@@ -2,7 +2,7 @@ from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 
-from bhtom_catalogs.harvester import AbstractHarvester, get_service_classes, MissingDataException
+from bhtom_base.bhtom_catalogs.harvester import AbstractHarvester, get_service_classes, MissingDataException
 
 
 class TestHarvester(AbstractHarvester):
@@ -22,13 +22,13 @@ class TestHarvester(AbstractHarvester):
         return target
 
 
-@override_settings(TOM_HARVESTER_CLASSES=['bhtom_catalogs.tests.tests.TestHarvester'])
+@override_settings(TOM_HARVESTER_CLASSES=['bhtom_base.bhtom_catalogs.tests.tests.TestHarvester'])
 class TestHarvesterClass(TestCase):
     def test_get_broker_class(self):
         self.assertIn(TestHarvester, get_service_classes().values())
 
 
-@override_settings(TOM_HARVESTER_CLASSES=['bhtom_catalogs.tests.tests.TestHarvester'])
+@override_settings(TOM_HARVESTER_CLASSES=['bhtom_base.bhtom_catalogs.tests.tests.TestHarvester'])
 class TestHarvesterViews(TestCase):
     def setUp(self):
         user = User.objects.create_user(username='test', password='test')

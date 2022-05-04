@@ -8,12 +8,12 @@ from guardian.shortcuts import get_objects_for_user
 from plotly import offline
 import plotly.graph_objs as go
 
-from bhtom_observations.forms import AddExistingObservationForm, UpdateObservationId
-from bhtom_observations.models import ObservationRecord
-from bhtom_observations.facility import get_service_class, get_service_classes
-from bhtom_observations.observation_template import ApplyObservationTemplateForm
-from bhtom_observations.utils import get_sidereal_visibility
-from bhtom_targets.models import Target
+from bhtom_base.bhtom_observations.forms import AddExistingObservationForm, UpdateObservationId
+from bhtom_base.bhtom_observations.models import ObservationRecord
+from bhtom_base.bhtom_observations.facility import get_service_class, get_service_classes
+from bhtom_base.bhtom_observations.observation_template import ApplyObservationTemplateForm
+from bhtom_base.bhtom_observations.utils import get_sidereal_visibility
+from bhtom_base.bhtom_targets.models import Target
 
 
 register = template.Library()

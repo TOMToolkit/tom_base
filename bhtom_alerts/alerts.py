@@ -10,20 +10,20 @@ from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit
 
-from bhtom_alerts.models import BrokerQuery
-from bhtom_observations.models import ObservationRecord
-from bhtom_targets.models import Target
+from bhtom_base.bhtom_alerts.models import BrokerQuery
+from bhtom_base.bhtom_observations.models import ObservationRecord
+from bhtom_base.bhtom_targets.models import Target
 
 
 DEFAULT_ALERT_CLASSES = [
-    'bhtom_alerts.brokers.mars.MARSBroker',
-    'bhtom_alerts.brokers.lasair.LasairBroker',
-    'bhtom_alerts.brokers.scout.ScoutBroker',
-    'bhtom_alerts.brokers.alerce.ALeRCEBroker',
-    'bhtom_alerts.brokers.antares.ANTARESBroker',
-    'bhtom_alerts.brokers.gaia.GaiaBroker',
-    'bhtom_alerts.brokers.scimma.SCIMMABroker',
-    'bhtom_alerts.brokers.fink.FinkBroker',
+    'bhtom_base.bhtom_alerts.brokers.mars.MARSBroker',
+    'bhtom_base.bhtom_alerts.brokers.lasair.LasairBroker',
+    'bhtom_base.bhtom_alerts.brokers.scout.ScoutBroker',
+    'bhtom_base.bhtom_alerts.brokers.alerce.ALeRCEBroker',
+    'bhtom_base.bhtom_alerts.brokers.antares.ANTARESBroker',
+    'bhtom_base.bhtom_alerts.brokers.gaia.GaiaBroker',
+    'bhtom_base.bhtom_alerts.brokers.scimma.SCIMMABroker',
+    'bhtom_base.bhtom_alerts.brokers.fink.FinkBroker',
 ]
 
 

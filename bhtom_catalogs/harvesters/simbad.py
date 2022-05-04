@@ -1,4 +1,4 @@
-from bhtom_catalogs.harvester import AbstractHarvester
+from bhtom_base.bhtom_catalogs.harvester import AbstractHarvester
 
 from astroquery.simbad import Simbad
 from astroquery.exceptions import TableParseError

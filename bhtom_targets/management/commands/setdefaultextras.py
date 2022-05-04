@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 
-from bhtom_targets.models import Target, TargetExtra
+from bhtom_base.bhtom_targets.models import Target, TargetExtra
 
 
 class Command(BaseCommand):

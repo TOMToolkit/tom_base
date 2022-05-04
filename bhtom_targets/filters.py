@@ -2,8 +2,8 @@ from django.conf import settings
 from django.db.models import Q
 import django_filters
 
-from bhtom_targets.models import Target, TargetList
-from bhtom_targets.utils import cone_search_filter
+from bhtom_base.bhtom_targets.models import Target, TargetList
+from bhtom_base.bhtom_targets.utils import cone_search_filter
 
 
 def filter_for_field(field):

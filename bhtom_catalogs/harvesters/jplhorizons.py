@@ -1,6 +1,6 @@
 from astroquery.jplhorizons import Horizons
 
-from bhtom_catalogs.harvester import AbstractHarvester
+from bhtom_base.bhtom_catalogs.harvester import AbstractHarvester
 
 
 class JPLHorizonsHarvester(AbstractHarvester):

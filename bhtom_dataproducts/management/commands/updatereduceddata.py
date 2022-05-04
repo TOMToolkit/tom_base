@@ -2,9 +2,9 @@ from requests.exceptions import HTTPError
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 
-from bhtom_alerts import alerts
-from bhtom_targets.models import Target
-from bhtom_dataproducts.models import ReducedDatum
+from bhtom_base.bhtom_alerts. import alerts
+from bhtom_base.bhtom_targets.models import Target
+from bhtom_base.bhtom_dataproducts.models import ReducedDatum
 
 
 class Command(BaseCommand):

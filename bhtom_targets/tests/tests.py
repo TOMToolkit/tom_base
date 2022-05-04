@@ -8,8 +8,8 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory, TargetNameFactory
-from bhtom_targets.models import Target, TargetExtra, TargetList, TargetName
-from bhtom_targets.utils import import_targets
+from bhtom_base.bhtom_targets.models import Target, TargetExtra, TargetList, TargetName
+from bhtom_base.bhtom_targets.utils import import_targets
 from guardian.shortcuts import assign_perm
 
 

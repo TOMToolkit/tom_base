@@ -10,8 +10,8 @@ from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 
-from bhtom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm, GroupForm
-from bhtom_common.mixins import SuperuserRequiredMixin
+from bhtom_base.bhtom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm, GroupForm
+from bhtom_base.bhtom_common.mixins import SuperuserRequiredMixin
 
 
 class GroupCreateView(SuperuserRequiredMixin, CreateView):

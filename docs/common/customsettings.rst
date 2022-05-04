@@ -196,12 +196,12 @@ Default:
 .. code-block::
 
    [
-       'bhtom_alerts.brokers.mars.MARSBroker',
-       'bhtom_alerts.brokers.lasair.LasairBroker',
-       'bhtom_alerts.brokers.scout.ScoutBroker',
-       'bhtom_alerts.brokers.tns.TNSBroker',
-       'bhtom_alerts.brokers.antares.ANTARESBroker',
-       'bhtom_alerts.brokers.gaia.GaiaBroker'
+       'bhtom_base.bhtom_alerts.brokers.mars.MARSBroker',
+       'bhtom_base.bhtom_alerts.brokers.lasair.LasairBroker',
+       'bhtom_base.bhtom_alerts.brokers.scout.ScoutBroker',
+       'bhtom_base.bhtom_alerts.brokers.tns.TNSBroker',
+       'bhtom_base.bhtom_alerts.brokers.antares.ANTARESBroker',
+       'bhtom_base.bhtom_alerts.brokers.gaia.GaiaBroker'
    ]
 
 A list of tom alert classes to make available to your TOM. If you have

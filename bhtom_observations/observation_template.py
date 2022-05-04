@@ -2,9 +2,9 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit
 from django import forms
 
-from bhtom_observations.models import ObservationTemplate
-from bhtom_observations.cadence import get_cadence_strategies
-from bhtom_targets.models import Target
+from bhtom_base.bhtom_observations.models import ObservationTemplate
+from bhtom_base.bhtom_observations.cadence import get_cadence_strategies
+from bhtom_base.bhtom_targets.models import Target
 
 
 class GenericTemplateForm(forms.Form):

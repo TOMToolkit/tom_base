@@ -6,8 +6,8 @@ from astropy import units as u
 from astropy.coordinates import Angle
 from crispy_forms.layout import HTML, Layout
 
-from bhtom_alerts.alerts import GenericAlert, GenericQueryForm, GenericBroker
-from bhtom_targets.models import Target
+from bhtom_base.bhtom_alerts.alerts import GenericAlert, GenericQueryForm, GenericBroker
+from bhtom_base.bhtom_targets.models import Target
 
 SCOUT_URL = 'https://ssd-api.jpl.nasa.gov/scout.api'
 

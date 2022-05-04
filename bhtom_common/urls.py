@@ -22,9 +22,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.authtoken import views
 
-from bhtom_common.api_views import GroupViewSet
-from bhtom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
-from bhtom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
+from bhtom_base.bhtom_common.api_views import GroupViewSet
+from bhtom_base.bhtom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
+from bhtom_base.bhtom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
 
 from .api_router import collect_api_urls, SharedAPIRootRouter  # DRF routers are setup in each INSTALL_APPS url.py
 
@@ -34,7 +34,7 @@ router.register(r'groups', GroupViewSet, 'groups')
 urlpatterns = [
     path('', TemplateView.as_view(template_name='bhtom_common/index.html'), name='home'),
     path('targets/', include('bhtom_targets.urls', namespace='targets')),
-    path('alerts/', include('bhtom_alerts.urls', namespace='alerts')),
+    path('alerts/', include('bhtom_base.bhtom_alerts.urls', namespace='alerts')),
     path('comments/', include('django_comments.urls')),
     path('catalogs/', include('bhtom_catalogs.urls')),
     path('observations/', include('bhtom_observations.urls', namespace='observations')),

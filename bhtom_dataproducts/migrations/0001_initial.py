@@ -4,7 +4,7 @@ import datetime
 
 from django.db import migrations, models
 import django.db.models.deletion
-import bhtom_dataproducts.models
+import bhtom_base.bhtom_dataproducts.models
 
 
 class Migration(migrations.Migration):
@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('product_id', models.CharField(max_length=255, null=True, unique=True)),
-                ('data', models.FileField(default=None, null=True, upload_to=bhtom_dataproducts.models.data_product_path)),
+                ('data', models.FileField(default=None, null=True, upload_to=bhtom_base.bhtom_dataproducts.models.data_product_path)),
                 ('extra_data', models.TextField(blank=True, default='')),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('modified', models.DateTimeField(auto_now=True)),

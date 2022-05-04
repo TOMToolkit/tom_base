@@ -4,9 +4,9 @@ from guardian.shortcuts import get_objects_for_user
 from rest_framework.mixins import DestroyModelMixin, RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
-from bhtom_targets.filters import TargetFilter
-from bhtom_targets.models import TargetExtra, TargetName
-from bhtom_targets.serializers import TargetSerializer, TargetExtraSerializer, TargetNameSerializer
+from bhtom_base.bhtom_targets.filters import TargetFilter
+from bhtom_base.bhtom_targets.models import TargetExtra, TargetName
+from bhtom_base.bhtom_targets.serializers import TargetSerializer, TargetExtraSerializer, TargetNameSerializer
 
 
 permissions_map = {  # TODO: Use the built-in DRF mapping or just switch to DRF entirely.

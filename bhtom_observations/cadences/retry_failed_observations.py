@@ -1,9 +1,9 @@
 from datetime import timedelta
 from dateutil.parser import parse
 
-from bhtom_observations.cadence import BaseCadenceForm, CadenceStrategy
-from bhtom_observations.models import ObservationRecord
-from bhtom_observations.facility import get_service_class
+from bhtom_base.bhtom_observations.cadence import BaseCadenceForm, CadenceStrategy
+from bhtom_base.bhtom_observations.models import ObservationRecord
+from bhtom_base.bhtom_observations.facility import get_service_class
 
 
 class RetryFailedObservationsForm(BaseCadenceForm):

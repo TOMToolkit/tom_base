@@ -70,7 +70,7 @@ a target:
 
     >>> from django.contrib.auth.models import Group, User
     >>> from guardian.shortcuts import assign_perm
-    >>> from bhtom_targets.models import Target
+    >>> from bhtom_base.bhtom_targets.models import Target
     >>> user = User.objects.filter(username='jaire_alexander').first()
     >>> groups = user.groups.all()
     >>> targets = Target.objects.all()

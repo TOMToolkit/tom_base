@@ -4,8 +4,8 @@ from requests import Response
 
 from django.test import TestCase
 
-from bhtom_common.exceptions import ImproperCredentialsException
-from bhtom_observations.facilities.gemini import make_request
+from bhtom_base.bhtom_common.exceptions import ImproperCredentialsException
+from bhtom_base.bhtom_observations.facilities.gemini import make_request
 
 
 class TestMakeRequest(TestCase):
@@ -14,7 +14,7 @@ class TestMakeRequest(TestCase):
     Tests make_request function of the Gemini facility, modeled after test_lco
     '''
 
-    @patch('bhtom_observations.facilities.gemini.requests.request')
+    @patch('bhtom_base.bhtom_observations.facilities.gemini.requests.request')
     def test_make_request(self, mock_request):
         '''
         Response object contains server's response to HTTP request

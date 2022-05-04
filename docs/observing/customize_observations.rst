@@ -35,7 +35,7 @@ Now add some code to this file to create a new observation module:
 .. code:: python
 
    # lcomultifilter.py
-   from bhtom_observations.facilities.lco import LCOFacility
+   from bhtom_base.bhtom_observations.facilities.lco import LCOFacility
 
 
    class LCOMultiFilterFacility(LCOFacility):
@@ -94,7 +94,7 @@ new import and create a new class that will become the new form:
 .. code:: python
 
    # lcomultifilter.py
-   from bhtom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm, filter_choices
+   from bhtom_base.bhtom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm, filter_choices
    from django import forms
 
 
@@ -144,7 +144,7 @@ like this:
 .. code:: python
 
    # lcomultifilter.py
-   from bhtom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm, filter_choices
+   from bhtom_base.bhtom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm, filter_choices
    from django import forms
    from crispy_forms.layout import Column, Div, Row
 
@@ -221,7 +221,7 @@ suit the needs of our ``LCOMultiFilter`` class:
 .. code:: python
 
     #lcomultifilter.py
-    from bhtom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm
+    from bhtom_base.bhtom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm
     from django import forms
     from crispy_forms.layout import Column, Div, Row
 

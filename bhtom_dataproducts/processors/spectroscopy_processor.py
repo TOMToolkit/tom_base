@@ -9,11 +9,11 @@ from astropy.time import Time
 from astropy.wcs import WCS
 from specutils import Spectrum1D
 
-from bhtom_dataproducts.data_processor import DataProcessor
-from bhtom_dataproducts.exceptions import InvalidFileFormatException
-from bhtom_dataproducts.processors.data_serializers import SpectrumSerializer
-from bhtom_observations.facility import get_service_class, get_service_classes
-from bhtom_dataproducts.models import DatumValue
+from bhtom_base.bhtom_dataproducts.data_processor import DataProcessor
+from bhtom_base.bhtom_dataproducts.exceptions import InvalidFileFormatException
+from bhtom_base.bhtom_dataproducts.processors.data_serializers import SpectrumSerializer
+from bhtom_base.bhtom_observations.facility import get_service_class, get_service_classes
+from bhtom_base.bhtom_dataproducts.models import DatumValue
 from typing import List, Tuple
 from datetime import datetime
 

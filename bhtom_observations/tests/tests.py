@@ -13,14 +13,14 @@ from astropy.coordinates import get_sun, SkyCoord
 from astropy.time import Time
 
 from .factories import ObservingRecordFactory, ObservationTemplateFactory, SiderealTargetFactory, TargetNameFactory
-from bhtom_observations.utils import get_astroplan_sun_and_time, get_sidereal_visibility
-from bhtom_observations.tests.utils import FakeRoboticFacility
-from bhtom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate
-from bhtom_targets.models import Target
+from bhtom_base.bhtom_observations.utils import get_astroplan_sun_and_time, get_sidereal_visibility
+from bhtom_base.bhtom_observations.tests.utils import FakeRoboticFacility
+from bhtom_base.bhtom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate
+from bhtom_base.bhtom_targets.models import Target
 from guardian.shortcuts import assign_perm
 
 
-@override_settings(TOM_FACILITY_CLASSES=['bhtom_observations.tests.utils.FakeRoboticFacility'],
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility'],
                    TARGET_PERMISSIONS_ONLY=True)
 class TestObservationViews(TestCase):
     def setUp(self):
@@ -109,7 +109,7 @@ class TestObservationViews(TestCase):
         self.assertNotIn(self.observation_record, obs_group.observation_records.all())
 
 
-@override_settings(TOM_FACILITY_CLASSES=['bhtom_observations.tests.utils.FakeRoboticFacility',
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility',
                                          'bhtom_observations.tests.utils.FakeManualFacility'],
                    TARGET_PERMISSIONS_ONLY=True)
 class TestObservationCreateView(TestCase):
@@ -168,7 +168,7 @@ class TestObservationCreateView(TestCase):
         self.assertEqual(ObservationRecord.objects.filter(observation_id='fakeid').first().user, self.user)
 
 
-@override_settings(TOM_FACILITY_CLASSES=['bhtom_observations.tests.utils.FakeRoboticFacility'],
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility'],
                    TARGET_PERMISSIONS_ONLY=True)
 class TestObservationCancelView(TestCase):
     def setUp(self):
@@ -182,7 +182,7 @@ class TestObservationCancelView(TestCase):
         self.user = User.objects.create_user(username='vincent_adultman', password='important')
         self.client.force_login(self.user)
 
-    @mock.patch('bhtom_observations.tests.utils.FakeRoboticFacility.get_observation_status')
+    @mock.patch('bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility.get_observation_status')
     def test_cancel_observation(self, mock_get_status):
         mock_get_status.return_value = {'state': 'CANCELED',
                                         'scheduled_start': datetime.now(),
@@ -194,7 +194,7 @@ class TestObservationCancelView(TestCase):
         self.observation_record.refresh_from_db()
         self.assertEqual(self.observation_record.status, 'CANCELED')
 
-    @mock.patch('bhtom_observations.tests.utils.FakeRoboticFacility.cancel_observation')
+    @mock.patch('bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility.cancel_observation')
     def test_cancel_observation_failure(self, mock_cancel_observation):
         mock_cancel_observation.return_value = False
         response = self.client.get(reverse('bhtom_observations:cancel', kwargs={'pk': self.observation_record.id}))
@@ -202,7 +202,7 @@ class TestObservationCancelView(TestCase):
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(messages[0][0], 'Unable to cancel observation.')
 
-    @mock.patch('bhtom_observations.tests.utils.FakeRoboticFacility.cancel_observation')
+    @mock.patch('bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility.cancel_observation')
     def test_cancel_observation_exception(self, mock_cancel_observation):
         mock_cancel_observation.side_effect = ValidationError('mock error')
         response = self.client.get(reverse('bhtom_observations:cancel', kwargs={'pk': self.observation_record.id}))
@@ -211,7 +211,7 @@ class TestObservationCancelView(TestCase):
         self.assertEqual(messages[0][0], 'Unable to cancel observation: [\'mock error\']')
 
 
-@override_settings(TOM_FACILITY_CLASSES=['bhtom_observations.tests.utils.FakeRoboticFacility'],
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility'],
                    TARGET_PERMISSIONS_ONLY=True)
 class TestAddExistingObservationView(TestCase):
     def setUp(self):
@@ -258,7 +258,7 @@ class TestAddExistingObservationView(TestCase):
         self.assertEqual(ObservationRecord.objects.filter(observation_id=obsr.observation_id).count(), 2)
 
 
-@override_settings(TOM_FACILITY_CLASSES=['bhtom_observations.tests.utils.FakeRoboticFacility'])
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility'])
 class TestFacilityStatusView(TestCase):
     def setUp(self):
         pass
@@ -269,7 +269,7 @@ class TestFacilityStatusView(TestCase):
         self.assertContains(response, 'coj.domb.1m0a', status_code=HTTPStatus.OK)
 
 
-@override_settings(TOM_FACILITY_CLASSES=['bhtom_observations.tests.utils.FakeRoboticFacility'],
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility'],
                    TARGET_PERMISSIONS_ONLY=False)
 class TestObservationViewsRowLevelPermissions(TestCase):
     def setUp(self):
@@ -319,12 +319,12 @@ class TestObservationViewsRowLevelPermissions(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-@override_settings(TOM_FACILITY_CLASSES=['bhtom_observations.tests.utils.FakeRoboticFacility'])
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility'])
 class TestObservationGroupViews(TestCase):
     pass
 
 
-@override_settings(TOM_FACILITY_CLASSES=['bhtom_observations.tests.utils.FakeRoboticFacility'])
+@override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility'])
 class TestObservationTemplateViews(TestCase):
     def setUp(self):
         self.observation_template = ObservationTemplateFactory.create(name='Test Template')
@@ -423,7 +423,7 @@ class TestGetVisibility(TestCase):
             self.interval, self.airmass_limit
         )
 
-    @mock.patch('bhtom_observations.utils.facility.get_service_classes')
+    @mock.patch('bhtom_base.bhtom_observations.utils.facility.get_service_classes')
     def test_get_visibility_sidereal(self, mock_facility):
         mock_facility.return_value = {'Fake Robotic Facility': FakeRoboticFacility}
         end = self.start + timedelta(minutes=60)

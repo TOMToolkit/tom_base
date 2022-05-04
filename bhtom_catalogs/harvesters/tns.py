@@ -6,8 +6,8 @@ from astropy.coordinates import SkyCoord
 from collections import OrderedDict
 from django.conf import settings
 
-from bhtom_catalogs.harvester import AbstractHarvester
-from bhtom_common.exceptions import ImproperCredentialsException
+from bhtom_base.bhtom_catalogs.harvester import AbstractHarvester
+from bhtom_base.bhtom_common.exceptions import ImproperCredentialsException
 
 TNS_URL = 'https://www.wis-tns.org'
 

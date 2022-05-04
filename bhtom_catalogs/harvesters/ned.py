@@ -1,7 +1,7 @@
 from astroquery.ned import Ned
 from astroquery.exceptions import RemoteServiceError
 
-from bhtom_catalogs.harvester import AbstractHarvester
+from bhtom_base.bhtom_catalogs.harvester import AbstractHarvester
 
 
 class NEDHarvester(AbstractHarvester):

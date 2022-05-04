@@ -2,9 +2,9 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, get_objects_for_user
 from rest_framework import serializers
 
-from bhtom_common.serializers import GroupSerializer
-from bhtom_targets.models import Target, TargetExtra, TargetName
-from bhtom_targets.validators import RequiredFieldsTogetherValidator
+from bhtom_base.bhtom_common.serializers import GroupSerializer
+from bhtom_base.bhtom_targets.models import Target, TargetExtra, TargetName
+from bhtom_base.bhtom_targets.validators import RequiredFieldsTogetherValidator
 
 
 class TargetNameSerializer(serializers.ModelSerializer):

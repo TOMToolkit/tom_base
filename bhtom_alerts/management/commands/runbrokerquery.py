@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
-from bhtom_alerts.models import BrokerQuery
-from bhtom_alerts.alerts import get_service_class
+from bhtom_base.bhtom_alerts.models import BrokerQuery
+from bhtom_base.bhtom_alerts.alerts import get_service_class
 from time import sleep
 
 

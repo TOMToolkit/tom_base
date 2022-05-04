@@ -5,9 +5,9 @@ from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from bhtom_dataproducts.models import DataProduct, ReducedDatum
-from bhtom_observations.tests.factories import ObservingRecordFactory
-from bhtom_targets.tests.factories import SiderealTargetFactory
+from bhtom_base.bhtom_dataproducts.models import DataProduct, ReducedDatum
+from bhtom_base.bhtom_observations.tests.factories import ObservingRecordFactory
+from bhtom_base.bhtom_targets.tests.factories import SiderealTargetFactory
 
 
 class TestDataProductViewset(APITestCase):

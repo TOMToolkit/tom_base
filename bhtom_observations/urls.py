@@ -1,13 +1,13 @@
 from django.urls import path
 
-from bhtom_observations.views import (AddExistingObservationView, FacilityStatusView, ObservationCreateView,
+from bhtom_base.bhtom_observations.views import (AddExistingObservationView, FacilityStatusView, ObservationCreateView,
                                     ObservationRecordUpdateView, ObservationGroupCreateView, ObservationGroupDeleteView,
                                     ObservationGroupListView, ObservationListView, ObservationRecordCancelView,
                                     ObservationRecordDetailView, ObservationTemplateCreateView,
                                     ObservationTemplateDeleteView, ObservationTemplateListView,
                                     ObservationTemplateUpdateView)
-from bhtom_observations.api_views import ObservationRecordViewSet
-from bhtom_common.api_router import SharedAPIRootRouter
+from bhtom_base.bhtom_observations.api_views import ObservationRecordViewSet
+from bhtom_base.bhtom_common.api_router import SharedAPIRootRouter
 
 router = SharedAPIRootRouter()
 router.register(r'observations', ObservationRecordViewSet, 'observations')

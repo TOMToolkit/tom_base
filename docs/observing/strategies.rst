@@ -63,7 +63,7 @@ our new file, so to begin with, it should look like this:
 
 .. code:: python
 
-   from bhtom_observations.cadence import CadenceStrategy
+   from bhtom_base.bhtom_observations.cadence import CadenceStrategy
 
    class MyCadenceStrategy(CadenceStrategy):
      pass

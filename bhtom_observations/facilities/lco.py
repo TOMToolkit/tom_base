@@ -11,12 +11,12 @@ from django import forms
 from django.conf import settings
 from django.core.cache import cache
 
-from bhtom_common.exceptions import ImproperCredentialsException
-from bhtom_observations.cadence import CadenceForm
-from bhtom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
-from bhtom_observations.observation_template import GenericTemplateForm
-from bhtom_observations.widgets import FilterField
-from bhtom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
+from bhtom_base.bhtom_common.exceptions import ImproperCredentialsException
+from bhtom_base.bhtom_observations.cadence import CadenceForm
+from bhtom_base.bhtom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
+from bhtom_base.bhtom_observations.observation_template import GenericTemplateForm
+from bhtom_base.bhtom_observations.widgets import FilterField
+from bhtom_base.bhtom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
 logger = logging.getLogger(__name__)
 

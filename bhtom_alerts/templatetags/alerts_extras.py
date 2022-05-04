@@ -1,6 +1,6 @@
 from django import template
 
-from bhtom_alerts.alerts import get_service_class
+from bhtom_base.bhtom_alerts.alerts import get_service_class
 
 register = template.Library()
 

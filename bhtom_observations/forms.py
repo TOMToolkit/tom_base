@@ -3,7 +3,7 @@ from django.urls import reverse
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Column, Layout, Row, Submit
 
-from bhtom_observations.facility import get_service_classes
+from bhtom_base.bhtom_observations.facility import get_service_classes
 
 
 def facility_choices():

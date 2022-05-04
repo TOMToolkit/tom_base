@@ -100,9 +100,9 @@ to access the object for which we’re generating data.
 
    from django import forms
 
-   from bhtom_dataproducts.models import ReducedDatum
+   from bhtom_base.bhtom_dataproducts.models import ReducedDatum
    from bhtom_base.tom_publications.latex import GenericLatexProcessor, GenericLatexForm
-   from bhtom_targets.models import Target
+   from bhtom_base.bhtom_targets.models import Target
 
    ...
 
@@ -184,9 +184,9 @@ TOM. Here’s our final ``target_data_latex_processor.py``:
 
    from django import forms
 
-   from bhtom_dataproducts.models import ReducedDatum
+   from bhtom_base.bhtom_dataproducts.models import ReducedDatum
    from bhtom_base.tom_publications.latex import GenericLatexProcessor, GenericLatexForm
-   from bhtom_targets.models import Target
+   from bhtom_base.bhtom_targets.models import Target
 
 
    class TargetDataLatexForm(GenericLatexForm):
