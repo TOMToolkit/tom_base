@@ -12,7 +12,7 @@ from bhtom_base.bhtom_common.api_router import SharedAPIRootRouter
 router = SharedAPIRootRouter()
 router.register(r'observations', ObservationRecordViewSet, 'observations')
 
-app_name = 'bhtom_observations'
+app_name = 'bhtom_base.bhtom_observations'
 
 urlpatterns = [
     path('add/', AddExistingObservationView.as_view(), name='add-existing'),

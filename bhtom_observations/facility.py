@@ -16,10 +16,10 @@ from bhtom_base.bhtom_targets.models import Target
 logger = logging.getLogger(__name__)
 
 DEFAULT_FACILITY_CLASSES = [
-        'bhtom_observations.facilities.lco.LCOFacility',
-        'bhtom_observations.facilities.gemini.GEMFacility',
-        'bhtom_observations.facilities.soar.SOARFacility',
-        'bhtom_observations.facilities.lt.LTFacility'
+        'bhtom_base.bhtom_observations.facilities.lco.LCOFacility',
+        'bhtom_base.bhtom_observations.facilities.gemini.GEMFacility',
+        'bhtom_base.bhtom_observations.facilities.soar.SOARFacility',
+        'bhtom_base.bhtom_observations.facilities.lt.LTFacility'
 ]
 
 try:

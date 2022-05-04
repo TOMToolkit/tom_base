@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django_extensions',
     'guardian',
-    'bhtom_common',
+    'bhtom_base.bhtom_common',
     'django_comments',
     'bootstrap4',
     'crispy_forms',
@@ -52,11 +52,11 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_filters',
     'django_gravatar',
-    'bhtom_targets',
-    'bhtom_alerts',
-    'bhtom_catalogs',
-    'bhtom_observations',
-    'bhtom_dataproducts',
+    'bhtom_base.bhtom_targets',
+    'bhtom_base.bhtom_alerts',
+    'bhtom_base.bhtom_catalogs',
+    'bhtom_base.bhtom_observations',
+    'bhtom_base.bhtom_dataproducts',
 ]
 
 SITE_ID = 1
@@ -69,9 +69,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'bhtom_common.middleware.Raise403Middleware',
-    'bhtom_common.middleware.ExternalServiceMiddleware',
-    'bhtom_common.middleware.AuthStrategyMiddleware',
+    'bhtom_base.bhtom_common.middleware.Raise403Middleware',
+    'bhtom_base.bhtom_common.middleware.ExternalServiceMiddleware',
+    'bhtom_base.bhtom_common.middleware.AuthStrategyMiddleware',
 ]
 
 ROOT_URLCONF = 'bhtom_base.bhtom_common.urls'
@@ -206,19 +206,19 @@ DATA_PRODUCT_TYPES = {
 }
 
 DATA_PROCESSORS = {
-    'photometry': 'bhtom_dataproducts.processors.photometry_processor.PhotometryProcessor',
-    'spectroscopy': 'bhtom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
+    'photometry': 'bhtom_base.bhtom_dataproducts.processors.photometry_processor.PhotometryProcessor',
+    'spectroscopy': 'bhtom_base.bhtom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
 }
 
 TOM_FACILITY_CLASSES = [
-    'bhtom_observations.facilities.lco.LCOFacility',
-    'bhtom_observations.facilities.gemini.GEMFacility',
-    'bhtom_observations.facilities.soar.SOARFacility',
+    'bhtom_base.bhtom_observations.facilities.lco.LCOFacility',
+    'bhtom_base.bhtom_observations.facilities.gemini.GEMFacility',
+    'bhtom_base.bhtom_observations.facilities.soar.SOARFacility',
 ]
 
 TOM_CADENCE_STRATEGIES = [
-    'bhtom_observations.cadences.retry_failed_observations.RetryFailedObservationsStrategy',
-    'bhtom_observations.cadences.resume_cadence_after_failure.ResumeCadenceAfterFailureStrategy'
+    'bhtom_base.bhtom_observations.cadences.retry_failed_observations.RetryFailedObservationsStrategy',
+    'bhtom_base.bhtom_observations.cadences.resume_cadence_after_failure.ResumeCadenceAfterFailureStrategy'
 ]
 
 # Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"
@@ -250,9 +250,9 @@ TARGET_PERMISSIONS_ONLY = True
 OPEN_URLS = []
 
 HOOKS = {
-    'target_post_save': 'bhtom_common.hooks.target_post_save',
-    'observation_change_state': 'bhtom_common.hooks.observation_change_state',
-    'data_product_post_upload': 'bhtom_dataproducts.hooks.data_product_post_upload'
+    'target_post_save': 'bhtom_base.bhtom_common.hooks.target_post_save',
+    'observation_change_state': 'bhtom_base.bhtom_common.hooks.observation_change_state',
+    'data_product_post_upload': 'bhtom_base.bhtom_dataproducts.hooks.data_product_post_upload'
 }
 
 AUTO_THUMBNAILS = False

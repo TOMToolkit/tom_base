@@ -12,7 +12,7 @@ router.register(r'targets', TargetViewSet, 'targets')
 router.register(r'targetextra', TargetExtraViewSet, 'targetextra')
 router.register(r'targetname', TargetNameViewSet, 'targetname')
 
-app_name = 'bhtom_targets'
+app_name = 'bhtom_base.bhtom_targets'
 
 urlpatterns = [
     path('', TargetListView.as_view(), name='list'),

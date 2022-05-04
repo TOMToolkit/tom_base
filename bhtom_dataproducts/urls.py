@@ -11,7 +11,7 @@ from bhtom_base.bhtom_dataproducts.api_views import DataProductViewSet
 router = SharedAPIRootRouter()
 router.register(r'dataproducts', DataProductViewSet, 'dataproducts')
 
-app_name = 'bhtom_dataproducts'
+app_name = 'bhtom_base.bhtom_dataproducts'
 
 urlpatterns = [
     path('data/', DataProductListView.as_view(), name='list'),
