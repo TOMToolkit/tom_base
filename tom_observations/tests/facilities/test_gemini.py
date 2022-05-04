@@ -4,8 +4,8 @@ from requests import Response
 
 from django.test import TestCase
 
-from bhtom_base.tom_common.exceptions import ImproperCredentialsException
-from bhtom_base.tom_observations.facilities.gemini import make_request
+from tom_common.exceptions import ImproperCredentialsException
+from tom_observations.facilities.gemini import make_request
 
 
 class TestMakeRequest(TestCase):

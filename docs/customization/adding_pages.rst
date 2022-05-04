@@ -105,7 +105,7 @@ the following content:
 .. code:: python
 
    from django.views.generic import TemplateView
-   from bhtom_base.tom_observations.models import Target
+   from tom_observations.models import Target
 
 
    class AboutView(TemplateView):
@@ -192,7 +192,7 @@ in the base TOM Toolkit behaves, you could subclass it in your TOM:
 
 .. code:: python
 
-   from bhtom_base.tom_targets.views import TargetListView
+   from tom_targets.views import TargetListView
 
    class MyCustomTargetListView(TargetListView):
        template_name = 'mysupertargetlist.html'

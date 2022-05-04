@@ -1,5 +1,5 @@
 from django import forms
-from bhtom_base.tom_catalogs.harvester import get_service_classes
+from tom_catalogs.harvester import get_service_classes
 
 
 class CatalogQueryForm(forms.Form):

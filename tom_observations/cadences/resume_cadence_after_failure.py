@@ -2,9 +2,9 @@ from datetime import datetime, timedelta
 from dateutil.parser import parse
 import logging
 
-from bhtom_base.tom_observations.cadence import BaseCadenceForm, CadenceStrategy
-from bhtom_base.tom_observations.models import ObservationRecord
-from bhtom_base.tom_observations.facility import get_service_class
+from tom_observations.cadence import BaseCadenceForm, CadenceStrategy
+from tom_observations.models import ObservationRecord
+from tom_observations.facility import get_service_class
 
 logger = logging.getLogger(__name__)
 

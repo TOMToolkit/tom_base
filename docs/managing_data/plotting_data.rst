@@ -83,7 +83,7 @@ Edit this file, starting with the necessary imports:
    import plotly.graph_objs as go
    from django import template
 
-   from bhtom_base.tom_targets.models import Target
+   from tom_targets.models import Target
 
 The ``plotly`` imports are needed for building an offline plot. The
 django ``template`` import gives access to the template library, which

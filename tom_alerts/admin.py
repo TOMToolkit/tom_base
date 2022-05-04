@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from bhtom_base.tom_alerts.models import BrokerQuery
+from tom_alerts.models import BrokerQuery
 
 admin.site.register(BrokerQuery)
 

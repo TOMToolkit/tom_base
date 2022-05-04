@@ -16,8 +16,8 @@ from django.core.files import File
 from django.db import models
 from fits2image.conversions import fits_to_jpg
 
-from bhtom_base.tom_observations.models import ObservationRecord
-from bhtom_base.tom_targets.models import Target
+from tom_observations.models import ObservationRecord
+from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 

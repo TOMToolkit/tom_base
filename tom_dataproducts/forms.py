@@ -2,9 +2,9 @@ from django import forms
 from django.contrib.auth.models import Group
 from django.conf import settings
 
-from bhtom_base.tom_dataproducts.models import DataProductGroup, DataProduct
-from bhtom_base.tom_observations.models import ObservationRecord
-from bhtom_base.tom_targets.models import Target
+from tom_dataproducts.models import DataProductGroup, DataProduct
+from tom_observations.models import ObservationRecord
+from tom_targets.models import Target
 
 
 class AddProductToGroupForm(forms.Form):

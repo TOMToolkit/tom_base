@@ -2,7 +2,7 @@ from astropy.units import photon, Quantity, spectral_density
 from django.db import migrations
 from specutils import Spectrum1D
 
-from bhtom_base.tom_dataproducts.processors.data_serializers import SpectrumSerializer
+from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 
 """
 This code was written by Curtis McCully for the conversion from photon_flux to flux. The below code is an adaptation

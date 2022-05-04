@@ -4,9 +4,9 @@ from astropy import units
 from astropy.io import ascii
 from astropy.time import Time, TimezoneInfo
 
-from bhtom_base.tom_dataproducts.data_processor import DataProcessor
-from bhtom_base.tom_dataproducts.exceptions import InvalidFileFormatException
-from bhtom_base.tom_dataproducts.models import DatumValue
+from tom_dataproducts.data_processor import DataProcessor
+from tom_dataproducts.exceptions import InvalidFileFormatException
+from tom_dataproducts.models import DatumValue
 from typing import List, Tuple
 from datetime import datetime
 

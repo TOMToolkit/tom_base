@@ -7,9 +7,9 @@ from importlib import import_module
 
 from django.db import transaction
 
-from bhtom_base.tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import ReducedDatum
 
-from bhtom_base.tom_dataproducts.models import DatumValue, DataProduct
+from tom_dataproducts.models import DatumValue, DataProduct
 
 DEFAULT_DATA_PROCESSOR_CLASS = 'tom_dataproducts.data_processor.DataProcessor'
 

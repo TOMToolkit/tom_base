@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
 
-from bhtom_base.tom_targets.models import Target
+from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +182,7 @@ class BaseObservationFacility(ABC):
     name = 'BaseObservation'
 
     def all_data_products(self, observation_record):
-        from bhtom_base.tom_dataproducts.models import DataProduct
+        from tom_dataproducts.models import DataProduct
         products = {'saved': [], 'unsaved': []}
         for product in self.data_products(observation_record.observation_id):
             try:
@@ -347,7 +347,7 @@ class BaseRoboticObservationFacility(BaseObservationFacility):
     name = 'BaseRobotic'  # rename in concrete subclasses
 
     def update_observation_status(self, observation_id):
-        from bhtom_base.tom_observations.models import ObservationRecord
+        from tom_observations.models import ObservationRecord
         try:
             record = ObservationRecord.objects.get(observation_id=observation_id)
             status = self.get_observation_status(observation_id)
@@ -359,7 +359,7 @@ class BaseRoboticObservationFacility(BaseObservationFacility):
             raise Exception('No record exists for that observation id')
 
     def update_all_observation_statuses(self, target=None):
-        from bhtom_base.tom_observations.models import ObservationRecord
+        from tom_observations.models import ObservationRecord
         failed_records = []
         records = ObservationRecord.objects.filter(facility=self.name)
         if target:
@@ -373,8 +373,8 @@ class BaseRoboticObservationFacility(BaseObservationFacility):
         return failed_records
 
     def save_data_products(self, observation_record, product_id=None):
-        from bhtom_base.tom_dataproducts.models import DataProduct
-        from bhtom_base.tom_dataproducts.utils import create_image_dataproduct
+        from tom_dataproducts.models import DataProduct
+        from tom_dataproducts.utils import create_image_dataproduct
         final_products = []
         products = self.data_products(observation_record.observation_id, product_id)
 

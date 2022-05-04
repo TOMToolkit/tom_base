@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from bhtom_base.tom_observations.models import DynamicCadence, ObservationGroup, ObservationRecord
+from tom_observations.models import DynamicCadence, ObservationGroup, ObservationRecord
 
 
 class DynamicCadenceAdmin(admin.ModelAdmin):

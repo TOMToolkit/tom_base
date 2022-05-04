@@ -2,8 +2,8 @@ import logging
 
 from django.core.management.base import BaseCommand
 
-from bhtom_base.tom_observations.cadence import get_cadence_strategy
-from bhtom_base.tom_observations.models import DynamicCadence
+from tom_observations.cadence import get_cadence_strategy
+from tom_observations.models import DynamicCadence
 
 
 logger = logging.getLogger(__name__)

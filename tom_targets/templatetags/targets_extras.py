@@ -12,9 +12,9 @@ import numpy as np
 from plotly import offline
 from plotly import graph_objs as go
 
-from bhtom_base.tom_observations.utils import get_sidereal_visibility
-from bhtom_base.tom_targets.models import Target, TargetExtra, TargetList
-from bhtom_base.tom_targets.forms import TargetVisibilityForm
+from tom_observations.utils import get_sidereal_visibility
+from tom_targets.models import Target, TargetExtra, TargetList
+from tom_targets.forms import TargetVisibilityForm
 
 register = template.Library()
 

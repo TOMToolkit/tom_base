@@ -63,7 +63,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 #     '.md': 'recommonmark.parser.CommonMarkParser',
 # }
 
-# source_suffix = ['.rst', '.md']
+# source_suffix = ['rst', '.md']
 
 # autodoc_mock_imports = ['rise-set']
 autodoc_inherit_docstrings = False

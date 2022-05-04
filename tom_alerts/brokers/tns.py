@@ -1,4 +1,4 @@
-from bhtom_base.tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
+from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
 from django import forms
 from django.conf import settings
 import requests

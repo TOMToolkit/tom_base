@@ -1,7 +1,7 @@
 from django.conf import settings
 from importlib import import_module
 
-from bhtom_base.tom_targets.models import Target
+from tom_targets.models import Target
 
 DEFAULT_HARVESTER_CLASSES = [
     'tom_catalogs.harvesters.simbad.SimbadHarvester',

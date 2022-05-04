@@ -22,9 +22,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.authtoken import views
 
-from bhtom_base.tom_common.api_views import GroupViewSet
-from bhtom_base.tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
-from bhtom_base.tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
+from tom_common.api_views import GroupViewSet
+from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
+from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
 
 from .api_router import collect_api_urls, SharedAPIRootRouter  # DRF routers are setup in each INSTALL_APPS url.py
 

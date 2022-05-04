@@ -1,4 +1,4 @@
-from bhtom_base.tom_catalogs.harvester import AbstractHarvester
+from tom_catalogs.harvester import AbstractHarvester
 
 from astroquery.mpc import MPC
 

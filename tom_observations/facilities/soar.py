@@ -2,9 +2,9 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 
-from bhtom_base.tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm
-from bhtom_base.tom_observations.facilities.lco import LCOImagingObservationForm, LCOSpectroscopyObservationForm
-from bhtom_base.tom_common.exceptions import ImproperCredentialsException
+from tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm
+from tom_observations.facilities.lco import LCOImagingObservationForm, LCOSpectroscopyObservationForm
+from tom_common.exceptions import ImproperCredentialsException
 
 
 # Determine settings for this module.

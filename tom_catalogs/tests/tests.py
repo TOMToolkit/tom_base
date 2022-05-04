@@ -2,7 +2,7 @@ from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 
-from bhtom_base.tom_catalogs.harvester import AbstractHarvester, get_service_classes, MissingDataException
+from tom_catalogs.harvester import AbstractHarvester, get_service_classes, MissingDataException
 
 
 class TestHarvester(AbstractHarvester):

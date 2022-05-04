@@ -2,8 +2,8 @@ import logging
 
 from django.conf import settings
 
-from bhtom_base.tom_observations.facility import BaseManualObservationFacility, BaseManualObservationForm
-from bhtom_base.tom_targets.models import Target
+from tom_observations.facility import BaseManualObservationFacility, BaseManualObservationForm
+from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 

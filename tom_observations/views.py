@@ -21,15 +21,15 @@ from django.views.generic.list import ListView
 from guardian.shortcuts import get_objects_for_user, assign_perm
 from guardian.mixins import PermissionListMixin
 
-from bhtom_base.tom_common.hints import add_hint
-from bhtom_base.tom_common.mixins import Raise403PermissionRequiredMixin
-from bhtom_base.tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
-from bhtom_base.tom_observations.cadence import CadenceForm, get_cadence_strategy
-from bhtom_base.tom_observations.facility import get_service_class, get_service_classes
-from bhtom_base.tom_observations.facility import BaseManualObservationFacility
-from bhtom_base.tom_observations.forms import AddExistingObservationForm
-from bhtom_base.tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
-from bhtom_base.tom_targets.models import Target
+from tom_common.hints import add_hint
+from tom_common.mixins import Raise403PermissionRequiredMixin
+from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
+from tom_observations.cadence import CadenceForm, get_cadence_strategy
+from tom_observations.facility import get_service_class, get_service_classes
+from tom_observations.facility import BaseManualObservationFacility
+from tom_observations.forms import AddExistingObservationForm
+from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
+from tom_targets.models import Target
 
 
 class ObservationFilter(FilterSet):
