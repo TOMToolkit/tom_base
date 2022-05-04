@@ -1,5 +1,5 @@
 Views
 =====
 
-.. automodule:: tom_targets.views
+.. automodule:: bhtom_targets.views
     :members:

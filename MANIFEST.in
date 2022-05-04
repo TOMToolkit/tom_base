@@ -1,14 +1,14 @@
 include README.md
-recursive-include tom_common/templates *
-recursive-include tom_common/static *
-recursive-include tom_alerts/templates *
-recursive-include tom_alerts/static *
-recursive-include tom_catalogs/templates *
-recursive-include tom_catalogs/static *
-recursive-include tom_targets/templates *
-recursive-include tom_targets/static *
-recursive-include tom_setup/templates *
-recursive-include tom_observations/static *
-recursive-include tom_observations/templates *
-recursive-include tom_dataproducts/static *
-recursive-include tom_dataproducts/templates *
+recursive-include bhtom_common/templates *
+recursive-include bhtom_common/static *
+recursive-include bhtom_alerts/templates *
+recursive-include bhtom_alerts/static *
+recursive-include bhtom_catalogs/templates *
+recursive-include bhtom_catalogs/static *
+recursive-include bhtom_targets/templates *
+recursive-include bhtom_targets/static *
+recursive-include bhtom_setup/templates *
+recursive-include bhtom_observations/static *
+recursive-include bhtom_observations/templates *
+recursive-include bhtom_dataproducts/static *
+recursive-include bhtom_dataproducts/templates *

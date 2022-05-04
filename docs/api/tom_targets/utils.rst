@@ -1,5 +1,5 @@
 Utilities
 =========
 
-.. automodule:: tom_targets.utils
+.. automodule:: bhtom_targets.utils
     :members:

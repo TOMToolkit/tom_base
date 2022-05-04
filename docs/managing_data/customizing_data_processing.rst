@@ -7,11 +7,11 @@ built-in functionality that can be overridden to allow your TOM to work
 for your use case.
 
 To begin, here’s a brief look at part of the structure of the
-tom_dataproducts app in the TOM Toolkit:
+bhtom_dataproducts app in the TOM Toolkit:
 
 ::
 
-   tom_dataproducts
+   bhtom_dataproducts
    ├──hooks.py
    ├──models.py
    └──processors
@@ -56,8 +56,8 @@ the database, and those are also specified in ``settings.py``:
 .. code:: python
 
    DATA_PROCESSORS = {
-       'photometry': 'tom_dataproducts.processors.photometry_processor.PhotometryProcessor',
-       'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
+       'photometry': 'bhtom_dataproducts.processors.photometry_processor.PhotometryProcessor',
+       'spectroscopy': 'bhtom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
    }
 
 When a user either uploads a ``DataProduct`` to their TOM, the TOM runs
@@ -151,7 +151,7 @@ first is to create a class that implements ``DataProcessor``, like so:
 
 .. code:: python
 
-   from tom_dataproducts.data_processor import DataProcessor
+   from bhtom_dataproducts.data_processor import DataProcessor
 
 
    class MyDataProcessor(DataProcessor):
@@ -169,7 +169,7 @@ Let’s replace spectroscopy:
 .. code:: python
 
    DATA_PROCESSORS = {
-       'photometry': 'tom_dataproducts.processors.photometry_processor.PhotometryProcessor',
+       'photometry': 'bhtom_dataproducts.processors.photometry_processor.PhotometryProcessor',
        'spectroscopy': 'mytom.my_data_processor.MyDataProcessor',
    }
 

@@ -1,0 +1,85 @@
+{% extends 'bhtom_common/base.html' %}
+{% load bootstrap4 static observation_extras dataproduct_extras %}
+{% block title %} Observation record: {{ object.id }} {% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'bhtom_observations/css/main.css' %}">
+{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <h2>{{ object }}
+      {% if object.url %}
+      <a class="btn btn-success" href="{{ object.url }}">View at observatory »</a>
+      {% endif %}
+    </h2>
+    <div class="col-md-6">
+      {% if editable %}
+        <p>{% update_observation_id_form object %}</p>
+      {% endif %}
+      <p class="my-auto"><strong>Observation ID:</strong> {{ object.observation_id }}</p>
+      <p class="my-auto"><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
+      <p class="my-auto"><strong>Status:</strong> {{ object.status }}</p>
+    </div>
+    <p></p>
+    {% upload_dataproduct object %}
+  </div>
+  <div class="col-md-6">
+    {% if image %}
+    <img src="data:image/jpeg;base64, {{ image }}" class="display">
+    {% endif %}
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-8">
+    <h4>Saved Data Products</h4>
+    <form method="POST" action="{% url 'bhtom_dataproducts:group-data' %}">
+      {% csrf_token %}
+      <div class="form-row">
+        <div class="col-sm-4">
+          {% bootstrap_field form.group layout='inline' %}
+          {% for product in data_products.saved %}
+            <input type="hidden" name="products" value="{{ product.id }}">
+          {% endfor %}
+        </div>
+        <div class="col-sm-8">
+          {% buttons %}
+          <input type="submit" value="Add to group" class="btn btn-primary">
+          <a href="{% url 'dataproducts:group-list' %}">Manage groups</a>
+          {% endbuttons %}
+        </div>
+      </div>
+      {% dataproduct_list_for_observation_saved data_products request %}
+    </form>
+
+    <form method="POST" action="{% url 'bhtom_dataproducts:save' object.id %}">
+      {% csrf_token %}
+      <input type="hidden" value="{{ object.facility }}" name="facility">
+      <input type="hidden" value="ALL" name="products">
+      <input type="submit" value="Save All" class="btn btn-primary float-right">
+    </form>
+    <form method="POST" action="{% url 'bhtom_dataproducts:save' object.id %}">
+      {% csrf_token %}
+      <input type="hidden" value="{{ object.facility }}" name="facility">
+      <div class="row">
+        <div class="col-md-9">
+          <h4>Unsaved data products</h4>
+        </div>
+        <div class="col-md-3">
+          <input type="submit" value="Save Selected" class="btn btn-primary">
+        </div>
+      </div>
+      {% dataproduct_list_for_observation_unsaved data_products %}
+    </form>
+  </div>
+  <div class="col-md-4">
+    <h4>Request Parameters</h4>
+    {% observationtemplate_from_record object %}
+    <dl class="row">
+      {% for k,v in object.parameters.items %}
+      <dt class="col-sm-6">{{ k }}</dt>
+      <dd class="col-sm-6">{{ v }}</dt>
+      {% endfor %}
+    </dl>
+  </div>
+</div>
+{% endblock %}

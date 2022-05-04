@@ -63,7 +63,7 @@ our new file, so to begin with, it should look like this:
 
 .. code:: python
 
-   from tom_observations.cadence import CadenceStrategy
+   from bhtom_observations.cadence import CadenceStrategy
 
    class MyCadenceStrategy(CadenceStrategy):
      pass
@@ -74,8 +74,8 @@ TOM knows that it exists:
 .. code:: python
 
    TOM_CADENCE_STRATEGIES = [
-       'tom_observations.cadence.RetryFailedObservationsStrategy',
-       'tom_observations.cadence.ResumeCadenceAfterFailureStrategy',
+       'bhtom_observations.cadence.RetryFailedObservationsStrategy',
+       'bhtom_observations.cadence.ResumeCadenceAfterFailureStrategy',
        'mytom.mycadence.MyCadenceStrategy'
    ]
 

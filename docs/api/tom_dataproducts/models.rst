@@ -1,5 +1,5 @@
 Models
 ======
 
-.. automodule:: tom_dataproducts.models
+.. automodule:: bhtom_dataproducts.models
     :members:

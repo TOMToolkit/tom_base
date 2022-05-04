@@ -9,11 +9,11 @@ observatories, to providing additional plotting or data analytics functionality.
 
 ### tom-alerts-dash
 
-This module supplements the tom_alerts module with Plotly Dash support for more responsive broker views.
+This module supplements the bhtom_alerts module with Plotly Dash support for more responsive broker views.
 
-[Github](https://github.com/TOMToolkit/tom_alerts_dash)
+[Github](https://github.com/TOMToolkit/bhtom_alerts_dash)
 
-[Installation Instructions](https://github.com/TOMToolkit/tom_alerts_dash#installation)
+[Installation Instructions](https://github.com/TOMToolkit/bhtom_alerts_dash#installation)
 
 ### tom-antares
 This module provides the ability to query and/or listen to Antares alert streams

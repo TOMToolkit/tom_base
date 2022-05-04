@@ -1,5 +1,5 @@
 Forms
 =====
 
-.. automodule:: tom_catalogs.forms
+.. automodule:: bhtom_catalogs.forms
     :members:

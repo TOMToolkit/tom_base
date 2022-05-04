@@ -22,9 +22,9 @@ A TOM Toolkit observing facility module is a python module which
 contains the code necessary to provide an interface to an observing
 facility in a TOM. Some examples of existing modules are the `Las
 Cumbres
-Observatory <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__
+Observatory <https://github.com/TOMToolkit/tom_base/blob/main/bhtom_observations/facilities/lco.py>`__
 and the
-`Gemini <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/gemini.py>`__
+`Gemini <https://github.com/TOMToolkit/tom_base/blob/main/bhtom_observations/facilities/gemini.py>`__
 modules. Both allow the submission of observation requests to their
 respective observatories through a TOM.
 
@@ -67,7 +67,7 @@ next to ``settings.py``. For now, copy the following lines into
 
 .. code:: python
 
-   from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
+   from bhtom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 
 
    class MyObservationFacilityForm(BaseRoboticObservationForm):
@@ -85,10 +85,10 @@ class:
 .. code:: python
 
    TOM_FACILITY_CLASSES = [
-        'tom_observations.facilities.lco.LCOFacility',
-        'tom_observations.facilities.gemini.GEMFacility',
-        'tom_observations.facilities.soar.SOARFacility',
-        'tom_observations.facilities.lt.LTFacility'
+        'bhtom_observations.facilities.lco.LCOFacility',
+        'bhtom_observations.facilities.gemini.GEMFacility',
+        'bhtom_observations.facilities.soar.SOARFacility',
+        'bhtom_observations.facilities.lt.LTFacility'
         'mytom.myfacility.MyObservationFacility'
    ]
 
@@ -177,7 +177,7 @@ the page. This is read from the ``observation_forms`` variable in
 value of each dict item is the observation form class. The key of each
 dict item is what should be used to distinguish different observation types
 in your code, which will be displayed in Pascal Case in the observation form tabs.
-To see a demonstration of this, check out the `Las Cumbres Observatory <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__
+To see a demonstration of this, check out the `Las Cumbres Observatory <https://github.com/TOMToolkit/tom_base/blob/main/bhtom_observations/facilities/lco.py>`__
 facility’s ``observation_forms`` and ``get_form``.
 
 Now let’s populate the form. Let’s assume our observatory only requires
@@ -188,7 +188,7 @@ exposure_count. Let’s start by adding them to our form class:
 
     from crispy_forms.layout import Layout
     from django import forms
-    from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
+    from bhtom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 
 
     class MyObservationFacilityForm(BaseRoboticObservationForm):
@@ -210,7 +210,7 @@ we've created.
 All fields must show be named in the ``layout`` function in order to be displayed, and 
 the ``layout`` function is also how we could make the layout more sophisticated. See the 
 `django-crispy-forms documentation <https://django-crispy-forms.readthedocs.io/en/latest/>`__ 
-and the `lco.py module <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__ for examples.
+and the `lco.py module <https://github.com/TOMToolkit/tom_base/blob/main/bhtom_observations/facilities/lco.py>`__ for examples.
 
 Now if we reload the page, we should see something like this:
 
@@ -225,7 +225,7 @@ the observation request:
 
     from crispy_forms.layout import Layout
     from django import forms
-    from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
+    from bhtom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
 
     class MyObservationFacilityForm(BaseRoboticObservationForm):
         exposure_time = forms.IntegerField()
@@ -291,7 +291,7 @@ data, but when you adapt it to work with a real observatory you should
 fill them in with the correct logic so that the whole module works
 correctly with the TOM. You can view explanations of each method `in the
 source
-code <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facility.py#L142>`__
+code <https://github.com/TOMToolkit/tom_base/blob/main/bhtom_observations/facility.py#L142>`__
 
 ###Airmass plotting for new facilities The last step in adding a new
 facility is to get it to appear on airmass plots. If you input two dates
@@ -302,7 +302,7 @@ at LCO and Gemini sites.
 In our ``MyObservationFacility`` class, let’s define a new variable
 called ``SITES``. Modeling our ``SITES`` on the one defined for `Las
 Cumbres
-Observatory <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__,
+Observatory <https://github.com/TOMToolkit/tom_base/blob/main/bhtom_observations/facilities/lco.py>`__,
 we can easily put new sites into the airmass plots:
 
 .. code:: python

@@ -25,7 +25,7 @@ have a project layout that looks something like this:
        └── wsgi.py
 
 We are going to override the html template included with the TOM
-Toolkit, ``tom_common/index.html``, so that we can edit some text and
+Toolkit, ``bhtom_common/index.html``, so that we can edit some text and
 change the image. Overriding and extending templates is `documented
 extensively <https://docs.djangoproject.com/en/2.1/howto/overriding-templates/>`__
 on Django’s website and we highly recommend reading these docs if you
@@ -35,12 +35,12 @@ Since the template we want to override is already part of the TOM
 Toolkit source code, we can use it as a starting point for our
 customized template. In fact, we’ll copy and paste the entire thing from
 the `source code of TOM
-Toolkit <https://github.com/TOMToolkit/tom_base/blob/main/tom_common/templates/tom_common/index.html>`__.
+Toolkit <https://github.com/TOMToolkit/tom_base/blob/main/bhtom_common/templates/bhtom_common/index.html>`__.
 and place it in our project. The template we are looking for is
-``tom_common/index.html``
+``bhtom_common/index.html``
 
 Let’s download and copy that template into our ``templates`` folder
-(including the ``tom_common`` sub-directory) so that our directory
+(including the ``bhtom_common`` sub-directory) so that our directory
 structure now looks like this:
 
 ::
@@ -48,7 +48,7 @@ structure now looks like this:
    ├── db.sqlite3
    ├── manage.py
    ├── templates
-   │   └── tom_common
+   │   └── bhtom_common
    │       └── index.html
    └── mytom
        ├── __init__.py
@@ -56,13 +56,13 @@ structure now looks like this:
        ├── urls.py
        └── wsgi.py
 
-Now let’s make a few changes to the ``templates/tom_common/index.html``
+Now let’s make a few changes to the ``templates/bhtom_common/index.html``
 template:
 
 .. code:: html
 
-   {% extends 'tom_common/base.html' %}
-   {% load static targets_extras observation_extras dataproduct_extras tom_common_extras %}
+   {% extends 'bhtom_common/base.html' %}
+   {% load static targets_extras observation_extras dataproduct_extras bhtom_common_extras %}
    {% block title %}Home{% endblock %}
    {% block content %}
    <div class="row">
@@ -137,7 +137,7 @@ static
 files <https://docs.djangoproject.com/en/2.1/howto/static-files/>`__
 capabilities.
 
-If you ran the tom_setup script, you should have a directory ``static``
+If you ran the bhtom_setup script, you should have a directory ``static``
 at the top level of your project. Within this folder, make a directory
 ``img``. In this folder, place an image you’d like to display on your
 homepage. For example, ``mytom.jpg``.

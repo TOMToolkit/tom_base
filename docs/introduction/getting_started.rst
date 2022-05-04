@@ -63,10 +63,10 @@ You should now have a fully functional standard Django installation
 inside the ``mytom`` folder, with the TOM dependencies installed as
 well.
 
-Getting started with the ``tom_setup`` script.
+Getting started with the ``bhtom_setup`` script.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We need to add the ``tom_setup`` app to our project’s
+We need to add the ``bhtom_setup`` app to our project’s
 ``INSTALLED_APPS``. Locate the ``settings.py`` file inside your project
 directory (usually in a subdirectory of the main folder,
 i.e. mytom/mytom/settings.py) and edit it so that it looks like this:
@@ -80,18 +80,18 @@ i.e. mytom/mytom/settings.py) and edit it so that it looks like this:
        'django.contrib.sessions',
        'django.contrib.messages',
        'django.contrib.staticfiles',
-       'tom_setup',
+       'bhtom_setup',
    ]
 
 Run the setup script
 ~~~~~~~~~~~~~~~~~~~~
 
-The ``tom_setup`` app contains a script that will bootstrap a new TOM in
+The ``bhtom_setup`` app contains a script that will bootstrap a new TOM in
 your current project. Run it:
 
 ::
 
-   ./manage.py tom_setup
+   ./manage.py bhtom_setup
 
 The install script will ask you a few questions and then install your
 TOM.

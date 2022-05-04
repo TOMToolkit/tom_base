@@ -50,8 +50,8 @@ Default:
 .. code-block::
 
    {
-       'photometry': 'tom_dataproducts.processors.photometry_processor.PhotometryProcessor',
-       'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
+       'photometry': 'bhtom_dataproducts.processors.photometry_processor.PhotometryProcessor',
+       'spectroscopy': 'bhtom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
    }
 
 The ``DATA_PROCESSORS`` dict specifies the subclasses of
@@ -146,9 +146,9 @@ Default:
 .. code-block::
 
    {
-       'target_post_save': 'tom_common.hooks.target_post_save',
-       'observation_change_state': 'tom_common.hooks.observation_change_state',
-       'data_product_post_upload': 'tom_dataproducts.hooks.data_product_post_upload',
+       'target_post_save': 'bhtom_common.hooks.target_post_save',
+       'observation_change_state': 'bhtom_common.hooks.observation_change_state',
+       'data_product_post_upload': 'bhtom_dataproducts.hooks.data_product_post_upload',
    }
 
 A dictionary of action, method code hooks to run. These hooks allow
@@ -196,12 +196,12 @@ Default:
 .. code-block::
 
    [
-       'tom_alerts.brokers.mars.MARSBroker',
-       'tom_alerts.brokers.lasair.LasairBroker',
-       'tom_alerts.brokers.scout.ScoutBroker',
-       'tom_alerts.brokers.tns.TNSBroker',
-       'tom_alerts.brokers.antares.ANTARESBroker',
-       'tom_alerts.brokers.gaia.GaiaBroker'
+       'bhtom_alerts.brokers.mars.MARSBroker',
+       'bhtom_alerts.brokers.lasair.LasairBroker',
+       'bhtom_alerts.brokers.scout.ScoutBroker',
+       'bhtom_alerts.brokers.tns.TNSBroker',
+       'bhtom_alerts.brokers.antares.ANTARESBroker',
+       'bhtom_alerts.brokers.gaia.GaiaBroker'
    ]
 
 A list of tom alert classes to make available to your TOM. If you have
@@ -218,8 +218,8 @@ Default:
 .. code-block:: python
 
    [
-      'tom_alerts_dash.brokers.alerce.ALeRCEDashBroker',
-      'tom_alerts_dash.brokers.mars.MARSDashBroker',
+      'bhtom_alerts_dash.brokers.alerce.ALeRCEDashBroker',
+      'bhtom_alerts_dash.brokers.mars.MARSDashBroker',
    ]
 
 A list of tom alert dash classes to make available to your TOM. If you have
@@ -235,10 +235,10 @@ Default:
 .. code-block
 
    [
-      'tom_observations.facilities.lco.LCOFacility',
-      'tom_observations.facilities.gemini.GEMFacility',
-      'tom_observations.facilities.soar.SOARFacility',
-      'tom_observations.facilities.lt.LTFacility'
+      'bhtom_observations.facilities.lco.LCOFacility',
+      'bhtom_observations.facilities.gemini.GEMFacility',
+      'bhtom_observations.facilities.soar.SOARFacility',
+      'bhtom_observations.facilities.lt.LTFacility'
    ]
 
 A list of observation facility classes to make available to your TOM. If
@@ -253,11 +253,11 @@ Default:
 .. code-block
 
    [
-       'tom_catalogs.harvesters.simbad.SimbadHarvester',
-       'tom_catalogs.harvesters.ned.NEDHarvester',
-       'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
-       'tom_catalogs.harvesters.mpc.MPCHarvester',
-       'tom_catalogs.harvesters.tns.TNSHarvester',
+       'bhtom_catalogs.harvesters.simbad.SimbadHarvester',
+       'bhtom_catalogs.harvesters.ned.NEDHarvester',
+       'bhtom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
+       'bhtom_catalogs.harvesters.mpc.MPCHarvester',
+       'bhtom_catalogs.harvesters.tns.TNSHarvester',
    ]
 
 A list of TOM harverster classes to make available to your TOM. If you

@@ -1,0 +1,40 @@
+{% load bhtom_common_extras targets_extras %}
+<dl class="row">
+  {% for target_name in target.names %}
+    {% if forloop.first %}
+      <dt class="col-sm-6">Names</dt>
+    {% else %}
+      <dt class="col-sm-6">&nbsp;</dt>
+    {% endif %}
+    <dd class="col-sm-6">{{ target_name }}</dd>
+  {% endfor %}
+  {% for key, value in target.as_dict.items %}
+  {% if value and key != 'name' %}
+  <dt class="col-sm-6">{% verbose_name target key %}</dt>
+  <dd class="col-sm-6">{{ value|truncate_number }}</dd>
+  {% endif %}
+  {% if key == 'ra' %}
+    <dt class="col-sm-6">&nbsp;</dt>
+    <dd class="col-sm-6">{{ value|deg_to_sexigesimal:"hms" }}</dd>
+  {% endif%}
+  {% if key == 'dec' %}
+    <dt class="col-sm-6">&nbsp;</dt>
+    <dd class="col-sm-6">{{ value|deg_to_sexigesimal:"dms" }}</dd>
+  {% endif%}
+  {% endfor %}
+</dl>
+<dl class="row">
+{% for key, value in extras.items %}
+  <dt class="col-sm-6">{{ key }}</dt>
+  <dd class="col-sm-6">{{ value }}</dd>
+{% endfor %}
+</dl>
+{% if target.tags %}
+<p>Tags</p>
+<dl class="row">
+{% for key, value in target.tags.items %}
+  <dt class="col-sm-6">{{ key }}</dt>
+  <dd class="col-sm-6">{{ value }}</dd>
+{% endfor %}
+</dl>
+{% endif %}

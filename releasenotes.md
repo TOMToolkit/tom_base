@@ -12,7 +12,7 @@ This release fixes the following:
 
 This release removes the MPC module as a default, given that the latest version of astroquery has an issue with it that will be fixed in the next release.
 
-Users of the MPC should follow the instructions listed [here](https://tom-toolkit.readthedocs.io/en/stable/api/tom_catalogs/harvesters.html#minor-planet-center) in order to ensure that it works.
+Users of the MPC should follow the instructions listed [here](https://tom-toolkit.readthedocs.io/en/stable/api/bhtom_catalogs/harvesters.html#minor-planet-center) in order to ensure that it works.
 
 ## 2.6.3
 
@@ -42,7 +42,7 @@ This release supercedes the mistaken 2.6.1 release and includes the fix for spec
 
 ### What to watch out for
 
-- In order to leverage the tab retention, you'll need to copy the changes in ``tom_targets/target_detail.html``, ``tom_observations/observation_list``, and ``tom_targets/target_list.html``. You can review [this pull request](https://github.com/TOMToolkit/tom_base/pull/436/files) to see what has changed.
+- In order to leverage the tab retention, you'll need to copy the changes in ``bhtom_targets/target_detail.html``, ``bhtom_observations/observation_list``, and ``bhtom_targets/target_list.html``. You can review [this pull request](https://github.com/TOMToolkit/tom_base/pull/436/files) to see what has changed.
 
 ## 2.5.2
 
@@ -55,7 +55,7 @@ This release supercedes the mistaken 2.6.1 release and includes the fix for spec
 
 ## 2.5.1
 
-- Fixes the ObservationRecordCancelView and adds a path to it to urls.py. It is now accessible via tom_observations:cancel.
+- Fixes the ObservationRecordCancelView and adds a path to it to urls.py. It is now accessible via bhtom_observations:cancel.
 
 ## 2.5.0
 
@@ -115,7 +115,7 @@ Release 2.4.1 was yanked and should not be installed.
 - Renamed `ALERT_CREDENTIALS` and `BROKER_CREDENTIALS` to `BROKERS` as a catchall for any broker-specific values.
 - Added support for custom `CadenceStrategy` layouts.
 - Moved settings for `TNSHarvester` into `settings.HARVESTERS` to maintain consistency.
-- Updated `tom_alerts.GenericBroker` interface to support submission upstream to a broker, if implemented.
+- Updated `bhtom_alerts.GenericBroker` interface to support submission upstream to a broker, if implemented.
 - Fixed `TNSBroker` to get the correct object name.
 - Added stub `SCIMMABroker`.
 - Removed `tom_publications` from `tom_base`, and placed it in a separate `tom_publications` repository.

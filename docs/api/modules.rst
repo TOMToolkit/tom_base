@@ -10,10 +10,10 @@ API Documentation
   :maxdepth: 1
   :includehidden:
 
-  tom_alerts/index
-  tom_catalogs/index
-  tom_common/index
-  tom_dataproducts/index
-  tom_observations/index
-  tom_targets/index
+  bhtom_alerts/index
+  bhtom_catalogs/index
+  bhtom_common/index
+  bhtom_dataproducts/index
+  bhtom_observations/index
+  bhtom_targets/index
   management_commands

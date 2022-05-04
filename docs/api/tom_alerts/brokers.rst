@@ -5,7 +5,7 @@ Brokers
 Base Broker Class
 *****************
 
-.. automodule:: tom_alerts.alerts
+.. automodule:: bhtom_alerts.alerts
     :members:
     :member-order: bysource
 
@@ -14,7 +14,7 @@ Base Broker Class
 ALeRCE
 ******
 
-.. automodule:: tom_alerts.brokers.alerce
+.. automodule:: bhtom_alerts.brokers.alerce
     :members:
 
 
@@ -29,7 +29,7 @@ ANTARES
 Lasair
 ******
 
-.. automodule:: tom_alerts.brokers.lasair
+.. automodule:: bhtom_alerts.brokers.lasair
     :members:
 
 
@@ -37,7 +37,7 @@ Lasair
 MARS
 ****
 
-.. automodule:: tom_alerts.brokers.mars
+.. automodule:: bhtom_alerts.brokers.mars
     :members:
 
 
@@ -52,7 +52,7 @@ SCIMMA
 Scout
 *****
 
-.. automodule:: tom_alerts.brokers.scout
+.. automodule:: bhtom_alerts.brokers.scout
     :members:
 
 
@@ -60,5 +60,5 @@ Scout
 Transient Name Server
 *********************
 
-.. automodule:: tom_alerts.brokers.tns
+.. automodule:: bhtom_alerts.brokers.tns
     :members:

@@ -19,7 +19,7 @@ Create a new Observation Module
 Many methods of customizing the TOM Toolkit involve inheriting/extending
 existing functionality. This time will be no different: we’ll crate a
 new observation module that inherits the existing functionality from
-``tom_observations.facilities.LCOFacility``.
+``bhtom_observations.facilities.LCOFacility``.
 
 First, create a python file somewhere in your project to house your new
 module. For example it could live next to your ``settings.py``, or if
@@ -35,7 +35,7 @@ Now add some code to this file to create a new observation module:
 .. code:: python
 
    # lcomultifilter.py
-   from tom_observations.facilities.lco import LCOFacility
+   from bhtom_observations.facilities.lco import LCOFacility
 
 
    class LCOMultiFilterFacility(LCOFacility):
@@ -62,8 +62,8 @@ it to submit observations. Add (or edit) the following lines to your
 
    # settings.py
    TOM_FACILITY_CLASSES = [
-       'tom_observations.facilities.lco.LCOFacility',
-       'tom_observations.facilities.gemini.GEMFacility',
+       'bhtom_observations.facilities.lco.LCOFacility',
+       'bhtom_observations.facilities.gemini.GEMFacility',
        'mytom.lcomultifilter.LCOMultiFilterFacility',
    ]
 
@@ -94,7 +94,7 @@ new import and create a new class that will become the new form:
 .. code:: python
 
    # lcomultifilter.py
-   from tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm, filter_choices
+   from bhtom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm, filter_choices
    from django import forms
 
 
@@ -144,7 +144,7 @@ like this:
 .. code:: python
 
    # lcomultifilter.py
-   from tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm, filter_choices
+   from bhtom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm, filter_choices
    from django import forms
    from crispy_forms.layout import Column, Div, Row
 
@@ -190,7 +190,7 @@ like this:
         }
 
 Take a look at the layout and compare it to the `existing lco
-layout <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py#L169>`__.
+layout <https://github.com/TOMToolkit/tom_base/blob/main/bhtom_observations/facilities/lco.py#L169>`__.
 A second row has been added that includes all the filter choices. Note
 that the original ``filter`` and ``exposure_time`` have been moved from
 their original location to the new row.
@@ -221,7 +221,7 @@ suit the needs of our ``LCOMultiFilter`` class:
 .. code:: python
 
     #lcomultifilter.py
-    from tom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm
+    from bhtom_observations.facilities.lco import LCOFacility, LCOBaseObservationForm
     from django import forms
     from crispy_forms.layout import Column, Div, Row
 
@@ -311,7 +311,7 @@ Observation Utility Methods
 In the example above, we modified the `_build_instrument_config()` method to manipulate 
 the instrument configuration. The LCO module in particular has a number of utility methods 
 to manipulate specific parts of the observation submission, and can be reviewed in 
-`the code <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py#L289>`__.
+`the code <https://github.com/TOMToolkit/tom_base/blob/main/bhtom_observations/facilities/lco.py#L289>`__.
 
 However, the main entrypoint for a facility module is the `observation_payload()` function, which calls 
 all of the utility methods to construct a request. If it's unclear how a facility module constructs a request, 

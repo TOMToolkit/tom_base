@@ -3,6 +3,6 @@ Models
 
 .. autosummary::
 
-.. automodule:: tom_targets.models
+.. automodule:: bhtom_targets.models
     :members:
     :special-members:

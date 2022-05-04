@@ -51,9 +51,9 @@ your project’s ``settings.py``:
 .. code:: python
 
    HOOKS = {
-       'target_post_save': 'tom_common.hooks.target_post_save',
+       'target_post_save': 'bhtom_common.hooks.target_post_save',
        'observation_change_state': 'mytom.hooks.observation_change_state',
-       'data_product_post_upload': 'tom_dataproducts.hooks.data_product_post_upload',
+       'data_product_post_upload': 'bhtom_dataproducts.hooks.data_product_post_upload',
    }
 
 We changed the path for the ``observation_change_state`` method from
@@ -69,7 +69,7 @@ your logs:
 
 You can test this by manually changing an observation via the `django
 admin
-page <http://127.0.0.1:8000/admin/tom_observations/observationrecord/>`__.
+page <http://127.0.0.1:8000/admin/bhtom_observations/observationrecord/>`__.
 
 If you only wanted to know how to run code via a hook, you can stop here
 and implement your own code hooks. If you’d like to learn how to send an

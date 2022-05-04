@@ -1,8 +1,8 @@
 Hooks
 =====
 
-.. automodule:: tom_common.hooks
+.. automodule:: bhtom_common.hooks
     :members:
 
-.. automodule:: tom_dataproducts.hooks
+.. automodule:: bhtom_dataproducts.hooks
     :members:

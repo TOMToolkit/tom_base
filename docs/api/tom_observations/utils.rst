@@ -1,5 +1,5 @@
 Utilities
 =========
 
-.. automodule:: tom_observations.utils
+.. automodule:: bhtom_observations.utils
     :members:

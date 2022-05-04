@@ -1,5 +1,5 @@
 Group Management
 ================
 
-.. automodule:: tom_targets.groups
+.. automodule:: bhtom_targets.groups
     :members:

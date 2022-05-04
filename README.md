@@ -6,7 +6,7 @@
 [![Documentation Status](https://readthedocs.org/projects/tom-toolkit/badge/?version=stable)](https://tom-toolkit.readthedocs.io/en/stable/?badge=stable)
 [Documentation](https://tom-toolkit.readthedocs.io/en/latest/)
 
-![logo](tom_common/static/tom_common/img/logo-color.png)
+![logo](bhtom_common/static/bhtom_common/img/logo-color.png)
 
 The TOM Toolkit is a web framework for building TOMs: Target and Observation
 Managers. TOMs are meant to facilitate collaborative astronomical observing
@@ -34,10 +34,10 @@ For development information targeted at the maintainers of the project, please s
 
 ## Plugins
 
-### tom_alerts_dash
+### bhtom_alerts_dash
 
-The [tom_alerts_dash](https://github.com/TOMToolkit/tom_alerts_dash) plugin adds responsive ReactJS views to the 
-`tom_alerts` module for supported brokers.
+The [bhtom_alerts_dash](https://github.com/TOMToolkit/bhtom_alerts_dash) plugin adds responsive ReactJS views to the 
+`bhtom_alerts` module for supported brokers.
 
 ### Antares
 

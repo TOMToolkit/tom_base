@@ -9,8 +9,8 @@ Observing Facilities and Observations
   ../common/scripts
   strategies
   observation_module
-  ../api/tom_observations/facilities
-  ../api/tom_observations/views
+  ../api/bhtom_observations/facilities
+  ../api/bhtom_observations/views
 
 
 :doc:`Changing Request Submission Behavior <customize_observations>` - Learn how to customize observation forms 
@@ -24,6 +24,6 @@ the result of prior observations, as well as how to leverage observing templates
 :doc:`Building a TOM Observation Facility Module <observation_module>` - Learn to build a module which will
 allow your TOM to submit observation requests to observatories.
 
-:doc:`Facility Modules <../api/tom_observations/facilities>` - Take a look at the supported facilities.
+:doc:`Facility Modules <../api/bhtom_observations/facilities>` - Take a look at the supported facilities.
 
-:doc:`Observation Views <../api/tom_observations/views>` - Familiarize yourself with the available Observation Views.
+:doc:`Observation Views <../api/bhtom_observations/views>` - Familiarize yourself with the available Observation Views.

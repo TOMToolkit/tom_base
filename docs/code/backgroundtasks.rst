@@ -137,7 +137,7 @@ tom_* apps:
        ...
        'django_gravatar',
        'django_dramatiq',
-       'tom_targets',
+       'bhtom_targets',
        ...
    ]
 

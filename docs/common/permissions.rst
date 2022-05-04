@@ -70,41 +70,41 @@ a target:
 
     >>> from django.contrib.auth.models import Group, User
     >>> from guardian.shortcuts import assign_perm
-    >>> from tom_targets.models import Target
+    >>> from bhtom_targets.models import Target
     >>> user = User.objects.filter(username='jaire_alexander').first()
     >>> groups = user.groups.all()
     >>> targets = Target.objects.all()
     >>> for group in groups:
-    ...  assign_perm('tom_targets.view_target', group, targets)
-    ...  assign_perm('tom_targets.change_target', group, targets)
-    ...  assign_perm('tom_targets.delete_target', group, targets)
+    ...  assign_perm('bhtom_targets.view_target', group, targets)
+    ...  assign_perm('bhtom_targets.change_target', group, targets)
+    ...  assign_perm('bhtom_targets.delete_target', group, targets)
 
 The above code will allow all users in the groups that the example user belongs to to view, modify, and delete all targets. This example can be expanded to the other model-related permissions in the TOM. Below is a brief list of the permissions-enabled models with their permission names:
 
 ``Targets``:
 
-* ``tom_targets.view_target``
-* ``tom_targets.change_target``
-* ``tom_targets.delete_target``
+* ``bhtom_targets.view_target``
+* ``bhtom_targets.change_target``
+* ``bhtom_targets.delete_target``
 
 ``TargetLists``:
 
-* ``tom_targets.view_targetlist``
-* ``tom_targets.delete_targetlist``
+* ``bhtom_targets.view_targetlist``
+* ``bhtom_targets.delete_targetlist``
 
 ``ObservationRecords``:
 
-* ``tom_observations.view_observationrecord``
+* ``bhtom_observations.view_observationrecord``
 
 ``ObservationGroups``:
 
-* ``tom_observations.view_observationgroup``
+* ``bhtom_observations.view_observationgroup``
 
 ``DataProducts``:
 
-* ``tom_dataproducts.view_dataproduct``
-* ``tom_dataproducts.delete_dataproduct``
+* ``bhtom_dataproducts.view_dataproduct``
+* ``bhtom_dataproducts.delete_dataproduct``
 
 ``ReducedDatum``:
 
-* ``tom_dataproducts.view_reduceddatum``
+* ``bhtom_dataproducts.view_reduceddatum``

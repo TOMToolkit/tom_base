@@ -36,7 +36,7 @@ release = '1.1.0'
 # import sys
 # import django
 # sys.path.insert(0, os.path.abspath('..'))
-os.environ['DJANGO_SETTINGS_MODULE'] = 'tom_base.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'bhtom_base.settings'
 django.setup()
 
 
@@ -97,7 +97,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_theme_options = {
     'logo': 'logo-color.png',
     'logo_name': 'false',
-    'github_repo': 'tom_base',
+    'github_repo': 'bhtom_base',
     'github_button': 'false',
 }
 

@@ -1,0 +1,29 @@
+{% load bootstrap4 %}
+{% include 'bhtom_dataproducts/partials/js9_scripts.html' %}
+<h4>Data</h4>
+<table class="table table-striped">
+  <thead><tr><th></th><th></th><th>Filename</th><th>Type</th><th>Delete</th></tr></thead>
+  <tbody>
+  {% for product in products %}
+    <tr>
+      {% if not product.featured %}
+      <td><a href="{% url 'bhtom_dataproducts:feature' pk=product.id %}?target_id={{ target.id }}" title="Make Featured Image" class="btn btn-primary">Feature</a></td>
+      {% else %}
+      <td><span class="btn btn-secondary active featured">Featured</span></td>
+      {% endif %}
+      <td>
+        {%  if 'fits' in product.get_file_name or product.data_product_type == 'fits_file' %}
+          {% include 'bhtom_dataproducts/partials/js9_button.html' with url=product.data.url only %}
+        {% endif %}
+      </td>
+      <td><a href="{{ product.data.url }}">{{ product.get_file_name }}</a></td>
+      <td>
+        {% if product.data_product_type %}
+          {{ product.get_type_display }}
+        {% endif %}
+        </a>
+      </td>
+      <td><a href="{% url 'bhtom_dataproducts:delete' product.id %}" class="btn btn-danger">Delete</a></td>
+    </tr>
+  {% endfor %}
+</table>

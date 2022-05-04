@@ -5,7 +5,7 @@ Facilities
 Base Facility Class
 *******************
 
-.. automodule:: tom_observations.facility
+.. automodule:: bhtom_observations.facility
     :members:
 
 
@@ -13,7 +13,7 @@ Base Facility Class
 Gemini
 ******
 
-.. automodule:: tom_observations.facilities.gemini
+.. automodule:: bhtom_observations.facilities.gemini
     :members:
 
 
@@ -21,7 +21,7 @@ Gemini
 Las Cumbres Observatory
 ***********************
 
-.. automodule:: tom_observations.facilities.lco
+.. automodule:: bhtom_observations.facilities.lco
     :members:
     
 
@@ -29,5 +29,5 @@ Las Cumbres Observatory
 SOAR
 ****
 
-.. automodule:: tom_observations.facilities.soar
+.. automodule:: bhtom_observations.facilities.soar
     :members:

@@ -1,5 +1,5 @@
 Views
 =====
 
-.. automodule:: tom_alerts.views
+.. automodule:: bhtom_alerts.views
     :members:

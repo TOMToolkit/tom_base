@@ -3,9 +3,9 @@
 The TOM is configured with built-in data processing on the upload of Data Products. This processing is broken up into
 three components.
 
-* ``tom_dataproducts.data_processor.run_data_processor``
-* ``tom_dataproducts.data_processor.DataProcessor``
-* ``tom_dataproducts.data_serializers``
+* ``bhtom_dataproducts.data_processor.run_data_processor``
+* ``bhtom_dataproducts.data_processor.DataProcessor``
+* ``bhtom_dataproducts.data_serializers``
 
 The ``DataProductUploadView`` calls ``run_data_processor`` upon saving the ``DataProduct``. ``run_data_processor``
 instantiates the ``DATA_PROCESSOR_CLASS``, which can be specified in ``settings.py``. ``run_data_processor`` then
@@ -20,16 +20,16 @@ For photometry, the default behavior is simply to read the CSV and convert it to
 Data Serializers
 ----------------
 
-.. autoclass:: tom_dataproducts.processors.data_serializers.SpectrumSerializer
+.. autoclass:: bhtom_dataproducts.processors.data_serializers.SpectrumSerializer
     :members:
 
 
 Data Processors
 ---------------
 
-.. autofunction:: tom_dataproducts.data_processor.run_data_processor
+.. autofunction:: bhtom_dataproducts.data_processor.run_data_processor
 
-.. autoclass:: tom_dataproducts.data_processor.DataProcessor
+.. autoclass:: bhtom_dataproducts.data_processor.DataProcessor
     :members:
     :private-members:
     :member-order: bysource

@@ -1,5 +1,5 @@
 Utilities
 =========
 
-.. automodule:: tom_dataproducts.utils
+.. automodule:: bhtom_dataproducts.utils
     :members:

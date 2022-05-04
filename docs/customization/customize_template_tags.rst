@@ -38,7 +38,7 @@ end of ``INSTALLED_APPS``:
        'django.contrib.admin',
        'django.contrib.auth',
        ...
-       'tom_dataproducts',
+       'bhtom_dataproducts',
        'custom_code',
    ]
    ...
@@ -156,7 +156,7 @@ take note of the imports in this step!
 
    from django import template
 
-   from tom_dataproducts.models import ReducedDatum
+   from bhtom_dataproducts.models import ReducedDatum
 
 
    register = template.Library()
@@ -265,7 +265,7 @@ The target detail page seems like a logical place for this, so let’s go
 there. First, we need to override our ``target_detail.html`` template.
 If you haven’t read the tutorial on template overriding, you can do so
 `here <customize_templates>`__– in the meantime, you’ll need to add
-``target_detail.html`` to ``templates/tom_targets/`` in the top level of
+``target_detail.html`` to ``templates/bhtom_targets/`` in the top level of
 your project. Your project directory should look like this:
 
 ::
@@ -277,22 +277,22 @@ your project. Your project directory should look like this:
    ├── mytom
    ├── static
    ├── templates
-   │   └── tom_targets
+   │   └── bhtom_targets
    │       └── target_detail.html
    └── tmp
 
 Then, you’ll need to copy the contents of ``target_detail.html`` in the
 base TOM Toolkit to your ``target_detail.html``. You can find that file
 on
-`Github <https://github.com/TOMToolkit/tom_base/blob/main/tom_targets/templates/tom_targets/target_detail.html>`__.
+`Github <https://github.com/TOMToolkit/tom_base/blob/main/bhtom_targets/templates/bhtom_targets/target_detail.html>`__.
 
 Near the top of the file, there’s a series of template tags that are
 loaded in. Add ``custom_extras`` to that list:
 
 .. code:: html
 
-   {% extends 'tom_common/base.html' %}
-   {% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras publication_extras custom_extras static cache %}
+   {% extends 'bhtom_common/base.html' %}
+   {% load comments bootstrap4 bhtom_common_extras targets_extras observation_extras dataproduct_extras publication_extras custom_extras static cache %}
    ...
 
 Then, put your templatetag in the HTML somewhere, passing in ``object``

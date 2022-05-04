@@ -41,7 +41,7 @@ already, the important part is the one relevant to ``about.html``):
    from django.views.generic import TemplateView
 
    urlpatterns = [
-       path('', include('tom_common.urls')),
+       path('', include('bhtom_common.urls')),
        path('about/', TemplateView.as_view(template_name='about.html'), name='about')
    ]
 
@@ -65,7 +65,7 @@ That’s progress, but our new page is pretty ugly. The navigation bar is
 missing and we don’t have any of the nice CSS that makes the rest of the
 TOM pages look good! But wait, before you start copying in lines of
 HTML, know that all we need to do is extend
-`tom_common/base.html <https://github.com/TOMToolkit/tom_base/blob/main/tom_common/templates/tom_common/base.html>`__
+`bhtom_common/base.html <https://github.com/TOMToolkit/tom_base/blob/main/bhtom_common/templates/bhtom_common/base.html>`__
 to get all that back. You can read more about extending templates from
 the guide on `Customizing TOM
 Templates </customization/customize_templates>`__. Let’s modify
@@ -73,7 +73,7 @@ Templates </customization/customize_templates>`__. Let’s modify
 
 .. code:: html
 
-   {% extends 'tom_common/base.html' %}
+   {% extends 'bhtom_common/base.html' %}
    {% block content %}
    <p>
    To know that we know what we know, and to know that we do not know
@@ -105,7 +105,7 @@ the following content:
 .. code:: python
 
    from django.views.generic import TemplateView
-   from tom_observations.models import Target
+   from bhtom_observations.models import Target
 
 
    class AboutView(TemplateView):
@@ -127,7 +127,7 @@ Let’s modify our ``urls.py`` to use our new view:
    from .views import AboutView
 
    urlpatterns = [
-       path('', include('tom_common.urls')),
+       path('', include('bhtom_common.urls')),
        path('about/', AboutView.as_view(), name='about')
    ]
 
@@ -139,7 +139,7 @@ list of targets:
 
 .. code:: html
 
-   {% extends 'tom_common/base.html' %}
+   {% extends 'bhtom_common/base.html' %}
    {% block content %}
    <p>
    To know that we know what we know, and to know that we do not know
@@ -187,12 +187,12 @@ We did this with our ``AboutView`` earlier, and changed the
 lies the power of class based views. You can even subclass the views
 that ship with the TOM Toolkit itself. So for example, if you don’t like
 how the
-`TargetListView <https://github.com/TOMToolkit/tom_base/blob/15870172e842bcbac17bd4a4b71c9e016b270cf9/tom_targets/views.py#L29>`__
+`TargetListView <https://github.com/TOMToolkit/tom_base/blob/15870172e842bcbac17bd4a4b71c9e016b270cf9/bhtom_targets/views.py#L29>`__
 in the base TOM Toolkit behaves, you could subclass it in your TOM:
 
 .. code:: python
 
-   from tom_targets.views import TargetListView
+   from bhtom_targets.views import TargetListView
 
    class MyCustomTargetListView(TargetListView):
        template_name = 'mysupertargetlist.html'

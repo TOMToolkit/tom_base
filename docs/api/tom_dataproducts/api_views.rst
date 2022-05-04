@@ -13,5 +13,5 @@ API Views
     The available parameters for RESTful API calls are not available here. However, if you navigate to ``/api/targets/``
     and click the ``OPTIONS`` button, you can easily view all of the available parameters.
 
-.. automodule:: tom_dataproducts.api_views
+.. automodule:: bhtom_dataproducts.api_views
     :members:

@@ -1,5 +1,5 @@
 Views
 =====
 
-.. automodule:: tom_catalogs.views
+.. automodule:: bhtom_catalogs.views
     :members:

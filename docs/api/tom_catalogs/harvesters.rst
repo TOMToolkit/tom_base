@@ -5,7 +5,7 @@ Harvesters
 Base Harvester Class
 ********************
 
-.. automodule:: tom_catalogs.harvester
+.. automodule:: bhtom_catalogs.harvester
     :members:
 
 
@@ -13,7 +13,7 @@ Base Harvester Class
 JPL HORIZONS
 ************
 
-.. automodule:: tom_catalogs.harvesters.jplhorizons
+.. automodule:: bhtom_catalogs.harvesters.jplhorizons
     :members:
 
 
@@ -30,7 +30,7 @@ astroquery using the following command:
     pip install astroquery --upgrade --pre --use-deprecated=legacy-resolver
 
 
-.. automodule:: tom_catalogs.harvesters.mpc
+.. automodule:: bhtom_catalogs.harvesters.mpc
     :members:
 
 
@@ -38,7 +38,7 @@ astroquery using the following command:
 NED
 ***
 
-.. automodule:: tom_catalogs.harvesters.ned
+.. automodule:: bhtom_catalogs.harvesters.ned
     :members:
 
 
@@ -46,7 +46,7 @@ NED
 SIMBAD
 ******
 
-.. automodule:: tom_catalogs.harvesters.simbad
+.. automodule:: bhtom_catalogs.harvesters.simbad
     :members:
 
 
@@ -54,5 +54,5 @@ SIMBAD
 Transient Name Server
 *********************
 
-.. automodule:: tom_catalogs.harvesters.tns
+.. automodule:: bhtom_catalogs.harvesters.tns
     :members:

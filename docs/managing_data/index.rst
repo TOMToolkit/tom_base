@@ -6,7 +6,7 @@ Managing Data
   :hidden:
 
 
-  ../api/tom_dataproducts/views
+  ../api/bhtom_dataproducts/views
   plotting_data
   customizing_data_processing
 

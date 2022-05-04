@@ -1,5 +1,5 @@
 TemplateTags
 ============
 
-.. automodule:: tom_observations.templatetags.observation_extras
+.. automodule:: bhtom_observations.templatetags.observation_extras
     :members:

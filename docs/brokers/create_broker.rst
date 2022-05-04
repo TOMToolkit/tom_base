@@ -59,9 +59,9 @@ to import the necessary modules.
 
 .. code-block:: python
 
-    from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
-    from tom_alerts.models import BrokerQuery
-    from tom_targets.models import Target
+    from bhtom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
+    from bhtom_alerts.models import BrokerQuery
+    from bhtom_targets.models import Target
 
 In order to add custom forms to our broker module, we will also need Django's `forms` module, as well the Python module `requests`, which will allow us to fetch some remote broker test data.
 
@@ -152,7 +152,7 @@ name passed into the query.
 ---------------------------------
 
 In order to standardize alerts and display them in a consistent manner,
-the ``GenericAlert`` class has been defined within the ``tom_alerts`` library.
+the ``GenericAlert`` class has been defined within the ``bhtom_alerts`` library.
 This broker method converts a remote alert into a TOM Toolkit ``GenericAlert``.
 
 .. code-block:: python
@@ -193,14 +193,14 @@ Using Our New Alert Broker
 Now that we've created our TOM alert broker, let's hook it into our TOM
 so that we can ingest alerts and create targets.
 
-The ``tom_alerts`` module will look in ``settings.py`` for a list of alert
+The ``bhtom_alerts`` module will look in ``settings.py`` for a list of alert
 broker classes, so we'll need to add ``MyBroker`` to that list.
 
 .. code-block:: python
 
     TOM_ALERT_CLASSES = [
         ...
-        'tom_alerts.brokers.mars.MARSBroker',
+        'bhtom_alerts.brokers.mars.MARSBroker',
         'mytom.my_broker.MyBroker',
         ...
     ]

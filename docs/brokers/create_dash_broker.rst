@@ -1,23 +1,23 @@
 Plotly Dash Broker Modules in the TOM Toolkit
 #############################################
 
-An optional plugin module for the TOM Toolkit is the `tom_alerts_dash <https://github.com/TOMToolkit/tom_alerts_dash>`_ module.
-``tom_alerts_dash`` is built using `Plotly Dash <https://dash.plotly.com/>`_, a library that provides a Python wrapper for 
+An optional plugin module for the TOM Toolkit is the `bhtom_alerts_dash <https://github.com/TOMToolkit/bhtom_alerts_dash>`_ module.
+``bhtom_alerts_dash`` is built using `Plotly Dash <https://dash.plotly.com/>`_, a library that provides a Python wrapper for
 ReactJS, allowing you to generate ReactJS code by writing Python. The inclusion of Plotly Dash in the TOM Toolkit allows for
 responsive, single-page-app-styled views that don't require hard page reloads for simple actions.
 
-The instructions for installing ``tom_alerts_dash`` into your TOM are in the repository itself. However, this guide provides 
+The instructions for installing ``bhtom_alerts_dash`` into your TOM are in the repository itself. However, this guide provides
 instructions on writing your own broker module that can be used with the responsive views.
 
 The primary Dash object that we'll be using is that of a `DataTable <https://dash.plotly.com/datatable>`_, which is the 
-component that ``tom_alerts_dash`` uses to display the Dash broker data. It's recommended to consult the 
+component that ``bhtom_alerts_dash`` uses to display the Dash broker data. It's recommended to consult the
 `Reference <https://dash.plotly.com/datatable/reference>`_ when implementing a Dash broker module, as the properties for 
 columns and inputs are described there.
 
 Creating a Dash Broker Module
 *****************************
 
-Within ``tom_alerts_dash``, a broker module can be created with a custom table and custom inputs. That means that while MARS 
+Within ``bhtom_alerts_dash``, a broker module can be created with a custom table and custom inputs. That means that while MARS
 may provide filters for real-bogus score, ALeRCE can instead provide filters for early and late classifier. Additionally, 
 the set of columns MARS displays can be completely different than ALeRCE. For a custom broker module, that means that 
 an implementer is not limited to a small set of available filters.
@@ -46,16 +46,16 @@ The TOM Toolkit provides Dash modules for the following brokers:
 Required Dash Broker Class Methods
 ==================================
 
-For the following instructions, we'll be using the ``tom_alerts_dash`` ``MARSDashBroker`` module as an example. The code can 
-be found `here <https://github.com/TOMToolkit/tom_alerts_dash/blob/main/tom_alerts_dash/brokers/mars.py>`_.
+For the following instructions, we'll be using the ``bhtom_alerts_dash`` ``MARSDashBroker`` module as an example. The code can
+be found `here <https://github.com/TOMToolkit/bhtom_alerts_dash/blob/main/bhtom_alerts_dash/brokers/mars.py>`_.
 
-A ``tom_alerts_dash`` broker module is required to inherit from two classes: the TOM Toolkit broker module that it represents, 
-and the ``tom_alerts_dash`` ``GenericDashBroker`` interface.
+A ``bhtom_alerts_dash`` broker module is required to inherit from two classes: the TOM Toolkit broker module that it represents,
+and the ``bhtom_alerts_dash`` ``GenericDashBroker`` interface.
 
 .. code-block:: python
 
-    from tom_alerts.brokers.mars import MARSBroker, MARSQueryForm, MARS_URL
-    from tom_alerts_dash.alerts import GenericDashBroker
+    from bhtom_alerts.brokers.mars import MARSBroker, MARSQueryForm, MARS_URL
+    from bhtom_alerts_dash.alerts import GenericDashBroker
 
 
     class MARSDashBroker(MARSBroker, GenericDashBroker):
@@ -198,7 +198,7 @@ implementation of ``get_callback_inputs``, which provides the two inputs for ``p
 A ReactJS/Plotly Dash concept that is important to know for this method is that of the callback. A callback is a function that 
 runs asynchronously after being triggered, which is what enables a responsive page that doesn't require hard reloads.
 
-Each ``tom_alerts_dash`` module is required to implement a callback. The callback function will trigger on a change to 
+Each ``bhtom_alerts_dash`` module is required to implement a callback. The callback function will trigger on a change to
 any of the previously defined inputs. The callback function will accept the input values and query the broker to return 
 a set of alerts to the user, which should be a list of dictionaries.
 
@@ -219,7 +219,7 @@ exception simply prevents the callback from firing due to the incomplete data, b
 
     from dash.exceptions import PreventUpdate
 
-    from tom_alerts.brokers.mars import MARSBroker, MARSQueryForm
+    from bhtom_alerts.brokers.mars import MARSBroker, MARSQueryForm
 
 
     class MARSDashBroker(MARSBroker, GenericDashBroker):
@@ -252,7 +252,7 @@ exception simply prevents the callback from firing due to the incomplete data, b
 ``flatten_dash_alerts`` method
 ------------------------------
 
-As stated above, the ``flatten_dash_alerts`` method is not required for a custom implementation of a ``tom_alerts_dash`` broker 
+As stated above, the ``flatten_dash_alerts`` method is not required for a custom implementation of a ``bhtom_alerts_dash`` broker
 module, but exists for convenience. The below example creates a new dictionary for each alert that is one level deep, save for 
 original alert. Each key in the dictionary corresponds to a column defined in ``get_dash_columns``, for example:
 
@@ -274,9 +274,9 @@ original alert with the key ``alert``. This is critical in order to enable creat
 
 .. code-block:: python
 
-    from tom_alerts.brokers.mars import MARSBroker, MARSQueryForm, MARS_URL
-    from tom_common.templatetags.tom_common_extras import truncate_number
-    from tom_targets.templatetags.targets_extras import deg_to_sexigesimal
+    from bhtom_alerts.brokers.mars import MARSBroker, MARSQueryForm, MARS_URL
+    from bhtom_common.templatetags.bhtom_common_extras import truncate_number
+    from bhtom_targets.templatetags.targets_extras import deg_to_sexigesimal
 
 
     class MARSDashBroker(MARSBroker, GenericDashBroker):
@@ -309,7 +309,7 @@ that are currently rendered, so that they can be appended to and will not be ina
 
     import dash_bootstrap_components
 
-    from tom_alerts.brokers.mars import MARSQueryForm
+    from bhtom_alerts.brokers.mars import MARSQueryForm
 
 
     class MARSDashBroker(MARSBroker, GenericDashBroker):
@@ -352,15 +352,15 @@ To get a custom Dash broker module to show up in a TOM, it must be added to ``se
 .. code-block:: python
 
     TOM_ALERT_DASH_CLASSES = [
-        'tom_alerts_dash.brokers.alerce.ALeRCEDashBroker',
-        'tom_alerts_dash.brokers.mars.MARSDashBroker',
-        'tom_alerts_dash.brokers.scimma.SCIMMADashBroker',
+        'bhtom_alerts_dash.brokers.alerce.ALeRCEDashBroker',
+        'bhtom_alerts_dash.brokers.mars.MARSDashBroker',
+        'bhtom_alerts_dash.brokers.scimma.SCIMMADashBroker',
     ]
 
 Summary
 *******
 
-Though there's a learning curve to Dash, the implementation of ``tom_alerts_dash`` is intended to provide a relatively convenient 
+Though there's a learning curve to Dash, the implementation of ``bhtom_alerts_dash`` is intended to provide a relatively convenient
 and quick way to create a responsive table for displaying alerts from a preferred broker. As the Dash library evolves, the 
 TOM Toolkit will continue to build on the provided features. For implementers, the following tips are important to keep in 
 mind to make the process as smooth as possible:

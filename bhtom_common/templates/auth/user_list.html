@@ -1,0 +1,8 @@
+{% extends 'bhtom_common/base.html' %}
+{% load user_extras %}
+{% block title %}User Management{% endblock %}
+{% block content %}
+{% group_list %}
+<hr/>
+{% user_list %}
+{% endblock %}

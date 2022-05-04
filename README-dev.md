@@ -126,9 +126,9 @@ have automated release notification to a dedicated #releases slack channel).
 * `./manage.py test --exclude-tag=canary` to run non-canary tests
 
 * Examples for running specific tests or test suites:
-  * `./manage.py test tom_targets.tests`
-  * `./manage.py test tom_targets.tests.tests.TestTargetDetail`
-  * `./manage.py test tom_targets.tests.tests.TestTargetDetail.test_sidereal_target_detail`
+  * `./manage.py test bhtom_targets.tests`
+  * `./manage.py test bhtom_targets.tests.tests.TestTargetDetail`
+  * `./manage.py test bhtom_targets.tests.tests.TestTargetDetail.test_sidereal_target_detail`
 
 
 ## Project Information
@@ -169,7 +169,7 @@ Releases are managed by the TOM Toolkit team unless otherwise specified.
 - `tom_publications` - Provides support for generating LaTeX summaries of target and observation data. Deprecated.
 - `skip-django` - Provides Plotly Dash Single-Page app for Skip interaction. Deprecated, to be replaced by VueJS components.
 - `tom-demo-frontend` - Prototype for implementation of pure VueJS app rather than using django-webpack. Patterned after `science-archive-frontend`.
-- `tom_alerts_dash` - Provides Plotly Dash single-page app for broker interaction. Deprecated, should be replaced by an Django app with simple plots instead. Also out of date with `django-plotly-dash`, and needs to be updated to use pattern-matching callbacks.
+- `bhtom_alerts_dash` - Provides Plotly Dash single-page app for broker interaction. Deprecated, should be replaced by an Django app with simple plots instead. Also out of date with `django-plotly-dash`, and needs to be updated to use pattern-matching callbacks.
 
 #### Archived
 
@@ -239,7 +239,7 @@ The [documentation](https://tom-toolkit.readthedocs.io/en/stable/) is built on n
 | `skip-django`       | No     | No        | No         | TOM-Team            |
 | `tom-demo-frontend` | N/A    | N/A       | No         | N/A                 |
 | `tt-component-lib`  | No     | N/A       | No         | N/A                 |
-| `tom_alerts_dash`   | Yes    | Yes       | Yes        | TOM Team            |
+| `bhtom_alerts_dash`   | Yes    | Yes       | Yes        | TOM Team            |
 | `tom_antares`       | Yes    | Yes       | Yes        | TOM Team            |
 | `tom_base`          | Yes    | >89%      | Yes        | TOM Team            |
 | `tom_calibrations`  | No     | No        | No         | TOM Team            |

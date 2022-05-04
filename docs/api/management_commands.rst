@@ -2,13 +2,13 @@ Commands
 ========
 
 **********
-tom_alerts
+bhtom_alerts
 **********
 
 runbrokerquery.py - Runs saved alert queries and saves the results as Targets.
 
 ****************
-tom_dataproducts
+bhtom_dataproducts
 ****************
 
 downloaddata.py - Downloads available data for all completed observations.
@@ -17,7 +17,7 @@ updatereduceddata - Gets and updates time-series data for alert-generated target
 
 
 ****************
-tom_dataproducts
+bhtom_dataproducts
 ****************
 
 runcadencestrategy.py - Entry point for running cadence strategies.

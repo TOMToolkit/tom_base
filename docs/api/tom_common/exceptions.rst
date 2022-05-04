@@ -1,5 +1,5 @@
 Exceptions
 ==========
 
-.. automodule:: tom_common.exceptions
+.. automodule:: bhtom_common.exceptions
     :members:

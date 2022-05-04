@@ -1,5 +1,5 @@
 Models
 ======
 
-.. automodule:: tom_observations.models
+.. automodule:: bhtom_observations.models
     :members:
