@@ -78,7 +78,7 @@ class TestBroker(GenericBroker):
         return super().submit_upstream_alert(target=target, observation_record=observation_record)
 
 
-@override_settings(TOM_ALERT_CLASSES=['bhtom_base.tom_alerts.tests.tests.TestBroker'])
+@override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests.TestBroker'])
 class TestBrokerClass(TestCase):
     """ Test the functionality of the TestBroker, we modify the django settings to make sure
     it is the only installed broker.
@@ -103,26 +103,26 @@ class TestBrokerClass(TestCase):
         self.assertEqual(target.name, test_alerts[0]['name'])
 
 
-@override_settings(TOM_ALERT_CLASSES=['bhtom_base.tom_alerts.fake_broker'])
+@override_settings(TOM_ALERT_CLASSES=['tom_alerts.fake_broker'])
 class TestAlertModule(TestCase):
     """Test that attempting to import a nonexistent broker module raises the appropriate errors.
     """
 
     def test_get_service_classes_import_error(self):
         with self.subTest('Invalid import returns an import error.'):
-            with patch('bhtom_base.tom_alerts.alerts.import_module') as mock_import_module:
+            with patch('tom_alerts.alerts.import_module') as mock_import_module:
                 mock_import_module.side_effect = ImportError()
-                with self.assertRaisesRegex(ImportError, 'Could not import bhtom_base.tom_alerts.fake_broker.'):
+                with self.assertRaisesRegex(ImportError, 'Could not import tom_alerts.fake_broker.'):
                     get_service_classes()
 
         with self.subTest('Invalid import returns an attribute error.'):
             with patch('bhtom_base.tom_alerts.alerts.import_module') as mock_import_module:
                 mock_import_module.side_effect = AttributeError()
-                with self.assertRaisesRegex(ImportError, 'Could not import bhtom_base.tom_alerts.fake_broker.'):
+                with self.assertRaisesRegex(ImportError, 'Could not import tom_alerts.fake_broker.'):
                     get_service_classes()
 
 
-@override_settings(TOM_ALERT_CLASSES=['bhtom_base.tom_alerts.tests.tests.TestBroker'])
+@override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests.TestBroker'])
 class TestBrokerViews(TestCase):
     """ Test the views that use the broker classes
     """
@@ -256,7 +256,7 @@ class TestBrokerViews(TestCase):
         self.assertEqual(Target.objects.count(), 0)
         self.assertRedirects(response, reverse('tom_alerts:run', kwargs={'pk': query.id}))
 
-    @patch('bhtom_base.tom_alerts.tests.tests.TestBroker.submit_upstream_alert')
+    @patch('tom_alerts.tests.tests.TestBroker.submit_upstream_alert')
     def test_submit_alert_success(self, mock_submit_upstream_alert):
         """Test submission of an alert to a broker."""
 

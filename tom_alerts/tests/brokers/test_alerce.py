@@ -44,12 +44,13 @@ alerce_classifiers_response = [
 ]
 
 
+# TODO: why is the meandec 0 to 360 here...? Shouldn't it be -90, 90???
 def create_alerce_alert(firstmjd=None, lastmjd=None, class_name=None, classifier=None, probability=None):
     fake = Faker()
 
     return {'oid': fake.pystr_format(string_format='ZTF##???????', letters='abcdefghijklmnopqrstuvwxyz'),
             'meanra': fake.pyfloat(min_value=0, max_value=360),
-            'meandec': fake.pyfloat(min_value=0, max_value=360),
+            'meandec': fake.pyfloat(min_value=-90, max_value=90),
             'firstmjd': firstmjd if firstmjd else fake.pyfloat(min_value=56000, max_value=59000, right_digits=1),
             'lastmjd': lastmjd if lastmjd else fake.pyfloat(min_value=56000, max_value=59000, right_digits=1),
             'class': class_name if class_name else fake.pystr_format(string_format='????????',
