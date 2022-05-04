@@ -90,7 +90,7 @@ you want the quick and dirty, edit the ``urls.py`` (located next to
    from django.views.generic import TemplateView
 
    urlpatterns = [
-       path('', include('bhtom_common.urls')),
+       path('', include('bhtom_base.bhtom_common.urls')),
        path('newpage/', TemplateView.as_view(template_name='newpage.html'), name='newpage')
    ]
 

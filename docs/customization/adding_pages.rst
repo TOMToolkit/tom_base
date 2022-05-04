@@ -41,7 +41,7 @@ already, the important part is the one relevant to ``about.html``):
    from django.views.generic import TemplateView
 
    urlpatterns = [
-       path('', include('bhtom_common.urls')),
+       path('', include('bhtom_base.bhtom_common.urls')),
        path('about/', TemplateView.as_view(template_name='about.html'), name='about')
    ]
 
@@ -127,7 +127,7 @@ Let’s modify our ``urls.py`` to use our new view:
    from .views import AboutView
 
    urlpatterns = [
-       path('', include('bhtom_common.urls')),
+       path('', include('bhtom_base.bhtom_common.urls')),
        path('about/', AboutView.as_view(), name='about')
    ]
 

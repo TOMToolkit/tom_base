@@ -74,7 +74,7 @@ MIDDLEWARE = [
     'bhtom_common.middleware.AuthStrategyMiddleware',
 ]
 
-ROOT_URLCONF = 'bhtom_common.urls'
+ROOT_URLCONF = 'bhtom_base.bhtom_common.urls'
 
 TEMPLATES = [
     {
