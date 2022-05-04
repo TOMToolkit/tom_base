@@ -84,10 +84,10 @@ def upload_dataproduct(context, obj):
     initial = {}
     if isinstance(obj, Target):
         initial['target'] = obj
-        initial['referrer'] = reverse('bhtom_targets:detail', args=(obj.id,))
+        initial['referrer'] = reverse('bhtom_base.bhtom_targets:detail', args=(obj.id,))
     elif isinstance(obj, ObservationRecord):
         initial['observation_record'] = obj
-        initial['referrer'] = reverse('bhtom_observations:detail', args=(obj.id,))
+        initial['referrer'] = reverse('bhtom_base.bhtom_observations:detail', args=(obj.id,))
     form = DataProductUploadForm(initial=initial)
     if not settings.TARGET_PERMISSIONS_ONLY:
         if user.is_superuser:

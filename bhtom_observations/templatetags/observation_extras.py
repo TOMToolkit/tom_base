@@ -91,7 +91,7 @@ def facility_observation_form(target, facility, observation_type):
         'observation_type': observation_type
     }
     obs_form = facility_class.get_form(observation_type)(initial=initial_fields)
-    obs_form.helper.form_action = reverse('bhtom_observations:create', kwargs={'facility': facility})
+    obs_form.helper.form_action = reverse('bhtom_base.bhtom_observations:create', kwargs={'facility': facility})
 
     return {'obs_form': obs_form}
 

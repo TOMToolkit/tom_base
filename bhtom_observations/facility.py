@@ -91,7 +91,7 @@ class BaseObservationForm(forms.Form):
         target_id = self.initial.get('target_id')
         return ButtonHolder(
                 Submit('submit', 'Submit'),
-                HTML(f'''<a class="btn btn-outline-primary" href={{% url 'bhtom_targets:detail' {target_id} %}}>
+                HTML(f'''<a class="btn btn-outline-primary" href={{% url 'bhtom_base.bhtom_targets:detail' {target_id} %}}>
                          Back</a>''')
             )
 

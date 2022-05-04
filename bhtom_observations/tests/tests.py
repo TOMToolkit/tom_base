@@ -37,23 +37,23 @@ class TestObservationViews(TestCase):
         self.client.force_login(self.user)
 
     def test_observation_list(self):
-        response = self.client.get(reverse('bhtom_observations:list'))
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, reverse('bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
+            response, reverse('bhtom_base.bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
         )
 
     def test_observation_list_unauthorized(self):
         self.client.force_login(self.user2)
-        response = self.client.get(reverse('bhtom_observations:list'))
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:list'))
         self.assertEqual(response.status_code,  200)
         self.assertNotContains(
-            response, reverse('bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
+            response, reverse('bhtom_base.bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
         )
 
     def test_observation_detail(self):
         response = self.client.get(
-            reverse('bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
+            reverse('bhtom_base.bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(
@@ -63,21 +63,21 @@ class TestObservationViews(TestCase):
     def test_observation_detail_unauthorized(self):
         self.client.force_login(self.user2)
         response = self.client.get(
-            reverse('bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
+            reverse('bhtom_base.bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
         )
         self.assertEqual(response.status_code, 404)
 
     def test_update_observations(self):
-        response = self.client.get(reverse('bhtom_observations:list') + '?update_status=True', follow=True)
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:list') + '?update_status=True', follow=True)
         self.assertContains(response, 'COMPLETED', status_code=200)
 
     def test_update_observations_not_authenticated(self):
         """Test that an unauthenticated user is redirected to login screen if they attempt to update observations."""
-        response = self.client.get(reverse('bhtom_observations:list') + '?update_status=True')
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:list') + '?update_status=True')
         self.assertEqual(response.status_code, 302)
 
     def test_get_observation_form(self):
-        url = f"{reverse('bhtom_observations:create', kwargs={'facility': 'FakeRoboticFacility'})}" \
+        url = f"{reverse('bhtom_base.bhtom_observations:create', kwargs={'facility': 'FakeRoboticFacility'})}" \
               f"?target_id={self.target.id}&observation_type=OBSERVATION"
         response = self.client.get(url)
         # self.assertContains(response, 'fake form input')
@@ -89,7 +89,7 @@ class TestObservationViews(TestCase):
             self.observation_record.id,
             obs_group.id
         )
-        response = self.client.get(reverse('bhtom_observations:list') + reqstring)
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:list') + reqstring)
         self.assertEqual(response.status_code, 302)
         obs_group.refresh_from_db()
         self.assertIn(self.observation_record, obs_group.observation_records.all())
@@ -103,7 +103,7 @@ class TestObservationViews(TestCase):
             self.observation_record.id,
             obs_group.id
         )
-        response = self.client.get(reverse('bhtom_observations:list') + reqstring)
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:list') + reqstring)
         self.assertEqual(response.status_code, 302)
         obs_group.refresh_from_db()
         self.assertNotIn(self.observation_record, obs_group.observation_records.all())
@@ -135,7 +135,7 @@ class TestObservationCreateView(TestCase):
         }
         self.client.post(
             '{}?target_id={}'.format(
-                reverse('bhtom_observations:create', kwargs={'facility': 'FakeRoboticFacility'}),
+                reverse('bhtom_base.bhtom_observations:create', kwargs={'facility': 'FakeRoboticFacility'}),
                 self.target.id
             ),
             data=form_data,
@@ -161,7 +161,7 @@ class TestObservationCreateView(TestCase):
             'test_input': 'elves',
             'facility': 'FakeManualFacility',
         }
-        url = f"{reverse('bhtom_observations:create', kwargs={'facility': 'FakeManualFacility'})}" \
+        url = f"{reverse('bhtom_base.bhtom_observations:create', kwargs={'facility': 'FakeManualFacility'})}" \
               f"?target_id={self.target.id}"
         self.client.post(url, data=form_data, follow=True)
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
@@ -190,14 +190,14 @@ class TestObservationCancelView(TestCase):
         self.observation_record.status = 'PENDING'
         self.observation_record.save()
 
-        self.client.get(reverse('bhtom_observations:cancel', kwargs={'pk': self.observation_record.id}))
+        self.client.get(reverse('bhtom_base.bhtom_observations:cancel', kwargs={'pk': self.observation_record.id}))
         self.observation_record.refresh_from_db()
         self.assertEqual(self.observation_record.status, 'CANCELED')
 
     @mock.patch('bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility.cancel_observation')
     def test_cancel_observation_failure(self, mock_cancel_observation):
         mock_cancel_observation.return_value = False
-        response = self.client.get(reverse('bhtom_observations:cancel', kwargs={'pk': self.observation_record.id}))
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:cancel', kwargs={'pk': self.observation_record.id}))
 
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(messages[0][0], 'Unable to cancel observation.')
@@ -205,7 +205,7 @@ class TestObservationCancelView(TestCase):
     @mock.patch('bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility.cancel_observation')
     def test_cancel_observation_exception(self, mock_cancel_observation):
         mock_cancel_observation.side_effect = ValidationError('mock error')
-        response = self.client.get(reverse('bhtom_observations:cancel', kwargs={'pk': self.observation_record.id}))
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:cancel', kwargs={'pk': self.observation_record.id}))
 
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(messages[0][0], 'Unable to cancel observation: [\'mock error\']')
@@ -225,7 +225,7 @@ class TestAddExistingObservationView(TestCase):
             'target_id': self.target.id,
             'observation_id': '1234567890'
         }
-        response = self.client.post(reverse('bhtom_observations:add-existing'), data=form_data, follow=True)
+        response = self.client.post(reverse('bhtom_base.bhtom_observations:add-existing'), data=form_data, follow=True)
 
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(messages[0][0], 'Successfully associated observation record 1234567890')
@@ -245,13 +245,13 @@ class TestAddExistingObservationView(TestCase):
             'target_id': self.target.id,
             'observation_id': obsr.observation_id
         }
-        response = self.client.post(reverse('bhtom_observations:add-existing'), data=form_data, follow=True)
+        response = self.client.post(reverse('bhtom_base.bhtom_observations:add-existing'), data=form_data, follow=True)
         self.assertContains(response,
                             'An observation record already exists in your TOM for this combination')
         self.assertEqual(ObservationRecord.objects.filter(observation_id=obsr.observation_id).count(), 1)
 
         form_data['confirm'] = True
-        response = self.client.post(reverse('bhtom_observations:add-existing'), data=form_data, follow=True)
+        response = self.client.post(reverse('bhtom_base.bhtom_observations:add-existing'), data=form_data, follow=True)
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(messages[0][0], f'Successfully associated observation record {obsr.observation_id}')
 
@@ -264,7 +264,7 @@ class TestFacilityStatusView(TestCase):
         pass
 
     def test_facility_status(self):
-        response = self.client.get(reverse('bhtom_observations:facility-status'))
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:facility-status'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'coj.domb.1m0a', status_code=HTTPStatus.OK)
 
@@ -288,23 +288,23 @@ class TestObservationViewsRowLevelPermissions(TestCase):
         self.client.force_login(user)
 
     def test_observation_list_authorized(self):
-        response = self.client.get(reverse('bhtom_observations:list'))
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, reverse('bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
+            response, reverse('bhtom_base.bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
         )
 
     def test_observation_list_unauthorized(self):
         self.client.force_login(self.user2)
-        response = self.client.get(reverse('bhtom_observations:list'))
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:list'))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(
-            response, reverse('bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
+            response, reverse('bhtom_base.bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
         )
 
     def test_observation_detail(self):
         response = self.client.get(
-            reverse('bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
+            reverse('bhtom_base.bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(
@@ -314,7 +314,7 @@ class TestObservationViewsRowLevelPermissions(TestCase):
     def test_observation_detail_unauthorized(self):
         self.client.force_login(self.user2)
         response = self.client.get(
-            reverse('bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
+            reverse('bhtom_base.bhtom_observations:detail', kwargs={'pk': self.observation_record.id})
         )
         self.assertEqual(response.status_code, 404)
 
@@ -332,22 +332,22 @@ class TestObservationTemplateViews(TestCase):
         self.client.force_login(self.user)
 
     def test_observation_template_list(self):
-        response = self.client.get(reverse('bhtom_observations:template-list'))
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:template-list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, reverse('bhtom_observations:template-update', kwargs={'pk': self.observation_template.id})
+            response, reverse('bhtom_base.bhtom_observations:template-update', kwargs={'pk': self.observation_template.id})
         )
 
     def test_observation_template_create(self):
-        response = self.client.get(reverse('bhtom_observations:template-create',
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:template-create',
                                            kwargs={'facility': 'FakeRoboticFacility'}))
         self.assertContains(response, 'Template name')
 
     def test_observation_template_delete(self):
-        response = self.client.post(reverse('bhtom_observations:template-delete',
+        response = self.client.post(reverse('bhtom_base.bhtom_observations:template-delete',
                                     args=(self.observation_template.id,)),
                                     follow=True)
-        self.assertRedirects(response, reverse('bhtom_observations:template-list'), status_code=302)
+        self.assertRedirects(response, reverse('bhtom_base.bhtom_observations:template-list'), status_code=302)
         self.assertFalse(ObservationTemplate.objects.filter(pk=self.observation_template.id).exists())
 
 

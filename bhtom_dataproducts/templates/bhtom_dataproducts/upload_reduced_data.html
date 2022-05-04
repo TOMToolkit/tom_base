@@ -2,7 +2,7 @@
 {% load bootstrap4 static %}
 {% block title %}Import target{% endblock %}
 {% block content %}
-<form method="POST" action="{% url 'bhtom_dataproducts:upload-reduced-data' %}" enctype="multipart/form-data">
+<form method="POST" action="{% url 'bhtom_base.bhtom_dataproducts:upload-reduced-data' %}" enctype="multipart/form-data">
   {% csrf_token %}
   <input type="file" name="target_csv">
   {% buttons %}

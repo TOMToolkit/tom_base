@@ -23,7 +23,7 @@ class AddExistingObservationForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_action = reverse('bhtom_observations:add-existing')
+        self.helper.form_action = reverse('bhtom_base.bhtom_observations:add-existing')
         self.helper.layout = Layout(
             'target_id',
             'confirm',
@@ -54,7 +54,7 @@ class UpdateObservationId(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_action = reverse('bhtom_observations:update', kwargs={'pk': self.initial.get('obsr_id')})
+        self.helper.form_action = reverse('bhtom_base.bhtom_observations:update', kwargs={'pk': self.initial.get('obsr_id')})
         self.helper.layout = Layout(
             'obsr_id',
             Row(

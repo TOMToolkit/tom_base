@@ -3,7 +3,7 @@
 <p>
   For example CSVs, see the <a href="{% static 'bhtom_dataproducts/photometry_sample.csv' %}">photometry</a> and <a href="{% static 'bhtom_dataproducts/spectrum_sample.csv' %}">spectroscopy</a> sample files. FITS is supported for spectra.
 </p>
-<form method="POST" action="{% url 'bhtom_dataproducts:upload' %}" enctype="multipart/form-data">
+<form method="POST" action="{% url 'bhtom_base.bhtom_dataproducts:upload' %}" enctype="multipart/form-data">
   {% csrf_token %}
   {% bootstrap_form data_product_form %}
   {% buttons %}

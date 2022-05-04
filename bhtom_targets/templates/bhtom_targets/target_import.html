@@ -7,7 +7,7 @@
   Upload a .csv to import targets in bulk. CSV columns must match target attributes.
   View the <a href="{% static 'bhtom_targets/target_import.csv' %}">example .csv file</a>.
 </p>
-<form method="POST" action="{% url 'bhtom_targets:import' %}" enctype="multipart/form-data">
+<form method="POST" action="{% url 'bhtom_base.bhtom_targets:import' %}" enctype="multipart/form-data">
   {% csrf_token %}
   <input type="file" name="target_csv">
   {% buttons %}

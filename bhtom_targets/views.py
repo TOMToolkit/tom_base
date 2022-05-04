@@ -377,7 +377,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
                               'Did you know updating observation statuses can be automated? Learn how in'
                               '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
                               ' the docs.</a>'))
-            return redirect(reverse('bhtom_targets:detail', args=(target_id,)))
+            return redirect(reverse('bhtom_base.bhtom_targets:detail', args=(target_id,)))
 
         obs_template_form = ApplyObservationTemplateForm(request.GET)
         if obs_template_form.is_valid():
@@ -387,7 +387,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
             obs_template_params['cadence_frequency'] = request.GET.get('cadence_frequency', '')
             params = urlencode(obs_template_params)
             return redirect(
-                reverse('bhtom_observations:create',
+                reverse('bhtom_base.bhtom_observations:create',
                         args=(obs_template.facility,)) + f'?target_id={self.get_object().id}&' + params)
 
         return super().get(request, *args, **kwargs)
@@ -415,7 +415,7 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
         )
         for error in result['errors']:
             messages.warning(request, error)
-        return redirect(reverse('bhtom_targets:list'))
+        return redirect(reverse('bhtom_base.bhtom_targets:list'))
 
 
 class TargetExportView(TargetListView):
@@ -461,10 +461,10 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
             grouping_object = TargetList.objects.get(pk=grouping_id)
         except Exception as e:
             messages.error(request, 'Cannot find the target group with id={}; {}'.format(grouping_id, e))
-            return redirect(reverse('bhtom_targets:list') + '?' + query_string)
+            return redirect(reverse('bhtom_base.bhtom_targets:list') + '?' + query_string)
         if not request.user.has_perm('bhtom_targets.view_targetlist', grouping_object):
             messages.error(request, 'Permission denied.')
-            return redirect(reverse('bhtom_targets:list') + '?' + query_string)
+            return redirect(reverse('bhtom_base.bhtom_targets:list') + '?' + query_string)
 
         if 'add' in request.POST:
             if request.POST.get('isSelectAll') == 'True':
@@ -485,7 +485,7 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
                 target_ids = request.POST.getlist('selected-target')
                 move_selected_to_grouping(target_ids, grouping_object, request)
 
-        return redirect(reverse('bhtom_targets:list') + '?' + query_string)
+        return redirect(reverse('bhtom_base.bhtom_targets:list') + '?' + query_string)
 
 
 class TargetGroupingView(PermissionListMixin, ListView):

@@ -104,13 +104,13 @@ class TestUserManagement(TestCase):
 class TestAuthScheme(TestCase):
     @override_settings(AUTH_STRATEGY='LOCKED')
     def test_user_cannot_access_view(self):
-        response = self.client.get(reverse('bhtom_targets:list'))
+        response = self.client.get(reverse('bhtom_base.bhtom_targets:list'))
         self.assertRedirects(
-            response, reverse('login') + '?next=' + reverse('bhtom_targets:list'), status_code=302
+            response, reverse('login') + '?next=' + reverse('bhtom_base.bhtom_targets:list'), status_code=302
         )
 
     @override_settings(AUTH_STRATEGY='READ_ONLY')
     def test_user_can_access_view(self):
-        response = self.client.get(reverse('bhtom_targets:list'))
+        response = self.client.get(reverse('bhtom_base.bhtom_targets:list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Create Targets')

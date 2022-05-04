@@ -44,8 +44,8 @@
         {% for observation in filter.qs %}
         <tr>
           <td><input type="checkbox" name="selected" value="{{observation.id}}"></td>
-          <td><a class="btn btn-success" href="{% url 'bhtom_observations:detail' observation.id %}">Details</a></td>
-          <td><a href="{% url 'bhtom_targets:detail' observation.target.id %}" title="{{ observation.target.id }}">{{ observation.target.names|join:", " }}</a></td>
+          <td><a class="btn btn-success" href="{% url 'bhtom_base.bhtom_observations:detail' observation.id %}">Details</a></td>
+          <td><a href="{% url 'bhtom_base.bhtom_targets:detail' observation.target.id %}" title="{{ observation.target.id }}">{{ observation.target.names|join:", " }}</a></td>
           <td>{{ observation.facility }}</td>
           <td>{{ observation.status }}</td>
           <td>{{ observation.scheduled_start }}</td>
@@ -54,7 +54,7 @@
           <td>{{ observation.dataproduct_set.count }}</td>
           <td>
             {% if observation.status == 'COMPLETED' %}
-            <form method="POST" action="{% url 'bhtom_dataproducts:save' observation.id %}">
+            <form method="POST" action="{% url 'bhtom_base.bhtom_dataproducts:save' observation.id %}">
               {% csrf_token %}
               <input type="hidden" value="ALL" name="products">
               <input type="hidden" value="{{ observation.facility }}" name="facility">
@@ -67,7 +67,7 @@
         <tr>
           <td colspan="7">
             No observations yet. You might want to create an observation from one of
-            <a href="{% url 'bhtom_targets:list' %}">your saved targets</a>.
+            <a href="{% url 'bhtom_base.bhtom_targets:list' %}">your saved targets</a>.
           </td>
         </tr>
         {% endfor %}
@@ -83,7 +83,7 @@
         <button type="submit" class="btn btn-primary">
           Filter
         </button>
-        <a href="{% url 'bhtom_observations:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
+        <a href="{% url 'bhtom_base.bhtom_observations:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
       {% endbuttons %}
     </form>
   </div>

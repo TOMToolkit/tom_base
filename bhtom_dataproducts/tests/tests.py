@@ -61,11 +61,11 @@ class Views(TestCase):
         self.client.force_login(user)
 
     def test_dataproduct_list_on_target(self, dp_mock):
-        response = self.client.get(reverse('bhtom_targets:detail', kwargs={'pk': self.target.id}))
+        response = self.client.get(reverse('bhtom_base.bhtom_targets:detail', kwargs={'pk': self.target.id}))
         self.assertContains(response, 'afile.fits')
 
     def test_get_dataproducts(self, dp_mock):
-        response = self.client.get(reverse('bhtom_observations:detail', kwargs={'pk': self.observation_record.id}))
+        response = self.client.get(reverse('bhtom_base.bhtom_observations:detail', kwargs={'pk': self.observation_record.id}))
         self.assertContains(response, 'testdpid')
 
     def test_save_dataproduct(self, dp_mock):
@@ -168,22 +168,22 @@ class TestViewsWithPermissions(TestCase):
         self.client.force_login(self.user)
 
     def test_dataproduct_list_on_target(self, dp_mock):
-        response = self.client.get(reverse('bhtom_targets:detail', kwargs={'pk': self.target.id}))
+        response = self.client.get(reverse('bhtom_base.bhtom_targets:detail', kwargs={'pk': self.target.id}))
         self.assertContains(response, 'afile.fits')
         self.client.force_login(self.user2)
 
     def test_dataproduct_list_on_target_unauthorized(self, dp_mock):
         self.client.force_login(self.user2)
-        response = self.client.get(reverse('bhtom_targets:detail', kwargs={'pk': self.target.id}))
+        response = self.client.get(reverse('bhtom_base.bhtom_targets:detail', kwargs={'pk': self.target.id}))
         self.assertNotContains(response, 'afile.fits')
 
     def test_dataproduct_list(self, dp_mock):
-        response = self.client.get(reverse('bhtom_dataproducts:list'))
+        response = self.client.get(reverse('bhtom_base.bhtom_dataproducts:list'))
         self.assertContains(response, 'afile.fits')
 
     def test_dataproduct_list_unauthorized(self, dp_mock):
         self.client.force_login(self.user2)
-        response = self.client.get(reverse('bhtom_dataproducts:list'))
+        response = self.client.get(reverse('bhtom_base.bhtom_dataproducts:list'))
         self.assertNotContains(response, 'afile.fits')
 
     @override_settings(TOM_FACILITY_CLASSES=['bhtom_base.bhtom_observations.tests.utils.FakeRoboticFacility'],
@@ -226,14 +226,14 @@ class TestDataProductListView(TestCase):
     @patch('bhtom_base.bhtom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
     def test_dataproduct_list(self, dp_mock):
         """Test that the data product list view renders correctly."""
-        response = self.client.get(reverse('bhtom_dataproducts:list'))
+        response = self.client.get(reverse('bhtom_base.bhtom_dataproducts:list'))
         self.assertContains(response, 'afile.fits')
 
     @patch('bhtom_base.bhtom_dataproducts.models.is_fits_image_file')
     def test_dataproduct_list_no_thumbnail(self, mock_is_fits_image_file):
         """Test that a data product with a failed thumbnail creation does not raise an exception."""
         mock_is_fits_image_file.return_value = True
-        response = self.client.get(reverse('bhtom_dataproducts:list'))
+        response = self.client.get(reverse('bhtom_base.bhtom_dataproducts:list'))
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
 

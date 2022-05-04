@@ -8,7 +8,7 @@
     <p>
       Create a new query using:
       {% for broker in installed_brokers %}
-      <a href="{% url 'bhtom_alerts:create' %}?broker={{ broker }}" title="{{ broker }}" class="btn btn-outline-primary">{{ broker }}</a>
+      <a href="{% url 'bhtom_base.bhtom_alerts:create' %}?broker={{ broker }}" title="{{ broker }}" class="btn btn-outline-primary">{{ broker }}</a>
       {% endfor %}
     </p>
     <table class="table table-striped">
@@ -16,12 +16,12 @@
       <tbody>
         {% for query in filter.qs %}
         <tr>
-          <td><a href="{% url 'bhtom_alerts:update' query.id %}" title="Update {{ query.name }}">{{ query.name }}</a></td>
+          <td><a href="{% url 'bhtom_base.bhtom_alerts:update' query.id %}" title="Update {{ query.name }}">{{ query.name }}</a></td>
           <td>{{ query.broker }}</td>
           <td>{{ query.created }}</td>
           <td>{{ query.last_run }}</td>
-          <td><a href="{% url 'bhtom_alerts:run' query.id %}" title="Run query" class="btn btn-primary">Run</a></td>
-          <td><a href="{% url 'bhtom_alerts:delete' query.id %}" title="Delete query" class="btn btn-danger">Delete</a></td>
+          <td><a href="{% url 'bhtom_base.bhtom_alerts:run' query.id %}" title="Run query" class="btn btn-primary">Run</a></td>
+          <td><a href="{% url 'bhtom_base.bhtom_alerts:delete' query.id %}" title="Delete query" class="btn btn-danger">Delete</a></td>
         </tr>
         {% empty %}
         <tr>
@@ -41,7 +41,7 @@
         <button type="submit" class="btn btn-primary">
           Filter
         </button>
-        <a href="{% url 'bhtom_alerts:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
+        <a href="{% url 'bhtom_base.bhtom_alerts:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
       {% endbuttons %}
     </form>
   </div>

@@ -32,7 +32,7 @@
 <div class="row">
   <div class="col-md-8">
     <h4>Saved Data Products</h4>
-    <form method="POST" action="{% url 'bhtom_dataproducts:group-data' %}">
+    <form method="POST" action="{% url 'bhtom_base.bhtom_dataproducts:group-data' %}">
       {% csrf_token %}
       <div class="form-row">
         <div class="col-sm-4">
@@ -51,13 +51,13 @@
       {% dataproduct_list_for_observation_saved data_products request %}
     </form>
 
-    <form method="POST" action="{% url 'bhtom_dataproducts:save' object.id %}">
+    <form method="POST" action="{% url 'bhtom_base.bhtom_dataproducts:save' object.id %}">
       {% csrf_token %}
       <input type="hidden" value="{{ object.facility }}" name="facility">
       <input type="hidden" value="ALL" name="products">
       <input type="submit" value="Save All" class="btn btn-primary float-right">
     </form>
-    <form method="POST" action="{% url 'bhtom_dataproducts:save' object.id %}">
+    <form method="POST" action="{% url 'bhtom_base.bhtom_dataproducts:save' object.id %}">
       {% csrf_token %}
       <input type="hidden" value="{{ object.facility }}" name="facility">
       <div class="row">

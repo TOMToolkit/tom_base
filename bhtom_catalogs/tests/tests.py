@@ -35,17 +35,17 @@ class TestHarvesterViews(TestCase):
         self.client.force_login(user)
 
     def test_service_available(self):
-        response = self.client.get(reverse('bhtom_catalogs:query'))
+        response = self.client.get(reverse('bhtom_base.bhtom_catalogs:query'))
         self.assertContains(response, TestHarvester.name)
 
     def test_do_search(self):
         data = {'term': 'atarget', 'service': 'TEST'}
-        response = self.client.post(reverse('bhtom_catalogs:query'), data=data, follow=True)
+        response = self.client.post(reverse('bhtom_base.bhtom_catalogs:query'), data=data, follow=True)
         self.assertContains(response, 'faketarget')
 
 
 # TODO: investigate
     # def test_not_found(self):
     #     data = {'term': 'notfound', 'service': 'TEST'}
-    #     response = self.client.post(reverse('bhtom_catalogs:query'), data=data, follow=True)
+    #     response = self.client.post(reverse('bhtom_base.bhtom_catalogs:query'), data=data, follow=True)
     #     self.assertContains(response, 'Object not found')

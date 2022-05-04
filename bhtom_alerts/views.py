@@ -60,7 +60,7 @@ class BrokerQueryCreateView(LoginRequiredMixin, FormView):
         :rtype: django.forms.Form
         """
         form = super().get_form()
-        form.helper.form_action = reverse('bhtom_alerts:create')
+        form.helper.form_action = reverse('bhtom_base.bhtom_alerts:create')
         return form
 
     def get_initial(self):
@@ -79,7 +79,7 @@ class BrokerQueryCreateView(LoginRequiredMixin, FormView):
         Saves the associated ``BrokerQuery`` and redirects to the ``BrokerQuery`` list.
         """
         form.save()
-        return redirect(reverse('bhtom_alerts:list'))
+        return redirect(reverse('bhtom_base.bhtom_alerts:list'))
 
 
 class BrokerQueryUpdateView(LoginRequiredMixin, FormView):
@@ -114,7 +114,7 @@ class BrokerQueryUpdateView(LoginRequiredMixin, FormView):
         """
         form = super().get_form()
         form.helper.form_action = reverse(
-            'bhtom_alerts:update', kwargs={'pk': self.object.id}
+            'bhtom_base.bhtom_alerts:update', kwargs={'pk': self.object.id}
         )
         return form
 
@@ -136,7 +136,7 @@ class BrokerQueryUpdateView(LoginRequiredMixin, FormView):
         Saves the associated ``BrokerQuery`` and redirects to the ``BrokerQuery`` list.
         """
         form.save(query_id=self.object.id)
-        return redirect(reverse('bhtom_alerts:list'))
+        return redirect(reverse('bhtom_base.bhtom_alerts:list'))
 
 
 class BrokerQueryFilter(FilterSet):
@@ -178,7 +178,7 @@ class BrokerQueryDeleteView(LoginRequiredMixin, DeleteView):
     View that handles the deletion of a saved ``BrokerQuery``. Requires authentication.
     """
     model = BrokerQuery
-    success_url = reverse_lazy('bhtom_alerts:list')
+    success_url = reverse_lazy('bhtom_base.bhtom_alerts:list')
 
 
 class RunQueryView(TemplateView):
@@ -233,12 +233,12 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
         errors = []
         if not alerts:
             messages.warning(request, 'Please select at least one alert from which to create a target.')
-            return redirect(reverse('bhtom_alerts:run', kwargs={'pk': query_id}))
+            return redirect(reverse('bhtom_base.bhtom_alerts:run', kwargs={'pk': query_id}))
         for alert_id in alerts:
             cached_alert = cache.get('alert_{}'.format(alert_id))
             if not cached_alert:
                 messages.error(request, 'Could not create targets. Try re running the query again.')
-                return redirect(reverse('bhtom_alerts:run', kwargs={'pk': query_id}))
+                return redirect(reverse('bhtom_base.bhtom_alerts:run', kwargs={'pk': query_id}))
             generic_alert = broker_class().to_generic_alert(json.loads(cached_alert))
             target, extras, aliases = generic_alert.to_target()
             try:
@@ -252,14 +252,14 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
                 messages.warning(request, f'Unable to save {target.name}, target with that name already exists.')
                 errors.append(target.name)
         if (len(alerts) == len(errors)):
-            return redirect(reverse('bhtom_alerts:run', kwargs={'pk': query_id}))
+            return redirect(reverse('bhtom_base.bhtom_alerts:run', kwargs={'pk': query_id}))
         elif (len(alerts) == 1):
             return redirect(reverse(
-                'bhtom_targets:update', kwargs={'pk': target.id})
+                'bhtom_base.bhtom_targets:update', kwargs={'pk': target.id})
             )
         else:
             return redirect(reverse(
-                'bhtom_targets:list')
+                'bhtom_base.bhtom_targets:list')
             )
 
 

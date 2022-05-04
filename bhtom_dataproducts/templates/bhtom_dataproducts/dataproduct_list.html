@@ -28,15 +28,15 @@
         {% for product in object_list %}
         <tr>
           <td><a href="{{ product.data.url }}">{{ product.get_file_name|truncatechars:40 }}</a></th>
-          <td><a href="{% url 'bhtom_targets:detail' product.target.id %}">{{ product.target.name|truncatechars:40 }}</a></td>
+          <td><a href="{% url 'bhtom_base.bhtom_targets:detail' product.target.id %}">{{ product.target.name|truncatechars:40 }}</a></td>
           {% if product.observation_record.id %}
-          <td><a href="{% url 'bhtom_observations:detail' product.observation_record.id %}">{{ product.observation_record|truncatechars:40 }}</a></td>
+          <td><a href="{% url 'bhtom_base.bhtom_observations:detail' product.observation_record.id %}">{{ product.observation_record|truncatechars:40 }}</a></td>
           {% else %}
           <td></td>
           {% endif %}
           <td>
             {% for group in product.group.all %}
-            <a href="{% url 'bhtom_dataproducts:group-detail' group.id %}">{{ group.name|truncatechars:40 }}</a>
+            <a href="{% url 'bhtom_base.bhtom_dataproducts:group-detail' group.id %}">{{ group.name|truncatechars:40 }}</a>
             {% endfor %}
           </td>
           <td>
@@ -63,7 +63,7 @@
         <tr>
           <td colspan="7">
             No data yet. You might want to save some data products from your
-            <a href="{% url 'bhtom_observations:list' %}">completed observations</a>.
+            <a href="{% url 'bhtom_base.bhtom_observations:list' %}">completed observations</a>.
           </td>
         </tr>
         {% endfor %}
@@ -78,17 +78,17 @@
         <button type="submit" class="btn btn-primary">
           Filter
         </button>
-        <a href="{% url 'bhtom_dataproducts:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
+        <a href="{% url 'bhtom_base.bhtom_dataproducts:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
       {% endbuttons %}
     </form>
     <h5>Data Groups</h5>
     {% for group in product_groups %}
     <p>
-      <a href="{% url 'bhtom_dataproducts:group-detail' group.id %}">{{ group.name }}</a><br/>
+      <a href="{% url 'bhtom_base.bhtom_dataproducts:group-detail' group.id %}">{{ group.name }}</a><br/>
       <span class="text-muted">Products: {{ group.dataproduct_set.count }}</span>
     </p>
     {% endfor %}
-    <a href="{% url 'bhtom_dataproducts:group-list' %}">Manage groups</a>
+    <a href="{% url 'bhtom_base.bhtom_dataproducts:group-list' %}">Manage groups</a>
   </div>
 </div>
 {% endblock %}

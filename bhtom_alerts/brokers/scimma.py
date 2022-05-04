@@ -14,7 +14,7 @@ class SCIMMAQueryForm(GenericQueryForm):
                 instructions <a href="https://github.com/TOMToolkit/tom_scimma">here</a>.
                 </p>
             '''),
-            HTML('''<a class="btn btn-outline-primary" href={% url 'bhtom_alerts:list' %}>Back</a>''')
+            HTML('''<a class="btn btn-outline-primary" href={% url 'bhtom_base.bhtom_alerts:list' %}>Back</a>''')
         )
 
 

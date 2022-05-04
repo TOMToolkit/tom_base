@@ -15,7 +15,7 @@ class LTQueryForm(GenericObservationForm):
                 see the instructions <a href="https://github.com/TOMToolkit/tom_lt">here</a>.
                 </p>
             '''),
-            HTML(f'''<a class="btn btn-outline-primary" href={{% url 'bhtom_targets:detail' {target_id} %}}>Back</a>''')
+            HTML(f'''<a class="btn btn-outline-primary" href={{% url 'bhtom_base.bhtom_targets:detail' {target_id} %}}>Back</a>''')
         )
 
 

@@ -69,7 +69,7 @@ class DataProductSaveView(LoginRequiredMixin, View):
                 )
             run_hook('multiple_data_products_post_save', total_saved_products)
         return redirect(reverse(
-            'bhtom_observations:detail',
+            'bhtom_base.bhtom_observations:detail',
             kwargs={'pk': observation_record.id})
         )
 
@@ -271,7 +271,7 @@ class DataProductFeatureView(View):
         product.featured = True
         product.save()
         return redirect(reverse(
-            'bhtom_targets:detail',
+            'bhtom_base.bhtom_targets:detail',
             kwargs={'pk': request.GET.get('target_id')})
         )
 
@@ -291,7 +291,7 @@ class DataProductGroupDetailView(DetailView):
             group.dataproduct_set.remove(DataProduct.objects.get(pk=product))
         group.save()
         return redirect(reverse(
-            'bhtom_dataproducts:group-detail',
+            'bhtom_base.bhtom_dataproducts:group-detail',
             kwargs={'pk': group.id})
         )
 
@@ -308,7 +308,7 @@ class DataProductGroupCreateView(LoginRequiredMixin, CreateView):
     View that handles the creation of a new ``DataProductGroup``.
     """
     model = DataProductGroup
-    success_url = reverse_lazy('bhtom_dataproducts:group-list')
+    success_url = reverse_lazy('bhtom_base.bhtom_dataproducts:group-list')
     fields = ['name']
 
 
@@ -316,7 +316,7 @@ class DataProductGroupDeleteView(LoginRequiredMixin, DeleteView):
     """
     View that handles the deletion of a ``DataProductGroup``. Requires authentication.
     """
-    success_url = reverse_lazy('bhtom_dataproducts:group-list')
+    success_url = reverse_lazy('bhtom_base.bhtom_dataproducts:group-list')
     model = DataProductGroup
 
 
@@ -338,7 +338,7 @@ class DataProductGroupDataView(LoginRequiredMixin, FormView):
         group.dataproduct_set.add(*form.cleaned_data['products'])
         group.save()
         return redirect(reverse(
-            'bhtom_dataproducts:group-detail',
+            'bhtom_base.bhtom_dataproducts:group-detail',
             kwargs={'pk': group.id})
         )
 

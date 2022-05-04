@@ -24,7 +24,7 @@
       {% for group in object_list %}
       <tr>
         <td>
-          <a href="{% url 'bhtom_observations:list' %}?observationgroup={{ group.id }}">
+          <a href="{% url 'bhtom_base.bhtom_observations:list' %}?observationgroup={{ group.id }}">
             {{ group.name }}
           </a>
         </td>
@@ -32,7 +32,7 @@
             {{ group.observation_records.count }}
         </td>
         <td>
-          <a href="{% url 'bhtom_observations:group-delete' pk=group.id %}" class="btn btn-danger">Delete</a>
+          <a href="{% url 'bhtom_base.bhtom_observations:group-delete' pk=group.id %}" class="btn btn-danger">Delete</a>
         </td>
       </tr>
       {% empty %}

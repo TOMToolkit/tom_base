@@ -14,7 +14,7 @@
         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
           <a class="dropdown-item" href="{% url 'targets:create' %}" title="Create a Target">Create a Target</a>
           <a class="dropdown-item" href="{% url 'targets:import' %}" title="Import Targets">Import Targets</a>
-          <a class="dropdown-item" href="{% url 'bhtom_catalogs:query' %}" title="Catalog Search">Catalog Search</a>
+          <a class="dropdown-item" href="{% url 'bhtom_base.bhtom_catalogs:query' %}" title="Catalog Search">Catalog Search</a>
         </div>
         {% update_broker_data_button %}
         <button onclick="document.getElementById('invisible-export-button').click()" class="btn btn-primary">Export Filtered Targets</button>

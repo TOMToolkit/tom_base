@@ -95,7 +95,7 @@ class ObservationListView(FilterView):
                               'Did you know updating observation statuses can be automated? Learn how in '
                               '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
                               'the docs.</a>'))
-            return redirect(f'{reverse("bhtom_observations:list")}?{urlencode(query_params)}')
+            return redirect(f'{reverse("bhtom_base.bhtom_observations:list")}?{urlencode(query_params)}')
 
         selected = request.GET.getlist('selected')
         observationgroups = request.GET.getlist('observationgroup')
@@ -109,7 +109,7 @@ class ObservationListView(FilterView):
                 if action == 'remove':
                     group.observation_records.remove(*observation_records)
                 group.save()
-            return redirect(reverse('bhtom_observations:list'))
+            return redirect(reverse('bhtom_base.bhtom_observations:list'))
         return super().get(request, *args, **kwargs)
 
 
@@ -223,7 +223,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         if not settings.TARGET_PERMISSIONS_ONLY:
             form.fields['groups'].queryset = self.request.user.groups.all()
         form.helper.form_action = reverse(
-            'bhtom_observations:create', kwargs=self.kwargs
+            'bhtom_base.bhtom_observations:create', kwargs=self.kwargs
         )
         return form
 
@@ -308,7 +308,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
                 assign_perm('bhtom_observations.delete_observationrecord', groups, record)
 
         return redirect(
-            reverse('bhtom_targets:detail', kwargs={'pk': target.id})
+            reverse('bhtom_base.bhtom_targets:detail', kwargs={'pk': target.id})
         )
 
 
@@ -321,7 +321,7 @@ class ObservationRecordUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'bhtom_observations/observationupdate_form.html'
 
     def get_success_url(self):
-        return reverse('bhtom_observations:detail', kwargs={'pk': self.get_object().id})
+        return reverse('bhtom_base.bhtom_observations:detail', kwargs={'pk': self.get_object().id})
 
 
 class ObservationRecordCancelView(LoginRequiredMixin, View):
@@ -340,7 +340,7 @@ class ObservationRecordCancelView(LoginRequiredMixin, View):
         except forms.ValidationError as ve:
             messages.error(self.request, f'Unable to cancel observation: {ve}')
 
-        return redirect(reverse('bhtom_observations:detail', kwargs={'pk': obsr.id}))
+        return redirect(reverse('bhtom_base.bhtom_observations:detail', kwargs={'pk': obsr.id}))
 
 
 class AddExistingObservationView(LoginRequiredMixin, FormView):
@@ -368,7 +368,7 @@ class AddExistingObservationView(LoginRequiredMixin, FormView):
             target_id = self.request.POST.get('target_id')
         cancel_url = reverse('home')
         if target_id:
-            cancel_url = reverse('bhtom_targets:detail', kwargs={'pk': target_id})
+            cancel_url = reverse('bhtom_base.bhtom_targets:detail', kwargs={'pk': target_id})
         form.helper.layout = Layout(
             HTML('''<p>An observation record already exists in your TOM for this combination of observation ID,
                  facility, and target. Are you sure you want to create this record?</p>'''),
@@ -405,7 +405,7 @@ class AddExistingObservationView(LoginRequiredMixin, FormView):
                                                    observation_id=form.cleaned_data['observation_id'])
 
         if records and not form.cleaned_data.get('confirm'):
-            return redirect(reverse('bhtom_observations:add-existing') + '?' + self.request.POST.urlencode())
+            return redirect(reverse('bhtom_base.bhtom_observations:add-existing') + '?' + self.request.POST.urlencode())
         else:
             ObservationRecord.objects.create(
                 target_id=form.cleaned_data['target_id'],
@@ -416,7 +416,7 @@ class AddExistingObservationView(LoginRequiredMixin, FormView):
             observation_id = form.cleaned_data['observation_id']
             messages.success(self.request, f'Successfully associated observation record {observation_id}')
         return redirect(reverse(
-            'bhtom_targets:detail', kwargs={'pk': form.cleaned_data['target_id']})
+            'bhtom_base.bhtom_targets:detail', kwargs={'pk': form.cleaned_data['target_id']})
         )
 
 
@@ -466,7 +466,7 @@ class ObservationRecordDetailView(DetailView):
         data_product_upload_form = DataProductUploadForm(
             initial={
                 'observation_record': self.get_object(),
-                'referrer': reverse('bhtom_observations:detail', args=(self.get_object().id,))
+                'referrer': reverse('bhtom_base.bhtom_observations:detail', args=(self.get_object().id,))
             }
         )
         context['data_product_form'] = data_product_upload_form
@@ -479,7 +479,7 @@ class ObservationGroupCreateView(LoginRequiredMixin, CreateView):
     """
     model = ObservationGroup
     fields = ['name']
-    success_url = reverse_lazy('bhtom_observations:group-list')
+    success_url = reverse_lazy('bhtom_base.bhtom_observations:group-list')
 
     def form_valid(self, form):
         """
@@ -512,7 +512,7 @@ class ObservationGroupDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     """
     permission_required = 'bhtom_observations.delete_observationgroup'
     model = ObservationGroup
-    success_url = reverse_lazy('bhtom_observations:group-list')
+    success_url = reverse_lazy('bhtom_base.bhtom_observations:group-list')
 
 
 class ObservationTemplateFilter(FilterSet):
@@ -564,7 +564,7 @@ class ObservationTemplateCreateView(FormView):
 
     def get_form(self, form_class=None):
         form = super().get_form()
-        form.helper.form_action = reverse('bhtom_observations:template-create',
+        form.helper.form_action = reverse('bhtom_base.bhtom_observations:template-create',
                                           kwargs={'facility': self.get_facility_name()})
         return form
 
@@ -576,7 +576,7 @@ class ObservationTemplateCreateView(FormView):
 
     def form_valid(self, form):
         form.save()
-        return redirect(reverse('bhtom_observations:template-list'))
+        return redirect(reverse('bhtom_base.bhtom_observations:template-list'))
 
 
 class ObservationTemplateUpdateView(LoginRequiredMixin, FormView):
@@ -595,7 +595,7 @@ class ObservationTemplateUpdateView(LoginRequiredMixin, FormView):
     def get_form(self):
         form = super().get_form()
         form.helper.form_action = reverse(
-            'bhtom_observations:template-update', kwargs={'pk': self.object.id}
+            'bhtom_base.bhtom_observations:template-update', kwargs={'pk': self.object.id}
         )
         return form
 
@@ -607,7 +607,7 @@ class ObservationTemplateUpdateView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         form.save(template_id=self.object.id)
-        return redirect(reverse('bhtom_observations:template-list'))
+        return redirect(reverse('bhtom_base.bhtom_observations:template-list'))
 
 
 class ObservationTemplateDeleteView(LoginRequiredMixin, DeleteView):
@@ -615,7 +615,7 @@ class ObservationTemplateDeleteView(LoginRequiredMixin, DeleteView):
     Deletes an observation template.
     """
     model = ObservationTemplate
-    success_url = reverse_lazy('bhtom_observations:template-list')
+    success_url = reverse_lazy('bhtom_base.bhtom_observations:template-list')
 
 
 class FacilityStatusView(TemplateView):

@@ -8,7 +8,7 @@
     <p>
       Create a new observation template using
       {% for facility in installed_facilities %}
-      <a href="{% url 'bhtom_observations:template-create' facility %}" title="{{ facility }}" class="btn btn-outline-primary">{{ facility }}</a>
+      <a href="{% url 'bhtom_base.bhtom_observations:template-create' facility %}" title="{{ facility }}" class="btn btn-outline-primary">{{ facility }}</a>
       {% endfor %}
     </p>
     <table class="table table-striped">
@@ -16,13 +16,13 @@
       <tbody>
         {% for template in filter.qs %}
         <tr>
-          <td><a href="{% url 'bhtom_observations:template-update' template.id %}" title="Update {{ template.name }}">{{ template.name }}</a></td>
+          <td><a href="{% url 'bhtom_base.bhtom_observations:template-update' template.id %}" title="Update {{ template.name }}">{{ template.name }}</a></td>
           <td>{{ template.facility }}</td>
           <td>{{ template.created }}</td>
           {% comment %}
-          <td><a href="{% url 'bhtom_observations:run-strategy' template.id %}" title="Run query" class="btn btn-primary">Run</a></td>
+          <td><a href="{% url 'bhtom_base.bhtom_observations:run-strategy' template.id %}" title="Run query" class="btn btn-primary">Run</a></td>
           {% endcomment %}
-          <td><a href="{% url 'bhtom_observations:template-delete' template.id %}" title="Delete strategy" class="btn btn-danger">Delete</a></td>
+          <td><a href="{% url 'bhtom_base.bhtom_observations:template-delete' template.id %}" title="Delete strategy" class="btn btn-danger">Delete</a></td>
         </tr>
         {% empty %}
         <tr>
@@ -42,7 +42,7 @@
         <button type="submit" class="btn btn-primary">
           Filter
         </button>
-        <a href="{% url 'bhtom_observations:template-list' %}" class="btn btn-secondary" title="Reset">Reset</a>
+        <a href="{% url 'bhtom_base.bhtom_observations:template-list' %}" class="btn btn-secondary" title="Reset">Reset</a>
       {% endbuttons %}
     </form>
   </div>

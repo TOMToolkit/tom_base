@@ -134,7 +134,7 @@ class TestBrokerViews(TestCase):
         self.client.force_login(self.user)
 
     def test_display_form(self):
-        response = self.client.get(reverse('bhtom_alerts:create') + '?broker=TEST')
+        response = self.client.get(reverse('bhtom_base.bhtom_alerts:create') + '?broker=TEST')
         self.assertContains(response, 'TEST Query Form')
 
     def test_create_query(self):
@@ -143,7 +143,7 @@ class TestBrokerViews(TestCase):
             'broker': 'TEST',
             'name': 'Test Name',
         }
-        response = self.client.post(reverse('bhtom_alerts:create'), data=query_data, follow=True)
+        response = self.client.post(reverse('bhtom_base.bhtom_alerts:create'), data=query_data, follow=True)
         self.assertContains(response, query_data['query_name'])
         self.assertEqual(BrokerQuery.objects.count(), 1)
         self.assertEqual(BrokerQuery.objects.first().name, query_data['query_name'])
@@ -159,7 +159,7 @@ class TestBrokerViews(TestCase):
             broker='TEST',
             parameters={'name': 'Hoth'},
         )
-        response = self.client.get(reverse('bhtom_alerts:list') + '?name=dust')
+        response = self.client.get(reverse('bhtom_base.bhtom_alerts:list') + '?name=dust')
         self.assertContains(response, broker_query.name)
         self.assertNotContains(response, not_found.name)
 
@@ -170,7 +170,7 @@ class TestBrokerViews(TestCase):
             parameters={'name': 'Hoth'},
         )
         self.assertTrue(BrokerQuery.objects.filter(name='find hoth').exists())
-        self.client.post(reverse('bhtom_alerts:delete', kwargs={'pk': broker_query.id}))
+        self.client.post(reverse('bhtom_base.bhtom_alerts:delete', kwargs={'pk': broker_query.id}))
         self.assertFalse(BrokerQuery.objects.filter(name='find hoth').exists())
 
     def test_run_query(self):
@@ -179,7 +179,7 @@ class TestBrokerViews(TestCase):
             broker='TEST',
             parameters={'name': 'Hoth'},
         )
-        response = self.client.get(reverse('bhtom_alerts:run', kwargs={'pk': broker_query.id}))
+        response = self.client.get(reverse('bhtom_base.bhtom_alerts:run', kwargs={'pk': broker_query.id}))
         self.assertContains(response,  '66')
 
     def test_update_query(self):
@@ -193,7 +193,7 @@ class TestBrokerViews(TestCase):
             'broker': 'TEST',
             'name': 'another place',
         }
-        self.client.post(reverse('bhtom_alerts:update', kwargs={'pk': broker_query.id}), data=update_data)
+        self.client.post(reverse('bhtom_base.bhtom_alerts:update', kwargs={'pk': broker_query.id}), data=update_data)
         broker_query.refresh_from_db()
         self.assertEqual(broker_query.parameters['name'], update_data['name'])
 
@@ -214,10 +214,10 @@ class TestBrokerViews(TestCase):
             'query_id': query.id,
             'alerts': [2]
         }
-        response = self.client.post(reverse('bhtom_alerts:create-target'), data=post_data)
+        response = self.client.post(reverse('bhtom_base.bhtom_alerts:create-target'), data=post_data)
         self.assertEqual(Target.objects.count(), 1)
         self.assertEqual(Target.objects.first().name, 'Hoth')
-        self.assertRedirects(response, reverse('bhtom_targets:update', kwargs={'pk': Target.objects.first().id}))
+        self.assertRedirects(response, reverse('bhtom_base.bhtom_targets:update', kwargs={'pk': Target.objects.first().id}))
 
     @override_settings(CACHES={
             'default': {
@@ -237,9 +237,9 @@ class TestBrokerViews(TestCase):
             'query_id': query.id,
             'alerts': [1, 2]
         }
-        response = self.client.post(reverse('bhtom_alerts:create-target'), data=post_data)
+        response = self.client.post(reverse('bhtom_base.bhtom_alerts:create-target'), data=post_data)
         self.assertEqual(Target.objects.count(), 2)
-        self.assertRedirects(response, reverse('bhtom_targets:list'))
+        self.assertRedirects(response, reverse('bhtom_base.bhtom_targets:list'))
 
     def test_create_no_targets(self):
         query = BrokerQuery.objects.create(
@@ -252,9 +252,9 @@ class TestBrokerViews(TestCase):
             'query_id': query.id,
             'alerts': []
         }
-        response = self.client.post(reverse('bhtom_alerts:create-target'), data=post_data, follow=True)
+        response = self.client.post(reverse('bhtom_base.bhtom_alerts:create-target'), data=post_data, follow=True)
         self.assertEqual(Target.objects.count(), 0)
-        self.assertRedirects(response, reverse('bhtom_alerts:run', kwargs={'pk': query.id}))
+        self.assertRedirects(response, reverse('bhtom_base.bhtom_alerts:run', kwargs={'pk': query.id}))
 
     @patch('bhtom_base.bhtom_alerts.tests.tests.TestBroker.submit_upstream_alert')
     def test_submit_alert_success(self, mock_submit_upstream_alert):
@@ -262,7 +262,7 @@ class TestBrokerViews(TestCase):
 
         # Tests that an alert is submitted with just a target, and that no redirect_url results in redirect to home
         target = Target.objects.create(name='test_target', ra=1, dec=2)
-        response = self.client.post(reverse('bhtom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
+        response = self.client.post(reverse('bhtom_base.bhtom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
                                     data={'target': target.id})
 
         mock_submit_upstream_alert.assert_called_with(target=target, observation_record=None, topic='')
@@ -271,15 +271,15 @@ class TestBrokerViews(TestCase):
 
         # Tests that an alert is submitted with just an observation, and that redirect is to redirect_url
         obsr = ObservationRecord.objects.create(target=target, facility='Test', parameters={}, observation_id=1)
-        response = self.client.post(reverse('bhtom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
-                                    data={'observation_record': obsr.id, 'redirect_url': reverse('bhtom_targets:list')})
+        response = self.client.post(reverse('bhtom_base.bhtom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
+                                    data={'observation_record': obsr.id, 'redirect_url': reverse('bhtom_base.bhtom_targets:list')})
 
         mock_submit_upstream_alert.assert_called_with(target=None, observation_record=obsr, topic='')
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('bhtom_targets:list'))
+        self.assertRedirects(response, reverse('bhtom_base.bhtom_targets:list'))
 
         # Tests that an alert submitted with additional parameters calls submit_upstream_alert correctly.
-        response = self.client.post(reverse('bhtom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
+        response = self.client.post(reverse('bhtom_base.bhtom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
                                     data={'observation_record': obsr.id, 'topic': 'test topic'})
         mock_submit_upstream_alert.assert_called_with(target=None, observation_record=obsr, topic='test topic')
 
@@ -288,7 +288,7 @@ class TestBrokerViews(TestCase):
         """Test that a failed alert submission returns an appropriate message."""
         target = Target.objects.create(name='test_target', ra=1, dec=2)
         mock_submit_upstream_alert.return_value = False
-        response = self.client.post(reverse('bhtom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
+        response = self.client.post(reverse('bhtom_base.bhtom_alerts:submit-alert', kwargs={'broker': 'TEST'}),
                                     data={'target': target.id})
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 1)
@@ -299,14 +299,14 @@ class TestBrokerViews(TestCase):
         """Test that an alert submission returns an appropriate message when alert submission raises an exception."""
         mock_submit_upstream_alert.side_effect = AlertSubmissionException()
 
-        response = self.client.post(reverse('bhtom_alerts:submit-alert', kwargs={'broker': 'TEST'}), data={})
+        response = self.client.post(reverse('bhtom_base.bhtom_alerts:submit-alert', kwargs={'broker': 'TEST'}), data={})
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 1)
         self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST. See logs for details.')
 
     def test_submit_alert_invalid_form(self):
         """Test that an alert submission failed when form is invalid."""
-        response = self.client.post(reverse('bhtom_alerts:submit-alert', kwargs={'broker': 'TEST'}), data={})
+        response = self.client.post(reverse('bhtom_base.bhtom_alerts:submit-alert', kwargs={'broker': 'TEST'}), data={})
         messages = [(m.message, m.level) for m in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 1)
         self.assertEqual(messages[0][0], 'Unable to submit one or more alerts to TEST. See logs for details.')

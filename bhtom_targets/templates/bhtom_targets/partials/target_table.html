@@ -31,8 +31,8 @@
     <tr>
       <td colspan="5">
         {% if target_count == 0 and not query_string %}
-        No targets yet. You might want to <a href="{% url 'bhtom_targets:create' %}">create a target manually</a>
-        or <a href="{% url 'bhtom_alerts:list' %}">import one from an alert broker</a>.
+        No targets yet. You might want to <a href="{% url 'bhtom_base.bhtom_targets:create' %}">create a target manually</a>
+        or <a href="{% url 'bhtom_base.bhtom_alerts:list' %}">import one from an alert broker</a>.
         {% else %}
         No targets match those filters.
         {% endif %}

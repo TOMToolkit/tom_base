@@ -153,7 +153,7 @@ class GenericUpstreamSubmissionForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form-inline'
-        self.helper.form_action = reverse('bhtom_alerts:submit-alert', kwargs={'broker': broker_name})
+        self.helper.form_action = reverse('bhtom_base.bhtom_alerts:submit-alert', kwargs={'broker': broker_name})
         self.helper.layout = Layout(
             'target',
             'observation_record',

@@ -8,7 +8,7 @@
       <td>{{ observation.status }}</td>
       <td>{{ observation.scheduled_start }}</td>
       <td>{{ observation.dataproduct_set.count }}</td>
-      <td><a href="{% url 'bhtom_observations:detail' observation.id %}">View</a></td>
+      <td><a href="{% url 'bhtom_base.bhtom_observations:detail' observation.id %}">View</a></td>
     </tr>
   {% empty %}
     <tr>

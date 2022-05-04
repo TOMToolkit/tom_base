@@ -7,7 +7,7 @@
   {% for product in products %}
     <tr>
       {% if not product.featured %}
-      <td><a href="{% url 'bhtom_dataproducts:feature' pk=product.id %}?target_id={{ target.id }}" title="Make Featured Image" class="btn btn-primary">Feature</a></td>
+      <td><a href="{% url 'bhtom_base.bhtom_dataproducts:feature' pk=product.id %}?target_id={{ target.id }}" title="Make Featured Image" class="btn btn-primary">Feature</a></td>
       {% else %}
       <td><span class="btn btn-secondary active featured">Featured</span></td>
       {% endif %}
@@ -23,7 +23,7 @@
         {% endif %}
         </a>
       </td>
-      <td><a href="{% url 'bhtom_dataproducts:delete' product.id %}" class="btn btn-danger">Delete</a></td>
+      <td><a href="{% url 'bhtom_base.bhtom_dataproducts:delete' product.id %}" class="btn btn-danger">Delete</a></td>
     </tr>
   {% endfor %}
 </table>

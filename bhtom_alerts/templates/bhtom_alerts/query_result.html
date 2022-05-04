@@ -2,7 +2,7 @@
 {% block title %}Query Result for {{ query }}{% endblock %}
 {% block content %}
 <h2>Query Result for {{ query }}</h2>
-<form method="POST" action="{% url 'bhtom_alerts:create-target' %}">
+<form method="POST" action="{% url 'bhtom_base.bhtom_alerts:create-target' %}">
   {% csrf_token %}
   <div class="">
     <input type="hidden" name="broker" value="{{ query.broker }}"/>
