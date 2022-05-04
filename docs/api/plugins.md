@@ -54,9 +54,9 @@ observation requests.
 
 This module provides two registration flows for users to self-register--either requiring approval, or not.
 
-[Github](https://github.com/TOMToolkit/tom_registration)
+[Github](https://github.com/TOMToolkit/bhtom_registration)
 
-[Installation Instructions](https://github.com/TOMToolkit/tom_registration#installation)
+[Installation Instructions](https://github.com/TOMToolkit/bhtom_registration#installation)
 
 ### tom-scimma
 

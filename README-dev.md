@@ -147,7 +147,7 @@ Releases are managed by the TOM Toolkit team unless otherwise specified.
 
 - `tom-toolkit-component-lib` - VueJS component library.
 - `tom_nonsidereal_airmass` - Provides airmass plots for non-sidereal targets. 
-- `tom_registration` - Provides registration flows in the TOM Toolkit.
+- `bhtom_registration` - Provides registration flows in the TOM Toolkit.
 - `tom_superevents` - Provides models and views for astronomical events.
 
 #### Third-party service modules
@@ -248,6 +248,6 @@ The [documentation](https://tom-toolkit.readthedocs.io/en/stable/) is built on n
 | `tom_lt`            | No     | No        | Yes        | TOM Team            |
 | `tom_nonsidereal`   | No     | No        | Yes        | TOM Team            |
 | `tom_publications`  | No     | No        | Yes        | TOM Team            |
-| `tom_registration`  | Yes    | Yes       | Yes        | TOM Team            |
+| `bhtom_registration`  | Yes    | Yes       | Yes        | TOM Team            |
 | `tom_scimma`        | Yes    | Yes       | Yes        | TOM Team            |
 | `tom_superevents`   | Yes    | Yes       | Yes        | TOM Team            |

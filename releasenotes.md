@@ -24,7 +24,7 @@ This release supercedes the mistaken 2.6.1 release and includes the fix for spec
 
 ## 2.6.0
 
-- Refactors user_list to use templatetags in order to facilitate introduction of new [tom_registration](https://github.com/TOMToolkit/tom_registration) installable app.
+- Refactors user_list to use templatetags in order to facilitate introduction of new [bhtom_registration](https://github.com/TOMToolkit/bhtom_registration) installable app.
 - Adds django-rest-framework API endpoint for cancelling observations.
 - Adds support for assigning group permissions to observations submitted via the django-rest-framework API endpoint.
 - Upgrades ``numpy``, ``astropy``, and ``astroplan``, and removes support for Python 3.6.

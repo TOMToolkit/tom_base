@@ -60,7 +60,7 @@ requests.
 
 [Github](https://github.com/TOMToolkit/tom_lt)
 
-### tom_registration
+### bhtom_registration
 
-The [tom_registration](https://github.com/TOMToolkit/tom_registration) plugin introduces support for two TOM registration 
+The [bhtom_registration](https://github.com/TOMToolkit/bhtom_registration) plugin introduces support for two TOM registration 
 flows--an open registration, and a registration that requires administrator approval.
