@@ -6,9 +6,12 @@ from astropy.time import Time, TimezoneInfo
 from crispy_forms.layout import Column, Fieldset, HTML, Layout, Row
 from django import forms
 from django.core.cache import cache
+from requests.exceptions import HTTPError
+
 
 from tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
 from tom_targets.models import Target
+from tom_dataproducts.models import ReducedDatum
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +31,7 @@ SORT_CHOICES = [('None', 'None'),
 SORT_ORDER = [('None', 'None'),
               ('ASC', 'Ascending'),
               ('DESC', 'Descending')]
+FILTERS = {1: 'g', 2: 'r', 3: 'i'}
 
 
 class ALeRCEQueryForm(GenericQueryForm):
@@ -332,6 +336,46 @@ class ALeRCEBroker(GenericBroker):
         response = requests.get(f'{ALERCE_SEARCH_URL}/objects/{id}')
         response.raise_for_status()
         return response.json()
+
+    def fetch_lightcurve(self, oid):
+        response = requests.get(f'{ALERCE_SEARCH_URL}/objects/{oid}/lightcurve')
+        response.raise_for_status()
+        return response.json()
+
+    def process_reduced_data(self, target, alert=None):
+        oid = target.name
+        lightcurve = self.fetch_lightcurve(oid)
+
+        for detection in lightcurve['detections']:
+            mjd = Time(detection['mjd'], format='mjd', scale='utc')
+            value = {
+                'filter': FILTERS[detection['fid']],
+                'magnitude': detection['diffmaglim'],
+                'error': detection['sigmapsf'],
+            }
+            ReducedDatum.objects.get_or_create(
+                timestamp=mjd.to_datetime(TimezoneInfo()),
+                value=value,
+                source_name=self.name,
+                source_location=oid,
+                data_type='photometry',
+                target=target
+            )
+
+        for non_detection in lightcurve['non_detections']:
+            mjd = Time(non_detection['mjd'], format='mjd', scale='utc')
+            value = {
+                'filter': FILTERS[non_detection['fid']],
+                'limit': non_detection['diffmaglim'],
+            }
+            ReducedDatum.objects.get_or_create(
+                timestamp=mjd.to_datetime(TimezoneInfo()),
+                value=value,
+                source_name=self.name,
+                source_location=oid,
+                data_type='photometry',
+                target=target
+            )
 
     def to_target(self, alert):
         return Target.objects.create(
