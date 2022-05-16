@@ -6,7 +6,6 @@ from astropy.time import Time, TimezoneInfo
 from crispy_forms.layout import Column, Fieldset, HTML, Layout, Row
 from django import forms
 from django.core.cache import cache
-from requests.exceptions import HTTPError
 
 
 from tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
