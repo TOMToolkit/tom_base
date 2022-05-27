@@ -367,6 +367,8 @@ class TargetName(models.Model):
     :type modified: datetime
     """
     target = models.ForeignKey(Target, on_delete=models.CASCADE, related_name='aliases')
+    source_name = models.CharField(max_length=100, unique=False,
+                                   verbose_name='Source Name', choices=settings.SOURCE_CHOICES)
     name = models.CharField(max_length=100, unique=True, verbose_name='Alias')
     created = models.DateTimeField(
         auto_now_add=True, help_text='The time which this target name was created.'

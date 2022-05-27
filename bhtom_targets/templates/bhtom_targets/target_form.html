@@ -1,37 +1,63 @@
 {% extends 'bhtom_common/base.html' %}
-{% load bootstrap4 %}
+{% load bootstrap4 static %}
 {% block title %}New Target{% endblock %}
 {% block content %}
-{% if not object %}
-  <h3>Create a Target</h3>
-  <ul class="nav nav-tabs">
-    {% for k, v in type_choices %}
-      <li class="nav-item">
-        <a class="nav-link {% if form.type.initial == k %} active {% endif %}" href="{% url 'targets:create' %}?type={{ k }}">{{ v  }}</a>
-      </li>
-    {% endfor %}
-{% else %}
-<h3> Update {{ object.name }}</h3>
+    {% if not object %}
+        <h3>Create a Target</h3>
+        <ul class="nav nav-tabs">
+        {% for k, v in type_choices %}
+            <li class="nav-item">
+                <a class="nav-link {% if form.type.initial == k %} active {% endif %}"
+                   href="{% url 'targets:create' %}?type={{ k }}">{{ v }}</a>
+            </li>
+        {% endfor %}
+    {% else %}
+        <h3> Update {{ object.name }}</h3>
 
-{% endif %}
+    {% endif %}
 </ul>
-{% if not object %}
-  <form method="post" class="form">
-{% else %}
-  <form method="post" class="form">
-{% endif %}
+    {% if not object %}
+        <form method="post" class="form">
+    {% else %}
+        <form method="post" class="form">
+    {% endif %}
 {% csrf_token %}
 {% bootstrap_form form %}
-{% bootstrap_formset names_form %}
+<div id="alias-form-container">
+    <h3>Aliases</h3>
+    {#    {% bootstrap_formset names_form %}#}
+    {{ names_form.management_form }}
+    {% for form in names_form %}
+        <div class="alias-formset row">
+            <div class="col-md-4">
+                {% bootstrap_field form.source_name %}
+            </div>
+            <div class="col-md-6">
+                {% bootstrap_field form.name %}
+            </div>
+            <div class="col-md-2 align-self-end">
+                <button class="btn btn-danger btn-delete" style="margin-bottom: 1rem;">Delete</button>
+            </div>
+        </div>
+    {% endfor %}
+
+    <button id="add-alias-form" class="btn btn-secondary">Add new alias</button>
+</div>
 <h3>Tags</h3>
 {% bootstrap_formset extra_form %}
 {% buttons %}
-  {% if not object %}
-  <button type="submit" formaction="{% url 'targets:create' %}"class="btn btn-primary">Submit</button>
-  {% else %}
-  <button type="submit" formaction="{% url 'targets:update' pk=object.id %}"class="btn btn-primary">Save</button>
-  <a href="{% url 'targets:detail' pk=object.id %}" class="btn btn-primary" title="Back">Back</a>
-  {% endif %}
+    {% if not object %}
+        <button type="submit" id="submit-btn" formaction="{% url 'targets:create' %}" class="btn btn-primary">Submit
+        </button>
+    {% else %}
+        <button type="submit" id="save-btn" formaction="{% url 'targets:update' pk=object.id %}"
+                class="btn btn-primary">Save
+        </button>
+        <a href="{% url 'targets:detail' pk=object.id %}" class="btn btn-primary" title="Back">Back</a>
+    {% endif %}
 {% endbuttons %}
 </form>
+{% endblock %}
+{% block extra_javascript %}
+    <script type="text/JavaScript" src="{% static 'bhtom_targets/js/add_alias_formset.js' %}"></script>
 {% endblock %}

@@ -27,6 +27,10 @@ def extra_field_to_form_field(field_type):
         )
 
 
+def name_field_to_form_field(source_name):
+    return forms.CharField(required=False, widget=forms.TextInput, label=f'{source_name} name')
+
+
 class CoordinateField(forms.CharField):
     def __init__(self, *args, **kwargs):
         c_type = kwargs.pop('c_type')
@@ -65,6 +69,8 @@ class TargetForm(forms.ModelForm):
                     self.extra_fields[field_name].initial = te.first().typed_value(extra_field['type'])
 
             self.fields.update(self.extra_fields)
+
+        self.name_fields = {}
 
     def save(self, commit=True):
         instance = super().save(commit=commit)
@@ -163,6 +169,8 @@ class TargetVisibilityForm(forms.Form):
 
 
 TargetExtraFormset = inlineformset_factory(Target, TargetExtra, fields=('key', 'value'),
-                                           widgets={'value': forms.TextInput()})
-TargetNamesFormset = inlineformset_factory(Target, TargetName, fields=('name',), validate_min=False, can_delete=True,
-                                           extra=3)
+                                           widgets={'value': forms.TextInput()}, extra=0)
+
+TargetNamesFormset = inlineformset_factory(Target, TargetName, fields=('source_name', 'name',), validate_min=False,
+                                           can_delete=False, extra=1, max_num=100,
+                                           widgets={'name': forms.TextInput()},)

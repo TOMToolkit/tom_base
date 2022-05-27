@@ -192,23 +192,23 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
     distance_color = 'rgb(0, 0, 255)'
     phase_color = 'rgb(255, 0, 0)'
     plot_data = [
-        go.Scatter(x=times.mjd-times[0].mjd, y=separations, mode='lines', name='Moon distance (degrees)',
+        go.Scatter(x=times.mjd - times[0].mjd, y=separations, mode='lines', name='Moon distance (degrees)',
                    line=dict(color=distance_color)),
-        go.Scatter(x=times.mjd-times[0].mjd, y=phases, mode='lines', name='Moon phase', yaxis='y2',
+        go.Scatter(x=times.mjd - times[0].mjd, y=phases, mode='lines', name='Moon phase', yaxis='y2',
                    line=dict(color=phase_color))
     ]
     layout = go.Layout(
-                xaxis={'title': 'Days from now'},
-                yaxis={'range': [0, 180], 'tick0': 0, 'dtick': 45, 'tickfont': {'color': distance_color}},
-                yaxis2={'range': [0, 1], 'tick0': 0, 'dtick': 0.25, 'overlaying': 'y', 'side': 'right',
-                        'tickfont': {'color': phase_color}},
-                margin={'l': 20, 'r': 10, 'b': 30, 't': 40},
-                width=width,
-                height=height,
-                autosize=True,
-                paper_bgcolor=background,
-                plot_bgcolor=background
-            )
+        xaxis={'title': 'Days from now'},
+        yaxis={'range': [0, 180], 'tick0': 0, 'dtick': 45, 'tickfont': {'color': distance_color}},
+        yaxis2={'range': [0, 1], 'tick0': 0, 'dtick': 0.25, 'overlaying': 'y', 'side': 'right',
+                'tickfont': {'color': phase_color}},
+        margin={'l': 20, 'r': 10, 'b': 30, 't': 40},
+        width=width,
+        height=height,
+        autosize=True,
+        paper_bgcolor=background,
+        plot_bgcolor=background
+    )
     layout.legend.font.color = label_color
     fig = go.Figure(data=plot_data, layout=layout)
     fig.update_yaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
@@ -233,14 +233,16 @@ def target_distribution(targets):
             text=[location[2] for location in locations],
             hoverinfo='lon+lat+text',
             mode='markers',
+            textfont_color='#d7d6d6',
             type='scattergeo'
         ),
         dict(
-            lon=list(range(0, 360, 60))+[180]*4,
-            lat=[0]*6+[-60, -30, 30, 60],
-            text=list(range(0, 360, 60))+[-60, -30, 30, 60],
+            lon=list(range(0, 360, 60)) + [180] * 4,
+            lat=[0] * 6 + [-60, -30, 30, 60],
+            text=list(range(0, 360, 60)) + [-60, -30, 30, 60],
             hoverinfo='none',
             mode='text',
+            textfont_color='#d7d6d6',
             type='scattergeo'
         )
     ]
@@ -262,7 +264,10 @@ def target_distribution(targets):
                 'showgrid': True,
                 'range': [-90, 90],
             },
-        }
+        },
+        'paper_bgcolor': "#080404",
+        'geo_bgcolor': "#080404",
+        'geo_showlakes': False
     }
     figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
     return {'figure': figure}
