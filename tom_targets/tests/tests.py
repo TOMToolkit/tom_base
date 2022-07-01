@@ -318,6 +318,11 @@ class TestTargetCreate(TestCase):
         target.save(extras={'foo': 5})
         self.assertTrue(TargetExtra.objects.filter(target=target, key='foo', value='5').exists())
 
+    def test_none_extra(self):
+        target = SiderealTargetFactory.create()
+        target.save(extras={'foo': None})
+        self.assertTrue(TargetExtra.objects.filter(target=target, key='foo').exists())
+
     def test_non_sidereal_required_fields(self):
         base_data = {
             'name': 'nonsidereal_target',
