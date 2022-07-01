@@ -438,14 +438,17 @@ class TargetExtra(models.Model):
             self.bool_value = bool(self.value)
         except (TypeError, ValueError, OverflowError):
             self.bool_value = None
-        try:
-            if isinstance(self.value, datetime):
-                self.time_value = self.value
-            else:
-                self.time_value = parse(self.value)
-        except (TypeError, ValueError, OverflowError):
+        if not self.float_value:
+            try:
+                if isinstance(self.value, datetime):
+                    self.time_value = self.value
+                else:
+                    self.time_value = parse(self.value)
+            except (TypeError, ValueError, OverflowError):
+                self.time_value = None
+        else:
             self.time_value = None
-
+            
         super().save(*args, **kwargs)
 
     def typed_value(self, type_val):

@@ -323,6 +323,17 @@ class TestTargetCreate(TestCase):
         target.save(extras={'foo': None})
         self.assertTrue(TargetExtra.objects.filter(target=target, key='foo').exists())
 
+    def test_datetime_warning(self):
+        '''Tests for an int that might come in and get mistakenly parsed for a datetime
+        If the value can be successfully cast as a float it it not useful to us as a datetime
+        Casting a datetime from an int will indicate that year on an arbitrary day. '''
+        target = SiderealTargetFactory.create()
+        target.save(extras={'foo': '1984'})
+        te = target.targetextra_set.get(key = 'foo')
+        self.assertEquals(te.typed_value('number'), 1984.0)
+        self.assertIsNone(te.typed_value('datetime'))
+
+
     def test_non_sidereal_required_fields(self):
         base_data = {
             'name': 'nonsidereal_target',
