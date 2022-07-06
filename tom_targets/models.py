@@ -448,7 +448,6 @@ class TargetExtra(models.Model):
                 self.time_value = None
         else:
             self.time_value = None
-            
         super().save(*args, **kwargs)
 
     def typed_value(self, type_val):
