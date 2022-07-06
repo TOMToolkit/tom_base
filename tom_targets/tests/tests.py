@@ -329,7 +329,7 @@ class TestTargetCreate(TestCase):
         Casting a datetime from an int will indicate that year on an arbitrary day. '''
         target = SiderealTargetFactory.create()
         target.save(extras={'foo': '1984'})
-        te = target.targetextra_set.get(key = 'foo')
+        te = target.targetextra_set.get(key='foo')
         self.assertEquals(te.typed_value('number'), 1984.0)
         self.assertIsNone(te.typed_value('datetime'))
 
