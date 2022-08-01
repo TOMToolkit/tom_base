@@ -132,3 +132,7 @@ class SOARFacility(LCOFacility):
 
     def get_form(self, observation_type):
         return self.observation_forms.get(observation_type, SOARBaseObservationForm)
+
+    # Do not inherit facility status from LCOFacility to avoid duplicating the facility status list
+    def get_facility_status(self):
+        return {}
