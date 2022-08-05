@@ -24,6 +24,7 @@ from guardian.mixins import PermissionListMixin
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
+from tom_dataproducts.models import is_fits_image_file
 from tom_observations.cadence import CadenceForm, get_cadence_strategy
 from tom_observations.facility import get_service_class, get_service_classes
 from tom_observations.facility import BaseManualObservationFacility
@@ -460,9 +461,9 @@ class ObservationRecordDetailView(DetailView):
         newest_image = None
         for data_product in context['data_products']['saved']:
             newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and \
-                data_product.get_file_extension() == '.fits' else newest_image
+                is_fits_image_file(data_product.data.file) else newest_image
         if newest_image:
-            context['image'] = newest_image.get_image_data()
+            context['image'] = newest_image.get_preview()
         data_product_upload_form = DataProductUploadForm(
             initial={
                 'observation_record': self.get_object(),
