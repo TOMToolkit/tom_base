@@ -10,7 +10,7 @@ from tom_observations import facility
 logger = logging.getLogger(__name__)
 
 
-def get_sidereal_visibility(target, start_time, end_time, interval, airmass_limit):
+def get_sidereal_visibility(target, start_time, end_time, interval, airmass_limit, observation_facility=None):
     """
     Uses astroplan to calculate the airmass for a sidereal target
     for each given interval between the start and end times.
@@ -34,6 +34,9 @@ def get_sidereal_visibility(target, start_time, end_time, interval, airmass_limi
     :param airmass_limit: maximum acceptable airmass for the resulting calculations
     :type airmass_limit: int
 
+    :param observation_facility: observing facility for which to calculate the airmass. None indicates all available facilities.
+    :type observation_facility: BaseObservationFacility
+
     :returns: A dictionary containing the airmass data for each site. The dict keys consist of the site name prepended
         with the observing facility. The values are the airmass data, structured as an array containing two arrays. The
         first array contains the set of datetimes used in the airmass calculations. The second array contains the
@@ -53,11 +56,16 @@ def get_sidereal_visibility(target, start_time, end_time, interval, airmass_limi
     if airmass_limit is None:
         airmass_limit = 10
 
+    if observation_facility is None:
+        facilities = facility.get_service_classes()
+    else:
+        facilities = [observation_facility]
+
     body = FixedTarget(name=target.name, coord=SkyCoord(target.ra, target.dec, unit='deg'))
 
     visibility = {}
     sun, time_range = get_astroplan_sun_and_time(start_time, end_time, interval)
-    for observing_facility in facility.get_service_classes():
+    for observing_facility in facilities:
         observing_facility_class = facility.get_service_class(observing_facility)
         sites = observing_facility_class().get_observing_sites()
         for site, site_details in sites.items():
