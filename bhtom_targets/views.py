@@ -1,5 +1,4 @@
 import logging
-
 from datetime import datetime
 from io import StringIO
 from urllib.parse import urlencode
@@ -11,26 +10,25 @@ from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse
 from django.forms import HiddenInput
+from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
-from django.utils.text import slugify
 from django.utils.safestring import mark_safe
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.views.generic.detail import DetailView
-from django.views.generic.list import ListView
+from django.utils.text import slugify
 from django.views.generic import RedirectView, TemplateView, View
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.generic.list import ListView
 from django_filters.views import FilterView
-
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
 
 from bhtom_base.bhtom_common.hints import add_hint
 from bhtom_base.bhtom_common.hooks import run_hook
 from bhtom_base.bhtom_common.mixins import Raise403PermissionRequiredMixin
-from bhtom_base.bhtom_observations.observation_template import ApplyObservationTemplateForm
 from bhtom_base.bhtom_observations.models import ObservationTemplate
+from bhtom_base.bhtom_observations.observation_template import ApplyObservationTemplateForm
 from bhtom_base.bhtom_targets.filters import TargetFilter
 from bhtom_base.bhtom_targets.forms import (
     SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset
@@ -39,7 +37,7 @@ from bhtom_base.bhtom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
     move_all_to_grouping, move_selected_to_grouping
 )
-from bhtom_base.bhtom_targets.models import Target, TargetList
+from bhtom_base.bhtom_targets.models import Target, TargetList, TargetName
 from bhtom_base.bhtom_targets.utils import import_targets, export_targets
 
 logger = logging.getLogger(__name__)
@@ -187,7 +185,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         :param form: Form data for target creation
         :type form: subclass of TargetCreateForm
         """
-
+        super().form_valid(form)
         extra = TargetExtraFormset(self.request.POST)
         names = TargetNamesFormset(self.request.POST)
         if extra.is_valid() and names.is_valid():
@@ -201,7 +199,6 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
-        super().form_valid(form)
         logger.info('Target post save hook: %s created: %s', self.object, True)
         run_hook('target_post_save', target=self.object, created=True)
         return redirect(self.get_success_url())
@@ -259,9 +256,24 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
         """
         extra = TargetExtraFormset(self.request.POST, instance=self.object)
         names = TargetNamesFormset(self.request.POST, instance=self.object)
-        if extra.is_valid() and names.is_valid():
+
+        target_source_names = [v for k, v in names.data.items() if
+                               k.startswith('alias') and k.endswith('-source_name')]
+        target_name_values = [v for k, v in names.data.items() if
+                              k.startswith('alias') and k.endswith('-name')]
+
+        # Update target names for given source
+        for source_name, name in zip(target_source_names, target_name_values):
+            to_update, _ = TargetName.objects.get_or_create(target=self.object, source_name=source_name)
+            to_update.name = name
+            to_update.save(update_fields=['name'])
+
+        # Delete target names not in the form (probably deleted by the user)
+        for to_delete in TargetName.objects.filter(target=self.object).exclude(source_name__in=target_source_names):
+            to_delete.delete()
+
+        if extra.is_valid():
             extra.save()
-            names.save()
         else:
             form.add_error(None, extra.errors)
             form.add_error(None, extra.non_form_errors())
@@ -373,9 +385,9 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
             call_command('updatestatus', target_id=target_id, stdout=out)
             messages.info(request, out.getvalue())
             add_hint(request, mark_safe(
-                              'Did you know updating observation statuses can be automated? Learn how in'
-                              '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
-                              ' the docs.</a>'))
+                'Did you know updating observation statuses can be automated? Learn how in'
+                '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
+                ' the docs.</a>'))
             return redirect(reverse('bhtom_base.bhtom_targets:detail', args=(target_id,)))
 
         obs_template_form = ApplyObservationTemplateForm(request.GET)
@@ -421,6 +433,7 @@ class TargetExportView(TargetListView):
     """
     View that handles the export of targets to a CSV. Only exports selected targets.
     """
+
     def render_to_response(self, context, **response_kwargs):
         """
         Returns a response containing the exported CSV of selected targets.

@@ -401,15 +401,16 @@ class TestTargetCreate(TestCase):
             'aliases-MIN_NUM_FORMS': 0,
             'aliases-MAX_NUM_FORMS': 1000,
         }
-        names = ['John', 'Doe']
+        names = [('GAIA', 'John'), ('ZTF', 'Doe')]
         for i, name in enumerate(names):
-            target_data[f'aliases-{i}-name'] = name
+            target_data[f'aliases-{i}-source_name'] = name[0]
+            target_data[f'aliases-{i}-name'] = name[1]
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
 
         target = Target.objects.get(name=target_data['name'])
         for target_name in names:
-            self.assertTrue(TargetName.objects.filter(target=target, name=target_name).exists())
+            self.assertTrue(TargetName.objects.filter(target=target, source_name=target_name[0], name=target_name[1]).exists())
 
     def test_create_targets_with_conflicting_aliases(self):
         target_data = {
@@ -462,7 +463,7 @@ class TestTargetCreate(TestCase):
             target_data[f'aliases-{i}-source_name'] = 'GAIA'
             target_data[f'aliases-{i}-name'] = name
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertTrue(len(Target.objects.all())==0)
+        self.assertTrue(len(Target.objects.get(name=target_data['name']).aliases.all())==0)
         #self.assertContains(response, 'Target name with this Alias already exists.')
 
 
