@@ -187,7 +187,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         :param form: Form data for target creation
         :type form: subclass of TargetCreateForm
         """
-        super().form_valid(form)
+
         extra = TargetExtraFormset(self.request.POST)
         names = TargetNamesFormset(self.request.POST)
         if extra.is_valid() and names.is_valid():
@@ -201,6 +201,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
+        super().form_valid(form)
         logger.info('Target post save hook: %s created: %s', self.object, True)
         run_hook('target_post_save', target=self.object, created=True)
         return redirect(self.get_success_url())

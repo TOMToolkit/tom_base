@@ -5,6 +5,7 @@ from .models import Target, TargetExtra, TargetName
 from io import StringIO
 from django.db.models import ExpressionWrapper, FloatField
 from django.db.models.functions.math import ACos, Cos, Radians, Pi, Sin
+from django.conf import settings
 from math import radians
 
 
@@ -28,11 +29,9 @@ def export_targets(qs):
     # Gets the count of the target names for the target with the most aliases in the database
     # This is to construct enough row headers of format "name2, name3, name4, etc" for exporting aliases
     # The alias headers are then added to the set of fields for export
-    aliases = TargetName.objects.filter(target__in=qs_pk).values('target_id').annotate(count=Count('target_id'))
-    max_alias_count = 0
-    if aliases:
-        max_alias_count = max([alias['count'] for alias in aliases])
-    all_fields = target_fields + target_extra_fields + [f'name{index+1}' for index in range(1, max_alias_count+1)]
+    all_fields = target_fields + target_extra_fields + [f'{sn["source_name"].upper()}_name'
+                                                        for sn in
+                                                        TargetName.objects.filter(target__in=qs_pk).values('source_name')]
     for key in ['id', 'targetlist', 'dataproduct', 'observationrecord', 'reduceddatum', 'aliases', 'targetextra']:
         all_fields.remove(key)
 
@@ -44,10 +43,8 @@ def export_targets(qs):
         names = list(TargetName.objects.filter(target_id=target_data['id']))
         for e in extras:
             target_data[e.key] = e.value
-        name_index = 2
         for name in names:
-            target_data[f'name{str(name_index)}'] = name.name
-            name_index += 1
+            target_data[f'{name.source_name.upper()}_name'] = name.name
         del target_data['id']  # do not export 'id'
         writer.writerow(target_data)
     return file_buffer
@@ -72,13 +69,17 @@ def import_targets(targets):
         # filter out empty values in base fields, otherwise converting empty string to float will throw error
         row = {k: v for (k, v) in row.items() if not (k in base_target_fields and not v)}
         target_extra_fields = []
-        target_names = []
+        target_names = {}
         target_fields = {}
+
+        uppercase_source_names = [sc[0].upper() for sc in settings.SOURCE_CHOICES]
+
         for k in row:
-            # All fields starting with 'name' (e.g. name2, name3) that aren't literally 'name' will be added as
-            # TargetNames
-            if k != 'name' and k.startswith('name'):
-                target_names.append(row[k])
+            # Fields with <source_name>_name (e.g. Gaia_name, ZTF_name, where <source_name> is a valid
+            # catalog) will be added as a name corresponding to this catalog
+            k_source_name = k.upper().replace('_NAME', '')
+            if k != 'name' and k.endswith('name') and k_source_name in uppercase_source_names:
+                target_names[k_source_name] = row[k]
             elif k not in base_target_fields:
                 target_extra_fields.append((k, row[k]))
             else:
@@ -89,9 +90,10 @@ def import_targets(targets):
             target = Target.objects.create(**target_fields)
             for extra in target_extra_fields:
                 TargetExtra.objects.create(target=target, key=extra[0], value=extra[1])
-            for name in target_names:
+            for name in target_names.items():
                 if name:
-                    TargetName.objects.create(target=target, name=name)
+                    source_name = name[0].upper().replace('_NAME', '')
+                    TargetName.objects.create(target=target, source_name=source_name, name=name[1])
             targets.append(target)
         except Exception as e:
             error = 'Error on line {0}: {1}'.format(index + 2, str(e))

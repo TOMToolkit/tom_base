@@ -2,7 +2,6 @@ from datetime import datetime
 from dateutil.parser import parse
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.forms.models import model_to_dict
 from django.urls import reverse
@@ -260,15 +259,6 @@ class Target(models.Model):
         if not created:
             run_hook('target_post_save', target=self, created=created)
 
-    def validate_unique(self, *args, **kwargs):
-        """
-        Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
-        """
-        super().validate_unique(*args, **kwargs)
-        for alias in self.aliases.all():
-            if alias.name == self.name:
-                raise ValidationError('Target name and target aliases must be unique')
-
     def __str__(self):
         return str(self.name)
 
@@ -357,6 +347,9 @@ class TargetName(models.Model):
 
     :param target: The ``Target`` object this ``TargetName`` is associated with.
 
+    :param source_name: The source corresponding for the target: ZTF, Gaia Alerts etc.
+    :type name: str
+
     :param name: The name that this ``TargetName`` object represents.
     :type name: str
 
@@ -378,17 +371,11 @@ class TargetName(models.Model):
         help_text='The time which this target name was changed in the TOM database.'
     )
 
+    class Meta:
+        unique_together = ['source_name', 'target']
+
     def __str__(self):
         return self.name
-
-    def validate_unique(self, *args, **kwargs):
-        """
-        Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
-        """
-        super().validate_unique(*args, **kwargs)
-        if self.name == self.target.name:
-            raise ValidationError(f'''Alias {self.name} has a conflict with the primary name of the target
-                                      {self.target.name} (id={self.target.id})''')
 
 
 class TargetExtra(models.Model):

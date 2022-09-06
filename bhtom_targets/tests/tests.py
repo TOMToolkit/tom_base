@@ -411,31 +411,6 @@ class TestTargetCreate(TestCase):
         for target_name in names:
             self.assertTrue(TargetName.objects.filter(target=target, name=target_name).exists())
 
-    def test_create_targets_with_conflicting_names(self):
-        target_data = {
-            'name': 'multiple_names_target',
-            'type': Target.SIDEREAL,
-            'ra': 113.456,
-            'dec': -22.1,
-            'groups': [self.group.id],
-            'targetextra_set-TOTAL_FORMS': 1,
-            'targetextra_set-INITIAL_FORMS': 0,
-            'targetextra_set-MIN_NUM_FORMS': 0,
-            'targetextra_set-MAX_NUM_FORMS': 1000,
-            'targetextra_set-0-key': '',
-            'targetextra_set-0-value': '',
-            'aliases-TOTAL_FORMS': 2,
-            'aliases-INITIAL_FORMS': 0,
-            'aliases-MIN_NUM_FORMS': 0,
-            'aliases-MAX_NUM_FORMS': 1000,
-        }
-        names = ['John', 'Doe']
-        for i, name in enumerate(names):
-            target_data[f'aliases-{i}-name'] = name
-        self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(second_response, 'Target with this Name already exists')
-
     def test_create_targets_with_conflicting_aliases(self):
         target_data = {
             'name': 'multiple_names_target',
@@ -454,13 +429,41 @@ class TestTargetCreate(TestCase):
             'aliases-MIN_NUM_FORMS': 0,
             'aliases-MAX_NUM_FORMS': 1000,
         }
-        names = ['John', 'Doe']
+        names = [('GAIA', 'John'), ('ZTF', 'Doe')]
         for i, name in enumerate(names):
-            target_data[f'aliases-{i}-name'] = name
+            target_data[f'aliases-{i}-source_name'] = name[0]
+            target_data[f'aliases-{i}-name'] = name[1]
         self.client.post(reverse('targets:create'), data=target_data, follow=True)
         target_data['name'] = 'multiple_names_target2'
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(second_response, 'Target name with this Alias already exists.')
+
+
+    def test_create_target_with_conflicting_source_names(self):
+        target_data = {
+            'name': 'multiple_names_target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 2,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        names = ['John', 'Doe']
+        for i, name in enumerate(names):
+            target_data[f'aliases-{i}-source_name'] = 'GAIA'
+            target_data[f'aliases-{i}-name'] = name
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertTrue(len(Target.objects.all())==0)
+        #self.assertContains(response, 'Target name with this Alias already exists.')
 
 
 class TestTargetUpdate(TestCase):
@@ -488,6 +491,7 @@ class TestTargetUpdate(TestCase):
             'aliases-INITIAL_FORMS': 0,
             'aliases-MIN_NUM_FORMS': 0,
             'aliases-MAX_NUM_FORMS': 1000,
+            'aliases-0-source_name': 'GAIA',
             'aliases-0-name': 'testtargetname2'
         })
         self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
@@ -524,17 +528,20 @@ class TestTargetImport(TestCase):
 
     def test_import_csv_with_multiple_names(self):
         csv = [
-            'name,type,ra,dec,name1,name2',
-            'm13,SIDEREAL,250.421,36.459,Tom,Joe',
-            'm27,SIDEREAL,299.901,22.721,John,Doe'
+            'name,type,ra,dec,gaia_name,ztf_name,unknown_name',
+            'm13,SIDEREAL,250.421,36.459,gaia1,ztf1,unknown1',
+            'm27,SIDEREAL,299.901,22.721,gaia2,,unknown2'
         ]
         result = import_targets(csv)
         self.assertEqual(len(result['targets']), 2)
-        aliases = {'m13': 'Tom,Joe', 'm27': 'John,Doe'}
+        aliases = {'m13': [('GAIA', 'gaia1'), ('ZTF', 'ztf1')],
+                   'm27': [('GAIA', 'gaia2'), ('ZTF', '')]}
         for target_name in aliases:
             target = Target.objects.get(name=target_name)
-            for alias in aliases[target_name].split(','):
-                self.assertTrue(TargetName.objects.filter(target=target, name=alias).exists())
+            for source_name_alias in aliases[target_name]:
+                self.assertTrue(TargetName.objects.filter(target=target,
+                                                          source_name=source_name_alias[0],
+                                                          name=source_name_alias[1]).exists())
 
 
 class TestTargetExport(TestCase):

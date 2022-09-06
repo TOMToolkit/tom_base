@@ -15,6 +15,7 @@ class TargetNameFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = TargetName
 
+    source_name = factory.Faker('pystr')
     name = factory.Faker('pystr')
 
 
