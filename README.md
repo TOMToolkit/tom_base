@@ -5,7 +5,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/TOMToolkit/tom_base/badge.svg?branch=main)](https://coveralls.io/github/TOMToolkit/tom_base?branch=main)
 [![Documentation Status](https://readthedocs.org/projects/tom-toolkit/badge/?version=stable)](https://tom-toolkit.readthedocs.io/en/stable/?badge=stable)
 [Documentation](https://tom-toolkit.readthedocs.io/en/latest/)
-
+[![ASCL](https://img.shields.io/badge/ascl-2208.004-blue.svg?colorB=262255)](https://ascl.net/2208.004)
 ![logo](tom_common/static/tom_common/img/logo-color.png)
 
 The TOM Toolkit is a web framework for building TOMs: Target and Observation
@@ -36,7 +36,7 @@ For development information targeted at the maintainers of the project, please s
 
 ### tom_alerts_dash
 
-The [tom_alerts_dash](https://github.com/TOMToolkit/tom_alerts_dash) plugin adds responsive ReactJS views to the 
+The [tom_alerts_dash](https://github.com/TOMToolkit/tom_alerts_dash) plugin adds responsive ReactJS views to the
 `tom_alerts` module for supported brokers.
 
 ### Antares
@@ -62,5 +62,5 @@ requests.
 
 ### tom_registration
 
-The [tom_registration](https://github.com/TOMToolkit/tom_registration) plugin introduces support for two TOM registration 
+The [tom_registration](https://github.com/TOMToolkit/tom_registration) plugin introduces support for two TOM registration
 flows--an open registration, and a registration that requires administrator approval.
