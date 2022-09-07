@@ -1,3 +1,5 @@
+from typing import Dict, Any, Tuple, List
+
 from django.db.models import Count
 
 import csv
@@ -141,3 +143,54 @@ def cone_search_filter(queryset, ra, dec, radius):
         )
 
     return queryset.annotate(separation=separation).filter(separation__lte=radius)
+
+
+def get_aliases_from_queryset(queryset: Dict[str, Any]) -> Tuple[List, List]:
+    """
+    Extracts the passed aliases from the form queryset.
+
+    :param queryset: data extracted from form as a dictionary
+    :type queryset: Dict[str, Any]
+
+    :returns: two lists- source names (e.g. survey names) and corresponding target names
+    :rtype: Tuple[List, List]
+
+    """
+    target_source_names = [v for k, v in queryset.items() if
+                           k.startswith('alias') and k.endswith('-source_name')]
+    target_name_values = [v for k, v in queryset.items() if
+                          k.startswith('alias') and k.endswith('-name')]
+    return target_source_names, target_name_values
+
+
+def get_nonempty_names_from_queryset(queryset: Dict[str, Any]) -> List[Tuple[str, str]]:
+    """
+    Extracts the non-empty aliases from the form queryset.
+
+    :param queryset: data extracted from form as a dictionary
+    :type queryset: Dict[str, Any]
+
+    :returns: list of (source_name, target_name)
+    :rtype: List[Tuple[str, str]]
+    """
+    target_source_names, target_name_values = get_aliases_from_queryset(queryset)
+    return [(source_name, name) for source_name, name in zip(target_source_names, target_name_values) if
+                    source_name.strip() and name.strip()]
+
+
+def check_duplicate_source_names(target_names: List[Tuple[str, str]]) -> bool:
+    """
+    Checks for target names with duplicate source names.
+
+    :param target_names: list of (source_name, target_name)
+    :type target_names: List[Tuple[str, str]]
+
+    :returns: are there duplicate source names
+    :rtype: bool
+    """
+    nonempty_source_names: List[str] = [s for s, _ in target_names]
+    return len(nonempty_source_names) != len(set(nonempty_source_names))
+
+
+def check_for_existing_alias(target_names: List[Tuple[str, str]]) -> bool:
+    return sum([len(TargetName.objects.filter(name=alias)) for _, alias in target_names])>0

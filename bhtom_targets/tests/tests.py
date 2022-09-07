@@ -1,16 +1,16 @@
-import pytz
 from datetime import datetime
 
+import pytz
 from django.contrib.auth.models import User, Group
 from django.contrib.messages import get_messages
 from django.contrib.messages.constants import SUCCESS, WARNING
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from guardian.shortcuts import assign_perm
 
-from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory, TargetNameFactory
 from bhtom_base.bhtom_targets.models import Target, TargetExtra, TargetList, TargetName
 from bhtom_base.bhtom_targets.utils import import_targets
-from guardian.shortcuts import assign_perm
+from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory, TargetNameFactory
 
 
 class TestTargetListUserPermissions(TestCase):
@@ -410,7 +410,44 @@ class TestTargetCreate(TestCase):
 
         target = Target.objects.get(name=target_data['name'])
         for target_name in names:
-            self.assertTrue(TargetName.objects.filter(target=target, source_name=target_name[0], name=target_name[1]).exists())
+            self.assertTrue(
+                TargetName.objects.filter(target=target, source_name=target_name[0], name=target_name[1]).exists())
+
+    def test_create_targets_with_empty_names(self):
+        target_data = {
+            'name': 'multiple_names_target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 2,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        names = [('GAIA', 'John'), ('ZTF', 'Doe')]
+        empty_names = [('', 'A'), ('B', ''), ('', '')]
+        for i, name in enumerate(names + empty_names):
+            target_data[f'aliases-{i}-source_name'] = name[0]
+            target_data[f'aliases-{i}-name'] = name[1]
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(response, target_data['name'])
+
+        target = Target.objects.get(name=target_data['name'])
+        for target_name in names:
+            self.assertTrue(TargetName.objects.filter(target=target,
+                                                      source_name=target_name[0],
+                                                      name=target_name[1]).exists())
+        for target_name in empty_names:
+            self.assertFalse(TargetName.objects.filter(target=target,
+                                                       source_name=target_name[0],
+                                                       name=target_name[1]).exists())
 
     def test_create_targets_with_conflicting_aliases(self):
         target_data = {
@@ -437,10 +474,12 @@ class TestTargetCreate(TestCase):
         self.client.post(reverse('targets:create'), data=target_data, follow=True)
         target_data['name'] = 'multiple_names_target2'
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertEqual(len(Target.objects.filter(name='multiple_names_target2')), 0)
+        self.assertEqual(len(TargetName.objects.filter(name='John')), 1)
+        self.assertEqual(len(TargetName.objects.filter(name='Doe')), 1)
         self.assertContains(second_response, 'Target name with this Alias already exists.')
 
-
-    def test_create_target_with_conflicting_source_names(self):
+    def test_create_target_with_duplicated_source_names(self):
         target_data = {
             'name': 'multiple_names_target',
             'type': Target.SIDEREAL,
@@ -463,8 +502,10 @@ class TestTargetCreate(TestCase):
             target_data[f'aliases-{i}-source_name'] = 'GAIA'
             target_data[f'aliases-{i}-name'] = name
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertTrue(len(Target.objects.get(name=target_data['name']).aliases.all())==0)
-        #self.assertContains(response, 'Target name with this Alias already exists.')
+        self.assertEqual(len(Target.objects.filter(name=target_data['name'])), 0)
+        self.assertEqual(len(TargetName.objects.filter(name='John')), 0)
+        self.assertEqual(len(TargetName.objects.filter(name='Doe')), 0)
+        self.assertContains(response, 'Duplicate source names for aliases.')
 
 
 class TestTargetUpdate(TestCase):
@@ -477,6 +518,7 @@ class TestTargetUpdate(TestCase):
         }
         user = User.objects.create(username='testuser')
         self.target = Target.objects.create(**self.form_data)
+        TargetName.objects.create(target=self.target, source_name='ZTF', name='test')
         assign_perm('bhtom_targets.change_target', user, self.target)
         self.client.force_login(user)
 
@@ -499,6 +541,101 @@ class TestTargetUpdate(TestCase):
         self.target.refresh_from_db()
         self.assertTrue(self.target.targetextra_set.filter(key='redshift').exists())
         self.assertTrue(self.target.aliases.filter(name='testtargetname2').exists())
+
+    def test_valid_delete_name(self):
+        self.form_data.update({
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': 'redshift',
+            'targetextra_set-0-value': '3',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000
+        })
+        self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.target.refresh_from_db()
+        self.assertFalse(self.target.aliases.filter(name='test').exists())
+
+    def test_valid_add_only_nonblank_names(self):
+        self.form_data.update({
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': 'redshift',
+            'targetextra_set-0-value': '3',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+            'aliases-0-source_name': 'GAIA',
+            'aliases-0-name': 'testtargetname2',
+            'aliases-1-source_name': '',
+            'aliases-1-name': 'A',
+            'aliases-2-source_name': 'B',
+            'aliases-2-name': '',
+            'aliases-3-source_name': '',
+            'aliases-3-name': ''
+        })
+        self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.target.refresh_from_db()
+        self.assertEqual(len(self.target.aliases.all()), 1)
+
+    def test_dont_update_duplicate_source_names(self):
+        self.form_data.update({
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': 'redshift',
+            'targetextra_set-0-value': '3',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+            'aliases-0-source_name': 'GAIA',
+            'aliases-0-name': 'testtargetname2',
+            'aliases-1-source_name': 'GAIA',
+            'aliases-1-name': 'A',
+        })
+        response = self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.target.refresh_from_db()
+        self.assertEqual(len(self.target.aliases.all()), 1)
+        self.assertEqual(len(self.target.aliases.filter(source_name='GAIA')), 0)
+        self.assertContains(response, 'Duplicate source names for aliases.')
+
+    def test_dont_update_duplicate_name(self):
+        second_target_form = {
+            'name': 'testtarget2',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1
+        }
+        second_target = Target.objects.create(**second_target_form)
+        TargetName.objects.create(target=second_target, source_name='GAIA', name='test2')
+        self.form_data.update({
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': 'redshift',
+            'targetextra_set-0-value': '3',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+            'aliases-0-source_name': 'ZTF',
+            'aliases-0-name': 'test2'
+        })
+        response = self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.target.refresh_from_db()
+        self.assertEqual(len(self.target.aliases.all()), 1)
+        self.assertEqual(len(TargetName.objects.filter(target=self.target, source_name='ZTF', name='test')), 1)
+        self.assertEqual(len(TargetName.objects.filter(target=self.target, source_name='ZTF', name='test2')), 0)
+        self.assertContains(response, 'Target name with this Alias already exists.')
 
 
 class TestTargetImport(TestCase):
@@ -554,14 +691,15 @@ class TestTargetExport(TestCase):
     Tests are included for targets with and without aliases due to the previous presence of a bug relating to aliases
     and target export: https://github.com/TOMToolkit/tom_base/issues/265
     """
+
     def setUp(self):
         self.st = SiderealTargetFactory.create(name='M42', ra=83.8221, dec=-5.3911)
         self.st2 = SiderealTargetFactory.create(name='M52', ra=351.2, dec=61.593)
 
         self.user = User.objects.create(username='testuser')
         self.client.force_login(self.user)
-        assign_perm('bhtom_targets.view_target',  self.user, self.st)
-        assign_perm('bhtom_targets.view_target',  self.user, self.st2)
+        assign_perm('bhtom_targets.view_target', self.user, self.st)
+        assign_perm('bhtom_targets.view_target', self.user, self.st2)
 
     def test_export_all_targets_no_aliases(self):
         response = self.client.get(reverse('targets:export'))

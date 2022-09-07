@@ -252,10 +252,6 @@ class Target(models.Model):
             target_extra.value = v
             target_extra.save()
 
-        for name in names:
-            name, _ = TargetName.objects.get_or_create(target=self, name=name)
-            name.save()
-
         if not created:
             run_hook('target_post_save', target=self, created=created)
 

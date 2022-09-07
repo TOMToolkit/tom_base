@@ -24,6 +24,7 @@ from django_filters.views import FilterView
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
 
+from bhtom2.external_service.data_source_information import PRETTY_SURVEY_NAME, get_pretty_survey_name
 from bhtom_base.bhtom_common.hints import add_hint
 from bhtom_base.bhtom_common.hooks import run_hook
 from bhtom_base.bhtom_common.mixins import Raise403PermissionRequiredMixin
@@ -38,7 +39,8 @@ from bhtom_base.bhtom_targets.groups import (
     move_all_to_grouping, move_selected_to_grouping
 )
 from bhtom_base.bhtom_targets.models import Target, TargetList, TargetName
-from bhtom_base.bhtom_targets.utils import import_targets, export_targets
+from bhtom_base.bhtom_targets.utils import import_targets, export_targets, get_nonempty_names_from_queryset, \
+    check_duplicate_source_names, check_for_existing_alias
 
 logger = logging.getLogger(__name__)
 
@@ -185,20 +187,33 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         :param form: Form data for target creation
         :type form: subclass of TargetCreateForm
         """
-        super().form_valid(form)
+
         extra = TargetExtraFormset(self.request.POST)
         names = TargetNamesFormset(self.request.POST)
-        if extra.is_valid() and names.is_valid():
+
+        target_names = get_nonempty_names_from_queryset(names.data)
+        duplicate_names = check_duplicate_source_names(target_names)
+        existing_names = check_for_existing_alias(target_names)
+
+        # Check if the form, extras and names are all valid:
+        if extra.is_valid() and names.is_valid() and (not duplicate_names) and (not existing_names):
+            super().form_valid(form)
             extra.instance = self.object
             extra.save()
-            names.instance = self.object
-            names.save()
         else:
+            if duplicate_names:
+                form.add_error(None, 'Duplicate source names for aliases.')
             form.add_error(None, extra.errors)
             form.add_error(None, extra.non_form_errors())
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
+
+        for source_name, name in target_names:
+            to_add = TargetName.objects.create(target=self.object, source_name=source_name)
+            to_add.name = name
+            to_add.save()
+
         logger.info('Target post save hook: %s created: %s', self.object, True)
         run_hook('target_post_save', target=self.object, created=True)
         return redirect(self.get_success_url())
@@ -257,30 +272,48 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
         extra = TargetExtraFormset(self.request.POST, instance=self.object)
         names = TargetNamesFormset(self.request.POST, instance=self.object)
 
-        target_source_names = [v for k, v in names.data.items() if
-                               k.startswith('alias') and k.endswith('-source_name')]
-        target_name_values = [v for k, v in names.data.items() if
-                              k.startswith('alias') and k.endswith('-name')]
+        target_names = get_nonempty_names_from_queryset(names.data)
+        duplicate_names = check_duplicate_source_names(target_names)
+        existing_names = check_for_existing_alias(target_names)
 
-        # Update target names for given source
-        for source_name, name in zip(target_source_names, target_name_values):
-            to_update, _ = TargetName.objects.get_or_create(target=self.object, source_name=source_name)
-            to_update.name = name
-            to_update.save(update_fields=['name'])
-
-        # Delete target names not in the form (probably deleted by the user)
-        for to_delete in TargetName.objects.filter(target=self.object).exclude(source_name__in=target_source_names):
-            to_delete.delete()
-
-        if extra.is_valid():
+        # Check if the form, extras and names are all valid:
+        if extra.is_valid() and names.is_valid() and not duplicate_names and not existing_names:
+            extra.instance = self.object
             extra.save()
         else:
+            if duplicate_names:
+                form.add_error(None, 'Duplicate source names for aliases.')
             form.add_error(None, extra.errors)
             form.add_error(None, extra.non_form_errors())
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
+
         super().form_valid(form)
+
+        # Update target names for given source
+        for source_name, name in target_names:
+            to_update, created = TargetName.objects.get_or_create(target=self.object, source_name=source_name)
+            to_update.name = name
+            to_update.save(update_fields=['name'])
+            messages.add_message(
+                self.request,
+                messages.INFO,
+                f'{"Added" if created else "Updated"} alias {to_update.name} for '
+                f'{get_pretty_survey_name(to_update.source_name)}'
+            )
+
+        target_source_names = [s for s, _ in target_names]
+
+        # Delete target names not in the form (probably deleted by the user)
+        for to_delete in TargetName.objects.filter(target=self.object).exclude(source_name__in=target_source_names):
+            to_delete.delete()
+            messages.add_message(
+                self.request,
+                messages.INFO,
+                f'Deleted alias {to_delete.name} for {get_pretty_survey_name(to_delete.source_name)}'
+            )
+
         return redirect(self.get_success_url())
 
     def get_queryset(self, *args, **kwargs):
