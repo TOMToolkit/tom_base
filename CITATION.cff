@@ -31,3 +31,6 @@ authors:
   - given-names: Mark
     family-names: Bowman
     affiliation: Las Cumbres Observatory
+version: 2.0.0
+doi: 10.5281/zenodo.4437764
+date-released: 2020-11-16
