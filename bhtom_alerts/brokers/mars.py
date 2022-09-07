@@ -275,12 +275,7 @@ class MARSBroker(GenericBroker):
                                      observer='ZTF',
                                      facility='ZTF') for datum in data]
         with transaction.atomic():
-            for reduced_datum in reduced_data:
-                try:
-                    reduced_datum.save()
-                except Exception as e:
-                    logger.error(f'Error while updating reduced datum for target {target.name}: {e}')
-                    continue
+            ReducedDatum.objects.bulk_create(reduced_data, ignore_conflicts=True)
 
     def to_target(self, alert):
         alert_copy = alert.copy()
