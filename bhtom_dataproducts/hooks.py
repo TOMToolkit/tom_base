@@ -1,6 +1,14 @@
 import logging
 
+from astropy.time import Time
+
 logger = logging.getLogger(__name__)
+
+
+def reduced_datum_pre_save(target, created, **kwargs):
+    if target.mjd == 0:
+        target.mjd = Time(target.timestamp, scale='utc').mjd
+    logger.info(f'Running pre save hook for ReducedDatum')
 
 
 def data_product_post_upload(dp):

@@ -10,12 +10,16 @@ from django import forms
 from crispy_forms.layout import Layout, Div, Fieldset, HTML
 from astropy.time import Time, TimezoneInfo
 
+from bhtom2.utils.bhtom_logger import BHTOMLogger
 from bhtom_base.bhtom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
 from bhtom_base.bhtom_targets.models import Target
 from bhtom_base.bhtom_dataproducts.models import ReducedDatum, DatumValue
 
 MARS_URL = 'https://mars.lco.global'
 filters = {1: 'g', 2: 'r', 3: 'i'}
+
+
+logger: BHTOMLogger = BHTOMLogger(__name__, '[MARS Lightcurve Update]')
 
 
 class MARSQueryForm(GenericQueryForm):
@@ -271,7 +275,12 @@ class MARSBroker(GenericBroker):
                                      observer='ZTF',
                                      facility='ZTF') for datum in data]
         with transaction.atomic():
-            ReducedDatum.objects.bulk_create(reduced_data, ignore_conflicts=True)
+            for reduced_datum in reduced_data:
+                try:
+                    reduced_datum.save()
+                except Exception as e:
+                    logger.error(f'Error while updating reduced datum for target {target.name}: {e}')
+                    continue
 
     def to_target(self, alert):
         alert_copy = alert.copy()

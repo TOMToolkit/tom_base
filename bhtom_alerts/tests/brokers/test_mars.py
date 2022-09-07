@@ -1,6 +1,8 @@
 from datetime import datetime
 from itertools import islice
 import json
+
+from astropy.time import Time
 from requests import Response
 
 from django.utils import timezone
@@ -36,12 +38,14 @@ class TestMARSBrokerClass(TestCase):
     """
     def setUp(self):
         self.test_target = Target.objects.create(name='ZTF18aberpsh')
+
         ReducedDatum.objects.create(
             source_name='MARS',
             source_location=11053318,
             target=self.test_target,
             data_type='photometry',
             timestamp=timezone.now(),
+            mjd=Time(timezone.now()).mjd,
             value=12
         )
         alert2 = alert1.copy()

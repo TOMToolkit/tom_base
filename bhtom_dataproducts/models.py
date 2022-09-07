@@ -6,14 +6,14 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 from PIL import Image
-from astropy.time import Time
-
 from astropy.io import fits
+from astropy.time import Time
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from fits2image.conversions import fits_to_jpg
 
 from bhtom_base.bhtom_observations.models import ObservationRecord
@@ -25,6 +25,12 @@ try:
     THUMBNAIL_DEFAULT_SIZE = settings.THUMBNAIL_DEFAULT_SIZE
 except AttributeError:
     THUMBNAIL_DEFAULT_SIZE = (200, 200)
+
+
+class ReducedDatumUnit(models.TextChoices):
+    MAGNITUDE = 'MAG', _('mag')
+    MILLIJANSKY = 'MILLIJANSKY', _('mJy')
+    ERG_S_CM2_ANGSTROM = 'ERG_S_CM2_ANGSTROM', _('erg/s/cm^2/Angstrom')
 
 
 def find_fits_img_size(filename):
@@ -320,6 +326,9 @@ class ReducedDatum(models.Model):
     :param value: The value of the datum (e.g. magnitude, mag limit, flux, etc.)
     :type value: float
 
+    :param value_unit: The unit of value (e.g. magnitude, mJy, etc.)
+    :type value: str
+
     :param error: The value error of the datum (e.g. magnitude, flux, etc.)
     :type error: float
 
@@ -341,11 +350,16 @@ class ReducedDatum(models.Model):
     )
     source_name = models.CharField(max_length=100, default='')
     source_location = models.CharField(max_length=200, default='')
-    mjd = models.FloatField(null=False, default=Time(datetime.utcnow(), scale='utc').mjd)
+    mjd = models.FloatField(null=False)
     timestamp = models.DateTimeField(null=False, blank=False, default=datetime.now, db_index=True)
     observer = models.CharField(null=True, max_length=100, default='')
     facility = models.CharField(null=True, max_length=100, default='')
     value = models.FloatField(null=False)
+    value_unit = models.CharField(
+        max_length=100,
+        choices=ReducedDatumUnit.choices,
+        default=ReducedDatumUnit.MAGNITUDE
+    )
     error = models.FloatField(null=True, default=0.)
     filter = models.CharField(max_length=100, null=True, default=None)
     extra_data = models.JSONField(null=True, blank=True)

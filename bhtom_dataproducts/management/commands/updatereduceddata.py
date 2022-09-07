@@ -1,10 +1,10 @@
-from requests.exceptions import HTTPError
-from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.management.base import BaseCommand
+from requests.exceptions import HTTPError
 
 from bhtom_base.bhtom_alerts import alerts
-from bhtom_base.bhtom_targets.models import Target
 from bhtom_base.bhtom_dataproducts.models import ReducedDatum
+from bhtom_base.bhtom_targets.models import Target
 
 
 class Command(BaseCommand):
@@ -37,7 +37,7 @@ class Command(BaseCommand):
         failed_records = {}
         for target in targets:
             for class_name, clazz in broker_classes.items():
-                if class_name in sources:
+                if (len(sources) > 0 and class_name in sources) or (len(sources) == 0):
                     try:
                         clazz.process_reduced_data(target)
                     except HTTPError:
