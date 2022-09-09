@@ -265,6 +265,8 @@ class Target(models.Model):
         Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
         """
         super().validate_unique(*args, **kwargs)
+        print(self.aliases.all())
+        print("========================================================")
         for alias in self.aliases.all():
             if alias.name == self.name:
                 raise ValidationError('Target name and target aliases must be unique')
