@@ -21,6 +21,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 from django_filters.views import FilterView
+from django_tables2 import Column, SingleTableMixin, Table
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
 
@@ -45,17 +46,24 @@ from bhtom_base.bhtom_targets.utils import import_targets, export_targets, get_n
 logger = logging.getLogger(__name__)
 
 
-class TargetListView(PermissionListMixin, FilterView):
+class TargetTable(Table):
+    class Meta:
+        model = Target
+        template_name = "django_tables2/bootstrap-responsive.html"
+        fields = ("name", "ra", "dec",)
+
+
+class TargetListView(SingleTableMixin, FilterView):
     """
     View for listing targets in the TOM. Only shows targets that the user is authorized to view. Requires authorization.
     """
     template_name = 'bhtom_targets/target_list.html'
-    paginate_by = 25
     strict = False
     model = Target
+    table_class = TargetTable
     filterset_class = TargetFilter
     permission_required = 'bhtom_targets.view_target'
-    ordering = ['-created']
+    table_pagination = False
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -66,7 +74,6 @@ class TargetListView(PermissionListMixin, FilterView):
         :rtype: dict
         """
         context = super().get_context_data(*args, **kwargs)
-        context['target_count'] = context['paginator'].count
         # hide target grouping list if user not logged in
         context['groupings'] = (TargetList.objects.all()
                                 if self.request.user.is_authenticated
