@@ -50,7 +50,7 @@ class TargetTable(Table):
     class Meta:
         model = Target
         template_name = "django_tables2/bootstrap-responsive.html"
-        fields = ("name", "ra", "dec",)
+        fields = ("name", "ra", "dec", "type")
 
 
 class TargetListView(SingleTableMixin, FilterView):
