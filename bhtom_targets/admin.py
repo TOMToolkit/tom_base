@@ -11,6 +11,9 @@ class TargetExtraInline(admin.TabularInline):
 class TargetAdmin(admin.ModelAdmin):
     model = Target
     inlines = [TargetExtraInline]
+    list_display = ['name', 'type', 'created', 'modified']
+    list_filter = ['type']
+    search_fields = ['name']
 
 
 class TargetListAdmin(admin.ModelAdmin):
