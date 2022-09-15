@@ -14,6 +14,7 @@ from django.forms import HiddenInput
 from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.views.generic import RedirectView, TemplateView, View
@@ -51,6 +52,17 @@ class TargetTable(Table):
         model = Target
         template_name = "django_tables2/bootstrap-responsive.html"
         fields = ("name", "ra", "dec", "type")
+
+    def render_name(self, record):
+        """
+        This function will render over the default id column.
+        By adding <a href> HTML formatting around the id number a link will be added,
+        thus acting the same as linkify. The record stands for the entire record
+        for the row from the table data.
+        """
+        return format_html('<a href="{}">{}</a>',
+                           reverse('detail',
+                                   kwargs={'pk': record.id}), record.name)
 
 
 class TargetListView(SingleTableMixin, FilterView):
