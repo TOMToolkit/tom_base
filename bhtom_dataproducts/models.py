@@ -10,6 +10,7 @@ from astropy.io import fits
 from astropy.time import Time
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
@@ -326,14 +327,23 @@ class ReducedDatum(models.Model):
     :param value: The value of the datum (e.g. magnitude, mag limit, flux, etc.)
     :type value: float
 
+    :param value_list: The array of values, e.g. fluxes for spectra
+    :type value_list: array
+
     :param value_unit: The unit of value (e.g. magnitude, mJy, etc.)
     :type value: str
 
     :param error: The value error of the datum (e.g. magnitude, flux, etc.)
     :type error: float
 
+    :param error_list: The array of error values, e.g. flux errors for spectra
+    :type error_list: array
+
     :param filter: Filterband, but also wavelength for spectra etc.
     :type filter: str
+
+    :param wavelengths: The array of wavelengths for spectra
+    :type wavelengths: array
 
     :param extra_data: Additional value of the datum. This is a dict, intended to store data with a variety of scopes.
                        For example, that could be HJD or a comment.
@@ -354,19 +364,22 @@ class ReducedDatum(models.Model):
     timestamp = models.DateTimeField(null=False, blank=False, default=datetime.now, db_index=True)
     observer = models.CharField(null=True, max_length=100, default='')
     facility = models.CharField(null=True, max_length=100, default='')
-    value = models.FloatField(null=False)
+    value = models.FloatField(null=True, default=None)
+    value_list = ArrayField(models.FloatField(), null=True, default=list)
     value_unit = models.CharField(
         max_length=100,
         choices=ReducedDatumUnit.choices,
         default=ReducedDatumUnit.MAGNITUDE
     )
-    error = models.FloatField(null=True, default=0.)
+    error = models.FloatField(null=True, default=None)
+    error_list = ArrayField(models.FloatField(), null=True, default=list)
     filter = models.CharField(max_length=100, null=True, default=None)
+    wavelengths = ArrayField(models.FloatField(), null=True, default=list)
     extra_data = models.JSONField(null=True, blank=True)
 
     class Meta:
-        unique_together = (('target', 'data_type', 'mjd', 'value', 'filter'),)
-        get_latest_by = ('timestamp',)
+        unique_together = (('target', 'data_type', 'mjd', 'value', 'value_list', 'filter', 'wavelengths'),)
+        get_latest_by = ('mjd',)
 
     def save(self, *args, **kwargs):
         for _, dp_values in settings.DATA_PRODUCT_TYPES.items():
@@ -374,6 +387,7 @@ class ReducedDatum(models.Model):
                 break
         else:
             raise ValidationError('Not a valid DataProduct type.')
+
         return super().save()
 
 
