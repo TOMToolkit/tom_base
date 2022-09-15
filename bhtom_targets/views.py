@@ -65,7 +65,7 @@ class TargetTable(Table):
                                    kwargs={'pk': record.id}), record.name)
 
 
-class TargetListView(SingleTableMixin, FilterView):
+class TargetListView(SingleTableMixin, PermissionListMixin, FilterView):
     """
     View for listing targets in the TOM. Only shows targets that the user is authorized to view. Requires authorization.
     """

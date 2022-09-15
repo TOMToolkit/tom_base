@@ -147,7 +147,7 @@ class TestTargetNameSearch(TestCase):
         self.client.force_login(self.user2)
         response = self.client.get(reverse('targets:name-search', kwargs={'name': 'testtarget3'}), follow=True)
         self.assertRedirects(response, reverse('targets:list') + '?name=testtarget3')
-        self.assertContains(response, 'No targets match those filters.')
+        self.assertNotContains(response, self.st3.name)
 
     def test_search_multiple_results_unauthorized(self):
         """Test that a search with multiple results returns the target list page, but without the targets that
