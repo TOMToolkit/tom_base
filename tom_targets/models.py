@@ -269,7 +269,7 @@ class Target(models.Model):
         if self.pk:
             for alias in self.aliases.all():
                 if alias.name == self.name:
-                    raise ValidationError('Target name and target aliases must be unique')
+                    raise ValidationError('Target name and target aliases must be different')
 
     def __str__(self):
         return str(self.name)
