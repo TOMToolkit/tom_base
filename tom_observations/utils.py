@@ -34,7 +34,8 @@ def get_sidereal_visibility(target, start_time, end_time, interval, airmass_limi
     :param airmass_limit: maximum acceptable airmass for the resulting calculations
     :type airmass_limit: int
 
-    :param observation_facility: observing facility for which to calculate the airmass. None indicates all available facilities.
+    :param observation_facility: observing facility for which to calculate the airmass. None indicates all available
+    facilities.
     :type observation_facility: BaseObservationFacility
 
     :returns: A dictionary containing the airmass data for each site. The dict keys consist of the site name prepended
