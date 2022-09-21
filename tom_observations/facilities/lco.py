@@ -1252,7 +1252,7 @@ class LCOFacility(BaseRoboticObservationFacility):
 
         for telescope_key, telescope_value in telescope_states.items():
             [site_code, _, _] = telescope_key.split('.')
-            
+
             # limit returned sites to those provided by the facility
             if site_code in site_list:
 
