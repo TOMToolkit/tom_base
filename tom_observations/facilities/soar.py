@@ -144,8 +144,8 @@ class SOARFacility(LCOFacility):
             'sites': [
                 {
                     'code': site['sitecode'],
-                    'weather_url': f'https://noirlab.edu/science/observing-noirlab/weather-webcams/'
-                                   f'cerro-pachon/environmental-conditions'
+                    'weather_url': 'https://noirlab.edu/science/observing-noirlab/weather-webcams/'
+                                   'cerro-pachon/environmental-conditions'
                 }
                 for site in self.SITES.values()]
             }
