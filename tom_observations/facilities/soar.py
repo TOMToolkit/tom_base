@@ -133,6 +133,21 @@ class SOARFacility(LCOFacility):
     def get_form(self, observation_type):
         return self.observation_forms.get(observation_type, SOARBaseObservationForm)
 
-    # Do not inherit facility status from LCOFacility to avoid duplicating the facility status list
-    def get_facility_status(self):
-        return {}
+    def get_facility_weather_urls(self):
+        """
+        `facility_weather_urls = {'code': 'XYZ', 'sites': [ site_dict, ... ]}`
+        where
+        `site_dict = {'code': 'XYZ', 'weather_url': 'http://path/to/weather'}`
+        """
+        facility_weather_urls = {
+            'code': 'SOAR',
+            'sites': [
+                {
+                    'code': site['sitecode'],
+                    'weather_url': f'https://noirlab.edu/science/observing-noirlab/weather-webcams/'
+                                   f'cerro-pachon/environmental-conditions'
+                }
+                for site in self.SITES.values()]
+            }
+
+        return facility_weather_urls
