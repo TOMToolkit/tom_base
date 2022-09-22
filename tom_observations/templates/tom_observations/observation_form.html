@@ -17,13 +17,9 @@
 {% endif %}
 <div class="row">
     <div class="col-md-6">
-        <div class="row">
-            {% target_data target %}
-        </div>
-        <div class="row">
-            Lunar Distance
-            {% moon_distance target %}
-        </div>
+        {% target_data target %}
+        <h4>Lunar Distance</h4>
+        {% moon_distance target width=None %}
     </div>
     <div class="col-md-6">
         <ul class="nav nav-tabs" id="tabs">
