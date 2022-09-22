@@ -97,7 +97,7 @@ def facility_observation_form(target, facility, observation_type):
 
 
 @register.inclusion_tag('tom_observations/partials/observation_plan.html')
-def observation_plan(target, facility, length=7, interval=60, airmass_limit=None):
+def observation_plan(target, facility=None, length=7, interval=60, airmass_limit=None):
     """
     Displays form and renders plot for visibility calculation. Using this templatetag to render a plot requires that
     the context of the parent view have values for start_time, end_time, and airmass.
@@ -107,7 +107,7 @@ def observation_plan(target, facility, length=7, interval=60, airmass_limit=None
     start_time = datetime.now()
     end_time = start_time + timedelta(days=length)
 
-    visibility_data = get_sidereal_visibility(target, start_time, end_time, interval, airmass_limit)
+    visibility_data = get_sidereal_visibility(target, start_time, end_time, interval, airmass_limit, facility)
     i = 0
     plot_data = []
     for site, data in visibility_data.items():

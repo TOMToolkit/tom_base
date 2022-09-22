@@ -132,3 +132,22 @@ class SOARFacility(LCOFacility):
 
     def get_form(self, observation_type):
         return self.observation_forms.get(observation_type, SOARBaseObservationForm)
+
+    def get_facility_weather_urls(self):
+        """
+        `facility_weather_urls = {'code': 'XYZ', 'sites': [ site_dict, ... ]}`
+        where
+        `site_dict = {'code': 'XYZ', 'weather_url': 'http://path/to/weather'}`
+        """
+        facility_weather_urls = {
+            'code': 'SOAR',
+            'sites': [
+                {
+                    'code': site['sitecode'],
+                    'weather_url': 'https://noirlab.edu/science/observing-noirlab/weather-webcams/'
+                                   'cerro-pachon/environmental-conditions'
+                }
+                for site in self.SITES.values()]
+            }
+
+        return facility_weather_urls

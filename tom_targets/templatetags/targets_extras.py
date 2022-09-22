@@ -271,15 +271,13 @@ def target_distribution(targets):
 @register.filter
 def deg_to_sexigesimal(value, fmt):
     """
-    Displays a degree coordinate value in sexigesimal, given a format of hms or dms.
+    Displays a degree coordinate value in sexagesimal, given a format of hms or dms.
     """
     a = Angle(value, unit=u.degree)
     if fmt == 'hms':
-        return '{0:02.0f}:{1:02.0f}:{2:05.3f}'.format(a.hms.h, a.hms.m, a.hms.s)
+        return a.to_string(unit=u.hourangle, sep=':', precision=3, pad=True)
     elif fmt == 'dms':
-        rep = a.signed_dms
-        sign = '-' if rep.sign < 0 else '+'
-        return '{0}{1:02.0f}:{2:02.0f}:{3:05.3f}'.format(sign, rep.d, rep.m, rep.s)
+        return a.to_string(unit=u.deg, sep=':', precision=2, alwayssign=True, pad=True)
     else:
         return 'fmt must be "hms" or "dms"'
 
