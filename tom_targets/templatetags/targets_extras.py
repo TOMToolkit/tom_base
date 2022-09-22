@@ -190,26 +190,26 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
     phases = moon_illumination(times)
 
     distance_color = 'rgb(0, 0, 255)'
-    phase_color = 'rgb(255, 0, 0)'
+    phase_color = 'rgb(255, 100, 100)'
     plot_data = [
-        go.Scatter(x=times.mjd-times[0].mjd, y=separations, mode='lines', name='Moon distance (degrees)',
+        go.Scatter(x=times.mjd-times[0].mjd, y=separations, mode='lines', name='Moon Distance',
                    line=dict(color=distance_color)),
-        go.Scatter(x=times.mjd-times[0].mjd, y=phases, mode='lines', name='Moon phase', yaxis='y2',
+        go.Scatter(x=times.mjd-times[0].mjd, y=phases, mode='lines', name='Moon Phase', yaxis='y2',
                    line=dict(color=phase_color))
     ]
     layout = go.Layout(
                 xaxis={'title': 'Days from now'},
-                yaxis={'range': [0, 180], 'tick0': 0, 'dtick': 45, 'tickfont': {'color': distance_color}},
+                yaxis={'range': [0, 180], 'tick0': 0, 'dtick': 45, 'tickfont': {'color': distance_color},
+                       'title': 'Moon Distance (Degrees)', 'titlefont': {'color': distance_color}},
                 yaxis2={'range': [0, 1], 'tick0': 0, 'dtick': 0.25, 'overlaying': 'y', 'side': 'right',
-                        'tickfont': {'color': phase_color}},
+                        'tickfont': {'color': phase_color}, 'title': 'Moon Phase', 'titlefont': {'color': phase_color}},
                 margin={'l': 20, 'r': 10, 'b': 30, 't': 40},
-                width=width,
                 height=height,
                 autosize=True,
                 paper_bgcolor=background,
-                plot_bgcolor=background
+                plot_bgcolor=background,
+                showlegend=False
             )
-    layout.legend.font.color = label_color
     fig = go.Figure(data=plot_data, layout=layout)
     fig.update_yaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
     fig.update_xaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
