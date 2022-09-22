@@ -190,7 +190,7 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
     phases = moon_illumination(times)
 
     distance_color = 'rgb(0, 0, 255)'
-    phase_color = 'rgb(255, 0, 0)'
+    phase_color = 'rgb(255, 100, 100)'
     plot_data = [
         go.Scatter(x=times.mjd-times[0].mjd, y=separations, mode='lines', name='Moon Distance',
                    line=dict(color=distance_color)),
