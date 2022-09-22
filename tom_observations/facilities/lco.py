@@ -1245,34 +1245,38 @@ class LCOFacility(BaseRoboticObservationFacility):
 
         # set up the return value to be populated by the for loop below
         facility_status = {
-            'code': 'LCO',
+            'code': self.name,
             'sites': []
         }
+        site_list = [site["sitecode"] for site in self.SITES.values()]
 
         for telescope_key, telescope_value in telescope_states.items():
             [site_code, _, _] = telescope_key.split('.')
 
-            # extract this telescope and it's status from the response
-            telescope = {
-                'code': telescope_key,
-                'status': telescope_value[0]['event_type']
-            }
+            # limit returned sites to those provided by the facility
+            if site_code in site_list:
 
-            # get the site dictionary from the facilities list of sites
-            # filter by site_code and provide a default (None) for new sites
-            site = next((site_ix for site_ix in facility_status['sites']
-                         if site_ix['code'] == site_code), None)
-            # create the site if it's new and not yet in the facility_status['sites] list
-            if site is None:
-                new_site = {
-                    'code': site_code,
-                    'telescopes': []
+                # extract this telescope and it's status from the response
+                telescope = {
+                    'code': telescope_key,
+                    'status': telescope_value[0]['event_type']
                 }
-                facility_status['sites'].append(new_site)
-                site = new_site
 
-            # Now, add the telescope to the site's telescopes
-            site['telescopes'].append(telescope)
+                # get the site dictionary from the facilities list of sites
+                # filter by site_code and provide a default (None) for new sites
+                site = next((site_ix for site_ix in facility_status['sites']
+                             if site_ix['code'] == site_code), None)
+                # create the site if it's new and not yet in the facility_status['sites] list
+                if site is None:
+                    new_site = {
+                        'code': site_code,
+                        'telescopes': []
+                    }
+                    facility_status['sites'].append(new_site)
+                    site = new_site
+
+                # Now, add the telescope to the site's telescopes
+                site['telescopes'].append(telescope)
 
         return facility_status
 
