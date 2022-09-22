@@ -38,7 +38,7 @@ setup(
         'django-contrib-comments~=2.0',  # Earlier version are incompatible with Django >= 3.0
         'django-crispy-forms~=1.11',
         'django-extensions~=3.1',
-        'django-filter~=21.0',
+        'django-filter>=21,<23',
         'django-gravatar2~=1.4',
         'django-guardian~=2.3',
         'fits2image==0.4.6',
@@ -54,7 +54,7 @@ setup(
         'test': ['factory_boy==3.2.1'],
         'docs': [
             'recommonmark~=0.7',
-            'sphinx~=4.0',
+            'sphinx>=4,<6',
             'tom_antares',
             'tom_scimma'
         ]
