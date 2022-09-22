@@ -1,0 +1,36 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: The TOM Toolkit
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: William
+    family-names: Lindstrom
+    email: llindstrom@lco.global
+    affiliation: Las Cumbres Observatory
+  - given-names: Joseph
+    family-names: Chatelain
+    affiliation: Las Cumbres Observatory
+  - given-names: David
+    family-names: Collom
+  - given-names: Austin
+    family-names: Riba
+  - given-names: Rachel
+    family-names: Street
+    email: rstreet@lco.global
+    affiliation: Las Cumbres Observatory
+    orcid: 'https://orcid.org/0000-0001-6279-0552'
+  - given-names: Curtis
+    family-names: McCully
+    email: cmccully@lco.global
+    affiliation: Las Cumbres Observatory
+  - given-names: Mark
+    family-names: Bowman
+    affiliation: Las Cumbres Observatory
+version: 2.0.0
+doi: 10.5281/zenodo.4437764
+date-released: 2020-11-16
