@@ -70,14 +70,12 @@ class LasairBroker(GenericBroker):
     form = LasairBrokerForm
 
     def fetch_alerts(self, parameters):
-        print(parameters)
         if 'cone' in parameters and len(parameters['cone'].strip()) > 0:
             response = requests.post(
                 LASAIR_URL + '/conesearch/',
                 data={'cone': parameters['cone'], 'json': 'on'}
             )
             response.raise_for_status()
-            print(response.content)
             cone_result = response.json()
             alerts = []
             for objectId in cone_result['hitlist']:
