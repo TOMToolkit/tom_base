@@ -21,6 +21,7 @@
           <th>Observation</th>
           <th>Groups</th>
           <th>Type</th>
+          <th>Share</th>
           <th>Thumbnail</th>
         </tr>
       </thead>
@@ -43,7 +44,11 @@
             {% if product.data_product_type %}
               {{ product.get_type_display }}
             {% endif %}
-          </a></td>
+          </td>
+          <td>
+            <a href="{% url 'tom_dataproducts:share' pk=product.id %}?target_id={{ product.target.id }}"
+               title="Share" class="btn btn-primary">Publish</a></td>
+
           {% if product.get_file_extension == '.fz' or product.get_file_extension == '.fits' %}
           <td>
             {% if product.get_preview %}
