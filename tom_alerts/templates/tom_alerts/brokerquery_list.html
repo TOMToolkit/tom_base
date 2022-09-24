@@ -8,11 +8,7 @@
     <p>
       Create a new query using:
       {% for broker in installed_brokers %}
-        {% if broker == "Lasair" %}
-          <a title="{{ broker }} is unavailable" class="btn btn-outline-secondary">{{ broker }} </a>
-        {% else %}
-          <a href="{% url 'tom_alerts:create' %}?broker={{ broker }}" title="{{ broker }}" class="btn btn-outline-primary">{{ broker }}</a>
-        {% endif %}
+        <a href="{% url 'tom_alerts:create' %}?broker={{ broker }}" title="{{ broker }}" class="btn btn-outline-primary">{{ broker }}</a>
       {% endfor %}
     </p>
     <table class="table table-striped">
@@ -24,11 +20,7 @@
           <td>{{ query.broker }}</td>
           <td>{{ query.created }}</td>
           <td>{{ query.last_run }}</td>
-          {% if query.broker == "Lasair" %}
-            <td><a title="{{ broker }} is unavailable" class="btn btn-secondary">Run</a></td>
-          {% else %}
-            <td><a href="{% url 'tom_alerts:run' query.id %}" title="Run query" class="btn btn-primary">Run</a></td>
-          {% endif %}
+          <td><a href="{% url 'tom_alerts:run' query.id %}" title="Run query" class="btn btn-primary">Run</a></td>
           <td><a href="{% url 'tom_alerts:delete' query.id %}" title="Delete query" class="btn btn-danger">Delete</a></td>
         </tr>
         {% empty %}

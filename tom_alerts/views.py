@@ -198,7 +198,8 @@ class RunQueryView(TemplateView):
         context = super().get_context_data()
         query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
         broker_class = get_service_class(query.broker)()
-        alerts = broker_class.fetch_alerts(deepcopy(query.parameters))  # TODO: Should the deepcopy be in the brokers?
+        # TODO: Should the deepcopy be in the brokers?
+        alerts, messages = broker_class.fetch_alerts(deepcopy(query.parameters))
         context['score_description'] = broker_class.score_description
         context['alerts'] = []
         query.last_run = timezone.now()

@@ -2,6 +2,7 @@ import requests
 
 from crispy_forms.layout import Fieldset, HTML, Layout
 from django import forms
+from django.conf import settings
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
 from tom_targets.models import Target
@@ -39,10 +40,12 @@ class LasairBrokerForm(GenericQueryForm):
         return cleaned_data
 
 
-def get_lasair_object(objectId):
-    url = LASAIR_URL + '/object/' + objectId + '/json/'
-    response = requests.get(url)
-    obj = response.json()
+def get_lasair_object(obj):
+    # url = LASAIR_URL + '/object/' + objectId + '/json/'
+    # print(url)
+    # response = requests.get(url)
+    # obj = response.json()
+    objectId = obj['objectId']
     jdmax = obj['candidates'][0]['mjd']
     ra = obj['objectData']['ramean']
     dec = obj['objectData']['decmean']
@@ -71,16 +74,37 @@ class LasairBroker(GenericBroker):
 
     def fetch_alerts(self, parameters):
         if 'cone' in parameters and len(parameters['cone'].strip()) > 0:
-            response = requests.post(
-                LASAIR_URL + '/conesearch/',
-                data={'cone': parameters['cone'], 'json': 'on'}
+
+            ra, dec = parameters['cone'].strip().split(',')
+            radius = 1  # max radius = 1000"
+            token = settings.LASAIR_TOKEN
+            # lasair_request = lasair.lasair_client(token)
+            # cone_results = lasair_request.cone(ra, dec, radius=5, requestType='all')
+
+            cone_response = requests.get(
+                LASAIR_URL + '/api/cone/' + f'?ra={ra}&dec={dec}&radius={radius}&request' +
+                                            f'Type=all&token={token}&format=json'
             )
-            response.raise_for_status()
-            cone_result = response.json()
+            cone_results = cone_response.json()
             alerts = []
-            for objectId in cone_result['hitlist']:
-                alerts.append(get_lasair_object(objectId))
-            return iter(alerts)
+            messages = ''
+
+            try:
+                object_ids = ','.join([result['object'] for result in cone_results])
+
+                obj_response = requests.get(
+                    LASAIR_URL + '/api/objects/' + f'?objectIds={object_ids}&token={token}&format=json'
+                )
+
+                obj_results = obj_response.json()
+
+                for obj in obj_results:
+                    alerts.append(get_lasair_object(obj))
+
+            except TypeError:
+                for value in cone_results.values():
+                    messages += value + '\r'
+            return iter(alerts), messages
 
         # note: the sql SELECT must include objectId
         if 'sqlquery' in parameters and len(parameters['sqlquery'].strip()) > 0:
