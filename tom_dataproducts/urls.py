@@ -3,7 +3,7 @@ from django.urls import path
 from tom_dataproducts.views import DataProductListView, DataProductSaveView, DataProductGroupListView
 from tom_dataproducts.views import DataProductDeleteView, DataProductGroupCreateView
 from tom_dataproducts.views import DataProductGroupDetailView, DataProductGroupDataView, DataProductGroupDeleteView
-from tom_dataproducts.views import DataProductUploadView, DataProductFeatureView, UpdateReducedDataView
+from tom_dataproducts.views import DataProductUploadView, DataProductFeatureView, UpdateReducedDataView, DataProductShareView
 
 from tom_common.api_router import SharedAPIRootRouter
 from tom_dataproducts.api_views import DataProductViewSet
@@ -24,5 +24,6 @@ urlpatterns = [
     path('data/reduced/update/', UpdateReducedDataView.as_view(), name='update-reduced-data'),
     path('data/<int:pk>/delete/', DataProductDeleteView.as_view(), name='delete'),
     path('data/<int:pk>/feature/', DataProductFeatureView.as_view(), name='feature'),
+    path('data/<int:pk>/share/', DataProductShareView.as_view(), name='share'),
     path('<int:pk>/save/', DataProductSaveView.as_view(), name='save'),
 ]

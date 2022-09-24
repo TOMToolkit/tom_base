@@ -1,4 +1,6 @@
+import datetime
 from io import StringIO
+import logging
 from urllib.parse import urlencode, urlparse
 
 from django.conf import settings
@@ -27,9 +29,14 @@ from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
+from tom_dataproducts.processors.photometry_processor import PhotometryProcessor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 
+import requests
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class DataProductSaveView(LoginRequiredMixin, View):
     """
@@ -270,6 +277,93 @@ class DataProductFeatureView(View):
             pass
         product.featured = True
         product.save()
+        return redirect(reverse(
+            'tom_targets:detail',
+            kwargs={'pk': request.GET.get('target_id')})
+        )
+
+
+class DataProductShareView(View):
+    # TODO: update class docstring
+    """
+    View that handles the featuring of ``DataProduct``s. A featured ``DataProduct`` is displayed on the
+    ``TargetDetailView``.
+    """
+
+    # TODO: refactor the general data shaing mechanism to make it more driven by the
+    # configuration in settings.py
+    def submit_to_hermes(self, data_to_share, message='From TOMToolkit'):
+        hermes_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
+        
+        # Get the csrf-token to include in header
+        #csrf_url = hermes_base_url + 'get-csrf-token/'
+        #csrf_headers = {'Content-Type': 'application/json'}
+        #csrf_response = requests.get(url=csrf_url, headers=csrf_headers)
+
+        #logger.debug(f'dir(csrf_response): {dir(csrf_response)}')
+        #logger.debug(f'csrf_response.text: {csrf_response.text}')
+        #logger.debug(f'csrf_response.json(): {csrf_response.json()}')
+
+        csrf_token = ''
+        #csrf_token = csrf_response.json()['token']
+
+        submit_url = hermes_base_url + 'submit/'
+        headers = {
+            #'X-CSRFToken': csrf_token,
+            #'Content-Type': 'application/json',
+        }
+
+        # fields required by hopingest.py: topic, title, author, data, message_text
+        data = data_to_share
+        alert = {
+            'topic': 'hermes.test',
+            'title': 'TOM Toolkit test (Photometry)',
+            'author': 'llindstrom@lco.global',
+            'data': data_to_share,
+            'message_text': f'Test alert from TOM Toolkit at {datetime.datetime.now()}',
+        }
+
+        submit_response = requests.post(url=submit_url, data=alert, headers=headers)
+
+        logger.debug(f'submit_to_hermes response.status_code: {submit_response.status_code}')
+        logger.debug(f'submit_to_hermes response.text: {submit_response.text}')
+
+
+    def get(self, request, *args, **kwargs):
+        # TODO: update get method docstring
+        """
+        Method that handles the GET requests for this view. Sets all other ``DataProduct``s to unfeatured in the
+        database, and sets the specified ``DataProduct`` to featured. Caches the featured image. Deletes previously
+        featured images from the cache.
+        """
+        product_id = kwargs.get('pk', None)
+        product = DataProduct.objects.get(pk=product_id)
+
+        logger.debug(f'Sharing data product: {product} of type: {product.data_product_type}')
+        if product.data_product_type == 'photometry':
+            data = PhotometryProcessor().process_data(product)
+            # data is a list of tuples:
+            #    [
+            #     (datetime.datetime(2012, 2, 2, 1, 40, 47, 999986,
+            #      tzinfo=<astropy.time.formats.TimezoneInfo object at 0x7f9955f7f760>),
+            #      {
+            #          'magnitude': 15.582,
+            #          'filter': 'r',
+            #          'error': 0.005
+            #      }
+            #     )
+            #    ]
+            for datum in data:
+                logger.debug(f'datum: {datum}')
+
+            # Turn the data into JSON to send to the HERMES /submit endpoint
+            self.submit_to_hermes(data)
+
+
+        # TODO: if a target_id came in with the request then redirect to its TargetDetail page
+        #   otherwise stay on the same DataProductsListView page
+        # TODO: should give user feedback about the success/failure of the publishing 
+
         return redirect(reverse(
             'tom_targets:detail',
             kwargs={'pk': request.GET.get('target_id')})
