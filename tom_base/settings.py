@@ -196,6 +196,16 @@ FACILITIES = {
     },
 }
 
+TOM_FACILITY_CLASSES = [
+    'tom_observations.facilities.lco.LCOFacility',
+    'tom_observations.facilities.gemini.GEMFacility',
+    'tom_observations.facilities.soar.SOARFacility',
+]
+
+#
+# tom_dataproducts configuration
+#
+
 # Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
 # longer be valid, and may cause issues unless the offending records are modified.
 DATA_PRODUCT_TYPES = {
@@ -210,11 +220,17 @@ DATA_PROCESSORS = {
     'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
 }
 
-TOM_FACILITY_CLASSES = [
-    'tom_observations.facilities.lco.LCOFacility',
-    'tom_observations.facilities.gemini.GEMFacility',
-    'tom_observations.facilities.soar.SOARFacility',
-]
+DATA_SHARING = {
+    'hermes': {
+        'BASE_URL': os.getenv('HERMES_BASE_URL', 'http://hermes-dev.lco.gtn/'),
+        'API_TOKEN': os.getenv('HERMES_API_TOKEN', 'set HERMES_API_TOKEN value in environment'),
+    },
+    'tomtoolkit': {
+        'BASE_URL': os.getenv('TOM_DEMO_BASE_URL', 'http://tom-demo-dev.lco.gtn/'),
+        'API_TOKEN': os.getenv('TOM_DEMO_API_TOKEN', 'set TOM_DEMO_API_TOKEN value in environment'),
+    }
+}
+
 
 TOM_CADENCE_STRATEGIES = [
     'tom_observations.cadences.retry_failed_observations.RetryFailedObservationsStrategy',
