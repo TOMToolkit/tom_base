@@ -202,6 +202,7 @@ class RunQueryView(TemplateView):
         alerts, messages = broker_class.fetch_alerts(deepcopy(query.parameters))
         context['score_description'] = broker_class.score_description
         context['alerts'] = []
+        context['error_messages'] = messages
         query.last_run = timezone.now()
         query.save()
         context['query'] = query

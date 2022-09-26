@@ -76,10 +76,8 @@ class LasairBroker(GenericBroker):
         if 'cone' in parameters and len(parameters['cone'].strip()) > 0:
 
             ra, dec = parameters['cone'].strip().split(',')
-            radius = 1  # max radius = 1000"
+            radius = 200
             token = settings.LASAIR_TOKEN
-            # lasair_request = lasair.lasair_client(token)
-            # cone_results = lasair_request.cone(ra, dec, radius=5, requestType='all')
 
             cone_response = requests.get(
                 LASAIR_URL + '/api/cone/' + f'?ra={ra}&dec={dec}&radius={radius}&request' +
