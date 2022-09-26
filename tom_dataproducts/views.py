@@ -1,3 +1,4 @@
+import csv
 import datetime
 from io import StringIO
 import logging
@@ -293,7 +294,7 @@ class DataProductShareView(View):
 
     # TODO: refactor the general data shaing mechanism to make it more driven by the
     # configuration in settings.py
-    def submit_to_hermes(self, data_to_share, message='From TOMToolkit'):
+    def submit_to_hermes(self, target_name, photometry_data, message='From TOMToolkit'):
         hermes_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
 
         # Get the csrf-token to include in header
@@ -304,7 +305,6 @@ class DataProductShareView(View):
         # logger.debug(f'csrf_response.text: {csrf_response.text}')
         # logger.debug(f'csrf_response.json(): {csrf_response.json()}')
 
-        # csrf_token = ''
         # csrf_token = csrf_response.json()['token']
 
         submit_url = hermes_base_url + 'submit/'
@@ -313,25 +313,41 @@ class DataProductShareView(View):
             # 'Content-Type': 'application/json',
         }
 
+        #
+        # Map TOM Toolkit Photometry.csv fields to HERMES Photometry reporting form fields
+        #
+        hermes_photometry_data = []
+        for tomtoolkit_photometry in photometry_data:
+            hermes_photometry_data.append({
+                'photometryId': target_name,
+                'dateObs': tomtoolkit_photometry['time'],
+                'band': tomtoolkit_photometry['filter'],
+                'brightness': tomtoolkit_photometry['magnitude'],
+                'brightnessError': tomtoolkit_photometry['error'],
+                'brightnessUnit': 'AB mag',
+            })
+
         # fields required by hopingest.py: topic, title, author, data, message_text
+        # TODO: maybe throw up form to get these fields
         alert = {
             'topic': 'hermes.test',
             'title': 'TOM Toolkit test (Photometry)',
             'author': 'llindstrom@lco.global',
-            'data': data_to_share,
+            'data': {
+                'photometry_data': hermes_photometry_data,
+            },
             'message_text': f'Test alert from TOM Toolkit at {datetime.datetime.now()}',
         }
+        logger.debug(f'DataProductShareView.submit_to_hermes() alert: {alert}')
 
-        submit_response = requests.post(url=submit_url, data=alert, headers=headers)
-
-        logger.debug(f'submit_to_hermes response.status_code: {submit_response.status_code}')
-        logger.debug(f'submit_to_hermes response.text: {submit_response.text}')
+        submit_response = requests.post(url=submit_url, json=alert, headers=headers)
+        logger.debug(f'DataProductShareView.submit_to_hermes response.status_code: {submit_response.status_code}')
+        logger.debug(f'DataProductShareView.submit_to_hermes response.text: {submit_response.text}')
 
     def get(self, request, *args, **kwargs):
         """
-        Method that handles the GET requests for this view. Sets all other ``DataProduct``s to unfeatured in the
-        database, and sets the specified ``DataProduct`` to featured. Caches the featured image. Deletes previously
-        featured images from the cache.
+        Method that handles the GET requests for this view. 
+        
         """
         # TODO: update get method docstring
 
@@ -340,8 +356,11 @@ class DataProductShareView(View):
 
         logger.debug(f'Sharing data product: {product} of type: {product.data_product_type}')
         if product.data_product_type == 'photometry':
-            data = PhotometryProcessor().process_data(product)
-            # data is a list of tuples:
+            #data = PhotometryProcessor().process_data(product)
+            # NOTE: for PhotemeryProcessor
+            #  * CSV headers assummed: time, magnitude, filter, error
+            #  * time assumed to be astropy.time.Time (format='mjd')
+            #  * result of process_data() is a list of tuples:
             #    [
             #     (datetime.datetime(2012, 2, 2, 1, 40, 47, 999986,
             #      tzinfo=<astropy.time.formats.TimezoneInfo object at 0x7f9955f7f760>),
@@ -352,11 +371,14 @@ class DataProductShareView(View):
             #      }
             #     )
             #    ]
-            for datum in data:
-                logger.debug(f'datum: {datum}')
+            #
+            # Alternatively just convert CSV in to python dict using csv.DictReader:
+            with open(product.data.path, newline='') as csvfile:
+                photometry_reader = csv.DictReader(csvfile, delimiter=',')
+                data = [row for row in photometry_reader]
 
             # Turn the data into JSON to send to the HERMES /submit endpoint
-            self.submit_to_hermes(data)
+            self.submit_to_hermes(product.target.name, data)
 
         # TODO: if a target_id came in with the request then redirect to its TargetDetail page
         #   otherwise stay on the same DataProductsListView page
