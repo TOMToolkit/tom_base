@@ -30,7 +30,6 @@ from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
-from tom_dataproducts.processors.photometry_processor import PhotometryProcessor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 
@@ -294,8 +293,8 @@ class DataProductShareView(View):
 
     # TODO: refactor the general data shaing mechanism to make it more driven by the
     # configuration in settings.py
-    def submit_to_hermes(self, target_name, photometry_data, message='From TOMToolkit'):
-        hermes_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
+    def submit_to_stream(self, stream_name, target_name, photometry_data, message='From TOMToolkit'):
+        hermes_base_url = settings.DATA_SHARING[stream_name]['BASE_URL']
 
         # Get the csrf-token to include in header
         # csrf_url = hermes_base_url + 'get-csrf-token/'
@@ -344,10 +343,17 @@ class DataProductShareView(View):
         logger.debug(f'DataProductShareView.submit_to_hermes response.status_code: {submit_response.status_code}')
         logger.debug(f'DataProductShareView.submit_to_hermes response.text: {submit_response.text}')
 
+    def share_with_tom(self, tom_name, target_name, photometry_data):
+        logger.debug(f'DataProductShareView.share_with_tom: {tom_name}')
+        tom_base_url = settings.DATA_SHARING[tom_name]['BASE_URL']
+
+        logger.debug(f'DataProductShareView.share_with_tom: {tom_name} at {tom_base_url}')
+        pass
+
     def get(self, request, *args, **kwargs):
         """
-        Method that handles the GET requests for this view. 
-        
+        Method that handles the GET requests for this view.
+
         """
         # TODO: update get method docstring
 
@@ -356,33 +362,15 @@ class DataProductShareView(View):
 
         logger.debug(f'Sharing data product: {product} of type: {product.data_product_type}')
         if product.data_product_type == 'photometry':
-            #data = PhotometryProcessor().process_data(product)
-            # NOTE: for PhotemeryProcessor
-            #  * CSV headers assummed: time, magnitude, filter, error
-            #  * time assumed to be astropy.time.Time (format='mjd')
-            #  * result of process_data() is a list of tuples:
-            #    [
-            #     (datetime.datetime(2012, 2, 2, 1, 40, 47, 999986,
-            #      tzinfo=<astropy.time.formats.TimezoneInfo object at 0x7f9955f7f760>),
-            #      {
-            #          'magnitude': 15.582,
-            #          'filter': 'r',
-            #          'error': 0.005
-            #      }
-            #     )
-            #    ]
-            #
-            # Alternatively just convert CSV in to python dict using csv.DictReader:
+            # Convert CSV into python dict with csv.DictReader:
             with open(product.data.path, newline='') as csvfile:
                 photometry_reader = csv.DictReader(csvfile, delimiter=',')
                 data = [row for row in photometry_reader]
 
             # Turn the data into JSON to send to the HERMES /submit endpoint
-            self.submit_to_hermes(product.target.name, data)
-
-        # TODO: if a target_id came in with the request then redirect to its TargetDetail page
-        #   otherwise stay on the same DataProductsListView page
-        # TODO: should give user feedback about the success/failure of the publishing
+            # TODO: rename these photometry-specfic methods to reflect that..
+            self.submit_to_stream('hermes', product.target.name, data)
+            self.share_with_tom('tom-demo-dev', product.target.name, data)
 
         return redirect(reverse(
             'tom_targets:detail',
