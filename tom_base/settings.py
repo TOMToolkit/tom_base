@@ -225,7 +225,8 @@ DATA_SHARING = {
         'BASE_URL': os.getenv('HERMES_BASE_URL', 'http://hermes-dev.lco.gtn/'),
         'API_TOKEN': os.getenv('HERMES_API_TOKEN', 'set HERMES_API_TOKEN value in environment'),
     },
-    'tomtoolkit': {
+    'tom-demo-dev': {
+        # configuration for the TOM receiving data from this TOM
         'BASE_URL': os.getenv('TOM_DEMO_BASE_URL', 'http://tom-demo-dev.lco.gtn/'),
         'API_TOKEN': os.getenv('TOM_DEMO_API_TOKEN', 'set TOM_DEMO_API_TOKEN value in environment'),
     }
