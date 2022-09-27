@@ -1,4 +1,5 @@
 import requests
+from urllib.parse import urlencode
 
 from crispy_forms.layout import Fieldset, HTML, Layout
 from django import forms
@@ -7,7 +8,7 @@ from django.conf import settings
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
 from tom_targets.models import Target
 
-LASAIR_URL = 'https://lasair.roe.ac.uk'
+LASAIR_URL = 'https://lasair-ztf.lsst.ac.uk'
 
 
 class LasairBrokerForm(GenericQueryForm):
@@ -41,10 +42,6 @@ class LasairBrokerForm(GenericQueryForm):
 
 
 def get_lasair_object(obj):
-    # url = LASAIR_URL + '/object/' + objectId + '/json/'
-    # print(url)
-    # response = requests.get(url)
-    # obj = response.json()
     objectId = obj['objectId']
     jdmax = obj['candidates'][0]['mjd']
     ra = obj['objectData']['ramean']
@@ -73,48 +70,61 @@ class LasairBroker(GenericBroker):
     form = LasairBrokerForm
 
     def fetch_alerts(self, parameters):
+        token = settings.LASAIR_TOKEN
+        alerts = []
+        messages = ''
+        object_ids = ''
         if 'cone' in parameters and len(parameters['cone'].strip()) > 0:
 
-            ra, dec = parameters['cone'].strip().split(',')
-            radius = 200
-            token = settings.LASAIR_TOKEN
+            cone_query = {'ra': (parameters['cone'].strip().split(','))[0],
+                          'dec': (parameters['cone'].strip().split(','))[1],
+                          'radius': 200,
+                          'requestType': 'all'}
+            parsed_cone_query = urlencode(cone_query)
 
             cone_response = requests.get(
-                LASAIR_URL + '/api/cone/' + f'?ra={ra}&dec={dec}&radius={radius}&request' +
-                                            f'Type=all&token={token}&format=json'
+                LASAIR_URL + '/api/cone/?' + parsed_cone_query + f'&token={token}&format=json'
             )
-            cone_results = cone_response.json()
-            alerts = []
-            messages = ''
-
+            search_results = cone_response.json()
             try:
-                object_ids = ','.join([result['object'] for result in cone_results])
-
-                obj_response = requests.get(
-                    LASAIR_URL + '/api/objects/' + f'?objectIds={object_ids}&token={token}&format=json'
-                )
-
-                obj_results = obj_response.json()
-
-                for obj in obj_results:
-                    alerts.append(get_lasair_object(obj))
-
+                object_ids = ','.join([result['object'] for result in search_results])
             except TypeError:
-                for value in cone_results.values():
-                    messages += value + '\r'
-            return iter(alerts), messages
+                for key in search_results:
+                    messages += f'{key}:{search_results[key]}'
 
         # note: the sql SELECT must include objectId
-        if 'sqlquery' in parameters and len(parameters['sqlquery'].strip()) > 0:
-            response = requests.post(
-                LASAIR_URL + '/objlist/',
-                data={'sqlquery': parameters['sqlquery'], 'json': 'on', 'page': ''}
+        elif 'sqlquery' in parameters and len(parameters['sqlquery'].strip()) > 0:
+            sql_query = {'selected': 'objectId',
+                         'tables': 'objects',
+                         'conditions': 'gmag < 12.0',
+                         'limit': '100'}
+            parsed_sql_query = urlencode(sql_query)
+
+            query_response = requests.get(
+                LASAIR_URL + '/api/query/?' + parsed_sql_query + f'&token={token}&format=json'
             )
-            records = response.json()
-            alerts = []
-            for record in records:
-                alerts.append(get_lasair_object(record['objectId']))
-            return iter(alerts)
+
+            search_results = query_response.json()
+            try:
+                object_ids = ','.join([result['objectId'] for result in search_results])
+            except TypeError:
+                for key in search_results:
+                    messages += f'{key}:{search_results[key]}'
+
+            if not object_ids and not messages:
+                messages += f"No objects found with conditions: {sql_query['conditions']}"
+        else:
+            return iter(alerts), messages
+
+        if object_ids:
+            obj_response = requests.get(
+                LASAIR_URL + '/api/objects/' + f'?objectIds={object_ids}&token={token}&format=json'
+            )
+            obj_results = obj_response.json()
+
+            for obj in obj_results:
+                alerts.append(get_lasair_object(obj))
+        return iter(alerts), messages
 
     def fetch_alert(self, alert_id):
         url = LASAIR_URL + '/object/' + alert_id + '/json/'
