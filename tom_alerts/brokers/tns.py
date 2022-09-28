@@ -101,6 +101,7 @@ class TNSBroker(GenericBroker):
 
     @classmethod
     def fetch_alerts(cls, parameters):
+        messages = ''
         if parameters['days_ago'] is not None:
             public_timestamp = (datetime.utcnow() - timedelta(days=parameters['days_ago']))\
                 .strftime('%Y-%m-%d %H:%M:%S')
@@ -150,7 +151,7 @@ class TNSBroker(GenericBroker):
             else:
                 alerts.append(alert)
 
-        return iter(alerts)
+        return iter(alerts), messages
 
     @classmethod
     def to_generic_alert(cls, alert):

@@ -23,7 +23,7 @@ class FinkBroker(GenericBroker):
     form = FinkQueryForm
 
     def fetch_alerts(self, parameters):
-        return iter([])
+        return iter([]), ''
 
     def process_reduced_data(self, target, alert=None):
         return

@@ -197,10 +197,11 @@ class MARSBroker(GenericBroker):
     def fetch_alerts(self, parameters):
         response = self._request_alerts(parameters)
         alerts = response['results']
+        messages = ''
         if response['has_next'] and parameters['page'] < 10:
             parameters['page'] += 1
             alerts += self.fetch_alerts(parameters)
-        return iter(alerts)
+        return iter(alerts), messages
 
     def fetch_alert(self, id):
         url = f'{MARS_URL}/{id}/?format=json'

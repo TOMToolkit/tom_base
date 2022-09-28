@@ -316,10 +316,11 @@ class ALeRCEBroker(GenericBroker):
     def fetch_alerts(self, parameters):
         response = self._request_alerts(parameters)
         alerts = response['items']
+        messages = ''
         if len(alerts) > 0 and response['page'] < parameters.get('max_pages', 1):
             parameters['page'] = response.get('page') + 1
             alerts += self.fetch_alerts(parameters)
-        return iter(alerts)
+        return iter(alerts), messages
 
     def fetch_alert(self, id):
         """
