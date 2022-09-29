@@ -53,7 +53,7 @@ class TestBroker(GenericBroker):
         """ All brokers must implement this method. It must return a list of alerts.
         """
         # Here we simply return a list of `GenericAlert`s that match the name passed in via `parameters`.
-        return iter([alert for alert in test_alerts if alert['name'] == parameters['name']])
+        return iter([alert for alert in test_alerts if alert['name'] == parameters['name']]), "test message"
 
     def process_reduced_data(self, target, alert=None):
         pass
@@ -91,7 +91,7 @@ class TestBrokerClass(TestCase):
             get_service_class('MARS')
 
     def test_fetch_alerts(self):
-        alerts = TestBroker().fetch_alerts({'name': 'Hoth'})
+        alerts, messages = TestBroker().fetch_alerts({'name': 'Hoth'})
         self.assertEqual(test_alerts[1], list(alerts)[0])
 
     def test_to_generic_alert(self):
