@@ -91,7 +91,7 @@ class TestBrokerClass(TestCase):
             get_service_class('MARS')
 
     def test_fetch_alerts(self):
-        alerts, messages = TestBroker().fetch_alerts({'name': 'Hoth'})
+        alerts, _ = TestBroker().fetch_alerts({'name': 'Hoth'})
         self.assertEqual(test_alerts[1], list(alerts)[0])
 
     def test_to_generic_alert(self):

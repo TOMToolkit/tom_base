@@ -299,9 +299,9 @@ class TestALeRCEBrokerClass(TestCase):
 
         with self.subTest():
             mock_requests_get.side_effect = [first_mock_response]
-            response, messages = self.broker.fetch_alerts({'max_pages': 1})
+            response = self.broker.fetch_alerts({'max_pages': 1})
             alerts = []
-            for alert in response:
+            for alert in response[0]:
                 alerts.append(alert)
             self.assertEqual(20, len(alerts))
 
