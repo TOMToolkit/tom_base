@@ -89,7 +89,7 @@ class LasairBroker(GenericBroker):
     def fetch_alerts(self, parameters):
         token = settings.LASAIR_TOKEN
         alerts = []
-        messages = ''
+        broker_feedback = ''
         object_ids = ''
 
         # Check for Cone Search
@@ -115,7 +115,7 @@ class LasairBroker(GenericBroker):
                 object_ids = ','.join([result['object'] for result in search_results])
             except TypeError:
                 for key in search_results:
-                    messages += f'{key}:{search_results[key]}'
+                    broker_feedback += f'{key}:{search_results[key]}'
 
         # Check for SQL Condition Query
         elif 'sqlquery' in parameters and len(parameters['sqlquery'].strip()) > 0:
@@ -139,13 +139,13 @@ class LasairBroker(GenericBroker):
                 object_ids = ','.join([result['objectId'] for result in search_results])
             except TypeError:
                 for key in search_results:
-                    messages += f'{key}:{search_results[key]}'
+                    broker_feedback += f'{key}:{search_results[key]}'
 
-            # Supply message for empty results
-            if not object_ids and not messages:
-                messages += f"No objects found with conditions: {sql_query['conditions']}"
+            # Supply feedback for empty results
+            if not object_ids and not broker_feedback:
+                broker_feedback += f"No objects found with conditions: {sql_query['conditions']}"
         else:
-            return iter(alerts), messages
+            return iter(alerts), broker_feedback
 
         if object_ids:
             # Query LASAIR object API
@@ -157,7 +157,7 @@ class LasairBroker(GenericBroker):
 
             for obj in obj_results:
                 alerts.append(get_lasair_object(obj))
-        return iter(alerts), messages
+        return iter(alerts), broker_feedback
 
     def fetch_alert(self, alert_id):
         url = LASAIR_URL + '/object/' + alert_id + '/json/'
