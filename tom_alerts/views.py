@@ -200,7 +200,7 @@ class RunQueryView(TemplateView):
         broker_class = get_service_class(query.broker)()
         # TODO: Should the deepcopy be in the brokers?
         alert_query_results = broker_class.fetch_alerts(deepcopy(query.parameters))
-        # Check if feedback is available for fetch_alerts, and allow for backwards compatability if not.
+        # Check if feedback is available for fetch_alerts, and allow for backwards compatibility if not.
         if type(alert_query_results) is tuple:
             alerts, broker_feedback = alert_query_results
         else:
