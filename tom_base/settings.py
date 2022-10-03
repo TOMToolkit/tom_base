@@ -23,13 +23,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY', 'testkey')
-LASAIR_TOKEN = os.getenv('LASAIR_TOKEN', None)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ['']
-
 
 # Application definition
 
@@ -196,6 +194,11 @@ FACILITIES = {
         'api_key': os.getenv('LCO_API_KEY', ''),
     },
 }
+
+#
+# tom_alerts configuration
+#
+LASAIR_TOKEN = os.getenv('LASAIR_TOKEN', None)
 
 # Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
 # longer be valid, and may cause issues unless the offending records are modified.
