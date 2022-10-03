@@ -2,6 +2,7 @@ import csv
 import datetime
 from io import StringIO
 import logging
+import os
 from urllib.parse import urlencode, urlparse
 
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
+from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
@@ -293,6 +295,8 @@ class DataProductShareView(View):
 
     # TODO: refactor the general data shaing mechanism to make it more driven by the
     # configuration in settings.py
+    # TODO: consider passing DataProduct instance to submit_ and _share methods
+    #   and refactor data manipulation to _helper methods.
     def submit_to_stream(self, stream_name, target_name, photometry_data, message='From TOMToolkit'):
         hermes_base_url = settings.DATA_SHARING[stream_name]['BASE_URL']
 
@@ -343,12 +347,48 @@ class DataProductShareView(View):
         logger.debug(f'DataProductShareView.submit_to_hermes response.status_code: {submit_response.status_code}')
         logger.debug(f'DataProductShareView.submit_to_hermes response.text: {submit_response.text}')
 
-    def share_with_tom(self, tom_name, target_name, photometry_data):
-        logger.debug(f'DataProductShareView.share_with_tom: {tom_name}')
-        tom_base_url = settings.DATA_SHARING[tom_name]['BASE_URL']
+    def share_with_tom(self, tom_name, product: DataProduct):
+        """Construct and make a POST (create) request to the destination TOM /api/dataproducts/ endpoint.
 
-        logger.debug(f'DataProductShareView.share_with_tom: {tom_name} at {tom_base_url}')
-        pass
+        Theoritically, we should be able to simply serializer the DataProduct instance with the
+        DataProductSerializer (producing native python data types) and JSONRenderer().render() that
+        (producing JSON) and POST that to the destination TOM DRF API endpoint.
+
+        * tom_name is the key in the settings.DATA_SHARING configuration dictionary
+        * product is the DataProduct instance to share
+        """
+        #logger.debug(f'DataProductShareView.share_with_tom: DATA_SHARING key: {tom_name}')
+        try:
+            destination_tom_base_url = settings.DATA_SHARING[tom_name]['BASE_URL']
+            username = settings.DATA_SHARING[tom_name]['USERNAME']
+            password = settings.DATA_SHARING[tom_name]['PASSWORD']
+        except KeyError as err:
+            raise ImproperlyConfigured(f'Please check DATA_SHARING configuration dictiionary for {tom_name}: Key {err} not found.')
+
+        # TODO: query destination TOM for it's target.id for this target
+        targets_url = destination_tom_base_url + 'api/targets/'
+        destination_tom_target_id = 1
+        # TODO: what if this target doesn't exist for the destination TOM?
+
+        data_products_url = destination_tom_base_url + 'api/dataproducts/'
+
+        # TODO: this should be updated when tom_dataproducts is updated to use django.core.storage        
+        dataproduct_filename = os.path.join(settings.MEDIA_ROOT, product.data.name)
+        with open(dataproduct_filename, 'rb') as dataproduct_filep:
+            files = {'file': (product.data.name, dataproduct_filep, 'text/csv')}
+            data = {
+                'target': destination_tom_target_id,
+                'data_product_type': product.data_product_type
+            }
+            headers = {'Media-Type': 'multipart/form-data'}
+            auth= (username, password)
+            logger.debug(f'DataProductShareView.share_with_tom auth: {auth}')
+            response = requests.post(data_products_url, data=data, files=files, headers=headers, auth=auth)
+
+        logger.debug(f'DataProductShareView.share_with_tom response.status_code: {response.status_code}')
+        logger.debug(f'DataProductShareView.share_with_tom response.text: {response.text}')
+
+
 
     def get(self, request, *args, **kwargs):
         """
@@ -369,8 +409,11 @@ class DataProductShareView(View):
 
             # Turn the data into JSON to send to the HERMES /submit endpoint
             # TODO: rename these photometry-specfic methods to reflect that..
-            self.submit_to_stream('hermes', product.target.name, data)
-            self.share_with_tom('tom-demo-dev', product.target.name, data)
+            # TODO: sort out where to share to (perhaps template info or FORM data?)
+
+            #self.submit_to_stream('hermes', product.target.name, data)
+
+            self.share_with_tom('tom-demo-dev', product)
 
         return redirect(reverse(
             'tom_targets:detail',

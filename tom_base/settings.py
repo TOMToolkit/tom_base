@@ -26,6 +26,10 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'testkey')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+DEBUG = False
+
+
+
 
 ALLOWED_HOSTS = ['']
 
@@ -227,8 +231,12 @@ DATA_SHARING = {
     },
     'tom-demo-dev': {
         # configuration for the TOM receiving data from this TOM
-        'BASE_URL': os.getenv('TOM_DEMO_BASE_URL', 'http://tom-demo-dev.lco.gtn/'),
-        'API_TOKEN': os.getenv('TOM_DEMO_API_TOKEN', 'set TOM_DEMO_API_TOKEN value in environment'),
+        #'BASE_URL': os.getenv('TOM_DEMO_BASE_URL', 'http://tom-demo-dev.lco.gtn/'),
+        'BASE_URL': os.getenv('TOM_DEMO_BASE_URL', 'http://127.0.0.1:8000/'), # for testing share with yourself
+        # TODO: explain authentication mechanisms to TOM impolementers
+        #'API_TOKEN': os.getenv('TOM_DEMO_API_TOKEN', 'set TOM_DEMO_API_TOKEN value in environment'),
+        'USERNAME': os.getenv('TOM_DEMO_USERNAME', 'set TOM_DEMO_USERNAME value in environment'),
+        'PASSWORD': os.getenv('TOM_DEMO_PASSWORD', 'set TOM_DEMO_PASSWORD value in environment'),
     }
 }
 
