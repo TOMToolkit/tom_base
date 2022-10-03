@@ -102,7 +102,7 @@ class TestBrokerClass(TestCase):
 
     def test_old_fetch_alerts(self):
         alerts = TestBroker().no_message_fetch_alerts({'name': 'Hoth'})
-        self.assertNotEqual(type(alerts), tuple)
+        self.assertFalse(isinstance(alerts, tuple))
         self.assertEqual(test_alerts[1], list(alerts)[0])
 
     def test_to_generic_alert(self):
