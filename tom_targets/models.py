@@ -430,6 +430,8 @@ class TargetExtra(models.Model):
         Saves TargetExtra model data to the database. In the process, converts the string value of the ``TargetExtra``
         to the appropriate type, and stores it in the corresponding field as well.
         """
+        if self.value is None:
+            self.value = 'None'
         try:
             self.float_value = float(self.value)
         except (TypeError, ValueError, OverflowError):
@@ -438,14 +440,16 @@ class TargetExtra(models.Model):
             self.bool_value = bool(self.value)
         except (TypeError, ValueError, OverflowError):
             self.bool_value = None
-        try:
-            if isinstance(self.value, datetime):
-                self.time_value = self.value
-            else:
-                self.time_value = parse(self.value)
-        except (TypeError, ValueError, OverflowError):
+        if not self.float_value:
+            try:
+                if isinstance(self.value, datetime):
+                    self.time_value = self.value
+                else:
+                    self.time_value = parse(self.value)
+            except (TypeError, ValueError, OverflowError):
+                self.time_value = None
+        else:
             self.time_value = None
-
         super().save(*args, **kwargs)
 
     def typed_value(self, type_val):
