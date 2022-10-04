@@ -510,6 +510,51 @@ class TestTargetUpdate(TestCase):
         self.assertTrue(self.target.targetextra_set.filter(key='redshift').exists())
         self.assertTrue(self.target.aliases.filter(name='testtargetname2').exists())
 
+    def test_invalid_alias_update(self):
+        self.form_data.update({
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+            'aliases-0-name': 'testtarget'
+        })
+        # Try to add alias that is the same as target name (not allowed)
+        response = self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.assertContains(response, 'Alias testtarget has a conflict with the primary name of the target')
+        # Show Alias was not saved
+        self.target.refresh_from_db()
+        self.assertFalse(self.target.aliases.filter(name='testtarget').exists())
+
+    def test_invalid_name_update(self):
+        self.form_data.update({
+            'targetextra_set-TOTAL_FORMS': 0,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+            'aliases-0-name': 'testtargetname2'
+        })
+        # Set alias
+        self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.target.refresh_from_db()
+        self.assertTrue(self.target.aliases.filter(name='testtargetname2').exists())
+        # Change name to same as alias (Not allowed)
+        self.form_data.update({
+            'name': 'testtargetname2',
+        })
+        response = self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.assertContains(response, 'Target name and target aliases must be different')
+        # Show name change was unsuccessful
+        self.target.refresh_from_db()
+        self.assertTrue(self.target.name, 'testtarget')
+
 
 class TestTargetImport(TestCase):
     def setUp(self):
