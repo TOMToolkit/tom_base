@@ -357,19 +357,51 @@ class DataProductShareView(View):
         * tom_name is the key in the settings.DATA_SHARING configuration dictionary
         * product is the DataProduct instance to share
         """
-        #logger.debug(f'DataProductShareView.share_with_tom: DATA_SHARING key: {tom_name}')
         try:
             destination_tom_base_url = settings.DATA_SHARING[tom_name]['BASE_URL']
             username = settings.DATA_SHARING[tom_name]['USERNAME']
             password = settings.DATA_SHARING[tom_name]['PASSWORD']
         except KeyError as err:
             raise ImproperlyConfigured(f'Please check DATA_SHARING configuration dictiionary for {tom_name}: Key {err} not found.')
+        auth= (username, password)
+        target_name = product.target.name
 
-        # TODO: query destination TOM for it's target.id for this target
+        #
+        # Get this target's PK from the destination TOM
+        #
         targets_url = destination_tom_base_url + 'api/targets/'
-        destination_tom_target_id = 1
-        # TODO: what if this target doesn't exist for the destination TOM?
+        target_params = {'name': target_name}
+        response = requests.get(targets_url, auth=auth, params=target_params)
 
+        target_response = response.json()
+        if target_response['count'] == 1:
+            destination_tom_target_id = target_response['results'][0]['id']
+            # TODO: handle target groups correctly
+        elif target_response['count'] == 0:
+            # Target not found in destination tom
+            logger.warning(
+                f'DataProductShareView.share_with_tom Target {target_name} not found on {tom_name}. '
+                f'If target {target_name} does exist on the destination TOM, then this may an '
+                f'authentication problem preventing access to the targets on {tom_name}.'
+            )
+            # TODO: post message to UI
+            return  # NOTE: early exit
+        elif target_response['count'] > 1:
+            # More than one target found; Target name must be amibiguous 
+            msg = (
+                f'Target name must be unique on destination TOM {tom_name}. '
+                f'The following targets share a name or alias with {target_name}:\n'
+            )
+            for target in target_response['results']:
+                aliases = ', '.join([alias['name'] for alias in target['aliases']])  # alias1, alias2, alias, 
+                msg += f'  Target: {target["name"]} Aliases: {aliases}\n'
+            logger.warning(msg)
+            # TODO: post message to UI
+            return  # NOTE: early exit
+
+        #
+        # Now POST the DataProduct to the destination TOM
+        #
         data_products_url = destination_tom_base_url + 'api/dataproducts/'
 
         # TODO: this should be updated when tom_dataproducts is updated to use django.core.storage        
@@ -381,8 +413,6 @@ class DataProductShareView(View):
                 'data_product_type': product.data_product_type
             }
             headers = {'Media-Type': 'multipart/form-data'}
-            auth= (username, password)
-            logger.debug(f'DataProductShareView.share_with_tom auth: {auth}')
             response = requests.post(data_products_url, data=data, files=files, headers=headers, auth=auth)
 
         logger.debug(f'DataProductShareView.share_with_tom response.status_code: {response.status_code}')
