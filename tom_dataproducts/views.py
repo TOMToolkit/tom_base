@@ -362,8 +362,8 @@ class DataProductShareView(View):
             username = settings.DATA_SHARING[tom_name]['USERNAME']
             password = settings.DATA_SHARING[tom_name]['PASSWORD']
         except KeyError as err:
-            raise ImproperlyConfigured(f'Please check DATA_SHARING configuration dictiionary for {tom_name}: Key {err} not found.')
-        auth= (username, password)
+            raise ImproperlyConfigured(f'Check DATA_SHARING configuration for {tom_name}: Key {err} not found.')
+        auth = (username, password)
         target_name = product.target.name
 
         #
@@ -387,13 +387,13 @@ class DataProductShareView(View):
             # TODO: post message to UI
             return  # NOTE: early exit
         elif target_response['count'] > 1:
-            # More than one target found; Target name must be amibiguous 
+            # More than one target found; Target name must be amibiguous
             msg = (
                 f'Target name must be unique on destination TOM {tom_name}. '
                 f'The following targets share a name or alias with {target_name}:\n'
             )
             for target in target_response['results']:
-                aliases = ', '.join([alias['name'] for alias in target['aliases']])  # alias1, alias2, alias, 
+                aliases = ', '.join([alias['name'] for alias in target['aliases']])  # alias1, alias2, alias
                 msg += f'  Target: {target["name"]} Aliases: {aliases}\n'
             logger.warning(msg)
             # TODO: post message to UI
@@ -404,7 +404,7 @@ class DataProductShareView(View):
         #
         data_products_url = destination_tom_base_url + 'api/dataproducts/'
 
-        # TODO: this should be updated when tom_dataproducts is updated to use django.core.storage        
+        # TODO: this should be updated when tom_dataproducts is updated to use django.core.storage
         dataproduct_filename = os.path.join(settings.MEDIA_ROOT, product.data.name)
         with open(dataproduct_filename, 'rb') as dataproduct_filep:
             files = {'file': (product.data.name, dataproduct_filep, 'text/csv')}
@@ -418,8 +418,6 @@ class DataProductShareView(View):
         logger.debug(f'DataProductShareView.share_with_tom response.status_code: {response.status_code}')
         logger.debug(f'DataProductShareView.share_with_tom response.text: {response.text}')
 
-
-
     def get(self, request, *args, **kwargs):
         """
         Method that handles the GET requests for this view.
@@ -432,18 +430,23 @@ class DataProductShareView(View):
 
         logger.debug(f'Sharing data product: {product} of type: {product.data_product_type}')
         if product.data_product_type == 'photometry':
-            # Convert CSV into python dict with csv.DictReader:
-            with open(product.data.path, newline='') as csvfile:
-                photometry_reader = csv.DictReader(csvfile, delimiter=',')
-                data = [row for row in photometry_reader]
+            # TODO: get DATA_SHARING config dict key from UI via kwargs or ???
+            sharing_destination = 'hermes'
+            sharing_destination = 'localhost-tom'
+            if sharing_destination == 'hermes':
+                # Convert CSV into python dict with csv.DictReader:
+                with open(product.data.path, newline='') as csvfile:
+                    photometry_reader = csv.DictReader(csvfile, delimiter=',')
+                    data = [row for row in photometry_reader]
 
-            # Turn the data into JSON to send to the HERMES /submit endpoint
-            # TODO: rename these photometry-specfic methods to reflect that..
-            # TODO: sort out where to share to (perhaps template info or FORM data?)
+                # Turn the data into JSON to send to the HERMES /submit endpoint
+                # TODO: rename these photometry-specfic methods to reflect that..
+                # TODO: sort out where to share to (perhaps template info or FORM data?)
 
-            #self.submit_to_stream('hermes', product.target.name, data)
-
-            self.share_with_tom('tom-demo-dev', product)
+                # TODO: pass product to submit method, open path, and  get data there
+                self.submit_to_stream(sharing_destination, product.target.name, data)
+            else:
+                self.share_with_tom(sharing_destination, product)
 
         return redirect(reverse(
             'tom_targets:detail',
