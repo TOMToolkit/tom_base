@@ -220,22 +220,24 @@ DATA_PROCESSORS = {
     'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
 }
 
+# Configuration for the TOM receiving data from this TOM
 DATA_SHARING = {
     'hermes': {
-        'BASE_URL': os.getenv('HERMES_BASE_URL', 'http://hermes-dev.lco.gtn/'),
+        'BASE_URL': os.getenv('HERMES_BASE_URL', 'http://hermes.lco.global/'),
         'API_TOKEN': os.getenv('HERMES_API_TOKEN', 'set HERMES_API_TOKEN value in environment'),
     },
     'tom-demo-dev': {
-        # configuration for the TOM receiving data from this TOM
-        #'BASE_URL': os.getenv('TOM_DEMO_BASE_URL', 'http://tom-demo-dev.lco.gtn/'),
-        'BASE_URL': os.getenv('TOM_DEMO_BASE_URL', 'http://127.0.0.1:8000/'), # for testing share with yourself
-        # TODO: explain authentication mechanisms to TOM impolementers
-        #'API_TOKEN': os.getenv('TOM_DEMO_API_TOKEN', 'set TOM_DEMO_API_TOKEN value in environment'),
+        'BASE_URL': os.getenv('TOM_DEMO_BASE_URL', 'http://tom-demo-dev.lco.gtn/'),
         'USERNAME': os.getenv('TOM_DEMO_USERNAME', 'set TOM_DEMO_USERNAME value in environment'),
         'PASSWORD': os.getenv('TOM_DEMO_PASSWORD', 'set TOM_DEMO_PASSWORD value in environment'),
+    },
+    'localhost-tom': {
+        # for testing; share with yourself
+        'BASE_URL': os.getenv('LOCALHOST_TOM_BASE_URL', 'http://127.0.0.1:8000/'),
+        'USERNAME': os.getenv('LOCALHOST_TOM_USERNAME', 'set LOCALHOST_TOM_USERNAME value in environment'),
+        'PASSWORD': os.getenv('LOCALHOST_TOM_PASSWORD', 'set LOCALHOST_TOM_PASSWORD value in environment'),
     }
 }
-
 
 TOM_CADENCE_STRATEGIES = [
     'tom_observations.cadences.retry_failed_observations.RetryFailedObservationsStrategy',
