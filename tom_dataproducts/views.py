@@ -367,7 +367,7 @@ class DataProductShareView(View):
         target_name = product.target.name
 
         #
-        # Get this target's PK from the destination TOM
+        # Get this DataProduct's target's PK from the destination TOM
         #
         targets_url = destination_tom_base_url + 'api/targets/'
         target_params = {'name': target_name}
