@@ -8,7 +8,7 @@
     <p>
       Create a new query using:
       {% for broker in installed_brokers %}
-      <a href="{% url 'tom_alerts:create' %}?broker={{ broker }}" title="{{ broker }}" class="btn btn-outline-primary">{{ broker }}</a>
+        <a href="{% url 'tom_alerts:create' %}?broker={{ broker }}" title="{{ broker }}" class="btn btn-outline-primary">{{ broker }}</a>
       {% endfor %}
     </p>
     <table class="table table-striped">

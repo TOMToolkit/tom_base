@@ -29,7 +29,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['']
 
-
 # Application definition
 
 TOM_NAME = 'TOM Toolkit'
@@ -196,11 +195,19 @@ FACILITIES = {
     },
 }
 
+
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
     'tom_observations.facilities.soar.SOARFacility',
 ]
+
+
+#
+# tom_alerts configuration
+#
+LASAIR_TOKEN = os.getenv('LASAIR_TOKEN', None)
+
 
 #
 # tom_dataproducts configuration

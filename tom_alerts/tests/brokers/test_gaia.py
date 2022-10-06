@@ -119,11 +119,11 @@ class TestGaiaBroker(TestCase):
         mock_requests_get.return_value = mock_response
 
         search_params = {'target_name': 'Gaia20bph', 'cone': None, }
-        alerts = GaiaBroker().fetch_alerts(search_params)
+        alerts, _ = GaiaBroker().fetch_alerts(search_params)
         self.assertEqual(1, sum(1 for _ in alerts))
 
         search_params = {'target_name': None, 'cone': '291.61247, 13.36801, 0.002'}
-        alerts = GaiaBroker().fetch_alerts(search_params)
+        alerts, _ = GaiaBroker().fetch_alerts(search_params)
         self.assertEqual(1, sum(1 for _ in alerts))
 
     def test_to_generic_alert(self):

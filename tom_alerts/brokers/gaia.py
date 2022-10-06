@@ -68,6 +68,7 @@ class GaiaBroker(GenericBroker):
 
     def fetch_alerts(self, parameters):
         """Must return an iterator"""
+        broker_feedback = ''
         response = requests.get(f'{BASE_BROKER_URL}/alerts/alertsindex')
         response.raise_for_status()
 
@@ -109,7 +110,7 @@ class GaiaBroker(GenericBroker):
         else:
             filtered_alerts = alert_list
 
-        return iter(filtered_alerts)
+        return iter(filtered_alerts), broker_feedback
 
     def fetch_alert(self, target_name):
 
