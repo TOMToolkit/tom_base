@@ -30,7 +30,13 @@
         {% endif %}
         </a>
       </td>
-      <td><a href="{% url 'tom_dataproducts:share' pk=product.id %}?target_id={{ target.id }}" title="Share" class="btn btn-primary">Publish</a></td>
+      <td>
+        {% if sharing_destinations %}
+          <a href="{% url 'tom_dataproducts:share' pk=product.id %}?target_id={{ target.id }}" title="Share" class="btn btn-primary">Publish</a>
+        {% else %}
+          <p>Not Configured</p>
+        {% endif %}
+      </td>
       <td><a href="{% url 'tom_dataproducts:delete' product.id %}" class="btn btn-danger">Delete</a></td>
     </tr>
   {% endfor %}

@@ -46,9 +46,13 @@
             {% endif %}
           </td>
           <td>
-            <a href="{% url 'tom_dataproducts:share' pk=product.id %}?target_id={{ product.target.id }}"
-               title="Share" class="btn btn-primary">Publish</a></td>
-
+            {% if sharing_destinations %}
+              <a href="{% url 'tom_dataproducts:share' pk=product.id %}?target_id={{ product.target.id }}"
+                 title="Share" class="btn btn-primary">Publish</a>
+            {% else %}
+              <p>Not Configured {{sharing_destinations}}</p>
+            {% endif %}
+          </td>
           {% if product.get_file_extension == '.fz' or product.get_file_extension == '.fits' %}
           <td>
             {% if product.get_preview %}
