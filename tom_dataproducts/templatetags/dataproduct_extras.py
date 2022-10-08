@@ -1,4 +1,6 @@
+import logging
 from urllib.parse import urlencode
+
 
 from django import template
 from django.conf import settings
@@ -20,7 +22,28 @@ from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 register = template.Library()
+
+
+def get_data_sharing_destinations():
+    """
+    Return a list of data sharing destinations from the DATA_SHARING configuration
+    dictionary in settings.py.
+
+    This should be placed into the context of the inclusion tags that offer to share
+    DataProducts. Templates should know that None means that DATA_SHARING has not
+    been configured.
+    """
+    try:
+        sharing_destinations = settings.DATA_SHARING.keys()
+    except Exception as ex:
+        logger.warning(f'{ex.__class__.__name__} while calling DATA_SHARING.keys(): {ex}')
+        sharing_destinations = None
+
+    return sharing_destinations
 
 
 @register.inclusion_tag('tom_dataproducts/partials/dataproduct_list_for_target.html', takes_context=True)
@@ -33,9 +56,11 @@ def dataproduct_list_for_target(context, target):
     else:
         target_products_for_user = get_objects_for_user(
             context['request'].user, 'tom_dataproducts.view_dataproduct', klass=target.dataproduct_set.all())
+
     return {
         'products': target_products_for_user,
-        'target': target
+        'target': target,
+        'sharing_destinations': get_data_sharing_destinations()
     }
 
 
@@ -75,7 +100,11 @@ def dataproduct_list_all(context):
         products = DataProduct.objects.all().order_by('-created')
     else:
         products = get_objects_for_user(context['request'].user, 'tom_dataproducts.view_dataproduct')
-    return {'products': products}
+
+    return {
+        'products': products,
+        'sharing_destinations': get_data_sharing_destinations()
+    }
 
 
 @register.inclusion_tag('tom_dataproducts/partials/upload_dataproduct.html', takes_context=True)
