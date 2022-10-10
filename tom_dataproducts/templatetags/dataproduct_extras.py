@@ -27,6 +27,23 @@ logger.setLevel(logging.DEBUG)
 
 register = template.Library()
 
+def get_data_sharing_destinations():
+    """
+    Return a list of data sharing destinations from the DATA_SHARING configuration
+    dictionary in settings.py.
+
+    This should be placed into the context of the inclusion tags that offer to share
+    DataProducts. Templates should know that None means that DATA_SHARING has not
+    been configured.
+    """
+    try:
+        sharing_destinations = settings.DATA_SHARING.keys()
+    except Exception as ex:
+        logger.warning(f'{ex.__class__.__name__} while calling DATA_SHARING.keys(): {ex}')
+        sharing_destinations = None
+
+    return sharing_destinations
+
 
 def get_data_sharing_destinations():
     """
