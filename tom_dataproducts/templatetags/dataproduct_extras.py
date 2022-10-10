@@ -132,7 +132,22 @@ def recent_photometry(target, limit=1):
     Displays a table of the most recent photometric points for a target.
     """
     photometry = ReducedDatum.objects.filter(data_type='photometry', target=target).order_by('-timestamp')[:limit]
-    return {'data': [{'timestamp': rd.timestamp, 'magnitude': rd.value['magnitude']} for rd in photometry]}
+
+    # Possibilities for reduced_datums from ZTF/MARS:
+    # reduced_datum.value: {'error': 0.0929680392146111, 'filter': 'r', 'magnitude': 18.2364940643311}
+    # reduced_datum.value: {'limit': 20.1023998260498, 'filter': 'g'}
+
+    try:
+        # TODO: handle case where the value dict has no 'magnitude' key
+        # TODO: ask an Astronomyer about magnitude vs. limit ZTF alerts
+        context = {'data': [{'timestamp': rd.timestamp, 'magnitude': rd.value['magnitude']} for rd in photometry]}
+    except KeyError as err:
+        logger.error(f'KeyError: {err} not found in one or more ReducedDatum instances:')
+        for reduced_datum in photometry:
+            logger.error(f'reduced_datum: {reduced_datum}')
+            logger.error(f'reduced_datum.value: {reduced_datum.value}')
+        context = {}
+    return context
 
 
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html', takes_context=True)
