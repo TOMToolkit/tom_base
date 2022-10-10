@@ -22,9 +22,10 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 from django_filters.views import FilterView
-from django_tables2 import Column, SingleTableMixin, Table
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
+from django_tables2 import Table
+from django_tables2.views import SingleTableMixin
 
 from bhtom2.external_service.data_source_information import PRETTY_SURVEY_NAME, get_pretty_survey_name
 from bhtom_base.bhtom_common.hints import add_hint
