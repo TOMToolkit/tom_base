@@ -29,7 +29,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['']
 
-
 # Application definition
 
 TOM_NAME = 'TOM Toolkit'
@@ -195,6 +194,11 @@ FACILITIES = {
         'api_key': os.getenv('LCO_API_KEY', ''),
     },
 }
+
+#
+# tom_alerts configuration
+#
+LASAIR_TOKEN = os.getenv('LASAIR_TOKEN', None)
 
 # Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
 # longer be valid, and may cause issues unless the offending records are modified.

@@ -50,7 +50,13 @@ class TestBroker(GenericBroker):
     alert_submission_form = TestUpstreamSubmissionForm
 
     def fetch_alerts(self, parameters):
-        """ All brokers must implement this method. It must return a list of alerts.
+        """ All brokers must implement this method. It must return a list of alerts and may include broker feedback.
+        """
+        # Here we simply return a list of `GenericAlert`s that match the name passed in via `parameters`.
+        return iter([alert for alert in test_alerts if alert['name'] == parameters['name']]), "test message"
+
+    def no_message_fetch_alerts(self, parameters):
+        """ Older brokers might implement this version of the fetch_alerts method. It returns a list of alerts.
         """
         # Here we simply return a list of `GenericAlert`s that match the name passed in via `parameters`.
         return iter([alert for alert in test_alerts if alert['name'] == parameters['name']])
@@ -91,7 +97,12 @@ class TestBrokerClass(TestCase):
             get_service_class('MARS')
 
     def test_fetch_alerts(self):
-        alerts = TestBroker().fetch_alerts({'name': 'Hoth'})
+        alerts, _ = TestBroker().fetch_alerts({'name': 'Hoth'})
+        self.assertEqual(test_alerts[1], list(alerts)[0])
+
+    def test_old_fetch_alerts(self):
+        alerts = TestBroker().no_message_fetch_alerts({'name': 'Hoth'})
+        self.assertFalse(isinstance(alerts, tuple))
         self.assertEqual(test_alerts[1], list(alerts)[0])
 
     def test_to_generic_alert(self):

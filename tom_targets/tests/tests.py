@@ -318,6 +318,21 @@ class TestTargetCreate(TestCase):
         target.save(extras={'foo': 5})
         self.assertTrue(TargetExtra.objects.filter(target=target, key='foo', value='5').exists())
 
+    def test_none_extra(self):
+        target = SiderealTargetFactory.create()
+        target.save(extras={'foo': None})
+        self.assertTrue(TargetExtra.objects.filter(target=target, key='foo').exists())
+
+    def test_datetime_warning(self):
+        '''Tests for an int that might come in and get mistakenly parsed for a datetime
+        If the value can be successfully cast as a float it is not useful to us as a datetime
+        Casting a datetime from an int will indicate that year on an arbitrary day. '''
+        target = SiderealTargetFactory.create()
+        target.save(extras={'foo': '1984'})
+        te = target.targetextra_set.get(key='foo')
+        self.assertEquals(te.typed_value('number'), 1984.0)
+        self.assertIsNone(te.typed_value('datetime'))
+
     def test_non_sidereal_required_fields(self):
         base_data = {
             'name': 'nonsidereal_target',
@@ -494,6 +509,51 @@ class TestTargetUpdate(TestCase):
         self.target.refresh_from_db()
         self.assertTrue(self.target.targetextra_set.filter(key='redshift').exists())
         self.assertTrue(self.target.aliases.filter(name='testtargetname2').exists())
+
+    def test_invalid_alias_update(self):
+        self.form_data.update({
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+            'aliases-0-name': 'testtarget'
+        })
+        # Try to add alias that is the same as target name (not allowed)
+        response = self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.assertContains(response, 'Alias testtarget has a conflict with the primary name of the target')
+        # Show Alias was not saved
+        self.target.refresh_from_db()
+        self.assertFalse(self.target.aliases.filter(name='testtarget').exists())
+
+    def test_invalid_name_update(self):
+        self.form_data.update({
+            'targetextra_set-TOTAL_FORMS': 0,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+            'aliases-0-name': 'testtargetname2'
+        })
+        # Set alias
+        self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.target.refresh_from_db()
+        self.assertTrue(self.target.aliases.filter(name='testtargetname2').exists())
+        # Change name to same as alias (Not allowed)
+        self.form_data.update({
+            'name': 'testtargetname2',
+        })
+        response = self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.assertContains(response, 'Target name and target aliases must be different')
+        # Show name change was unsuccessful
+        self.target.refresh_from_db()
+        self.assertTrue(self.target.name, 'testtarget')
 
 
 class TestTargetImport(TestCase):

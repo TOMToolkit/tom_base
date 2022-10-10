@@ -37,15 +37,16 @@ class TestLasairBrokerForm(TestCase):
 
     def test_clean(self):
         form_parameters = {'query_name': 'Test Lasair', 'broker': 'Lasair', 'name': 'ZTF18abbkloa',
-                           'cone': '', 'sqlquery': ''}
+                           'cone_ra': '', 'cone_dec': '', 'cone_radius': '', 'sqlquery': ''}
 
         with self.subTest():
             form = LasairBrokerForm(form_parameters)
             self.assertFalse(form.is_valid())
-            self.assertIn('One of either Object Cone Search or Freeform SQL Query must be populated.',
+            self.assertIn('Either RA/Dec or Freeform SQL Query must be populated.',
                           form.non_field_errors())
 
-        test_parameters_list = [{'cone': '1, 2', 'sqlquery': ''}, {'cone': '', 'sqlquery': 'select * from objects;'}]
+        test_parameters_list = [{'cone_ra': '1', 'cone_dec': '2', 'cone_radius': '10', 'sqlquery': ''},
+                                {'cone': '', 'sqlquery': 'gmag < 12.0'}]
         for test_params in test_parameters_list:
             with self.subTest():
                 form_parameters.update(test_params)

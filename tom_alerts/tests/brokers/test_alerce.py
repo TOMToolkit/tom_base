@@ -7,7 +7,9 @@ from django.test import tag, TestCase
 from faker import Faker
 
 from tom_alerts.brokers.alerce import ALeRCEBroker, ALeRCEQueryForm
+from tom_dataproducts.models import ReducedDatum
 from tom_targets.models import Target
+from tom_targets.tests.factories import SiderealTargetFactory
 
 
 alerce_classifiers_response = [
@@ -290,7 +292,7 @@ class TestALeRCEBrokerClass(TestCase):
             mock_requests_get.side_effect = [first_mock_response, second_mock_response, third_mock_response]
             response = self.broker.fetch_alerts({'max_pages': 5})
             alerts = []
-            for alert in response:
+            for alert in response[0]:
                 alerts.append(alert)
             self.assertEqual(25, len(alerts))
             self.assertEqual(alerts[0], first_mock_response_content['items'][0])
@@ -299,7 +301,7 @@ class TestALeRCEBrokerClass(TestCase):
             mock_requests_get.side_effect = [first_mock_response]
             response = self.broker.fetch_alerts({'max_pages': 1})
             alerts = []
-            for alert in response:
+            for alert in response[0]:
                 alerts.append(alert)
             self.assertEqual(20, len(alerts))
 
@@ -325,6 +327,55 @@ class TestALeRCEBrokerClass(TestCase):
         self.assertEqual(mock_alert['oid'], t.name)
         self.assertEqual(mock_alert['meanra'], t.ra)
         self.assertEqual(mock_alert['meandec'], t.dec)
+
+    @patch('tom_alerts.brokers.alerce.ALeRCEBroker.fetch_lightcurve')
+    def test_process_reduced_datum(self, mock_fetch_lightcurve):
+        test_data = {
+            "detections": [{
+                "mjd": 59690.27546299994,
+                "candid": "1936275461615015015",
+                "fid": 1,
+                "pid": 1936275461615,
+                "diffmaglim": 20.50796,
+                "isdiffpos": 1,
+                "nid": 1936,
+                "distnr": 0.1533999,
+                "magpsf": 20.146738,
+                "magpsf_corr": 18.00878,
+                "magpsf_corr_ext": None,
+                "magap": 20.112,
+                "magap_corr": None,
+                "sigmapsf": 0.18631585,
+                "sigmapsf_corr": 0.015807027,
+                "sigmapsf_corr_ext": 0.026005577,
+                "sigmagap": 0.2664,
+                "sigmagap_corr": None,
+                "ra": 181.9453484,
+                "dec": 4.0944815,
+                "rb": 0.93142855,
+                "rbversion": "t17_f5_c3",
+                "drb": 0.9999496,
+                "magapbig": 20.1173,
+                "sigmagapbig": 0.3381,
+                "rfid": 472120116,
+                "has_stamp": True,
+                "corrected": True,
+                "dubious": False,
+                "candid_alert": None,
+                "step_id_corr": "correction_1.0.6",
+                "phase": 0,
+                "parent_candid": None
+            }],
+            "non_detections": [{
+                "mjd": 59699.25937499991,
+                "fid": 2,
+                "diffmaglim": 20.2106
+            }]
+        }
+        mock_fetch_lightcurve.return_value = test_data
+        target = SiderealTargetFactory()
+        ALeRCEBroker().process_reduced_data(target)
+        self.assertEqual(ReducedDatum.objects.count(), 2)
 
     def test_to_generic_alert(self):
         """Test to_generic_alert broker method."""

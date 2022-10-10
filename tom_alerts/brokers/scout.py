@@ -48,13 +48,14 @@ class ScoutBroker(GenericBroker):
         return {k.replace('_', '-'): v for k, v in parameters.items() if v}
 
     def fetch_alerts(self, parameters):
+        broker_feedback = ''
         args = urlencode(self.clean_parameters(parameters))
         url = '{0}?{1}'.format(SCOUT_URL, args)
         response = requests.get(url)
         response.raise_for_status()
         parsed = response.json()['data']
         parsed.sort(key=lambda x: parse(x['lastRun']), reverse=True)
-        return iter(parsed)
+        return iter(parsed), broker_feedback
 
     def fetch_alert(self, id):
         url = f'{SCOUT_URL}/{id}/?format=json'

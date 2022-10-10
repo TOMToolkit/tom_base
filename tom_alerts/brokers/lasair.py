@@ -1,48 +1,65 @@
 import requests
+from urllib.parse import urlencode
 
-from crispy_forms.layout import Fieldset, HTML, Layout
+from crispy_forms.layout import HTML, Layout, Div, Fieldset, Row, Column
 from django import forms
+from django.conf import settings
 
 from tom_alerts.alerts import GenericQueryForm, GenericAlert, GenericBroker
 from tom_targets.models import Target
 
-LASAIR_URL = 'https://lasair.roe.ac.uk'
+LASAIR_URL = 'https://lasair-ztf.lsst.ac.uk'
 
 
 class LasairBrokerForm(GenericQueryForm):
-    cone = forms.CharField(required=False, label='Object Cone Search', help_text='Object RA and Dec')
-    sqlquery = forms.CharField(required=False, label='Freeform SQL query', help_text='SQL query')
+    cone_ra = forms.CharField(required=False, label='RA', help_text='Object RA (Decimal Degrees)',
+                              widget=forms.TextInput(attrs={'placeholder': '1.2345'}))
+    cone_dec = forms.CharField(required=False, label='Dec', help_text='Object Dec (Decimal Degrees)',
+                               widget=forms.TextInput(attrs={'placeholder': '1.2345'}))
+    cone_radius = forms.CharField(required=False, label='Radius', help_text='Search Radius (Arcsec)', initial='10',
+                                  widget=forms.TextInput(attrs={'placeholder': '10'}))
+    sqlquery = forms.CharField(required=False, label='SQL Query Conditions',
+                               help_text='The "WHERE" criteria to restrict which objects are returned. '
+                                         '(i.e. gmag < 12.0)')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper.layout = Layout(
             HTML('''
-                <p>
-                Please see the <a href="https://lasair.roe.ac.uk/objlist/">Lasair website</a> for more detailed
-                instructions on querying the broker.
-            '''),
+                    <p>
+                    Please see the <a href="https://lasair-ztf.lsst.ac.uk/api">Lasair website</a> for more detailed
+                    instructions on querying the broker.
+                '''),
             self.common_layout,
             Fieldset(
-                None,
-                'cone',
-                'sqlquery'
-            ),
+                'Cone Search',
+                Row(
+                    Column('cone_ra', css_class='form-group col-md-4 mb-0'),
+                    Column('cone_dec', css_class='form-group col-md-4 mb-0'),
+                    Column('cone_radius', css_class='form-group col-md-4 mb-0'),
+                    css_class='form-row'
+                ),
+                HTML("""<br>
+                    <h4>SQL Query Search</h4>
+                    """),
+
+                Div('sqlquery')
+            )
         )
 
     def clean(self):
         cleaned_data = super().clean()
 
         # Ensure that either cone search or sqlquery are populated
-        if not (cleaned_data['cone'] or cleaned_data['sqlquery']):
-            raise forms.ValidationError('One of either Object Cone Search or Freeform SQL Query must be populated.')
+        if not ((cleaned_data['cone_ra'] and cleaned_data['cone_dec']) or cleaned_data['sqlquery']):
+            raise forms.ValidationError('Either RA/Dec or Freeform SQL Query must be populated.')
 
         return cleaned_data
 
 
-def get_lasair_object(objectId):
-    url = LASAIR_URL + '/object/' + objectId + '/json/'
-    response = requests.get(url)
-    obj = response.json()
+def get_lasair_object(obj):
+    """Parse lasair object table"""
+    objectid = obj['objectId']
     jdmax = obj['candidates'][0]['mjd']
     ra = obj['objectData']['ramean']
     dec = obj['objectData']['decmean']
@@ -50,7 +67,7 @@ def get_lasair_object(objectId):
     glat = obj['objectData']['glatmean']
     magpsf = obj['candidates'][0]['magpsf']
     return {
-        'alert_id': objectId,
+        'alert_id': objectid,
         'timestamp': jdmax,
         'ra': ra,
         'dec': dec,
@@ -63,38 +80,84 @@ def get_lasair_object(objectId):
 class LasairBroker(GenericBroker):
     """
     The ``LasairBroker`` is the interface to the Lasair alert broker. For information regarding the query format for
-    Lasair, please see https://lasair.roe.ac.uk/objlist/.
+    Lasair, please see https://lasair-ztf.lsst.ac.uk/.
     """
 
     name = 'Lasair'
     form = LasairBrokerForm
 
     def fetch_alerts(self, parameters):
-        print(parameters)
-        if 'cone' in parameters and len(parameters['cone'].strip()) > 0:
-            response = requests.post(
-                LASAIR_URL + '/conesearch/',
-                data={'cone': parameters['cone'], 'json': 'on'}
-            )
-            response.raise_for_status()
-            print(response.content)
-            cone_result = response.json()
-            alerts = []
-            for objectId in cone_result['hitlist']:
-                alerts.append(get_lasair_object(objectId))
-            return iter(alerts)
+        token = settings.LASAIR_TOKEN
+        alerts = []
+        broker_feedback = ''
+        object_ids = ''
 
-        # note: the sql SELECT must include objectId
-        if 'sqlquery' in parameters and len(parameters['sqlquery'].strip()) > 0:
-            response = requests.post(
-                LASAIR_URL + '/objlist/',
-                data={'sqlquery': parameters['sqlquery'], 'json': 'on', 'page': ''}
+        # Check for Cone Search
+        if 'cone_ra' in parameters and len(parameters['cone_ra'].strip()) > 0 and\
+                'cone_dec' in parameters and len(parameters['cone_dec'].strip()) > 0:
+
+            cone_query = {'ra': parameters['cone_ra'].strip(),
+                          'dec': parameters['cone_dec'].strip(),
+                          'radius': parameters['cone_radius'].strip(),  # defaults to 10"
+                          'requestType': 'all'  # Return all objects within radius
+                          }
+            parsed_cone_query = urlencode(cone_query)
+
+            # Query LASAIR Cone Search API
+            cone_response = requests.get(
+                LASAIR_URL + '/api/cone/?' + parsed_cone_query + f'&token={token}&format=json'
             )
-            records = response.json()
-            alerts = []
-            for record in records:
-                alerts.append(get_lasair_object(record['objectId']))
-            return iter(alerts)
+            search_results = cone_response.json()
+            # Successful Search ~ [{'object': 'ZTF19abuaekk', 'separation': 205.06135003141878},...]
+            # Unsuccessful Search ~ {'error': 'No object found ...'}
+            try:
+                # Provide comma separated string of Object IDs matching search criteria
+                object_ids = ','.join([result['object'] for result in search_results])
+            except TypeError:
+                for key in search_results:
+                    broker_feedback += f'{key}:{search_results[key]}'
+
+        # Check for SQL Condition Query
+        elif 'sqlquery' in parameters and len(parameters['sqlquery'].strip()) > 0:
+            sql_query = {'selected': 'objectId',  # The only parameter we need returned is the objectId
+                         'tables': 'objects',  # The only table we need to search is the objects table
+                         'conditions': parameters['sqlquery'].strip(),
+                         'limit': '1000'  # limit number of returned objects to 1000
+                         }
+            parsed_sql_query = urlencode(sql_query)
+
+            # Query LASAIR SQLQuery API
+            query_response = requests.get(
+                LASAIR_URL + '/api/query/?' + parsed_sql_query + f'&token={token}&format=json'
+            )
+
+            search_results = query_response.json()
+            # Successful Search ~ [{'objectId': 'ZTF18aagzzzz'},...]
+            # Unsuccessful Search ~ []
+            try:
+                # Provide comma separated string of Object IDs matching search criteria
+                object_ids = ','.join([result['objectId'] for result in search_results])
+            except TypeError:
+                for key in search_results:
+                    broker_feedback += f'{key}:{search_results[key]}'
+
+            # Supply feedback for empty results
+            if not object_ids and not broker_feedback:
+                broker_feedback += f"No objects found with conditions: {sql_query['conditions']}"
+        else:
+            return iter(alerts), broker_feedback
+
+        if object_ids:
+            # Query LASAIR object API
+            obj_response = requests.get(
+                LASAIR_URL + '/api/objects/' + f'?objectIds={object_ids}&token={token}&format=json'
+            )
+            obj_results = obj_response.json()
+            # Successful Search ~ [{'objectId': 'ZTF19abuaekk', 'objectData': {...}},...]
+
+            for obj in obj_results:
+                alerts.append(get_lasair_object(obj))
+        return iter(alerts), broker_feedback
 
     def fetch_alert(self, alert_id):
         url = LASAIR_URL + '/object/' + alert_id + '/json/'
