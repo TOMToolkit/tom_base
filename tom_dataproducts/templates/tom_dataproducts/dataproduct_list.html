@@ -27,7 +27,7 @@
       <div class="form-row align-items-center">
         <div class="col-auto my-1">
           <select class="custom-select mr-sm-2" id="inlineFormCustomSelect">
-            <option selected>Choose...</option>
+            <option selected>Destination...</option>
             <option value="1">HERMES</option>
             <option value="2">tom-demo-dev</option>
             <option value="3">localhost</option>
@@ -48,7 +48,6 @@
           <th>Observation</th>
           <th>Groups</th>
           <th>Type</th>
-          <th>Share</th>
           <th>Thumbnail</th>
         </tr>
       </thead>
@@ -71,14 +70,6 @@
           <td>
             {% if product.data_product_type %}
               {{ product.get_type_display }}
-            {% endif %}
-          </td>
-          <td>
-            {% if sharing_destinations %}
-              <a href="{% url 'tom_dataproducts:share' pk=product.id %}?target_id={{ product.target.id }}"
-                 title="Share" class="btn btn-primary">Publish</a>
-            {% else %}
-              <p>Not Configured {{sharing_destinations}}</p>
             {% endif %}
           </td>
           {% if product.get_file_extension == '.fz' or product.get_file_extension == '.fits' %}
