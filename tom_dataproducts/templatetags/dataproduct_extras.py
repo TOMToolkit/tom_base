@@ -137,16 +137,22 @@ def recent_photometry(target, limit=1):
     # reduced_datum.value: {'error': 0.0929680392146111, 'filter': 'r', 'magnitude': 18.2364940643311}
     # reduced_datum.value: {'limit': 20.1023998260498, 'filter': 'g'}
 
-    try:
-        # TODO: handle case where the value dict has no 'magnitude' key
-        # TODO: ask an Astronomyer about magnitude vs. limit ZTF alerts
-        context = {'data': [{'timestamp': rd.timestamp, 'magnitude': rd.value['magnitude']} for rd in photometry]}
-    except KeyError as err:
-        logger.error(f'KeyError: {err} not found in one or more ReducedDatum instances:')
-        for reduced_datum in photometry:
-            logger.error(f'reduced_datum: {reduced_datum}')
-            logger.error(f'reduced_datum.value: {reduced_datum.value}')
-        context = {}
+    # for limit magnitudes, set the value of the limit key to True and
+    # the value of the magnitude key to the limit so the template and
+    # treat magnitudes as such and prepend a '>' to the limit magnitudes
+    # see recent_photometry.html
+    data = []
+    for reduced_datum in photometry:
+        rd_data = {'timestamp': reduced_datum.timestamp}
+        if 'limit' in reduced_datum.value.keys():
+            rd_data['magnitude'] = reduced_datum.value['limit']
+            rd_data['limit'] = True
+        else:
+            rd_data['magnitude'] = reduced_datum.value['magnitude']
+            rd_data['limit'] = False
+        data.append(rd_data)
+
+    context = {'data': data}
     return context
 
 
