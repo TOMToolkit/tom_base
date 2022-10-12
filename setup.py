@@ -41,7 +41,7 @@ setup(
         'django-filter>=21,<23',
         'django-gravatar2~=1.4',
         'django-guardian~=2.3',
-        'fits2image~=0.4',
+        'fits2image>=0.4.2',
         'Markdown~=3.4',  # django-rest-framework doc headers require this to support Markdown
         'numpy~=1.20',
         'pillow~=9.2',
@@ -51,7 +51,7 @@ setup(
         'specutils~=1.8',
     ],
     extras_require={
-        'test': ['factory_boy==3.2.1'],
+        'test': ['factory_boy~=3.2.1'],
         'docs': [
             'recommonmark~=0.7',
             'sphinx>=4,<6',
