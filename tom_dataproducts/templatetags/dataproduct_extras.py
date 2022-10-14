@@ -16,7 +16,7 @@ from io import BytesIO
 from PIL import Image, ImageDraw
 import base64
 
-from tom_dataproducts.forms import DataProductUploadForm
+from tom_dataproducts.forms import DataProductUploadForm, DataProductShareForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_observations.models import ObservationRecord
@@ -57,10 +57,14 @@ def dataproduct_list_for_target(context, target):
         target_products_for_user = get_objects_for_user(
             context['request'].user, 'tom_dataproducts.view_dataproduct', klass=target.dataproduct_set.all())
 
+    initial = {}
+    form = DataProductShareForm(initial=initial)
+
     return {
         'products': target_products_for_user,
         'target': target,
-        'sharing_destinations': get_data_sharing_destinations()
+        'sharing_destinations': get_data_sharing_destinations(),
+        'data_product_share_form': form
     }
 
 

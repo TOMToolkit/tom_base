@@ -7,6 +7,11 @@ from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
 
+DESTINATION_OPTIONS = (('hermes', 'Hermes'),
+                       ('tom-demo-dev', '2nd best TOM'),
+                       ('local_host', 'Best TOM (My TOM)'))
+
+
 class AddProductToGroupForm(forms.Form):
     products = forms.ModelMultipleChoiceField(
         DataProduct.objects.all(),
@@ -46,3 +51,9 @@ class DataProductUploadForm(forms.Form):
             self.fields['groups'] = forms.ModelMultipleChoiceField(Group.objects.none(),
                                                                    required=False,
                                                                    widget=forms.CheckboxSelectMultiple)
+
+
+class DataProductShareForm(forms.Form):
+    share_destination = forms.ChoiceField(required=True, choices=DESTINATION_OPTIONS)
+    share_title = forms.CharField(required=False)
+    share_message = forms.CharField(required=False)

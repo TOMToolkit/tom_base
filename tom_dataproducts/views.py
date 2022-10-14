@@ -293,7 +293,7 @@ class DataProductShareView(View):
     ``TargetDetailView``.
     """
 
-    # TODO: refactor the general data shaing mechanism to make it more driven by the
+    # TODO: refactor the general data sharing mechanism to make it more driven by the
     # configuration in settings.py
     # TODO: consider passing DataProduct instance to submit_ and _share methods
     #   and refactor data manipulation to _helper methods.
@@ -341,11 +341,11 @@ class DataProductShareView(View):
             },
             'message_text': f'Test alert from TOM Toolkit at {datetime.datetime.now()}',
         }
-        logger.debug(f'DataProductShareView.submit_to_hermes() alert: {alert}')
+        # logger.debug(f'DataProductShareView.submit_to_hermes() alert: {alert}')
 
         submit_response = requests.post(url=submit_url, json=alert, headers=headers)
-        logger.debug(f'DataProductShareView.submit_to_hermes response.status_code: {submit_response.status_code}')
-        logger.debug(f'DataProductShareView.submit_to_hermes response.text: {submit_response.text}')
+        # logger.debug(f'DataProductShareView.submit_to_hermes response.status_code: {submit_response.status_code}')
+        # logger.debug(f'DataProductShareView.submit_to_hermes response.text: {submit_response.text}')
 
     def share_with_tom(self, tom_name, product: DataProduct):
         """Construct and make a POST (create) request to the destination TOM /api/dataproducts/ endpoint.
@@ -432,7 +432,7 @@ class DataProductShareView(View):
         if product.data_product_type == 'photometry':
             # TODO: get DATA_SHARING config dict key from UI via kwargs or ???
             sharing_destination = 'hermes'
-            sharing_destination = 'localhost-tom'
+            # sharing_destination = 'localhost-tom'
             if sharing_destination == 'hermes':
                 # Convert CSV into python dict with csv.DictReader:
                 with open(product.data.path, newline='') as csvfile:
@@ -440,7 +440,7 @@ class DataProductShareView(View):
                     data = [row for row in photometry_reader]
 
                 # Turn the data into JSON to send to the HERMES /submit endpoint
-                # TODO: rename these photometry-specfic methods to reflect that..
+                # TODO: rename these photometry-specific methods to reflect that..
                 # TODO: sort out where to share to (perhaps template info or FORM data?)
 
                 # TODO: pass product to submit method, open path, and  get data there

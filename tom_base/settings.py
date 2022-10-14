@@ -230,7 +230,7 @@ DATA_PROCESSORS = {
 # Configuration for the TOM receiving data from this TOM
 DATA_SHARING = {
     'hermes': {
-        'BASE_URL': os.getenv('HERMES_BASE_URL', 'http://hermes.lco.global/'),
+        'BASE_URL': os.getenv('HERMES_BASE_URL', 'https://hermes.lco.global/'),
         'API_TOKEN': os.getenv('HERMES_API_TOKEN', 'set HERMES_API_TOKEN value in environment'),
     },
     'tom-demo-dev': {
