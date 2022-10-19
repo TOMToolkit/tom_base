@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth.models import Group
 from django.conf import settings
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import HTML, Layout, Div, Fieldset, Row, Column
 
 from tom_dataproducts.models import DataProductGroup, DataProduct
 from tom_observations.models import ObservationRecord
@@ -54,6 +56,14 @@ class DataProductUploadForm(forms.Form):
 
 
 class DataProductShareForm(forms.Form):
-    share_destination = forms.ChoiceField(required=True, choices=DESTINATION_OPTIONS)
-    share_title = forms.CharField(required=False)
-    share_message = forms.CharField(required=False)
+    share_destination = forms.ChoiceField(required=True, choices=DESTINATION_OPTIONS, label="Destination")
+    share_title = forms.CharField(required=False, label="Title")
+    share_message = forms.CharField(required=False, label="Message", widget=forms.Textarea())
+    share_authors = forms.CharField(required=False, widget=forms.HiddenInput())
+    target = forms.ModelChoiceField(
+        Target.objects.all(),
+        widget=forms.HiddenInput(),
+        required=False)
+    submitter = forms.CharField(
+        widget=forms.HiddenInput()
+    )

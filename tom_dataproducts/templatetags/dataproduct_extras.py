@@ -57,7 +57,9 @@ def dataproduct_list_for_target(context, target):
         target_products_for_user = get_objects_for_user(
             context['request'].user, 'tom_dataproducts.view_dataproduct', klass=target.dataproduct_set.all())
 
-    initial = {}
+    initial = {'submitter': context['request'].user,
+               'target': target,
+               'share_title': f"Updated data for {target.name}."}
     form = DataProductShareForm(initial=initial)
 
     return {

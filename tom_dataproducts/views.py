@@ -29,7 +29,7 @@ from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
 from tom_dataproducts.exceptions import InvalidFileFormatException
-from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
+from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm, DataProductShareForm
 from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
 from tom_observations.models import ObservationRecord
@@ -286,13 +286,38 @@ class DataProductFeatureView(View):
         )
 
 
-class DataProductShareView(View):
+class DataProductShareView(FormView):
     # TODO: update class docstring
     """
     View that handles the featuring of ``DataProduct``s. A featured ``DataProduct`` is displayed on the
     ``TargetDetailView``.
     """
 
+    form_class = DataProductShareForm
+
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+        return form
+
+    def form_valid(self, form):
+        """
+        Runs after ``DataProductUploadForm`` is validated. Saves each ``DataProduct`` and calls ``run_data_processor``
+        on each saved file. Redirects to the previous page.
+        """
+
+        print(form.cleaned_data)
+        return redirect('/')
+
+    def form_invalid(self, form):
+        """
+        Adds errors to Django messaging framework in the case of an invalid form and redirects to the previous page.
+        """
+        # TODO: Format error messages in a more human-readable way
+        messages.error(self.request, 'There was a problem sharing your Data: {}'.format(form.errors.as_json()))
+        return redirect(form.cleaned_data.get('referrer', '/'))
+
+
+class DataProductShareViewOld(View):
     # TODO: refactor the general data sharing mechanism to make it more driven by the
     # configuration in settings.py
     # TODO: consider passing DataProduct instance to submit_ and _share methods

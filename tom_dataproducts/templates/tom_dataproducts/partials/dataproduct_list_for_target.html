@@ -39,16 +39,29 @@
       <td><a href="{% url 'tom_dataproducts:delete' product.id %}" class="btn btn-danger">Delete</a></td>
     </tr>
     <tr id="share-{{forloop.counter}}" class="collapse">
-      <td>
-      <form method="POST" action="{% url 'tom_dataproducts:share' pk=product.id %}?target_id={{ target.id }}" enctype="multipart/form-data">
-        {% csrf_token %}
-        {% bootstrap_form data_product_share_form %}
-        {% buttons %}
-        <input type="submit" class="btn btn-primary" value="Publish" name="share_dataproduct_form">
-        {% endbuttons %}
-      </form>
+      <td colspan=100%>
+        <form method="POST" action="{% url 'tom_dataproducts:share' pk=product.id %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-sm-4">
+              {% bootstrap_field data_product_share_form.share_destination %}
+            </div>
+            <div class="col-sm-8">
+              {% bootstrap_field data_product_share_form.share_title %}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-10">
+              {% bootstrap_field data_product_share_form.share_message %}
+            </div>
+            <div class="col-sm-2">
+              {% buttons %}
+                <input type="submit" class="btn btn-primary" value="Submit" name="share_dataproduct_form" style="position:absolute; bottom:0">
+              {% endbuttons %}
+            </div>
+          </div>
+        </form>
       </td>
-      <td><a href="{% url 'tom_dataproducts:share' pk=product.id %}?target_id={{ target.id }}" title="Share" class="btn btn-primary">Submit</a> </td>
     </tr>
   {% endfor %}
 </table>
