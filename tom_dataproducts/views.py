@@ -361,9 +361,16 @@ class DataProductShareView(FormView):
             'message_text': message_info['share_message'],
         }
 
-        submit_response = requests.post(url=submit_url, json=alert, headers=headers)
+        requests.post(url=submit_url, json=alert, headers=headers)
 
     def share_with_tom(self, destination, product):
+        """
+        When sharing a DataProduct with another TOM we likely want to share the data product itself and let the other
+        TOM process it rather than share the Reduced Datums
+        :param destination:
+        :param product:
+        :return:
+        """
         print(destination, product)
 
 
@@ -418,7 +425,7 @@ class DataProductShareViewOld(View):
         }
         # logger.debug(f'DataProductShareView.submit_to_hermes() alert: {alert}')
 
-        submit_response = requests.post(url=submit_url, json=alert, headers=headers)
+        requests.post(url=submit_url, json=alert, headers=headers)
         # logger.debug(f'DataProductShareView.submit_to_hermes response.status_code: {submit_response.status_code}')
         # logger.debug(f'DataProductShareView.submit_to_hermes response.text: {submit_response.text}')
 
