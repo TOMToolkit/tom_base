@@ -296,17 +296,9 @@ class DataProductShareView(FormView):
     form_class = DataProductShareForm
 
     def get_form(self, *args, **kwargs):
+        # TODO: Add permissions
         form = super().get_form(*args, **kwargs)
         return form
-
-    def form_valid(self, form):
-        """
-        Runs after ``DataProductUploadForm`` is validated. Saves each ``DataProduct`` and calls ``run_data_processor``
-        on each saved file. Redirects to the previous page.
-        """
-
-        print(form.cleaned_data)
-        return redirect('/')
 
     def form_invalid(self, form):
         """
@@ -315,6 +307,64 @@ class DataProductShareView(FormView):
         # TODO: Format error messages in a more human-readable way
         messages.error(self.request, 'There was a problem sharing your Data: {}'.format(form.errors.as_json()))
         return redirect(form.cleaned_data.get('referrer', '/'))
+
+    def post(self, request, *args, **kwargs):
+        """
+        Method that handles thePOST requests for this view.
+        """
+        data_product_share_form = DataProductShareForm(request.POST, request.FILES)
+        if data_product_share_form.is_valid():
+            form_data = data_product_share_form.cleaned_data
+            product_id = kwargs.get('pk', None)
+            product = DataProduct.objects.get(pk=product_id)
+            if product.data_product_type == 'photometry':
+                reduced_datums = ReducedDatum.objects.filter(data_product=product)
+                share_destination = form_data['share_destination']
+                if share_destination == 'hermes':
+                    # build hermes table from Reduced Datums
+                    self.publish_photometry_to_stream(share_destination, form_data, reduced_datums)
+                else:
+                    self.share_with_tom(share_destination, product)
+        return redirect('/')
+
+    def publish_photometry_to_stream(self, destination, message_info, datums):
+        """
+        For now this code submits a typical hermes photometry alert using the datums tied to the dataproduct being
+         shared. In the future this should instead send the user to a new tab with a populated hermes form.
+        :param destination: target stream (topic included?)
+        :param message_info: Dictionary of message information
+        :param datums: Reduced Datums to be built into table.
+        :return:
+        """
+        stream_base_url = settings.DATA_SHARING[destination]['BASE_URL']
+        submit_url = stream_base_url + 'submit/'
+        headers = {}
+        hermes_photometry_data = []
+        for tomtoolkit_photometry in datums:
+            hermes_photometry_data.append({
+                'photometryId': tomtoolkit_photometry.target.name,
+                'dateObs': tomtoolkit_photometry.timestamp.strftime('%x %X'),
+                'band': tomtoolkit_photometry.value['filter'],
+                'brightness': tomtoolkit_photometry.value['magnitude'],
+                'brightnessError': tomtoolkit_photometry.value['error'],
+                'brightnessUnit': 'AB mag',
+            })
+        alert = {
+            'topic': 'hermes.test',
+            'title': message_info['share_title'],
+            'author': message_info['submitter'],
+            ''
+            'data': {
+                'authors': message_info['share_authors'],
+                'photometry_data': hermes_photometry_data,
+            },
+            'message_text': message_info['share_message'],
+        }
+
+        submit_response = requests.post(url=submit_url, json=alert, headers=headers)
+
+    def share_with_tom(self, destination, product):
+        print(destination, product)
 
 
 class DataProductShareViewOld(View):
