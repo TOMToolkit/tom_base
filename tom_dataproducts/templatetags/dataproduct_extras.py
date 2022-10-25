@@ -249,6 +249,12 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
     fig = go.Figure(data=plot_data, layout=layout)
     fig.update_yaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
     fig.update_xaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
+    fig.update_layout(clickmode='event+select')
+
+    # TODO: Build linked data table
+    tab = go.Table(header=dict(values=[]),
+                   cells=dict(values=[]))
+
     return {
         'target': target,
         'plot': offline.plot(fig, output_type='div', show_link=False)
