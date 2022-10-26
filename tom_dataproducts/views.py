@@ -23,10 +23,12 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, FormView
 from django_filters.views import FilterView
 from guardian.shortcuts import assign_perm, get_objects_for_user
+from rest_framework.renderers import JSONRenderer
 
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
+from tom_targets.serializers import TargetSerializer
 from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm, DataProductShareForm
@@ -363,15 +365,28 @@ class DataProductShareView(FormView):
 
         requests.post(url=submit_url, json=alert, headers=headers)
 
-    def share_with_tom(self, destination, product):
+    def share_with_tom(self, tom_name, product):
         """
         When sharing a DataProduct with another TOM we likely want to share the data product itself and let the other
         TOM process it rather than share the Reduced Datums
-        :param destination:
+        :param tom_name:
         :param product:
         :return:
         """
-        print(destination, product)
+        try:
+            destination_tom_base_url = settings.DATA_SHARING[tom_name]['BASE_URL']
+            username = settings.DATA_SHARING[tom_name]['USERNAME']
+            password = settings.DATA_SHARING[tom_name]['PASSWORD']
+        except KeyError as err:
+            raise ImproperlyConfigured(f'Check DATA_SHARING configuration for {tom_name}: Key {err} not found.')
+        auth = (username, password)
+        headers = {'Media-Type': 'application/json'}
+        target = product.target
+        serialized_target_data = TargetSerializer(target).data
+        target_json = JSONRenderer().render(serialized_target_data)
+        targets_url = destination_tom_base_url + 'api/targets/'
+        response = requests.post(targets_url, headers=headers, auth=auth, data=serialized_target_data)
+        print(response.text)
 
 
 class DataProductShareViewOld(View):
@@ -432,7 +447,7 @@ class DataProductShareViewOld(View):
     def share_with_tom(self, tom_name, product: DataProduct):
         """Construct and make a POST (create) request to the destination TOM /api/dataproducts/ endpoint.
 
-        Theoritically, we should be able to simply serializer the DataProduct instance with the
+        Theoretically, we should be able to simply serializer the DataProduct instance with the
         DataProductSerializer (producing native python data types) and JSONRenderer().render() that
         (producing JSON) and POST that to the destination TOM DRF API endpoint.
 
