@@ -12,6 +12,7 @@ from fits2image.conversions import fits_to_jpg
 from PIL import Image
 
 from tom_targets.models import Target
+from tom_alerts.models import AlertStreamMessage
 from tom_observations.models import ObservationRecord
 
 logger = logging.getLogger(__name__)
@@ -322,6 +323,9 @@ class ReducedDatum(models.Model):
                     }
     :type value: dict
 
+    :param message: Set of ``AlertStreamMessage`` objects this object is associated with.
+    :type message: ManyRelatedManager object
+
     """
 
     target = models.ForeignKey(Target, null=False, on_delete=models.CASCADE)
@@ -334,6 +338,7 @@ class ReducedDatum(models.Model):
     source_location = models.CharField(max_length=200, default='')
     timestamp = models.DateTimeField(null=False, blank=False, default=datetime.now, db_index=True)
     value = models.JSONField(null=False, blank=False)
+    message = models.ManyToManyField(AlertStreamMessage)
 
     class Meta:
         get_latest_by = ('timestamp',)
