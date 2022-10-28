@@ -34,6 +34,7 @@ from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm, DataProductShareForm
 from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
+from tom_dataproducts.hermes import publish_photometry_to_hermes
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 
@@ -324,46 +325,10 @@ class DataProductShareView(FormView):
                 share_destination = form_data['share_destination']
                 if share_destination == 'hermes':
                     # build hermes table from Reduced Datums
-                    self.publish_photometry_to_stream(share_destination, form_data, reduced_datums)
+                    publish_photometry_to_hermes(share_destination, form_data, reduced_datums)
                 else:
                     self.share_with_tom(share_destination, product)
         return redirect('/')
-
-    def publish_photometry_to_stream(self, destination, message_info, datums):
-        """
-        For now this code submits a typical hermes photometry alert using the datums tied to the dataproduct being
-         shared. In the future this should instead send the user to a new tab with a populated hermes form.
-        :param destination: target stream (topic included?)
-        :param message_info: Dictionary of message information
-        :param datums: Reduced Datums to be built into table.
-        :return:
-        """
-        stream_base_url = settings.DATA_SHARING[destination]['BASE_URL']
-        submit_url = stream_base_url + 'submit/'
-        headers = {}
-        hermes_photometry_data = []
-        for tomtoolkit_photometry in datums:
-            hermes_photometry_data.append({
-                'photometryId': tomtoolkit_photometry.target.name,
-                'dateObs': tomtoolkit_photometry.timestamp.strftime('%x %X'),
-                'band': tomtoolkit_photometry.value['filter'],
-                'brightness': tomtoolkit_photometry.value['magnitude'],
-                'brightnessError': tomtoolkit_photometry.value['error'],
-                'brightnessUnit': 'AB mag',
-            })
-        alert = {
-            'topic': 'hermes.test',
-            'title': message_info['share_title'],
-            'author': message_info['submitter'],
-            ''
-            'data': {
-                'authors': message_info['share_authors'],
-                'photometry_data': hermes_photometry_data,
-            },
-            'message_text': message_info['share_message'],
-        }
-
-        requests.post(url=submit_url, json=alert, headers=headers)
 
     def share_with_tom(self, tom_name, product):
         """
@@ -383,8 +348,8 @@ class DataProductShareView(FormView):
         headers = {'Media-Type': 'application/json'}
         target = product.target
         serialized_target_data = TargetSerializer(target).data
-        target_json = JSONRenderer().render(serialized_target_data)
         targets_url = destination_tom_base_url + 'api/targets/'
+        # TODO: Make sure aliases are checked before creating new target
         response = requests.post(targets_url, headers=headers, auth=auth, data=serialized_target_data)
         print(response.text)
 
