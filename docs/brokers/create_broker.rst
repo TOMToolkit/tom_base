@@ -138,9 +138,10 @@ will only filter on name, but this can be easily extended to other query paramet
         response = requests.get(broker_url)
         response.raise_for_status()
         test_alerts = response.json()
+        alert_list = []
         try:
             alert_list = [alert for alert in test_alerts if alert['name'] == parameters['target_name']]
-        except KeyError:
+        except KeyError:  # We want to catch error messages returned from the Broker and pass them on as feedback.
             broker_feedback = test_alerts
         return iter(alert_list), broker_feedback
 
