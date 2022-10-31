@@ -5,6 +5,14 @@ from tom_alerts.models import AlertStreamMessage
 import requests
 
 
+class BuildHermesMessage(object):
+    def __init__(self, title='', submitter='', authors='', message=''):
+        self.title = title
+        self.submitter = submitter
+        self.authors = authors
+        self.message = message
+
+
 def publish_photometry_to_hermes(destination, message_info, datums):
     """
     For now this code submits a typical hermes photometry alert using the datums tied to the dataproduct being
@@ -32,14 +40,14 @@ def publish_photometry_to_hermes(destination, message_info, datums):
         })
     alert = {
         'topic': 'hermes.test',
-        'title': message_info['share_title'],
-        'author': message_info['submitter'],
+        'title': message_info.title,
+        'author': message_info.submitter,
         ''
         'data': {
-            'authors': message_info['share_authors'],
+            'authors': message_info.authors,
             'photometry_data': hermes_photometry_data,
         },
-        'message_text': message_info['share_message'],
+        'message_text': message_info.message,
     }
 
     requests.post(url=submit_url, json=alert, headers=headers)

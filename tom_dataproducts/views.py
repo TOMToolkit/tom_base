@@ -34,7 +34,7 @@ from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm, DataProductShareForm
 from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
-from tom_dataproducts.hermes import publish_photometry_to_hermes
+from tom_dataproducts.hermes import publish_photometry_to_hermes, BuildHermesMessage
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 
@@ -324,8 +324,12 @@ class DataProductShareView(FormView):
                 reduced_datums = ReducedDatum.objects.filter(data_product=product)
                 share_destination = form_data['share_destination']
                 if share_destination == 'hermes':
-                    # build hermes table from Reduced Datums
-                    publish_photometry_to_hermes(share_destination, form_data, reduced_datums)
+                    # build and submit hermes table from Reduced Datums
+                    message_info = BuildHermesMessage(title=form_data['share_title'],
+                                                      submitter=form_data['submitter'],
+                                                      authors=form_data['share_authors'],
+                                                      message=form_data['share_message'])
+                    publish_photometry_to_hermes(share_destination, message_info, reduced_datums)
                 else:
                     self.share_with_tom(share_destination, product)
         return redirect('/')
