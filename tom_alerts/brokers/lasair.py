@@ -81,6 +81,9 @@ class LasairBroker(GenericBroker):
     """
     The ``LasairBroker`` is the interface to the Lasair alert broker. For information regarding the query format for
     Lasair, please see https://lasair-ztf.lsst.ac.uk/.
+
+    Requires a LASAIR_TOKEN in settings.py.
+    See https://lasair-ztf.lsst.ac.uk/api for details about how to acquire an authorization token.
     """
 
     name = 'Lasair'
