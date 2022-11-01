@@ -19,7 +19,7 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Topic :: Scientific/Engineering :: Astronomy',
         'Topic :: Scientific/Engineering :: Physics'
     ],
@@ -29,7 +29,7 @@ setup(
     setup_requires=['setuptools_scm', 'wheel'],
     install_requires=[
         'astroquery>=0.4.2',
-        'astroplan==0.8',
+        'astroplan~=0.8',
         'astropy>=5.0',
         'beautifulsoup4~=4.9',
         'django>=3.1,<5.0',  # TOM Toolkit requires db math functions
@@ -41,17 +41,17 @@ setup(
         'django-filter>=21,<23',
         'django-gravatar2~=1.4',
         'django-guardian~=2.3',
-        'fits2image==0.4.6',
-        'Markdown==3.4.1',  # django-rest-framework doc headers require this to support Markdown
+        'fits2image>=0.4.2',
+        'Markdown~=3.4',  # django-rest-framework doc headers require this to support Markdown
         'numpy~=1.20',
-        'pillow==9.2.0',
+        'pillow~=9.2',
         'plotly~=5.0',
         'python-dateutil~=2.8',
         'requests~=2.25',
-        'specutils==1.8.1',
+        'specutils~=1.8',
     ],
     extras_require={
-        'test': ['factory_boy==3.2.1'],
+        'test': ['factory_boy~=3.2.1'],
         'docs': [
             'recommonmark~=0.7',
             'sphinx>=4,<6',

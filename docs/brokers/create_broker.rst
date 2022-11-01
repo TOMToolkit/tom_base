@@ -125,19 +125,25 @@ alerts and targets.
 ``fetch_alerts`` Class Method
 -----------------------------
 
-`fetch_alerts` is used to query the remote broker, and return an iterator
-of results depending on the parameters passed into the query, so that
-these results may be displayed on the query results page. In our case, `fetch_alerts`
+`fetch_alerts` is used to query the remote broker, and return both an iterator
+of results and any broker feedback received depending on the parameters passed into the query, so that
+any results or feedback (such as error messages) may be displayed on the query results page. In our case, `fetch_alerts`
 will only filter on name, but this can be easily extended to other query parameters.
 
 .. code-block:: python
     
     @classmethod
     def fetch_alerts(clazz, parameters):
+        broker_feedback = ''
         response = requests.get(broker_url)
         response.raise_for_status()
         test_alerts = response.json()
-        return iter([alert for alert in test_alerts if alert['name'] == parameters['target_name']])
+        alert_list = []
+        try:
+            alert_list = [alert for alert in test_alerts if alert['name'] == parameters['target_name']]
+        except KeyError:  # We want to catch error messages returned from the Broker and pass them on as feedback.
+            broker_feedback = test_alerts
+        return iter(alert_list), broker_feedback
 
 **Why an iterator?** Because some alert brokers work by sending streams, not fully
 evaluated lists. This simple example broker could easily return a list (in fact we
@@ -145,8 +151,9 @@ are coercing the list into an iterator!) but that would not work in the model
 where a broker is sending an unending stream of alerts.
 
 Our implementation will get a response from our test broker source, check that our
-request was successful, and return a iterator of alerts whose name field matches the
-name passed into the query.
+request was successful, and if so, return a iterator of alerts whose name field matches the
+name passed into the query. If the keyword 'name' isn't present in the alert, we pass the results
+as feedback.
 
 ``to_generic_alert`` Class Method
 ---------------------------------
