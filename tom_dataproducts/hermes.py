@@ -13,7 +13,7 @@ class BuildHermesMessage(object):
         self.message = message
 
 
-def publish_photometry_to_hermes(destination, message_info, datums):
+def publish_photometry_to_hermes(destination, message_info, datums, **kwargs):
     """
     For now this code submits a typical hermes photometry alert using the datums tied to the dataproduct being
      shared. In the future this should instead send the user to a new tab with a populated hermes form.
@@ -30,19 +30,11 @@ def publish_photometry_to_hermes(destination, message_info, datums):
     hermes_alert.save()
     for tomtoolkit_photometry in datums:
         tomtoolkit_photometry.message.add(hermes_alert)
-        hermes_photometry_data.append({
-            'photometryId': tomtoolkit_photometry.target.name,
-            'dateObs': tomtoolkit_photometry.timestamp.strftime('%x %X'),
-            'band': tomtoolkit_photometry.value['filter'],
-            'brightness': tomtoolkit_photometry.value['magnitude'],
-            'brightnessError': tomtoolkit_photometry.value['error'],
-            'brightnessUnit': 'AB mag',
-        })
+        hermes_photometry_data.append(create_hermes_phot_table_row(tomtoolkit_photometry, **kwargs))
     alert = {
         'topic': 'hermes.test',
         'title': message_info.title,
         'author': message_info.submitter,
-        ''
         'data': {
             'authors': message_info.authors,
             'photometry_data': hermes_photometry_data,
@@ -51,3 +43,16 @@ def publish_photometry_to_hermes(destination, message_info, datums):
     }
 
     requests.post(url=submit_url, json=alert, headers=headers)
+
+
+def create_hermes_phot_table_row(datum, **kwargs):
+    """Build a row for a Hermes Photometry Table using a TOM Photometry datum"""
+    table_row = {
+        'photometryId': datum.target.name,
+        'dateObs': datum.timestamp.strftime('%x %X'),
+        'band': datum.value['filter'],
+        'brightness': datum.value['magnitude'],
+        'brightnessError': datum.value['error'],
+        'brightnessUnit': 'AB mag',
+    }
+    return table_row
