@@ -37,6 +37,7 @@ from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.hermes import publish_photometry_to_hermes, BuildHermesMessage
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
+from tom_dataproducts.serializers import DataProductSerializer
 
 import requests
 
@@ -354,8 +355,28 @@ class DataProductShareView(FormView):
         serialized_target_data = TargetSerializer(target).data
         targets_url = destination_tom_base_url + 'api/targets/'
         # TODO: Make sure aliases are checked before creating new target
+        # Attempt to create Target in Destination TOM
         response = requests.post(targets_url, headers=headers, auth=auth, data=serialized_target_data)
-        print(response.text)
+        try:
+            target_response = response.json()
+            destination_target_id = target_response['id']
+        except KeyError:
+            # If Target already exists at destination, find ID
+            response = requests.get(targets_url, headers=headers, auth=auth, data=serialized_target_data)
+            target_response = response.json()
+            destination_target_id = target_response['results'][0]['id']
+
+        serialized_dataproduct_data = DataProductSerializer(product).data
+        serialized_dataproduct_data['target'] = destination_target_id
+        dataproducts_url = destination_tom_base_url + 'api/dataproducts/'
+        # TODO: this should be updated when tom_dataproducts is updated to use django.core.storage
+        dataproduct_filename = os.path.join(settings.MEDIA_ROOT, product.data.name)
+        # Save DataProduct in Destination TOM
+        with open(dataproduct_filename, 'rb') as dataproduct_filep:
+            files = {'file': (product.data.name, dataproduct_filep, 'text/csv')}
+            headers = {'Media-Type': 'multipart/form-data'}
+            response = requests.post(dataproducts_url, data=serialized_dataproduct_data, files=files,
+                                     headers=headers, auth=auth)
 
 
 class DataProductShareViewOld(View):
