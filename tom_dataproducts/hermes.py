@@ -6,11 +6,12 @@ import requests
 
 
 class BuildHermesMessage(object):
-    def __init__(self, title='', submitter='', authors='', message=''):
+    def __init__(self, title='', submitter='', authors='', message='', **kwargs):
         self.title = title
         self.submitter = submitter
         self.authors = authors
         self.message = message
+        self.extra_info = kwargs
 
 
 def publish_photometry_to_hermes(destination, message_info, datums, **kwargs):
@@ -41,6 +42,7 @@ def publish_photometry_to_hermes(destination, message_info, datums, **kwargs):
         },
         'message_text': message_info.message,
     }
+    alert['data'].update(message_info.extra_info)
 
     requests.post(url=submit_url, json=alert, headers=headers)
 
@@ -50,9 +52,11 @@ def create_hermes_phot_table_row(datum, **kwargs):
     table_row = {
         'photometryId': datum.target.name,
         'dateObs': datum.timestamp.strftime('%x %X'),
-        'band': datum.value['filter'],
-        'brightness': datum.value['magnitude'],
-        'brightnessError': datum.value['error'],
-        'brightnessUnit': 'AB mag',
+        'telescope': datum.value.get('telescope', ''),
+        'instrument': datum.value.get('instrument', ''),
+        'band': datum.value.get('filter', ''),
+        'brightness': datum.value.get('magnitude', ''),
+        'brightnessError': datum.value.get('error', ''),
+        'brightnessUnit': datum.value.get('unit', 'AB mag'),
     }
     return table_row

@@ -339,8 +339,8 @@ class DataProductShareView(FormView):
         """
         When sharing a DataProduct with another TOM we likely want to share the data product itself and let the other
         TOM process it rather than share the Reduced Datums
-        :param tom_name:
-        :param product:
+        :param tom_name: name of destination tom in settings.DATA_SHARING
+        :param product: DataProduct model instance
         :return:
         """
         try:
