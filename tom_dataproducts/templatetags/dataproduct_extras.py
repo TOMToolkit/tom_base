@@ -209,12 +209,8 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
         photometry_data[datum.value['filter']].setdefault('error', []).append(datum.value.get('error'))
         photometry_data[datum.value['filter']].setdefault('limit', []).append(datum.value.get('limit'))
 
-    table_cols = {'time': [], 'filter': [], 'magnitude': [], 'error': [], 'limit': []}
     plot_data = []
     for filter_name, filter_values in photometry_data.items():
-        for col_header, col_data in filter_values.items():
-            table_cols[col_header] += col_data
-        table_cols['filter'] += [filter_name]*len(filter_values['time'])
         if filter_values['magnitude']:
             series = go.Scatter(
                 x=filter_values['time'],
@@ -255,20 +251,9 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
     fig.update_xaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
     fig.update_layout(clickmode='event+select')
 
-    # TODO: Build linked data table
-    tab = go.Figure(data=[go.Table(header=dict(values=[table_header for table_header in table_cols]),
-                                   cells=dict(values=[table_cols[table_header] for table_header in table_cols]))])
-
-    def selection_fn(trace, points, selector):
-        print(trace, points, selector)
-
-    for plot in plot_data:
-        plot.on_selection(selection_fn)
-
     return {
         'target': target,
         'plot': offline.plot(fig, output_type='div', show_link=False),
-        'table': offline.plot(tab, output_type='div', show_link=False)
     }
 
 
