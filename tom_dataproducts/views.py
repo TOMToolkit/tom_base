@@ -23,7 +23,6 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, FormView
 from django_filters.views import FilterView
 from guardian.shortcuts import assign_perm, get_objects_for_user
-from rest_framework.renderers import JSONRenderer
 
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
