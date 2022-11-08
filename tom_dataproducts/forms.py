@@ -11,6 +11,9 @@ DESTINATION_OPTIONS = (('hermes', 'Hermes'),
                        ('tom-demo-dev', '2nd best TOM'),
                        ('local_host', 'Best TOM (My TOM)'))
 
+DATA_TYPE_OPTIONS = (('photometry', 'Photometry'),
+                     ('spectroscopy', 'Spectroscopy'))
+
 
 class AddProductToGroupForm(forms.Form):
     products = forms.ModelMultipleChoiceField(
@@ -53,11 +56,12 @@ class DataProductUploadForm(forms.Form):
                                                                    widget=forms.CheckboxSelectMultiple)
 
 
-class DataProductShareForm(forms.Form):
+class DataShareForm(forms.Form):
     share_destination = forms.ChoiceField(required=True, choices=DESTINATION_OPTIONS, label="Destination")
     share_title = forms.CharField(required=False, label="Title")
     share_message = forms.CharField(required=False, label="Message", widget=forms.Textarea())
     share_authors = forms.CharField(required=False, widget=forms.HiddenInput())
+    data_type = forms.ChoiceField(required=False, choices=DATA_TYPE_OPTIONS, label="Type")
     target = forms.ModelChoiceField(
         Target.objects.all(),
         widget=forms.HiddenInput(),

@@ -40,12 +40,11 @@
     </tr>
     <tr id="share-{{forloop.counter}}" class="collapse">
       <td colspan=100%>
-        <form method="POST" action="{% url 'tom_dataproducts:share' pk=product.id %}" enctype="multipart/form-data">
+        <form method="POST" action="{% url 'tom_dataproducts:share' dp_pk=product.id %}" enctype="multipart/form-data">
           {% csrf_token %}
           {% for hidden in data_product_share_form.hidden_fields %}
             {{ hidden }}
           {% endfor %}
-          {{ data_product_share_form.data_product.value }}
           <div class="form-row">
             <div class="col-sm-4">
               {% bootstrap_field data_product_share_form.share_destination %}

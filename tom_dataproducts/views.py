@@ -28,9 +28,10 @@ from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_targets.serializers import TargetSerializer
+from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
 from tom_dataproducts.exceptions import InvalidFileFormatException
-from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm, DataProductShareForm
+from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm, DataShareForm
 from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.hermes import publish_photometry_to_hermes, BuildHermesMessage
@@ -289,14 +290,12 @@ class DataProductFeatureView(View):
         )
 
 
-class DataProductShareView(FormView):
-    # TODO: update class docstring
+class DataShareView(FormView):
     """
-    View that handles the featuring of ``DataProduct``s. A featured ``DataProduct`` is displayed on the
-    ``TargetDetailView``.
+    View that handles the sharing of ``DataProduct``s either through HERMES or with another TOM.
     """
 
-    form_class = DataProductShareForm
+    form_class = DataShareForm
 
     def get_form(self, *args, **kwargs):
         # TODO: Add permissions
@@ -315,13 +314,21 @@ class DataProductShareView(FormView):
         """
         Method that handles thePOST requests for this view.
         """
-        data_product_share_form = DataProductShareForm(request.POST, request.FILES)
-        if data_product_share_form.is_valid():
-            form_data = data_product_share_form.cleaned_data
-            product_id = kwargs.get('pk', None)
-            product = DataProduct.objects.get(pk=product_id)
-            if product.data_product_type == 'photometry':
+        data_share_form = DataShareForm(request.POST, request.FILES)
+        if data_share_form.is_valid():
+            form_data = data_share_form.cleaned_data
+            # determine if pk is data product, Reduced Datum, or Target.
+            product_id = kwargs.get('dp_pk', None)
+            if product_id:
+                product = DataProduct.objects.get(pk=product_id)
+                data_type = product.data_product_type
                 reduced_datums = ReducedDatum.objects.filter(data_product=product)
+            else:
+                target_id = kwargs.get('tg_pk', None)
+                target = Target.objects.get(pk=target_id)
+                data_type = form_data['data_type']
+                reduced_datums = ReducedDatum.objects.filter(target=target, data_type=data_type)
+            if data_type == 'photometry':
                 share_destination = form_data['share_destination']
                 if share_destination == 'hermes':
                     # build and submit hermes table from Reduced Datums

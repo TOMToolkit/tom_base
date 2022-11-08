@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 
 
 from django import template
+from django import forms
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
@@ -16,7 +17,7 @@ from io import BytesIO
 from PIL import Image, ImageDraw
 import base64
 
-from tom_dataproducts.forms import DataProductUploadForm, DataProductShareForm
+from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_observations.models import ObservationRecord
@@ -60,7 +61,7 @@ def dataproduct_list_for_target(context, target):
     initial = {'submitter': context['request'].user,
                'target': target,
                'share_title': f"Updated data for {target.name}."}
-    form = DataProductShareForm(initial=initial)
+    form = DataShareForm(initial=initial)
 
     return {
         'products': target_products_for_user,
@@ -130,6 +131,23 @@ def upload_dataproduct(context, obj):
         else:
             form.fields['groups'].queryset = user.groups.all()
     return {'data_product_form': form}
+
+
+@register.inclusion_tag('tom_dataproducts/partials/share_target_data.html', takes_context=True)
+def share_data(context, target):
+    """
+    Publish data to Hermes
+    """
+    initial = {'submitter': context['request'].user,
+               'target': target,
+               'share_title': f"Updated data for {target.name}.",
+               }
+    form = DataShareForm(initial=initial)
+    form.fields['share_title'].widget = forms.HiddenInput()
+
+    context = {'target': target,
+               'target_data_share_form': form}
+    return context
 
 
 @register.inclusion_tag('tom_dataproducts/partials/recent_photometry.html')
