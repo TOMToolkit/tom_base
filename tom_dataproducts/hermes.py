@@ -44,7 +44,8 @@ def publish_photometry_to_hermes(destination, message_info, datums, **kwargs):
     }
     alert['data'].update(message_info.extra_info)
 
-    requests.post(url=submit_url, json=alert, headers=headers)
+    response = requests.post(url=submit_url, json=alert, headers=headers)
+    return response
 
 
 def create_hermes_phot_table_row(datum, **kwargs):

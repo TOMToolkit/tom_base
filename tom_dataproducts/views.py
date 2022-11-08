@@ -336,9 +336,12 @@ class DataShareView(FormView):
                                                       submitter=form_data['submitter'],
                                                       authors=form_data['share_authors'],
                                                       message=form_data['share_message'])
-                    publish_photometry_to_hermes(share_destination, message_info, reduced_datums)
+                    response = publish_photometry_to_hermes(share_destination, message_info, reduced_datums)
                 else:
-                    self.share_with_tom(share_destination, product)
+                    response = self.share_with_tom(share_destination, product)
+                publish_feedback = response.json()["message"]
+                for feedback in publish_feedback:
+                    messages.success(self.request, feedback)
         return redirect('/')
 
     def share_with_tom(self, tom_name, product):
@@ -383,6 +386,7 @@ class DataShareView(FormView):
             headers = {'Media-Type': 'multipart/form-data'}
             response = requests.post(dataproducts_url, data=serialized_dataproduct_data, files=files,
                                      headers=headers, auth=auth)
+        return response
 
 
 class DataProductShareViewOld(View):
