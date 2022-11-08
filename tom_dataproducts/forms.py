@@ -7,9 +7,8 @@ from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
 
-DESTINATION_OPTIONS = (('hermes', 'Hermes'),
-                       ('tom-demo-dev', '2nd best TOM'),
-                       ('local_host', 'Best TOM (My TOM)'))
+DESTINATION_OPTIONS = [(destination, details.get('NICKNAME', destination))
+                       for destination, details in settings.DATA_SHARING.items()]
 
 DATA_TYPE_OPTIONS = (('photometry', 'Photometry'),
                      ('spectroscopy', 'Spectroscopy'))
@@ -61,7 +60,7 @@ class DataShareForm(forms.Form):
     share_title = forms.CharField(required=False, label="Title")
     share_message = forms.CharField(required=False, label="Message", widget=forms.Textarea())
     share_authors = forms.CharField(required=False, widget=forms.HiddenInput())
-    data_type = forms.ChoiceField(required=False, choices=DATA_TYPE_OPTIONS, label="Type")
+    data_type = forms.ChoiceField(required=False, choices=DATA_TYPE_OPTIONS, label="Data Type")
     target = forms.ModelChoiceField(
         Target.objects.all(),
         widget=forms.HiddenInput(),

@@ -230,16 +230,19 @@ DATA_PROCESSORS = {
 # Configuration for the TOM receiving data from this TOM
 DATA_SHARING = {
     'hermes': {
+        'NICKNAME': os.getenv('HERMES_NICKNAME', 'Hermes'),
         'BASE_URL': os.getenv('HERMES_BASE_URL', 'https://hermes.lco.global/'),
         'API_TOKEN': os.getenv('HERMES_API_TOKEN', 'set HERMES_API_TOKEN value in environment'),
     },
     'tom-demo-dev': {
+        'NICKNAME': os.getenv('TOM_DEMO_NICKNAME', 'TOM Demo Dev'),
         'BASE_URL': os.getenv('TOM_DEMO_BASE_URL', 'http://tom-demo-dev.lco.gtn/'),
         'USERNAME': os.getenv('TOM_DEMO_USERNAME', 'set TOM_DEMO_USERNAME value in environment'),
         'PASSWORD': os.getenv('TOM_DEMO_PASSWORD', 'set TOM_DEMO_PASSWORD value in environment'),
     },
     'localhost-tom': {
         # for testing; share with yourself
+        'NICKNAME': os.getenv('LOCALHOST_TOM_NICKNAME', 'Local'),
         'BASE_URL': os.getenv('LOCALHOST_TOM_BASE_URL', 'http://127.0.0.1:8000/'),
         'USERNAME': os.getenv('LOCALHOST_TOM_USERNAME', 'set LOCALHOST_TOM_USERNAME value in environment'),
         'PASSWORD': os.getenv('LOCALHOST_TOM_PASSWORD', 'set LOCALHOST_TOM_PASSWORD value in environment'),

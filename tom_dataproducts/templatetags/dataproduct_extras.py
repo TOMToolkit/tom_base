@@ -140,7 +140,7 @@ def share_data(context, target):
     """
     initial = {'submitter': context['request'].user,
                'target': target,
-               'share_title': f"Updated data for {target.name}.",
+               'share_title': f"Updated data for {target.name} from {settings.TOM_NAME}.",
                }
     form = DataShareForm(initial=initial)
     form.fields['share_title'].widget = forms.HiddenInput()
