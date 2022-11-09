@@ -338,7 +338,7 @@ class DataShareView(FormView):
                                                       message=form_data['share_message'])
                     response = publish_photometry_to_hermes(share_destination, message_info, reduced_datums)
                 else:
-                    messages.error(self.request, f'TOM-TOM sharing is not yet supported.')
+                    messages.error(self.request, 'TOM-TOM sharing is not yet supported.')
                     return redirect('/')
                     # response = self.share_with_tom(share_destination, product)
                 publish_feedback = response.json()["message"]
