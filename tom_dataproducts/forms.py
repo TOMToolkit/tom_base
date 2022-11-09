@@ -6,9 +6,11 @@ from tom_dataproducts.models import DataProductGroup, DataProduct
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
-
-DESTINATION_OPTIONS = [(destination, details.get('DISPLAY_NAME', destination))
-                       for destination, details in settings.DATA_SHARING.items()]
+try:
+    DESTINATION_OPTIONS = [(destination, details.get('DISPLAY_NAME', destination))
+                           for destination, details in settings.DATA_SHARING.items()]
+except AttributeError:
+    DESTINATION_OPTIONS = []
 
 DATA_TYPE_OPTIONS = (('photometry', 'Photometry'),
                      ('spectroscopy', 'Spectroscopy'))
