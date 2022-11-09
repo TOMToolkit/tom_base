@@ -1,7 +1,6 @@
 import logging
 from urllib.parse import urlencode
 
-
 from django import template
 from django import forms
 from django.conf import settings
@@ -110,7 +109,6 @@ def dataproduct_list_all(context):
 
     return {
         'products': products,
-        'sharing_destinations': get_data_sharing_destinations()
     }
 
 

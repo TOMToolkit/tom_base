@@ -292,7 +292,7 @@ class DataProductFeatureView(View):
 
 class DataShareView(FormView):
     """
-    View that handles the sharing of ``DataProduct``s either through HERMES or with another TOM.
+    View that handles the sharing of data either through HERMES or with another TOM.
     """
 
     form_class = DataShareForm
@@ -312,7 +312,9 @@ class DataShareView(FormView):
 
     def post(self, request, *args, **kwargs):
         """
-        Method that handles thePOST requests for this view.
+        Method that handles the POST requests for sharing data.
+        Handles Data Products and All the data of a type for a target.
+        Submit to Hermes, or Share with TOM.
         """
         data_share_form = DataShareForm(request.POST, request.FILES)
         if data_share_form.is_valid():
