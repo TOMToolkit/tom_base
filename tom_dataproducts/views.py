@@ -342,6 +342,8 @@ class DataShareView(FormView):
                 publish_feedback = response.json()["message"]
                 for feedback in publish_feedback:
                     messages.success(self.request, feedback)
+            else:
+                messages.error(self.request, f'Publishing {data_type} data is not yet supported.')
         return redirect('/')
 
     def share_with_tom(self, tom_name, product):
