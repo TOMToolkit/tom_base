@@ -7,7 +7,7 @@ from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
 
-DESTINATION_OPTIONS = [(destination, details.get('NICKNAME', destination))
+DESTINATION_OPTIONS = [(destination, details.get('DISPLAY_NAME', destination))
                        for destination, details in settings.DATA_SHARING.items()]
 
 DATA_TYPE_OPTIONS = (('photometry', 'Photometry'),

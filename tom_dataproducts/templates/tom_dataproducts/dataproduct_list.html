@@ -22,27 +22,9 @@
 
     </div>
     -->
-    <form>
-      <div>
-      <div class="form-row align-items-center">
-        <div class="col-auto my-1">
-          <select class="custom-select mr-sm-2" id="inlineFormCustomSelect">
-            <option selected>Destination...</option>
-            <option value="1">HERMES</option>
-            <option value="2">tom-demo-dev</option>
-            <option value="3">localhost</option>
-          </select>
-        </div>
-        <div class="col-auto my-1">
-          <button type="submit" class="btn btn-primary">Publish/Share</button>
-        </div>
-      </div>
-    </div>
-    </form>
     <table class="table">
       <thead>
         <tr>
-          <th></th>
           <th>File</th>
           <th>Target</th>
           <th>Observation</th>
@@ -54,7 +36,6 @@
       <tbody>
         {% for product in object_list %}
         <tr>
-          <td><input type="checkbox" name="products" value="{{ product.id }}"/></td>
           <td><a href="{{ product.data.url }}">{{ product.get_file_name|truncatechars:40 }}</a></th>
           <td><a href="{% url 'tom_targets:detail' product.target.id %}">{{ product.target.name|truncatechars:40 }}</a></td>
           {% if product.observation_record.id %}
