@@ -16,7 +16,6 @@ from io import BytesIO
 from PIL import Image, ImageDraw
 import base64
 
-from tom_dataproducts.alertstreams.hermes import get_hermes_topics
 from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
