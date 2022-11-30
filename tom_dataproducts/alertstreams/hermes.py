@@ -3,7 +3,7 @@ from datetime import datetime
 
 from django.conf import settings
 
-from hop.io import Metadata
+# from hop.io import Metadata
 
 from tom_alerts.models import AlertStreamMessage
 from tom_targets.models import Target
@@ -88,7 +88,7 @@ def get_hermes_topics():
     return topics
 
 
-def hermes_alert_handler(alert, metadata: Metadata):
+def hermes_alert_handler(alert, metadata):
     # logger.info(f'Alert received on topic {metadata.topic}: {alert};  metatdata: {metadata}')
     alert_as_dict = alert.content
     photometry_table = alert_as_dict['data'].get('photometry_data', None)
