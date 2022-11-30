@@ -1,10 +1,8 @@
 import logging
-import json
 from datetime import datetime
 
 from django.conf import settings
 
-from hop.models import JSONBlob
 from hop.io import Metadata
 
 from tom_alerts.models import AlertStreamMessage
@@ -78,12 +76,12 @@ def create_hermes_phot_table_row(datum, **kwargs):
 
 
 def get_hermes_topics():
-    stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
-    submit_url = stream_base_url + "api/v0/topics/"
-    headers = {'SCIMMA-API-Auth-Username': settings.DATA_SHARING['hermes']['CREDENTIAL_USERNAME'],
-               'SCIMMA-API-Auth-Password': settings.DATA_SHARING['hermes']['CREDENTIAL_PASSWORD']}
-    user = settings.DATA_SHARING['hermes']['SCIMMA_AUTH_USERNAME']
-    headers = {}
+    # stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
+    # submit_url = stream_base_url + "api/v0/topics/"
+    # headers = {'SCIMMA-API-Auth-Username': settings.DATA_SHARING['hermes']['CREDENTIAL_USERNAME'],
+    #            'SCIMMA-API-Auth-Password': settings.DATA_SHARING['hermes']['CREDENTIAL_PASSWORD']}
+    # user = settings.DATA_SHARING['hermes']['SCIMMA_AUTH_USERNAME']
+    # headers = {}
 
     # response = requests.get(url=submit_url, headers=headers)
     topics = settings.DATA_SHARING['hermes']['USER_TOPICS']
@@ -104,7 +102,7 @@ def hermes_alert_handler(alert, metadata: Metadata):
                 continue
 
             try:
-                obs_date = datetime.strptime(row['dateObs'], '%x %X')
+                obs_date = datetime.strptime(row['dateObs'].strip(), '%x %X')
             except ValueError:
                 continue
 
@@ -132,4 +130,3 @@ def get_hermes_phot_value(phot_data):
         'unit': phot_data['brightnessUnit'],
     }
     return data_dictionary
-
