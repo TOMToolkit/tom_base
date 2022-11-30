@@ -16,6 +16,7 @@ from io import BytesIO
 from PIL import Image, ImageDraw
 import base64
 
+from tom_dataproducts.alertstreams.hermes import get_hermes_topics
 from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
@@ -136,6 +137,7 @@ def share_data(context, target):
     """
     Publish data to Hermes
     """
+
     initial = {'submitter': context['request'].user,
                'target': target,
                'share_title': f"Updated data for {target.name} from {settings.TOM_NAME}.",
@@ -144,7 +146,8 @@ def share_data(context, target):
     form.fields['share_title'].widget = forms.HiddenInput()
 
     context = {'target': target,
-               'target_data_share_form': form}
+               'target_data_share_form': form,
+               'sharing_destinations': settings.DATA_SHARING}
     return context
 
 

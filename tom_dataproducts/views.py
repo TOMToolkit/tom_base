@@ -32,7 +32,7 @@ from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm, DataShareForm
 from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
-from tom_dataproducts.hermes import publish_photometry_to_hermes, BuildHermesMessage
+from tom_dataproducts.alertstreams.hermes import publish_photometry_to_hermes, BuildHermesMessage
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 from tom_dataproducts.serializers import DataProductSerializer
@@ -314,6 +314,7 @@ class DataShareView(FormView):
         Handles Data Products and All the data of a type for a target.
         Submit to Hermes, or Share with TOM.
         """
+
         data_share_form = DataShareForm(request.POST, request.FILES)
         if data_share_form.is_valid():
             form_data = data_share_form.cleaned_data
@@ -330,20 +331,26 @@ class DataShareView(FormView):
                 reduced_datums = ReducedDatum.objects.filter(target=target, data_type=data_type)
             if data_type == 'photometry':
                 share_destination = form_data['share_destination']
-                if share_destination == 'hermes':
+                if 'HERMES' in share_destination.upper():
                     # build and submit hermes table from Reduced Datums
+                    hermes_topic = share_destination.split(':')[1]
+                    destination = share_destination.split(':')[0]
                     message_info = BuildHermesMessage(title=form_data['share_title'],
                                                       submitter=form_data['submitter'],
                                                       authors=form_data['share_authors'],
-                                                      message=form_data['share_message'])
-                    response = publish_photometry_to_hermes(share_destination, message_info, reduced_datums)
+                                                      message=form_data['share_message'],
+                                                      topic=hermes_topic
+                                                      )
+                    response = publish_photometry_to_hermes(destination, message_info, reduced_datums)
                 else:
                     messages.error(self.request, 'TOM-TOM sharing is not yet supported.')
                     return redirect('/')
                     # response = self.share_with_tom(share_destination, product)
                 publish_feedback = response.json()["message"]
-                for feedback in publish_feedback:
-                    messages.success(self.request, feedback)
+                if "ERROR" in publish_feedback.upper():
+                    messages.error(self.request, publish_feedback)
+                else:
+                    messages.success(self.request, publish_feedback)
             else:
                 messages.error(self.request, f'Publishing {data_type} data is not yet supported.')
         return redirect('/')

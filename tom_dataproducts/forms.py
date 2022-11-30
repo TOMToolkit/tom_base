@@ -6,11 +6,21 @@ from tom_dataproducts.models import DataProductGroup, DataProduct
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
-try:
-    DESTINATION_OPTIONS = [(destination, details.get('DISPLAY_NAME', destination))
-                           for destination, details in settings.DATA_SHARING.items()]
-except AttributeError:
-    DESTINATION_OPTIONS = []
+
+def get_sharing_destination_options():
+    choices = []
+    for destination, details in settings.DATA_SHARING.items():
+        new_destination = [details.get('DISPLAY_NAME', destination)]
+        if details.get('USER_TOPICS', None):
+            topic_list = [(f'{destination}:{topic}', topic) for topic in details['USER_TOPICS']]
+            new_destination.append(tuple(topic_list))
+        else:
+            new_destination.insert(0, destination)
+        choices.append(tuple(new_destination))
+    return tuple(choices)
+
+
+DESTINATION_OPTIONS = get_sharing_destination_options()
 
 DATA_TYPE_OPTIONS = (('photometry', 'Photometry'),
                      ('spectroscopy', 'Spectroscopy'))
