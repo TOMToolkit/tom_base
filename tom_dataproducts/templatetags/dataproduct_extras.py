@@ -139,7 +139,7 @@ def share_data(context, target):
 
     initial = {'submitter': context['request'].user,
                'target': target,
-               'share_title': f"Updated data for {target.name} from {settings.TOM_NAME}.",
+               'share_title': f"Updated data for {target.name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
                }
     form = DataShareForm(initial=initial)
     form.fields['share_title'].widget = forms.HiddenInput()
