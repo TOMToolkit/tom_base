@@ -69,7 +69,7 @@ def create_hermes_phot_table_row(datum, **kwargs):
         'instrument': datum.value.get('instrument', ''),
         'band': datum.value.get('filter', ''),
         'brightness': datum.value.get('magnitude', ''),
-        'brightnessError': datum.value.get('error', ''),
+        'brightnessError': datum.value.get('magnitude_error', ''),
         'brightnessUnit': datum.value.get('unit', 'AB mag'),
     }
     return table_row
