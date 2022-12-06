@@ -42,6 +42,7 @@ def publish_photometry_to_hermes(destination, message_info, datums, **kwargs):
     hermes_alert = AlertStreamMessage(topic=message_info.topic, exchange_status='published')
     hermes_alert.save()
     for tomtoolkit_photometry in datums:
+
         tomtoolkit_photometry.message.add(hermes_alert)
         hermes_photometry_data.append(create_hermes_phot_table_row(tomtoolkit_photometry, **kwargs))
     alert = {
@@ -89,6 +90,13 @@ def get_hermes_topics():
 
 
 def hermes_alert_handler(alert, metadata):
+    """Alert Handler to record data streamed through Hermes.
+    -- Only Reads Photometry Data
+    -- Only ingests Data if exact match for Target Name
+    -- Does not Ingest Data if exact match already exists
+    -- Requires 'tom_alertstreams' in settings.INSTALLED_APPS
+    -- Requires ALERT_STREAMS['topic_handlers'] in settings
+    """
     # logger.info(f'Alert received on topic {metadata.topic}: {alert};  metatdata: {metadata}')
     alert_as_dict = alert.content
     photometry_table = alert_as_dict['data'].get('photometry_data', None)
@@ -121,6 +129,11 @@ def hermes_alert_handler(alert, metadata):
 
 
 def get_hermes_phot_value(phot_data):
+    """
+    Convert Hermes Message format for a row of Photometry table into parameters accepted by the Reduced Datum model
+    :param phot_data:
+    :return: Dictionary containing properly formatted parameters for Reduced_Datum
+    """
     data_dictionary = {
         'magnitude': phot_data['brightness'],
         'magnitude_error': phot_data['brightnessError'],

@@ -20,6 +20,7 @@ from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, FormView
 from django_filters.views import FilterView
+from django.db.models import Q
 from guardian.shortcuts import assign_perm, get_objects_for_user
 
 from tom_common.hooks import run_hook
@@ -341,7 +342,13 @@ class DataShareView(FormView):
                                                       message=form_data['share_message'],
                                                       topic=hermes_topic
                                                       )
-                    response = publish_photometry_to_hermes(destination, message_info, reduced_datums)
+                    filtered_reduced_datums = self.get_share_safe_datums(destination, reduced_datums,
+                                                                         topic=hermes_topic)
+                    if filtered_reduced_datums.count() > 0:
+                        response = publish_photometry_to_hermes(destination, message_info, filtered_reduced_datums)
+                    else:
+                        messages.error(self.request, 'No Data to share. (Check sharing Protocol.)')
+                        return redirect('/')
                 else:
                     messages.error(self.request, 'TOM-TOM sharing is not yet supported.')
                     return redirect('/')
@@ -398,6 +405,23 @@ class DataShareView(FormView):
             response = requests.post(dataproducts_url, data=serialized_dataproduct_data, files=files,
                                      headers=headers, auth=auth)
         return response
+
+    def get_share_safe_datums(self, destination, reduced_datums, **kwargs):
+        """
+        Custom sharing protocols used to determine when data is shared with a destination.
+        This example prevents sharing if a datum has already been published to the given Hermes topic.
+        :param destination: sharing destination string
+        :param reduced_datums: selected input datums
+        :return: queryset of reduced datums to be shared
+        """
+        if 'hermes' in destination:
+            message_topic = kwargs.get('topic', None)
+            # Remove data points previously shared to the given topic
+            filtered_datums = reduced_datums.exclude(Q(message__exchange_status='published')
+                                                     & Q(message__topic=message_topic))
+        else:
+            filtered_datums = reduced_datums
+        return filtered_datums
 
 
 class DataProductGroupDetailView(DetailView):
