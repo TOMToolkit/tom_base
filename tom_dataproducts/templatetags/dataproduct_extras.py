@@ -180,6 +180,53 @@ def recent_photometry(target, limit=1):
     return context
 
 
+@register.inclusion_tag('tom_dataproducts/partials/photometry_datalist_for_target.html', takes_context=True)
+def get_photometry_data(context, target):
+    """
+    Displays a table of the all photometric points for a target.
+    """
+    photometry = ReducedDatum.objects.filter(data_type='photometry', target=target).order_by('-timestamp')
+
+    # Possibilities for reduced_datums from ZTF/MARS:
+    # reduced_datum.value: {'error': 0.0929680392146111, 'filter': 'r', 'magnitude': 18.2364940643311}
+    # reduced_datum.value: {'limit': 20.1023998260498, 'filter': 'g'}
+
+    # for limit magnitudes, set the value of the limit key to True and
+    # the value of the magnitude key to the limit so the template and
+    # treat magnitudes as such and prepend a '>' to the limit magnitudes
+    # see recent_photometry.html
+    data = []
+    for reduced_datum in photometry:
+        rd_data = {'id': reduced_datum.pk,
+                   'timestamp': reduced_datum.timestamp,
+                   'source': reduced_datum.source_name,
+                   'filter': reduced_datum.value.get('filter', ''),
+                   'telescope': reduced_datum.value.get('telescope', ''),
+                   'magnitude_error': reduced_datum.value.get('magnitude_error', '')
+                   }
+
+        if 'limit' in reduced_datum.value.keys():
+            rd_data['magnitude'] = reduced_datum.value['limit']
+            rd_data['limit'] = True
+        else:
+            rd_data['magnitude'] = reduced_datum.value['magnitude']
+            rd_data['limit'] = False
+        data.append(rd_data)
+
+    initial = {'submitter': context['request'].user,
+               'target': target,
+               'share_title': f"Updated data for {target.name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
+               }
+    form = DataShareForm(initial=initial)
+    form.fields['share_title'].widget = forms.HiddenInput()
+
+    context = {'data': data,
+               'target': target,
+               'target_data_share_form': form,
+               'sharing_destinations': settings.DATA_SHARING}
+    return context
+
+
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html', takes_context=True)
 def photometry_for_target(context, target, width=700, height=600, background=None, label_color=None, grid=True):
     """

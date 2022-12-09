@@ -317,6 +317,7 @@ class DataShareView(FormView):
         """
 
         data_share_form = DataShareForm(request.POST, request.FILES)
+        selected_data = request.POST.getlist("share-box", None)
         if data_share_form.is_valid():
             form_data = data_share_form.cleaned_data
             # determine if pk is data product, Reduced Datum, or Target.
@@ -329,7 +330,10 @@ class DataShareView(FormView):
                 target_id = kwargs.get('tg_pk', None)
                 target = Target.objects.get(pk=target_id)
                 data_type = form_data['data_type']
-                reduced_datums = ReducedDatum.objects.filter(target=target, data_type=data_type)
+                if selected_data is None:
+                    reduced_datums = ReducedDatum.objects.filter(target=target, data_type=data_type)
+                else:
+                    reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
             if data_type == 'photometry':
                 share_destination = form_data['share_destination']
                 if 'HERMES' in share_destination.upper():

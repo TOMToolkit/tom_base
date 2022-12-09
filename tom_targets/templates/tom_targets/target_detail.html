@@ -95,6 +95,7 @@ $(document).ready(function(){
       </div>
       <div class="tab-pane" id="photometry">
         {% photometry_for_target target %}
+        {% get_photometry_data object %}
         </div>
       <div class="tab-pane" id="spectroscopy">
         {% spectroscopy_for_target target %}

@@ -312,7 +312,7 @@ class ReducedDatum(models.Model):
                       'error': .5
                     }
 
-                  but could also contain a filter:
+                  but could also contain a filter, a telescope, an instrument, and/or a unit:
 
                   ::
 
@@ -320,6 +320,8 @@ class ReducedDatum(models.Model):
                       'magnitude': 18.5,
                       'magnitude_error': .5,
                       'filter': 'r'
+                      'telescope': 'ELP.domeA.1m0a'
+                      'instrument': 'fa07'
                     }
     :type value: dict
 
