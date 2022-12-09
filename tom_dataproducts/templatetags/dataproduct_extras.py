@@ -215,10 +215,12 @@ def get_photometry_data(context, target):
 
     initial = {'submitter': context['request'].user,
                'target': target,
+               'data_type': 'photometry',
                'share_title': f"Updated data for {target.name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
                }
     form = DataShareForm(initial=initial)
     form.fields['share_title'].widget = forms.HiddenInput()
+    form.fields['data_type'].widget = forms.HiddenInput()
 
     context = {'data': data,
                'target': target,
