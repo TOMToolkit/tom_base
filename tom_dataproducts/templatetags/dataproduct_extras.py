@@ -28,24 +28,6 @@ logger.setLevel(logging.DEBUG)
 register = template.Library()
 
 
-def get_data_sharing_destinations():
-    """
-    Return a list of data sharing destinations from the DATA_SHARING configuration
-    dictionary in settings.py.
-
-    This should be placed into the context of the inclusion tags that offer to share
-    DataProducts. Templates should know that None means that DATA_SHARING has not
-    been configured.
-    """
-    try:
-        sharing_destinations = settings.DATA_SHARING.keys()
-    except Exception as ex:
-        logger.warning(f'{ex.__class__.__name__} while calling DATA_SHARING.keys(): {ex}')
-        sharing_destinations = None
-
-    return sharing_destinations
-
-
 @register.inclusion_tag('tom_dataproducts/partials/dataproduct_list_for_target.html', takes_context=True)
 def dataproduct_list_for_target(context, target):
     """
@@ -65,7 +47,7 @@ def dataproduct_list_for_target(context, target):
     return {
         'products': target_products_for_user,
         'target': target,
-        'sharing_destinations': get_data_sharing_destinations(),
+        'sharing_destinations': form.fields['share_destination'].choices,
         'data_product_share_form': form
     }
 
