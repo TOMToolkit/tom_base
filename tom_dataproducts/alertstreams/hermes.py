@@ -16,6 +16,9 @@ logger.setLevel(logging.DEBUG)
 
 
 class BuildHermesMessage(object):
+    """
+    A HERMES Message Object that can be submitted to HOP through HERMES
+    """
     def __init__(self, title='', submitter='', authors='', message='', topic='hermes.test', **kwargs):
         self.title = title
         self.submitter = submitter
@@ -27,10 +30,10 @@ class BuildHermesMessage(object):
 
 def publish_photometry_to_hermes(destination, message_info, datums, **kwargs):
     """
-    For now this code submits a typical hermes photometry alert using the datums tied to the dataproduct being
-     shared. In the future this should instead send the user to a new tab with a populated hermes form.
-    :param destination: target stream (topic included?)
-    :param message_info: Dictionary of message information
+    Submits a typical hermes photometry alert using the datums supplied to build a photometry table.
+    -- Stores an AlertStreamMessage connected to each datum to show that the datum has previously been shared.
+    :param destination: target stream
+    :param message_info: HERMES Message Object
     :param datums: Reduced Datums to be built into table.
     :return:
     """
@@ -42,7 +45,6 @@ def publish_photometry_to_hermes(destination, message_info, datums, **kwargs):
     hermes_alert = AlertStreamMessage(topic=message_info.topic, exchange_status='published')
     hermes_alert.save()
     for tomtoolkit_photometry in datums:
-
         tomtoolkit_photometry.message.add(hermes_alert)
         hermes_photometry_data.append(create_hermes_phot_table_row(tomtoolkit_photometry, **kwargs))
     alert = {
@@ -62,7 +64,8 @@ def publish_photometry_to_hermes(destination, message_info, datums, **kwargs):
 
 
 def create_hermes_phot_table_row(datum, **kwargs):
-    """Build a row for a Hermes Photometry Table using a TOM Photometry datum"""
+    """Build a row for a Hermes Photometry Table using a TOM Photometry datum
+    """
     table_row = {
         'photometryId': datum.target.name,
         'dateObs': datum.timestamp.strftime('%x %X'),
@@ -77,6 +80,11 @@ def create_hermes_phot_table_row(datum, **kwargs):
 
 
 def get_hermes_topics():
+    """
+    Method to retrieve a list of available topics.
+    TODO: Retrieve list from HOP, currently unavailable due to authentication issues.
+    :return: List of topics available for users
+    """
     # stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
     # submit_url = stream_base_url + "api/v0/topics/"
     # headers = {'SCIMMA-API-Auth-Username': settings.DATA_SHARING['hermes']['CREDENTIAL_USERNAME'],
@@ -90,7 +98,7 @@ def get_hermes_topics():
 
 
 def hermes_alert_handler(alert, metadata):
-    """Alert Handler to record data streamed through Hermes.
+    """Alert Handler to record data streamed through Hermes as a new ReducedDatum.
     -- Only Reads Photometry Data
     -- Only ingests Data if exact match for Target Name
     -- Does not Ingest Data if exact match already exists

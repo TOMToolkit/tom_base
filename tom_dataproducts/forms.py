@@ -8,15 +8,26 @@ from tom_targets.models import Target
 
 
 def get_sharing_destination_options():
+    """
+    Build the Display options and headers for the dropdown form for choosing sharing topics.
+    Customize for a different selection experience.
+    :return: Tuple: Possible Destinations and their Display Names
+    """
     choices = []
-    for destination, details in settings.DATA_SHARING.items():
-        new_destination = [details.get('DISPLAY_NAME', destination)]
-        if details.get('USER_TOPICS', None):
-            topic_list = [(f'{destination}:{topic}', topic) for topic in details['USER_TOPICS']]
-            new_destination.append(tuple(topic_list))
-        else:
-            new_destination.insert(0, destination)
-        choices.append(tuple(new_destination))
+    try:
+        for destination, details in settings.DATA_SHARING.items():
+            new_destination = [details.get('DISPLAY_NAME', destination)]
+            if details.get('USER_TOPICS', None):
+                # If topics exist for a destination (Such as HERMES) give topics as sub-choices
+                #   for non-selectable Destination
+                topic_list = [(f'{destination}:{topic}', topic) for topic in details['USER_TOPICS']]
+                new_destination.append(tuple(topic_list))
+            else:
+                # Otherwise just use destination as option
+                new_destination.insert(0, destination)
+            choices.append(tuple(new_destination))
+    except AttributeError:
+        pass
     return tuple(choices)
 
 

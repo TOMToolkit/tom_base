@@ -37,7 +37,7 @@ class BrokerQuery(models.Model):
 
 class AlertStreamMessage(models.Model):
     """
-    Class representing a streaming message containing data
+    Class representing a streaming message containing data sent/received either over Kafka or to/from another TOM
     :param topic: The destination or source of sharing for the message.
     :type topic: str
 

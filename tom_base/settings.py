@@ -212,7 +212,6 @@ LASAIR_TOKEN = os.getenv('LASAIR_TOKEN', None)
 #
 # tom_dataproducts configuration
 #
-
 # Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
 # longer be valid, and may cause issues unless the offending records are modified.
 DATA_PRODUCT_TYPES = {
@@ -227,7 +226,7 @@ DATA_PROCESSORS = {
     'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
 }
 
-# Configuration for the TOM receiving data from this TOM
+# Configuration for the TOM/Kafka Stream receiving data from this TOM
 DATA_SHARING = {
     'hermes': {
         'DISPLAY_NAME': os.getenv('HERMES_DISPLAY_NAME', 'Hermes'),

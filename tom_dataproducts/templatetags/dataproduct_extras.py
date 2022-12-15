@@ -146,7 +146,7 @@ def share_data(context, target):
 
     context = {'target': target,
                'target_data_share_form': form,
-               'sharing_destinations': settings.DATA_SHARING}
+               'sharing_destinations': form.fields['share_destination'].choices}
     return context
 
 
@@ -225,7 +225,7 @@ def get_photometry_data(context, target):
     context = {'data': data,
                'target': target,
                'target_data_share_form': form,
-               'sharing_destinations': settings.DATA_SHARING}
+               'sharing_destinations': form.fields['share_destination'].choices}
     return context
 
 
