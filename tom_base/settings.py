@@ -231,7 +231,11 @@ DATA_SHARING = {
     'hermes': {
         'DISPLAY_NAME': os.getenv('HERMES_DISPLAY_NAME', 'Hermes'),
         'BASE_URL': os.getenv('HERMES_BASE_URL', 'https://hermes.lco.global/'),
-        'API_TOKEN': os.getenv('HERMES_API_TOKEN', 'set HERMES_API_TOKEN value in environment'),
+        'CREDENTIAL_USERNAME': os.getenv('SCIMMA_CREDENTIAL_USERNAME',
+                                         'set SCIMMA_CREDENTIAL_USERNAME value in environment'),
+        'CREDENTIAL_PASSWORD': os.getenv('SCIMMA_CREDENTIAL_PASSWORD',
+                                         'set SCIMMA_CREDENTIAL_PASSWORD value in environment'),
+        'USER_TOPICS': ['hermes.test', 'tomtoolkit.test']
     },
     'tom-demo-dev': {
         'DISPLAY_NAME': os.getenv('TOM_DEMO_DISPLAY_NAME', 'TOM Demo Dev'),
