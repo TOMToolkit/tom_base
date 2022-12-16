@@ -349,7 +349,7 @@ class DataShareView(FormView):
                     filtered_reduced_datums = self.get_share_safe_datums(destination, reduced_datums,
                                                                          topic=hermes_topic)
                     if filtered_reduced_datums.count() > 0:
-                        response = publish_photometry_to_hermes(destination, message_info, filtered_reduced_datums)
+                        response = publish_photometry_to_hermes(message_info, filtered_reduced_datums)
                     else:
                         messages.error(self.request, 'No Data to share. (Check sharing Protocol.)')
                         return redirect('/')

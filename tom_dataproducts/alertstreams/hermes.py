@@ -28,16 +28,15 @@ class BuildHermesMessage(object):
         self.extra_info = kwargs
 
 
-def publish_photometry_to_hermes(destination, message_info, datums, **kwargs):
+def publish_photometry_to_hermes(message_info, datums, **kwargs):
     """
     Submits a typical hermes photometry alert using the datums supplied to build a photometry table.
     -- Stores an AlertStreamMessage connected to each datum to show that the datum has previously been shared.
-    :param destination: target stream
-    :param message_info: HERMES Message Object
-    :param datums: Reduced Datums to be built into table.
-    :return:
+    :param message_info: HERMES Message Object created with BuildHermesMessage
+    :param datums: Queryset of Reduced Datums to be built into table.
+    :return: response
     """
-    stream_base_url = settings.DATA_SHARING[destination]['BASE_URL']
+    stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
     submit_url = stream_base_url + 'submit/'
     headers = {'SCIMMA-API-Auth-Username': settings.DATA_SHARING['hermes']['CREDENTIAL_USERNAME'],
                'SCIMMA-API-Auth-Password': settings.DATA_SHARING['hermes']['CREDENTIAL_PASSWORD']}
@@ -139,7 +138,7 @@ def hermes_alert_handler(alert, metadata):
 def get_hermes_phot_value(phot_data):
     """
     Convert Hermes Message format for a row of Photometry table into parameters accepted by the Reduced Datum model
-    :param phot_data:
+    :param phot_data: Dictionary containing Hermes Photometry table.
     :return: Dictionary containing properly formatted parameters for Reduced_Datum
     """
     data_dictionary = {
