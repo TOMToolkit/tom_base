@@ -339,7 +339,7 @@ class DataShareView(FormView):
             if data_type == 'photometry':
                 share_destination = form_data['share_destination']
                 if 'HERMES' in share_destination.upper():
-                    # build and submit hermes table from Reduced Datums
+                    # Build and submit hermes table from Reduced Datums
                     hermes_topic = share_destination.split(':')[1]
                     destination = share_destination.split(':')[0]
                     message_info = BuildHermesMessage(title=form_data['share_title'],
@@ -355,10 +355,10 @@ class DataShareView(FormView):
                         response = publish_photometry_to_hermes(message_info, filtered_reduced_datums)
                     else:
                         messages.error(self.request, 'No Data to share. (Check sharing Protocol.)')
-                        return redirect('/')
+                        return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
                 else:
                     messages.error(self.request, 'TOM-TOM sharing is not yet supported.')
-                    return redirect('/')
+                    return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
                     # response = self.share_with_tom(share_destination, product)
                 publish_feedback = response.json()["message"]
                 if "ERROR" in publish_feedback.upper():
@@ -367,7 +367,7 @@ class DataShareView(FormView):
                     messages.success(self.request, publish_feedback)
             else:
                 messages.error(self.request, f'Publishing {data_type} data is not yet supported.')
-        return redirect('/')
+        return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
 
     def share_with_tom(self, tom_name, product):
         """

@@ -80,7 +80,9 @@ def create_hermes_phot_table_row(datum, **kwargs):
 
 def get_hermes_topics():
     """
-    Method to retrieve a list of available topics.
+    !CURRENTLY UNUSED!
+    Method to retrieve a list of available topics from HOP.
+    Intended to be called from forms when building topic list.
     TODO: Retrieve list from HOP, currently unavailable due to authentication issues.
     :return: List of topics available for users
     """
