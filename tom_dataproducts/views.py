@@ -312,15 +312,17 @@ class DataShareView(FormView):
     def post(self, request, *args, **kwargs):
         """
         Method that handles the POST requests for sharing data.
-        Handles Data Products and All the data of a type for a target.
-        Submit to Hermes, or Share with TOM.
+        Handles Data Products and All the data of a type for a target as well as individual Reduced Datums.
+        Submit to Hermes, or Share with TOM (soon).
         """
 
         data_share_form = DataShareForm(request.POST, request.FILES)
+        # Check if data points have been selected.
         selected_data = request.POST.getlist("share-box", None)
         if data_share_form.is_valid():
             form_data = data_share_form.cleaned_data
-            # determine if pk is data product, Reduced Datum, or Target.
+            # 1st determine if pk is data product, Reduced Datum, or Target.
+            # Then query relevant Reduced Datums Queryset
             product_id = kwargs.get('dp_pk', None)
             if product_id:
                 product = DataProduct.objects.get(pk=product_id)
@@ -346,6 +348,7 @@ class DataShareView(FormView):
                                                       message=form_data['share_message'],
                                                       topic=hermes_topic
                                                       )
+                    # Run ReducedDatums Queryset through sharing protocols to make sure they are safe to share.
                     filtered_reduced_datums = self.get_share_safe_datums(destination, reduced_datums,
                                                                          topic=hermes_topic)
                     if filtered_reduced_datums.count() > 0:
