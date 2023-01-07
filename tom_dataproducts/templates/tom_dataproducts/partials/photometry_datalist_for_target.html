@@ -27,7 +27,7 @@
             <tbody>
             {% for datum in data %}
             <tr>
-                <td><input type="checkbox" class="phot-row" id="phot-row-{{datum.id}}" name="share-box" value="{{datum.id}}"></td>
+                <td><input type="checkbox" class="phot-row" id="phot-row-{{datum.id}}" name="share-box" value="{{datum.id}}" onchange="check_selected()"></td>
                 <td>{{ datum.timestamp }}</td>
                 <td>{{ datum.telescope }}</td>
                 <td>{{ datum.filter }}</td>
@@ -56,7 +56,7 @@
               {% bootstrap_field target_data_share_form.share_destination %}
             </div>
             <div class="col-sm-2">
-              <input type="submit" class="btn btn-primary" value="Submit" name="share_targetdata_form" style="position:absolute; bottom:1rem">
+              <input type="submit" class="btn btn-primary" id="submit_selected" value="Submit" name="share_targetdata_form" style="position:absolute; bottom:1rem" disabled>
             </div>
           </div>
             {% else %}
@@ -75,5 +75,16 @@
      } else {
         $('input[name=share-box]').prop('checked', false);
      }
+  }
+  function check_selected()  {
+  var share_boxes = document.getElementsByName("share-box");
+  var submit_btn = document.getElementById('submit_selected');
+    for (const box of share_boxes) {
+        if(box.checked == true) {
+            submit_btn.disabled = false;
+            return;
+        }
+    }
+    submit_btn.disabled = true;
   }
 </script>

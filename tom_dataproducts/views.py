@@ -318,7 +318,7 @@ class DataShareView(FormView):
 
         data_share_form = DataShareForm(request.POST, request.FILES)
         # Check if data points have been selected.
-        selected_data = request.POST.getlist("share-box", None)
+        selected_data = request.POST.getlist("share-box")
         if data_share_form.is_valid():
             form_data = data_share_form.cleaned_data
             # 1st determine if pk is data product, Reduced Datum, or Target.
@@ -332,7 +332,7 @@ class DataShareView(FormView):
                 target_id = kwargs.get('tg_pk', None)
                 target = Target.objects.get(pk=target_id)
                 data_type = form_data['data_type']
-                if selected_data is None:
+                if request.POST.get("share-box", None) is None:
                     reduced_datums = ReducedDatum.objects.filter(target=target, data_type=data_type)
                 else:
                     reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
@@ -360,7 +360,13 @@ class DataShareView(FormView):
                     messages.error(self.request, 'TOM-TOM sharing is not yet supported.')
                     return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
                     # response = self.share_with_tom(share_destination, product)
-                publish_feedback = response.json()["message"]
+                try:
+                    if 'message' in response.json():
+                        publish_feedback = response.json()['message']
+                    else:
+                        publish_feedback = f"ERROR: {response.text}"
+                except ValueError:
+                    publish_feedback = f"ERROR: Returned Response code {response.status_code}"
                 if "ERROR" in publish_feedback.upper():
                     messages.error(self.request, publish_feedback)
                 else:
@@ -421,14 +427,15 @@ class DataShareView(FormView):
         :param reduced_datums: selected input datums
         :return: queryset of reduced datums to be shared
         """
-        if 'hermes' in destination:
-            message_topic = kwargs.get('topic', None)
-            # Remove data points previously shared to the given topic
-            filtered_datums = reduced_datums.exclude(Q(message__exchange_status='published')
-                                                     & Q(message__topic=message_topic))
-        else:
-            filtered_datums = reduced_datums
-        return filtered_datums
+        return reduced_datums
+        # if 'hermes' in destination:
+        #     message_topic = kwargs.get('topic', None)
+        #     # Remove data points previously shared to the given topic
+        #     filtered_datums = reduced_datums.exclude(Q(message__exchange_status='published')
+        #                                              & Q(message__topic=message_topic))
+        # else:
+        #     filtered_datums = reduced_datums
+        # return filtered_datums
 
 
 class DataProductGroupDetailView(DetailView):

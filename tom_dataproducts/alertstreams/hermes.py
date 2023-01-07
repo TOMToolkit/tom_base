@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from dateutil.parser import parse
 
 from django.conf import settings
 
@@ -37,7 +38,7 @@ def publish_photometry_to_hermes(message_info, datums, **kwargs):
     :return: response
     """
     stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
-    submit_url = stream_base_url + 'submit/'
+    submit_url = stream_base_url + 'api/v0/' + 'submit_photometry/'
     headers = {'SCIMMA-API-Auth-Username': settings.DATA_SHARING['hermes']['CREDENTIAL_USERNAME'],
                'SCIMMA-API-Auth-Password': settings.DATA_SHARING['hermes']['CREDENTIAL_PASSWORD']}
     hermes_photometry_data = []
@@ -49,10 +50,10 @@ def publish_photometry_to_hermes(message_info, datums, **kwargs):
     alert = {
         'topic': message_info.topic,
         'title': message_info.title,
-        'author': message_info.submitter,
+        'submitter': message_info.submitter,
         'data': {
             'authors': message_info.authors,
-            'photometry_data': hermes_photometry_data,
+            'photometry': hermes_photometry_data,
         },
         'message_text': message_info.message,
     }
@@ -66,15 +67,22 @@ def create_hermes_phot_table_row(datum, **kwargs):
     """Build a row for a Hermes Photometry Table using a TOM Photometry datum
     """
     table_row = {
-        'photometryId': datum.target.name,
-        'dateObs': datum.timestamp.strftime('%x %X'),
+        'target_name': datum.target.name,
+        'ra': datum.target.ra,
+        'dec': datum.target.dec,
+        'date': datum.timestamp.strftime('%x %X'),
         'telescope': datum.value.get('telescope', ''),
         'instrument': datum.value.get('instrument', ''),
         'band': datum.value.get('filter', ''),
-        'brightness': datum.value.get('magnitude', ''),
-        'brightnessError': datum.value.get('magnitude_error', ''),
-        'brightnessUnit': datum.value.get('unit', 'AB mag'),
+        'brightness_unit': datum.value.get('unit', 'AB mag'),
     }
+    if datum.value.get('magnitude', None):
+        table_row['brightness'] = datum.value['magnitude']
+    else:
+        table_row['brightness'] = datum.value['limit']
+        table_row['nondetection'] = True
+    if datum.value.get('magnitude_error', None):
+        table_row['brightness_error'] = datum.value['magnitude_error']
     return table_row
 
 
@@ -108,18 +116,18 @@ def hermes_alert_handler(alert, metadata):
     """
     # logger.info(f'Alert received on topic {metadata.topic}: {alert};  metatdata: {metadata}')
     alert_as_dict = alert.content
-    photometry_table = alert_as_dict['data'].get('photometry_data', None)
+    print(alert_as_dict)
+    photometry_table = alert_as_dict['data'].get('photometry', None)
     if photometry_table:
         hermes_alert = AlertStreamMessage(topic=alert_as_dict['topic'], exchange_status='ingested')
-        hermes_alert.save()
         for row in photometry_table:
             try:
-                target = Target.objects.get(name=row['photometryId'])
+                target = Target.objects.get(name=row['target_name'])
             except Target.DoesNotExist:
                 continue
 
             try:
-                obs_date = datetime.strptime(row['dateObs'].strip(), '%x %X')
+                obs_date = parse(row['date'])
             except ValueError:
                 continue
 
@@ -133,6 +141,7 @@ def hermes_alert_handler(alert, metadata):
             }
             new_rd, created = ReducedDatum.objects.get_or_create(**datum)
             if created:
+                hermes_alert.save()
                 new_rd.message.add(hermes_alert)
                 new_rd.save()
 
@@ -144,11 +153,16 @@ def get_hermes_phot_value(phot_data):
     :return: Dictionary containing properly formatted parameters for Reduced_Datum
     """
     data_dictionary = {
-        'magnitude': phot_data['brightness'],
-        'magnitude_error': phot_data['brightnessError'],
+        'magnitude_error': phot_data.get('brightness_error', ''),
         'filter': phot_data['band'],
-        'telescope': phot_data['telescope'],
-        'instrument': phot_data['instrument'],
-        'unit': phot_data['brightnessUnit'],
+        'telescope': phot_data.get('telescope', ''),
+        'instrument': phot_data.get('instrument', ''),
+        'unit': phot_data['brightness_unit'],
     }
+
+    if not phot_data.get('nondetection', False):
+        data_dictionary['magnitude'] = phot_data['brightness']
+    else:
+        data_dictionary['limit'] = phot_data['brightness']
+
     return data_dictionary
