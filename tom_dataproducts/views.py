@@ -20,7 +20,6 @@ from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, FormView
 from django_filters.views import FilterView
-from django.db.models import Q
 from guardian.shortcuts import assign_perm, get_objects_for_user
 
 from tom_common.hooks import run_hook

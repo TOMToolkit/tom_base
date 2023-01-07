@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 from dateutil.parser import parse
 
 from django.conf import settings
