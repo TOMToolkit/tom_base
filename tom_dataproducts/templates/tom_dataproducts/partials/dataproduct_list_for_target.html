@@ -38,7 +38,7 @@
       </td>
       <td><a href="{% url 'tom_dataproducts:delete' product.id %}" class="btn btn-danger">Delete</a></td>
     </tr>
-    <tr id="share-{{forloop.counter}}" class="collapse">
+    <tr id="share-{{ forloop.counter }}" class="collapse">
       <td colspan=100%>
         <form method="POST" action="{% url 'tom_dataproducts:share' dp_pk=product.id %}" enctype="multipart/form-data">
           {% csrf_token %}
