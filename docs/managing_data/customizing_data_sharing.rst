@@ -1,7 +1,7 @@
 Customizing Data Sharing
 ---------------------------
 
-Data sharing is Possible currently only with HERMES.
+Currently, data sharing is only possible with HERMES.
 
 You will need to add ``DATA_SHARING`` to your ``settings.py`` that will give the proper credentials for the various
 streams, TOMS, etc. with which you desire to share data.

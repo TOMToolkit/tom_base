@@ -3,7 +3,7 @@
 {% load tom_common_extras %}
 <div class="card" style="margin-top:1rem; margin-bottom:1rem;">
     <div class="card-header">
-      Publish Data for {{target.name}}:
+      Publish Data for {{ target.name }}:
     </div>
     {% if sharing_destinations %}
     <form method="POST" action="{% url 'tom_dataproducts:share_all' tg_pk=target.id %}" enctype="multipart/form-data">

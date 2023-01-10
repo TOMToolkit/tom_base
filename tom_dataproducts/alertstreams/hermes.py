@@ -50,13 +50,13 @@ def publish_photometry_to_hermes(message_info, datums, **kwargs):
         'topic': message_info.topic,
         'title': message_info.title,
         'submitter': message_info.submitter,
+        'authors': message_info.authors,
         'data': {
-            'authors': message_info.authors,
             'photometry': hermes_photometry_data,
+            'extra_info': message_info.extra_info
         },
         'message_text': message_info.message,
     }
-    alert['data'].update(message_info.extra_info)
 
     response = requests.post(url=submit_url, json=alert, headers=headers)
     return response
@@ -69,7 +69,7 @@ def create_hermes_phot_table_row(datum, **kwargs):
         'target_name': datum.target.name,
         'ra': datum.target.ra,
         'dec': datum.target.dec,
-        'date': datum.timestamp.strftime('%x %X'),
+        'date': datum.timestamp.isoformat(),
         'telescope': datum.value.get('telescope', ''),
         'instrument': datum.value.get('instrument', ''),
         'band': datum.value.get('filter', ''),
@@ -78,7 +78,7 @@ def create_hermes_phot_table_row(datum, **kwargs):
     if datum.value.get('magnitude', None):
         table_row['brightness'] = datum.value['magnitude']
     else:
-        table_row['brightness'] = datum.value['limit']
+        table_row['brightness'] = datum.value.get('limit', None)
         table_row['nondetection'] = True
     if datum.value.get('magnitude_error', None):
         table_row['brightness_error'] = datum.value['magnitude_error']
@@ -94,7 +94,7 @@ def get_hermes_topics():
     :return: List of topics available for users
     """
     # stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
-    # submit_url = stream_base_url + "api/v0/topics/"
+    # submit_url = stream_base_url + "api/v0/profile/"
     # headers = {'SCIMMA-API-Auth-Username': settings.DATA_SHARING['hermes']['CREDENTIAL_USERNAME'],
     #            'SCIMMA-API-Auth-Password': settings.DATA_SHARING['hermes']['CREDENTIAL_PASSWORD']}
     # user = settings.DATA_SHARING['hermes']['SCIMMA_AUTH_USERNAME']
