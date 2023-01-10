@@ -7,5 +7,6 @@ omit =
     */migrations/*
     *wsgi.py
     *apps.py
+    */tests/*
 exclude_lines =
     except AttributeError:
