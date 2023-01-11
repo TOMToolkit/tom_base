@@ -115,7 +115,6 @@ def hermes_alert_handler(alert, metadata):
     """
     # logger.info(f'Alert received on topic {metadata.topic}: {alert};  metatdata: {metadata}')
     alert_as_dict = alert.content
-    print(alert_as_dict)
     photometry_table = alert_as_dict['data'].get('photometry', None)
     if photometry_table:
         hermes_alert = AlertStreamMessage(topic=alert_as_dict['topic'], exchange_status='ingested')
@@ -134,7 +133,7 @@ def hermes_alert_handler(alert, metadata):
                 'target': target,
                 'data_type': 'photometry',
                 'source_name': alert_as_dict['topic'],
-                'source_location': 'HERMES',
+                'source_location': 'Hermes via HOP',  # TODO Add message URL here once message ID's exist
                 'timestamp': obs_date,
                 'value': get_hermes_phot_value(row)
             }
