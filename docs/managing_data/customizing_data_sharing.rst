@@ -1,10 +1,24 @@
-Customizing Data Sharing
----------------------------
+Sharing Data with Other TOMs
+############################
 
-Currently, data sharing is only possible with HERMES.
+TOM Toolkit supports data sharing in two ways: sharing data directly from one TOM Toolkit-based TOM to another and
+sharing data between TOMs via `Hermes <https://hermes.lco.global>`_, an interface to `HOPSKOTCH <https://hop.scimma.org>`_,
+a Kafka stream dedicated to Astronomical messaging. (Learn more about HOPSKOTCH and Hermes by following those links).
 
-You will need to add ``DATA_SHARING`` to your ``settings.py`` that will give the proper credentials for the various
-streams, TOMS, etc. with which you desire to share data.
+Currently, data sharing is only possible with Hermes. Sharing data directly between two TOM Toolkit-based TOMs will be
+avalable soon.
+
+When sharing data between TOMs via Hermes, the source TOM publishes the data to shared to a topic on the HOPSKOTCH
+Kafka stream. The TOM receiving the data subscribes to the topic on the Kafka stream, ingesting messages on topic,
+extracting the data from the message, and saving it. So, publishing (sending) and subscribing (receiving) data are
+handled separately.
+
+
+Configuring your TOM to Send Data
+*********************************
+
+You will need to add a ``DATA_SHARING`` configuration dictionary to your ``settings.py`` that gives the credentials
+for the various streams, TOMS, etc. with which you wish to share data.
 
 .. code:: python
 

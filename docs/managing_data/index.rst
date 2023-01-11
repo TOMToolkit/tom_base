@@ -18,4 +18,4 @@ data to display anywhere in your TOM.
 :doc:`Adding Custom Data Processing <customizing_data_processing>` - Learn how you can process data into your
 TOM from uploaded data products.
 
-:doc:`Adding Custom Data Sharing <customizing_data_sharing>` - Learn how you can share data from your TOM.
+:doc:`Sharing Data <customizing_data_sharing>` - Learn how you can share data to and from your TOM.
