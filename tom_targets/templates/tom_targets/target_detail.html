@@ -35,6 +35,7 @@ $(document).ready(function(){
       {% target_buttons object %}
       {% target_data object %}
       {% recent_photometry object limit=3 %}
+      {% share_data object %}
       {% if object.type == 'SIDEREAL' %}
       {% aladin object %}
       {% endif %}
@@ -94,6 +95,7 @@ $(document).ready(function(){
       </div>
       <div class="tab-pane" id="photometry">
         {% photometry_for_target target %}
+        {% get_photometry_data object %}
         </div>
       <div class="tab-pane" id="spectroscopy">
         {% spectroscopy_for_target target %}
