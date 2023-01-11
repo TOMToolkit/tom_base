@@ -113,7 +113,6 @@ def hermes_alert_handler(alert, metadata):
     -- Requires 'tom_alertstreams' in settings.INSTALLED_APPS
     -- Requires ALERT_STREAMS['topic_handlers'] in settings
     """
-    # logger.info(f'Alert received on topic {metadata.topic}: {alert};  metatdata: {metadata}')
     alert_as_dict = alert.content
     photometry_table = alert_as_dict['data'].get('photometry', None)
     if photometry_table:
