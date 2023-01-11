@@ -7,6 +7,36 @@ from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
 
+def get_sharing_destination_options():
+    """
+    Build the Display options and headers for the dropdown form for choosing sharing topics.
+    Customize for a different selection experience.
+    :return: Tuple: Possible Destinations and their Display Names
+    """
+    choices = []
+    try:
+        for destination, details in settings.DATA_SHARING.items():
+            new_destination = [details.get('DISPLAY_NAME', destination)]
+            if details.get('USER_TOPICS', None):
+                # If topics exist for a destination (Such as HERMES) give topics as sub-choices
+                #   for non-selectable Destination
+                topic_list = [(f'{destination}:{topic}', topic) for topic in details['USER_TOPICS']]
+                new_destination.append(tuple(topic_list))
+            else:
+                # Otherwise just use destination as option
+                new_destination.insert(0, destination)
+            choices.append(tuple(new_destination))
+    except AttributeError:
+        pass
+    return tuple(choices)
+
+
+DESTINATION_OPTIONS = get_sharing_destination_options()
+
+DATA_TYPE_OPTIONS = (('photometry', 'Photometry'),
+                     ('spectroscopy', 'Spectroscopy'))
+
+
 class AddProductToGroupForm(forms.Form):
     products = forms.ModelMultipleChoiceField(
         DataProduct.objects.all(),
@@ -46,3 +76,18 @@ class DataProductUploadForm(forms.Form):
             self.fields['groups'] = forms.ModelMultipleChoiceField(Group.objects.none(),
                                                                    required=False,
                                                                    widget=forms.CheckboxSelectMultiple)
+
+
+class DataShareForm(forms.Form):
+    share_destination = forms.ChoiceField(required=True, choices=DESTINATION_OPTIONS, label="Destination")
+    share_title = forms.CharField(required=False, label="Title")
+    share_message = forms.CharField(required=False, label="Message", widget=forms.Textarea())
+    share_authors = forms.CharField(required=False, widget=forms.HiddenInput())
+    data_type = forms.ChoiceField(required=False, choices=DATA_TYPE_OPTIONS, label="Data Type")
+    target = forms.ModelChoiceField(
+        Target.objects.all(),
+        widget=forms.HiddenInput(),
+        required=False)
+    submitter = forms.CharField(
+        widget=forms.HiddenInput()
+    )

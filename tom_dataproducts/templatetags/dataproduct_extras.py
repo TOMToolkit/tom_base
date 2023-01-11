@@ -1,6 +1,8 @@
+import logging
 from urllib.parse import urlencode
 
 from django import template
+from django import forms
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
@@ -14,11 +16,14 @@ from io import BytesIO
 from PIL import Image, ImageDraw
 import base64
 
-from tom_dataproducts.forms import DataProductUploadForm
+from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 register = template.Library()
 
@@ -33,9 +38,17 @@ def dataproduct_list_for_target(context, target):
     else:
         target_products_for_user = get_objects_for_user(
             context['request'].user, 'tom_dataproducts.view_dataproduct', klass=target.dataproduct_set.all())
+
+    initial = {'submitter': context['request'].user,
+               'target': target,
+               'share_title': f"Updated data for {target.name}."}
+    form = DataShareForm(initial=initial)
+
     return {
         'products': target_products_for_user,
-        'target': target
+        'target': target,
+        'sharing_destinations': form.fields['share_destination'].choices,
+        'data_product_share_form': form
     }
 
 
@@ -75,7 +88,10 @@ def dataproduct_list_all(context):
         products = DataProduct.objects.all().order_by('-created')
     else:
         products = get_objects_for_user(context['request'].user, 'tom_dataproducts.view_dataproduct')
-    return {'products': products}
+
+    return {
+        'products': products,
+    }
 
 
 @register.inclusion_tag('tom_dataproducts/partials/upload_dataproduct.html', takes_context=True)
@@ -97,13 +113,102 @@ def upload_dataproduct(context, obj):
     return {'data_product_form': form}
 
 
+@register.inclusion_tag('tom_dataproducts/partials/share_target_data.html', takes_context=True)
+def share_data(context, target):
+    """
+    Publish data to Hermes
+    """
+
+    initial = {'submitter': context['request'].user,
+               'target': target,
+               'share_title': f"Updated data for {target.name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
+               }
+    form = DataShareForm(initial=initial)
+    form.fields['share_title'].widget = forms.HiddenInput()
+
+    context = {'target': target,
+               'target_data_share_form': form,
+               'sharing_destinations': form.fields['share_destination'].choices}
+    return context
+
+
 @register.inclusion_tag('tom_dataproducts/partials/recent_photometry.html')
 def recent_photometry(target, limit=1):
     """
     Displays a table of the most recent photometric points for a target.
     """
     photometry = ReducedDatum.objects.filter(data_type='photometry', target=target).order_by('-timestamp')[:limit]
-    return {'data': [{'timestamp': rd.timestamp, 'magnitude': rd.value['magnitude']} for rd in photometry]}
+
+    # Possibilities for reduced_datums from ZTF/MARS:
+    # reduced_datum.value: {'error': 0.0929680392146111, 'filter': 'r', 'magnitude': 18.2364940643311}
+    # reduced_datum.value: {'limit': 20.1023998260498, 'filter': 'g'}
+
+    # for limit magnitudes, set the value of the limit key to True and
+    # the value of the magnitude key to the limit so the template and
+    # treat magnitudes as such and prepend a '>' to the limit magnitudes
+    # see recent_photometry.html
+    data = []
+    for reduced_datum in photometry:
+        rd_data = {'timestamp': reduced_datum.timestamp}
+        if 'limit' in reduced_datum.value.keys():
+            rd_data['magnitude'] = reduced_datum.value['limit']
+            rd_data['limit'] = True
+        else:
+            rd_data['magnitude'] = reduced_datum.value['magnitude']
+            rd_data['limit'] = False
+        data.append(rd_data)
+
+    context = {'data': data}
+    return context
+
+
+@register.inclusion_tag('tom_dataproducts/partials/photometry_datalist_for_target.html', takes_context=True)
+def get_photometry_data(context, target):
+    """
+    Displays a table of the all photometric points for a target.
+    """
+    photometry = ReducedDatum.objects.filter(data_type='photometry', target=target).order_by('-timestamp')
+
+    # Possibilities for reduced_datums from ZTF/MARS:
+    # reduced_datum.value: {'error': 0.0929680392146111, 'filter': 'r', 'magnitude': 18.2364940643311}
+    # reduced_datum.value: {'limit': 20.1023998260498, 'filter': 'g'}
+
+    # for limit magnitudes, set the value of the limit key to True and
+    # the value of the magnitude key to the limit so the template and
+    # treat magnitudes as such and prepend a '>' to the limit magnitudes
+    # see recent_photometry.html
+    data = []
+    for reduced_datum in photometry:
+        rd_data = {'id': reduced_datum.pk,
+                   'timestamp': reduced_datum.timestamp,
+                   'source': reduced_datum.source_name,
+                   'filter': reduced_datum.value.get('filter', ''),
+                   'telescope': reduced_datum.value.get('telescope', ''),
+                   'magnitude_error': reduced_datum.value.get('magnitude_error', '')
+                   }
+
+        if 'limit' in reduced_datum.value.keys():
+            rd_data['magnitude'] = reduced_datum.value['limit']
+            rd_data['limit'] = True
+        else:
+            rd_data['magnitude'] = reduced_datum.value['magnitude']
+            rd_data['limit'] = False
+        data.append(rd_data)
+
+    initial = {'submitter': context['request'].user,
+               'target': target,
+               'data_type': 'photometry',
+               'share_title': f"Updated data for {target.name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
+               }
+    form = DataShareForm(initial=initial)
+    form.fields['share_title'].widget = forms.HiddenInput()
+    form.fields['data_type'].widget = forms.HiddenInput()
+
+    context = {'data': data,
+               'target': target,
+               'target_data_share_form': form,
+               'sharing_destinations': form.fields['share_destination'].choices}
+    return context
 
 
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html', takes_context=True)
@@ -193,9 +298,11 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
     fig = go.Figure(data=plot_data, layout=layout)
     fig.update_yaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
     fig.update_xaxes(showgrid=grid, color=label_color, showline=True, linecolor=label_color, mirror=True)
+    fig.update_layout(clickmode='event+select')
+
     return {
         'target': target,
-        'plot': offline.plot(fig, output_type='div', show_link=False)
+        'plot': offline.plot(fig, output_type='div', show_link=False),
     }
 
 
