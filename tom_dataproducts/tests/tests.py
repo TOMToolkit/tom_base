@@ -5,7 +5,7 @@ import tempfile
 from astropy import units
 from astropy.io import fits
 from astropy.table import Table
-from datetime import date, time
+from datetime import date, time, datetime, timezone
 from django.test import TestCase, override_settings
 from django.conf import settings
 from django.contrib.auth.models import Group, User
@@ -18,10 +18,11 @@ from unittest.mock import patch
 
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import DataProductUploadForm
-from tom_dataproducts.models import DataProduct, is_fits_image_file
+from tom_dataproducts.models import DataProduct, is_fits_image_file, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_dataproducts.processors.photometry_processor import PhotometryProcessor
 from tom_dataproducts.processors.spectroscopy_processor import SpectroscopyProcessor
+from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, publish_photometry_to_hermes
 from tom_dataproducts.utils import create_image_dataproduct
 from tom_observations.tests.utils import FakeRoboticFacility
 from tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory
@@ -37,6 +38,10 @@ def mock_find_fits_img_size(filename):
 
 def mock_is_fits_image_file(filename):
     return True
+
+
+def mock_hermes_post(url, json, headers):
+    return json
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
@@ -489,3 +494,43 @@ class TestDataProductModel(TestCase):
                         'ignore_missing_simple=True')
 
             self.assertIn(expected, logs.output)
+
+
+class TestDataSharing(TestCase):
+    def setUp(self):
+        self.target = SiderealTargetFactory.create()
+        self.message_info = BuildHermesMessage()
+        datum = {'target': self.target,
+                 'data_type': 'photometry',
+                 'value': {'magnitude': 12,
+                           'magnitude_error': .1,
+                           'filter': 'v',
+                           'telescope': 'ogg',
+                           'instrument': 'kb27',
+                           'unit': "Mag",
+                           }
+                 }
+        self.rd = ReducedDatum.objects.create(**datum)
+
+    @patch('tom_dataproducts.alertstreams.hermes.requests.post', mock_hermes_post)
+    def test_publish_photometry_to_hermes(self):
+        """Test a basic Hermes message format."""
+        expected_message = {'topic': 'hermes.test',
+                            'title': '',
+                            'submitter': '',
+                            'authors': '',
+                            'data': {'photometry': [{'target_name': self.target.name,
+                                                     'ra': self.target.ra,
+                                                     'dec': self.target.dec,
+                                                     'date': self.rd.timestamp.replace(tzinfo=timezone.utc).isoformat(),
+                                                     'telescope': 'ogg',
+                                                     'instrument': 'kb27',
+                                                     'band': 'v',
+                                                     'brightness_unit': 'Mag',
+                                                     'brightness': 12,
+                                                     'brightness_error': 0.1}],
+                                     'extra_info': {}},
+                            'message_text': ''}
+        datums = ReducedDatum.objects.all()
+        response = publish_photometry_to_hermes(self.message_info, datums)
+        self.assertEqual(response, expected_message)
