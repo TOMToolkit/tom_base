@@ -477,6 +477,35 @@ class TestTargetCreate(TestCase):
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(second_response, 'Target name with this Alias already exists.')
 
+    def test_create_target_name_conflicting_with_other_aliases(self):
+        target_data = {
+            'name': 'multiple_names_target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 2,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        names = ['John', 'Doe']
+        for i, name in enumerate(names):
+            target_data[f'aliases-{i}-name'] = name
+        self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        target_data['name'] = 'John'
+        target_data['aliases-TOTAL_FORMS'] = 0
+        for i, name in enumerate(names):
+            target_data.pop(f'aliases-{i}-name')
+        second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(second_response, 'Target with Alias matching this Name already exists.')
+
 
 class TestTargetUpdate(TestCase):
     def setUp(self):
