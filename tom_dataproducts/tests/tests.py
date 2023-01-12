@@ -5,7 +5,7 @@ import tempfile
 from astropy import units
 from astropy.io import fits
 from astropy.table import Table
-from datetime import date, time, datetime, timezone
+from datetime import date, time, timezone
 from django.test import TestCase, override_settings
 from django.conf import settings
 from django.contrib.auth.models import Group, User
