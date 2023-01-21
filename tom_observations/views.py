@@ -247,9 +247,16 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         if form.is_valid():
-            return self.form_valid(form)
+            if 'validateButton' in request.POST:
+                return self.form_validation_valid(form)
+            else:
+                return self.form_valid(form)
         else:
             return self.form_invalid(form)
+
+    def form_validation_valid(self, form):
+        messages.info(self.request, form.get_validation_message())
+        return self.render_to_response(self.get_context_data(request=self.request, form=form))
 
     def form_valid(self, form):
         """

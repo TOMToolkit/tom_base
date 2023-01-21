@@ -7,7 +7,7 @@ from django.test import TestCase
 
 from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.facilities.lco import make_request, LCOFacility
-from tom_observations.facilities.lco import LCOBaseForm, LCOBaseObservationForm, LCOImagingObservationForm
+from tom_observations.facilities.lco import LCOTemplateBaseForm, LCOBaseObservationForm, LCOImagingObservationForm
 from tom_observations.facilities.lco import LCOPhotometricSequenceForm, LCOSpectroscopicSequenceForm
 from tom_observations.facilities.lco import LCOSpectroscopyObservationForm, LCOMuscatImagingObservationForm
 from tom_observations.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
@@ -145,7 +145,7 @@ class TestLCOBaseForm(TestCase):
             test_instruments = {'test instrument': {'type': 'IMAGE'}}
             mock_cache.get.return_value = test_instruments
 
-            instruments = LCOBaseForm._get_instruments()
+            instruments = LCOTemplateBaseForm._get_instruments()
             self.assertDictContainsSubset({'test instrument': {'type': 'IMAGE'}}, instruments)
             self.assertNotIn('0M4-SCICAM-SBIG', instruments)
 
@@ -153,7 +153,7 @@ class TestLCOBaseForm(TestCase):
         with self.subTest():
             mock_cache.get.return_value = None
 
-            instruments = LCOBaseForm._get_instruments()
+            instruments = LCOTemplateBaseForm._get_instruments()
             self.assertIn('0M4-SCICAM-SBIG', instruments)
             self.assertDictContainsSubset({'type': 'IMAGE'}, instruments['0M4-SCICAM-SBIG'])
             self.assertNotIn('SOAR_GHTS_REDCAM', instruments)
@@ -163,7 +163,7 @@ class TestLCOBaseForm(TestCase):
     def test_instrument_choices(self, mock_get_instruments):
         mock_get_instruments.return_value = generate_lco_instrument_choices()
 
-        inst_choices = LCOBaseForm.instrument_choices()
+        inst_choices = LCOTemplateBaseForm.instrument_choices()
         self.assertIn(('2M0-FLOYDS-SCICAM', '2.0 meter FLOYDS'), inst_choices)
         self.assertIn(('0M4-SCICAM-SBIG', '0.4 meter SBIG'), inst_choices)
         self.assertIn(('2M0-SCICAM-MUSCAT', '2.0 meter Muscat'), inst_choices)
@@ -173,7 +173,7 @@ class TestLCOBaseForm(TestCase):
     def test_filter_choices(self, mock_get_instruments):
         mock_get_instruments.return_value = generate_lco_instrument_choices()
 
-        filter_choices = LCOBaseForm.filter_choices()
+        filter_choices = LCOTemplateBaseForm.filter_choices()
         for expected in [('opaque', 'Opaque'), ('100um-Pinhole', '100um Pinhole'), ('slit_6.0as', '6.0 arcsec slit')]:
             self.assertIn(expected, filter_choices)
         self.assertEqual(len(filter_choices), 17)
@@ -188,7 +188,7 @@ class TestLCOBaseForm(TestCase):
         mock_response.status_code = 200
         mock_make_request.return_value = mock_response
 
-        proposal_choices = LCOBaseForm.proposal_choices()
+        proposal_choices = LCOTemplateBaseForm.proposal_choices()
         self.assertIn(('ActiveProposal', 'Active (ActiveProposal)'), proposal_choices)
         self.assertNotIn(('InactiveProposal', 'Inactive (InactiveProposal)'), proposal_choices)
 

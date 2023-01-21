@@ -69,6 +69,7 @@ class BaseObservationForm(forms.Form):
     observation_type = forms.CharField(required=False, max_length=50, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
+        self.validation_message = 'This observation is valid.'
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         if settings.TARGET_PERMISSIONS_ONLY:
@@ -91,9 +92,15 @@ class BaseObservationForm(forms.Form):
         target_id = self.initial.get('target_id')
         return ButtonHolder(
                 Submit('submit', 'Submit'),
+                Submit('validate', 'Validate'),
                 HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>
                          Back</a>''')
             )
+
+    def get_validation_message(self):
+        """ Override this or self.validation_message to return a validation message that is shown when the Validate button is clicked and the form is valid
+        """
+        return self.validation_message
 
     def is_valid(self):
         # TODO: Make this call the validate_observation method in facility
