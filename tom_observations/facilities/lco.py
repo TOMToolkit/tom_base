@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 
 from astropy import units as u
 from crispy_forms.bootstrap import AppendedText, PrependedText, Accordion, AccordionGroup, TabHolder, Tab, Alert
-from crispy_forms.layout import Column, Div, HTML, Layout, Row, MultiWidgetField, Fieldset, Button, Submit, ButtonHolder
+from crispy_forms.layout import Column, Div, HTML, Layout, Row, MultiWidgetField, Fieldset, Submit, ButtonHolder
 from dateutil.parser import parse
 from django import forms
 from django.conf import settings
@@ -137,13 +137,17 @@ def make_request(*args, **kwargs):
     response.raise_for_status()
     return response
 
+
 class LCOBaseForm(forms.Form):
-    """ The LCOBaseForm assumes nothing of fields, and just adds helper methods for getting data from the LCO portal to other form subclasses.
+    """ The LCOBaseForm assumes nothing of fields, and just adds helper methods for getting
+        data from the LCO portal to other form subclasses.
     """
+
     def target_group_choices(self):
         target_id = self.initial.get('target_id')
         target_name = Target.objects.get(pk=target_id).name
-        group_targets = Target.objects.filter(targetlist__targets__pk=target_id).exclude(pk=target_id).order_by('name').distinct().values_list('pk', 'name')
+        group_targets = Target.objects.filter(targetlist__targets__pk=target_id).exclude(
+            pk=target_id).order_by('name').distinct().values_list('pk', 'name')
         return [(target_id, target_name)] + list(group_targets)
 
     @staticmethod
@@ -180,19 +184,19 @@ class LCOBaseForm(forms.Form):
         return sorted(set([
             (f['code'], f['code'] if use_code_only else f['name']) for ins in self.get_instruments().values() for f in
             ins['modes'].get(mode_type, {}).get('modes', [])
-            ]), key=lambda filter_tuple: filter_tuple[1])
+        ]), key=lambda filter_tuple: filter_tuple[1])
 
     def filter_choices(self, use_code_only=False):
         return sorted(set([
             (f['code'], f['code'] if use_code_only else f['name']) for ins in self.get_instruments().values() for f in
             ins['optical_elements'].get('filters', []) + ins['optical_elements'].get('slits', []) if f['schedulable']
-            ]), key=lambda filter_tuple: filter_tuple[1])
+        ]), key=lambda filter_tuple: filter_tuple[1])
 
     def filter_choices_for_group(self, oe_group, use_code_only=False):
         return sorted(set([
             (f['code'], f['code'] if use_code_only else f['name']) for ins in self.get_instruments().values() for f in
             ins['optical_elements'].get(oe_group, []) if f.get('schedulable')
-            ]), key=lambda filter_tuple: filter_tuple[1])
+        ]), key=lambda filter_tuple: filter_tuple[1])
 
     def get_optical_element_groups(self):
         oe_groups = set()
@@ -205,7 +209,10 @@ class LCOBaseForm(forms.Form):
         all_config_types = set()
         for instrument in self.get_instruments().values():
             config_types = instrument.get('configuration_types', {}).values()
-            all_config_types.update({(config_type.get('code'), config_type.get('name')) for config_type in config_types if config_type.get('schedulable')})
+            all_config_types.update(
+                {(config_type.get('code'), config_type.get('name'))
+                 for config_type in config_types if config_type.get('schedulable')}
+            )
         return sorted(all_config_types, key=lambda config_type: config_type[1])
 
     @staticmethod
@@ -239,135 +246,143 @@ class AdvancedExpansionsLayout(Layout):
     def __init__(self, form_name, *args, **kwargs):
         super().__init__(
             Accordion(
-                AccordionGroup('Cadence / Dither / Mosaic',
-                    Alert(
-                        content="Using the following sections each result in expanding portions of the Request on submission. You should only combine these if you know what you are doing.",
-                        css_class='alert-warning'
-                    ),
-                    TabHolder(
-                        Tab('Cadence',
-                            Div(
-                                HTML(f'''<br/><p>{static_cadencing_help}</p>'''),
-                            ),
-                            Div(
-                                Div(
-                                    'period',
-                                    css_class='col'
-                                ),
-                                Div(
-                                    'jitter',
-                                    css_class='col'
-                                ),
-                                css_class='form-row'
-                            ),
-                            css_id=f'{form_name}_cadence'
+                *self._get_accordion_group(form_name)
+            )
+        )
+
+    def _get_accordion_group(self, form_name):
+        return (
+            AccordionGroup(
+                'Cadence / Dither / Mosaic',
+                Alert(
+                    content="""Using the following sections each result in expanding portions of the Request
+                                on submission. You should only combine these if you know what you are doing.
+                            """,
+                    css_class='alert-warning'
+                ),
+                TabHolder(
+                    Tab('Cadence',
+                        Div(
+                            HTML(f'''<br/><p>{static_cadencing_help}</p>'''),
                         ),
-                        Tab('Dithering',
-                            Alert(
-                                content="Dithering will only be applied if you have a single Configuration specified.",
-                                css_class='alert-warning'
+                        Div(
+                            Div(
+                                'period',
+                                css_class='col'
                             ),
                             Div(
-                                Div(
-                                    'dither_pattern',
-                                    css_class='col'
-                                ),
-                                Div(
-                                    'dither_num_points',
-                                    css_class='col'
-                                ),
-                                css_class='form-row'
+                                'jitter',
+                                css_class='col'
                             ),
-                            Div(
-                                Div(
-                                    'dither_point_spacing',
-                                    css_class='col'
-                                ),
-                                Div(
-                                    'dither_line_spacing',
-                                    css_class='col'
-                                ),
-                                css_class='form-row'
-                            ),
-                            Div(
-                                Div(
-                                    'dither_num_rows',
-                                    css_class='col'
-                                ),
-                                Div(
-                                    'dither_num_columns',
-                                    css_class='col'
-                                ),
-                                css_class='form-row'
-                            ),
-                            Div(
-                                Div(
-                                    'dither_orientation',
-                                    css_class='col'
-                                ),
-                                Div(
-                                    'dither_center',
-                                    css_class='col'
-                                ),
-                                css_class='form-row'
-                            ),
-                            css_id=f'{form_name}_dithering'
+                            css_class='form-row'
                         ),
-                        Tab('Mosaicing',
-                            Alert(
-                                content="Mosaicing will only be applied if you have a single Configuration specified.",
-                                css_class='alert-warning'
+                        css_id=f'{form_name}_cadence'
+                        ),
+                    Tab('Dithering',
+                        Alert(
+                            content="Dithering will only be applied if you have a single Configuration specified.",
+                            css_class='alert-warning'
+                        ),
+                        Div(
+                            Div(
+                                'dither_pattern',
+                                css_class='col'
                             ),
                             Div(
-                                Div(
-                                    'mosaic_pattern',
-                                    css_class='col'
-                                ),
-                                Div(
-                                    'mosaic_num_points',
-                                    css_class='col'
-                                ),
-                                css_class='form-row'
+                                'dither_num_points',
+                                css_class='col'
+                            ),
+                            css_class='form-row'
+                        ),
+                        Div(
+                            Div(
+                                'dither_point_spacing',
+                                css_class='col'
                             ),
                             Div(
-                                Div(
-                                    'mosaic_point_overlap',
-                                    css_class='col'
-                                ),
-                                Div(
-                                    'mosaic_line_overlap',
-                                    css_class='col'
-                                ),
-                                css_class='form-row'
+                                'dither_line_spacing',
+                                css_class='col'
+                            ),
+                            css_class='form-row'
+                        ),
+                        Div(
+                            Div(
+                                'dither_num_rows',
+                                css_class='col'
                             ),
                             Div(
-                                Div(
-                                    'mosaic_num_rows',
-                                    css_class='col'
-                                ),
-                                Div(
-                                    'mosaic_num_columns',
-                                    css_class='col'
-                                ),
-                                css_class='form-row'
+                                'dither_num_columns',
+                                css_class='col'
+                            ),
+                            css_class='form-row'
+                        ),
+                        Div(
+                            Div(
+                                'dither_orientation',
+                                css_class='col'
                             ),
                             Div(
-                                Div(
-                                    'mosaic_orientation',
-                                    css_class='col'
-                                ),
-                                Div(
-                                    'mosaic_center',
-                                    css_class='col'
-                                ),
-                                css_class='form-row'
+                                'dither_center',
+                                css_class='col'
                             ),
-                            css_id=f'{form_name}_mosaicing'
+                            css_class='form-row'
+                        ),
+                        css_id=f'{form_name}_dithering'
+                        ),
+                    Tab('Mosaicing',
+                        Alert(
+                            content="Mosaicing will only be applied if you have a single Configuration specified.",
+                            css_class='alert-warning'
+                        ),
+                        Div(
+                            Div(
+                                'mosaic_pattern',
+                                css_class='col'
+                            ),
+                            Div(
+                                'mosaic_num_points',
+                                css_class='col'
+                            ),
+                            css_class='form-row'
+                        ),
+                        Div(
+                            Div(
+                                'mosaic_point_overlap',
+                                css_class='col'
+                            ),
+                            Div(
+                                'mosaic_line_overlap',
+                                css_class='col'
+                            ),
+                            css_class='form-row'
+                        ),
+                        Div(
+                            Div(
+                                'mosaic_num_rows',
+                                css_class='col'
+                            ),
+                            Div(
+                                'mosaic_num_columns',
+                                css_class='col'
+                            ),
+                            css_class='form-row'
+                        ),
+                        Div(
+                            Div(
+                                'mosaic_orientation',
+                                css_class='col'
+                            ),
+                            Div(
+                                'mosaic_center',
+                                css_class='col'
+                            ),
+                            css_class='form-row'
+                        ),
+                        css_id=f'{form_name}_mosaicing'
                         )
-                    ),
-                    active=False,
-                    css_id=f'{form_name}-expansions-group'
-                )
+                ),
+                active=False,
+                css_id=f'{form_name}-expansions-group'
             )
         )
 
@@ -392,14 +407,16 @@ class ConfigurationLayout(Layout):
                 Tab(f'{i+1}',
                     *self._get_config_layout(i+1, oe_groups),
                     css_id=f'{self.form_name}_config_{i+1}'
-                ),
+                    ),
             )
         return tuple(tabs)
 
     def _get_config_layout(self, instance, oe_groups):
         return (
             Alert(
-                content="When using multiple configurations, ensure the instrument types are all available on the same telescope class.",
+                content="""When using multiple configurations, ensure the instrument types are all
+                            available on the same telescope class.
+                        """,
                 css_class='alert-warning'
             ),
             Div(
@@ -423,38 +440,38 @@ class ConfigurationLayout(Layout):
             *self._get_target_override(instance),
             Accordion(
                 AccordionGroup('Instrument Configurations',
-                    self.instrument_config_layout_class(self.form_name, instance, oe_groups),
-                    css_id=f'{self.form_name}-c-{instance}-instrument-configs'
-                ),
+                               self.instrument_config_layout_class(self.form_name, instance, oe_groups),
+                               css_id=f'{self.form_name}-c-{instance}-instrument-configs'
+                               ),
                 AccordionGroup('Constraints',
-                    Div(
-                        Div(
-                            f'c_{instance}_max_airmass',
-                            css_class='col'
-                        ),
-                        css_class='form-row'
-                    ),
-                    Div(
-                        Div(
-                            f'c_{instance}_min_lunar_distance',
-                            css_class='col'
-                        ),
-                        Div(
-                            f'c_{instance}_max_lunar_phase',
-                            css_class='col'
-                        ),
-                        css_class='form-row'
-                    ),
-                ),
+                               Div(
+                                   Div(
+                                       f'c_{instance}_max_airmass',
+                                       css_class='col'
+                                   ),
+                                   css_class='form-row'
+                               ),
+                               Div(
+                                   Div(
+                                       f'c_{instance}_min_lunar_distance',
+                                       css_class='col'
+                                   ),
+                                   Div(
+                                       f'c_{instance}_max_lunar_phase',
+                                       css_class='col'
+                                   ),
+                                   css_class='form-row'
+                               ),
+                               ),
                 AccordionGroup('Fractional Ephemeris Rate',
-                    Div(
-                        HTML(f'''<br/><p>{fractional_ephemeris_rate_help}</p>''')
-                    ),
-                    Div(
-                        f'c_{instance}_fractional_ephemeris_rate',
-                        css_class='form-col'
-                    )
-                ),
+                               Div(
+                                   HTML(f'''<br/><p>{fractional_ephemeris_rate_help}</p>''')
+                               ),
+                               Div(
+                                   f'c_{instance}_fractional_ephemeris_rate',
+                                   css_class='form-col'
+                               )
+                               ),
             )
         )
 
@@ -536,7 +553,7 @@ class InstrumentConfigLayout(Layout):
                 Tab(f'{i+1}',
                     *self._get_ic_layout(config_instance, i+1, oe_groups),
                     css_id=f'{self.form_name}_c_{config_instance}_ic_{i+1}'
-                ),
+                    ),
             )
         return tuple(tabs)
 
@@ -611,30 +628,30 @@ class MuscatInstrumentConfigLayout(InstrumentConfigLayout):
                 css_class='form-row'
             ),
             Fieldset("Exposure Times",
-                HTML('''<p>Select the exposure time for each channel.</p>'''),
-                Div(
-                    Div(
-                        f'c_{config_instance}_ic_{instance}_exposure_time_g',
-                        css_class='col'
-                    ),
-                    Div(
-                        f'c_{config_instance}_ic_{instance}_exposure_time_i',
-                        css_class='col'
-                    ),
-                    css_class='form-row'
-                ),
-                Div(
-                    Div(
-                        f'c_{config_instance}_ic_{instance}_exposure_time_r',
-                        css_class='col'
-                    ),
-                    Div(
-                        f'c_{config_instance}_ic_{instance}_exposure_time_z',
-                        css_class='col'
-                    ),
-                    css_class='form-row'
-                )
-            ),
+                     HTML('''<p>Select the exposure time for each channel.</p>'''),
+                     Div(
+                         Div(
+                             f'c_{config_instance}_ic_{instance}_exposure_time_g',
+                             css_class='col'
+                         ),
+                         Div(
+                             f'c_{config_instance}_ic_{instance}_exposure_time_i',
+                             css_class='col'
+                         ),
+                         css_class='form-row'
+                     ),
+                     Div(
+                         Div(
+                             f'c_{config_instance}_ic_{instance}_exposure_time_r',
+                             css_class='col'
+                         ),
+                         Div(
+                             f'c_{config_instance}_ic_{instance}_exposure_time_z',
+                             css_class='col'
+                         ),
+                         css_class='form-row'
+                     )
+                     ),
             *self._get_oe_groups_layout(config_instance, instance, oe_groups)
         )
 
@@ -714,11 +731,11 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     def button_layout(self):
         target_id = self.initial.get('target_id')
         return ButtonHolder(
-                Submit('submit', 'Submit'),
-                Submit('validateButton', 'Validate'),
-                HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>
+            Submit('submit', 'Submit'),
+            Submit('validateButton', 'Validate'),
+            HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>
                          Back</a>''')
-            )
+        )
 
     def clean_start(self):
         start = self.cleaned_data['start']
@@ -732,7 +749,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
         obs_module = get_service_class(self.cleaned_data['facility'])
         response = obs_module().validate_observation(self.observation_payload())
         if response.get('request_durations', {}).get('duration'):
-            self.validation_message = f"This observation is valid with a duration of {response['request_durations']['duration']} seconds."
+            duration = response['request_durations']['duration']
+            self.validation_message = f"This observation is valid with a duration of {duration} seconds."
         if response.get('errors'):
             self.add_error(None, self._flatten_error_dict(response['errors']))
 
@@ -812,7 +830,6 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
             if 'extra_params' not in target_fields:
                 target_fields['extra_params'] = {}
             target_fields['extra_params'].update(self._build_target_extra_params(configuration_id))
-
 
         return target_fields
 
@@ -896,8 +913,8 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
 
 class LCOOldStyleObservationForm(LCOBaseObservationForm):
     """
-    The LCOOldStyleObservationForm provides the backwards compatibility for the Imaging and Spectral Sequence forms to remain the
-    same as they were previously despite the upgrades to the other LCO forms.
+    The LCOOldStyleObservationForm provides the backwards compatibility for the Imaging and Spectral Sequence
+    forms to remain the same as they were previously despite the upgrades to the other LCO forms.
     """
     exposure_count = forms.IntegerField(min_value=1)
     exposure_time = forms.FloatField(min_value=0.1,
@@ -905,7 +922,8 @@ class LCOOldStyleObservationForm(LCOBaseObservationForm):
                                      help_text=exposure_time_help)
     max_airmass = forms.FloatField(help_text=max_airmass_help, min_value=0)
     min_lunar_distance = forms.IntegerField(min_value=0, label='Minimum Lunar Distance', required=False)
-    max_lunar_phase = forms.FloatField(help_text=max_lunar_phase_help, min_value=0, max_value=1.0, label='Maximum Lunar Phase', required=False)
+    max_lunar_phase = forms.FloatField(help_text=max_lunar_phase_help, min_value=0,
+                                       max_value=1.0, label='Maximum Lunar Phase', required=False)
     fractional_ephemeris_rate = forms.FloatField(min_value=0.0, max_value=1.0,
                                                  label='Fractional Ephemeris Rate',
                                                  help_text='Value between 0 (Sidereal Tracking) '
@@ -1024,32 +1042,60 @@ class LCOFullObservationForm(LCOBaseObservationForm):
     jitter = forms.FloatField(help_text='Decimal Hours', required=False, min_value=0.0)
 
     dither_pattern = forms.ChoiceField(
-        choices=(('', 'None'),('line', 'Line'), ('grid', 'Grid'), ('spiral', 'Spiral')),
+        choices=(('', 'None'), ('line', 'Line'), ('grid', 'Grid'), ('spiral', 'Spiral')),
         required=False,
         help_text='Expand your Instrument Configurations with a set of offsets from the target following a pattern.'
     )
-    dither_num_points = forms.IntegerField(min_value=2, label='Number of Points', help_text='Number of Points in the pattern (Line and Spiral only).', required=False)
-    dither_point_spacing = forms.FloatField(label='Point Spacing', help_text='Vertical spacing between offsets.', required=False, min_value=0.0)
-    dither_line_spacing = forms.FloatField(label='Line Spacing', help_text='Horizontal spacing between offsets (Grid only).', required=False, min_value=0.0)
-    dither_orientation = forms.FloatField(label='Orientation', help_text='Angular rotation of the pattern in degrees, measured clockwise East of North (Line and Grid only).', required=False, min_value=0.0)
-    dither_num_rows = forms.IntegerField(min_value=1, label='Number of Rows', help_text='Number of offsets in the pattern in the RA direction (Grid only).', required=False)
-    dither_num_columns = forms.IntegerField(min_value=1, label='Number of Columns', help_text='Number of offsets in the pattern in the declination direction (Grid only).', required=False)
+    dither_num_points = forms.IntegerField(min_value=2, label='Number of Points',
+                                           help_text='Number of Points in the pattern (Line and Spiral only).',
+                                           required=False)
+    dither_point_spacing = forms.FloatField(
+        label='Point Spacing', help_text='Vertical spacing between offsets.', required=False, min_value=0.0)
+    dither_line_spacing = forms.FloatField(
+        label='Line Spacing', help_text='Horizontal spacing between offsets (Grid only).',
+        required=False, min_value=0.0)
+    dither_orientation = forms.FloatField(
+        label='Orientation',
+        help_text='Angular rotation of the pattern in degrees, measured clockwise East of North (Line and Grid only).',
+        required=False, min_value=0.0)
+    dither_num_rows = forms.IntegerField(
+        min_value=1, label='Number of Rows', required=False,
+        help_text='Number of offsets in the pattern in the RA direction (Grid only).')
+    dither_num_columns = forms.IntegerField(
+        min_value=1, label='Number of Columns', required=False,
+        help_text='Number of offsets in the pattern in the declination direction (Grid only).')
     dither_center = forms.ChoiceField(
         choices=((True, 'True'), (False, 'False')),
         label='Center',
         help_text='If True, pattern is centered on initial target. Otherwise pattern begins at initial target.'
     )
     mosaic_pattern = forms.ChoiceField(
-        choices=(('', 'None'),('line', 'Line'), ('grid', 'Grid')),
+        choices=(('', 'None'), ('line', 'Line'), ('grid', 'Grid')),
         required=False,
-        help_text='Expand your Configurations with a set of different targets following a mosaic pattern. Only works with Sidereal targets.'
+        help_text="""Expand your Configurations with a set of different targets following a mosaic pattern.
+                     Only works with Sidereal targets.
+                  """
     )
-    mosaic_num_points = forms.IntegerField(min_value=2, label='Number of Points', help_text='Number of Points in the pattern (Line only).', required=False)
-    mosaic_point_overlap = forms.FloatField(label='Point Overlap Percent', help_text='Percentage overlap of pointings in the pattern as a percent of declination in FOV.', required=False, min_value=0.0, max_value=100.0)
-    mosaic_line_overlap = forms.FloatField(label='Line Overlap Percent', help_text='Percentage overlap of pointings in the pattern as a percent of RA in FOV (Grid only).', required=False, min_value=0.0, max_value=100.0)
-    mosaic_orientation = forms.FloatField(label='Orientation', help_text='Angular rotation of the pattern in degrees, measured clockwise East of North.', required=False, min_value=0.0)
-    mosaic_num_rows = forms.IntegerField(min_value=1, label='Number of Rows', help_text='Number of pointings in the pattern in the declination direction (Grid only).', required=False)
-    mosaic_num_columns = forms.IntegerField(min_value=1, label='Number of Columns', help_text='Number of pointings in the pattern in the RA direction (Grid only).', required=False)
+    mosaic_num_points = forms.IntegerField(min_value=2, label='Number of Points',
+                                           help_text='Number of Points in the pattern (Line only).', required=False)
+    mosaic_point_overlap = forms.FloatField(
+        label='Point Overlap Percent',
+        help_text='Percentage overlap of pointings in the pattern as a percent of declination in FOV.',
+        required=False, min_value=0.0, max_value=100.0)
+    mosaic_line_overlap = forms.FloatField(
+        label='Line Overlap Percent',
+        help_text='Percentage overlap of pointings in the pattern as a percent of RA in FOV (Grid only).',
+        required=False, min_value=0.0, max_value=100.0)
+    mosaic_orientation = forms.FloatField(
+        label='Orientation',
+        help_text='Angular rotation of the pattern in degrees, measured clockwise East of North.',
+        required=False, min_value=0.0)
+    mosaic_num_rows = forms.IntegerField(
+        min_value=1, label='Number of Rows',
+        help_text='Number of pointings in the pattern in the declination direction (Grid only).', required=False)
+    mosaic_num_columns = forms.IntegerField(
+        min_value=1, label='Number of Columns',
+        help_text='Number of pointings in the pattern in the RA direction (Grid only).', required=False)
     mosaic_center = forms.ChoiceField(
         choices=((True, 'True'), (False, 'False')),
         label='Center',
@@ -1059,16 +1105,23 @@ class LCOFullObservationForm(LCOBaseObservationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for j in range(MAX_CONFIGURATIONS):
-            self.fields[f'c_{j+1}_instrument_type'] = forms.ChoiceField(choices=self.instrument_choices(), help_text=instrument_type_help, label='Instrument Type')
-            self.fields[f'c_{j+1}_configuration_type'] = forms.ChoiceField(choices=self.configuration_type_choices(), label='Configuration Type')
-            self.fields[f'c_{j+1}_repeat_duration'] = forms.FloatField(help_text=repeat_duration_help, required=False, label='Repeat Duration', widget=forms.TextInput(attrs={'placeholder': 'Seconds'}))
-            self.fields[f'c_{j+1}_max_airmass'] = forms.FloatField(help_text=max_airmass_help, label='Max Airmass', min_value=0, initial=1.6)
-            self.fields[f'c_{j+1}_min_lunar_distance'] = forms.IntegerField(min_value=0, label='Minimum Lunar Distance', required=False)
-            self.fields[f'c_{j+1}_max_lunar_phase'] = forms.FloatField(help_text=max_lunar_phase_help, min_value=0, max_value=1.0, label='Maximum Lunar Phase', required=False)
+            self.fields[f'c_{j+1}_instrument_type'] = forms.ChoiceField(
+                choices=self.instrument_choices(), help_text=instrument_type_help, label='Instrument Type')
+            self.fields[f'c_{j+1}_configuration_type'] = forms.ChoiceField(
+                choices=self.configuration_type_choices(), label='Configuration Type')
+            self.fields[f'c_{j+1}_repeat_duration'] = forms.FloatField(
+                help_text=repeat_duration_help, required=False, label='Repeat Duration',
+                widget=forms.TextInput(attrs={'placeholder': 'Seconds'}))
+            self.fields[f'c_{j+1}_max_airmass'] = forms.FloatField(
+                help_text=max_airmass_help, label='Max Airmass', min_value=0, initial=1.6)
+            self.fields[f'c_{j+1}_min_lunar_distance'] = forms.IntegerField(
+                min_value=0, label='Minimum Lunar Distance', required=False)
+            self.fields[f'c_{j+1}_max_lunar_phase'] = forms.FloatField(
+                help_text=max_lunar_phase_help, min_value=0, max_value=1.0, label='Maximum Lunar Phase', required=False)
             self.fields[f'c_{j+1}_fractional_ephemeris_rate'] = forms.FloatField(
                 min_value=0.0, max_value=1.0, label='Fractional Ephemeris Rate',
                 help_text='Value between 0 (Sidereal Tracking) '
-                        'and 1 (Target Tracking). If blank, Target Tracking.',
+                'and 1 (Target Tracking). If blank, Target Tracking.',
                 required=False
             )
             self.fields[f'c_{j+1}_target_override'] = forms.ChoiceField(
@@ -1078,12 +1131,17 @@ class LCOFullObservationForm(LCOBaseObservationForm):
                 label='Substitute Target for this Configuration'
             )
             for i in range(MAX_INSTRUMENT_CONFIGS):
-                self.fields[f'c_{j+1}_ic_{i+1}_exposure_count'] = forms.IntegerField(min_value=1, label='Exposure Count', initial=1)
-                self.fields[f'c_{j+1}_ic_{i+1}_exposure_time'] = forms.FloatField(min_value=0.1, label='Exposure Time',
-                    widget=forms.TextInput(attrs={'placeholder': 'Seconds'}), help_text=exposure_time_help, required=False)
+                self.fields[f'c_{j+1}_ic_{i+1}_exposure_count'] = forms.IntegerField(
+                    min_value=1, label='Exposure Count', initial=1)
+                self.fields[f'c_{j+1}_ic_{i+1}_exposure_time'] = forms.FloatField(
+                    min_value=0.1, label='Exposure Time',
+                    widget=forms.TextInput(attrs={'placeholder': 'Seconds'}),
+                    help_text=exposure_time_help, required=False)
                 for oe_group in self.get_optical_element_groups():
                     oe_group_plural = oe_group + 's'
-                    self.fields[f'c_{j+1}_ic_{i+1}_{oe_group}'] = forms.ChoiceField(choices=self.filter_choices_for_group(oe_group_plural), label=oe_group.replace('_', ' ').capitalize())
+                    self.fields[f'c_{j+1}_ic_{i+1}_{oe_group}'] = forms.ChoiceField(
+                        choices=self.filter_choices_for_group(oe_group_plural),
+                        label=oe_group.replace('_', ' ').capitalize())
         self.helper.layout = Layout(
             self.common_layout,
             self.layout(),
@@ -1147,7 +1205,9 @@ class LCOFullObservationForm(LCOBaseObservationForm):
                 ),
                 css_class='form-row'
             ),
-            self.configuration_layout_class()(self.form_name(), self.instrument_config_layout_class(), self.get_optical_element_groups()),
+            self.configuration_layout_class()(
+                self.form_name(), self.instrument_config_layout_class(), self.get_optical_element_groups()
+            ),
             AdvancedExpansionsLayout(self.form_name())
         )
 
@@ -1168,7 +1228,8 @@ class LCOFullObservationForm(LCOBaseObservationForm):
             'optical_elements': {}
         }
         for oe_group in self.get_optical_element_groups():
-            instrument_config['optical_elements'][oe_group] = self.cleaned_data.get(f'c_{configuration_id}_ic_{id}_{oe_group}')
+            instrument_config['optical_elements'][oe_group] = self.cleaned_data.get(
+                f'c_{configuration_id}_ic_{id}_{oe_group}')
 
         return instrument_config
 
@@ -1179,7 +1240,7 @@ class LCOFullObservationForm(LCOBaseObservationForm):
             # This will only include instrument configs with an exposure time set
             if ic:
                 ics.append(ic)
-    
+
         return ics
 
     def _build_configuration(self, id):
@@ -1291,7 +1352,10 @@ class LCOFullObservationForm(LCOBaseObservationForm):
             return request
 
     def _build_location(self, configuration_id=1):
-        return {'telescope_class': self._get_instruments()[self.cleaned_data[f'c_{configuration_id}_instrument_type']]['class']}
+        return {
+            'telescope_class': self._get_instruments()[
+                self.cleaned_data[f'c_{configuration_id}_instrument_type']]['class']
+        }
 
     def observation_payload(self):
         payload = {
@@ -1315,8 +1379,10 @@ class LCOFullObservationForm(LCOBaseObservationForm):
                 }
             ]
         }
-        if self.cleaned_data.get('dither_pattern') and self.cleaned_data.get('dither_point_spacing') and len(payload['requests'][0]['configurations']) == 1:
-            payload['requests'][0]['configurations'][0] = self._expand_dither_pattern(payload['requests'][0]['configurations'][0])
+        if (self.cleaned_data.get('dither_pattern') and self.cleaned_data.get('dither_point_spacing') and len(
+                payload['requests'][0]['configurations']) == 1):
+            payload['requests'][0]['configurations'][0] = self._expand_dither_pattern(
+                payload['requests'][0]['configurations'][0])
         if self.cleaned_data.get('mosaic_pattern') and len(payload['requests'][0]['configurations']) == 1:
             payload['requests'][0] = self._expand_mosaic_pattern(payload['requests'][0])
         if self.cleaned_data.get('period') and self.cleaned_data.get('jitter') is not None:
@@ -1330,9 +1396,13 @@ class LCOImagingObservationForm(LCOFullObservationForm):
     The LCOImagingObservationForm allows the selection of parameters for observing using LCO's Imagers. The list of
     Imagers and their details can be found here: https://lco.global/observatory/instruments/
     """
+
     def get_instruments(self):
         instruments = super().get_instruments()
-        return {code: instrument for (code, instrument) in instruments.items() if ('IMAGE' == instrument['type'] and 'MUSCAT' not in code and 'SOAR' not in code)}
+        return {
+            code: instrument for (code, instrument) in instruments.items() if (
+                'IMAGE' == instrument['type'] and 'MUSCAT' not in code and 'SOAR' not in code)
+        }
 
     def form_name(self):
         return 'image'
@@ -1341,28 +1411,34 @@ class LCOImagingObservationForm(LCOFullObservationForm):
         return [('EXPOSE', 'Exposure'), ('REPEAT_EXPOSE', 'Exposure Sequence')]
 
 
-
 class LCOMuscatImagingObservationForm(LCOFullObservationForm):
     """
     The LCOMuscatImagingObservationForm allows the selection of parameter for observing using LCO's Muscat imaging
     instrument. More information can be found here: https://lco.global/observatory/instruments/muscat3/
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Need to add the muscat specific exposure time fields to this form
         for j in range(MAX_CONFIGURATIONS):
-            self.fields[f'c_{j+1}_guide_mode'] = forms.ChoiceField(choices=self.mode_choices('guiding'), label='Guide Mode')
+            self.fields[f'c_{j+1}_guide_mode'] = forms.ChoiceField(
+                choices=self.mode_choices('guiding'), label='Guide Mode')
             for i in range(MAX_INSTRUMENT_CONFIGS):
                 self.fields.pop(f'c_{j+1}_ic_{i+1}_exposure_time', None)
-                self.fields[f'c_{j+1}_ic_{i+1}_exposure_time_g'] = forms.FloatField(min_value=0.0, label='Exposure Time g',
+                self.fields[f'c_{j+1}_ic_{i+1}_exposure_time_g'] = forms.FloatField(
+                    min_value=0.0, label='Exposure Time g',
                     widget=forms.TextInput(attrs={'placeholder': 'Seconds'}), required=False)
-                self.fields[f'c_{j+1}_ic_{i+1}_exposure_time_r'] = forms.FloatField(min_value=0.0, label='Exposure Time r',
+                self.fields[f'c_{j+1}_ic_{i+1}_exposure_time_r'] = forms.FloatField(
+                    min_value=0.0, label='Exposure Time r',
                     widget=forms.TextInput(attrs={'placeholder': 'Seconds'}), required=False)
-                self.fields[f'c_{j+1}_ic_{i+1}_exposure_time_i'] = forms.FloatField(min_value=0.0, label='Exposure Time i',
+                self.fields[f'c_{j+1}_ic_{i+1}_exposure_time_i'] = forms.FloatField(
+                    min_value=0.0, label='Exposure Time i',
                     widget=forms.TextInput(attrs={'placeholder': 'Seconds'}), required=False)
-                self.fields[f'c_{j+1}_ic_{i+1}_exposure_time_z'] = forms.FloatField(min_value=0.0, label='Exposure Time z',
+                self.fields[f'c_{j+1}_ic_{i+1}_exposure_time_z'] = forms.FloatField(
+                    min_value=0.0, label='Exposure Time z',
                     widget=forms.TextInput(attrs={'placeholder': 'Seconds'}), required=False)
-                self.fields[f'c_{j+1}_ic_{i+1}_readout_mode'] = forms.ChoiceField(choices=self.mode_choices('readout'), label='Readout Mode')
+                self.fields[f'c_{j+1}_ic_{i+1}_readout_mode'] = forms.ChoiceField(
+                    choices=self.mode_choices('readout'), label='Readout Mode')
                 self.fields[f'c_{j+1}_ic_{i+1}_exposure_mode'] = forms.ChoiceField(
                     label='Exposure Mode',
                     choices=self.mode_choices('exposure'),
@@ -1380,7 +1456,10 @@ class LCOMuscatImagingObservationForm(LCOFullObservationForm):
 
     def get_instruments(self):
         instruments = super().get_instruments()
-        return {code: instrument for (code, instrument) in instruments.items() if ('IMAGE' == instrument['type'] and 'MUSCAT' in code)}
+        return {
+            code: instrument for (code, instrument) in instruments.items() if (
+                'IMAGE' == instrument['type'] and 'MUSCAT' in code)
+        }
 
     def configuration_type_choices(self):
         return [('EXPOSE', 'Exposure'), ('REPEAT_EXPOSE', 'Exposure Sequence')]
@@ -1394,9 +1473,10 @@ class LCOMuscatImagingObservationForm(LCOFullObservationForm):
 
     def _build_instrument_config(self, instrument_type, configuration_id, id):
         # Refer to the 'MUSCAT instrument configuration' section on this page: https://developers.lco.global/
-        if not (self.cleaned_data.get(f'c_{configuration_id}_ic_{id}_exposure_time_g') and self.cleaned_data.get(f'c_{configuration_id}_ic_{id}_exposure_time_r')
-                and self.cleaned_data.get(f'c_{configuration_id}_ic_{id}_exposure_time_i') and self.cleaned_data.get(f'c_{configuration_id}_ic_{id}_exposure_time_z')
-            ):
+        if not (self.cleaned_data.get(f'c_{configuration_id}_ic_{id}_exposure_time_g') and self.cleaned_data.get(
+            f'c_{configuration_id}_ic_{id}_exposure_time_r') and self.cleaned_data.get(
+                f'c_{configuration_id}_ic_{id}_exposure_time_i') and self.cleaned_data.get(
+                    f'c_{configuration_id}_ic_{id}_exposure_time_z')):
             return None
         instrument_config = {
             'exposure_count': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_count'],
@@ -1417,7 +1497,8 @@ class LCOMuscatImagingObservationForm(LCOFullObservationForm):
             }
         }
         for oe_group in self.get_optical_element_groups():
-            instrument_config['optical_elements'][oe_group] = self.cleaned_data.get(f'c_{configuration_id}_ic_{id}_{oe_group}')
+            instrument_config['optical_elements'][oe_group] = self.cleaned_data.get(
+                f'c_{configuration_id}_ic_{id}_{oe_group}')
 
         return instrument_config
 
@@ -1427,14 +1508,19 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
     The LCOSpectroscopyObservationForm allows the selection of parameters for observing using LCO's Spectrographs. The
     list of spectrographs and their details can be found here: https://lco.global/observatory/instruments/
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for j in range(MAX_CONFIGURATIONS):
-            self.fields[f'c_{j+1}_acquisition_mode'] = forms.ChoiceField(choices=self.mode_choices('acquisition', use_code_only=True), label='Acquisition Mode')
+            self.fields[f'c_{j+1}_acquisition_mode'] = forms.ChoiceField(
+                choices=self.mode_choices('acquisition', use_code_only=True), label='Acquisition Mode')
             for i in range(MAX_INSTRUMENT_CONFIGS):
-                self.fields[f'c_{j+1}_ic_{i+1}_rotator_mode'] = forms.ChoiceField(choices=self.mode_choices('rotator'), label='Rotator Mode', help_text='Only for Floyds')
-                self.fields[f'c_{j+1}_ic_{i+1}_rotator_angle'] = forms.FloatField(min_value=0.0, initial=0.0,
-                    help_text='Rotation angle of slit. Only for Floyds `Slit Position Angle` rotator mode', label='Rotator Angle', required=False
+                self.fields[f'c_{j+1}_ic_{i+1}_rotator_mode'] = forms.ChoiceField(
+                    choices=self.mode_choices('rotator'), label='Rotator Mode', help_text='Only for Floyds')
+                self.fields[f'c_{j+1}_ic_{i+1}_rotator_angle'] = forms.FloatField(
+                    min_value=0.0, initial=0.0,
+                    help_text='Rotation angle of slit. Only for Floyds `Slit Position Angle` rotator mode',
+                    label='Rotator Angle', required=False
                 )
                 self.fields[f'c_{j+1}_ic_{i+1}_slit'].help_text = 'Only for Floyds'
 
@@ -1452,7 +1538,12 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
         return SpectralConfigurationLayout
 
     def configuration_type_choices(self):
-        return [('SPECTRUM', 'Spectrum'), ('REPEAT_SPECTRUM', 'Spectrum Sequence'), ('ARC', 'Arc'), ('LAMP_FLAT', 'Lamp Flat')]
+        return [
+            ('SPECTRUM', 'Spectrum'),
+            ('REPEAT_SPECTRUM', 'Spectrum Sequence'),
+            ('ARC', 'Arc'),
+            ('LAMP_FLAT', 'Lamp Flat')
+        ]
 
     def _build_acquisition_config(self, configuration_id):
         acquisition_config = {'mode': self.cleaned_data[f'c_{configuration_id}_acquisition_mode']}
@@ -1480,7 +1571,8 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
         if 'FLOYDS' in instrument_type.upper():
             instrument_config['rotator_mode'] = self.cleaned_data[f'c_{configuration_id}_ic_{id}_rotator_mode']
             if instrument_config['rotator_mode'] == 'SKY':
-                instrument_config['extra_params'] = {'rotator_angle': self.cleaned_data.get(f'c_{configuration_id}_ic_{id}_rotator_angle', 0)}
+                instrument_config['extra_params'] = {'rotator_angle': self.cleaned_data.get(
+                    f'c_{configuration_id}_ic_{id}_rotator_angle', 0)}
         # Clear out the optical elements for NRES
         elif 'NRES' in instrument_type.upper():
             instrument_config['optical_elements'] = {}
@@ -1760,7 +1852,7 @@ class LCOSpectroscopicSequenceForm(LCOOldStyleObservationForm):
         return sorted(set([
             (f['code'], f['name']) for name, ins in LCOSpectroscopicSequenceForm._get_instruments().items() for f in
             ins['optical_elements'].get('slits', []) if name == '2M0-FLOYDS-SCICAM'
-            ]), key=lambda filter_tuple: filter_tuple[1])
+        ]), key=lambda filter_tuple: filter_tuple[1])
 
     def layout(self):
         if settings.TARGET_PERMISSIONS_ONLY:
@@ -1791,6 +1883,7 @@ class LCOObservationTemplateForm(GenericTemplateForm, LCOTemplateBaseForm):
     point to making start_time an available field, as it will change between
     observations.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name in ['groups', 'target_id']:
@@ -1962,7 +2055,7 @@ class LCOFacility(BaseRoboticObservationFacility):
                     'weather_url': f'https://weather.lco.global/#/{site["sitecode"]}'
                 }
                 for site in self.SITES.values()]
-            }
+        }
 
         return facility_weather_urls
 

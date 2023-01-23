@@ -98,7 +98,8 @@ class BaseObservationForm(forms.Form):
             )
 
     def get_validation_message(self):
-        """ Override this or self.validation_message to return a validation message that is shown when the Validate button is clicked and the form is valid
+        """ Override this or self.validation_message to return a validation message that is shown when
+            the Validate button is clicked and the form is valid
         """
         return self.validation_message
 
