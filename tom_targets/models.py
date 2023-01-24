@@ -241,6 +241,7 @@ class Target(models.Model):
         names = kwargs.pop('names', [])
 
         created = False if self.id else True
+
         super().save(*args, **kwargs)
 
         if created:
@@ -255,6 +256,7 @@ class Target(models.Model):
 
         for name in names:
             name, _ = TargetName.objects.get_or_create(target=self, name=name)
+            name.full_clean()
             name.save()
 
         if not created:
@@ -270,6 +272,8 @@ class Target(models.Model):
             for alias in self.aliases.all():
                 if alias.name == self.name:
                     raise ValidationError('Target name and target aliases must be different')
+        if TargetName.objects.filter(name=self.name):
+            raise ValidationError(f'Target {self.name} has a conflict with the alias of an existing target.')
 
     def __str__(self):
         return str(self.name)
@@ -387,8 +391,10 @@ class TargetName(models.Model):
         """
         super().validate_unique(*args, **kwargs)
         if self.name == self.target.name:
-            raise ValidationError(f'''Alias {self.name} has a conflict with the primary name of the target
-                                      {self.target.name} (id={self.target.id})''')
+            raise ValidationError(f'Alias {self.name} has a conflict with the primary name of the target. '
+                                  f'(target_id={self.target.id})')
+        if Target.objects.filter(name=self.name):
+            raise ValidationError(f'Alias {self.name} has a conflict with the primary name of an existing target.')
 
 
 class TargetExtra(models.Model):

@@ -504,7 +504,9 @@ class TestTargetCreate(TestCase):
         for i, name in enumerate(names):
             target_data.pop(f'aliases-{i}-name')
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(second_response, 'Target with Alias matching this Name already exists.')
+        self.assertContains(second_response, f'Target {target_data["name"]} has a conflict with the alias of an '
+                                             f'existing target.')
+        self.assertFalse(Target.objects.filter(name=target_data['name']).exists())
 
     def test_create_target_alias_conflicting_with_existing_target_name(self):
         target_data = {
@@ -531,7 +533,8 @@ class TestTargetCreate(TestCase):
         target_data['name'] = 'multiple_names_target'
         target_data['aliases-TOTAL_FORMS'] = 2
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(second_response, 'Target with Name matching this Alias already exists.')
+        self.assertContains(second_response, f'Alias {names[0]} has a conflict with the primary name of an existing'
+                                             f' target.')
 
     def test_create_target_alias_conflicting_with_target_name(self):
         target_data = {
@@ -555,7 +558,11 @@ class TestTargetCreate(TestCase):
         for i, name in enumerate(names):
             target_data[f'aliases-{i}-name'] = name
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(response, 'Target name and target aliases must be different')
+        self.assertTrue(Target.objects.filter(name=target_data['name']).exists())
+        target = Target.objects.get(name=target_data['name'])
+        self.assertContains(response, f'Alias {names[0]} has a conflict with the primary name of the target. '
+                                      f'(target_id={target.id})')
+        self.assertFalse(TargetName.objects.filter(name=target_data['name']).exists())
 
 
 class TestTargetUpdate(TestCase):
