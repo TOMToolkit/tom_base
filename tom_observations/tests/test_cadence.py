@@ -10,29 +10,29 @@ from tom_observations.cadences.retry_failed_observations import RetryFailedObser
 
 
 mock_filters = {'1M0-SCICAM-SINISTRO': {
-                    'type': 'IMAGE',
-                    'class': '1m0',
-                    'name': '1.0 meter Sinistro',
-                    'optical_elements': {
-                        'filters': [{'name': 'Bessell-I', 'code': 'I'}]}
-                    }
-                }
+    'type': 'IMAGE',
+    'class': '1m0',
+    'name': '1.0 meter Sinistro',
+    'optical_elements': {
+        'filters': [{'name': 'Bessell-I', 'code': 'I'}]}
+}
+}
 
 obs_params = {
-        'facility': 'LCO',
-        'observation_type': 'IMAGING',
-        'name': 'With Perms',
-        'ipp_value': 1.05,
-        'start': '2020-01-01T00:00:00',
-        'end': '2020-01-02T00:00:00',
-        'exposure_count': 1,
-        'exposure_time': 2.0,
-        'max_airmass': 4.0,
-        'observation_mode': 'NORMAL',
-        'proposal': 'LCOSchedulerTest',
-        'filter': 'I',
-        'instrument_type': '1M0-SCICAM-SINISTRO'
-    }
+    'facility': 'LCO',
+    'observation_type': 'IMAGING',
+    'name': 'With Perms',
+    'ipp_value': 1.05,
+    'start': '2020-01-01T00:00:00',
+    'end': '2020-01-02T00:00:00',
+    'exposure_count': 1,
+    'exposure_time': 2.0,
+    'max_airmass': 4.0,
+    'observation_mode': 'NORMAL',
+    'proposal': 'LCOSchedulerTest',
+    'filter': 'I',
+    'instrument_type': '1M0-SCICAM-SINISTRO'
+}
 
 
 @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments', return_value=mock_filters)

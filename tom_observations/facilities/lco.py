@@ -175,7 +175,7 @@ class LCOBaseForm(forms.Form):
             return 'EXPOSE'
 
     def get_instruments(self):
-        return LCOTemplateBaseForm._get_instruments()
+        return LCOBaseForm._get_instruments()
 
     def instrument_choices(self):
         return sorted([(k, v['name']) for k, v in self.get_instruments().items()], key=lambda inst: inst[1])
@@ -183,7 +183,7 @@ class LCOBaseForm(forms.Form):
     def mode_choices(self, mode_type, use_code_only=False):
         return sorted(set([
             (f['code'], f['code'] if use_code_only else f['name']) for ins in self.get_instruments().values() for f in
-            ins['modes'].get(mode_type, {}).get('modes', [])
+            ins.get('modes', {}).get(mode_type, {}).get('modes', [])
         ]), key=lambda filter_tuple: filter_tuple[1])
 
     def filter_choices(self, use_code_only=False):
@@ -718,6 +718,9 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
         label='Configuration Repeats',
         help_text='Number of times to repeat the set of configurations, usually used for nodding between 2+ targets'
     )
+    period = forms.FloatField(help_text='Decimal Hours', required=False, min_value=0.0)
+    jitter = forms.FloatField(help_text='Decimal Hours', required=False, min_value=0.0)
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1038,9 +1041,6 @@ class LCOFullObservationForm(LCOBaseObservationForm):
     LCOFullObservationForm presents the user with all of the instrument and filter options that the facility has to
     offer.
     """
-    period = forms.FloatField(help_text='Decimal Hours', required=False, min_value=0.0)
-    jitter = forms.FloatField(help_text='Decimal Hours', required=False, min_value=0.0)
-
     dither_pattern = forms.ChoiceField(
         choices=(('', 'None'), ('line', 'Line'), ('grid', 'Grid'), ('spiral', 'Spiral')),
         required=False,
@@ -1067,6 +1067,7 @@ class LCOFullObservationForm(LCOBaseObservationForm):
     dither_center = forms.ChoiceField(
         choices=((True, 'True'), (False, 'False')),
         label='Center',
+        required=False,
         help_text='If True, pattern is centered on initial target. Otherwise pattern begins at initial target.'
     )
     mosaic_pattern = forms.ChoiceField(
@@ -1099,6 +1100,7 @@ class LCOFullObservationForm(LCOBaseObservationForm):
     mosaic_center = forms.ChoiceField(
         choices=((True, 'True'), (False, 'False')),
         label='Center',
+        required=False,
         help_text='If True, pattern is centered on initial target. Otherwise pattern begins at initial target.'
     )
 
@@ -1106,14 +1108,15 @@ class LCOFullObservationForm(LCOBaseObservationForm):
         super().__init__(*args, **kwargs)
         for j in range(MAX_CONFIGURATIONS):
             self.fields[f'c_{j+1}_instrument_type'] = forms.ChoiceField(
-                choices=self.instrument_choices(), help_text=instrument_type_help, label='Instrument Type')
+                choices=self.instrument_choices(), required=False, help_text=instrument_type_help,
+                label='Instrument Type')
             self.fields[f'c_{j+1}_configuration_type'] = forms.ChoiceField(
-                choices=self.configuration_type_choices(), label='Configuration Type')
+                choices=self.configuration_type_choices(), required=False, label='Configuration Type')
             self.fields[f'c_{j+1}_repeat_duration'] = forms.FloatField(
                 help_text=repeat_duration_help, required=False, label='Repeat Duration',
                 widget=forms.TextInput(attrs={'placeholder': 'Seconds'}))
             self.fields[f'c_{j+1}_max_airmass'] = forms.FloatField(
-                help_text=max_airmass_help, label='Max Airmass', min_value=0, initial=1.6)
+                help_text=max_airmass_help, label='Max Airmass', min_value=0, initial=1.6, required=False)
             self.fields[f'c_{j+1}_min_lunar_distance'] = forms.IntegerField(
                 min_value=0, label='Minimum Lunar Distance', required=False)
             self.fields[f'c_{j+1}_max_lunar_phase'] = forms.FloatField(
@@ -1132,7 +1135,7 @@ class LCOFullObservationForm(LCOBaseObservationForm):
             )
             for i in range(MAX_INSTRUMENT_CONFIGS):
                 self.fields[f'c_{j+1}_ic_{i+1}_exposure_count'] = forms.IntegerField(
-                    min_value=1, label='Exposure Count', initial=1)
+                    min_value=1, label='Exposure Count', initial=1, required=False)
                 self.fields[f'c_{j+1}_ic_{i+1}_exposure_time'] = forms.FloatField(
                     min_value=0.1, label='Exposure Time',
                     widget=forms.TextInput(attrs={'placeholder': 'Seconds'}),
@@ -1140,7 +1143,7 @@ class LCOFullObservationForm(LCOBaseObservationForm):
                 for oe_group in self.get_optical_element_groups():
                     oe_group_plural = oe_group + 's'
                     self.fields[f'c_{j+1}_ic_{i+1}_{oe_group}'] = forms.ChoiceField(
-                        choices=self.filter_choices_for_group(oe_group_plural),
+                        choices=self.filter_choices_for_group(oe_group_plural), required=False,
                         label=oe_group.replace('_', ' ').capitalize())
         self.helper.layout = Layout(
             self.common_layout,
@@ -1422,7 +1425,7 @@ class LCOMuscatImagingObservationForm(LCOFullObservationForm):
         # Need to add the muscat specific exposure time fields to this form
         for j in range(MAX_CONFIGURATIONS):
             self.fields[f'c_{j+1}_guide_mode'] = forms.ChoiceField(
-                choices=self.mode_choices('guiding'), label='Guide Mode')
+                choices=self.mode_choices('guiding'), required=False, label='Guide Mode')
             for i in range(MAX_INSTRUMENT_CONFIGS):
                 self.fields.pop(f'c_{j+1}_ic_{i+1}_exposure_time', None)
                 self.fields[f'c_{j+1}_ic_{i+1}_exposure_time_g'] = forms.FloatField(
@@ -1438,9 +1441,9 @@ class LCOMuscatImagingObservationForm(LCOFullObservationForm):
                     min_value=0.0, label='Exposure Time z',
                     widget=forms.TextInput(attrs={'placeholder': 'Seconds'}), required=False)
                 self.fields[f'c_{j+1}_ic_{i+1}_readout_mode'] = forms.ChoiceField(
-                    choices=self.mode_choices('readout'), label='Readout Mode')
+                    choices=self.mode_choices('readout'), required=False, label='Readout Mode')
                 self.fields[f'c_{j+1}_ic_{i+1}_exposure_mode'] = forms.ChoiceField(
-                    label='Exposure Mode',
+                    label='Exposure Mode', required=False,
                     choices=self.mode_choices('exposure'),
                     help_text=muscat_exposure_mode_help
                 )
@@ -1513,10 +1516,11 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
         super().__init__(*args, **kwargs)
         for j in range(MAX_CONFIGURATIONS):
             self.fields[f'c_{j+1}_acquisition_mode'] = forms.ChoiceField(
-                choices=self.mode_choices('acquisition', use_code_only=True), label='Acquisition Mode')
+                choices=self.mode_choices('acquisition', use_code_only=True), required=False, label='Acquisition Mode')
             for i in range(MAX_INSTRUMENT_CONFIGS):
                 self.fields[f'c_{j+1}_ic_{i+1}_rotator_mode'] = forms.ChoiceField(
-                    choices=self.mode_choices('rotator'), label='Rotator Mode', help_text='Only for Floyds')
+                    choices=self.mode_choices('rotator'), label='Rotator Mode', required=False,
+                    help_text='Only for Floyds')
                 self.fields[f'c_{j+1}_ic_{i+1}_rotator_angle'] = forms.FloatField(
                     min_value=0.0, initial=0.0,
                     help_text='Rotation angle of slit. Only for Floyds `Slit Position Angle` rotator mode',

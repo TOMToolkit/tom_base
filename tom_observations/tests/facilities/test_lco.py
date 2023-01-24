@@ -6,8 +6,8 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from tom_common.exceptions import ImproperCredentialsException
-from tom_observations.facilities.lco import make_request, LCOFacility
-from tom_observations.facilities.lco import LCOTemplateBaseForm, LCOBaseObservationForm, LCOImagingObservationForm
+from tom_observations.facilities.lco import make_request, LCOFacility, LCOBaseForm
+from tom_observations.facilities.lco import LCOTemplateBaseForm, LCOOldStyleObservationForm, LCOImagingObservationForm
 from tom_observations.facilities.lco import LCOPhotometricSequenceForm, LCOSpectroscopicSequenceForm
 from tom_observations.facilities.lco import LCOSpectroscopyObservationForm, LCOMuscatImagingObservationForm
 from tom_observations.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
@@ -17,12 +17,23 @@ instrument_response = {
     '2M0-FLOYDS-SCICAM': {
         'type': 'SPECTRA', 'class': '2m0', 'name': '2.0 meter FLOYDS', 'optical_elements': {
             'slits': [
-              {'name': '6.0 arcsec slit', 'code': 'slit_6.0as', 'schedulable': True, 'default': False},
-              {'name': '1.6 arcsec slit', 'code': 'slit_1.6as', 'schedulable': True, 'default': False},
-              {'name': '2.0 arcsec slit', 'code': 'slit_2.0as', 'schedulable': True, 'default': False},
-              {'name': '1.2 arcsec slit', 'code': 'slit_1.2as', 'schedulable': True, 'default': False}
+                {'name': '6.0 arcsec slit', 'code': 'slit_6.0as', 'schedulable': True, 'default': False},
+                {'name': '1.6 arcsec slit', 'code': 'slit_1.6as', 'schedulable': True, 'default': False},
+                {'name': '2.0 arcsec slit', 'code': 'slit_2.0as', 'schedulable': True, 'default': False},
+                {'name': '1.2 arcsec slit', 'code': 'slit_1.2as', 'schedulable': True, 'default': False}
             ]
+        },
+        'modes': {
+            'rotator': {
+                'type': 'rotator',
+                'modes': [
+                    {'name': 'Sky Position', 'code': 'SKY'}
+                ]
+            }
         }
+    },
+    '1M0-NRES-SCICAM': {
+        'type': 'SPECTRA', 'class': '1m0', 'name': '1.0 meter NRES', 'optical_elements': {}
     },
     '0M4-SCICAM-SBIG': {
         'type': 'IMAGE', 'class': '0m4', 'name': '0.4 meter SBIG', 'optical_elements': {
@@ -162,21 +173,23 @@ class TestLCOBaseForm(TestCase):
     @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
     def test_instrument_choices(self, mock_get_instruments):
         mock_get_instruments.return_value = generate_lco_instrument_choices()
+        form = LCOBaseForm()
 
-        inst_choices = LCOTemplateBaseForm.instrument_choices()
+        inst_choices = form.instrument_choices()
         self.assertIn(('2M0-FLOYDS-SCICAM', '2.0 meter FLOYDS'), inst_choices)
         self.assertIn(('0M4-SCICAM-SBIG', '0.4 meter SBIG'), inst_choices)
         self.assertIn(('2M0-SCICAM-MUSCAT', '2.0 meter Muscat'), inst_choices)
-        self.assertEqual(len(inst_choices), 3)
+        self.assertEqual(len(inst_choices), 4)
 
     @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
     def test_filter_choices(self, mock_get_instruments):
         mock_get_instruments.return_value = generate_lco_instrument_choices()
+        form = LCOBaseForm()
 
-        filter_choices = LCOTemplateBaseForm.filter_choices()
-        for expected in [('opaque', 'Opaque'), ('100um-Pinhole', '100um Pinhole'), ('slit_6.0as', '6.0 arcsec slit')]:
+        filter_choices = form.filter_choices()
+        for expected in [('rp', 'SDSS-rp'), ('R', 'Bessell-R'), ('slit_6.0as', '6.0 arcsec slit')]:
             self.assertIn(expected, filter_choices)
-        self.assertEqual(len(filter_choices), 17)
+        self.assertEqual(len(filter_choices), 15)
 
     @patch('tom_observations.facilities.lco.make_request')
     def test_proposal_choices(self, mock_make_request):
@@ -197,7 +210,7 @@ class TestLCOBaseForm(TestCase):
 @patch('tom_observations.facilities.lco.LCOBaseObservationForm.filter_choices')
 @patch('tom_observations.facilities.lco.LCOBaseObservationForm.instrument_choices')
 @patch('tom_observations.facilities.lco.LCOBaseObservationForm.validate_at_facility')
-class TestLCOBaseObservationForm(TestCase):
+class TestLCOOldStyleObservationForm(TestCase):
 
     def setUp(self):
         self.st = SiderealTargetFactory.create()
@@ -226,14 +239,14 @@ class TestLCOBaseObservationForm(TestCase):
         mock_proposals.return_value = self.proposal_choices
 
         # Test that a valid form returns True, and that start and end are cleaned properly
-        form = LCOBaseObservationForm(self.valid_form_data)
+        form = LCOOldStyleObservationForm(self.valid_form_data)
         self.assertTrue(form.is_valid())
         self.assertEqual('2020-11-03T00:00:00', form.cleaned_data['start'])
         self.assertEqual('2020-11-04T00:00:00', form.cleaned_data['end'])
 
         # Test that an invalid form returns False
         self.valid_form_data.pop('target_id')
-        form = LCOBaseObservationForm(self.valid_form_data)
+        form = LCOOldStyleObservationForm(self.valid_form_data)
         self.assertFalse(form.is_valid())
 
         # TODO: Add test for when validate_at_facility returns errors
@@ -248,7 +261,7 @@ class TestLCOBaseObservationForm(TestCase):
             'ipp_value': 'Invalid ipp',
             'test_dict': {'test_key': 'dict_error'}
         }
-        form = LCOBaseObservationForm(self.valid_form_data)
+        form = LCOOldStyleObservationForm(self.valid_form_data)
         flattened_errors = form._flatten_error_dict(test_error)
         self.assertIn(['non_field_errors: Test configuration error'], flattened_errors[0])
         self.assertIn('test_string: string error', flattened_errors)
@@ -258,9 +271,9 @@ class TestLCOBaseObservationForm(TestCase):
 
     def test_instrument_to_type(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         """Test instrument_to_type method."""
-        self.assertEqual('SPECTRUM', LCOBaseObservationForm.instrument_to_type('2M0-FLOYDS-SCICAM'))
-        self.assertEqual('NRES_SPECTRUM', LCOBaseObservationForm.instrument_to_type('1M0-NRES-SCICAM'))
-        self.assertEqual('EXPOSE', LCOBaseObservationForm.instrument_to_type('0M4-SCICAM-SBIG'))
+        self.assertEqual('SPECTRUM', LCOOldStyleObservationForm.instrument_to_type('2M0-FLOYDS-SCICAM'))
+        self.assertEqual('NRES_SPECTRUM', LCOOldStyleObservationForm.instrument_to_type('1M0-NRES-SCICAM'))
+        self.assertEqual('EXPOSE', LCOOldStyleObservationForm.instrument_to_type('0M4-SCICAM-SBIG'))
 
     def test_build_target_fields(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         """Test _build_target_fields method."""
@@ -271,35 +284,35 @@ class TestLCOBaseObservationForm(TestCase):
 
         # Test correct population of target fields for a sidereal target
         with self.subTest():
-            form = LCOBaseObservationForm(self.valid_form_data)
+            form = LCOOldStyleObservationForm(self.valid_form_data)
             self.assertTrue(form.is_valid())
             self.assertDictEqual({
                 'name': self.st.name, 'type': 'ICRS', 'ra': self.st.ra, 'dec': self.st.dec,
                 'proper_motion_ra': self.st.pm_ra, 'proper_motion_dec': self.st.pm_dec, 'epoch': self.st.epoch
-            }, form._build_target_fields())
+            }, form._build_target_fields(self.st.id))
 
         # Test correct population of target fields for a non-sidereal target
         with self.subTest():
             self.valid_form_data['target_id'] = self.nst.id
-            form = LCOBaseObservationForm(self.valid_form_data)
+            form = LCOOldStyleObservationForm(self.valid_form_data)
             self.assertTrue(form.is_valid())
             self.assertDictContainsSubset({
                 'name': self.nst.name, 'type': 'ORBITAL_ELEMENTS', 'epochofel': self.nst.epoch_of_elements,
                 'orbinc': self.nst.inclination, 'longascnode': self.nst.lng_asc_node,
                 'argofperih': self.nst.arg_of_perihelion, 'meananom': self.nst.mean_anomaly,
                 'meandist': self.nst.semimajor_axis
-            }, form._build_target_fields())
+            }, form._build_target_fields(self.nst.id))
 
         # Test that fractional_ephemeris_rate is handled correctly when present
         with self.subTest():
             self.valid_form_data['target_id'] = self.nst.id
             fractional_ephemeris_rate = 0.5
             self.valid_form_data['fractional_ephemeris_rate'] = fractional_ephemeris_rate
-            form = LCOBaseObservationForm(self.valid_form_data)
+            form = LCOOldStyleObservationForm(self.valid_form_data)
             self.assertTrue(form.is_valid())
             self.assertDictContainsSubset({
                 'extra_params': {'fractional_ephemeris_rate': fractional_ephemeris_rate}
-            }, form._build_target_fields())
+            }, form._build_target_fields(self.nst.id))
 
     def test_build_instrument_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         """Test _build_instrument_config method."""
@@ -308,7 +321,7 @@ class TestLCOBaseObservationForm(TestCase):
         mock_filters.return_value = self.filter_choices
         mock_proposals.return_value = self.proposal_choices
 
-        form = LCOBaseObservationForm(self.valid_form_data)
+        form = LCOOldStyleObservationForm(self.valid_form_data)
         self.assertTrue(form.is_valid())
         self.assertEqual(
             [{'exposure_count': self.valid_form_data['exposure_count'],
@@ -325,7 +338,7 @@ class TestLCOBaseObservationForm(TestCase):
         mock_filters.return_value = self.filter_choices
         mock_proposals.return_value = self.proposal_choices
 
-        form = LCOBaseObservationForm(self.valid_form_data)
+        form = LCOOldStyleObservationForm(self.valid_form_data)
         self.assertTrue(form.is_valid())
         self.assertDictEqual({}, form._build_acquisition_config())
 
@@ -336,7 +349,7 @@ class TestLCOBaseObservationForm(TestCase):
         mock_filters.return_value = self.filter_choices
         mock_proposals.return_value = self.proposal_choices
 
-        form = LCOBaseObservationForm(self.valid_form_data)
+        form = LCOOldStyleObservationForm(self.valid_form_data)
         self.assertTrue(form.is_valid())
         self.assertDictEqual({}, form._build_guiding_config())
 
@@ -349,7 +362,7 @@ class TestLCOBaseObservationForm(TestCase):
         mock_filters.return_value = self.filter_choices
         mock_proposals.return_value = self.proposal_choices
 
-        form = LCOBaseObservationForm(self.valid_form_data)
+        form = LCOOldStyleObservationForm(self.valid_form_data)
         self.assertTrue(form.is_valid())
         configuration = form._build_configuration()
         self.assertDictContainsSubset(
@@ -368,7 +381,7 @@ class TestLCOBaseObservationForm(TestCase):
         mock_filters.return_value = self.filter_choices
         mock_proposals.return_value = self.proposal_choices
 
-        form = LCOBaseObservationForm(self.valid_form_data)
+        form = LCOOldStyleObservationForm(self.valid_form_data)
         self.assertTrue(form.is_valid())
         self.assertDictEqual({'telescope_class': '0m4'}, form._build_location())
 
@@ -390,7 +403,7 @@ class TestLCOBaseObservationForm(TestCase):
 
         # Test a non-static cadenced form
         with self.subTest():
-            form = LCOBaseObservationForm(self.valid_form_data)
+            form = LCOOldStyleObservationForm(self.valid_form_data)
             self.assertTrue(form.is_valid())
             obs_payload = form.observation_payload()
             self.assertDictContainsSubset(
@@ -408,7 +421,7 @@ class TestLCOBaseObservationForm(TestCase):
 
             self.valid_form_data['period'] = 60
             self.valid_form_data['jitter'] = 15
-            form = LCOBaseObservationForm(self.valid_form_data)
+            form = LCOOldStyleObservationForm(self.valid_form_data)
             self.assertTrue(form.is_valid())
             self.assertDictEqual({'test': 'test_static_cadence'}, form.observation_payload())
 
@@ -416,7 +429,7 @@ class TestLCOBaseObservationForm(TestCase):
         with self.subTest():
             self.valid_form_data['period'] = -60
             self.valid_form_data['jitter'] = 15
-            form = LCOBaseObservationForm(self.valid_form_data)
+            form = LCOOldStyleObservationForm(self.valid_form_data)
             self.assertFalse(form.is_valid())
 
         # Test an edge-case static cadence form
@@ -428,57 +441,73 @@ class TestLCOBaseObservationForm(TestCase):
 
             self.valid_form_data['period'] = 60
             self.valid_form_data['jitter'] = 0.0
-            form = LCOBaseObservationForm(self.valid_form_data)
+            form = LCOOldStyleObservationForm(self.valid_form_data)
             self.assertTrue(form.is_valid())
             self.assertDictEqual({'test': 'test_static_cadence'}, form.observation_payload())
 
 
-@patch('tom_observations.facilities.lco.LCOImagingObservationForm._get_instruments')
+@patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices')
+@patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
 class TestLCOImagingObservationForm(TestCase):
-    def test_instrument_choices(self, mock_get_instruments):
+    def setUp(self):
+        self.st = SiderealTargetFactory.create()
+        self.initial = {'facility': 'LCO', 'target_id': self.st.id}
+        self.valid_form_data = {
+            'name': 'test', 'facility': 'LCO', 'target_id': self.st.id, 'ipp_value': 0.5, 'start': '2020-11-03',
+            'end': '2020-11-04', 'c_1_ic_1_exposure_count': 1, 'c_1_ic_1_exposure_time': 30.0, 'c_1_max_airmass': 3.0,
+            'c_1_min_lunar_distance': 20, 'observation_mode': 'NORMAL', 'proposal': 'sampleproposal',
+            'c_1_ic_1_filter': 'gp', 'c_1_instrument_type': '0M4-SCICAM-SBIG'
+        }
+
+    def test_instrument_choices(self, mock_get_instruments, mock_get_proposals):
         """Test LCOImagingObservationForm._instrument_choices."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
-
-        inst_choices = LCOImagingObservationForm.instrument_choices()
+        form = LCOImagingObservationForm(self.valid_form_data, initial=self.initial)
+        inst_choices = form.instrument_choices()
         self.assertIn(('0M4-SCICAM-SBIG', '0.4 meter SBIG'), inst_choices)
         self.assertNotIn(('2M0-FLOYDS-SCICAM', '2.0 meter FLOYDS'), inst_choices)
         self.assertNotIn(('2M0-SCICAM-MUSCAT', '2.0 meter Muscat'), inst_choices)
         self.assertEqual(len(inst_choices), 1)
 
-    def test_filter_choices(self, mock_get_instruments):
+    def test_filter_choices(self, mock_get_instruments, mock_get_proposals):
         """Test LCOImagingObservationForm._filter_choices."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
+        form = LCOImagingObservationForm(self.valid_form_data, initial=self.initial)
 
-        filter_choices = LCOImagingObservationForm.filter_choices()
-        for expected in [('opaque', 'Opaque'), ('100um-Pinhole', '100um Pinhole')]:
+        filter_choices = form.filter_choices_for_group('filters')
+        for expected in [('rp', 'SDSS-rp'), ('R', 'Bessell-R')]:
             self.assertIn(expected, filter_choices)
-        for not_expected in [('slit_6.0as', '6.0 arcsec slit'), ('slit_1.6as', '1.6 arcsec slit'),
+        for not_expected in [('opaque', 'Opaque'), ('100um-Pinhole', '100um Pinhole'),
+                             ('slit_6.0as', '6.0 arcsec slit'), ('slit_1.6as', '1.6 arcsec slit'),
                              ('slit_2.0as', '2.0 arcsec slit'), ('slit_1.2as', '1.2 arcsec slit')]:
             self.assertNotIn(not_expected, filter_choices)
-        self.assertEqual(len(filter_choices), 13)
+        self.assertEqual(len(filter_choices), 11)
 
 
 @patch('tom_observations.facilities.lco.LCOMuscatImagingObservationForm.validate_at_facility')
 @patch('tom_observations.facilities.lco.LCOMuscatImagingObservationForm.filter_choices')
-@patch('tom_observations.facilities.lco.LCOMuscatImagingObservationForm.proposal_choices')
-@patch('tom_observations.facilities.lco.LCOMuscatImagingObservationForm._get_instruments')
+@patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices')
+@patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
 class TestLCOMuscatImagingObservationForm(TestCase):
 
     def setUp(self):
         self.st = SiderealTargetFactory.create()
+        self.initial = {'facility': 'LCO', 'target_id': self.st.id}
         self.valid_form_data = {
             'name': 'test', 'facility': 'LCO', 'target_id': self.st.id, 'ipp_value': 0.5, 'start': '2020-11-03',
-            'end': '2020-11-04', 'exposure_count': 1, 'exposure_time_g': 30, 'exposure_time_r': 40,
-            'exposure_time_i': 50, 'exposure_time_z': 60, 'diffuser_g_position': 'out', 'diffuser_r_position': 'out',
-            'diffuser_i_position': 'in', 'diffuser_z_position': 'in', 'observation_mode': 'NORMAL',
-            'guider_mode': 'MUSCAT_G', 'exposure_mode': 'SYNCHRONOUS', 'proposal': 'sampleproposal',
-            'instrument_type': '2M0-SCICAM-MUSCAT', 'max_airmass': 3.0
+            'end': '2020-11-04', 'c_1_ic_1_exposure_count': 1, 'c_1_ic_1_exposure_time_g': 30,
+            'c_1_ic_1_exposure_time_r': 40, 'c_1_ic_1_exposure_time_i': 50, 'c_1_ic_1_exposure_time_z': 60,
+            'c_1_ic_1_diffuser_g_position': 'out', 'c_1_ic_1_diffuser_r_position': 'out',
+            'c_1_ic_1_diffuser_i_position': 'in', 'c_1_ic_1_diffuser_z_position': 'in', 'observation_mode': 'NORMAL',
+            'c_1_guide_mode': 'MUSCAT_G', 'c_1_ic_1_exposure_mode': 'SYNCHRONOUS', 'proposal': 'sampleproposal',
+            'c_1_instrument_type': '2M0-SCICAM-MUSCAT', 'c_1_max_airmass': 3.0
         }
 
     def test_instrument_choices(self, mock_get_instruments, mock_get_proposals, mock_get_filters, mock_validate):
         """Test LCOMuscatImagingObservationForm._instrument_choices."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
-        inst_choices = LCOMuscatImagingObservationForm.instrument_choices()
+        form = LCOMuscatImagingObservationForm(self.valid_form_data, initial=self.initial)
+        inst_choices = form.instrument_choices()
         self.assertIn(('2M0-SCICAM-MUSCAT', '2.0 meter Muscat'), inst_choices)
         self.assertEqual(len(inst_choices), 1)
 
@@ -487,7 +516,9 @@ class TestLCOMuscatImagingObservationForm(TestCase):
         mock_get_instruments.return_value = generate_lco_instrument_choices()
         for channel in ['g', 'r', 'i', 'z']:
             with self.subTest(channel=channel):
-                diffuser_choices = LCOMuscatImagingObservationForm.diffuser_position_choices(channel=channel)
+                form = LCOMuscatImagingObservationForm(self.valid_form_data, initial=self.initial)
+                oe_group = f'diffuser_{channel}_positions'
+                diffuser_choices = form.filter_choices_for_group(oe_group)
                 self.assertIn(('in', 'In Beam'), diffuser_choices)
                 self.assertIn(('out', 'Out of Beam'), diffuser_choices)
                 self.assertTrue(len(diffuser_choices), 2)
@@ -495,7 +526,8 @@ class TestLCOMuscatImagingObservationForm(TestCase):
     def test_exposure_mode_choices(self, mock_get_instruments, mock_get_proposals, mock_get_filters, mock_validate):
         """Test LCOMuscatImagingObservationForm.mode_choices for exposure modes."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
-        exposure_mode_choices = LCOMuscatImagingObservationForm.mode_choices('exposure')
+        form = LCOMuscatImagingObservationForm(self.valid_form_data, initial=self.initial)
+        exposure_mode_choices = form.mode_choices('exposure')
         self.assertIn(('SYNCHRONOUS', 'Muscat Synchronous Exposure Mode'), exposure_mode_choices)
         self.assertIn(('ASYNCHRONOUS', 'Muscat Asynchronous Exposure Mode'), exposure_mode_choices)
         self.assertEqual(len(exposure_mode_choices), 2)
@@ -503,7 +535,8 @@ class TestLCOMuscatImagingObservationForm(TestCase):
     def test_guide_mode_choices(self, mock_get_instruments, mock_get_proposals, mock_get_filters, mock_validate):
         """Test LCOMuscatImagingObservationForm.mode_choices for guiding modes."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
-        guide_mode_choices = LCOMuscatImagingObservationForm.mode_choices('guiding')
+        form = LCOMuscatImagingObservationForm(self.valid_form_data, initial=self.initial)
+        guide_mode_choices = form.mode_choices('guiding')
         self.assertIn(('MUSCAT_G', 'Muscat G Guiding'), guide_mode_choices)
         self.assertIn(('ON', 'On'), guide_mode_choices)
         self.assertEqual(len(guide_mode_choices), 2)
@@ -512,108 +545,123 @@ class TestLCOMuscatImagingObservationForm(TestCase):
         """Test LCOMuscatImagingObservationForm._build_instrument_config."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
         mock_get_proposals.return_value = generate_lco_proposal_choices()
-        form = LCOMuscatImagingObservationForm(self.valid_form_data)
+        form = LCOMuscatImagingObservationForm(self.valid_form_data, initial=self.initial)
         self.assertTrue(form.is_valid())
-        instrument_config = form._build_instrument_config()
+        instrument_config = form._build_instrument_config(self.valid_form_data['c_1_instrument_type'], 1, 1)
         expected_exposure_time = max(
-            self.valid_form_data['exposure_time_g'],
-            self.valid_form_data['exposure_time_r'],
-            self.valid_form_data['exposure_time_i'],
-            self.valid_form_data['exposure_time_z']
+            self.valid_form_data['c_1_ic_1_exposure_time_g'],
+            self.valid_form_data['c_1_ic_1_exposure_time_r'],
+            self.valid_form_data['c_1_ic_1_exposure_time_i'],
+            self.valid_form_data['c_1_ic_1_exposure_time_z']
         )
-        self.assertEqual(expected_exposure_time, instrument_config[0]['exposure_time'])
+        self.assertEqual(expected_exposure_time, instrument_config['exposure_time'])
         self.assertDictEqual({
-            'exposure_mode': self.valid_form_data['exposure_mode'],
-            'exposure_time_g': self.valid_form_data['exposure_time_g'],
-            'exposure_time_r': self.valid_form_data['exposure_time_r'],
-            'exposure_time_i': self.valid_form_data['exposure_time_i'],
-            'exposure_time_z': self.valid_form_data['exposure_time_z']
-        }, instrument_config[0]['extra_params'])
+            'exposure_mode': self.valid_form_data['c_1_ic_1_exposure_mode'],
+            'exposure_time_g': self.valid_form_data['c_1_ic_1_exposure_time_g'],
+            'exposure_time_r': self.valid_form_data['c_1_ic_1_exposure_time_r'],
+            'exposure_time_i': self.valid_form_data['c_1_ic_1_exposure_time_i'],
+            'exposure_time_z': self.valid_form_data['c_1_ic_1_exposure_time_z']
+        }, instrument_config['extra_params'])
         self.assertDictEqual({
             'diffuser_g_position': 'out',
             'diffuser_r_position': 'out',
             'diffuser_i_position': 'in',
             'diffuser_z_position': 'in'
-        }, instrument_config[0]['optical_elements'])
+        }, instrument_config['optical_elements'])
 
     def test_build_guiding_config(self, mock_get_instruments, mock_get_proposals, mock_get_filters, mock_validate):
         """Test LCOMuscatImagingObservationForm._build_guiding_config."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
         mock_get_proposals.return_value = generate_lco_proposal_choices()
-        form = LCOMuscatImagingObservationForm(self.valid_form_data)
+        form = LCOMuscatImagingObservationForm(self.valid_form_data, initial=self.initial)
         self.assertTrue(form.is_valid())
-        guiding_config = form._build_guiding_config()
-        self.assertDictEqual({'mode': 'MUSCAT_G', 'optional': True},  guiding_config)
+        guiding_config = form._build_guiding_config(1)
+        self.assertDictEqual({'mode': 'MUSCAT_G', 'optional': True}, guiding_config)
 
 
 class TestLCOSpectroscopyObservationForm(TestCase):
-    @patch('tom_observations.facilities.lco.LCOSpectroscopyObservationForm._get_instruments')
-    def test_instrument_choices(self, mock_get_instruments):
+
+    def setUp(self):
+        self.st = SiderealTargetFactory.create()
+        self.initial = {'facility': 'LCO', 'target_id': self.st.id}
+        self.valid_form_data = {
+            'name': 'test', 'facility': 'LCO', 'target_id': self.st.id, 'ipp_value': 0.5, 'start': '2020-11-03',
+            'end': '2020-11-04', 'c_1_ic_1_exposure_count': 1, 'c_1_ic_1_exposure_time': 30.0, 'c_1_max_airmass': 3.0,
+            'c_1_min_lunar_distance': 20, 'observation_mode': 'NORMAL', 'proposal': 'sampleproposal',
+            'c_1_ic_1_slit': 'slit_2.0as', 'c_1_instrument_type': '2M0-FLOYDS-SCICAM',
+            'c_1_ic_1_rotator_mode': 'SKY', 'c_1_ic_1_rotator_angle': 1.0
+        }
+
+    @patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices')
+    @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
+    def test_instrument_choices(self, mock_get_instruments, mock_get_proposals):
         """Test LCOSpectroscopyObservationForm._instrument_choices."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
+        mock_get_proposals.return_value = generate_lco_proposal_choices()
+        form = LCOSpectroscopyObservationForm(self.valid_form_data, initial=self.initial)
 
-        inst_choices = LCOSpectroscopyObservationForm.instrument_choices()
+        inst_choices = form.instrument_choices()
         self.assertIn(('2M0-FLOYDS-SCICAM', '2.0 meter FLOYDS'), inst_choices)
+        self.assertIn(('1M0-NRES-SCICAM', '1.0 meter NRES'), inst_choices)
         self.assertNotIn(('0M4-SCICAM-SBIG', '0.4 meter SBIG'), inst_choices)
-        self.assertEqual(len(inst_choices), 1)
+        self.assertEqual(len(inst_choices), 2)
 
-    @patch('tom_observations.facilities.lco.LCOSpectroscopyObservationForm._get_instruments')
-    def test_filter_choices(self, mock_get_instruments):
+    @patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices')
+    @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
+    def test_filter_choices(self, mock_get_instruments, mock_get_proposals):
         """Test LCOSpectroscopyObservationForm._filter_choices."""
         mock_get_instruments.return_value = generate_lco_instrument_choices()
+        mock_get_proposals.return_value = generate_lco_proposal_choices()
+        form = LCOSpectroscopyObservationForm(self.valid_form_data, initial=self.initial)
 
-        filter_choices = LCOSpectroscopyObservationForm.filter_choices()
+        filter_choices = form.filter_choices()
         for expected in [('slit_6.0as', '6.0 arcsec slit'), ('slit_1.6as', '1.6 arcsec slit'),
-                         ('slit_2.0as', '2.0 arcsec slit'), ('slit_1.2as', '1.2 arcsec slit'), ('None', 'None')]:
+                         ('slit_2.0as', '2.0 arcsec slit'), ('slit_1.2as', '1.2 arcsec slit')]:
             self.assertIn(expected, filter_choices)
         for not_expected in [('opaque', 'Opaque'), ('100um-Pinhole', '100um Pinhole')]:
             self.assertNotIn(not_expected, filter_choices)
-        self.assertEqual(len(filter_choices), 5)
+        self.assertEqual(len(filter_choices), 4)
 
-    @patch('tom_observations.facilities.lco.LCOSpectroscopyObservationForm.proposal_choices')
+    @patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices')
     @patch('tom_observations.facilities.lco.LCOSpectroscopyObservationForm.filter_choices')
-    @patch('tom_observations.facilities.lco.LCOSpectroscopyObservationForm.instrument_choices')
+    @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
     @patch('tom_observations.facilities.lco.LCOSpectroscopyObservationForm.validate_at_facility')
     def test_build_instrument_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         mock_validate.return_value = []
-        mock_insts.return_value = [(k, v['name']) for k, v in instrument_response.items() if 'SPECTRA' in v['type']]
+        mock_insts.return_value = generate_lco_instrument_choices()
         mock_filters.return_value = set([
             (f['code'], f['name']) for ins in instrument_response.values() for f in
             ins['optical_elements'].get('slits', [])
-            ] + [('None', 'None')])
+            ])
         mock_proposals.return_value = generate_lco_proposal_choices()
-
-        st = SiderealTargetFactory.create()
-        valid_form_data = {
-            'name': 'test', 'facility': 'LCO', 'target_id': st.id, 'ipp_value': 0.5, 'start': '2020-11-03',
-            'end': '2020-11-04', 'exposure_count': 1, 'exposure_time': 30.0, 'max_airmass': 3.0,
-            'min_lunar_distance': 20, 'observation_mode': 'NORMAL', 'proposal': 'sampleproposal',
-            'filter': 'slit_2.0as', 'instrument_type': '2M0-FLOYDS-SCICAM', 'rotator_angle': 1.0
-        }
 
         # Test that optical_elements['slit'] is populated when filter is included
         with self.subTest():
-            form = LCOSpectroscopyObservationForm(valid_form_data)
+            form = LCOSpectroscopyObservationForm(self.valid_form_data, initial=self.initial)
             self.assertTrue(form.is_valid())
             self.assertEqual(
-                [{'exposure_count': valid_form_data['exposure_count'],
-                  'exposure_time': valid_form_data['exposure_time'],
-                  'optical_elements': {'slit': valid_form_data['filter']},
-                  'rotator_mode': 'VFLOAT',
-                  'extra_params': {'rotator_angle': valid_form_data['rotator_angle']}
-                  }], form._build_instrument_config()
+                {
+                    'exposure_count': self.valid_form_data['c_1_ic_1_exposure_count'],
+                    'exposure_time': self.valid_form_data['c_1_ic_1_exposure_time'],
+                    'optical_elements': {'slit': self.valid_form_data['c_1_ic_1_slit']},
+                    'rotator_mode': 'SKY',
+                    'extra_params': {'rotator_angle': self.valid_form_data['c_1_ic_1_rotator_angle']}
+                },
+                form._build_instrument_config(self.valid_form_data['c_1_instrument_type'], 1, 1)
             )
 
-        # Test that optical elements is removed when filter is excluded
+        # Test that optical elements is removed for nres 
         with self.subTest():
-            valid_form_data['filter'] = 'None'
-            form = LCOSpectroscopyObservationForm(valid_form_data)
+            self.valid_form_data['c_1_instrument_type'] = '1M0-NRES-SCICAM'
+            form = LCOSpectroscopyObservationForm(self.valid_form_data, initial=self.initial)
             self.assertTrue(form.is_valid())
             self.assertEqual(
-                [{'exposure_count': valid_form_data['exposure_count'],
-                  'exposure_time': valid_form_data['exposure_time'],
-                  'rotator_mode': 'VFLOAT', 'extra_params': {'rotator_angle': valid_form_data['rotator_angle']}
-                  }], form._build_instrument_config()
+                {
+                    'exposure_count': self.valid_form_data['c_1_ic_1_exposure_count'],
+                    'exposure_time': self.valid_form_data['c_1_ic_1_exposure_time'],
+                    'optical_elements': {}
+                },
+                form._build_instrument_config(self.valid_form_data['c_1_instrument_type'], 1, 1)
             )
 
 
