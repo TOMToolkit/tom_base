@@ -7,7 +7,7 @@ from django.test import TestCase
 from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.facilities.soar import make_request, SOARImagingObservationForm
 from tom_observations.facilities.soar import SOARSpectroscopyObservationForm
-from tom_observations.tests.factories import NonSiderealTargetFactory, SiderealTargetFactory
+from tom_observations.tests.factories import SiderealTargetFactory
 
 
 instrument_response = {
@@ -78,6 +78,7 @@ class TestMakeRequest(TestCase):
         mock_request.return_value = mock_response
         with self.assertRaises(ImproperCredentialsException):
             make_request('GET', 'google.com', headers={'test': 'test'})
+
 
 @patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices')
 @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')

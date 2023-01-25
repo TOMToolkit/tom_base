@@ -1,6 +1,5 @@
 import requests
 from django.conf import settings
-from django.core.cache import cache
 
 from tom_observations.facilities.lco import LCOFacility, LCOBaseForm
 from tom_observations.facilities.lco import LCOImagingObservationForm, LCOSpectroscopyObservationForm

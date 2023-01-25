@@ -726,7 +726,6 @@ class LCOBaseObservationForm(BaseRoboticObservationForm, LCOBaseForm):
     period = forms.FloatField(help_text='Decimal Hours', required=False, min_value=0.0)
     jitter = forms.FloatField(help_text='Decimal Hours', required=False, min_value=0.0)
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['proposal'] = forms.ChoiceField(choices=self.proposal_choices())

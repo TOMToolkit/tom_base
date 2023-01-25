@@ -647,7 +647,7 @@ class TestLCOSpectroscopyObservationForm(TestCase):
                 form._build_instrument_config(self.valid_form_data['c_1_instrument_type'], 1, 1)
             )
 
-        # Test that optical elements is removed for nres 
+        # Test that optical elements is removed for nres
         with self.subTest():
             self.valid_form_data['c_1_instrument_type'] = '1M0-NRES-SCICAM'
             form = LCOSpectroscopyObservationForm(self.valid_form_data)
