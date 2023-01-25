@@ -144,11 +144,16 @@ class LCOBaseForm(forms.Form):
     """
 
     def target_group_choices(self):
-        target_id = self.initial.get('target_id')
-        target_name = Target.objects.get(pk=target_id).name
-        group_targets = Target.objects.filter(targetlist__targets__pk=target_id).exclude(
-            pk=target_id).order_by('name').distinct().values_list('pk', 'name')
-        return [(target_id, target_name)] + list(group_targets)
+        target_id = self.data.get('target_id')
+        if not target_id:
+            target_id = self.initial.get('target_id')
+        try:
+            target_name = Target.objects.get(pk=target_id).name
+            group_targets = Target.objects.filter(targetlist__targets__pk=target_id).exclude(
+                pk=target_id).order_by('name').distinct().values_list('pk', 'name')
+            return [(target_id, target_name)] + list(group_targets)
+        except Target.DoesNotExist:
+            return []
 
     @staticmethod
     def _get_instruments():
@@ -1104,8 +1109,10 @@ class LCOFullObservationForm(LCOBaseObservationForm):
         help_text='If True, pattern is centered on initial target. Otherwise pattern begins at initial target.'
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, data=None, **kwargs):
+        # convert data argument field names to the proper fields. Data is assumed to be observation payload format
+        data = self.convert_old_observation_payload_to_fields(data)
+        super().__init__(data, **kwargs)
         for j in range(MAX_CONFIGURATIONS):
             self.fields[f'c_{j+1}_instrument_type'] = forms.ChoiceField(
                 choices=self.instrument_choices(), required=False, help_text=instrument_type_help,
@@ -1152,6 +1159,36 @@ class LCOFullObservationForm(LCOBaseObservationForm):
         )
         if isinstance(self, CadenceForm):
             self.helper.layout.insert(2, self.cadence_layout())
+
+    def convert_old_observation_payload_to_fields(self, data):
+        """ This is a backwards compatibility function to allow us to load old-format observation parameters
+            for existing ObservationRecords, which use the old form, but may still need to use the new form
+            to submit cadence strategy observations.
+        """
+        if not data:
+            return None
+        if 'instrument_type' in data:
+            data['c_1_instrument_type'] = data['instrument_type']
+            del data['instrument_type']
+        if 'max_airmass' in data:
+            data['c_1_max_airmass'] = data['max_airmass']
+            del data['max_airmass']
+        if 'min_lunar_distance' in data:
+            data['c_1_min_lunar_distance'] = data['min_lunar_distance']
+            del data['min_lunar_distance']
+        if 'fractional_ephemeris_rate' in data:
+            data['c_1_fractional_ephemeris_rate'] = data['fractional_ephemeris_rate']
+            del data['fractional_ephemeris_rate']
+        if 'exposure_count' in data:
+            data['c_1_ic_1_exposure_count'] = data['exposure_count']
+            del data['exposure_count']
+        if 'exposure_time' in data:
+            data['c_1_ic_1_exposure_time'] = data['exposure_time']
+            del data['exposure_time']
+        if 'filter' in data:
+            data['c_1_ic_1_filter'] = data['filter']
+            del data['filter']
+        return data
 
     def form_name(self):
         return 'base'
@@ -1448,6 +1485,24 @@ class LCOMuscatImagingObservationForm(LCOFullObservationForm):
                     help_text=muscat_exposure_mode_help
                 )
 
+    def convert_old_observation_payload_to_fields(self, data):
+        data = super().convert_old_observation_payload_to_fields(data)
+        if not data:
+            return None
+        ic_fields = [
+            'exposure_time_g', 'exposure_time_r', 'exposure_time_i', 'exposure_time_z', 'exposure_mode',
+            'diffuser_g_position', 'diffuser_r_position', 'diffuser_i_position', 'diffuser_z_position'
+        ]
+        for field in ic_fields:
+            if field in data:
+                data[f'c_1_ic_1_{field}'] = data[field]
+                del data[field]
+
+        if 'guider_mode' in data:
+            data['c_1_guide_mode'] = data['guider_mode']
+            del data['guider_mode']
+        return data
+
     def form_name(self):
         return 'muscat'
 
@@ -1527,6 +1582,21 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
                     label='Rotator Angle', required=False
                 )
                 self.fields[f'c_{j+1}_ic_{i+1}_slit'].help_text = 'Only for Floyds'
+
+    def convert_old_observation_payload_to_fields(self, data):
+        data = super().convert_old_observation_payload_to_fields(data)
+        if not data:
+            return None
+        if 'rotator_angle' in data:
+            data['c_1_ic_1_rotator_angle'] = data['rotator_angle']
+            if data['rotator_angle']:
+                data['c_1_ic_1_rotator_mode'] = 'SKY'
+            del data['rotator_angle']
+        if 'c_1_ic_1_filter' in data:
+            data['c_1_ic_1_slit'] = data['c_1_ic_1_filter']
+            del data['c_1_ic_1_filter']
+
+        return data
 
     def get_instruments(self):
         instruments = super().get_instruments()
