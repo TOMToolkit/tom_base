@@ -1642,7 +1642,7 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
         if not instrument_config:
             return None
         # If floyds, add the rotator mode and angle in
-        if 'FLOYDS' in instrument_type.upper():
+        if 'FLOYDS' in instrument_type.upper() or 'SOAR' in instrument_type.upper():
             instrument_config['rotator_mode'] = self.cleaned_data[f'c_{configuration_id}_ic_{id}_rotator_mode']
             if instrument_config['rotator_mode'] == 'SKY':
                 instrument_config['extra_params'] = {'rotator_angle': self.cleaned_data.get(
