@@ -564,6 +564,31 @@ class TestTargetCreate(TestCase):
                                       f'(target_id={target.id})')
         self.assertFalse(TargetName.objects.filter(name=target_data['name']).exists())
 
+    def test_create_targets_with_fuzzy_conflicting_names(self):
+        target_data = {
+            'name': 'fuzzy_name_Target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 0,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        names = ['FuzzyNameTarget', 'Fuzzy name target', 'FUZZY_NAME-TARGET', 'fuzzynametarget']
+        self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        for name in names:
+            target_data['name'] = name
+            second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+            self.assertContains(second_response, 'Target with a similar Name already exists')
+
 
 class TestTargetUpdate(TestCase):
     def setUp(self):

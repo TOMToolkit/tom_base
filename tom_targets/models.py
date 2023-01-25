@@ -34,6 +34,18 @@ REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME = {
 }
 
 
+class TargetMatchManager(models.Manager):
+    def check_for_fuzzy_match(self, name):
+        simple_name = self.make_simple_name(name)
+        matching_names = [target.name for target in Target.objects.all()
+                          if self.make_simple_name(target.name) == simple_name]
+        queryset = Target.objects.filter(name__in=matching_names)
+        return queryset
+
+    def make_simple_name(self, name):
+        return name.lower().replace(" ", "").replace("-", "").replace("_", "")
+
+
 class Target(models.Model):
     """
     Class representing a target in a TOM
@@ -228,6 +240,9 @@ class Target(models.Model):
         null=True, blank=True, verbose_name='Perihelion Distance', help_text='AU'
     )
 
+    objects = models.Manager()
+    matches = TargetMatchManager()
+
     @transaction.atomic
     def save(self, *args, **kwargs):
         """
@@ -267,6 +282,8 @@ class Target(models.Model):
         Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
         """
         super().validate_unique(*args, **kwargs)
+        if Target.matches.check_for_fuzzy_match(self.name):
+            raise ValidationError(f'Target with a similar Name already exists')
         # Alias Check only necessary when updating target existing target. Reverse relationships require Primary Key.
         if self.pk:
             for alias in self.aliases.all():
