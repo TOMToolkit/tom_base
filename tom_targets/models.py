@@ -43,7 +43,7 @@ class TargetMatchManager(models.Manager):
         return queryset
 
     def make_simple_name(self, name):
-        return name.lower().replace(" ", "").replace("-", "").replace("_", "")
+        return name.lower().replace(" ", "").replace("-", "").replace("_", "").replace("(", "").replace(")", "")
 
 
 class Target(models.Model):

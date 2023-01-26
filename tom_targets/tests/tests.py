@@ -582,7 +582,7 @@ class TestTargetCreate(TestCase):
             'aliases-MIN_NUM_FORMS': 0,
             'aliases-MAX_NUM_FORMS': 1000,
         }
-        names = ['FuzzyNameTarget', 'Fuzzy name target', 'FUZZY_NAME-TARGET', 'fuzzynametarget']
+        names = ['FuzzyNameTarget', 'Fuzzy name target', 'FUZZY_NAME-TARGET', 'fuzzynametarget', '(Fuzzy) Name-Target']
         self.client.post(reverse('targets:create'), data=target_data, follow=True)
         for name in names:
             target_data['name'] = name
