@@ -19,8 +19,8 @@ data to display anywhere in your TOM.
 :doc:`Adding Custom Data Processing <customizing_data_processing>` - Learn how you can process data into your
 TOM from uploaded data products.
 
-:doc:`TOM-TOM Direct Sharing <tom_direct_sharing>` - Learn how you can send/receive data between your TOM and another TOM-Toolkit TOM via an API.
+:doc:`TOM-TOM Direct Sharing <tom_direct_sharing>` - Learn how you can send and receive data between your TOM and another TOM-Toolkit TOM via an API.
 
-:doc:`Publish/Subscribe to a Kafka Stream <stream_pub_sub>` - Learn how to publish and subscribe to a Kafka stream topic.
+:doc:`Publish and Subscribe to a Kafka Stream <stream_pub_sub>` - Learn how to publish and subscribe to a Kafka stream topic.
 
 
