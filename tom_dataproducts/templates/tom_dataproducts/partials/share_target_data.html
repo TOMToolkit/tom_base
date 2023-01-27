@@ -1,0 +1,29 @@
+{% load bootstrap4 %}
+{% include 'tom_dataproducts/partials/js9_scripts.html' %}
+{% load tom_common_extras %}
+<div class="card" style="margin-top:1rem; margin-bottom:1rem;">
+    <div class="card-header">
+      Publish Data for {{ target.name }}:
+    </div>
+    {% if sharing_destinations %}
+    <form method="POST" action="{% url 'tom_dataproducts:share_all' tg_pk=target.id %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% for hidden in target_data_share_form.hidden_fields %}
+        {{ hidden }}
+      {% endfor %}
+      <div class="form-row" style="padding-inline:1rem">
+        <div class="col-sm-4">
+          {% bootstrap_field target_data_share_form.share_destination %}
+        </div>
+        <div class="col-sm-4">
+          {% bootstrap_field target_data_share_form.data_type %}
+        </div>
+        <div class="col-sm-2">
+          <input type="submit" class="btn btn-primary" value="Submit" name="share_targetdata_form" style="position:absolute; bottom:1rem">
+        </div>
+      </div>
+    </form>
+    {% else %}
+        <em style="padding-inline:1rem">Not Configured</em>
+    {% endif %}
+</div>

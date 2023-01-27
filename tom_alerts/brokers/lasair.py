@@ -90,10 +90,15 @@ class LasairBroker(GenericBroker):
     form = LasairBrokerForm
 
     def fetch_alerts(self, parameters):
-        token = settings.LASAIR_TOKEN
         alerts = []
         broker_feedback = ''
         object_ids = ''
+        try:
+            token = settings.LASAIR_TOKEN
+        except AttributeError:
+            broker_feedback += 'Requires a LASAIR_TOKEN in settings.py. See https://lasair-ztf.lsst.ac.uk/api' \
+                               ' for details about how to acquire an authorization token.'
+            return iter(alerts), broker_feedback
 
         # Check for Cone Search
         if 'cone_ra' in parameters and len(parameters['cone_ra'].strip()) > 0 and\
