@@ -411,12 +411,12 @@ class TargetName(models.Model):
         """
         super().validate_unique(*args, **kwargs)
         matches = Target.matches.check_for_fuzzy_match(self.name)
-        for match in matches:
-            if match.id is not self.target.id:
+        if matches:
+            if matches[0] == self.target:
+                raise ValidationError(f'Alias {self.name} has a conflict with the primary name of the target. '
+                                      f'(target_id={self.target.id})')
+            else:
                 raise ValidationError(f'Target with Name or alias similar to {self.name} already exists')
-        if self.name == self.target.name:
-            raise ValidationError(f'Alias {self.name} has a conflict with the primary name of the target. '
-                                  f'(target_id={self.target.id})')
 
 
 class TargetExtra(models.Model):
