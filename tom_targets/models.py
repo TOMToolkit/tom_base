@@ -37,8 +37,11 @@ REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME = {
 class TargetMatchManager(models.Manager):
     def check_for_fuzzy_match(self, name):
         simple_name = self.make_simple_name(name)
-        matching_names = [target.name for target in Target.objects.all()
-                          if self.make_simple_name(target.name) == simple_name]
+        matching_names = []
+        for target in Target.objects.all():
+            for alias in target.names:
+                if self.make_simple_name(alias) == simple_name:
+                    matching_names.append(target.name)
         queryset = Target.objects.filter(name__in=matching_names)
         return queryset
 
@@ -282,15 +285,15 @@ class Target(models.Model):
         Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
         """
         super().validate_unique(*args, **kwargs)
-        if Target.matches.check_for_fuzzy_match(self.name):
-            raise ValidationError(f'Target with a similar Name already exists')
+        matches = Target.matches.check_for_fuzzy_match(self.name)
+        for match in matches:
+            if match.id is not self.id:
+                raise ValidationError(f'Target with Name or alias similar to {self.name} already exists')
         # Alias Check only necessary when updating target existing target. Reverse relationships require Primary Key.
         if self.pk:
             for alias in self.aliases.all():
                 if alias.name == self.name:
                     raise ValidationError('Target name and target aliases must be different')
-        if TargetName.objects.filter(name=self.name):
-            raise ValidationError(f'Target {self.name} has a conflict with the alias of an existing target.')
 
     def __str__(self):
         return str(self.name)
@@ -407,11 +410,13 @@ class TargetName(models.Model):
         Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
         """
         super().validate_unique(*args, **kwargs)
+        matches = Target.matches.check_for_fuzzy_match(self.name)
+        for match in matches:
+            if match.id is not self.target.id:
+                raise ValidationError(f'Target with Name or alias similar to {self.name} already exists')
         if self.name == self.target.name:
             raise ValidationError(f'Alias {self.name} has a conflict with the primary name of the target. '
                                   f'(target_id={self.target.id})')
-        if Target.objects.filter(name=self.name):
-            raise ValidationError(f'Alias {self.name} has a conflict with the primary name of an existing target.')
 
 
 class TargetExtra(models.Model):
