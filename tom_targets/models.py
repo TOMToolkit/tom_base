@@ -35,7 +35,13 @@ REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME = {
 
 
 class TargetMatchManager(models.Manager):
+    """Search for matches amongst Target names and Aliases"""
     def check_for_fuzzy_match(self, name):
+        """
+        Check for case-insensitive names ignoring spaces, dashes, underscore, and parentheses.
+        :param name: The string against which target names and aliases will be matched.
+        :return: queryset containing matching Targets. Will return targets even when matched value is an alias.
+        """
         simple_name = self.make_simple_name(name)
         matching_names = []
         for target in Target.objects.all():
@@ -46,6 +52,7 @@ class TargetMatchManager(models.Manager):
         return queryset
 
     def make_simple_name(self, name):
+        """Create a simplified name to be used for comparison in check_for_fuzzy_match."""
         return name.lower().replace(" ", "").replace("-", "").replace("_", "").replace("(", "").replace(")", "")
 
 
@@ -285,6 +292,7 @@ class Target(models.Model):
         Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
         """
         super().validate_unique(*args, **kwargs)
+        # Check DB for similar target/alias names.
         matches = Target.matches.check_for_fuzzy_match(self.name)
         for match in matches:
             if match.id is not self.id:
@@ -410,6 +418,7 @@ class TargetName(models.Model):
         Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
         """
         super().validate_unique(*args, **kwargs)
+        # Check DB for similar target/alias names.
         matches = Target.matches.check_for_fuzzy_match(self.name)
         if matches:
             if matches[0] == self.target:
