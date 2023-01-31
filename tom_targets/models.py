@@ -44,7 +44,7 @@ class TargetMatchManager(models.Manager):
         """
         simple_name = self.make_simple_name(name)
         matching_names = []
-        for target in Target.objects.all():
+        for target in Target.objects.all().prefetch_related('aliases'):
             for alias in target.names:
                 if self.make_simple_name(alias) == simple_name:
                     matching_names.append(target.name)
