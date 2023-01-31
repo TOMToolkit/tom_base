@@ -28,8 +28,8 @@ class TargetSerializer(serializers.ModelSerializer):
     json (or other representations). See
     https://www.django-rest-framework.org/api-guide/serializers/#modelserializer
     """
-    targetextra_set = TargetExtraSerializer(many=True)
-    aliases = TargetNameSerializer(many=True)
+    targetextra_set = TargetExtraSerializer(many=True, required=False)
+    aliases = TargetNameSerializer(many=True, required=False)
     groups = GroupSerializer(many=True, required=False)  # TODO: return groups in detail and list
 
     class Meta:

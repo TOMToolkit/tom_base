@@ -1,0 +1,91 @@
+{% load bootstrap4 %}
+{% load tom_common_extras %}
+
+<form method="POST" action="{% url 'tom_dataproducts:share_all' tg_pk=target.id %}" enctype="multipart/form-data">
+    {% csrf_token %}
+      {% for hidden in target_data_share_form.hidden_fields %}
+        {{ hidden }}
+      {% endfor %}
+    <div class="card">
+        <div class="card-header">
+          Photometry Data
+        </div>
+        <table id="photData" class="table table-striped table-hover table-sm" cellspacing="0" width="100%">
+            <thead>
+                <tr><th><div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="share-all" onclick="select_all()" value=""/>
+                    <label class="form-check-label" for="share-all">Share</label>
+                    </div></th>
+                    <th>Timestamp</th>
+                    <th>Telescope</th>
+                    <th>Filter</th>
+                    <th>Magnitude</th>
+                    <th>Error</th>
+                    <th>Source</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for datum in data %}
+            <tr>
+                <td><input type="checkbox" class="phot-row" id="phot-row-{{datum.id}}" name="share-box" value="{{datum.id}}" onchange="check_selected()"></td>
+                <td>{{ datum.timestamp }}</td>
+                <td>{{ datum.telescope }}</td>
+                <td>{{ datum.filter }}</td>
+                <td>
+                    <!-- prepend greater-than sign if this is a magnitude limit -->
+                    {% if datum.limit %}>{% endif %}
+                    {{ datum.magnitude|truncate_number }}
+                </td>
+                <td>{{ datum.magnitude_error }}</td>
+                <td>{{ datum.source }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2">No Photometry Data.</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="card">
+        <div class="card-header">
+          Share Selected Data
+        </div>
+            {% if sharing_destinations %}
+          <div class="form-row" style="padding-inline:1rem">
+            <div class="col-sm-4">
+              {% bootstrap_field target_data_share_form.share_destination %}
+            </div>
+            <div class="col-sm-2">
+              <input type="submit" class="btn btn-primary" id="submit_selected" value="Submit" name="share_targetdata_form" style="position:absolute; bottom:1rem" disabled>
+            </div>
+          </div>
+            {% else %}
+            <em style="padding-inline:1rem">Not Configured</em>
+            {% endif %}
+
+
+            </div>
+    </div>
+</form>
+<script>
+  function select_all()  {
+  var share_all = document.getElementById("share-all");
+     if(share_all.checked == true){
+        $('input[name=share-box]').prop('checked', true);
+     } else {
+        $('input[name=share-box]').prop('checked', false);
+     }
+     check_selected()
+  }
+  function check_selected()  {
+  var share_boxes = document.getElementsByName("share-box");
+  var submit_btn = document.getElementById('submit_selected');
+    for (const box of share_boxes) {
+        if(box.checked == true) {
+            submit_btn.disabled = false;
+            return;
+        }
+    }
+    submit_btn.disabled = true;
+  }
+</script>

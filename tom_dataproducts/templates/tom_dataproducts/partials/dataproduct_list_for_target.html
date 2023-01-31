@@ -2,7 +2,14 @@
 {% include 'tom_dataproducts/partials/js9_scripts.html' %}
 <h4>Data</h4>
 <table class="table table-striped">
-  <thead><tr><th></th><th></th><th>Filename</th><th>Type</th><th>Delete</th></tr></thead>
+  <thead><tr>
+    <th></th>
+    <th></th>
+    <th>Filename</th>
+    <th>Type</th>
+    <th>Share</th>
+    <th>Delete</th>
+  </tr></thead>
   <tbody>
   {% for product in products %}
     <tr>
@@ -21,9 +28,43 @@
         {% if product.data_product_type %}
           {{ product.get_type_display }}
         {% endif %}
-        </a>
+      </td>
+      <td>
+        {% if sharing_destinations %}
+          <button type="button" class="btn btn-info" data-toggle="collapse" data-target="#share-{{ forloop.counter }}">Publish</button>
+        {% else %}
+          <p>Not Configured</p>
+        {% endif %}
       </td>
       <td><a href="{% url 'tom_dataproducts:delete' product.id %}" class="btn btn-danger">Delete</a></td>
+    </tr>
+    <tr id="share-{{ forloop.counter }}" class="collapse">
+      <td colspan=100%>
+        <form method="POST" action="{% url 'tom_dataproducts:share' dp_pk=product.id %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          {% for hidden in data_product_share_form.hidden_fields %}
+            {{ hidden }}
+          {% endfor %}
+          <div class="form-row">
+            <div class="col-sm-4">
+              {% bootstrap_field data_product_share_form.share_destination %}
+            </div>
+            <div class="col-sm-8">
+              {% bootstrap_field data_product_share_form.share_title %}
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="col-sm-10">
+              {% bootstrap_field data_product_share_form.share_message %}
+            </div>
+            <div class="col-sm-2">
+              {% buttons %}
+                <input type="submit" class="btn btn-primary" value="Submit" name="share_dataproduct_form" style="position:absolute; bottom:0">
+              {% endbuttons %}
+            </div>
+          </div>
+        </form>
+      </td>
     </tr>
   {% endfor %}
 </table>
