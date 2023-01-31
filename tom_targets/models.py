@@ -34,6 +34,28 @@ REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME = {
 }
 
 
+class TargetMatchManager(models.Manager):
+    """Search for matches amongst Target names and Aliases"""
+    def check_for_fuzzy_match(self, name):
+        """
+        Check for case-insensitive names ignoring spaces, dashes, underscore, and parentheses.
+        :param name: The string against which target names and aliases will be matched.
+        :return: queryset containing matching Targets. Will return targets even when matched value is an alias.
+        """
+        simple_name = self.make_simple_name(name)
+        matching_names = []
+        for target in Target.objects.all():
+            for alias in target.names:
+                if self.make_simple_name(alias) == simple_name:
+                    matching_names.append(target.name)
+        queryset = Target.objects.filter(name__in=matching_names)
+        return queryset
+
+    def make_simple_name(self, name):
+        """Create a simplified name to be used for comparison in check_for_fuzzy_match."""
+        return name.lower().replace(" ", "").replace("-", "").replace("_", "").replace("(", "").replace(")", "")
+
+
 class Target(models.Model):
     """
     Class representing a target in a TOM
@@ -228,6 +250,9 @@ class Target(models.Model):
         null=True, blank=True, verbose_name='Perihelion Distance', help_text='AU'
     )
 
+    objects = models.Manager()
+    matches = TargetMatchManager()
+
     @transaction.atomic
     def save(self, *args, **kwargs):
         """
@@ -241,6 +266,7 @@ class Target(models.Model):
         names = kwargs.pop('names', [])
 
         created = False if self.id else True
+
         super().save(*args, **kwargs)
 
         if created:
@@ -255,6 +281,7 @@ class Target(models.Model):
 
         for name in names:
             name, _ = TargetName.objects.get_or_create(target=self, name=name)
+            name.full_clean()
             name.save()
 
         if not created:
@@ -265,6 +292,11 @@ class Target(models.Model):
         Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
         """
         super().validate_unique(*args, **kwargs)
+        # Check DB for similar target/alias names.
+        matches = Target.matches.check_for_fuzzy_match(self.name)
+        for match in matches:
+            if match.id is not self.id:
+                raise ValidationError(f'Target with Name or alias similar to {self.name} already exists')
         # Alias Check only necessary when updating target existing target. Reverse relationships require Primary Key.
         if self.pk:
             for alias in self.aliases.all():
@@ -386,9 +418,14 @@ class TargetName(models.Model):
         Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
         """
         super().validate_unique(*args, **kwargs)
-        if self.name == self.target.name:
-            raise ValidationError(f'''Alias {self.name} has a conflict with the primary name of the target
-                                      {self.target.name} (id={self.target.id})''')
+        # Check DB for similar target/alias names.
+        matches = Target.matches.check_for_fuzzy_match(self.name)
+        if matches:
+            if matches[0] == self.target:
+                raise ValidationError(f'Alias {self.name} has a conflict with the primary name of the target. '
+                                      f'(target_id={self.target.id})')
+            else:
+                raise ValidationError(f'Target with Name or alias similar to {self.name} already exists')
 
 
 class TargetExtra(models.Model):
