@@ -504,7 +504,8 @@ class TestTargetCreate(TestCase):
         for i, name in enumerate(names):
             target_data.pop(f'aliases-{i}-name')
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(second_response, f'Target with Name or alias similar to {target_data["name"]} already exists')
+        self.assertContains(second_response, f'Target with Name or alias similar to {target_data["name"]} '
+                                             f'already exists')
         self.assertFalse(Target.objects.filter(name=target_data['name']).exists())
 
     def test_create_target_alias_conflicting_with_existing_target_name(self):
