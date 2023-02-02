@@ -316,7 +316,7 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
         'zeroline': False,
     }
     if target.distance is not None:
-        dm = 5. * (np.log10(target.distance) + 5.)  # assumes target.distance is in Mpc
+        dm = 5. * (np.log10(target.distance) - 1.)  # assumes target.distance is in parsecs
         yaxis2 = {
             'title': 'Absolute Magnitude',
             'range': (ymax_view - dm, ymin_view - dm),
