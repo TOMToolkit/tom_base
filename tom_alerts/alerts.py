@@ -14,15 +14,14 @@ from tom_alerts.models import BrokerQuery
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
-
+# Note: the MARS and SCiMMA Brokers have been deprecated and thus
+# remove from the list of default Alert Classes
 DEFAULT_ALERT_CLASSES = [
-    'tom_alerts.brokers.mars.MARSBroker',
     'tom_alerts.brokers.lasair.LasairBroker',
     'tom_alerts.brokers.scout.ScoutBroker',
     'tom_alerts.brokers.alerce.ALeRCEBroker',
     'tom_alerts.brokers.antares.ANTARESBroker',
     'tom_alerts.brokers.gaia.GaiaBroker',
-    'tom_alerts.brokers.scimma.SCIMMABroker',
     'tom_alerts.brokers.fink.FinkBroker',
 ]
 
