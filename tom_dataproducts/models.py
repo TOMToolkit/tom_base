@@ -12,6 +12,7 @@ from fits2image.conversions import fits_to_jpg
 from PIL import Image
 
 from tom_targets.models import Target
+from tom_alerts.models import AlertStreamMessage
 from tom_observations.models import ObservationRecord
 
 logger = logging.getLogger(__name__)
@@ -311,7 +312,7 @@ class ReducedDatum(models.Model):
                       'error': .5
                     }
 
-                  but could also contain a filter:
+                  but could also contain a filter, a telescope, an instrument, and/or a unit:
 
                   ::
 
@@ -319,8 +320,13 @@ class ReducedDatum(models.Model):
                       'magnitude': 18.5,
                       'magnitude_error': .5,
                       'filter': 'r'
+                      'telescope': 'ELP.domeA.1m0a'
+                      'instrument': 'fa07'
                     }
     :type value: dict
+
+    :param message: Set of ``AlertStreamMessage`` objects this object is associated with.
+    :type message: ManyRelatedManager object
 
     """
 
@@ -334,6 +340,7 @@ class ReducedDatum(models.Model):
     source_location = models.CharField(max_length=200, default='')
     timestamp = models.DateTimeField(null=False, blank=False, default=datetime.now, db_index=True)
     value = models.JSONField(null=False, blank=False)
+    message = models.ManyToManyField(AlertStreamMessage)
 
     class Meta:
         get_latest_by = ('timestamp',)

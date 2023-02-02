@@ -190,12 +190,14 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         :type form: subclass of TargetCreateForm
         """
         super().form_valid(form)
+
         extra = TargetExtraFormset(self.request.POST)
+        extra.instance = self.object
         names = TargetNamesFormset(self.request.POST)
+        names.instance = self.object
+
         if extra.is_valid() and names.is_valid():
-            extra.instance = self.object
             extra.save()
-            names.instance = self.object
             names.save()
         else:
             form.add_error(None, extra.errors)

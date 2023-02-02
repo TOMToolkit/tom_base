@@ -4,12 +4,20 @@
       Recent Photometry
     </div>
     <table class="table">
-        <thead><tr><th>Timestamp</th><th>Magnitude</th></tr></thead>
+        <thead>
+            <tr><th>Timestamp</th>
+                <th>Magnitude</th>
+            </tr>
+        </thead>
         <tbody>
         {% for datum in data %}
         <tr>
             <td>{{ datum.timestamp }}</td>
-            <td>{{ datum.magnitude|truncate_number }}</td>
+            <td>
+                <!-- prepend greater-than sign if this is a magnitude limit -->
+                {% if datum.limit %}>{% endif %}
+                {{ datum.magnitude|truncate_number }}
+            </td>
         </tr>
         {% empty %}
         <tr>
