@@ -208,6 +208,7 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
         'showline': True,
         'linecolor': label_color,
         'mirror': True,
+        'zeroline': False,
     }
     if target.distance is not None:
         dm = 5. * (np.log10(target.distance) + 5.)  # assumes target.distance is in Mpc
@@ -217,6 +218,7 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
             'showgrid': False,
             'overlaying': 'y',
             'side': 'right',
+            'zeroline': False,
         }
         plot_data.append(go.Scatter(x=[], y=[], yaxis='y2'))  # dummy data set for abs mag axis
     else:
