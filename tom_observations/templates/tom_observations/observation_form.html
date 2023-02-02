@@ -25,7 +25,7 @@
         <ul class="nav nav-tabs" id="tabs">
         {% for observation_type, observation_form in observation_type_choices %}
             <li class="nav-item">
-                <span class="nav-link {% if observation_type == active or not active and forloop.first %}active{% endif %}" data-target="#{{ observation_type }}" data-toggle="tab"">
+                <span class="nav-link {% if observation_type == active or not active and forloop.first %}active{% endif %}" data-target="#{{ observation_type }}" data-toggle="tab">
                     {{ observation_type|display_obs_type }}
                 </span>
             </li>
