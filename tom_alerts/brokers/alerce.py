@@ -18,7 +18,7 @@ ALERCE_URL = 'https://alerce.online'
 ALERCE_SEARCH_URL = 'https://api.alerce.online/ztf/v1'
 ALERCE_CLASSES_URL = f'{ALERCE_SEARCH_URL}/classifiers'
 
-SORT_CHOICES = [('None', 'None'),
+SORT_CHOICES = [(None, 'None'),
                 ('oid', 'Object ID'),
                 ('probability', 'Classifier Probability'),
                 ('ndet', 'Number of Detections'),
@@ -27,7 +27,7 @@ SORT_CHOICES = [('None', 'None'),
                 ('meanra', 'Mean Right Ascension'),
                 ('meandec', 'Mean Declination')]
 
-SORT_ORDER = [('None', 'None'),
+SORT_ORDER = [(None, 'None'),
               ('ASC', 'Ascending'),
               ('DESC', 'Descending')]
 FILTERS = {1: 'g', 2: 'r', 3: 'i'}
