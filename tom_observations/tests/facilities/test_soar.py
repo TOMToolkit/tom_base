@@ -14,12 +14,13 @@ instrument_response = {
     '2M0-FLOYDS-SCICAM': {
         'type': 'SPECTRA', 'class': '2m0', 'name': '2.0 meter FLOYDS', 'optical_elements': {
             'slits': [
-              {'name': '6.0 arcsec slit', 'code': 'slit_6.0as', 'schedulable': True, 'default': False},
-              {'name': '1.6 arcsec slit', 'code': 'slit_1.6as', 'schedulable': True, 'default': False},
-              {'name': '2.0 arcsec slit', 'code': 'slit_2.0as', 'schedulable': True, 'default': False},
-              {'name': '1.2 arcsec slit', 'code': 'slit_1.2as', 'schedulable': True, 'default': False}
+                {'name': '6.0 arcsec slit', 'code': 'slit_6.0as', 'schedulable': True, 'default': False},
+                {'name': '1.6 arcsec slit', 'code': 'slit_1.6as', 'schedulable': True, 'default': False},
+                {'name': '2.0 arcsec slit', 'code': 'slit_2.0as', 'schedulable': True, 'default': False},
+                {'name': '1.2 arcsec slit', 'code': 'slit_1.2as', 'schedulable': True, 'default': False}
             ]
-        }
+        },
+        'default_configuration_type': 'SPECTRUM'
     },
     '0M4-SCICAM-SBIG': {
         'type': 'IMAGE', 'class': '0m4', 'name': '0.4 meter SBIG', 'optical_elements': {
@@ -28,6 +29,7 @@ instrument_response = {
                 {'name': '100um Pinhole', 'code': '100um-Pinhole', 'schedulable': False, 'default': False},
             ]
         },
+        'default_configuration_type': 'EXPOSE'
     },
     'SOAR_GHTS_REDCAM': {
         'type': 'SPECTRA', 'class': '4m0', 'name': 'Goodman Spectrograph RedCam', 'optical_elements': {
@@ -45,7 +47,8 @@ instrument_response = {
                     {'name': 'Sky Position', 'code': 'SKY'}
                 ]
             }
-        }
+        },
+        'default_configuration_type': 'SPECTRUM'
     },
     'SOAR_GHTS_REDCAM_IMAGER': {
         'type': 'IMAGE', 'class': '4m0', 'name': 'Goodman Spectrograph RedCam Imager', 'optical_elements': {
@@ -59,6 +62,7 @@ instrument_response = {
                 {'name': 'GHTS VR', 'code': 'VR', 'schedulable': True, 'default': False}
             ]
         },
+        'default_configuration_type': 'EXPOSE'
     }
 }
 
@@ -80,8 +84,8 @@ class TestMakeRequest(TestCase):
             make_request('GET', 'google.com', headers={'test': 'test'})
 
 
-@patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices')
-@patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
+@patch('tom_observations.facilities.ocs.OCSBaseForm.proposal_choices')
+@patch('tom_observations.facilities.ocs.OCSBaseForm._get_instruments')
 class TestSOARImagingObservationForm(TestCase):
     def setUp(self):
         self.st = SiderealTargetFactory.create()
@@ -130,8 +134,8 @@ class TestSOARSpectroscopyObservationForm(TestCase):
             'c_1_instrument_type': 'SOAR_GHTS_REDCAM', 'c_1_ic_1_rotator_angle': 1.0
         }
 
-    @patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices')
-    @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
+    @patch('tom_observations.facilities.ocs.OCSBaseForm.proposal_choices')
+    @patch('tom_observations.facilities.ocs.OCSBaseForm._get_instruments')
     def test_instrument_choices(self, mock_get_instruments, mock_proposals):
         """Test SOARSpectroscopyObservationForm._instrument_choices."""
         mock_proposals.return_value = [('sampleproposal', 'Sample Proposal')]
@@ -143,8 +147,8 @@ class TestSOARSpectroscopyObservationForm(TestCase):
         self.assertNotIn(('SOAR_GHTS_REDCAM_IMAGER', 'Goodman Spectrograph RedCam Imager'), inst_choices)
         self.assertEqual(len(inst_choices), 1)
 
-    @patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices')
-    @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
+    @patch('tom_observations.facilities.ocs.OCSBaseForm.proposal_choices')
+    @patch('tom_observations.facilities.ocs.OCSBaseForm._get_instruments')
     def test_slit_choices(self, mock_get_instruments, mock_proposals):
         """Test SOARSpectroscopyObservationForm slit choices"""
         mock_proposals.return_value = [('sampleproposal', 'Sample Proposal')]
@@ -158,8 +162,8 @@ class TestSOARSpectroscopyObservationForm(TestCase):
             self.assertNotIn(not_expected, slit_choices)
         self.assertEqual(len(slit_choices), 1)
 
-    @patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices')
-    @patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments')
+    @patch('tom_observations.facilities.ocs.OCSBaseForm.proposal_choices')
+    @patch('tom_observations.facilities.ocs.OCSBaseForm._get_instruments')
     @patch('tom_observations.facilities.soar.SOARSpectroscopyObservationForm.validate_at_facility')
     def test_build_instrument_config(self, mock_validate, mock_insts, mock_proposals):
         mock_validate.return_value = {}

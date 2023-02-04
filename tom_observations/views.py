@@ -247,7 +247,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         if form.is_valid():
-            if 'validateButton' in request.POST:
+            if 'validate' in request.POST:
                 return self.form_validation_valid(form)
             else:
                 return self.form_valid(form)
