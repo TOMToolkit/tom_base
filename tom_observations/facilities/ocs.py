@@ -242,18 +242,19 @@ class OCSBaseForm(forms.Form):
         return sorted(all_config_types, key=lambda config_type: config_type[1])
 
     def proposal_choices(self):
-        now = datetime.now()
-        response = make_request(
-            'GET',
-            urljoin(self.facility_settings.get_setting('portal_url'), '/api/profile/'),
-            headers={'Authorization': 'Token {0}'.format(self.facility_settings.get_setting('api_key'))}
-        )
-        choices = []
-        for p in response.json()['proposals']:
-            if p['current']:
-                choices.append((p['id'], '{} ({})'.format(p['title'], p['id'])))
-        logger.warning(f"Get proposals took {(datetime.now() - now).total_seconds()}")
-        return choices
+        cached_proposals = cache.get(f'{self.facility_settings.facility_name}_proposals')
+        if not cached_proposals:
+            response = make_request(
+                'GET',
+                urljoin(self.facility_settings.get_setting('portal_url'), '/api/profile/'),
+                headers={'Authorization': 'Token {0}'.format(self.facility_settings.get_setting('api_key'))}
+            )
+            cached_proposals = []
+            for p in response.json()['proposals']:
+                if p['current']:
+                    cached_proposals.append((p['id'], '{} ({})'.format(p['title'], p['id'])))
+            cache.set(f'{self.facility_settings.facility_name}_proposals', cached_proposals, 3600)
+        return cached_proposals
 
 
 class OCSTemplateBaseForm(GenericTemplateForm, OCSBaseForm):
@@ -890,7 +891,12 @@ class OCSFullObservationForm(OCSBaseObservationForm):
         help_text='If True, pattern is centered on initial target. Otherwise pattern begins at initial target.'
     )
 
-    def __init__(self, *args, **kwargs):        
+    def __init__(self, *args, **kwargs):
+        # Need to load the facility_settings here even though it gets loaded in super __init__
+        # So that we can modify the initial data before hitting the base __init__
+        self.facility_settings = kwargs.get('facility_settings', OCSSettings("OCS"))
+        if 'initial' in kwargs:
+            kwargs['initial'] = self.load_initial_from_template(kwargs['initial'])
         super().__init__(*args, **kwargs)
         for j in range(self.facility_settings.get_setting('max_configurations')):
             self.fields[f'c_{j+1}_instrument_type'] = forms.ChoiceField(
@@ -1000,6 +1006,28 @@ class OCSFullObservationForm(OCSBaseObservationForm):
             ),
             self.advanced_expansions_layout_class()(self.form_name(), self.facility_settings)
         )
+
+    def load_initial_from_template(self, initial):
+        """ Template data contains single fields like 'exposure_time' so convert those into the per config/ic versions
+        """
+        if not initial:
+            return initial
+        if 'template_name' in initial:
+            if 'exposure_time' in initial:
+                initial['c_1_ic_1_exposure_time'] = initial['exposure_time']
+            if 'exposure_count' in initial:
+                initial['c_1_ic_1_exposure_count'] = initial['exposure_count']
+            if 'max_airmass' in initial:
+                initial['c_1_max_airmass'] = initial['max_airmass']
+            if 'instrument_type' in initial:
+                initial['c_1_instrument_type'] = initial['instrument_type']
+            if 'filter' in initial:
+                for oe_group in self.get_optical_element_groups():
+                    oe_group_plural = oe_group + 's'
+                    filter_choices = self.filter_choices_for_group(oe_group_plural)
+                    if initial['filter'] in [f[0] for f in filter_choices]:
+                        initial[f'c_1_ic_1_{oe_group}'] = initial['filter']
+        return initial
 
     def _build_target_extra_params(self, configuration_id=1):
         # if a fractional_ephemeris_rate has been specified, add it as an extra_param
@@ -1432,7 +1460,6 @@ class OCSFacility(BaseRoboticObservationFacility):
             return requestgroups['results'][0]['id']
 
     def _archive_frames(self, observation_id, product_id=None):
-        # todo save this key somewhere
         frames = []
         if product_id:
             response = make_request(

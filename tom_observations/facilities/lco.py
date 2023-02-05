@@ -457,8 +457,6 @@ class LCOFullObservationForm(OCSFullObservationForm):
             for existing ObservationRecords, which use the old form, but may still need to use the new form
             to submit cadence strategy observations.
         """
-        if not data:
-            return None
         if 'instrument_type' in data:
             data['c_1_instrument_type'] = data['instrument_type']
             del data['instrument_type']
@@ -726,6 +724,10 @@ class LCOPhotometricSequenceForm(LCOOldStyleObservationForm):
     def __init__(self, *args, **kwargs):
         if 'facility_settings' not in kwargs:
             kwargs['facility_settings'] = LCOSettings("LCO")
+        if 'initial' in kwargs:
+            # Because we use a FilterField custom field here that combines three fields, we must
+            # convert those fields when they are passed in so validation doesn't depopulate the fields
+            kwargs['initial'] = self.convert_filter_fields(kwargs['initial'])
         super().__init__(*args, **kwargs)
 
         # Add fields for each available filter as specified in the filters property
@@ -774,6 +776,14 @@ class LCOPhotometricSequenceForm(LCOOldStyleObservationForm):
                 })
 
         return instrument_configs
+
+    def convert_filter_fields(self, initial):
+        if not initial:
+            return initial
+        for filter_name in self.valid_filters:
+            if f'{filter_name}_0' in initial or f'{filter_name}_1' in initial or f'{filter_name}_2' in initial:
+                initial[f'{filter_name}'] = [initial[f'{filter_name}_0'], initial[f'{filter_name}_1'], initial[f'{filter_name}_2']]
+        return initial
 
     def clean_start(self):
         """
@@ -906,6 +916,11 @@ class LCOSpectroscopicSequenceForm(LCOOldStyleObservationForm):
             self.layout(),
             self.button_layout()
         )
+
+    def _build_configuration(self):
+        configuration = super()._build_configuration()
+        configuration['type'] = 'SPECTRUM'
+        return configuration
 
     def _build_instrument_configs(self):
         instrument_configs = super()._build_instrument_configs()
