@@ -25,6 +25,13 @@ class OCSSettings():
         an OCS form implementation. The facility_name is used for retrieving the settings from the
         FACILITIES dictionary in settings.py.
     """
+    default_settings = {
+        'portal_url': '',
+        'archive_url': '',
+        'api_key': '',
+        'max_instrument_configs': 5,
+        'max_configurations': 5
+    }
     # These class variables describe default help text for a variety of OCS fields.
     # Override them as desired for a specific OCS implementation.
     ipp_value_help = """
@@ -67,14 +74,8 @@ class OCSSettings():
         self.facility_name = facility_name
 
     def get_setting(self, key):
-        default_settings = {
-            'portal_url': '',
-            'archive_url': '',
-            'api_key': '',
-            'max_instrument_configs': 5,
-            'max_configurations': 5
-        }
-        return settings.FACILITIES.get(self.facility_name, default_settings).get(key, default_settings[key])
+
+        return settings.FACILITIES.get(self.facility_name, self.default_settings).get(key, self.default_settings[key])
 
     def get_observing_states(self):
         return [

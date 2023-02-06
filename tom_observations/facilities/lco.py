@@ -19,6 +19,13 @@ logger = logging.getLogger(__name__)
 class LCOSettings(OCSSettings):
     """ LCO Specific settings
     """
+    default_settings = {
+        'portal_url': 'https://observe.lco.global',
+        'archive_url': 'https://archive-api.lco.global/',
+        'api_key': '',
+        'max_instrument_configs': 5,
+        'max_configurations': 5
+    }
     # These class variables describe default help text for a variety of OCS fields.
     # Override them as desired for a specific OCS implementation.
     end_help = """
