@@ -37,6 +37,7 @@ obs_params = {
     'instrument_type': '1M0-SCICAM-SINISTRO'
 }
 
+
 @patch('tom_observations.facilities.ocs.OCSBaseForm._get_instruments', return_value=mock_instruments)
 @patch('tom_observations.facilities.ocs.OCSBaseForm.proposal_choices',
        return_value=[('LCOSchedulerTest', 'LCOSchedulerTest')])

@@ -25,8 +25,8 @@ class OCSSettings():
         an OCS form implementation. The facility_name is used for retrieving the settings from the
         FACILITIES dictionary in settings.py.
     """
-    # These class variables describe default help text for a variety of OCS fields. Override 
-    # them as desired for a specific OCS implementation
+    # These class variables describe default help text for a variety of OCS fields.
+    # Override them as desired for a specific OCS implementation.
     ipp_value_help = """
             Value between 0.5 to 2.0.
             <a href="https://lco.global/documents/20/the_new_priority_factor.pdf">
@@ -118,7 +118,7 @@ class OCSSettings():
         """
         Return an iterable of dictionaries that contain the information
         necessary to be used in the planning (visibility) tool.
-        Format: 
+        Format:
         {
             'Site Name': {
                 'sitecode': 'tst',
@@ -147,6 +147,7 @@ class OCSSettings():
             'code': self.facility_name,
             'sites': []
         }
+
 
 def make_request(*args, **kwargs):
     response = requests.request(*args, **kwargs)
@@ -1469,7 +1470,7 @@ class OCSFacility(BaseRoboticObservationFacility):
             )
             frames = [response.json()]
         else:
-            url = urljoin(self.facility_settings.get_setting('archive_url'), 
+            url = urljoin(self.facility_settings.get_setting('archive_url'),
                           f'/frames/?REQNUM={observation_id}&limit=1000')
             while url:
                 response = make_request(

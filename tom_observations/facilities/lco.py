@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 import logging
-from urllib.parse import urlencode
 
 from crispy_forms.bootstrap import AppendedText, PrependedText, AccordionGroup
 from crispy_forms.layout import Column, Div, HTML, Layout, Row, MultiWidgetField, Fieldset
@@ -16,11 +15,12 @@ from tom_observations.widgets import FilterField
 
 logger = logging.getLogger(__name__)
 
+
 class LCOSettings(OCSSettings):
     """ LCO Specific settings
     """
-    # These class variables describe default help text for a variety of OCS fields. Override 
-    # them as desired for a specific OCS implementation
+    # These class variables describe default help text for a variety of OCS fields.
+    # Override them as desired for a specific OCS implementation.
     end_help = """
         Try the
         <a href="https://lco.global/observatory/visibility/">
@@ -131,6 +131,7 @@ class LCOSettings(OCSSettings):
                 }
                 for site in self.get_sites().values()]
         }
+
 
 class LCOTemplateBaseForm(OCSTemplateBaseForm):
     def all_optical_element_choices(self, use_code_only=False):
@@ -782,7 +783,11 @@ class LCOPhotometricSequenceForm(LCOOldStyleObservationForm):
             return initial
         for filter_name in self.valid_filters:
             if f'{filter_name}_0' in initial or f'{filter_name}_1' in initial or f'{filter_name}_2' in initial:
-                initial[f'{filter_name}'] = [initial[f'{filter_name}_0'], initial[f'{filter_name}_1'], initial[f'{filter_name}_2']]
+                initial[f'{filter_name}'] = [
+                    initial[f'{filter_name}_0'],
+                    initial[f'{filter_name}_1'],
+                    initial[f'{filter_name}_2']
+                ]
         return initial
 
     def clean_start(self):

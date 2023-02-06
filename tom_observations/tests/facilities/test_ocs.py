@@ -115,6 +115,7 @@ instrument_response = {
     }
 }
 
+
 def generate_ocs_instrument_choices():
     return {k: v for k, v in instrument_response.items()}
 
