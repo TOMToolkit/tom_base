@@ -107,6 +107,9 @@ celerybeat-schedule
 venv/
 ENV/
 
+# secrets
+tom-demo-secrets.*
+
 # Spyder project settings
 .spyderproject
 
