@@ -69,7 +69,7 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
 
         # Submission of the new observation to the facility
         obs_type = last_obs.parameters.get('observation_type')
-        form = facility.get_form(obs_type)(observation_payload)
+        form = facility.get_form(obs_type)(data=observation_payload)
         if form.is_valid():
             observation_ids = facility.submit_observation(form.observation_payload())
         else:

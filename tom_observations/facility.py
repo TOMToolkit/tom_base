@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from importlib import import_module
 import copy
 import logging
 import requests
@@ -10,16 +9,17 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
+from django.utils.module_loading import import_string
 
 from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_FACILITY_CLASSES = [
-        'tom_observations.facilities.lco.LCOFacility',
-        'tom_observations.facilities.gemini.GEMFacility',
-        'tom_observations.facilities.soar.SOARFacility',
-        'tom_observations.facilities.lt.LTFacility'
+    'tom_observations.facilities.lco.LCOFacility',
+    'tom_observations.facilities.gemini.GEMFacility',
+    'tom_observations.facilities.soar.SOARFacility',
+    'tom_observations.facilities.lt.LTFacility'
 ]
 
 try:
@@ -36,10 +36,8 @@ def get_service_classes():
 
     service_choices = {}
     for service in TOM_FACILITY_CLASSES:
-        mod_name, class_name = service.rsplit('.', 1)
         try:
-            mod = import_module(mod_name)
-            clazz = getattr(mod, class_name)
+            clazz = import_string(service)
         except (ImportError, AttributeError):
             raise ImportError('Could not import {}. Did you provide the correct path?'.format(service))
         service_choices[clazz.name] = clazz
@@ -69,6 +67,7 @@ class BaseObservationForm(forms.Form):
     observation_type = forms.CharField(required=False, max_length=50, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
+        self.validation_message = 'This observation is valid.'
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         if settings.TARGET_PERMISSIONS_ONLY:
@@ -90,10 +89,17 @@ class BaseObservationForm(forms.Form):
     def button_layout(self):
         target_id = self.initial.get('target_id')
         return ButtonHolder(
-                Submit('submit', 'Submit'),
-                HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>
-                         Back</a>''')
-            )
+            Submit('submit', 'Submit'),
+            Submit('validate', 'Validate'),
+            HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>
+                        Back</a>''')
+        )
+
+    def get_validation_message(self):
+        """ Override this or self.validation_message to return a validation message that is shown when
+            the Validate button is clicked and the form is valid
+        """
+        return self.validation_message
 
     def is_valid(self):
         # TODO: Make this call the validate_observation method in facility
