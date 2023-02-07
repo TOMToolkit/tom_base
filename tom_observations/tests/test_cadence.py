@@ -9,34 +9,37 @@ from tom_observations.cadences.resume_cadence_after_failure import ResumeCadence
 from tom_observations.cadences.retry_failed_observations import RetryFailedObservationsStrategy
 
 
-mock_filters = {'1M0-SCICAM-SINISTRO': {
-                    'type': 'IMAGE',
-                    'class': '1m0',
-                    'name': '1.0 meter Sinistro',
-                    'optical_elements': {
-                        'filters': [{'name': 'Bessell-I', 'code': 'I'}]}
-                    }
-                }
+mock_instruments = {
+    '1M0-SCICAM-SINISTRO': {
+        'type': 'IMAGE',
+        'class': '1m0',
+        'name': '1.0 meter Sinistro',
+        'optical_elements': {
+            'filters': [{'name': 'Bessell-I', 'code': 'I', 'schedulable': True, 'default': True}]
+        },
+        'default_configuration_type': 'EXPOSE'
+    }
+}
 
 obs_params = {
-        'facility': 'LCO',
-        'observation_type': 'IMAGING',
-        'name': 'With Perms',
-        'ipp_value': 1.05,
-        'start': '2020-01-01T00:00:00',
-        'end': '2020-01-02T00:00:00',
-        'exposure_count': 1,
-        'exposure_time': 2.0,
-        'max_airmass': 4.0,
-        'observation_mode': 'NORMAL',
-        'proposal': 'LCOSchedulerTest',
-        'filter': 'I',
-        'instrument_type': '1M0-SCICAM-SINISTRO'
-    }
+    'facility': 'LCO',
+    'observation_type': 'IMAGING',
+    'name': 'With Perms',
+    'ipp_value': 1.05,
+    'start': '2020-01-01T00:00:00',
+    'end': '2020-01-02T00:00:00',
+    'exposure_count': 1,
+    'exposure_time': 2.0,
+    'max_airmass': 4.0,
+    'observation_mode': 'NORMAL',
+    'proposal': 'LCOSchedulerTest',
+    'filter': 'I',
+    'instrument_type': '1M0-SCICAM-SINISTRO'
+}
 
 
-@patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments', return_value=mock_filters)
-@patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices',
+@patch('tom_observations.facilities.ocs.OCSBaseForm._get_instruments', return_value=mock_instruments)
+@patch('tom_observations.facilities.ocs.OCSBaseForm.proposal_choices',
        return_value=[('LCOSchedulerTest', 'LCOSchedulerTest')])
 @patch('tom_observations.facilities.lco.LCOFacility.submit_observation', return_value=[198132])
 @patch('tom_observations.facilities.lco.LCOFacility.validate_observation')
@@ -78,7 +81,7 @@ class TestReactiveCadencing(TestCase):
            'scheduled_start': None, 'scheduled_end': None})
     def test_resume_when_failed_cadence_failed_obs(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
                                                    mock_proposal_choices, mock_get_insts):
-        mock_validate_obs.return_value = []
+        mock_validate_obs.return_value = {}
         num_records = self.group.observation_records.count()
 
         strategy = ResumeCadenceAfterFailureStrategy(self.dynamic_cadence)
@@ -94,7 +97,7 @@ class TestReactiveCadencing(TestCase):
            'scheduled_start': None, 'scheduled_end': None})
     def test_resume_when_failed_cadence_successful_obs(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
                                                        mock_proposal_choices, mock_get_insts):
-        mock_validate_obs.return_value = []
+        mock_validate_obs.return_value = {}
         num_records = self.group.observation_records.count()
         obsr = self.group.observation_records.order_by('-created').first()
 
@@ -111,7 +114,7 @@ class TestReactiveCadencing(TestCase):
            'scheduled_start': None, 'scheduled_end': None})
     def test_resume_when_failed_cadence_invalid_date(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
                                                      mock_proposal_choices, mock_get_insts):
-        mock_validate_obs.return_value = []
+        mock_validate_obs.return_value = {}
         num_records = self.group.observation_records.count()
         obsr = self.group.observation_records.order_by('-created').first()
         obsr.parameters['start'] = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%S')
@@ -131,7 +134,7 @@ class TestReactiveCadencing(TestCase):
            'scheduled_start': None, 'scheduled_end': None})
     def test_resume_when_failed_cadence_obs_invalid(self, mock_get_obs_status, mock_validate_obs, mock_submit_obs,
                                                     mock_proposal_choices, mock_get_insts):
-        mock_validate_obs.return_value = {'end': 'Window end time must be in the future'}
+        mock_validate_obs.return_value = {'errors': {'end': 'Window end time must be in the future'}}
 
         strategy = ResumeCadenceAfterFailureStrategy(self.dynamic_cadence)
         with self.assertRaises(Exception):

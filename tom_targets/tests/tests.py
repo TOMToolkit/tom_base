@@ -1049,7 +1049,7 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.assertIn(('1 target(s) successfully removed from group \'{}\'.'.format(self.fake_grouping.name),
                        SUCCESS), messages)
         self.assertIn(('2 target(s) not in group \'{}\': {}'.format(
-            self.fake_grouping.name, self.fake_targets[1].name + ', ' + self.fake_targets[2].name
+            self.fake_grouping.name, ', '.join(sorted([self.fake_targets[1].name, self.fake_targets[2].name]))
         ), WARNING), messages)
 
     def test_remove_all_from_grouping_filtered_by_grouping(self):
@@ -1090,7 +1090,7 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.assertIn(('1 target(s) successfully removed from group \'{}\'.'.format(self.fake_grouping.name),
                        SUCCESS), messages)
         self.assertIn(('2 target(s) not in group \'{}\': {}'.format(
-            self.fake_grouping.name, self.fake_targets[1].name + ', ' + self.fake_targets[2].name
+            self.fake_grouping.name, ', '.join(sorted([self.fake_targets[1].name, self.fake_targets[2].name]))
         ), WARNING), messages)
 
     def test_persist_filter(self):
