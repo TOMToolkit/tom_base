@@ -161,7 +161,7 @@ observation, using a utility method that’s part of the
 .. code:: python
 
    obs_type = last_obs.parameters_as_dict.get('observation_type')
-   form = facility.get_form(obs_type)(observation_payload)
+   form = facility.get_form(obs_type)(data=observation_payload)
    form.is_valid()
    observation_ids = facility.submit_observation(form.observation_payload())
 
@@ -216,7 +216,7 @@ Just to review, here is the strategy’s ``run()`` in its entirety:
             )
 
         obs_type = last_obs.parameters_as_dict.get('observation_type')
-        form = facility.get_form(obs_type)(observation_payload)
+        form = facility.get_form(obs_type)(data=observation_payload)
         form.is_valid()
         observation_ids = facility.submit_observation(form.observation_payload())
 
