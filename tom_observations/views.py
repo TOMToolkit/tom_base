@@ -1,9 +1,11 @@
 from io import StringIO
 from urllib.parse import urlencode
+import logging
 
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import HTML, Layout, Submit
 from django import forms
+from django.core.exceptions import BadRequest
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -31,6 +33,8 @@ from tom_observations.facility import BaseManualObservationFacility
 from tom_observations.forms import AddExistingObservationForm
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
 from tom_targets.models import Target
+
+logger = logging.getLogger(__name__)
 
 
 class ObservationFilter(FilterSet):
@@ -220,7 +224,11 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :returns: observation form
         :rtype: subclass of GenericObservationForm
         """
-        form = super().get_form()
+        try:
+            form = super().get_form()
+        except Exception as ex:
+            logger.error(f"Error loading {self.get_facility()} form: {repr(ex)}")
+            raise BadRequest(f"Error loading {self.get_facility()} form: {repr(ex)}")
         if not settings.TARGET_PERMISSIONS_ONLY:
             form.fields['groups'].queryset = self.request.user.groups.all()
         form.helper.form_action = reverse(
@@ -247,7 +255,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         if form.is_valid():
-            if 'validateButton' in request.POST:
+            if 'validate' in request.POST:
                 return self.form_validation_valid(form)
             else:
                 return self.form_valid(form)

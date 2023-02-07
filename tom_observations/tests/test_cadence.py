@@ -9,14 +9,15 @@ from tom_observations.cadences.resume_cadence_after_failure import ResumeCadence
 from tom_observations.cadences.retry_failed_observations import RetryFailedObservationsStrategy
 
 
-mock_filters = {
+mock_instruments = {
     '1M0-SCICAM-SINISTRO': {
         'type': 'IMAGE',
         'class': '1m0',
         'name': '1.0 meter Sinistro',
         'optical_elements': {
             'filters': [{'name': 'Bessell-I', 'code': 'I', 'schedulable': True, 'default': True}]
-        }
+        },
+        'default_configuration_type': 'EXPOSE'
     }
 }
 
@@ -37,8 +38,8 @@ obs_params = {
 }
 
 
-@patch('tom_observations.facilities.lco.LCOBaseForm._get_instruments', return_value=mock_filters)
-@patch('tom_observations.facilities.lco.LCOBaseForm.proposal_choices',
+@patch('tom_observations.facilities.ocs.OCSBaseForm._get_instruments', return_value=mock_instruments)
+@patch('tom_observations.facilities.ocs.OCSBaseForm.proposal_choices',
        return_value=[('LCOSchedulerTest', 'LCOSchedulerTest')])
 @patch('tom_observations.facilities.lco.LCOFacility.submit_observation', return_value=[198132])
 @patch('tom_observations.facilities.lco.LCOFacility.validate_observation')
