@@ -35,7 +35,7 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
                 observation_payload, start_keyword=start_keyword, end_keyword=end_keyword
             )
             obs_type = obs.parameters.get('observation_type', None)
-            form = facility.get_form(obs_type)(observation_payload)
+            form = facility.get_form(obs_type)(data=observation_payload)
             form.is_valid()
             observation_ids = facility.submit_observation(form.observation_payload())
 
