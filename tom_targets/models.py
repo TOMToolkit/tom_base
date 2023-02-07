@@ -417,11 +417,13 @@ class TargetName(models.Model):
         """
         Ensures that Target.name and all aliases of the target are unique. Called automatically on save.
         """
+        if self.pk and self.name == TargetName.objects.get(pk=self.pk).name:
+            return
         super().validate_unique(*args, **kwargs)
         # Check DB for similar target/alias names.
         matches = Target.matches.check_for_fuzzy_match(self.name)
         if matches:
-            if matches[0] == self.target:
+            if self.name == self.target.name:
                 raise ValidationError(f'Alias {self.name} has a conflict with the primary name of the target. '
                                       f'(target_id={self.target.id})')
             else:
