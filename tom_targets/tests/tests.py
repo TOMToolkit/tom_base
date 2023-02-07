@@ -770,6 +770,13 @@ class TestTargetUpdate(TestCase):
         self.assertTrue(new_name in self.target.names)
         self.assertFalse('testtarget' in self.target.names)
 
+        # Update target name to fuzzy match to existing alias
+        self.assertTrue('test_target' in self.target.names)
+        new_name = "alias (1)"
+        self.target.name = new_name
+        with self.assertRaises(ValidationError):
+            self.target.full_clean()
+
         # Add new valid alias with invalid alias in DB
         bad_alias_data = {'name': "Test Target",
                           'target': self.target}
