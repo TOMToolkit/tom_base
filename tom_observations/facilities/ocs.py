@@ -74,7 +74,6 @@ class OCSSettings():
         self.facility_name = facility_name
 
     def get_setting(self, key):
-
         return settings.FACILITIES.get(self.facility_name, self.default_settings).get(key, self.default_settings[key])
 
     def get_observing_states(self):
@@ -170,7 +169,7 @@ class OCSBaseForm(forms.Form):
         self.facility_settings = kwargs.pop('facility_settings')
         super().__init__(*args, **kwargs)
 
-    def target_group_choices(self):
+    def target_group_choices(self, include_self=True):
         target_id = self.data.get('target_id')
         if not target_id:
             target_id = self.initial.get('target_id')
@@ -178,7 +177,10 @@ class OCSBaseForm(forms.Form):
             target_name = Target.objects.get(pk=target_id).name
             group_targets = Target.objects.filter(targetlist__targets__pk=target_id).exclude(
                 pk=target_id).order_by('name').distinct().values_list('pk', 'name')
-            return [(target_id, target_name)] + list(group_targets)
+            if include_self:
+                return [(target_id, target_name)] + list(group_targets)
+            else:
+                return list(group_targets)
         except Target.DoesNotExist:
             return []
 
@@ -592,8 +594,19 @@ class OCSInstrumentConfigLayout(Layout):
             )
         return oe_groups_layout
 
+    def get_initial_ic_items(self, config_instance, instance):
+        """ Override in subclasses to add items to the begining of the inst config
+        """
+        return ()
+
+    def get_final_ic_items(self, config_instance, instance):
+        """ Override in the subclasses to add items at the end of the inst config
+        """
+        return ()
+
     def _get_ic_layout(self, config_instance, instance, oe_groups):
         return (
+            *self.get_initial_ic_items(config_instance, instance),
             Div(
                 Div(
                     f'c_{config_instance}_ic_{instance}_exposure_time',
@@ -605,7 +618,8 @@ class OCSInstrumentConfigLayout(Layout):
                 ),
                 css_class='form-row'
             ),
-            *self._get_oe_groups_layout(config_instance, instance, oe_groups)
+            *self._get_oe_groups_layout(config_instance, instance, oe_groups),
+            *self.get_final_ic_items(config_instance, instance)
         )
 
 
@@ -1030,13 +1044,6 @@ class OCSFullObservationForm(OCSBaseObservationForm):
                     if initial['filter'] in [f[0] for f in filter_choices]:
                         initial[f'c_1_ic_1_{oe_group}'] = initial['filter']
         return initial
-
-    def _build_target_extra_params(self, configuration_id=1):
-        # if a fractional_ephemeris_rate has been specified, add it as an extra_param
-        # to the target_fields
-        if f'c_{configuration_id}_fractional_ephemeris_rate' in self.cleaned_data:
-            return {'fractional_ephemeris_rate': self.cleaned_data[f'c_{configuration_id}_fractional_ephemeris_rate']}
-        return {}
 
     def _build_instrument_config(self, instrument_type, configuration_id, id):
         # If the instrument config did not have an exposure time set, leave it out by returning None

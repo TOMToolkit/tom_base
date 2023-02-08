@@ -491,6 +491,13 @@ class LCOFullObservationForm(OCSFullObservationForm):
     def configuration_layout_class(self):
         return LCOConfigurationLayout
 
+    def _build_target_extra_params(self, configuration_id=1):
+        # if a fractional_ephemeris_rate has been specified, add it as an extra_param
+        # to the target_fields
+        if f'c_{configuration_id}_fractional_ephemeris_rate' in self.cleaned_data:
+            return {'fractional_ephemeris_rate': self.cleaned_data[f'c_{configuration_id}_fractional_ephemeris_rate']}
+        return {}
+
 
 class LCOImagingObservationForm(LCOFullObservationForm):
     """
