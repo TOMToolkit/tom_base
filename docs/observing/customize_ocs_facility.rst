@@ -1,12 +1,20 @@
-Customizing an OCS Facility plugin
----------------------------------------
+Customizing an OCS Facility
+---------------------------
+
+The `Observatory Control System <https://observatorycontrolsystem.github.io/>`_ (OCS) is an open-source
+software system whose goal is to bring the benefits of API-driven observing to the astronomical
+community. `Las Cumbres Observatory <https://lco.global/>`_ successfully operates a global network of
+20+ robotic telescopes using the OCS.
 
 The OCS Facility module for the TOM Toolkit should work for an OCS based observatory
-by setting the proper settings in your TOM's ``settings.py``. The base OCS Facility implementation
+by setting the proper settings in your TOM's ``settings.py``.
+
+The base OCS Facility implementation
 supports showing all the instruments that are schedulable, along with all of their potential
 `optical_elements` as defined within your OCS configuration database.
 
-.. code:: python
+.. code-block:: python
+ :linenos:
 
     # settings.py
     TOM_FACILITY_CLASSES = [
@@ -54,7 +62,8 @@ as long as it’s located somewhere in your project:
 
 Now add some code to this file to create a new observation module:
 
-.. code:: python
+.. code-block:: python
+ :linenos:
 
 
     # custom_ocs.py
@@ -70,21 +79,22 @@ Now add some code to this file to create a new observation module:
 
 So what does the above code do?
 
-1. Line 1 imports the OCSFacility that is already shipped with the TOM
+1. Line 2 imports the OCSFacility that is already shipped with the TOM
    Toolkit. You want this class because it contains functionality you will
    re-use in your own implementation.
-2. Line 4 defines a new class named ``CustomOCSFacility`` that
+2. Line 5 defines a new class named ``CustomOCSFacility`` that
    inherits from ``OCSFacility``.
-3. Line 5 sets the name attribute of this class to ``CustomOCS``. This is
+3. Line 6 sets the name attribute of this class to ``CustomOCS``. This is
    how the TOM facilities modules knows how to reference your facility, and
    therefor should be unique.
-4. Line 6 defines two new Observation forms, which will be implemented in
+4. Line 7 defines two new Observation forms, which will be implemented in
    the next section.
 
 Now you need to tell your TOM where to find your new module so you can use
 it to submit observations. Add (or edit) the following lines in your ``settings.py``:
 
-.. code:: python
+.. code-block:: python
+ :linenos:
 
     # settings.py
     TOM_FACILITY_CLASSES = [
@@ -98,21 +108,22 @@ to your TOM.
 With that done, go to any target in your TOM and you should see your new
 module in the list. But right now, if you click on your `CustomOCS` module,
 you will get an error because the specific forms you referenced do not
-exist yet. Those forms will be added the next two section.
+exist yet. Those forms will be added the next two sections.
 
 Create a new OCS based observing form for a specific instrument
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Say your observatory has several instruments available, each with a varying set
+Let's assume your observatory has several instruments available, each with a varying set
 of extra parameters that can be set by the user. In this section, you will create
 a customized form specific to instrument `Instrument1`, and add some custom fields
 to its `instrument_configuration` layout. We will be adding a `readout_mode` dropdown
 since your instrument has many readout modes, and a `defocus` value, since your science
 requires setting how defocused the instrument should be for each exposure. First, start
-by subclassing the base full OCS observation form:
+by subclassing the base class of the full OCS observation form:
 ``tom_observations.facilities.ocs.OCSFullObservationForm``.
 
-.. code:: python
+.. code-block:: python
+ :linenos:
 
     # custom_ocs.py
     from tom_observations.facilities.ocs import OCSFullObservationForm, OCSFacility
@@ -201,14 +212,15 @@ the code block for a description of why each section is overriden.
 Create a new OCS based observing form for spectrographs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now say your observatory has multiple spectrographs, and each one has several different
-settings for acquisition. In this section we will create another custom OCS observation form,
+Now let's assume your observatory has multiple spectrographs, and each one has several different
+settings for acquisition. In this section, we will create another custom OCS observation form,
 this time tailoring it to spectrograph instruments and adding additional fields for acquisition
 parameters: acquisition `mode`, `exposure_time` and a `guide_star`. The guide star will be a
-target present in your TOM's target database. You will start by subclassing the base full OCS
-observation form: ``tom_observations.facilities.ocs.OCSFullObservationForm``.
+target present in your TOM's target database. You will start by subclassing the base class of
+the full OCS observation form: ``tom_observations.facilities.ocs.OCSFullObservationForm``.
 
-.. code:: python
+.. code-block:: python
+ :linenos:
 
     # custom_ocs.py
     from tom_observations.facilities.ocs import OCSFullObservationForm, OCSFacility
@@ -324,10 +336,10 @@ observation form: ``tom_observations.facilities.ocs.OCSFullObservationForm``.
 
             return acquisition_config
 
-The above code should define a form which only has spectrograph instruments, and adds 3 new
+The above code should define a form which only has spectrograph instruments, and adds three new
 fields to the `acquisition_config` section of the form. 
 
-Now that you have defined both new forms, your new OCS based facility module should be complete!
+Now that you have defined both new forms, your new OCS-based facility module should be complete!
 Try reloading your TOM and navigating to the details page for a specific Target. You should see
 your ``CustomOCS`` facility in the list, and clicking that should bring you to a page with the
 observation forms you've just defined.
@@ -348,7 +360,8 @@ and create your own facility settings class. This is necessary to hook in facili
 a visibility plot, and facility weather/availability information. To create your own custom settings
 class, start by subclassing ``OCSSettings`` like this:
 
-.. code:: python
+.. code-block:: python
+ :linenos:
 
     # custom_ocs.py
     from tom_observations.facilities.ocs import OCSFacility, OCSSettings
@@ -413,7 +426,7 @@ class, start by subclassing ``OCSSettings`` like this:
         def __init__(self, facility_settings=CustomOCSSettings('CustomOCS')):
             super().__init__(facility_settings=facility_settings)
 
-Notice the only change to the ``CustomOCSFacility`` was the overriding of the `__init__()`
+Notice that the only change to the ``CustomOCSFacility`` was the overriding of the `__init__()`
 method to set the `facility_settings` class to be an instance of our newly created ``CustomOCSSettings``
 class. Please review
 `the base OCSSettings class <https://github.com/TOMToolkit/tom_base/blob/dev/tom_observations/facilities/ocs.py#L23>`__
