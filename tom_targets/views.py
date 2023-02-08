@@ -191,10 +191,8 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         """
         super().form_valid(form)
 
-        extra = TargetExtraFormset(self.request.POST)
-        extra.instance = self.object
-        names = TargetNamesFormset(self.request.POST)
-        names.instance = self.object
+        extra = TargetExtraFormset(self.request.POST, instance=self.object)
+        names = TargetNamesFormset(self.request.POST, instance=self.object)
 
         if extra.is_valid() and names.is_valid():
             extra.save()
@@ -260,6 +258,7 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
         :param form: Form data for target update
         :type form: subclass of TargetCreateForm
         """
+        super().form_valid(form)
         extra = TargetExtraFormset(self.request.POST, instance=self.object)
         names = TargetNamesFormset(self.request.POST, instance=self.object)
         if extra.is_valid() and names.is_valid():
@@ -271,7 +270,6 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
-        super().form_valid(form)
         return redirect(self.get_success_url())
 
     def get_queryset(self, *args, **kwargs):
