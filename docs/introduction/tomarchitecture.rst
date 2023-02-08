@@ -52,7 +52,7 @@ they are left with a functioning but generic TOM. It is then up to the developer
 to implement the specific features that their science case requires. The toolkit
 tries to facilitate this as efficiently as possible and provides
 :doc:`documentation <index>` in areas of customization from :doc:`changing the HTML layout of a page </customization/customize_templates>`
-to :doc:`altering how observations are submitted </observing/customize_observations>` and even 
+to :doc:`customizing an OCS facility and forms </observing/customize_ocs_facility>` and even 
 :doc:`creating a new alert broker </brokers/create_broker>`.
 
 Django, and by extension the toolkit, rely heavily on object oriented

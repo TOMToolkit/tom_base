@@ -117,10 +117,15 @@ def hermes_alert_handler(alert, metadata):
     photometry_table = alert_as_dict['data'].get('photometry', None)
     if photometry_table:
         hermes_alert = AlertStreamMessage(topic=alert_as_dict['topic'], exchange_status='ingested')
+        target_name = ''
+        query = []
         for row in photometry_table:
-            try:
-                target = Target.objects.get(name=row['target_name'])
-            except Target.DoesNotExist:
+            if row['target_name'] != target_name:
+                target_name = row['target_name']
+                query = Target.matches.check_for_fuzzy_match(target_name)
+            if query:
+                target = query[0]
+            else:
                 continue
 
             try:

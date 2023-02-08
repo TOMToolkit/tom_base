@@ -6,6 +6,7 @@ from django.contrib.messages import get_messages
 from django.contrib.messages.constants import SUCCESS, WARNING
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.core.exceptions import ValidationError
 
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory, TargetNameFactory
 from tom_targets.models import Target, TargetExtra, TargetList, TargetName
@@ -448,6 +449,7 @@ class TestTargetCreate(TestCase):
         for i, name in enumerate(names):
             target_data[f'aliases-{i}-name'] = name
         self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        # Create same target again
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(second_response, 'Target with this Name already exists')
 
@@ -473,9 +475,151 @@ class TestTargetCreate(TestCase):
         for i, name in enumerate(names):
             target_data[f'aliases-{i}-name'] = name
         self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        # Create target with different name, same aliases
         target_data['name'] = 'multiple_names_target2'
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(second_response, 'Target name with this Alias already exists.')
+
+    def test_create_target_name_conflicting_with_existing_aliases(self):
+        target_data = {
+            'name': 'multiple_names_target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 2,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        names = ['John', 'Doe']
+        for i, name in enumerate(names):
+            target_data[f'aliases-{i}-name'] = name
+        self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        # New target with name the same as different target alias
+        target_data['name'] = 'John'
+        target_data['aliases-TOTAL_FORMS'] = 0
+        for i, name in enumerate(names):
+            target_data.pop(f'aliases-{i}-name')
+        second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(second_response, f'Target with Name or alias similar to {target_data["name"]} '
+                                             f'already exists')
+        self.assertFalse(Target.objects.filter(name=target_data['name']).exists())
+
+    def test_create_target_alias_conflicting_with_existing_target_name(self):
+        target_data = {
+            'name': 'John',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 0,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        # Create Target with new name, but alias matches previous target
+        names = ['John', 'Doe']
+        for i, name in enumerate(names):
+            target_data[f'aliases-{i}-name'] = name
+        target_data['name'] = 'multiple_names_target'
+        target_data['aliases-TOTAL_FORMS'] = 2
+        second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(second_response, f'Target with Name or alias similar to {names[0]} already exists')
+
+    def test_create_target_alias_conflicting_with_target_name(self):
+        target_data = {
+            'name': 'John',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 2,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        names = ['John', 'Doe']
+        for i, name in enumerate(names):
+            target_data[f'aliases-{i}-name'] = name
+        # Create target with alias same as name
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertTrue(Target.objects.filter(name=target_data['name']).exists())
+        target = Target.objects.get(name=target_data['name'])
+        self.assertContains(response, f'Alias {names[0]} has a conflict with the primary name of the target. '
+                                      f'(target_id={target.id})')
+        self.assertFalse(TargetName.objects.filter(name=target_data['name']).exists())
+
+    def test_create_targets_with_fuzzy_conflicting_names(self):
+        target_data = {
+            'name': 'fuzzy_name_Target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 0,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        names = ['FuzzyNameTarget', 'Fuzzy name target', 'FUZZY_NAME-TARGET', 'fuzzynametarget', '(Fuzzy) Name-Target']
+        self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        for name in names:
+            target_data['name'] = name
+            second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+            self.assertContains(second_response, f'Target with Name or alias similar to {name} already exists')
+
+    def test_create_alias_fuzzy_conflict_with_existing_target_name(self):
+        target_data = {
+            'name': 'John',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1,
+            'groups': [self.group.id],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 0,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        names = ['jo-hn', 'Doe']
+        for i, name in enumerate(names):
+            target_data[f'aliases-{i}-name'] = name
+        target_data['name'] = 'multiple_names_target'
+        target_data['aliases-TOTAL_FORMS'] = 2
+        second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(second_response, f'Target with Name or alias similar to {names[0]} already exists')
 
 
 class TestTargetUpdate(TestCase):
@@ -550,10 +694,149 @@ class TestTargetUpdate(TestCase):
             'name': 'testtargetname2',
         })
         response = self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
-        self.assertContains(response, 'Target name and target aliases must be different')
         # Show name change was unsuccessful
         self.target.refresh_from_db()
         self.assertTrue(self.target.name, 'testtarget')
+        # Check for Error Message
+        self.assertContains(response, 'Target name and target aliases must be different')
+
+    def test_2nd_valid_alias_update(self):
+        self.form_data.update({
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'aliases-TOTAL_FORMS': 2,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+            'aliases-0-name': 'testtargetname2',
+            'aliases-0-id': '',
+            'aliases-1-name': '',
+            'aliases-1-id': ''
+        })
+        # Add Alias
+        self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.target.refresh_from_db()
+        self.assertTrue(self.target.aliases.filter(name='testtargetname2').exists())
+        # Create 2nd Alias
+        old_alias = TargetName.objects.get(name='testtargetname2')
+        self.form_data.update({'aliases-INITIAL_FORMS': 1,
+                               'aliases-0-id': old_alias.pk,
+                               'aliases-1-name': 'totally_different_name',
+                               'aliases-1-id': ''})
+        self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.target.refresh_from_db()
+        self.assertTrue(self.target.aliases.filter(name='totally_different_name').exists())
+
+    def test_raw_update_process(self):
+        """Series of escalating tests to direct DB submissions"""
+        # Add new valid alias
+        new_alias_data = {'name': "alias1",
+                          'target': self.target}
+        new_alias = TargetName(**new_alias_data)
+        new_alias.full_clean()
+        new_alias.save()
+        self.assertTrue(new_alias_data['name'] in self.target.names)
+
+        # Add new invalid alias that fuzzy matches Target Name
+        new_alias_data = {'name': "test Target",
+                          'target': self.target}
+        new_alias = TargetName(**new_alias_data)
+        with self.assertRaises(ValidationError):
+            new_alias.full_clean()
+
+        # Add new invalid alias that fuzzy matched Alias
+        new_alias_data = {'name': "Alias_1",
+                          'target': self.target}
+        new_alias = TargetName(**new_alias_data)
+        with self.assertRaises(ValidationError):
+            new_alias.full_clean()
+
+        # Add new valid alias
+        new_alias_data = {'name': "alias2",
+                          'target': self.target}
+        new_alias = TargetName(**new_alias_data)
+        new_alias.full_clean()
+        new_alias.save()
+        self.assertTrue(new_alias_data['name'] in self.target.names)
+
+        # Update target name to fuzzy match to old name
+        self.assertTrue('testtarget' in self.target.names)
+        new_name = "test_target"
+        self.target.name = new_name
+        self.target.full_clean()
+        self.target.save()
+        self.assertTrue(new_name in self.target.names)
+        self.assertFalse('testtarget' in self.target.names)
+
+        # Update target name to fuzzy match to existing alias
+        self.assertTrue('test_target' in self.target.names)
+        new_name = "alias (1)"
+        self.target.name = new_name
+        with self.assertRaises(ValidationError):
+            self.target.full_clean()
+
+        # Add new valid alias with invalid alias in DB
+        bad_alias_data = {'name': "Test Target",
+                          'target': self.target}
+        bad_alias = TargetName(**bad_alias_data)
+        bad_alias.save()
+        self.assertTrue(bad_alias_data['name'] in self.target.names)
+        new_alias_data = {'name': "alias3",
+                          'target': self.target}
+        new_alias = TargetName(**new_alias_data)
+        new_alias.full_clean()
+        new_alias.save()
+        self.assertTrue(new_alias_data['name'] in self.target.names)
+
+        # Change existing valid alias to invalid alias that fuzzy conflicts with alias name
+        new_alias.name = "alias (2)"
+        with self.assertRaises(ValidationError):
+            new_alias.full_clean()
+
+        # Add new invalid target with name fuzzy matching existing target name
+        bad_target_data = {
+            'name': 'testtarget',
+            'type': Target.SIDEREAL,
+            'ra': 10,
+            'dec': -22.1
+        }
+        bad_target = Target(**bad_target_data)
+        with self.assertRaises(ValidationError):
+            bad_target.full_clean()
+
+        # Add new invalid target with name fuzzy matching existing alias
+        bad_target.name = "Alias__1"
+        with self.assertRaises(ValidationError):
+            bad_target.full_clean()
+
+        # Add new valid target
+        new_target_data = {
+            'name': 'newtesttarget',
+            'type': Target.SIDEREAL,
+            'ra': 10,
+            'dec': -22.1
+        }
+        new_target = Target(**new_target_data)
+        new_target.full_clean()
+        new_target.save()
+        self.assertTrue(Target.objects.filter(name=new_target_data['name']).exists())
+
+        # Add new valid alias to new target
+        new_alias_data = {'name': "new_target_alias",
+                          'target': new_target}
+        new_alias = TargetName(**new_alias_data)
+        new_alias.full_clean()
+        new_alias.save()
+        self.assertTrue(new_alias_data['name'] in new_target.names)
+
+        # Add invalid alias to new target that fuzzy matches main target alias
+        new_alias_data = {'name': "aLiAs2",
+                          'target': new_target}
+        new_alias = TargetName(**new_alias_data)
+        with self.assertRaises(ValidationError):
+            new_alias.full_clean()
 
 
 class TestTargetImport(TestCase):
@@ -911,7 +1194,7 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.assertIn(('1 target(s) successfully removed from group \'{}\'.'.format(self.fake_grouping.name),
                        SUCCESS), messages)
         self.assertIn(('2 target(s) not in group \'{}\': {}'.format(
-            self.fake_grouping.name, self.fake_targets[1].name + ', ' + self.fake_targets[2].name
+            self.fake_grouping.name, ', '.join(sorted([self.fake_targets[1].name, self.fake_targets[2].name]))
         ), WARNING), messages)
 
     def test_remove_all_from_grouping_filtered_by_grouping(self):
@@ -952,7 +1235,7 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.assertIn(('1 target(s) successfully removed from group \'{}\'.'.format(self.fake_grouping.name),
                        SUCCESS), messages)
         self.assertIn(('2 target(s) not in group \'{}\': {}'.format(
-            self.fake_grouping.name, self.fake_targets[1].name + ', ' + self.fake_targets[2].name
+            self.fake_grouping.name, ', '.join(sorted([self.fake_targets[1].name, self.fake_targets[2].name]))
         ), WARNING), messages)
 
     def test_persist_filter(self):

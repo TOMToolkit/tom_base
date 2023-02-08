@@ -5,7 +5,7 @@ Observing Facilities and Observations
   :maxdepth: 2
   :hidden:
 
-  customize_observations
+  customize_ocs_facility
   ../common/scripts
   strategies
   observation_module
@@ -13,8 +13,9 @@ Observing Facilities and Observations
   ../api/tom_observations/views
 
 
-:doc:`Changing Request Submission Behavior <customize_observations>` - Learn how to customize observation forms 
-in order to add additional parameters to observation requests.
+:doc:`Customizing an OCS Facility and its Forms <customize_ocs_facility>` - Learn how to customize an
+`Observatory Control System <https://observatorycontrolsystem.github.io/>`_ facility and its observation forms
+to add new fields and behaviour.
 
 `Programmatically Submitting Observations <../common/scripts.html#creating-observations-programmatically>`__
 
