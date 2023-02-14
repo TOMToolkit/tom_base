@@ -9,6 +9,11 @@
     <!-- Bootstrap CSS -->
     {% bootstrap_css %}
     <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
+    <!--  Implement Dark Mode CSS if indicated in Settings  -->
+    {% dark_mode as dark_mode %}
+    {% if dark_mode %}
+      <link rel="stylesheet" href="{% static 'tom_common/css/dark.css' %}">
+    {% endif %}
     {% block additional_css %}
     {% endblock %}
     <link rel="icon" type="image/x-icon" href="{% static 'tom_common/img/favicon-32.ico' %}" sizes="32x32" />

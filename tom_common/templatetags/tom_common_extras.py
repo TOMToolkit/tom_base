@@ -76,3 +76,9 @@ def truncate_number(value):
 @register.simple_tag
 def tom_name():
     return getattr(settings, 'TOM_NAME', 'TOM Toolkit')
+
+
+@register.simple_tag
+def dark_mode():
+    """Check for Dark Mode in Settings"""
+    return getattr(settings, 'DARK_MODE', False)
