@@ -315,4 +315,8 @@ def target_table(targets):
     Returns a partial for a table of targets, used in the target_list.html template
     by default
     """
+    # Prefetch related tables to speed up target List Load
+    related_tables = ['aliases', 'dataproduct_set', 'observationrecord_set']
+    for table in related_tables:
+        targets = targets.prefetch_related(table)
     return {'targets': targets}
