@@ -6,6 +6,7 @@ from astropy.coordinates import SkyCoord
 from collections import OrderedDict
 from django.conf import settings
 
+from tom_alerts.brokers.tns import TNSBroker
 from tom_catalogs.harvester import AbstractHarvester
 from tom_common.exceptions import ImproperCredentialsException
 
@@ -30,7 +31,7 @@ def get(term):
     get_data = [('api_key', (None, TNS_CREDENTIALS['api_key'])),
                 ('data', (None, json.dumps(json_file)))]
 
-    response = requests.post(get_url, files=get_data)
+    response = requests.post(get_url, files=get_data, headers=TNSBroker.tns_headers())
     response_data = json.loads(response.text)
 
     if 400 <= response_data.get('id_code') <= 403:
@@ -53,7 +54,7 @@ class TNSHarvester(AbstractHarvester):
     def to_target(self):
         target = super().to_target()
         target.type = 'SIDEREAL'
-        target.name = (self.catalog_data['name_prefix'] + self.catalog_data['name'])
+        target.name = (self.catalog_data['name_prefix'] + self.catalog_data['objname'])
         c = SkyCoord('{0} {1}'.format(self.catalog_data['ra'], self.catalog_data['dec']), unit=(u.hourangle, u.deg))
         target.ra, target.dec = c.ra.deg, c.dec.deg
         return target

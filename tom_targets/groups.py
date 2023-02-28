@@ -124,7 +124,8 @@ def remove_all_from_grouping(filter_data, grouping_object, request):
                               .format(len(success_targets), grouping_object.name))
     if warning_targets:
         messages.warning(request, "{} target(s) not in group '{}': {}"
-                                  .format(len(warning_targets), grouping_object.name, ', '.join(warning_targets)))
+                                  .format(len(warning_targets), grouping_object.name, ', '
+                                          .join(sorted(warning_targets))))
     for failure_target in failure_targets:
         messages.error(request, "Failed to remove target with id={} from group '{}'; {}"
                                 .format(failure_target['id'], grouping_object.name, failure_target['error']))
@@ -163,7 +164,8 @@ def remove_selected_from_grouping(targets_ids, grouping_object, request):
                               .format(len(success_targets), grouping_object.name))
     if warning_targets:
         messages.warning(request, "{} target(s) not in group '{}': {}"
-                                  .format(len(warning_targets), grouping_object.name, ', '.join(warning_targets)))
+                                  .format(len(warning_targets), grouping_object.name, ', '
+                                          .join(sorted(warning_targets))))
     for failure_target in failure_targets:
         messages.error(request, "Failed to remove target with id={} from group '{}'; {}"
                                 .format(failure_target['id'], grouping_object.name, failure_target['error']))
