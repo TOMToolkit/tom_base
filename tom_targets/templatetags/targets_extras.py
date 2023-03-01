@@ -225,7 +225,8 @@ def target_distribution(targets):
     """
     Displays a plot showing on a map the locations of all sidereal targets in the TOM.
     """
-    locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
+    locations = targets.values_list('ra', 'dec', 'name')
+
     data = [
         dict(
             lon=[location[0] for location in locations],
