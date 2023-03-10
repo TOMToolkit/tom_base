@@ -10,3 +10,10 @@ DATABASES = {
        'PORT': 5432
    }
 }
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        'LOCATION': 'unique-snowflake'
+    }
+}
