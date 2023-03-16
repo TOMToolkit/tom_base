@@ -9,6 +9,7 @@ from django.db.models import ExpressionWrapper, FloatField
 from django.db.models.functions.math import ACos, Cos, Radians, Pi, Sin
 from django.conf import settings
 from math import radians
+from bhtom_base.bhtom_common.hooks import run_hook
 
 
 # NOTE: This saves locally. To avoid this, create file buffer.
@@ -56,6 +57,8 @@ def import_targets(targets):
     """
     Imports a set of targets into the TOM and saves them to the database.
 
+    Additionally, performs post hook for each target (names, creation date)
+
     :param targets: String buffer of targets
     :type targets: StringIO
 
@@ -96,6 +99,11 @@ def import_targets(targets):
                 if name:
                     source_name = name[0].upper().replace('_NAME', '')
                     TargetName.objects.create(target=target, source_name=source_name, name=name[1])
+
+            target.type=Target.SIDEREAL  #temp - fixed to sideral only
+
+            run_hook('target_post_save', target=target, created=True)
+
             targets.append(target)
         except Exception as e:
             error = 'Error on line {0}: {1}'.format(index + 2, str(e))
