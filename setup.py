@@ -36,7 +36,8 @@ setup(
         'djangorestframework~=3.12',
         'django-bootstrap4>=3,<23',
         'django-contrib-comments~=2.0',  # Earlier version are incompatible with Django >= 3.0
-        'django-crispy-forms~=1.11',
+        'django-crispy-forms>=1.11,<3.0',
+        'crispy-bootstrap4',
         'django-extensions~=3.1',
         'django-filter>=21,<23',
         'django-gravatar2~=1.4',
@@ -54,7 +55,7 @@ setup(
         'test': ['factory_boy~=3.2.1'],
         'docs': [
             'recommonmark~=0.7',
-            'sphinx>=4,<6',
+            'sphinx>=4,<7',
             'tom_antares',
             'tom_scimma'
         ]
