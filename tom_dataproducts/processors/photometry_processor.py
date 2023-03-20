@@ -55,10 +55,9 @@ class PhotometryProcessor(DataProcessor):
             time.format = 'datetime'
             value = {
                 'timestamp': time.to_datetime(timezone=utc),
-                'magnitude': datum['magnitude'],
-                'filter': datum['filter'],
-                'error': datum['error']
             }
+            for column_name in datum.colnames:
+                value[column_name] = datum[column_name]
             photometry.append(value)
 
         return photometry
