@@ -96,6 +96,7 @@ def create_hermes_target_table_row(target, **kwargs):
                 "perihelion_distance": target.perihdist,
             }
         }
+    target_table_row['aliases'] = [alias.name for alias in target.aliases.all()]
     return target_table_row
 
 
