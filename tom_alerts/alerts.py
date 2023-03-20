@@ -22,6 +22,7 @@ DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.antares.ANTARESBroker',
     'tom_alerts.brokers.gaia.GaiaBroker',
     'tom_alerts.brokers.fink.FinkBroker',
+    'tom_alerts.brokers.hermes.HermesBroker',
 ]
 
 
