@@ -37,13 +37,16 @@ def publish_photometry_to_hermes(message_info, datums, **kwargs):
     :return: response
     """
     stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
-    submit_url = stream_base_url + 'api/v0/' + 'submit_photometry/'
+    submit_url = stream_base_url + 'api/v0/' + 'submit_message/'
     headers = {'SCIMMA-API-Auth-Username': settings.DATA_SHARING['hermes']['CREDENTIAL_USERNAME'],
                'SCIMMA-API-Auth-Password': settings.DATA_SHARING['hermes']['CREDENTIAL_PASSWORD']}
     hermes_photometry_data = []
+    hermes_target_list = []
     hermes_alert = AlertStreamMessage(topic=message_info.topic, exchange_status='published')
     hermes_alert.save()
     for tomtoolkit_photometry in datums:
+        if tomtoolkit_photometry.target.name not in [target['name'] for target in hermes_target_list]:
+            hermes_target_list.append(create_hermes_target_table_row(tomtoolkit_photometry.target, **kwargs))
         tomtoolkit_photometry.message.add(hermes_alert)
         hermes_photometry_data.append(create_hermes_phot_table_row(tomtoolkit_photometry, **kwargs))
     alert = {
@@ -52,8 +55,9 @@ def publish_photometry_to_hermes(message_info, datums, **kwargs):
         'submitter': message_info.submitter,
         'authors': message_info.authors,
         'data': {
+            'targets': hermes_target_list,
             'photometry': hermes_photometry_data,
-            'extra_info': message_info.extra_info
+            'extra_data': message_info.extra_info
         },
         'message_text': message_info.message,
     }
@@ -62,27 +66,57 @@ def publish_photometry_to_hermes(message_info, datums, **kwargs):
     return response
 
 
+def create_hermes_target_table_row(target, **kwargs):
+    """Build a row for a Hermes Target Table from a TOM target Model.
+    """
+    if target.type == "SIDEREAL":
+        target_table_row = {
+            'name': target.name,
+            'ra': target.ra,
+            'dec': target.dec,
+        }
+        if target.epoch:
+            target_table_row['epoch'] = target.epoch
+        if target.pm_ra:
+            target_table_row['pm_ra'] = target.pm_ra
+        if target.pm_dec:
+            target_table_row['pm_dec'] = target.pm_dec
+    else:
+        target_table_row = {
+            'name': target.name,
+            'orbital_elements': {
+                "epoch_of_elements": target.epoch_of_elements,
+                "eccentricity": target.eccentricity,
+                "argument_of_the_perihelion": target.arg_of_perihelion,
+                "mean_anomaly": target.mean_anomaly,
+                "orbital_inclination": target.inclination,
+                "longitude_of_the_ascending_node": target.lng_asc_node,
+                "semimajor_axis": target.semimajor_axis,
+                "epoch_of_perihelion": target.epoch_of_perihelion,
+                "perihelion_distance": target.perihdist,
+            }
+        }
+    return target_table_row
+
+
 def create_hermes_phot_table_row(datum, **kwargs):
     """Build a row for a Hermes Photometry Table using a TOM Photometry datum
     """
-    table_row = {
+    phot_table_row = {
         'target_name': datum.target.name,
-        'ra': datum.target.ra,
-        'dec': datum.target.dec,
-        'date': datum.timestamp.isoformat(),
+        'date_obs': datum.timestamp.isoformat(),
         'telescope': datum.value.get('telescope', ''),
         'instrument': datum.value.get('instrument', ''),
-        'band': datum.value.get('filter', ''),
+        'bandpass': datum.value.get('filter', ''),
         'brightness_unit': datum.value.get('unit', 'AB mag'),
     }
     if datum.value.get('magnitude', None):
-        table_row['brightness'] = datum.value['magnitude']
+        phot_table_row['brightness'] = datum.value['magnitude']
     else:
-        table_row['brightness'] = datum.value.get('limit', None)
-        table_row['nondetection'] = True
+        phot_table_row['limiting_brightness'] = datum.value.get('limit', None)
     if datum.value.get('magnitude_error', None):
-        table_row['brightness_error'] = datum.value['magnitude_error']
-    return table_row
+        phot_table_row['brightness_error'] = datum.value['magnitude_error']
+    return phot_table_row
 
 
 def get_hermes_topics():
