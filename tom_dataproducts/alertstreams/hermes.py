@@ -164,7 +164,7 @@ def hermes_alert_handler(alert, metadata):
                 continue
 
             try:
-                obs_date = parse(row['date'])
+                obs_date = parse(row['date_obs'])
             except ValueError:
                 continue
 
@@ -191,15 +191,15 @@ def get_hermes_phot_value(phot_data):
     """
     data_dictionary = {
         'magnitude_error': phot_data.get('brightness_error', ''),
-        'filter': phot_data['band'],
+        'filter': phot_data['bandpass'],
         'telescope': phot_data.get('telescope', ''),
         'instrument': phot_data.get('instrument', ''),
         'unit': phot_data['brightness_unit'],
     }
 
-    if not phot_data.get('nondetection', False):
+    if phot_data.get('brightness', None):
         data_dictionary['magnitude'] = phot_data['brightness']
-    else:
-        data_dictionary['limit'] = phot_data['brightness']
+    elif phot_data.get('limiting_brightness', None):
+        data_dictionary['limit'] = phot_data['limiting_brightness']
 
     return data_dictionary
