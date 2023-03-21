@@ -10,6 +10,8 @@ from django.db.models.functions.math import ACos, Cos, Radians, Pi, Sin
 from django.conf import settings
 from math import radians
 from bhtom_base.bhtom_common.hooks import run_hook
+from astropy.coordinates import Angle
+from astropy import units as u
 
 
 # NOTE: This saves locally. To avoid this, create file buffer.
@@ -202,3 +204,55 @@ def check_duplicate_source_names(target_names: List[Tuple[str, str]]) -> bool:
 
 def check_for_existing_alias(target_names: List[Tuple[str, str]]) -> bool:
     return sum([len(TargetName.objects.filter(name=alias)) for _, alias in target_names])>0
+
+def check_for_existing_coords(ra:float, dec:float, radius:float, queryset: Dict[str, Any]) -> List[Tuple[str, str]]:
+    """
+    Extracts the cone_search found targets
+
+    :param ra: RightAscension to search (decimal points)
+    :type ra: float
+
+    :param dec: Declination to search (decimal points)
+    :type dec: float
+
+    :param radius: search radius in degrees
+    :type radius: float
+
+    :param queryset: data extracted from form as a dictionary
+    :type queryset: Dict[str, Any]
+
+    :returns: list of target names at these coordinates
+    :rtype: List[str]
+    """
+    existing_coords_names = []
+    try:
+        cc=cone_search_filter(queryset, ra, dec, radius)
+        for target in cc:
+            existing_coords_names.append(target.name)
+    except Exception as e:
+        pass
+
+    return existing_coords_names
+
+def coords_to_degrees(value, c_type):
+    """
+    Converts from any type of coordinate to decimal degrees
+
+    :param value: Ra or Dec
+    :type value: any (float or string)
+
+    :param c_type: 'ra' or 'dec' tells if the value is RA or Dec
+    :type c_type: string
+    """
+    try:
+        a = float(value)
+        return a
+    except ValueError:
+        try:
+            if c_type == 'ra':
+                a = Angle(value, unit=u.hourangle)
+            else:
+                a = Angle(value, unit=u.degree)
+            return a.to(u.degree).value
+        except Exception:
+            raise Exception('Invalid format. Please use sexigesimal or degrees')
