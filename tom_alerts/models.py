@@ -63,6 +63,7 @@ class AlertStreamMessage(models.Model):
     )
     message_id = models.CharField(
         max_length=50,
+        null=True,
         verbose_name='Message ID',
         help_text='An external message identifier that can be used to locate the message within the given topic.'
     )

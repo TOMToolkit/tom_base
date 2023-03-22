@@ -152,7 +152,9 @@ def hermes_alert_handler(alert, metadata):
     photometry_table = alert_as_dict['data'].get('photometry', None)
     target_table = alert_as_dict['data'].get('targets', None)
     if photometry_table:
-        hermes_alert = AlertStreamMessage(topic=alert_as_dict['topic'], exchange_status='ingested')
+        hermes_alert = AlertStreamMessage(topic=alert_as_dict['topic'],
+                                          exchange_status='ingested',
+                                          message_id=alert_as_dict.get("uuid", None))
         target_name = ''
         query = []
         for row in photometry_table:
@@ -229,8 +231,18 @@ def create_new_hermes_target(target_table, target_name=None):
                 new_target['pm_ra'] = hermes_target.pop('pm_ra', None)
                 new_target['pm_dec'] = hermes_target.pop('pm_dec', None)
                 new_target['epoch'] = hermes_target.pop('epoch', None)
-            else:
-                new_target['type'] = 'NON-SIDEREAL'
+            elif "orbital_elements" in hermes_target:
+                orbital_elements = hermes_target.pop('orbital_elements')
+                new_target['type'] = 'NON_SIDEREAL'
+                new_target['epoch_of_elements'] = orbital_elements.pop('epoch_of_elements', None)
+                new_target['mean_anomaly'] = orbital_elements.pop('mean_anomaly', None)
+                new_target['arg_of_perihelion'] = orbital_elements.pop('argument_of_the_perihelion', None)
+                new_target['eccentricity'] = orbital_elements.pop('eccentricity', None)
+                new_target['lng_asc_node'] = orbital_elements.pop('longitude_of_the_ascending_node', None)
+                new_target['inclination'] = orbital_elements.pop('orbital_inclination', None)
+                new_target['semimajor_axis'] = orbital_elements.pop('semimajor_axis', None)
+                new_target['epoch_of_perihelion'] = orbital_elements.pop('epoch_of_perihelion', None)
+                new_target['perihdist'] = orbital_elements.pop('perihelion_distance', None)
             aliases = hermes_target.pop('aliases', [])
             target = Target(**new_target)
             target.full_clean()
