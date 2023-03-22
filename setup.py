@@ -36,7 +36,7 @@ setup(
         'djangorestframework~=3.12',
         'django-bootstrap4>=3,<23',
         'django-contrib-comments~=2.0',  # Earlier version are incompatible with Django >= 3.0
-        'django-crispy-forms>=1.11,<3.0',
+        'django-crispy-forms~=2.0',
         'crispy-bootstrap4',
         'django-extensions~=3.1',
         'django-filter>=21,<23',
