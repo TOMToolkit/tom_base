@@ -141,7 +141,7 @@ def get_hermes_topics():
 
 
 def hermes_alert_handler(alert, metadata):
-    """Alert Handler to record data streamed through Hermes as a new ReducedDatum.
+    """Example Alert Handler to record data streamed through Hermes as a new ReducedDatum.
     -- Only Reads Photometry Data
     -- Only ingests Data if exact match for Target Name
     -- Does not Ingest Data if exact match already exists
@@ -150,6 +150,7 @@ def hermes_alert_handler(alert, metadata):
     """
     alert_as_dict = alert.content
     photometry_table = alert_as_dict['data'].get('photometry', None)
+    target_table = alert_as_dict['data'].get('targets', None)
     if photometry_table:
         hermes_alert = AlertStreamMessage(topic=alert_as_dict['topic'], exchange_status='ingested')
         target_name = ''
@@ -161,6 +162,8 @@ def hermes_alert_handler(alert, metadata):
             if query:
                 target = query[0]
             else:
+                # add conditional statements for whether to ingest a target here.
+                # target = create_new_hermes_target(target_table, target_name)
                 continue
 
             try:
@@ -203,3 +206,33 @@ def get_hermes_phot_value(phot_data):
         data_dictionary['limit'] = phot_data['limiting_brightness']
 
     return data_dictionary
+
+
+def create_new_hermes_target(target_table, target_name=None):
+    """
+    Ingest a target into your TOM from Hermes.
+    Takes a target_table and a target_name. If no target name is given, every target on the target table will be
+    ingested.
+    :param target_table: Hermes Target table from a Hermes Message
+    :param target_name: Name for individual target to ingest from target table.
+    :return:
+    """
+    target = None
+    for hermes_target in target_table:
+        if target_name == hermes_target['name'] or target_name is None:
+
+            new_target = {"name": hermes_target.pop('name')}
+            if "ra" in hermes_target and "dec" in hermes_target:
+                new_target['type'] = 'SIDEREAL'
+                new_target['ra'] = hermes_target.pop('ra')
+                new_target['dec'] = hermes_target.pop('dec')
+                new_target['pm_ra'] = hermes_target.pop('pm_ra', None)
+                new_target['pm_dec'] = hermes_target.pop('pm_dec', None)
+                new_target['epoch'] = hermes_target.pop('epoch', None)
+            else:
+                new_target['type'] = 'NON-SIDEREAL'
+            aliases = hermes_target.pop('aliases', [])
+            target = Target(**new_target)
+            target.full_clean()
+            target.save(names=aliases, extras=hermes_target)
+    return target
