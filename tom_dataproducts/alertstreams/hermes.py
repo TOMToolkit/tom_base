@@ -6,7 +6,7 @@ from django.conf import settings
 # from hop.io import Metadata
 
 from tom_alerts.models import AlertStreamMessage
-from tom_targets.models import Target
+from tom_targets.models import Target, TargetList
 from tom_dataproducts.models import ReducedDatum
 
 import requests
@@ -165,7 +165,7 @@ def hermes_alert_handler(alert, metadata):
                 target = query[0]
             else:
                 # add conditional statements for whether to ingest a target here.
-                # target = create_new_hermes_target(target_table, target_name)
+                # target = create_new_hermes_target(target_table, target_name, target_list_name="new_hermes_object")
                 continue
 
             try:
@@ -210,13 +210,14 @@ def get_hermes_phot_value(phot_data):
     return data_dictionary
 
 
-def create_new_hermes_target(target_table, target_name=None):
+def create_new_hermes_target(target_table, target_name=None, target_list_name=None):
     """
     Ingest a target into your TOM from Hermes.
     Takes a target_table and a target_name. If no target name is given, every target on the target table will be
     ingested.
     :param target_table: Hermes Target table from a Hermes Message
     :param target_name: Name for individual target to ingest from target table.
+    :param target_list_name: Name of TargetList within which new target should be placed.
     :return:
     """
     target = None
@@ -247,4 +248,7 @@ def create_new_hermes_target(target_table, target_name=None):
             target = Target(**new_target)
             target.full_clean()
             target.save(names=aliases, extras=hermes_target)
+            if target_list_name:
+                target_list, created = TargetList.objects.get_or_create(name=target_list_name)
+                target_list.targets.add(target)
     return target
