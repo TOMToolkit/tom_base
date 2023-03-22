@@ -150,7 +150,7 @@ def hermes_alert_handler(alert, metadata):
     """
     alert_as_dict = alert.content
     photometry_table = alert_as_dict['data'].get('photometry', None)
-    target_table = alert_as_dict['data'].get('targets', None)
+    # target_table = alert_as_dict['data'].get('targets', None)
     if photometry_table:
         hermes_alert = AlertStreamMessage(topic=alert_as_dict['topic'],
                                           exchange_status='ingested',
