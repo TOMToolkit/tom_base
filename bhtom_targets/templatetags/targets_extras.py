@@ -280,14 +280,23 @@ def deg_to_sexigesimal(value, fmt):
     """
     a = Angle(value, unit=u.degree)
     if fmt == 'hms':
-        return '{0:02.0f}:{1:02.0f}:{2:05.3f}'.format(a.hms.h, a.hms.m, a.hms.s)
+        return '{0:02.0f}:{1:02.0f}:{2:06.3f}'.format(a.hms.h, a.hms.m, a.hms.s)            
     elif fmt == 'dms':
         rep = a.signed_dms
         sign = '-' if rep.sign < 0 else '+'
-        return '{0}{1:02.0f}:{2:02.0f}:{3:05.3f}'.format(sign, rep.d, rep.m, rep.s)
+        dd=rep.d
+        mm=rep.m
+        ss=rep.s
+        ##this fixes the error in rounding seconds, e.g. for dec=54.4
+        if (np.abs(rep.s-59.999)<0.001): 
+            ss=0
+            mm+=1
+        if (mm==60):
+            mm=0
+            dd+=1
+        return '{0}{1:02.0f}:{2:02.0f}:{3:06.3f}'.format(sign, dd, mm, ss)
     else:
         return 'fmt must be "hms" or "dms"'
-
 
 @register.filter
 def target_extra_field(target, name):
