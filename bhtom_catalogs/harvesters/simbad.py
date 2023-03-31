@@ -32,6 +32,7 @@ class SimbadHarvester(AbstractHarvester):
         target.type = 'SIDEREAL'
         target.ra = result.get('RA_d')
         target.dec = result.get('DEC_d')
+        target.epoch = 2000.0
         target.pm_ra = result.get('PMRA')
         target.pm_dec = result.get('PMDEC')
         target.distance = result.get('Distance_distance')
