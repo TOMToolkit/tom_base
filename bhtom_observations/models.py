@@ -8,11 +8,11 @@ from bhtom_base.bhtom_common.hooks import run_hook
 
 class Proposal(models.Model):
     name = models.CharField(blank=False, max_length=512)
-    facilities = models.JSONField()
+    facilities = models.JSONField(null=False, blank=True, default='')
     users = models.ManyToManyField(User)
-    parameters = models.JSONField()
-    active_from = models.DateTimeField(null=False)
-    active_to = models.DateTimeField(null=False)
+    parameters = models.JSONField(null=False, blank=True, default='')
+    active_from = models.DateField(null=False)
+    active_to = models.DateField(null=False)
     comments = models.CharField(null=True, blank=True, max_length=2048)
 
     class Meta:
