@@ -11,7 +11,12 @@ class Proposal(models.Model):
     facilities = models.JSONField()
     users = models.ManyToManyField(User)
     parameters = models.JSONField()
+    active_from = models.DateTimeField(null=False)
+    active_to = models.DateTimeField(null=False)
     comments = models.CharField(null=True, blank=True, max_length=2048)
+
+    class Meta:
+        ordering = ('-active_to', '-active_from')
 
 
 class ObservationRecord(models.Model):
