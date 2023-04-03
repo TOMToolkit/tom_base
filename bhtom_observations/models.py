@@ -6,6 +6,14 @@ from bhtom_base.bhtom_observations.facility import get_service_class
 from bhtom_base.bhtom_common.hooks import run_hook
 
 
+class Proposal(models.Model):
+    name = models.CharField(blank=False, max_length=512)
+    facilities = models.JSONField()
+    users = models.ManyToManyField(User)
+    parameters = models.JSONField()
+    comments = models.CharField(null=True, blank=True, max_length=2048)
+
+
 class ObservationRecord(models.Model):
     """
     Class representing an observation in a TOM.
