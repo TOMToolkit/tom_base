@@ -4,11 +4,13 @@ from django.db import models
 from bhtom_base.bhtom_targets.models import Target
 from bhtom_base.bhtom_observations.facility import get_service_class
 from bhtom_base.bhtom_common.hooks import run_hook
+from django.contrib.postgres.fields import ArrayField
+from django.db.models import CheckConstraint, Q, F
 
 
 class Proposal(models.Model):
     name = models.CharField(blank=False, max_length=512)
-    facilities = models.JSONField(null=False, blank=True, default='')
+    facilities = ArrayField(models.CharField(max_length=200), blank=True, default=list())
     users = models.ManyToManyField(User)
     parameters = models.JSONField(null=False, blank=True, default='')
     active_from = models.DateField(null=False)
@@ -16,6 +18,11 @@ class Proposal(models.Model):
     comments = models.CharField(null=True, blank=True, max_length=2048)
 
     class Meta:
+        constraints = [
+            CheckConstraint(
+                check=Q(active_to__gt=F('active_from')),
+                name='check_active_dates',
+            )]
         ordering = ('-active_to', '-active_from')
 
 

@@ -8,6 +8,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.management import call_command
+from django.http import HttpResponseForbidden
 from django_filters import (CharFilter, ChoiceFilter, DateTimeFromToRangeFilter, FilterSet, ModelMultipleChoiceFilter,
                             OrderingFilter)
 from django_filters.views import FilterView
@@ -28,7 +29,8 @@ from bhtom_base.bhtom_observations.cadence import CadenceForm, get_cadence_strat
 from bhtom_base.bhtom_observations.facility import get_service_class, get_service_classes
 from bhtom_base.bhtom_observations.facility import BaseManualObservationFacility
 from bhtom_base.bhtom_observations.forms import AddExistingObservationForm
-from bhtom_base.bhtom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
+from bhtom_base.bhtom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, \
+    DynamicCadence, Proposal
 from bhtom_base.bhtom_targets.models import Target
 
 
@@ -92,9 +94,9 @@ class ObservationListView(FilterView):
             call_command('updatestatus', stdout=out)
             messages.info(request, out.getvalue())
             add_hint(request, mark_safe(
-                              'Did you know updating observation statuses can be automated? Learn how in '
-                              '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
-                              'the docs.</a>'))
+                'Did you know updating observation statuses can be automated? Learn how in '
+                '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
+                'the docs.</a>'))
             return redirect(f'{reverse("bhtom_base.bhtom_observations:list")}?{urlencode(query_params)}')
 
         selected = request.GET.getlist('selected')
@@ -119,6 +121,10 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     View for creation/submission of an observation. Requires authentication.
     """
     template_name = 'bhtom_observations/observation_form.html'
+
+    #def get(self, request, *args, **kwargs):
+        #if not self.request.user.is_superuser and get_objects_for_user(self.request.user, Proposal).filter(facilities__contains=[kwargs['facility']])
+        #return super(ObservationCreateView, self).get()
 
     def get_target_id(self):
         """
@@ -460,7 +466,7 @@ class ObservationRecordDetailView(DetailView):
         newest_image = None
         for data_product in context['data_products']['saved']:
             newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and \
-                data_product.get_file_extension() == '.fits' else newest_image
+                                           data_product.get_file_extension() == '.fits' else newest_image
         if newest_image:
             context['image'] = newest_image.get_image_data()
         data_product_upload_form = DataProductUploadForm(
