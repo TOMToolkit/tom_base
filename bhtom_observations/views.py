@@ -218,10 +218,10 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     def has_active_proposal(self):
         today = date.today()
         facility = self.get_facility()
-        return not (facility.lower() != 'lco' and
+        return not (facility.upper() != 'LCO' and
                 (not self.request.user.is_superuser) and
                 len(Proposal.objects.filter(users__in=[self.request.user.id],
-                                            facilities__contains=[facility],
+                                            facilities__contains=[facility.upper()],
                                             active_to__gte=today,
                                             active_from__lte=today)) == 0)
 
