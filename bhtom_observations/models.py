@@ -69,6 +69,7 @@ class ObservationRecord(models.Model):
     scheduled_end = models.DateTimeField(null=True)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
+    proposal = models.ForeignKey(Proposal, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         ordering = ('-created',)
