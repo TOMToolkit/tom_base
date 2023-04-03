@@ -1,3 +1,4 @@
+from datetime import date
 from io import StringIO
 from urllib.parse import urlencode
 
@@ -122,9 +123,15 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     """
     template_name = 'bhtom_observations/observation_form.html'
 
-    #def get(self, request, *args, **kwargs):
-        #if not self.request.user.is_superuser and get_objects_for_user(self.request.user, Proposal).filter(facilities__contains=[kwargs['facility']])
-        #return super(ObservationCreateView, self).get()
+    def get(self, request, *args, **kwargs):
+        today = date.today()
+        if (not self.request.user.is_superuser and
+                len(Proposal.objects.filter(users__in=[self.request.user.id],
+                                            facilities__contains=[kwargs['facility']],
+                                            active_to__gte=today,
+                                            active_from__lte=today)) == 0):
+            return HttpResponseForbidden()
+        return super(ObservationCreateView, self).get(request, args, kwargs)
 
     def get_target_id(self):
         """
