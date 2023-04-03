@@ -1,8 +1,9 @@
+from datetime import date
 from io import StringIO
 from urllib.parse import urlencode
 
 from crispy_forms.bootstrap import FormActions
-from crispy_forms.layout import HTML, Layout, Submit
+from crispy_forms.layout import HTML, Layout, Submit, Div
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -122,10 +123,6 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     """
     template_name = 'bhtom_observations/observation_form.html'
 
-    #def get(self, request, *args, **kwargs):
-        #if not self.request.user.is_superuser and get_objects_for_user(self.request.user, Proposal).filter(facilities__contains=[kwargs['facility']])
-        #return super(ObservationCreateView, self).get()
-
     def get_target_id(self):
         """
         Parses the target id for the given observation from the query parameters.
@@ -218,6 +215,16 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
                           {})
         return form_class
 
+    def has_active_proposal(self):
+        today = date.today()
+        facility = self.get_facility()
+        return not (facility.lower() != 'lco' and
+                (not self.request.user.is_superuser) and
+                len(Proposal.objects.filter(users__in=[self.request.user.id],
+                                            facilities__contains=[facility],
+                                            active_to__gte=today,
+                                            active_from__lte=today)) == 0)
+
     def get_form(self):
         """
         Gets an instance of the form appropriate for the request.
@@ -248,6 +255,12 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         initial['facility'] = self.get_facility()
         initial.update(self.request.GET.dict())
         return initial
+
+    def get(self, request, *args, **kwargs):
+        if self.has_active_proposal():
+            return super(ObservationCreateView, self).get(request, args, kwargs)
+        else:
+            return HttpResponseForbidden()
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
