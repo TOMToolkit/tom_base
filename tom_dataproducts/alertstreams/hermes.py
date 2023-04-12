@@ -38,8 +38,8 @@ def publish_photometry_to_hermes(message_info, datums, **kwargs):
     """
     stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
     submit_url = stream_base_url + 'api/v0/' + 'submit_message/'
-    headers = {'SCIMMA-API-Auth-Username': settings.DATA_SHARING['hermes']['CREDENTIAL_USERNAME'],
-               'SCIMMA-API-Auth-Password': settings.DATA_SHARING['hermes']['CREDENTIAL_PASSWORD']}
+    headers = {'Authorization': f"Token {settings.DATA_SHARING['hermes']['HERMES_API_KEY']}"}
+
     hermes_photometry_data = []
     hermes_target_list = []
     hermes_alert = AlertStreamMessage(topic=message_info.topic, exchange_status='published')
