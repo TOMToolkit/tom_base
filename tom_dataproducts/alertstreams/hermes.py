@@ -38,6 +38,7 @@ def publish_photometry_to_hermes(message_info, datums, **kwargs):
     """
     stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
     submit_url = stream_base_url + 'api/v0/' + 'submit_message/'
+    # You will need your Hermes API key. This can be found on your Hermes profile page.
     headers = {'Authorization': f"Token {settings.DATA_SHARING['hermes']['HERMES_API_KEY']}"}
 
     hermes_photometry_data = []
