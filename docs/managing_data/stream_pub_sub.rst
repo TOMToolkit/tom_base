@@ -11,7 +11,8 @@ TOM Toolkit supports publishing data to a Kafka stream such as `Hermes <https://
 `HOPSKOTCH <https://hop.scimma.org>`_) and `GCNClassicOverKafka <https://gcn.nasa.gov>`_.
 
 When sharing photometry data via Hermes, the TOM publishes the data to be shared to a topic on the HOPSKOTCH
-Kafka stream. At this time, only photometry data is supported.
+Kafka stream. At this time, only photometry data is supported by TOM Toolkit. To submit via the Hermes API, you will
+need to copy your Hermes API Key from your Hermes profile page.
 
 
 Configuring your TOM to Publish Data to a stream:
@@ -27,10 +28,7 @@ for the various streams with which you wish to share data.
         'hermes': {
            'DISPLAY_NAME': os.getenv('HERMES_DISPLAY_NAME', 'Hermes'),
            'BASE_URL': os.getenv('HERMES_BASE_URL', 'https://hermes.lco.global/'),
-           'CREDENTIAL_USERNAME': os.getenv('SCIMMA_CREDENTIAL_USERNAME',
-                                             'set SCIMMA_CREDENTIAL_USERNAME value in environment'),
-           'CREDENTIAL_PASSWORD': os.getenv('SCIMMA_CREDENTIAL_PASSWORD',
-                                             'set SCIMMA_CREDENTIAL_PASSWORD value in environment'),
+           'HERMES_API_KEY': os.getenv('HERMES_API_KEY', 'set HERMES_API_KEY value in environment'),
            'USER_TOPICS': ['hermes.test', 'tomtoolkit.test']
         },
    }
