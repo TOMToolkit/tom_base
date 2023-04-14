@@ -80,10 +80,7 @@ class TestUserManagement(TestCase):
             'password2': 'forc34eva!',
         }
         response = self.client.post(reverse('user-update', kwargs={'pk': user.id}), data=user_data, follow=True)
-        print(user.__dict__)
-        print("===============")
         user.refresh_from_db()
-        print(user.__dict__)
         self.assertEqual(user.first_name, 'Luke')
         self.assertContains(response, 'Profile updated')
 
