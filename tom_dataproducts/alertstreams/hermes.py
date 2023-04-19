@@ -128,13 +128,16 @@ def get_hermes_topics(**kwargs):
     Extend this method to restrict topics for individual users.
     :return: List of writable topics available for TOM.
     """
-    stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
-    submit_url = stream_base_url + "api/v0/profile/"
-    headers = {'Authorization': f"Token {settings.DATA_SHARING['hermes']['HERMES_API_KEY']}"}
+    try:
+        stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
+        submit_url = stream_base_url + "api/v0/profile/"
+        headers = {'Authorization': f"Token {settings.DATA_SHARING['hermes']['HERMES_API_KEY']}"}
 
-    response = requests.get(url=submit_url, headers=headers)
+        response = requests.get(url=submit_url, headers=headers)
 
-    topics = response.json()['writable_topics']
+        topics = response.json()['writable_topics']
+    except KeyError:
+        topics = settings.DATA_SHARING['hermes']['USER_TOPICS']
     return topics
 
 
