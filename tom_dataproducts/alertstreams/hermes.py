@@ -121,23 +121,20 @@ def create_hermes_phot_table_row(datum, **kwargs):
     return phot_table_row
 
 
-def get_hermes_topics():
+def get_hermes_topics(**kwargs):
     """
-    !CURRENTLY UNUSED!
     Method to retrieve a list of available topics from HOP.
     Intended to be called from forms when building topic list.
-    TODO: Retrieve list from HOP, currently unavailable due to authentication issues.
-    :return: List of topics available for users
+    Extend this method to restrict topics for individual users.
+    :return: List of writable topics available for TOM.
     """
-    # stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
-    # submit_url = stream_base_url + "api/v0/profile/"
-    # headers = {'SCIMMA-API-Auth-Username': settings.DATA_SHARING['hermes']['CREDENTIAL_USERNAME'],
-    #            'SCIMMA-API-Auth-Password': settings.DATA_SHARING['hermes']['CREDENTIAL_PASSWORD']}
-    # user = settings.DATA_SHARING['hermes']['SCIMMA_AUTH_USERNAME']
-    # headers = {}
+    stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
+    submit_url = stream_base_url + "api/v0/profile/"
+    headers = {'Authorization': f"Token {settings.DATA_SHARING['hermes']['HERMES_API_KEY']}"}
 
-    # response = requests.get(url=submit_url, headers=headers)
-    topics = settings.DATA_SHARING['hermes']['USER_TOPICS']
+    response = requests.get(url=submit_url, headers=headers)
+
+    topics = response.json()['writable_topics']
     return topics
 
 
