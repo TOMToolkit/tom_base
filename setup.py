@@ -39,7 +39,7 @@ setup(
         'django-crispy-forms~=2.0',
         'crispy-bootstrap4',
         'django-extensions~=3.1',
-        'django-filter>=21,<23',
+        'django-filter>=21,<24',
         'django-gravatar2~=1.4',
         'django-guardian~=2.3',
         'fits2image>=0.4.2',
