@@ -1,6 +1,15 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, UsernameField
+from django.contrib.auth.forms import UsernameField
 from django.contrib.auth.models import User, Group
+
+# UserCreationForm was changed for django 4.2 to not allow new users to have case-sensitive variations in
+# existing usernames. This check breaks our username update process because we use the UserCreationForm rather
+# than directly updating an existing user. The BaseUserCreationForm of Django 4.2 is identical to earlier
+# versions of UserCreationForm. (https://docs.djangoproject.com/en/4.2/releases/4.2/#miscellaneous)
+try:
+    from django.contrib.auth.forms import BaseUserCreationForm as UserCreationForm
+except ImportError:
+    from django.contrib.auth.forms import UserCreationForm
 
 
 class ChangeUserPasswordForm(forms.Form):
