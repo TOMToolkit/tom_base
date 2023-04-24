@@ -1,6 +1,7 @@
 from copy import deepcopy
 import json
 import logging
+from typing import List
 
 from django.views.generic.edit import DeleteView, FormMixin, FormView, ProcessFormView
 from django.views.generic.base import TemplateView, View
@@ -20,6 +21,7 @@ from tom_alerts.models import BrokerQuery
 from tom_alerts.exceptions import AlertSubmissionException
 
 logger = logging.getLogger(__name__)
+#logger.setLevel(logging.DEBUG)
 
 
 class BrokerQueryCreateView(LoginRequiredMixin, FormView):
@@ -186,6 +188,30 @@ class RunQueryView(TemplateView):
     View that handles the running of a specific ``BrokerQuery``.
     """
     template_name = 'tom_alerts/query_result.html'
+
+    def get_template_names(self) -> List[str]:
+        """Override the base class method to ask the broker if it has
+        specified a Broker-specific template to use. If so, put it at the
+        front of the returned list of template_names.
+        """
+        template_names = super().get_template_names()
+
+        # if the broker class has defined a template to use add it to template names (at the front)
+        query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
+        broker_class = get_service_class(query.broker)()
+        logger.debug(f'RunQueryView.get_template_name broker_class: {broker_class}')
+
+        try:
+            if broker_class.template_name:
+                # add to front of list b/c first template will be tried first
+                template_names.insert(0, broker_class.template_name)
+        except AttributeError:
+            # many Brokers won't have a template_name defined and will just
+            # use the one defined above.
+            pass
+
+        logger.debug(f'RunQueryView.get_template_name template_names: {template_names}')
+        return template_names
 
     def get_context_data(self, *args, **kwargs):
         """
