@@ -255,6 +255,13 @@ class RunQueryView(TemplateView):
                 context['alerts'].append(generic_alert)
         except StopIteration:
             pass
+
+        # allow the Broker to add to the context (besides the query_results)
+        broker_context_additions = broker_class.get_broker_context_data(alerts)
+        context.update(broker_context_additions)
+        # TODO: in python 3.9 we could use the merge operator context |= broker_dict
+        # context |= broker_context_additions
+
         return context
 
 
