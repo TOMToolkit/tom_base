@@ -222,8 +222,12 @@ class RunQueryView(TemplateView):
         :rtype: dict
         """
         context = super().get_context_data()
+
+        # get the Broker class
         query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
         broker_class = get_service_class(query.broker)()
+
+        # Do query and get query results (fetch_alerts)
         # TODO: Should the deepcopy be in the brokers?
         alert_query_results = broker_class.fetch_alerts(deepcopy(query.parameters))
         # Check if feedback is available for fetch_alerts, and allow for backwards compatibility if not.
@@ -242,7 +246,7 @@ class RunQueryView(TemplateView):
             while True:
                 alert = next(alerts)
                 generic_alert = broker_class.to_generic_alert(alert)
-                cache.set('alert_{}'.format(generic_alert.id), json.dumps(alert), 3600)
+                cache.set(f'alert_{generic_alert.id}', json.dumps(alert), 3600)
                 context['alerts'].append(generic_alert)
         except StopIteration:
             pass
