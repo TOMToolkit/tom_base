@@ -269,7 +269,7 @@ class GenericBroker(ABC):
 
         return targets
 
-    def get_broker_context_data(self):
+    def get_broker_context_data(self, *args, **kwargs):
         """Override this method in the subclass to allow the Broker to add additional context
         data to the View. This method will be called by views.RunQueryView.get_context_data()
         and the returned dictionary will be added to the View's context.
