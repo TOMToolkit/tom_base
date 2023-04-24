@@ -236,12 +236,17 @@ class RunQueryView(TemplateView):
         else:
             alerts = alert_query_results
             broker_feedback = ''
-        context['score_description'] = broker_class.score_description
-        context['alerts'] = []
-        context['broker_feedback'] = broker_feedback
+
+        # Post-query tasks
         query.last_run = timezone.now()
         query.save()
+
+        # create context for template
         context['query'] = query
+        context['score_description'] = broker_class.score_description
+        context['broker_feedback'] = broker_feedback
+
+        context['alerts'] = []
         try:
             while True:
                 alert = next(alerts)
