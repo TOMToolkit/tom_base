@@ -21,7 +21,6 @@ from tom_alerts.models import BrokerQuery
 from tom_alerts.exceptions import AlertSubmissionException
 
 logger = logging.getLogger(__name__)
-#logger.setLevel(logging.DEBUG)
 
 
 class BrokerQueryCreateView(LoginRequiredMixin, FormView):
