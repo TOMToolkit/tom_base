@@ -58,10 +58,10 @@ This module provides two registration flows for users to self-register--either r
 
 [Installation Instructions](https://github.com/TOMToolkit/tom_registration#installation)
 
-### tom-scimma
+### tom-hermes
 
-This module provides an interface to query the [Skip alert broker](http://skip.dev.hop.scimma.org) provided by [SCIMMA](https://scimma.org).
+This module provides an interface to query the [Hermes alert broker](https://hermes.lco.global).
 
-[Github](https://github.com/TOMToolkit/tom_scimma)
+[Github](https://github.com/TOMToolkit/tom_hermes)
 
-[Installation Instructions](https://github.com/TOMToolkit/tom_scimma#installation)
+[Installation Instructions](https://github.com/TOMToolkit/tom_hermes#installation)
