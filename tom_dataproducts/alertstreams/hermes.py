@@ -251,5 +251,7 @@ def create_new_hermes_target(target_table, target_name=None, target_list_name=No
             target.save(names=aliases, extras=hermes_target)
             if target_list_name:
                 target_list, created = TargetList.objects.get_or_create(name=target_list_name)
+                if created:
+                    logger.debug(f'New target_list created: {target_list_name}')
                 target_list.targets.add(target)
     return target
