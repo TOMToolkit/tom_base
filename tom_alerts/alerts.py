@@ -21,7 +21,8 @@ DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.alerce.ALeRCEBroker',
     'tom_alerts.brokers.antares.ANTARESBroker',
     'tom_alerts.brokers.gaia.GaiaBroker',
-    'tom_alerts.brokers.fink.FinkBroker',
+    'tom_alerts.brokers.fink.FinkBroker',  # the stub for the plugin
+    'tom_alerts.brokers.hermes.HermesBroker',
 ]
 
 
@@ -267,3 +268,10 @@ class GenericBroker(ABC):
             targets.append(target)
 
         return targets
+
+    def get_broker_context_data(self, *args, **kwargs):
+        """Override this method in the subclass to allow the Broker to add additional context
+        data to the View. This method will be called by views.RunQueryView.get_context_data()
+        and the returned dictionary will be added to the View's context.
+        """
+        return {}

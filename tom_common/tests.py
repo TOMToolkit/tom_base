@@ -80,9 +80,9 @@ class TestUserManagement(TestCase):
             'password2': 'forc34eva!',
         }
         response = self.client.post(reverse('user-update', kwargs={'pk': user.id}), data=user_data, follow=True)
-        self.assertContains(response, 'Profile updated')
         user.refresh_from_db()
         self.assertEqual(user.first_name, 'Luke')
+        self.assertContains(response, 'Profile updated')
 
     def test_user_cannot_update_other(self):
         user = User.objects.create(username='luke', password='forc3')

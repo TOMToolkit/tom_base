@@ -32,13 +32,14 @@ setup(
         'astroplan~=0.8',
         'astropy>=5.0',
         'beautifulsoup4~=4.9',
-        'django>=3.1,<5.0',  # TOM Toolkit requires db math functions
+        'django>=3.1,<5',  # TOM Toolkit requires db math functions
         'djangorestframework~=3.12',
-        'django-bootstrap4>=3,<23',
+        'django-bootstrap4>=3,<24',
         'django-contrib-comments~=2.0',  # Earlier version are incompatible with Django >= 3.0
-        'django-crispy-forms~=1.11',
+        'django-crispy-forms~=2.0',
+        'crispy-bootstrap4',
         'django-extensions~=3.1',
-        'django-filter>=21,<23',
+        'django-filter>=21,<24',
         'django-gravatar2~=1.4',
         'django-guardian~=2.3',
         'fits2image>=0.4.2',
@@ -54,7 +55,7 @@ setup(
         'test': ['factory_boy~=3.2.1'],
         'docs': [
             'recommonmark~=0.7',
-            'sphinx>=4,<6',
+            'sphinx>=4,<7',
             'tom_antares',
             'tom_scimma'
         ]

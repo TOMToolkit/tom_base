@@ -690,13 +690,20 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
         form = LCOSpectroscopicSequenceForm(self.valid_form_data)
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data['instrument_type'], '2M0-FLOYDS-SCICAM')
-        self.assertAlmostEqual(datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S'), form.cleaned_data['start'])
-        self.assertAlmostEqual(
-            datetime.strftime(
-                datetime.now() + timedelta(hours=form.cleaned_data['cadence_frequency']), '%Y-%m-%dT%H:%M:%S'
-            ),
-            form.cleaned_data['end']
-        )
+
+        # Make sure Cadence Frequency is passed through clean()
+        self.assertEquals(form.cleaned_data['cadence_frequency'], self.valid_form_data['cadence_frequency'])
+
+        # Convert Cleaned "Start" to datetime, make sure close to now (2 seconds)
+        seconds_from_start = (datetime.now() - datetime.strptime(form.cleaned_data['start'],
+                                                                 '%Y-%m-%dT%H:%M:%S')).total_seconds()
+        self.assertLess(seconds_from_start, 2)
+
+        # Convert Cleaned "End" to datetime, make sure it's close to now + cadence frequency.
+        # (Cadence Frequency is in hours)
+        hours_to_end = (datetime.strptime(form.cleaned_data['end'],
+                                          '%Y-%m-%dT%H:%M:%S') - datetime.now()).total_seconds() / 60 / 60
+        self.assertAlmostEqual(form.cleaned_data['cadence_frequency'], hours_to_end, 3)
 
         # Test that an invalid form returns False
         self.valid_form_data.pop('target_id')
