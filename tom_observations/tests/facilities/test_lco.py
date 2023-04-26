@@ -705,8 +705,6 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
                                           '%Y-%m-%dT%H:%M:%S') - datetime.now()).total_seconds() / 60 / 60
         self.assertAlmostEqual(form.cleaned_data['cadence_frequency'], hours_to_end, 3)
 
-
-
         # Test that an invalid form returns False
         self.valid_form_data.pop('target_id')
         form = LCOSpectroscopicSequenceForm(self.valid_form_data)
