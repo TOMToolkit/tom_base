@@ -32,20 +32,11 @@ Lasair
 .. automodule:: tom_alerts.brokers.lasair
     :members:
 
-
-****
-MARS
-****
-
-.. automodule:: tom_alerts.brokers.mars
-    :members:
-
-
 ******
-SCIMMA
+Hermes
 ******
 
-.. automodule:: tom_scimma.scimma
+.. automodule:: tom_hermes.hermes
     :members:
 
 *****

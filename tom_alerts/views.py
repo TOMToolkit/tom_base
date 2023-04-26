@@ -1,6 +1,7 @@
 from copy import deepcopy
 import json
 import logging
+from typing import List
 
 from django.views.generic.edit import DeleteView, FormMixin, FormView, ProcessFormView
 from django.views.generic.base import TemplateView, View
@@ -187,6 +188,30 @@ class RunQueryView(TemplateView):
     """
     template_name = 'tom_alerts/query_result.html'
 
+    def get_template_names(self) -> List[str]:
+        """Override the base class method to ask the broker if it has
+        specified a Broker-specific template to use. If so, put it at the
+        front of the returned list of template_names.
+        """
+        template_names = super().get_template_names()
+
+        # if the broker class has defined a template to use add it to template names (at the front)
+        query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
+        broker_class = get_service_class(query.broker)()
+        logger.debug(f'RunQueryView.get_template_name broker_class: {broker_class}')
+
+        try:
+            if broker_class.template_name:
+                # add to front of list b/c first template will be tried first
+                template_names.insert(0, broker_class.template_name)
+        except AttributeError:
+            # many Brokers won't have a template_name defined and will just
+            # use the one defined above.
+            pass
+
+        logger.debug(f'RunQueryView.get_template_name template_names: {template_names}')
+        return template_names
+
     def get_context_data(self, *args, **kwargs):
         """
         Runs the ``fetch_alerts`` method specific to the given ``BrokerQuery`` and adds the matching alerts to the
@@ -196,8 +221,12 @@ class RunQueryView(TemplateView):
         :rtype: dict
         """
         context = super().get_context_data()
+
+        # get the Broker class
         query = get_object_or_404(BrokerQuery, pk=self.kwargs['pk'])
         broker_class = get_service_class(query.broker)()
+
+        # Do query and get query results (fetch_alerts)
         # TODO: Should the deepcopy be in the brokers?
         alert_query_results = broker_class.fetch_alerts(deepcopy(query.parameters))
         # Check if feedback is available for fetch_alerts, and allow for backwards compatibility if not.
@@ -206,20 +235,32 @@ class RunQueryView(TemplateView):
         else:
             alerts = alert_query_results
             broker_feedback = ''
-        context['score_description'] = broker_class.score_description
-        context['alerts'] = []
-        context['broker_feedback'] = broker_feedback
+
+        # Post-query tasks
         query.last_run = timezone.now()
         query.save()
+
+        # create context for template
         context['query'] = query
+        context['score_description'] = broker_class.score_description
+        context['broker_feedback'] = broker_feedback
+
+        context['alerts'] = []
         try:
             while True:
                 alert = next(alerts)
                 generic_alert = broker_class.to_generic_alert(alert)
-                cache.set('alert_{}'.format(generic_alert.id), json.dumps(alert), 3600)
+                cache.set(f'alert_{generic_alert.id}', json.dumps(alert), 3600)
                 context['alerts'].append(generic_alert)
         except StopIteration:
             pass
+
+        # allow the Broker to add to the context (besides the query_results)
+        broker_context_additions = broker_class.get_broker_context_data(alerts)
+        context.update(broker_context_additions)
+        # TODO: in python 3.9 we could use the merge operator context |= broker_dict
+        # context |= broker_context_additions
+
         return context
 
 
