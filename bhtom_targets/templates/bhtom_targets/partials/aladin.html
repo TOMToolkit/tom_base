@@ -1,7 +1,7 @@
 <!-- include Aladin Lite CSS file in the head section of your page -->
 <link rel="stylesheet" href="//aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.css" />
 <!-- insert this snippet where you want Aladin Lite viewer to appear and after the loading of jQuery -->
-<h3>Survey View</h3>
+<!-- <h3>Survey View</h3> -->
 <div id="aladin-lite-div" style="width:300px;height:300px;"></div>
 <div id="chart-form-div" style="width:300px;">
   <form id="chart-form">
@@ -10,7 +10,7 @@
         <div class="input-group-prepend">
           <span class="input-group-text bg-transparent" style="font-family: inherit;">Field of view</span>
         </div>
-        <input type="number" class="form-control" aria-label="Field of view" id="fov" min="0" value="10">
+        <input type="number" class="form-control" aria-label="Field of view" id="fov" min="0" value="5">
         <div class="input-group-append">
           <select id="fov-units-select" class="form-control">
             <option>arcsec</option>
@@ -25,11 +25,11 @@
         <div class="input-group-prepend">
           <label class="input-group-text bg-transparent" style="font-family: inherit;" for="scale-bar-units-select">Scale bar</label>
         </div>
-        <input type="number" class="form-control" aria-label="Scale bar size" id="scale-bar-size" min="0" value="1">
+        <input type="number" class="form-control" aria-label="Scale bar size" id="scale-bar-size" min="0" value="20">
         <div class="input-group-append">
           <select id="scale-bar-units-select" class="form-control">
-            <option>arcsec</option>
-            <option selected>arcmin</option>
+            <option selected> arcsec</option>
+            <option>arcmin</option>
             <option>deg</option>
           </select>
         </div>
