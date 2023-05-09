@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.forms.models import model_to_dict
 from django.urls import reverse
+from django.utils.module_loading import import_string
 
 from tom_common.hooks import run_hook
 
@@ -256,7 +257,16 @@ class Target(models.Model):
     )
 
     objects = models.Manager()
-    matches = TargetMatchManager()
+    target_match_manager = settings.MATCH_MANAGERS.get('Target', None)
+    if target_match_manager:
+        try:
+            manager = import_string(target_match_manager)
+            matches = manager()
+        except (ImportError, AttributeError):
+            raise ImportError(f'Could not import {target_match_manager}. Did you provide the correct path in '
+                              f'settings.py?')
+    else:
+        matches = TargetMatchManager()
 
     @transaction.atomic
     def save(self, *args, **kwargs):

@@ -203,6 +203,8 @@ TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.soar.SOARFacility',
 ]
 
+MATCH_MANAGERS = {
+}
 
 #
 # tom_alerts configuration
