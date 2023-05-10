@@ -147,7 +147,6 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         logger.debug(f'ObservationCreateView.get_template_name template_names: {template_names}')
         return template_names
 
-
     def get_target_id(self):
         """
         Parses the target id for the given observation from the query parameters.
@@ -258,6 +257,9 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         except Exception as ex:
             logger.error(f"Error loading {self.get_facility()} form: {repr(ex)}")
             raise BadRequest(f"Error loading {self.get_facility()} form: {repr(ex)}")
+
+        # tom_observations/facility.BaseObservationForm.__init__ to see how
+        # groups is added to common_layout
         if not settings.TARGET_PERMISSIONS_ONLY:
             form.fields['groups'].queryset = self.request.user.groups.all()
         form.helper.form_action = reverse(
