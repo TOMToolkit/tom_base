@@ -52,3 +52,6 @@ See the following example for never checking target aliases for matching:
         """
         queryset = Target.objects.none()
         return queryset
+
+This might be useful if a user is experiencing performance issues when ingesting targets or does not wish to limit
+target matching to similar strings.
