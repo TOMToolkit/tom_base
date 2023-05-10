@@ -204,10 +204,12 @@ TOM_FACILITY_CLASSES = [
 ]
 
 # Define MATCH_MANAGERS here.
-# This is a dictionary that contains a dotted module path to the desired match manager for a given model.
+# This is a dictionary with the key set to a given model class name and the value as a dotted module path to the desired
+# match manager for the named model.
+# See https://tom-toolkit.readthedocs.io/en/latest/targets/target_matcher.html
 # For example:
 # MATCH_MANAGERS = {
-#    "Target": "my_custom_code.match_managers.MyCustomTargetMatchManager"
+#    'Target': 'custom_code_directory.match_managers.MyCustomTargetMatchManager'
 # }
 MATCH_MANAGERS = {
 }
