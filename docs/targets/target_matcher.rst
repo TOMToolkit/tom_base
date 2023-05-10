@@ -36,22 +36,22 @@ example.
 Your can the override the default ``TargetMatchManager`` by writing your own in the location you used above.
 
 **Remember** the ``TargetMatchManager`` must contain a ``check_for_fuzzy_match`` function and return a queryset.
-See the following example for never checking target aliases for matching:
+See the following example for only checking for exact name matches:
 
 .. code:: python
 
     class CustomTargetMatchManager(models.Manager):
     """
-    Return Empty Queryset
+    Return Queryset for target with name matching string.
     """
     def check_for_fuzzy_match(self, name):
         """
-        Returns an empty queryset regardless of what name is received
+        Returns a queryset exactly matching name that is received
         :param name: The string against which target names and aliases will be matched.
         :return: queryset containing matching Targets. Will return targets even when matched value is an alias.
         """
-        queryset = Target.objects.none()
+        queryset = Target.objects.filter(name=name)
         return queryset
 
-This might be useful if a user is experiencing performance issues when ingesting targets or does not wish to limit
-target matching to similar strings.
+This might be useful if a user is experiencing performance issues when ingesting targets or does not wish to allow for
+a target matching to similar strings.
