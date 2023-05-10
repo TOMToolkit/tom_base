@@ -203,6 +203,12 @@ TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.soar.SOARFacility',
 ]
 
+# Define MATCH_MANAGERS here. This is a dictionary that contains a dotted module path to the desired match manager
+# for a given model.
+# For example:
+# MATCH_MANAGERS = {
+#    "Target": "my_custom_code.match_managers.MyCustomTargetMatchManager"
+# }
 MATCH_MANAGERS = {
 }
 
