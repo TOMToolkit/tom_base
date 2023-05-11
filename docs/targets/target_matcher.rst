@@ -47,10 +47,10 @@ See the following example for only checking for exact name matches:
     def check_for_fuzzy_match(self, name):
         """
         Returns a queryset exactly matching name that is received
-        :param name: The string against which target names and aliases will be matched.
-        :return: queryset containing matching Targets. Will return targets even when matched value is an alias.
+        :param name: The string against which target names will be matched.
+        :return: queryset containing matching Target(s).
         """
-        queryset = Target.objects.filter(name=name)
+        queryset = super().get_queryset().filter(name=name)
         return queryset
 
 This might be useful if a user is experiencing performance issues when ingesting targets or does not wish to allow for
