@@ -211,8 +211,7 @@ TOM_FACILITY_CLASSES = [
 # MATCH_MANAGERS = {
 #    'Target': 'custom_code_directory.match_managers.MyCustomTargetMatchManager'
 # }
-MATCH_MANAGERS = {
-}
+MATCH_MANAGERS = {}
 
 #
 # tom_alerts configuration
