@@ -1,5 +1,6 @@
 from datetime import datetime
 from dateutil.parser import parse
+import logging
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -9,6 +10,8 @@ from django.urls import reverse
 from django.utils.module_loading import import_string
 
 from tom_common.hooks import run_hook
+
+logger = logging.getLogger(__name__)
 
 GLOBAL_TARGET_FIELDS = ['name', 'type']
 
@@ -257,15 +260,16 @@ class Target(models.Model):
     )
 
     objects = models.Manager()
-    target_match_manager = settings.MATCH_MANAGERS.get('Target', None)
-    if target_match_manager:
+    try:
+        target_match_manager = settings.MATCH_MANAGERS.get('Target')
         try:
             manager = import_string(target_match_manager)
             matches = manager()
         except (ImportError, AttributeError):
-            raise ImportError(f'Could not import {target_match_manager}. Did you provide the correct path in '
-                              f'settings.py?')
-    else:
+            logger.debug(f'Could not import a Target Match Manager from {target_match_manager}. Did you provide the'
+                         f'correct path in settings.py?')
+            raise ImportError
+    except (ImportError, AttributeError):
         matches = TargetMatchManager()
 
     @transaction.atomic
