@@ -1,3 +1,7 @@
+from tom_targets.models import Target
+from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
+from tom_dataproducts.alertstreams.hermes import publish_photometry_to_hermes, BuildHermesMessage
+
 
 def share_data_with_hermes(share_destination, form_data, product_id=None, target_id=None, selected_data=None):
     # Query relevant Reduced Datums Queryset
@@ -26,14 +30,12 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
                                       topic=hermes_topic
                                       )
     # Run ReducedDatums Queryset through sharing protocols to make sure they are safe to share.
-    filtered_reduced_datums = get_share_safe_datums(destination, reduced_datums, topic=hermes_topic)
+    filtered_reduced_datums = check_for_share_safe_datums(destination, reduced_datums, topic=hermes_topic)
     if filtered_reduced_datums.count() > 0:
         response = publish_photometry_to_hermes(message_info, filtered_reduced_datums)
     else:
-        def response():
-            def json():
-                return {'message': f'No Data to share. (Check sharing Protocol, note that data types must be in '
-                                   f'{accepted_data_types})'}
+        return {'message': f'ERROR: No valid data to share. (Check Sharing Protocol. Note that data types must be in '
+                           f'{accepted_data_types})'}
     return response
 
 
@@ -69,16 +71,12 @@ def share_data_with_tom(destination, datums, product=None):
     #     target_response = response.json()
     #     destination_target_id = target_response['results'][0]['id']
 
-    print(serialized_target_data)
-
     response = requests.get(f'{targets_url}?name={target.name}', headers=headers, auth=auth)
     target_response = response.json()
     if target_response['results']:
         destination_target_id = target_response['results'][0]['id']
     else:
         return response
-    print("------------------------")
-    print(target_response)
     serialized_dataproduct_data = DataProductSerializer(product).data
     serialized_dataproduct_data['target'] = destination_target_id
     dataproducts_url = destination_tom_base_url + 'api/dataproducts/'
@@ -93,8 +91,23 @@ def share_data_with_tom(destination, datums, product=None):
     return response
 
 
-def check_for_share_safe_datums():
-    return
+def check_for_share_safe_datums(destination, reduced_datums, **kwargs):
+    """
+    Custom sharing protocols used to determine when data is shared with a destination.
+    This example prevents sharing if a datum has already been published to the given Hermes topic.
+    :param destination: sharing destination string
+    :param reduced_datums: selected input datums
+    :return: queryset of reduced datums to be shared
+    """
+    return reduced_datums
+    # if 'hermes' in destination:
+    #     message_topic = kwargs.get('topic', None)
+    #     # Remove data points previously shared to the given topic
+    #     filtered_datums = reduced_datums.exclude(Q(message__exchange_status='published')
+    #                                              & Q(message__topic=message_topic))
+    # else:
+    #     filtered_datums = reduced_datums
+    # return filtered_datums
 
 
 def check_for_save_safe_datums():

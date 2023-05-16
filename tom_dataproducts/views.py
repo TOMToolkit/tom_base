@@ -32,10 +32,10 @@ from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm, DataShareForm
 from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
-from tom_dataproducts.alertstreams.hermes import publish_photometry_to_hermes, BuildHermesMessage
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 from tom_dataproducts.serializers import DataProductSerializer
+from tom_dataproducts.sharing import share_data_with_hermes
 
 import requests
 
@@ -335,6 +335,8 @@ class DataShareView(FormView):
                     publish_feedback = response.json()['message']
                 else:
                     publish_feedback = f"ERROR: {response.text}"
+            except AttributeError:
+                publish_feedback = response['message']
             except ValueError:
                 publish_feedback = f"ERROR: Returned Response code {response.status_code}"
             if "ERROR" in publish_feedback.upper():
@@ -352,24 +354,6 @@ class DataShareView(FormView):
         #             response = self.share_with_tom(share_destination, product)
         #             return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
         #             # response = self.share_with_tom(share_destination, product)
-
-    def get_share_safe_datums(self, destination, reduced_datums, **kwargs):
-        """
-        Custom sharing protocols used to determine when data is shared with a destination.
-        This example prevents sharing if a datum has already been published to the given Hermes topic.
-        :param destination: sharing destination string
-        :param reduced_datums: selected input datums
-        :return: queryset of reduced datums to be shared
-        """
-        return reduced_datums
-        # if 'hermes' in destination:
-        #     message_topic = kwargs.get('topic', None)
-        #     # Remove data points previously shared to the given topic
-        #     filtered_datums = reduced_datums.exclude(Q(message__exchange_status='published')
-        #                                              & Q(message__topic=message_topic))
-        # else:
-        #     filtered_datums = reduced_datums
-        # return filtered_datums
 
 
 class DataProductGroupDetailView(DetailView):
