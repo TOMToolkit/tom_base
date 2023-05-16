@@ -30,8 +30,11 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
     if filtered_reduced_datums.count() > 0:
         response = publish_photometry_to_hermes(message_info, filtered_reduced_datums)
     else:
-        messages.error(self.request, f'No Data to share. (Check sharing Protocol, note that data types must be '
-                                     f'in {accepted_data_types})')
+        def response():
+            def json():
+                return {'message': f'No Data to share. (Check sharing Protocol, note that data types must be in '
+                                   f'{accepted_data_types})'}
+    return response
 
 
 def share_data_with_tom(destination, datums, product=None):

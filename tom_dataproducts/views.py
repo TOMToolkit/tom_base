@@ -322,7 +322,6 @@ class DataShareView(FormView):
             product_id = kwargs.get('dp_pk', None)
             target_id = kwargs.get('tg_pk', None)
 
-
             # Check if data points have been selected.
             selected_data = request.POST.getlist("share-box")
 
@@ -344,18 +343,15 @@ class DataShareView(FormView):
                 messages.success(self.request, publish_feedback)
         return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
 
-
-        if data_share_form.is_valid():
-            form_data = data_share_form.cleaned_data
-
-                        return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
-                else:
-                    # messages.error(self.request, 'TOM-TOM sharing is not yet supported.')
-                    response = self.share_with_tom(share_destination, product)
-                    return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
-                    # response = self.share_with_tom(share_destination, product)
-
-
+        # if data_share_form.is_valid():
+        #     form_data = data_share_form.cleaned_data
+        #
+        #                 return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
+        #         else:
+        #             # messages.error(self.request, 'TOM-TOM sharing is not yet supported.')
+        #             response = self.share_with_tom(share_destination, product)
+        #             return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
+        #             # response = self.share_with_tom(share_destination, product)
 
     def get_share_safe_datums(self, destination, reduced_datums, **kwargs):
         """
