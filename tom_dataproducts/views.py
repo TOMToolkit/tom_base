@@ -314,109 +314,48 @@ class DataShareView(FormView):
         Handles Data Products and All the data of a type for a target as well as individual Reduced Datums.
         Submit to Hermes, or Share with TOM (soon).
         """
-
         data_share_form = DataShareForm(request.POST, request.FILES)
-        # Check if data points have been selected.
-        selected_data = request.POST.getlist("share-box")
+
         if data_share_form.is_valid():
             form_data = data_share_form.cleaned_data
-            # 1st determine if pk is data product, Reduced Datum, or Target.
-            # Then query relevant Reduced Datums Queryset
+            share_destination = form_data['share_destination']
             product_id = kwargs.get('dp_pk', None)
-            if product_id:
-                product = DataProduct.objects.get(pk=product_id)
-                data_type = product.data_product_type
-                reduced_datums = ReducedDatum.objects.filter(data_product=product)
+            target_id = kwargs.get('tg_pk', None)
+
+
+            # Check if data points have been selected.
+            selected_data = request.POST.getlist("share-box")
+
+            # Check Destination
+            if 'HERMES' in share_destination.upper():
+                response = share_data_with_hermes(share_destination, form_data, product_id, target_id, selected_data)
             else:
-                target_id = kwargs.get('tg_pk', None)
-                target = Target.objects.get(pk=target_id)
-                data_type = form_data['data_type']
-                if request.POST.get("share-box", None) is None:
-                    reduced_datums = ReducedDatum.objects.filter(target=target, data_type=data_type)
+                response = share_data_with_tom(share_destination, form_data, product_id, target_id, selected_data)
+            try:
+                if 'message' in response.json():
+                    publish_feedback = response.json()['message']
                 else:
-                    reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
-            if data_type == 'photometry':
-                share_destination = form_data['share_destination']
-                if 'HERMES' in share_destination.upper():
-                    # Build and submit hermes table from Reduced Datums
-                    hermes_topic = share_destination.split(':')[1]
-                    destination = share_destination.split(':')[0]
-                    message_info = BuildHermesMessage(title=form_data['share_title'],
-                                                      submitter=form_data['submitter'],
-                                                      authors=form_data['share_authors'],
-                                                      message=form_data['share_message'],
-                                                      topic=hermes_topic
-                                                      )
-                    # Run ReducedDatums Queryset through sharing protocols to make sure they are safe to share.
-                    filtered_reduced_datums = self.get_share_safe_datums(destination, reduced_datums,
-                                                                         topic=hermes_topic)
-                    if filtered_reduced_datums.count() > 0:
-                        response = publish_photometry_to_hermes(message_info, filtered_reduced_datums)
-                    else:
-                        messages.error(self.request, 'No Data to share. (Check sharing Protocol.)')
-                        return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
-                else:
-                    messages.error(self.request, 'TOM-TOM sharing is not yet supported.')
-                    return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
-                    # response = self.share_with_tom(share_destination, product)
-                try:
-                    if 'message' in response.json():
-                        publish_feedback = response.json()['message']
-                    else:
-                        publish_feedback = f"ERROR: {response.text}"
-                except ValueError:
-                    publish_feedback = f"ERROR: Returned Response code {response.status_code}"
-                if "ERROR" in publish_feedback.upper():
-                    messages.error(self.request, publish_feedback)
-                else:
-                    messages.success(self.request, publish_feedback)
+                    publish_feedback = f"ERROR: {response.text}"
+            except ValueError:
+                publish_feedback = f"ERROR: Returned Response code {response.status_code}"
+            if "ERROR" in publish_feedback.upper():
+                messages.error(self.request, publish_feedback)
             else:
-                messages.error(self.request, f'Publishing {data_type} data is not yet supported.')
+                messages.success(self.request, publish_feedback)
         return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
 
-    def share_with_tom(self, tom_name, product):
-        """
-        When sharing a DataProduct with another TOM we likely want to share the data product itself and let the other
-        TOM process it rather than share the Reduced Datums
-        :param tom_name: name of destination tom in settings.DATA_SHARING
-        :param product: DataProduct model instance
-        :return:
-        """
-        try:
-            destination_tom_base_url = settings.DATA_SHARING[tom_name]['BASE_URL']
-            username = settings.DATA_SHARING[tom_name]['USERNAME']
-            password = settings.DATA_SHARING[tom_name]['PASSWORD']
-        except KeyError as err:
-            raise ImproperlyConfigured(f'Check DATA_SHARING configuration for {tom_name}: Key {err} not found.')
-        auth = (username, password)
-        headers = {'Media-Type': 'application/json'}
-        target = product.target
-        serialized_target_data = TargetSerializer(target).data
-        targets_url = destination_tom_base_url + 'api/targets/'
-        # TODO: Make sure aliases are checked before creating new target
-        # Attempt to create Target in Destination TOM
-        response = requests.post(targets_url, headers=headers, auth=auth, data=serialized_target_data)
-        try:
-            target_response = response.json()
-            destination_target_id = target_response['id']
-        except KeyError:
-            # If Target already exists at destination, find ID
-            response = requests.get(targets_url, headers=headers, auth=auth, data=serialized_target_data)
-            target_response = response.json()
-            destination_target_id = target_response['results'][0]['id']
 
-        serialized_dataproduct_data = DataProductSerializer(product).data
-        serialized_dataproduct_data['target'] = destination_target_id
-        dataproducts_url = destination_tom_base_url + 'api/dataproducts/'
-        # TODO: this should be updated when tom_dataproducts is updated to use django.core.storage
-        dataproduct_filename = os.path.join(settings.MEDIA_ROOT, product.data.name)
-        # Save DataProduct in Destination TOM
-        with open(dataproduct_filename, 'rb') as dataproduct_filep:
-            files = {'file': (product.data.name, dataproduct_filep, 'text/csv')}
-            headers = {'Media-Type': 'multipart/form-data'}
-            response = requests.post(dataproducts_url, data=serialized_dataproduct_data, files=files,
-                                     headers=headers, auth=auth)
-        return response
+        if data_share_form.is_valid():
+            form_data = data_share_form.cleaned_data
+
+                        return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
+                else:
+                    # messages.error(self.request, 'TOM-TOM sharing is not yet supported.')
+                    response = self.share_with_tom(share_destination, product)
+                    return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
+                    # response = self.share_with_tom(share_destination, product)
+
+
 
     def get_share_safe_datums(self, destination, reduced_datums, **kwargs):
         """

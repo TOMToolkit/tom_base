@@ -489,3 +489,57 @@ class TestDataProductModel(TestCase):
                         'ignore_missing_simple=True')
 
             self.assertIn(expected, logs.output)
+
+
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+                   TARGET_PERMISSIONS_ONLY=True)
+@patch('tom_dataproducts.views.run_data_processor')
+class TestShareDataProducts(TestCase):
+    def setUp(self):
+        self.target = SiderealTargetFactory.create()
+        self.observation_record = ObservingRecordFactory.create(
+            target_id=self.target.id,
+            facility=FakeRoboticFacility.name,
+            parameters={}
+        )
+        self.data_product = DataProduct.objects.create(
+            product_id='testproductid',
+            target=self.target,
+            observation_record=self.observation_record,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+        self.user = User.objects.create_user(username='test', email='test@example.com')
+        assign_perm('tom_targets.view_target', self.user, self.target)
+        self.client.force_login(self.user)
+
+    def test_share_dataproduct(self, run_data_processor_mock):
+
+        response = self.client.post(
+            reverse('dataproducts:share', kwargs={'dp_pk': self.data_product.id}),
+            {
+                'share_authors': ['test_author'],
+                'target': self.target.id,
+                'submitter': ['test_submitter'],
+                'share_destination': ['local_host'],
+                'share_title': ['Updated data for thingy.'],
+                'share_message': ['test_message']
+            },
+            follow=True
+        )
+        self.assertContains(response, 'TOM-TOM sharing is not yet supported.')
+
+    def test_share_data_for_target(self, run_data_processor_mock):
+
+        response = self.client.post(
+            reverse('dataproducts:share_all', kwargs={'tg_pk': self.target.id}),
+            {
+                'share_authors': ['test_author'],
+                'target': self.target.id,
+                'submitter': ['test_submitter'],
+                'share_destination': ['local_host'],
+                'share_title': ['Updated data for thingy.'],
+                'share_message': ['test_message']
+            },
+            follow=True
+        )
+        self.assertContains(response, 'TOM-TOM sharing is not yet supported.')
