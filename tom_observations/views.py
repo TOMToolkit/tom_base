@@ -1,6 +1,7 @@
 from io import StringIO
 from urllib.parse import urlencode
 import logging
+from typing import List
 
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import HTML, Layout, Submit
@@ -125,6 +126,27 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     """
     template_name = 'tom_observations/observation_form.html'
 
+    def get_template_names(self) -> List[str]:
+        """Override the base class method to ask the Facility if it has
+        specified a Facility-specific template to use. If so, put it at the
+        front of the returned list of template_names.
+        """
+        template_names = super().get_template_names()
+
+        # get the facility_class and its template_name, if defined
+        facility_class = self.get_facility_class()
+        try:
+            if facility_class.template_name:
+                # add to front of list b/c first template will be tried first
+                template_names.insert(0, facility_class.template_name)
+        except AttributeError:
+            # some Facilities won't have a custom template_name defined and so
+            # we will just use the one defined above.
+            pass
+
+        logger.debug(f'ObservationCreateView.get_template_name template_names: {template_names}')
+        return template_names
+
     def get_target_id(self):
         """
         Parses the target id for the given observation from the query parameters.
@@ -198,6 +220,12 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
 
         target = Target.objects.get(pk=self.get_target_id())
         context['target'] = target
+
+        # allow the Facility class to add data to the context
+        facility_class = self.get_facility_class()
+        facility_context = facility_class().get_facility_context_data()
+        context.update(facility_context)
+
         return context
 
     def get_form_class(self):
@@ -229,6 +257,9 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         except Exception as ex:
             logger.error(f"Error loading {self.get_facility()} form: {repr(ex)}")
             raise BadRequest(f"Error loading {self.get_facility()} form: {repr(ex)}")
+
+        # tom_observations/facility.BaseObservationForm.__init__ to see how
+        # groups is added to common_layout
         if not settings.TARGET_PERMISSIONS_ONLY:
             form.fields['groups'].queryset = self.request.user.groups.all()
         form.helper.form_action = reverse(

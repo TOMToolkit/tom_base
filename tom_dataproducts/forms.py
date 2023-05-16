@@ -62,9 +62,7 @@ class DataProductUploadForm(forms.Form):
         required=False
     )
     files = forms.FileField(
-        widget=forms.ClearableFileInput(
-            attrs={'multiple': True}
-        )
+        widget=forms.ClearableFileInput()
     )
     data_product_type = forms.ChoiceField(
         choices=[v for k, v in settings.DATA_PRODUCT_TYPES.items()],

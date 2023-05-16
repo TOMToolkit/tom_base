@@ -325,9 +325,9 @@ class TestTargetCreate(TestCase):
         self.assertTrue(TargetExtra.objects.filter(target=target, key='foo').exists())
 
     def test_datetime_warning(self):
-        '''Tests for an int that might come in and get mistakenly parsed for a datetime
+        """Tests for an int that might come in and get mistakenly parsed for a datetime
         If the value can be successfully cast as a float it is not useful to us as a datetime
-        Casting a datetime from an int will indicate that year on an arbitrary day. '''
+        Casting a datetime from an int will indicate that year on an arbitrary day. """
         target = SiderealTargetFactory.create()
         target.save(extras={'foo': '1984'})
         te = target.targetextra_set.get(key='foo')
