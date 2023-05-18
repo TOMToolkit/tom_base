@@ -38,6 +38,7 @@ class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, Ge
         response = super().create(request, *args, **kwargs)
 
         if response.status_code == status.HTTP_201_CREATED:
+            response.data['message'] = 'Data product successfully uploaded.'
             dp = DataProduct.objects.get(pk=response.data['id'])
             try:
                 run_hook('data_product_post_upload', dp)

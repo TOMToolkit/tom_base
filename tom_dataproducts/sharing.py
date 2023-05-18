@@ -1,9 +1,24 @@
+import requests
+import os
+
+from django.conf import settings
+
 from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
 from tom_dataproducts.alertstreams.hermes import publish_photometry_to_hermes, BuildHermesMessage
+from tom_dataproducts.serializers import DataProductSerializer
 
 
 def share_data_with_hermes(share_destination, form_data, product_id=None, target_id=None, selected_data=None):
+    """
+
+    :param share_destination:
+    :param form_data:
+    :param product_id:
+    :param target_id:
+    :param selected_data:
+    :return:
+    """
     # Query relevant Reduced Datums Queryset
     accepted_data_types = ['photometry']
     if product_id:
@@ -39,26 +54,61 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
     return response
 
 
-def share_data_with_tom(destination, datums, product=None):
+def share_data_with_tom(share_destination, form_data, product_id=None, target_id=None, selected_data=None):
     """
-    When sharing a DataProduct with another TOM we likely want to share the data product itself and let the other
-    TOM process it rather than share the Reduced Datums
-    :param destination: name of destination tom in settings.DATA_SHARING
-    :param datums: Queryset of ReducedDatum Instances
-    :param product: DataProduct model instance
+
+    :param share_destination:
+    :param form_data:
+    :param product_id:
+    :param target_id:
+    :param selected_data:
     :return:
     """
     try:
-        destination_tom_base_url = settings.DATA_SHARING[destination]['BASE_URL']
-        username = settings.DATA_SHARING[destination]['USERNAME']
-        password = settings.DATA_SHARING[destination]['PASSWORD']
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+        username = settings.DATA_SHARING[share_destination]['USERNAME']
+        password = settings.DATA_SHARING[share_destination]['PASSWORD']
     except KeyError as err:
-        raise ImproperlyConfigured(f'Check DATA_SHARING configuration for {destination}: Key {err} not found.')
+        raise ImproperlyConfigured(f'Check DATA_SHARING configuration for {share_destination}: Key {err} not found.')
     auth = (username, password)
     headers = {'Media-Type': 'application/json'}
-    target = product.target
-    serialized_target_data = TargetSerializer(target).data
+
+    dataproducts_url = destination_tom_base_url + 'api/dataproducts/'
     targets_url = destination_tom_base_url + 'api/targets/'
+    reduced_datums = ReducedDatum.objects.none()
+    if product_id:
+        product = DataProduct.objects.get(pk=product_id)
+        target = product.target
+        serialized_data = DataProductSerializer(product).data
+    # elif selected_data:
+    #     reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
+    # elif target_id:
+    #     target = Target.objects.get(pk=target_id)
+    #     data_type = form_data['data_type']
+    #     reduced_datums = ReducedDatum.objects.filter(target=target, data_type=data_type)
+    else:
+        return {'message': f'ERROR: No valid data to share.'}
+
+    # get destination Target
+    target_response = requests.get(f'{targets_url}?name={target.name}', headers=headers, auth=auth)
+    target_response_json = target_response.json()
+    if target_response_json['results']:
+        destination_target_id = target_response_json['results'][0]['id']
+    else:
+        return target_response
+
+    serialized_data['target'] = destination_target_id
+
+    # TODO: this should be updated when tom_dataproducts is updated to use django.core.storage
+    dataproduct_filename = os.path.join(settings.MEDIA_ROOT, product.data.name)
+    # Save DataProduct in Destination TOM
+    with open(dataproduct_filename, 'rb') as dataproduct_filep:
+        files = {'file': (product.data.name, dataproduct_filep, 'text/csv')}
+        headers = {'Media-Type': 'multipart/form-data'}
+        response = requests.post(dataproducts_url, data=serialized_data, files=files,
+                                 headers=headers, auth=auth)
+    return response
+    # serialized_target_data = TargetSerializer(target).data
     # TODO: Make sure aliases are checked before creating new target
     # Attempt to create Target in Destination TOM
     # response = requests.post(targets_url, headers=headers, auth=auth, data=serialized_target_data)
@@ -70,25 +120,6 @@ def share_data_with_tom(destination, datums, product=None):
     #     response = requests.get(targets_url, headers=headers, auth=auth, data=serialized_target_data)
     #     target_response = response.json()
     #     destination_target_id = target_response['results'][0]['id']
-
-    response = requests.get(f'{targets_url}?name={target.name}', headers=headers, auth=auth)
-    target_response = response.json()
-    if target_response['results']:
-        destination_target_id = target_response['results'][0]['id']
-    else:
-        return response
-    serialized_dataproduct_data = DataProductSerializer(product).data
-    serialized_dataproduct_data['target'] = destination_target_id
-    dataproducts_url = destination_tom_base_url + 'api/dataproducts/'
-    # TODO: this should be updated when tom_dataproducts is updated to use django.core.storage
-    dataproduct_filename = os.path.join(settings.MEDIA_ROOT, product.data.name)
-    # Save DataProduct in Destination TOM
-    # with open(dataproduct_filename, 'rb') as dataproduct_filep:
-    #     files = {'file': (product.data.name, dataproduct_filep, 'text/csv')}
-    #     headers = {'Media-Type': 'multipart/form-data'}
-    #     response = requests.post(dataproducts_url, data=serialized_dataproduct_data, files=files,
-    #                              headers=headers, auth=auth)
-    return response
 
 
 def check_for_share_safe_datums(destination, reduced_datums, **kwargs):

@@ -34,8 +34,7 @@ from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
-from tom_dataproducts.serializers import DataProductSerializer
-from tom_dataproducts.sharing import share_data_with_hermes
+from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom
 
 import requests
 
