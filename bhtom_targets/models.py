@@ -259,7 +259,7 @@ class Target(models.Model):
         return str(self.name)
 
     def get_absolute_url(self):
-        return reverse('targets:detail', kwargs={'pk': self.id})
+        return reverse('targets:detail', kwargs={'name': self.name})
 
     def featured_image(self):
         """
