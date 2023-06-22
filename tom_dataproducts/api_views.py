@@ -4,7 +4,7 @@ from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import status
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, ListModelMixin
-from rest_framework.parsers import MultiPartParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
@@ -12,7 +12,7 @@ from tom_common.hooks import run_hook
 from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.models import DataProduct, ReducedDatum
-from tom_dataproducts.serializers import DataProductSerializer
+from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
 
 
 class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, GenericViewSet, PermissionListMixin):
@@ -69,3 +69,29 @@ class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, Ge
             )
         else:
             return get_objects_for_user(self.request.user, 'tom_dataproducts.view_dataproduct')
+
+
+class ReducedDatumViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, GenericViewSet, PermissionListMixin):
+    """
+    Viewset for ReducedDatum objects. Supports list, create, and delete.
+
+    To view supported query parameters, please use the OPTIONS endpoint, which can be accessed through the web UI.
+
+    **Please note that ``groups`` are an accepted query parameters for the ``CREATE`` endpoint. The groups parameter
+    will specify which ``groups`` can view the created ``DataProduct``. If no ``groups`` are specified, the
+    ``ReducedDatum`` will only be visible to the user that created the ``DataProduct``. Make sure to check your
+    ``groups``!!**
+    """
+    queryset = ReducedDatum.objects.all()
+    serializer_class = ReducedDatumSerializer
+    filter_backends = (drf_filters.DjangoFilterBackend,)
+    permission_required = 'tom_dataproducts.view_reduceddatum'
+    parser_classes = [FormParser, JSONParser]
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+
+        if response.status_code == status.HTTP_201_CREATED:
+            response.data['message'] = 'Data successfully uploaded.'
+
+        return response

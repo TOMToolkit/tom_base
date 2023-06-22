@@ -6,7 +6,7 @@ from django.conf import settings
 from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
 from tom_dataproducts.alertstreams.hermes import publish_photometry_to_hermes, BuildHermesMessage
-from tom_dataproducts.serializers import DataProductSerializer
+from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
 
 
 def share_data_with_hermes(share_destination, form_data, product_id=None, target_id=None, selected_data=None):
@@ -71,55 +71,70 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
     except KeyError as err:
         raise ImproperlyConfigured(f'Check DATA_SHARING configuration for {share_destination}: Key {err} not found.')
     auth = (username, password)
-    headers = {'Media-Type': 'application/json'}
+    headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
     dataproducts_url = destination_tom_base_url + 'api/dataproducts/'
     targets_url = destination_tom_base_url + 'api/targets/'
+    reduced_datums_url = destination_tom_base_url + 'api/reduceddatums/'
     reduced_datums = ReducedDatum.objects.none()
+
     if product_id:
         product = DataProduct.objects.get(pk=product_id)
         target = product.target
         serialized_data = DataProductSerializer(product).data
-    # elif selected_data:
-    #     reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
-    # elif target_id:
-    #     target = Target.objects.get(pk=target_id)
-    #     data_type = form_data['data_type']
-    #     reduced_datums = ReducedDatum.objects.filter(target=target, data_type=data_type)
+        destination_target_id = get_destination_target(target, targets_url, headers, auth)
+        serialized_data['target'] = destination_target_id
+        # TODO: this should be updated when tom_dataproducts is updated to use django.core.storage
+        dataproduct_filename = os.path.join(settings.MEDIA_ROOT, product.data.name)
+        # Save DataProduct in Destination TOM
+        with open(dataproduct_filename, 'rb') as dataproduct_filep:
+            files = {'file': (product.data.name, dataproduct_filep, 'text/csv')}
+            headers = {'Media-Type': 'multipart/form-data'}
+            response = requests.post(dataproducts_url, data=serialized_data, files=files, headers=headers, auth=auth)
+    elif selected_data or target_id:
+        if selected_data:
+            reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
+            targets = set(reduced_datum.target for reduced_datum in reduced_datums)
+            target_dict = {}
+            for target in targets:
+                # get destination Target
+                destination_target_id = get_destination_target(target, targets_url, headers, auth)
+                target_dict[target.name] = destination_target_id
+        else:
+            target = Target.objects.get(pk=target_id)
+            reduced_datums = ReducedDatum.objects.filter(target=target)
+            destination_target_id = get_destination_target(target, targets_url, headers, auth)
+            target_dict = {target.name:  destination_target_id}
+        response_codes = []
+        for datum in reduced_datums:
+            if target_dict[datum.target.name]:
+                serialized_data = ReducedDatumSerializer(datum).data
+                serialized_data['target'] = target_dict[datum.target.name]
+                serialized_data['data_product'] = ''
+                if not serialized_data['source_name']:
+                    serialized_data['source_name'] = settings.TOM_NAME
+                    serialized_data['source_location'] = "TOM-TOM Direct Sharing"
+                response = requests.post(reduced_datums_url, json=serialized_data, headers=headers, auth=auth)
+                response_codes.append(response.status_code)
+        failed_data_count = response_codes.count(500)
+        if failed_data_count < len(response_codes):
+            return {'message': f'{len(response_codes)-failed_data_count} of {len(response_codes)} datums successfully saved.'}
+        else:
+            return {'message': f'ERROR: No valid data shared. These data may already exist in target TOM.'}
     else:
         return {'message': f'ERROR: No valid data to share.'}
 
-    # get destination Target
+    return response
+
+
+def get_destination_target(target, targets_url, headers, auth):
     target_response = requests.get(f'{targets_url}?name={target.name}', headers=headers, auth=auth)
     target_response_json = target_response.json()
     if target_response_json['results']:
         destination_target_id = target_response_json['results'][0]['id']
+        return destination_target_id
     else:
-        return target_response
-
-    serialized_data['target'] = destination_target_id
-
-    # TODO: this should be updated when tom_dataproducts is updated to use django.core.storage
-    dataproduct_filename = os.path.join(settings.MEDIA_ROOT, product.data.name)
-    # Save DataProduct in Destination TOM
-    with open(dataproduct_filename, 'rb') as dataproduct_filep:
-        files = {'file': (product.data.name, dataproduct_filep, 'text/csv')}
-        headers = {'Media-Type': 'multipart/form-data'}
-        response = requests.post(dataproducts_url, data=serialized_data, files=files,
-                                 headers=headers, auth=auth)
-    return response
-    # serialized_target_data = TargetSerializer(target).data
-    # TODO: Make sure aliases are checked before creating new target
-    # Attempt to create Target in Destination TOM
-    # response = requests.post(targets_url, headers=headers, auth=auth, data=serialized_target_data)
-    # try:
-    #     target_response = response.json()
-    #     destination_target_id = target_response['id']
-    # except KeyError:
-    #     # If Target already exists at destination, find ID
-    #     response = requests.get(targets_url, headers=headers, auth=auth, data=serialized_target_data)
-    #     target_response = response.json()
-    #     destination_target_id = target_response['results'][0]['id']
+        return None
 
 
 def check_for_share_safe_datums(destination, reduced_datums, **kwargs):
