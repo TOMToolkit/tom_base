@@ -1,4 +1,3 @@
-from datetime import datetime
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
@@ -135,10 +134,10 @@ class TestReducedDatumViewset(APITestCase):
         """
         Test that identical data raises a validation error while similar but different JSON will make it through.
         """
-        response = self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
+        self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
         with self.assertRaises(ValidationError):
             self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
         self.rd_data['value'] = {'magnitude': 15.582, 'filter': 'B', 'error': 0.005}
-        response3 = self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
+        self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
         rd_queryset = ReducedDatum.objects.all()
         self.assertEqual(rd_queryset.count(), 2)

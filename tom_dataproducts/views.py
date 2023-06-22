@@ -1,6 +1,5 @@
 from io import StringIO
 import logging
-import os
 from urllib.parse import urlencode, urlparse
 
 from django.conf import settings
@@ -9,7 +8,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
-from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
@@ -25,8 +23,6 @@ from guardian.shortcuts import assign_perm, get_objects_for_user
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
-from tom_targets.serializers import TargetSerializer
-from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm, DataShareForm
@@ -35,8 +31,6 @@ from tom_dataproducts.data_processor import run_data_processor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom
-
-import requests
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

@@ -2,9 +2,10 @@ import requests
 import os
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 from tom_targets.models import Target
-from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
+from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.alertstreams.hermes import publish_photometry_to_hermes, BuildHermesMessage
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
 
@@ -106,6 +107,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             destination_target_id = get_destination_target(target, targets_url, headers, auth)
             target_dict = {target.name:  destination_target_id}
         response_codes = []
+        reduced_datums = check_for_share_safe_datums(share_destination, reduced_datums)
         for datum in reduced_datums:
             if target_dict[datum.target.name]:
                 serialized_data = ReducedDatumSerializer(datum).data
@@ -118,11 +120,12 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
                 response_codes.append(response.status_code)
         failed_data_count = response_codes.count(500)
         if failed_data_count < len(response_codes):
-            return {'message': f'{len(response_codes)-failed_data_count} of {len(response_codes)} datums successfully saved.'}
+            return {'message': f'{len(response_codes)-failed_data_count} of {len(response_codes)} '
+                               'datums successfully saved.'}
         else:
-            return {'message': f'ERROR: No valid data shared. These data may already exist in target TOM.'}
+            return {'message': 'ERROR: No valid data shared. These data may already exist in target TOM.'}
     else:
-        return {'message': f'ERROR: No valid data to share.'}
+        return {'message': 'ERROR: No valid data to share.'}
 
     return response
 
