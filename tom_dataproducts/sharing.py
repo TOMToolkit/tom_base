@@ -84,6 +84,8 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
         target = product.target
         serialized_data = DataProductSerializer(product).data
         destination_target_id = get_destination_target(target, targets_url, headers, auth)
+        if destination_target_id is None:
+            return {'message': 'ERROR: No matching target found.'}
         serialized_data['target'] = destination_target_id
         # TODO: this should be updated when tom_dataproducts is updated to use django.core.storage
         dataproduct_filename = os.path.join(settings.MEDIA_ROOT, product.data.name)
@@ -101,10 +103,14 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
                 # get destination Target
                 destination_target_id = get_destination_target(target, targets_url, headers, auth)
                 target_dict[target.name] = destination_target_id
+            if all(value is None for value in target_dict.values()):
+                return {'message': 'ERROR: No matching targets found.'}
         else:
             target = Target.objects.get(pk=target_id)
             reduced_datums = ReducedDatum.objects.filter(target=target)
             destination_target_id = get_destination_target(target, targets_url, headers, auth)
+            if destination_target_id is None:
+                return {'message': 'ERROR: No matching target found.'}
             target_dict = {target.name:  destination_target_id}
         response_codes = []
         reduced_datums = check_for_share_safe_datums(share_destination, reduced_datums)
@@ -133,10 +139,13 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
 def get_destination_target(target, targets_url, headers, auth):
     target_response = requests.get(f'{targets_url}?name={target.name}', headers=headers, auth=auth)
     target_response_json = target_response.json()
-    if target_response_json['results']:
-        destination_target_id = target_response_json['results'][0]['id']
-        return destination_target_id
-    else:
+    try:
+        if target_response_json['results']:
+            destination_target_id = target_response_json['results'][0]['id']
+            return destination_target_id
+        else:
+            return None
+    except KeyError:
         return None
 
 

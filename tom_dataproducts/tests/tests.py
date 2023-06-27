@@ -1,6 +1,7 @@
 import os
 from http import HTTPStatus
 import tempfile
+import responses
 
 from astropy import units
 from astropy.io import fits
@@ -18,7 +19,7 @@ from unittest.mock import patch
 
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import DataProductUploadForm
-from tom_dataproducts.models import DataProduct, is_fits_image_file
+from tom_dataproducts.models import DataProduct, is_fits_image_file, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_dataproducts.processors.photometry_processor import PhotometryProcessor
 from tom_dataproducts.processors.spectroscopy_processor import SpectroscopyProcessor
@@ -493,7 +494,6 @@ class TestDataProductModel(TestCase):
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
                    TARGET_PERMISSIONS_ONLY=True)
-@patch('tom_dataproducts.views.run_data_processor')
 class TestShareDataProducts(TestCase):
     def setUp(self):
         self.target = SiderealTargetFactory.create()
@@ -512,7 +512,40 @@ class TestShareDataProducts(TestCase):
         assign_perm('tom_targets.view_target', self.user, self.target)
         self.client.force_login(self.user)
 
-    def test_share_dataproduct(self, run_data_processor_mock):
+        self.rd1 = ReducedDatum.objects.create(
+            target=self.target,
+            data_type='photometry',
+            value={'magnitude': 18.5, 'error': .5, 'filter': 'V'}
+        )
+        self.rd2 = ReducedDatum.objects.create(
+            target=self.target,
+            data_type='photometry',
+            value={'magnitude': 19.5, 'error': .5, 'filter': 'B'}
+        )
+        self.rd3 = ReducedDatum.objects.create(
+            target=self.target,
+            data_type='photometry',
+            value={'magnitude': 17.5, 'error': .5, 'filter': 'R'}
+        )
+
+    @responses.activate
+    def test_share_dataproduct_no_valid_responses(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"error": "not found"},
+            status=500
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
 
         response = self.client.post(
             reverse('dataproducts:share', kwargs={'dp_pk': self.data_product.id}),
@@ -520,13 +553,80 @@ class TestShareDataProducts(TestCase):
                 'share_authors': ['test_author'],
                 'target': self.target.id,
                 'submitter': ['test_submitter'],
-                'share_destination': ['local_host'],
+                'share_destination': [share_destination],
                 'share_title': ['Updated data for thingy.'],
                 'share_message': ['test_message']
             },
             follow=True
         )
-        self.assertContains(response, 'TOM-TOM sharing is not yet supported.')
+        self.assertContains(response, 'ERROR: No matching target found.')
+
+    @responses.activate
+    def test_share_reduceddatums_target_no_valid_responses(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"error": "not found"},
+            status=500
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+
+        response = self.client.post(
+            reverse('dataproducts:share_all', kwargs={'tg_pk': self.target.id}),
+            {
+                'share_authors': ['test_author'],
+                'target': self.target.id,
+                'submitter': ['test_submitter'],
+                'share_destination': [share_destination],
+                'share_title': ['Updated data for thingy.'],
+                'share_message': ['test_message']
+            },
+            follow=True
+        )
+        self.assertContains(response, 'ERROR: No matching target found.')
+
+    @responses.activate
+    def test_share_reduced_datums_no_valid_responses(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"error": "not found"},
+            status=500
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+
+        response = self.client.post(
+            reverse('dataproducts:share_all', kwargs={'tg_pk': self.target.id}),
+            {
+                'share_authors': ['test_author'],
+                'target': self.target.id,
+                'submitter': ['test_submitter'],
+                'share_destination': [share_destination],
+                'share_title': ['Updated data for thingy.'],
+                'share_message': ['test_message'],
+                'share-box': [1, 2]
+            },
+            follow=True
+        )
+        self.assertContains(response, 'ERROR: No matching targets found.')
 
     def test_share_data_for_target(self, run_data_processor_mock):
 
@@ -542,4 +642,4 @@ class TestShareDataProducts(TestCase):
             },
             follow=True
         )
-        self.assertContains(response, 'TOM-TOM sharing is not yet supported.')
+        self.assertContains(response, 'Data successfully uploaded.')

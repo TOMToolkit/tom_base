@@ -49,6 +49,7 @@ setup(
         'plotly~=5.0',
         'python-dateutil~=2.8',
         'requests~=2.25',
+        'responses~=0.23',
         'specutils~=1.8',
     ],
     extras_require={
