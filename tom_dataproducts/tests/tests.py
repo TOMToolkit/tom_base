@@ -494,7 +494,7 @@ class TestDataProductModel(TestCase):
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
                    TARGET_PERMISSIONS_ONLY=True,
-                   DATA_SHARING={'local_host': {'BASE_URL': 'fake.url/example',
+                   DATA_SHARING={'local_host': {'BASE_URL': 'https://fake.url/example',
                                                 'USERNAME': 'fake_user',
                                                 'PASSWORD': 'password'}})
 class TestShareDataProducts(TestCase):
