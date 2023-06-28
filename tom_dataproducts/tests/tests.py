@@ -494,7 +494,7 @@ class TestDataProductModel(TestCase):
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
                    TARGET_PERMISSIONS_ONLY=True,
-                   DATA_SHARING={'local_host': {'BASE_URL': 'https://fake.url/example',
+                   DATA_SHARING={'local_host': {'BASE_URL': 'https://fake.url/example/',
                                                 'USERNAME': 'fake_user',
                                                 'PASSWORD': 'password'}})
 class TestShareDataProducts(TestCase):
@@ -631,18 +631,120 @@ class TestShareDataProducts(TestCase):
         )
         self.assertContains(response, 'ERROR: No matching targets found.')
 
-    # def test_share_data_for_target(self, run_data_processor_mock):
-    #
-    #     response = self.client.post(
-    #         reverse('dataproducts:share_all', kwargs={'tg_pk': self.target.id}),
-    #         {
-    #             'share_authors': ['test_author'],
-    #             'target': self.target.id,
-    #             'submitter': ['test_submitter'],
-    #             'share_destination': ['local_host'],
-    #             'share_title': ['Updated data for thingy.'],
-    #             'share_message': ['test_message']
-    #         },
-    #         follow=True
-    #     )
-    #     self.assertContains(response, 'Data successfully uploaded.')
+    @responses.activate
+    def test_share_dataproduct_valid_target_found(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"results": [{'id': 1}]},
+            status=200
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+        responses.add(
+            responses.POST,
+            destination_tom_base_url + 'api/dataproducts/',
+            json={"message": "Data product successfully uploaded."},
+            status=200,
+        )
+
+        response = self.client.post(
+            reverse('dataproducts:share', kwargs={'dp_pk': self.data_product.id}),
+            {
+                'share_authors': ['test_author'],
+                'target': self.target.id,
+                'submitter': ['test_submitter'],
+                'share_destination': [share_destination],
+                'share_title': ['Updated data for thingy.'],
+                'share_message': ['test_message']
+            },
+            follow=True
+        )
+        self.assertContains(response, 'Data product successfully uploaded.')
+
+    @responses.activate
+    def test_share_reduceddatums_target_valid_responses(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"results": [{'id': 1}]},
+            status=200
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+        responses.add(
+            responses.POST,
+            destination_tom_base_url + 'api/reduceddatums/',
+            json={},
+            status=201,
+        )
+
+        response = self.client.post(
+            reverse('dataproducts:share_all', kwargs={'tg_pk': self.target.id}),
+            {
+                'share_authors': ['test_author'],
+                'target': self.target.id,
+                'submitter': ['test_submitter'],
+                'share_destination': [share_destination],
+                'share_title': ['Updated data for thingy.'],
+                'share_message': ['test_message']
+            },
+            follow=True
+        )
+        self.assertContains(response, '3 of 3 datums successfully saved.')
+
+    @responses.activate
+    def test_share_reduced_datums_valid_responses(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"results": [{'id': 1}]},
+            status=200
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+        responses.add(
+            responses.POST,
+            destination_tom_base_url + 'api/reduceddatums/',
+            json={},
+            status=201,
+        )
+
+        response = self.client.post(
+            reverse('dataproducts:share_all', kwargs={'tg_pk': self.target.id}),
+            {
+                'share_authors': ['test_author'],
+                'target': self.target.id,
+                'submitter': ['test_submitter'],
+                'share_destination': [share_destination],
+                'share_title': ['Updated data for thingy.'],
+                'share_message': ['test_message'],
+                'share-box': [1, 2]
+            },
+            follow=True
+        )
+        self.assertContains(response, '2 of 2 datums successfully saved.')
