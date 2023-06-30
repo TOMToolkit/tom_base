@@ -218,6 +218,15 @@ class BaseObservationFacility(ABC):
         """
         pass
 
+    def get_facility_context_data(self, **kwargs):
+        """
+        This method provides an opportunity for the Facility subclass to add additional
+        context data. It will be called by the OberservationCreateView.get_context_data()
+        method and the context dictionary passed to the template will be updated with the
+        returned facility context dictionary.
+        """
+        return kwargs
+
     # TODO: consider making submit_observation create ObservationRecords as well
     @abstractmethod
     def submit_observation(self, observation_payload):
