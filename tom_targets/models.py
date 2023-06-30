@@ -317,7 +317,7 @@ class Target(models.Model):
         matches = Target.matches.check_for_fuzzy_match(self.name)
         for match in matches:
             # Ignore the fact that this target's name matches itself.
-            if match.id is not self.id:
+            if match.id != self.id:
                 raise ValidationError(f'Target with Name or alias similar to {self.name} already exists')
         # Alias Check only necessary when updating target existing target. Reverse relationships require Primary Key.
         # If nothing has changed for the Target, do not validate against existing aliases.
