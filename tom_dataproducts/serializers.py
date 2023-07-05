@@ -18,6 +18,8 @@ class DataProductGroupSerializer(serializers.ModelSerializer):
 
 
 class ReducedDatumSerializer(serializers.ModelSerializer):
+    target = TargetFilteredPrimaryKeyRelatedField(queryset=Target.objects.all())
+
     class Meta:
         model = ReducedDatum
         fields = (
@@ -26,8 +28,30 @@ class ReducedDatumSerializer(serializers.ModelSerializer):
             'source_name',
             'source_location',
             'timestamp',
-            'value'
+            'value',
+            'target'
         )
+
+    def create(self, validated_data):
+        """DRF requires explicitly handling writeable nested serializers,
+        here we pop the groups data and save it using its serializer.
+        """
+        groups = validated_data.pop('groups', [])
+
+        rd = ReducedDatum(**validated_data)
+        rd.full_clean()
+        rd.save()
+
+        # Save groups for this target
+        group_serializer = GroupSerializer(data=groups, many=True)
+        if group_serializer.is_valid() and settings.TARGET_PERMISSIONS_ONLY is False:
+            for group in groups:
+                group_instance = Group.objects.get(pk=group['id'])
+                assign_perm('tom_dataproducts.view_dataproduct', group_instance, rd)
+                assign_perm('tom_dataproducts.change_dataproduct', group_instance, rd)
+                assign_perm('tom_dataproducts.delete_dataproduct', group_instance, rd)
+
+        return rd
 
 
 class DataProductSerializer(serializers.ModelSerializer):

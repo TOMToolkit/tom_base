@@ -331,7 +331,7 @@ class ReducedDatum(models.Model):
     """
 
     target = models.ForeignKey(Target, null=False, on_delete=models.CASCADE)
-    data_product = models.ForeignKey(DataProduct, null=True, on_delete=models.CASCADE)
+    data_product = models.ForeignKey(DataProduct, null=True, blank=True, on_delete=models.CASCADE)
     data_type = models.CharField(
         max_length=100,
         default=''
@@ -352,3 +352,12 @@ class ReducedDatum(models.Model):
         else:
             raise ValidationError('Not a valid DataProduct type.')
         return super().save()
+
+    def validate_unique(self, *args, **kwargs):
+        super().validate_unique(*args, **kwargs)
+        model_dict = self.__dict__.copy()
+        del model_dict['_state']
+        del model_dict['id']
+        obs = ReducedDatum.objects.filter(**model_dict)
+        if obs:
+            raise ValidationError('Data point already exists.')
