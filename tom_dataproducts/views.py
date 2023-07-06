@@ -338,16 +338,6 @@ class DataShareView(FormView):
                 messages.success(self.request, publish_feedback)
         return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
 
-        # if data_share_form.is_valid():
-        #     form_data = data_share_form.cleaned_data
-        #
-        #                 return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
-        #         else:
-        #             # messages.error(self.request, 'TOM-TOM sharing is not yet supported.')
-        #             response = self.share_with_tom(share_destination, product)
-        #             return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
-        #             # response = self.share_with_tom(share_destination, product)
-
 
 class DataProductGroupDetailView(DetailView):
     """

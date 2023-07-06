@@ -321,6 +321,64 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
         return form
 
 
+# class TargetShareView(FormView):
+#     """
+#     View that handles the sharing of data either through HERMES or with another TOM.
+#     """
+#
+#     form_class = DataShareForm
+#
+#     def get_form(self, *args, **kwargs):
+#         # TODO: Add permissions
+#         form = super().get_form(*args, **kwargs)
+#         return form
+#
+#     def form_invalid(self, form):
+#         """
+#         Adds errors to Django messaging framework in the case of an invalid form and redirects to the previous page.
+#         """
+#         # TODO: Format error messages in a more human-readable way
+#         messages.error(self.request, 'There was a problem sharing your Data: {}'.format(form.errors.as_json()))
+#         return redirect(form.cleaned_data.get('referrer', '/'))
+#
+#     def post(self, request, *args, **kwargs):
+#         """
+#         Method that handles the POST requests for sharing data.
+#         Handles Data Products and All the data of a type for a target as well as individual Reduced Datums.
+#         Submit to Hermes, or Share with TOM (soon).
+#         """
+#         data_share_form = DataShareForm(request.POST, request.FILES)
+#
+#         if data_share_form.is_valid():
+#             form_data = data_share_form.cleaned_data
+#             share_destination = form_data['share_destination']
+#             product_id = kwargs.get('dp_pk', None)
+#             target_id = kwargs.get('tg_pk', None)
+#
+#             # Check if data points have been selected.
+#             selected_data = request.POST.getlist("share-box")
+#
+#             # Check Destination
+#             if 'HERMES' in share_destination.upper():
+#                 response = share_data_with_hermes(share_destination, form_data, product_id, target_id, selected_data)
+#             else:
+#                 response = share_data_with_tom(share_destination, form_data, product_id, target_id, selected_data)
+#             try:
+#                 if 'message' in response.json():
+#                     publish_feedback = response.json()['message']
+#                 else:
+#                     publish_feedback = f"ERROR: {response.text}"
+#             except AttributeError:
+#                 publish_feedback = response['message']
+#             except ValueError:
+#                 publish_feedback = f"ERROR: Returned Response code {response.status_code}"
+#             if "ERROR" in publish_feedback.upper():
+#                 messages.error(self.request, publish_feedback)
+#             else:
+#                 messages.success(self.request, publish_feedback)
+#         return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
+
+
 class TargetDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     """
     View for deleting a target. Requires authorization.
