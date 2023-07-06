@@ -172,7 +172,7 @@ class Target(models.Model):
         max_length=100, choices=TARGET_TYPES, verbose_name='Target Type', help_text='The type of this target.'
     )
     created = models.DateTimeField(
-        auto_now_add=True, verbose_name='Time Created',
+        auto_now_add=True, verbose_name='Time Created', db_index=True,
         help_text='The time which this target was created in the TOM database.'
     )
     modified = models.DateTimeField(
