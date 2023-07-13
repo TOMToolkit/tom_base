@@ -6,7 +6,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct, ReducedDatum
-from tom_dataproducts.alertstreams.hermes import publish_photometry_to_hermes, BuildHermesMessage
+from tom_dataproducts.alertstreams.hermes import publish_photometry_to_hermes, BuildHermesMessage, get_hermes_topics
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
 
 
@@ -170,3 +170,31 @@ def check_for_share_safe_datums(destination, reduced_datums, **kwargs):
 
 def check_for_save_safe_datums():
     return
+
+
+def get_sharing_destination_options():
+    """
+    Build the Display options and headers for the dropdown form for choosing sharing topics.
+    Customize for a different selection experience.
+    :return: Tuple: Possible Destinations and their Display Names
+    """
+    choices = []
+    try:
+        for destination, details in settings.DATA_SHARING.items():
+            new_destination = [details.get('DISPLAY_NAME', destination)]
+            if details.get('USER_TOPICS', None):
+                # If topics exist for a destination (Such as HERMES) give topics as sub-choices
+                #   for non-selectable Destination
+                if destination == "hermes":
+                    destination_topics = get_hermes_topics()
+                else:
+                    destination_topics = details['USER_TOPICS']
+                topic_list = [(f'{destination}:{topic}', topic) for topic in destination_topics]
+                new_destination.append(tuple(topic_list))
+            else:
+                # Otherwise just use destination as option
+                new_destination.insert(0, destination)
+            choices.append(tuple(new_destination))
+    except AttributeError:
+        pass
+    return tuple(choices)

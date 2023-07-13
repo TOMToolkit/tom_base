@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
+from tom_dataproducts.sharing import get_sharing_destination_options
 from .models import (
     Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
     REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
@@ -166,3 +167,18 @@ TargetExtraFormset = inlineformset_factory(Target, TargetExtra, fields=('key', '
                                            widgets={'value': forms.TextInput()})
 TargetNamesFormset = inlineformset_factory(Target, TargetName, fields=('name',), validate_min=False, can_delete=True,
                                            extra=3)
+
+
+class TargetShareForm(forms.Form):
+    share_destination = forms.ChoiceField(required=True, choices=[], label="Destination")
+    target = forms.ModelChoiceField(
+        Target.objects.all(),
+        widget=forms.HiddenInput(),
+        required=False)
+    submitter = forms.CharField(
+        widget=forms.HiddenInput()
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['share_destination'].choices = get_sharing_destination_options()

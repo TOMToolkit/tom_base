@@ -17,7 +17,7 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
@@ -32,9 +32,9 @@ from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
-from tom_targets.forms import (
-    SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset
-)
+from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
+from tom_targets.forms import TargetNamesFormset, TargetShareForm
+
 from tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
     move_all_to_grouping, move_selected_to_grouping
@@ -321,64 +321,6 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
         return form
 
 
-# class TargetShareView(FormView):
-#     """
-#     View that handles the sharing of data either through HERMES or with another TOM.
-#     """
-#
-#     form_class = DataShareForm
-#
-#     def get_form(self, *args, **kwargs):
-#         # TODO: Add permissions
-#         form = super().get_form(*args, **kwargs)
-#         return form
-#
-#     def form_invalid(self, form):
-#         """
-#         Adds errors to Django messaging framework in the case of an invalid form and redirects to the previous page.
-#         """
-#         # TODO: Format error messages in a more human-readable way
-#         messages.error(self.request, 'There was a problem sharing your Data: {}'.format(form.errors.as_json()))
-#         return redirect(form.cleaned_data.get('referrer', '/'))
-#
-#     def post(self, request, *args, **kwargs):
-#         """
-#         Method that handles the POST requests for sharing data.
-#         Handles Data Products and All the data of a type for a target as well as individual Reduced Datums.
-#         Submit to Hermes, or Share with TOM (soon).
-#         """
-#         data_share_form = DataShareForm(request.POST, request.FILES)
-#
-#         if data_share_form.is_valid():
-#             form_data = data_share_form.cleaned_data
-#             share_destination = form_data['share_destination']
-#             product_id = kwargs.get('dp_pk', None)
-#             target_id = kwargs.get('tg_pk', None)
-#
-#             # Check if data points have been selected.
-#             selected_data = request.POST.getlist("share-box")
-#
-#             # Check Destination
-#             if 'HERMES' in share_destination.upper():
-#                 response = share_data_with_hermes(share_destination, form_data, product_id, target_id, selected_data)
-#             else:
-#                 response = share_data_with_tom(share_destination, form_data, product_id, target_id, selected_data)
-#             try:
-#                 if 'message' in response.json():
-#                     publish_feedback = response.json()['message']
-#                 else:
-#                     publish_feedback = f"ERROR: {response.text}"
-#             except AttributeError:
-#                 publish_feedback = response['message']
-#             except ValueError:
-#                 publish_feedback = f"ERROR: Returned Response code {response.status_code}"
-#             if "ERROR" in publish_feedback.upper():
-#                 messages.error(self.request, publish_feedback)
-#             else:
-#                 messages.success(self.request, publish_feedback)
-#         return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
-
-
 class TargetDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     """
     View for deleting a target. Requires authorization.
@@ -386,6 +328,41 @@ class TargetDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     permission_required = 'tom_targets.delete_target'
     success_url = reverse_lazy('targets:list')
     model = Target
+
+
+class TargetShareView(FormView):
+    """
+    View for deleting a target. Requires authorization.
+    """
+    template_name = 'tom_targets/target_share.html'
+    # permission_required = 'tom_targets.share_target'
+    form_class = TargetShareForm
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds the ``DataProductUploadForm`` to the context and prepopulates the hidden fields.
+        :returns: context object
+        :rtype: dict
+        """
+        context = super().get_context_data(*args, **kwargs)
+        target_id = self.kwargs.get('pk', None)
+        context['target'] = Target.objects.get(id=target_id)
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy('targets:detail', kwargs={'pk': self.kwargs.get('pk', None)})
+
+    def form_invalid(self, form):
+        """
+        Adds errors to Django messaging framework in the case of an invalid form and redirects to the previous page.
+        """
+        # TODO: Format error messages in a more human-readable way
+        messages.error(self.request, 'There was a problem sharing your Data: {}'.format(form.errors.as_json()))
+        return redirect(self.get_success_url())
+
+    def form_valid(self, form):
+        messages.success(self.request, "Target successfully shared.")
+        return redirect(self.get_success_url())
 
 
 class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
