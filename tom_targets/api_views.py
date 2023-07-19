@@ -3,6 +3,7 @@ from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user
 from rest_framework.mixins import DestroyModelMixin, RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from rest_framework import status
 
 from tom_targets.filters import TargetFilter
 from tom_targets.models import TargetExtra, TargetName
@@ -52,6 +53,15 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
     def get_queryset(self):
         permission_required = permissions_map.get(self.request.method)
         return get_objects_for_user(self.request.user, f'tom_targets.{permission_required}')
+
+    def create(self, request, *args, **kwargs):
+        print(request)
+        response = super().create(request, *args, **kwargs)
+
+        if response.status_code == status.HTTP_201_CREATED:
+            response.data['message'] = 'Target successfully uploaded.'
+            print(response.data)
+        return response
 
 
 class TargetNameViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMixin, GenericViewSet):

@@ -174,10 +174,8 @@ class TargetShareForm(forms.Form):
     target = forms.ModelChoiceField(
         Target.objects.all(),
         widget=forms.HiddenInput(),
-        required=False)
-    submitter = forms.CharField(
-        widget=forms.HiddenInput()
-    )
+        required=True)
+    submitter = forms.CharField(widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

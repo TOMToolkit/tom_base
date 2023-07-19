@@ -24,7 +24,7 @@ class TargetExtraSerializer(serializers.ModelSerializer):
 
 
 class TargetSerializer(serializers.ModelSerializer):
-    """Target serializer responsbile for transforming models to/from
+    """Target serializer responsible for transforming models to/from
     json (or other representations). See
     https://www.django-rest-framework.org/api-guide/serializers/#modelserializer
     """

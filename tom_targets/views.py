@@ -34,6 +34,8 @@ from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from tom_targets.forms import TargetNamesFormset, TargetShareForm
+from tom_targets.sharing import share_target_with_tom
+from tom_dataproducts.sharing import share_data_with_hermes
 
 from tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
@@ -347,6 +349,7 @@ class TargetShareView(FormView):
         context = super().get_context_data(*args, **kwargs)
         target_id = self.kwargs.get('pk', None)
         context['target'] = Target.objects.get(id=target_id)
+
         return context
 
     def get_success_url(self):
@@ -357,11 +360,35 @@ class TargetShareView(FormView):
         Adds errors to Django messaging framework in the case of an invalid form and redirects to the previous page.
         """
         # TODO: Format error messages in a more human-readable way
+        print(form.cleaned_data)
+        print('There was a problem sharing your Data: {}'.format(form.errors.as_json()))
         messages.error(self.request, 'There was a problem sharing your Data: {}'.format(form.errors.as_json()))
         return redirect(self.get_success_url())
 
     def form_valid(self, form):
-        messages.success(self.request, "Target successfully shared.")
+        form_data = form.cleaned_data
+        share_destination = form_data['share_destination']
+        target_id = self.kwargs.get('pk', None)
+        selected_data = self.request.POST.getlist("share-box")
+        print(form_data)
+        print(selected_data)
+        if 'HERMES' in share_destination.upper():
+            response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
+        else:
+            response = share_target_with_tom(share_destination, form_data, selected_data)
+        try:
+            if 'message' in response.json():
+                publish_feedback = response.json()['message']
+            else:
+                publish_feedback = f"ERROR: {response.text}"
+        except AttributeError:
+            publish_feedback = response['message']
+        except ValueError:
+            publish_feedback = f"ERROR: Returned Response code {response.status_code}"
+        if "ERROR" in publish_feedback.upper():
+            messages.error(self.request, publish_feedback)
+        else:
+            messages.success(self.request, publish_feedback)
         return redirect(self.get_success_url())
 
 

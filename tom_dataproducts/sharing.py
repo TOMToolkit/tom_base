@@ -24,25 +24,29 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
     accepted_data_types = ['photometry']
     if product_id:
         product = DataProduct.objects.get(pk=product_id)
+        target = product.target
         reduced_datums = ReducedDatum.objects.filter(data_product=product)
     elif selected_data:
         reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
+        target = reduced_datums[0].target
     elif target_id:
         target = Target.objects.get(pk=target_id)
-        data_type = form_data['data_type']
+        data_type = form_data.get('data_type', 'photometry')
         reduced_datums = ReducedDatum.objects.filter(target=target, data_type=data_type)
     else:
         reduced_datums = ReducedDatum.objects.none()
+        target = Target.objects.none()
 
     reduced_datums.filter(data_type__in=accepted_data_types)
 
     # Build and submit hermes table from Reduced Datums
     hermes_topic = share_destination.split(':')[1]
     destination = share_destination.split(':')[0]
-    message_info = BuildHermesMessage(title=form_data['share_title'],
-                                      submitter=form_data['submitter'],
-                                      authors=form_data['share_authors'],
-                                      message=form_data['share_message'],
+    message_info = BuildHermesMessage(title=form_data.get('share_title', f"Updated data for {target.name} from "
+                                                                         f"{getattr(settings, 'TOM_NAME','TOM Toolkit')}."),
+                                      submitter=form_data.get('submitter'),
+                                      authors=form_data.get('share_authors', None),
+                                      message=form_data.get('share_message', None),
                                       topic=hermes_topic
                                       )
     # Run ReducedDatums Queryset through sharing protocols to make sure they are safe to share.
@@ -137,16 +141,24 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
 
 
 def get_destination_target(target, targets_url, headers, auth):
+    """
+    Retrieve the target ID from a destination TOM
+    :param target: Target Model
+    :param targets_url: Destination API URL for TOM Target List
+    :param headers:
+    :param auth:
+    :return:
+    """
     target_response = requests.get(f'{targets_url}?name={target.name}', headers=headers, auth=auth)
     target_response_json = target_response.json()
     try:
         if target_response_json['results']:
             destination_target_id = target_response_json['results'][0]['id']
-            return destination_target_id
+            return destination_target_id, target_response
         else:
-            return None
+            return None, target_response
     except KeyError:
-        return None
+        return None, target_response
 
 
 def check_for_share_safe_datums(destination, reduced_datums, **kwargs):
