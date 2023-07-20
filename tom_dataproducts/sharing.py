@@ -87,7 +87,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
         product = DataProduct.objects.get(pk=product_id)
         target = product.target
         serialized_data = DataProductSerializer(product).data
-        destination_target_id = get_destination_target(target, targets_url, headers, auth)
+        destination_target_id, target_search_response = get_destination_target(target, targets_url, headers, auth)
         if destination_target_id is None:
             return {'message': 'ERROR: No matching target found.'}
         serialized_data['target'] = destination_target_id
@@ -105,14 +105,14 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             target_dict = {}
             for target in targets:
                 # get destination Target
-                destination_target_id = get_destination_target(target, targets_url, headers, auth)
+                destination_target_id, target_search_response = get_destination_target(target, targets_url, headers, auth)
                 target_dict[target.name] = destination_target_id
             if all(value is None for value in target_dict.values()):
                 return {'message': 'ERROR: No matching targets found.'}
         else:
             target = Target.objects.get(pk=target_id)
             reduced_datums = ReducedDatum.objects.filter(target=target)
-            destination_target_id = get_destination_target(target, targets_url, headers, auth)
+            destination_target_id, target_search_response = get_destination_target(target, targets_url, headers, auth)
             if destination_target_id is None:
                 return {'message': 'ERROR: No matching target found.'}
             target_dict = {target.name:  destination_target_id}
