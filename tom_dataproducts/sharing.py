@@ -42,8 +42,9 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
     # Build and submit hermes table from Reduced Datums
     hermes_topic = share_destination.split(':')[1]
     destination = share_destination.split(':')[0]
-    message_info = BuildHermesMessage(title=form_data.get('share_title', f"Updated data for {target.name} from "
-                                                                         f"{getattr(settings, 'TOM_NAME','TOM Toolkit')}."),
+    message_info = BuildHermesMessage(title=form_data.get('share_title',
+                                                          f"Updated data for {target.name} from "
+                                                          f"{getattr(settings, 'TOM_NAME','TOM Toolkit')}."),
                                       submitter=form_data.get('submitter'),
                                       authors=form_data.get('share_authors', None),
                                       message=form_data.get('share_message', None),
@@ -105,7 +106,10 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             target_dict = {}
             for target in targets:
                 # get destination Target
-                destination_target_id, target_search_response = get_destination_target(target, targets_url, headers, auth)
+                destination_target_id, target_search_response = get_destination_target(target,
+                                                                                       targets_url,
+                                                                                       headers,
+                                                                                       auth)
                 target_dict[target.name] = destination_target_id
             if all(value is None for value in target_dict.values()):
                 return {'message': 'ERROR: No matching targets found.'}

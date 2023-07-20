@@ -1,8 +1,9 @@
 import requests
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
-from tom_targets.serializers import TargetSerializer, TargetNameSerializer, TargetExtraSerializer
+from tom_targets.serializers import TargetSerializer
 from tom_dataproducts.sharing import get_destination_target
 
 
@@ -41,5 +42,3 @@ def share_target_with_tom(share_destination, form_data, selected_data):
         target_create_response = requests.post(targets_url, json=serialized_target, headers=headers, auth=auth)
 
     return target_create_response
-
-
