@@ -35,7 +35,7 @@ from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from tom_targets.forms import TargetNamesFormset, TargetShareForm
 from tom_targets.sharing import share_target_with_tom
-from tom_dataproducts.sharing import share_data_with_hermes
+from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom
 
 from tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
@@ -360,8 +360,6 @@ class TargetShareView(FormView):
         Adds errors to Django messaging framework in the case of an invalid form and redirects to the previous page.
         """
         # TODO: Format error messages in a more human-readable way
-        print(form.cleaned_data)
-        print('There was a problem sharing your Data: {}'.format(form.errors.as_json()))
         messages.error(self.request, 'There was a problem sharing your Data: {}'.format(form.errors.as_json()))
         return redirect(self.get_success_url())
 
@@ -376,6 +374,8 @@ class TargetShareView(FormView):
             response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
         else:
             response = share_target_with_tom(share_destination, form_data, selected_data)
+            if selected_data:
+                data_creation_response = share_data_with_tom(share_destination, form_data, selected_data=selected_data)
         try:
             if 'message' in response.json():
                 publish_feedback = response.json()['message']
