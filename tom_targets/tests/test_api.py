@@ -64,7 +64,7 @@ class TestTargetViewset(APITestCase):
             'ra': 123.456,
             'dec': -32.1,
             'groups': [
-                {'id': group.id}
+                {'id': group.id}, {'name': 'test_group'}
             ],
             'targetextra_set': [
                 {'key': 'foo', 'value': 5}

@@ -37,7 +37,7 @@ def share_target_with_tom(share_destination, form_data, selected_data):
         # If target is not in Destination, serialize and create new target.
         serialized_target = TargetSerializer(form_data['target']).data
         # Remove local Groups
-        serialized_target['groups'] = []
+        serialized_target['groups'] = [{'name': f'Imported From {settings.TOM_NAME}'}]
         target_create_response = requests.post(targets_url, json=serialized_target, headers=headers, auth=auth)
 
     return target_create_response

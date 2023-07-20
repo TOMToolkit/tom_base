@@ -368,14 +368,12 @@ class TargetShareView(FormView):
         share_destination = form_data['share_destination']
         target_id = self.kwargs.get('pk', None)
         selected_data = self.request.POST.getlist("share-box")
-        print(form_data)
-        print(selected_data)
         if 'HERMES' in share_destination.upper():
             response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
         else:
             response = share_target_with_tom(share_destination, form_data, selected_data)
             if selected_data:
-                data_creation_response = share_data_with_tom(share_destination, form_data, selected_data=selected_data)
+                response = share_data_with_tom(share_destination, form_data, selected_data=selected_data)
         try:
             if 'message' in response.json():
                 publish_feedback = response.json()['message']

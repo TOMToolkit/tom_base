@@ -55,12 +55,10 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
         return get_objects_for_user(self.request.user, f'tom_targets.{permission_required}')
 
     def create(self, request, *args, **kwargs):
-        print(request)
         response = super().create(request, *args, **kwargs)
 
         if response.status_code == status.HTTP_201_CREATED:
             response.data['message'] = 'Target successfully uploaded.'
-            print(response.data)
         return response
 
 

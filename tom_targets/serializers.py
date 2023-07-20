@@ -61,7 +61,10 @@ class TargetSerializer(serializers.ModelSerializer):
         group_serializer = GroupSerializer(data=groups, many=True)
         if group_serializer.is_valid():
             for group in groups:
-                group_instance = Group.objects.get(pk=group['id'])
+                try:
+                    group_instance = Group.objects.get(pk=group['id'])
+                except KeyError:
+                    group_instance, _ = Group.objects.get_or_create(name=group['name'])
                 assign_perm('tom_targets.view_target', group_instance, target)
                 assign_perm('tom_targets.change_target', group_instance, target)
                 assign_perm('tom_targets.delete_target', group_instance, target)
