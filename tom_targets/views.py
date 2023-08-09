@@ -588,3 +588,61 @@ class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
         assign_perm('tom_targets.change_targetlist', self.request.user, obj)
         assign_perm('tom_targets.delete_targetlist', self.request.user, obj)
         return super().form_valid(form)
+
+
+class TargetGroupingShareView(FormView):
+    """
+    View for deleting a target. Requires authorization.
+    """
+    template_name = 'tom_targets/target_group_share.html'
+    # permission_required = 'tom_targets.share_target'
+    form_class = TargetShareForm
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds the ``DataProductUploadForm`` to the context and prepopulates the hidden fields.
+        :returns: context object
+        :rtype: dict
+        """
+        context = super().get_context_data(*args, **kwargs)
+        group_id = self.kwargs.get('pk', None)
+        context['group'] = TargetList.objects.get(id=group_id)
+
+        return context
+    #
+    # def get_success_url(self):
+    #     return reverse_lazy('targets:detail', kwargs={'pk': self.kwargs.get('pk', None)})
+    #
+    # def form_invalid(self, form):
+    #     """
+    #     Adds errors to Django messaging framework in the case of an invalid form and redirects to the previous page.
+    #     """
+    #     # TODO: Format error messages in a more human-readable way
+    #     messages.error(self.request, 'There was a problem sharing your Data: {}'.format(form.errors.as_json()))
+    #     return redirect(self.get_success_url())
+    #
+    # def form_valid(self, form):
+    #     form_data = form.cleaned_data
+    #     share_destination = form_data['share_destination']
+    #     target_id = self.kwargs.get('pk', None)
+    #     selected_data = self.request.POST.getlist("share-box")
+    #     if 'HERMES' in share_destination.upper():
+    #         response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
+    #     else:
+    #         response = share_target_with_tom(share_destination, form_data, selected_data)
+    #         if selected_data:
+    #             response = share_data_with_tom(share_destination, form_data, selected_data=selected_data)
+    #     try:
+    #         if 'message' in response.json():
+    #             publish_feedback = response.json()['message']
+    #         else:
+    #             publish_feedback = f"ERROR: {response.text}"
+    #     except AttributeError:
+    #         publish_feedback = response['message']
+    #     except ValueError:
+    #         publish_feedback = f"ERROR: Returned Response code {response.status_code}"
+    #     if "ERROR" in publish_feedback.upper():
+    #         messages.error(self.request, publish_feedback)
+    #     else:
+    #         messages.success(self.request, publish_feedback)
+    #     return redirect(self.get_success_url())

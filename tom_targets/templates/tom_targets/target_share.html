@@ -21,7 +21,6 @@
         {% get_photometry_data target target_share %}
     {% endwith %}
     {% buttons %}
-<!--        <input type="submit" class="btn btn-primary" formaction="{% url 'targets:share' pk=target.id %}" id="submit_selected_2" value="Submit" name="share_target_form">-->
         <a href="{% url 'targets:detail' pk=target.id %}" class="btn btn-primary" title="Back">Back</a>
     {% endbuttons %}
 </form>
