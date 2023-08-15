@@ -634,16 +634,22 @@ class TargetGroupingShareView(FormView):
         print(form_data)
         print(self.kwargs)
         print(self.request.POST)
-        return redirect(self.get_success_url())
         share_destination = form_data['share_destination']
-        target_id = self.kwargs.get('pk', None)
-        selected_data = self.request.POST.getlist("share-box")
+        selected_targets = self.request.POST.getlist('selected-target')
+        data_switch = self.request.POST.get('dataSwitch', False)
         if 'HERMES' in share_destination.upper():
-            response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
+            # response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
+            messages.error(self.request, "Publishing Groups to Hermes is not yet supported.")
+            return redirect(self.get_success_url())
         else:
-            response = share_target_with_tom(share_destination, form_data, selected_data)
-            if selected_data:
-                response = share_data_with_tom(share_destination, form_data, selected_data=selected_data)
+            for target in selected_targets:
+                form_data['target'] = Target.objects.get(id=target)
+                response = share_target_with_tom(share_destination, form_data, group_list=[form_data['group']])
+                if data_switch:
+                    response = share_data_with_tom(share_destination, form_data, target_id=target)
+            if not selected_targets:
+                messages.error(self.request, 'No targets shared.'.format(form.errors.as_json()))
+                return redirect(self.get_success_url())
         try:
             if 'message' in response.json():
                 publish_feedback = response.json()['message']
