@@ -8,7 +8,7 @@ from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
 from tom_dataproducts.sharing import get_sharing_destination_options
 from .models import (
-    Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
+    Target, TargetExtra, TargetName, TargetList, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
     REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 )
 
@@ -173,6 +173,19 @@ class TargetShareForm(forms.Form):
     share_destination = forms.ChoiceField(required=True, choices=[], label="Destination")
     target = forms.ModelChoiceField(
         Target.objects.all(),
+        widget=forms.HiddenInput(),
+        required=True)
+    submitter = forms.CharField(widget=forms.HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['share_destination'].choices = get_sharing_destination_options()
+
+
+class TargetGroupShareForm(forms.Form):
+    share_destination = forms.ChoiceField(required=True, choices=[], label="Destination")
+    group = forms.ModelChoiceField(
+        TargetList.objects.all(),
         widget=forms.HiddenInput(),
         required=True)
     submitter = forms.CharField(widget=forms.HiddenInput())

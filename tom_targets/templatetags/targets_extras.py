@@ -310,9 +310,9 @@ def aladin(target):
 
 
 @register.inclusion_tag('tom_targets/partials/target_table.html')
-def target_table(targets):
+def target_table(targets, all_checked=False):
     """
     Returns a partial for a table of targets, used in the target_list.html template
     by default
     """
-    return {'targets': targets}
+    return {'targets': targets, 'all_checked': all_checked}

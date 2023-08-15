@@ -33,7 +33,7 @@ from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
-from tom_targets.forms import TargetNamesFormset, TargetShareForm
+from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetGroupShareForm
 from tom_targets.sharing import share_target_with_tom
 from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom
 
@@ -365,6 +365,9 @@ class TargetShareView(FormView):
 
     def form_valid(self, form):
         form_data = form.cleaned_data
+        print(form_data)
+        print(self.kwargs)
+        print(self.request.POST)
         share_destination = form_data['share_destination']
         target_id = self.kwargs.get('pk', None)
         selected_data = self.request.POST.getlist("share-box")
@@ -596,7 +599,7 @@ class TargetGroupingShareView(FormView):
     """
     template_name = 'tom_targets/target_group_share.html'
     # permission_required = 'tom_targets.share_target'
-    form_class = TargetShareForm
+    form_class = TargetGroupShareForm
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -609,40 +612,49 @@ class TargetGroupingShareView(FormView):
         context['group'] = TargetList.objects.get(id=group_id)
 
         return context
-    #
-    # def get_success_url(self):
-    #     return reverse_lazy('targets:detail', kwargs={'pk': self.kwargs.get('pk', None)})
-    #
-    # def form_invalid(self, form):
-    #     """
-    #     Adds errors to Django messaging framework in the case of an invalid form and redirects to the previous page.
-    #     """
-    #     # TODO: Format error messages in a more human-readable way
-    #     messages.error(self.request, 'There was a problem sharing your Data: {}'.format(form.errors.as_json()))
-    #     return redirect(self.get_success_url())
-    #
-    # def form_valid(self, form):
-    #     form_data = form.cleaned_data
-    #     share_destination = form_data['share_destination']
-    #     target_id = self.kwargs.get('pk', None)
-    #     selected_data = self.request.POST.getlist("share-box")
-    #     if 'HERMES' in share_destination.upper():
-    #         response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
-    #     else:
-    #         response = share_target_with_tom(share_destination, form_data, selected_data)
-    #         if selected_data:
-    #             response = share_data_with_tom(share_destination, form_data, selected_data=selected_data)
-    #     try:
-    #         if 'message' in response.json():
-    #             publish_feedback = response.json()['message']
-    #         else:
-    #             publish_feedback = f"ERROR: {response.text}"
-    #     except AttributeError:
-    #         publish_feedback = response['message']
-    #     except ValueError:
-    #         publish_feedback = f"ERROR: Returned Response code {response.status_code}"
-    #     if "ERROR" in publish_feedback.upper():
-    #         messages.error(self.request, publish_feedback)
-    #     else:
-    #         messages.success(self.request, publish_feedback)
-    #     return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        return reverse_lazy('targets:list')+f'?targetlist__name={self.kwargs.get("pk", None)}'
+        # return reverse_lazy('targets:detail', kwargs={'pk': self.kwargs.get('pk', None)})
+
+    def form_invalid(self, form):
+        """
+        Adds errors to Django messaging framework in the case of an invalid form and redirects to the previous page.
+        """
+        # TODO: Format error messages in a more human-readable way
+        form_data = form.cleaned_data
+        print(form_data)
+        print(self.kwargs)
+        print(self.request.POST)
+        messages.error(self.request, 'There was a problem sharing your Data: {}'.format(form.errors.as_json()))
+        return redirect(self.get_success_url())
+
+    def form_valid(self, form):
+        form_data = form.cleaned_data
+        print(form_data)
+        print(self.kwargs)
+        print(self.request.POST)
+        return redirect(self.get_success_url())
+        share_destination = form_data['share_destination']
+        target_id = self.kwargs.get('pk', None)
+        selected_data = self.request.POST.getlist("share-box")
+        if 'HERMES' in share_destination.upper():
+            response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
+        else:
+            response = share_target_with_tom(share_destination, form_data, selected_data)
+            if selected_data:
+                response = share_data_with_tom(share_destination, form_data, selected_data=selected_data)
+        try:
+            if 'message' in response.json():
+                publish_feedback = response.json()['message']
+            else:
+                publish_feedback = f"ERROR: {response.text}"
+        except AttributeError:
+            publish_feedback = response['message']
+        except ValueError:
+            publish_feedback = f"ERROR: Returned Response code {response.status_code}"
+        if "ERROR" in publish_feedback.upper():
+            messages.error(self.request, publish_feedback)
+        else:
+            messages.success(self.request, publish_feedback)
+        return redirect(self.get_success_url())
