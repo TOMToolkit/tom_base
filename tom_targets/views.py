@@ -609,24 +609,24 @@ class TargetGroupingShareView(FormView):
         """
         context = super().get_context_data(*args, **kwargs)
         group_id = self.kwargs.get('pk', None)
-        context['group'] = TargetList.objects.get(id=group_id)
-
+        group = TargetList.objects.get(id=group_id)
+        context['group'] = group
+        initial = {'submitter': self.request.user,
+                   'group': group,
+                   'share_title': f"Updated targets for group {group.name}."}
+        form = TargetGroupShareForm(initial=initial)
+        context['form'] = form
         return context
 
     def get_success_url(self):
         return reverse_lazy('targets:list')+f'?targetlist__name={self.kwargs.get("pk", None)}'
-        # return reverse_lazy('targets:detail', kwargs={'pk': self.kwargs.get('pk', None)})
 
     def form_invalid(self, form):
         """
         Adds errors to Django messaging framework in the case of an invalid form and redirects to the previous page.
         """
         # TODO: Format error messages in a more human-readable way
-        form_data = form.cleaned_data
-        print(form_data)
-        print(self.kwargs)
-        print(self.request.POST)
-        messages.error(self.request, 'There was a problem sharing your Data: {}'.format(form.errors.as_json()))
+        messages.error(self.request, 'There was a problem sharing your Group: {}'.format(form.errors.as_json()))
         return redirect(self.get_success_url())
 
     def form_valid(self, form):

@@ -315,4 +315,5 @@ def target_table(targets, all_checked=False):
     Returns a partial for a table of targets, used in the target_list.html template
     by default
     """
+
     return {'targets': targets, 'all_checked': all_checked}
