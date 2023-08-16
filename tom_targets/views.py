@@ -631,9 +631,6 @@ class TargetGroupingShareView(FormView):
 
     def form_valid(self, form):
         form_data = form.cleaned_data
-        print(form_data)
-        print(self.kwargs)
-        print(self.request.POST)
         share_destination = form_data['share_destination']
         selected_targets = self.request.POST.getlist('selected-target')
         data_switch = self.request.POST.get('dataSwitch', False)
