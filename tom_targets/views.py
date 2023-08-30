@@ -645,7 +645,7 @@ class TargetGroupingShareView(FormView):
                 if data_switch:
                     response = share_data_with_tom(share_destination, form_data, target_id=target)
             if not selected_targets:
-                messages.error(self.request, 'No targets shared.'.format(form.errors.as_json()))
+                messages.error(self.request, f'No targets shared. {form.errors.as_json()}')
                 return redirect(self.get_success_url())
         try:
             if 'message' in response.json():

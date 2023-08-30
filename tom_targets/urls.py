@@ -12,7 +12,7 @@ router = SharedAPIRootRouter()
 router.register(r'targets', TargetViewSet, 'targets')
 router.register(r'targetextra', TargetExtraViewSet, 'targetextra')
 router.register(r'targetname', TargetNameViewSet, 'targetname')
-router.register(r'targetlist', TargetNameViewSet, 'targetlist')
+router.register(r'targetlist', TargetListViewSet, 'targetlist')
 
 app_name = 'tom_targets'
 
