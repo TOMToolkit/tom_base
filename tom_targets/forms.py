@@ -182,9 +182,9 @@ class TargetShareForm(forms.Form):
         self.fields['share_destination'].choices = get_sharing_destination_options()
 
 
-class TargetGroupShareForm(forms.Form):
+class TargetListShareForm(forms.Form):
     share_destination = forms.ChoiceField(required=True, choices=[], label="Destination")
-    group = forms.ModelChoiceField(
+    target_list = forms.ModelChoiceField(
         TargetList.objects.all(),
         widget=forms.HiddenInput(),
         required=True)

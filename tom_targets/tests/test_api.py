@@ -8,7 +8,7 @@ from rest_framework.test import APITestCase
 
 from tom_targets.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
 from tom_targets.tests.factories import TargetExtraFactory, TargetNameFactory
-from tom_targets.models import Target, TargetExtra, TargetName
+from tom_targets.models import Target, TargetExtra, TargetName, TargetList
 
 
 class TestTargetViewset(APITestCase):
@@ -57,9 +57,10 @@ class TestTargetViewset(APITestCase):
         group = Group.objects.create(name='bourgeoisie')
         group.user_set.add(self.user)
         group.user_set.add(collaborator)
+        target_list = TargetList.objects.create(name="Test TargetList")
 
         target_data = {
-            'name': 'test_target_name_wtf',
+            'name': 'test_target_name',
             'type': Target.SIDEREAL,
             'ra': 123.456,
             'dec': -32.1,
@@ -71,6 +72,10 @@ class TestTargetViewset(APITestCase):
             ],
             'aliases': [
                 {'name': 'alternative name'}
+            ],
+            'target_lists': [
+                {'name': target_list.name},  # Add to existing Target List
+                {'name': 'newer_tlist'}  # Create new Target List
             ]
         }
         response = self.client.post(reverse('api:targets-list'), data=target_data)
@@ -79,6 +84,9 @@ class TestTargetViewset(APITestCase):
         self.assertEqual(response.json()['aliases'][0]['name'], target_data['aliases'][0]['name'])
         self.assertEqual(get_objects_for_user(collaborator, 'tom_targets.view_target').first().name,
                          target_data['name'])  # Test that group permissions are respected
+        target_list2 = TargetList.objects.get(name='newer_tlist')
+        self.assertEqual(target_list.targets.all().count(), 1)
+        self.assertEqual(target_list2.targets.all().count(), 1)
 
         # TODO: For whatever reason, in django-guardian, authenticated users have permission to create objects,
         # regardless of their row-level permissions. This should be addressed eventually--however, we don't provide a

@@ -3,7 +3,7 @@ from guardian.shortcuts import assign_perm, get_groups_with_perms, get_objects_f
 from rest_framework import serializers
 
 from tom_common.serializers import GroupSerializer
-from tom_targets.models import Target, TargetExtra, TargetName
+from tom_targets.models import Target, TargetExtra, TargetName, TargetList
 from tom_targets.validators import RequiredFieldsTogetherValidator
 
 
@@ -23,6 +23,15 @@ class TargetExtraSerializer(serializers.ModelSerializer):
         fields = ('id', 'key', 'value')
 
 
+class TargetListSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    name = serializers.CharField(required=False)
+
+    class Meta:
+        model = TargetList
+        fields = ('id', 'name')
+
+
 class TargetSerializer(serializers.ModelSerializer):
     """Target serializer responsible for transforming models to/from
     json (or other representations). See
@@ -30,6 +39,7 @@ class TargetSerializer(serializers.ModelSerializer):
     """
     targetextra_set = TargetExtraSerializer(many=True, required=False)
     aliases = TargetNameSerializer(many=True, required=False)
+    target_lists = TargetListSerializer(many=True, required=False)
     groups = GroupSerializer(many=True, required=False)  # TODO: return groups in detail and list
 
     class Meta:
@@ -50,14 +60,14 @@ class TargetSerializer(serializers.ModelSerializer):
         here we pop the alias/tag/group data and save it using their respective
         serializers
         """
-
         aliases = validated_data.pop('aliases', [])
         targetextras = validated_data.pop('targetextra_set', [])
         groups = validated_data.pop('groups', [])
+        target_lists = validated_data.pop('target_lists', [])
 
         target = Target.objects.create(**validated_data)
 
-        # Save groups for this target
+        # Save user groups for this target
         group_serializer = GroupSerializer(data=groups, many=True)
         if group_serializer.is_valid():
             for group in groups:
@@ -82,6 +92,12 @@ class TargetSerializer(serializers.ModelSerializer):
         tes = TargetExtraSerializer(data=targetextras, many=True)
         if tes.is_valid():
             tes.save(target=target)
+
+        tls = TargetListSerializer(data=target_lists, many=True)
+        if tls.is_valid():
+            for target_list in target_lists:
+                tl_instance, _ = TargetList.objects.get_or_create(name=target_list['name'])
+                tl_instance.targets.add(target)
 
         return target
 

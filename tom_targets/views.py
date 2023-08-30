@@ -33,7 +33,7 @@ from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
-from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetGroupShareForm
+from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm
 from tom_targets.sharing import share_target_with_tom
 from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom
 
@@ -599,7 +599,7 @@ class TargetGroupingShareView(FormView):
     """
     template_name = 'tom_targets/target_group_share.html'
     # permission_required = 'tom_targets.share_target'
-    form_class = TargetGroupShareForm
+    form_class = TargetListShareForm
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -608,13 +608,13 @@ class TargetGroupingShareView(FormView):
         :rtype: dict
         """
         context = super().get_context_data(*args, **kwargs)
-        group_id = self.kwargs.get('pk', None)
-        group = TargetList.objects.get(id=group_id)
-        context['group'] = group
+        target_list_id = self.kwargs.get('pk', None)
+        target_list = TargetList.objects.get(id=target_list_id)
+        context['target_list'] = target_list
         initial = {'submitter': self.request.user,
-                   'group': group,
-                   'share_title': f"Updated targets for group {group.name}."}
-        form = TargetGroupShareForm(initial=initial)
+                   'target_list': target_list,
+                   'share_title': f"Updated targets for group {target_list.name}."}
+        form = TargetListShareForm(initial=initial)
         context['form'] = form
         return context
 
@@ -626,7 +626,7 @@ class TargetGroupingShareView(FormView):
         Adds errors to Django messaging framework in the case of an invalid form and redirects to the previous page.
         """
         # TODO: Format error messages in a more human-readable way
-        messages.error(self.request, 'There was a problem sharing your Group: {}'.format(form.errors.as_json()))
+        messages.error(self.request, 'There was a problem sharing your Target List: {}'.format(form.errors.as_json()))
         return redirect(self.get_success_url())
 
     def form_valid(self, form):
@@ -641,7 +641,7 @@ class TargetGroupingShareView(FormView):
         else:
             for target in selected_targets:
                 form_data['target'] = Target.objects.get(id=target)
-                response = share_target_with_tom(share_destination, form_data, group_list=[form_data['group']])
+                response = share_target_with_tom(share_destination, form_data, target_lists=[form_data['target_list']])
                 if data_switch:
                     response = share_data_with_tom(share_destination, form_data, target_id=target)
             if not selected_targets:

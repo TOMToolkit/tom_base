@@ -1433,10 +1433,10 @@ class TestShareTargetList(TestCase):
             facility=FakeRoboticFacility.name,
             parameters={}
         )
-        self.group = TargetList.objects.create(
+        self.target_list = TargetList.objects.create(
             name="test_group",
         )
-        self.group.targets.set(Target.objects.all())
+        self.target_list.targets.set(Target.objects.all())
         self.user = User.objects.create_user(username='test', email='test@example.com')
         assign_perm('tom_targets.view_target', self.user, self.target)
         self.client.force_login(self.user)
@@ -1481,10 +1481,10 @@ class TestShareTargetList(TestCase):
         )
 
         response = self.client.post(
-            reverse('targets:share-group', kwargs={'pk': self.group.id}),
+            reverse('targets:share-group', kwargs={'pk': self.target_list.id}),
             {
                 'submitter': ['test_submitter'],
-                'group': self.group.id,
+                'target_list': self.target_list.id,
                 'share_destination': [share_destination],
             },
             follow=True
@@ -1516,10 +1516,10 @@ class TestShareTargetList(TestCase):
             status=200,
         )
         response = self.client.post(
-            reverse('targets:share-group', kwargs={'pk': self.group.id}),
+            reverse('targets:share-group', kwargs={'pk': self.target_list.id}),
             {
                 'submitter': ['test_submitter'],
-                'group': self.group.id,
+                'target_list': self.target_list.id,
                 'share_destination': [share_destination],
                 'selected-target': [self.target.id, self.target2.id]
             },
@@ -1554,10 +1554,10 @@ class TestShareTargetList(TestCase):
         )
 
         response = self.client.post(
-            reverse('targets:share-group', kwargs={'pk': self.group.id}),
+            reverse('targets:share-group', kwargs={'pk': self.target_list.id}),
             {
                 'submitter': ['test_submitter'],
-                'group': self.group.id,
+                'target_list': self.target_list.id,
                 'share_destination': [share_destination],
                 'dataSwitch': 'on',
                 'selected-target': [self.target.id, self.target2.id]
@@ -1566,3 +1566,27 @@ class TestShareTargetList(TestCase):
         )
 
         self.assertContains(response, '1 of 1 datums successfully saved.')
+
+    @responses.activate
+    def test_share_empty_group(self):
+        share_destination = 'local_host'
+
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+
+        response = self.client.post(
+            reverse('targets:share-group', kwargs={'pk': self.target_list.id}),
+            {
+                'submitter': ['test_submitter'],
+                'target_list': self.target_list.id,
+                'share_destination': [share_destination],
+                'dataSwitch': 'on',
+                'selected-target': []
+            },
+            follow=True
+        )
+        self.assertContains(response, 'No targets shared.')

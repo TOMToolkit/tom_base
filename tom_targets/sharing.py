@@ -7,7 +7,7 @@ from tom_targets.serializers import TargetSerializer
 from tom_dataproducts.sharing import get_destination_target
 
 
-def share_target_with_tom(share_destination, form_data, group_list=()):
+def share_target_with_tom(share_destination, form_data, target_lists=()):
     """
 
     :param share_destination:
@@ -37,10 +37,12 @@ def share_target_with_tom(share_destination, form_data, group_list=()):
     if destination_target_id is None:
         # If target is not in Destination, serialize and create new target.
         serialized_target = TargetSerializer(form_data['target']).data
-        # Overwrite local Groups
-        serialized_target['groups'] = [{'name': f'Imported From {settings.TOM_NAME}'}]
-        for group in group_list:
-            serialized_target['groups'].append({'name': group.name})
+        # Remove local User Groups
+        serialized_target['groups'] = []
+        # Add target lists
+        serialized_target['target_lists'] = [{'name': f'Imported From {settings.TOM_NAME}'}]
+        for target_list in target_lists:
+            serialized_target['target_lists'].append({'name': target_list.name})
         target_create_response = requests.post(targets_url, json=serialized_target, headers=headers, auth=auth)
 
     return target_create_response

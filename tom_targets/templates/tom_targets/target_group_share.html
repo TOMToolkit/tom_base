@@ -1,12 +1,12 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 static targets_extras %}
-{% block title %}Share {{ group.name }} Group{% endblock %}
+{% block title %}Share {{ target_list.name }} Target List{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
 {% endblock %}
 {% block content %}
-<h3> Share <a href="{% url 'targets:list' %}?targetlist__name={{ group.id }}" title="View Group">{{ group.name }}</a> Group </h3>
+<h3> Share <a href="{% url 'targets:list' %}?targetlist__name={{ target_list.id }}" title="View Target Lists">{{ target_list.name }}</a> Target List </h3>
 <form method="post" class="form">
     <div class="form-row" style="padding-inline:1rem">
         <div class="col-sm-4">
@@ -14,7 +14,7 @@
             {% bootstrap_form form %}
         </div>
         <div class="col-sm-2">
-            <input type="submit" class="btn btn-primary" formaction="{% url 'targets:share-group' pk=group.id %}" id="submit_targetlist" value="Submit" name="share_targetlist_form" style="position:absolute; bottom:1rem">
+            <input type="submit" class="btn btn-primary" formaction="{% url 'targets:share-group' pk=target_list.id %}" id="submit_targetlist" value="Submit" name="share_targetlist_form" style="position:absolute; bottom:1rem">
         </div>
     </div>
 
@@ -30,7 +30,7 @@
             <input type="hidden" value="{{ query_string }}" name="query_string">
             <input type="hidden" value="False" id="isSelectAll" name="isSelectAll">
         </div>
-      {% target_table group.targets.all True %}
+      {% target_table target_list.targets.all True %}
     </div>
 </form>
 
