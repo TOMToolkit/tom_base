@@ -214,3 +214,7 @@ def get_sharing_destination_options():
     except AttributeError:
         pass
     return tuple(choices)
+
+
+def sharing_feedback_handler(response, request):
+    return

@@ -365,9 +365,6 @@ class TargetShareView(FormView):
 
     def form_valid(self, form):
         form_data = form.cleaned_data
-        print(form_data)
-        print(self.kwargs)
-        print(self.request.POST)
         share_destination = form_data['share_destination']
         target_id = self.kwargs.get('pk', None)
         selected_data = self.request.POST.getlist("share-box")
