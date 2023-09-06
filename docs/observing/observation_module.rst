@@ -11,8 +11,7 @@ You can use this example as the foundation to build an observing
 facility module to connect to a real observatory or track observations
 on non-API supported facilities.
 
-Be sure you’ve followed the `Getting
-Started </introduction/getting_started>`__ guide before continuing onto
+Be sure you’ve followed the :doc:`Getting Started </introduction/getting_started>` guide before continuing onto
 this tutorial.
 
 What is a observing facility module?
@@ -31,16 +30,21 @@ respective observatories through a TOM.
 Prerequisites
 ~~~~~~~~~~~~~
 
-You should have a working TOM already. You can start where the `Getting
-Started </introduction/getting_started>`__ guide leaves off. You should
-also be familiar with the observing facility’s API that you would like
-to work with.
+You should have a working TOM already. You can start where the :doc:`Getting Started </introduction/getting_started>`
+guide leaves off. You should also be familiar with the observing facility’s API that you would like to work with.
 
-Creating a custom robotic facility
-----------------------------------
+.. tip:: Read these first!
+
+    The following Python/Django concepts are used in this tutorial. While this tutorial does not assume familiarity with the concepts, you will likely find the tutorial easier to understand and build upon if you read these in advance.
+
+    - `Working with Django Forms <https://docs.djangoproject.com/en/stable/topics/forms/>`_
+    - `Requests Official API Docs <http://docs.python-requests.org/en/master/>`_
+
+Creating a Custom Facility
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Defining the minimal implementation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 Within any existing module in your TOM you should create a new python
 module (file) named ``myfacility.py``. For example, if you have a fresh
@@ -101,7 +105,7 @@ This means our new observation facility module has been successfully
 loaded.
 
 BaseRoboticObservationFacility and BaseRoboticObservationForm
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------------------------
 
 You will have noticed our module consists of two classes that inherit
 from two other classes.
@@ -120,7 +124,7 @@ super class, contains logic and layout that all observation facility
 form classes should contain.
 
 Implementing observation submission
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 Try to click on the button for ``MyFacility``. It should return an error
 that says everything it’s missing:
@@ -167,22 +171,26 @@ Reload the page and now it should look something like this:
 
 |image1|
 
-Some notes: 1. The form is empty, but we’ll fix that next. 2. The
-``name`` variable of ``MyObservationFacility`` determines what the top
-of the page says (``Submit an observation to MyFacility``). It also
-determines the name of the button under “Observe” on the target’s page.
-3. You should see a tab for ``Custom Observation`` as the only option on
-the page. This is read from the ``observation_forms`` variable in
-``MyObservationFacility``. That variable is a dict. The
-value of each dict item is the observation form class. The key of each
-dict item is what should be used to distinguish different observation types
-in your code, which will be displayed in Pascal Case in the observation form tabs.
-To see a demonstration of this, check out the `Las Cumbres Observatory <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__
-facility’s ``observation_forms`` and ``get_form``.
+:Some notes:
+
+#. The form is empty, but we’ll fix that next.
+
+#. The ``name`` variable of ``MyObservationFacility`` determines what the top
+    of the page says (``Submit an observation to MyFacility``). It also
+    determines the name of the button under “Observe” on the target’s page.
+
+#. You should see a tab for ``Custom Observation`` as the only option on
+    the page. This is read from the ``observation_forms`` variable in
+    ``MyObservationFacility``. That variable is a dict. The
+    value of each dict item is the observation form class. The key of each
+    dict item is what should be used to distinguish different observation types
+    in your code, which will be displayed in Pascal Case in the observation form tabs.
+    To see a demonstration of this, check out the `Las Cumbres Observatory <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__
+    facility’s ``observation_forms`` and ``get_form``.
 
 Now let’s populate the form. Let’s assume our observatory only requires
-us to send 2 parameters (besides the target data): exposure_time and
-exposure_count. Let’s start by adding them to our form class:
+us to send 2 parameters (besides the target data): `exposure_time` and
+`exposure_count`. Let’s start by adding them to our form class:
 
 .. code:: python
 
@@ -207,7 +215,7 @@ a crispy_forms class with ``from crispy_forms.layout import Layout``. Finally,
 we've defined a function ``layout(self)`` that is used to display the fields that 
 we've created.
 
-All fields must show be named in the ``layout`` function in order to be displayed, and 
+All fields must be named in the ``layout`` function in order to be displayed, and
 the ``layout`` function is also how we could make the layout more sophisticated. See the 
 `django-crispy-forms documentation <https://django-crispy-forms.readthedocs.io/en/latest/>`__ 
 and the `lco.py module <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__ for examples.
@@ -283,27 +291,24 @@ its “Observations” tab you can see the parameters of the observation you
 just submitted in more detail.
 
 Filling in the rest of the functionality
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------
 
 You’ll notice we added many more methods other than
 ``submit_observation`` to our Facility class. For now they return dummy
 data, but when you adapt it to work with a real observatory you should
 fill them in with the correct logic so that the whole module works
-correctly with the TOM. You can view explanations of each method `in the
-source
-code <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facility.py#L142>`__
+correctly with the TOM. You can view explanations of each method in the :doc:`Facility Modules <../api/tom_observations/facilities>`
+section of the documentation or
+`in the source code <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facility.py#L181>`__
 
-###Airmass plotting for new facilities The last step in adding a new
-facility is to get it to appear on airmass plots. If you input two dates
-into the “Plan” form under the “Observe” tab on a target’s page, you’ll
-see the target’s visibility. By default, the plot shows you the airmass
-at LCO and Gemini sites.
+Adding Sites to new Facilities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In our ``MyObservationFacility`` class, let’s define a new variable
 called ``SITES``. Modeling our ``SITES`` on the one defined for `Las
 Cumbres
 Observatory <https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py>`__,
-we can easily put new sites into the airmass plots:
+we can easily put new sites to our facility that will then show up in the airmass plots:
 
 .. code:: python
 
@@ -329,15 +334,20 @@ we can easily put new sites into the airmass plots:
 (Koichi Itagaki is an “amateur” astronomer in Japan who has discovered
 many extremely interesting supernovae.)
 
-Now the new observatory site should show up when you generate airmass
-plots. Even if the facilities you observe at are not API-accessible, you
+Airmass plotting for new facilities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Now that your facility has sites, they should appear on airmass plots. If you input two dates
+into the “Plan” form under the “Observe” tab on a target’s page, you’ll
+see the target’s visibility. By default, the plot shows you the airmass
+at LCO and Gemini sites.
+
+Even if the facilities you observe at are not API-accessible, you
 can still add them to your TOM’s airmass plots to judge what targets to
 observe when.
 
 Happy developing!
 
-Creating a custom manual facility
----------------------------------
 
 .. |image0| image:: /_static/observation_module/myfacility.png
 .. |image1| image:: /_static/observation_module/empty_form.png
