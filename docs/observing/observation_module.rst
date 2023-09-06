@@ -189,8 +189,8 @@ Reload the page and now it should look something like this:
     facility’s ``observation_forms`` and ``get_form``.
 
 Now let’s populate the form. Let’s assume our observatory only requires
-us to send 2 parameters (besides the target data): `exposure_time` and
-`exposure_count`. Let’s start by adding them to our form class:
+us to send 2 parameters (besides the target data): ``exposure_time`` and
+``exposure_count``. Let’s start by adding them to our form class:
 
 .. code:: python
 
@@ -340,7 +340,7 @@ Airmass plotting for new facilities
 Now that your facility has sites, they should appear on airmass plots. If you input two dates
 into the “Plan” form under the “Observe” tab on a target’s page, you’ll
 see the target’s visibility. By default, the plot shows you the airmass
-at LCO and Gemini sites.
+at LCO and Gemini sites. To remove these, you can delete these facilities from ``TOM_FACILITY_CLASSES`` in ``settings.py``.
 
 Even if the facilities you observe at are not API-accessible, you
 can still add them to your TOM’s airmass plots to judge what targets to
