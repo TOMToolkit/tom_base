@@ -35,7 +35,7 @@ from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm
 from tom_targets.sharing import share_target_with_tom
-from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom
+from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom, sharing_feedback_handler
 
 from tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
@@ -639,22 +639,11 @@ class TargetGroupingShareView(FormView):
             for target in selected_targets:
                 form_data['target'] = Target.objects.get(id=target)
                 response = share_target_with_tom(share_destination, form_data, target_lists=[form_data['target_list']])
+                sharing_feedback_handler(response, self.request)
                 if data_switch:
                     response = share_data_with_tom(share_destination, form_data, target_id=target)
+                    sharing_feedback_handler(response, self.request)
             if not selected_targets:
                 messages.error(self.request, f'No targets shared. {form.errors.as_json()}')
                 return redirect(self.get_success_url())
-        try:
-            if 'message' in response.json():
-                publish_feedback = response.json()['message']
-            else:
-                publish_feedback = f"ERROR: {response.text}"
-        except AttributeError:
-            publish_feedback = response['message']
-        except ValueError:
-            publish_feedback = f"ERROR: Returned Response code {response.status_code}"
-        if "ERROR" in publish_feedback.upper():
-            messages.error(self.request, publish_feedback)
-        else:
-            messages.success(self.request, publish_feedback)
         return redirect(self.get_success_url())

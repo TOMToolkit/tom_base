@@ -323,19 +323,7 @@ class DataShareView(FormView):
                 response = share_data_with_hermes(share_destination, form_data, product_id, target_id, selected_data)
             else:
                 response = share_data_with_tom(share_destination, form_data, product_id, target_id, selected_data)
-            try:
-                if 'message' in response.json():
-                    publish_feedback = response.json()['message']
-                else:
-                    publish_feedback = f"ERROR: {response.text}"
-            except AttributeError:
-                publish_feedback = response['message']
-            except ValueError:
-                publish_feedback = f"ERROR: Returned Response code {response.status_code}"
-            if "ERROR" in publish_feedback.upper():
-                messages.error(self.request, publish_feedback)
-            else:
-                messages.success(self.request, publish_feedback)
+            sharing_feedback_handler(response, self.request)
         return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
 
 

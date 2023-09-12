@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from tom_targets.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
-from tom_targets.tests.factories import TargetExtraFactory, TargetNameFactory
+from tom_targets.tests.factories import TargetExtraFactory, TargetNameFactory, TargetGroupingFactory
 from tom_targets.models import Target, TargetExtra, TargetName, TargetList
 
 
@@ -201,6 +201,38 @@ class TestTargetViewset(APITestCase):
         self.assertContains(response,
                             f'Alias \'{self.st.name}\' conflicts with Target name \'{self.st.name}\'',
                             status_code=status.HTTP_400_BAD_REQUEST)
+
+    def test_targetlist_update(self):
+        # Test both create new alias and update alias
+        target_list = TargetGroupingFactory.create(name='tl')
+        target_list.targets.add(self.st)
+        updates = {
+            'target_lists': [
+                {'id': target_list.id, 'name': 'update tl'},
+                {'name': 'create tl'}
+            ]
+        }
+        response = self.client.patch(reverse('api:targets-detail', args=(self.st.id,)), data=updates)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.st.refresh_from_db()
+        target_list.refresh_from_db()
+        # Target list added by name, not ID, so new name = new TargetList
+        self.assertEqual(TargetList.objects.filter(targets=self.st).count(), 3)
+        self.assertEqual(target_list.name, 'tl')
+
+        # Ensure proper handling when adding target to existing targetlist
+        target_list_s2 = TargetGroupingFactory.create(name='tl_s2')
+        target_list_s2.targets.add(self.st2)
+        updates = {
+            'target_lists': [
+                {'name': target_list_s2.name}
+            ]
+        }
+        response = self.client.patch(reverse('api:targets-detail', args=(self.st.id,)), data=updates)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.st.refresh_from_db()
+        target_list_s2.refresh_from_db()
+        self.assertEqual(target_list_s2.targets.count(), 2)
 
     def test_target_delete(self):
         response = self.client.delete(reverse('api:targets-detail', args=(self.st.id,)))

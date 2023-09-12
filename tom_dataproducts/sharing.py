@@ -3,6 +3,7 @@ import os
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.contrib import messages
 
 from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct, ReducedDatum
@@ -122,6 +123,8 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             target_dict = {target.name:  destination_target_id}
         response_codes = []
         reduced_datums = check_for_share_safe_datums(share_destination, reduced_datums)
+        if not reduced_datums:
+            return {'message': 'ERROR: No valid data to share.'}
         for datum in reduced_datums:
             if target_dict[datum.target.name]:
                 serialized_data = ReducedDatumSerializer(datum).data
@@ -217,4 +220,17 @@ def get_sharing_destination_options():
 
 
 def sharing_feedback_handler(response, request):
+    try:
+        if 'message' in response.json():
+            publish_feedback = response.json()['message']
+        else:
+            publish_feedback = f"ERROR: {response.text}"
+    except AttributeError:
+        publish_feedback = response['message']
+    except ValueError:
+        publish_feedback = f"ERROR: Returned Response code {response.status_code}"
+    if "ERROR" in publish_feedback.upper():
+        messages.error(request, publish_feedback)
+    else:
+        messages.success(request, publish_feedback)
     return

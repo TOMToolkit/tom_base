@@ -61,6 +61,13 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
             response.data['message'] = 'Target successfully uploaded.'
         return response
 
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+
+        if response.status_code == status.HTTP_200_OK:
+            response.data['message'] = 'Target successfully updated.'
+        return response
+
 
 class TargetNameViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMixin, GenericViewSet):
     """

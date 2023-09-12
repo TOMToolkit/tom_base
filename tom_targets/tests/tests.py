@@ -1428,6 +1428,7 @@ class TestShareTargetList(TestCase):
     def setUp(self):
         self.target = SiderealTargetFactory.create()
         self.target2 = SiderealTargetFactory.create()
+        self.target3 = SiderealTargetFactory.create()
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
             facility=FakeRoboticFacility.name,
@@ -1536,7 +1537,7 @@ class TestShareTargetList(TestCase):
         rsp1 = responses.Response(
             method="GET",
             url=destination_tom_base_url + 'api/targets/',
-            json={"results": [{'id': 1}]},
+            json={"results": [{'id': 1}, {'id': 2}]},
             status=200
         )
         responses.add(rsp1)
@@ -1551,6 +1552,12 @@ class TestShareTargetList(TestCase):
             destination_tom_base_url + 'api/reduceddatums/',
             json={},
             status=201,
+        )
+        responses.add(
+            responses.PATCH,
+            destination_tom_base_url + 'api/targets/1/',
+            json={"message": "Target successfully uploaded."},
+            status=200,
         )
 
         response = self.client.post(

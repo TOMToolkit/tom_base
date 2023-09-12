@@ -117,6 +117,7 @@ class TargetSerializer(serializers.ModelSerializer):
         aliases = validated_data.pop('aliases', [])
         targetextras = validated_data.pop('targetextra_set', [])
         groups = validated_data.pop('groups', [])
+        target_lists = validated_data.pop('target_lists', [])
 
         # Save groups for this target
         group_serializer = GroupSerializer(data=groups, many=True)
@@ -155,6 +156,12 @@ class TargetSerializer(serializers.ModelSerializer):
                 tes = TargetExtraSerializer(data=te_data)
             if tes.is_valid():
                 tes.save(target=instance)
+
+        tls = TargetListSerializer(data=target_lists, many=True)
+        if tls.is_valid():
+            for target_list in target_lists:
+                tl_instance, _ = TargetList.objects.get_or_create(name=target_list['name'])
+                tl_instance.targets.add(instance)
 
         fields_to_validate = ['name', 'type', 'ra', 'dec', 'epoch', 'parallax', 'pm_ra', 'pm_dec', 'galactic_lng',
                               'galactic_lat', 'distance', 'distance_err', 'scheme', 'epoch_of_elements',
