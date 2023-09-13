@@ -241,6 +241,8 @@ class BaseObservationFacility(ABC):
         """
         Same thing as submit_observation, but a dry run. You can
         skip this in different modules by just using "pass"
+
+        Typically called by the ObservationForm.is_valid() method.
         """
         pass
 
