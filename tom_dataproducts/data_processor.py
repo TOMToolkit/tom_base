@@ -37,7 +37,7 @@ def run_data_processor(dp):
     data = data_processor.process_data(dp)
 
     reduced_datums = [ReducedDatum(target=dp.target, data_product=dp, data_type=dp.data_product_type,
-                                   timestamp=datum[0], value=datum[1]) for datum in data]
+                                   timestamp=datum[0], value=datum[1], source_name=datum[2]) for datum in data]
     ReducedDatum.objects.bulk_create(reduced_datums)
 
     return ReducedDatum.objects.filter(data_product=dp)
