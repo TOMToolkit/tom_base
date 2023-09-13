@@ -371,7 +371,7 @@ class TargetShareView(FormView):
         if 'HERMES' in share_destination.upper():
             response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
         else:
-            response = share_target_with_tom(share_destination, form_data, selected_data)
+            response = share_target_with_tom(share_destination, form_data)
             if selected_data:
                 response = share_data_with_tom(share_destination, form_data, selected_data=selected_data)
         try:

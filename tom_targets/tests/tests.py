@@ -1404,6 +1404,12 @@ class TestShareTargets(TestCase):
             json={},
             status=201,
         )
+        responses.add(
+            responses.PATCH,
+            destination_tom_base_url + 'api/targets/1/',
+            json={},
+            status=200,
+        )
 
         response = self.client.post(
             reverse('targets:share', kwargs={'pk': self.target.id}),
