@@ -406,11 +406,17 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
         )
 
     def get_instruments(self):
+        """Filter the instruments from the OCSBaseObservationForm.get_instruments()
+        (i.e. the super class) in an LCO-specifc way.
+        """
         instruments = super().get_instruments()
-        return {
+        filtered_instruments = {
             code: instrument for (code, instrument) in instruments.items() if (
-                'IMAGE' == instrument['type'] and 'MUSCAT' not in code and 'SOAR' not in code)
+                instrument['type'] in ['IMAGE', 'SPECTRA'] and (
+                'MUSCAT' not in code and
+                'SOAR' not in code))
         }
+        return filtered_instruments
 
     def all_optical_element_choices(self, use_code_only=False):
         return sorted(set([
@@ -433,8 +439,8 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
                 'filter': self.cleaned_data['filter']
             }
         }
-
-        return [instrument_config]
+        instrument_configs = [instrument_config]
+        return instrument_configs
 
 
 class LCOFullObservationForm(OCSFullObservationForm):
