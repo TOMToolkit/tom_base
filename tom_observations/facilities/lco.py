@@ -411,10 +411,10 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
         """
         instruments = super().get_instruments()
         filtered_instruments = {
-            code: instrument for (code, instrument) in instruments.items() if (
-                instrument['type'] in ['IMAGE', 'SPECTRA'] and (
-                'MUSCAT' not in code and
-                'SOAR' not in code))
+            code: instrument
+            for (code, instrument) in instruments.items()
+            if (instrument['type'] in ['IMAGE', 'SPECTRA'] and
+                ('MUSCAT' not in code and 'SOAR' not in code))
         }
         return filtered_instruments
 
