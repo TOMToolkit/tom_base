@@ -39,7 +39,7 @@ def get_service_classes():
         try:
             clazz = import_string(service)
         except (ImportError, AttributeError):
-            raise ImportError('Could not import {}. Did you provide the correct path?'.format(service))
+            raise ImportError(f'Could not import {service}. Did you provide the correct path?')
         service_choices[clazz.name] = clazz
     return service_choices
 
@@ -241,6 +241,8 @@ class BaseObservationFacility(ABC):
         """
         Same thing as submit_observation, but a dry run. You can
         skip this in different modules by just using "pass"
+
+        Typically called by the ObservationForm.is_valid() method.
         """
         pass
 
