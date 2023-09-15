@@ -70,6 +70,11 @@ class OCSSettings():
         Only applicable to <em>* Sequence</em> configuration types.
     """
 
+    max_airmass_help = """
+        Maximum acceptable airmass at which the observation can be scheduled.
+        A plane-parallel atmosphere is assumed.
+    """
+
     def __init__(self, facility_name):
         self.facility_name = facility_name
 
