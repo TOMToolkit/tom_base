@@ -1359,13 +1359,18 @@ class OCSFacility(BaseRoboticObservationFacility):
         """
         # make the request to the OCS API for the telescope_states
         now = datetime.now()
-        response = make_request(
-            'GET',
-            urljoin(self.facility_settings.get_setting('portal_url'), '/api/telescope_states/'),
-            headers=self._portal_headers()
-        )
-        telescope_states = response.json()
-        logger.warning(f"Telescope states took {(datetime.now() - now).total_seconds()}")
+        telescope_states = {}
+        try:
+            response = make_request(
+                'GET',
+                urljoin(self.facility_settings.get_setting('portal_url'), '/api/telescope_states/'),
+                headers=self._portal_headers()
+            )
+            response.raise_for_status()
+            telescope_states = response.json()
+            logger.info(f"Telescope states took {(datetime.now() - now).total_seconds()}")
+        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as e:
+            logger.warning(f"Error retrieving telescope_states from OCS for facility status: {repr(e)}")
         # Now, transform the telescopes_state dictionary in a dictionary suitable
         # for the facility_status.html template partial.
 
