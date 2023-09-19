@@ -27,8 +27,8 @@ class LasairBrokerForm(GenericQueryForm):
         self.helper.layout = Layout(
             HTML('''
                     <p>
-                    Please see the <a href="https://lasair-ztf.lsst.ac.uk/api">Lasair website</a> for more detailed
-                    instructions on querying the broker.
+                    Please see the <a href="https://lasair-ztf.lsst.ac.uk/api" target="_blank">Lasair website</a> for
+                    more detailed instructions on querying the broker.
                 '''),
             self.common_layout,
             Fieldset(

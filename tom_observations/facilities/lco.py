@@ -30,27 +30,27 @@ class LCOSettings(OCSSettings):
     # Override them as desired for a specific OCS implementation.
     end_help = """
         Try the
-        <a href="https://lco.global/observatory/visibility/">
+        <a href="https://lco.global/observatory/visibility/" target="_blank">
             Target Visibility Calculator.
         </a>
     """
 
     instrument_type_help = """
-        <a href="https://lco.global/observatory/instruments/">
+        <a href="https://lco.global/observatory/instruments/" target="_blank">
             More information about LCO instruments.
         </a>
     """
 
     max_airmass_help = """
         Advice on
-        <a href="https://lco.global/documentation/airmass-limit">
+        <a href="https://lco.global/documentation/airmass-limit" target="_blank">
             setting the airmass limit.
         </a>
     """
 
     exposure_time_help = """
         Try the
-        <a href="https://exposure-time-calculator.lco.global/">
+        <a href="https://exposure-time-calculator.lco.global/" target="_blank">
             online Exposure Time Calculator.
         </a>
     """
@@ -75,7 +75,7 @@ class LCOSettings(OCSSettings):
     static_cadencing_help = """
         <em>Static cadence parameters.</em> Leave blank if no cadencing is desired.
         For information on static cadencing with LCO,
-        <a href="https://lco.global/documentation/">
+        <a href="https://lco.global/documentation/" target="_blank">
             check the Observation Portal getting started guide, starting on page 27.
         </a>
     """

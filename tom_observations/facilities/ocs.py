@@ -36,13 +36,13 @@ class OCSSettings():
     # Override them as desired for a specific OCS implementation.
     ipp_value_help = """
             Value between 0.5 to 2.0.
-            <a href="https://lco.global/documents/20/the_new_priority_factor.pdf">
+            <a href="https://lco.global/documents/20/the_new_priority_factor.pdf" target="_blank">
                 More information about Intra Proprosal Priority (IPP).
             </a>
     """
 
     observation_mode_help = """
-        <a href="https://lco.global/documentation/special-scheduling-modes/">
+        <a href="https://lco.global/documentation/special-scheduling-modes/" target="_blank">
             More information about Rapid Response mode.
         </a>
     """
