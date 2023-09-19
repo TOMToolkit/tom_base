@@ -12,7 +12,7 @@ class LTQueryForm(GenericObservationForm):
             HTML('''
                 <p>
                 This plugin is a stub for the Liverpool Telescope plugin. In order to install the full plugin, please
-                see the instructions <a href="https://github.com/TOMToolkit/tom_lt">here</a>.
+                see the instructions <a href="https://github.com/TOMToolkit/tom_lt" target="_blank">here</a>.
                 </p>
             '''),
             HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>Back</a>''')

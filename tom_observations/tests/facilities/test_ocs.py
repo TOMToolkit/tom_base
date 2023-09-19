@@ -225,6 +225,15 @@ class TestOCSFacility(TestCase):
         self.lco = OCSFacility()
 
     @patch('tom_observations.facilities.ocs.make_request')
+    def test_get_facility_status_fails_gracefully(self, mock_make_request):
+        mock_response = Response()
+        mock_response._content = str.encode('ConnectionError - Error retrieving telescope states')
+        mock_response.status_code = 502
+        mock_make_request.return_value = mock_response
+        facility_status = self.lco.get_facility_status()
+        self.assertEqual(facility_status.get('sites'), [])
+
+    @patch('tom_observations.facilities.ocs.make_request')
     def test_get_requestgroup_id(self, mock_make_request):
         mock_response = Response()
         mock_response._content = str.encode(json.dumps({
