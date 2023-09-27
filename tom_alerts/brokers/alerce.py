@@ -308,7 +308,7 @@ class ALeRCEBroker(GenericBroker):
     def _request_alerts(self, parameters):
         payload = self._clean_parameters(parameters)
         logger.log(msg=f'Fetching alerts from ALeRCE with payload {payload}', level=logging.INFO)
-        args = urlencode(self._clean_parameters(parameters))
+        args = urlencode(payload)
         response = requests.get(f'{ALERCE_SEARCH_URL}/objects/?count=false&{args}')
         response.raise_for_status()
         return response.json()
@@ -317,8 +317,8 @@ class ALeRCEBroker(GenericBroker):
         response = self._request_alerts(parameters)
         alerts = response['items']
         broker_feedback = ''
-        if len(alerts) > 0 and response['page'] < parameters.get('max_pages', 1):
-            parameters['page'] = response.get('page') + 1
+        if len(alerts) > 0 and parameters.get('page', 1) < parameters.get('max_pages', 1):
+            parameters['page'] = parameters.get('page', 1) + 1
             alerts += self.fetch_alerts(parameters)[0]
         return iter(alerts), broker_feedback
 
