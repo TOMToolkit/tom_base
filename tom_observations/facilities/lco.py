@@ -660,8 +660,9 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
                     label='Rotator Angle', required=False
                 )
                 # Add None option and help text for SOAR Gratings
-                self.fields[f'c_{j+1}_ic_{i+1}_grating'].help_text = 'Only for SOAR'
-                self.fields[f'c_{j+1}_ic_{i+1}_grating'].choices.insert(0, ('None', 'None'))
+                if self.fields.get(f'c_{j+1}_ic_{i+1}_grating', None):
+                    self.fields[f'c_{j+1}_ic_{i+1}_grating'].help_text = 'Only for SOAR'
+                    self.fields[f'c_{j+1}_ic_{i+1}_grating'].choices.insert(0, ('None', 'None'))
                 self.fields[f'c_{j+1}_ic_{i+1}_slit'].help_text = 'Only for Floyds'
 
     def convert_old_observation_payload_to_fields(self, data):
