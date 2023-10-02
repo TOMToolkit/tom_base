@@ -50,7 +50,7 @@ class TargetListView(PermissionListMixin, FilterView):
     View for listing targets in the TOM. Only shows targets that the user is authorized to view. Requires authorization.
     """
     template_name = 'tom_targets/target_list.html'
-    paginate_by = 25
+    paginate_by = 10
     strict = False
     model = Target
     filterset_class = TargetFilter
