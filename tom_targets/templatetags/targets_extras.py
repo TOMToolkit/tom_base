@@ -8,12 +8,14 @@ from django import template
 from django.conf import settings
 from django.db.models import Q
 from guardian.shortcuts import get_objects_for_user
+from guardian.models import GroupObjectPermission
+from guardian.core import ObjectPermissionChecker
 import numpy as np
 from plotly import offline
 from plotly import graph_objs as go
 
 from tom_observations.utils import get_sidereal_visibility
-from tom_targets.models import Target, TargetExtra, TargetList
+from tom_targets.models import TargetExtra, TargetList, Target
 from tom_targets.forms import TargetVisibilityForm
 
 register = template.Library()
@@ -24,8 +26,28 @@ def recent_targets(context, limit=10):
     """
     Displays a list of the most recently created targets in the TOM up to the given limit, or 10 if not specified.
     """
+    # Get User and group permissions for user
     user = context['request'].user
-    return {'targets': get_objects_for_user(user, 'tom_targets.view_target').order_by('-created')[:limit]}
+    groups = user.groups.all()
+    group_permissions = GroupObjectPermission.objects.filter(group__in=groups, permission__codename='view_target')
+
+    # Build Query for the most recently created objects
+    target_query = Target.objects.order_by('-created').prefetch_related()[:limit]
+
+    # Build permission checker and check if user has permission to view each target
+    checker = ObjectPermissionChecker(user)
+    checker.prefetch_perms(target_query)
+    targets = [target for target in target_query if checker.has_perm('view_target', target)]
+
+    if targets:
+        # If any of these targets are viewable, display them
+        return {'targets': targets}
+    elif group_permissions.count():
+        # Otherwise, if user has permission to view ANY target, find them. (EXPENSIVE)
+        return {'targets': get_objects_for_user(user, 'tom_targets.view_target').order_by('-created')[:limit]}
+    else:
+        # Return empty list if user has no permissions.
+        return {'targets': []}
 
 
 @register.inclusion_tag('tom_targets/partials/recently_updated_targets.html', takes_context=True)
@@ -225,7 +247,8 @@ def target_distribution(targets):
     """
     Displays a plot showing on a map the locations of all sidereal targets in the TOM.
     """
-    locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
+    locations = targets.values_list('ra', 'dec', 'name')
+
     data = [
         dict(
             lon=[location[0] for location in locations],
@@ -315,4 +338,8 @@ def target_table(targets):
     Returns a partial for a table of targets, used in the target_list.html template
     by default
     """
+    # Prefetch related tables to speed up target List Load
+    related_tables = ['aliases', 'dataproduct_set', 'observationrecord_set']
+    for table in related_tables:
+        targets = targets.prefetch_related(table)
     return {'targets': targets}

@@ -1,0 +1,16 @@
+body {
+  background-color: black;
+  color: white;
+}
+
+.table {
+  color: #f2f7fc;
+}
+
+.card {
+  background-color: #ffffff3d;
+}
+
+.card-header {
+  background-color: rgb(0 0 0 / 45%)
+}
