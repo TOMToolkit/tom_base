@@ -11,7 +11,7 @@ class ANTARESQueryForm(GenericQueryForm):
             HTML('''
                 <p>
                 This plugin is a stub for the ANTARES plugin. In order to install the full plugin, please see the
-                instructions <a href="https://github.com/TOMToolkit/tom_antares">here</a>.
+                instructions <a href="https://github.com/TOMToolkit/tom_antares" target="_blank">here</a>.
                 </p>
             '''),
             HTML('''<a class="btn btn-outline-primary" href={% url 'tom_alerts:list' %}>Back</a>''')

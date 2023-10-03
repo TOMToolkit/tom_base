@@ -32,9 +32,9 @@ class TNSForm(GenericQueryForm):
     days_ago = forms.FloatField(required=False, min_value=0.,
                                 label='Discovered in the Last __ Days',
                                 help_text='Leave blank to use the "Discovered After" field')
-    min_date = forms.DateTimeField(required=False,
-                                   label='Discovered After',
-                                   help_text='Most valid date formats are recognized')
+    min_date = forms.CharField(required=False,
+                               label='Discovered After',
+                               help_text='Most valid date formats are recognized')
     days_from_nondet = forms.FloatField(required=False, min_value=0.,
                                         label='Days From Nondetection',
                                         help_text='Maximum time between last nondetection and first detection')
@@ -44,8 +44,8 @@ class TNSForm(GenericQueryForm):
         self.helper.layout = Layout(
             HTML('''
                 <p>
-                Please see <a href="https://wis-tns.weizmann.ac.il/sites/default/files/api/TNS_APIs_manual.pdf">
-                the TNS API Manual</a> for a detailed description of available filters.
+                Please see <a href="https://wis-tns.weizmann.ac.il/sites/default/files/api/TNS_APIs_manual.pdf"
+                target="_blank">the TNS API Manual</a> for a detailed description of available filters.
                 </p>
             '''),
             self.common_layout,
@@ -106,7 +106,7 @@ class TNSBroker(GenericBroker):
             public_timestamp = (datetime.utcnow() - timedelta(days=parameters['days_ago']))\
                 .strftime('%Y-%m-%d %H:%M:%S')
         elif parameters['min_date'] is not None:
-            public_timestamp = parameters['min_date'].strftime('%Y-%m-%d %H:%M:%S')
+            public_timestamp = parameters['min_date']
         else:
             public_timestamp = ''
         data = {

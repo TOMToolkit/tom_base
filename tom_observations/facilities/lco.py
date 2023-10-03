@@ -30,27 +30,27 @@ class LCOSettings(OCSSettings):
     # Override them as desired for a specific OCS implementation.
     end_help = """
         Try the
-        <a href="https://lco.global/observatory/visibility/">
+        <a href="https://lco.global/observatory/visibility/" target="_blank">
             Target Visibility Calculator.
         </a>
     """
 
     instrument_type_help = """
-        <a href="https://lco.global/observatory/instruments/">
+        <a href="https://lco.global/observatory/instruments/" target="_blank">
             More information about LCO instruments.
         </a>
     """
 
     max_airmass_help = """
         Advice on
-        <a href="https://lco.global/documentation/airmass-limit">
+        <a href="https://lco.global/documentation/airmass-limit" target="_blank">
             setting the airmass limit.
         </a>
     """
 
     exposure_time_help = """
         Try the
-        <a href="https://exposure-time-calculator.lco.global/">
+        <a href="https://exposure-time-calculator.lco.global/" target="_blank">
             online Exposure Time Calculator.
         </a>
     """
@@ -75,7 +75,7 @@ class LCOSettings(OCSSettings):
     static_cadencing_help = """
         <em>Static cadence parameters.</em> Leave blank if no cadencing is desired.
         For information on static cadencing with LCO,
-        <a href="https://lco.global/documentation/">
+        <a href="https://lco.global/documentation/" target="_blank">
             check the Observation Portal getting started guide, starting on page 27.
         </a>
     """
@@ -406,11 +406,17 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
         )
 
     def get_instruments(self):
+        """Filter the instruments from the OCSBaseObservationForm.get_instruments()
+        (i.e. the super class) in an LCO-specifc way.
+        """
         instruments = super().get_instruments()
-        return {
-            code: instrument for (code, instrument) in instruments.items() if (
-                'IMAGE' == instrument['type'] and 'MUSCAT' not in code and 'SOAR' not in code)
+        filtered_instruments = {
+            code: instrument
+            for (code, instrument) in instruments.items()
+            if (instrument['type'] in ['IMAGE', 'SPECTRA'] and
+                ('MUSCAT' not in code and 'SOAR' not in code))
         }
+        return filtered_instruments
 
     def all_optical_element_choices(self, use_code_only=False):
         return sorted(set([
@@ -433,8 +439,8 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
                 'filter': self.cleaned_data['filter']
             }
         }
-
-        return [instrument_config]
+        instrument_configs = [instrument_config]
+        return instrument_configs
 
 
 class LCOFullObservationForm(OCSFullObservationForm):

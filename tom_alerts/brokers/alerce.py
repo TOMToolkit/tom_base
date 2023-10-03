@@ -132,8 +132,8 @@ class ALeRCEQueryForm(GenericQueryForm):
         self.helper.layout = Layout(
             HTML('''
                 <p>
-                Please see the <a href="http://alerce.science/">ALeRCE homepage</a> for information about the ALeRCE
-                filters.
+                Please see the <a href="http://alerce.science/" target="_blank">ALeRCE homepage</a> for information
+                about the ALeRCE filters.
             '''),
             self.common_layout,
             'oid',
