@@ -314,12 +314,19 @@ class ALeRCEBroker(GenericBroker):
         return response.json()
 
     def fetch_alerts(self, parameters):
+        """
+        Loop through pages of ALeRCE alerts until we reach the maximum pages requested.
+        This simply concatenates all alerts from n pages into a single iterable to be returned.
+        """
         response = self._request_alerts(parameters)
         alerts = response['items']
         broker_feedback = ''
-        if len(alerts) > 0 and parameters.get('page', 1) < parameters.get('max_pages', 1):
-            parameters['page'] = parameters.get('page', 1) + 1
+        current_page = parameters.get('page', 1)
+        if len(alerts) > 0 and current_page < parameters.get('max_pages', 1):
+            # make new request for the next page. (by recursion)
+            parameters['page'] = current_page + 1
             alerts += self.fetch_alerts(parameters)[0]
+        # Bottom out of recursion and return accumulated alerts
         return iter(alerts), broker_feedback
 
     def fetch_alert(self, id):
