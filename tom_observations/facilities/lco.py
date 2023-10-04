@@ -659,6 +659,10 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
                     help_text='Rotation angle of slit. Only for Floyds `Slit Position Angle` rotator mode',
                     label='Rotator Angle', required=False
                 )
+                # Add None option and help text for SOAR Gratings
+                if self.fields.get(f'c_{j+1}_ic_{i+1}_grating', None):
+                    self.fields[f'c_{j+1}_ic_{i+1}_grating'].help_text = 'Only for SOAR'
+                    self.fields[f'c_{j+1}_ic_{i+1}_grating'].choices.insert(0, ('None', 'None'))
                 self.fields[f'c_{j+1}_ic_{i+1}_slit'].help_text = 'Only for Floyds'
 
     def convert_old_observation_payload_to_fields(self, data):
@@ -725,6 +729,9 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
             if instrument_config['rotator_mode'] == 'SKY':
                 instrument_config['extra_params'] = {'rotator_angle': self.cleaned_data.get(
                     f'c_{configuration_id}_ic_{id}_rotator_angle', 0)}
+            if 'FLOYDS' in instrument_type.upper():
+                # Remove grating from FLOYDS requests
+                instrument_config['optical_elements'].pop('grating', None)
         # Clear out the optical elements for NRES
         elif 'NRES' in instrument_type.upper():
             instrument_config['optical_elements'] = {}
