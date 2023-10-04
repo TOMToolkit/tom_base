@@ -190,17 +190,30 @@ class DataProductDeleteView(Raise403PermissionRequiredMixin, DeleteView):
         referer = urlparse(referer).path if referer else '/'
         return referer
 
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, form):
         """
-        Method that handles DELETE requests for this view. First deletes all ``ReducedDatum`` objects associated with
-        the ``DataProduct``, then deletes the ``DataProduct``.
+        Method that handles DELETE requests for this view. It performs the following actions in order:
+        1. Deletes all ``ReducedDatum`` objects associated with the ``DataProduct``.
+        2. Deletes the file referenced by the ``DataProduct``.
+        3. Deletes the ``DataProduct`` object from the database.
 
-        :param request: Django POST request object
-        :type request: HttpRequest
+        :param form: Django form instance containing the data for the DELETE request.
+        :type form: django.forms.Form
+        :return: HttpResponseRedirect to the success URL.
+        :rtype: HttpResponseRedirect
         """
-        ReducedDatum.objects.filter(data_product=self.get_object()).delete()
-        self.get_object().data.delete()
-        return super().delete(request, *args, **kwargs)
+        # Fetch the DataProduct object
+        data_product = self.get_object()
+
+        # Delete associated ReducedDatum objects
+        ReducedDatum.objects.filter(data_product=data_product).delete()
+
+        # Delete the file reference.
+        data_product.data.delete()
+        # Delete the `DataProduct` object from the database.
+        data_product.delete()
+
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, *args, **kwargs):
         """
