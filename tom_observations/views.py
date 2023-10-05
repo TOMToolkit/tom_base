@@ -223,7 +223,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
 
         # allow the Facility class to add data to the context
         facility_class = self.get_facility_class()
-        facility_context = facility_class().get_facility_context_data()
+        facility_context = facility_class().get_facility_context_data(target=target)
         context.update(facility_context)
 
         return context
