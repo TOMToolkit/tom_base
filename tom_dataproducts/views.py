@@ -37,7 +37,7 @@ from tom_dataproducts.alertstreams.hermes import publish_photometry_to_hermes, B
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 from tom_dataproducts.serializers import DataProductSerializer
-from tom_dataproducts.forced_photometry.forced_photometry_service import ForcedPhotometryServiceException, get_service_class
+import tom_dataproducts.forced_photometry.forced_photometry_service as fps
 
 import requests
 
@@ -122,7 +122,7 @@ class ForcedPhotometryQueryView(LoginRequiredMixin, FormView):
         """
         Gets the forced photometry service class
         """
-        return get_service_class(self.get_service())
+        return fps.get_service_class(self.get_service())
 
     def get_form_class(self):
         """
@@ -157,7 +157,7 @@ class ForcedPhotometryQueryView(LoginRequiredMixin, FormView):
             service = self.get_service_class()()
             try:
                 service.query_service(form.cleaned_data)
-            except ForcedPhotometryServiceException as e:
+            except fps.ForcedPhotometryServiceException as e:
                 form.add_error(f"Problem querying forced photometry service: {repr(e)}")
                 return self.form_invalid(form)
             messages.info(self.request, service.get_success_message())

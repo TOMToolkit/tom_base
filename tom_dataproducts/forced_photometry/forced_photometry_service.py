@@ -1,17 +1,11 @@
 from abc import ABC, abstractmethod
-import copy
 import logging
-import requests
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import ButtonHolder, Layout, Submit, Div, HTML
+from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
 from django.conf import settings
-from django.contrib.auth.models import Group
-from django.core.files.base import ContentFile
 from django.utils.module_loading import import_string
-
-from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +31,9 @@ def get_service_class(name):
     try:
         return available_classes[name]
     except KeyError:
-        raise ImportError(f'Could not a find a forced photometry service with the name {name}. Did you add it to TOM_FORCED_PHOTOMETRY_CLASSES?')
+        raise ImportError((
+            f'Could not a find a forced photometry service with the name {name}. '
+            'Did you add it to TOM_FORCED_PHOTOMETRY_CLASSES?'))
 
 
 class ForcedPhotometryServiceException(Exception):

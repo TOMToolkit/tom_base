@@ -1,21 +1,28 @@
 from django import forms
 from django.conf import settings
-from django.utils import timezone
-from django.core.files.base import ContentFile
 from crispy_forms.layout import Div, HTML
 from astropy.time import Time
-from tom_dataproducts.forced_photometry.forced_photometry_service import BaseForcedPhotometryQueryForm, BaseForcedPhotometryService, ForcedPhotometryServiceException
-from tom_dataproducts.models import ReducedDatum, DataProduct
-from tom_dataproducts.data_processor import run_data_processor
-from tom_dataproducts.exceptions import InvalidFileFormatException
+import tom_dataproducts.forced_photometry.forced_photometry_service as fps
 from tom_dataproducts.tasks import atlas_query
 from tom_targets.models import Target
 
-class AtlasForcedPhotometryQueryForm(BaseForcedPhotometryQueryForm):
-    min_date = forms.CharField(label='Min date:', required=False, widget=forms.TextInput(attrs={'class': 'ml-2', 'type': 'datetime-local'}))
-    max_date = forms.CharField(label='Max date:', required=False, widget=forms.TextInput(attrs={'class': 'ml-2', 'type': 'datetime-local'}))
-    min_date_mjd = forms.FloatField(label='Min date (mjd):', required=False, widget=forms.NumberInput(attrs={'class': 'ml-2'}))
-    max_date_mjd = forms.FloatField(label='Max date (mjd):', required=False, widget=forms.NumberInput(attrs={'class': 'ml-2'}))
+class AtlasForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
+    min_date = forms.CharField(
+        label='Min date:', required=False,
+        widget=forms.TextInput(attrs={'class': 'ml-2', 'type': 'datetime-local'})
+    )
+    max_date = forms.CharField(
+        label='Max date:', required=False,
+        widget=forms.TextInput(attrs={'class': 'ml-2', 'type': 'datetime-local'})
+    )
+    min_date_mjd = forms.FloatField(
+        label='Min date (mjd):', required=False,
+        widget=forms.NumberInput(attrs={'class': 'ml-2'})
+    )
+    max_date_mjd = forms.FloatField(
+        label='Max date (mjd):', required=False,
+        widget=forms.NumberInput(attrs={'class': 'ml-2'})
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -65,12 +72,14 @@ class AtlasForcedPhotometryQueryForm(BaseForcedPhotometryQueryForm):
         return cleaned_data
 
 
-class AtlasForcedPhotometryService(BaseForcedPhotometryService):
+class AtlasForcedPhotometryService(fps.BaseForcedPhotometryService):
     name = 'Atlas'
 
     def __init__(self):
         super().__init__
-        self.success_message = 'Asynchronous Atlas query is processing. Refresh the page once complete it will show up as a dataproduct in the "Manage Data" tab.'
+        self.success_message = ('Asynchronous Atlas query is processing. '
+                                'Refresh the page once complete it will show '
+                                'up as a dataproduct in the "Manage Data" tab.')
 
     def get_form(self):
         """
@@ -91,21 +100,31 @@ class AtlasForcedPhotometryService(BaseForcedPhotometryService):
         if not max_date_mjd and query_parameters.get('max_date'):
             max_date_mjd = Time(query_parameters.get('max_date')).mjd
         if not Target.objects.filter(pk=query_parameters.get('target_id')).exists():
-            raise ForcedPhotometryServiceException(f"Target {query_parameters.get('target_id')} does not exist")
+            raise fps.ForcedPhotometryServiceException(f"Target {query_parameters.get('target_id')} does not exist")
 
         if 'atlas' not in settings.FORCED_PHOTOMETRY_SERVICES:
-            raise ForcedPhotometryServiceException("Must specify 'atlas' settings in FORCED_PHOTOMETRY_SERVICES")
+            raise fps.ForcedPhotometryServiceException("Must specify 'atlas' settings in FORCED_PHOTOMETRY_SERVICES")
         if not settings.FORCED_PHOTOMETRY_SERVICES.get('atlas', {}).get('url'):
-            raise ForcedPhotometryServiceException("Must specify a 'url' under atlas settings in FORCED_PHOTOMETRY_SERVICES")
+            raise fps.ForcedPhotometryServiceException(
+                "Must specify a 'url' under atlas settings in FORCED_PHOTOMETRY_SERVICES"
+            )
         if not settings.FORCED_PHOTOMETRY_SERVICES.get('atlas', {}).get('api_key'):
-            raise ForcedPhotometryServiceException("Must specify an 'api_key' under atlas settings in FORCED_PHOTOMETRY_SERVICES")
+            raise fps.ForcedPhotometryServiceException(
+                "Must specify an 'api_key' under atlas settings in FORCED_PHOTOMETRY_SERVICES"
+            )
 
         if 'django_dramatiq' in settings.INSTALLED_APPS:
-            atlas_query.send(min_date_mjd, max_date_mjd, query_parameters.get('target_id'), self.get_data_product_type())
+            atlas_query.send(min_date_mjd, max_date_mjd,
+                             query_parameters.get('target_id'),
+                             self.get_data_product_type())
         else:
-            query_succeeded = atlas_query(min_date_mjd, max_date_mjd, query_parameters.get('target_id'), self.get_data_product_type())
+            query_succeeded = atlas_query(min_date_mjd, max_date_mjd,
+                                          query_parameters.get('target_id'),
+                                          self.get_data_product_type())
             if not query_succeeded:
-                raise ForcedPhotometryServiceException("Atlas query failed, check the server logs for more information")
+                raise fps.ForcedPhotometryServiceException(
+                    "Atlas query failed, check the server logs for more information"
+                )
             self.success_message = "Atlas query completed. View its data product in the 'Manage Data' tab"
 
         return True

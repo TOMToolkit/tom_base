@@ -95,12 +95,14 @@ def dataproduct_list_all(context):
         'products': products,
     }
 
+
 @register.inclusion_tag('tom_dataproducts/partials/query_forced_photometry.html')
 def query_forced_photometry(target):
     services = get_service_classes().keys()
-    return {'forced_photometry_services': services,
-            'target': target
-           }
+    return {
+        'forced_photometry_services': services,
+        'target': target
+    }
 
 
 @register.inclusion_tag('tom_dataproducts/partials/upload_dataproduct.html', takes_context=True)

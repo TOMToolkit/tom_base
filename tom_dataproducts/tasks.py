@@ -23,12 +23,13 @@ logger = logging.getLogger(__name__)
 def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type):
     print("Calling atlas query!")
     target = Target.objects.get(pk=target_id)
-    headers = {"Authorization": f"Token {settings.FORCED_PHOTOMETRY_SERVICES.get('atlas', {}).get('api_key')}", "Accept": "application/json"}
+    headers = {"Authorization": f"Token {settings.FORCED_PHOTOMETRY_SERVICES.get('atlas', {}).get('api_key')}",
+               "Accept": "application/json"}
     base_url = settings.FORCED_PHOTOMETRY_SERVICES.get('atlas', {}).get('url')
     task_url = None
     while not task_url:
         with requests.Session() as s:
-            task_data = {"ra":target.ra, "dec": target.dec, "mjd_min": min_date_mjd, "send_email": False}
+            task_data = {"ra": target.ra, "dec": target.dec, "mjd_min": min_date_mjd, "send_email": False}
             if max_date_mjd:
                 task_data['mjd_max'] = max_date_mjd
             resp = s.post(
@@ -81,11 +82,11 @@ def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type):
     dp_name = f"atlas_{Time(min_date_mjd, format='mjd').strftime('%Y_%m_%d')}"
     if max_date_mjd:
         dp_name += f"-{Time(max_date_mjd, format='mjd').strftime('%Y_%m_%d')}"
-    dp_name += f"_{urlparse(result_url)[2].rpartition('/')[2]}"  
+    dp_name += f"_{urlparse(result_url)[2].rpartition('/')[2]}"
     file = ContentFile(results.content, name=dp_name)
 
     dp = DataProduct.objects.create(
-        product_id = dp_name,
+        product_id=dp_name,
         target=target,
         data=file,
         data_product_type=data_product_type,

@@ -39,7 +39,7 @@ class AtlasProcessor(DataProcessor):
         text file, as produced by the ATLAS forced photometry service at https://fallingstar-data.com/forcedphot
 
         The header looks like this:
-        ###MJD          m      dm   uJy   duJy F err chi/N     RA       Dec        x        y     maj  min   phi  apfit mag5sig Sky   Obs 
+        ###MJD   m   dm  uJy   duJy F err chi/N   RA  Dec   x   y  maj  min   phi  apfit mag5sig Sky   Obs
 
         :param data_product: ATLAS Photometric DataProduct which will be processed into a list of dicts
         :type data_product: DataProduct
