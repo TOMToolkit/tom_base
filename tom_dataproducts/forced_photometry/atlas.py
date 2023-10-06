@@ -6,6 +6,7 @@ import tom_dataproducts.forced_photometry.forced_photometry_service as fps
 from tom_dataproducts.tasks import atlas_query
 from tom_targets.models import Target
 
+
 class AtlasForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
     min_date = forms.CharField(
         label='Min date:', required=False,
