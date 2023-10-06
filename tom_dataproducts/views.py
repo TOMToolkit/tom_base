@@ -1,7 +1,6 @@
 from io import StringIO
 import logging
 import os
-from typing import Any
 from urllib.parse import urlencode, urlparse
 
 from django.conf import settings
@@ -130,11 +129,11 @@ class ForcedPhotometryQueryView(LoginRequiredMixin, FormView):
         """
         return self.get_service_class()().get_form()
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+    def get_context_data(self, *args, **kwargs):
         """
         Adds the target to the context object.
         """
-        context = super().get_context_data(**kwargs)
+        context = super().get_context_data(*args, **kwargs)
         context['target'] = self.get_target()
         context['query_form'] = self.get_form_class()(initial=self.get_initial())
         return context
