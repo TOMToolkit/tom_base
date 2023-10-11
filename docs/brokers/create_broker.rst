@@ -16,7 +16,7 @@ Be sure you've followed the :doc:`Getting Started </introduction/getting_started
 
     The following Python/Django concepts are used in this tutorial. While this tutorial does not assume familiarity with the concepts, you will likely find the tutorial easier to understand and build upon if you read these in advance.
 
-    - `Working with Django Forms <https://docs.djangoproject.com/en/2.1/topics/forms/>`_
+    - `Working with Django Forms <https://docs.djangoproject.com/en/stable/topics/forms/>`_
     - `Requests Official API Docs <http://docs.python-requests.org/en/master/>`_
 
 TOM Alerts module

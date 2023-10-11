@@ -30,8 +30,8 @@ class GaiaQueryForm(GenericQueryForm):
         self.helper.layout = Layout(
             HTML('''
                 <p>
-                Please see the <a href="http://gsaweb.ast.cam.ac.uk/alerts/tableinfo">Gaia homepage</a> for a detailed
-                description of this broker.
+                Please see the <a href="http://gsaweb.ast.cam.ac.uk/alerts/tableinfo" target="_blank">Gaia homepage</a>
+                for a detailed description of this broker.
             '''),
             self.common_layout,
             Fieldset(

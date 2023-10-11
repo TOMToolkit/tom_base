@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 from django.core.management.base import BaseCommand
 
@@ -26,7 +27,13 @@ class Command(BaseCommand):
         for cg in cadenced_groups:
             try:
                 strategy = get_cadence_strategy(cg.cadence_strategy)(cg)
-                new_observations = strategy.run()
+                try:
+                    new_observations = strategy.run()
+                except Exception as e:
+                    logger.error((f'Unable to run cadence_group: {cg}; strategy {strategy};'
+                                  f' with id {cg.id} due to error: {e}'))
+                    logger.error(f'{traceback.format_exc()}')
+                    continue
                 if not new_observations:
                     logger.log(msg=f'No changes from dynamic cadence {cg}', level=logging.INFO)
                 else:

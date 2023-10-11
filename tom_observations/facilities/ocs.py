@@ -36,13 +36,13 @@ class OCSSettings():
     # Override them as desired for a specific OCS implementation.
     ipp_value_help = """
             Value between 0.5 to 2.0.
-            <a href="https://lco.global/documents/20/the_new_priority_factor.pdf">
+            <a href="https://lco.global/documents/20/the_new_priority_factor.pdf" target="_blank">
                 More information about Intra Proprosal Priority (IPP).
             </a>
     """
 
     observation_mode_help = """
-        <a href="https://lco.global/documentation/special-scheduling-modes/">
+        <a href="https://lco.global/documentation/special-scheduling-modes/" target="_blank">
             More information about Rapid Response mode.
         </a>
     """
@@ -68,6 +68,11 @@ class OCSSettings():
     repeat_duration_help = """
         The requested duration for this configuration to be repeated within.
         Only applicable to <em>* Sequence</em> configuration types.
+    """
+
+    max_airmass_help = """
+        Maximum acceptable airmass at which the observation can be scheduled.
+        A plane-parallel atmosphere is assumed.
     """
 
     def __init__(self, facility_name):
@@ -1359,13 +1364,18 @@ class OCSFacility(BaseRoboticObservationFacility):
         """
         # make the request to the OCS API for the telescope_states
         now = datetime.now()
-        response = make_request(
-            'GET',
-            urljoin(self.facility_settings.get_setting('portal_url'), '/api/telescope_states/'),
-            headers=self._portal_headers()
-        )
-        telescope_states = response.json()
-        logger.warning(f"Telescope states took {(datetime.now() - now).total_seconds()}")
+        telescope_states = {}
+        try:
+            response = make_request(
+                'GET',
+                urljoin(self.facility_settings.get_setting('portal_url'), '/api/telescope_states/'),
+                headers=self._portal_headers()
+            )
+            response.raise_for_status()
+            telescope_states = response.json()
+            logger.info(f"Telescope states took {(datetime.now() - now).total_seconds()}")
+        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as e:
+            logger.warning(f"Error retrieving telescope_states from OCS for facility status: {repr(e)}")
         # Now, transform the telescopes_state dictionary in a dictionary suitable
         # for the facility_status.html template partial.
 

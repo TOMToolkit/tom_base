@@ -88,7 +88,7 @@ class Command(BaseCommand):
             '2': 'NON_SIDEREAL'
         }
         options_str = ['{}) {}'.format(key, target_type) for key, target_type in allowed_types.items()]
-        prompt = 'Which target type will your project use? {} '.format(self.style.WARNING(", ".join(options_str)))
+        prompt = 'Which target type should be used as default? {} '.format(self.style.WARNING(", ".join(options_str)))
         target_type = input(prompt)
         try:
             self.context['TARGET_TYPE'] = allowed_types[target_type]
