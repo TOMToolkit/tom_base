@@ -92,6 +92,8 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
         destination_target_id, target_search_response = get_destination_target(target, targets_url, headers, auth)
         if destination_target_id is None:
             return {'message': 'ERROR: No matching target found.'}
+        elif isinstance(destination_target_id, list) and len(destination_target_id) > 1:
+            return {'message': 'ERROR: Multiple targets with matching name found in destination TOM.'}
         serialized_data['target'] = destination_target_id
         # TODO: this should be updated when tom_dataproducts is updated to use django.core.storage
         dataproduct_filename = os.path.join(settings.MEDIA_ROOT, product.data.name)
@@ -111,6 +113,8 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
                                                                                        targets_url,
                                                                                        headers,
                                                                                        auth)
+                if isinstance(destination_target_id, list) and len(destination_target_id) > 1:
+                    return {'message': 'ERROR: Multiple targets with matching name found in destination TOM.'}
                 target_dict[target.name] = destination_target_id
             if all(value is None for value in target_dict.values()):
                 return {'message': 'ERROR: No matching targets found.'}
@@ -120,6 +124,8 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             destination_target_id, target_search_response = get_destination_target(target, targets_url, headers, auth)
             if destination_target_id is None:
                 return {'message': 'ERROR: No matching target found.'}
+            elif isinstance(destination_target_id, list) and len(destination_target_id) > 1:
+                return {'message': 'ERROR: Multiple targets with matching name found in destination TOM.'}
             target_dict = {target.name:  destination_target_id}
         response_codes = []
         reduced_datums = check_for_share_safe_datums(share_destination, reduced_datums)
@@ -156,10 +162,13 @@ def get_destination_target(target, targets_url, headers, auth):
     :param auth:
     :return:
     """
-    target_response = requests.get(f'{targets_url}?name={target.name}', headers=headers, auth=auth)
+    target_names = ','.join(map(str, target.names))
+    target_response = requests.get(f'{targets_url}?name_fuzzy={target_names}', headers=headers, auth=auth)
     target_response_json = target_response.json()
     try:
         if target_response_json['results']:
+            if len(target_response_json['results']) > 1:
+                return target_response_json['results'], target_response
             destination_target_id = target_response_json['results'][0]['id']
             return destination_target_id, target_response
         else:

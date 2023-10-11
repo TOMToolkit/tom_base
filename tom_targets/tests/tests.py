@@ -1381,6 +1381,37 @@ class TestShareTargets(TestCase):
         self.assertContains(response, 'Target successfully uploaded.')
 
     @responses.activate
+    def test_share_target_valid_connection_multiple_target_found(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"results": [{'id': 1}, {'id': 2}]},
+            status=200
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+
+        response = self.client.post(
+            reverse('targets:share', kwargs={'pk': self.target.id}),
+            {
+                'submitter': ['test_submitter'],
+                'target': self.target.id,
+                'share_destination': [share_destination],
+            },
+            follow=True
+        )
+
+        self.assertContains(response, 'ERROR: Multiple targets with matching name found in destination TOM.')
+
+    @responses.activate
     def test_share_reduceddatums_target_valid_responses(self):
         share_destination = 'local_host'
         destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
@@ -1543,7 +1574,7 @@ class TestShareTargetList(TestCase):
         rsp1 = responses.Response(
             method="GET",
             url=destination_tom_base_url + 'api/targets/',
-            json={"results": [{'id': 1}, {'id': 2}]},
+            json={"results": [{'id': 1}]},
             status=200
         )
         responses.add(rsp1)

@@ -32,6 +32,8 @@ def share_target_with_tom(share_destination, form_data, target_lists=()):
                                                                            auth)
     if target_search_response.status_code != 200:
         return target_search_response
+    elif isinstance(destination_target_id, list) and len(destination_target_id) > 1:
+        return {'message': 'ERROR: Multiple targets with matching name found in destination TOM.'}
 
     target_dict_list = [{'name': f'Imported From {settings.TOM_NAME}'}]
     for target_list in target_lists:
