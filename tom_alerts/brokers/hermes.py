@@ -11,7 +11,7 @@ class HermesQueryForm(GenericQueryForm):
             HTML('''
                 <p>
                 This plugin is a stub for the Hermes Broker plugin. In order to install the full plugin, please see the
-                instructions <a href="https://github.com/TOMToolkit/tom_hermes">here</a>.
+                instructions <a href="https://github.com/TOMToolkit/tom_hermes" target="_blank">here</a>.
                 </p>
             '''),
             HTML('''<a class="btn btn-outline-primary" href={% url 'tom_alerts:list' %}>Back</a>''')

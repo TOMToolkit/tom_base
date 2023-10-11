@@ -9,5 +9,5 @@ updates:
   open-pull-requests-limit: 10
   target-branch: dev
   reviewers:
-  - dmcollom
+  - jchate6
   - phycodurus

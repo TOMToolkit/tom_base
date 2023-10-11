@@ -838,6 +838,26 @@ class TestTargetUpdate(TestCase):
         with self.assertRaises(ValidationError):
             new_alias.full_clean()
 
+    @override_settings(MATCH_MANAGERS={'Target': 'tom_targets.tests.test_utils.StrictMatch'})
+    def test_update_with_strict_matching(self):
+        self.form_data.update({
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': 'redshift',
+            'targetextra_set-0-value': '3',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+            'aliases-0-name': 'testtargetname2'
+        })
+        self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
+        self.target.refresh_from_db()
+        self.assertTrue(self.target.targetextra_set.filter(key='redshift').exists())
+        self.assertTrue(self.target.aliases.filter(name='testtargetname2').exists())
+
 
 class TestTargetImport(TestCase):
     def setUp(self):
