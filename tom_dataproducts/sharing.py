@@ -13,12 +13,12 @@ from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSeri
 
 def share_data_with_hermes(share_destination, form_data, product_id=None, target_id=None, selected_data=None):
     """
-
-    :param share_destination:
-    :param form_data:
-    :param product_id:
-    :param target_id:
-    :param selected_data:
+    Serialize and share data with Hermes (hermes.lco.global)
+    :param share_destination: Topic to share data to. (e.g. 'hermes.test')
+    :param form_data: Sharing Form data
+    :param product_id: DataProduct ID (if provided)
+    :param target_id: Target ID (if provided)
+    :param selected_data: List of ReducedDatum IDs (if provided)
     :return:
     """
     # Query relevant Reduced Datums Queryset
@@ -63,14 +63,15 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
 
 def share_data_with_tom(share_destination, form_data, product_id=None, target_id=None, selected_data=None):
     """
-
-    :param share_destination:
-    :param form_data:
-    :param product_id:
-    :param target_id:
-    :param selected_data:
+    Serialize and share data with another TOM
+    :param share_destination: TOM to share data to as described in settings.DATA_SHARING. (e.g. 'mytom')
+    :param form_data: Sharing Form data
+    :param product_id: DataProduct ID (if provided)
+    :param target_id: Target ID (if provided)
+    :param selected_data: List of ReducedDatum IDs (if provided)
     :return:
     """
+    # Build destination TOM headers and URL information
     try:
         destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
         username = settings.DATA_SHARING[share_destination]['USERNAME']
@@ -85,10 +86,12 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
     reduced_datums_url = destination_tom_base_url + 'api/reduceddatums/'
     reduced_datums = ReducedDatum.objects.none()
 
+    # If a DataProduct is provided, share that DataProduct
     if product_id:
         product = DataProduct.objects.get(pk=product_id)
         target = product.target
         serialized_data = DataProductSerializer(product).data
+        # Find matching target in destination TOM
         destination_target_id, target_search_response = get_destination_target(target, targets_url, headers, auth)
         if destination_target_id is None:
             return {'message': 'ERROR: No matching target found.'}
@@ -103,6 +106,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             headers = {'Media-Type': 'multipart/form-data'}
             response = requests.post(dataproducts_url, data=serialized_data, files=files, headers=headers, auth=auth)
     elif selected_data or target_id:
+        # If ReducedDatums are provided, share those ReducedDatums
         if selected_data:
             reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
             targets = set(reduced_datum.target for reduced_datum in reduced_datums)
@@ -119,6 +123,8 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             if all(value is None for value in target_dict.values()):
                 return {'message': 'ERROR: No matching targets found.'}
         else:
+            # If Target is provided, share all ReducedDatums for that Target
+            # (Will not create New Target in Destination TOM)
             target = Target.objects.get(pk=target_id)
             reduced_datums = ReducedDatum.objects.filter(target=target)
             destination_target_id, target_search_response = get_destination_target(target, targets_url, headers, auth)
@@ -155,13 +161,14 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
 
 def get_destination_target(target, targets_url, headers, auth):
     """
-    Retrieve the target ID from a destination TOM
+    Retrieve the target ID from a destination TOM that is a fuzzy match the given target name and aliases
     :param target: Target Model
     :param targets_url: Destination API URL for TOM Target List
-    :param headers:
-    :param auth:
+    :param headers: TOM API headers
+    :param auth: TOM API authorization
     :return:
     """
+    # Create coma separated list of target names plus aliases that can be recognized and parsed by the TOM API Filter
     target_names = ','.join(map(str, target.names))
     target_response = requests.get(f'{targets_url}?name_fuzzy={target_names}', headers=headers, auth=auth)
     target_response_json = target_response.json()
@@ -229,6 +236,10 @@ def get_sharing_destination_options():
 
 
 def sharing_feedback_handler(response, request):
+    """
+    Handle the response from a sharing request and prepare a message to the user
+    :return:
+    """
     try:
         if 'message' in response.json():
             publish_feedback = response.json()['message']

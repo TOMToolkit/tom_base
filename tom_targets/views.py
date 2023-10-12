@@ -334,15 +334,15 @@ class TargetDeleteView(Raise403PermissionRequiredMixin, DeleteView):
 
 class TargetShareView(FormView):
     """
-    View for deleting a target. Requires authorization.
+    View for sharing a target. Requires authorization.
     """
     template_name = 'tom_targets/target_share.html'
-    # permission_required = 'tom_targets.share_target'
+    permission_required = 'tom_targets.share_target'
     form_class = TargetShareForm
 
     def get_context_data(self, *args, **kwargs):
         """
-        Adds the ``DataProductUploadForm`` to the context and prepopulates the hidden fields.
+        Adds the target information to the context.
         :returns: context object
         :rtype: dict
         """
@@ -353,6 +353,9 @@ class TargetShareView(FormView):
         return context
 
     def get_success_url(self):
+        """
+        Redirect to target detail page for shared target
+        """
         return reverse_lazy('targets:detail', kwargs={'pk': self.kwargs.get('pk', None)})
 
     def form_invalid(self, form):
@@ -364,29 +367,24 @@ class TargetShareView(FormView):
         return redirect(self.get_success_url())
 
     def form_valid(self, form):
+        """
+        Shares the target with the selected destination(s) and redirects to the target detail page.
+        """
         form_data = form.cleaned_data
         share_destination = form_data['share_destination']
         target_id = self.kwargs.get('pk', None)
         selected_data = self.request.POST.getlist("share-box")
         if 'HERMES' in share_destination.upper():
             response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
+            sharing_feedback_handler(response, self.request)
         else:
+            # Share Target with Destination TOM
             response = share_target_with_tom(share_destination, form_data)
+            sharing_feedback_handler(response, self.request)
             if selected_data:
+                # Share Data with Destination TOM
                 response = share_data_with_tom(share_destination, form_data, selected_data=selected_data)
-        try:
-            if 'message' in response.json():
-                publish_feedback = response.json()['message']
-            else:
-                publish_feedback = f"ERROR: {response.text}"
-        except AttributeError:
-            publish_feedback = response['message']
-        except ValueError:
-            publish_feedback = f"ERROR: Returned Response code {response.status_code}"
-        if "ERROR" in publish_feedback.upper():
-            messages.error(self.request, publish_feedback)
-        else:
-            messages.success(self.request, publish_feedback)
+                sharing_feedback_handler(response, self.request)
         return redirect(self.get_success_url())
 
 
@@ -592,15 +590,15 @@ class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
 
 class TargetGroupingShareView(FormView):
     """
-    View for deleting a target. Requires authorization.
+    View for sharing a TargetList. Requires authorization.
     """
     template_name = 'tom_targets/target_group_share.html'
-    # permission_required = 'tom_targets.share_target'
+    permission_required = 'tom_targets.share_target'
     form_class = TargetListShareForm
 
     def get_context_data(self, *args, **kwargs):
         """
-        Adds the ``DataProductUploadForm`` to the context and prepopulates the hidden fields.
+        Adds the ``TargetListShareForm`` to the context and prepopulates the hidden fields.
         :returns: context object
         :rtype: dict
         """
@@ -616,6 +614,9 @@ class TargetGroupingShareView(FormView):
         return context
 
     def get_success_url(self):
+        """
+        Redirects to the target list page with the target list name as a query parameter.
+        """
         return reverse_lazy('targets:list')+f'?targetlist__name={self.kwargs.get("pk", None)}'
 
     def form_invalid(self, form):
@@ -632,15 +633,18 @@ class TargetGroupingShareView(FormView):
         selected_targets = self.request.POST.getlist('selected-target')
         data_switch = self.request.POST.get('dataSwitch', False)
         if 'HERMES' in share_destination.upper():
+            # TODO: Implement Hermes sharing
             # response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
             messages.error(self.request, "Publishing Groups to Hermes is not yet supported.")
             return redirect(self.get_success_url())
         else:
             for target in selected_targets:
+                # Share each target individually
                 form_data['target'] = Target.objects.get(id=target)
                 response = share_target_with_tom(share_destination, form_data, target_lists=[form_data['target_list']])
                 sharing_feedback_handler(response, self.request)
                 if data_switch:
+                    # If Data sharing request, share all data associated with the target
                     response = share_data_with_tom(share_destination, form_data, target_id=target)
                     sharing_feedback_handler(response, self.request)
             if not selected_targets:

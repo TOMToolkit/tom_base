@@ -57,6 +57,7 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
 
+        # Custom message for successful target creation
         if response.status_code == status.HTTP_201_CREATED:
             response.data['message'] = 'Target successfully uploaded.'
         return response
@@ -64,6 +65,7 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
     def update(self, request, *args, **kwargs):
         response = super().update(request, *args, **kwargs)
 
+        # Custom message for successful target update
         if response.status_code == status.HTTP_200_OK:
             response.data['message'] = 'Target successfully updated.'
         return response

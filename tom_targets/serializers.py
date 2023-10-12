@@ -24,6 +24,9 @@ class TargetExtraSerializer(serializers.ModelSerializer):
 
 
 class TargetListSerializer(serializers.ModelSerializer):
+    """
+    TargetList serializer responsible for transforming models to/from
+    """
     id = serializers.IntegerField(required=False)
     name = serializers.CharField(required=False)
 
@@ -93,6 +96,7 @@ class TargetSerializer(serializers.ModelSerializer):
         if tes.is_valid():
             tes.save(target=target)
 
+        # Save target lists for this target
         tls = TargetListSerializer(data=target_lists, many=True)
         if tls.is_valid():
             for target_list in target_lists:
@@ -157,6 +161,7 @@ class TargetSerializer(serializers.ModelSerializer):
             if tes.is_valid():
                 tes.save(target=instance)
 
+        # Update target lists for this target
         tls = TargetListSerializer(data=target_lists, many=True)
         if tls.is_valid():
             for target_list in target_lists:

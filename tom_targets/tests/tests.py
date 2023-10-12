@@ -1288,6 +1288,10 @@ class TestTargetAddRemoveGrouping(TestCase):
                                                 'USERNAME': 'fake_user',
                                                 'PASSWORD': 'password'}})
 class TestShareTargets(TestCase):
+    """
+    Tests for the share_targets view.
+    Tests the behavior of the SENDING TOM and Mocks responses from receiving TOM.
+    """
     def setUp(self):
         self.target = SiderealTargetFactory.create()
         self.observation_record = ObservingRecordFactory.create(

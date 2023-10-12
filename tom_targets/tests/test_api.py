@@ -53,6 +53,9 @@ class TestTargetViewset(APITestCase):
         self.assertEqual(response.json()['detail'], 'Not found.')
 
     def test_target_create(self):
+        """
+        Test that a target can be created with all valid parameters through the API
+        """
         collaborator = User.objects.create(username='test collaborator')
         group = Group.objects.create(name='bourgeoisie')
         group.user_set.add(self.user)
@@ -203,7 +206,7 @@ class TestTargetViewset(APITestCase):
                             status_code=status.HTTP_400_BAD_REQUEST)
 
     def test_targetlist_update(self):
-        # Test both create new alias and update alias
+        # Test Add existing target to new target list
         target_list = TargetGroupingFactory.create(name='tl')
         target_list.targets.add(self.st)
         updates = {
