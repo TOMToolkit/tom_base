@@ -50,7 +50,8 @@ def target_buttons(target):
     """
     Displays the Update and Delete buttons for a target.
     """
-    return {'target': target}
+    return {'target': target,
+            'sharing': getattr(settings, "DATA_SHARING", None)}
 
 
 @register.inclusion_tag('tom_targets/partials/target_data.html')

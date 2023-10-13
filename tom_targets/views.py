@@ -555,6 +555,16 @@ class TargetGroupingView(PermissionListMixin, ListView):
     model = TargetList
     paginate_by = 25
 
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds ``settings.DATA_SHARING`` to the context to see if sharing has been configured.
+        :returns: context object
+        :rtype: dict
+        """
+        context = super().get_context_data(*args, **kwargs)
+        context['sharing'] = getattr(settings, "DATA_SHARING", None)
+        return context
+
 
 class TargetGroupingDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     """
