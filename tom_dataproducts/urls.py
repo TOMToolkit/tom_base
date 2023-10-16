@@ -4,7 +4,7 @@ from tom_dataproducts.views import DataProductListView, DataProductSaveView, Dat
 from tom_dataproducts.views import DataProductDeleteView, DataProductGroupCreateView
 from tom_dataproducts.views import DataProductGroupDetailView, DataProductGroupDataView, DataProductGroupDeleteView
 from tom_dataproducts.views import DataProductUploadView, DataProductFeatureView, UpdateReducedDataView
-from tom_dataproducts.views import DataShareView
+from tom_dataproducts.views import DataShareView, ForcedPhotometryQueryView
 
 from tom_common.api_router import SharedAPIRootRouter
 from tom_dataproducts.api_views import DataProductViewSet, ReducedDatumViewSet
@@ -24,6 +24,8 @@ urlpatterns = [
     path('data/group/<int:pk>/delete/', DataProductGroupDeleteView.as_view(), name='group-delete'),
     path('data/upload/', DataProductUploadView.as_view(), name='upload'),
     path('data/reduced/update/', UpdateReducedDataView.as_view(), name='update-reduced-data'),
+    path('data/forced_photometry/<str:service>/query/', ForcedPhotometryQueryView.as_view(),
+         name='forced-photometry-query'),
     path('data/<int:pk>/delete/', DataProductDeleteView.as_view(), name='delete'),
     path('data/<int:pk>/feature/', DataProductFeatureView.as_view(), name='feature'),
     path('data/<int:dp_pk>/share/', DataShareView.as_view(), name='share'),

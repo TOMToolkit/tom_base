@@ -1,0 +1,14 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 static crispy_forms_tags %}
+{% block title %}Query Forced Photometry{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
+{% endblock %}
+{% block content %}
+{{ form|as_crispy_errors }}
+<h2>Query {{ form.service.value }} Forced Photometry Service</h2>
+<br />
+<h4>Target <b>{{ target.name }}</b> at RA {{ target.ra }}, DEC {{ target.dec }}</h4>
+<br />
+{% crispy query_form %}
+{% endblock %}

@@ -31,6 +31,10 @@ from tom_dataproducts.data_processor import run_data_processor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom, sharing_feedback_handler
+from tom_dataproducts.serializers import DataProductSerializer
+import tom_dataproducts.forced_photometry.forced_photometry_service as fps
+
+import requests
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -77,6 +81,86 @@ class DataProductSaveView(LoginRequiredMixin, View):
             'tom_observations:detail',
             kwargs={'pk': observation_record.id})
         )
+
+
+class ForcedPhotometryQueryView(LoginRequiredMixin, FormView):
+    """
+    View that handles queries for forced photometry services
+    """
+    template_name = 'tom_dataproducts/forced_photometry_form.html'
+
+    def get_target_id(self):
+        """
+        Parses the target id from the query parameters.
+        """
+        if self.request.method == 'GET':
+            return self.request.GET.get('target_id')
+        elif self.request.method == 'POST':
+            return self.request.POST.get('target_id')
+
+    def get_target(self):
+        """
+        Gets the target for observing from the database
+
+        :returns: target for observing
+        :rtype: Target
+        """
+        return Target.objects.get(pk=self.get_target_id())
+
+    def get_service(self):
+        """
+        Gets the forced photometry service that you want to query
+        """
+        return self.kwargs['service']
+
+    def get_service_class(self):
+        """
+        Gets the forced photometry service class
+        """
+        return fps.get_service_class(self.get_service())
+
+    def get_form_class(self):
+        """
+        Gets the forced photometry service form class
+        """
+        return self.get_service_class()().get_form()
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds the target to the context object.
+        """
+        context = super().get_context_data(*args, **kwargs)
+        context['target'] = self.get_target()
+        context['query_form'] = self.get_form_class()(initial=self.get_initial())
+        return context
+
+    def get_initial(self):
+        """
+        Populates the form with initial data including service name and target id
+        """
+        initial = super().get_initial()
+        if not self.get_target_id():
+            raise Exception('Must provide target_id')
+        initial['target_id'] = self.get_target_id()
+        initial['service'] = self.get_service()
+        initial.update(self.request.GET.dict())
+        return initial
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            service = self.get_service_class()()
+            try:
+                service.query_service(form.cleaned_data)
+            except fps.ForcedPhotometryServiceException as e:
+                form.add_error(f"Problem querying forced photometry service: {repr(e)}")
+                return self.form_invalid(form)
+            messages.info(self.request, service.get_success_message())
+            return redirect(
+                reverse('tom_targets:detail', kwargs={'pk': self.get_target_id()})
+            )
+        else:
+            return self.form_invalid(form)
 
 
 class DataProductUploadView(LoginRequiredMixin, FormView):
