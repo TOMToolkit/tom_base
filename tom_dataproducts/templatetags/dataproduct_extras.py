@@ -164,7 +164,7 @@ def recent_photometry(target, limit=1):
 
 
 @register.inclusion_tag('tom_dataproducts/partials/photometry_datalist_for_target.html', takes_context=True)
-def get_photometry_data(context, target):
+def get_photometry_data(context, target, target_share=False):
     """
     Displays a table of the all photometric points for a target.
     """
@@ -208,7 +208,8 @@ def get_photometry_data(context, target):
     context = {'data': data,
                'target': target,
                'target_data_share_form': form,
-               'sharing_destinations': form.fields['share_destination'].choices}
+               'sharing_destinations': form.fields['share_destination'].choices,
+               'target_share': target_share}
     return context
 
 

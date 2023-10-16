@@ -30,7 +30,7 @@ from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
-from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom
+from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom, sharing_feedback_handler
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -336,30 +336,8 @@ class DataShareView(FormView):
                 response = share_data_with_hermes(share_destination, form_data, product_id, target_id, selected_data)
             else:
                 response = share_data_with_tom(share_destination, form_data, product_id, target_id, selected_data)
-            try:
-                if 'message' in response.json():
-                    publish_feedback = response.json()['message']
-                else:
-                    publish_feedback = f"ERROR: {response.text}"
-            except AttributeError:
-                publish_feedback = response['message']
-            except ValueError:
-                publish_feedback = f"ERROR: Returned Response code {response.status_code}"
-            if "ERROR" in publish_feedback.upper():
-                messages.error(self.request, publish_feedback)
-            else:
-                messages.success(self.request, publish_feedback)
+            sharing_feedback_handler(response, self.request)
         return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
-
-        # if data_share_form.is_valid():
-        #     form_data = data_share_form.cleaned_data
-        #
-        #                 return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
-        #         else:
-        #             # messages.error(self.request, 'TOM-TOM sharing is not yet supported.')
-        #             response = self.share_with_tom(share_destination, product)
-        #             return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
-        #             # response = self.share_with_tom(share_destination, product)
 
 
 class DataProductGroupDetailView(DetailView):

@@ -49,11 +49,11 @@ setup(
         'plotly~=5.0',
         'python-dateutil~=2.8',
         'requests~=2.25',
-        'responses~=0.23',
         'specutils~=1.8',
     ],
     extras_require={
-        'test': ['factory_boy>=3.2.1,<3.4.0'],
+        'test': ['factory_boy>=3.2.1,<3.4.0',
+                 'responses~=0.23'],
         'docs': [
             'recommonmark~=0.7',
             'sphinx>=4,<8',

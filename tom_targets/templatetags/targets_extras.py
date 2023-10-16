@@ -50,7 +50,8 @@ def target_buttons(target):
     """
     Displays the Update and Delete buttons for a target.
     """
-    return {'target': target}
+    return {'target': target,
+            'sharing': getattr(settings, "DATA_SHARING", None)}
 
 
 @register.inclusion_tag('tom_targets/partials/target_data.html')
@@ -310,9 +311,10 @@ def aladin(target):
 
 
 @register.inclusion_tag('tom_targets/partials/target_table.html')
-def target_table(targets):
+def target_table(targets, all_checked=False):
     """
     Returns a partial for a table of targets, used in the target_list.html template
     by default
     """
-    return {'targets': targets}
+
+    return {'targets': targets, 'all_checked': all_checked}

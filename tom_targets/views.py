@@ -17,7 +17,7 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
@@ -32,9 +32,11 @@ from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
-from tom_targets.forms import (
-    SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset
-)
+from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
+from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm
+from tom_targets.sharing import share_target_with_tom
+from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom, sharing_feedback_handler
+
 from tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
     move_all_to_grouping, move_selected_to_grouping
@@ -330,6 +332,62 @@ class TargetDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     model = Target
 
 
+class TargetShareView(FormView):
+    """
+    View for sharing a target. Requires authorization.
+    """
+    template_name = 'tom_targets/target_share.html'
+    permission_required = 'tom_targets.share_target'
+    form_class = TargetShareForm
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds the target information to the context.
+        :returns: context object
+        :rtype: dict
+        """
+        context = super().get_context_data(*args, **kwargs)
+        target_id = self.kwargs.get('pk', None)
+        context['target'] = Target.objects.get(id=target_id)
+
+        return context
+
+    def get_success_url(self):
+        """
+        Redirect to target detail page for shared target
+        """
+        return reverse_lazy('targets:detail', kwargs={'pk': self.kwargs.get('pk', None)})
+
+    def form_invalid(self, form):
+        """
+        Adds errors to Django messaging framework in the case of an invalid form and redirects to the previous page.
+        """
+        # TODO: Format error messages in a more human-readable way
+        messages.error(self.request, 'There was a problem sharing your Data: {}'.format(form.errors.as_json()))
+        return redirect(self.get_success_url())
+
+    def form_valid(self, form):
+        """
+        Shares the target with the selected destination(s) and redirects to the target detail page.
+        """
+        form_data = form.cleaned_data
+        share_destination = form_data['share_destination']
+        target_id = self.kwargs.get('pk', None)
+        selected_data = self.request.POST.getlist("share-box")
+        if 'HERMES' in share_destination.upper():
+            response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
+            sharing_feedback_handler(response, self.request)
+        else:
+            # Share Target with Destination TOM
+            response = share_target_with_tom(share_destination, form_data)
+            sharing_feedback_handler(response, self.request)
+            if selected_data:
+                # Share Data with Destination TOM
+                response = share_data_with_tom(share_destination, form_data, selected_data=selected_data)
+                sharing_feedback_handler(response, self.request)
+        return redirect(self.get_success_url())
+
+
 class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
     """
     View that handles the display of the target details. Requires authorization.
@@ -497,6 +555,16 @@ class TargetGroupingView(PermissionListMixin, ListView):
     model = TargetList
     paginate_by = 25
 
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds ``settings.DATA_SHARING`` to the context to see if sharing has been configured.
+        :returns: context object
+        :rtype: dict
+        """
+        context = super().get_context_data(*args, **kwargs)
+        context['sharing'] = getattr(settings, "DATA_SHARING", None)
+        return context
+
 
 class TargetGroupingDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     """
@@ -528,3 +596,68 @@ class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
         assign_perm('tom_targets.change_targetlist', self.request.user, obj)
         assign_perm('tom_targets.delete_targetlist', self.request.user, obj)
         return super().form_valid(form)
+
+
+class TargetGroupingShareView(FormView):
+    """
+    View for sharing a TargetList. Requires authorization.
+    """
+    template_name = 'tom_targets/target_group_share.html'
+    permission_required = 'tom_targets.share_target'
+    form_class = TargetListShareForm
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds the ``TargetListShareForm`` to the context and prepopulates the hidden fields.
+        :returns: context object
+        :rtype: dict
+        """
+        context = super().get_context_data(*args, **kwargs)
+        target_list_id = self.kwargs.get('pk', None)
+        target_list = TargetList.objects.get(id=target_list_id)
+        context['target_list'] = target_list
+        initial = {'submitter': self.request.user,
+                   'target_list': target_list,
+                   'share_title': f"Updated targets for group {target_list.name}."}
+        form = TargetListShareForm(initial=initial)
+        context['form'] = form
+        return context
+
+    def get_success_url(self):
+        """
+        Redirects to the target list page with the target list name as a query parameter.
+        """
+        return reverse_lazy('targets:list')+f'?targetlist__name={self.kwargs.get("pk", None)}'
+
+    def form_invalid(self, form):
+        """
+        Adds errors to Django messaging framework in the case of an invalid form and redirects to the previous page.
+        """
+        # TODO: Format error messages in a more human-readable way
+        messages.error(self.request, 'There was a problem sharing your Target List: {}'.format(form.errors.as_json()))
+        return redirect(self.get_success_url())
+
+    def form_valid(self, form):
+        form_data = form.cleaned_data
+        share_destination = form_data['share_destination']
+        selected_targets = self.request.POST.getlist('selected-target')
+        data_switch = self.request.POST.get('dataSwitch', False)
+        if 'HERMES' in share_destination.upper():
+            # TODO: Implement Hermes sharing
+            # response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
+            messages.error(self.request, "Publishing Groups to Hermes is not yet supported.")
+            return redirect(self.get_success_url())
+        else:
+            for target in selected_targets:
+                # Share each target individually
+                form_data['target'] = Target.objects.get(id=target)
+                response = share_target_with_tom(share_destination, form_data, target_lists=[form_data['target_list']])
+                sharing_feedback_handler(response, self.request)
+                if data_switch:
+                    # If Data sharing request, share all data associated with the target
+                    response = share_data_with_tom(share_destination, form_data, target_id=target)
+                    sharing_feedback_handler(response, self.request)
+            if not selected_targets:
+                messages.error(self.request, f'No targets shared. {form.errors.as_json()}')
+                return redirect(self.get_success_url())
+        return redirect(self.get_success_url())
