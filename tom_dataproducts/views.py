@@ -31,10 +31,8 @@ from tom_dataproducts.data_processor import run_data_processor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom, sharing_feedback_handler
-from tom_dataproducts.serializers import DataProductSerializer
 import tom_dataproducts.forced_photometry.forced_photometry_service as fps
-
-import requests
+from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
