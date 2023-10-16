@@ -20,6 +20,7 @@ import numpy as np
 from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
+from tom_dataproducts.forced_photometry.forced_photometry_service import get_service_classes
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
@@ -92,6 +93,15 @@ def dataproduct_list_all(context):
 
     return {
         'products': products,
+    }
+
+
+@register.inclusion_tag('tom_dataproducts/partials/query_forced_photometry.html')
+def query_forced_photometry(target):
+    services = get_service_classes().keys()
+    return {
+        'forced_photometry_services': services,
+        'target': target
     }
 
 

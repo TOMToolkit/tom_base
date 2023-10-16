@@ -1,0 +1,9 @@
+{% load bootstrap4 static %}
+{% bootstrap_css %}
+{% bootstrap_javascript jquery='full' %}
+<script src="{% static 'assets/js/popper.min.js' %}"></script>
+<script src="{% static 'js/jquery.bootstrap.modal.forms.js' %}"></script>
+<h4>Query Forced Photometry Service</h4>
+{% for service in forced_photometry_services %}
+<a href="{% url 'tom_dataproducts:forced-photometry-query' service=service %}?target_id={{ target.id }}" title="{{ service }}" class="btn btn-outline-primary">{{ service }}</a>
+{% endfor %}

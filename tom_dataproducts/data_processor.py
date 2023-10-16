@@ -35,8 +35,9 @@ def run_data_processor(dp):
 
     data_processor = clazz()
     data = data_processor.process_data(dp)
+    data_type = data_processor.data_type_override() or dp.data_product_type
 
-    reduced_datums = [ReducedDatum(target=dp.target, data_product=dp, data_type=dp.data_product_type,
+    reduced_datums = [ReducedDatum(target=dp.target, data_product=dp, data_type=data_type,
                                    timestamp=datum[0], value=datum[1], source_name=datum[2]) for datum in data]
     ReducedDatum.objects.bulk_create(reduced_datums)
 
@@ -65,3 +66,10 @@ class DataProcessor():
         :rtype: list of 2-tuples
         """
         return []
+
+    def data_type_override(self):
+        """
+        Override for the ReducedDatum data type, if you want it to be different from the
+        DataProduct data_type.
+        """
+        return ''
