@@ -3,10 +3,11 @@ from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user
 from rest_framework.mixins import DestroyModelMixin, RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from rest_framework import status
 
 from tom_targets.filters import TargetFilter
-from tom_targets.models import TargetExtra, TargetName
-from tom_targets.serializers import TargetSerializer, TargetExtraSerializer, TargetNameSerializer
+from tom_targets.models import TargetExtra, TargetName, TargetList
+from tom_targets.serializers import TargetSerializer, TargetExtraSerializer, TargetNameSerializer, TargetListSerializer
 
 
 permissions_map = {  # TODO: Use the built-in DRF mapping or just switch to DRF entirely.
@@ -53,6 +54,22 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
         permission_required = permissions_map.get(self.request.method)
         return get_objects_for_user(self.request.user, f'tom_targets.{permission_required}')
 
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+
+        # Custom message for successful target creation
+        if response.status_code == status.HTTP_201_CREATED:
+            response.data['message'] = 'Target successfully uploaded.'
+        return response
+
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+
+        # Custom message for successful target update
+        if response.status_code == status.HTTP_200_OK:
+            response.data['message'] = 'Target successfully updated.'
+        return response
+
 
 class TargetNameViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMixin, GenericViewSet):
     """
@@ -80,5 +97,20 @@ class TargetExtraViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMi
     def get_queryset(self):
         permission_required = permissions_map.get(self.request.method)
         return TargetExtra.objects.filter(
+            target__in=get_objects_for_user(self.request.user, f'tom_targets.{permission_required}')
+        )
+
+
+class TargetListViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMixin, GenericViewSet):
+    """
+    Viewset for TargetList objects. Only ``GET`` and ``DELETE`` operations are permitted.
+
+    To view available query parameters, please use the OPTIONS endpoint, which can be accessed through the web UI.
+    """
+    serializer_class = TargetListSerializer
+
+    def get_queryset(self):
+        permission_required = permissions_map.get(self.request.method)
+        return TargetList.objects.filter(
             target__in=get_objects_for_user(self.request.user, f'tom_targets.{permission_required}')
         )

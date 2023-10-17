@@ -7,10 +7,11 @@ from tom_dataproducts.views import DataProductUploadView, DataProductFeatureView
 from tom_dataproducts.views import DataShareView, ForcedPhotometryQueryView
 
 from tom_common.api_router import SharedAPIRootRouter
-from tom_dataproducts.api_views import DataProductViewSet
+from tom_dataproducts.api_views import DataProductViewSet, ReducedDatumViewSet
 
 router = SharedAPIRootRouter()
 router.register(r'dataproducts', DataProductViewSet, 'dataproducts')
+router.register(r'reduceddatums', ReducedDatumViewSet, 'reduceddatums')
 
 app_name = 'tom_dataproducts'
 

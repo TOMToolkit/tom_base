@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db.models import Q
 import django_filters
 
-from tom_targets.models import Target, TargetList
+from tom_targets.models import Target, TargetList, TargetMatchManager
 from tom_targets.utils import cone_search_filter
 
 
@@ -55,7 +55,29 @@ class TargetFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(method='filter_name', label='Name')
 
     def filter_name(self, queryset, name, value):
-        return queryset.filter(Q(name__icontains=value) | Q(aliases__name__icontains=value)).distinct()
+        """
+        Return a queryset for targets with names or aliases containing the given coma-separated list of terms.
+        """
+        q_set = Q()
+        for term in value.split(','):
+            q_set |= Q(name__icontains=term) | Q(aliases__name__icontains=term)
+        return queryset.filter(q_set).distinct()
+
+    name_fuzzy = django_filters.CharFilter(method='filter_name_fuzzy', label='Name (Fuzzy)')
+
+    def filter_name_fuzzy(self, queryset, name, value):
+        """
+        Return a queryset for targets with names or aliases fuzzy matching the given coma-separated list of terms.
+        A fuzzy match is determined by the `make_simple_name` method of the `TargetMatchManager` class.
+        """
+        matching_names = []
+        for term in value.split(','):
+            simple_name = TargetMatchManager.make_simple_name(self, term)
+            for target in Target.objects.all().prefetch_related('aliases'):
+                for alias in target.names:
+                    if TargetMatchManager.make_simple_name(self, alias) == simple_name:
+                        matching_names.append(target.name)
+        return queryset.filter(name__in=matching_names).distinct()
 
     cone_search = django_filters.CharFilter(method='filter_cone_search', label='Cone Search',
                                             help_text='RA, Dec, Search Radius (degrees)')

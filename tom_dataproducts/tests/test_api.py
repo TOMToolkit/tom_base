@@ -1,6 +1,7 @@
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
+from django.core.exceptions import ValidationError
 from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -102,3 +103,41 @@ class TestDataProductViewset(APITestCase):
 
         response = self.client.get(reverse('api:dataproducts-list'))
         self.assertContains(response, dp.product_id, status_code=status.HTTP_200_OK)
+
+
+class TestReducedDatumViewset(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create(username='testuser')
+        self.client.force_login(self.user)
+        self.st = SiderealTargetFactory.create()
+        self.obsr = ObservingRecordFactory.create(target_id=self.st.id)
+        self.rd_data = {
+            'data_product': '',
+            'data_type': 'photometry',
+            'source_name': 'TOM Toolkit',
+            'source_location': 'TOM-TOM Direct Sharing',
+            'value': {'magnitude': 15.582, 'filter': 'r', 'error': 0.005},
+            'target': self.st.id,
+            'timestamp': '2012-02-12T01:40:47Z'
+        }
+
+        assign_perm('tom_dataproducts.add_reduceddatum', self.user)
+        assign_perm('tom_targets.add_target', self.user, self.st)
+        assign_perm('tom_targets.view_target', self.user, self.st)
+        assign_perm('tom_targets.change_target', self.user, self.st)
+
+    def test_upload_reduced_datum(self):
+        response = self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
+        self.assertContains(response, self.rd_data['source_name'], status_code=status.HTTP_201_CREATED)
+
+    def test_upload_same_reduced_datum_twice(self):
+        """
+        Test that identical data raises a validation error while similar but different JSON will make it through.
+        """
+        self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
+        with self.assertRaises(ValidationError):
+            self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
+        self.rd_data['value'] = {'magnitude': 15.582, 'filter': 'B', 'error': 0.005}
+        self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
+        rd_queryset = ReducedDatum.objects.all()
+        self.assertEqual(rd_queryset.count(), 2)
