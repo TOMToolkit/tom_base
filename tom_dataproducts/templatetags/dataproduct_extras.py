@@ -20,6 +20,7 @@ import numpy as np
 from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
+from tom_dataproducts.forced_photometry.forced_photometry_service import get_service_classes
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
@@ -95,6 +96,15 @@ def dataproduct_list_all(context):
     }
 
 
+@register.inclusion_tag('tom_dataproducts/partials/query_forced_photometry.html')
+def query_forced_photometry(target):
+    services = get_service_classes().keys()
+    return {
+        'forced_photometry_services': services,
+        'target': target
+    }
+
+
 @register.inclusion_tag('tom_dataproducts/partials/upload_dataproduct.html', takes_context=True)
 def upload_dataproduct(context, obj):
     user = context['user']
@@ -164,7 +174,7 @@ def recent_photometry(target, limit=1):
 
 
 @register.inclusion_tag('tom_dataproducts/partials/photometry_datalist_for_target.html', takes_context=True)
-def get_photometry_data(context, target):
+def get_photometry_data(context, target, target_share=False):
     """
     Displays a table of the all photometric points for a target.
     """
@@ -208,7 +218,8 @@ def get_photometry_data(context, target):
     context = {'data': data,
                'target': target,
                'target_data_share_form': form,
-               'sharing_destinations': form.fields['share_destination'].choices}
+               'sharing_destinations': form.fields['share_destination'].choices,
+               'target_share': target_share}
     return context
 
 

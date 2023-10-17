@@ -46,25 +46,25 @@
             {% endfor %}
             </tbody>
         </table>
-        <div class="card">
-        <div class="card-header">
-          Share Selected Data
-        </div>
-            {% if sharing_destinations %}
-          <div class="form-row" style="padding-inline:1rem">
-            <div class="col-sm-4">
-              {% bootstrap_field target_data_share_form.share_destination %}
+        {% if not target_share %}
+            <div class="card">
+                <div class="card-header">
+                    Share Selected Data
+                </div>
+                {% if sharing_destinations %}
+                    <div class="form-row" style="padding-inline:1rem">
+                        <div class="col-sm-4">
+                            {% bootstrap_field target_data_share_form.share_destination %}
+                        </div>
+                        <div class="col-sm-2">
+                            <input type="submit" class="btn btn-primary" id="submit_selected" value="Submit" name="share_targetdata_form" style="position:absolute; bottom:1rem" disabled>
+                        </div>
+                    </div>
+                {% else %}
+                    <em style="padding-inline:1rem">Not Configured</em>
+                {% endif %}
             </div>
-            <div class="col-sm-2">
-              <input type="submit" class="btn btn-primary" id="submit_selected" value="Submit" name="share_targetdata_form" style="position:absolute; bottom:1rem" disabled>
-            </div>
-          </div>
-            {% else %}
-            <em style="padding-inline:1rem">Not Configured</em>
-            {% endif %}
-
-
-            </div>
+        {% endif %}
     </div>
 </form>
 <script>

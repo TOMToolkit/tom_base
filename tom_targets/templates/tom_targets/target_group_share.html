@@ -1,0 +1,41 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 static targets_extras %}
+{% block title %}Share {{ target_list.name }} Target List{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
+<link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+{% endblock %}
+{% block content %}
+<h3> Share <a href="{% url 'targets:list' %}?targetlist__name={{ target_list.id }}" title="View Target Lists">{{ target_list.name }}</a> Target List </h3>
+<form method="post" class="form">
+    <div class="form-row" style="padding-inline:1rem">
+        <div class="col-sm-4">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+        </div>
+        <div class="col-sm-2">
+            <input type="submit" class="btn btn-primary" formaction="{% url 'targets:share-group' pk=target_list.id %}" id="submit_targetlist" value="Submit" name="share_targetlist_form" style="position:absolute; bottom:1rem">
+        </div>
+    </div>
+
+    <div class="col-md-10">
+        {% select_target_js %}
+        <label id="displaySelected"></label>
+        <div class="custom-control custom-switch">
+          <input type="checkbox" class="custom-control-input" checked id="dataSwitch" name="dataSwitch">
+          <label class="custom-control-label" for="dataSwitch">Include Photometric Data</label>
+        </div>
+        {% csrf_token %}
+        <div class="form-group d-flex justify-content-end align-items-baseline">
+            <input type="hidden" value="{{ query_string }}" name="query_string">
+            <input type="hidden" value="False" id="isSelectAll" name="isSelectAll">
+        </div>
+      {% target_table target_list.targets.all True %}
+    </div>
+</form>
+
+{% buttons %}
+    <a href="{% url 'targets:targetgrouping' %}" class="btn btn-primary" title="Back">Back</a>
+{% endbuttons %}
+
+{% endblock %}

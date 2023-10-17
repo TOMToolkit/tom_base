@@ -86,6 +86,11 @@ $(document).ready(function(){
       </div>
       <div class="tab-pane" id="manage-data">
         {% if user.is_authenticated %}
+          {% query_forced_photometry object %}
+          <br />
+          <br />
+        {% endif %}
+        {% if user.is_authenticated %}
           {% upload_dataproduct object %}
         {% endif %}
         {% dataproduct_list_for_target object %}

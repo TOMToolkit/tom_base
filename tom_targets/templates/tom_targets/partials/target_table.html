@@ -1,7 +1,13 @@
 <table class="table table-hover">
   <thead>
     <tr>
-      <th><input type="checkbox" id="selectPage" onClick="select_page(this, {{ targets|length }})" /></th>
+      <th>
+        {% if all_checked %}
+          <input type="checkbox" id="selectPage" onClick="select_page(this, {{ targets|length }})" checked/>
+        {% else %}
+          <input type="checkbox" id="selectPage" onClick="select_page(this, {{ targets|length }})" />
+        {% endif %}
+      </th>
       <th>Name</th>
       <th>Type</th>
       {% if request.GET.type == 'SIDEREAL' %}
@@ -15,7 +21,13 @@
   <tbody>
     {% for target in targets %}
     <tr>
-      <td><input type="checkbox" name="selected-target" value="{{ target.id }}" onClick="single_select()"/></td>
+      <td>
+        {% if all_checked %}
+          <input type="checkbox" name="selected-target" value="{{ target.id }}" onClick="single_select()" checked/>
+        {% else %}
+          <input type="checkbox" name="selected-target" value="{{ target.id }}" onClick="single_select()"/>
+        {% endif %}
+      </td>
       <td>
           <a href="{% url 'targets:detail' target.id %}" title="{{ target.name }}">{{ target.names|join:", " }}</a>
       </td>

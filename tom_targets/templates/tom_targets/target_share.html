@@ -1,0 +1,27 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 dataproduct_extras static %}
+{% block title %}Share Target {{ target.name }}{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
+<link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+{% endblock %}
+{% block content %}
+<h3> Share <a href="{% url 'targets:detail' pk=target.id %}" title="Back">{{ target.name }}</a></h3>
+<form method="post" class="form">
+    <div class="form-row" style="padding-inline:1rem">
+        <div class="col-sm-4">
+            {% bootstrap_form form %}
+        </div>
+        <div class="col-sm-2">
+            <input type="submit" class="btn btn-primary" formaction="{% url 'targets:share' pk=target.id %}" id="submit_target" value="Submit" name="share_target_form" style="position:absolute; bottom:1rem">
+        </div>
+    </div>
+    <h4> Include Data </h4>
+    {% with target_share=True %}
+        {% get_photometry_data target target_share %}
+    {% endwith %}
+    {% buttons %}
+        <a href="{% url 'targets:detail' pk=target.id %}" class="btn btn-primary" title="Back">Back</a>
+    {% endbuttons %}
+</form>
+{% endblock %}
