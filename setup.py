@@ -38,7 +38,7 @@ setup(
         'django-bootstrap4>=3,<24',
         'django-contrib-comments~=2.0',  # Earlier version are incompatible with Django >= 3.0
         'django-crispy-forms~=2.0',
-        'crispy-bootstrap4~=2022.0',
+        'crispy-bootstrap4>=2022,<2024',
         'django-dramatiq<1.0.0',
         'django-extensions~=3.1',
         'django-filter>=21,<24',
