@@ -467,9 +467,9 @@ class AddExistingObservationView(LoginRequiredMixin, FormView):
             )
             observation_id = form.cleaned_data['observation_id']
             messages.success(self.request, f'Successfully associated observation record {observation_id}')
-        return redirect(reverse(
-            'tom_targets:detail', kwargs={'pk': form.cleaned_data['target_id']})
-        )
+        base_url = reverse('tom_targets:detail', kwargs={'pk': form.cleaned_data['target_id']})
+        query_params = urlencode({'tab': 'observations'})
+        return redirect(f'{base_url}?{query_params}')
 
 
 class ObservationRecordDetailView(DetailView):

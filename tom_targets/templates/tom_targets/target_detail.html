@@ -7,18 +7,24 @@
 {% endblock %}
 {% block content %}
 <script>
-// This script maintains the selected tab upon reload
-$(document).ready(function(){
-  // This is required due to the apparent redefinition of $ in another library: https://api.jquery.com/jquery.noconflict/
-  // Based on trial and error, the offending script appears to be JS9, which is used in dataproduct_list_for_target
-  $.noConflict();
-  $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
-    localStorage.setItem('activeTab', $(e.target).attr('href'));
-  });
+document.addEventListener("DOMContentLoaded", function() {
+  // Fetch the URL and look for the 'tab' query parameter.
+  const url = new URL(window.location.href);
+  const tabQuery = url.searchParams.get('tab');
 
-  var activeTab = localStorage.getItem('activeTab');
-  if(activeTab){
-    $('#tabs a[href="' + activeTab + '"]').tab('show');
+  // If a tab is specified in the URL, make it active.
+  if (tabQuery) {
+    const activeTab = '#' + tabQuery;
+    // Remove the 'tab' query parameter to avoid unwanted persistence across
+    // page reloads.
+    url.searchParams.delete('tab');
+    history.replaceState({}, document.title, url.toString());
+
+    // Show the active tab, if any.
+    const tabElement = document.querySelector(`a[href="${activeTab}"]`);
+    if (tabElement) {
+      tabElement.click();
+    }
   }
 });
 </script>
@@ -39,7 +45,7 @@ $(document).ready(function(){
       {% if object.type == 'SIDEREAL' %}
       {% aladin object %}
       {% endif %}
-      
+
     </div>
   </div>
   <div class="col-md-8">
