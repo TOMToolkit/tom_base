@@ -29,6 +29,10 @@ class AtlasForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # initialize query time range to reasonable values
+        now = datetime.now()
+        self.fields['max_date'].initial = (now - timedelta(minutes=1)).strftime('%Y-%m-%dT%H:%M')
+        self.fields['min_date'].initial = (now - timedelta(days=20)).strftime('%Y-%m-%dT%H:%M')
 
     def layout(self):
         return Div(
