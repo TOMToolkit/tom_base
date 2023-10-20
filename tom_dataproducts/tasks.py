@@ -19,6 +19,7 @@ from tom_dataproducts.data_processor import run_data_processor
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+
 @dramatiq.actor(max_retries=0)
 def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type):
     logger.debug('Calling atlas query!')
