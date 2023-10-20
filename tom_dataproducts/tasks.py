@@ -17,11 +17,11 @@ from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.data_processor import run_data_processor
 
 logger = logging.getLogger(__name__)
-
+logger.setLevel(logging.DEBUG)
 
 @dramatiq.actor(max_retries=0)
 def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type):
-    print("Calling atlas query!")
+    logger.debug('Calling atlas query!')
     target = Target.objects.get(pk=target_id)
     headers = {"Authorization": f"Token {settings.FORCED_PHOTOMETRY_SERVICES.get('ATLAS', {}).get('api_key')}",
                "Accept": "application/json"}
@@ -38,10 +38,10 @@ def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type):
 
             if resp.status_code == 201:
                 task_url = resp.json()["url"]
-                print(f"The task url is {task_url}")
+                logger.debug(f"The task url is {task_url}")
             elif resp.status_code == 429:
                 message = resp.json()["detail"]
-                print(f"{resp.status_code} {message}")
+                logger.debug(f"{resp.status_code} {message}")
                 t_sec = re.findall(r"available in (\d+) seconds", message)
                 t_min = re.findall(r"available in (\d+) minutes", message)
                 if t_sec:
@@ -50,7 +50,7 @@ def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type):
                     waittime = int(t_min[0]) * 60
                 else:
                     waittime = 10
-                print(f"Waiting {waittime} seconds")
+                logger.debug(f"Waiting {waittime} seconds")
                 time.sleep(waittime)
             else:
                 logger.error(f"Failed to queue Atlas task: HTTP Error {resp.status_code} - {resp.text}")
@@ -65,14 +65,14 @@ def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type):
             if resp.status_code == 200:
                 if resp.json()["finishtimestamp"]:
                     result_url = resp.json()["result_url"]  # PART WHEN QUERY IS COMPLETE
-                    print(f"Task is complete with results available at {result_url}")
+                    logger.debug(f"Task is complete with results available at {result_url}")
                 elif resp.json()["starttimestamp"]:
                     if not taskstarted_printed:
-                        print(f"Task is running (started at {resp.json()['starttimestamp']})")
+                        logger.debug(f"Task is running (started at {resp.json()['starttimestamp']})")
                         taskstarted_printed = True
                     time.sleep(2)
                 else:
-                    print(f"Waiting for job to start (queued at {resp.json()['timestamp']})")
+                    logger.debug(f"Waiting for job to start (queued at {resp.json()['timestamp']})")
                     time.sleep(4)
             else:
                 logger.error(f"Failed to retrieve Atlas task status: HTTP Error {resp.status_code} - {resp.text}")
