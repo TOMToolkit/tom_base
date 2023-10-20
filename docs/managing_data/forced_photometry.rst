@@ -19,12 +19,11 @@ shown below:
             'url': "https://fallingstar-data.com/forcedphot",
             'api_key': os.getenv('ATLAS_FORCED_PHOTOMETRY_API_KEY', 'your atlas account api token')
         },
-        'panstarrs': {
-            #TODO
-        },
-        'ztf': {
-            #TODO
-        }
+        # TODO: these services are coming soon...
+        # 'PANSTARSS': {
+        # },
+        # 'ZTF': {
+        # }
     }
 
     DATA_PRODUCT_TYPES = {
