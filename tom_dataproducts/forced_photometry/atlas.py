@@ -109,15 +109,15 @@ class AtlasForcedPhotometryService(fps.BaseForcedPhotometryService):
         if not Target.objects.filter(pk=query_parameters.get('target_id')).exists():
             raise fps.ForcedPhotometryServiceException(f"Target {query_parameters.get('target_id')} does not exist")
 
-        if 'atlas' not in settings.FORCED_PHOTOMETRY_SERVICES:
-            raise fps.ForcedPhotometryServiceException("Must specify 'atlas' settings in FORCED_PHOTOMETRY_SERVICES")
-        if not settings.FORCED_PHOTOMETRY_SERVICES.get('atlas', {}).get('url'):
+        if 'ATLAS' not in settings.FORCED_PHOTOMETRY_SERVICES:
+            raise fps.ForcedPhotometryServiceException("Must specify 'ATLAS' settings in FORCED_PHOTOMETRY_SERVICES")
+        if not settings.FORCED_PHOTOMETRY_SERVICES.get('ATLAS', {}).get('url'):
             raise fps.ForcedPhotometryServiceException(
-                "Must specify a 'url' under atlas settings in FORCED_PHOTOMETRY_SERVICES"
+                "Must specify a 'url' under ATLAS settings in FORCED_PHOTOMETRY_SERVICES"
             )
-        if not settings.FORCED_PHOTOMETRY_SERVICES.get('atlas', {}).get('api_key'):
+        if not settings.FORCED_PHOTOMETRY_SERVICES.get('ATLAS', {}).get('api_key'):
             raise fps.ForcedPhotometryServiceException(
-                "Must specify an 'api_key' under atlas settings in FORCED_PHOTOMETRY_SERVICES"
+                "Must specify an 'api_key' under ATLAS settings in FORCED_PHOTOMETRY_SERVICES"
             )
 
         if 'django_dramatiq' in settings.INSTALLED_APPS:
