@@ -14,7 +14,7 @@ shown below:
 
 .. code:: python
     FORCED_PHOTOMETRY_SERVICES = {
-        'atlas': {
+        'ATLAS': {
             'class': 'tom_dataproducts.forced_photometry.atlas.AtlasForcedPhotometryService',
             'url': "https://fallingstar-data.com/forcedphot",
             'api_key': os.getenv('ATLAS_FORCED_PHOTOMETRY_API_KEY', 'your atlas account api token')
