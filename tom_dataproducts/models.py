@@ -336,8 +336,8 @@ class ReducedDatum(models.Model):
         max_length=100,
         default=''
     )
-    source_name = models.CharField(max_length=100, default='')
-    source_location = models.CharField(max_length=200, default='')
+    source_name = models.CharField(max_length=100, default='', blank=True)
+    source_location = models.CharField(max_length=200, default='', blank=True)
     timestamp = models.DateTimeField(null=False, blank=False, default=datetime.now, db_index=True)
     value = models.JSONField(null=False, blank=False)
     message = models.ManyToManyField(AlertStreamMessage)
