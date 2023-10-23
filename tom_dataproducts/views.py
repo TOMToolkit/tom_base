@@ -151,7 +151,7 @@ class ForcedPhotometryQueryView(LoginRequiredMixin, FormView):
             try:
                 service.query_service(form.cleaned_data)
             except fps.ForcedPhotometryServiceException as e:
-                form.add_error(f"Problem querying forced photometry service: {repr(e)}")
+                form.add_error(None, f"Problem querying forced photometry service: {repr(e)}")
                 return self.form_invalid(form)
             messages.info(self.request, service.get_success_message())
             return redirect(
