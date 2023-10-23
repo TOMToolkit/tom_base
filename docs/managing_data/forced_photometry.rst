@@ -14,17 +14,16 @@ shown below:
 
 .. code:: python
     FORCED_PHOTOMETRY_SERVICES = {
-        'atlas': {
+        'ATLAS': {
             'class': 'tom_dataproducts.forced_photometry.atlas.AtlasForcedPhotometryService',
             'url': "https://fallingstar-data.com/forcedphot",
             'api_key': os.getenv('ATLAS_FORCED_PHOTOMETRY_API_KEY', 'your atlas account api token')
         },
-        'panstarrs': {
-            #TODO
-        },
-        'ztf': {
-            #TODO
-        }
+        # TODO: these services are coming soon...
+        # 'PANSTARSS': {
+        # },
+        # 'ZTF': {
+        # }
     }
 
     DATA_PRODUCT_TYPES = {
@@ -72,8 +71,9 @@ a redis server, you would add the following to your ``settings.py``:
 
 After adding the ``django_dramatiq`` installed app, you will need to run ``./manage.py migrate`` once to setup
 its DB tables. If this configuration is set in your TOM, the existing services which support asynchronous queries,
-Atlas and ZTF, should start querying asynchronously. If you do not add these settings, those services will still
-function but will fall back to synchronous queries.
+Atlas and ZTF, should start querying asynchronously. (Note: You must also start the dramatiq workers:
+``./manage.py rundramatic``. If you do not add these settings, those services will still function but will fall
+back to synchronous queries.
 
 
 Adding a new Forced Photometry Service

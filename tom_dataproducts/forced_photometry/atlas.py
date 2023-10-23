@@ -1,7 +1,9 @@
+from datetime import timedelta, datetime
+from astropy.time import Time
+from crispy_forms.layout import Div, HTML
 from django import forms
 from django.conf import settings
-from crispy_forms.layout import Div, HTML
-from astropy.time import Time
+
 import tom_dataproducts.forced_photometry.forced_photometry_service as fps
 from tom_dataproducts.tasks import atlas_query
 from tom_targets.models import Target
@@ -27,6 +29,10 @@ class AtlasForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # initialize query time range to reasonable values
+        now = datetime.now()
+        self.fields['max_date'].initial = (now - timedelta(minutes=1)).strftime('%Y-%m-%dT%H:%M')
+        self.fields['min_date'].initial = (now - timedelta(days=20)).strftime('%Y-%m-%dT%H:%M')
 
     def layout(self):
         return Div(
@@ -103,15 +109,15 @@ class AtlasForcedPhotometryService(fps.BaseForcedPhotometryService):
         if not Target.objects.filter(pk=query_parameters.get('target_id')).exists():
             raise fps.ForcedPhotometryServiceException(f"Target {query_parameters.get('target_id')} does not exist")
 
-        if 'atlas' not in settings.FORCED_PHOTOMETRY_SERVICES:
-            raise fps.ForcedPhotometryServiceException("Must specify 'atlas' settings in FORCED_PHOTOMETRY_SERVICES")
-        if not settings.FORCED_PHOTOMETRY_SERVICES.get('atlas', {}).get('url'):
+        if 'ATLAS' not in settings.FORCED_PHOTOMETRY_SERVICES:
+            raise fps.ForcedPhotometryServiceException("Must specify 'ATLAS' settings in FORCED_PHOTOMETRY_SERVICES")
+        if not settings.FORCED_PHOTOMETRY_SERVICES.get('ATLAS', {}).get('url'):
             raise fps.ForcedPhotometryServiceException(
-                "Must specify a 'url' under atlas settings in FORCED_PHOTOMETRY_SERVICES"
+                "Must specify a 'url' under ATLAS settings in FORCED_PHOTOMETRY_SERVICES"
             )
-        if not settings.FORCED_PHOTOMETRY_SERVICES.get('atlas', {}).get('api_key'):
+        if not settings.FORCED_PHOTOMETRY_SERVICES.get('ATLAS', {}).get('api_key'):
             raise fps.ForcedPhotometryServiceException(
-                "Must specify an 'api_key' under atlas settings in FORCED_PHOTOMETRY_SERVICES"
+                "Must specify an 'api_key' under ATLAS settings in FORCED_PHOTOMETRY_SERVICES"
             )
 
         if 'django_dramatiq' in settings.INSTALLED_APPS:
