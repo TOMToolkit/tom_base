@@ -127,7 +127,7 @@ def upload_dataproduct(context, obj):
 @register.inclusion_tag('tom_dataproducts/partials/share_target_data.html', takes_context=True)
 def share_data(context, target):
     """
-    Publish data to Hermes
+    Share data to Hermes or another TOM
     """
 
     initial = {'submitter': context['request'].user,
