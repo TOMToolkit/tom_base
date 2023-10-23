@@ -144,10 +144,11 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
                 serialized_data['data_product'] = ''
                 if not serialized_data['source_name']:
                     serialized_data['source_name'] = settings.TOM_NAME
-                    serialized_data['source_location'] = "TOM-TOM Direct Sharing"
+                    serialized_data['source_location'] = f"ReducedDatum shared from " \
+                                                         f"<{settings.TOM_NAME}.url>/api/reduceddatums/{datum.id}/"
                 response = requests.post(reduced_datums_url, json=serialized_data, headers=headers, auth=auth)
                 response_codes.append(response.status_code)
-        failed_data_count = response_codes.count(500)
+        failed_data_count = len([rc for rc in response_codes if rc >= 300])
         if failed_data_count < len(response_codes):
             return {'message': f'{len(response_codes)-failed_data_count} of {len(response_codes)} '
                                'datums successfully saved.'}

@@ -748,3 +748,73 @@ class TestShareDataProducts(TestCase):
             follow=True
         )
         self.assertContains(response, '2 of 2 datums successfully saved.')
+
+    @responses.activate
+    def test_share_reduced_datums_invalid_responses(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"results": [{'id': 1}]},
+            status=200
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+
+        sharing_dict = {
+            'share_authors': ['test_author'],
+            'target': self.target.id,
+            'submitter': ['test_submitter'],
+            'share_destination': [share_destination],
+            'share_title': ['Updated data for thingy.'],
+            'share_message': ['test_message'],
+            'share-box': [1, 2]
+        }
+        # Check 500 error
+        responses.add(
+            responses.POST,
+            destination_tom_base_url + 'api/reduceddatums/',
+            json={},
+            status=500,
+        )
+        response = self.client.post(
+            reverse('dataproducts:share_all', kwargs={'tg_pk': self.target.id}),
+            sharing_dict,
+            follow=True
+        )
+        self.assertContains(response, 'No valid data shared. These data may already exist in target TOM.')
+
+        # Check 400 error
+        responses.add(
+            responses.POST,
+            destination_tom_base_url + 'api/reduceddatums/',
+            json={},
+            status=400,
+        )
+        response = self.client.post(
+            reverse('dataproducts:share_all', kwargs={'tg_pk': self.target.id}),
+            sharing_dict,
+            follow=True
+        )
+        self.assertContains(response, 'No valid data shared. These data may already exist in target TOM.')
+
+        # Check 300 error
+        responses.add(
+            responses.POST,
+            destination_tom_base_url + 'api/reduceddatums/',
+            json={},
+            status=300,
+        )
+        response = self.client.post(
+            reverse('dataproducts:share_all', kwargs={'tg_pk': self.target.id}),
+            sharing_dict,
+            follow=True
+        )
+        self.assertContains(response, 'No valid data shared. These data may already exist in target TOM.')

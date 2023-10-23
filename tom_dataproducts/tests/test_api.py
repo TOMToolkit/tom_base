@@ -141,3 +141,19 @@ class TestReducedDatumViewset(APITestCase):
         self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
         rd_queryset = ReducedDatum.objects.all()
         self.assertEqual(rd_queryset.count(), 2)
+
+    def test_upload_reduced_datum_no_sharing_location(self):
+        """
+        Test that a reduced datum can be uploaded without a source_location.
+        """
+        del self.rd_data['source_location']
+        response = self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_upload_reduced_datum_no_sharing_name(self):
+        """
+        Test that a reduced datum can be uploaded without a source_name.
+        """
+        del self.rd_data['source_name']
+        response = self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
