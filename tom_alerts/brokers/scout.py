@@ -57,9 +57,9 @@ class ScoutBroker(GenericBroker):
         parsed.sort(key=lambda x: parse(x['lastRun']), reverse=True)
         return iter(parsed), broker_feedback
 
-    def fetch_alert(self, id):
-        url = f'{SCOUT_URL}/{id}/?format=json'
-        url = '{0}?tdes={1}'.format(SCOUT_URL, id)
+    def fetch_alert(self, alert_id):
+        url = f'{SCOUT_URL}/{alert_id}/?format=json'
+        url = '{0}?tdes={1}'.format(SCOUT_URL, alert_id)
         response = requests.get(url)
         response.raise_for_status()
         return response.json()

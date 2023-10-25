@@ -191,7 +191,7 @@ class GenericBroker(ABC):
         :type parameters: dict
         """
 
-    def fetch_alert(self, id):
+    def fetch_alert(self, alert_id):
         """
         This method takes an alert id and retrieves the specific
         alert data from the given broker.

@@ -605,34 +605,34 @@ class LCOMuscatImagingObservationForm(LCOFullObservationForm):
         guiding_config['optional'] = True
         return guiding_config
 
-    def _build_instrument_config(self, instrument_type, configuration_id, id):
+    def _build_instrument_config(self, instrument_type, configuration_id, instrument_config_id):
         # Refer to the 'MUSCAT instrument configuration' section on this page: https://developers.lco.global/
-        if not (self.cleaned_data.get(f'c_{configuration_id}_ic_{id}_exposure_time_g') and self.cleaned_data.get(
-            f'c_{configuration_id}_ic_{id}_exposure_time_r') and self.cleaned_data.get(
-                f'c_{configuration_id}_ic_{id}_exposure_time_i') and self.cleaned_data.get(
-                    f'c_{configuration_id}_ic_{id}_exposure_time_z')):
+        if not (self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_g') and self.cleaned_data.get(
+            f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_r') and self.cleaned_data.get(
+                f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_i') and self.cleaned_data.get(
+                    f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_z')):
             return None
         instrument_config = {
-            'exposure_count': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_count'],
+            'exposure_count': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_count'],
             'exposure_time': max(
-                self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_g'],
-                self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_r'],
-                self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_i'],
-                self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_z']
+                self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_g'],
+                self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_r'],
+                self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_i'],
+                self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_z']
             ),
             'optical_elements': {},
-            'mode': self.cleaned_data[f'c_{configuration_id}_ic_{id}_readout_mode'],
+            'mode': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode'],
             'extra_params': {
-                'exposure_mode': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_mode'],
-                'exposure_time_g': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_g'],
-                'exposure_time_r': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_r'],
-                'exposure_time_i': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_i'],
-                'exposure_time_z': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_z'],
+                'exposure_mode': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_mode'],
+                'exposure_time_g': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_g'],
+                'exposure_time_r': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_r'],
+                'exposure_time_i': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_i'],
+                'exposure_time_z': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_z'],
             }
         }
         for oe_group in self.get_optical_element_groups():
             instrument_config['optical_elements'][oe_group] = self.cleaned_data.get(
-                f'c_{configuration_id}_ic_{id}_{oe_group}')
+                f'c_{configuration_id}_ic_{instrument_config_id}_{oe_group}')
 
         return instrument_config
 
@@ -706,8 +706,8 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
 
         return acquisition_config
 
-    def _build_configuration(self, id):
-        configuration = super()._build_configuration(id)
+    def _build_configuration(self, build_id):
+        configuration = super()._build_configuration(build_id)
         if not configuration:
             return None
         # If NRES, adjust the configuration types to match nres types

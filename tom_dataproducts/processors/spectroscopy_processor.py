@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime
 
 from astropy import units
-from astropy.io import fits, ascii
+from astropy.io import fits, ascii as astropy_ascii
 from astropy.time import Time
 from astropy.wcs import WCS
 from specutils import Spectrum1D
@@ -111,7 +111,7 @@ class SpectroscopyProcessor(DataProcessor):
         :rtype: AstroPy.Time
         """
 
-        data = ascii.read(data_product.data.path)
+        data = astropy_ascii.read(data_product.data.path)
         if len(data) < 1:
             raise InvalidFileFormatException('Empty table or invalid file type')
         facility_name = None
