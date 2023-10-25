@@ -598,7 +598,7 @@ class LCOMuscatImagingObservationForm(LCOFullObservationForm):
     def configuration_type_choices(self):
         return [('EXPOSE', 'Exposure'), ('REPEAT_EXPOSE', 'Exposure Sequence')]
 
-    def _build_guiding_config(self, configuration_id: int):
+    def _build_guiding_config(self, configuration_id=1):
         guiding_config = super()._build_guiding_config()
         guiding_config['mode'] = self.cleaned_data[f'c_{configuration_id}_guide_mode']
         # Muscat guiding `optional` setting only makes sense set to true from the telescope software perspective
@@ -701,7 +701,7 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
             ('LAMP_FLAT', 'Lamp Flat')
         ]
 
-    def _build_acquisition_config(self, configuration_id: int):
+    def _build_acquisition_config(self, configuration_id=1):
         acquisition_config = {'mode': self.cleaned_data[f'c_{configuration_id}_acquisition_mode']}
 
         return acquisition_config
