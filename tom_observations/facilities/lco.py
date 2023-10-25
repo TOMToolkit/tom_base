@@ -607,10 +607,10 @@ class LCOMuscatImagingObservationForm(LCOFullObservationForm):
 
     def _build_instrument_config(self, instrument_type, configuration_id, instrument_config_id):
         # Refer to the 'MUSCAT instrument configuration' section on this page: https://developers.lco.global/
-        if not (self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_g') and self.cleaned_data.get(
-            f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_r') and self.cleaned_data.get(
-                f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_i') and self.cleaned_data.get(
-                    f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_z')):
+        if not (self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_g') and 
+                self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_r') and 
+                self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_i') and 
+                self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_z')):
             return None
         instrument_config = {
             'exposure_count': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_count'],

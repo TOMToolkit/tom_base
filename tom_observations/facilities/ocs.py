@@ -1076,7 +1076,9 @@ class OCSFullObservationForm(OCSBaseObservationForm):
         return ics
 
     def _build_configuration(self, build_id):
-        instrument_configs = self._build_instrument_configs(self.cleaned_data[f'c_{build_id}_instrument_type'], build_id)
+        instrument_configs = self._build_instrument_configs(
+            self.cleaned_data[f'c_{build_id}_instrument_type'], build_id
+            )
         # Check if the instrument configs are empty, and if so, leave this configuration out by returning None
         if not instrument_configs:
             return None
