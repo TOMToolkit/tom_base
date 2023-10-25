@@ -53,7 +53,7 @@ class BrokerQueryCreateView(LoginRequiredMixin, FormView):
 
         return get_service_class(broker_name).form
 
-    def get_form(self):
+    def get_form(self, form_class=None):
         """
         Returns an instance of the form to be used in this view.
 
