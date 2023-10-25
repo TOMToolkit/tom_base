@@ -516,7 +516,7 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
                           'the docs.</a>'))
         return HttpResponseRedirect(f'{self.get_redirect_url(*args, **kwargs)}?{urlencode(query_params)}')
 
-    def get_redirect_url(self):
+    def get_redirect_url(self, *args, **kwargs):
         """
         Returns redirect URL as specified in the HTTP_REFERER field of the request.
 
