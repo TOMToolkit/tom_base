@@ -73,9 +73,7 @@ class TestLasairBrokerClass(TestCase):
 
     def test_to_target(self):
         created_target = LasairBroker().to_target(alert1)  # uses to_target method
-        '''
-        The following assertions check to_target() works properly
-        '''
+        'The following assertions check to_target() works properly'
         self.assertEqual(created_target.name, 'ZTF18aaaduje')
         self.assertEqual(created_target.ra, 52.68339748783069)
         self.assertEqual(created_target.dec, 30.546314428042333)

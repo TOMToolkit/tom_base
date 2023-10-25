@@ -4,18 +4,18 @@ from specutils import Spectrum1D
 
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 
-"""
-This code was written by Curtis McCully for the conversion from photon_flux to flux. The below code is an adaptation
-of this code.
-
-def photon_spectrum_to_energy_spectrum(wavelength, photon_counts):
-    photon_spectrum = specutils.Spectrum1D(flux=photon_counts, spectral_axis=wavelength)
-    energy_spectrum = photon_spectrum.flux * (photon_spectrum.energy / u.photon)
-    return specutils.Spectrum1D(spectral_axis=wavelength,
-                                flux=energy_spectrum.to('erg / (s cm2 AA)', u.spectral_density(wavelength)))
-"""
 
 def photon_spectrum_to_energy_spectrum(apps, schema_editor):
+    """
+    This code was written by Curtis McCully for the conversion from photon_flux to flux. The below code is an adaptation
+    of this code.
+
+    def photon_spectrum_to_energy_spectrum(wavelength, photon_counts):
+        photon_spectrum = specutils.Spectrum1D(flux=photon_counts, spectral_axis=wavelength)
+        energy_spectrum = photon_spectrum.flux * (photon_spectrum.energy / u.photon)
+        return specutils.Spectrum1D(spectral_axis=wavelength,
+                                    flux=energy_spectrum.to('erg / (s cm2 AA)', u.spectral_density(wavelength)))
+    """
     reduced_datum = apps.get_model('tom_dataproducts', 'ReducedDatum')
     spectrum_serializer = SpectrumSerializer()
     for row in reduced_datum.objects.filter(data_type='spectroscopy'):
