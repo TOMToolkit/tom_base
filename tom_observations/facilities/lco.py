@@ -598,41 +598,41 @@ class LCOMuscatImagingObservationForm(LCOFullObservationForm):
     def configuration_type_choices(self):
         return [('EXPOSE', 'Exposure'), ('REPEAT_EXPOSE', 'Exposure Sequence')]
 
-    def _build_guiding_config(self, configuration_id):
+    def _build_guiding_config(self, configuration_id: int):
         guiding_config = super()._build_guiding_config()
         guiding_config['mode'] = self.cleaned_data[f'c_{configuration_id}_guide_mode']
         # Muscat guiding `optional` setting only makes sense set to true from the telescope software perspective
         guiding_config['optional'] = True
         return guiding_config
 
-    def _build_instrument_config(self, instrument_type, configuration_id, id):
+    def _build_instrument_config(self, instrument_type, configuration_id, instrument_config_id):
         # Refer to the 'MUSCAT instrument configuration' section on this page: https://developers.lco.global/
-        if not (self.cleaned_data.get(f'c_{configuration_id}_ic_{id}_exposure_time_g') and self.cleaned_data.get(
-            f'c_{configuration_id}_ic_{id}_exposure_time_r') and self.cleaned_data.get(
-                f'c_{configuration_id}_ic_{id}_exposure_time_i') and self.cleaned_data.get(
-                    f'c_{configuration_id}_ic_{id}_exposure_time_z')):
+        if not (self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_g') and
+                self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_r') and
+                self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_i') and
+                self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_z')):
             return None
         instrument_config = {
-            'exposure_count': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_count'],
+            'exposure_count': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_count'],
             'exposure_time': max(
-                self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_g'],
-                self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_r'],
-                self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_i'],
-                self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_z']
+                self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_g'],
+                self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_r'],
+                self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_i'],
+                self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_z']
             ),
             'optical_elements': {},
-            'mode': self.cleaned_data[f'c_{configuration_id}_ic_{id}_readout_mode'],
+            'mode': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode'],
             'extra_params': {
-                'exposure_mode': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_mode'],
-                'exposure_time_g': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_g'],
-                'exposure_time_r': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_r'],
-                'exposure_time_i': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_i'],
-                'exposure_time_z': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time_z'],
+                'exposure_mode': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_mode'],
+                'exposure_time_g': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_g'],
+                'exposure_time_r': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_r'],
+                'exposure_time_i': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_i'],
+                'exposure_time_z': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time_z'],
             }
         }
         for oe_group in self.get_optical_element_groups():
             instrument_config['optical_elements'][oe_group] = self.cleaned_data.get(
-                f'c_{configuration_id}_ic_{id}_{oe_group}')
+                f'c_{configuration_id}_ic_{instrument_config_id}_{oe_group}')
 
         return instrument_config
 
@@ -701,13 +701,13 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
             ('LAMP_FLAT', 'Lamp Flat')
         ]
 
-    def _build_acquisition_config(self, configuration_id):
+    def _build_acquisition_config(self, configuration_id: int):
         acquisition_config = {'mode': self.cleaned_data[f'c_{configuration_id}_acquisition_mode']}
 
         return acquisition_config
 
-    def _build_configuration(self, id):
-        configuration = super()._build_configuration(id)
+    def _build_configuration(self, build_id):
+        configuration = super()._build_configuration(build_id)
         if not configuration:
             return None
         # If NRES, adjust the configuration types to match nres types
@@ -719,16 +719,18 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
 
         return configuration
 
-    def _build_instrument_config(self, instrument_type, configuration_id, id):
-        instrument_config = super()._build_instrument_config(instrument_type, configuration_id, id)
+    def _build_instrument_config(self, instrument_type, configuration_id, instrument_config_id):
+        instrument_config = super()._build_instrument_config(instrument_type, configuration_id, instrument_config_id)
         if not instrument_config:
             return None
         # If floyds, add the rotator mode and angle in
         if 'FLOYDS' in instrument_type.upper() or 'SOAR' in instrument_type.upper():
-            instrument_config['rotator_mode'] = self.cleaned_data[f'c_{configuration_id}_ic_{id}_rotator_mode']
+            instrument_config['rotator_mode'] = self.cleaned_data[
+                f'c_{configuration_id}_ic_{instrument_config_id}_rotator_mode'
+                ]
             if instrument_config['rotator_mode'] == 'SKY':
                 instrument_config['extra_params'] = {'rotator_angle': self.cleaned_data.get(
-                    f'c_{configuration_id}_ic_{id}_rotator_angle', 0)}
+                    f'c_{configuration_id}_ic_{instrument_config_id}_rotator_angle', 0)}
             if 'FLOYDS' in instrument_type.upper():
                 # Remove grating from FLOYDS requests
                 instrument_config['optical_elements'].pop('grating', None)

@@ -191,13 +191,13 @@ class GenericBroker(ABC):
         :type parameters: dict
         """
 
-    def fetch_alert(self, id):
+    def fetch_alert(self, alert_id):
         """
         This method takes an alert id and retrieves the specific
         alert data from the given broker.
 
-        :param id: Broker-specific id corresponding with the desired alert
-        :type id: str
+        :param alert_id: Broker-specific id corresponding with the desired alert
+        :type alert_id: str
         """
         return None
 
@@ -212,7 +212,6 @@ class GenericBroker(ABC):
         :param alert: alert data from a particular ``BrokerQuery``
         :type alert: str
         """
-        pass
 
     def to_target(self, alert):
         """
@@ -237,7 +236,6 @@ class GenericBroker(ABC):
         :returns: True or False depending on success of message submission
         :rtype: bool
         """
-        pass
 
     @abstractmethod
     def to_generic_alert(self, alert):

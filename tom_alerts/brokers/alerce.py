@@ -329,7 +329,7 @@ class ALeRCEBroker(GenericBroker):
         # Bottom out of recursion and return accumulated alerts
         return iter(alerts), broker_feedback
 
-    def fetch_alert(self, id):
+    def fetch_alert(self, alert_id):
         """
         The response for a single alert is as follows:
 
@@ -340,7 +340,7 @@ class ALeRCEBroker(GenericBroker):
             ...
         }
         """
-        response = requests.get(f'{ALERCE_SEARCH_URL}/objects/{id}')
+        response = requests.get(f'{ALERCE_SEARCH_URL}/objects/{alert_id}')
         response.raise_for_status()
         return response.json()
 
