@@ -74,14 +74,14 @@ class GenericAlert:
     dataclass representing an alert in order to display it in the UI.
     """
 
-    timestamp: datetime = datetime.now()
-    id: int = None
-    name: str = None
-    ra: float = None
-    dec: float = None
-    mag: float = None
-    score: float = None
-    url: str = None
+    timestamp: datetime
+    id: int
+    name: str
+    ra: float
+    dec: float
+    mag: float
+    score: float
+    url: str
 
     def to_target(self):
         """
