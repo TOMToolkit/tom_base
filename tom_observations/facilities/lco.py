@@ -598,7 +598,7 @@ class LCOMuscatImagingObservationForm(LCOFullObservationForm):
     def configuration_type_choices(self):
         return [('EXPOSE', 'Exposure'), ('REPEAT_EXPOSE', 'Exposure Sequence')]
 
-    def _build_guiding_config(self, configuration_id: int):
+    def _build_guiding_config(self, configuration_id=1):
         guiding_config = super()._build_guiding_config()
         guiding_config['mode'] = self.cleaned_data[f'c_{configuration_id}_guide_mode']
         # Muscat guiding `optional` setting only makes sense set to true from the telescope software perspective
@@ -701,7 +701,7 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
             ('LAMP_FLAT', 'Lamp Flat')
         ]
 
-    def _build_acquisition_config(self, configuration_id: int):
+    def _build_acquisition_config(self, configuration_id=1):
         acquisition_config = {'mode': self.cleaned_data[f'c_{configuration_id}_acquisition_mode']}
 
         return acquisition_config
@@ -719,13 +719,13 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
 
         return configuration
 
-    def _build_instrument_config(self, instrument_type, configuration_id, id):
-        instrument_config = super()._build_instrument_config(instrument_type, configuration_id, id)
+    def _build_instrument_config(self, instrument_type, configuration_id, instrument_config_id):
+        instrument_config = super()._build_instrument_config(instrument_type, configuration_id, instrument_config_id)
         if not instrument_config:
             return None
         # If floyds, add the rotator mode and angle in
         if 'FLOYDS' in instrument_type.upper() or 'SOAR' in instrument_type.upper():
-            instrument_config['rotator_mode'] = self.cleaned_data[f'c_{configuration_id}_ic_{id}_rotator_mode']
+            instrument_config['rotator_mode'] = self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_rotator_mode']
             if instrument_config['rotator_mode'] == 'SKY':
                 instrument_config['extra_params'] = {'rotator_angle': self.cleaned_data.get(
                     f'c_{configuration_id}_ic_{id}_rotator_angle', 0)}
