@@ -199,7 +199,6 @@ class GenericBroker(ABC):
         :param id: Broker-specific id corresponding with the desired alert
         :type id: str
         """
-        pass
 
     def process_reduced_data(self, target, alert=None):
         """

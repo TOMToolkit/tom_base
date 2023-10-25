@@ -138,7 +138,6 @@ class BaseRoboticObservationForm(BaseObservationForm):
     For an implementation example please see
     https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py#L132
     """
-    pass
 
 
 # This aliasing exists to support backwards compatibility

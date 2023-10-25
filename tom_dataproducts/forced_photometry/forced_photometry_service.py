@@ -84,7 +84,6 @@ class BaseForcedPhotometryService(ABC):
         """
         This method returns the form for querying this service.
         """
-        pass
 
     @abstractmethod
     def query_service(self, query_parameters):
