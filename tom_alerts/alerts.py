@@ -211,7 +211,6 @@ class GenericBroker(ABC):
         :param alert: alert data from a particular ``BrokerQuery``
         :type alert: str
         """
-        pass
 
     def to_target(self, alert):
         """
@@ -220,7 +219,6 @@ class GenericBroker(ABC):
         :param alert: alert data from a particular ``BrokerQuery``
         :type alert: str
         """
-        pass
 
     def submit_upstream_alert(self, target=None, observation_record=None, **kwargs):
         """
@@ -236,7 +234,6 @@ class GenericBroker(ABC):
         :returns: True or False depending on success of message submission
         :rtype: bool
         """
-        pass
 
     @abstractmethod
     def to_generic_alert(self, alert):
@@ -247,7 +244,6 @@ class GenericBroker(ABC):
         :param alert: alert data from a particular ``BrokerQuery``
         :type alert: str
         """
-        pass
 
     def fetch_and_save_all(self, parameters):
         """
