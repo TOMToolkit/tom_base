@@ -434,5 +434,5 @@ class TestGetVisibility(TestCase):
             1.2895601364316183, 1.3034413026227516, 1.3203684217446099
         ]
         self.assertEqual(len(airmass_data), len(expected_airmass))
-        for i in range(0, len(expected_airmass)):
-            self.assertAlmostEqual(airmass_data[i], expected_airmass[i], places=3)
+        for i, expected_airmass_value in enumerate(expected_airmass):
+            self.assertAlmostEqual(airmass_data[i], expected_airmass_value, places=3)
