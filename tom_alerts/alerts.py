@@ -74,14 +74,14 @@ class GenericAlert:
     dataclass representing an alert in order to display it in the UI.
     """
 
-    timestamp: datetime
-    id: int
-    name: str
-    ra: float
-    dec: float
-    mag: float
-    score: float
-    url: str
+    timestamp: datetime = datetime.now()
+    id: int = None
+    name: str = None
+    ra: float = None
+    dec: float = None
+    mag: float = None
+    score: float = None
+    url: str = None
 
     def to_target(self):
         """
@@ -199,7 +199,7 @@ class GenericBroker(ABC):
         :param id: Broker-specific id corresponding with the desired alert
         :type id: str
         """
-        pass
+        return None
 
     def process_reduced_data(self, target, alert=None):
         """
@@ -221,7 +221,7 @@ class GenericBroker(ABC):
         :param alert: alert data from a particular ``BrokerQuery``
         :type alert: str
         """
-        pass
+        return None
 
     def submit_upstream_alert(self, target=None, observation_record=None, **kwargs):
         """
@@ -243,12 +243,12 @@ class GenericBroker(ABC):
     def to_generic_alert(self, alert):
         """
         This method creates a ``GenericAlert`` object from the broker-specific
-        alert data for use outside of the implementation of the ``GenericBroker``.
+        alert data for use outside the implementation of the ``GenericBroker``.
 
         :param alert: alert data from a particular ``BrokerQuery``
         :type alert: str
         """
-        pass
+        return None
 
     def fetch_and_save_all(self, parameters):
         """
