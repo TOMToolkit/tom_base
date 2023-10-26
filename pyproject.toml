@@ -2,11 +2,11 @@
 name = "tom-base"
 version = "0.0.0"  # version supplied by poetry-dynamic-versioning
 description = "TOM Toolkit and base modules"
-authors = [TOM Toolkit Project]
+authors = ["TOM Toolkit Project"]
 maintainers = [
-    William Lindstrom <llindstrom@lco.global>,
-    Joey Chatelain <jchatelain@lco.global>,
-    Rachel Street <rstreet@lco.global>
+    "William Lindstrom <llindstrom@lco.global>",
+    "Joey Chatelain <jchatelain@lco.global>",
+    "Rachel Street <rstreet@lco.global>"
 ]
 license = "GPL-3.0-only"
 readme = "README.md"
