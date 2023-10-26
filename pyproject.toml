@@ -1,0 +1,53 @@
+[tool.poetry]
+name = "tom-base"
+version = "2.15.0"
+description = "TOM Toolkit and base modules"
+authors = ["William (Lindy) Lindstrom <llindstrom@lco.global>"]
+license = "GPLv3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+numpy = "<2"
+astroquery = ">=0.4.2"
+astroplan = "~0.8"
+astropy = "^5.3.4"
+django = "<5"
+djangorestframework = "<4"
+django-bootstrap4 = ">3,<24"
+beautifulsoup4 = "<5"
+dramatiq = {version = "<2.0.0", extras = ["redis", "watch"]}
+django-contrib-comments = ">=2.0,<3.0"
+django-crispy-forms = ">=2.0,<3.0"
+crispy-bootstrap4 = "^2023.1"
+django-dramatiq = "^0.11.5"
+django-extensions = "^3.2.3"
+django-filter = "^23.3"
+django-gravatar2 = "^1.4.4"
+django-guardian = "^2.4.0"
+fits2image = "<0.5"
+markdown = "<4"
+pillow = ">9.2,<11.0"
+plotly = "<6"
+python-dateutil = "<3"
+requests = "<3"
+specutils = "<2"
+
+
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+style = "pep440"
+# the default pattern regex makes the 'v' manditory
+# this pattern modifies the default regex in order to make the 'v' optional
+# ('v' becomes '[v]?' meaning a single v, [v], and ? means optional)
+pattern = "(?x)^[v]?((?P<epoch>\\d+)!)?(?P<base>\\d+(\\.\\d+)*)([-._]?((?P<stage>[a-zA-Z]+)[-._]?(?P<revision>\\d+)?))?(\\+(?P<tagged_metadata>.+))?$"
+
+# substitute version not only in pyproject.toml (which the config block above does)
+# but also the __version__.py file
+[tool.poetry-dynamic-versioning.substitution]
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
