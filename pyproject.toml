@@ -12,6 +12,8 @@ license = "GPL-3.0-only"
 readme = "README.md"
 homepage = "https://lco.global/tomtoolkit/"
 repository = "https://github.com/TOMToolkit/tom_base"
+documentation = "https://tom-toolkit.readthedocs.io/en/latest/"
+
 keywords = [
     'tomtoolkit',
     'TOM',
