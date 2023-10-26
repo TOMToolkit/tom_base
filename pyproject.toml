@@ -1,17 +1,48 @@
 [tool.poetry]
 name = "tom-base"
-version = "2.15.0"
+version = "0.0.0"  # version supplied by poetry-dynamic-versioning
 description = "TOM Toolkit and base modules"
-authors = ["William (Lindy) Lindstrom <llindstrom@lco.global>"]
-license = "GPLv3"
+authors = [TOM Toolkit Project]
+maintainers = [
+    William Lindstrom <llindstrom@lco.global>,
+    Joey Chatelain <jchatelain@lco.global>,
+    Rachel Street <rstreet@lco.global>
+]
+license = "GPL-3.0-only"
 readme = "README.md"
+homepage = "https://lco.global/tomtoolkit/"
+repository = "https://github.com/TOMToolkit/tom_base"
+keywords = [
+    'tomtoolkit',
+    'TOM',
+    'astronomy',
+    'astrophysics',
+    'cosmology',
+    'science',
+    'fits',
+    'observatory',
+]
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: BSD License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Topic :: Scientific/Engineering :: Astronomy',
+    'Topic :: Scientific/Engineering :: Physics'
+]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">= 3.8"
 numpy = "<2"
-astroquery = ">=0.4.2"
+astroquery = "<1"
 astroplan = "~0.8"
-astropy = "^5.3.4"
+astropy = ">=3,<6"
 django = "<5"
 djangorestframework = "<4"
 django-bootstrap4 = ">3,<24"
@@ -19,13 +50,13 @@ beautifulsoup4 = "<5"
 dramatiq = {version = "<2.0.0", extras = ["redis", "watch"]}
 django-contrib-comments = ">=2.0,<3.0"
 django-crispy-forms = ">=2.0,<3.0"
-crispy-bootstrap4 = "^2023.1"
-django-dramatiq = "^0.11.5"
-django-extensions = "^3.2.3"
-django-filter = "^23.3"
-django-gravatar2 = "^1.4.4"
-django-guardian = "^2.4.0"
-fits2image = "<0.5"
+crispy-bootstrap4 = "~2023.1"
+django-dramatiq = "~0.11"
+django-extensions = "~3"
+django-filter = "~23"
+django-gravatar2 = "~1"
+django-guardian = "~2"
+fits2image = "~0.4"
 markdown = "<4"
 pillow = ">9.2,<11.0"
 plotly = "<6"
