@@ -7,6 +7,9 @@ on:
 jobs:
   publish_to_pypi:
     runs-on: ubuntu-latest
+    environment: release  # configured in repo Settings/Environments; referenced in PyPI OIDC
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -15,11 +18,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install setuptools wheel twine
-    - name: Build package and publish to PyPi
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_TOMTOOLKIT_API_TOKEN }}
+        python -m pip install poetry
+        poetry self add "poetry-dynamic-versioning[plugin]"
+    - name: Build package with poetry
       run: |
-        python setup.py sdist bdist_wheel
-        twine upload dist/*
+        poetry build -f wheel
+        poetry publish -f sdist
+    - name: Publish to PyPI with pypi-publish (trusted publishing)
+      uses: pypa/gh-action-pypi-publish@v1.8.5
