@@ -41,7 +41,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">= 3.8"
-numpy = "<2"
+numpy = "~1.24,<2"
 astroquery = "<1"
 astroplan = "~0.8"
 astropy = ">=3,<6"
