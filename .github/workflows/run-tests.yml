@@ -14,7 +14,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install poetry
-        poetry install --with test
+        poetry install
         python -m pip install -I flake8
     - name: Style Checks
       run: flake8 tom_* --exclude=*/migrations/* --max-line-length=120
@@ -40,7 +40,9 @@ jobs:
           python -m pip install coveralls
           python -m pip install -I flake8
       - name: Run Tests
-        run: python manage.py test --exclude-tag=canary
+        run: |
+          python -m pip freeze
+          python manage.py test --exclude-tag=canary
 
   publish_coverage:
     runs-on: ubuntu-latest
