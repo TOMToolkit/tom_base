@@ -45,7 +45,7 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
     destination = share_destination.split(':')[0]
     message_info = BuildHermesMessage(title=form_data.get('share_title',
                                                           f"Updated data for {target.name} from "
-                                                          f"{getattr(settings, 'TOM_NAME','TOM Toolkit')}."),
+                                                          f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}."),
                                       submitter=form_data.get('submitter'),
                                       authors=form_data.get('share_authors', None),
                                       message=form_data.get('share_message', None),
