@@ -141,6 +141,11 @@ class LCOSettings(OCSSettings):
 
 
 class LCOTemplateBaseForm(OCSTemplateBaseForm):
+    def __init__(self, *args, **kwargs):
+        if 'facility_settings' not in kwargs:
+            kwargs['facility_settings'] = LCOSettings("LCO")
+        super().__init__(*args, **kwargs)
+
     def all_optical_element_choices(self, use_code_only=False):
         return sorted(set([
             (f['code'], f['code'] if use_code_only else f['name']) for ins in self.get_instruments().values() for f in
