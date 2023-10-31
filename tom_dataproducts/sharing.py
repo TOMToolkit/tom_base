@@ -92,7 +92,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
         target = product.target
         serialized_data = DataProductSerializer(product).data
         # Find matching target in destination TOM
-        destination_target_id, target_search_response = get_destination_target(target, targets_url, headers, auth)
+        destination_target_id, _ = get_destination_target(target, targets_url, headers, auth)
         if destination_target_id is None:
             return {'message': 'ERROR: No matching target found.'}
         elif isinstance(destination_target_id, list) and len(destination_target_id) > 1:
