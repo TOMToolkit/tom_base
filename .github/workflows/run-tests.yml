@@ -23,9 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.8"] # TODO: add back 3.10, 3.11, 3.12
-        # 3.12 not working for numpy
-        # 3.10, 3.11 not working for antares-client's confluent-kafka dependency
+        python-version: ["3.11", "3.10", "3.9", "3.8"]
+        # 3.12 not working yet for numpy 1.24
         os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v2
