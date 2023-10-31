@@ -223,7 +223,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
 
         # allow the Facility class to add data to the context
         facility_class = self.get_facility_class()
-        facility_context = facility_class().get_facility_context_data()
+        facility_context = facility_class().get_facility_context_data(target=target)
         context.update(facility_context)
 
         return context
@@ -245,7 +245,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
                           {})
         return form_class
 
-    def get_form(self):
+    def get_form(self, form_class=None):
         """
         Gets an instance of the form appropriate for the request.
 
@@ -405,7 +405,7 @@ class AddExistingObservationView(LoginRequiredMixin, FormView):
     template_name = 'tom_observations/existing_observation_confirm.html'
     form_class = AddExistingObservationForm
 
-    def get_form(self):
+    def get_form(self, form_class=None):
         form = super().get_form()
         form.fields['facility'].widget = forms.HiddenInput()
         form.fields['observation_id'].widget = forms.HiddenInput()
@@ -639,7 +639,7 @@ class ObservationTemplateUpdateView(LoginRequiredMixin, FormView):
         self.object = self.get_object()
         return get_service_class(self.object.facility)().get_template_form(None)
 
-    def get_form(self):
+    def get_form(self, form_class=None):
         form = super().get_form()
         form.helper.form_action = reverse(
             'tom_observations:template-update', kwargs={'pk': self.object.id}

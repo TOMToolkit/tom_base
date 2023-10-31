@@ -1,6 +1,5 @@
 from io import StringIO
 import logging
-import os
 from urllib.parse import urlencode, urlparse
 
 from django.conf import settings
@@ -9,7 +8,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
-from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
@@ -25,19 +23,16 @@ from guardian.shortcuts import assign_perm, get_objects_for_user
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
-from tom_targets.serializers import TargetSerializer
-from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm, DataShareForm
 from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
-from tom_dataproducts.alertstreams.hermes import publish_photometry_to_hermes, BuildHermesMessage
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
-from tom_dataproducts.serializers import DataProductSerializer
-
-import requests
+from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom, sharing_feedback_handler
+import tom_dataproducts.forced_photometry.forced_photometry_service as fps
+from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -84,6 +79,86 @@ class DataProductSaveView(LoginRequiredMixin, View):
             'tom_observations:detail',
             kwargs={'pk': observation_record.id})
         )
+
+
+class ForcedPhotometryQueryView(LoginRequiredMixin, FormView):
+    """
+    View that handles queries for forced photometry services
+    """
+    template_name = 'tom_dataproducts/forced_photometry_form.html'
+
+    def get_target_id(self):
+        """
+        Parses the target id from the query parameters.
+        """
+        if self.request.method == 'GET':
+            return self.request.GET.get('target_id')
+        elif self.request.method == 'POST':
+            return self.request.POST.get('target_id')
+
+    def get_target(self):
+        """
+        Gets the target for observing from the database
+
+        :returns: target for observing
+        :rtype: Target
+        """
+        return Target.objects.get(pk=self.get_target_id())
+
+    def get_service(self):
+        """
+        Gets the forced photometry service that you want to query
+        """
+        return self.kwargs['service']
+
+    def get_service_class(self):
+        """
+        Gets the forced photometry service class
+        """
+        return fps.get_service_class(self.get_service())
+
+    def get_form_class(self):
+        """
+        Gets the forced photometry service form class
+        """
+        return self.get_service_class()().get_form()
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds the target to the context object.
+        """
+        context = super().get_context_data(*args, **kwargs)
+        context['target'] = self.get_target()
+        context['query_form'] = self.get_form_class()(initial=self.get_initial())
+        return context
+
+    def get_initial(self):
+        """
+        Populates the form with initial data including service name and target id
+        """
+        initial = super().get_initial()
+        if not self.get_target_id():
+            raise Exception('Must provide target_id')
+        initial['target_id'] = self.get_target_id()
+        initial['service'] = self.get_service()
+        initial.update(self.request.GET.dict())
+        return initial
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            service = self.get_service_class()()
+            try:
+                service.query_service(form.cleaned_data)
+            except fps.ForcedPhotometryServiceException as e:
+                form.add_error(None, f"Problem querying forced photometry service: {repr(e)}")
+                return self.form_invalid(form)
+            messages.info(self.request, service.get_success_message())
+            return redirect(
+                reverse('tom_targets:detail', kwargs={'pk': self.get_target_id()})
+            )
+        else:
+            return self.form_invalid(form)
 
 
 class DataProductUploadView(LoginRequiredMixin, FormView):
@@ -327,127 +402,24 @@ class DataShareView(FormView):
         Handles Data Products and All the data of a type for a target as well as individual Reduced Datums.
         Submit to Hermes, or Share with TOM (soon).
         """
-
         data_share_form = DataShareForm(request.POST, request.FILES)
-        # Check if data points have been selected.
-        selected_data = request.POST.getlist("share-box")
+
         if data_share_form.is_valid():
             form_data = data_share_form.cleaned_data
-            # 1st determine if pk is data product, Reduced Datum, or Target.
-            # Then query relevant Reduced Datums Queryset
+            share_destination = form_data['share_destination']
             product_id = kwargs.get('dp_pk', None)
-            if product_id:
-                product = DataProduct.objects.get(pk=product_id)
-                data_type = product.data_product_type
-                reduced_datums = ReducedDatum.objects.filter(data_product=product)
+            target_id = kwargs.get('tg_pk', None)
+
+            # Check if data points have been selected.
+            selected_data = request.POST.getlist("share-box")
+
+            # Check Destination
+            if 'HERMES' in share_destination.upper():
+                response = share_data_with_hermes(share_destination, form_data, product_id, target_id, selected_data)
             else:
-                target_id = kwargs.get('tg_pk', None)
-                target = Target.objects.get(pk=target_id)
-                data_type = form_data['data_type']
-                if request.POST.get("share-box", None) is None:
-                    reduced_datums = ReducedDatum.objects.filter(target=target, data_type=data_type)
-                else:
-                    reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
-            if data_type == 'photometry':
-                share_destination = form_data['share_destination']
-                if 'HERMES' in share_destination.upper():
-                    # Build and submit hermes table from Reduced Datums
-                    hermes_topic = share_destination.split(':')[1]
-                    destination = share_destination.split(':')[0]
-                    message_info = BuildHermesMessage(title=form_data['share_title'],
-                                                      submitter=form_data['submitter'],
-                                                      authors=form_data['share_authors'],
-                                                      message=form_data['share_message'],
-                                                      topic=hermes_topic
-                                                      )
-                    # Run ReducedDatums Queryset through sharing protocols to make sure they are safe to share.
-                    filtered_reduced_datums = self.get_share_safe_datums(destination, reduced_datums,
-                                                                         topic=hermes_topic)
-                    if filtered_reduced_datums.count() > 0:
-                        response = publish_photometry_to_hermes(message_info, filtered_reduced_datums)
-                    else:
-                        messages.error(self.request, 'No Data to share. (Check sharing Protocol.)')
-                        return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
-                else:
-                    messages.error(self.request, 'TOM-TOM sharing is not yet supported.')
-                    return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
-                    # response = self.share_with_tom(share_destination, product)
-                try:
-                    if 'message' in response.json():
-                        publish_feedback = response.json()['message']
-                    else:
-                        publish_feedback = f"ERROR: {response.text}"
-                except ValueError:
-                    publish_feedback = f"ERROR: Returned Response code {response.status_code}"
-                if "ERROR" in publish_feedback.upper():
-                    messages.error(self.request, publish_feedback)
-                else:
-                    messages.success(self.request, publish_feedback)
-            else:
-                messages.error(self.request, f'Publishing {data_type} data is not yet supported.')
+                response = share_data_with_tom(share_destination, form_data, product_id, target_id, selected_data)
+            sharing_feedback_handler(response, self.request)
         return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
-
-    def share_with_tom(self, tom_name, product):
-        """
-        When sharing a DataProduct with another TOM we likely want to share the data product itself and let the other
-        TOM process it rather than share the Reduced Datums
-        :param tom_name: name of destination tom in settings.DATA_SHARING
-        :param product: DataProduct model instance
-        :return:
-        """
-        try:
-            destination_tom_base_url = settings.DATA_SHARING[tom_name]['BASE_URL']
-            username = settings.DATA_SHARING[tom_name]['USERNAME']
-            password = settings.DATA_SHARING[tom_name]['PASSWORD']
-        except KeyError as err:
-            raise ImproperlyConfigured(f'Check DATA_SHARING configuration for {tom_name}: Key {err} not found.')
-        auth = (username, password)
-        headers = {'Media-Type': 'application/json'}
-        target = product.target
-        serialized_target_data = TargetSerializer(target).data
-        targets_url = destination_tom_base_url + 'api/targets/'
-        # TODO: Make sure aliases are checked before creating new target
-        # Attempt to create Target in Destination TOM
-        response = requests.post(targets_url, headers=headers, auth=auth, data=serialized_target_data)
-        try:
-            target_response = response.json()
-            destination_target_id = target_response['id']
-        except KeyError:
-            # If Target already exists at destination, find ID
-            response = requests.get(targets_url, headers=headers, auth=auth, data=serialized_target_data)
-            target_response = response.json()
-            destination_target_id = target_response['results'][0]['id']
-
-        serialized_dataproduct_data = DataProductSerializer(product).data
-        serialized_dataproduct_data['target'] = destination_target_id
-        dataproducts_url = destination_tom_base_url + 'api/dataproducts/'
-        # TODO: this should be updated when tom_dataproducts is updated to use django.core.storage
-        dataproduct_filename = os.path.join(settings.MEDIA_ROOT, product.data.name)
-        # Save DataProduct in Destination TOM
-        with open(dataproduct_filename, 'rb') as dataproduct_filep:
-            files = {'file': (product.data.name, dataproduct_filep, 'text/csv')}
-            headers = {'Media-Type': 'multipart/form-data'}
-            response = requests.post(dataproducts_url, data=serialized_dataproduct_data, files=files,
-                                     headers=headers, auth=auth)
-        return response
-
-    def get_share_safe_datums(self, destination, reduced_datums, **kwargs):
-        """
-        Custom sharing protocols used to determine when data is shared with a destination.
-        This example prevents sharing if a datum has already been published to the given Hermes topic.
-        :param destination: sharing destination string
-        :param reduced_datums: selected input datums
-        :return: queryset of reduced datums to be shared
-        """
-        return reduced_datums
-        # if 'hermes' in destination:
-        #     message_topic = kwargs.get('topic', None)
-        #     # Remove data points previously shared to the given topic
-        #     filtered_datums = reduced_datums.exclude(Q(message__exchange_status='published')
-        #                                              & Q(message__topic=message_topic))
-        # else:
-        #     filtered_datums = reduced_datums
-        # return filtered_datums
 
 
 class DataProductGroupDetailView(DetailView):
@@ -544,7 +516,7 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
                           'the docs.</a>'))
         return HttpResponseRedirect(f'{self.get_redirect_url(*args, **kwargs)}?{urlencode(query_params)}')
 
-    def get_redirect_url(self):
+    def get_redirect_url(self, *args, **kwargs):
         """
         Returns redirect URL as specified in the HTTP_REFERER field of the request.
 

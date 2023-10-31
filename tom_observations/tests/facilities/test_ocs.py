@@ -175,7 +175,7 @@ class TestOCSBaseForm(TestCase):
     @patch('tom_observations.facilities.ocs.OCSBaseForm._get_instruments')
     def test_instrument_to_type(self, mock_get_instruments):
         mock_get_instruments.return_value = generate_ocs_instrument_choices()
-        """Test instrument_to_type method."""
+        # Test instrument_to_type method.
         form = OCSBaseForm()
         self.assertEqual('SPECTRUM', form.instrument_to_default_configuration_type('2M0-FLOYDS-SCICAM'))
         self.assertEqual('NRES_SPECTRUM', form.instrument_to_default_configuration_type('1M0-NRES-SCICAM'))

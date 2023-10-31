@@ -3,7 +3,7 @@ from guardian.shortcuts import assign_perm, get_groups_with_perms, get_objects_f
 from rest_framework import serializers
 
 from tom_common.serializers import GroupSerializer
-from tom_targets.models import Target, TargetExtra, TargetName
+from tom_targets.models import Target, TargetExtra, TargetName, TargetList
 from tom_targets.validators import RequiredFieldsTogetherValidator
 
 
@@ -23,13 +23,26 @@ class TargetExtraSerializer(serializers.ModelSerializer):
         fields = ('id', 'key', 'value')
 
 
+class TargetListSerializer(serializers.ModelSerializer):
+    """
+    TargetList serializer responsible for transforming models to/from
+    """
+    id = serializers.IntegerField(required=False)
+    name = serializers.CharField(required=False)
+
+    class Meta:
+        model = TargetList
+        fields = ('id', 'name')
+
+
 class TargetSerializer(serializers.ModelSerializer):
-    """Target serializer responsbile for transforming models to/from
+    """Target serializer responsible for transforming models to/from
     json (or other representations). See
     https://www.django-rest-framework.org/api-guide/serializers/#modelserializer
     """
     targetextra_set = TargetExtraSerializer(many=True, required=False)
     aliases = TargetNameSerializer(many=True, required=False)
+    target_lists = TargetListSerializer(many=True, required=False)
     groups = GroupSerializer(many=True, required=False)  # TODO: return groups in detail and list
 
     class Meta:
@@ -50,18 +63,21 @@ class TargetSerializer(serializers.ModelSerializer):
         here we pop the alias/tag/group data and save it using their respective
         serializers
         """
-
         aliases = validated_data.pop('aliases', [])
         targetextras = validated_data.pop('targetextra_set', [])
         groups = validated_data.pop('groups', [])
+        target_lists = validated_data.pop('target_lists', [])
 
         target = Target.objects.create(**validated_data)
 
-        # Save groups for this target
+        # Save user groups for this target
         group_serializer = GroupSerializer(data=groups, many=True)
         if group_serializer.is_valid():
             for group in groups:
-                group_instance = Group.objects.get(pk=group['id'])
+                try:
+                    group_instance = Group.objects.get(pk=group['id'])
+                except KeyError:
+                    group_instance, _ = Group.objects.get_or_create(name=group['name'])
                 assign_perm('tom_targets.view_target', group_instance, target)
                 assign_perm('tom_targets.change_target', group_instance, target)
                 assign_perm('tom_targets.delete_target', group_instance, target)
@@ -79,6 +95,13 @@ class TargetSerializer(serializers.ModelSerializer):
         tes = TargetExtraSerializer(data=targetextras, many=True)
         if tes.is_valid():
             tes.save(target=target)
+
+        # Save target lists for this target
+        tls = TargetListSerializer(data=target_lists, many=True)
+        if tls.is_valid():
+            for target_list in target_lists:
+                tl_instance, _ = TargetList.objects.get_or_create(name=target_list['name'])
+                tl_instance.targets.add(target)
 
         return target
 
@@ -98,6 +121,7 @@ class TargetSerializer(serializers.ModelSerializer):
         aliases = validated_data.pop('aliases', [])
         targetextras = validated_data.pop('targetextra_set', [])
         groups = validated_data.pop('groups', [])
+        target_lists = validated_data.pop('target_lists', [])
 
         # Save groups for this target
         group_serializer = GroupSerializer(data=groups, many=True)
@@ -136,6 +160,13 @@ class TargetSerializer(serializers.ModelSerializer):
                 tes = TargetExtraSerializer(data=te_data)
             if tes.is_valid():
                 tes.save(target=instance)
+
+        # Update target lists for this target
+        tls = TargetListSerializer(data=target_lists, many=True)
+        if tls.is_valid():
+            for target_list in target_lists:
+                tl_instance, _ = TargetList.objects.get_or_create(name=target_list['name'])
+                tl_instance.targets.add(instance)
 
         fields_to_validate = ['name', 'type', 'ra', 'dec', 'epoch', 'parallax', 'pm_ra', 'pm_dec', 'galactic_lng',
                               'galactic_lat', 'distance', 'distance_err', 'scheme', 'epoch_of_elements',

@@ -32,12 +32,14 @@ setup(
         'astroplan~=0.8',
         'astropy>=5.0',
         'beautifulsoup4~=4.9',
+        'dramatiq[redis, watch]<2.0.0',
         'django>=3.1,<5',  # TOM Toolkit requires db math functions
         'djangorestframework~=3.12',
         'django-bootstrap4>=3,<24',
         'django-contrib-comments~=2.0',  # Earlier version are incompatible with Django >= 3.0
         'django-crispy-forms~=2.0',
         'crispy-bootstrap4~=2022.0',
+        'django-dramatiq<1.0.0',
         'django-extensions~=3.1',
         'django-filter>=21,<24',
         'django-gravatar2~=1.4',
@@ -52,7 +54,8 @@ setup(
         'specutils~=1.8',
     ],
     extras_require={
-        'test': ['factory_boy>=3.2.1,<3.4.0'],
+        'test': ['factory_boy>=3.2.1,<3.4.0',
+                 'responses~=0.23'],
         'docs': [
             'recommonmark~=0.7',
             'sphinx>=4,<8',

@@ -23,8 +23,8 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'TOM Toolkit'
-copyright = '2021, David Collom and Lindy Lindstrom'
-author = 'David Collom, Lindy Lindstrom, Austin Riba'
+copyright = '2021-3, Las Cumbres Observatory'
+author = 'Joey Chatelain, David Collom, Lindy Lindstrom, Austin Riba'
 
 # The full version, including alpha/beta/rc tags
 # This has to mirror the setup.py version for PDF generation

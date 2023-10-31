@@ -1,16 +1,21 @@
 import pytz
 from datetime import datetime
+import responses
 
 from django.contrib.auth.models import User, Group
 from django.contrib.messages import get_messages
 from django.contrib.messages.constants import SUCCESS, WARNING
 from django.test import TestCase, override_settings
+from django.conf import settings
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory, TargetNameFactory
+from tom_observations.tests.utils import FakeRoboticFacility
+from tom_observations.tests.factories import ObservingRecordFactory
 from tom_targets.models import Target, TargetExtra, TargetList, TargetName
 from tom_targets.utils import import_targets
+from tom_dataproducts.models import ReducedDatum
 from guardian.shortcuts import assign_perm
 
 
@@ -1275,3 +1280,361 @@ class TestTargetAddRemoveGrouping(TestCase):
         response = self.client.post(reverse('targets:add-remove-grouping'), data={}, follow=True)
         response_query_dict = response.context['filter'].data
         self.assertEqual(response_query_dict, expected_query_dict)
+
+
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+                   TARGET_PERMISSIONS_ONLY=True,
+                   DATA_SHARING={'local_host': {'BASE_URL': 'https://fake.url/example/',
+                                                'USERNAME': 'fake_user',
+                                                'PASSWORD': 'password'}})
+class TestShareTargets(TestCase):
+    """
+    Tests for the share_targets view.
+    Tests the behavior of the SENDING TOM and Mocks responses from receiving TOM.
+    """
+    def setUp(self):
+        self.target = SiderealTargetFactory.create()
+        self.observation_record = ObservingRecordFactory.create(
+            target_id=self.target.id,
+            facility=FakeRoboticFacility.name,
+            parameters={}
+        )
+        self.user = User.objects.create_user(username='test', email='test@example.com')
+        assign_perm('tom_targets.view_target', self.user, self.target)
+        self.client.force_login(self.user)
+        self.rd1 = ReducedDatum.objects.create(
+            target=self.target,
+            data_type='photometry',
+            value={'magnitude': 18.5, 'error': .5, 'filter': 'V'}
+        )
+        self.rd2 = ReducedDatum.objects.create(
+            target=self.target,
+            data_type='photometry',
+            value={'magnitude': 19.5, 'error': .5, 'filter': 'B'}
+        )
+        self.rd3 = ReducedDatum.objects.create(
+            target=self.target,
+            data_type='photometry',
+            value={'magnitude': 17.5, 'error': .5, 'filter': 'R'}
+        )
+
+    @responses.activate
+    def test_share_target_no_valid_responses(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"error": "not found"},
+            status=500
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+
+        response = self.client.post(
+            reverse('targets:share', kwargs={'pk': self.target.id}),
+            {
+                'submitter': ['test_submitter'],
+                'target': self.target.id,
+                'share_destination': [share_destination],
+            },
+            follow=True
+        )
+        self.assertContains(response, "not found")
+
+    @responses.activate
+    def test_share_target_valid_connection_no_target_found(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"results": []},
+            status=200
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+        responses.add(
+            responses.POST,
+            destination_tom_base_url + 'api/targets/',
+            json={"message": "Target successfully uploaded."},
+            status=200,
+        )
+        response = self.client.post(
+            reverse('targets:share', kwargs={'pk': self.target.id}),
+            {
+                'submitter': ['test_submitter'],
+                'target': self.target.id,
+                'share_destination': [share_destination],
+            },
+            follow=True
+        )
+
+        self.assertContains(response, 'Target successfully uploaded.')
+
+    @responses.activate
+    def test_share_target_valid_connection_multiple_target_found(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"results": [{'id': 1}, {'id': 2}]},
+            status=200
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+
+        response = self.client.post(
+            reverse('targets:share', kwargs={'pk': self.target.id}),
+            {
+                'submitter': ['test_submitter'],
+                'target': self.target.id,
+                'share_destination': [share_destination],
+            },
+            follow=True
+        )
+
+        self.assertContains(response, 'ERROR: Multiple targets with matching name found in destination TOM.')
+
+    @responses.activate
+    def test_share_reduceddatums_target_valid_responses(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"results": [{'id': 1}]},
+            status=200
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+        responses.add(
+            responses.POST,
+            destination_tom_base_url + 'api/reduceddatums/',
+            json={},
+            status=201,
+        )
+        responses.add(
+            responses.PATCH,
+            destination_tom_base_url + 'api/targets/1/',
+            json={},
+            status=200,
+        )
+
+        response = self.client.post(
+            reverse('targets:share', kwargs={'pk': self.target.id}),
+            {
+                'submitter': ['test_submitter'],
+                'target': self.target.id,
+                'share_destination': [share_destination],
+                'share-box': [1, 2]
+            },
+            follow=True
+        )
+
+        self.assertContains(response, '2 of 2 datums successfully saved.')
+
+
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+                   TARGET_PERMISSIONS_ONLY=True,
+                   DATA_SHARING={'local_host': {'BASE_URL': 'https://fake.url/example/',
+                                                'USERNAME': 'fake_user',
+                                                'PASSWORD': 'password'}})
+class TestShareTargetList(TestCase):
+    def setUp(self):
+        self.target = SiderealTargetFactory.create()
+        self.target2 = SiderealTargetFactory.create()
+        self.target3 = SiderealTargetFactory.create()
+        self.observation_record = ObservingRecordFactory.create(
+            target_id=self.target.id,
+            facility=FakeRoboticFacility.name,
+            parameters={}
+        )
+        self.target_list = TargetList.objects.create(
+            name="test_group",
+        )
+        self.target_list.targets.set(Target.objects.all())
+        self.user = User.objects.create_user(username='test', email='test@example.com')
+        assign_perm('tom_targets.view_target', self.user, self.target)
+        self.client.force_login(self.user)
+        self.rd1 = ReducedDatum.objects.create(
+            target=self.target,
+            data_type='photometry',
+            value={'magnitude': 18.5, 'error': .5, 'filter': 'V'}
+        )
+        self.rd2 = ReducedDatum.objects.create(
+            target=self.target,
+            data_type='photometry',
+            value={'magnitude': 19.5, 'error': .5, 'filter': 'B'}
+        )
+        self.rd3 = ReducedDatum.objects.create(
+            target=self.target,
+            data_type='photometry',
+            value={'magnitude': 17.5, 'error': .5, 'filter': 'R'}
+        )
+        self.rd4 = ReducedDatum.objects.create(
+            target=self.target2,
+            data_type='photometry',
+            value={'magnitude': 17.5, 'error': .5, 'filter': 'R'}
+        )
+
+    @responses.activate
+    def test_share_group_no_valid_responses(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"error": "not found"},
+            status=500
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+
+        response = self.client.post(
+            reverse('targets:share-group', kwargs={'pk': self.target_list.id}),
+            {
+                'submitter': ['test_submitter'],
+                'target_list': self.target_list.id,
+                'share_destination': [share_destination],
+            },
+            follow=True
+        )
+        self.assertContains(response, "not found")
+
+    @responses.activate
+    def test_share_group_valid_connection_selected_target_not_found(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"results": []},
+            status=200
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+        responses.add(
+            responses.POST,
+            destination_tom_base_url + 'api/targets/',
+            json={"message": "Target successfully uploaded."},
+            status=200,
+        )
+        response = self.client.post(
+            reverse('targets:share-group', kwargs={'pk': self.target_list.id}),
+            {
+                'submitter': ['test_submitter'],
+                'target_list': self.target_list.id,
+                'share_destination': [share_destination],
+                'selected-target': [self.target.id, self.target2.id]
+            },
+            follow=True
+        )
+
+        self.assertContains(response, 'Target successfully uploaded.')
+
+    @responses.activate
+    def test_share_reduceddatums_group_valid_responses(self):
+        share_destination = 'local_host'
+        destination_tom_base_url = settings.DATA_SHARING[share_destination]['BASE_URL']
+
+        rsp1 = responses.Response(
+            method="GET",
+            url=destination_tom_base_url + 'api/targets/',
+            json={"results": [{'id': 1}]},
+            status=200
+        )
+        responses.add(rsp1)
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+        responses.add(
+            responses.POST,
+            destination_tom_base_url + 'api/reduceddatums/',
+            json={},
+            status=201,
+        )
+        responses.add(
+            responses.PATCH,
+            destination_tom_base_url + 'api/targets/1/',
+            json={"message": "Target successfully uploaded."},
+            status=200,
+        )
+
+        response = self.client.post(
+            reverse('targets:share-group', kwargs={'pk': self.target_list.id}),
+            {
+                'submitter': ['test_submitter'],
+                'target_list': self.target_list.id,
+                'share_destination': [share_destination],
+                'dataSwitch': 'on',
+                'selected-target': [self.target.id, self.target2.id]
+            },
+            follow=True
+        )
+
+        self.assertContains(response, '1 of 1 datums successfully saved.')
+
+    @responses.activate
+    def test_share_empty_group(self):
+        share_destination = 'local_host'
+
+        responses.add(
+            responses.GET,
+            "http://hermes-dev.lco.global/api/v0/profile/",
+            json={"error": "not found"},
+            status=404,
+        )
+
+        response = self.client.post(
+            reverse('targets:share-group', kwargs={'pk': self.target_list.id}),
+            {
+                'submitter': ['test_submitter'],
+                'target_list': self.target_list.id,
+                'share_destination': [share_destination],
+                'dataSwitch': 'on',
+                'selected-target': []
+            },
+            follow=True
+        )
+        self.assertContains(response, 'No targets shared.')

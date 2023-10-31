@@ -136,7 +136,7 @@ def get_hermes_topics(**kwargs):
         response = requests.get(url=submit_url, headers=headers)
 
         topics = response.json()['writable_topics']
-    except KeyError:
+    except (KeyError, requests.exceptions.JSONDecodeError):
         topics = settings.DATA_SHARING['hermes']['USER_TOPICS']
     return topics
 
