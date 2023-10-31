@@ -22,6 +22,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.authtoken import views
 
+from tom_base import __version__
 from tom_common.api_views import GroupViewSet
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
 from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
@@ -32,7 +33,8 @@ router = SharedAPIRootRouter()
 router.register(r'groups', GroupViewSet, 'groups')
 
 urlpatterns = [
-    path('', TemplateView.as_view(template_name='tom_common/index.html'), name='home'),
+    path('', TemplateView.as_view(template_name='tom_common/index.html'),
+         kwargs={'version': __version__}, name='home'),
     path('targets/', include('tom_targets.urls', namespace='targets')),
     path('alerts/', include('tom_alerts.urls', namespace='alerts')),
     path('comments/', include('django_comments.urls')),
