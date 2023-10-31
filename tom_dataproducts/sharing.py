@@ -113,7 +113,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             target_dict = {}
             for target in targets:
                 # get destination Target
-                destination_target_id, target_search_response = get_destination_target(target,
+                destination_target_id, _ = get_destination_target(target,
                                                                                        targets_url,
                                                                                        headers,
                                                                                        auth)
@@ -127,7 +127,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             # (Will not create New Target in Destination TOM)
             target = Target.objects.get(pk=target_id)
             reduced_datums = ReducedDatum.objects.filter(target=target)
-            destination_target_id, target_search_response = get_destination_target(target, targets_url, headers, auth)
+            destination_target_id, _ = get_destination_target(target, targets_url, headers, auth)
             if destination_target_id is None:
                 return {'message': 'ERROR: No matching target found.'}
             elif isinstance(destination_target_id, list) and len(destination_target_id) > 1:
