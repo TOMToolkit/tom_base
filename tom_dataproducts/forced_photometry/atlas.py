@@ -83,7 +83,7 @@ class AtlasForcedPhotometryService(fps.BaseForcedPhotometryService):
     name = 'Atlas'
 
     def __init__(self):
-        super().__init__
+        super().__init__()
         self.success_message = ('Asynchronous Atlas query is processing. '
                                 'Refresh the page once complete it will show '
                                 'up as a dataproduct in the "Manage Data" tab.')
