@@ -23,6 +23,6 @@ jobs:
     - name: Build package with poetry
       run: |
         poetry build -f wheel
-        poetry publish -f sdist
+        poetry build -f sdist
     - name: Publish to PyPI with pypi-publish (trusted publishing)
       uses: pypa/gh-action-pypi-publish@v1.8.5
