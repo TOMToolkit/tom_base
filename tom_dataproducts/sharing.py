@@ -113,10 +113,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             target_dict = {}
             for target in targets:
                 # get destination Target
-                destination_target_id, _ = get_destination_target(target,
-                                                                                       targets_url,
-                                                                                       headers,
-                                                                                       auth)
+                destination_target_id, _ = get_destination_target(target, targets_url, headers, auth)
                 if isinstance(destination_target_id, list) and len(destination_target_id) > 1:
                     return {'message': 'ERROR: Multiple targets with matching name found in destination TOM.'}
                 target_dict[target.name] = destination_target_id
