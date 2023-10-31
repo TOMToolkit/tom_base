@@ -29,4 +29,13 @@ class FinkBroker(GenericBroker):
         return
 
     def to_generic_alert(self, alert):
-        return GenericAlert()
+        return GenericAlert(
+            timestamp=None,
+            url=None,
+            id=None,
+            name=None,
+            ra=None,
+            dec=None,
+            mag=None,
+            score=None
+        )

@@ -84,7 +84,6 @@ class BaseForcedPhotometryService(ABC):
         """
         This method returns the form for querying this service.
         """
-        pass
 
     @abstractmethod
     def query_service(self, query_parameters):
@@ -92,7 +91,6 @@ class BaseForcedPhotometryService(ABC):
         This method takes in the serialized data from the query form and actually
         submits the query to the service
         """
-        pass
 
     @abstractmethod
     def validate_form(self, query_parameters):
@@ -102,7 +100,6 @@ class BaseForcedPhotometryService(ABC):
 
         Typically called by the .is_valid() method.
         """
-        pass
 
     @abstractmethod
     def get_success_message(self):
@@ -111,7 +108,6 @@ class BaseForcedPhotometryService(ABC):
         It should explain what is happening / next steps, i.e. if the results will be
         emailed to you it should say that and that you must upload them once received.
         """
-        pass
 
     @abstractmethod
     def get_data_product_type(self):
@@ -120,4 +116,3 @@ class BaseForcedPhotometryService(ABC):
         Make sure to also add this type in your settings to DATA_PRODUCT_TYPES and
         DATA_PROCESSORS.
         """
-        pass
