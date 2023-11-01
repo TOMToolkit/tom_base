@@ -186,6 +186,11 @@ class BaseObservationFacility(ABC):
     """
     name = 'BaseObservation'
 
+    def __init__(self, user=None):
+        if self.__class__ == BaseObservationFacility:
+            raise Exception("Cannot instantiate abstract class BaseObservationFacility")
+        self.user = user
+
     def all_data_products(self, observation_record):
         from tom_dataproducts.models import DataProduct
         products = {'saved': [], 'unsaved': []}

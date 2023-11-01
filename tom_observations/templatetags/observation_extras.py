@@ -79,12 +79,12 @@ def observation_type_tabs(context):
     }
 
 
-@register.inclusion_tag('tom_observations/partials/facility_observation_form.html')
-def facility_observation_form(target, facility, observation_type):
+@register.inclusion_tag('tom_observations/partials/facility_observation_form.html', takes_context=True)
+def facility_observation_form(context, target, facility, observation_type):
     """
     Displays a form for submitting an observation for a specific facility and observation type, e.g., imaging.
     """
-    facility_class = get_service_class(facility)()
+    facility_class = get_service_class(facility)(user=context['request'].user)
     initial_fields = {
         'target_id': target.id,
         'facility': facility,
@@ -259,8 +259,8 @@ def observation_distribution(observations):
     return {'figure': figure}
 
 
-@register.inclusion_tag('tom_observations/partials/facility_status.html')
-def facility_status():
+@register.inclusion_tag('tom_observations/partials/facility_status.html', takes_context=True)
+def facility_status(context):
     """
     Collect the facility status from the registered facilities and pass them
     to the facility_status.html partial template.
@@ -270,7 +270,7 @@ def facility_status():
 
     facility_statuses = []
     for facility_class in get_service_classes().values():
-        facility = facility_class()
+        facility = facility_class(user=context['request'].user)
         weather_urls = facility.get_facility_weather_urls()
         status = facility.get_facility_status()
 
@@ -286,11 +286,11 @@ def facility_status():
     return {'facilities': facility_statuses}
 
 
-@register.inclusion_tag('tom_observations/partials/facility_map.html')
-def facility_map():
+@register.inclusion_tag('tom_observations/partials/facility_map.html', takes_context=True)
+def facility_map(context):
     facility_locations = []
     for facility_class in get_service_classes().values():
-        facility = facility_class()
+        facility = facility_class(user=context['request'].user)
         sites = facility.get_observing_sites()
 
         # Flatten each facility site dictionary and add text label for use in facility map
