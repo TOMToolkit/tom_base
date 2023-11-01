@@ -240,8 +240,9 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             observation_type = self.request.GET.get('observation_type')
         elif self.request.method == 'POST':
             observation_type = self.request.POST.get('observation_type')
+        facility = self.get_facility_class()(user=self.request.user)
         form_class = type(f'Composite{observation_type}Form',
-                          (self.get_facility_class()(user=self.request.user).get_form(observation_type), self.get_cadence_strategy_form()),
+                          (facility.get_form(observation_type), self.get_cadence_strategy_form()),
                           {})
         return form_class
 

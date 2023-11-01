@@ -22,7 +22,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--username',
             required=False,
-            help='The username of a user to use if the facility requires per user-based authentication for its API calls'
+            help='The username of a user to use if the facility uses per user-based authentication for its API calls'
         )
 
     def handle(self, *args, **options):
