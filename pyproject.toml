@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "tom_base"
+name = "tomtoolkit"  # must match PyPI package name
 version = "0.0.0"  # version supplied by poetry-dynamic-versioning
 description = "TOM Toolkit and base modules"
 authors = ["TOM Toolkit Project"]
