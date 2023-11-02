@@ -144,6 +144,25 @@ class TestObservationCreateView(TestCase):
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
         self.assertEqual(ObservationRecord.objects.filter(observation_id='fakeid').first().user, self.user)
 
+    @mock.patch('tom_observations.tests.utils.FakeRoboticFacility.test_user')
+    def test_submit_observation_robotic_gets_user(self, mock_method):
+        form_data = {
+            'target_id': self.target.id,
+            'test_input': 'gnomes',
+            'facility': 'FakeRoboticFacility',
+            'observation_type': 'OBSERVATION'
+        }
+        self.client.post(
+            '{}?target_id={}'.format(
+                reverse('tom_observations:create', kwargs={'facility': 'FakeRoboticFacility'}),
+                self.target.id
+            ),
+            data=form_data,
+            follow=True
+        )
+        calls = [mock.call(self.user)]
+        mock_method.assert_has_calls(calls)
+
     # TODO: this test
     # def test_submit_observation_cadence(self):
     #     form_data = {
