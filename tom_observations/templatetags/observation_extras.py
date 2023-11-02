@@ -84,13 +84,14 @@ def facility_observation_form(context, target, facility, observation_type):
     """
     Displays a form for submitting an observation for a specific facility and observation type, e.g., imaging.
     """
-    facility_class = get_service_class(facility)(user=context['request'].user)
+    facility_instance = get_service_class(facility)()
+    facility_instance.set_user(context['request'].user)
     initial_fields = {
         'target_id': target.id,
         'facility': facility,
         'observation_type': observation_type
     }
-    obs_form = facility_class.get_form(observation_type)(initial=initial_fields)
+    obs_form = facility_instance.get_form(observation_type)(initial=initial_fields)
     obs_form.helper.form_action = reverse('tom_observations:create', kwargs={'facility': facility})
 
     return {'obs_form': obs_form}
@@ -270,7 +271,8 @@ def facility_status(context):
 
     facility_statuses = []
     for facility_class in get_service_classes().values():
-        facility = facility_class(user=context['request'].user)
+        facility = facility_class()
+        facility.set_user(context['request'].user)
         weather_urls = facility.get_facility_weather_urls()
         status = facility.get_facility_status()
 
@@ -290,7 +292,8 @@ def facility_status(context):
 def facility_map(context):
     facility_locations = []
     for facility_class in get_service_classes().values():
-        facility = facility_class(user=context['request'].user)
+        facility = facility_class()
+        facility.set_user(context['request'].user)
         sites = facility.get_observing_sites()
 
         # Flatten each facility site dictionary and add text label for use in facility map

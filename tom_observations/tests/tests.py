@@ -4,6 +4,7 @@ from unittest import mock
 
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
+from django.utils.functional import SimpleLazyObject
 from django.forms import ValidationError
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -144,7 +145,7 @@ class TestObservationCreateView(TestCase):
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
         self.assertEqual(ObservationRecord.objects.filter(observation_id='fakeid').first().user, self.user)
 
-    @mock.patch('tom_observations.tests.utils.FakeRoboticFacility.test_user')
+    @mock.patch('tom_observations.tests.utils.FakeRoboticFacility.set_user')
     def test_submit_observation_robotic_gets_user(self, mock_method):
         form_data = {
             'target_id': self.target.id,

@@ -222,8 +222,9 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         context['target'] = target
 
         # allow the Facility class to add data to the context
-        facility_class = self.get_facility_class()
-        facility_context = facility_class(user=self.request.user).get_facility_context_data(target=target)
+        facility = self.get_facility_class()()
+        facility.set_user(self.request.user)
+        facility_context = facility.get_facility_context_data(target=target)
         context.update(facility_context)
 
         return context
@@ -240,7 +241,8 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             observation_type = self.request.GET.get('observation_type')
         elif self.request.method == 'POST':
             observation_type = self.request.POST.get('observation_type')
-        facility = self.get_facility_class()(user=self.request.user)
+        facility = self.get_facility_class()()
+        facility.set_user(self.request.user)
         form_class = type(f'Composite{observation_type}Form',
                           (facility.get_form(observation_type), self.get_cadence_strategy_form()),
                           {})
@@ -310,9 +312,10 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :type form: subclass of GenericObservationForm
         """
         # Submit the observation
-        facility = self.get_facility_class()
+        facility = self.get_facility_class()()
+        facility.set_user(self.request.user)
         target = self.get_target()
-        observation_ids = facility(user=self.request.user).submit_observation(form.observation_payload())
+        observation_ids = facility.submit_observation(form.observation_payload())
         records = []
 
         for observation_id in observation_ids:
@@ -377,7 +380,8 @@ class ObservationRecordCancelView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         obsr_id = self.kwargs.get('pk')
         obsr = ObservationRecord.objects.get(id=obsr_id)
-        facility = get_service_class(obsr.facility)(user=request.user)
+        facility = get_service_class(obsr.facility)()
+        facility.set_user(request.user)
         try:
             success = facility.cancel_observation(obsr.observation_id)
             if success:
@@ -501,10 +505,11 @@ class ObservationRecordDetailView(DetailView):
         """
         context = super().get_context_data(*args, **kwargs)
         context['form'] = AddProductToGroupForm()
-        service_class = get_service_class(self.object.facility)(user=self.request.user)
-        context['editable'] = isinstance(service_class, BaseManualObservationFacility)
-        context['data_products'] = service_class.all_data_products(self.object)
-        context['can_be_cancelled'] = self.object.status not in service_class.get_terminal_observing_states()
+        facility = get_service_class(self.object.facility)()
+        facility.set_user(self.request.user)
+        context['editable'] = isinstance(facility, BaseManualObservationFacility)
+        context['data_products'] = facility.all_data_products(self.object)
+        context['can_be_cancelled'] = self.object.status not in facility.get_terminal_observing_states()
         newest_image = None
         for data_product in context['data_products']['saved']:
             newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and \
@@ -608,7 +613,9 @@ class ObservationTemplateCreateView(FormView):
             raise ValueError('Must provide a facility name')
 
         # TODO: modify this to work with all LCO forms
-        return get_service_class(facility_name)(user=self.request.user).get_template_form(None)
+        facility = get_service_class(facility_name)()
+        facility.set_user(self.request.user)
+        return facility.get_template_form(None)
 
     def get_form(self, form_class=None):
         form = super().get_form()
@@ -638,7 +645,9 @@ class ObservationTemplateUpdateView(LoginRequiredMixin, FormView):
 
     def get_form_class(self):
         self.object = self.get_object()
-        return get_service_class(self.object.facility)(user=self.request.user).get_template_form(None)
+        facility = get_service_class(self.object.facility)()
+        facility.set_user(self.request.user)
+        return facility.get_template_form(None)
 
     def get_form(self, form_class=None):
         form = super().get_form()

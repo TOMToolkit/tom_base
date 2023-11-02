@@ -76,8 +76,8 @@ class SOARFacility(LCOFacility):
         'SPECTRA': SOARSpectroscopyObservationForm
     }
 
-    def __init__(self, user=None, facility_settings=SOARSettings('LCO')):
-        super().__init__(user=user, facility_settings=facility_settings)
+    def __init__(self, facility_settings=SOARSettings('LCO')):
+        super().__init__(facility_settings=facility_settings)
 
     def get_form(self, observation_type):
         return self.observation_forms.get(observation_type, SOARImagingObservationForm)

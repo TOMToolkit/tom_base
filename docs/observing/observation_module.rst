@@ -114,11 +114,9 @@ from two other classes.
 logic” for interacting with the remote observatory. This includes
 methods to submit observations, check observation status, etc. It
 inherits from ``BaseRoboticObservationFacility``, which contains some
-functionality that all observation facility classes will want. The
-``BaseObservationFacility`` init method takes in a User object, which
-you can access from your facility implementation if you need it for any
-api requests. Remember to pass this parameter through if you need to override
-the init method in your facility implementation.
+functionality that all observation facility classes will want. You
+can access the user within your facility implementation using
+``self.user`` if you need it for any api requests.
 
 ``MyObservationFacilityForm`` is the class that will display a GUI form
 for our users to create an observation. We can submit observations

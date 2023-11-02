@@ -186,9 +186,10 @@ class BaseObservationFacility(ABC):
     """
     name = 'BaseObservation'
 
-    def __init__(self, user=None):
-        if self.__class__ == BaseObservationFacility:
-            raise Exception("Cannot instantiate abstract class BaseObservationFacility")
+    def __init__(self):
+        self.user = None
+
+    def set_user(self, user):
         self.user = user
 
     def all_data_products(self, observation_record):

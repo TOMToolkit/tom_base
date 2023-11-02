@@ -40,13 +40,6 @@ class FakeRoboticFacility(BaseRoboticObservationFacility):
         'OBSERVATION': FakeFacilityForm
     }
 
-    def __init__(self, user=None):
-        self.test_user(user)
-        super().__init__(user)
-
-    def test_user(self, user):
-        return user
-
     def get_form(self, observation_type):
         return self.observation_forms[observation_type]
 

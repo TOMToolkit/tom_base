@@ -1235,9 +1235,9 @@ class OCSFacility(BaseRoboticObservationFacility):
         'ALL': OCSFullObservationForm,
     }
 
-    def __init__(self, user=None, facility_settings=OCSSettings('OCS')):
+    def __init__(self, facility_settings=OCSSettings('OCS')):
         self.facility_settings = facility_settings
-        super().__init__(user=user)
+        super().__init__()
 
     # TODO: this should be called get_form_class
     def get_form(self, observation_type):

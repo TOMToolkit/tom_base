@@ -41,8 +41,9 @@ class Command(BaseCommand):
 
         failed_records = {}
         for facility_name in facility.get_service_classes():
-            clazz = facility.get_service_class(facility_name)
-            failed_records[facility_name] = clazz(user=user).update_all_observation_statuses(target=target)
+            instance = facility.get_service_class(facility_name)()
+            instance.set_user(user)
+            failed_records[facility_name] = instance.update_all_observation_statuses(target=target)
         success = True
         for facility_name, errors in failed_records.items():
             if len(errors) > 0:
