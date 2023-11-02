@@ -4,7 +4,6 @@ from unittest import mock
 
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
-from django.utils.functional import SimpleLazyObject
 from django.forms import ValidationError
 from django.test import TestCase, override_settings
 from django.urls import reverse
