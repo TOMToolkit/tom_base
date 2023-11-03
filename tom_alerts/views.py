@@ -300,16 +300,9 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             except IntegrityError:
                 messages.warning(request, f'Unable to save {target.name}, target with that name already exists.')
                 errors.append(target.name)
-        if (len(alerts) == len(errors)):
+        if len(alerts) == len(errors):
             return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
-        elif (len(alerts) == 1):
-            return redirect(reverse(
-                'tom_targets:update', kwargs={'pk': target.id})
-            )
-        else:
-            return redirect(reverse(
-                'tom_targets:list')
-            )
+        return redirect(reverse('tom_targets:list'))
 
 
 class SubmitAlertUpstreamView(LoginRequiredMixin, FormMixin, ProcessFormView, View):
