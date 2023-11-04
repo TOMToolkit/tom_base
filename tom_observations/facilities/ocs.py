@@ -18,6 +18,7 @@ from tom_observations.observation_template import GenericTemplateForm
 from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class OCSSettings():
@@ -190,24 +191,39 @@ class OCSBaseForm(forms.Form):
             return []
 
     def _get_instruments(self):
-        cached_instruments = cache.get(f'{self.facility_settings.facility_name}_instruments')
+        cache_name = f'{self.facility_settings.facility_name}_instruments'
+        cached_instruments = cache.get(cache_name)
 
         if not cached_instruments:
-            logger.warning("Instruments not cached, getting them again!!!")
+            url = urljoin(self.facility_settings.get_setting('portal_url'), '/api/instruments/')
+            logger.warning(f'Instruments not cached, getting them again!!! from {url} to {cache_name}')
             response = make_request(
-                'GET',
-                urljoin(self.facility_settings.get_setting('portal_url'), '/api/instruments/'),
+                'GET', url,
                 headers={'Authorization': 'Token {0}'.format(self.facility_settings.get_setting('api_key'))}
             )
+            logger.debug(f'***** response.json: {response.json().keys()}')
+            logger.debug(f'***** response.json: {[(k, v.get("name")) for k, v in response.json().items()]}')
             cached_instruments = {k: v for k, v in response.json().items()}
-            cache.set(f'{self.facility_settings.facility_name}_instruments', cached_instruments, 3600)
+            cache.set(cache_name, cached_instruments, 3600)
+            #logger.debug(f'***** cached_instruments: {cached_instruments.get("2M0-SCICAM-MUSCAT")}')
         return cached_instruments
 
     def get_instruments(self):
-        return self._get_instruments()
+        instruments = self._get_instruments()
+        logger.debug(f'***** get_instruments --  instruments keys: {instruments.keys()}')
+        return instruments
 
     def instrument_choices(self):
-        return sorted([(k, v.get('name')) for k, v in self.get_instruments().items()], key=lambda inst: inst[1])
+        #cache.clear()
+        instrumentsxxx = self.get_instruments()
+        logger.debug(f'***** instrument_choices --  instrumentsxxx keys: {instrumentsxxx.keys()}')
+        import pprint
+        pprint.pprint(instrumentsxxx)
+        #logger.debug(f'\n\n***** instrument_choices --  instruments: {instruments}\n\n')
+        
+        choices = sorted([(k, v.get('name')) for k, v in instrumentsxxx.items()], key=lambda inst: inst[1])
+        logger.debug(f'***** instrument_choices -- choices: {choices}')
+        return choices
 
     def mode_choices(self, mode_type, use_code_only=False):
         return sorted(set([
