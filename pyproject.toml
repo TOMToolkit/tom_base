@@ -9,6 +9,7 @@ packages = [ # tell poetry build that the repo is named tom_base (which != name,
     { include="tom_observations"},
     { include="tom_setup"},
     { include="tom_targets"},
+    { include="*", format="sdist"},
 ]
 version = "0.0.0"  # version supplied by poetry-dynamic-versioning
 description = "TOM Toolkit and base modules"
