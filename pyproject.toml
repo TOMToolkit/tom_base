@@ -1,14 +1,14 @@
 [tool.poetry]
 name = "tomtoolkit"  # must match PyPI package name
 packages = [ # tell poetry build that the repo is named tom_base (which != name, above)
-    { include="tom_base/tom_alerts"},
-    { include="tom_base/tom_base"},
-    { include="tom_base/tom_catalogs"},
-    { include="tom_base/tom_common"},
-    { include="tom_base/tom_dataproducts"},
-    { include="tom_base/tom_observations"},
-    { include="tom_base/tom_setup"},
-    { include="tom_base/tom_targets"},
+    { include="tom_alerts"},
+    { include="tom_base"},
+    { include="tom_catalogs"},
+    { include="tom_common"},
+    { include="tom_dataproducts"},
+    { include="tom_observations"},
+    { include="tom_setup"},
+    { include="tom_targets"},
 ]
 version = "0.0.0"  # version supplied by poetry-dynamic-versioning
 description = "TOM Toolkit and base modules"
