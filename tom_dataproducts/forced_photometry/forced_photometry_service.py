@@ -8,6 +8,7 @@ from django.conf import settings
 from django.utils.module_loading import import_string
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 def get_service_classes():
