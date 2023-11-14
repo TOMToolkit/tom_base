@@ -1,3 +1,4 @@
+import logging
 import mimetypes
 
 from astropy import units
@@ -7,6 +8,9 @@ from astropy.time import Time, TimezoneInfo
 from tom_dataproducts.data_processor import DataProcessor
 from tom_dataproducts.exceptions import InvalidFileFormatException
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 class PanstarrsProcessor(DataProcessor):
 
@@ -15,33 +19,35 @@ class PanstarrsProcessor(DataProcessor):
 
     def process_data(self, data_product):
         """
-        Routes a atlas processing call to a method specific to a file-format.
+        Routes a PanSTARRS processing call to a method specific to a file-format.
 
         :param data_product: Photometric DataProduct which will be processed into the specified format for database
         ingestion
         :type data_product: DataProduct
 
-        :returns: python list of 2-tuples, each with a timestamp and corresponding data
+        :returns: python list of 3-tuples: (timestamp, datum, source)
         :rtype: list
         """
 
         mimetype = mimetypes.guess_type(data_product.data.path)[0]
+        logger.debug(f'Processing PanSTARRS data with mimetype {mimetype}')
+
         if mimetype in self.PLAINTEXT_MIMETYPES:
             photometry = self._process_photometry_from_plaintext(data_product)
-            return [(datum.pop('timestamp'), datum, datum.pop('source', 'ATLAS')) for datum in photometry]
+            return [(datum.pop('timestamp'), datum, datum.pop('source', 'PanSTARRS')) for datum in photometry]
         else:
             raise InvalidFileFormatException('Unsupported file type')
 
     def _process_photometry_from_plaintext(self, data_product):
         """
         Processes the photometric data from a plaintext file into a list of dicts. File is read using astropy as
-        specified in the below documentation. The file is expected to be a multi-column delimited space delimited
-        text file, as produced by the ATLAS forced photometry service at https://fallingstar-data.com/forcedphot
+        specified in the below documentation. The file is expected to be a multi-column delimited comma delimited
+        text file (csv), as produced by the PanSTARRS (MAST PS1) forced photometry service.
 
-        The header looks like this:
-        ###MJD   m   dm  uJy   duJy F err chi/N   RA  Dec   x   y  maj  min   phi  apfit mag5sig Sky   Obs
+        NOTE: currently this method makes assumptions about the column names and order of the columns in the file.
+        TODO: should be generalized to use the panstarrs_api.py module to get the column names.
 
-        :param data_product: ATLAS Photometric DataProduct which will be processed into a list of dicts
+        :param data_product: PanSTARRS Photometric DataProduct which will be processed into a list of dicts
         :type data_product: DataProduct
 
         :returns: python list containing the photometric data from the DataProduct
@@ -55,16 +61,23 @@ class PanstarrsProcessor(DataProcessor):
 
         try:
             for datum in data:
-                time = Time(float(datum['##MJD']), format='mjd')
+                # extract the timestamp from the epochMean column
+                time = Time(float(datum['epochMean']), format='mjd')
                 utc = TimezoneInfo(utc_offset=0*units.hour)
                 time.format = 'datetime'
-                value = {
-                    'timestamp': time.to_datetime(timezone=utc),
-                    'magnitude': float(datum['m']),
-                    'magnitude_error': float(datum['dm']),
-                    'filter': str(datum['F'])
-                }
-                photometry.append(value)
+                for filter in ['g', 'r', 'i', 'z', 'y']:
+                    mag_col_name = f'{filter}MeanPSFMag'
+                    mag_err_col_name = f'{filter}MeanPSFMagErr'
+                    mag = float(datum[mag_col_name])
+                    mag_err = float(datum[mag_err_col_name])
+                    if mag > -999:
+                        value = {
+                            'timestamp': time.to_datetime(timezone=utc),
+                            'magnitude': mag,
+                            'magnitude_error': mag_err,
+                            'filter': filter
+                        }
+                        photometry.append(value)
         except Exception as e:
             raise InvalidFileFormatException(e)
 
