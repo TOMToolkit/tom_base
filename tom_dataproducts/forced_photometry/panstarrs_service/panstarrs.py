@@ -27,6 +27,27 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
         widget=forms.NumberInput(attrs={'class': 'ml-2'})
     )
 
+    min_detections = forms.IntegerField(
+        label='Minimum detections:',
+        initial=2, required=False,
+        help_text=('Objects with nDetections=1 tend to be artifacts, so this is a way to'
+                   ' eliminate most spurious objects from the catalog.')
+    )
+
+    data_release = forms.ChoiceField(
+        # TODO: get these from panstarrs_api.py
+        label='Data release: ',
+        choices=get_data_release_choices(),
+        initial='dr2',
+    )
+
+    # TODO: get these from panstarrs_api.py
+    catalog = forms.ChoiceField(
+        label='Catalog: ',
+        choices=get_catalog_choices(),
+        initial='mean',
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # initialize query time range to reasonable values
@@ -36,6 +57,13 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
 
     def layout(self):
         return Div(
+            Div(
+                Div('data_release', css_class='col-md-2'),
+                Div('catalog', css_class='col-md-2'),
+                Div('min_detections', css_class='col-md-4'),
+                css_class='row'
+            ),
+            HTML('<hr>'),
             Div(
                 Div(
                     'min_date',
