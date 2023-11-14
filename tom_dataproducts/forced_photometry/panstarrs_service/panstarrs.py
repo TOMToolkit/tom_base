@@ -66,8 +66,6 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
         now = datetime.now()
         now_mjd = Time((now - timedelta(minutes=1))).mjd
         past_mjd = Time((now - timedelta(days=20))).mjd
-        #self.fields['max_date'].initial = (now - timedelta(minutes=1)).strftime('%Y-%m-%dT%H:%M')
-        #self.fields['min_date'].initial = (now - timedelta(days=20)).strftime('%Y-%m-%dT%H:%M')
         self.fields['max_date_mjd'].initial = now_mjd
         self.fields['min_date_mjd'].initial = past_mjd
 
@@ -79,18 +77,18 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
                 Div('min_detections', css_class='col-md-4'),
                 css_class='row'
             ),
-            HTML('<hr>'),
             Div(
                 Div(
                     'min_date_mjd',
-                    css_class='col-md-5'
+                    css_class='col-md-4'
                 ),
                 Div(
                     'max_date_mjd',
-                    css_class='col-md-5'
+                    css_class='col-md-4'
                 ),
-                css_class='form-row form-inline mb-2'
+                css_class='row'
             ),
+            HTML('<hr>'),
         )
 
     def clean(self):
@@ -101,13 +99,14 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
         cleaned_data = super().clean()
         logger.debug(f"PanstarrsForcedPhotometryQueryForm.clean() -- cleaned_data: {cleaned_data}")
 
+        # TODO: update cross-field validation
         if not (cleaned_data.get('min_date') or cleaned_data.get('min_date_mjd')):
             raise forms.ValidationError("Must supply a minimum date in either datetime or mjd format")
-        #if cleaned_data.get('min_date') and cleaned_data.get('min_date_mjd'):
-        #    raise forms.ValidationError("Please specify the minimum date in either datetime or mjd format")
-        #if cleaned_data.get('max_date') and cleaned_data.get('max_date_mjd'):
+        # if cleaned_data.get('min_date') and cleaned_data.get('min_date_mjd'):
+        #     raise forms.ValidationError("Please specify the minimum date in either datetime or mjd format")
+        # if cleaned_data.get('max_date') and cleaned_data.get('max_date_mjd'):
             raise forms.ValidationError("Please specify the maximum date in either datetime or mjd format")
-        #return cleaned_data
+        # return cleaned_data
 
 
 class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):

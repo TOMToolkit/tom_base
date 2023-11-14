@@ -7,5 +7,3 @@ class PanSTARRSTestCase(TestCase):
 
     def test_can_resolve_target(self):
         self.assertEqual(1, 1)
-
-

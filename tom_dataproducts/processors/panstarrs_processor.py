@@ -65,14 +65,17 @@ class PanstarrsProcessor(DataProcessor):
                 time = Time(float(datum['epochMean']), format='mjd')
                 utc = TimezoneInfo(utc_offset=0*units.hour)
                 time.format = 'datetime'
+                timestamp = time.to_datetime(timezone=utc)
                 for filter in ['g', 'r', 'i', 'z', 'y']:
+                    # these filter and column names come from pastarrs_api.py
                     mag_col_name = f'{filter}MeanPSFMag'
                     mag_err_col_name = f'{filter}MeanPSFMagErr'
                     mag = float(datum[mag_col_name])
                     mag_err = float(datum[mag_err_col_name])
+                    # -999 is the value returned by PanSTARRS when there is no data for a given column
                     if mag > -999:
                         value = {
-                            'timestamp': time.to_datetime(timezone=utc),
+                            'timestamp': timestamp,
                             'magnitude': mag,
                             'magnitude_error': mag_err,
                             'filter': filter
