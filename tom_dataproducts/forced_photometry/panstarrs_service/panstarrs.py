@@ -21,20 +21,21 @@ logger.setLevel(logging.DEBUG)
 
 
 class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
-    min_date = forms.CharField(
-        label='Min date:', required=False,
-        widget=forms.TextInput(attrs={'class': 'ml-2', 'type': 'datetime-local'})
-    )
-    max_date = forms.CharField(
-        label='Max date:', required=False,
-        widget=forms.TextInput(attrs={'class': 'ml-2', 'type': 'datetime-local'})
-    )
+    # TODO: if we include both calendar and mjd fields, they should be linked in the UI
+    # min_date = forms.CharField(
+    #     label='Min date:', required=False,
+    #     widget=forms.TextInput(attrs={'class': 'ml-2', 'type': 'datetime-local'})
+    # )
+    # max_date = forms.CharField(
+    #     label='Max date:', required=False,
+    #     widget=forms.TextInput(attrs={'class': 'ml-2', 'type': 'datetime-local'})
+    # )
     min_date_mjd = forms.FloatField(
-        label='Min date (mjd):', required=False,
+        label='Min date (MJD):', required=False,
         widget=forms.NumberInput(attrs={'class': 'ml-2'})
     )
     max_date_mjd = forms.FloatField(
-        label='Max date (mjd):', required=False,
+        label='Max date (MJD):', required=False,
         widget=forms.NumberInput(attrs={'class': 'ml-2'})
     )
 
@@ -63,8 +64,12 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
         super().__init__(*args, **kwargs)
         # initialize query time range to reasonable values
         now = datetime.now()
-        self.fields['max_date'].initial = (now - timedelta(minutes=1)).strftime('%Y-%m-%dT%H:%M')
-        self.fields['min_date'].initial = (now - timedelta(days=20)).strftime('%Y-%m-%dT%H:%M')
+        now_mjd = Time((now - timedelta(minutes=1))).mjd
+        past_mjd = Time((now - timedelta(days=20))).mjd
+        #self.fields['max_date'].initial = (now - timedelta(minutes=1)).strftime('%Y-%m-%dT%H:%M')
+        #self.fields['min_date'].initial = (now - timedelta(days=20)).strftime('%Y-%m-%dT%H:%M')
+        self.fields['max_date_mjd'].initial = now_mjd
+        self.fields['min_date_mjd'].initial = past_mjd
 
     def layout(self):
         return Div(
@@ -77,33 +82,14 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
             HTML('<hr>'),
             Div(
                 Div(
-                    'min_date',
-                    css_class='col-md-4',
-                ),
-                Div(
-                    HTML('OR'),
-                    css_class='col-md-1'
-                ),
-                Div(
                     'min_date_mjd',
                     css_class='col-md-5'
-                ),
-                css_class='form-row form-inline mb-2'
-            ),
-            Div(
-                Div(
-                    'max_date',
-                    css_class='col-md-4',
-                ),
-                Div(
-                    HTML('OR'),
-                    css_class='col-md-1'
                 ),
                 Div(
                     'max_date_mjd',
                     css_class='col-md-5'
                 ),
-                css_class='form-row form-inline mb-4'
+                css_class='form-row form-inline mb-2'
             ),
         )
 
@@ -113,13 +99,15 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
         TODO: describe where in the validatin process this method is called.
         """
         cleaned_data = super().clean()
+        logger.debug(f"PanstarrsForcedPhotometryQueryForm.clean() -- cleaned_data: {cleaned_data}")
+
         if not (cleaned_data.get('min_date') or cleaned_data.get('min_date_mjd')):
             raise forms.ValidationError("Must supply a minimum date in either datetime or mjd format")
-        if cleaned_data.get('min_date') and cleaned_data.get('min_date_mjd'):
-            raise forms.ValidationError("Please specify the minimum date in either datetime or mjd format")
-        if cleaned_data.get('max_date') and cleaned_data.get('max_date_mjd'):
+        #if cleaned_data.get('min_date') and cleaned_data.get('min_date_mjd'):
+        #    raise forms.ValidationError("Please specify the minimum date in either datetime or mjd format")
+        #if cleaned_data.get('max_date') and cleaned_data.get('max_date_mjd'):
             raise forms.ValidationError("Please specify the maximum date in either datetime or mjd format")
-        return cleaned_data
+        #return cleaned_data
 
 
 class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
@@ -182,7 +170,7 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
         request_data = {
             'ra': target.ra,
             'dec': target.dec,
-            'radius': 0.02,  # arcsec cone search radius
+            'radius': 0.1,  # arcsec cone search radius
             'epochMean.min': min_date_mjd,
             'epochMean.max': max_date_mjd,
             'nDetections.min': query_parameters.get('min_detections'),
@@ -192,7 +180,13 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
         data_release = query_parameters.get('data_release')
         response = mast_query(table=catalog, release=data_release, request_data=request_data)
 
-        logger.debug(f'PanSTARRS query response.text: {response.text}')
+        # Did the response contain any data?
+        if len(response.content) == 0:
+            error_msg = (f'PanSTARRS query returned no data. '
+                         f'Data Release: {data_release}, Catalog: {catalog}, '
+                         f'request_data: {request_data}')
+            logger.error(error_msg)
+            raise fps.ForcedPhotometryServiceException(error_msg)
 
         # TODO: consider consistent ContentFile naming scheme between services
         # and implementing nameing function in base class fps.BaseForcedPhotometryService
@@ -204,7 +198,6 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
         dp_name += '.csv'
 
         file = ContentFile(response.content, name=dp_name)
-        # TODO: check content for 0-bytes
 
         # TODO: this should be a get_or_create()
         dp, created = DataProduct.objects.get_or_create(
