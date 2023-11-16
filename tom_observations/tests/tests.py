@@ -4,6 +4,7 @@ from unittest import mock
 
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.forms import ValidationError
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -13,6 +14,7 @@ from astropy.coordinates import get_sun, SkyCoord
 from astropy.time import Time
 
 from .factories import ObservingRecordFactory, ObservationTemplateFactory, SiderealTargetFactory, TargetNameFactory
+from tom_dataproducts.models import DataProduct
 from tom_observations.utils import get_astroplan_sun_and_time, get_sidereal_visibility
 from tom_observations.tests.utils import FakeRoboticFacility
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate
@@ -436,3 +438,38 @@ class TestGetVisibility(TestCase):
         self.assertEqual(len(airmass_data), len(expected_airmass))
         for i, expected_airmass_value in enumerate(expected_airmass):
             self.assertAlmostEqual(airmass_data[i], expected_airmass_value, places=3)
+
+
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
+class TestObservationRecordDeleteView(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.client.force_login(self.user)
+        self.target = SiderealTargetFactory.create()
+        self.target_name = TargetNameFactory.create(target=self.target)
+        self.observation_record = ObservingRecordFactory.create(
+            target_id=self.target.id,
+            facility=FakeRoboticFacility.name,
+            parameters={}
+        )
+        self.data_product = DataProduct.objects.create(
+            product_id='testproductid',
+            target=self.target,
+            observation_record=self.observation_record,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+        assign_perm('tom_observations.delete_observationrecord', self.user, self.observation_record)
+        assign_perm('tom_targets.delete_dataproduct', self.user, self.data_product)
+
+    def test_delete_observation(self):
+        self.assertTrue(ObservationRecord.objects.filter(id=self.observation_record.id).exists())
+        self.assertTrue(DataProduct.objects.filter(product_id='testproductid').exists())
+        delete_url = reverse('tom_observations:delete', kwargs={'pk': self.observation_record.id})
+        response = self.client.post(delete_url, follow=True)
+
+        # Check if the response redirected to the success URL (observations list).
+        self.assertRedirects(response, reverse("tom_observations:list"))
+
+        # Verify that the ObservationRecord and DataProduct no longer exists.
+        self.assertFalse(ObservationRecord.objects.filter(id=self.observation_record.id).exists())
+        self.assertFalse(DataProduct.objects.filter(product_id='testproductid').exists())

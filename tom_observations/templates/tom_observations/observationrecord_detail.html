@@ -19,6 +19,7 @@
       <p class="my-auto"><strong>Observation ID:</strong> {{ object.observation_id }}</p>
       <p class="my-auto"><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
       <p class="my-auto"><strong>Status:</strong> {{ object.status }}</p>
+      <a href="{% url 'tom_observations:delete' object.id %}" title="Delete observation" class="btn btn-danger">Delete</a>
     </div>
     <p></p>
     {% upload_dataproduct object %}

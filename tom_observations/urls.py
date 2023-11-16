@@ -5,7 +5,7 @@ from tom_observations.views import (AddExistingObservationView, FacilityStatusVi
                                     ObservationGroupListView, ObservationListView, ObservationRecordCancelView,
                                     ObservationRecordDetailView, ObservationTemplateCreateView,
                                     ObservationTemplateDeleteView, ObservationTemplateListView,
-                                    ObservationTemplateUpdateView)
+                                    ObservationTemplateUpdateView, ObservationRecordDeleteView)
 from tom_observations.api_views import ObservationRecordViewSet
 from tom_common.api_router import SharedAPIRootRouter
 
@@ -16,6 +16,7 @@ app_name = 'tom_observations'
 
 urlpatterns = [
     path('add/', AddExistingObservationView.as_view(), name='add-existing'),
+    path('<int:pk>/delete', ObservationRecordDeleteView.as_view(), name='delete'),
     path('list/', ObservationListView.as_view(), name='list'),
     path('status/', FacilityStatusView.as_view(), name='facility-status'),
     path('template/list/', ObservationTemplateListView.as_view(), name='template-list'),

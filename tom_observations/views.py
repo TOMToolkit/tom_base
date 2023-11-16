@@ -14,6 +14,7 @@ from django.core.management import call_command
 from django_filters import (CharFilter, ChoiceFilter, DateTimeFromToRangeFilter, FilterSet, ModelMultipleChoiceFilter,
                             OrderingFilter)
 from django_filters.views import FilterView
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
@@ -26,6 +27,7 @@ from guardian.mixins import PermissionListMixin
 
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
+from tom_common.utils import delete_associated_data_products
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_dataproducts.models import is_fits_image_file
 from tom_observations.cadence import CadenceForm, get_cadence_strategy
@@ -667,3 +669,30 @@ class ObservationTemplateDeleteView(LoginRequiredMixin, DeleteView):
 
 class FacilityStatusView(TemplateView):
     template_name = 'tom_observations/facility_status.html'
+
+
+class ObservationRecordDeleteView(Raise403PermissionRequiredMixin, DeleteView):
+    """View for deleting an observation."""
+    permission_required = "tom_observations.delete_observationrecord"
+    success_url = reverse_lazy("observations:list")
+    model = ObservationRecord
+
+    def form_valid(self, form: forms.Form) -> HttpResponse:
+        """Handle deletion of associated DataProducts upon valid form
+        submission.
+
+        Parameters
+        ----------
+        form : `Form`
+            The form object.
+
+        Returns
+        -------
+        `HttpResponse`
+            HTTP response indicating the outcome of the deletion process.
+        """
+        # Fetch the ObservationRecord object.
+        observation_record = self.get_object()
+        delete_associated_data_products(observation_record)
+
+        return super().form_valid(form)

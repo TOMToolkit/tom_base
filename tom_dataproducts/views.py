@@ -23,6 +23,7 @@ from guardian.shortcuts import assign_perm, get_objects_for_user
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
+from tom_common.utils import delete_associated_data_products
 from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm, DataShareForm
@@ -279,14 +280,7 @@ class DataProductDeleteView(Raise403PermissionRequiredMixin, DeleteView):
         """
         # Fetch the DataProduct object
         data_product = self.get_object()
-
-        # Delete associated ReducedDatum objects
-        ReducedDatum.objects.filter(data_product=data_product).delete()
-
-        # Delete the file reference.
-        data_product.data.delete()
-        # Delete the `DataProduct` object from the database.
-        data_product.delete()
+        delete_associated_data_products(data_product)
 
         return HttpResponseRedirect(self.get_success_url())
 
