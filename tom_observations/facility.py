@@ -186,6 +186,12 @@ class BaseObservationFacility(ABC):
     """
     name = 'BaseObservation'
 
+    def __init__(self):
+        self.user = None
+
+    def set_user(self, user):
+        self.user = user
+
     def all_data_products(self, observation_record):
         from tom_dataproducts.models import DataProduct
         products = {'saved': [], 'unsaved': []}
