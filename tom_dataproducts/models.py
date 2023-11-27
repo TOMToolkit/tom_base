@@ -234,8 +234,9 @@ class DataProduct(models.Model):
         """
         if self.thumbnail:
             im = Image.open(self.thumbnail)
-            if im.size != THUMBNAIL_DEFAULT_SIZE:
+            if im.size != THUMBNAIL_DEFAULT_SIZE and im.size[0] not in THUMBNAIL_DEFAULT_SIZE:
                 redraw = True
+                logger.critical("Redrawing thumbnail for {0} due to size mismatch".format(im.size))
 
         if not self.thumbnail or redraw:
             width, height = THUMBNAIL_DEFAULT_SIZE
@@ -262,6 +263,9 @@ class DataProduct(models.Model):
         :returns: Thumbnail file if created, None otherwise
         :rtype: file
         """
+        if not self.data:
+            logger.error(f'Unable to create thumbnail for {self}: No data file found.')
+            return
         if is_fits_image_file(self.data.file):
             tmpfile = tempfile.NamedTemporaryFile(suffix='.jpg')
             try:
