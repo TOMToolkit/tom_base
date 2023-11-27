@@ -435,7 +435,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
                               'Did you know updating observation statuses can be automated? Learn how in'
                               '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
                               ' the docs.</a>'))
-            return redirect(reverse('tom_targets:detail', args=(target_id,)))
+            return redirect(reverse('tom_targets:detail', args=(target_id,)) + '?tab=observations')
 
         obs_template_form = ApplyObservationTemplateForm(request.GET)
         if obs_template_form.is_valid():
