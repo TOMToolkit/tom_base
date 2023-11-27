@@ -943,13 +943,13 @@ typing-extensions = {version = ">=3.10.0.1", markers = "python_version <= \"3.8\
 
 [[package]]
 name = "fits2image"
-version = "0.4.6"
+version = "0.4.7"
 description = "Common libraries for the conversion and scaling of fits images"
 optional = false
 python-versions = "*"
 files = [
-    {file = "fits2image-0.4.6-py3-none-any.whl", hash = "sha256:79a1fdba40de10b1378c03463ba7f2ec67b6b14c3f2b320945584919108ebe1e"},
-    {file = "fits2image-0.4.6.tar.gz", hash = "sha256:1721ee540a725e3d29a3835d121209581e447f54d639b7050b65b0019b90c76f"},
+    {file = "fits2image-0.4.7-py3-none-any.whl", hash = "sha256:0727d0dfef482a1493399f3b44b59085fd0beb1b9d81aa32fd1882272561dae5"},
+    {file = "fits2image-0.4.7.tar.gz", hash = "sha256:25a29c0b442c4d025d6bf546c677b7539d3a57cedfc65ee87315c618feece387"},
 ]
 
 [package.dependencies]
