@@ -318,3 +318,26 @@ def target_table(targets, all_checked=False):
     """
 
     return {'targets': targets, 'all_checked': all_checked}
+
+
+@register.inclusion_tag('tom_targets/partials/module_buttons.html')
+def get_buttons(target):
+    """
+    Returns a list of buttons from imported modules to be displayed on the target detail page.
+    In order to add a button to the target detail page, an app must contain an integration points attribute.
+    The Integration Points attribute must be a dictionary with a key of 'target_detail_button':
+    'target_detail_button' = {'namespace': <<redirect path, i.e. 'app:name'>>,
+                              'title': <<Button title>>,
+                              'class': <<Button class i.e 'btn  btn-info'>>,
+                              'text': <<What you want the button to actually say>>,
+                              }
+
+    """
+    from django.apps import apps
+    button_list = []
+    for app in apps.get_app_configs():
+        integration_points = getattr(app, 'integration_points', {})
+        if integration_points.get('target_detail_button', False):
+            button_list.append(integration_points['target_detail_button'])
+
+    return {'target': target, 'button_list': button_list}
