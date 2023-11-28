@@ -228,7 +228,7 @@ class TestBrokerViews(TestCase):
         response = self.client.post(reverse('tom_alerts:create-target'), data=post_data)
         self.assertEqual(Target.objects.count(), 1)
         self.assertEqual(Target.objects.first().name, 'Hoth')
-        self.assertRedirects(response, reverse('tom_targets:update', kwargs={'pk': Target.objects.first().id}))
+        self.assertRedirects(response, reverse('tom_targets:list'))
 
     @override_settings(CACHES={
             'default': {
