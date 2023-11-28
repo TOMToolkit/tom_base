@@ -138,7 +138,6 @@ class BaseRoboticObservationForm(BaseObservationForm):
     For an implementation example please see
     https://github.com/TOMToolkit/tom_base/blob/main/tom_observations/facilities/lco.py#L132
     """
-    pass
 
 
 # This aliasing exists to support backwards compatibility
@@ -187,6 +186,12 @@ class BaseObservationFacility(ABC):
     """
     name = 'BaseObservation'
 
+    def __init__(self):
+        self.user = None
+
+    def set_user(self, user):
+        self.user = user
+
     def all_data_products(self, observation_record):
         from tom_dataproducts.models import DataProduct
         products = {'saved': [], 'unsaved': []}
@@ -216,7 +221,6 @@ class BaseObservationFacility(ABC):
         """
         This method takes in an observation type and returns the form type that matches it.
         """
-        pass
 
     def get_facility_context_data(self, **kwargs):
         """
@@ -234,7 +238,6 @@ class BaseObservationFacility(ABC):
         This method takes in the serialized data from the form and actually
         submits the observation to the remote api
         """
-        pass
 
     @abstractmethod
     def validate_observation(self, observation_payload):
@@ -244,19 +247,16 @@ class BaseObservationFacility(ABC):
 
         Typically called by the ObservationForm.is_valid() method.
         """
-        pass
 
     def get_flux_constant(self):
         """
         Returns the astropy quantity that a facility uses for its spectral flux conversion.
         """
-        pass
 
     def get_wavelength_units(self):
         """
         Returns the astropy units that a facility uses for its spectral wavelengths
         """
-        pass
 
     def is_fits_facility(self, header):
         """
@@ -278,7 +278,6 @@ class BaseObservationFacility(ABC):
         Returns the states for which an observation is not expected
         to change.
         """
-        pass
 
     @abstractmethod
     def get_observing_sites(self):
@@ -289,7 +288,6 @@ class BaseObservationFacility(ABC):
         latitude, longitude and elevation. This is the static information
         about a site.
         """
-        pass
 
     def get_facility_weather_urls(self):
         """
@@ -340,7 +338,6 @@ class BaseObservationFacility(ABC):
         we return a URL to the LCO observation portal's observation
         record page.
         """
-        pass
 
     def get_date_obs_from_fits_header(self, header):
         return None
@@ -419,7 +416,6 @@ class BaseRoboticObservationFacility(BaseObservationFacility):
         Return the status for a single observation. observation_id should
         be able to be used to retrieve the status from the external service.
         """
-        pass
 
     @abstractmethod
     def data_products(self, observation_id, product_id=None):
@@ -429,7 +425,6 @@ class BaseRoboticObservationFacility(BaseObservationFacility):
         the LCO module retrieves a list of frames from the LCO
         data archive.
         """
-        pass
 
 
 # This aliasing exists to support backwards compatibility

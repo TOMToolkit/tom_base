@@ -144,6 +144,25 @@ class TestObservationCreateView(TestCase):
         self.assertTrue(ObservationRecord.objects.filter(observation_id='fakeid').exists())
         self.assertEqual(ObservationRecord.objects.filter(observation_id='fakeid').first().user, self.user)
 
+    @mock.patch('tom_observations.tests.utils.FakeRoboticFacility.set_user')
+    def test_submit_observation_robotic_gets_user(self, mock_method):
+        form_data = {
+            'target_id': self.target.id,
+            'test_input': 'gnomes',
+            'facility': 'FakeRoboticFacility',
+            'observation_type': 'OBSERVATION'
+        }
+        self.client.post(
+            '{}?target_id={}'.format(
+                reverse('tom_observations:create', kwargs={'facility': 'FakeRoboticFacility'}),
+                self.target.id
+            ),
+            data=form_data,
+            follow=True
+        )
+        calls = [mock.call(self.user)]
+        mock_method.assert_has_calls(calls)
+
     # TODO: this test
     # def test_submit_observation_cadence(self):
     #     form_data = {
@@ -434,5 +453,5 @@ class TestGetVisibility(TestCase):
             1.2895601364316183, 1.3034413026227516, 1.3203684217446099
         ]
         self.assertEqual(len(airmass_data), len(expected_airmass))
-        for i in range(0, len(expected_airmass)):
-            self.assertAlmostEqual(airmass_data[i], expected_airmass[i], places=3)
+        for i, expected_airmass_value in enumerate(expected_airmass):
+            self.assertAlmostEqual(airmass_data[i], expected_airmass_value, places=3)

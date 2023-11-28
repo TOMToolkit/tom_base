@@ -1,0 +1,112 @@
+[tool.poetry]
+name = "tomtoolkit"  # must match PyPI package name
+packages = [ # tell poetry build that the repo is named tom_base (which != name, above)
+    { include="tom_alerts"},
+    { include="tom_base"},
+    { include="tom_catalogs"},
+    { include="tom_common"},
+    { include="tom_dataproducts"},
+    { include="tom_observations"},
+    { include="tom_setup"},
+    { include="tom_targets"},
+    { include="*", format="sdist"},
+]
+version = "0.0.0"  # version supplied by poetry-dynamic-versioning
+description = "TOM Toolkit and base modules"
+authors = ["TOM Toolkit Project"]
+maintainers = [
+    "William Lindstrom <llindstrom@lco.global>",
+    "Joey Chatelain <jchatelain@lco.global>",
+    "Rachel Street <rstreet@lco.global>"
+]
+license = "GPL-3.0-only"
+readme = "README.md"
+homepage = "https://lco.global/tomtoolkit/"
+repository = "https://github.com/TOMToolkit/tom_base"
+documentation = "https://tom-toolkit.readthedocs.io/en/latest/"
+
+keywords = [
+    'tomtoolkit',
+    'TOM',
+    'astronomy',
+    'astrophysics',
+    'cosmology',
+    'science',
+    'fits',
+    'observatory',
+]
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: BSD License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Topic :: Scientific/Engineering :: Astronomy',
+    'Topic :: Scientific/Engineering :: Physics'
+]
+
+[tool.poetry.dependencies]
+python = ">=3.8.1,<3.12"
+numpy = "~1.24,<2"
+astroquery = "<1"
+astroplan = ">=0.8,<0.10"
+astropy = ">=3,<6"
+django = "<5"
+djangorestframework = "<4"
+django-bootstrap4 = ">3,<24"
+beautifulsoup4 = "<5"
+dramatiq = {version = "<2.0.0", extras = ["redis", "watch"]}
+django-contrib-comments = ">=2.0,<3.0"
+django-crispy-forms = ">=2.0,<3.0"
+crispy-bootstrap4 = "~2023.1"
+django-dramatiq = "~0.11"
+django-extensions = "~3"
+django-filter = "~23"
+django-gravatar2 = "~1"
+django-guardian = "~2"
+fits2image = "~0.4"
+markdown = "<4"
+pillow = ">9.2,<11.0"
+plotly = "<6"
+python-dateutil = "<3"
+requests = "<3"
+specutils = "<2"
+
+[tool.poetry.group.test.dependencies]
+responses = ">=0.23,<0.25"
+factory_boy = ">3.2.1,<3.4"
+
+[tool.poetry.group.docs.dependencies]
+recommonmark = "~0.7"
+sphinx = ">=4,<8"
+sphinx-rtd-theme = ">=1.0,<1.4"
+
+[tool.poetry.group.coverage.dependencies]
+coverage = "~6" # coveralls needs ~6 even though 7.3.2 is latest
+coveralls = "~3"
+
+[tool.poetry.group.lint.dependencies]
+flake8 = ">=6.0,<6.2"
+
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+style = "pep440"
+# the default pattern regex makes the 'v' manditory
+# this pattern modifies the default regex in order to make the 'v' optional
+# ('v' becomes '[v]?' meaning a single v, [v], and ? means optional)
+pattern = "(?x)^[v]?((?P<epoch>\\d+)!)?(?P<base>\\d+(\\.\\d+)*)([-._]?((?P<stage>[a-zA-Z]+)[-._]?(?P<revision>\\d+)?))?(\\+(?P<tagged_metadata>.+))?$"
+
+# substitute version not only in pyproject.toml (which the config block above does)
+# but also the __version__.py file
+[tool.poetry-dynamic-versioning.substitution]
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

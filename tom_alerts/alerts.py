@@ -191,15 +191,15 @@ class GenericBroker(ABC):
         :type parameters: dict
         """
 
-    def fetch_alert(self, id):
+    def fetch_alert(self, alert_id):
         """
         This method takes an alert id and retrieves the specific
         alert data from the given broker.
 
-        :param id: Broker-specific id corresponding with the desired alert
-        :type id: str
+        :param alert_id: Broker-specific id corresponding with the desired alert
+        :type alert_id: str
         """
-        pass
+        return None
 
     def process_reduced_data(self, target, alert=None):
         """
@@ -212,7 +212,6 @@ class GenericBroker(ABC):
         :param alert: alert data from a particular ``BrokerQuery``
         :type alert: str
         """
-        pass
 
     def to_target(self, alert):
         """
@@ -221,7 +220,7 @@ class GenericBroker(ABC):
         :param alert: alert data from a particular ``BrokerQuery``
         :type alert: str
         """
-        pass
+        return None
 
     def submit_upstream_alert(self, target=None, observation_record=None, **kwargs):
         """
@@ -237,18 +236,17 @@ class GenericBroker(ABC):
         :returns: True or False depending on success of message submission
         :rtype: bool
         """
-        pass
 
     @abstractmethod
     def to_generic_alert(self, alert):
         """
         This method creates a ``GenericAlert`` object from the broker-specific
-        alert data for use outside of the implementation of the ``GenericBroker``.
+        alert data for use outside the implementation of the ``GenericBroker``.
 
         :param alert: alert data from a particular ``BrokerQuery``
         :type alert: str
         """
-        pass
+        return None
 
     def fetch_and_save_all(self, parameters):
         """

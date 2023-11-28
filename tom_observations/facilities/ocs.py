@@ -1050,18 +1050,18 @@ class OCSFullObservationForm(OCSBaseObservationForm):
                         initial[f'c_1_ic_1_{oe_group}'] = initial['filter']
         return initial
 
-    def _build_instrument_config(self, instrument_type, configuration_id, id):
+    def _build_instrument_config(self, instrument_type, configuration_id, instrument_config_id):
         # If the instrument config did not have an exposure time set, leave it out by returning None
-        if not self.cleaned_data.get(f'c_{configuration_id}_ic_{id}_exposure_time'):
+        if not self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time'):
             return None
         instrument_config = {
-            'exposure_count': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_count'],
-            'exposure_time': self.cleaned_data[f'c_{configuration_id}_ic_{id}_exposure_time'],
+            'exposure_count': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_count'],
+            'exposure_time': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time'],
             'optical_elements': {}
         }
         for oe_group in self.get_optical_element_groups():
             instrument_config['optical_elements'][oe_group] = self.cleaned_data.get(
-                f'c_{configuration_id}_ic_{id}_{oe_group}')
+                f'c_{configuration_id}_ic_{instrument_config_id}_{oe_group}')
 
         return instrument_config
 
@@ -1075,31 +1075,33 @@ class OCSFullObservationForm(OCSBaseObservationForm):
 
         return ics
 
-    def _build_configuration(self, id):
-        instrument_configs = self._build_instrument_configs(self.cleaned_data[f'c_{id}_instrument_type'], id)
+    def _build_configuration(self, build_id):
+        instrument_configs = self._build_instrument_configs(
+            self.cleaned_data[f'c_{build_id}_instrument_type'], build_id
+            )
         # Check if the instrument configs are empty, and if so, leave this configuration out by returning None
         if not instrument_configs:
             return None
         configuration = {
-            'type': self.cleaned_data[f'c_{id}_configuration_type'],
-            'instrument_type': self.cleaned_data[f'c_{id}_instrument_type'],
+            'type': self.cleaned_data[f'c_{build_id}_configuration_type'],
+            'instrument_type': self.cleaned_data[f'c_{build_id}_instrument_type'],
             'instrument_configs': instrument_configs,
-            'acquisition_config': self._build_acquisition_config(id),
-            'guiding_config': self._build_guiding_config(id),
+            'acquisition_config': self._build_acquisition_config(build_id),
+            'guiding_config': self._build_guiding_config(build_id),
             'constraints': {
-                'max_airmass': self.cleaned_data[f'c_{id}_max_airmass'],
+                'max_airmass': self.cleaned_data[f'c_{build_id}_max_airmass'],
             }
         }
-        if self.cleaned_data.get(f'c_{id}_target_override'):
-            configuration['target'] = self._build_target_fields(self.cleaned_data[f'c_{id}_target_override'])
+        if self.cleaned_data.get(f'c_{build_id}_target_override'):
+            configuration['target'] = self._build_target_fields(self.cleaned_data[f'c_{build_id}_target_override'])
         else:
             configuration['target'] = self._build_target_fields(self.cleaned_data['target_id'])
-        if self.cleaned_data.get(f'c_{id}_repeat_duration'):
-            configuration['repeat_duration'] = self.cleaned_data[f'c_{id}_repeat_duration']
-        if self.cleaned_data.get(f'c_{id}_min_lunar_distance'):
-            configuration['constraints']['min_lunar_distance'] = self.cleaned_data[f'c_{id}_min_lunar_distance']
-        if self.cleaned_data.get(f'c_{id}_max_lunar_phase'):
-            configuration['constraints']['max_lunar_phase'] = self.cleaned_data[f'c_{id}_max_lunar_phase']
+        if self.cleaned_data.get(f'c_{build_id}_repeat_duration'):
+            configuration['repeat_duration'] = self.cleaned_data[f'c_{build_id}_repeat_duration']
+        if self.cleaned_data.get(f'c_{build_id}_min_lunar_distance'):
+            configuration['constraints']['min_lunar_distance'] = self.cleaned_data[f'c_{build_id}_min_lunar_distance']
+        if self.cleaned_data.get(f'c_{build_id}_max_lunar_phase'):
+            configuration['constraints']['max_lunar_phase'] = self.cleaned_data[f'c_{build_id}_max_lunar_phase']
 
         return configuration
 

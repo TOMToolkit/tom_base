@@ -45,7 +45,7 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
     destination = share_destination.split(':')[0]
     message_info = BuildHermesMessage(title=form_data.get('share_title',
                                                           f"Updated data for {target.name} from "
-                                                          f"{getattr(settings, 'TOM_NAME','TOM Toolkit')}."),
+                                                          f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}."),
                                       submitter=form_data.get('submitter'),
                                       authors=form_data.get('share_authors', None),
                                       message=form_data.get('share_message', None),
@@ -92,7 +92,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
         target = product.target
         serialized_data = DataProductSerializer(product).data
         # Find matching target in destination TOM
-        destination_target_id, target_search_response = get_destination_target(target, targets_url, headers, auth)
+        destination_target_id, _ = get_destination_target(target, targets_url, headers, auth)
         if destination_target_id is None:
             return {'message': 'ERROR: No matching target found.'}
         elif isinstance(destination_target_id, list) and len(destination_target_id) > 1:
@@ -113,10 +113,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             target_dict = {}
             for target in targets:
                 # get destination Target
-                destination_target_id, target_search_response = get_destination_target(target,
-                                                                                       targets_url,
-                                                                                       headers,
-                                                                                       auth)
+                destination_target_id, _ = get_destination_target(target, targets_url, headers, auth)
                 if isinstance(destination_target_id, list) and len(destination_target_id) > 1:
                     return {'message': 'ERROR: Multiple targets with matching name found in destination TOM.'}
                 target_dict[target.name] = destination_target_id
@@ -127,7 +124,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             # (Will not create New Target in Destination TOM)
             target = Target.objects.get(pk=target_id)
             reduced_datums = ReducedDatum.objects.filter(target=target)
-            destination_target_id, target_search_response = get_destination_target(target, targets_url, headers, auth)
+            destination_target_id, _ = get_destination_target(target, targets_url, headers, auth)
             if destination_target_id is None:
                 return {'message': 'ERROR: No matching target found.'}
             elif isinstance(destination_target_id, list) and len(destination_target_id) > 1:
