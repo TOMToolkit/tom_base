@@ -1,3 +1,5 @@
-<div class="alert alert-warning">
+{% if num_unknown_statuses %}
+  <div class="alert alert-warning">
     There are {{ num_unknown_statuses }} observations with unknown status.
   </div>
+{% endif %}
