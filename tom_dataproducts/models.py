@@ -100,7 +100,7 @@ def data_product_path(instance, filename):
             mod = import_module(mod_name)
             clazz = getattr(mod, class_name)
         except (ImportError, AttributeError):
-            raise ImportError('Could not import {}. Did you provide the correct path?'.format(processor_class))
+            raise ImportError('Could not import {}. Did you provide the correct path?'.format(path_class))
         return clazz(instance, filename)
     except AttributeError:
         # Uploads go to MEDIA_ROOT
