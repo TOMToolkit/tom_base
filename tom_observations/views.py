@@ -230,7 +230,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         try:
             context['unconfigured'] = ", ".join(facility.facility_settings.check_configuration())
         except AttributeError:
-            context['unconfigured'] = False
+            context['unconfigured'] = ''
 
         return context
 

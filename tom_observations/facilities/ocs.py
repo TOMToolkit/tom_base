@@ -98,7 +98,9 @@ class OCSSettings():
         return settings.FACILITIES.get(self.facility_name, self.default_settings).get(key, self.default_settings[key])
 
     def check_configuration(self):
-        """ Check that the settings for this facility are present, and return list of unconfigured settings"""
+        """
+        Check that the settings for this facility are present, and return list of any required settings that are blank.
+        """
         return [key for key in self.default_settings.keys() if not self.get_setting(key)]
 
     def get_observing_states(self):
@@ -989,6 +991,10 @@ class OCSFullObservationForm(OCSBaseObservationForm):
             self.helper.layout.insert(2, self.cadence_layout())
 
     def button_layout(self):
+        """
+        Override Button layout from BaseObservationForm.
+        Submit button will be disabled if there are any unconfigured settings found by check_configuration().
+        """
         target_id = self.initial.get('target_id')
 
         return ButtonHolder(
