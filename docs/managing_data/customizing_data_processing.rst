@@ -48,6 +48,20 @@ In order to add new data product types, simply add a new key/value pair,
 with the value being a 2-tuple. The first tuple item is the database
 value, and the second is the display value.
 
+When a ``DataProduct`` is uploaded, its path is set by a `data_product_path`. By default this is set to
+``{target}/{facility}/{filename}``, but can be overridden by setting the ``DATA_PRODUCT_PATH`` in
+``settings.py`` to a dot-separated method path that takes a ``DataProduct`` and filename as arguments. For example, if
+you wanted to set the `data_product_path` to ``{target}/{facility}/{observation_id}/{filename}``, you would point the
+``DATA_PRODUCT_PATH`` to a custom method that looks something like this:
+
+.. code:: python
+
+   def custom_data_product_path(data_product, filename):
+       return f'{data_product.target.name}/' \
+               f'{data_product.observation_record.facility}/' \
+               f'{data_product.observation_record.observation_id}/' \
+               f'{filename}'
+
 All data products are automatically “processed” on upload, as well. Of
 course, that can mean different things to different TOMs! The TOM has
 two built-in data processors, both of which simply ingest the data into
