@@ -1,5 +1,5 @@
 Integrating Forced Photometry Service Queries
----------------------------------------
+---------------------------------------------
 
 The base TOM Toolkit comes with Atlas, panSTARRS, and ZTF query services. More services
 can be added by extending the base ForcedPhotometryService implementation.
@@ -13,6 +13,7 @@ photometry services. This configuration will go in the ``FORCED_PHOTOMETRY_SERVI
 shown below:
 
 .. code:: python
+
     FORCED_PHOTOMETRY_SERVICES = {
         'ATLAS': {
             'class': 'tom_dataproducts.forced_photometry.atlas.AtlasForcedPhotometryService',
@@ -49,6 +50,7 @@ or `rabbitmq <https://github.com/rabbitmq/rabbitmq-server>`_ server to act as th
 a redis server, you would add the following to your ``settings.py``:
 
 .. code:: python
+
     INSTALLED_APPS = [
         ...
         'django_dramatiq',
