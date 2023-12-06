@@ -100,14 +100,14 @@ def data_product_path(instance, filename):
             mod = import_module(mod_name)
             clazz = getattr(mod, class_name)
         except (ImportError, AttributeError):
-            raise ImportError('Could not import {}. Did you provide the correct path?'.format(path_class))
+            raise ImportError(f'Could not import {path_class}. Did you provide the correct path?')
         return clazz(instance, filename)
     except AttributeError:
         # Uploads go to MEDIA_ROOT
         if instance.observation_record is not None:
-            return '{0}/{1}/{2}'.format(instance.target.name, instance.observation_record.facility, filename)
+            return f'{instance.target.name}/{instance.observation_record.facility}/{filename}'
         else:
-            return '{0}/none/{1}'.format(instance.target.name, filename)
+            return f'{instance.target.name}/none/{filename}'
 
 
 class DataProductGroup(models.Model):

@@ -57,11 +57,10 @@ you wanted to set the `data_product_path` to ``{target}/{facility}/{observation_
 .. code:: python
 
    def custom_data_product_path(data_product, filename):
-       return '{}/{}/{}/{}'.format(data_product.target.name,
-                                   data_product.observation_record.facility,
-                                   data_product.observation_record.observation_id,
-                                   filename)
-
+       return f'{data_product.target.name}/' \
+               f'{data_product.observation_record.facility}/' \
+               f'{data_product.observation_record.observation_id}/' \
+               f'{filename}'
 
 All data products are automatically “processed” on upload, as well. Of
 course, that can mean different things to different TOMs! The TOM has
