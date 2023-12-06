@@ -5,7 +5,7 @@ from urllib.parse import urlencode, urljoin
 
 from astropy import units as u
 from crispy_forms.bootstrap import Accordion, AccordionGroup, TabHolder, Tab, Alert
-from crispy_forms.layout import Div, HTML, Layout
+from crispy_forms.layout import Div, HTML, Layout, ButtonHolder, Submit
 from dateutil.parser import parse
 from django import forms
 from django.conf import settings
@@ -96,6 +96,10 @@ class OCSSettings():
 
     def get_setting(self, key):
         return settings.FACILITIES.get(self.facility_name, self.default_settings).get(key, self.default_settings[key])
+
+    def check_configuration(self):
+        """ Check that the settings for this facility are present, and return list of unconfigured settings"""
+        return [key for key in self.default_settings.keys() if not self.get_setting(key)]
 
     def get_observing_states(self):
         return [
@@ -983,6 +987,16 @@ class OCSFullObservationForm(OCSBaseObservationForm):
         )
         if isinstance(self, CadenceForm):
             self.helper.layout.insert(2, self.cadence_layout())
+
+    def button_layout(self):
+        target_id = self.initial.get('target_id')
+
+        return ButtonHolder(
+            Submit('submit', 'Submit', disabled=bool(self.facility_settings.check_configuration())),
+            Submit('validate', 'Validate'),
+            HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>
+                        Back</a>''')
+        )
 
     def form_name(self):
         return 'base'

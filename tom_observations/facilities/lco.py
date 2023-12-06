@@ -801,13 +801,13 @@ class LCOPhotometricSequenceForm(LCOOldStyleObservationForm):
         instrument configurations in the appropriate manner.
         """
         instrument_configs = []
-        for filter_name in self.valid_filters:
-            if len(self.cleaned_data[filter_name]) > 0:
+        for filter_code, _ in self.all_optical_element_choices():
+            if len(self.cleaned_data[filter_code]) > 0:
                 instrument_configs.append({
-                    'exposure_count': self.cleaned_data[filter_name][1],
-                    'exposure_time': self.cleaned_data[filter_name][0],
+                    'exposure_count': self.cleaned_data[filter_code][1],
+                    'exposure_time': self.cleaned_data[filter_code][0],
                     'optical_elements': {
-                        'filter': filter_name
+                        'filter': filter_code
                     }
                 })
 
