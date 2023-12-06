@@ -10,6 +10,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from fits2image.conversions import fits_to_jpg
 from PIL import Image
+from importlib import import_module
 
 from tom_targets.models import Target
 from tom_alerts.models import AlertStreamMessage
@@ -73,7 +74,14 @@ def is_fits_image_file(file):
 
 def data_product_path(instance, filename):
     """
-    Returns the TOM-style path for a ``DataProduct`` file. Structure is <target identifier>/<facility>/<filename>.
+    Returns the TOM-style path for a ``DataProduct`` file.
+    Default behavior can be overridden by user in settings.DATA_PRODUCT_PATH
+    DATA_PRODUCT_PATH must be a dot separated method name pointing to a method that takes two arguments:
+    instance: The specific instance of the ``DataProduct`` class.
+    filename: The filename to add to the path.
+    The method must return a string representing the path to the file.
+
+    The default structure is <target identifier>/<facility>/<filename>.
     ``DataProduct`` objects not associated with a facility will save with 'None' as the facility.
 
     :param instance: The specific instance of the ``DataProduct`` class.
@@ -85,11 +93,21 @@ def data_product_path(instance, filename):
     :returns: The TOM-style path of the file
     :rtype: str
     """
-    # Uploads go to MEDIA_ROOT
-    if instance.observation_record is not None:
-        return '{0}/{1}/{2}'.format(instance.target.name, instance.observation_record.facility, filename)
-    else:
-        return '{0}/none/{1}'.format(instance.target.name, filename)
+    try:
+        path_class = settings.DATA_PRODUCT_PATH
+        try:
+            mod_name, class_name = path_class.rsplit('.', 1)
+            mod = import_module(mod_name)
+            clazz = getattr(mod, class_name)
+        except (ImportError, AttributeError):
+            raise ImportError('Could not import {}. Did you provide the correct path?'.format(processor_class))
+        return clazz(instance, filename)
+    except AttributeError:
+        # Uploads go to MEDIA_ROOT
+        if instance.observation_record is not None:
+            return '{0}/{1}/{2}'.format(instance.target.name, instance.observation_record.facility, filename)
+        else:
+            return '{0}/none/{1}'.format(instance.target.name, filename)
 
 
 class DataProductGroup(models.Model):
