@@ -19,7 +19,7 @@ from unittest.mock import patch
 
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import DataProductUploadForm
-from tom_dataproducts.models import DataProduct, is_fits_image_file, ReducedDatum
+from tom_dataproducts.models import DataProduct, is_fits_image_file, ReducedDatum, data_product_path
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_dataproducts.processors.photometry_processor import PhotometryProcessor
 from tom_dataproducts.processors.spectroscopy_processor import SpectroscopyProcessor
@@ -38,6 +38,10 @@ def mock_find_fits_img_size(filename):
 
 def mock_is_fits_image_file(filename):
     return True
+
+
+def dp_path(instance, filename):
+    return f'new_path/{filename}'
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
@@ -142,6 +146,35 @@ class Views(TestCase):
         self.assertTrue(resp)
         products = DataProduct.objects.filter(data_product_type='image_file')
         self.assertEqual(products.count(), 1)
+
+
+class TestModels(TestCase):
+    def setUp(self):
+        self.overide_path = 'tom_dataproducts.tests.tests.dp_path'
+        self.target = SiderealTargetFactory.create()
+        self.observation_record = ObservingRecordFactory.create(
+            target_id=self.target.id,
+            facility=FakeRoboticFacility.name,
+            parameters={}
+        )
+        self.data_product = DataProduct.objects.create(
+            product_id='testproductid',
+            target=self.target,
+            observation_record=self.observation_record,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+
+    def test_no_path_overide(self):
+        """Test that the default path is used if no overide is set"""
+        filename = 'afile.fits'
+        path = data_product_path(self.data_product, filename)
+        self.assertIn(f'FakeRoboticFacility/{filename}', path)
+
+    @override_settings(DATA_PRODUCT_PATH='tom_dataproducts.tests.tests.dp_path')
+    def test_path_overide(self):
+        """Test that the overide path is used if set"""
+        path = data_product_path(self.data_product, 'afile.fits')
+        self.assertIn('new_path/afile.fits', path)
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
