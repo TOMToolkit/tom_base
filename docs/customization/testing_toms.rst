@@ -18,7 +18,8 @@ stand-alone test database, meaning that any input used for testing
 doesn't interfere with an operational TOM database.
 
 Code Structure and Running Tests
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 There are two main options on where the test code lives in your TOM,
 depending on how you want to run the tests.  Here we follow convention and refer to
 the top-level directory of your TOM as the `project` and the subdirectory
@@ -27,7 +28,8 @@ name, the distinction matters because TOMs can have multiple `applications`
 within the same `project`.  The actual test code will be the same regardless
 of which option you use - this is described in the next section.
 
-**Option 1: Use the built-in manage.py application to run the tests**
+Option 1: Use the built-in manage.py application to run the tests
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 With this option, test code is run using ``manage.py``, just like management
 commands.  ``manage.py`` is designed to consider any file with a filename
@@ -79,7 +81,8 @@ $ ./manage.py test mytom.tests.MyTestCase
 
 $ ./manage.py test mytom.test.MyTestClass.test_my_function
 
-**Option 2: Use a test runner**
+Option 2: Use a test runner
++++++++++++++++++++++++++++
 
 A test runner script instead of ``manage.py`` can be useful because it
 allows you to have more sophisticated control over settings that can be
@@ -199,7 +202,7 @@ $ python runtests.py tests.test_mytom.TestCase
 $ python runtests.py tests.test_mytom.TestCase.test_my_function
 
 Writing Unittests
------------------
+~~~~~~~~~~~~~~~~~
 
 Regardless of how they are run, the anatomy of a unittest will be the same.
 Unittests are composed as `classes`, inheriting from Django's ``TestCase`` class.
@@ -243,10 +246,9 @@ coordinates.  We could do this just by setting some input RA, Dec values
 as purely numerical attributes.  However, bearing in
 mind that the TOM stores this information as entry in its
 database, a more realistic test would present that information in the
-form of a `Target object <targets/index>`__.  The Toolkit includes a number of
+form of a `Target object <../targets/index>`.  The Toolkit includes a number of
 ``factory`` classes designed to make it easy to create realistic input
-data for testing purposes.  The last element that the ``setUp`` method needs
-is information on the output we expect if everything is working.
+data for testing purposes.
 
 .. code-block::
 
@@ -262,8 +264,6 @@ is information on the output we expect if everything is working.
             self.target.name = 'test_target'
             self.target.ra = 262.71041667
             self.target.dec = -28.50847222
-            self.l = 358.62948127
-            self.b = 2.96696435
 
 A test method can now be added to complete the TestCase, which calls
 the TOM's function with the test input and compares the results from
@@ -286,19 +286,21 @@ or the methods inherited from the ``TestCase`` class.
             self.target.name = 'test_target'
             self.target.ra = 262.71041667
             self.target.dec = -28.50847222
-            self.l = 358.62948127
-            self.b = 2.96696435
 
         def test_calc_gal_coords(self):
+
+            expected_l = 358.62948127
+            expected_b = 2.96696435
+
             (test_l, test_b) = calc_gal_coords(self.target.ra,
                                                 self.target.dec)
-            self.assertEqual(test_l, self.l)
-            self.assertEqual(test_b, self.b)
+            self.assertEqual(test_l, expected_l)
+            self.assertEqual(test_b, expected_b)
 
 You can add as many additional test methods to a ``TestCase`` as you like.
 
 TOM's Built-in Tests and Factory Functions
-------------------------------------------
+++++++++++++++++++++++++++++++++++++++++++
 
 The Toolkit provides a number of factory functions to generate input
 data to test various objects in a TOM system.  These can be found in the ``tests``
