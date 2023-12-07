@@ -39,6 +39,6 @@
   </table>
 </form>
 {% if broker_feedback %}
-  <div class="alert alert-danger" role="alert">{{broker_feedback}}</div>
+  <div class="alert alert-danger" role="alert">{{broker_feedback |safe }}</div>
 {% endif %}
 {% endblock %}
