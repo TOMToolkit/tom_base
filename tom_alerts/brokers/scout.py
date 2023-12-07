@@ -54,7 +54,6 @@ class ScoutBroker(GenericBroker):
         broker_feedback = ''
         args = urlencode(self.clean_parameters(parameters))
         url = '{0}?{1}'.format(SCOUT_URL, args)
-        print(url)
         response = requests.get(url)
         response.raise_for_status()
         parsed = response.json()['data']
