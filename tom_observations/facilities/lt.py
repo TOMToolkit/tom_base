@@ -7,7 +7,6 @@ class LTQueryForm(GenericObservationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         target_id = self.initial.get('target_id')
-        self.helper.inputs.pop()
         self.helper.layout = Layout(
             HTML('''
                 <p>
@@ -21,6 +20,9 @@ class LTQueryForm(GenericObservationForm):
 
 class LTFacility(GenericObservationFacility):
     name = 'LT'
+    observation_forms = {
+        'ALL': LTQueryForm,
+    }
     observation_types = [('Default', '')]
 
     def get_form(self, observation_type):
