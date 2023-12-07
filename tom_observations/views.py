@@ -227,6 +227,11 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         facility_context = facility.get_facility_context_data(target=target)
         context.update(facility_context)
 
+        try:
+            context['unconfigured'] = ", ".join(facility.facility_settings.check_configuration())
+        except AttributeError:
+            context['unconfigured'] = ''
+
         return context
 
     def get_form_class(self):

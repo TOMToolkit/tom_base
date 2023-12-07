@@ -668,7 +668,8 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
                 if self.fields.get(f'c_{j+1}_ic_{i+1}_grating', None):
                     self.fields[f'c_{j+1}_ic_{i+1}_grating'].help_text = 'Only for SOAR'
                     self.fields[f'c_{j+1}_ic_{i+1}_grating'].choices.insert(0, ('None', 'None'))
-                self.fields[f'c_{j+1}_ic_{i+1}_slit'].help_text = 'Only for Floyds'
+                if self.fields.get(f'c_{j+1}_ic_{i+1}_slit', None):
+                    self.fields[f'c_{j+1}_ic_{i+1}_slit'].help_text = 'Only for Floyds'
 
     def convert_old_observation_payload_to_fields(self, data):
         data = super().convert_old_observation_payload_to_fields(data)
@@ -753,7 +754,7 @@ class LCOPhotometricSequenceForm(LCOOldStyleObservationForm):
     configuration of multiple filters, as well as a more intuitive proactive cadence form.
     """
     valid_instruments = ['1M0-SCICAM-SINISTRO', '0M4-SCICAM-SBIG', '2M0-SPECTRAL-AG']
-    valid_filters = ['U', 'B', 'V', 'R', 'I', 'up', 'gp', 'rp', 'ip', 'zs', 'w']
+    valid_filters = ['U', 'B', 'V', 'R', 'I', 'up', 'gp', 'rp', 'ip', 'zs', 'w', 'unknown']
     cadence_frequency = forms.IntegerField(required=True, help_text='in hours')
 
     def __init__(self, *args, **kwargs):
@@ -800,13 +801,13 @@ class LCOPhotometricSequenceForm(LCOOldStyleObservationForm):
         instrument configurations in the appropriate manner.
         """
         instrument_configs = []
-        for filter_name in self.valid_filters:
-            if len(self.cleaned_data[filter_name]) > 0:
+        for filter_code, _ in self.all_optical_element_choices():
+            if len(self.cleaned_data[filter_code]) > 0:
                 instrument_configs.append({
-                    'exposure_count': self.cleaned_data[filter_name][1],
-                    'exposure_time': self.cleaned_data[filter_name][0],
+                    'exposure_count': self.cleaned_data[filter_code][1],
+                    'exposure_time': self.cleaned_data[filter_code][0],
                     'optical_elements': {
-                        'filter': filter_name
+                        'filter': filter_code
                     }
                 })
 
@@ -888,8 +889,8 @@ class LCOPhotometricSequenceForm(LCOOldStyleObservationForm):
                 Column(HTML('Block No.')),
             )
         )
-        for filter_name in self.valid_filters:
-            filter_layout.append(Row(MultiWidgetField(filter_name, attrs={'min': 0})))
+        for filter_code, _ in self.all_optical_element_choices():
+            filter_layout.append(Row(MultiWidgetField(filter_code, attrs={'min': 0})))
 
         return Row(
             Column(
