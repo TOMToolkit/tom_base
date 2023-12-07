@@ -21,7 +21,8 @@ class ScoutQueryForm(GenericQueryForm):
                 Please see the <a href="https://ssd-api.jpl.nasa.gov/doc/scout.html" target="_blank">Scout API
                 Reference</a> for a detailed description of the service.
                 </br>
-                <b>This form is a placeholder for future broker development.</b>
+                <b>This form is a placeholder for future broker development. This query will currently retrieve all
+                 available summary data.</b>
                 </p>
             '''),
             self.common_layout,
@@ -42,7 +43,6 @@ class ScoutBroker(GenericBroker):
 
     name = 'Scout'
     form = ScoutQueryForm
-    help_url = 'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html#module-tom_alerts.brokers.scout'
 
     @classmethod
     def clean_parameters(clazz, parameters):
@@ -54,6 +54,7 @@ class ScoutBroker(GenericBroker):
         broker_feedback = ''
         args = urlencode(self.clean_parameters(parameters))
         url = '{0}?{1}'.format(SCOUT_URL, args)
+        print(url)
         response = requests.get(url)
         response.raise_for_status()
         parsed = response.json()['data']
