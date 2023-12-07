@@ -18,7 +18,7 @@ class ScoutQueryForm(GenericQueryForm):
         self.helper.layout = Layout(
             HTML('''
                 <p>
-                Please see the <a href="https://ssd-api.jpl.nasa.gov/doc/scout.html">Scout API
+                Please see the <a href="https://ssd-api.jpl.nasa.gov/doc/scout.html" target="_blank">Scout API
                 Reference</a> for a detailed description of the service.
                 </br>
                 <b>This form is a placeholder for future broker development.</b>
