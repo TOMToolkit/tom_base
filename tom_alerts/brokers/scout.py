@@ -42,6 +42,7 @@ class ScoutBroker(GenericBroker):
 
     name = 'Scout'
     form = ScoutQueryForm
+    help_url = 'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html#module-tom_alerts.brokers.scout'
 
     @classmethod
     def clean_parameters(clazz, parameters):
