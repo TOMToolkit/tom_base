@@ -4,7 +4,7 @@ import requests
 from django.conf import settings
 from django import forms
 from dateutil.parser import parse
-from crispy_forms.layout import Div, HTML, ButtonHolder, Submit
+from crispy_forms.layout import Div, HTML
 from astropy import units as u
 
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm

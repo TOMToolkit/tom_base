@@ -1,7 +1,6 @@
 from crispy_forms.layout import Layout, HTML
 
 from tom_observations.facility import GenericObservationFacility, GenericObservationForm
-from tom_observations.observation_template import GenericTemplateForm
 
 
 class LTQueryForm(GenericObservationForm):
@@ -29,7 +28,7 @@ class LTTemplateForm(LTQueryForm):
                 see the instructions <a href="https://github.com/TOMToolkit/tom_lt" target="_blank">here</a>.
                 </p>
             '''),
-            HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_observations:template-list'%}}>Back</a>''')
+            HTML('''<a class="btn btn-outline-primary" href={{% url 'tom_observations:template-list'%}}>Back</a>''')
         )
 
 
