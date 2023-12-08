@@ -611,6 +611,16 @@ class ObservationTemplateCreateView(FormView):
     def get_facility_name(self):
         return self.kwargs['facility']
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        facility = get_service_class(self.get_facility_name())()
+        try:
+            context['unconfigured'] = ", ".join(facility.facility_settings.check_configuration())
+        except AttributeError:
+            context['unconfigured'] = ''
+        return context
+
     def get_form_class(self):
         facility_name = self.get_facility_name()
 
