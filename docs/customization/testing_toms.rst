@@ -246,7 +246,7 @@ coordinates.  We could do this just by setting some input RA, Dec values
 as purely numerical attributes.  However, bearing in
 mind that the TOM stores this information as entry in its
 database, a more realistic test would present that information in the
-form of a `Target object <../targets/index>`.  The Toolkit includes a number of
+form of a :doc:`Target object <../targets/index>`.  The Toolkit includes a number of
 ``factory`` classes designed to make it easy to create realistic input
 data for testing purposes.
 
