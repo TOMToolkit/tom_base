@@ -1,12 +1,14 @@
 from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.conf import settings
 
 from tom_catalogs.harvester import AbstractHarvester, get_service_classes, MissingDataException
 
 
 class TestHarvester(AbstractHarvester):
     name = 'TEST'
+    help_text = "This is a test harvester."
 
     def query(self, term):
         if term == 'notfound':
@@ -37,6 +39,7 @@ class TestHarvesterViews(TestCase):
     def test_service_available(self):
         response = self.client.get(reverse('tom_catalogs:query'))
         self.assertContains(response, TestHarvester.name)
+        self.assertContains(response, TestHarvester.help_text)
 
     def test_do_search(self):
         data = {'term': 'atarget', 'service': 'TEST'}
