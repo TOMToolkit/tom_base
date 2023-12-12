@@ -228,9 +228,9 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         context.update(facility_context)
 
         try:
-            context['unconfigured'] = ", ".join(facility.facility_settings.check_configuration())
+            context['missing_configurations'] = ", ".join(facility.facility_settings.get_unconfigured_settings())
         except AttributeError:
-            context['unconfigured'] = ''
+            context['missing_configurations'] = ''
 
         return context
 
@@ -615,11 +615,11 @@ class ObservationTemplateCreateView(FormView):
         context = super().get_context_data(*args, **kwargs)
 
         facility = get_service_class(self.get_facility_name())()
-        # Check configuration of facility and pass names of missing settings to context as 'unconfigured'.
+        # Check configuration of facility and pass names of missing settings to context as 'missing_configurations'.
         try:
-            context['unconfigured'] = ", ".join(facility.facility_settings.check_configuration())
+            context['missing_configurations'] = ", ".join(facility.facility_settings.get_unconfigured_settings())
         except AttributeError:
-            context['unconfigured'] = ''
+            context['missing_configurations'] = ''
         return context
 
     def get_form_class(self):
