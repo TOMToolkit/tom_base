@@ -615,6 +615,7 @@ class ObservationTemplateCreateView(FormView):
         context = super().get_context_data(*args, **kwargs)
 
         facility = get_service_class(self.get_facility_name())()
+        # Check configuration of facility and pass names of missing settings to context as 'unconfigured'.
         try:
             context['unconfigured'] = ", ".join(facility.facility_settings.check_configuration())
         except AttributeError:
