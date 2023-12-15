@@ -228,14 +228,25 @@ class RunQueryView(TemplateView):
 
         # Do query and get query results (fetch_alerts)
         # TODO: Should the deepcopy be in the brokers?
-        alert_query_results = broker_class.fetch_alerts(deepcopy(query.parameters))
-        # Check if feedback is available for fetch_alerts, and allow for backwards compatibility if not.
-        if isinstance(alert_query_results, tuple):
-            alerts, broker_feedback = alert_query_results
-        else:
-            alerts = alert_query_results
-            broker_feedback = ''
+        try:
+            alert_query_results = broker_class.fetch_alerts(deepcopy(query.parameters))
 
+            # Check if feedback is available for fetch_alerts, and allow for backwards compatibility if not.
+            if isinstance(alert_query_results, tuple):
+                alerts, broker_feedback = alert_query_results
+            else:
+                alerts = alert_query_results
+                broker_feedback = ''
+        except AttributeError:
+            # If the broker isn't configured in settings.py, display error instead of query results
+            alerts = iter(())
+            broker_help = getattr(broker_class, 'help_url',
+                                  'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html')
+            broker_feedback = f"""The {broker_class.name} Broker is not properly configured in settings.py.
+                                </br>
+                                Please see the <a href="{broker_help}" target="_blank">documentation</a> for more
+                                information.
+                                """
         # Post-query tasks
         query.last_run = timezone.now()
         query.save()
@@ -300,16 +311,9 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             except IntegrityError:
                 messages.warning(request, f'Unable to save {target.name}, target with that name already exists.')
                 errors.append(target.name)
-        if (len(alerts) == len(errors)):
+        if len(alerts) == len(errors):
             return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
-        elif (len(alerts) == 1):
-            return redirect(reverse(
-                'tom_targets:update', kwargs={'pk': target.id})
-            )
-        else:
-            return redirect(reverse(
-                'tom_targets:list')
-            )
+        return redirect(reverse('tom_targets:list'))
 
 
 class SubmitAlertUpstreamView(LoginRequiredMixin, FormMixin, ProcessFormView, View):
