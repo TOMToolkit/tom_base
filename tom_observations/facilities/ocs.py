@@ -97,7 +97,7 @@ class OCSSettings():
     def get_setting(self, key):
         return settings.FACILITIES.get(self.facility_name, self.default_settings).get(key, self.default_settings[key])
 
-    def check_configuration(self):
+    def get_unconfigured_settings(self):
         """
         Check that the settings for this facility are present, and return list of any required settings that are blank.
         """
@@ -993,12 +993,12 @@ class OCSFullObservationForm(OCSBaseObservationForm):
     def button_layout(self):
         """
         Override Button layout from BaseObservationForm.
-        Submit button will be disabled if there are any unconfigured settings found by check_configuration().
+        Submit button will be disabled if there are any unconfigured settings found by get_unconfigured_settings().
         """
         target_id = self.initial.get('target_id')
 
         return ButtonHolder(
-            Submit('submit', 'Submit', disabled=bool(self.facility_settings.check_configuration())),
+            Submit('submit', 'Submit', disabled=bool(self.facility_settings.get_unconfigured_settings())),
             Submit('validate', 'Validate'),
             HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>
                         Back</a>''')

@@ -8,8 +8,8 @@
 {% block content %}
 {{ form|as_crispy_errors }}
 <h3>Submit an observation to {{ form.facility.value }} for <a href="{% url 'targets:detail' pk=target.id %}">{{target.name}}</a></h3>
-{% if unconfigured %}
-    <div class="alert alert-danger">Some {{ form.facility.value }} Facility settings ({{ unconfigured }}) are not configured.</div>
+{% if missing_configurations %}
+    <div class="alert alert-danger">Some {{ form.facility.value }} Facility settings ({{ missing_configurations }}) are not configured.</div>
 {% endif %}
 {% if target.type == 'SIDEREAL' %}
 <div class="row">
