@@ -12,7 +12,7 @@
   <table class="table table-striped">
     <thead>
       <tr>
-        <th></th>
+        <th><input type="checkbox" id="selectAll"/></th>
         <th>Time</th>
         <th>Name</th>
         <th>RA</th>
@@ -41,4 +41,26 @@
 {% if broker_feedback %}
   <div class="alert alert-danger" role="alert">{{broker_feedback |safe }}</div>
 {% endif %}
+
+<script>
+  document.getElementById("selectAll").addEventListener("change", function() {
+    // If the select all checkbox state changes, this will change the state
+    // of all checkboxes with the name attribute "alerts.
+    document.querySelectorAll(`input[name="alerts"]`).forEach(item => {
+      item.checked = this.checked;
+    });
+  });
+
+  document.querySelectorAll(`input[name="alerts"]`).forEach(item => {
+    item.addEventListener("change", function() {
+      let selectAllCheckbox = document.getElementById("selectAll");
+      // If all checkboxes with the name attribute "alerts" are checked, this
+      // will also check the "selectAll" checkbox.
+      const alertsCheckboxes = document.querySelectorAll(`input[name="alerts"]`);
+      const allChecked = Array.from(alertsCheckboxes).every(checkbox => checkbox.checked);
+      selectAllCheckbox.checked = allChecked;
+    });
+  });
+</script>
+
 {% endblock %}

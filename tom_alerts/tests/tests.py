@@ -1,4 +1,5 @@
 import json
+from requests import HTTPError
 from unittest.mock import patch
 
 from django import forms
@@ -192,6 +193,22 @@ class TestBrokerViews(TestCase):
         )
         response = self.client.get(reverse('tom_alerts:run', kwargs={'pk': broker_query.id}))
         self.assertContains(response,  '66')
+
+    @patch('tom_alerts.tests.tests.TestBroker.fetch_alerts')
+    def test_handle_http_error(self, mock_fetch_alerts):
+        broker_query = BrokerQuery.objects.create(
+            name='find hoth',
+            broker='TEST',
+            parameters={'name': 'Hoth'},
+        )
+        # Set up the mock to raise an HTTPError
+        mock_fetch_alerts.side_effect = HTTPError("Test HTTP Error")
+
+        # Replace 'query_id' with the appropriate identifier for your test query
+        response = self.client.get(reverse('tom_alerts:run', kwargs={'pk': broker_query.id}))
+
+        # Assert that the HTTPError is handled as expected
+        self.assertContains(response, "Issue fetching alerts, please try again.")
 
     def test_update_query(self):
         broker_query = BrokerQuery.objects.create(
