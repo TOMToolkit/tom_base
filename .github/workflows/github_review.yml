@@ -1,0 +1,15 @@
+name: Move pull request into "Needs Review" column
+
+on:
+  pull_request:
+    types: [review_requested]
+
+jobs:
+  automate-project-columns:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: alex-page/github-project-automation-plus@v0.8.3
+        with:
+          project: TOM Toolkit
+          column: Needs Review
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
