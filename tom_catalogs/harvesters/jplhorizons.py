@@ -11,6 +11,7 @@ class JPLHorizonsHarvester(AbstractHarvester):
     """
 
     name = 'JPL Horizons'
+    help_text = 'Query the JPL Horizons Minor Body catalog.'
 
     def query(self, term, location=None, start=None, end=None, step=None):
         if all((start, end, step)):
