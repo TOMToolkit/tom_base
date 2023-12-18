@@ -777,13 +777,13 @@ django = ">=4.2"
 
 [[package]]
 name = "django-dramatiq"
-version = "0.11.5"
+version = "0.11.6"
 description = "A Django app for Dramatiq."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "django_dramatiq-0.11.5-py3-none-any.whl", hash = "sha256:79ebc6d622ca6ad79af7dcba7c7f220ca3ec9a89700b51ab8bc1c76703b0324e"},
-    {file = "django_dramatiq-0.11.5.tar.gz", hash = "sha256:c560b62c735921b263f856d06b17aecf05aa192f03ac101697f811b93eaade4a"},
+    {file = "django_dramatiq-0.11.6-py3-none-any.whl", hash = "sha256:9843f5e4d019bf8f8c89e78b39ba037b3552f17f587f49633cc5e13774ac0ab0"},
+    {file = "django_dramatiq-0.11.6.tar.gz", hash = "sha256:f8b47a1654c4a8a1a0b4d3215b6b3ec189cb28dd4dec5afb5437ada48ee38ff1"},
 ]
 
 [package.dependencies]
