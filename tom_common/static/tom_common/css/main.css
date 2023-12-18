@@ -21,3 +21,9 @@ body {
 #login-buttons > li {
   margin: 0 2px 0 2px;
 }
+
+/* see https://github.com/twbs/bootstrap/issues/23295 */
+textarea {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
