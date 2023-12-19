@@ -19,7 +19,6 @@
         <th>Dec</th>
         <th>Mag</th>
         <th><span title="{{ score_description }}">Score</span></th>
-        <th>View</th>
       </tr>
     </thead>
     <tbody>
@@ -27,12 +26,11 @@
       <tr>
         <td><input type="checkbox" name="alerts" value="{{ alert.id }}"/></td>
         <td>{{ alert.timestamp }}</td>
-        <td>{{ alert.name }}</td>
+        <td><a href="{{ alert.url }}" target="_blank" title="View alert">{{ alert.name }}</a></td>
         <td>{{ alert.ra|floatformat:3 }}</td>
         <td>{{ alert.dec|floatformat:3 }}</td>
         <td>{{ alert.mag|floatformat:3 }}</td>
         <td>{{ alert.score|floatformat:3 }}</td>
-        <td><a href="{{ alert.url }}" target="_blank" title="View alert">View</a></td>
       </tr>
       {% endfor %}
     </tbody>
