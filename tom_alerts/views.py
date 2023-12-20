@@ -1,6 +1,7 @@
 from copy import deepcopy
 import json
 import logging
+from requests import HTTPError
 from typing import List
 
 from django.views.generic.edit import DeleteView, FormMixin, FormView, ProcessFormView
@@ -247,6 +248,10 @@ class RunQueryView(TemplateView):
                                 Please see the <a href="{broker_help}" target="_blank">documentation</a> for more
                                 information.
                                 """
+        except HTTPError as e:
+            alerts = iter(())
+            broker_feedback = f"Issue fetching alerts, please try again.</br>{e}"
+
         # Post-query tasks
         query.last_run = timezone.now()
         query.save()
