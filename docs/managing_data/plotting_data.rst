@@ -5,6 +5,16 @@ The TOM Toolkit provides a few basic plots, such as photometry,
 spectroscopy and target distribution. Sometimes it would be useful to
 visualize data in a different way.
 
+If you want a different `plotly` theme than the one that comes standard, you can
+change this by adding the following to your `settings.py` file:
+
+::
+
+    # Default Plotly theme setting, can set to any valid theme:
+    # 'plotly', 'plotly_white', 'plotly_dark', 'ggplot2', 'seaborn', 'simple_white', 'none'
+    PLOTLY_THEME = 'plotly_dark'
+
+
 In this tutorial you will learn how to build and display a very simple
 plot in our TOM: number of reduced data per target. The end result will
 demonstrate how to create a `plot.ly <https://plot.ly>`__ plot with data
