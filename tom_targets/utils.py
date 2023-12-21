@@ -1,5 +1,4 @@
 from django.db.models import Count
-from guardian.shortcuts import assign_perm
 from django.contrib.auth.models import Group
 
 import csv
@@ -103,9 +102,7 @@ def import_targets(target_stream):
             for group in group_names:
                 try:
                     group_instance = Group.objects.get(name=group)
-                    assign_perm('tom_targets.view_target', group_instance, target)
-                    assign_perm('tom_targets.change_target', group_instance, target)
-                    assign_perm('tom_targets.delete_target', group_instance, target)
+                    target.give_user_access(group_instance)
                 except Group.DoesNotExist:
                     pass
         except Exception as e:
