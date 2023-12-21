@@ -19,6 +19,15 @@ class ANTARESQueryForm(GenericQueryForm):
 
 
 class ANTARESBroker(GenericBroker):
+    """
+    In order to install the Antares Broker plugin, please see
+    these instructions at https://github.com/TOMToolkit/tom_antares.
+
+    There is a known compatibility issue with antares-client required for the TOM_Antares Broker.
+    The antares-client requires the librdkafka library to be installed in order to be compatible with Python 3.10.
+    You can learn more about this on the
+    antares-client website (https://nsf-noirlab.gitlab.io/csdc/antares/client/installation.html) .
+    """
     name = 'ANTARES'
     form = ANTARESQueryForm
 

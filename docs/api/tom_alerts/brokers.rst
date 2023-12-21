@@ -22,6 +22,9 @@ ALeRCE
 ANTARES
 *******
 
+.. automodule:: tom_alerts.brokers.antares
+    :members:
+
 .. automodule:: tom_antares.antares
     :members:
 
@@ -35,6 +38,9 @@ Lasair
 ******
 Hermes
 ******
+
+.. automodule:: tom_alerts.brokers.hermes
+    :members:
 
 .. automodule:: tom_hermes.hermes
     :members:
