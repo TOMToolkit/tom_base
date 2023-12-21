@@ -1,7 +1,11 @@
 from django.test import TestCase, override_settings
 
+from django.contrib.sites.models import Site
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django_comments.models import Comment
+
+from tom_targets.tests.factories import SiderealTargetFactory
 
 
 class TestCommonViews(TestCase):
@@ -114,3 +118,39 @@ class TestAuthScheme(TestCase):
         response = self.client.get(reverse('tom_targets:list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Create Targets')
+
+
+class CommentDeleteViewTest(TestCase):
+    def setUp(self):
+        self.site = Site.objects.get_current()
+        self.user = User.objects.create_user(username='user', password='password')
+        self.superuser = User.objects.create_superuser(username='admin', password='admin')
+
+        # Create a content object and a comment linked to that object.
+        self.content_object = SiderealTargetFactory.create(ra=123.456, dec=-32.1)
+        self.comment = Comment.objects.create(user=self.user, content_object=self.content_object,
+                                              comment="Test Comment", site=self.site)
+
+    def test_redirect_if_not_logged_in(self):
+        response = self.client.get(reverse('comment-delete', kwargs={'pk': self.comment.pk}))
+        self.assertRedirects(response, f'/accounts/login/?next=/comment/{self.comment.pk}/delete')
+
+    def test_logged_in_but_not_author_or_superuser(self):
+        another_user = User.objects.create_user(username='another_user', password='password')
+        self.client.force_login(another_user)
+        response = self.client.post(reverse('comment-delete', kwargs={'pk': self.comment.pk}))
+        # Somewhere in TOM redirects the user to login as a user with correct permissions rather than
+        # send to 403 page.
+        self.assertEqual(response.status_code, 302)
+
+    def test_superuser_can_delete(self):
+        self.client.force_login(self.superuser)
+        response = self.client.post(reverse('comment-delete', kwargs={'pk': self.comment.pk}))
+        self.assertRedirects(response, self.content_object.get_absolute_url())
+        self.assertFalse(Comment.objects.filter(pk=self.comment.pk).exists())
+
+    def test_author_can_delete(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('comment-delete', kwargs={'pk': self.comment.pk}), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Comment.objects.filter(pk=self.comment.pk).exists())
