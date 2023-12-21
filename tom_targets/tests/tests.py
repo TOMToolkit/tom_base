@@ -176,11 +176,12 @@ class TestTargetNameSearch(TestCase):
 @override_settings(TOM_FACILITY_CLASSES=[])
 class TestTargetCreate(TestCase):
     def setUp(self):
-        user = User.objects.create(username='testuser')
-        self.client.force_login(user)
+        self.user = User.objects.create(username='testuser')
+        self.client.force_login(self.user)
         self.group = Group.objects.create(name='agroup')
-        user.groups.add(self.group)
-        user.save()
+        self.group2 = Group.objects.create(name='agroup2')
+        self.user.groups.add(self.group)
+        self.user.save()
 
     def test_target_create_form(self):
         response = self.client.get(reverse('targets:create'))
@@ -208,6 +209,32 @@ class TestTargetCreate(TestCase):
         response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
         self.assertContains(response, target_data['name'])
         self.assertTrue(Target.objects.filter(name=target_data['name']).exists())
+        # Check Group level permissions
+        self.assertIn("view_target", get_perms(self.user, Target.objects.filter(name=target_data['name'])[0]))
+
+    def test_create_target_no_group(self):
+        target_data = {
+            'name': 'test_target_new',
+            'type': Target.SIDEREAL,
+            'ra': 123.456,
+            'dec': -32.1,
+            'groups': [],
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
+        self.assertContains(response, target_data['name'])
+        self.assertTrue(Target.objects.filter(name=target_data['name']).exists())
+        # Check Target level permissions
+        self.assertIn("view_target", get_perms(self.user, Target.objects.filter(name=target_data['name'])[0]))
 
     def test_create_target_sexigesimal(self):
         """

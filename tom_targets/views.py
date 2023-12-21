@@ -205,6 +205,9 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
+        # Give the user access to the target they created
+        self.object.give_user_access(self.request.user)
+        # Run the target post save hook
         logger.info('Target post save hook: %s created: %s', self.object, True)
         run_hook('target_post_save', target=self.object, created=True)
         return redirect(self.get_success_url())
