@@ -1,4 +1,6 @@
 from django.db.models import Count
+from guardian.shortcuts import assign_perm
+from django.contrib.auth.models import Group
 
 import csv
 from .models import Target, TargetExtra, TargetName
@@ -73,12 +75,17 @@ def import_targets(target_stream):
         row = {k: v for (k, v) in row.items() if not (k in base_target_fields and not v)}
         target_extra_fields = []
         target_names = []
+        group_names = []
         target_fields = {}
         for k in row:
             # All fields starting with 'name' (e.g. name2, name3) that aren't literally 'name' will be added as
             # TargetNames
             if k != 'name' and k.startswith('name'):
                 target_names.append(row[k])
+            elif k == 'groups':
+                groups = row[k].split(',')
+                for group in groups:
+                    group_names.append(group.strip())
             elif k not in base_target_fields:
                 target_extra_fields.append((k, row[k]))
             else:
@@ -93,6 +100,14 @@ def import_targets(target_stream):
                 if name:
                     TargetName.objects.create(target=target, name=name)
             targets.append(target)
+            for group in group_names:
+                try:
+                    group_instance = Group.objects.get(name=group)
+                    assign_perm('tom_targets.view_target', group_instance, target)
+                    assign_perm('tom_targets.change_target', group_instance, target)
+                    assign_perm('tom_targets.delete_target', group_instance, target)
+                except Group.DoesNotExist:
+                    pass
         except Exception as e:
             error = 'Error on line {0}: {1}'.format(index + 2, str(e))
             errors.append(error)
