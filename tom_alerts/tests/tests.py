@@ -8,6 +8,7 @@ from django.contrib.messages import get_messages
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from guardian.shortcuts import get_perms
 
 from tom_alerts.alerts import GenericBroker, GenericQueryForm, GenericUpstreamSubmissionForm, GenericAlert
 from tom_alerts.alerts import get_service_class, get_service_classes
@@ -246,6 +247,8 @@ class TestBrokerViews(TestCase):
         self.assertEqual(Target.objects.count(), 1)
         self.assertEqual(Target.objects.first().name, 'Hoth')
         self.assertRedirects(response, reverse('tom_targets:list'))
+        # Check Group level permissions
+        self.assertIn("view_target", get_perms(self.user, Target.objects.first()))
 
     @override_settings(CACHES={
             'default': {
