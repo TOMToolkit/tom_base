@@ -874,7 +874,7 @@ class TestTargetImport(TestCase):
         csv_content = b"name,type,ra,dec\nm13,SIDEREAL,250.421,36.459\nm27,SIDEREAL,299.901,22.721"
         csv_file = SimpleUploadedFile("test.csv", csv_content, content_type="text/csv")
 
-        response = self.client.post(reverse('targets:import'), {'target_csv': csv_file})
+        self.client.post(reverse('targets:import'), {'target_csv': csv_file})
 
         csv_file.close()
         targets = Target.objects.all()
@@ -882,7 +882,6 @@ class TestTargetImport(TestCase):
             self.assertIn("view_target", get_perms(self.user, target))
 
     def test_import_csv(self):
-        from guardian.shortcuts import get_perms
         csv = [
             'name,type,ra,dec',
             'm13,SIDEREAL,250.421,36.459',
