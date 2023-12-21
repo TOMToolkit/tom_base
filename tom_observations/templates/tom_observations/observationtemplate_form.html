@@ -3,5 +3,8 @@
 {% block title %}Create an Observation Template{% endblock %}
 {% block content %}
 <h2>Create a new Observation Template for {{ form.facility.value }}</h2>
+{% if missing_configurations %}
+    <div class="alert alert-danger">Some {{ form.facility.value }} Facility settings ({{ missing_configurations }}) are not configured.</div>
+{% endif %}
 {% crispy form %}
 {% endblock %}

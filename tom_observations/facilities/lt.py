@@ -18,6 +18,20 @@ class LTQueryForm(GenericObservationForm):
         )
 
 
+class LTTemplateForm(LTQueryForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            HTML('''
+                <p>
+                This plugin is a stub for the Liverpool Telescope plugin. In order to install the full plugin, please
+                see the instructions <a href="https://github.com/TOMToolkit/tom_lt" target="_blank">here</a>.
+                </p>
+            '''),
+            HTML('''<a class="btn btn-outline-primary" href={% url 'tom_observations:template-list' %}>Back</a>''')
+        )
+
+
 class LTFacility(GenericObservationFacility):
     name = 'LT'
     observation_forms = {
@@ -27,6 +41,9 @@ class LTFacility(GenericObservationFacility):
 
     def get_form(self, observation_type):
         return LTQueryForm
+
+    def get_template_form(self, observation_type):
+        return LTTemplateForm
 
     def submit_observation(self, observation_payload):
         return
