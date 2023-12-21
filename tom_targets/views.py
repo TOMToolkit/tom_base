@@ -467,6 +467,8 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
         csv_file = request.FILES['target_csv']
         csv_stream = StringIO(csv_file.read().decode('utf-8'), newline=None)
         result = import_targets(csv_stream)
+        for target in result['targets']:
+            target.give_user_access(request.user)
         messages.success(
             request,
             'Targets created: {}'.format(len(result['targets']))

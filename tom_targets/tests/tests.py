@@ -16,7 +16,7 @@ from tom_observations.tests.factories import ObservingRecordFactory
 from tom_targets.models import Target, TargetExtra, TargetList, TargetName
 from tom_targets.utils import import_targets
 from tom_dataproducts.models import ReducedDatum
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, get_perms
 
 
 class TestTargetListUserPermissions(TestCase):
@@ -866,10 +866,23 @@ class TestTargetUpdate(TestCase):
 
 class TestTargetImport(TestCase):
     def setUp(self):
-        user = User.objects.create(username='testuser')
-        self.client.force_login(user)
+        self.user = User.objects.create(username='testuser')
+        self.client.force_login(self.user)
+
+    def test_import_view(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        csv_content = b"name,type,ra,dec\nm13,SIDEREAL,250.421,36.459\nm27,SIDEREAL,299.901,22.721"
+        csv_file = SimpleUploadedFile("test.csv", csv_content, content_type="text/csv")
+
+        response = self.client.post(reverse('targets:import'), {'target_csv': csv_file})
+
+        csv_file.close()
+        targets = Target.objects.all()
+        for target in targets:
+            self.assertIn("view_target", get_perms(self.user, target))
 
     def test_import_csv(self):
+        from guardian.shortcuts import get_perms
         csv = [
             'name,type,ra,dec',
             'm13,SIDEREAL,250.421,36.459',

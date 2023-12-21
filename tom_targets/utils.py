@@ -53,18 +53,18 @@ def export_targets(qs):
     return file_buffer
 
 
-def import_targets(targets):
+def import_targets(target_stream):
     """
     Imports a set of targets into the TOM and saves them to the database.
 
-    :param targets: String buffer of targets
-    :type targets: StringIO
+    :param target_stream: String buffer of targets
+    :type target_stream: StringIO
 
     :returns: dictionary of successfully imported targets, as well errors
     :rtype: dict
     """
     # TODO: Replace this with an in memory iterator
-    targetreader = csv.DictReader(targets, dialect=csv.excel)
+    targetreader = csv.DictReader(target_stream, dialect=csv.excel)
     targets = []
     errors = []
     base_target_fields = [field.name for field in Target._meta.get_fields()]
