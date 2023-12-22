@@ -1,6 +1,10 @@
 Welcome to the TOM Toolkit's documentation!
 ===========================================
 
+.. link-button:: introduction/getting_started.html
+    :text: Quickstart Guide
+    :classes: btn-info
+
 .. toctree::
   :maxdepth: 3
   :hidden:
@@ -10,7 +14,6 @@ Welcome to the TOM Toolkit's documentation!
   introduction/about
   introduction/support
   introduction/troubleshooting
-
 
 Introduction
 ------------
