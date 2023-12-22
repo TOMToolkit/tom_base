@@ -23,6 +23,38 @@ will guide you through the process of setting up a TOM for the first time.
 Please use the [issue tracker](https://github.com/TOMToolkit/tom_base/issues) to
 report any issues or support questions.
 
+## Development Team 
+The lead developers of the TOM Toolkit are [William Lindstrom](https://lco.global/people/>)
+and [Joey Chatelain](https://sites.google.com/site/josephchatelain>),
+professional software developers with the Las Cumbres Observatory software team,
+together with [Jon Nation](https://lco.global/people/>), [Curtis McCully](https://lco.global/people/>),
+[Matt Daily](https://lco.global/people/>) and [Mark Bowman](https://lco.global/people/>).  [Rachel Street](https://lco.global/user/rstreet/>) is the project's Principle Investigator.
+The TOM Toolkit is grateful for the advice and collaboration with [Andy Howell](http://www.dahowell.com/),
+[Edward Gomez](https://www.zemogle.net/>), Craig Pellegrino, Jamie Burke and the rest of the LCO Science team.
+The [original Toolkit](https://zenodo.org/records/4437764>) was developed by
+Austin Riba, David Collom and William Lindstrom.
+
+Our team very much welcome input from the community, and we are grateful to
+the following people for their many contributions:
+ - Dan Avner, NOIRLab
+ - Doug Arnold, Liverpool Telescope
+ - Etienne Bachelet, IPAC/Caltech
+ - Ezequiel Contreras Martinez, UCSB
+ - Griffin Hosseinzadeh, University of Arizona
+ - Bryan Miller, Gemini Observatory
+ - Brendan Mills, UCSB
+ - Julien Peloton, Fink
+
+## Acknowledgements
+
+We hope you find our software useful for your research.  If so, we would be grateful
+if you can include a brief acknowledgement in your papers and presentations, for example 
+"This research made use of [The TOM Toolkit](https://tom-toolkit.readthedocs.io/)". 
+We would also very much appreciate you including a citation to our paper describing 
+the Toolkit [Street, R.A. et al., 2018, SPIE, 10707, 11](http://adsabs.harvard.edu/abs/2018SPIE10707E..11S) 
+(to export the BibTeX please click [here](https://ui.adsabs.harvard.edu/abs/2018SPIE10707E..11S/exportcitation)).  
+
+
 ## Contributing to the project
 If you'd like to contribute to the TOM Toolkit, first of all, thanks! Secondly, we
 have a [contribution guide](https://tom-toolkit.readthedocs.io/en/stable/introduction/contributing.html) that
@@ -65,3 +97,11 @@ requests.
 
 The [tom_registration](https://github.com/TOMToolkit/tom_registration) plugin introduces support for two TOM registration
 flows--an open registration, and a registration that requires administrator approval.
+
+## About the TOM Toolkit
+
+The TOM Toolkit is managed by Las Cumbres Observatory, with generous
+financial support from the [National Science Foundation](https://www.nsf.gov/>) grant 2209852.
+We are also grateful for support from the [Heising-Simons Foundation](https://hsfoundation.org>) 
+and the [Zegar Family Foundation](https://sites.google.com/zegarff.org/site>) at the start
+of the project.  
