@@ -1,4 +1,5 @@
 from django.db.models import Count
+from django.contrib.auth.models import Group
 
 import csv
 from .models import Target, TargetExtra, TargetName
@@ -53,18 +54,18 @@ def export_targets(qs):
     return file_buffer
 
 
-def import_targets(targets):
+def import_targets(target_stream):
     """
     Imports a set of targets into the TOM and saves them to the database.
 
-    :param targets: String buffer of targets
-    :type targets: StringIO
+    :param target_stream: String buffer of targets
+    :type target_stream: StringIO
 
     :returns: dictionary of successfully imported targets, as well errors
     :rtype: dict
     """
     # TODO: Replace this with an in memory iterator
-    targetreader = csv.DictReader(targets, dialect=csv.excel)
+    targetreader = csv.DictReader(target_stream, dialect=csv.excel)
     targets = []
     errors = []
     base_target_fields = [field.name for field in Target._meta.get_fields()]
@@ -73,12 +74,17 @@ def import_targets(targets):
         row = {k: v for (k, v) in row.items() if not (k in base_target_fields and not v)}
         target_extra_fields = []
         target_names = []
+        group_names = []
         target_fields = {}
         for k in row:
             # All fields starting with 'name' (e.g. name2, name3) that aren't literally 'name' will be added as
             # TargetNames
             if k != 'name' and k.startswith('name'):
                 target_names.append(row[k])
+            elif k == 'groups':
+                groups = row[k].split(',')
+                for group in groups:
+                    group_names.append(group.strip())
             elif k not in base_target_fields:
                 target_extra_fields.append((k, row[k]))
             else:
@@ -93,6 +99,12 @@ def import_targets(targets):
                 if name:
                     TargetName.objects.create(target=target, name=name)
             targets.append(target)
+            for group in group_names:
+                try:
+                    group_instance = Group.objects.get(name=group)
+                    target.give_user_access(group_instance)
+                except Group.DoesNotExist:
+                    pass
         except Exception as e:
             error = 'Error on line {0}: {1}'.format(index + 2, str(e))
             errors.append(error)

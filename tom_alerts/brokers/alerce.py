@@ -332,13 +332,13 @@ class ALeRCEBroker(GenericBroker):
     def fetch_alert(self, alert_id):
         """
         The response for a single alert is as follows:
+            {
+                'oid':'ZTF20acnsdjd',
+                ...
+                'firstmjd':59149.1119328998,
+                ...
+            }
 
-        {
-            'oid':'ZTF20acnsdjd',
-            ...
-            'firstmjd':59149.1119328998,
-            ...
-        }
         """
         response = requests.get(f'{ALERCE_SEARCH_URL}/objects/{alert_id}')
         response.raise_for_status()

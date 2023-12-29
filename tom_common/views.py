@@ -176,13 +176,14 @@ class CommentDeleteView(LoginRequiredMixin, DeleteView):
     """
     model = Comment
 
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, form):
         """
-        Method that handles the DELETE request for a ``Comment``. Validates that the user either authored the comment or
-        is a superuser, then deletes the ``Comment``.
+        Checks if the user is authorized to delete the comment and then proceeds with deletion.
         """
-        if request.user == self.get_object().user or request.user.is_superuser:
-            self.success_url = self.get_object().get_absolute_url()
-            return super().delete(request, *args, **kwargs)
-        else:
-            return HttpResponseForbidden('Not authorized')
+        self.object = self.get_object()
+
+        if self.request.user == self.object.user or self.request.user.is_superuser:
+            self.success_url = self.object.content_object.get_absolute_url()
+            return super().form_valid(form)
+
+        return HttpResponseForbidden('Not authorized')

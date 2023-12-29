@@ -211,7 +211,7 @@ the documentation on `Creating an Alert Module for the TOM
 Toolkit </brokers/create_broker>`__.
 
 `TOM_ALERT_DASH_CLASSES <#tom_alert_dash_classes>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default:
 
