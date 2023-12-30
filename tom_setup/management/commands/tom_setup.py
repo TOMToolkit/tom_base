@@ -7,7 +7,6 @@ from django.core.management import call_command
 from django.core.management.utils import get_random_secret_key
 from django.utils import timezone
 from django.contrib.auth.models import Group, User
-# from tom_common.static.tom_common.css
 
 BASE_DIR = settings.BASE_DIR
 
@@ -81,6 +80,10 @@ class Command(BaseCommand):
             pass
         try:
             os.mkdir(os.path.join(common_static_dir, 'css'))
+        except FileExistsError:
+            pass
+        try:
+            os.mkdir(os.path.join(common_static_dir, 'img'))
         except FileExistsError:
             pass
         try:
