@@ -13,7 +13,7 @@ The `tom_iag <https://github.com/thusser/tom_iag>`_ plugin provides and interfac
 tom_gemini_community
 ********************
 
-The `tom_gemini_community <https://github.com/TOMToolkit/tom_gemini_community>`_ plugin provides additional features for making observation requests to Gemini, and includes support for guide star selection via `tom_gemini_community <https://github.com/bryanmiller/gsselect>`_. The plugin was developed by Bryan Miller.
+The `tom_gemini_community <https://github.com/TOMToolkit/tom_gemini_community>`_ plugin provides additional features for making observation requests to Gemini, and includes support for guide star selection via `GSselect <https://github.com/bryanmiller/gsselect>`_. The plugin was developed by Bryan Miller.
 
 ****************
 SNEx Custom Code

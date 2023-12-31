@@ -67,10 +67,10 @@ template:
    {% block content %}
    <div class="row">
      <div class="col-md-8">
-       <h2 class="text-center">Project LEO</h2>
 
        <!-- BEGIN MODIFIED CONTENT -->
 
+       <h2 class="text-center">Project LEO</h2>
        <p class="text-center"><img src="https://raw.githubusercontent.com/TOMToolkit/tomtoolkit.github.io/master/assets/img/customize_templates_doc/sciencecat.jpg" class="img-fluid mx-auto"></p>
        <p>Project LEO is a very serious survey of the most important constellation.</p>
 
@@ -137,9 +137,78 @@ static
 files <https://docs.djangoproject.com/en/2.1/howto/static-files/>`__
 capabilities.
 
+Updating Built-in Static Files:
+===============================
+
+The TOM Toolkit allows you to easily overwrite some default style settings and image files.
+The default static files can be found in the following structure:
+
+::
+
+   ├── db.sqlite3
+   ├── manage.py
+   ├── templates
+   ├── mytom
+   └── static
+       └── tom_common
+           ├── css
+           │   └── custom.css
+           └── img
+
+Customize default CSS:
+######################
+
+The default styling is mostly based on Bootstrap v4.6.2 (`https://getbootstrap.com/ <https://getbootstrap.com/>`__).
+If you ran the tom_setup script, you should have a directory ``static`` at the top level of your project.
+Within this folder, find the ``tom_common/css`` directory. In this folder, is a file named ``custom.css``.
+Editing this file will allow you to overwrite any of the custom css used at the base level in the TOM Toolkit.
+
+As an example, let's change the background color from white (#ffffff) to an off-white (#efead6).
+
+.. code:: css
+
+    body {
+        background-color: #efead6;
+    }
+
+Once you have added these images to the ``static/tom_common/img`` directory and reloaded the page (you may need to
+clear the Cache as well), you should now see your changes displayed on the page.
+
+This example is a fairly heavy handed change that will affect the entire TOM including any elements that inherit
+from the `body` `background-color`. More subtle and complex changes will require more careful editing of the
+``custom.css`` file. Note: you can use your browser's developer tools to inspect the elements of the TOM in order
+to determine which css classes are being used and how to best style them.
+
+Customize default Logos and Icons:
+##################################
+
 If you ran the tom_setup script, you should have a directory ``static``
-at the top level of your project. Within this folder, make a directory
-``img``. In this folder, place an image you’d like to display on your
+at the top level of your project. Within this folder, find the ``tom_common/img`` directory.
+In this folder, place the images you’d like to use in your TOM to replace the default TOMToolkit Logos and Icons.
+The images should be named as follows:
+
+::
+
+    logo-color.png --> Full Color Logo used on Main Page
+    logo-color-cropped.png --> Smaller Logo used on the Navbar
+    favicon-32.ico --> Favicon used in the browser tab
+
+The use of `logo-color.png` assumes that you are using the original TOMToolkit html for your homepage.
+Specifically, the following line of code should be left intact and not edited as in the example above:
+
+.. code:: html
+
+    <p class="text-center"><img src="{% static 'tom_common/img/logo-color.png' %}" class="img-fluid mx-auto"></p>
+
+Once you have added these images to the ``static/tom_common/img`` directory and reloaded the page (you may need to
+clear the Cache as well), you should now see your images displayed instead of the default images provided by TOMToolkit.
+
+Adding Your Own Static Files:
+=============================
+
+In some cases you may want to more directly reference a local file.
+In this case, you should add a ``img`` directory in the ``static`` directory
+at the top level of your project. In this folder, place an image you’d like to display on your
 homepage. For example, ``mytom.jpg``.
 
 ::
