@@ -53,6 +53,21 @@ class Command(BaseCommand):
         self.ok()
 
     def create_project_dirs(self):
+        """
+        Create the project directory structure.
+        Final directory structure should look like this:
+           mytom
+           ├── manage.py
+           ├── templates
+           ├── tmp
+           ├── mytom
+           └── static
+               ├── .keep
+               └── tom_common
+                   ├── css
+                   │   └── custom.css
+                   └── img
+        """
         self.status('Creating project directories... ')
         try:
             os.mkdir(os.path.join(BASE_DIR, 'data'))
@@ -62,7 +77,7 @@ class Command(BaseCommand):
             os.mkdir(os.path.join(BASE_DIR, 'templates'))
         except FileExistsError:
             pass
-        # set up custom static files
+        # ---set up custom static files---
         static_dir = os.path.join(BASE_DIR, 'static')
         try:
             os.mkdir(static_dir)
@@ -165,8 +180,8 @@ class Command(BaseCommand):
         # TODO: Ugly hack to get project name
         settings_location = os.path.join(BASE_DIR, os.path.basename(BASE_DIR), 'settings.py')
         if not os.path.exists(settings_location):
-            msg = 'Could not determine settings.py location. Writing settings.py out to {}. Please copy file to ' \
-                  'the proper location after script finishes.'.format(settings_location)
+            msg = f'Could not determine settings.py location. Writing settings.py out to {settings_location}. ' \
+                  f'Please copy file to the proper location after script finishes.'
             self.stdout.write(self.style.WARNING(msg))
         with open(settings_location, 'w+') as settings_file:
             settings_file.write(rendered)
@@ -193,8 +208,8 @@ class Command(BaseCommand):
         # TODO: Ugly hack to get project name
         urls_location = os.path.join(BASE_DIR, os.path.basename(BASE_DIR), 'urls.py')
         if not os.path.exists(urls_location):
-            msg = 'Could not determine urls.py location. Writing urls.py out to {}. Please copy file to ' \
-                  'the proper location after script finishes.'.format(urls_location)
+            msg = f'Could not determine urls.py location. Writing urls.py out to {urls_location}. ' \
+                  f'Please copy file to the proper location after script finishes.'
             self.stdout.write(self.style.WARNING(msg))
         with open(urls_location, 'w+') as urls_file:
             urls_file.write(rendered)

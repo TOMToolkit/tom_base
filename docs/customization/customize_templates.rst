@@ -45,6 +45,7 @@ structure now looks like this:
 
 ::
 
+   mytom
    ├── db.sqlite3
    ├── manage.py
    ├── templates
@@ -145,7 +146,7 @@ The default static files can be found in the following structure:
 
 ::
 
-   ├── db.sqlite3
+   mytom
    ├── manage.py
    ├── templates
    ├── mytom
