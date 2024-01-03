@@ -44,7 +44,7 @@ You can now fast-forward to the section below on :ref:`Running in dev server <ru
 
 Installing the TOM Toolkit and Django
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you prefer to build your own system, here's how.
+If you prefer to build your system manually, here's how.
 
 Firstly, the TOM toolkit requires you to have Python >= 3.7 installed
 on your machine.
@@ -141,9 +141,8 @@ these changes are applied correctly to your new TOM's database:
 Running the dev server
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Now that your TOM has been built, you’re ready to try it out!
-You can run it first of all directly on your local machine using the
-command ``runserver``:
+Now that your TOM has been built you can run it immediately, directly on
+your local machine, using the command ``runserver``:
 
 ::
 
