@@ -69,6 +69,7 @@ class TargetSerializer(serializers.ModelSerializer):
         target_lists = validated_data.pop('target_lists', [])
 
         target = Target.objects.create(**validated_data)
+        target.give_user_access(self.context['request'].user)
 
         # Save user groups for this target
         group_serializer = GroupSerializer(data=groups, many=True)
