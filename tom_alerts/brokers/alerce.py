@@ -359,6 +359,7 @@ class ALeRCEBroker(GenericBroker):
                 'filter': FILTERS[detection['fid']],
                 'magnitude': detection['diffmaglim'],
                 'error': detection['sigmapsf'],
+                'telescope': 'ZTF',
             }
             ReducedDatum.objects.get_or_create(
                 timestamp=mjd.to_datetime(TimezoneInfo()),
@@ -374,6 +375,7 @@ class ALeRCEBroker(GenericBroker):
             value = {
                 'filter': FILTERS[non_detection['fid']],
                 'limit': non_detection['diffmaglim'],
+                'telescope': 'ZTF',
             }
             ReducedDatum.objects.get_or_create(
                 timestamp=mjd.to_datetime(TimezoneInfo()),
