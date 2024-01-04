@@ -450,12 +450,11 @@ def reduceddatum_sparkline(target, height, spacing=5, color_map=None, limit_y=Tr
     :type color_map: dict
 
     :param limit_y: Whether to limit the y-axis to the min/max of detections. If false, the mix/max will also include
-    non-detections. Default True.
+        non-detections. Default True.
     :type limit_y: bool
 
     :param days: The number of days in the past, relative to today, of datapoints to render. Default is 32.
     :type days: int
-
     """
     if not color_map:
         color_map = {

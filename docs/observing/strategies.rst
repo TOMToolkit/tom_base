@@ -1,5 +1,5 @@
 Dynamic Cadences and Observation Templates
-================================
+==========================================
 
 The TOM has a couple of unique concepts that may be unfamiliar to some
 at first, that will be describe here before going into detail.

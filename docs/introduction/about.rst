@@ -63,10 +63,8 @@ IT expert or software engineer.
 Financial Support
 ~~~~~~~~~~~~~~~~~
 
-The TOM Toolkit has been made possible through generous financial
-support from the `Heising-Simons
-Foundation <https://hsfoundation.org>`_ and the `Zegar Family
-Foundation <https://sites.google.com/zegarff.org/site>`_.
-
-.. image:: /_static/hs.jpg
-.. image:: /_static/zff.png
+The TOM Toolkit is managed by Las Cumbres Observatory, with generous
+financial support from the `National Science Foundation <https://www.nsf.gov/>`_ grant 2209852.
+We are also grateful for support from the `Heising-Simons Foundation
+<https://hsfoundation.org>`_ and the `Zegar Family Foundation
+<https://sites.google.com/zegarff.org/site>`_ at the start of the project.
