@@ -68,6 +68,7 @@ class SpectroscopyProcessor(DataProcessor):
         for facility_class in get_service_classes():
             facility = get_service_class(facility_class)()
             if facility.is_fits_facility(header):
+                facility_name = facility_class
                 flux_constant = facility.get_flux_constant()
                 date_obs = facility.get_date_obs_from_fits_header(header)
                 break
