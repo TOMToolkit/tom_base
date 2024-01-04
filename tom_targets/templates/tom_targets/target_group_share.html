@@ -8,13 +8,36 @@
 {% block content %}
 <h3> Share <a href="{% url 'targets:list' %}?targetlist__name={{ target_list.id }}" title="View Target Lists">{{ target_list.name }}</a> Target List </h3>
 <form method="post" class="form">
+    {% csrf_token %}
+    {% for hidden in form.hidden_fields %}
+      {{ hidden }}
+    {% endfor %}
     <div class="form-row" style="padding-inline:1rem">
-        <div class="col-sm-4">
-            {% csrf_token %}
-            {% bootstrap_form form %}
+        <div class="col-sm-3">
+            {% bootstrap_field form.share_destination %}
+        </div>
+        <div class="col-sm-5">
+            {% bootstrap_field form.share_title %}
+        </div>
+        <div class="col-sm-1">
+            <input type="submit" class="btn btn-primary" formaction="{% url 'targets:share-group' pk=target_list.id %}" id="submit_targetlist" value="Submit" name="share_targetlist_form" style="position:absolute; bottom:1rem">
+        </div>
+        {% if hermes_url_no_data %}
+        <div class="col-sm-1">
+            <b style="position:absolute; bottom:1.2rem; right:2rem;">or</b>
         </div>
         <div class="col-sm-2">
-            <input type="submit" class="btn btn-primary" formaction="{% url 'targets:share-group' pk=target_list.id %}" id="submit_targetlist" value="Submit" name="share_targetlist_form" style="position:absolute; bottom:1rem">
+            <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="position:absolute; bottom:1rem">Open in Hermes &#10064;</button>
+            <div class="dropdown-menu">
+                <a href="{{ hermes_url_no_data }}" title="Hermes Targets Only" target="_blank" class="dropdown-item">All Targets Only</a>
+                <a href="{{ hermes_url_with_data }}" title="Hermes Targets with Data" target="_blank" class="dropdown-item">All Targets with Data</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <div class="form-row" style="padding-inline:1rem">
+        <div class="col-sm-12">
+            {% bootstrap_field form.share_message %}
         </div>
     </div>
 

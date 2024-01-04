@@ -1,5 +1,5 @@
 import logging
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urljoin
 
 from django import template
 from django import forms
@@ -16,11 +16,13 @@ from io import BytesIO
 from PIL import Image, ImageDraw
 import base64
 import numpy as np
+import json
 
 from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_dataproducts.forced_photometry.forced_photometry_service import get_service_classes
+from tom_dataproducts.alertstreams.hermes import create_hermes_target_table_row
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
@@ -124,25 +126,6 @@ def upload_dataproduct(context, obj):
     return {'data_product_form': form}
 
 
-@register.inclusion_tag('tom_dataproducts/partials/share_target_data.html', takes_context=True)
-def share_data(context, target):
-    """
-    Share data to Hermes or another TOM
-    """
-
-    initial = {'submitter': context['request'].user,
-               'target': target,
-               'share_title': f"Updated data for {target.name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
-               }
-    form = DataShareForm(initial=initial)
-    form.fields['share_title'].widget = forms.HiddenInput()
-
-    context = {'target': target,
-               'target_data_share_form': form,
-               'sharing_destinations': form.fields['share_destination'].choices}
-    return context
-
-
 @register.inclusion_tag('tom_dataproducts/partials/recent_photometry.html')
 def recent_photometry(target, limit=1):
     """
@@ -191,10 +174,11 @@ def get_photometry_data(context, target, target_share=False):
     data = []
     for reduced_datum in photometry:
         rd_data = {'id': reduced_datum.pk,
-                   'timestamp': reduced_datum.timestamp,
+                   'timestamp': reduced_datum.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
                    'source': reduced_datum.source_name,
                    'filter': reduced_datum.value.get('filter', ''),
                    'telescope': reduced_datum.value.get('telescope', ''),
+                   'instrument': reduced_datum.value.get('instrument', ''),
                    'magnitude_error': reduced_datum.value.get('magnitude_error', '')
                    }
 
@@ -212,13 +196,26 @@ def get_photometry_data(context, target, target_share=False):
                'share_title': f"Updated data for {target.name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
                }
     form = DataShareForm(initial=initial)
-    form.fields['share_title'].widget = forms.HiddenInput()
     form.fields['data_type'].widget = forms.HiddenInput()
+
+    sharing = getattr(settings, "DATA_SHARING", None)
+    hermes_format = {}
+    hermes_url = ''
+    if sharing and 'hermes' in sharing:
+        hermes_format = {
+            'title': initial['share_title'],
+            'data': {
+                'targets': [create_hermes_target_table_row(target)]
+            }
+        }
+        hermes_url = urljoin(sharing['hermes'].get('BASE_URL'), 'submit-message?preload=')
 
     context = {'data': data,
                'target': target,
                'target_data_share_form': form,
                'sharing_destinations': form.fields['share_destination'].choices,
+               'hermes_format': json.dumps(hermes_format),
+               'hermes_url': hermes_url,
                'target_share': target_share}
     return context
 
@@ -405,7 +402,7 @@ def spectroscopy_for_target(context, target, dataproduct=None):
             tickformat="d"
         ),
         yaxis=dict(
-            tickformat=".1eg"
+            tickformat=".1g"
         )
     )
     return {

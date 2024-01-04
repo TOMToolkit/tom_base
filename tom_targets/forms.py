@@ -174,6 +174,8 @@ class TargetShareForm(forms.Form):
     Form for sharing a target with an outside destination such as another TOM Toolkit or Hermes
     """
     share_destination = forms.ChoiceField(required=True, choices=[], label="Destination")
+    share_title = forms.CharField(required=False, label="Title")
+    share_message = forms.CharField(required=False, label="Message", widget=forms.Textarea(attrs={'rows': 4}))
     target = forms.ModelChoiceField(
         Target.objects.all(),
         widget=forms.HiddenInput(),
@@ -190,11 +192,13 @@ class TargetListShareForm(forms.Form):
     Form for sharing a target list with an outside destination such as another TOM Toolkit or Hermes
     """
     share_destination = forms.ChoiceField(required=True, choices=[], label="Destination")
+    share_title = forms.CharField(required=False, label="Title")
+    share_message = forms.CharField(required=False, label="Message", widget=forms.Textarea(attrs={'rows': 4}))
     target_list = forms.ModelChoiceField(
         TargetList.objects.all(),
         widget=forms.HiddenInput(),
         required=True)
-    submitter = forms.CharField(widget=forms.HiddenInput())
+    submitter = forms.CharField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

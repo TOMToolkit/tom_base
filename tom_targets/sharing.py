@@ -1,4 +1,6 @@
 import requests
+import base64
+import json
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -57,3 +59,98 @@ def share_target_with_tom(share_destination, form_data, target_lists=()):
         update_target_url = targets_url + f'{destination_target_id}/'
         target_create_response = requests.patch(update_target_url, json=update_target_data, headers=headers, auth=auth)
     return target_create_response
+
+
+def urlencode_hermes_format(hermes_json):
+    return base64.urlsafe_b64encode(str.encode(json.dumps(hermes_json))).decode()
+
+
+def targets_to_hermes_format(group_name, targets, include_data=True):
+    """ Takes a list of Target model instances and converts them into hermes json format for preloading
+    """
+    targets_list = []
+    photometry_list = []
+    for target in targets:
+        target_json, photometry_json = _target_to_hermes_format_helper(target, include_data)
+        targets_list.append(target_json)
+        photometry_list.extend(photometry_json)
+    hermes_format = {
+        'title': f"Sharing target list {group_name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
+        'data': {'targets': targets_list, 'photometry': photometry_list}
+    }
+    return hermes_format
+
+
+def target_to_hermes_format(target, include_data=True):
+    """ Takes a Target model instance and converts it into the hermes json format for preloading
+    """
+    target_json, photometry_json = _target_to_hermes_format_helper(target, include_data)
+    hermes_format = {
+        'title': f"Updated data for {target.name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
+        'data': {'targets': [target_json], 'photometry': photometry_json}
+    }
+    return hermes_format
+
+
+def _target_to_hermes_format_helper(target, include_data=True):
+    """ Takes a Target model instance and converts it into the hermes json format for preloading
+    """
+    target_json = {
+        'name': target.name,
+        'aliases': [alias.name for alias in target.aliases.all()],
+    }
+    if target.type == 'SIDEREAL':
+        target_json['ra'] = f"{target.ra}"
+        target_json['dec'] = f"{target.dec}"
+        if target.epoch:
+            target_json['epoch'] = f"{target.epoch}"
+        if target.pm_ra:
+            target_json['pm_ra'] = f"{target.pm_ra}"
+        if target.pm_dec:
+            target_json['pm_dec'] = f"{target.pm_dec}"
+        if target.distance:
+            target_json['distance'] = f"{target.distance}"
+            target_json['distance_units'] = 'pc'
+        if target.distance_err:
+            target_json['distance_error'] = f"{target.distance_err}"
+    elif target.type == 'NON_SIDEREAL':
+        target_json['orbital_elements'] = {}
+        if target.epoch_of_elements:
+            target_json['orbital_elements']['epoch_of_elements'] = f"{target.epoch_of_elements}"
+        if target.mean_anomaly:
+            target_json['orbital_elements']['mean_anomaly'] = f"{target.mean_anomaly}"
+        if target.arg_of_perihelion:
+            target_json['orbital_elements']['argument_of_the_perihelion'] = f"{target.arg_of_perihelion}"
+        if target.eccentricity:
+            target_json['orbital_elements']['eccentricity'] = f"{target.eccentricity}"
+        if target.lng_asc_node:
+            target_json['orbital_elements']['longitude_of_the_ascending_node'] = f"{target.lng_asc_node}"
+        if target.inclination:
+            target_json['orbital_elements']['orbital_inclination'] = f"{target.inclination}"
+        if target.semimajor_axis:
+            target_json['orbital_elements']['semimajor_axis'] = f"{target.semimajor_axis}"
+        if target.perihdist:
+            target_json['orbital_elements']['perihelion_distance'] = f"{target.perihdist}"
+        if target.epoch_of_perihelion:
+            target_json['orbital_elements']['epoch_of_perihelion'] = f"{target.epoch_of_perihelion}"
+    photometry_json = []
+    if include_data:
+        # Now add the reduced datums to the message
+        reduced_datums = target.reduceddatum_set.filter(data_type='photometry')
+        for reduced_datum in reduced_datums.iterator():
+            photometry = {
+                'target_name': reduced_datum.target.name,
+                'date_obs': reduced_datum.timestamp.isoformat(),
+                'telescope': reduced_datum.value.get('telescope', ''),
+                'instrument': reduced_datum.value.get('instrument', ''),
+                'bandpass': reduced_datum.value.get('filter', ''),
+                'brightness_unit': reduced_datum.value.get('unit', 'AB mag'),
+            }
+            if reduced_datum.value.get('magnitude', None):
+                photometry['brightness'] = f"{reduced_datum.value['magnitude']}"
+            else:
+                photometry['limiting_brightness'] = f"{reduced_datum.value.get('limit', None)}"
+            if reduced_datum.value.get('magnitude_error', None):
+                photometry['brightness_error'] = f"{reduced_datum.value['magnitude_error']}"
+            photometry_json.append(photometry)
+    return target_json, photometry_json

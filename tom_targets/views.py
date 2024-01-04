@@ -2,7 +2,7 @@ import logging
 
 from datetime import datetime
 from io import StringIO
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urljoin
 
 from django.conf import settings
 from django.contrib import messages
@@ -34,9 +34,9 @@ from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm
-from tom_targets.sharing import share_target_with_tom
-from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom, sharing_feedback_handler
-
+from tom_targets.sharing import share_target_with_tom, targets_to_hermes_format, urlencode_hermes_format
+from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
+                                      share_target_list_with_hermes)
 from tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
     move_all_to_grouping, move_selected_to_grouping
@@ -621,6 +621,24 @@ class TargetGroupingShareView(FormView):
                    'share_title': f"Updated targets for group {target_list.name}."}
         form = TargetListShareForm(initial=initial)
         context['form'] = form
+        # Also add the hermes preload link to the context if hermes sharing is setup
+        sharing = getattr(settings, "DATA_SHARING", None)
+        if sharing and 'hermes' in sharing:
+            targets = list(target_list.targets.all())
+            hermes_format_with_data = urlencode_hermes_format(
+                targets_to_hermes_format(target_list.name, targets)
+            )
+            hermes_url_with_data = urljoin(sharing['hermes'].get('BASE_URL'), 'submit-message')
+            hermes_url_with_data += f'?preload={hermes_format_with_data}'
+            hermes_format_no_data = urlencode_hermes_format(
+                targets_to_hermes_format(target_list.name, targets, include_data=False)
+            )
+            hermes_url_no_data = urljoin(sharing['hermes'].get('BASE_URL'), 'submit-message')
+            hermes_url_no_data += f'?preload={hermes_format_no_data}'
+
+            context['hermes_url_with_data'] = hermes_url_with_data
+            context['hermes_url_no_data'] = hermes_url_no_data
+
         return context
 
     def get_success_url(self):
@@ -642,11 +660,9 @@ class TargetGroupingShareView(FormView):
         share_destination = form_data['share_destination']
         selected_targets = self.request.POST.getlist('selected-target')
         data_switch = self.request.POST.get('dataSwitch', False)
-        if 'HERMES' in share_destination.upper():
-            # TODO: Implement Hermes sharing
-            # response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
-            messages.error(self.request, "Publishing Groups to Hermes is not yet supported.")
-            return redirect(self.get_success_url())
+        if 'hermes' in share_destination.lower():
+            response = share_target_list_with_hermes(share_destination, form_data, selected_targets, include_all_data=data_switch)
+            sharing_feedback_handler(response, self.request)
         else:
             for target in selected_targets:
                 # Share each target individually

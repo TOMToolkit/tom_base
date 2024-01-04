@@ -11,10 +11,14 @@ from guardian.shortcuts import get_objects_for_user
 import numpy as np
 from plotly import offline
 from plotly import graph_objs as go
+from urllib.parse import urljoin
+import json
+import base64
 
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target, TargetExtra, TargetList
 from tom_targets.forms import TargetVisibilityForm
+from tom_targets.sharing import target_to_hermes_format, urlencode_hermes_format
 
 register = template.Library()
 
@@ -48,10 +52,24 @@ def target_feature(target):
 @register.inclusion_tag('tom_targets/partials/target_buttons.html')
 def target_buttons(target):
     """
-    Displays the Update and Delete buttons for a target.
+    Displays the Update and Delete and Sharing buttons for a target.
     """
+    # If sharing is enabled and hermes sharing is setup, generate the hermes sharing url here to inject
+    sharing = getattr(settings, "DATA_SHARING", None)
+    hermes_url_with_data = ''
+    hermes_url_no_data = ''
+    if sharing and 'hermes' in sharing:
+        # Generate the hermes submission url for this target and its data
+        url_data_with_data = urlencode_hermes_format(target_to_hermes_format(target))
+        hermes_url_with_data = urljoin(sharing['hermes'].get('BASE_URL'), 'submit-message')
+        hermes_url_with_data += f'?preload={url_data_with_data}'
+        url_data_no_data = urlencode_hermes_format(target_to_hermes_format(target, include_data=False))
+        hermes_url_no_data = urljoin(sharing['hermes'].get('BASE_URL'), 'submit-message')
+        hermes_url_no_data += f'?preload={url_data_no_data}'
     return {'target': target,
-            'sharing': getattr(settings, "DATA_SHARING", None)}
+            'sharing': sharing,
+            'hermes_url_with_data': hermes_url_with_data,
+            'hermes_url_no_data': hermes_url_no_data}
 
 
 @register.inclusion_tag('tom_targets/partials/target_data.html')

@@ -1,8 +1,21 @@
 {% load targets_extras %}
-<a href="{% url 'tom_targets:update' pk=target.id %}" title="Update target" class="btn  btn-primary">Update</a>
-{% if sharing %}
-    <a href="{% url 'tom_targets:share' pk=target.id %}" title="Share target" class="btn  btn-info">Share</a>
-{% endif %}
-<a href="{% url 'tom_targets:delete' pk=target.id %}" title="Delete target" class="btn  btn-warning">Delete</a>
+<div class="btn-group" role="group" aria-label="Target detail buttons">
+    <a href="{% url 'tom_targets:update' pk=target.id %}" title="Update target" class="btn  btn-primary">Update</a>
+    {% if sharing %}
+    <div class="dropdown">
+        <button class="btn btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="border-radius:0;">Share</button>
+        <div class="dropdown-menu">
+            {% if "hermes" in sharing.keys %}
+            <h6 class="dropdown-header">Open in Hermes</h6>
+            <a href="{{ hermes_url_no_data }}" title="Hermes Target Only" target="_blank" class="dropdown-item">Target Only &#10064;</a>
+            <a href="{{ hermes_url_with_data }}" title="Hermes Target with Data" target="_blank" class="dropdown-item">Target with Data &#10064;</a>
+            <div class="dropdown-divider"></div>
+            {% endif %}
+            <a href="{% url 'tom_targets:share' pk=target.id %}" title="Share via TOM form" class="dropdown-item">Share via TOM form</a>
+        </div>
+    </div>
+    {% endif %}
+    <a href="{% url 'tom_targets:delete' pk=target.id %}" title="Delete target" class="btn  btn-warning">Delete</a>
+    {% get_buttons target %}
+</div>
 
-{% get_buttons target %}

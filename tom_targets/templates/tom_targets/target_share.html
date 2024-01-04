@@ -4,16 +4,25 @@
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/js-base64@3.7.5/base64.min.js"></script>
 {% endblock %}
 {% block content %}
 <h3> Share <a href="{% url 'targets:detail' pk=target.id %}" title="Back">{{ target.name }}</a></h3>
 <form method="post" class="form">
     <div class="form-row" style="padding-inline:1rem">
-        <div class="col-sm-4">
-            {% bootstrap_form form %}
+        <div class="col-sm-3">
+            {% bootstrap_field form.share_destination %}
         </div>
-        <div class="col-sm-2">
+        <div class="col-sm-6">
+            {% bootstrap_field form.share_title %}
+        </div>
+        <div class="col-sm-2 offset-sm-1">
             <input type="submit" class="btn btn-primary" formaction="{% url 'targets:share' pk=target.id %}" id="submit_target" value="Submit" name="share_target_form" style="position:absolute; bottom:1rem">
+        </div>
+    </div>
+    <div class="form-row" style="padding-inline:1rem">
+        <div class="col-sm-12">
+            {% bootstrap_field form.share_message %}
         </div>
     </div>
     <h4> Include Data </h4>
