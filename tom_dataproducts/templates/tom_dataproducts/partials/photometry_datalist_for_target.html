@@ -133,7 +133,7 @@
       }
       jsonHermesFormat.data.photometry.push(hermesDatum);
     });
-    let preloadUrl = btoa(JSON.stringify(jsonHermesFormat))
+    let preloadUrl = encodeURIComponent(btoa(JSON.stringify(jsonHermesFormat)));
     var openInHermes = document.getElementById('open-in-hermes-button');
     openInHermes.href = hermesUrl + preloadUrl;
   }

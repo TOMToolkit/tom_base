@@ -204,6 +204,7 @@ def get_photometry_data(context, target, target_share=False):
     if sharing and 'hermes' in sharing:
         hermes_format = {
             'title': initial['share_title'],
+            'authors': sharing['hermes'].get('DEFAULT_AUTHORS', ''),
             'data': {
                 'targets': [create_hermes_target_table_row(target)]
             }

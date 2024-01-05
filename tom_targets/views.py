@@ -666,7 +666,8 @@ class TargetGroupingShareView(FormView):
         selected_targets = self.request.POST.getlist('selected-target')
         data_switch = self.request.POST.get('dataSwitch', False)
         if 'hermes' in share_destination.lower():
-            response = share_target_list_with_hermes(share_destination, form_data, selected_targets, include_all_data=data_switch)
+            response = share_target_list_with_hermes(
+                share_destination, form_data, selected_targets, include_all_data=data_switch)
             sharing_feedback_handler(response, self.request)
         else:
             for target in selected_targets:

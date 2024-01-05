@@ -49,7 +49,8 @@ def publish_to_hermes(message_info, datums, targets=Target.objects.none(), **kwa
     hermes_alert.save()
     for tomtoolkit_photometry in datums:
         if tomtoolkit_photometry.target.name not in hermes_target_dict:
-            hermes_target_dict[tomtoolkit_photometry.target.name] = create_hermes_target_table_row(tomtoolkit_photometry.target, **kwargs)
+            hermes_target_dict[tomtoolkit_photometry.target.name] = create_hermes_target_table_row(
+                tomtoolkit_photometry.target, **kwargs)
         tomtoolkit_photometry.message.add(hermes_alert)
         hermes_photometry_data.append(create_hermes_phot_table_row(tomtoolkit_photometry, **kwargs))
 

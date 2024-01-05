@@ -12,8 +12,6 @@ import numpy as np
 from plotly import offline
 from plotly import graph_objs as go
 from urllib.parse import urljoin
-import json
-import base64
 
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target, TargetExtra, TargetList

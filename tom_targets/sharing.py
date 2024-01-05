@@ -75,9 +75,13 @@ def targets_to_hermes_format(group_name, targets, include_data=True):
         targets_list.append(target_json)
         photometry_list.extend(photometry_json)
     hermes_format = {
-        'title': f"Sharing target list {group_name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
+        'title': f"Sharing target list '{group_name}' from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
         'data': {'targets': targets_list, 'photometry': photometry_list}
     }
+    sharing = getattr(settings, "DATA_SHARING", None)
+    if sharing and 'hermes' in sharing:
+        hermes_format['authors'] = sharing['hermes'].get('DEFAULT_AUTHORS', '')
+
     return hermes_format
 
 
@@ -89,6 +93,10 @@ def target_to_hermes_format(target, include_data=True):
         'title': f"Updated data for {target.name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
         'data': {'targets': [target_json], 'photometry': photometry_json}
     }
+    sharing = getattr(settings, "DATA_SHARING", None)
+    if sharing and 'hermes' in sharing:
+        hermes_format['authors'] = sharing['hermes'].get('DEFAULT_AUTHORS', '')
+
     return hermes_format
 
 

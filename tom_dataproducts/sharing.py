@@ -24,10 +24,6 @@ def share_target_list_with_hermes(share_destination, form_data, selected_targets
     title_name = f"{target_list.name } target list"
     targets = Target.objects.filter(id__in=selected_targets)
     reduced_datums = ReducedDatum.objects.filter(target__id__in=selected_targets, data_type='photometry')
-    for target in targets:
-        print(f"Sharing target: {target.id} - {target.name}")
-    for rd in reduced_datums:
-        print(f"Reduced Datum {rd.id} for target {rd.target.name}")
     return _share_with_hermes(share_destination, form_data, title_name, reduced_datums, targets)
 
 
@@ -62,7 +58,9 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
     return _share_with_hermes(share_destination, form_data, title_name, reduced_datums)
 
 
-def _share_with_hermes(share_destination, form_data, title_name, reduced_datums=ReducedDatum.objects.none(), targets=Target.objects.none()):
+def _share_with_hermes(share_destination, form_data, title_name,
+                       reduced_datums=ReducedDatum.objects.none(),
+                       targets=Target.objects.none()):
     """
     Helper method to serialize and share data with hermes
     :param share_destination: Topic to share data to. (e.g. 'hermes.test')
@@ -73,11 +71,13 @@ def _share_with_hermes(share_destination, form_data, title_name, reduced_datums=
     # Build and submit hermes table from Reduced Datums
     hermes_topic = share_destination.split(':')[1]
     destination = share_destination.split(':')[0]
+    sharing = getattr(settings, "DATA_SHARING", {})
+    authors = form_data.get('share_authors', sharing.get('hermes', {}).get('DEFAULT_AUTHORS', None))
     message_info = BuildHermesMessage(title=form_data.get('share_title',
                                                           f"Updated data for {title_name} from "
                                                           f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}."),
                                       submitter=form_data.get('submitter'),
-                                      authors=form_data.get('share_authors', None),
+                                      authors=authors,
                                       message=form_data.get('share_message', None),
                                       topic=hermes_topic
                                       )
@@ -86,8 +86,8 @@ def _share_with_hermes(share_destination, form_data, title_name, reduced_datums=
     if filtered_reduced_datums.count() > 0 or targets.count() > 0:
         response = publish_to_hermes(message_info, filtered_reduced_datums, targets)
     else:
-        return {'message': f'ERROR: No valid data or targets to share. (Check Sharing Protocol. Note that only photometry data '
-                           'types are supported for sharing with hermes'}
+        return {'message': 'ERROR: No valid data or targets to share. (Check Sharing Protocol. Note that '
+                           'only photometry data types are supported for sharing with hermes'}
     return response
 
 
