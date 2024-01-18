@@ -447,7 +447,7 @@ class TestDataProcessor(TestCase):
         self.test_file = SimpleUploadedFile('afile.fits', b'somedata')
 
     @patch('tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor._process_spectrum_from_fits',
-           return_value=('', ''))
+           return_value=('', '', ''))
     @patch('tom_dataproducts.processors.spectroscopy_processor.SpectrumSerializer.serialize', return_value={})
     def test_process_spectroscopy_with_fits_file(self, serializer_mock, process_data_mock):
         self.data_product.data.save('spectrum.fits', self.test_file)
@@ -455,7 +455,7 @@ class TestDataProcessor(TestCase):
         process_data_mock.assert_called_with(self.data_product)
 
     @patch('tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor._process_spectrum_from_plaintext',
-           return_value=('', ''))
+           return_value=('', '', ''))
     @patch('tom_dataproducts.processors.spectroscopy_processor.SpectrumSerializer.serialize', return_value={})
     def test_process_spectroscopy_with_plaintext_file(self, serializer_mock, process_data_mock):
         self.data_product.data.save('spectrum.csv', self.test_file)
@@ -470,7 +470,7 @@ class TestDataProcessor(TestCase):
     def test_process_spectrum_from_fits(self):
         with open('tom_dataproducts/tests/test_data/test_spectrum.fits', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.fits', spectrum_file)
-            spectrum, _ = self.spectrum_data_processor._process_spectrum_from_fits(self.data_product)
+            spectrum, _, _ = self.spectrum_data_processor._process_spectrum_from_fits(self.data_product)
             self.assertTrue(isinstance(spectrum, Spectrum1D))
             self.assertAlmostEqual(spectrum.flux.mean().value, 2.295068e-14, places=19)
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 6600.478789, places=5)
@@ -478,7 +478,7 @@ class TestDataProcessor(TestCase):
     def test_process_spectrum_from_plaintext(self):
         with open('tom_dataproducts/tests/test_data/test_spectrum.csv', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.csv', spectrum_file)
-            spectrum, _ = self.spectrum_data_processor._process_spectrum_from_plaintext(self.data_product)
+            spectrum, _, _ = self.spectrum_data_processor._process_spectrum_from_plaintext(self.data_product)
             self.assertTrue(isinstance(spectrum, Spectrum1D))
             self.assertAlmostEqual(spectrum.flux.mean().value, 1.166619e-14, places=19)
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 3250.744489, places=5)
