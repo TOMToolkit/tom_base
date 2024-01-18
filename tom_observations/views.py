@@ -364,7 +364,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
                 assign_perm('tom_observations.delete_observationrecord', groups, record)
 
         return redirect(
-            reverse('tom_targets:detail', kwargs={'pk': target.id})
+            reverse('tom_targets:detail', kwargs={'pk': target.id}) + '?tab=observations'
         )
 
 
@@ -425,7 +425,7 @@ class AddExistingObservationView(LoginRequiredMixin, FormView):
             target_id = self.request.POST.get('target_id')
         cancel_url = reverse('home')
         if target_id:
-            cancel_url = reverse('tom_targets:detail', kwargs={'pk': target_id})
+            cancel_url = reverse('tom_targets:detail', kwargs={'pk': target_id}) + '?tab=observations'
         form.helper.layout = Layout(
             HTML('''<p>An observation record already exists in your TOM for this combination of observation ID,
                  facility, and target. Are you sure you want to create this record?</p>'''),
