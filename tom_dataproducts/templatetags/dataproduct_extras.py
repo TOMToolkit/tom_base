@@ -113,7 +113,7 @@ def upload_dataproduct(context, obj):
     initial = {}
     if isinstance(obj, Target):
         initial['target'] = obj
-        initial['referrer'] = reverse('tom_targets:detail', args=(obj.id,))
+        initial['referrer'] = reverse('tom_targets:detail', args=(obj.id,)) + '?tab=manage-data'
     elif isinstance(obj, ObservationRecord):
         initial['observation_record'] = obj
         initial['referrer'] = reverse('tom_observations:detail', args=(obj.id,))
