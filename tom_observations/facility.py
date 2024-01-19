@@ -90,8 +90,8 @@ class BaseObservationForm(forms.Form):
         return ButtonHolder(
             Submit('submit', 'Submit'),
             Submit('validate', 'Validate'),
-            HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>
-                        Back</a>''')
+            HTML(f'''<a class="btn btn-outline-primary"
+             href="{{% url 'tom_targets:detail' {target_id} %}}?tab=observe">Back</a>''')
         )
 
     def get_validation_message(self):
