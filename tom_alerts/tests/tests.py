@@ -1,4 +1,5 @@
 import json
+from requests import HTTPError
 from unittest.mock import patch
 
 from django import forms
@@ -7,6 +8,7 @@ from django.contrib.messages import get_messages
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from guardian.shortcuts import get_perms
 
 from tom_alerts.alerts import GenericBroker, GenericQueryForm, GenericUpstreamSubmissionForm, GenericAlert
 from tom_alerts.alerts import get_service_class, get_service_classes
@@ -193,6 +195,22 @@ class TestBrokerViews(TestCase):
         response = self.client.get(reverse('tom_alerts:run', kwargs={'pk': broker_query.id}))
         self.assertContains(response,  '66')
 
+    @patch('tom_alerts.tests.tests.TestBroker.fetch_alerts')
+    def test_handle_http_error(self, mock_fetch_alerts):
+        broker_query = BrokerQuery.objects.create(
+            name='find hoth',
+            broker='TEST',
+            parameters={'name': 'Hoth'},
+        )
+        # Set up the mock to raise an HTTPError
+        mock_fetch_alerts.side_effect = HTTPError("Test HTTP Error")
+
+        # Replace 'query_id' with the appropriate identifier for your test query
+        response = self.client.get(reverse('tom_alerts:run', kwargs={'pk': broker_query.id}))
+
+        # Assert that the HTTPError is handled as expected
+        self.assertContains(response, "Issue fetching alerts, please try again.")
+
     def test_update_query(self):
         broker_query = BrokerQuery.objects.create(
             name='find hoth',
@@ -228,7 +246,9 @@ class TestBrokerViews(TestCase):
         response = self.client.post(reverse('tom_alerts:create-target'), data=post_data)
         self.assertEqual(Target.objects.count(), 1)
         self.assertEqual(Target.objects.first().name, 'Hoth')
-        self.assertRedirects(response, reverse('tom_targets:update', kwargs={'pk': Target.objects.first().id}))
+        self.assertRedirects(response, reverse('tom_targets:list'))
+        # Check Group level permissions
+        self.assertIn("view_target", get_perms(self.user, Target.objects.first()))
 
     @override_settings(CACHES={
             'default': {

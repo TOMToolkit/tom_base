@@ -8,6 +8,7 @@ from crispy_forms.layout import Div, HTML
 from astropy import units as u
 
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm
+from tom_observations.observation_template import GenericTemplateForm
 from tom_common.exceptions import ImproperCredentialsException
 from tom_targets.models import Target
 
@@ -426,6 +427,10 @@ class GEMObservationForm(BaseRoboticObservationForm):
         return payloads
 
 
+class GEMTemplateForm(GenericTemplateForm, GEMObservationForm):
+    pass
+
+
 class GEMFacility(BaseRoboticObservationFacility):
     """
     The ``GEMFacility`` is the interface to the Gemini Telescope. For information regarding Gemini observing and the
@@ -439,6 +444,10 @@ class GEMFacility(BaseRoboticObservationFacility):
 
     def get_form(self, observation_type):
         return GEMObservationForm
+
+    # TODO: this should be called get_template_form_class
+    def get_template_form(self, observation_type):
+        return GEMTemplateForm
 
     @classmethod
     def submit_observation(clz, observation_payload):

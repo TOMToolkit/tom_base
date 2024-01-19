@@ -5,7 +5,7 @@ from urllib.parse import urlencode, urljoin
 
 from astropy import units as u
 from crispy_forms.bootstrap import Accordion, AccordionGroup, TabHolder, Tab, Alert
-from crispy_forms.layout import Div, HTML, Layout
+from crispy_forms.layout import Div, HTML, Layout, ButtonHolder, Submit
 from dateutil.parser import parse
 from django import forms
 from django.conf import settings
@@ -32,6 +32,22 @@ class OCSSettings():
         'max_instrument_configs': 5,
         'max_configurations': 5
     }
+    default_instrument_config = {'No Instrument Found': {
+        'type': 'NONE',
+        'optical_elements': {'filters': [{
+                'name': 'Unknown Filter',
+                'code': 'unknown',
+                'schedulable': True,
+                'default': True}]},
+        'configuration_types': {
+            'None': {
+                'name': 'No Configurations found',
+                'code': 'NONE',
+            }
+        },
+        'default_configuration_type': 'None',
+    }}
+
     # These class variables describe default help text for a variety of OCS fields.
     # Override them as desired for a specific OCS implementation.
     ipp_value_help = """
@@ -80,6 +96,12 @@ class OCSSettings():
 
     def get_setting(self, key):
         return settings.FACILITIES.get(self.facility_name, self.default_settings).get(key, self.default_settings[key])
+
+    def get_unconfigured_settings(self):
+        """
+        Check that the settings for this facility are present, and return list of any required settings that are blank.
+        """
+        return [key for key in self.default_settings.keys() if not self.get_setting(key)]
 
     def get_observing_states(self):
         return [
@@ -191,15 +213,17 @@ class OCSBaseForm(forms.Form):
 
     def _get_instruments(self):
         cached_instruments = cache.get(f'{self.facility_settings.facility_name}_instruments')
-
         if not cached_instruments:
             logger.warning("Instruments not cached, getting them again!!!")
-            response = make_request(
-                'GET',
-                urljoin(self.facility_settings.get_setting('portal_url'), '/api/instruments/'),
-                headers={'Authorization': 'Token {0}'.format(self.facility_settings.get_setting('api_key'))}
-            )
-            cached_instruments = {k: v for k, v in response.json().items()}
+            try:
+                response = make_request(
+                    'GET',
+                    urljoin(self.facility_settings.get_setting('portal_url'), '/api/instruments/'),
+                    headers={'Authorization': 'Token {0}'.format(self.facility_settings.get_setting('api_key'))}
+                )
+                cached_instruments = {k: v for k, v in response.json().items()}
+            except ImproperCredentialsException:
+                cached_instruments = self.facility_settings.default_instrument_config
             cache.set(f'{self.facility_settings.facility_name}_instruments', cached_instruments, 3600)
         return cached_instruments
 
@@ -253,11 +277,14 @@ class OCSBaseForm(forms.Form):
     def proposal_choices(self):
         cached_proposals = cache.get(f'{self.facility_settings.facility_name}_proposals')
         if not cached_proposals:
-            response = make_request(
-                'GET',
-                urljoin(self.facility_settings.get_setting('portal_url'), '/api/profile/'),
-                headers={'Authorization': 'Token {0}'.format(self.facility_settings.get_setting('api_key'))}
-            )
+            try:
+                response = make_request(
+                    'GET',
+                    urljoin(self.facility_settings.get_setting('portal_url'), '/api/profile/'),
+                    headers={'Authorization': 'Token {0}'.format(self.facility_settings.get_setting('api_key'))}
+                )
+            except ImproperCredentialsException:
+                return [(0, 'No proposals found')]
             cached_proposals = []
             for p in response.json()['proposals']:
                 if p['current']:
@@ -962,6 +989,20 @@ class OCSFullObservationForm(OCSBaseObservationForm):
         )
         if isinstance(self, CadenceForm):
             self.helper.layout.insert(2, self.cadence_layout())
+
+    def button_layout(self):
+        """
+        Override Button layout from BaseObservationForm.
+        Submit button will be disabled if there are any unconfigured settings found by get_unconfigured_settings().
+        """
+        target_id = self.initial.get('target_id')
+
+        return ButtonHolder(
+            Submit('submit', 'Submit', disabled=bool(self.facility_settings.get_unconfigured_settings())),
+            Submit('validate', 'Validate'),
+            HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>
+                        Back</a>''')
+        )
 
     def form_name(self):
         return 'base'

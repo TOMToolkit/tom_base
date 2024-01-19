@@ -83,10 +83,24 @@ class TNSBroker(GenericBroker):
     """
     The ``TNSBroker`` is the interface to the Transient Name Server. For information regarding the TNS, please see \
     https://www.wis-tns.org/
+
+    Requires the following configuration in settings.py:
+    ::
+        BROKERS = {
+            'TNS': {
+                'api_key': 'YOUR_API_KEY',
+                'bot_id': 'YOUR_BOT_ID',
+                'bot_name': 'YOUR_BOT_NAME',
+                'tns_base_url': 'https://sandbox.wis-tns.org/api',  # Note this is the Sandbox URL
+                'group_name': 'YOUR_GROUP_NAME',
+            },
+        }
+
     """
 
     name = 'TNS'
     form = TNSForm
+    help_url = 'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html#module-tom_alerts.brokers.tns'
 
     @classmethod
     def tns_headers(cls):

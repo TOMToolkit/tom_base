@@ -19,7 +19,6 @@ DEFAULT_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
     'tom_observations.facilities.soar.SOARFacility',
-    'tom_observations.facilities.lt.LTFacility'
 ]
 
 try:
@@ -185,6 +184,12 @@ class BaseObservationFacility(ABC):
     the other BaseObservationFacilities.
     """
     name = 'BaseObservation'
+
+    def __init__(self):
+        self.user = None
+
+    def set_user(self, user):
+        self.user = user
 
     def all_data_products(self, observation_record):
         from tom_dataproducts.models import DataProduct

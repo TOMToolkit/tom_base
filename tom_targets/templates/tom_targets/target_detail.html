@@ -2,25 +2,35 @@
 {% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras static cache %}
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
-<link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
 {% endblock %}
 {% block content %}
 <script>
-// This script maintains the selected tab upon reload
-$(document).ready(function(){
-  // This is required due to the apparent redefinition of $ in another library: https://api.jquery.com/jquery.noconflict/
-  // Based on trial and error, the offending script appears to be JS9, which is used in dataproduct_list_for_target
-  $.noConflict();
-  $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
-    localStorage.setItem('activeTab', $(e.target).attr('href'));
-  });
+  // Function to update the URL.
+  const updateUrlWithTab = (tabId) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tabId);
+    history.replaceState({}, document.title, url.toString());
+  };
 
-  var activeTab = localStorage.getItem('activeTab');
-  if(activeTab){
-    $('#tabs a[href="' + activeTab + '"]').tab('show');
-  }
-});
+  document.addEventListener("DOMContentLoaded", function() {
+    // Listen for tab changes.
+    document.querySelectorAll('#tabs .nav-link').forEach(tab => {
+      tab.addEventListener('click', function() {
+        updateUrlWithTab(this.id.replace('-tab', ''));
+      });
+    });
+
+    // Initial tab selection from URL.
+    const tabQuery = new URL(window.location.href).searchParams.get('tab');
+    if (tabQuery) {
+      const activeTab = '#' + tabQuery;
+      const tabElement = document.querySelector(`a[href="${activeTab}"]`);
+      if (tabElement) {
+        tabElement.click();
+      }
+    }
+  });
 </script>
 <div class="row">
   <div class="col-md-4">
@@ -39,7 +49,7 @@ $(document).ready(function(){
       {% if object.type == 'SIDEREAL' %}
       {% aladin object %}
       {% endif %}
-      
+
     </div>
   </div>
   <div class="col-md-8">

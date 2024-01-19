@@ -1,15 +1,19 @@
 Welcome to the TOM Toolkit's documentation!
 ===========================================
 
+.. link-button:: introduction/getting_started.html
+    :text: Quickstart Guide
+    :classes: btn-info
+
 .. toctree::
   :maxdepth: 3
   :hidden:
 
+  introduction/credits
   introduction/index
   introduction/about
   introduction/support
   introduction/troubleshooting
-
 
 Introduction
 ------------
@@ -80,6 +84,21 @@ Contributing
 If you find an issue, you need help with your TOM, you have a useful idea, or you wrote a module you'd like to be
 included in the TOM Toolkit, start with the :doc:`Contribution Guide <introduction/contributing>`.
 
+Acknowledging the TOM Toolkit
+-----------------------------
+
+We hope you find our software useful for your research.  If so, we would be grateful
+if you can include a brief acknowledgement in your papers and presentations, for example
+"This research made use of `The TOM Toolkit <https://tom-toolkit.readthedocs.io/>`_".
+We would also very much appreciate you including a citation to our paper describing
+the Toolkit `Street, R.A. et al., 2018, SPIE, 10707, 11 <http://adsabs.harvard.edu/abs/2018SPIE10707E..11S>`_
+(to export the BibTeX please click `here <https://ui.adsabs.harvard.edu/abs/2018SPIE10707E..11S/exportcitation>`_).
+
+.. toctree::
+  :maxdepth: 1
+
+  introduction/acknowledging_tom_toolkit
+
 Support
 -------
 
@@ -119,7 +138,11 @@ Indices and tables
 About the TOM Toolkit
 ---------------------
 
-The TOM Toolkit is managed by Las Cumbres Observatory, with generous financial support from the `Heising-Simons Foundation <https://hsfoundation.org>`_ and the `Zegar Family Foundation <https://sites.google.com/zegarff.org/site>`_.
+The TOM Toolkit is managed by Las Cumbres Observatory, with generous
+financial support from the `National Science Foundation <https://www.nsf.gov/>`_ grant 2209852.
+We are also grateful for support from the `Heising-Simons Foundation
+<https://hsfoundation.org>`_ and the `Zegar Family Foundation
+<https://sites.google.com/zegarff.org/site>`_ at the start of the project.
 
 
 Read about the project and the motivations behind it on the :doc:`About page <introduction/about>`.

@@ -4,9 +4,18 @@
 {% block content %}
 <h3>Import Targets</h3>
 <p>
-  Upload a .csv to import targets in bulk. CSV columns must match target attributes.
-  View the <a href="{% static 'tom_targets/target_import.csv' %}">example .csv file</a>.
+  Upload a .csv to import targets in bulk. CSV columns must match
+  <a href="https://tom-toolkit.readthedocs.io/en/stable/api/tom_targets/models.html">target attributes</a>.
+  Additional colimns will be checked against your
+  <a href="https://tom-toolkit.readthedocs.io/en/stable/targets/target_fields.html">EXTRA_FIELDS</a> and added if relevant.
+  <hr>
+  You can include a list of groups in an optional "groups" column to add targets to permission groups.
+  These permission groups are different from target lists and will be used for determining which users can view the target.
+  If the group does not exist, it will be ignored.
+  <hr>
+  See <a href="{% static 'tom_targets/target_import.csv' %}">target_import.csv</a> for an example.
 </p>
+<hr>
 <form method="POST" action="{% url 'tom_targets:import' %}" enctype="multipart/form-data">
   {% csrf_token %}
   <input type="file" name="target_csv">

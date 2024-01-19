@@ -1,9 +1,14 @@
 <table class="table table-striped">
-  <thead><tr><th>Facility</th><th>Created</th><th>Status</th><th>Scheduled</th><th>Saved  data</th><th>View</th></tr></thead>
+  <thead><tr><th>Facility</th><th>Observation ID</th><th>Created</th><th>Status</th><th>Scheduled</th><th>Saved  data</th><th>View</th></tr></thead>
   <tbody>
   {% for observation in observations %}
     <tr>
       <td>{{ observation.facility }}</td>
+      {% if observation.url %}
+        <td><a href="{{ observation.url }}">{{ observation.observation_id }}</a></td>
+      {% else %}
+        <td>{{ observation.observation_id }}</td>
+      {% endif %}
       <td>{{ observation.created }}</td>
       <td>{{ observation.status }}</td>
       <td>{{ observation.scheduled_start }}</td>

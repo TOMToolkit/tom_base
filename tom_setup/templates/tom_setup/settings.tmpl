@@ -151,7 +151,7 @@ USE_L10N = False
 
 USE_TZ = True
 
-DATETIME_FORMAT = 'Y-m-d H:m:s'
+DATETIME_FORMAT = 'Y-m-d H:i:s'
 DATE_FORMAT = 'Y-m-d'
 
 
@@ -239,7 +239,6 @@ TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
     'tom_observations.facilities.soar.SOARFacility',
-    'tom_observations.facilities.lt.LTFacility'
 ]
 
 TOM_ALERT_CLASSES = [
@@ -322,6 +321,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 100
 }
+
+# Default Plotly theme setting, can set to any valid theme:
+# 'plotly', 'plotly_white', 'plotly_dark', 'ggplot2', 'seaborn', 'simple_white', 'none'
+PLOTLY_THEME = 'plotly_white'
 
 try:
     from local_settings import * # noqa

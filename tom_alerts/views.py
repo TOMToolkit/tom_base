@@ -1,6 +1,7 @@
 from copy import deepcopy
 import json
 import logging
+from requests import HTTPError
 from typing import List
 
 from django.views.generic.edit import DeleteView, FormMixin, FormView, ProcessFormView
@@ -228,13 +229,28 @@ class RunQueryView(TemplateView):
 
         # Do query and get query results (fetch_alerts)
         # TODO: Should the deepcopy be in the brokers?
-        alert_query_results = broker_class.fetch_alerts(deepcopy(query.parameters))
-        # Check if feedback is available for fetch_alerts, and allow for backwards compatibility if not.
-        if isinstance(alert_query_results, tuple):
-            alerts, broker_feedback = alert_query_results
-        else:
-            alerts = alert_query_results
-            broker_feedback = ''
+        try:
+            alert_query_results = broker_class.fetch_alerts(deepcopy(query.parameters))
+
+            # Check if feedback is available for fetch_alerts, and allow for backwards compatibility if not.
+            if isinstance(alert_query_results, tuple):
+                alerts, broker_feedback = alert_query_results
+            else:
+                alerts = alert_query_results
+                broker_feedback = ''
+        except AttributeError:
+            # If the broker isn't configured in settings.py, display error instead of query results
+            alerts = iter(())
+            broker_help = getattr(broker_class, 'help_url',
+                                  'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html')
+            broker_feedback = f"""The {broker_class.name} Broker is not properly configured in settings.py.
+                                </br>
+                                Please see the <a href="{broker_help}" target="_blank">documentation</a> for more
+                                information.
+                                """
+        except HTTPError as e:
+            alerts = iter(())
+            broker_feedback = f"Issue fetching alerts, please try again.</br>{e}"
 
         # Post-query tasks
         query.last_run = timezone.now()
@@ -292,6 +308,8 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             target, extras, aliases = generic_alert.to_target()
             try:
                 target.save(extras=extras, names=aliases)
+                # Give the user access to the target they created
+                target.give_user_access(self.request.user)
                 broker_class().process_reduced_data(target, json.loads(cached_alert))
                 for group in request.user.groups.all().exclude(name='Public'):
                     assign_perm('tom_targets.view_target', group, target)
@@ -300,16 +318,9 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             except IntegrityError:
                 messages.warning(request, f'Unable to save {target.name}, target with that name already exists.')
                 errors.append(target.name)
-        if (len(alerts) == len(errors)):
+        if len(alerts) == len(errors):
             return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
-        elif (len(alerts) == 1):
-            return redirect(reverse(
-                'tom_targets:update', kwargs={'pk': target.id})
-            )
-        else:
-            return redirect(reverse(
-                'tom_targets:list')
-            )
+        return redirect(reverse('tom_targets:list'))
 
 
 class SubmitAlertUpstreamView(LoginRequiredMixin, FormMixin, ProcessFormView, View):

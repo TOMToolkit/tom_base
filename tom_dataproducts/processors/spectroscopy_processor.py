@@ -34,15 +34,15 @@ class SpectroscopyProcessor(DataProcessor):
 
         mimetype = mimetypes.guess_type(data_product.data.path)[0]
         if mimetype in self.FITS_MIMETYPES:
-            spectrum, obs_date = self._process_spectrum_from_fits(data_product)
+            spectrum, obs_date, source_id = self._process_spectrum_from_fits(data_product)
         elif mimetype in self.PLAINTEXT_MIMETYPES:
-            spectrum, obs_date = self._process_spectrum_from_plaintext(data_product)
+            spectrum, obs_date, source_id = self._process_spectrum_from_plaintext(data_product)
         else:
             raise InvalidFileFormatException('Unsupported file type')
 
         serialized_spectrum = SpectrumSerializer().serialize(spectrum)
 
-        return [(obs_date, serialized_spectrum)]
+        return [(obs_date, serialized_spectrum, source_id)]
 
     def _process_spectrum_from_fits(self, data_product):
         """
@@ -61,12 +61,14 @@ class SpectroscopyProcessor(DataProcessor):
             datetime otherwise
         :rtype: AstroPy.Time
         """
+        facility_name = 'DEFAULT'
 
         flux, header = fits.getdata(data_product.data.path, header=True)
 
         for facility_class in get_service_classes():
             facility = get_service_class(facility_class)()
             if facility.is_fits_facility(header):
+                facility_name = facility_class
                 flux_constant = facility.get_flux_constant()
                 date_obs = facility.get_date_obs_from_fits_header(header)
                 break
@@ -86,7 +88,7 @@ class SpectroscopyProcessor(DataProcessor):
 
         spectrum = Spectrum1D(flux=flux, wcs=wcs)
 
-        return spectrum, Time(date_obs).to_datetime()
+        return spectrum, Time(date_obs).to_datetime(), facility_name
 
     def _process_spectrum_from_plaintext(self, data_product):
         """
@@ -132,4 +134,4 @@ class SpectroscopyProcessor(DataProcessor):
         flux = np.array(data['flux']) * flux_constant
         spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis)
 
-        return spectrum, Time(date_obs).to_datetime()
+        return spectrum, Time(date_obs).to_datetime(), facility_name

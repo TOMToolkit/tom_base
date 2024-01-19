@@ -70,7 +70,7 @@ In order to add custom forms to our broker module, we will also need Django's `f
     from django import forms
     import requests
 
-See `Working with Django Forms <https://docs.djangoproject.com/en/2.1/topics/forms/>`_ and the `Requests Official API Docs <http://docs.python-requests.org/en/master/>`_.
+See `Working with Django Forms <https://docs.djangoproject.com/en/stable/topics/forms/>`_ and the `Requests Official API Docs <http://docs.python-requests.org/en/master/>`_.
 
 Test Data
 *********

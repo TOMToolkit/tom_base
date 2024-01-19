@@ -205,6 +205,9 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
+        # Give the user access to the target they created
+        self.object.give_user_access(self.request.user)
+        # Run the target post save hook
         logger.info('Target post save hook: %s created: %s', self.object, True)
         run_hook('target_post_save', target=self.object, created=True)
         return redirect(self.get_success_url())
@@ -435,7 +438,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
                               'Did you know updating observation statuses can be automated? Learn how in'
                               '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
                               ' the docs.</a>'))
-            return redirect(reverse('tom_targets:detail', args=(target_id,)))
+            return redirect(reverse('tom_targets:detail', args=(target_id,)) + '?tab=observations')
 
         obs_template_form = ApplyObservationTemplateForm(request.GET)
         if obs_template_form.is_valid():
@@ -467,6 +470,8 @@ class TargetImportView(LoginRequiredMixin, TemplateView):
         csv_file = request.FILES['target_csv']
         csv_stream = StringIO(csv_file.read().decode('utf-8'), newline=None)
         result = import_targets(csv_stream)
+        for target in result['targets']:
+            target.give_user_access(request.user)
         messages.success(
             request,
             'Targets created: {}'.format(len(result['targets']))

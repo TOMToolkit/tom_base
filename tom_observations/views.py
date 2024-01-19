@@ -224,9 +224,15 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         context['target'] = target
 
         # allow the Facility class to add data to the context
-        facility_class = self.get_facility_class()
-        facility_context = facility_class().get_facility_context_data(target=target)
+        facility = self.get_facility_class()()
+        facility.set_user(self.request.user)
+        facility_context = facility.get_facility_context_data(target=target)
         context.update(facility_context)
+
+        try:
+            context['missing_configurations'] = ", ".join(facility.facility_settings.get_unconfigured_settings())
+        except AttributeError:
+            context['missing_configurations'] = ''
 
         return context
 
@@ -242,8 +248,10 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             observation_type = self.request.GET.get('observation_type')
         elif self.request.method == 'POST':
             observation_type = self.request.POST.get('observation_type')
+        facility = self.get_facility_class()()
+        facility.set_user(self.request.user)
         form_class = type(f'Composite{observation_type}Form',
-                          (self.get_facility_class()().get_form(observation_type), self.get_cadence_strategy_form()),
+                          (facility.get_form(observation_type), self.get_cadence_strategy_form()),
                           {})
         return form_class
 
@@ -311,9 +319,10 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :type form: subclass of GenericObservationForm
         """
         # Submit the observation
-        facility = self.get_facility_class()
+        facility = self.get_facility_class()()
+        facility.set_user(self.request.user)
         target = self.get_target()
-        observation_ids = facility().submit_observation(form.observation_payload())
+        observation_ids = facility.submit_observation(form.observation_payload())
         records = []
 
         for observation_id in observation_ids:
@@ -379,6 +388,7 @@ class ObservationRecordCancelView(LoginRequiredMixin, View):
         obsr_id = self.kwargs.get('pk')
         obsr = ObservationRecord.objects.get(id=obsr_id)
         facility = get_service_class(obsr.facility)()
+        facility.set_user(request.user)
         try:
             success = facility.cancel_observation(obsr.observation_id)
             if success:
@@ -464,9 +474,9 @@ class AddExistingObservationView(LoginRequiredMixin, FormView):
             )
             observation_id = form.cleaned_data['observation_id']
             messages.success(self.request, f'Successfully associated observation record {observation_id}')
-        return redirect(reverse(
-            'tom_targets:detail', kwargs={'pk': form.cleaned_data['target_id']})
-        )
+        base_url = reverse('tom_targets:detail', kwargs={'pk': form.cleaned_data['target_id']})
+        query_params = urlencode({'tab': 'observations'})
+        return redirect(f'{base_url}?{query_params}')
 
 
 class ObservationRecordDetailView(DetailView):
@@ -502,10 +512,11 @@ class ObservationRecordDetailView(DetailView):
         """
         context = super().get_context_data(*args, **kwargs)
         context['form'] = AddProductToGroupForm()
-        service_class = get_service_class(self.object.facility)
-        context['editable'] = isinstance(service_class(), BaseManualObservationFacility)
-        context['data_products'] = service_class().all_data_products(self.object)
-        context['can_be_cancelled'] = self.object.status not in service_class().get_terminal_observing_states()
+        facility = get_service_class(self.object.facility)()
+        facility.set_user(self.request.user)
+        context['editable'] = isinstance(facility, BaseManualObservationFacility)
+        context['data_products'] = facility.all_data_products(self.object)
+        context['can_be_cancelled'] = self.object.status not in facility.get_terminal_observing_states()
         newest_image = None
         for data_product in context['data_products']['saved']:
             newest_image = data_product if (not newest_image or data_product.modified > newest_image.modified) and \
@@ -602,6 +613,17 @@ class ObservationTemplateCreateView(FormView):
     def get_facility_name(self):
         return self.kwargs['facility']
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        facility = get_service_class(self.get_facility_name())()
+        # Check configuration of facility and pass names of missing settings to context as 'missing_configurations'.
+        try:
+            context['missing_configurations'] = ", ".join(facility.facility_settings.get_unconfigured_settings())
+        except AttributeError:
+            context['missing_configurations'] = ''
+        return context
+
     def get_form_class(self):
         facility_name = self.get_facility_name()
 
@@ -609,7 +631,9 @@ class ObservationTemplateCreateView(FormView):
             raise ValueError('Must provide a facility name')
 
         # TODO: modify this to work with all LCO forms
-        return get_service_class(facility_name)().get_template_form(None)
+        facility = get_service_class(facility_name)()
+        facility.set_user(self.request.user)
+        return facility.get_template_form(None)
 
     def get_form(self, form_class=None):
         form = super().get_form()
@@ -639,7 +663,9 @@ class ObservationTemplateUpdateView(LoginRequiredMixin, FormView):
 
     def get_form_class(self):
         self.object = self.get_object()
-        return get_service_class(self.object.facility)().get_template_form(None)
+        facility = get_service_class(self.object.facility)()
+        facility.set_user(self.request.user)
+        return facility.get_template_form(None)
 
     def get_form(self, form_class=None):
         form = super().get_form()

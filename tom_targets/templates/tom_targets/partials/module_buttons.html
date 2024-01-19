@@ -1,0 +1,3 @@
+{% for button in button_list %}
+    <a href="{% url button.namespace pk=target.id %}" title={{button.title}} class="{{ button.class }}">{{button.text}}</a>
+{% endfor %}
