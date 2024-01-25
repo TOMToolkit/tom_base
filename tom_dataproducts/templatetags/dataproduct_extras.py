@@ -1,5 +1,5 @@
 import logging
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode
 
 from django import template
 from django import forms
@@ -16,13 +16,11 @@ from io import BytesIO
 from PIL import Image, ImageDraw
 import base64
 import numpy as np
-import json
 
 from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_dataproducts.forced_photometry.forced_photometry_service import get_service_classes
-from tom_dataproducts.alertstreams.hermes import create_hermes_target_table_row
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 

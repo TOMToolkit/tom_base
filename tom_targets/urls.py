@@ -32,6 +32,7 @@ urlpatterns = [
     path('targetgrouping/<int:pk>/delete/', TargetGroupingDeleteView.as_view(), name='delete-group'),
     path('targetgrouping/create/', TargetGroupingCreateView.as_view(), name='create-group'),
     path('targetgrouping/<int:pk>/share/', TargetGroupingShareView.as_view(), name='share-group'),
-    path('targetgrouping/<int:pk>/hermes-preload/', TargetGroupingHermesPreloadView.as_view(), name='group-hermes-preload')
+    path('targetgrouping/<int:pk>/hermes-preload/', TargetGroupingHermesPreloadView.as_view(),
+         name='group-hermes-preload'),
 
 ]
