@@ -43,15 +43,48 @@ def publish_to_hermes(message_info, datums, targets=Target.objects.none(), **kwa
     # You will need your Hermes API key. This can be found on your Hermes profile page.
     headers = {'Authorization': f"Token {settings.DATA_SHARING['hermes']['HERMES_API_KEY']}"}
 
+    alert = create_hermes_alert(message_info, datums, targets, **kwargs)
+
+    try:
+        response = requests.post(url=submit_url, json=alert, headers=headers)
+        response.raise_for_status()
+        # Only mark the datums as shared if the sharing was successful
+        hermes_alert = AlertStreamMessage(topic=message_info.topic, exchange_status='published')
+        hermes_alert.save()
+        for tomtoolkit_photometry in datums:
+            tomtoolkit_photometry.message.add(hermes_alert)
+    except Exception:
+        pass
+
+    return response
+
+
+def preload_to_hermes(message_info, reduced_datums, targets):
+    stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
+    preload_url = stream_base_url + 'api/v0/submit_message/preload/'
+    # You will need your Hermes API key. This can be found on your Hermes profile page.
+    headers = {'Authorization': f"Token {settings.DATA_SHARING['hermes']['HERMES_API_KEY']}"}
+
+    alert = create_hermes_alert(message_info, reduced_datums, targets)
+    try:
+        response = requests.post(url=preload_url, json=alert, headers=headers)
+        response.raise_for_status()
+        return response.json()['key']
+    except Exception as ex:
+        logger.error(repr(ex))
+        logger.error(response.json())
+
+    return ''
+
+
+def create_hermes_alert(message_info, datums, targets=Target.objects.none(), **kwargs):
     hermes_photometry_data = []
     hermes_target_dict = {}
-    hermes_alert = AlertStreamMessage(topic=message_info.topic, exchange_status='published')
-    hermes_alert.save()
+
     for tomtoolkit_photometry in datums:
         if tomtoolkit_photometry.target.name not in hermes_target_dict:
             hermes_target_dict[tomtoolkit_photometry.target.name] = create_hermes_target_table_row(
                 tomtoolkit_photometry.target, **kwargs)
-        tomtoolkit_photometry.message.add(hermes_alert)
         hermes_photometry_data.append(create_hermes_phot_table_row(tomtoolkit_photometry, **kwargs))
 
     # Now go through the targets queryset and ensure we have all of them in the table
@@ -66,15 +99,13 @@ def publish_to_hermes(message_info, datums, targets=Target.objects.none(), **kwa
         'submitter': message_info.submitter,
         'authors': message_info.authors,
         'data': {
-            'targets': hermes_target_dict.values(),
+            'targets': list(hermes_target_dict.values()),
             'photometry': hermes_photometry_data,
             'extra_data': message_info.extra_info
         },
         'message_text': message_info.message,
     }
-
-    response = requests.post(url=submit_url, json=alert, headers=headers)
-    return response
+    return alert
 
 
 def create_hermes_target_table_row(target, **kwargs):
@@ -138,7 +169,7 @@ def get_hermes_topics(**kwargs):
     Extend this method to restrict topics for individual users.
     :return: List of writable topics available for TOM.
     """
-    topics = cache.get('hermes_writable_topics')
+    topics = cache.get('hermes_writable_topics', [])
     if not topics:
         try:
             stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
@@ -146,9 +177,9 @@ def get_hermes_topics(**kwargs):
             headers = {'Authorization': f"Token {settings.DATA_SHARING['hermes']['HERMES_API_KEY']}"}
             response = requests.get(url=submit_url, headers=headers)
             topics = response.json()['writable_topics']
+            cache.set('hermes_writable_topics', topics, 86400)
         except (KeyError, requests.exceptions.JSONDecodeError):
-            topics = settings.DATA_SHARING['hermes']['USER_TOPICS']
-        cache.set('hermes_writable_topics', topics, 86400)
+            pass
     return topics
 
 

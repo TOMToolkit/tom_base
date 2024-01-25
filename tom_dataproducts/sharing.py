@@ -11,7 +11,7 @@ from tom_dataproducts.alertstreams.hermes import publish_to_hermes, BuildHermesM
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
 
 
-def share_target_list_with_hermes(share_destination, form_data, selected_targets=[], include_all_data=False):
+def share_target_list_with_hermes(share_destination, form_data, selected_targets=None, include_all_data=False):
     """
     Serialize and share a set of selected targets and their data with Hermes
     :param share_destination: Topic to share data to. (e.g. 'hermes.test')
@@ -20,6 +20,8 @@ def share_target_list_with_hermes(share_destination, form_data, selected_targets
     :param include_all_data: Boolean flag to include all dataproducts when sharing or not
     :return: json response for the sharing
     """
+    if selected_targets is None:
+        selected_targets = []
     target_list = form_data.get('target_list')
     title_name = f"{target_list.name } target list"
     targets = Target.objects.filter(id__in=selected_targets)
@@ -249,7 +251,10 @@ def get_sharing_destination_options():
             if destination.lower() == 'hermes':
                 # If this is a hermes share, get the topics from hermes and override what the users provide
                 hermes_topics = get_hermes_topics()
-                if destination_topics:
+                # If we have no writable hermes topics, then we can't share with hermes!
+                if not hermes_topics:
+                    destination_topics = []
+                elif destination_topics:
                     # If we've set USER_TOPICS with hermes, filter them to those available to your user account
                     destination_topics = [topic for topic in destination_topics if topic in hermes_topics]
                 else:

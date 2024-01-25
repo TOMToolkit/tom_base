@@ -198,7 +198,7 @@ class TargetListShareForm(forms.Form):
         TargetList.objects.all(),
         widget=forms.HiddenInput(),
         required=True)
-    submitter = forms.CharField(required=False, widget=forms.HiddenInput())
+    submitter = forms.CharField(widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

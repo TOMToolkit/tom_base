@@ -2,7 +2,7 @@ import logging
 
 from datetime import datetime
 from io import StringIO
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
@@ -18,7 +18,7 @@ from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
-from django.views.generic.detail import DetailView
+from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
 from django_filters.views import FilterView
@@ -34,15 +34,18 @@ from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm
-from tom_targets.sharing import share_target_with_tom, targets_to_hermes_format, urlencode_hermes_format
+from tom_targets.sharing import share_target_with_tom
 from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
                                       share_target_list_with_hermes)
+from tom_dataproducts.models import ReducedDatum
 from tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
     move_all_to_grouping, move_selected_to_grouping
 )
 from tom_targets.models import Target, TargetList
 from tom_targets.utils import import_targets, export_targets
+from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
+
 
 logger = logging.getLogger(__name__)
 
@@ -353,6 +356,13 @@ class TargetShareView(FormView):
         target_id = self.kwargs.get('pk', None)
         context['target'] = Target.objects.get(id=target_id)
 
+        # Add into the context whether hermes-sharing is setup or not
+        sharing = getattr(settings, "DATA_SHARING", None)
+        if sharing and 'hermes' in sharing:
+            context['hermes_sharing'] = True
+        else:
+            context['hermes_sharing'] = False
+
         return context
 
     def get_success_url(self):
@@ -452,6 +462,31 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
                         args=(obs_template.facility,)) + f'?target_id={self.get_object().id}&' + params)
 
         return super().get(request, *args, **kwargs)
+
+
+class TargetHermesPreloadView(SingleObjectMixin, View):
+    model = Target
+    permission_required = 'tom_targets.share_target'
+
+    def post(self, request, *args, **kwargs):
+        target = self.get_object()
+        sharing = getattr(settings, "DATA_SHARING", None)
+        if sharing and 'hermes' in sharing:
+            topic = request.POST.get('share_destination', '').split(':')[-1]
+            title = request.POST.get('share_title', '')
+            if not title:
+                title = f'Updated data for {target.name}'
+            hermes_message = BuildHermesMessage(
+                title=title,
+                topic=topic,
+                submitter=request.POST.get('submitter'),
+                message=request.POST.get('share_message', ''),
+                authors=sharing['hermes'].get('DEFAULT_AUTHORS')
+            )
+            reduced_datums = ReducedDatum.objects.filter(pk__in=request.POST.getlist('share-box', []))
+            preload_key = preload_to_hermes(hermes_message, reduced_datums, [target])
+            load_url = sharing['hermes']['BASE_URL'] + f'submit-message?id={preload_key}'
+            return HttpResponseRedirect(load_url)
 
 
 class TargetImportView(LoginRequiredMixin, TemplateView):
@@ -626,23 +661,13 @@ class TargetGroupingShareView(FormView):
                    'share_title': f"Updated targets for group {target_list.name}."}
         form = TargetListShareForm(initial=initial)
         context['form'] = form
-        # Also add the hermes preload link to the context if hermes sharing is setup
+
+        # Add into the context whether hermes-sharing is setup or not
         sharing = getattr(settings, "DATA_SHARING", None)
         if sharing and 'hermes' in sharing:
-            targets = list(target_list.targets.all())
-            hermes_format_with_data = urlencode_hermes_format(
-                targets_to_hermes_format(target_list.name, targets)
-            )
-            hermes_url_with_data = urljoin(sharing['hermes'].get('BASE_URL'), 'submit-message')
-            hermes_url_with_data += f'?preload={hermes_format_with_data}'
-            hermes_format_no_data = urlencode_hermes_format(
-                targets_to_hermes_format(target_list.name, targets, include_data=False)
-            )
-            hermes_url_no_data = urljoin(sharing['hermes'].get('BASE_URL'), 'submit-message')
-            hermes_url_no_data += f'?preload={hermes_format_no_data}'
-
-            context['hermes_url_with_data'] = hermes_url_with_data
-            context['hermes_url_no_data'] = hermes_url_no_data
+            context['hermes_sharing'] = True
+        else:
+            context['hermes_sharing'] = False
 
         return context
 
@@ -683,3 +708,32 @@ class TargetGroupingShareView(FormView):
                 messages.error(self.request, f'No targets shared. {form.errors.as_json()}')
                 return redirect(self.get_success_url())
         return redirect(self.get_success_url())
+
+
+class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
+    model = TargetList
+    permission_required = 'tom_targets.share_target'
+
+    def post(self, request, *args, **kwargs):
+        targetlist = self.get_object()
+        sharing = getattr(settings, "DATA_SHARING", None)
+        if sharing and 'hermes' in sharing:
+            topic = request.POST.get('share_destination', '').split(':')[-1]
+            title = request.POST.get('share_title', '')
+            if not title:
+                title = f'Updated data for target group {targetlist.name}'
+            hermes_message = BuildHermesMessage(
+                title=title,
+                topic=topic,
+                submitter=request.POST.get('submitter'),
+                message=request.POST.get('share_message', ''),
+                authors=sharing['hermes'].get('DEFAULT_AUTHORS')
+            )
+            targets = Target.objects.filter(pk__in=request.POST.getlist('selected-target', []))
+            if request.POST.get('dataSwitch', '') == 'on':
+                reduced_datums = ReducedDatum.objects.filter(target__in=targets, data_type='photometry')
+            else:
+                reduced_datums = ReducedDatum.objects.none()
+            preload_key = preload_to_hermes(hermes_message, reduced_datums, targets)
+            load_url = sharing['hermes']['BASE_URL'] + f'submit-message?id={preload_key}'
+            return HttpResponseRedirect(load_url)

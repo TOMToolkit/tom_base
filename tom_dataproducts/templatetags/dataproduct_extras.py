@@ -174,11 +174,10 @@ def get_photometry_data(context, target, target_share=False):
     data = []
     for reduced_datum in photometry:
         rd_data = {'id': reduced_datum.pk,
-                   'timestamp': reduced_datum.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                   'timestamp': reduced_datum.timestamp,
                    'source': reduced_datum.source_name,
                    'filter': reduced_datum.value.get('filter', ''),
                    'telescope': reduced_datum.value.get('telescope', ''),
-                   'instrument': reduced_datum.value.get('instrument', ''),
                    'magnitude_error': reduced_datum.value.get('magnitude_error', '')
                    }
 
@@ -199,24 +198,13 @@ def get_photometry_data(context, target, target_share=False):
     form.fields['data_type'].widget = forms.HiddenInput()
 
     sharing = getattr(settings, "DATA_SHARING", None)
-    hermes_format = {}
-    hermes_url = ''
-    if sharing and 'hermes' in sharing:
-        hermes_format = {
-            'title': initial['share_title'],
-            'authors': sharing['hermes'].get('DEFAULT_AUTHORS', ''),
-            'data': {
-                'targets': [create_hermes_target_table_row(target)]
-            }
-        }
-        hermes_url = urljoin(sharing['hermes'].get('BASE_URL'), 'submit-message?preload=')
+    hermes_sharing = sharing and 'hermes' in sharing
 
     context = {'data': data,
                'target': target,
                'target_data_share_form': form,
                'sharing_destinations': form.fields['share_destination'].choices,
-               'hermes_format': json.dumps(hermes_format),
-               'hermes_url': hermes_url,
+               'hermes_sharing': hermes_sharing,
                'target_share': target_share}
     return context
 

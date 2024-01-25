@@ -8,17 +8,25 @@
 {% endblock %}
 {% block content %}
 <h3> Share <a href="{% url 'targets:detail' pk=target.id %}" title="Back">{{ target.name }}</a></h3>
-<form method="post" class="form">
+<form method="post" class="form" id='target-share-form'>
     <div class="form-row" style="padding-inline:1rem">
         <div class="col-sm-3">
             {% bootstrap_field form.share_destination %}
         </div>
-        <div class="col-sm-6">
+        <div class="col-sm-5">
             {% bootstrap_field form.share_title %}
         </div>
-        <div class="col-sm-2 offset-sm-1">
-            <input type="submit" class="btn btn-primary" formaction="{% url 'targets:share' pk=target.id %}" id="submit_target" value="Submit" name="share_target_form" style="position:absolute; bottom:1rem">
+        <div class="col-sm-1">
+            <input type="submit" class="btn btn-primary" formaction="{% url 'targets:share' pk=target.id %}" id="submit_target" value="Submit" name="share_target_form" style="position:absolute; bottom:1rem" onclick="setTarget('')">
         </div>
+        {% if hermes_sharing %}
+        <div class="col-sm-1">
+            <b style="position:absolute; bottom:1.2rem; right:2rem;">or</b>
+        </div>
+        <div class="col-sm-2">
+            <button class="btn btn-info" type="submit" formaction="{% url 'targets:hermes-preload' pk=target.id %}" onclick="setTarget('_blank')" style="position:absolute; bottom:1rem">Open in Hermes &#x1F5D7;</button>
+        </div>
+        {% endif %}
     </div>
     <div class="form-row" style="padding-inline:1rem">
         <div class="col-sm-12">
@@ -33,4 +41,16 @@
         <a href="{% url 'targets:detail' pk=target.id %}" class="btn btn-primary" title="Back">Back</a>
     {% endbuttons %}
 </form>
+<script>
+    const targetShareForm = document.getElementById('target-share-form');
+    function setTarget(val) {
+      if (val && val != '') {
+        targetShareForm.setAttribute('target', val);
+      }
+      else{
+        targetShareForm.removeAttribute('target');
+      }
+      return true;
+    };
+</script>
 {% endblock %}

@@ -1,7 +1,7 @@
 {% load bootstrap4 %}
 {% load tom_common_extras %}
 
-<form method="POST" action="{% url 'tom_dataproducts:share_all' tg_pk=target.id %}" enctype="multipart/form-data">
+<form method="POST" action="{% url 'tom_dataproducts:share_all' tg_pk=target.id %}" enctype="multipart/form-data" id="photometry-data-share-form">
     {% csrf_token %}
       {% for hidden in target_data_share_form.hidden_fields %}
         {{ hidden }}
@@ -27,7 +27,7 @@
             <tbody>
             {% for datum in data %}
             <tr>
-                <td><input type="checkbox" class="phot-row" id="phot-row-{{ forloop.counter0 }}" name="share-box" value="{{ forloop.counter0 }}" onchange="check_selected({{ forloop.counter0 }})"></td>
+                <td><input type="checkbox" class="phot-row" id="phot-row-{{ datum.id }}" name="share-box" value="{{ datum.id }}" onchange="check_selected()"></td>
                 <td>{{ datum.timestamp }}</td>
                 <td>{{ datum.telescope }}</td>
                 <td>{{ datum.filter }}</td>
@@ -67,14 +67,14 @@
                             {% bootstrap_field target_data_share_form.share_destination %}
                         </div>
                         <div class="col-sm-2 offset-sm-1">
-                            <input type="submit" class="btn btn-primary" id="submit_selected" value="Submit" name="share_targetdata_form" style="position:absolute; bottom:1rem" disabled>
+                            <input type="submit" class="btn btn-primary" id="submit_selected" value="Submit" name="share_targetdata_form" style="position:absolute; bottom:1rem" disabled onclick="setTargetOnPhotometryForm('')">
                         </div>
-                        {% if hermes_url %}
+                        {% if hermes_sharing %}
                         <div class="col-sm-1">
                             <b style="position:absolute; bottom:1.2rem">or</b>
                         </div>
                         <div class="col-sm-4">
-                            <a href="{{ hermes_url }}" id="open-in-hermes-button" title="Open in Hermes" target="_blank" class="btn btn-info" style="position:absolute; bottom:1rem">Open in Hermes &#10064;</a>
+                            <button class="btn btn-info" type="submit" formaction="{% url 'tom_targets:hermes-preload' pk=target.id %}" onclick="setTargetOnPhotometryForm('_blank')" style="position:absolute; bottom:1rem">Open in Hermes &#x1F5D7;</button>
                         </div>
                         {% endif %}
                     </div>
@@ -86,57 +86,16 @@
     </div>
 </form>
 <script>
-  const hermesUrl = "{{ hermes_url }}"
-  const sanitizedData = "{{data|safe}}".replace(/'/g, '"').replaceAll('False', false).replaceAll('True', true);
-  const jsonData = JSON.parse(sanitizedData);
-  const jsonHermesFormat = JSON.parse('{{hermes_format|safe}}');
-  const message = document.getElementById('photometry').querySelector('#id_share_message');
-  message.onchange = function() {
-    setHermesPreloadLink();
-  }
-  const messageTitle = document.getElementById('photometry').querySelector('#id_share_title');
-  messageTitle.onchange = function() {
-    setHermesPreloadLink();
-  }
-  const selectedTopic = document.getElementById('photometry').querySelector('#id_share_destination');
-  selectedTopic.onchange = function() {
-    setHermesPreloadLink();
-  }
-  let selectedData = {};
-  setHermesPreloadLink();
-  // Must create and update the Hermes preload data link here since it varies based on user selection
-  function setHermesPreloadLink() {
-    if (!hermesUrl) {
-      return;
-    }
-    jsonHermesFormat.data.photometry = [];
-    // Set the topic if its been set in the widget to a hermes topic
-    if (selectedTopic.value.startsWith('hermes:')) {
-      jsonHermesFormat.topic = selectedTopic.value.substring(selectedTopic.value.indexOf(':') + 1);
-    }
-    jsonHermesFormat.title = messageTitle.value;
-    jsonHermesFormat.message_text = message.value;
-    Object.values(selectedData).forEach((datum) => {
-      let hermesDatum = {
-        'target_name': jsonHermesFormat.data.targets[0].name,
-        'date_obs': datum.timestamp,
-        'telescope': datum.telescope || '',
-        'instrument': datum.instrument || '',
-        'brightness_error': datum.magnitude_error,
-        'bandpass': datum.filter
+  const photometryShareForm = document.getElementById('photometry-data-share-form');
+  function setTargetOnPhotometryForm(val) {
+      if (val && val != '') {
+      photometryShareForm.setAttribute('target', val);
       }
-      if (datum.limit) {
-          hermesDatum['limiting_brightness'] = datum.magnitude
+      else{
+      photometryShareForm.removeAttribute('target');
       }
-      else {
-          hermesDatum['brightness'] = datum.magnitude
-      }
-      jsonHermesFormat.data.photometry.push(hermesDatum);
-    });
-    let preloadUrl = encodeURIComponent(btoa(JSON.stringify(jsonHermesFormat)));
-    var openInHermes = document.getElementById('open-in-hermes-button');
-    openInHermes.href = hermesUrl + preloadUrl;
-  }
+      return true;
+  };
   function select_all()  {
   var share_all = document.getElementById("share-all");
      if(share_all.checked == true){
@@ -144,28 +103,17 @@
      } else {
         $('input[name=share-box]').prop('checked', false);
      }
-     for (let i = 0; i < jsonData.length; i++) {
-      check_selected(i, false);
-     }
-     setHermesPreloadLink();
+     check_selected()
   }
-  function check_selected(index, setlink = true)  {
-    var share_box = document.getElementById('phot-row-' + index);
-    var submit_btn = document.getElementById('submit_selected');
-    if (share_box.checked == true){
-        selectedData[index] = jsonData[index];
+  function check_selected()  {
+  var share_boxes = document.getElementsByName("share-box");
+  var submit_btn = document.getElementById('submit_selected');
+    for (const box of share_boxes) {
+        if(box.checked == true) {
+            submit_btn.disabled = false;
+            return;
+        }
     }
-    else {
-        delete selectedData[index];
-    }
-    if (Object.keys(selectedData).length > 0) {
-        submit_btn.disabled = false;
-    }
-    else {
-        submit_btn.disabled = true;
-    }
-    if (setlink){
-      setHermesPreloadLink();
-    }
+    submit_btn.disabled = true;
   }
 </script>
