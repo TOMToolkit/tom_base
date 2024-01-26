@@ -64,6 +64,7 @@ class AtlasProcessor(DataProcessor):
                     'timestamp': time.to_datetime(timezone=utc),
                     'filter': str(datum['F']),
                     'error': float(datum['dm']),
+                    'telescope': 'ATLAS',
                 }
                 # If the signal is in the noise, set the non-detection limit to the
                 # absolute value of the reported magnitude.
