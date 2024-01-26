@@ -21,7 +21,7 @@ class AtlasProcessor(DataProcessor):
         ingestion
         :type data_product: DataProduct
 
-        :returns: python list of 2-tuples, each with a timestamp and corresponding data
+        :returns: python list of 3-tuples, each with a timestamp and corresponding data, and source
         :rtype: list
         """
 
