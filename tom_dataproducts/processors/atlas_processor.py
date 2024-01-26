@@ -37,6 +37,7 @@ class AtlasProcessor(DataProcessor):
         Processes the photometric data from a plaintext file into a list of dicts. File is read using astropy as
         specified in the below documentation. The file is expected to be a multi-column delimited space delimited
         text file, as produced by the ATLAS forced photometry service at https://fallingstar-data.com/forcedphot
+        See https://fallingstar-data.com/forcedphot/resultdesc/ for a description of the output format.
 
         The header looks like this:
         ###MJD   m   dm  uJy   duJy F err chi/N   RA  Dec   x   y  maj  min   phi  apfit mag5sig Sky   Obs
