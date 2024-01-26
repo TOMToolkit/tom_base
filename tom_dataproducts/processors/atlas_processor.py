@@ -21,7 +21,7 @@ class AtlasProcessor(DataProcessor):
         ingestion
         :type data_product: DataProduct
 
-        :returns: python list of 2-tuples, each with a timestamp and corresponding data
+        :returns: python list of 3-tuples, each with a timestamp and corresponding data, and source
         :rtype: list
         """
 
@@ -37,6 +37,7 @@ class AtlasProcessor(DataProcessor):
         Processes the photometric data from a plaintext file into a list of dicts. File is read using astropy as
         specified in the below documentation. The file is expected to be a multi-column delimited space delimited
         text file, as produced by the ATLAS forced photometry service at https://fallingstar-data.com/forcedphot
+        See https://fallingstar-data.com/forcedphot/resultdesc/ for a description of the output format.
 
         The header looks like this:
         ###MJD   m   dm  uJy   duJy F err chi/N   RA  Dec   x   y  maj  min   phi  apfit mag5sig Sky   Obs
@@ -48,6 +49,7 @@ class AtlasProcessor(DataProcessor):
         :rtype: list
         """
         photometry = []
+        signal_to_noise_cutoff = 3.0  # cutoff to turn magnitudes into non-detection limits
 
         data = astropy.io.ascii.read(data_product.data.path)
         if len(data) < 1:
@@ -60,10 +62,19 @@ class AtlasProcessor(DataProcessor):
                 time.format = 'datetime'
                 value = {
                     'timestamp': time.to_datetime(timezone=utc),
-                    'magnitude': float(datum['m']),
-                    'magnitude_error': float(datum['dm']),
-                    'filter': str(datum['F'])
+                    'filter': str(datum['F']),
+                    'error': float(datum['dm']),
+                    'telescope': 'ATLAS',
                 }
+                # If the signal is in the noise, set the non-detection limit to the
+                # absolute value of the reported magnitude.
+                # see https://fallingstar-data.com/forcedphot/resultdesc/
+                signal_to_noise = abs(float(datum['uJy']))/abs(float(datum['duJy']))
+                if signal_to_noise <= signal_to_noise_cutoff:
+                    value['limit'] = abs(float(datum['m']))
+                else:
+                    value['magnitude'] = abs(float(datum['m']))
+
                 photometry.append(value)
         except Exception as e:
             raise InvalidFileFormatException(e)
