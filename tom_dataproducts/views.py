@@ -155,7 +155,7 @@ class ForcedPhotometryQueryView(LoginRequiredMixin, FormView):
                 return self.form_invalid(form)
             messages.info(self.request, service.get_success_message())
             return redirect(
-                reverse('tom_targets:detail', kwargs={'pk': self.get_target_id()})
+                reverse('tom_targets:detail', kwargs={'pk': self.get_target_id()}) + '?tab=photometry'
             )
         else:
             return self.form_invalid(form)
