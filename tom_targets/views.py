@@ -354,7 +354,15 @@ class TargetShareView(FormView):
         """
         context = super().get_context_data(*args, **kwargs)
         target_id = self.kwargs.get('pk', None)
-        context['target'] = Target.objects.get(id=target_id)
+        target = Target.objects.get(id=target_id)
+        context['target'] = target
+
+        initial = {
+            'submitter': self.request.user,
+            'share_title': f'Updated data for {target.name}'
+        }
+        form = TargetShareForm(initial=initial)
+        context['form'] = form
 
         # Add into the context whether hermes-sharing is setup or not
         sharing = getattr(settings, "DATA_SHARING", None)
@@ -721,7 +729,7 @@ class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
             topic = request.POST.get('share_destination', '').split(':')[-1]
             title = request.POST.get('share_title', '')
             if not title:
-                title = f'Updated data for target group {targetlist.name}'
+                title = f'Updated targets for group {targetlist.name}.'
             hermes_message = BuildHermesMessage(
                 title=title,
                 topic=topic,
