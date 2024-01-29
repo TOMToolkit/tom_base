@@ -322,6 +322,10 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 100
 }
 
+# Default Plotly theme setting, can set to any valid theme:
+# 'plotly', 'plotly_white', 'plotly_dark', 'ggplot2', 'seaborn', 'simple_white', 'none'
+PLOTLY_THEME = 'plotly_white'
+
 try:
     from local_settings import * # noqa
 except ImportError:

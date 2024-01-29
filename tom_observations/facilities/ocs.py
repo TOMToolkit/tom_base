@@ -1000,7 +1000,7 @@ class OCSFullObservationForm(OCSBaseObservationForm):
         return ButtonHolder(
             Submit('submit', 'Submit', disabled=bool(self.facility_settings.get_unconfigured_settings())),
             Submit('validate', 'Validate'),
-            HTML(f'''<a class="btn btn-outline-primary" href={{% url 'tom_targets:detail' {target_id} %}}>
+            HTML(f'''<a class="btn btn-outline-primary" href="{{% url 'tom_targets:detail' {target_id} %}}?tab=observe">
                         Back</a>''')
         )
 

@@ -8,6 +8,7 @@ from django.db import models, transaction
 from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils.module_loading import import_string
+from guardian.shortcuts import assign_perm
 
 from tom_common.hooks import run_hook
 
@@ -407,6 +408,16 @@ class Target(models.Model):
             fields_for_type = GLOBAL_TARGET_FIELDS
 
         return model_to_dict(self, fields=fields_for_type)
+
+    def give_user_access(self, user):
+        """
+        Gives the given user permissions to view this target.
+        :param user:
+        :return:
+        """
+        assign_perm('targets.view_target', user, self)
+        assign_perm('targets.change_target', user, self)
+        assign_perm('targets.delete_target', user, self)
 
 
 class TargetName(models.Model):
