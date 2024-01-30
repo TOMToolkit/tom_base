@@ -58,7 +58,7 @@ def publish_to_hermes(message_info, datums, targets=Target.objects.none(), **kwa
         hermes_alert.save()
         for tomtoolkit_photometry in datums:
             tomtoolkit_photometry.message.add(hermes_alert)
-    except Exception as ex:
+    except Exception:
         return response
 
     return response

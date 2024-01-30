@@ -44,7 +44,6 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
     """
     # Query relevant Reduced Datums Queryset
     accepted_data_types = ['photometry']
-    data_type = form_data.get('data_type', 'photometry')
     if product_id:
         product = DataProduct.objects.get(pk=product_id)
         target = product.target
