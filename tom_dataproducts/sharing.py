@@ -25,7 +25,10 @@ def share_target_list_with_hermes(share_destination, form_data, selected_targets
     target_list = form_data.get('target_list')
     title_name = f"{target_list.name } target list"
     targets = Target.objects.filter(id__in=selected_targets)
-    reduced_datums = ReducedDatum.objects.filter(target__id__in=selected_targets, data_type='photometry')
+    if include_all_data:
+        reduced_datums = ReducedDatum.objects.filter(target__id__in=selected_targets, data_type='photometry')
+    else:
+        reduced_datums = ReducedDatum.objects.none()
     return _share_with_hermes(share_destination, form_data, title_name, reduced_datums, targets)
 
 
@@ -51,7 +54,7 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
         target = reduced_datums[0].target
     elif target_id:
         target = Target.objects.get(pk=target_id)
-        reduced_datums = ReducedDatum.objects.filter(target=target, data_type=data_type)
+        reduced_datums = ReducedDatum.objects.none()
     else:
         reduced_datums = ReducedDatum.objects.none()
         target = Target.objects.none()

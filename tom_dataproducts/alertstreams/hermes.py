@@ -38,6 +38,11 @@ def publish_to_hermes(message_info, datums, targets=Target.objects.none(), **kwa
     :param targets: Queryset of Targets to be built into table.
     :return: response
     """
+    if 'BASE_URL' not in settings.DATA_SHARING['hermes']:
+        return {'message': 'BASE_URL is not set for hermes in the settings.py DATA_SHARING section'}
+    if 'HERMES_API_KEY' not in settings.DATA_SHARING['hermes']:
+        return {'message': 'HERMES_API_KEY is not set for hermes in the settings.py DATA_SHARING section'}
+
     stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
     submit_url = stream_base_url + 'api/v0/' + 'submit_message/'
     # You will need your Hermes API key. This can be found on your Hermes profile page.
@@ -54,7 +59,7 @@ def publish_to_hermes(message_info, datums, targets=Target.objects.none(), **kwa
         for tomtoolkit_photometry in datums:
             tomtoolkit_photometry.message.add(hermes_alert)
     except Exception as ex:
-        return {'message': f'ERROR: Failed to share data with hermes: {repr(ex)}'}
+        return response
 
     return response
 
