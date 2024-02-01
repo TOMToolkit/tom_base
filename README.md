@@ -61,9 +61,12 @@ have a [contribution guide](https://tom-toolkit.readthedocs.io/en/stable/introdu
 you might find helpful. We are particularly interested in the contribution of
 observation and alert modules.
 
+### Community Code of Conduct
+We encourage developers to maintian a lively and civil discourse either on github or in our slack workspace.
+Please review our [code of conduct](CODE_OF_CONDUCT.md) for information about what is considered unacceptable behavior and how to report it.
+
 ## Developer information
 For development information targeted at the maintainers of the project, please see [README-dev.md](README-dev.md).
-
 
 ## Plugins
 
