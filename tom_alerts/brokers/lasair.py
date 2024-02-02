@@ -79,11 +79,23 @@ def get_lasair_object(obj):
 
 class LasairBroker(GenericBroker):
     """
-    The ``LasairBroker`` is the interface to the Lasair alert broker. For information regarding the query format for
-    Lasair, please see https://lasair-ztf.lsst.ac.uk/.
+    The ``LasairBroker`` is the interface to the Lasair alert broker.
+
+    To include the ``LasairBroker`` in your TOM, add the broker module location to your `TOM_ALERT_CLASSES` list in
+    your ``settings.py``:
+
+    .. code-block:: python
+
+        TOM_ALERT_CLASSES = [
+            'tom_alerts.brokers.lasair.LasairBroker',
+            ...
+        ]
 
     Requires a LASAIR_TOKEN in settings.py.
-    See https://lasair-ztf.lsst.ac.uk/api for details about how to acquire an authorization token.
+    Create an account at https://lasair-ztf.lsst.ac.uk/, log in, and check your profile page for your API token.
+
+    For information regarding the query format for
+    Lasair, please see https://lasair-ztf.lsst.ac.uk/.
     """
 
     name = 'Lasair'
@@ -96,8 +108,8 @@ class LasairBroker(GenericBroker):
         try:
             token = settings.LASAIR_TOKEN
         except AttributeError:
-            broker_feedback += 'Requires a LASAIR_TOKEN in settings.py. See https://lasair-ztf.lsst.ac.uk/api' \
-                               ' for details about how to acquire an authorization token.'
+            broker_feedback += 'Requires a LASAIR_TOKEN in settings.py. Log in or create and account at ' \
+                               'https://lasair-ztf.lsst.ac.uk/ to acquire an API token.'
             return iter(alerts), broker_feedback
 
         # Check for Cone Search
