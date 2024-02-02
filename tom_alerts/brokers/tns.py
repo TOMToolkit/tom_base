@@ -85,7 +85,9 @@ class TNSBroker(GenericBroker):
     https://www.wis-tns.org/
 
     Requires the following configuration in settings.py:
-    ::
+
+    .. code-block:: python
+
         BROKERS = {
             'TNS': {
                 'api_key': 'YOUR_API_KEY',
