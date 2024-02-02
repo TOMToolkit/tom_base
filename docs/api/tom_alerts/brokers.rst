@@ -28,6 +28,13 @@ ANTARES
 .. automodule:: tom_antares.antares
     :members:
 
+*******
+GAIA
+*******
+
+.. automodule:: tom_alerts.brokers.gaia
+    :members:
+
 ******
 Lasair
 ******
