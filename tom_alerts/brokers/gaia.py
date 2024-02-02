@@ -61,7 +61,7 @@ class GaiaBroker(GenericBroker):
     """
     The ``GaiaBroker`` is the interface to the Gaia alert broker.
 
-    To include the ``GaiaBroker`` in your TOM, add the broker module location to your `TOM_ALERT_CLASSES` list in 
+    To include the ``GaiaBroker`` in your TOM, add the broker module location to your `TOM_ALERT_CLASSES` list in
     your ``settings.py``:
 
     .. code-block:: python
