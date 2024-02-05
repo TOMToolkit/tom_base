@@ -91,8 +91,19 @@ class LasairBroker(GenericBroker):
             ...
         ]
 
-    Requires a LASAIR_TOKEN in settings.py.
+    Requires a `LASAIR['api_key']` value in the `BROKERS` dictionary in your settings.py.
+
     Create an account at https://lasair-ztf.lsst.ac.uk/, log in, and check your profile page for your API token.
+    Add the api key to your settings.py file as follows, storing the token in an environment variable for security:
+
+    .. code-block:: python
+
+        BROKERS = {
+            'LASAIR': {
+                'api_key': os.getenv('LASAIR_API_KEY', ''),
+            },
+            ...
+        }
 
     For information regarding the query format for
     Lasair, please see https://lasair-ztf.lsst.ac.uk/.
@@ -106,11 +117,14 @@ class LasairBroker(GenericBroker):
         broker_feedback = ''
         object_ids = ''
         try:
-            token = settings.LASAIR_TOKEN
-        except AttributeError:
-            broker_feedback += 'Requires a LASAIR_TOKEN in settings.py. Log in or create and account at ' \
-                               'https://lasair-ztf.lsst.ac.uk/ to acquire an API token.'
-            return iter(alerts), broker_feedback
+            token = settings.BROKERS['LASAIR']['api_key']
+        except KeyError:
+            try:
+                token = settings.LASAIR_TOKEN
+            except AttributeError:
+                broker_feedback += "Requires a `api_key` in settings.BROKERS['LASAIR']. Log in or create an" \
+                                   " account at https://lasair-ztf.lsst.ac.uk/ to acquire an API token."
+                return iter(alerts), broker_feedback
 
         # Check for Cone Search
         if 'cone_ra' in parameters and len(parameters['cone_ra'].strip()) > 0 and\

@@ -218,7 +218,7 @@ MATCH_MANAGERS = {}
 #
 # tom_alerts configuration
 #
-LASAIR_TOKEN = os.getenv('LASAIR_TOKEN', None)
+
 
 
 #
