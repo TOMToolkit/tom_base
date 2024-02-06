@@ -219,8 +219,6 @@ MATCH_MANAGERS = {}
 # tom_alerts configuration
 #
 
-
-
 #
 # tom_dataproducts configuration
 #
