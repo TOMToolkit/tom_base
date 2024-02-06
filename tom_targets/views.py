@@ -11,7 +11,7 @@ from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse
+from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse, HttpResponseBadRequest
 from django.forms import HiddenInput
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
@@ -366,7 +366,7 @@ class TargetShareView(FormView):
 
         # Add into the context whether hermes-sharing is setup or not
         sharing = getattr(settings, "DATA_SHARING", None)
-        if sharing and 'hermes' in sharing:
+        if sharing and sharing.get('hermes', {}).get('HERMES_API_KEY'):
             context['hermes_sharing'] = True
         else:
             context['hermes_sharing'] = False
@@ -479,7 +479,7 @@ class TargetHermesPreloadView(SingleObjectMixin, View):
     def post(self, request, *args, **kwargs):
         target = self.get_object()
         sharing = getattr(settings, "DATA_SHARING", None)
-        if sharing and 'hermes' in sharing:
+        if sharing and sharing.get('hermes', {}).get('HERMES_API_KEY'):
             topic = request.POST.get('share_destination', '').split(':')[-1]
             title = request.POST.get('share_title', '')
             if not title:
@@ -495,6 +495,8 @@ class TargetHermesPreloadView(SingleObjectMixin, View):
             preload_key = preload_to_hermes(hermes_message, reduced_datums, [target])
             load_url = sharing['hermes']['BASE_URL'] + f'submit-message?id={preload_key}'
             return HttpResponseRedirect(load_url)
+        else:
+            return HttpResponseBadRequest("Must have hermes section with HERMES_API_KEY set in DATA_SHARING settings")
 
 
 class TargetImportView(LoginRequiredMixin, TemplateView):
@@ -672,7 +674,7 @@ class TargetGroupingShareView(FormView):
 
         # Add into the context whether hermes-sharing is setup or not
         sharing = getattr(settings, "DATA_SHARING", None)
-        if sharing and 'hermes' in sharing:
+        if sharing and sharing.get('hermes', {}).get('HERMES_API_KEY'):
             context['hermes_sharing'] = True
         else:
             context['hermes_sharing'] = False
@@ -725,7 +727,7 @@ class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
     def post(self, request, *args, **kwargs):
         targetlist = self.get_object()
         sharing = getattr(settings, "DATA_SHARING", None)
-        if sharing and 'hermes' in sharing:
+        if sharing and sharing.get('hermes', {}).get('HERMES_API_KEY'):
             topic = request.POST.get('share_destination', '').split(':')[-1]
             title = request.POST.get('share_title', '')
             if not title:
@@ -745,3 +747,5 @@ class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
             preload_key = preload_to_hermes(hermes_message, reduced_datums, targets)
             load_url = sharing['hermes']['BASE_URL'] + f'submit-message?id={preload_key}'
             return HttpResponseRedirect(load_url)
+        else:
+            return HttpResponseBadRequest("Must have hermes section with HERMES_API_KEY set in DATA_SHARING settings")

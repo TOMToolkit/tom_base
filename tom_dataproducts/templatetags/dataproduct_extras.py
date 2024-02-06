@@ -196,7 +196,7 @@ def get_photometry_data(context, target, target_share=False):
     form.fields['data_type'].widget = forms.HiddenInput()
 
     sharing = getattr(settings, "DATA_SHARING", None)
-    hermes_sharing = sharing and 'hermes' in sharing
+    hermes_sharing = sharing and sharing.get('hermes', {}).get('HERMES_API_KEY')
 
     context = {'data': data,
                'target': target,
