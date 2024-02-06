@@ -1,7 +1,7 @@
 {% load bootstrap4 %}
 {% load tom_common_extras %}
 
-<form method="POST" action="{% url 'tom_dataproducts:share_all' tg_pk=target.id %}" enctype="multipart/form-data">
+<form method="POST" action="{% url 'tom_dataproducts:share_all' tg_pk=target.id %}" enctype="multipart/form-data" id="photometry-data-share-form">
     {% csrf_token %}
       {% for hidden in target_data_share_form.hidden_fields %}
         {{ hidden }}
@@ -27,7 +27,7 @@
             <tbody>
             {% for datum in data %}
             <tr>
-                <td><input type="checkbox" class="phot-row" id="phot-row-{{datum.id}}" name="share-box" value="{{datum.id}}" onchange="check_selected()"></td>
+                <td><input type="checkbox" class="phot-row" id="phot-row-{{ datum.id }}" name="share-box" value="{{ datum.id }}" onchange="check_selected()"></td>
                 <td>{{ datum.timestamp }}</td>
                 <td>{{ datum.telescope }}</td>
                 <td>{{ datum.filter }}</td>
@@ -53,12 +53,30 @@
                 </div>
                 {% if sharing_destinations %}
                     <div class="form-row" style="padding-inline:1rem">
+                        <div class="col-sm-12">
+                            {% bootstrap_field target_data_share_form.share_title %}
+                        </div>
+                    </div>
+                    <div class="form-row" style="padding-inline:1rem">
+                        <div class="col-sm-12">
+                            {% bootstrap_field target_data_share_form.share_message %}
+                        </div>
+                    </div>
+                    <div class="form-row" style="padding-inline:1rem">
                         <div class="col-sm-4">
                             {% bootstrap_field target_data_share_form.share_destination %}
                         </div>
-                        <div class="col-sm-2">
-                            <input type="submit" class="btn btn-primary" id="submit_selected" value="Submit" name="share_targetdata_form" style="position:absolute; bottom:1rem" disabled>
+                        <div class="col-sm-2 offset-sm-1">
+                            <input type="submit" class="btn btn-primary" id="submit_selected" value="Submit" name="share_targetdata_form" style="position:absolute; bottom:1rem" disabled onclick="setTargetOnPhotometryForm('')">
                         </div>
+                        {% if hermes_sharing %}
+                        <div class="col-sm-1">
+                            <b style="position:absolute; bottom:1.2rem">or</b>
+                        </div>
+                        <div class="col-sm-4">
+                            <button class="btn btn-info" type="submit" formaction="{% url 'tom_targets:hermes-preload' pk=target.id %}" onclick="setTargetOnPhotometryForm('_blank')" style="position:absolute; bottom:1rem">Open in Hermes &#x1F5D7;</button>
+                        </div>
+                        {% endif %}
                     </div>
                 {% else %}
                     <em style="padding-inline:1rem">Not Configured</em>
@@ -68,6 +86,16 @@
     </div>
 </form>
 <script>
+  const photometryShareForm = document.getElementById('photometry-data-share-form');
+  function setTargetOnPhotometryForm(val) {
+      if (val && val != '') {
+      photometryShareForm.setAttribute('target', val);
+      }
+      else{
+      photometryShareForm.removeAttribute('target');
+      }
+      return true;
+  };
   function select_all()  {
   var share_all = document.getElementById("share-all");
      if(share_all.checked == true){

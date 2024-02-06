@@ -124,25 +124,6 @@ def upload_dataproduct(context, obj):
     return {'data_product_form': form}
 
 
-@register.inclusion_tag('tom_dataproducts/partials/share_target_data.html', takes_context=True)
-def share_data(context, target):
-    """
-    Share data to Hermes or another TOM
-    """
-
-    initial = {'submitter': context['request'].user,
-               'target': target,
-               'share_title': f"Updated data for {target.name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
-               }
-    form = DataShareForm(initial=initial)
-    form.fields['share_title'].widget = forms.HiddenInput()
-
-    context = {'target': target,
-               'target_data_share_form': form,
-               'sharing_destinations': form.fields['share_destination'].choices}
-    return context
-
-
 @register.inclusion_tag('tom_dataproducts/partials/recent_photometry.html')
 def recent_photometry(target, limit=1):
     """
@@ -212,13 +193,16 @@ def get_photometry_data(context, target, target_share=False):
                'share_title': f"Updated data for {target.name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
                }
     form = DataShareForm(initial=initial)
-    form.fields['share_title'].widget = forms.HiddenInput()
     form.fields['data_type'].widget = forms.HiddenInput()
+
+    sharing = getattr(settings, "DATA_SHARING", None)
+    hermes_sharing = sharing and sharing.get('hermes', {}).get('HERMES_API_KEY')
 
     context = {'data': data,
                'target': target,
                'target_data_share_form': form,
                'sharing_destinations': form.fields['share_destination'].choices,
+               'hermes_sharing': hermes_sharing,
                'target_share': target_share}
     return context
 
@@ -405,7 +389,7 @@ def spectroscopy_for_target(context, target, dataproduct=None):
             tickformat="d"
         ),
         yaxis=dict(
-            tickformat=".1eg"
+            tickformat=".1g"
         )
     )
     return {
