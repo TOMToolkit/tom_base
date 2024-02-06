@@ -59,7 +59,9 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
         target = Target.objects.none()
     title_name = target.name if target else ''
     reduced_datums.filter(data_type__in=accepted_data_types)
-    return _share_with_hermes(share_destination, form_data, title_name, reduced_datums, targets=Target.objects.filter(pk=target.pk))
+    return _share_with_hermes(
+        share_destination, form_data, title_name, reduced_datums, targets=Target.objects.filter(pk=target.pk)
+    )
 
 
 def _share_with_hermes(share_destination, form_data, title_name,
