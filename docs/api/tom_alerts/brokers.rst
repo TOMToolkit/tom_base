@@ -52,12 +52,13 @@ Hermes
 .. automodule:: tom_hermes.hermes
     :members:
 
-*****
-Scout
-*****
+..
+    *****
+    Scout
+    *****
 
-.. automodule:: tom_alerts.brokers.scout
-    :members:
+    .. automodule:: tom_alerts.brokers.scout
+        :members:
 
 
 *********************
