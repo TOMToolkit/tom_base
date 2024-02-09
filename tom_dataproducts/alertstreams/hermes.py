@@ -2,6 +2,7 @@ import logging
 from dateutil.parser import parse
 
 from django.conf import settings
+from django.core.cache import cache
 
 # from hop.io import Metadata
 
@@ -28,43 +29,88 @@ class BuildHermesMessage(object):
         self.extra_info = kwargs
 
 
-def publish_photometry_to_hermes(message_info, datums, **kwargs):
+def publish_to_hermes(message_info, datums, targets=Target.objects.none(), **kwargs):
     """
-    Submits a typical hermes photometry alert using the datums supplied to build a photometry table.
+    Submits a typical hermes alert using the photometry and targets supplied to build a photometry table.
     -- Stores an AlertStreamMessage connected to each datum to show that the datum has previously been shared.
     :param message_info: HERMES Message Object created with BuildHermesMessage
-    :param datums: Queryset of Reduced Datums to be built into table.
+    :param datums: Queryset of Reduced Datums to be built into table. (Will also pull in targets)
+    :param targets: Queryset of Targets to be built into table.
     :return: response
     """
+    if 'BASE_URL' not in settings.DATA_SHARING['hermes']:
+        return {'message': 'BASE_URL is not set for hermes in the settings.py DATA_SHARING section'}
+    if 'HERMES_API_KEY' not in settings.DATA_SHARING['hermes']:
+        return {'message': 'HERMES_API_KEY is not set for hermes in the settings.py DATA_SHARING section'}
+
     stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
     submit_url = stream_base_url + 'api/v0/' + 'submit_message/'
     # You will need your Hermes API key. This can be found on your Hermes profile page.
     headers = {'Authorization': f"Token {settings.DATA_SHARING['hermes']['HERMES_API_KEY']}"}
 
+    alert = create_hermes_alert(message_info, datums, targets, **kwargs)
+
+    try:
+        response = requests.post(url=submit_url, json=alert, headers=headers)
+        response.raise_for_status()
+        # Only mark the datums as shared if the sharing was successful
+        hermes_alert = AlertStreamMessage(topic=message_info.topic, exchange_status='published')
+        hermes_alert.save()
+        for tomtoolkit_photometry in datums:
+            tomtoolkit_photometry.message.add(hermes_alert)
+    except Exception:
+        return response
+
+    return response
+
+
+def preload_to_hermes(message_info, reduced_datums, targets):
+    stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
+    preload_url = stream_base_url + 'api/v0/submit_message/preload/'
+    # You will need your Hermes API key. This can be found on your Hermes profile page.
+    headers = {'Authorization': f"Token {settings.DATA_SHARING['hermes']['HERMES_API_KEY']}"}
+
+    alert = create_hermes_alert(message_info, reduced_datums, targets)
+    try:
+        response = requests.post(url=preload_url, json=alert, headers=headers)
+        response.raise_for_status()
+        return response.json()['key']
+    except Exception as ex:
+        logger.error(repr(ex))
+        logger.error(response.json())
+
+    return ''
+
+
+def create_hermes_alert(message_info, datums, targets=Target.objects.none(), **kwargs):
     hermes_photometry_data = []
-    hermes_target_list = []
-    hermes_alert = AlertStreamMessage(topic=message_info.topic, exchange_status='published')
-    hermes_alert.save()
+    hermes_target_dict = {}
+
     for tomtoolkit_photometry in datums:
-        if tomtoolkit_photometry.target.name not in [target['name'] for target in hermes_target_list]:
-            hermes_target_list.append(create_hermes_target_table_row(tomtoolkit_photometry.target, **kwargs))
-        tomtoolkit_photometry.message.add(hermes_alert)
+        if tomtoolkit_photometry.target.name not in hermes_target_dict:
+            hermes_target_dict[tomtoolkit_photometry.target.name] = create_hermes_target_table_row(
+                tomtoolkit_photometry.target, **kwargs)
         hermes_photometry_data.append(create_hermes_phot_table_row(tomtoolkit_photometry, **kwargs))
+
+    # Now go through the targets queryset and ensure we have all of them in the table
+    # This is needed since some targets may have no corresponding photometry datums but that is still valid to share
+    for target in targets:
+        if target.name not in hermes_target_dict:
+            hermes_target_dict[target.name] = create_hermes_target_table_row(target, **kwargs)
+
     alert = {
         'topic': message_info.topic,
         'title': message_info.title,
         'submitter': message_info.submitter,
         'authors': message_info.authors,
         'data': {
-            'targets': hermes_target_list,
+            'targets': list(hermes_target_dict.values()),
             'photometry': hermes_photometry_data,
             'extra_data': message_info.extra_info
         },
         'message_text': message_info.message,
     }
-
-    response = requests.post(url=submit_url, json=alert, headers=headers)
-    return response
+    return alert
 
 
 def create_hermes_target_table_row(target, **kwargs):
@@ -128,16 +174,17 @@ def get_hermes_topics(**kwargs):
     Extend this method to restrict topics for individual users.
     :return: List of writable topics available for TOM.
     """
-    try:
-        stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
-        submit_url = stream_base_url + "api/v0/profile/"
-        headers = {'Authorization': f"Token {settings.DATA_SHARING['hermes']['HERMES_API_KEY']}"}
-
-        response = requests.get(url=submit_url, headers=headers)
-
-        topics = response.json()['writable_topics']
-    except (KeyError, requests.exceptions.JSONDecodeError):
-        topics = settings.DATA_SHARING['hermes']['USER_TOPICS']
+    topics = cache.get('hermes_writable_topics', [])
+    if not topics:
+        try:
+            stream_base_url = settings.DATA_SHARING['hermes']['BASE_URL']
+            submit_url = stream_base_url + "api/v0/profile/"
+            headers = {'Authorization': f"Token {settings.DATA_SHARING['hermes']['HERMES_API_KEY']}"}
+            response = requests.get(url=submit_url, headers=headers)
+            topics = response.json()['writable_topics']
+            cache.set('hermes_writable_topics', topics, 86400)
+        except (KeyError, requests.exceptions.JSONDecodeError):
+            pass
     return topics
 
 

@@ -29,7 +29,9 @@
         <td><button type="submit" class="btn btn-link" name="targetlist__name" value="{{group.id}}" title="View Group">{{ group.name }}</button></td>
         <td valign="middle">{{ group.targets.count }}</td>
         {% if sharing %}
-          <td><a href="{% url 'targets:share-group' group.id%}" title="Share Group" class="btn btn-info">Share</a></td>
+          <td>
+            <a href="{% url 'targets:share-group' group.id%}" title="Share Group" class="btn btn-info">Share</a>
+          </td>
         {% endif %}
         <td><a href="{% url 'targets:delete-group' group.id%}" title="Delete Group" class="btn btn-danger">Delete</a></td>
       </tr>

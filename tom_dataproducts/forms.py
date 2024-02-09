@@ -54,7 +54,7 @@ class DataProductUploadForm(forms.Form):
 class DataShareForm(forms.Form):
     share_destination = forms.ChoiceField(required=True, choices=[], label="Destination")
     share_title = forms.CharField(required=False, label="Title")
-    share_message = forms.CharField(required=False, label="Message", widget=forms.Textarea())
+    share_message = forms.CharField(required=False, label="Message", widget=forms.Textarea(attrs={'rows': 4}))
     share_authors = forms.CharField(required=False, widget=forms.HiddenInput())
     data_type = forms.ChoiceField(required=False, choices=DATA_TYPE_OPTIONS, label="Data Type")
     target = forms.ModelChoiceField(
