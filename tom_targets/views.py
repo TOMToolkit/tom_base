@@ -33,7 +33,7 @@ from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
-from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm
+from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetSelectionForm
 from tom_targets.sharing import share_target_with_tom
 from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
                                       share_target_list_with_hermes)
@@ -44,8 +44,9 @@ from tom_targets.groups import (
 )
 from tom_targets.models import Target, TargetList
 from tom_targets.utils import import_targets, export_targets
+from tom_observations.utils import get_sidereal_visibility
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
-
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +79,6 @@ class TargetListView(PermissionListMixin, FilterView):
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
         return context
-
 
 class TargetNameSearchView(RedirectView):
     """
@@ -749,3 +749,78 @@ class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
             return HttpResponseRedirect(load_url)
         else:
             return HttpResponseBadRequest("Must have hermes section with HERMES_API_KEY set in DATA_SHARING settings")
+
+class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
+    """
+    View to select targets suitable to observe from a specific facility/location, taking into account target visibility
+    from that site, as well as other user-defined constraints.
+    """
+    template_name = 'tom_targets/target_facility_selection.html'
+    paginate_by = 25
+    strict = False
+    model = Target
+    permission_required = 'tom_targets.view_target'
+    form_class = TargetSelectionForm
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds the ``TargetListShareForm`` to the context and prepopulates the hidden fields.
+        :returns: context object
+        :rtype: dict
+        """
+        context = super().get_context_data(*args, **kwargs)
+        # Surely this needs to verify that the user has permission?
+        context['form'] = TargetSelectionForm()
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handles POST requests to select targets suitable for observation from this facility
+
+        :param request: The HTML request object
+        :param args: Optional arguments if any
+        :param kwargs: Optional kwargs if any
+        :return: HTTPRequest
+        """
+
+        # Configuration:
+        # Maximum airmass limit to consider a target visible
+        # Number of intervals with which to calculate visibility throughout a single night
+        airmass_max = 2.0
+        visibiliy_intervals = 10
+        context = super().get_context_data(*args, **kwargs)
+
+        # Gather the list of targets, either from the selected target list, or all targets accessible
+        # to the user.  This produces a QuerySet either way.
+        if len(request.POST.get('target_list')) > 0:
+            target_list = TargetList.objects.get(id=request.POST.get('target_list'))
+            targets = target_list.targets.all()
+        else:
+            targets = get_objects_for_user(request.user, 'tom_targets.view_target').distinct()
+
+        # Calculate the visibility of all selected targets on the date given
+        # Since some observatories include multiple sites, the visibiliy_data returned is always
+        # a dictionary indexed by site code.  Our purpose here is to verify whether each target is ever
+        # visible at lower airmass than the limit from any site - if so the target is considered to be visible
+        observable_targets = []
+        for object in targets:
+            start_time = datetime.strptime(request.POST.get('date')+'T00:00:00', '%Y-%m-%dT%H:%M:%S')
+            end_time = datetime.strptime(request.POST.get('date')+'T23:59:59', '%Y-%m-%dT%H:%M:%S')
+            airmass_limit = 2.0 # Hardcoded for now
+            visibility_data = get_sidereal_visibility(
+                object, start_time, end_time,
+                visibiliy_intervals, airmass_max,
+                observation_facility=request.POST.get('observatory')
+            )
+            for site, vis_data in visibility_data.items():
+                airmass_data = np.array([x for x in vis_data[1] if x])
+                if len(airmass_data) > 0:
+                    observable_targets.append((object, site, airmass_data.min()))
+
+        context['observable_targets'] = observable_targets
+        print(context['observable_targets'])
+
+        return redirect(
+            reverse('tom_targets:target-selection'), context
+        )

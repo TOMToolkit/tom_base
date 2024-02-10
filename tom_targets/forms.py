@@ -1,10 +1,12 @@
 from django import forms
+from django.conf import settings
 from astropy.coordinates import Angle
 from astropy import units as u
 from django.forms import ValidationError, inlineformset_factory
 from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
+from tom_observations import facility
 
 from tom_dataproducts.sharing import get_sharing_destination_options
 from .models import (
@@ -203,3 +205,18 @@ class TargetListShareForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['share_destination'].choices = get_sharing_destination_options()
+
+class TargetSelectionForm(forms.Form):
+    """
+    Form for selecting the targets from a pre-existing TargetList
+    """
+    target_list = forms.ModelChoiceField(
+        TargetList.objects.all(),
+        required=False)
+    facilities = [(x,x) for x in facility.get_service_classes()]
+    observatory = forms.ChoiceField(required=True, choices=facilities)
+    date = forms.DateTimeField(required=True, help_text='YYYY-MM-DD')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+

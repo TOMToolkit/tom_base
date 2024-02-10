@@ -1,0 +1,31 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 targets_extras dataproduct_extras %}
+{% block title %}Target Selection{% endblock %}
+{% block content %}
+<h3>Select Targets for an Observing Facility</h3>
+<div class="row">
+  <form method="post" class="form" id='target-selection-form'>
+    {% csrf_token %}
+    <div class="form-row" style="padding-inline:1rem">
+        <div class="col-sm-3">
+            {% bootstrap_field form.observatory %}
+        </div>
+        <div class="col-sm-5">
+            {% bootstrap_field form.date %}
+        </div>
+        <div class="col-sm-3">
+            {% bootstrap_field form.target_list %}
+        </div>
+        <div class="col-sm-1">
+            <input type="submit" class="btn btn-primary" formaction="{% url 'targets:target-selection' %}" id="submit_target_selection" value="Submit" name="target_selection_form" style="position:absolute; bottom:1rem"">
+        </div>
+    </div>
+  </form>
+</div>
+<div class="row">
+    {% if observable_targets %}
+    FOO
+    {% endif %}
+    BAR
+</div>
+{% endblock %}
