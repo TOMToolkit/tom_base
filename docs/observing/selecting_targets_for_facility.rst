@@ -35,7 +35,6 @@ Additional parameters can be defined for each target by adding dictionary defini
 to the ``EXTRA_FIELDS`` list, as shown in the example below:
 
 .. code-block:: python
- :linenos:
 
     # settings.py
     EXTRA_FIELDS = [
@@ -117,6 +116,8 @@ the TOM handles observatories that have multiple sites, such as the `LCO network
 
 .. code:: python
 
+    # casleo.py
+
     # DEFAULT:
     try:
         EXAMPLE_MANUAL_SETTINGS = settings.FACILITIES['EXAMPLE_MANUAL']
@@ -155,6 +156,8 @@ Then we give the facility class a distinctive name:
 
 .. code:: python
 
+    # casleo.py
+
     # DEFAULT:
     class ExampleManualFacility(BaseManualObservationFacility):
         """
@@ -176,6 +179,8 @@ This list can be expanded for telescopes that are programmatically accessible, b
 with the default list for manual facilities.
 
 .. code:: python
+
+    # casleo.py
 
     # DEFAULT:
     def get_terminal_observing_states(self):
@@ -200,6 +205,8 @@ list of dictionaries that we specified above.
 
 .. code:: python
 
+    # casleo.py
+
     # DEFAULT:
     def get_observing_sites(self):
         """
@@ -220,6 +227,21 @@ list of dictionaries that we specified above.
         latitude, longitude and elevation.
         """
         return CASLEO_SITES
+
+
+The new facility is now ready.  To make sure that the TOM includes it,
+we simply need to add it to our TOM's list of facilities in the ``settings.py`` file:
+
+
+.. code-block:: python
+
+    # settings.py
+    TOM_FACILITY_CLASSES = [
+        'tom_observations.facilities.lco.LCOFacility',
+        'tom_observations.facilities.gemini.GEMFacility',
+        'tom_observations.facilities.soar.SOARFacility',
+        'facilities.casleo.CASLEOFacility',
+    ]
 
 
 Returning to the target selection form, the new observatory now appears as
