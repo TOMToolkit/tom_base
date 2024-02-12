@@ -58,7 +58,7 @@ astroplan = ">=0.8,<0.10"
 astropy = ">=3,<6"
 django = "<5"
 djangorestframework = "<4"
-django-bootstrap4 = ">3,<24"
+django-bootstrap4 = ">3,<25"
 beautifulsoup4 = "<5"
 dramatiq = {version = "<2.0.0", extras = ["redis", "watch"]}
 django-contrib-comments = ">=2.0,<3.0"
