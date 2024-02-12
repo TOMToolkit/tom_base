@@ -82,6 +82,7 @@ class TargetListView(PermissionListMixin, FilterView):
         context['query_string'] = self.request.META['QUERY_STRING']
         return context
 
+
 class TargetNameSearchView(RedirectView):
     """
     View for searching by target name. If the search returns one result, the view redirects to the corresponding
@@ -752,6 +753,7 @@ class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
         else:
             return HttpResponseBadRequest("Must have hermes section with HERMES_API_KEY set in DATA_SHARING settings")
 
+
 class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
     """
     View to select targets suitable to observe from a specific facility/location, taking into account target visibility
@@ -807,7 +809,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         table_columns = [
             'Target', 'RA', 'Dec', 'Site', 'Min airmass'
         ] + settings.SELECTION_EXTRA_FIELDS
-        #for param in settings.SELECTION_EXTRA_FIELDS:
+        # for param in settings.SELECTION_EXTRA_FIELDS:
         #    table_columns.append(param)
 
         # Calculate the visibility of all selected targets on the date given
@@ -818,7 +820,6 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         for object in targets:
             start_time = datetime.strptime(request.POST.get('date')+'T00:00:00', '%Y-%m-%dT%H:%M:%S')
             end_time = datetime.strptime(request.POST.get('date')+'T23:59:59', '%Y-%m-%dT%H:%M:%S')
-            airmass_limit = 2.0 # Hardcoded for now
             visibility_data = get_sidereal_visibility(
                 object, start_time, end_time,
                 visibiliy_intervals, airmass_max,
