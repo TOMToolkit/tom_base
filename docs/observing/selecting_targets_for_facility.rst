@@ -22,7 +22,6 @@ night in question, and the resulting table will include all objects with a minim
 airmass less than 2.0.
 
 .. image:: target_selection_table_default.png
-  :width: 600
   :alt: Default table output for target selection
 
 Customizing the Selected Targets Table
@@ -57,7 +56,6 @@ the target selection table by adding the parameter names to the list of ``SELECT
 This produces the table displayed below.
 
 .. image:: target_selection_table_extra_fields.png
-  :width: 600
   :alt: Target Selection table with additional columns added
 
 
@@ -115,7 +113,7 @@ updated by comparing the default with the customized example.
 
 First we need to declare the exact location of the observatory site.  Note that the sites
 dictionary can accept multiple dictionaries, each describing a different site.  This is how
-the TOM handles observatories that have multiple sites, such as the `LCO network <https://github.com/TOMToolkit/tom_base/blob/dev/tom_observations/facilities/lco.py>__`.
+the TOM handles observatories that have multiple sites, such as the `LCO network <https://github.com/TOMToolkit/tom_base/blob/dev/tom_observations/facilities/lco.py>'__.
 
 .. code:: python
 
@@ -229,5 +227,4 @@ an option in the Observatory pulldown menu.
 
 
 .. image:: target_selection_table_new_facility.png
-  :width: 600
   :alt: Target selection table with new telescope facility added
