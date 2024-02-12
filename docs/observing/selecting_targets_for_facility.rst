@@ -10,7 +10,6 @@ TOMs provide support for this through the Target Selection option under the Targ
 in the main navigation bar.
 
 .. image:: target_selection_menu_option.png
-  :width: 600
   :alt: Menu option for Target Selection view
 
 Observers can select the telescope facility that they are observing from using the form
