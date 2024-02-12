@@ -737,13 +737,13 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 name = "django-bootstrap4"
-version = "23.4"
+version = "24.1"
 description = "Django extensions by Zostera"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "django-bootstrap4-23.4.tar.gz", hash = "sha256:f7f40ad719c1b20399c804336e56a810abc1dec7ba56257756964c10005916f9"},
-    {file = "django_bootstrap4-23.4-py3-none-any.whl", hash = "sha256:577df4009adc21c8c65b7bfc3cd074c26072e245c43e6183ee0c6ae01181c263"},
+    {file = "django-bootstrap4-24.1.tar.gz", hash = "sha256:948a620a10efc3e091e55571341ae1749a3f6f521f1f031889242b65767b4c04"},
+    {file = "django_bootstrap4-24.1-py3-none-any.whl", hash = "sha256:accc64255af7bb45df6b518673facbbaf572418c26e3c3579a0cf4e9c4ef1183"},
 ]
 
 [package.dependencies]
@@ -2504,4 +2504,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "3a2d22cc0dd1ff687c6e390b15004811dee6f6898c48a6d2c94cf9db2a368c53"
+content-hash = "ce5ee2611ff5239f261ab1cf47fcf34e7081f2d14cf63d714d1d6708cadfe14c"
