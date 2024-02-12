@@ -47,6 +47,8 @@ from tom_targets.utils import import_targets, export_targets
 from tom_observations.utils import get_sidereal_visibility
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
 import numpy as np
+from astropy.coordinates import SkyCoord
+from astropy import units as u
 
 logger = logging.getLogger(__name__)
 
@@ -799,6 +801,15 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         else:
             targets = get_objects_for_user(request.user, 'tom_targets.view_target').distinct()
 
+        # Configure output target table.
+        # The displayed table can be extended to include selected extra_fields for each target,
+        # if configured in the TOM's settings.py. So we set the list of table columns accordingly.
+        table_columns = [
+            'Target', 'RA', 'Dec', 'Site', 'Min airmass'
+        ] + settings.SELECTION_EXTRA_FIELDS
+        #for param in settings.SELECTION_EXTRA_FIELDS:
+        #    table_columns.append(param)
+
         # Calculate the visibility of all selected targets on the date given
         # Since some observatories include multiple sites, the visibiliy_data returned is always
         # a dictionary indexed by site code.  Our purpose here is to verify whether each target is ever
@@ -816,11 +827,21 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
             for site, vis_data in visibility_data.items():
                 airmass_data = np.array([x for x in vis_data[1] if x])
                 if len(airmass_data) > 0:
-                    observable_targets.append((object, site, airmass_data.min()))
+                    s = SkyCoord(object.ra, object.dec, frame='icrs', unit=(u.deg, u.deg))
+                    target_data = [
+                        object.name, s.ra.to_string(u.hour), s.dec.to_string(u.deg, alwayssign=True),
+                        site, round(airmass_data.min(), 1)
+                    ]
 
+                    # Extract any requested extra parameters for this object, if available
+                    for param in settings.SELECTION_EXTRA_FIELDS:
+                        if param in object.extra_fields.keys():
+                            target_data.append(object.extra_fields[param])
+                        else:
+                            target_data.append(None)
+                    observable_targets.append(target_data)
+
+        context['table_columns'] = table_columns
         context['observable_targets'] = observable_targets
-        print(context['observable_targets'])
 
-        return redirect(
-            reverse('tom_targets:target-selection'), context
-        )
+        return self.render_to_response(context)

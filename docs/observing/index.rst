@@ -28,3 +28,5 @@ allow your TOM to submit observation requests to observatories.
 :doc:`Facility Modules <../api/tom_observations/facilities>` - Take a look at the supported facilities.
 
 :doc:`Observation Views <../api/tom_observations/views>` - Familiarize yourself with the available Observation Views.
+
+:doc:`Selecting Targets <selecting_targets_for_facility>` - Display a selection of targets for a specific observing facility.

@@ -1,6 +1,9 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 targets_extras dataproduct_extras %}
+{% load bootstrap4 targets_extras dataproduct_extras static %}
 {% block title %}Target Selection{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+{% endblock %}
 {% block content %}
 <h3>Select Targets for an Observing Facility</h3>
 <div class="row">
@@ -24,8 +27,20 @@
 </div>
 <div class="row">
     {% if observable_targets %}
-    FOO
+    <table class="table table-striped">
+        <tr>
+            {% for col in table_columns %}
+                <th>{{col}}</th>
+            {% endfor %}
+        </tr>
+        {% for entry in observable_targets %}
+            <tr>
+                {% for item in entry %}
+                    <td>{{item}}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
     {% endif %}
-    BAR
+    </table>
 </div>
 {% endblock %}
