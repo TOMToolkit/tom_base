@@ -113,7 +113,7 @@ updated by comparing the default with the customized example.
 
 First we need to declare the exact location of the observatory site.  Note that the sites
 dictionary can accept multiple dictionaries, each describing a different site.  This is how
-the TOM handles observatories that have multiple sites, such as the `LCO network <https://github.com/TOMToolkit/tom_base/blob/dev/tom_observations/facilities/lco.py>'__.
+the TOM handles observatories that have multiple sites, such as the `LCO network <https://github.com/TOMToolkit/tom_base/blob/dev/tom_observations/facilities/lco.py>`__.
 
 .. code:: python
 
