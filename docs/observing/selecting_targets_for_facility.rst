@@ -10,7 +10,7 @@ TOMs provide support for this through the Target Selection option under the Targ
 in the main navigation bar.
 
 .. image:: target_selection_menu_option.png
-  :width: 400
+  :width: 600
   :alt: Menu option for Target Selection view
 
 Observers can select the telescope facility that they are observing from using the form
@@ -23,7 +23,7 @@ night in question, and the resulting table will include all objects with a minim
 airmass less than 2.0.
 
 .. image:: target_selection_table_default.png
-  :width: 400
+  :width: 600
   :alt: Default table output for target selection
 
 Customizing the Selected Targets Table
@@ -58,7 +58,7 @@ the target selection table by adding the parameter names to the list of ``SELECT
 This produces the table displayed below.
 
 .. image:: target_selection_table_extra_fields.png
-  :width: 400
+  :width: 600
   :alt: Target Selection table with additional columns added
 
 
@@ -156,7 +156,7 @@ the TOM handles observatories that have multiple sites, such as the `LCO network
 
 Then we give the facility class a distinctive name:
 
-. code:: python
+.. code:: python
 
     # DEFAULT:
     class ExampleManualFacility(BaseManualObservationFacility):
@@ -178,7 +178,7 @@ We also need to update the reference to the list of possible end states of obser
 This list can be expanded for telescopes that are programmatically accessible, but it can be left
 with the default list for manual facilities.
 
-. code:: python
+.. code:: python
 
     # DEFAULT:
     def get_terminal_observing_states(self):
@@ -201,7 +201,7 @@ with the default list for manual facilities.
 Lastly, we need to make sure that the method to fetch the information on observing sites refers to the
 list of dictionaries that we specified above.
 
-. code:: python
+.. code:: python
 
     # DEFAULT:
     def get_observing_sites(self):
@@ -230,5 +230,5 @@ an option in the Observatory pulldown menu.
 
 
 .. image:: target_selection_table_new_facility.png
-  :width: 400
+  :width: 600
   :alt: Target selection table with new telescope facility added
