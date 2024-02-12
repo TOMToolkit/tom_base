@@ -187,12 +187,12 @@ with the default list for manual facilities.
 
 
     # UPDATED TO:
-        def get_terminal_observing_states(self):
-            """
-            Returns the states for which an observation is not expected
-            to change.
-            """
-            return TERMINAL_OBSERVING_STATES
+    def get_terminal_observing_states(self):
+        """
+        Returns the states for which an observation is not expected
+        to change.
+        """
+        return TERMINAL_OBSERVING_STATES
 
 
 Lastly, we need to make sure that the method to fetch the information on observing sites refers to the
@@ -212,14 +212,14 @@ list of dictionaries that we specified above.
 
 
     # UPDATED TO:
-        def get_observing_sites(self):
-            """
-            Return a list of dictionaries that contain the information
-            necessary to be used in the planning (visibility) tool. The
-            list should contain dictionaries each that contain sitecode,
-            latitude, longitude and elevation.
-            """
-            return CASLEO_SITES
+    def get_observing_sites(self):
+        """
+        Return a list of dictionaries that contain the information
+        necessary to be used in the planning (visibility) tool. The
+        list should contain dictionaries each that contain sitecode,
+        latitude, longitude and elevation.
+        """
+        return CASLEO_SITES
 
 
 Returning to the target selection form, the new observatory now appears as
