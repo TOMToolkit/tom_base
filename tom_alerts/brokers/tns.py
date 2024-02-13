@@ -179,3 +179,53 @@ class TNSBroker(GenericBroker):
             mag=alert['discoverymag'],
             score=alert['name_prefix'] == 'SN'
         )
+
+    @classmethod
+    def fetch_tns_name(cls, parameters):
+        '''
+        Modified version of fetch_alert from original TOM Toolkit.
+        Fetches a TNS objname for a target at requested coordinates and radius.
+        '''
+
+        data = {
+            'api_key': settings.BROKERS['TNS']['api_key'],
+            'data': json.dumps({
+                'ra': parameters['ra'],
+                'dec': parameters['dec'],
+                'radius': parameters['radius'],
+                'units': parameters['units'],
+            }
+            )
+        }
+        response = requests.post(TNS_SEARCH_URL, data, headers=cls.tns_headers())
+        response.raise_for_status()
+        transients = response.json()
+        names = []
+        for transient in transients['data']['reply']:
+            tns_name = transient['objname']
+            names.append(tns_name)
+
+        return names
+
+    @classmethod
+    def fetch_tns_class(cls, parameters):
+        '''
+        Modified version of fetch_alert from original TOM Toolkit.
+        Fetches a TNS class of a
+        '''
+
+        data = {
+            'api_key': settings.BROKERS['TNS']['api_key'],
+            'data': json.dumps({
+                'objname': parameters['objname'],
+                'photometry': 1,
+                'spectroscopy': 0,
+            }
+            )
+        }
+        response = requests.post(TNS_OBJECT_URL, data, headers=cls.tns_headers())
+        response.raise_for_status()
+        alert = response.json()['data']['reply']
+        tns_class = alert['object_type']['name']
+
+        return tns_class
