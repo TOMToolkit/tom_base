@@ -7,8 +7,29 @@ from django.contrib import messages
 
 from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct, ReducedDatum
-from tom_dataproducts.alertstreams.hermes import publish_photometry_to_hermes, BuildHermesMessage, get_hermes_topics
+from tom_dataproducts.alertstreams.hermes import publish_to_hermes, BuildHermesMessage, get_hermes_topics
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
+
+
+def share_target_list_with_hermes(share_destination, form_data, selected_targets=None, include_all_data=False):
+    """
+    Serialize and share a set of selected targets and their data with Hermes
+    :param share_destination: Topic to share data to. (e.g. 'hermes.test')
+    :param form_data: Sharing Form data
+    :param selected_targets: List of selected target ids to share
+    :param include_all_data: Boolean flag to include all dataproducts when sharing or not
+    :return: json response for the sharing
+    """
+    if selected_targets is None:
+        selected_targets = []
+    target_list = form_data.get('target_list')
+    title_name = f"{target_list.name } target list"
+    targets = Target.objects.filter(id__in=selected_targets)
+    if include_all_data:
+        reduced_datums = ReducedDatum.objects.filter(target__id__in=selected_targets, data_type='photometry')
+    else:
+        reduced_datums = ReducedDatum.objects.none()
+    return _share_with_hermes(share_destination, form_data, title_name, reduced_datums, targets)
 
 
 def share_data_with_hermes(share_destination, form_data, product_id=None, target_id=None, selected_data=None):
@@ -19,7 +40,7 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
     :param product_id: DataProduct ID (if provided)
     :param target_id: Target ID (if provided)
     :param selected_data: List of ReducedDatum IDs (if provided)
-    :return:
+    :return: json response for the sharing
     """
     # Query relevant Reduced Datums Queryset
     accepted_data_types = ['photometry']
@@ -32,32 +53,47 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
         target = reduced_datums[0].target
     elif target_id:
         target = Target.objects.get(pk=target_id)
-        data_type = form_data.get('data_type', 'photometry')
-        reduced_datums = ReducedDatum.objects.filter(target=target, data_type=data_type)
+        reduced_datums = ReducedDatum.objects.none()
     else:
         reduced_datums = ReducedDatum.objects.none()
         target = Target.objects.none()
-
+    title_name = target.name if target else ''
     reduced_datums.filter(data_type__in=accepted_data_types)
+    return _share_with_hermes(
+        share_destination, form_data, title_name, reduced_datums, targets=Target.objects.filter(pk=target.pk)
+    )
 
+
+def _share_with_hermes(share_destination, form_data, title_name,
+                       reduced_datums=ReducedDatum.objects.none(),
+                       targets=Target.objects.none()):
+    """
+    Helper method to serialize and share data with hermes
+    :param share_destination: Topic to share data to. (e.g. 'hermes.test')
+    :param form_data: Sharing Form data
+    :param reduced_datums: filtered queryset of reduced datums to submit
+    :return: json response for the sharing
+    """
     # Build and submit hermes table from Reduced Datums
     hermes_topic = share_destination.split(':')[1]
     destination = share_destination.split(':')[0]
+    sharing = getattr(settings, "DATA_SHARING", {})
+    authors = form_data.get('share_authors', sharing.get('hermes', {}).get('DEFAULT_AUTHORS', None))
     message_info = BuildHermesMessage(title=form_data.get('share_title',
-                                                          f"Updated data for {target.name} from "
+                                                          f"Updated data for {title_name} from "
                                                           f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}."),
                                       submitter=form_data.get('submitter'),
-                                      authors=form_data.get('share_authors', None),
+                                      authors=authors,
                                       message=form_data.get('share_message', None),
                                       topic=hermes_topic
                                       )
     # Run ReducedDatums Queryset through sharing protocols to make sure they are safe to share.
     filtered_reduced_datums = check_for_share_safe_datums(destination, reduced_datums, topic=hermes_topic)
-    if filtered_reduced_datums.count() > 0:
-        response = publish_photometry_to_hermes(message_info, filtered_reduced_datums)
+    if filtered_reduced_datums.count() > 0 or targets.count() > 0:
+        response = publish_to_hermes(message_info, filtered_reduced_datums, targets)
     else:
-        return {'message': f'ERROR: No valid data to share. (Check Sharing Protocol. Note that data types must be in '
-                           f'{accepted_data_types})'}
+        return {'message': 'ERROR: No valid data or targets to share. (Check Sharing Protocol. Note that '
+                           'only photometry data types are supported for sharing with hermes'}
     return response
 
 
@@ -215,17 +251,22 @@ def get_sharing_destination_options():
     try:
         for destination, details in settings.DATA_SHARING.items():
             new_destination = [details.get('DISPLAY_NAME', destination)]
-            if details.get('USER_TOPICS', None):
-                # If topics exist for a destination (Such as HERMES) give topics as sub-choices
-                #   for non-selectable Destination
-                if destination == "hermes":
-                    destination_topics = get_hermes_topics()
+            destination_topics = details.get('USER_TOPICS', [])
+            if destination.lower() == 'hermes':
+                # If this is a hermes share, get the topics from hermes and override what the users provide
+                hermes_topics = get_hermes_topics()
+                # If we have no writable hermes topics, then we can't share with hermes!
+                if not hermes_topics:
+                    destination_topics = []
+                elif destination_topics:
+                    # If we've set USER_TOPICS with hermes, filter them to those available to your user account
+                    destination_topics = [topic for topic in destination_topics if topic in hermes_topics]
                 else:
-                    destination_topics = details['USER_TOPICS']
+                    destination_topics = hermes_topics
+            if destination_topics:
                 topic_list = [(f'{destination}:{topic}', topic) for topic in destination_topics]
                 new_destination.append(tuple(topic_list))
             else:
-                # Otherwise just use destination as option
                 new_destination.insert(0, destination)
             choices.append(tuple(new_destination))
     except AttributeError:
