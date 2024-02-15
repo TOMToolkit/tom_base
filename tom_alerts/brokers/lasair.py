@@ -18,7 +18,7 @@ class LasairBrokerForm(GenericQueryForm):
                                widget=forms.TextInput(attrs={'placeholder': '1.2345'}))
     cone_radius = forms.CharField(required=False, label='Radius', help_text='Search Radius (Arcsec)', initial='10',
                                   widget=forms.TextInput(attrs={'placeholder': '10'}))
-    sqlquery = forms.CharField(required=False, label='SQL Query Conditions',
+    sqlquery = forms.CharField(required=False, label='SQL Query the "Objects" table.',
                                help_text='The "WHERE" criteria to restrict which objects are returned. '
                                          '(i.e. gmag < 12.0)')
 
