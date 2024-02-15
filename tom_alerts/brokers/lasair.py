@@ -27,8 +27,8 @@ class LasairBrokerForm(GenericQueryForm):
         self.helper.layout = Layout(
             HTML('''
                     <p>
-                    Please see the <a href="https://lasair-ztf.lsst.ac.uk/api" target="_blank">Lasair website</a> for
-                    more detailed instructions on querying the broker.
+                    Please see the <a href="https://lasair.readthedocs.io/en/main/core_functions/rest-api.html#"
+                    target="_blank">Lasair website</a> for more detailed instructions on querying the broker.
                 '''),
             self.common_layout,
             Fieldset(
@@ -106,7 +106,7 @@ class LasairBroker(GenericBroker):
         }
 
     For information regarding the query format for
-    Lasair, please see https://lasair-ztf.lsst.ac.uk/.
+    Lasair, please see https://lasair.readthedocs.io/en/main/core_functions/rest-api.html#.
     """
 
     name = 'Lasair'
