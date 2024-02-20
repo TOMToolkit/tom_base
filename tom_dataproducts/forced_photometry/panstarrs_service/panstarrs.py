@@ -17,19 +17,11 @@ from tom_dataproducts.data_processor import run_data_processor
 from .panstarrs_api import get_data_release_choices, get_catalog_choices, mast_query
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 
 class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
-    # TODO: if we include both calendar and mjd fields, they should be linked in the UI
-    # min_date = forms.CharField(
-    #     label='Min date:', required=False,
-    #     widget=forms.TextInput(attrs={'class': 'ml-2', 'type': 'datetime-local'})
-    # )
-    # max_date = forms.CharField(
-    #     label='Max date:', required=False,
-    #     widget=forms.TextInput(attrs={'class': 'ml-2', 'type': 'datetime-local'})
-    # )
+
     min_date_mjd = forms.FloatField(
         label='Min date (MJD):', required=False,
         widget=forms.NumberInput(attrs={'class': 'ml-2'})
@@ -47,13 +39,11 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
     )
 
     data_release = forms.ChoiceField(
-        # TODO: get these from panstarrs_api.py
         label='Data release: ',
         choices=get_data_release_choices(),
         initial='dr2',
     )
 
-    # TODO: get these from panstarrs_api.py
     catalog = forms.ChoiceField(
         label='Catalog: ',
         choices=get_catalog_choices(),
@@ -94,7 +84,7 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
     def clean(self):
         """After cleaning the form data field-by-field, do any necessary cross-field validation.
 
-        TODO: describe where in the validatin process this method is called.
+        TODO: describe where in the validation process this method is called.
         """
         cleaned_data = super().clean()
         logger.debug(f"PanstarrsForcedPhotometryQueryForm.clean() -- cleaned_data: {cleaned_data}")
@@ -102,11 +92,8 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
         # TODO: update cross-field validation
         if not (cleaned_data.get('min_date') or cleaned_data.get('min_date_mjd')):
             raise forms.ValidationError("Must supply a minimum date in either datetime or mjd format")
-        # if cleaned_data.get('min_date') and cleaned_data.get('min_date_mjd'):
-        #     raise forms.ValidationError("Please specify the minimum date in either datetime or mjd format")
-        # if cleaned_data.get('max_date') and cleaned_data.get('max_date_mjd'):
-            raise forms.ValidationError("Please specify the maximum date in either datetime or mjd format")
-        # return cleaned_data
+
+        return cleaned_data
 
 
 class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
@@ -198,7 +185,6 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
 
         file = ContentFile(response.content, name=dp_name)
 
-        # TODO: this should be a get_or_create()
         dp, created = DataProduct.objects.get_or_create(
             product_id=dp_name,
             target=target,
