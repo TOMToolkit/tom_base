@@ -17,7 +17,7 @@ from tom_dataproducts.data_processor import run_data_processor
 from .panstarrs_api import get_data_release_choices, get_catalog_choices, mast_query
 
 logger = logging.getLogger(__name__)
-#logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 
 class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
