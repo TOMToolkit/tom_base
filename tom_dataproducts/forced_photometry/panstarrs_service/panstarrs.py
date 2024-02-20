@@ -177,7 +177,7 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
 
         catalog = query_parameters.get('catalog')
         data_release = query_parameters.get('data_release')
-        response = mast_query(table=catalog, release=data_release, request_data=request_data)
+        response = mast_query(request_data, table=catalog, release=data_release)
 
         # Did the response contain any data?
         if len(response.content) == 0:

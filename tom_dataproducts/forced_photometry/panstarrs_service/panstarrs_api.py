@@ -127,8 +127,8 @@ def get_default_columns(catalog='mean'):
     return default_columns
 
 
-def mast_query(table='mean', release='dr2', format='csv',
-               columns=None, request_data={}, **kwargs):
+def mast_query(request_data, table='mean', release='dr2', output_format='csv',
+               columns=None, **kwargs):
     """Perform a MAST query.
     based on https://ps1images.stsci.edu/ps1_dr2_api.html
 
