@@ -12,7 +12,9 @@ TOM Toolkit supports publishing data to a Kafka stream such as `Hermes <https://
 
 When sharing photometry data via Hermes, the TOM publishes the data to be shared to a topic on the HOPSKOTCH
 Kafka stream. At this time, only photometry data is supported by TOM Toolkit. To submit via the Hermes API, you will
-need to copy your Hermes API Key from your Hermes profile page.
+need to copy your Hermes API Key from your Hermes profile page. When hermes sharing is configured, you will also see
+buttons to open your data in hermes with the form pre-filled - this is a good option if you want to make slight changes
+to your message or data before sharing.
 
 
 Configuring your TOM to Publish Data to a stream:
@@ -29,7 +31,8 @@ for the various streams with which you wish to share data.
            'DISPLAY_NAME': os.getenv('HERMES_DISPLAY_NAME', 'Hermes'),
            'BASE_URL': os.getenv('HERMES_BASE_URL', 'https://hermes.lco.global/'),
            'HERMES_API_KEY': os.getenv('HERMES_API_KEY', 'set HERMES_API_KEY value in environment'),
-           'USER_TOPICS': ['hermes.test', 'tomtoolkit.test']
+           'DEFAULT_AUTHORS': os.getenv('HERMES_DEFAULT_AUTHORS', 'set your default authors here'),
+           'USER_TOPICS': ['hermes.test', 'tomtoolkit.test']  # You must have write permissions on these topics
         },
    }
 
