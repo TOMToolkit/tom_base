@@ -152,7 +152,7 @@ def mast_query(table='mean', release='dr2', format='csv',
     ----------
     Returns HTTPResponse from the requests.get() call
     """
-    url = f'{get_base_url()}/{release}/{table}.{format}'
+    url = f'{get_base_url()}/{release}/{table}.{output_format}'
 
     # set up the request data
     data = kwargs.copy()  # start with the kwargs

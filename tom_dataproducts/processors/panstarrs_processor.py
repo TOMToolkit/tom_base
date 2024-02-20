@@ -66,10 +66,10 @@ class PanstarrsProcessor(DataProcessor):
                 utc = TimezoneInfo(utc_offset=0*units.hour)
                 time.format = 'datetime'
                 timestamp = time.to_datetime(timezone=utc)
-                for filter in ['g', 'r', 'i', 'z', 'y']:
+                for optical_filter in ['g', 'r', 'i', 'z', 'y']:
                     # these filter and column names come from pastarrs_api.py
-                    mag_col_name = f'{filter}MeanPSFMag'
-                    mag_err_col_name = f'{filter}MeanPSFMagErr'
+                    mag_col_name = f'{optical_filter}MeanPSFMag'
+                    mag_err_col_name = f'optical_{filter}MeanPSFMagErr'
                     mag = float(datum[mag_col_name])
                     mag_err = float(datum[mag_err_col_name])
                     # -999 is the value returned by PanSTARRS when there is no data for a given column
@@ -78,7 +78,7 @@ class PanstarrsProcessor(DataProcessor):
                             'timestamp': timestamp,
                             'magnitude': mag,
                             'magnitude_error': mag_err,
-                            'filter': filter
+                            'filter': optical_filter,
                         }
                         photometry.append(value)
         except Exception as e:
