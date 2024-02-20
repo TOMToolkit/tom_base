@@ -8,7 +8,7 @@
 {{ form|as_crispy_errors }}
 <h2>Query {{ form.service.value }} Forced Photometry Service</h2>
 <br />
-<h4>Target <b>{{ target.name }}</b> at RA {{ target.ra }}, DEC {{ target.dec }}</h4>
+<h4>Target <b><a href={% url "targets:detail" target.id %}> {{ target.name }}</a></b> at RA {{ target.ra }}, DEC {{ target.dec }}</h4>
 <br />
 {% crispy query_form %}
 {% endblock %}
