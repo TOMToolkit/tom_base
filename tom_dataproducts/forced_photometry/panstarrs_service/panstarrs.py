@@ -202,8 +202,10 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
         try:
             run_data_processor(dp)
         except InvalidFileFormatException as e:
-            logger.error(f"Error processing returned PanSTARRS data into ReducedDatums: {repr(e)}")
-            return False
+            error_msg = (f'Error while processing {dp_name} (the returned PanSTARRS data) '
+                         f'into ReducedDatums: {repr(e)}')
+            logger.error(error_msg)
+            raise fps.ForcedPhotometryServiceException(error_msg)
 
         return True
 
