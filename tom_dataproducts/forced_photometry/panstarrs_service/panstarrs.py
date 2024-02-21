@@ -104,7 +104,6 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
         super().__init__()
         self.success_message = ('PanSTARRS success message')
 
-
     def get_form(self):
         """
         This method returns the form for querying this service.
@@ -195,9 +194,12 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
             extra_data=f'Queried from PanSTARRS (via MAST) within the TOM on {timezone.now().isoformat()}'
         )
         if created:
-            logger.info(f"Created dataproduct {dp_name} from PanSTARRS (MAST) query")
+            message = f"Created dataproduct {dp_name} from PanSTARRS (MAST) query"
+            logger.info(message)
         else:
-            logger.warning(f"DataProduct {dp_name} already exists, skipping creation")
+            message = f"DataProduct {dp_name} already exists, skipping creation"
+            logger.warning(message)
+        self.success_message = (message)
 
         try:
             run_data_processor(dp)
