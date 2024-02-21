@@ -7,9 +7,13 @@
 {% block content %}
 {{ form|as_crispy_errors }}
 <h2>Query {{ form.service.value }} Forced Photometry Service</h2>
+{% if info_url %}
+<p><em>More information: <a href="{{ info_url }}" target="_blank"> {{ form.service.value }}</a></em></p>
+{% endif %}
 <br />
 <h4>Target <b><a href={% url "targets:detail" target.id %}> {{ target.name }}</a></b>
     at RA {{ target.ra|floatformat:4 }}, DEC {{ target.dec|floatformat:4 }}</h4>
-<br />
+<hr>
 {% crispy query_form %}
+<hr>
 {% endblock %}

@@ -81,6 +81,7 @@ class AtlasForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
 
 class AtlasForcedPhotometryService(fps.BaseForcedPhotometryService):
     name = 'Atlas'
+    info_url = 'https://fallingstar-data.com/forcedphot/'
 
     def __init__(self):
         super().__init__()

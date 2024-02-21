@@ -117,3 +117,18 @@ class BaseForcedPhotometryService(ABC):
         Make sure to also add this type in your settings to DATA_PRODUCT_TYPES and
         DATA_PROCESSORS.
         """
+
+    def get_context_data(self):
+        """Add any additional context data for the service.
+
+        Called by the View.get_context_data() method which adds the
+        returned dictionary to the View's context dictionary which is
+        passed to the template.
+
+        Define info_url as a class variable in your subclass and it will
+        be added to the context by this method.
+
+        If your subclass has additional subclass-specific context data,
+        then override this method and don't forget to call super().
+        """
+        return {'info_url': self.info_url}

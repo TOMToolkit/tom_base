@@ -98,10 +98,12 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
 
 class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
     name = 'PanSTARRS'
+    info_url = 'https://outerspace.stsci.edu/display/PANSTARRS'
 
     def __init__(self):
         super().__init__()
         self.success_message = ('PanSTARRS success message')
+
 
     def get_form(self):
         """

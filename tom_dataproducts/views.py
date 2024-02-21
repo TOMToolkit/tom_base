@@ -128,6 +128,12 @@ class ForcedPhotometryQueryView(LoginRequiredMixin, FormView):
         Adds the target to the context object.
         """
         context = super().get_context_data(*args, **kwargs)
+
+        # give the service class a chance to add to the context data
+        service_class = self.get_service_class()
+        service_class_context_data = service_class().get_context_data()
+        context.update(service_class_context_data)
+
         context['target'] = self.get_target()
         context['query_form'] = self.get_form_class()(initial=self.get_initial())
         return context
