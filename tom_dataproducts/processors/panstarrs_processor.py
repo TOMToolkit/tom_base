@@ -76,6 +76,7 @@ class PanstarrsProcessor(DataProcessor):
                     if mag > -999:
                         value = {
                             'timestamp': timestamp,
+                            'telescope': 'PanSTARRS 1',
                             'magnitude': mag,
                             'magnitude_error': mag_err,
                             'filter': optical_filter,
