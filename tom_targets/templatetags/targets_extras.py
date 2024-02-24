@@ -48,10 +48,11 @@ def target_feature(target):
 @register.inclusion_tag('tom_targets/partials/target_buttons.html')
 def target_buttons(target):
     """
-    Displays the Update and Delete buttons for a target.
+    Displays the Update and Delete and Sharing buttons for a target.
     """
+    sharing = getattr(settings, "DATA_SHARING", None)
     return {'target': target,
-            'sharing': getattr(settings, "DATA_SHARING", None)}
+            'sharing': sharing}
 
 
 @register.inclusion_tag('tom_targets/partials/target_data.html')

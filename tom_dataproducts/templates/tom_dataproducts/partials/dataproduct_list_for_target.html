@@ -33,7 +33,10 @@
         {% if sharing_destinations %}
           <button type="button" class="btn btn-info" data-toggle="collapse" data-target="#share-{{ forloop.counter }}">Share</button>
         {% else %}
-          <p>Not Configured</p>
+          <p>
+            <a href="https://tom-toolkit.readthedocs.io/en/stable/managing_data/tom_direct_sharing.html"
+               target="_blank">Not Configured</a>.
+          </p>
         {% endif %}
       </td>
       <td><a href="{% url 'tom_dataproducts:delete' product.id %}" class="btn btn-danger">Delete</a></td>
@@ -46,20 +49,22 @@
             {{ hidden }}
           {% endfor %}
           <div class="form-row">
-            <div class="col-sm-4">
-              {% bootstrap_field data_product_share_form.share_destination %}
-            </div>
-            <div class="col-sm-8">
+            <div class="col-sm-12">
               {% bootstrap_field data_product_share_form.share_title %}
             </div>
           </div>
           <div class="form-row">
-            <div class="col-sm-10">
+            <div class="col-sm-12">
               {% bootstrap_field data_product_share_form.share_message %}
             </div>
-            <div class="col-sm-2">
+          </div>
+          <div class="form-row">
+            <div class="col-sm-4">
+              {% bootstrap_field data_product_share_form.share_destination %}
+            </div>
+            <div class="col-sm-2 offset-sm-1">
               {% buttons %}
-                <input type="submit" class="btn btn-primary" value="Submit" name="share_dataproduct_form" style="position:absolute; bottom:0">
+                <input type="submit" class="btn btn-primary" value="Submit" name="share_dataproduct_form" style="position:absolute; bottom:1rem">
               {% endbuttons %}
             </div>
           </div>

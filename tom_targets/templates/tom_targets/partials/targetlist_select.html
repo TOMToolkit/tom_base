@@ -17,9 +17,15 @@
 
     function single_select() {
         count_selected();
-        document.getElementById("optionSelectAll").innerHTML = "";
-        document.getElementById("selectPage").checked = false;
-        document.getElementById("isSelectAll").value = "False";
+        if (document.getElementById("optionSelectAll") !== null) {
+            document.getElementById("optionSelectAll").innerHTML = "";
+        }
+        if (document.getElementById("selectPage") !== null) {
+            document.getElementById("selectPage").checked = false;
+        }
+        if (document.getElementById("isSelectAll") !== null) {
+            document.getElementById("isSelectAll").value = "False";
+        }
     }
 
     function select_page(source, totalTargets) {
@@ -28,12 +34,16 @@
             checkboxes[i].checked = source.checked;
         }
         count_selected();
-        document.getElementById("isSelectAll").value = "False";
-        if (source.checked) {
-            document.getElementById("optionSelectAll").innerHTML = "Select All " + totalTargets + " Target(s) Listed";
+        if (document.getElementById("isSelectAll") !== null) {
+            document.getElementById("isSelectAll").value = "False";
         }
-        else {
-            document.getElementById("optionSelectAll").innerHTML = "";
+        if (document.getElementById("optionSelectAll") !== null){
+            if (source.checked) {
+            document.getElementById("optionSelectAll").innerHTML = "Select All " + totalTargets + " Target(s) Listed";
+            }
+            else {
+                document.getElementById("optionSelectAll").innerHTML = "";
+            }
         }
     }
 
