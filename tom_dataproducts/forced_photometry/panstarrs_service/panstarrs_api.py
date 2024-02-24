@@ -41,7 +41,7 @@ def get_catalog_choices(data_release='dr2'):
     choices = [  # DR2 choices
         ('mean', 'Mean object'),
         ('stack', 'Stacked object'),
-        ('forced', 'Forced mean object'),
+        ('forced_mean', 'Forced mean object'),
         ('detection', 'Detections'),
     ]
 
