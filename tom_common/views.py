@@ -217,6 +217,7 @@ def robots_txt(request):
             with open(settings.ROBOTS_TXT_PATH, 'r') as f:
                 robots_txt_content = f.read()
         except FileNotFoundError as e:
-            logger.warning(f'Default robots.txt served: settings.ROBOTS_TXT_PATH is {settings.ROBOTS_TXT_PATH}, but {e}')
+            logger.warning(f'Default robots.txt served: settings.ROBOTS_TXT_PATH '
+                           f'is {settings.ROBOTS_TXT_PATH}, but {e}')
 
     return HttpResponse(robots_txt_content, content_type="text/plain")
