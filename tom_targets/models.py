@@ -66,7 +66,7 @@ class TargetMatchManager(models.Manager):
         return name.lower().replace(" ", "").replace("-", "").replace("_", "").replace("(", "").replace(")", "")
 
 
-class Target(models.Model):
+class BaseTarget(models.Model):
     """
     Class representing a target in a TOM
 
@@ -273,6 +273,9 @@ class Target(models.Model):
     except (ImportError, AttributeError):
         matches = TargetMatchManager()
 
+    class Meta:
+        abstract = True
+
     @transaction.atomic
     def save(self, *args, **kwargs):
         """
@@ -418,6 +421,10 @@ class Target(models.Model):
         assign_perm('targets.view_target', user, self)
         assign_perm('targets.change_target', user, self)
         assign_perm('targets.delete_target', user, self)
+
+
+class Target(BaseTarget):
+    pass
 
 
 class TargetName(models.Model):
