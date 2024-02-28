@@ -2090,13 +2090,13 @@ files = [
 
 [[package]]
 name = "specutils"
-version = "1.12.0"
+version = "1.13.0"
 description = "Package for spectroscopic astronomical data"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "specutils-1.12.0-py3-none-any.whl", hash = "sha256:bcec31b46d8c4969580b45297a96444810f451fdde9a0eaf82e18b9a807d442c"},
-    {file = "specutils-1.12.0.tar.gz", hash = "sha256:1b0bb6adcb6500e662dfbf54d334dc6bf20cc9fa7e8e47ce05d2b3703000d882"},
+    {file = "specutils-1.13.0-py3-none-any.whl", hash = "sha256:1d9f2ddfbe56f7c4e2eefbdcb6bd08009f021371f7b2907707ece4de0d0c5396"},
+    {file = "specutils-1.13.0.tar.gz", hash = "sha256:d8651d253baea379ad883d80fc349ee480cb587f29b284adf82702a5f78bda31"},
 ]
 
 [package.dependencies]
@@ -2111,7 +2111,7 @@ scipy = ">=1.3"
 [package.extras]
 docs = ["graphviz", "matplotlib", "sphinx-astropy"]
 jwst = ["stdatamodels (>=1.1.0)"]
-test = ["coverage", "graphviz", "matplotlib", "pytest-astropy", "pytest-cov", "spectral-cube"]
+test = ["matplotlib", "pytest-astropy", "spectral-cube", "tox"]
 
 [[package]]
 name = "sphinx"
