@@ -423,7 +423,24 @@ class BaseTarget(models.Model):
         assign_perm('targets.delete_target', user, self)
 
 
-class Target(BaseTarget):
+def get_abstract_target_base_models():
+    base_classes = (BaseTarget,)
+    try:
+        BASE_TARGET_MODELS = settings.BASE_TARGET_MODELS
+    except AttributeError:
+        return base_classes
+
+    for model in BASE_TARGET_MODELS:
+        try:
+            clazz = import_string(model)
+        except (ImportError, AttributeError):
+            raise ImportError(f'Could not import {model}. Did you provide the correct path?')
+        if clazz not in base_classes:
+            base_classes += (clazz,)
+    return base_classes
+
+
+class Target(*get_abstract_target_base_models()):
     pass
 
 
