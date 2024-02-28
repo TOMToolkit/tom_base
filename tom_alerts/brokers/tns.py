@@ -180,40 +180,90 @@ class TNSBroker(GenericBroker):
             score=alert['name_prefix'] == 'SN'
         )
 
-    @classmethod
-    def fetch_tns_name(cls, parameters):
-        '''
-        Modified version of fetch_alert from original TOM Toolkit.
-        Fetches a TNS objname for a target at requested coordinates and radius.
-        '''
+    # @classmethod
+    # def fetch_tns_name(cls, parameters):
+    #     '''
+    #     Modified version of fetch_alert from original TOM Toolkit.
+    #     Fetches a TNS objname for a target at requested coordinates and radius.
+    #     '''
+    #
+    #     data = {
+    #         'api_key': settings.BROKERS['TNS']['api_key'],
+    #         'data': json.dumps({
+    #             'ra': parameters['ra'],
+    #             'dec': parameters['dec'],
+    #             'radius': parameters['radius'],
+    #             'units': parameters['units'],
+    #         }
+    #         )
+    #     }
+    #     response = requests.post(TNS_SEARCH_URL, data, headers=cls.tns_headers())
+    #     response.raise_for_status()
+    #     transients = response.json()
+    #     names = []
+    #     for transient in transients['data']['reply']:
+    #         tns_name = transient['objname']
+    #         names.append(tns_name)
+    #
+    #     return names
+    #
+    # @classmethod
+    # def fetch_tns_class(cls, parameters):
+    #     '''
+    #     Modified version of fetch_alert from original TOM Toolkit.
+    #     Fetches a TNS class of a
+    #     '''
+    #
+    #     data = {
+    #         'api_key': settings.BROKERS['TNS']['api_key'],
+    #         'data': json.dumps({
+    #             'objname': parameters['objname'],
+    #             'photometry': 1,
+    #             'spectroscopy': 0,
+    #         }
+    #         )
+    #     }
+    #     response = requests.post(TNS_OBJECT_URL, data, headers=cls.tns_headers())
+    #     response.raise_for_status()
+    #     alert = response.json()['data']['reply']
+    #     tns_class = alert['object_type']['name']
+    #
+    #     return tns_class
 
+    @classmethod
+    def fetch_tns_transients(cls, parameters):
+        if parameters['days_ago'] is not None:
+            public_timestamp = (datetime.utcnow() - timedelta(days=parameters['days_ago']))\
+                .strftime('%Y-%m-%d %H:%M:%S')
+        elif parameters['min_date'] is not None:
+            public_timestamp = parameters['min_date']
+        else:
+            public_timestamp = ''
+
+        # TNS expects either (ra, dec, radius, unit) or just target_name.
+        # target_name has to be a TNS name of the target without a prefix.
+        # Unused fields can be empty strings
         data = {
             'api_key': settings.BROKERS['TNS']['api_key'],
             'data': json.dumps({
-                'ra': parameters['ra'],
-                'dec': parameters['dec'],
-                'radius': parameters['radius'],
-                'units': parameters['units'],
+                'name': parameters.get('target_name', ''),
+                'internal_name': parameters.get('internal_name', ''),
+                'ra': parameters.get('ra', ''),
+                'dec': parameters.get('dec', ''),
+                'radius': parameters.get('radius', ''),
+                'units': parameters.get('units', ''),
+                'public_timestamp': public_timestamp,
             }
             )
         }
         response = requests.post(TNS_SEARCH_URL, data, headers=cls.tns_headers())
         response.raise_for_status()
         transients = response.json()
-        names = []
-        for transient in transients['data']['reply']:
-            tns_name = transient['objname']
-            names.append(tns_name)
 
-        return names
+        return transients
 
     @classmethod
-    def fetch_tns_class(cls, parameters):
-        '''
-        Modified version of fetch_alert from original TOM Toolkit.
-        Fetches a TNS class of a
-        '''
-
+    def get_tns_object_info(cls, parameters):
         data = {
             'api_key': settings.BROKERS['TNS']['api_key'],
             'data': json.dumps({
@@ -225,7 +275,6 @@ class TNSBroker(GenericBroker):
         }
         response = requests.post(TNS_OBJECT_URL, data, headers=cls.tns_headers())
         response.raise_for_status()
-        alert = response.json()['data']['reply']
-        tns_class = alert['object_type']['name']
+        obj_info = response.json()
 
-        return tns_class
+        return obj_info
