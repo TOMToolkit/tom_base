@@ -1,8 +1,8 @@
-from django.test import TestCase
-from requests import Response
-
-from tom_targets.tests.factories import SiderealTargetFactory
-from tom_alerts.brokers import tns
+# from django.test import TestCase
+# from requests import Response
+#
+# from tom_targets.tests.factories import SiderealTargetFactory
+# from tom_alerts.brokers import tns
 
 tns_classified_target_response = {
     'id_code': 200,
@@ -69,4 +69,3 @@ tns_classified_target_response = {
 #                          'SN Ic-BL')
 #         self.assertEqual(obj_info['data']['reply']['object_type']['id'],
 #                          7)
-
