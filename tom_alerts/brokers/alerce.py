@@ -245,7 +245,19 @@ class ALeRCEQueryForm(GenericQueryForm):
 
 class ALeRCEBroker(GenericBroker):
     """
-    The ``ALeRCEBroker`` is the interface to the ALeRCE alert broker. For information regarding the ALeRCE objects
+    The ``ALeRCEBroker`` is the interface to the ALeRCE alert broker.
+
+    To include the ``ALeRCEBroker`` in your TOM, add the broker module location to your `TOM_ALERT_CLASSES` list in
+    your ``settings.py``:
+
+    .. code-block:: python
+
+        TOM_ALERT_CLASSES = [
+            'tom_alerts.brokers.alerce.ALeRCEBroker',
+            ...
+        ]
+
+    For information regarding the ALeRCE objects
     and classification, please see http://alerce.science.
     """
 
@@ -332,6 +344,9 @@ class ALeRCEBroker(GenericBroker):
     def fetch_alert(self, alert_id):
         """
         The response for a single alert is as follows:
+
+        .. code-block:: python
+
             {
                 'oid':'ZTF20acnsdjd',
                 ...

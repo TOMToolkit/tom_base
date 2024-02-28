@@ -1,17 +1,22 @@
+import logging
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.edit import UpdateView, CreateView
+from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import update_session_auth_hash
 from django_comments.models import Comment
+from django.views.decorators.http import require_GET
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.http import HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect
 
 from tom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm, GroupForm
 from tom_common.mixins import SuperuserRequiredMixin
+
+logger = logging.getLogger(__name__)
 
 
 class GroupCreateView(SuperuserRequiredMixin, CreateView):
@@ -187,3 +192,32 @@ class CommentDeleteView(LoginRequiredMixin, DeleteView):
             return super().form_valid(form)
 
         return HttpResponseForbidden('Not authorized')
+
+
+@require_GET
+def robots_txt(request):
+    """A function-based view that handles the robots.txt content.
+
+    The default robots.txt is defined here. It disallows everything from everyone.
+
+    If you want to change that, we check for a path to a custom robots.txt file defined
+    in settings.py as `ROBOTS_TXT_PATH`. If you set `ROBOTS_TXT_PATH` in your settings.py,
+    then that file will be served instead of the default.
+    """
+    # define the default robots.txt content
+    robots_txt_content = (
+        'User-Agent: *\n'
+        'Disallow: /\n'
+    )
+
+    # check for a custom robots.txt file in settings.py
+    if hasattr(settings, 'ROBOTS_TXT_PATH'):
+        # if a custom robots.txt file is defined in settings.py, use that instead
+        try:
+            with open(settings.ROBOTS_TXT_PATH, 'r') as f:
+                robots_txt_content = f.read()
+        except FileNotFoundError as e:
+            logger.warning(f'Default robots.txt served: settings.ROBOTS_TXT_PATH '
+                           f'is {settings.ROBOTS_TXT_PATH}, but {e}')
+
+    return HttpResponse(robots_txt_content, content_type="text/plain")
