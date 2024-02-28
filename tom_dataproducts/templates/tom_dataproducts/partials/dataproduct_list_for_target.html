@@ -33,7 +33,10 @@
         {% if sharing_destinations %}
           <button type="button" class="btn btn-info" data-toggle="collapse" data-target="#share-{{ forloop.counter }}">Share</button>
         {% else %}
-          <p>Not Configured</p>
+          <p>
+            <a href="https://tom-toolkit.readthedocs.io/en/stable/managing_data/tom_direct_sharing.html"
+               target="_blank">Not Configured</a>.
+          </p>
         {% endif %}
       </td>
       <td><a href="{% url 'tom_dataproducts:delete' product.id %}" class="btn btn-danger">Delete</a></td>

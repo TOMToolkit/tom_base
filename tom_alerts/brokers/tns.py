@@ -84,15 +84,27 @@ class TNSBroker(GenericBroker):
     The ``TNSBroker`` is the interface to the Transient Name Server. For information regarding the TNS, please see \
     https://www.wis-tns.org/
 
+    To include the ``TNSBroker`` in your TOM, add the broker module location to your `TOM_ALERT_CLASSES` list in
+    your ``settings.py``:
+
+    .. code-block:: python
+
+        TOM_ALERT_CLASSES = [
+            'tom_alerts.brokers.tns.TNSBroker',
+            ...
+        ]
+
     Requires the following configuration in settings.py:
-    ::
+
+    .. code-block:: python
+
         BROKERS = {
             'TNS': {
-                'api_key': 'YOUR_API_KEY',
-                'bot_id': 'YOUR_BOT_ID',
-                'bot_name': 'YOUR_BOT_NAME',
+                'api_key': os.getenv('TNS_API_KEY', 'DO NOT COMMIT API TOKENS TO GIT!'),
+                'bot_id': os.getenv('TNS_BOT_ID ', 'My TNS Bot ID'),
+                'bot_name': os.getenv('TNS_BOT_NAME', 'BestTOMBot'),
                 'tns_base_url': 'https://sandbox.wis-tns.org/api',  # Note this is the Sandbox URL
-                'group_name': 'YOUR_GROUP_NAME',
+                'group_name': os.getenv('TNS_GROUP_NAME', 'BestTOMGroup'),
             },
         }
 
