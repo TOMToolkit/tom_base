@@ -128,41 +128,12 @@ class TNSBroker(GenericBroker):
     @classmethod
     def fetch_alerts(cls, parameters):
         broker_feedback = ''
-        if parameters['days_ago'] is not None:
-            public_timestamp = (datetime.utcnow() - timedelta(days=parameters['days_ago']))\
-                .strftime('%Y-%m-%d %H:%M:%S')
-        elif parameters['min_date'] is not None:
-            public_timestamp = parameters['min_date']
-        else:
-            public_timestamp = ''
-        data = {
-            'api_key': settings.BROKERS['TNS']['api_key'],
-            'data': json.dumps({
-                'name': parameters['target_name'],
-                'internal_name': parameters['internal_name'],
-                'ra': parameters['ra'],
-                'dec': parameters['dec'],
-                'radius': parameters['radius'],
-                'units': parameters['units'],
-                'public_timestamp': public_timestamp,
-            })
-         }
-        response = requests.post(TNS_SEARCH_URL, data, headers=cls.tns_headers())
-        response.raise_for_status()
-        transients = response.json()
+
+        transients = cls.fetch_tns_transients(cls, parameters)
+
         alerts = []
         for transient in transients['data']['reply']:
-            data = {
-                'api_key': settings.BROKERS['TNS']['api_key'],
-                'data': json.dumps({
-                    'objname': transient['objname'],
-                    'photometry': 1,
-                    'spectroscopy': 0,
-                })
-            }
-            response = requests.post(TNS_OBJECT_URL, data, headers=cls.tns_headers())
-            response.raise_for_status()
-            alert = response.json()['data']['reply']
+            alert = cls.get_tns_object_info(cls, parameters)
 
             if parameters['days_from_nondet'] is not None:
                 last_nondet = 0.
@@ -191,56 +162,6 @@ class TNSBroker(GenericBroker):
             mag=alert['discoverymag'],
             score=alert['name_prefix'] == 'SN'
         )
-
-    # @classmethod
-    # def fetch_tns_name(cls, parameters):
-    #     '''
-    #     Modified version of fetch_alert from original TOM Toolkit.
-    #     Fetches a TNS objname for a target at requested coordinates and radius.
-    #     '''
-    #
-    #     data = {
-    #         'api_key': settings.BROKERS['TNS']['api_key'],
-    #         'data': json.dumps({
-    #             'ra': parameters['ra'],
-    #             'dec': parameters['dec'],
-    #             'radius': parameters['radius'],
-    #             'units': parameters['units'],
-    #         }
-    #         )
-    #     }
-    #     response = requests.post(TNS_SEARCH_URL, data, headers=cls.tns_headers())
-    #     response.raise_for_status()
-    #     transients = response.json()
-    #     names = []
-    #     for transient in transients['data']['reply']:
-    #         tns_name = transient['objname']
-    #         names.append(tns_name)
-    #
-    #     return names
-    #
-    # @classmethod
-    # def fetch_tns_class(cls, parameters):
-    #     '''
-    #     Modified version of fetch_alert from original TOM Toolkit.
-    #     Fetches a TNS class of a
-    #     '''
-    #
-    #     data = {
-    #         'api_key': settings.BROKERS['TNS']['api_key'],
-    #         'data': json.dumps({
-    #             'objname': parameters['objname'],
-    #             'photometry': 1,
-    #             'spectroscopy': 0,
-    #         }
-    #         )
-    #     }
-    #     response = requests.post(TNS_OBJECT_URL, data, headers=cls.tns_headers())
-    #     response.raise_for_status()
-    #     alert = response.json()['data']['reply']
-    #     tns_class = alert['object_type']['name']
-    #
-    #     return tns_class
 
     @classmethod
     def fetch_tns_transients(cls, parameters):
@@ -287,6 +208,6 @@ class TNSBroker(GenericBroker):
         }
         response = requests.post(TNS_OBJECT_URL, data, headers=cls.tns_headers())
         response.raise_for_status()
-        obj_info = response.json()
+        obj_info = response.json()['data']['reply']
 
         return obj_info
