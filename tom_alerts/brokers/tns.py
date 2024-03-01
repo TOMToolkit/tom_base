@@ -129,11 +129,12 @@ class TNSBroker(GenericBroker):
     def fetch_alerts(cls, parameters):
         broker_feedback = ''
 
-        transients = cls.fetch_tns_transients(cls, parameters)
+        transients = cls.fetch_tns_transients(parameters)
 
         alerts = []
         for transient in transients['data']['reply']:
-            alert = cls.get_tns_object_info(cls, parameters)
+
+            alert = cls.get_tns_object_info(transient)
 
             if parameters['days_from_nondet'] is not None:
                 last_nondet = 0.
