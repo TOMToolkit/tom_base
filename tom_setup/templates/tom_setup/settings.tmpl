@@ -235,6 +235,10 @@ DATA_PROCESSORS = {
     'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
 }
 
+BASE_TARGET_MODELS = [
+    '{{ PROJECT_NAME }}.models.UserDefinedTarget',
+]
+
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
