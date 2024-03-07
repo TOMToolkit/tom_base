@@ -9,7 +9,7 @@ from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from tom_dataproducts.sharing import get_sharing_destination_options
 from .models import (
     Target, TargetExtra, TargetName, TargetList, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
-    REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
+    REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME, IGNORE_FIELDS
 )
 
 
@@ -113,7 +113,9 @@ class SiderealTargetCreateForm(TargetForm):
             self.fields[field].required = True
 
     class Meta(TargetForm.Meta):
-        fields = SIDEREAL_FIELDS
+        # Include all fields except non-sidereal fields
+        fields = [field.name for field in Target._meta.get_fields()
+                  if field.name not in NON_SIDEREAL_FIELDS and field.name not in IGNORE_FIELDS]
 
 
 class NonSiderealTargetCreateForm(TargetForm):
@@ -144,7 +146,10 @@ class NonSiderealTargetCreateForm(TargetForm):
                 )
 
     class Meta(TargetForm.Meta):
-        fields = NON_SIDEREAL_FIELDS
+        # Include all fields except sidereal fields
+        print()
+        fields = [field.name for field in Target._meta.get_fields()
+                  if field.name not in SIDEREAL_FIELDS and field.name not in IGNORE_FIELDS]
 
 
 class TargetVisibilityForm(forms.Form):
