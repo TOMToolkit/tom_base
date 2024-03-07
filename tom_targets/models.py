@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 GLOBAL_TARGET_FIELDS = ['name', 'type']
 
+IGNORE_FIELDS = ['id', 'created', 'modified', 'aliases']
+
 SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'ra', 'dec', 'epoch', 'pm_ra', 'pm_dec', 'galactic_lng', 'galactic_lat', 'distance', 'distance_err'
 ]
@@ -397,12 +399,14 @@ class BaseTarget(models.Model):
 
     def as_dict(self):
         """
-        Returns dictionary representation of attributes, excluding all attributes not associated with the ``type`` of
-        this ``Target``.
+        Returns dictionary representation of attributes, sets the order of attributes associated with the ``type`` of
+        this ``Target`` and then includes any additional attributes that are not empty and have not been 'hidden'.
+
 
         :returns: Dictionary of key/value pairs representing target attributes
         :rtype: dict
         """
+        #  Get the ordered list of fields for the type of target
         if self.type == self.SIDEREAL:
             fields_for_type = SIDEREAL_FIELDS
         elif self.type == self.NON_SIDEREAL:
@@ -410,7 +414,12 @@ class BaseTarget(models.Model):
         else:
             fields_for_type = GLOBAL_TARGET_FIELDS
 
-        return model_to_dict(self, fields=fields_for_type)
+        # Get a list of all additional fields that are not empty and not hidden for this target
+        other_fields = [field.name for field in self._meta.get_fields()
+                        if getattr(self, field.name, None)
+                        and field.name not in fields_for_type and getattr(field, 'hidden', False) is False]
+
+        return model_to_dict(self, fields=fields_for_type + other_fields)
 
     def give_user_access(self, user):
         """
