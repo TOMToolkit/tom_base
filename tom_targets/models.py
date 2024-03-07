@@ -417,8 +417,9 @@ class BaseTarget(models.Model):
 
         # Get a list of all additional fields that are not empty and not hidden for this target
         other_fields = [field.name for field in self._meta.get_fields()
-                        if getattr(self, field.name, None)
-                        and field.name not in fields_for_type and getattr(field, 'hidden', False) is False]
+                        if getattr(self, field.name, None) is not None
+                        and field.name not in fields_for_type + IGNORE_FIELDS
+                        and getattr(field, 'hidden', False) is False]
 
         return model_to_dict(self, fields=fields_for_type + other_fields)
 
