@@ -166,6 +166,17 @@ class TNSBroker(GenericBroker):
 
     @classmethod
     def fetch_tns_transients(cls, parameters):
+    """
+    Args:
+        parameters: dictionary containing days_ago (str), min_date (str)
+            and either:
+            - Right Ascention, declination (can be deg, deg or h:m:s, d:m:s) of the target,
+            and search radius and search radius unit (str), or
+            - TNS name without the prefix (eg. 2024aa instead of AT2024aa)
+    Returns:
+        json containing response from TNS including TNS name and prefix.
+    """
+    try:
         if parameters['days_ago'] is not None:
             public_timestamp = (datetime.utcnow() - timedelta(days=parameters['days_ago']))\
                 .strftime('%Y-%m-%d %H:%M:%S')
@@ -173,6 +184,8 @@ class TNSBroker(GenericBroker):
             public_timestamp = parameters['min_date']
         else:
             public_timestamp = ''
+    except:
+        raise Exception('Missing fields (days_ago, min_date) from the parameters dictionary.')
 
         # TNS expects either (ra, dec, radius, unit) or just target_name.
         # target_name has to be a TNS name of the target without a prefix.
@@ -198,10 +211,20 @@ class TNSBroker(GenericBroker):
 
     @classmethod
     def get_tns_object_info(cls, parameters):
+        """
+        Args:
+            parameters: dictionary containing objname field with TNS name without the prefix.
+        Returns:
+            json containing response from TNS including classification and classification reports
+        """
+        try:
+            name = parameters['objname']
+        except:
+            raise Exception('Missing field (objname) from parameters dictionary.')
         data = {
             'api_key': settings.BROKERS['TNS']['api_key'],
             'data': json.dumps({
-                'objname': parameters['objname'],
+                'objname': name,
                 'photometry': 1,
                 'spectroscopy': 0,
             }
