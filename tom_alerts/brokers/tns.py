@@ -128,41 +128,13 @@ class TNSBroker(GenericBroker):
     @classmethod
     def fetch_alerts(cls, parameters):
         broker_feedback = ''
-        if parameters['days_ago'] is not None:
-            public_timestamp = (datetime.utcnow() - timedelta(days=parameters['days_ago']))\
-                .strftime('%Y-%m-%d %H:%M:%S')
-        elif parameters['min_date'] is not None:
-            public_timestamp = parameters['min_date']
-        else:
-            public_timestamp = ''
-        data = {
-            'api_key': settings.BROKERS['TNS']['api_key'],
-            'data': json.dumps({
-                'name': parameters['target_name'],
-                'internal_name': parameters['internal_name'],
-                'ra': parameters['ra'],
-                'dec': parameters['dec'],
-                'radius': parameters['radius'],
-                'units': parameters['units'],
-                'public_timestamp': public_timestamp,
-            })
-         }
-        response = requests.post(TNS_SEARCH_URL, data, headers=cls.tns_headers())
-        response.raise_for_status()
-        transients = response.json()
+
+        transients = cls.fetch_tns_transients(parameters)
+
         alerts = []
         for transient in transients['data']['reply']:
-            data = {
-                'api_key': settings.BROKERS['TNS']['api_key'],
-                'data': json.dumps({
-                    'objname': transient['objname'],
-                    'photometry': 1,
-                    'spectroscopy': 0,
-                })
-            }
-            response = requests.post(TNS_OBJECT_URL, data, headers=cls.tns_headers())
-            response.raise_for_status()
-            alert = response.json()['data']['reply']
+
+            alert = cls.get_tns_object_info(transient)
 
             if parameters['days_from_nondet'] is not None:
                 last_nondet = 0.
@@ -191,3 +163,75 @@ class TNSBroker(GenericBroker):
             mag=alert['discoverymag'],
             score=alert['name_prefix'] == 'SN'
         )
+
+    @classmethod
+    def fetch_tns_transients(cls, parameters):
+        """
+        Args:
+            parameters: dictionary containing days_ago (str), min_date (str)
+            and either:
+                - Right Ascention, declination (can be deg, deg or h:m:s, d:m:s) of the target,
+                and search radius and search radius unit ("arcmin", "arcsec", or "deg"), or
+                - TNS name without the prefix (eg. 2024aa instead of AT2024aa)
+        Returns:
+            json containing response from TNS including TNS name and prefix.
+        """
+        try:
+            if parameters['days_ago'] is not None:
+                public_timestamp = (datetime.utcnow() - timedelta(days=parameters['days_ago']))\
+                    .strftime('%Y-%m-%d %H:%M:%S')
+            elif parameters['min_date'] is not None:
+                public_timestamp = parameters['min_date']
+            else:
+                public_timestamp = ''
+        except KeyError:
+            raise Exception('Missing fields (days_ago, min_date) from the parameters dictionary.')
+
+        # TNS expects either (ra, dec, radius, unit) or just target_name.
+        # target_name has to be a TNS name of the target without a prefix.
+        # Unused fields can be empty strings
+        data = {
+            'api_key': settings.BROKERS['TNS']['api_key'],
+            'data': json.dumps({
+                'name': parameters.get('target_name', ''),
+                'internal_name': parameters.get('internal_name', ''),
+                'ra': parameters.get('ra', ''),
+                'dec': parameters.get('dec', ''),
+                'radius': parameters.get('radius', ''),
+                'units': parameters.get('units', ''),
+                'public_timestamp': public_timestamp,
+            }
+            )
+        }
+        response = requests.post(TNS_SEARCH_URL, data, headers=cls.tns_headers())
+        response.raise_for_status()
+        transients = response.json()
+
+        return transients
+
+    @classmethod
+    def get_tns_object_info(cls, parameters):
+        """
+        Args:
+            parameters: dictionary containing objname field with TNS name without the prefix.
+        Returns:
+            json containing response from TNS including classification and classification reports
+        """
+        try:
+            name = parameters['objname']
+        except KeyError:
+            raise Exception('Missing field (objname) from parameters dictionary.')
+        data = {
+            'api_key': settings.BROKERS['TNS']['api_key'],
+            'data': json.dumps({
+                'objname': name,
+                'photometry': 1,
+                'spectroscopy': 0,
+            }
+            )
+        }
+        response = requests.post(TNS_OBJECT_URL, data, headers=cls.tns_headers())
+        response.raise_for_status()
+        obj_info = response.json()['data']['reply']
+
+        return obj_info
