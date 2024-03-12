@@ -171,7 +171,7 @@ class TNSBroker(GenericBroker):
             parameters: dictionary containing days_ago (str), min_date (str)
             and either:
                 - Right Ascention, declination (can be deg, deg or h:m:s, d:m:s) of the target,
-                and search radius and search radius unit (str), or
+                and search radius and search radius unit ("arcmin", "arcsec", or "deg"), or
                 - TNS name without the prefix (eg. 2024aa instead of AT2024aa)
         Returns:
             json containing response from TNS including TNS name and prefix.
