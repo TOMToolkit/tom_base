@@ -2,14 +2,10 @@ from django import forms
 from django.contrib.auth.models import Group
 from django.conf import settings
 
-from tom_dataproducts.models import DataProductGroup, DataProduct
+from tom_dataproducts.models import DataProductGroup, DataProduct, DATA_TYPE_OPTIONS
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 from tom_dataproducts.sharing import get_sharing_destination_options
-
-
-DATA_TYPE_OPTIONS = (('photometry', 'Photometry'),
-                     ('spectroscopy', 'Spectroscopy'))
 
 
 class AddProductToGroupForm(forms.Form):
@@ -35,7 +31,7 @@ class DataProductUploadForm(forms.Form):
         widget=forms.ClearableFileInput()
     )
     data_product_type = forms.ChoiceField(
-        choices=[v for k, v in settings.DATA_PRODUCT_TYPES.items()],
+        choices=DATA_TYPE_OPTIONS,
         widget=forms.RadioSelect(),
         required=True
     )

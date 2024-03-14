@@ -24,6 +24,13 @@ except AttributeError:
     THUMBNAIL_DEFAULT_SIZE = (200, 200)
 
 
+DEFAULT_DATA_TYPE_OPTIONS = (('photometry', 'Photometry'), ('spectroscopy', 'Spectroscopy'))
+try:
+    DATA_TYPE_OPTIONS = settings.DATA_PRODUCT_TYPES.values()
+except AttributeError:
+    DATA_TYPE_OPTIONS = DEFAULT_DATA_TYPE_OPTIONS
+
+
 def find_fits_img_size(filename):
     """
     Returns the size of a FITS image, given a valid FITS image file
@@ -211,7 +218,7 @@ class DataProduct(models.Model):
         Saves the current `DataProduct` instance. Before saving, validates the `data_product_type` against those
         specified in `settings.py`.
         """
-        for _, dp_values in settings.DATA_PRODUCT_TYPES.items():
+        for dp_values in DATA_TYPE_OPTIONS:
             if not self.data_product_type or self.data_product_type == dp_values[0]:
                 break
         else:
@@ -225,7 +232,8 @@ class DataProduct(models.Model):
         :returns: Display value for a given data_product_type.
         :rtype: str
         """
-        return settings.DATA_PRODUCT_TYPES[self.data_product_type][1]
+        data_product_type_dict = {k: v for k, v in DATA_TYPE_OPTIONS}
+        return data_product_type_dict[self.data_product_type][1]
 
     def get_file_name(self):
         return os.path.basename(self.data.name)
@@ -368,7 +376,7 @@ class ReducedDatum(models.Model):
         get_latest_by = ('timestamp',)
 
     def save(self, *args, **kwargs):
-        for _, dp_values in settings.DATA_PRODUCT_TYPES.items():
+        for dp_values in DATA_TYPE_OPTIONS:
             if self.data_type and self.data_type == dp_values[0]:
                 break
         else:

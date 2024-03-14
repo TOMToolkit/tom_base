@@ -237,15 +237,19 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
         'i': 'black'
     }
 
+    try:
+        photometry_data_type = settings.DATA_PRODUCT_TYPES['photometry'][0]
+    except (AttributeError, KeyError):
+        photometry_data_type = 'photometry'
     photometry_data = {}
     if settings.TARGET_PERMISSIONS_ONLY:
-        datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
+        datums = ReducedDatum.objects.filter(target=target, data_type=photometry_data_type)
     else:
         datums = get_objects_for_user(context['request'].user,
                                       'tom_dataproducts.view_reduceddatum',
                                       klass=ReducedDatum.objects.filter(
                                         target=target,
-                                        data_type=settings.DATA_PRODUCT_TYPES['photometry'][0]))
+                                        data_type=photometry_data_type))
 
     for datum in datums:
         photometry_data.setdefault(datum.value['filter'], {})
@@ -362,8 +366,12 @@ def spectroscopy_for_target(context, target, dataproduct=None):
     Renders a spectroscopic plot for a ``Target``. If a ``DataProduct`` is specified, it will only render a plot with
     that spectrum.
     """
+    try:
+        spectroscopy_data_type = settings.DATA_PRODUCT_TYPES['spectroscopy'][0]
+    except (AttributeError, KeyError):
+        spectroscopy_data_type = 'spectroscopy'
     spectral_dataproducts = DataProduct.objects.filter(target=target,
-                                                       data_product_type=settings.DATA_PRODUCT_TYPES['spectroscopy'][0])
+                                                       data_product_type=spectroscopy_data_type)
     if dataproduct:
         spectral_dataproducts = DataProduct.objects.get(data_product=dataproduct)
 
