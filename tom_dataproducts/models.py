@@ -24,6 +24,7 @@ except AttributeError:
     THUMBNAIL_DEFAULT_SIZE = (200, 200)
 
 
+# Check settings.py for DATA_PRODUCT_TYPES, and provide defaults if not found
 DEFAULT_DATA_TYPE_OPTIONS = (('photometry', 'Photometry'), ('spectroscopy', 'Spectroscopy'))
 try:
     DATA_TYPE_OPTIONS = settings.DATA_PRODUCT_TYPES.values()
@@ -376,6 +377,7 @@ class ReducedDatum(models.Model):
         get_latest_by = ('timestamp',)
 
     def save(self, *args, **kwargs):
+        # Validate data_type based on options in settings.py or default types
         for dp_values in DATA_TYPE_OPTIONS:
             if self.data_type and self.data_type == dp_values[0]:
                 break
