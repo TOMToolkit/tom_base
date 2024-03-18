@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.models import Group
 from django.conf import settings
 
-from tom_dataproducts.models import DataProductGroup, DataProduct, DATA_TYPE_OPTIONS
+from tom_dataproducts.models import DataProductGroup, DataProduct, DATA_TYPE_CHOICES
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 from tom_dataproducts.sharing import get_sharing_destination_options
@@ -31,7 +31,7 @@ class DataProductUploadForm(forms.Form):
         widget=forms.ClearableFileInput()
     )
     data_product_type = forms.ChoiceField(
-        choices=DATA_TYPE_OPTIONS,
+        choices=DATA_TYPE_CHOICES,
         widget=forms.RadioSelect(),
         required=True
     )
@@ -52,7 +52,7 @@ class DataShareForm(forms.Form):
     share_title = forms.CharField(required=False, label="Title")
     share_message = forms.CharField(required=False, label="Message", widget=forms.Textarea(attrs={'rows': 4}))
     share_authors = forms.CharField(required=False, widget=forms.HiddenInput())
-    data_type = forms.ChoiceField(required=False, choices=DATA_TYPE_OPTIONS, label="Data Type")
+    data_type = forms.ChoiceField(required=False, choices=DATA_TYPE_CHOICES, label="Data Type")
     target = forms.ModelChoiceField(
         Target.objects.all(),
         widget=forms.HiddenInput(),

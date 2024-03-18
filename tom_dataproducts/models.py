@@ -25,12 +25,12 @@ except AttributeError:
 
 
 # Check settings.py for DATA_PRODUCT_TYPES, and provide defaults if not found
-DEFAULT_DATA_TYPE_OPTIONS = (('photometry', 'Photometry'), ('spectroscopy', 'Spectroscopy'))
+DEFAULT_DATA_TYPE_CHOICES = (('photometry', 'Photometry'), ('spectroscopy', 'Spectroscopy'))
 try:
     # Pull out tuples from settings.DATA_PRODUCT_TYPES dictionary to build choice fields for DataProduct Types
-    DATA_TYPE_OPTIONS = settings.DATA_PRODUCT_TYPES.values()
+    DATA_TYPE_CHOICES = settings.DATA_PRODUCT_TYPES.values()
 except AttributeError:
-    DATA_TYPE_OPTIONS = DEFAULT_DATA_TYPE_OPTIONS
+    DATA_TYPE_CHOICES = DEFAULT_DATA_TYPE_CHOICES
 
 
 def find_fits_img_size(filename):
@@ -220,8 +220,8 @@ class DataProduct(models.Model):
         Saves the current `DataProduct` instance. Before saving, validates the `data_product_type` against those
         specified in `settings.py`.
         """
-        # DATA_TYPE_OPTIONS from either settings.py or default types: (value, display)
-        for dp_value, _ in DATA_TYPE_OPTIONS:
+        # DATA_TYPE_CHOICES from either settings.py or default types: (value, display)
+        for dp_value, _ in DATA_TYPE_CHOICES:
             if not self.data_product_type or self.data_product_type == dp_value:
                 break
         else:
@@ -235,7 +235,7 @@ class DataProduct(models.Model):
         :returns: Display value for a given data_product_type.
         :rtype: str
         """
-        data_product_type_dict = {dp_type: dp_display for dp_type, dp_display in DATA_TYPE_OPTIONS}
+        data_product_type_dict = {dp_type: dp_display for dp_type, dp_display in DATA_TYPE_CHOICES}
         return data_product_type_dict[self.data_product_type]
 
     def get_file_name(self):
@@ -380,7 +380,7 @@ class ReducedDatum(models.Model):
 
     def save(self, *args, **kwargs):
         # Validate data_type based on options in settings.py or default types: (value, display)
-        for dp_value, _ in DATA_TYPE_OPTIONS:
+        for dp_value, _ in DATA_TYPE_CHOICES:
             if self.data_type and self.data_type == dp_value:
                 break
         else:
