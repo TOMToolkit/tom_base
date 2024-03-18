@@ -220,9 +220,9 @@ class DataProduct(models.Model):
         Saves the current `DataProduct` instance. Before saving, validates the `data_product_type` against those
         specified in `settings.py`.
         """
-        # DATA_TYPE_CHOICES from either settings.py or default types: (value, display)
-        for dp_value, _ in DATA_TYPE_CHOICES:
-            if not self.data_product_type or self.data_product_type == dp_value:
+        # DATA_TYPE_CHOICES from either settings.py or default types: (type, display)
+        for dp_type, _ in DATA_TYPE_CHOICES:
+            if not self.data_product_type or self.data_product_type == dp_type:
                 break
         else:
             raise ValidationError('Not a valid DataProduct type.')
@@ -379,9 +379,9 @@ class ReducedDatum(models.Model):
         get_latest_by = ('timestamp',)
 
     def save(self, *args, **kwargs):
-        # Validate data_type based on options in settings.py or default types: (value, display)
-        for dp_value, _ in DATA_TYPE_CHOICES:
-            if self.data_type and self.data_type == dp_value:
+        # Validate data_type based on options in settings.py or default types: (type, display)
+        for dp_type, _ in DATA_TYPE_CHOICES:
+            if self.data_type and self.data_type == dp_type:
                 break
         else:
             raise ValidationError('Not a valid DataProduct type.')
