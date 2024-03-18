@@ -235,8 +235,8 @@ class DataProduct(models.Model):
         :returns: Display value for a given data_product_type.
         :rtype: str
         """
-        data_product_type_dict = {k: v for k, v in DATA_TYPE_OPTIONS}
-        return data_product_type_dict[self.data_product_type][1]
+        data_product_type_dict = {dp_type: dp_display for dp_type, dp_display in DATA_TYPE_OPTIONS}
+        return data_product_type_dict[self.data_product_type]
 
     def get_file_name(self):
         return os.path.basename(self.data.name)
@@ -304,7 +304,7 @@ class DataProduct(models.Model):
                 if resp:
                     return tmpfile
             except Exception as e:
-                logger.warn(f'Unable to create thumbnail for {self}: {e}')
+                logger.warning(f'Unable to create thumbnail for {self}: {e}')
         return
 
 
