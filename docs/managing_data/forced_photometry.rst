@@ -5,7 +5,8 @@ The base TOM Toolkit comes with `ATLAS <https://fallingstar-data.com/forcedphot/
 `PanSTARRS <https://outerspace.stsci.edu/display/PANSTARRS>`_,
 and (comming soon) ZTF query services.
 
-Additional services can be added by extending the base ``ForcedPhotometryService`` implementation (see below).
+Additional services can be added by extending the base ``ForcedPhotometryService`` implementation
+(:ref:`see below<Adding a new Forced Photometry Service>`).
 
 
 Integrating existing Forced Photometry Services
