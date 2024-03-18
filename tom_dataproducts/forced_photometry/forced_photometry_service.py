@@ -131,4 +131,6 @@ class BaseForcedPhotometryService(ABC):
         If your subclass has additional subclass-specific context data,
         then override this method and don't forget to call super().
         """
-        return {'info_url': self.info_url}
+        return {
+            'info_url': self.info_url,
+            'service_notes': self.service_notes}

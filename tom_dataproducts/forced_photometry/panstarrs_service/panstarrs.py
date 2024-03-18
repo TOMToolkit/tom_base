@@ -98,7 +98,9 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
 
 class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
     name = 'PanSTARRS'
-    info_url = 'https://outerspace.stsci.edu/display/PANSTARRS'
+    info_url = 'https://catalogs.mast.stsci.edu/docs/panstarrs.html'
+    service_notes = ("At the momement, only the 'Mean object' catalog is supported. "
+                     "Please contact us (email tomtoolkit@lco.global) to request additional catalog support.")
 
     def __init__(self):
         super().__init__()

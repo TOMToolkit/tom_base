@@ -35,14 +35,17 @@ def get_data_release_choices():
 def get_catalog_choices(data_release='dr2'):
     """return the PanSTARRS catalog choices
 
+    NOTE: at the moment, only queries to the 'Mean object' catalog are supported.
+
     Data Release 1 (DR1) has only mean and stacked object catalogs.
     Unless otherwise specified, return the full list of DR2 choices.
     """
     choices = [  # DR2 choices
         ('mean', 'Mean object'),
-        ('stack', 'Stacked object'),
-        ('forced_mean', 'Forced mean object'),
-        ('detection', 'Detections'),
+        # TODO: support additional catalogs
+        # ('stack', 'Stacked object'),
+        # ('forced_mean', 'Forced mean object'),
+        # ('detection', 'Detections'),
     ]
 
     if data_release == 'dr1':
@@ -54,6 +57,9 @@ def get_catalog_choices(data_release='dr2'):
 
 
 def get_default_columns(catalog='mean'):
+    """Currently, only the 'Mean object' catalog is supported and only the columns
+    specified in the default_columns list are returned.
+    """
     default_columns = [
         'objID',
         'objName',
