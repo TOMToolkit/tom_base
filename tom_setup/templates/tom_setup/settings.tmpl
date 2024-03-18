@@ -221,7 +221,9 @@ FACILITIES = {
     },
 }
 
-# Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
+# Define the valid data product types for your TOM.
+# This is a dictionary of tuples, with the first element being the type name and the second being the display name.
+# Be careful when removing items, as previously valid types will no
 # longer be valid, and may cause issues unless the offending records are modified.
 DATA_PRODUCT_TYPES = {
     'photometry': ('photometry', 'Photometry'),

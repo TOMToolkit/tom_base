@@ -27,6 +27,7 @@ except AttributeError:
 # Check settings.py for DATA_PRODUCT_TYPES, and provide defaults if not found
 DEFAULT_DATA_TYPE_OPTIONS = (('photometry', 'Photometry'), ('spectroscopy', 'Spectroscopy'))
 try:
+    # Pull out tuples from settings.DATA_PRODUCT_TYPES dictionary to build choice fields for DataProduct Types
     DATA_TYPE_OPTIONS = settings.DATA_PRODUCT_TYPES.values()
 except AttributeError:
     DATA_TYPE_OPTIONS = DEFAULT_DATA_TYPE_OPTIONS
@@ -219,8 +220,8 @@ class DataProduct(models.Model):
         Saves the current `DataProduct` instance. Before saving, validates the `data_product_type` against those
         specified in `settings.py`.
         """
-        for dp_values in DATA_TYPE_OPTIONS:
-            if not self.data_product_type or self.data_product_type == dp_values[0]:
+        for dp_value, dp_display in DATA_TYPE_OPTIONS:
+            if not self.data_product_type or self.data_product_type == dp_value:
                 break
         else:
             raise ValidationError('Not a valid DataProduct type.')
@@ -378,8 +379,8 @@ class ReducedDatum(models.Model):
 
     def save(self, *args, **kwargs):
         # Validate data_type based on options in settings.py or default types
-        for dp_values in DATA_TYPE_OPTIONS:
-            if self.data_type and self.data_type == dp_values[0]:
+        for dp_value, dp_display in DATA_TYPE_OPTIONS:
+            if self.data_type and self.data_type == dp_value:
                 break
         else:
             raise ValidationError('Not a valid DataProduct type.')
