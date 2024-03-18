@@ -97,11 +97,13 @@ Adding a new Forced Photometry Service
 
 The Forced Photometry services fulfill an interface defined in 
 `BaseForcedPhotometryService <https://github.com/TOMToolkit/tom_base/blob/dev/tom_dataproducts/forced_photometry/forced_photometry_service.py>`_.
-To implement your own Forced Photometry service, you need to do 3 things:
-1. Subclass ``BaseForcedPhotometryService``
-2. Subclass ``BaseForcedPhotometryQueryForm``
-3. Subclass ``DataProcessor``
-Once those are implemented, don't forget to update your settings for ``FORCED_PHOTOMETRY_SERVICES``, 
+To implement your own Forced Photometry service, you need to do three things:
+
+#. Subclass ``BaseForcedPhotometryService``
+#. Subclass ``BaseForcedPhotometryQueryForm``
+#. Subclass ``DataProcessor``
+
+Once those subclasses are implemented, don't forget to update your settings for ``FORCED_PHOTOMETRY_SERVICES``,
 ``DATA_PRODUCT_TYPES``, and ``DATA_PROCESSORS`` for your new service and its associated data product type.
 
 
