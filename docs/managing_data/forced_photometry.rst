@@ -1,9 +1,10 @@
 Integrating Forced Photometry Service Queries
 ---------------------------------------------
 
-The base TOM Toolkit comes with `ATLAS <https://fallingstar-data.com/forcedphot/>`_,
-`PanSTARRS <https://outerspace.stsci.edu/display/PANSTARRS>`_,
-and (comming soon) ZTF query services.
+The base TOM Toolkit comes with `ATLAS <https://fallingstar-data.com/forcedphot/>`__,
+`PanSTARRS <https://outerspace.stsci.edu/display/PANSTARRS>`__,
+and (coming soon) ZTF query services. These services are optional and require additional configuration
+integrate into your TOM.
 
 Additional services can be added by extending the base ``ForcedPhotometryService`` implementation
 (:ref:`see below<Adding a new Forced Photometry Service>`).
@@ -28,7 +29,7 @@ shown below:
             'class': 'tom_dataproducts.forced_photometry.panstarrs_service.panstarrs.PanstarrsForcedPhotometryService',
             'url': 'https://catalogs.mast.stsci.edu/api/v0.1/panstarrs',  # MAST Base URL
             'api_key': os.getenv('MAST_API_TOKEN',
-                                 'MAST_API_TOKEN not set (only needed for non-public data).')
+                                 'optional MAST_API_TOKEN not set, so only public data will be accessible).')
         },
         # TODO: coming soon...
         #     # 'ZTF': {
@@ -50,8 +51,8 @@ shown below:
     }
 
 As you can see in the ``FORCED_PHOTOMETRY_SERVICES`` configuration dictionary above, some services require an API key.
-Information on how to obtain an API key for ATLAS can be found `here <https://fallingstar-data.com/forcedphot/apiguide/>`_
-and for PanSTARRS (since we access via `Catalogs.MAST <https://catalogs.mast.stsci.edu/>`_) `here <https://auth.mast.stsci.edu/info>`_.
+Information on how to obtain an API key is available for both for `ATLAS <https://fallingstar-data.com/forcedphot/apiguide/>`_
+and for `PanSTARRS <https://auth.mast.stsci.edu/info>`_. (PanSTARRS Forced Photometry is accessed via `Catalogs.MAST <https://catalogs.mast.stsci.edu/>`_).
 
 Configuring your TOM to serve tasks asynchronously:
 ***************************************************
