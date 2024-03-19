@@ -221,7 +221,10 @@ FACILITIES = {
     },
 }
 
-# Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
+# Define the valid data product types for your TOM.
+# This is a dictionary of tuples to be used as ChoiceField options, with the first element being the type and the
+# second being the display name.
+# Be careful when removing items, as previously valid types will no
 # longer be valid, and may cause issues unless the offending records are modified.
 DATA_PRODUCT_TYPES = {
     'photometry': ('photometry', 'Photometry'),
@@ -246,7 +249,6 @@ TOM_ALERT_CLASSES = [
     'tom_alerts.brokers.antares.ANTARESBroker',
     'tom_alerts.brokers.gaia.GaiaBroker',
     'tom_alerts.brokers.lasair.LasairBroker',
-    'tom_alerts.brokers.scout.ScoutBroker',
     'tom_alerts.brokers.tns.TNSBroker',
     'tom_alerts.brokers.fink.FinkBroker',
 ]
@@ -256,6 +258,9 @@ BROKERS = {
         'api_key': '',
         'bot_id': '',
         'bot_name': '',
+    }
+    'Lasair': {
+        'api_key': '',
     }
 }
 
