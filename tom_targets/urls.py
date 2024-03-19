@@ -4,6 +4,7 @@ from .views import TargetCreateView, TargetUpdateView, TargetDetailView, TargetN
 from .views import TargetDeleteView, TargetListView, TargetImportView, TargetExportView, TargetShareView
 from .views import TargetGroupingView, TargetGroupingDeleteView, TargetGroupingCreateView, TargetAddRemoveGroupingView
 from .views import TargetGroupingShareView, TargetHermesPreloadView, TargetGroupingHermesPreloadView
+from .views import TargetFacilitySelectionView
 
 from .api_views import TargetViewSet, TargetExtraViewSet, TargetNameViewSet, TargetListViewSet
 from tom_common.api_router import SharedAPIRootRouter
@@ -34,5 +35,6 @@ urlpatterns = [
     path('targetgrouping/<int:pk>/share/', TargetGroupingShareView.as_view(), name='share-group'),
     path('targetgrouping/<int:pk>/hermes-preload/', TargetGroupingHermesPreloadView.as_view(),
          name='group-hermes-preload'),
+    path('targetselection/', TargetFacilitySelectionView.as_view(), name='target-selection'),
 
 ]
