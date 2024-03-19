@@ -181,34 +181,42 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
 
         # TODO: consider consistent ContentFile naming scheme between services
         # and implementing nameing function in base class fps.BaseForcedPhotometryService
+
+        # ex. panstarrs-dr2-mean-M101-2013_03_17-2024_03_19.csv
+        # (note: dashes-between-fields and underscores within datetime_fields)
+
         min_time = Time(min_date_mjd, format='mjd').datetime.strftime('%Y_%m_%d')
-        dp_name = f"panstarrs-{data_release}-{catalog}_{min_time}"
+        data_product_name = f"panstarrs-{data_release}-{catalog}-{target.name}-{min_time}"
+        # if the max_data_mjd is specified, it will be included in the name
         if max_date_mjd:
             max_time = Time(max_date_mjd, format='mjd').datetime.strftime('%Y_%m_%d')
-            dp_name += f"-{max_time}"
-        dp_name += '.csv'
+            data_product_name += f"-{max_time}"
+        data_product_name += '.csv'
 
-        file = ContentFile(response.content, name=dp_name)
+        file = ContentFile(response.content, name=data_product_name)
 
+        # only compare the non-changing model fields for the get_or_create
         dp, created = DataProduct.objects.get_or_create(
-            product_id=dp_name,
+            product_id=data_product_name,
             target=target,
-            data=file,
             data_product_type=self.get_data_product_type(),
-            extra_data=f'Queried from PanSTARRS (via MAST) within the TOM on {timezone.now().isoformat()}'
         )
         if created:
-            message = f"Created dataproduct {dp_name} from PanSTARRS (MAST) query"
+            # add the changing model fields back into the model instance
+            dp.extra_data = f'Queried from PanSTARRS (via MAST) within the TOM on {timezone.now().isoformat()}'
+            dp.data = file
+            dp.save()
+            message = f"Created dataproduct {data_product_name} from PanSTARRS (MAST) query"
             logger.info(message)
         else:
-            message = f"DataProduct {dp_name} already exists, skipping creation"
+            message = f"DataProduct {data_product_name} already exists, skipping creation"
             logger.warning(message)
         self.success_message = (message)
 
         try:
             run_data_processor(dp)
         except InvalidFileFormatException as e:
-            error_msg = (f'Error while processing {dp_name} (the returned PanSTARRS data) '
+            error_msg = (f'Error while processing {data_product_name} (the returned PanSTARRS data) '
                          f'into ReducedDatums: {repr(e)}')
             logger.error(error_msg)
             raise fps.ForcedPhotometryServiceException(error_msg)
