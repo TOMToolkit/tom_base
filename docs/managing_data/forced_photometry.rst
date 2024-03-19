@@ -28,8 +28,8 @@ shown below:
         'PANSTARRS': {
             'class': 'tom_dataproducts.forced_photometry.panstarrs_service.panstarrs.PanstarrsForcedPhotometryService',
             'url': 'https://catalogs.mast.stsci.edu/api/v0.1/panstarrs',  # MAST Base URL
-            'api_key': os.getenv('MAST_API_TOKEN',
-                                 'optional MAST_API_TOKEN not set, so only public data will be accessible).')
+            # MAST_API_TOKEN is not required for public data
+            'api_key': os.getenv('MAST_API_TOKEN', 'MAST_API_TOKEN not set')
         },
         # TODO: coming soon...
         #     # 'ZTF': {
