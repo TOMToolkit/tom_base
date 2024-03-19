@@ -19,6 +19,7 @@ from .panstarrs_api import get_data_release_choices, get_catalog_choices, mast_q
 logger = logging.getLogger(__name__)
 # logger.setLevel(logging.DEBUG)
 
+DEFAULT_CONE_SEARCH_RADIUS_DEGREES = 0.008333  # degrees
 
 class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
 
@@ -60,6 +61,7 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
         self.fields['min_date_mjd'].initial = past_mjd
 
     def layout(self):
+        cone_search_radius_arcsec = round(DEFAULT_CONE_SEARCH_RADIUS_DEGREES * 3600)
         return Div(
             Div(
                 Div('data_release', css_class='col-md-2'),
@@ -78,6 +80,7 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
                 ),
                 css_class='row'
             ),
+            Div(HTML(f'<p>Default cone search radius of {cone_search_radius_arcsec} arcsec in use.</p>')),
             HTML('<hr>'),
         )
 
