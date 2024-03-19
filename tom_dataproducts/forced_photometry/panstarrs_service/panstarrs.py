@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_CONE_SEARCH_RADIUS_DEGREES = 0.008333  # degrees
 
+
 class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
 
     min_date_mjd = forms.FloatField(
