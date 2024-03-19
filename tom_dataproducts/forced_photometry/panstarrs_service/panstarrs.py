@@ -150,10 +150,8 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
             )
         # it's not clear if this is stricly necessary, so just warn for now
         if not settings.FORCED_PHOTOMETRY_SERVICES.get('PANSTARRS', {}).get('api_key'):
-            logger.warning('PANSTARRS api_key not specified in setings.py FORCED_PHOTOMETRY_SERVICES')
-            # raise fps.ForcedPhotometryServiceException(
-            #     "Must specify an 'api_key' under PANSTARRS settings in FORCED_PHOTOMETRY_SERVICES"
-            # )
+            logger.warning('PanSTARRS api_key not specified in setings.py FORCED_PHOTOMETRY_SERVICES: '
+                           'Only public data will be accessible.')
 
         # submit the query, create the data product, and run the data product processor
         # synchronous query, so we can return the result immediately, no dramatiq needed
