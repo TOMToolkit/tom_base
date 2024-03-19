@@ -163,7 +163,7 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
         request_data = {
             'ra': target.ra,
             'dec': target.dec,
-            'radius': 0.1,  # arcsec cone search radius
+            'radius': DEFAULT_CONE_SEARCH_RADIUS_DEGREES,
             'epochMean.min': min_date_mjd,
             'epochMean.max': max_date_mjd,
             'nDetections.min': query_parameters.get('min_detections'),
