@@ -127,13 +127,8 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
 
         target = Target.objects.get(pk=query_parameters.get('target_id'))
 
-        # first, convert datetime fields to mjd if necessary
         min_date_mjd = query_parameters.get('min_date_mjd')
-        if not min_date_mjd:
-            min_date_mjd = Time(query_parameters.get('min_date')).mjd
         max_date_mjd = query_parameters.get('max_date_mjd')
-        if not max_date_mjd and query_parameters.get('max_date'):
-            max_date_mjd = Time(query_parameters.get('max_date')).mjd
 
         # make sure target exists
         if not Target.objects.filter(pk=query_parameters.get('target_id')).exists():
