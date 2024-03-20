@@ -21,6 +21,9 @@ class PanstarrsProcessor(DataProcessor):
         """
         Routes a PanSTARRS processing call to a method specific to a file-format.
 
+        The call site for this method is (typically) tom_dataproducts.data_processor.run_data_processor(),
+        where the returned list of datums is used to `bulk_create` ReducedDatum objects.
+
         :param data_product: Photometric DataProduct which will be processed into the specified format for database
         ingestion
         :type data_product: DataProduct
@@ -73,6 +76,7 @@ class PanstarrsProcessor(DataProcessor):
                     mag = float(datum[mag_col_name])
                     mag_err = float(datum[mag_err_col_name])
                     # -999 is the value returned by PanSTARRS when there is no data for a given column
+                    # so, filter out columns for which there is no data
                     if mag > -999:
                         value = {
                             'timestamp': timestamp,
