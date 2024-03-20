@@ -388,10 +388,19 @@ class ReducedDatum(models.Model):
         return super().save()
 
     def validate_unique(self, *args, **kwargs):
+        """
+        Validates that the data point is unique. Because the value field is a JSONField, it is not possible to rely on
+        standard validation. We therefore check that we cannot filter on the dictionary instance of the model. If we
+        find another instance of Reduced Datum with the same values, we raise a ValidationError.
+        """
         super().validate_unique(*args, **kwargs)
+        # Create a copt of the model dictionary and remove the id and state fields since these either don't exist yet,
+        # or will always be unique.
         model_dict = self.__dict__.copy()
         del model_dict['_state']
         del model_dict['id']
+        # Check if the Reduced Datum exists in the database
         obs = ReducedDatum.objects.filter(**model_dict)
+        # If the Reduced Datum exists, raise a ValidationError
         if obs:
             raise ValidationError('Data point already exists.')
