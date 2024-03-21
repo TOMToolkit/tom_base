@@ -385,22 +385,31 @@ class ReducedDatum(models.Model):
                 break
         else:
             raise ValidationError('Not a valid DataProduct type.')
+
+        # because we have a custom way of validating the uniqueness of the ReducedDatum,
+        #  we need to call full_clean() here to invoke our validate_unique() method.
+        self.full_clean()
         return super().save()
 
     def validate_unique(self, *args, **kwargs):
         """
-        Validates that the data point is unique. Because the value field is a JSONField, it is not possible to rely on
-        standard validation. We therefore check that we cannot filter on the dictionary instance of the model. If we
-        find another instance of Reduced Datum with the same values, we raise a ValidationError.
+        Validates that the ReducedDatum is unique. Because the `value` field is a JSONField, it is not possible to rely
+        on standard validation.
+
+        Do nothing if the uniqueness test passes. Otherwise, raise a ValidationError.
+
+        see https://docs.djangoproject.com/en/5.0/ref/models/instances/#validating-objects
         """
         super().validate_unique(*args, **kwargs)
-        # Create a copt of the model dictionary and remove the id and state fields since these either don't exist yet,
-        # or will always be unique.
-        model_dict = self.__dict__.copy()
-        del model_dict['_state']
-        del model_dict['id']
+
         # Check if the Reduced Datum exists in the database
-        obs = ReducedDatum.objects.filter(**model_dict)
-        # If the Reduced Datum exists, raise a ValidationError
-        if obs:
-            raise ValidationError('Data point already exists.')
+        try:
+            existing_reduced_datum = ReducedDatum.objects.get(target=self.target, data_type=self.data_type,
+                                                              value=self.value)
+            if existing_reduced_datum:
+                # found ReducedDatum with the same values. Don't save this duplicate ReducedDatum.
+                raise ValidationError(f'ReducedDatum already exists: {self.data_type} data with value of {self.value} '
+                                      f'found for {self.target}')
+        except ReducedDatum.DoesNotExist:
+            # this means that our check for uniqueness passed: so do not raise ValidationError
+            pass
