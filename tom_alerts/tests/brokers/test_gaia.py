@@ -143,6 +143,7 @@ class TestGaiaBroker(TestCase):
 
         reduced_data = ReducedDatum.objects.filter(target=self.test_target, source_name='Gaia')
         self.assertGreater(reduced_data.count(), 1)
+        self.assertEqual(reduced_data.count(), 3)  # one from setUp and two from this test
 
     @mock.patch('tom_alerts.brokers.gaia.requests.get')
     @mock.patch('tom_alerts.brokers.gaia.GaiaBroker.fetch_alerts')
@@ -159,6 +160,29 @@ class TestGaiaBroker(TestCase):
 
         reduced_data = ReducedDatum.objects.filter(target=self.test_target, source_name='Gaia')
         self.assertGreater(reduced_data.count(), 1)
+        self.assertEqual(reduced_data.count(), 3)  # one from setUp and two from this test
 
     def test_get_broker_class(self):
         self.assertEqual(GaiaBroker, get_service_class('Gaia'))
+
+    def test_rewrite_process_reduced_data_with_alert(self):
+        """This is just a copy of test_process_reduced_data_with_alert, but with the
+        mock.patch decorator replaced with a context manager.
+
+        There are TWO ReducedDatums in the _content mocked below.
+        """
+        with mock.patch('tom_alerts.brokers.gaia.requests.get') as mock_requests_get:
+            mock_photometry_response = Response()
+            mock_photometry_response._content = str.encode('''Gaia20bph\n#Date,JD,averagemag.\n
+                                        2014-08-01 00:05:24,2456870.504,19.48\n2014-08-01 06:05:38,2456870.754,19.48\n\n''')
+            mock_photometry_response.status_code = 200
+            mock_requests_get.return_value = mock_photometry_response
+
+            try:
+                GaiaBroker().process_reduced_data(self.test_target, alert=self.alert_list[0])
+            except ValidationError as e:
+                self.fail(f'This test should have created two UNIQUE ReducedDatum objects, but {e}')
+
+        reduced_data = ReducedDatum.objects.filter(target=self.test_target, source_name='Gaia')
+        self.assertGreater(reduced_data.count(), 1)
+        self.assertEqual(reduced_data.count(), 3)  # one from setUp and two from this test
