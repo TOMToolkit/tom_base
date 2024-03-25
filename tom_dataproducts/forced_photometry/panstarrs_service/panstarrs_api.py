@@ -1,7 +1,6 @@
 import logging
 
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 
 import requests
 
@@ -13,13 +12,10 @@ logger = logging.getLogger(__name__)
 def get_base_url():
     """return the PanSTARRS MAST API base URL from settings
     """
-    try:
-        base_url = settings.FORCED_PHOTOMETRY_SERVICES.get(
-            'PANSTARRS', {}).get('url', 'https://catalogs.mast.stsci.edu/api/v0.1/panstarrs/')
-    except ImproperlyConfigured:
-        base_url = 'https://catalogs.mast.stsci.edu/api/v0.1/panstarrs/'
+    # the configuration in settings.py has all been vetted in
+    # panstarrs.PanstarrsForcedPhotometryService.query_service()
+    base_url = settings.FORCED_PHOTOMETRY_SERVICES.get('PANSTARRS', {}).get('url')
 
-    logger.debug(f'base_url is {base_url}')
     return base_url
 
 
