@@ -404,12 +404,14 @@ class ReducedDatum(models.Model):
 
         # Check if the Reduced Datum exists in the database
         try:
-            existing_reduced_datum = ReducedDatum.objects.get(target=self.target, data_type=self.data_type,
+            existing_reduced_datum = ReducedDatum.objects.get(target=self.target,
+                                                              data_type=self.data_type,
+                                                              timestamp=self.timestamp,
                                                               value=self.value)
             if existing_reduced_datum:
                 # found ReducedDatum with the same values. Don't save this duplicate ReducedDatum.
                 raise ValidationError(f'ReducedDatum already exists: {self.data_type} data with value of {self.value} '
-                                      f'found for {self.target}')
+                                      f'found for {self.target} at {self.timestamp}')
         except ReducedDatum.DoesNotExist:
             # this means that our check for uniqueness passed: so do not raise ValidationError
             pass

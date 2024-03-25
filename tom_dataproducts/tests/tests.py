@@ -1,5 +1,6 @@
-import os
+import datetime
 from http import HTTPStatus
+import os
 import tempfile
 import responses
 
@@ -532,6 +533,7 @@ class TestReducedDatumModel(TestCase):
         self.target = SiderealTargetFactory.create()
         self.data_type = 'photometry'
         self.source_name = 'test_source'
+        self.timestamp = datetime.datetime.now()
         self.existing_reduced_datum_value = {
             'magnitude': 18.5,
             'magnitude_error': .5,
@@ -542,6 +544,7 @@ class TestReducedDatumModel(TestCase):
             target=self.target,
             data_type=self.data_type,
             source_name=self.source_name,
+            timestamp=self.timestamp,
             value=self.existing_reduced_datum_value)
 
     def test_create_reduced_datum(self):
@@ -557,28 +560,35 @@ class TestReducedDatumModel(TestCase):
             target=self.target,
             data_type='photometry',
             source_name='test_source',
+            timestamp=self.timestamp,
             value=second_reduced_datum_value)
 
         self.assertEqual(2, ReducedDatum.objects.count())
 
     def test_create_reduced_datum_duplicate(self):
-        """Test that we cannot add a second ReducedDatum with the same target, data_type, and value dict"""
+        """Test that we cannot add a second ReducedDatum with the same target, data_type,
+        timestamp, and value dict"""
         # in this case ALL fields are the same as the self.existing_reduced_datum
         with self.assertRaises(ValidationError):
             ReducedDatum.objects.create(
                 target=self.target,
                 data_type=self.data_type,
                 source_name=self.source_name,
+                timestamp=self.timestamp,
                 value=self.existing_reduced_datum_value)
 
         # in this case only the target, data_type and value fields
         # are the same as the self.existing_reduced_datum
-        with self.assertRaises(ValidationError):
+        # so an exception should NOT be raised
+        try:
             ReducedDatum.objects.create(
                 target=self.target,
                 data_type=self.data_type,
                 source_name='new_source_name',
+                timestamp=(self.timestamp - datetime.timedelta(days=1)),  # different timestamp
                 value=self.existing_reduced_datum_value)
+        except ValidationError:
+            self.fail("ValidationError raised when it should not have been (timestamps differ)")
 
         # by NOT raising ValidationError, this shows that
         # ReducedDatum.objects.bulk_create() bypasses the ReducedDatum.save()
@@ -588,6 +598,7 @@ class TestReducedDatumModel(TestCase):
             target=self.target,
             data_type=self.data_type,
             source_name=self.source_name,
+            timestamp=self.timestamp,
             value=self.existing_reduced_datum_value)
         # does bulk_create bypass the ReducedDatum.save() method which validated uniqueness?
         # (this is a duplicate ReducedDatum that we are trying to add here
