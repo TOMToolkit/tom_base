@@ -276,9 +276,6 @@ class BaseTarget(models.Model):
     except (ImportError, AttributeError):
         matches = TargetMatchManager()
 
-    class Meta:
-        abstract = True
-
     @transaction.atomic
     def save(self, *args, **kwargs):
         """
@@ -434,25 +431,22 @@ class BaseTarget(models.Model):
         assign_perm('targets.delete_target', user, self)
 
 
-def get_abstract_target_base_models():
-    base_classes = (BaseTarget,)
+def get_target_base_model():
+    base_class = BaseTarget
     try:
-        BASE_TARGET_MODELS = settings.BASE_TARGET_MODELS
+        BASE_TARGET_MODEL = settings.BASE_TARGET_MODEL
     except AttributeError:
-        return base_classes
+        return base_class
 
-    for model in BASE_TARGET_MODELS:
-        try:
-            clazz = import_string(model)
-        except (ImportError, AttributeError):
-            raise ImportError(f'Could not import {model}. Did you provide the correct path?')
-        if clazz not in base_classes:
-            base_classes += (clazz,)
-    return base_classes
+    try:
+        clazz = import_string(BASE_TARGET_MODEL)
+        return clazz
+    except (ImportError, AttributeError):
+        raise ImportError(f'Could not import {BASE_TARGET_MODEL}. Did you provide the correct path?')
+    return base_class
 
 
-class Target(*get_abstract_target_base_models()):
-    pass
+Target = get_target_base_model()
 
 
 class TargetName(models.Model):

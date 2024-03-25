@@ -105,6 +105,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
     View for creating a Target. Requires authentication.
     """
 
+    template_name = 'tom_targets/target_form.html'
     model = Target
     fields = '__all__'
 
@@ -413,6 +414,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
     """
     View that handles the display of the target details. Requires authorization.
     """
+    template_name = 'tom_targets/target_detail.html'
     permission_required = 'tom_targets.view_target'
     model = Target
 
@@ -433,6 +435,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
             )
         observation_template_form.fields['target'].widget = HiddenInput()
         context['observation_template_form'] = observation_template_form
+        context['target'] = self.object
         return context
 
     def get(self, request, *args, **kwargs):
