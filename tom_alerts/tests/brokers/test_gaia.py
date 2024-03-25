@@ -174,7 +174,7 @@ class TestGaiaBroker(TestCase):
         with mock.patch('tom_alerts.brokers.gaia.requests.get') as mock_requests_get:
             mock_photometry_response = Response()
             mock_photometry_response._content = str.encode('''Gaia20bph\n#Date,JD,averagemag.\n
-                                        2014-08-01 00:05:24,2456870.504,19.48\n2014-08-01 06:05:38,2456870.754,19.48\n\n''')
+                                    2014-08-01 00:05:24,2456870.504,19.48\n2014-08-01 06:05:38,2456870.754,19.48\n\n''')
             mock_photometry_response.status_code = 200
             mock_requests_get.return_value = mock_photometry_response
 
