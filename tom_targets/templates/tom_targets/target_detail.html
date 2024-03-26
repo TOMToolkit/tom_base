@@ -95,12 +95,12 @@
       </div>
       <div class="tab-pane" id="manage-data">
         {% if user.is_authenticated %}
-          {% query_forced_photometry object %}
-          <br />
-          <br />
+          {% upload_dataproduct object %}
         {% endif %}
         {% if user.is_authenticated %}
-          {% upload_dataproduct object %}
+        <hr>
+        {% query_forced_photometry object %}
+        <hr>
         {% endif %}
         {% dataproduct_list_for_target object %}
       </div>

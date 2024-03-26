@@ -36,7 +36,7 @@
                     {% if datum.limit %}>{% endif %}
                     {{ datum.magnitude|truncate_number }}
                 </td>
-                <td>{{ datum.magnitude_error }}</td>
+                <td>{{ datum.magnitude_error|floatformat:4 }}</td>
                 <td>{{ datum.source }}</td>
             </tr>
             {% empty %}
