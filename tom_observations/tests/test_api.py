@@ -69,7 +69,7 @@ class TestObservationViewset(APITestCase):
         }
         response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
         self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
-        self.assertEqual(response.json()[0]['parameters'], response.json()[0]['parameters'] | {'test_input': 'gnomes'})
+        self.assertDictContainsSubset({'test_input': 'gnomes'}, response.json()[0]['parameters'])
 
     def test_observation_submit_invalid_parameters(self):
         """Test observation API submit endpoint with unsuccessful submissions."""
@@ -124,9 +124,8 @@ class TestObservationViewset(APITestCase):
 
         response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
         self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
-        self.assertEqual(response.json()[0].get('observation_groups', [])[0],
-                         response.json()[0].get('observation_groups', [])[0] |
-                         {'name': f'{self.st.name} at FakeRoboticFacility'})
+        self.assertDictContainsSubset({'name': f'{self.st.name} at FakeRoboticFacility'},
+                                      response.json()[0].get('observation_groups', [])[0])
         self.assertIn(
             'ResumeCadenceAfterFailureStrategy with parameters {\'cadence_frequency\': 24}',
             response.json()[0].get('observation_groups', [])[0].get('dynamic_cadences', []))
@@ -148,9 +147,8 @@ class TestObservationViewset(APITestCase):
 
         response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
         self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
-        self.assertEqual(response.json()[0].get('observation_groups', [])[0],
-                         response.json()[0].get('observation_groups', [])[0] |
-                         {'name': f'{self.st.name} at FakeRoboticFacility'})
+        self.assertDictContainsSubset({'name': f'{self.st.name} at FakeRoboticFacility'},
+                                      response.json()[0].get('observation_groups', [])[0])
 
     def test_observation_submit_cadence_invalid_parameters(self):
         """Test observation API submit endpoint with cadences that are unsuccessful submissions."""
@@ -265,7 +263,7 @@ class TestObservationViewsetRowLevelPermissions(APITestCase):
 
         response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
         self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
-        self.assertEqual(response.json()[0]['parameters'], response.json()[0]['parameters'] | {'test_input': 'gnomes'})
+        self.assertDictContainsSubset({'test_input': 'gnomes'}, response.json()[0]['parameters'])
 
         # Test that user in testgroup can see observation
         self.client.force_login(self.user)
