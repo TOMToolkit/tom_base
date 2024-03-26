@@ -2,114 +2,121 @@
 
 [[package]]
 name = "alabaster"
-version = "0.7.16"
-description = "A light, configurable Sphinx theme"
+version = "0.7.13"
+description = "A configurable sidebar-enabled Sphinx theme"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.6"
 files = [
-    {file = "alabaster-0.7.16-py3-none-any.whl", hash = "sha256:b46733c07dce03ae4e150330b975c75737fa60f0a7c591b6c8bf4928a28e2c92"},
-    {file = "alabaster-0.7.16.tar.gz", hash = "sha256:75a8b99c28a5dad50dd7f8ccdd447a121ddb3892da9e53d1ca5cca3106d58d65"},
+    {file = "alabaster-0.7.13-py3-none-any.whl", hash = "sha256:1ee19aca801bbabb5ba3f5f258e4422dfa86f82f3e9cefb0859b283cdd7f62a3"},
+    {file = "alabaster-0.7.13.tar.gz", hash = "sha256:a27a4a084d5e690e16e01e03ad2b2e552c61a65469419b907243193de1a84ae2"},
 ]
 
 [[package]]
 name = "asdf"
-version = "3.1.0"
+version = "2.15.0"
 description = "Python implementation of the ASDF Standard"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.8"
 files = [
-    {file = "asdf-3.1.0-py3-none-any.whl", hash = "sha256:89974e774dc32f53cea802068685e538871db6c6c025b8c73975819a495eb292"},
-    {file = "asdf-3.1.0.tar.gz", hash = "sha256:c4907ae3242b59a2d0e363dc5fd8337d5f82d4c01b1908be1d1e305cdff04639"},
+    {file = "asdf-2.15.0-py3-none-any.whl", hash = "sha256:11fae326d1f3a39a2c0c4cd42d4fcb789ef46f9ebe00c79564f34b066f05027a"},
+    {file = "asdf-2.15.0.tar.gz", hash = "sha256:686f1c91ebf987d41f915cfb6aa70940d7ad17f87ede0be70463147ad2314587"},
 ]
 
 [package.dependencies]
 asdf-standard = ">=1.0.1"
 asdf-transform-schemas = ">=0.3"
 asdf-unit-schemas = ">=0.1"
-attrs = ">=20.1.0"
 importlib-metadata = ">=4.11.4"
+importlib-resources = {version = ">=3", markers = "python_version < \"3.9\""}
 jmespath = ">=0.6.2"
-numpy = ">=1.22"
+jsonschema = ">=4.0.1,<4.18"
+numpy = [
+    {version = ">=1.20", markers = "python_version >= \"3.9\""},
+    {version = ">=1.20,<1.25", markers = "python_version < \"3.9\""},
+]
 packaging = ">=19"
 pyyaml = ">=5.4.1"
 semantic-version = ">=2.8"
 
 [package.extras]
 all = ["lz4 (>=0.10)"]
-docs = ["graphviz", "sphinx-asdf (>=0.2.2)", "sphinx-inline-tabs", "tomli"]
-tests = ["fsspec[http] (>=2022.8.2)", "lz4 (>=0.10)", "psutil", "pytest (>=7)", "pytest-doctestplus", "pytest-remotedata"]
+docs = ["sphinx-asdf (>=0.1.4)", "tomli"]
+tests = ["astropy (>=5.0.4)", "fsspec[http] (>=2022.8.2)", "gwcs (>=0.18.3)", "lz4 (>=0.10)", "psutil", "pytest (>=6)", "pytest-doctestplus", "pytest-openfiles", "pytest-remotedata"]
 
 [[package]]
 name = "asdf-astropy"
-version = "0.6.0"
+version = "0.4.0"
 description = "ASDF serialization support for astropy"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.8"
 files = [
-    {file = "asdf-astropy-0.6.0.tar.gz", hash = "sha256:f0835960154f24f9a030974f225988edeac1109a7f8faf2bdf2abe29a79dbc33"},
-    {file = "asdf_astropy-0.6.0-py3-none-any.whl", hash = "sha256:edbc6719bdc9781b0b362fd4f0f373e3b510dbb5ffa3817d5e86a0ed97b81b6f"},
+    {file = "asdf-astropy-0.4.0.tar.gz", hash = "sha256:462b674601fe2c4a2f45c92bed3e21effd0d58addc7ec4335c545118bc582eb6"},
+    {file = "asdf_astropy-0.4.0-py3-none-any.whl", hash = "sha256:561d47978e7012cd0488ff3386fea76102048cc8d3e75e470c1a39971eef86af"},
 ]
 
 [package.dependencies]
 asdf = ">=2.13"
-asdf-coordinates-schemas = ">=0.3"
-asdf-standard = ">=1.1.0"
-asdf-transform-schemas = ">=0.5"
+asdf-coordinates-schemas = ">=0.1"
+asdf-transform-schemas = ">=0.2.2"
 astropy = ">=5.0.4"
+importlib-resources = {version = ">=3", markers = "python_version < \"3.9\""}
 numpy = ">=1.20"
 packaging = ">=19"
 
 [package.extras]
 docs = ["docutils", "graphviz", "matplotlib", "sphinx", "sphinx-asdf", "sphinx-astropy", "sphinx-automodapi", "tomli"]
-test = ["coverage", "pytest", "pytest-astropy", "scipy"]
+test = ["coverage", "pytest-astropy", "scipy"]
 
 [[package]]
 name = "asdf-coordinates-schemas"
-version = "0.3.0"
+version = "0.2.0"
 description = "ASDF schemas for coordinates"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.8"
 files = [
-    {file = "asdf_coordinates_schemas-0.3.0-py3-none-any.whl", hash = "sha256:9afe55443b9e6ab80c95fe57befef353ead0a95c5714904da29965c63ca81451"},
-    {file = "asdf_coordinates_schemas-0.3.0.tar.gz", hash = "sha256:c98b6015dcec87a158fcde7798583f0615d08125fa6e1e9de16c4eb03fcd604e"},
+    {file = "asdf_coordinates_schemas-0.2.0-py3-none-any.whl", hash = "sha256:5450a70f0b548cd7d90599d0b2b98285219f2376431809373eb461ce7192f207"},
+    {file = "asdf_coordinates_schemas-0.2.0.tar.gz", hash = "sha256:e3f9a50872e13749a7eec2dc3ccb4af93280f5e5e20a8d70a3d83073de8dd5f4"},
 ]
 
 [package.dependencies]
 asdf = ">=2.12.1"
-asdf-standard = ">=1.1.0"
 
 [package.extras]
 docs = ["astropy (>=5.0.4)", "docutils", "graphviz", "matplotlib", "sphinx", "sphinx-asdf (>=0.1.3)", "sphinx-astropy", "sphinx-rtd-theme", "tomli"]
-test = ["asdf-astropy (>=0.2.0)", "pytest"]
+test = ["pytest"]
 
 [[package]]
 name = "asdf-standard"
-version = "1.1.1"
+version = "1.0.3"
 description = "The ASDF Standard schemas"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.8"
 files = [
-    {file = "asdf_standard-1.1.1-py3-none-any.whl", hash = "sha256:9b559b5d43f086a3e9e12604fb591e056e5d8c0b4a1d2d99a011d278afbc6fd8"},
-    {file = "asdf_standard-1.1.1.tar.gz", hash = "sha256:01535bc2b15bfc09ec8a62d4999f9cf32dc49dc71660c8425640228fd8776102"},
-]
-
-[package.extras]
-docs = ["docutils", "graphviz", "matplotlib", "sphinx (>=4.0)", "sphinx-asdf (>=0.1.3)", "sphinx-rtd-theme (>1.2.0)", "tomli"]
-test = ["asdf (>=3.0.0)", "packaging (>=16.0)", "pytest", "pyyaml"]
-
-[[package]]
-name = "asdf-transform-schemas"
-version = "0.5.0"
-description = "ASDF schemas for transforms"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "asdf_transform_schemas-0.5.0-py3-none-any.whl", hash = "sha256:9f91bfd964b905d0deff269b057a75b2b3745c462c3b9e7897242844fbc4cfe8"},
-    {file = "asdf_transform_schemas-0.5.0.tar.gz", hash = "sha256:82cf4c782575734a895327f25ff583ce9499d7e2b836fe8880b2d7961c6b462b"},
+    {file = "asdf_standard-1.0.3-py3-none-any.whl", hash = "sha256:1c628379c75f0663b6376a7e681d31b1b54391053e53447c9921fb04c26d41da"},
+    {file = "asdf_standard-1.0.3.tar.gz", hash = "sha256:afd8ff9a70e7b17f6bcc64eb92a544867d5d4fe1f0076719142fdf62b96cfd44"},
 ]
 
 [package.dependencies]
-asdf-standard = ">=1.1.0"
+importlib-resources = {version = ">=3", markers = "python_version < \"3.9\""}
+
+[package.extras]
+docs = ["docutils", "graphviz", "matplotlib", "sphinx", "sphinx-asdf (>=0.1.3)", "sphinx-astropy", "sphinx-rtd-theme", "toml"]
+test = ["asdf (>=2.8.0)", "astropy (>=5.0.4)", "gwcs", "packaging (>=16.0)", "pytest", "pyyaml"]
+
+[[package]]
+name = "asdf-transform-schemas"
+version = "0.4.0"
+description = "ASDF schemas for transforms"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "asdf_transform_schemas-0.4.0-py3-none-any.whl", hash = "sha256:fed6cab061ee759c97a30bfe4ec06fdea7af72268b355301082e97994e4313e8"},
+    {file = "asdf_transform_schemas-0.4.0.tar.gz", hash = "sha256:de7fdc3fee35fb957fc32957877a0e9d7dd4d2e851bd631a7259f11c2bd294ca"},
+]
+
+[package.dependencies]
+asdf-standard = ">=1.0.1"
+importlib-resources = {version = ">=3", markers = "python_version < \"3.9\""}
 
 [package.extras]
 docs = ["astropy (>=5.0.4)", "docutils", "graphviz", "matplotlib", "sphinx", "sphinx-asdf (>=0.1.3)", "sphinx-astropy", "sphinx-rtd-theme", "tomli"]
@@ -132,23 +139,24 @@ test = ["asdf", "pytest"]
 
 [[package]]
 name = "asdf-wcs-schemas"
-version = "0.4.0"
+version = "0.3.0"
 description = "ASDF WCS schemas"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.8"
 files = [
-    {file = "asdf_wcs_schemas-0.4.0-py3-none-any.whl", hash = "sha256:ffd0dc9d01ff453c8e81793f93a76c4cdd7780b0156d39c93b8017df49180a01"},
-    {file = "asdf_wcs_schemas-0.4.0.tar.gz", hash = "sha256:c0bb44b8a5f16e2e23b028bcf4360729f5047a8d19063f1c8d817590d0b308b4"},
+    {file = "asdf_wcs_schemas-0.3.0-py3-none-any.whl", hash = "sha256:ee0fc4e8894c6b09c9cea975a6831e9c8feac7678fe551d46a85c06d6474f493"},
+    {file = "asdf_wcs_schemas-0.3.0.tar.gz", hash = "sha256:51e593bc3c2941bed381409f84b1a8cb60a003548e3b8b8caf06f337b5d034e5"},
 ]
 
 [package.dependencies]
-asdf-coordinates-schemas = ">=0.3.0"
-asdf-standard = ">=1.1.0"
-asdf-transform-schemas = ">=0.5.0"
+asdf-standard = ">=1.0.1"
+asdf-transform-schemas = ">=0.3.0"
+asdf-unit-schemas = ">=0.1.0"
+importlib-resources = {version = ">=3", markers = "python_version < \"3.9\""}
 
 [package.extras]
 docs = ["astropy (>=5.0.4)", "docutils", "graphviz", "matplotlib", "sphinx", "sphinx-asdf (>=0.1.3)", "sphinx-astropy", "sphinx-rtd-theme", "tomli"]
-test = ["asdf (>=2.8.0)", "asdf-astropy", "pytest (>=4.6.0)"]
+test = ["asdf (>=2.8.0)", "asdf-astropy", "pytest (>=4.6.0)", "pytest-openfiles (>=0.5.0)"]
 
 [[package]]
 name = "asgiref"
@@ -188,6 +196,59 @@ all = ["astroquery", "matplotlib (>=1.4)"]
 docs = ["astroquery", "matplotlib (>=1.4)", "sphinx-astropy[confv2]", "sphinx-rtd-theme"]
 plotting = ["astroquery", "matplotlib (>=1.4)"]
 test = ["pytest-astropy", "pytest-mpl"]
+
+[[package]]
+name = "astropy"
+version = "5.2.2"
+description = "Astronomy and astrophysics core library"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "astropy-5.2.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:66522e897daf3766775c00ef5c63b69beb0eb359e1f45d18745d0f0ca7f29cc1"},
+    {file = "astropy-5.2.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:0ccf6f16cf7e520247ecc9d1a66dd4c3927fd60622203bdd1d06655ad81fa18f"},
+    {file = "astropy-5.2.2-cp310-cp310-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:3d0c37da922cdcb81e74437118fabd64171cbfefa06c7ea697a270e82a8164f2"},
+    {file = "astropy-5.2.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:04464e664a22382626ce9750ebe943b80a718dc8347134b9d138b63a2029f67a"},
+    {file = "astropy-5.2.2-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:4f60cea0fa7cb6ebbd90373e48c07f5d459e95dfd6363f50e316e2db7755bead"},
+    {file = "astropy-5.2.2-cp310-cp310-win32.whl", hash = "sha256:6c3abb2fa8ebaaad77875a02e664c1011f35bd0c0ef7d35a39b03c859de1129a"},
+    {file = "astropy-5.2.2-cp310-cp310-win_amd64.whl", hash = "sha256:185ade8c33cea34ba791b282e937686d98b4e205d4f343e686a4666efab2f6e7"},
+    {file = "astropy-5.2.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:f61c612e90e3dd3c075e99a61dedd53331c4577016c1d571aab00b95ca1731ab"},
+    {file = "astropy-5.2.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:3881e933ea870a27e5d6896443401fbf51e3b7e57c6356f333553f5ff0070c72"},
+    {file = "astropy-5.2.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f210b5b4062030388437b9aca4bbf68f9063b2b27184006814a09fab41ac270e"},
+    {file = "astropy-5.2.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e14b5a22f24ae5cf0404f21a4de135e26ca3c9cf55aefc5b0264a9ce24b53b0b"},
+    {file = "astropy-5.2.2-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:6768b3a670cdfff6c2416b3d7d1e4231839608299b32367e8b095959fc6733a6"},
+    {file = "astropy-5.2.2-cp311-cp311-win32.whl", hash = "sha256:0aad85604cad40189b13d66bb46fb2a95df1a9095992071b31c3fa35b476fdbc"},
+    {file = "astropy-5.2.2-cp311-cp311-win_amd64.whl", hash = "sha256:ac944158794a88789a007892ad91db35da14f689da1ab37c33c8de770a27f717"},
+    {file = "astropy-5.2.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:6703860deecd384bba2d2e338f77a0e7b46672812d27ed15f95e8faaa89fcd35"},
+    {file = "astropy-5.2.2-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:124ef2a9f9b1cdbc1a5d514f7e57538253bb67ad031215f5f5405fc4cd31a4cd"},
+    {file = "astropy-5.2.2-cp38-cp38-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:800501cc626aef0780dfb66156619699e98cb48854ed710f1ae3708aaab79f6e"},
+    {file = "astropy-5.2.2-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:22396592aa9b1653d37d552d3c52a8bb27ef072d077fad43b64faf841b1dcbf3"},
+    {file = "astropy-5.2.2-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:093782b1f0177c3dd2c04181ec016d8e569bd9e862b48236e40b14e2a7399170"},
+    {file = "astropy-5.2.2-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:0c664f9194a4a3cece6215f651a9bc22c3cbd1f52dd450bd4d94eaf36f13c06c"},
+    {file = "astropy-5.2.2-cp38-cp38-win32.whl", hash = "sha256:35ce00bb3dbc8bf7c842a0635354a5023cb64ae9c1925aa9b54629cf7fed2abe"},
+    {file = "astropy-5.2.2-cp38-cp38-win_amd64.whl", hash = "sha256:8304b590b20f9c161db85d5eb65d4c6323b3370a17c96ae163b18a0071cbd68a"},
+    {file = "astropy-5.2.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:855748c2f1aedee5d770dfec8334109f1bcd1c1cee97f5915d3e888f43c04acf"},
+    {file = "astropy-5.2.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:1ef9acc55c5fd70c7c78370389e79fb044321e531ac1facb7bddeef89d3132e3"},
+    {file = "astropy-5.2.2-cp39-cp39-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:f30b5d153b9d119783b96b948a3e0c4eb668820c06d2e8ba72f6ea989e4af5c1"},
+    {file = "astropy-5.2.2-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:530e6911a54a42e9f15b1a75dc3c699be3946c0b6ffdcfdcf4e14ae5fcfcd236"},
+    {file = "astropy-5.2.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ae3b383ac84fe6765e275f897f4010cc6afe6933607b7468561414dffdc4d915"},
+    {file = "astropy-5.2.2-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:b00a4cd49f8264a338b0020717bff104fbcca800bd50bf0a415d952078258a39"},
+    {file = "astropy-5.2.2-cp39-cp39-win32.whl", hash = "sha256:b7167b9965ebd78b7c9da7e98a943381b25e23d041bd304ec2e35e8ec811cefc"},
+    {file = "astropy-5.2.2-cp39-cp39-win_amd64.whl", hash = "sha256:df81b8f23c5e906d799b47d2d8462707c745df38cafae0cd6674ef09e9a41789"},
+    {file = "astropy-5.2.2.tar.gz", hash = "sha256:e6a9e34716bda5945788353c63f0644721ee7e5447d16b1cdcb58c48a96b0d9c"},
+]
+
+[package.dependencies]
+numpy = ">=1.20"
+packaging = ">=19.0"
+pyerfa = ">=2.0"
+PyYAML = ">=3.13"
+
+[package.extras]
+all = ["asdf (>=2.10.0)", "beautifulsoup4", "bleach", "bottleneck", "certifi", "dask[array]", "fsspec[http] (>=2022.8.2)", "h5py", "html5lib", "ipython (>=4.2)", "jplephem", "matplotlib (>=3.1,!=3.4.0,!=3.5.2)", "mpmath", "pandas", "pyarrow (>=5.0.0)", "pytest (>=7.0)", "pytz", "s3fs (>=2022.8.2)", "scipy (>=1.5)", "sortedcontainers", "typing-extensions (>=3.10.0.1)"]
+docs = ["Jinja2 (>=3.0)", "matplotlib (>=3.1,!=3.4.0,!=3.5.2)", "pytest (>=7.0)", "scipy (>=1.3)", "sphinx", "sphinx-astropy (>=1.6)", "sphinx-changelog (>=1.2.0)"]
+recommended = ["matplotlib (>=3.1,!=3.4.0,!=3.5.2)", "scipy (>=1.5)"]
+test = ["pytest (>=7.0)", "pytest-astropy (>=0.10)", "pytest-astropy-header (>=0.2.1)", "pytest-doctestplus (>=0.12)", "pytest-xdist"]
+test-all = ["coverage[toml]", "ipython (>=4.2)", "objgraph", "pytest (>=7.0)", "pytest-astropy (>=0.10)", "pytest-astropy-header (>=0.2.1)", "pytest-doctestplus (>=0.12)", "pytest-xdist", "sgp4 (>=2.3)", "skyfield (>=1.20)"]
 
 [[package]]
 name = "astropy"
@@ -306,8 +367,39 @@ files = [
     {file = "Babel-2.14.0.tar.gz", hash = "sha256:6919867db036398ba21eb5c7a0f6b28ab8cbc3ae7a73a44ebe34ae74a4e7d363"},
 ]
 
+[package.dependencies]
+pytz = {version = ">=2015.7", markers = "python_version < \"3.9\""}
+
 [package.extras]
 dev = ["freezegun (>=1.0,<2.0)", "pytest (>=6.0)", "pytest-cov"]
+
+[[package]]
+name = "backports-zoneinfo"
+version = "0.2.1"
+description = "Backport of the standard library zoneinfo module"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:da6013fd84a690242c310d77ddb8441a559e9cb3d3d59ebac9aca1a57b2e18bc"},
+    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:89a48c0d158a3cc3f654da4c2de1ceba85263fafb861b98b59040a5086259722"},
+    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:1c5742112073a563c81f786e77514969acb58649bcdf6cdf0b4ed31a348d4546"},
+    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-win32.whl", hash = "sha256:e8236383a20872c0cdf5a62b554b27538db7fa1bbec52429d8d106effbaeca08"},
+    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-win_amd64.whl", hash = "sha256:8439c030a11780786a2002261569bdf362264f605dfa4d65090b64b05c9f79a7"},
+    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:f04e857b59d9d1ccc39ce2da1021d196e47234873820cbeaad210724b1ee28ac"},
+    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:17746bd546106fa389c51dbea67c8b7c8f0d14b5526a579ca6ccf5ed72c526cf"},
+    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:5c144945a7752ca544b4b78c8c41544cdfaf9786f25fe5ffb10e838e19a27570"},
+    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-win32.whl", hash = "sha256:e55b384612d93be96506932a786bbcde5a2db7a9e6a4bb4bffe8b733f5b9036b"},
+    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-win_amd64.whl", hash = "sha256:a76b38c52400b762e48131494ba26be363491ac4f9a04c1b7e92483d169f6582"},
+    {file = "backports.zoneinfo-0.2.1-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:8961c0f32cd0336fb8e8ead11a1f8cd99ec07145ec2931122faaac1c8f7fd987"},
+    {file = "backports.zoneinfo-0.2.1-cp38-cp38-manylinux1_i686.whl", hash = "sha256:e81b76cace8eda1fca50e345242ba977f9be6ae3945af8d46326d776b4cf78d1"},
+    {file = "backports.zoneinfo-0.2.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:7b0a64cda4145548fed9efc10322770f929b944ce5cee6c0dfe0c87bf4c0c8c9"},
+    {file = "backports.zoneinfo-0.2.1-cp38-cp38-win32.whl", hash = "sha256:1b13e654a55cd45672cb54ed12148cd33628f672548f373963b0bff67b217328"},
+    {file = "backports.zoneinfo-0.2.1-cp38-cp38-win_amd64.whl", hash = "sha256:4a0f800587060bf8880f954dbef70de6c11bbe59c673c3d818921f042f9954a6"},
+    {file = "backports.zoneinfo-0.2.1.tar.gz", hash = "sha256:fadbfe37f74051d024037f223b8e001611eac868b5c5b06144ef4d8b799862f2"},
+]
+
+[package.extras]
+tzdata = ["tzdata"]
 
 [[package]]
 name = "beautifulsoup4"
@@ -692,6 +784,7 @@ files = [
 
 [package.dependencies]
 asgiref = ">=3.6.0,<4"
+"backports.zoneinfo" = {version = "*", markers = "python_version < \"3.9\""}
 sqlparse = ">=0.3.1"
 tzdata = {version = "*", markers = "sys_platform == \"win32\""}
 
@@ -825,6 +918,7 @@ files = [
 ]
 
 [package.dependencies]
+"backports.zoneinfo" = {version = "*", markers = "python_version < \"3.9\""}
 django = ">=3.0"
 
 [[package]]
@@ -905,6 +999,7 @@ files = [
 
 [package.dependencies]
 python-dateutil = ">=2.4"
+typing-extensions = {version = ">=3.10.0.1", markers = "python_version <= \"3.8\""}
 
 [[package]]
 name = "fits2image"
@@ -1077,26 +1172,26 @@ test = ["objgraph", "psutil"]
 
 [[package]]
 name = "gwcs"
-version = "0.21.0"
+version = "0.18.3"
 description = "Generalized World Coordinate System"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.8"
 files = [
-    {file = "gwcs-0.21.0-py3-none-any.whl", hash = "sha256:5a89f512d2a9b2933534fa454b0f34361f714d896f53d9a4b9d1b3a2831b58cc"},
-    {file = "gwcs-0.21.0.tar.gz", hash = "sha256:8cd27f1ce6b25ad72cc33ca2e4178ab29d82050344c710713f74992136a1c5ba"},
+    {file = "gwcs-0.18.3-py3-none-any.whl", hash = "sha256:e9b9f92049870573c3d1c2d7a9e84a8b4136da673c9004a1b827db5b93d54967"},
+    {file = "gwcs-0.18.3.tar.gz", hash = "sha256:a466a057624c6a0507468b00c7991d3eef848c64f41d6ad11344c8fa6a99fe55"},
 ]
 
 [package.dependencies]
 asdf = ">=2.8.1"
 asdf-astropy = ">=0.2.0"
-asdf-wcs-schemas = ">=0.4.0"
-astropy = ">=5.3"
+asdf-wcs-schemas = "*"
+astropy = ">=5.1"
 numpy = "*"
 scipy = "*"
 
 [package.extras]
-docs = ["sphinx", "sphinx-asdf", "sphinx-astropy", "sphinx-automodapi", "sphinx-rtd-theme", "stsci-rtd-theme", "tomli"]
-test = ["ci-watson (>=0.3.0)", "pytest (>=4.6.0)", "pytest-astropy"]
+docs = ["sphinx", "sphinx-asdf", "sphinx-astropy", "sphinx-automodapi", "sphinx-rtd-theme", "stsci-rtd-theme"]
+test = ["ci-watson (>=0.3.0)", "codecov", "pytest (>=4.6.0)", "pytest-astropy"]
 
 [[package]]
 name = "html5lib"
@@ -1159,6 +1254,24 @@ zipp = ">=0.5"
 docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
 perf = ["ipython"]
 testing = ["flufl.flake8", "importlib-resources (>=1.3)", "jaraco.test (>=5.4)", "packaging", "pyfakefs", "pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy", "pytest-perf (>=0.9.2)", "pytest-ruff (>=0.2.1)"]
+
+[[package]]
+name = "importlib-resources"
+version = "6.4.0"
+description = "Read resources from Python packages"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "importlib_resources-6.4.0-py3-none-any.whl", hash = "sha256:50d10f043df931902d4194ea07ec57960f66a80449ff867bfe782b4c486ba78c"},
+    {file = "importlib_resources-6.4.0.tar.gz", hash = "sha256:cdb2b453b8046ca4e3798eb1d84f3cce1446a0e8e7b5ef4efb600f19fc398145"},
+]
+
+[package.dependencies]
+zipp = {version = ">=3.1.0", markers = "python_version < \"3.10\""}
+
+[package.extras]
+docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (<7.2.5)", "sphinx (>=3.5)", "sphinx-lint"]
+testing = ["jaraco.test (>=5.4)", "pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy", "pytest-ruff (>=0.2.1)", "zipp (>=3.17)"]
 
 [[package]]
 name = "jaraco-classes"
@@ -1255,6 +1368,27 @@ files = [
 ]
 
 [[package]]
+name = "jsonschema"
+version = "4.17.3"
+description = "An implementation of JSON Schema validation for Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "jsonschema-4.17.3-py3-none-any.whl", hash = "sha256:a870ad254da1a8ca84b6a2905cac29d265f805acc57af304784962a2aa6508f6"},
+    {file = "jsonschema-4.17.3.tar.gz", hash = "sha256:0f864437ab8b6076ba6707453ef8f98a6a0d512a80e93f8abdb676f737ecb60d"},
+]
+
+[package.dependencies]
+attrs = ">=17.4.0"
+importlib-resources = {version = ">=1.4.0", markers = "python_version < \"3.9\""}
+pkgutil-resolve-name = {version = ">=1.3.10", markers = "python_version < \"3.9\""}
+pyrsistent = ">=0.14.0,<0.17.0 || >0.17.0,<0.17.1 || >0.17.1,<0.17.2 || >0.17.2"
+
+[package.extras]
+format = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-validator", "rfc3987", "uri-template", "webcolors (>=1.11)"]
+format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-validator", "rfc3986-validator (>0.1.0)", "uri-template", "webcolors (>=1.11)"]
+
+[[package]]
 name = "keyring"
 version = "25.0.0"
 description = "Store and access your passwords safely."
@@ -1267,6 +1401,7 @@ files = [
 
 [package.dependencies]
 importlib-metadata = {version = ">=4.11.4", markers = "python_version < \"3.12\""}
+importlib-resources = {version = "*", markers = "python_version < \"3.9\""}
 "jaraco.classes" = "*"
 "jaraco.context" = "*"
 "jaraco.functools" = "*"
@@ -1390,27 +1525,27 @@ files = [
 
 [[package]]
 name = "ndcube"
-version = "2.2.0"
+version = "2.1.4"
 description = "A package for multi-dimensional contiguous and non-contiguous coordinate aware arrays."
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.8"
 files = [
-    {file = "ndcube-2.2.0-py3-none-any.whl", hash = "sha256:9a251370e6a0b84caa9e9f206c3a9cd6cc745f1dc24fd9266e18fcbeafe6f406"},
-    {file = "ndcube-2.2.0.tar.gz", hash = "sha256:64f422c015bf96c2722188d0f0f27267044c0b0997c68dc89245a241aa5d7bac"},
+    {file = "ndcube-2.1.4-py3-none-any.whl", hash = "sha256:4b798837d1c7296fbc8739ec96c3902dde756430fb0887cf9f83e2af5a5d5e59"},
+    {file = "ndcube-2.1.4.tar.gz", hash = "sha256:42cbec3d2091d76e5c80f7e9ff986ddfa168a93a7ece3d24e81a0ac84e993db4"},
 ]
 
 [package.dependencies]
-astropy = ">=5.0.6,<5.1.0 || >5.1.0"
-gwcs = ">=0.18"
-numpy = ">=1.21.0"
+astropy = ">=4.2"
+gwcs = ">=0.15"
+numpy = ">1.17"
 
 [package.extras]
-all = ["matplotlib (>=3.5.0)", "mpl-animators (>=1.0)", "reproject (>=0.7.1)"]
-dev = ["dask", "importlib-resources (<6)", "matplotlib", "matplotlib (>=3.5.0)", "mpl-animators (>=1.0)", "pytest", "pytest-astropy", "pytest-doctestplus (>=0.9.0)", "pytest-mpl (>=0.12)", "reproject (>=0.7.1)", "scipy", "sphinx", "sphinx-automodapi", "sphinx-changelog (>=1.1.0)", "sphinx-gallery", "sphinxext-opengraph", "sunpy (>=5.0.0)", "sunpy-sphinx-theme"]
-docs = ["importlib-resources (<6)", "matplotlib", "pytest-doctestplus (>=0.9.0)", "sphinx", "sphinx-automodapi", "sphinx-changelog (>=1.1.0)", "sphinx-gallery", "sphinxext-opengraph", "sunpy (>=5.0.0)", "sunpy-sphinx-theme"]
-plotting = ["matplotlib (>=3.5.0)", "mpl-animators (>=1.0)"]
+all = ["matplotlib (>=3.2)", "mpl-animators (>=1.0)", "reproject (>=0.7.1)"]
+dev = ["dask", "importlib-resources (<6)", "matplotlib", "matplotlib (>=3.2)", "mpl-animators (>=1.0)", "pytest", "pytest-astropy", "pytest-doctestplus (>=0.9.0)", "pytest-mpl (>=0.12)", "reproject (>=0.7.1)", "scipy", "sphinx", "sphinx-automodapi", "sphinx-changelog (>=1.1.0)", "sphinx-gallery", "sphinxext-opengraph", "sunpy (>=4.0.0)", "sunpy-sphinx-theme"]
+docs = ["importlib-resources (<6)", "matplotlib", "pytest-doctestplus (>=0.9.0)", "sphinx", "sphinx-automodapi", "sphinx-changelog (>=1.1.0)", "sphinx-gallery", "sphinxext-opengraph", "sunpy (>=4.0.0)", "sunpy-sphinx-theme"]
+plotting = ["matplotlib (>=3.2)", "mpl-animators (>=1.0)"]
 reproject = ["reproject (>=0.7.1)"]
-tests = ["dask", "pytest", "pytest-astropy", "pytest-mpl (>=0.12)", "scipy", "sunpy (>=5.0.0)"]
+tests = ["dask", "pytest", "pytest-astropy", "pytest-mpl (>=0.12)", "scipy", "sunpy (>=4.0.0)"]
 
 [[package]]
 name = "numpy"
@@ -1546,6 +1681,17 @@ typing = ["typing-extensions"]
 xmp = ["defusedxml"]
 
 [[package]]
+name = "pkgutil-resolve-name"
+version = "1.3.10"
+description = "Resolve a name to an object."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "pkgutil_resolve_name-1.3.10-py3-none-any.whl", hash = "sha256:ca27cc078d25c5ad71a9de0a7a330146c4e014c2462d9af19c6b828280649c5e"},
+    {file = "pkgutil_resolve_name-1.3.10.tar.gz", hash = "sha256:357d6c9e6a755653cfd78893817c0853af365dd51ec97f3d358a819373bbd174"},
+]
+
+[[package]]
 name = "plotly"
 version = "5.20.0"
 description = "An open-source, interactive data visualization library for Python"
@@ -1595,6 +1741,62 @@ files = [
     {file = "pycparser-2.21-py2.py3-none-any.whl", hash = "sha256:8ee45429555515e1f6b185e78100aea234072576aa43ab53aefcae078162fca9"},
     {file = "pycparser-2.21.tar.gz", hash = "sha256:e644fdec12f7872f86c58ff790da456218b10f863970249516d60a5eaca77206"},
 ]
+
+[[package]]
+name = "pyerfa"
+version = "2.0.0.3"
+description = "Python bindings for ERFA"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pyerfa-2.0.0.3-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:676515861ca3f0cb9d7e693389233e7126413a5ba93a0cc4d36b8ca933951e8d"},
+    {file = "pyerfa-2.0.0.3-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:a438865894d226247dcfcb60d683ae075a52716504537052371b2b73458fe4fc"},
+    {file = "pyerfa-2.0.0.3-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:73bf7d23f069d47632a2feeb1e73454b10392c4f3c16116017a6983f1f0e9b2b"},
+    {file = "pyerfa-2.0.0.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:780b0f90adf500b8ba24e9d509a690576a7e8287e354cfb90227c5963690d3fc"},
+    {file = "pyerfa-2.0.0.3-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:5447bb45ddedde3052693c86b941a4908f5dbeb4a697bda45b5b89de92cfb74a"},
+    {file = "pyerfa-2.0.0.3-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:7c24e7960c6cdd3fa3f4dba5f3444a106ad48c94ff0b19eebaee06a142c18c52"},
+    {file = "pyerfa-2.0.0.3-cp310-cp310-win32.whl", hash = "sha256:170a83bd0243da518119b846f296cf33fa03f1f884a88578c1a38560182cf64e"},
+    {file = "pyerfa-2.0.0.3-cp310-cp310-win_amd64.whl", hash = "sha256:51aa6e0faa4aa9ad8f0eef1c47fec76c5bebc0da7023a436089bdd6e5cfd625f"},
+    {file = "pyerfa-2.0.0.3-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:4fa9fceeb78057bfff7ae3aa6cdad3f1b193722de22bdbb75319256f4a9e2f76"},
+    {file = "pyerfa-2.0.0.3-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:a8a2029fc62ff2369d01219f66a5ce6aed35ef33eddb06118b6c27e8573a9ed8"},
+    {file = "pyerfa-2.0.0.3-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:da888da2c8db5a78273fbf0af4e74f04e2d312d371c3c021cf6c3b14fa60fe3b"},
+    {file = "pyerfa-2.0.0.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7354753addba5261ec1cbf1ba45784ed3a5c42da565ecc6e0aa36b7a17fa4689"},
+    {file = "pyerfa-2.0.0.3-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:3b55f7278c1dd362648d7956e1a5365ade5fed2fe5541b721b3ceb5271128892"},
+    {file = "pyerfa-2.0.0.3-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:23e5efcf96ed7161d74f79ca261d255e1f36988843d22cd97d8f60fe9c868d44"},
+    {file = "pyerfa-2.0.0.3-cp311-cp311-win32.whl", hash = "sha256:f0e9d0b122c454bcad5dbd0c3283b200783031d3f99ca9c550f49a7a7d4c41ea"},
+    {file = "pyerfa-2.0.0.3-cp311-cp311-win_amd64.whl", hash = "sha256:09af83540e23a7d61a8368b0514b3daa4ed967e1e52d0add4f501f58c500dd7f"},
+    {file = "pyerfa-2.0.0.3-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:6a07444fd53a5dd18d7955f86f8d9b1be9a68ceb143e1145c0019a310c913c04"},
+    {file = "pyerfa-2.0.0.3-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:daf7364e475cff1f973e2fcf6962de9df9642c8802b010e29b2c592ae337e3c5"},
+    {file = "pyerfa-2.0.0.3-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e8458421166f6ffe2e259aaf4aaa6e802d6539649a40e3194a81d30dccdc167a"},
+    {file = "pyerfa-2.0.0.3-cp37-cp37m-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:96ea688341176ae6220cc4743cda655549d71e3e3b60c5a99d02d5912d0ddf55"},
+    {file = "pyerfa-2.0.0.3-cp37-cp37m-musllinux_1_1_x86_64.whl", hash = "sha256:d56f6b5a0a3ed7b80d630041829463a872946df277259b5453298842d42a54a4"},
+    {file = "pyerfa-2.0.0.3-cp37-cp37m-win32.whl", hash = "sha256:3ecb598924ddb4ea2b06efc6f1e55ca70897ed178a690e2eaa1e290448466c7c"},
+    {file = "pyerfa-2.0.0.3-cp37-cp37m-win_amd64.whl", hash = "sha256:1033fdb890ec70d3a511e20a464afc8abbea2180108f27b14d8f1d1addc38cbe"},
+    {file = "pyerfa-2.0.0.3-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:2d8c0dbb17119e52def33f9d6dbf2deaf2113ed3e657b6ff692df9b6a3598397"},
+    {file = "pyerfa-2.0.0.3-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:8a1edd2cbe4ead3bf9a51e578d5d83bdd7ab3b3ccb69e09b89a4c42aa5b35ffb"},
+    {file = "pyerfa-2.0.0.3-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a04c3b715c924b6f972dd440a94a701a16a07700bc8ba9e88b1df765bdc36ad0"},
+    {file = "pyerfa-2.0.0.3-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7d01c341c45b860ee5c7585ef003118c8015e9d65c30668d2f5bf657e1dcdd68"},
+    {file = "pyerfa-2.0.0.3-cp38-cp38-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:24d89ead30edc6038408336ad9b696683e74c4eef550708fca6afef3ecd5b010"},
+    {file = "pyerfa-2.0.0.3-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:0b8c5e74d48a505a014e855cd4c7be11604901d94fd6f34b685f6720b7b20ed8"},
+    {file = "pyerfa-2.0.0.3-cp38-cp38-win32.whl", hash = "sha256:2ccba04de166d81bdd3adcf10428d908ce2f3a56ed1c2767d740fec12680edbd"},
+    {file = "pyerfa-2.0.0.3-cp38-cp38-win_amd64.whl", hash = "sha256:3df87743e27588c5bd5e1f3a886629b3277fdd418059ca048420d33169376775"},
+    {file = "pyerfa-2.0.0.3-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:88aa1acedf298d255cc4b0740ee11a3b303b71763dba2f039d48abf0a95cf9df"},
+    {file = "pyerfa-2.0.0.3-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:06d4f08e96867b1fc3ae9a9e4b38693ed0806463288efc41473ad16e14774504"},
+    {file = "pyerfa-2.0.0.3-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f1819e0d95ff8dead80614f8063919d82b2dbb55437b6c0109d3393c1ab55954"},
+    {file = "pyerfa-2.0.0.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:61f1097ac2ee8c15a2a636cdfb99340d708574d66f4610456bd457d1e6b852f4"},
+    {file = "pyerfa-2.0.0.3-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:36f42ee01a62c6cbba58103e6f8e600b21ad3a71262dccf03d476efb4a20ea71"},
+    {file = "pyerfa-2.0.0.3-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:3ecd6167b48bb8f1922fae7b49554616f2e7382748a4320ad46ebd7e2cc62f3d"},
+    {file = "pyerfa-2.0.0.3-cp39-cp39-win32.whl", hash = "sha256:7f9eabfefa5317ce58fe22480102902f10f270fc64a5636c010f7c0b7e0fb032"},
+    {file = "pyerfa-2.0.0.3-cp39-cp39-win_amd64.whl", hash = "sha256:4ea7ca03ecc440224c2bed8fb136fadf6cf8aea8ba67d717f635116f30c8cc8c"},
+    {file = "pyerfa-2.0.0.3.tar.gz", hash = "sha256:d77fbbfa58350c194ccb99e5d93aa05d3c2b14d5aad8b662d93c6ad9fff41f39"},
+]
+
+[package.dependencies]
+numpy = ">=1.17"
+
+[package.extras]
+docs = ["sphinx-astropy (>=1.3)"]
+test = ["pytest", "pytest-doctestplus (>=0.7)"]
 
 [[package]]
 name = "pyerfa"
@@ -1648,6 +1850,47 @@ files = [
 [package.extras]
 plugins = ["importlib-metadata"]
 windows-terminal = ["colorama (>=0.4.6)"]
+
+[[package]]
+name = "pyrsistent"
+version = "0.20.0"
+description = "Persistent/Functional/Immutable data structures"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pyrsistent-0.20.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:8c3aba3e01235221e5b229a6c05f585f344734bd1ad42a8ac51493d74722bbce"},
+    {file = "pyrsistent-0.20.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c1beb78af5423b879edaf23c5591ff292cf7c33979734c99aa66d5914ead880f"},
+    {file = "pyrsistent-0.20.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:21cc459636983764e692b9eba7144cdd54fdec23ccdb1e8ba392a63666c60c34"},
+    {file = "pyrsistent-0.20.0-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:f5ac696f02b3fc01a710427585c855f65cd9c640e14f52abe52020722bb4906b"},
+    {file = "pyrsistent-0.20.0-cp310-cp310-win32.whl", hash = "sha256:0724c506cd8b63c69c7f883cc233aac948c1ea946ea95996ad8b1380c25e1d3f"},
+    {file = "pyrsistent-0.20.0-cp310-cp310-win_amd64.whl", hash = "sha256:8441cf9616d642c475684d6cf2520dd24812e996ba9af15e606df5f6fd9d04a7"},
+    {file = "pyrsistent-0.20.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:0f3b1bcaa1f0629c978b355a7c37acd58907390149b7311b5db1b37648eb6958"},
+    {file = "pyrsistent-0.20.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5cdd7ef1ea7a491ae70d826b6cc64868de09a1d5ff9ef8d574250d0940e275b8"},
+    {file = "pyrsistent-0.20.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cae40a9e3ce178415040a0383f00e8d68b569e97f31928a3a8ad37e3fde6df6a"},
+    {file = "pyrsistent-0.20.0-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:6288b3fa6622ad8a91e6eb759cfc48ff3089e7c17fb1d4c59a919769314af224"},
+    {file = "pyrsistent-0.20.0-cp311-cp311-win32.whl", hash = "sha256:7d29c23bdf6e5438c755b941cef867ec2a4a172ceb9f50553b6ed70d50dfd656"},
+    {file = "pyrsistent-0.20.0-cp311-cp311-win_amd64.whl", hash = "sha256:59a89bccd615551391f3237e00006a26bcf98a4d18623a19909a2c48b8e986ee"},
+    {file = "pyrsistent-0.20.0-cp312-cp312-macosx_10_9_universal2.whl", hash = "sha256:09848306523a3aba463c4b49493a760e7a6ca52e4826aa100ee99d8d39b7ad1e"},
+    {file = "pyrsistent-0.20.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a14798c3005ec892bbada26485c2eea3b54109cb2533713e355c806891f63c5e"},
+    {file = "pyrsistent-0.20.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b14decb628fac50db5e02ee5a35a9c0772d20277824cfe845c8a8b717c15daa3"},
+    {file = "pyrsistent-0.20.0-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:2e2c116cc804d9b09ce9814d17df5edf1df0c624aba3b43bc1ad90411487036d"},
+    {file = "pyrsistent-0.20.0-cp312-cp312-win32.whl", hash = "sha256:e78d0c7c1e99a4a45c99143900ea0546025e41bb59ebc10182e947cf1ece9174"},
+    {file = "pyrsistent-0.20.0-cp312-cp312-win_amd64.whl", hash = "sha256:4021a7f963d88ccd15b523787d18ed5e5269ce57aa4037146a2377ff607ae87d"},
+    {file = "pyrsistent-0.20.0-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:79ed12ba79935adaac1664fd7e0e585a22caa539dfc9b7c7c6d5ebf91fb89054"},
+    {file = "pyrsistent-0.20.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f920385a11207dc372a028b3f1e1038bb244b3ec38d448e6d8e43c6b3ba20e98"},
+    {file = "pyrsistent-0.20.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4f5c2d012671b7391803263419e31b5c7c21e7c95c8760d7fc35602353dee714"},
+    {file = "pyrsistent-0.20.0-cp38-cp38-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:ef3992833fbd686ee783590639f4b8343a57f1f75de8633749d984dc0eb16c86"},
+    {file = "pyrsistent-0.20.0-cp38-cp38-win32.whl", hash = "sha256:881bbea27bbd32d37eb24dd320a5e745a2a5b092a17f6debc1349252fac85423"},
+    {file = "pyrsistent-0.20.0-cp38-cp38-win_amd64.whl", hash = "sha256:6d270ec9dd33cdb13f4d62c95c1a5a50e6b7cdd86302b494217137f760495b9d"},
+    {file = "pyrsistent-0.20.0-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:ca52d1ceae015859d16aded12584c59eb3825f7b50c6cfd621d4231a6cc624ce"},
+    {file = "pyrsistent-0.20.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b318ca24db0f0518630e8b6f3831e9cba78f099ed5c1d65ffe3e023003043ba0"},
+    {file = "pyrsistent-0.20.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fed2c3216a605dc9a6ea50c7e84c82906e3684c4e80d2908208f662a6cbf9022"},
+    {file = "pyrsistent-0.20.0-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:2e14c95c16211d166f59c6611533d0dacce2e25de0f76e4c140fde250997b3ca"},
+    {file = "pyrsistent-0.20.0-cp39-cp39-win32.whl", hash = "sha256:f058a615031eea4ef94ead6456f5ec2026c19fb5bd6bfe86e9665c4158cf802f"},
+    {file = "pyrsistent-0.20.0-cp39-cp39-win_amd64.whl", hash = "sha256:58b8f6366e152092194ae68fefe18b9f0b4f89227dfd86a07770c3d86097aebf"},
+    {file = "pyrsistent-0.20.0-py3-none-any.whl", hash = "sha256:c55acc4733aad6560a7f5f818466631f07efc001fd023f34a6c203f8b6df0f0b"},
+    {file = "pyrsistent-0.20.0.tar.gz", hash = "sha256:4c48f78f62ab596c679086084d0dd13254ae4f3d6c72a83ffdf5ebdef8f265a4"},
+]
 
 [[package]]
 name = "python-dateutil"
@@ -1841,45 +2084,41 @@ tests = ["coverage (>=6.0.0)", "flake8", "mypy", "pytest (>=7.0.0)", "pytest-asy
 
 [[package]]
 name = "scipy"
-version = "1.12.0"
+version = "1.10.1"
 description = "Fundamental algorithms for scientific computing in Python"
 optional = false
-python-versions = ">=3.9"
+python-versions = "<3.12,>=3.8"
 files = [
-    {file = "scipy-1.12.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:78e4402e140879387187f7f25d91cc592b3501a2e51dfb320f48dfb73565f10b"},
-    {file = "scipy-1.12.0-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:f5f00ebaf8de24d14b8449981a2842d404152774c1a1d880c901bf454cb8e2a1"},
-    {file = "scipy-1.12.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e53958531a7c695ff66c2e7bb7b79560ffdc562e2051644c5576c39ff8efb563"},
-    {file = "scipy-1.12.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5e32847e08da8d895ce09d108a494d9eb78974cf6de23063f93306a3e419960c"},
-    {file = "scipy-1.12.0-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:4c1020cad92772bf44b8e4cdabc1df5d87376cb219742549ef69fc9fd86282dd"},
-    {file = "scipy-1.12.0-cp310-cp310-win_amd64.whl", hash = "sha256:75ea2a144096b5e39402e2ff53a36fecfd3b960d786b7efd3c180e29c39e53f2"},
-    {file = "scipy-1.12.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:408c68423f9de16cb9e602528be4ce0d6312b05001f3de61fe9ec8b1263cad08"},
-    {file = "scipy-1.12.0-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:5adfad5dbf0163397beb4aca679187d24aec085343755fcdbdeb32b3679f254c"},
-    {file = "scipy-1.12.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c3003652496f6e7c387b1cf63f4bb720951cfa18907e998ea551e6de51a04467"},
-    {file = "scipy-1.12.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8b8066bce124ee5531d12a74b617d9ac0ea59245246410e19bca549656d9a40a"},
-    {file = "scipy-1.12.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:8bee4993817e204d761dba10dbab0774ba5a8612e57e81319ea04d84945375ba"},
-    {file = "scipy-1.12.0-cp311-cp311-win_amd64.whl", hash = "sha256:a24024d45ce9a675c1fb8494e8e5244efea1c7a09c60beb1eeb80373d0fecc70"},
-    {file = "scipy-1.12.0-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:e7e76cc48638228212c747ada851ef355c2bb5e7f939e10952bc504c11f4e372"},
-    {file = "scipy-1.12.0-cp312-cp312-macosx_12_0_arm64.whl", hash = "sha256:f7ce148dffcd64ade37b2df9315541f9adad6efcaa86866ee7dd5db0c8f041c3"},
-    {file = "scipy-1.12.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:9c39f92041f490422924dfdb782527a4abddf4707616e07b021de33467f917bc"},
-    {file = "scipy-1.12.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a7ebda398f86e56178c2fa94cad15bf457a218a54a35c2a7b4490b9f9cb2676c"},
-    {file = "scipy-1.12.0-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:95e5c750d55cf518c398a8240571b0e0782c2d5a703250872f36eaf737751338"},
-    {file = "scipy-1.12.0-cp312-cp312-win_amd64.whl", hash = "sha256:e646d8571804a304e1da01040d21577685ce8e2db08ac58e543eaca063453e1c"},
-    {file = "scipy-1.12.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:913d6e7956c3a671de3b05ccb66b11bc293f56bfdef040583a7221d9e22a2e35"},
-    {file = "scipy-1.12.0-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:bba1b0c7256ad75401c73e4b3cf09d1f176e9bd4248f0d3112170fb2ec4db067"},
-    {file = "scipy-1.12.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:730badef9b827b368f351eacae2e82da414e13cf8bd5051b4bdfd720271a5371"},
-    {file = "scipy-1.12.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6546dc2c11a9df6926afcbdd8a3edec28566e4e785b915e849348c6dd9f3f490"},
-    {file = "scipy-1.12.0-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:196ebad3a4882081f62a5bf4aeb7326aa34b110e533aab23e4374fcccb0890dc"},
-    {file = "scipy-1.12.0-cp39-cp39-win_amd64.whl", hash = "sha256:b360f1b6b2f742781299514e99ff560d1fe9bd1bff2712894b52abe528d1fd1e"},
-    {file = "scipy-1.12.0.tar.gz", hash = "sha256:4bf5abab8a36d20193c698b0f1fc282c1d083c94723902c447e5d2f1780936a3"},
+    {file = "scipy-1.10.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:e7354fd7527a4b0377ce55f286805b34e8c54b91be865bac273f527e1b839019"},
+    {file = "scipy-1.10.1-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:4b3f429188c66603a1a5c549fb414e4d3bdc2a24792e061ffbd607d3d75fd84e"},
+    {file = "scipy-1.10.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1553b5dcddd64ba9a0d95355e63fe6c3fc303a8fd77c7bc91e77d61363f7433f"},
+    {file = "scipy-1.10.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4c0ff64b06b10e35215abce517252b375e580a6125fd5fdf6421b98efbefb2d2"},
+    {file = "scipy-1.10.1-cp310-cp310-win_amd64.whl", hash = "sha256:fae8a7b898c42dffe3f7361c40d5952b6bf32d10c4569098d276b4c547905ee1"},
+    {file = "scipy-1.10.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:0f1564ea217e82c1bbe75ddf7285ba0709ecd503f048cb1236ae9995f64217bd"},
+    {file = "scipy-1.10.1-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:d925fa1c81b772882aa55bcc10bf88324dadb66ff85d548c71515f6689c6dac5"},
+    {file = "scipy-1.10.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:aaea0a6be54462ec027de54fca511540980d1e9eea68b2d5c1dbfe084797be35"},
+    {file = "scipy-1.10.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:15a35c4242ec5f292c3dd364a7c71a61be87a3d4ddcc693372813c0b73c9af1d"},
+    {file = "scipy-1.10.1-cp311-cp311-win_amd64.whl", hash = "sha256:43b8e0bcb877faf0abfb613d51026cd5cc78918e9530e375727bf0625c82788f"},
+    {file = "scipy-1.10.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:5678f88c68ea866ed9ebe3a989091088553ba12c6090244fdae3e467b1139c35"},
+    {file = "scipy-1.10.1-cp38-cp38-macosx_12_0_arm64.whl", hash = "sha256:39becb03541f9e58243f4197584286e339029e8908c46f7221abeea4b749fa88"},
+    {file = "scipy-1.10.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bce5869c8d68cf383ce240e44c1d9ae7c06078a9396df68ce88a1230f93a30c1"},
+    {file = "scipy-1.10.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:07c3457ce0b3ad5124f98a86533106b643dd811dd61b548e78cf4c8786652f6f"},
+    {file = "scipy-1.10.1-cp38-cp38-win_amd64.whl", hash = "sha256:049a8bbf0ad95277ffba9b3b7d23e5369cc39e66406d60422c8cfef40ccc8415"},
+    {file = "scipy-1.10.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:cd9f1027ff30d90618914a64ca9b1a77a431159df0e2a195d8a9e8a04c78abf9"},
+    {file = "scipy-1.10.1-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:79c8e5a6c6ffaf3a2262ef1be1e108a035cf4f05c14df56057b64acc5bebffb6"},
+    {file = "scipy-1.10.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:51af417a000d2dbe1ec6c372dfe688e041a7084da4fdd350aeb139bd3fb55353"},
+    {file = "scipy-1.10.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1b4735d6c28aad3cdcf52117e0e91d6b39acd4272f3f5cd9907c24ee931ad601"},
+    {file = "scipy-1.10.1-cp39-cp39-win_amd64.whl", hash = "sha256:7ff7f37b1bf4417baca958d254e8e2875d0cc23aaadbe65b3d5b3077b0eb23ea"},
+    {file = "scipy-1.10.1.tar.gz", hash = "sha256:2cf9dfb80a7b4589ba4c40ce7588986d6d5cebc5457cad2c2880f6bc2d42f3a5"},
 ]
 
 [package.dependencies]
-numpy = ">=1.22.4,<1.29.0"
+numpy = ">=1.19.5,<1.27.0"
 
 [package.extras]
-dev = ["click", "cython-lint (>=0.12.2)", "doit (>=0.36.0)", "mypy", "pycodestyle", "pydevtool", "rich-click", "ruff", "types-psutil", "typing_extensions"]
-doc = ["jupytext", "matplotlib (>2)", "myst-nb", "numpydoc", "pooch", "pydata-sphinx-theme (==0.9.0)", "sphinx (!=4.1.0)", "sphinx-design (>=0.2.0)"]
-test = ["asv", "gmpy2", "hypothesis", "mpmath", "pooch", "pytest", "pytest-cov", "pytest-timeout", "pytest-xdist", "scikit-umfpack", "threadpoolctl"]
+dev = ["click", "doit (>=0.36.0)", "flake8", "mypy", "pycodestyle", "pydevtool", "rich-click", "typing_extensions"]
+doc = ["matplotlib (>2)", "numpydoc", "pydata-sphinx-theme (==0.9.0)", "sphinx (!=4.1.0)", "sphinx-design (>=0.2.0)"]
+test = ["asv", "gmpy2", "mpmath", "pooch", "pytest", "pytest-cov", "pytest-timeout", "pytest-xdist", "scikit-umfpack", "threadpoolctl"]
 
 [[package]]
 name = "secretstorage"
@@ -2062,50 +2301,47 @@ dev = ["bump2version", "sphinxcontrib-httpdomain", "transifex-client", "wheel"]
 
 [[package]]
 name = "sphinxcontrib-applehelp"
-version = "1.0.8"
+version = "1.0.4"
 description = "sphinxcontrib-applehelp is a Sphinx extension which outputs Apple help books"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.8"
 files = [
-    {file = "sphinxcontrib_applehelp-1.0.8-py3-none-any.whl", hash = "sha256:cb61eb0ec1b61f349e5cc36b2028e9e7ca765be05e49641c97241274753067b4"},
-    {file = "sphinxcontrib_applehelp-1.0.8.tar.gz", hash = "sha256:c40a4f96f3776c4393d933412053962fac2b84f4c99a7982ba42e09576a70619"},
+    {file = "sphinxcontrib-applehelp-1.0.4.tar.gz", hash = "sha256:828f867945bbe39817c210a1abfd1bc4895c8b73fcaade56d45357a348a07d7e"},
+    {file = "sphinxcontrib_applehelp-1.0.4-py3-none-any.whl", hash = "sha256:29d341f67fb0f6f586b23ad80e072c8e6ad0b48417db2bde114a4c9746feb228"},
 ]
 
 [package.extras]
 lint = ["docutils-stubs", "flake8", "mypy"]
-standalone = ["Sphinx (>=5)"]
 test = ["pytest"]
 
 [[package]]
 name = "sphinxcontrib-devhelp"
-version = "1.0.6"
-description = "sphinxcontrib-devhelp is a sphinx extension which outputs Devhelp documents"
+version = "1.0.2"
+description = "sphinxcontrib-devhelp is a sphinx extension which outputs Devhelp document."
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.5"
 files = [
-    {file = "sphinxcontrib_devhelp-1.0.6-py3-none-any.whl", hash = "sha256:6485d09629944511c893fa11355bda18b742b83a2b181f9a009f7e500595c90f"},
-    {file = "sphinxcontrib_devhelp-1.0.6.tar.gz", hash = "sha256:9893fd3f90506bc4b97bdb977ceb8fbd823989f4316b28c3841ec128544372d3"},
+    {file = "sphinxcontrib-devhelp-1.0.2.tar.gz", hash = "sha256:ff7f1afa7b9642e7060379360a67e9c41e8f3121f2ce9164266f61b9f4b338e4"},
+    {file = "sphinxcontrib_devhelp-1.0.2-py2.py3-none-any.whl", hash = "sha256:8165223f9a335cc1af7ffe1ed31d2871f325254c0423bc0c4c7cd1c1e4734a2e"},
 ]
 
 [package.extras]
 lint = ["docutils-stubs", "flake8", "mypy"]
-standalone = ["Sphinx (>=5)"]
 test = ["pytest"]
 
 [[package]]
 name = "sphinxcontrib-htmlhelp"
-version = "2.0.5"
+version = "2.0.1"
 description = "sphinxcontrib-htmlhelp is a sphinx extension which renders HTML help files"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.8"
 files = [
-    {file = "sphinxcontrib_htmlhelp-2.0.5-py3-none-any.whl", hash = "sha256:393f04f112b4d2f53d93448d4bce35842f62b307ccdc549ec1585e950bc35e04"},
-    {file = "sphinxcontrib_htmlhelp-2.0.5.tar.gz", hash = "sha256:0dc87637d5de53dd5eec3a6a01753b1ccf99494bd756aafecd74b4fa9e729015"},
+    {file = "sphinxcontrib-htmlhelp-2.0.1.tar.gz", hash = "sha256:0cbdd302815330058422b98a113195c9249825d681e18f11e8b1f78a2f11efff"},
+    {file = "sphinxcontrib_htmlhelp-2.0.1-py3-none-any.whl", hash = "sha256:c38cb46dccf316c79de6e5515e1770414b797162b23cd3d06e67020e1d2a6903"},
 ]
 
 [package.extras]
 lint = ["docutils-stubs", "flake8", "mypy"]
-standalone = ["Sphinx (>=5)"]
 test = ["html5lib", "pytest"]
 
 [[package]]
@@ -2138,34 +2374,32 @@ test = ["flake8", "mypy", "pytest"]
 
 [[package]]
 name = "sphinxcontrib-qthelp"
-version = "1.0.7"
-description = "sphinxcontrib-qthelp is a sphinx extension which outputs QtHelp documents"
+version = "1.0.3"
+description = "sphinxcontrib-qthelp is a sphinx extension which outputs QtHelp document."
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.5"
 files = [
-    {file = "sphinxcontrib_qthelp-1.0.7-py3-none-any.whl", hash = "sha256:e2ae3b5c492d58fcbd73281fbd27e34b8393ec34a073c792642cd8e529288182"},
-    {file = "sphinxcontrib_qthelp-1.0.7.tar.gz", hash = "sha256:053dedc38823a80a7209a80860b16b722e9e0209e32fea98c90e4e6624588ed6"},
+    {file = "sphinxcontrib-qthelp-1.0.3.tar.gz", hash = "sha256:4c33767ee058b70dba89a6fc5c1892c0d57a54be67ddd3e7875a18d14cba5a72"},
+    {file = "sphinxcontrib_qthelp-1.0.3-py2.py3-none-any.whl", hash = "sha256:bd9fc24bcb748a8d51fd4ecaade681350aa63009a347a8c14e637895444dfab6"},
 ]
 
 [package.extras]
 lint = ["docutils-stubs", "flake8", "mypy"]
-standalone = ["Sphinx (>=5)"]
 test = ["pytest"]
 
 [[package]]
 name = "sphinxcontrib-serializinghtml"
-version = "1.1.10"
-description = "sphinxcontrib-serializinghtml is a sphinx extension which outputs \"serialized\" HTML files (json and pickle)"
+version = "1.1.5"
+description = "sphinxcontrib-serializinghtml is a sphinx extension which outputs \"serialized\" HTML files (json and pickle)."
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.5"
 files = [
-    {file = "sphinxcontrib_serializinghtml-1.1.10-py3-none-any.whl", hash = "sha256:326369b8df80a7d2d8d7f99aa5ac577f51ea51556ed974e7716cfd4fca3f6cb7"},
-    {file = "sphinxcontrib_serializinghtml-1.1.10.tar.gz", hash = "sha256:93f3f5dc458b91b192fe10c397e324f262cf163d79f3282c158e8436a2c4511f"},
+    {file = "sphinxcontrib-serializinghtml-1.1.5.tar.gz", hash = "sha256:aa5f6de5dfdf809ef505c4895e51ef5c9eac17d0f287933eb49ec495280b6952"},
+    {file = "sphinxcontrib_serializinghtml-1.1.5-py2.py3-none-any.whl", hash = "sha256:352a9a00ae864471d3a7ead8d7d79f5fc0b57e8b3f95e9867eb9eb28999b92fd"},
 ]
 
 [package.extras]
 lint = ["docutils-stubs", "flake8", "mypy"]
-standalone = ["Sphinx (>=5)"]
 test = ["pytest"]
 
 [[package]]
@@ -2392,5 +2626,5 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.9,<3.12"
-content-hash = "f5eb7de4667009f3e224b6099eabb3ec4bf572a968d6c4bbcd2625baf8a1cf77"
+python-versions = ">=3.8.1,<3.12"
+content-hash = "c65cc7fc9b0781f7970ea95b0d77ceef825445ae1835f99072d603fde5aae777"
