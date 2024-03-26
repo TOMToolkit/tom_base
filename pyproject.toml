@@ -57,7 +57,7 @@ astroquery = "<1"
 astroplan = ">=0.8,<0.10"
 astropy = [
     { version = ">=5.3.3,<6", python = ">=3.9" },
-    { version = ">=3,<6", python = "<3.9" }
+    { version = ">=3,<6", python = "<3.12" }
 ]
 django = "<5"
 djangorestframework = "<4"
