@@ -256,28 +256,28 @@ test-all = ["coverage[toml]", "ipython (>=4.2)", "objgraph", "pytest (>=7.0)", "
 
 [[package]]
 name = "astroquery"
-version = "0.4.6"
+version = "0.4.7"
 description = "Functions and classes to access online astronomical data resources"
 optional = false
-python-versions = "*"
+python-versions = ">=3.7"
 files = [
-    {file = "astroquery-0.4.6-py3-none-any.whl", hash = "sha256:e1bc4996af7500370837d31491bd4ee7f0c954c78d24cd54fb1cceb755469094"},
-    {file = "astroquery-0.4.6.tar.gz", hash = "sha256:307ca554cb734a0ca9a22f86f5effe7e413af913ae65e1578972d847b1fe13ee"},
+    {file = "astroquery-0.4.7-py3-none-any.whl", hash = "sha256:dfa8ca46ca0a983f66e9547c774601b331770242f9f6245df5e603f795d75540"},
+    {file = "astroquery-0.4.7.tar.gz", hash = "sha256:047fbacb0a4faec4cdb62675e919c244c1c35e661044fcbb6c9a933331747ec9"},
 ]
 
 [package.dependencies]
-astropy = ">=4.0"
-beautifulsoup4 = ">=4.3.2"
+astropy = ">=4.2.1"
+beautifulsoup4 = ">=4.8"
 html5lib = ">=0.999"
-keyring = ">=4.0"
-numpy = ">=1.16"
+keyring = ">=15.0"
+numpy = ">=1.18"
 pyvo = ">=1.1"
-requests = ">=2.4.3"
+requests = ">=2.19"
 
 [package.extras]
-all = ["aplpy", "astropy-healpix", "boto3", "mocpy (>=0.5.2)", "pyregion", "regions"]
-docs = ["scipy", "sphinx-astropy (>=1.5)"]
-test = ["flask", "jinja2", "matplotlib", "pytest-astropy", "pytest-dependency"]
+all = ["astropy-healpix", "boto3", "mocpy (>=0.9)", "regions"]
+docs = ["fsspec[http]", "matplotlib", "scipy", "sphinx-astropy (>=1.5)"]
+test = ["matplotlib", "pytest-astropy", "pytest-dependency", "pytest-rerunfailures"]
 
 [[package]]
 name = "async-timeout"
