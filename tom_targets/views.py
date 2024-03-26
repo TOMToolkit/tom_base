@@ -235,6 +235,7 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
     """
     View that handles updating a target. Requires authorization.
     """
+    template_name = 'tom_targets/target_form.html'
     permission_required = 'tom_targets.change_target'
     model = Target
     fields = '__all__'
@@ -334,6 +335,7 @@ class TargetDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     """
     View for deleting a target. Requires authorization.
     """
+    template_name = 'tom_targets/target_confirm_delete.html'
     permission_required = 'tom_targets.delete_target'
     success_url = reverse_lazy('targets:list')
     model = Target
