@@ -46,7 +46,8 @@ class TestObservationViewset(APITestCase):
 
         with self.subTest('Test that a user cannot view an ObservationRecord for a target they cannot view.'):
             response = self.client.get(reverse('api:observations-detail', args=(self.obsr3.id,)))
-            self.assertContains(response, 'Not found.', status_code=status.HTTP_404_NOT_FOUND)
+            self.assertContains(response, 'No ObservationRecord matches the given query.',
+                                status_code=status.HTTP_404_NOT_FOUND)
 
     def test_observation_list(self):
         """Test observation API list endpoint."""
@@ -206,7 +207,8 @@ class TestObservationViewset(APITestCase):
 
         self.client.force_login(user2)
         response = self.client.patch(reverse('api:observations-cancel', kwargs={'pk': self.obsr2.id}))
-        self.assertContains(response, 'Not found.', status_code=status.HTTP_404_NOT_FOUND)
+        self.assertContains(response, 'No ObservationRecord matches the given query.',
+                            status_code=status.HTTP_404_NOT_FOUND)
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility',
