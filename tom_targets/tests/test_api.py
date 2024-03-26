@@ -50,7 +50,7 @@ class TestTargetViewset(APITestCase):
         self.client.force_login(self.user2)
         response = self.client.get(reverse('api:targets-detail', args=(self.nst.id,)))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.json()['detail'], 'Not found.')
+        self.assertEqual(response.json()['detail'], 'No Target matches the given query.')
 
     def test_target_create(self):
         """
