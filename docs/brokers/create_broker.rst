@@ -47,7 +47,7 @@ a Django project directory of the form:
 Creating a Broker Module
 ************************
 
-In this example, we will create a broker named __MyBroker__.
+In this example, we will create a broker named **MyBroker**.
 
 Begin by creating a file ``my_broker.py``, and placing it in the inner ``mytom/`` directory
 of the project (in the directory with settings.py). ``my_broker.py`` will contain the classes that define our custom

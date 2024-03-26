@@ -105,6 +105,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
     View for creating a Target. Requires authentication.
     """
 
+    template_name = 'tom_targets/target_form.html'
     model = Target
     fields = '__all__'
 
@@ -234,6 +235,7 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
     """
     View that handles updating a target. Requires authorization.
     """
+    template_name = 'tom_targets/target_form.html'
     permission_required = 'tom_targets.change_target'
     model = Target
     fields = '__all__'
@@ -333,6 +335,7 @@ class TargetDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     """
     View for deleting a target. Requires authorization.
     """
+    template_name = 'tom_targets/target_confirm_delete.html'
     permission_required = 'tom_targets.delete_target'
     success_url = reverse_lazy('targets:list')
     model = Target
@@ -413,6 +416,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
     """
     View that handles the display of the target details. Requires authorization.
     """
+    template_name = 'tom_targets/target_detail.html'
     permission_required = 'tom_targets.view_target'
     model = Target
 
@@ -433,6 +437,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
             )
         observation_template_form.fields['target'].widget = HiddenInput()
         context['observation_template_form'] = observation_template_form
+        context['target'] = self.object
         return context
 
     def get(self, request, *args, **kwargs):

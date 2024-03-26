@@ -61,6 +61,11 @@ class Command(BaseCommand):
            ├── templates
            ├── tmp
            ├── mytom
+           │   ├── __init__.py
+           │   ├── models.py
+           │   ├── settings.py
+           │   ├── urls.py
+           │   └── wsgi.py
            └── static
                ├── .keep
                └── tom_common
@@ -178,7 +183,8 @@ class Command(BaseCommand):
         rendered = template.render(self.context)
 
         # TODO: Ugly hack to get project name
-        settings_location = os.path.join(BASE_DIR, os.path.basename(BASE_DIR), 'settings.py')
+        project_dir = os.path.join(BASE_DIR, os.path.basename(BASE_DIR))
+        settings_location = os.path.join(project_dir, 'settings.py')
         if not os.path.exists(settings_location):
             msg = f'Could not determine settings.py location. Writing settings.py out to {settings_location}. ' \
                   f'Please copy file to the proper location after script finishes.'
@@ -193,10 +199,21 @@ class Command(BaseCommand):
         template = get_template('tom_setup/css.tmpl')
         rendered = template.render(self.context)
 
-        # TODO: Ugly hack to get project name
         css_location = os.path.join(BASE_DIR, 'static', 'tom_common', 'css', 'custom.css')
         with open(css_location, 'w+') as css_file:
             css_file.write(rendered)
+
+        self.ok()
+
+    def generate_models(self):
+        self.status('Generating models.py... ')
+        template = get_template('tom_setup/models.tmpl')
+        rendered = template.render(self.context)
+
+        # TODO: Ugly hack to get project name
+        models_location = os.path.join(BASE_DIR, os.path.basename(BASE_DIR), 'models.py')
+        with open(models_location, 'w+') as models_file:
+            models_file.write(rendered)
 
         self.ok()
 
@@ -242,6 +259,7 @@ class Command(BaseCommand):
         self.get_target_type()
         self.get_hint_preference()
         self.generate_config()
+        self.generate_models()
         self.generate_css()
         self.generate_urls()
         self.run_migrations()
