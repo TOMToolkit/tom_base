@@ -289,4 +289,5 @@ class TestObservationViewsetRowLevelPermissions(APITestCase):
 
         self.client.force_login(user2)
         response = self.client.patch(reverse('api:observations-cancel', kwargs={'pk': self.obsr2.id}))
-        self.assertContains(response, 'No ObservationRecord matches the given query.', status_code=status.HTTP_404_NOT_FOUND)
+        self.assertContains(response, 'No ObservationRecord matches the given query.',
+                            status_code=status.HTTP_404_NOT_FOUND)
