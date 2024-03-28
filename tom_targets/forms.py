@@ -7,10 +7,10 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
 from tom_dataproducts.sharing import get_sharing_destination_options
-from .models import (
-    Target, TargetExtra, TargetName, TargetList, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
-    REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME, IGNORE_FIELDS, GLOBAL_TARGET_FIELDS
-)
+from .models import Target, TargetExtra, TargetName, TargetList
+from tom_targets.base_models import (SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
+                                     REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME,
+                                     IGNORE_FIELDS, GLOBAL_TARGET_FIELDS)
 
 
 def extra_field_to_form_field(field_type):
