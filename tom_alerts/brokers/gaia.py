@@ -193,6 +193,5 @@ class GaiaBroker(GenericBroker):
                         source_location=alert_url,
                         data_type='photometry',
                         target=target)
-                    rd.save()
 
         return
