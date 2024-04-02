@@ -20,14 +20,14 @@ logger = logging.getLogger(__name__)
 
 def get_target_base_model():
     base_class = BaseTarget
-    try:
-        BASE_TARGET_MODEL = settings.BASE_TARGET_MODEL
-    except AttributeError:
-        return base_class
+    # try:
+    #     BASE_TARGET_MODEL = settings.BASE_TARGET_MODEL
+    # except AttributeError:
+    return base_class
 
     # try:
-    clazz = import_string('mycode.models.UserDefinedTarget')
-    return clazz
+    # clazz = import_string('mycode.models.UserDefinedTarget')
+    # return clazz
     # except (ImportError):
     #     raise ImportError(f'Could not import {BASE_TARGET_MODEL}. Did you provide the correct path?')
     # return base_class

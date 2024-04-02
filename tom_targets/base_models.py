@@ -275,6 +275,7 @@ class BaseTarget(models.Model):
         matches = TargetMatchManager()
 
     class Meta:
+        verbose_name = "target"
         permissions = (
             ('view_target', 'View Target'),
             ('add_target', 'Add Target'),
