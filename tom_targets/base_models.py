@@ -301,15 +301,15 @@ class BaseTarget(models.Model):
         if created:
             for extra_field in settings.EXTRA_FIELDS:
                 if extra_field.get('default') is not None:
-                    TargetExtra(target=self, key=extra_field['name'], value=extra_field.get('default')).save()
+                    self.targetextra_set(target=self, key=extra_field['name'], value=extra_field.get('default')).save()
 
         for k, v in extras.items():
-            target_extra, _ = TargetExtra.objects.get_or_create(target=self, key=k)
+            target_extra, _ = self.targetextra_set.get_or_create(target=self, key=k)
             target_extra.value = v
             target_extra.save()
 
         for name in names:
-            name, _ = TargetName.objects.get_or_create(target=self, name=name)
+            name, _ = self.targetname_set.get_or_create(target=self, name=name)
             name.full_clean()
             name.save()
 
