@@ -16,22 +16,16 @@ from tom_targets.base_models import BaseTarget
 logger = logging.getLogger(__name__)
 
 
-
-
 def get_target_base_model():
     base_class = BaseTarget
-    # try:
-    #     BASE_TARGET_MODEL = settings.BASE_TARGET_MODEL
-    # except AttributeError:
-    return base_class
-
-    # try:
-    # clazz = import_string('mycode.models.UserDefinedTarget')
-    # return clazz
-    # except (ImportError):
-    #     raise ImportError(f'Could not import {BASE_TARGET_MODEL}. Did you provide the correct path?')
-    # return base_class
-
+    try:
+        BASE_TARGET_MODEL = settings.BASE_TARGET_MODEL
+        clazz = import_string(BASE_TARGET_MODEL)
+        return clazz
+    except AttributeError:
+        return base_class
+    except ImportError:
+        raise ImportError(f'Could not import {BASE_TARGET_MODEL}. Did you provide the correct path?')
 
 
 Target = get_target_base_model()
@@ -52,7 +46,7 @@ class TargetName(models.Model):
     :param modified: The time at which this target name was modified in the TOM database.
     :type modified: datetime
     """
-    target = models.ForeignKey(Target, on_delete=models.CASCADE, related_name='aliases')
+    target = models.ForeignKey(BaseTarget, on_delete=models.CASCADE, related_name='aliases')
     name = models.CharField(max_length=100, unique=True, verbose_name='Alias')
     created = models.DateTimeField(
         auto_now_add=True, help_text='The time at which this target name was created.'
@@ -110,7 +104,7 @@ class TargetExtra(models.Model):
     :param time_value: Datetime representation of the ``value`` field for this object, if applicable.
     :type time_value: datetime
     """
-    target = models.ForeignKey(Target, on_delete=models.CASCADE)
+    target = models.ForeignKey(BaseTarget, on_delete=models.CASCADE)
     key = models.CharField(max_length=200)
     value = models.TextField(blank=True, default='')
     float_value = models.FloatField(null=True, blank=True)
@@ -187,7 +181,7 @@ class TargetList(models.Model):
     :type modified: datetime
     """
     name = models.CharField(max_length=200, help_text='The name of the target list.')
-    targets = models.ManyToManyField(Target)
+    targets = models.ManyToManyField(BaseTarget)
     created = models.DateTimeField(
         auto_now_add=True, help_text='The time which this target list was created in the TOM database.'
     )

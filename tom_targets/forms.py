@@ -113,9 +113,7 @@ class SiderealTargetCreateForm(TargetForm):
             self.fields[field].required = True
 
     class Meta(TargetForm.Meta):
-        # Include all fields except non-sidereal fields
-        fields = GLOBAL_TARGET_FIELDS + [field.name for field in Target._meta.get_fields()
-                                         if field.name not in NON_SIDEREAL_FIELDS and field.name not in IGNORE_FIELDS]
+        fields = SIDEREAL_FIELDS
 
 
 class NonSiderealTargetCreateForm(TargetForm):
@@ -146,9 +144,7 @@ class NonSiderealTargetCreateForm(TargetForm):
                 )
 
     class Meta(TargetForm.Meta):
-        # Include all fields except sidereal fields
-        fields = GLOBAL_TARGET_FIELDS + [field.name for field in Target._meta.get_fields()
-                                         if field.name not in SIDEREAL_FIELDS and field.name not in IGNORE_FIELDS]
+        fields = NON_SIDEREAL_FIELDS
 
 
 class TargetVisibilityForm(forms.Form):
