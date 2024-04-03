@@ -12,7 +12,6 @@ from fits2image.conversions import fits_to_jpg
 from PIL import Image
 from importlib import import_module
 
-from tom_targets.models import Target
 from tom_targets.base_models import BaseTarget
 from tom_alerts.models import AlertStreamMessage
 from tom_observations.models import ObservationRecord
@@ -294,7 +293,7 @@ class DataProduct(models.Model):
                 if resp:
                     return tmpfile
             except Exception as e:
-                logger.warn(f'Unable to create thumbnail for {self}: {e}')
+                logger.warning(f'Unable to create thumbnail for {self}: {e}')
         return
 
 

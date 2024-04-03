@@ -336,7 +336,8 @@ class BaseTarget(models.Model):
         if self.pk and self.name != self.__class__.objects.get(pk=self.pk).name:
             for alias in self.aliases.all():
                 # Check for fuzzy matching
-                if self.__class__.matches.make_simple_name(alias.name) == self.__class__.matches.make_simple_name(self.name):
+                if self.__class__.matches.make_simple_name(alias.name) == \
+                        self.__class__.matches.make_simple_name(self.name):
                     raise ValidationError('Target name and target aliases must be different')
 
     def __str__(self):
