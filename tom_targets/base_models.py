@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 GLOBAL_TARGET_FIELDS = ['name', 'type']
 
 IGNORE_FIELDS = ['id', 'created', 'modified', 'aliases', 'targetextra', 'targetlist', 'observationrecord',
-                 'dataproduct', 'reduceddatum']
+                 'dataproduct', 'reduceddatum', 'basetarget_ptr']
 
 SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'ra', 'dec', 'epoch', 'pm_ra', 'pm_dec', 'galactic_lng', 'galactic_lat', 'distance', 'distance_err'
