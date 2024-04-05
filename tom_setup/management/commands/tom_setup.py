@@ -48,8 +48,27 @@ class Command(BaseCommand):
         self.status('Checking Python version... ')
         major = sys.version_info.major
         minor = sys.version_info.minor
-        if major < 3 or minor < 7:
-            self.exit('Incompatible Python version found. Please install Python >= 3.7')
+        if major < 3 or minor < 8:
+            self.exit('Incompatible Python version found. Please install Python >= 3.8')
+        self.ok()
+
+    def create_custom_code_app(self):
+        custom_code_app_explanation = ('You will need an app to store your custom code. \n'
+                                       'This app will be created in the same directory as your project and should have '
+                                       'a different name from your main project name. \n')
+        prompt = f'What would you like to name your custom code app? {self.style.WARNING("[custom_code] ")}'
+        self.stdout.write(custom_code_app_explanation)
+        while True:
+            response = input(prompt).lower().replace(' ', '_')
+            if response == os.path.basename(BASE_DIR).lower():
+                self.stdout.write('Invalid response. Please try again.')
+            elif not response:
+                self.context['CUSTOM_CODE_APP_NAME'] = 'custom_code'
+                break
+            else:
+                self.context['CUSTOM_CODE_APP_NAME'] = response
+                break
+        call_command('startapp', response)
         self.ok()
 
     def create_project_dirs(self):
@@ -66,6 +85,12 @@ class Command(BaseCommand):
            │   ├── settings.py
            │   ├── urls.py
            │   └── wsgi.py
+           ├── myapp
+           │   ├── __init__.py
+           │   ├── migrations
+           │   ├── admin.py
+           │   ├── apps.py
+           │   └── models.py
            └── static
                ├── .keep
                └── tom_common
@@ -211,7 +236,7 @@ class Command(BaseCommand):
         rendered = template.render(self.context)
 
         # TODO: Ugly hack to get project name
-        models_location = os.path.join(BASE_DIR, os.path.basename(BASE_DIR), 'models.py')
+        models_location = os.path.join(BASE_DIR, self.context['CUSTOM_CODE_APP_NAME'], 'models.py')
         with open(models_location, 'w+') as models_file:
             models_file.write(rendered)
 
@@ -254,6 +279,7 @@ class Command(BaseCommand):
         self.context['PROJECT_NAME'] = os.path.basename(BASE_DIR)
         self.welcome_banner()
         self.check_python()
+        self.create_custom_code_app()
         self.create_project_dirs()
         self.generate_secret_key()
         self.get_target_type()

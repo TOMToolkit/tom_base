@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
+    '{{ CUSTOM_CODE_APP_NAME }}',
 ]
 
 SITE_ID = 1
@@ -192,6 +193,9 @@ CACHES = {
 
 # TOM Specific configuration
 TARGET_TYPE = '{{ TARGET_TYPE }}'
+
+# Set to the full path of a custom target model to extend the BaseTarget Model with custom fields.
+# BASE_TARGET_MODEL = '{{ CUSTOM_CODE_APP_NAME }}.models.UserDefinedTarget'
 
 FACILITIES = {
     'LCO': {
