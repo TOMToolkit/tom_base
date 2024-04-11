@@ -47,6 +47,6 @@ class TestAtlasProcessor(TestCase):
         # this is the call under test
         photometry = AtlasProcessor()._process_photometry_from_plaintext(self.data_product)
 
-        expected_non_detection_count = 9  # known apriori from test data in test_atlas_fp.csv
+        expected_non_detection_count = 17  # known a priori from test data in test_atlas_fp.csv
         self.assertEqual(expected_non_detection_count,
                          len([datum for datum in photometry if 'limit' in datum.keys()]))

@@ -79,6 +79,8 @@ class BaseForcedPhotometryService(ABC):
     form for a particular forced photometry service.
     """
     name = 'BaseForcedPhotometryService'
+    info_url = None
+    service_notes = None
 
     @abstractmethod
     def get_form(self):
