@@ -292,7 +292,7 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
         :returns: Set of targets
         :rtype: QuerySet
         """
-        return get_objects_for_user(self.request.user, 'tom_targets.change_target')
+        return get_objects_for_user(self.request.user, f'{Target._meta.app_label}.change_target')
 
     def get_form_class(self):
         """

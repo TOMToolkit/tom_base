@@ -59,7 +59,7 @@ class Command(BaseCommand):
         prompt = f'What would you like to name your custom code app? {self.style.WARNING("[custom_code] ")}'
         self.stdout.write(custom_code_app_explanation)
         while True:
-            response = input(prompt).lower().replace(' ', '_')
+            response = input(prompt).lower().replace(' ', '_').replace('-', '_')
             if response == os.path.basename(BASE_DIR).lower():
                 self.stdout.write('Invalid response. Please try again.')
             elif not response:
