@@ -10,13 +10,157 @@ the redshift of your targets. You could then do a search for targets
 with a redshift less than or greater than a particular value, or use the
 redshift value to make decisions in your science code.
 
+The TOM Toolkit currently supports two different methods for adding extra
+fields to targets:
+
+Extending the Target Model
+==========================
+Users can extend the `Target` model by creating a custom target model in the app
+where they store their custom code. This method is more flexible and allows for
+more intuitive relationships between the new target fields and other code the user
+may create. This method requires database migrations and a greater understanding of
+Django models to implement.
+
+By default the TOM Toolkit will use the `tom_targets.BaseTarget` model as the target model,
+but users can create their own target model by subclassing `tom_targets.BaseTarget` and adding
+their own fields. The TOM Toolkit will then use the custom target model if it is defined
+in the `BASE_TARGET_MODEL` setting of ``settings.py``. To implement this a user will first
+have to edit a ``models.py`` file in their custom code app and define a custom target model.
+
+Subclassing `tom_targets.BaseTarget` will give the user access to all the fields and methods
+of the `BaseTarget` model, but the user can also add their own fields and methods to the custom
+target model. Fields from the `BaseTarget` model will be stored in a separate table from the custom
+fields, and rely on separate migrations. See the
+`Django documentation on multi-table inheritance. <https://docs.djangoproject.com/en/5.0/topics/db/models/#multi-table-inheritance>`__
+
+Preparing your project for custom Target Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The first thing your project will need is a custom app. If you already have a custom app
+(usually called ``custom_code``) you can skip this section. You can read
+about custom apps in the Django tutorial
+`here <https://docs.djangoproject.com/en/dev/intro/tutorial01/>`__, but
+to quickly get started, the command to create a new app is as follows:
+
+.. code:: python
+
+   ./manage.py startapp custom_code
+
+Where ``custom_code`` is the name of your app. You will also need to
+ensure that ``custom_code`` is in your ``settings.py``. Append it to the
+end of ``INSTALLED_APPS``:
+
+.. code:: python
+
+   ...
+   INSTALLED_APPS = [
+       'django.contrib.admin',
+       'django.contrib.auth',
+       ...
+       'tom_dataproducts',
+       'custom_code',
+   ]
+   ...
+
+You should now have a directory within your TOM called ``custom_code``,
+which looks like this:
+
+::
+
+   ├── custom_code
+   |   ├── __init__.py
+   │   ├── admin.py
+   │   ├── apps.py
+   │   ├── models.py
+   │   ├── tests.py
+   │   └── views.py
+   ├── data
+   ├── db.sqlite3
+   ├── manage.py
+   ├── mytom
+   │   ├── __init__.py
+   │   ├── settings.py
+   │   ├── urls.py
+   │   └── wsgi.py
+   ├── static
+   ├── templates
+   └── tmp
+
+Editing ``models.py``
+~~~~~~~~~~~~~~~~~~~~~
+First you will need to create a custom target model in the `models.py` file of your custom app.
+The following is an example of a custom target model that adds a boolean field and a number field:
+
+.. code:: python
+
+    from django.db import models
+
+    from tom_targets.base_models import BaseTarget
+
+
+    class UserDefinedTarget(BaseTarget):
+        example_bool = models.BooleanField(default=False)
+        example_number = models.FloatField(default=0)
+
+        # Set Hidden Fields
+        example_bool.hidden = True
+
+        class Meta:
+            verbose_name = "target"
+            permissions = (
+                ('view_target', 'View Target'),
+                ('add_target', 'Add Target'),
+                ('change_target', 'Change Target'),
+                ('delete_target', 'Delete Target'),
+            )
+
+The model name, `UserDefinedTarget` in the example, can be replaced by whatever CamelCase name you want, but
+it must be a subclass of `tom_targets.BaseTarget`. The permissions in the class Meta are required for the
+TOM Toolkit to work properly. The `hidden` attribute can be set to `True` to hide the field from the target
+detail page.
+
+Editing ``settings.py``
+~~~~~~~~~~~~~~~~~~~~~~~
+Next you will need to tell the TOM Toolkit to use your custom target model. In the `settings.py` file of your
+project, you will need to add the following line:
+
+.. code:: python
+
+    BASE_TARGET_MODEL = 'custom_code.models.UserDefinedTarget'
+
+Changing `custom_code` to the name of your custom app and `UserDefinedTarget` to the name of your custom target model.
+
+Creating Migrations
+~~~~~~~~~~~~~~~~~~~~
+After you have created your custom target model, you will need to create a migration for it. To do this, run the
+following command:
+
+.. code:: python
+
+    ./manage.py makemigrations
+
+This will create a migration file in the `migrations` directory of your custom app. You can then apply the migration
+by running:
+
+.. code:: python
+
+    ./manage.py migrate
+
+This will build the appropriate tables in your database for your custom target model.
+
+Adding ``Extra Fields``
+=======================
+If a user does not want to create a custom target model, they can use the `EXTRA_FIELDS`
+setting to add extra fields to the `Target` model. This method is simpler and does not require
+any database migrations, but is less flexible than creating a custom target model.
+
 **Note**: There is a performance hit when using extra fields. Try to use
 the built in fields whenever possible.
 
 Enabling extra fields
 ~~~~~~~~~~~~~~~~~~~~~
 
-To start, find the ``EXTRA_FIELDS`` definition in your ``settings.py``:
+To start, find the `EXTRA_FIELDS` definition in your ``settings.py``:
 
 .. code:: python
 
