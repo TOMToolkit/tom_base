@@ -26,6 +26,7 @@ def get_target_base_model():
 
 Target = get_target_base_model()
 
+
 class TargetName(models.Model):
     """
     Class representing an alternative name for a ``Target``.

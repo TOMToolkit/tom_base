@@ -11,7 +11,7 @@ with a redshift less than or greater than a particular value, or use the
 redshift value to make decisions in your science code.
 
 The TOM Toolkit currently supports two different methods for adding extra
-fields to targets:
+fields to targets: Extending Target Models and adding Extra Fields.
 
 Extending the Target Model
 ==========================
