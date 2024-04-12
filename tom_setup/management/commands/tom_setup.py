@@ -81,11 +81,10 @@ class Command(BaseCommand):
            ├── tmp
            ├── mytom
            │   ├── __init__.py
-           │   ├── models.py
            │   ├── settings.py
            │   ├── urls.py
            │   └── wsgi.py
-           ├── myapp
+           ├── custom_code
            │   ├── __init__.py
            │   ├── migrations
            │   ├── admin.py
