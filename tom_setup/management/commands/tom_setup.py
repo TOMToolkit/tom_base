@@ -62,10 +62,9 @@ class Command(BaseCommand):
             response = input(prompt).lower().replace(' ', '_').replace('-', '_')
             if response == os.path.basename(BASE_DIR).lower():
                 self.stdout.write('Invalid response. Please try again.')
-            elif not response:
-                self.context['CUSTOM_CODE_APP_NAME'] = 'custom_code'
-                break
             else:
+                if not response:
+                    response = 'custom_code'
                 self.context['CUSTOM_CODE_APP_NAME'] = response
                 break
         call_command('startapp', response)
@@ -86,6 +85,8 @@ class Command(BaseCommand):
            │   └── wsgi.py
            ├── custom_code
            │   ├── __init__.py
+           │   └── management
+           │       └── commands
            │   ├── migrations
            │   ├── admin.py
            │   ├── apps.py
@@ -110,6 +111,17 @@ class Command(BaseCommand):
         static_dir = os.path.join(BASE_DIR, 'static')
         try:
             os.mkdir(static_dir)
+        except FileExistsError:
+            pass
+        # --- set up management command directories for custom code app ---
+        custom_code_app_dir = os.path.join(BASE_DIR, self.context.get('CUSTOM_CODE_APP_NAME', 'custom_code'))
+        management_dir = os.path.join(custom_code_app_dir, 'management')
+        try:
+            os.mkdir(management_dir)
+        except FileExistsError:
+            pass
+        try:
+            os.mkdir(os.path.join(management_dir, 'commands'))
         except FileExistsError:
             pass
         # os.mknod requires superuser permissions on osx, so create a blank file instead

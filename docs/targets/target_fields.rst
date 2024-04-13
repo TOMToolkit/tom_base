@@ -148,6 +148,53 @@ by running:
 
 This will build the appropriate tables in your database for your custom target model.
 
+Convert old targets to new model
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you have existing targets in your database, you will need to convert them to the new model. This can be done by
+running a version of the following code. We incorporate this into a management command to make it easier to run.
+
+Create a new file in your custom app called ``management/commands/convert_targets.py`` and add the following code:
+
+.. code:: python
+
+    from django.core.management.base import BaseCommand
+
+    from tom_targets.base_models import BaseTarget
+    from tom_targets.models import Target
+
+
+    class Command(BaseCommand):
+        """
+        Core code based on information found at
+        https://code.djangoproject.com/ticket/7623
+        """
+
+        help = 'A helper command to convert existing BaseTargets to UserDefinedTargets.'
+
+        def handle(self, *args, **options):
+            if Target != BaseTarget and issubclass(Target, BaseTarget):
+                self.stdout.write(f'{Target} is a subclass of BaseTarget, updating existing Targets.')
+                base_targets = BaseTarget.objects.all()
+                targets = Target.objects.all()
+                for base_target in base_targets:
+                    if not targets.filter(pk=base_target.pk).exists():
+                        self.stdout.write(f'Updating {base_target}...')
+                        target = Target(basetarget_ptr_id=base_target.pk)
+                        target.__dict__.update(base_target.__dict__)
+                        target.save()
+                self.stdout.write(f'{Target.objects.count()} Targets updated.')
+
+            return
+
+Once this file is created, you can run the following command to convert your old targets to the new model:
+
+.. code:: python
+
+    ./manage.py convert_targets
+
+
+
 Adding ``Extra Fields``
 =======================
 If a user does not want to create a custom target model, they can use the `EXTRA_FIELDS`
