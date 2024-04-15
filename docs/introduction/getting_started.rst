@@ -42,8 +42,15 @@ as the first argument.  You can call this whatever you like:
 
 You can now fast-forward to the section below on :ref:`Running in dev server <runserver>`.
 
-Installing the TOM Toolkit and Django
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Manually Installing the TOM Toolkit and Django
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning::
+
+    If you used the `make-tom.sh` script above, skip down to :ref:`Running in dev server <runserver>`.
+    The following sections walk you through the installation process run by `make-tom.sh` for those
+    who prefer to install their TOM manually.
+
 If you prefer to build your system manually, here's how.
 
 Firstly, the TOM toolkit requires you to have Python >= 3.7 installed
