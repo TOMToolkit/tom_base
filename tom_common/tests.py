@@ -1,3 +1,6 @@
+from http import HTTPStatus
+import tempfile
+
 from django.test import TestCase, override_settings
 
 from django.contrib.sites.models import Site
@@ -154,3 +157,57 @@ class CommentDeleteViewTest(TestCase):
         response = self.client.post(reverse('comment-delete', kwargs={'pk': self.comment.pk}), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Comment.objects.filter(pk=self.comment.pk).exists())
+
+
+class TestRobotsDotTxt(TestCase):
+    def test_get(self):
+        """Test that the robots.txt file is served correctly.
+        """
+        response = self.client.get("/robots.txt")
+
+        assert response.status_code == HTTPStatus.OK
+        assert response["content-type"] == "text/plain"
+        assert response.content.startswith(b"User-Agent: *\n")  # known a priori from default robots.txt
+
+    def test_post_disallowed(self):
+        """Test that a User-Agent can not POST to the /robots.txt endpoint.
+        """
+        response = self.client.post("/robots.txt")
+
+        assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+
+    def test_custom_robots_txt(self):
+        """Test that a custom robots.txt file is served if it exists at the
+        path specified in the settings as `ROBOTS_TXT_PATH`.
+        """
+        file_content = b'User-Agent: *\nDisallow: /\n'
+
+        # create a temporary file with the custom robots.txt content
+        with tempfile.NamedTemporaryFile() as fp:
+            fp.write(file_content)
+            fp.flush()
+            # set the settings.ROBOTS_TXT_PATH to the whatever the path of the temporary file is
+            with self.settings(ROBOTS_TXT_PATH=fp.name):
+                response = self.client.get("/robots.txt")
+
+                assert response.status_code == HTTPStatus.OK
+                assert response["content-type"] == "text/plain"
+                assert response.content.startswith(file_content)
+
+    def test_nonexistent_custom_robots_txt(self):
+        """Test that (1) the default robots.txt is served if the file specified in
+        the settings as `ROBOTS_TXT_PATH` does not exist, and (2) a warning is logged.
+        """
+        # set the settings.ROBOTS_TXT_PATH to a nonexistent file
+        with self.settings(ROBOTS_TXT_PATH="/nonexistent/file"):
+            # create a context manager to capture the warning logs
+            with self.assertLogs(logger="tom_common.views", level="WARNING") as logs:
+                response = self.client.get("/robots.txt")  # make the request; a warning should be logged...
+                # and check that the warning was logged
+                self.assertIn('Default robots.txt served', logs.output[0])
+
+            # now check that the default robots.txt was served
+            assert response.status_code == HTTPStatus.OK
+            assert response["content-type"] == "text/plain"
+            # check for default content
+            assert response.content.startswith(b"User-Agent: *\n")  # known a priori from default robots.txt

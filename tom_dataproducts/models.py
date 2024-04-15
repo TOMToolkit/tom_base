@@ -24,6 +24,15 @@ except AttributeError:
     THUMBNAIL_DEFAULT_SIZE = (200, 200)
 
 
+# Check settings.py for DATA_PRODUCT_TYPES, and provide defaults if not found
+DEFAULT_DATA_TYPE_CHOICES = (('photometry', 'Photometry'), ('spectroscopy', 'Spectroscopy'))
+try:
+    # Pull out tuples from settings.DATA_PRODUCT_TYPES dictionary to build choice fields for DataProduct Types
+    DATA_TYPE_CHOICES = settings.DATA_PRODUCT_TYPES.values()
+except AttributeError:
+    DATA_TYPE_CHOICES = DEFAULT_DATA_TYPE_CHOICES
+
+
 def find_fits_img_size(filename):
     """
     Returns the size of a FITS image, given a valid FITS image file
@@ -211,8 +220,9 @@ class DataProduct(models.Model):
         Saves the current `DataProduct` instance. Before saving, validates the `data_product_type` against those
         specified in `settings.py`.
         """
-        for _, dp_values in settings.DATA_PRODUCT_TYPES.items():
-            if not self.data_product_type or self.data_product_type == dp_values[0]:
+        # DATA_TYPE_CHOICES from either settings.py or default types: (type, display)
+        for dp_type, _ in DATA_TYPE_CHOICES:
+            if not self.data_product_type or self.data_product_type == dp_type:
                 break
         else:
             raise ValidationError('Not a valid DataProduct type.')
@@ -225,7 +235,8 @@ class DataProduct(models.Model):
         :returns: Display value for a given data_product_type.
         :rtype: str
         """
-        return settings.DATA_PRODUCT_TYPES[self.data_product_type][1]
+        data_product_type_dict = {dp_type: dp_display for dp_type, dp_display in DATA_TYPE_CHOICES}
+        return data_product_type_dict[self.data_product_type]
 
     def get_file_name(self):
         return os.path.basename(self.data.name)
@@ -341,9 +352,9 @@ class ReducedDatum(models.Model):
                     {
                       'magnitude': 18.5,
                       'magnitude_error': .5,
-                      'filter': 'r'
-                      'telescope': 'ELP.domeA.1m0a'
-                      'instrument': 'fa07'
+                      'filter': 'r',
+                      'telescope': 'ELP.domeA.1m0a',
+                      'instrument': 'fa07',
                     }
     :type value: dict
 
@@ -368,18 +379,39 @@ class ReducedDatum(models.Model):
         get_latest_by = ('timestamp',)
 
     def save(self, *args, **kwargs):
-        for _, dp_values in settings.DATA_PRODUCT_TYPES.items():
-            if self.data_type and self.data_type == dp_values[0]:
+        # Validate data_type based on options in settings.py or default types: (type, display)
+        for dp_type, _ in DATA_TYPE_CHOICES:
+            if self.data_type and self.data_type == dp_type:
                 break
         else:
             raise ValidationError('Not a valid DataProduct type.')
+
+        # because we have a custom way of validating the uniqueness of the ReducedDatum,
+        #  we need to call full_clean() here to invoke our validate_unique() method.
+        self.full_clean()
         return super().save()
 
     def validate_unique(self, *args, **kwargs):
+        """
+        Validates that the ReducedDatum is unique. Because the `value` field is a JSONField, it is not possible to rely
+        on standard validation.
+
+        Do nothing if the uniqueness test passes. Otherwise, raise a ValidationError.
+
+        see https://docs.djangoproject.com/en/5.0/ref/models/instances/#validating-objects
+        """
         super().validate_unique(*args, **kwargs)
-        model_dict = self.__dict__.copy()
-        del model_dict['_state']
-        del model_dict['id']
-        obs = ReducedDatum.objects.filter(**model_dict)
-        if obs:
-            raise ValidationError('Data point already exists.')
+
+        # Check if the Reduced Datum exists in the database
+        try:
+            existing_reduced_datum = ReducedDatum.objects.get(target=self.target,
+                                                              data_type=self.data_type,
+                                                              timestamp=self.timestamp,
+                                                              value=self.value)
+            if existing_reduced_datum:
+                # found ReducedDatum with the same values. Don't save this duplicate ReducedDatum.
+                raise ValidationError(f'ReducedDatum already exists: {self.data_type} data with value of {self.value} '
+                                      f'found for {self.target} at {self.timestamp}')
+        except ReducedDatum.DoesNotExist:
+            # this means that our check for uniqueness passed: so do not raise ValidationError
+            pass

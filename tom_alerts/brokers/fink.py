@@ -19,6 +19,9 @@ class FinkQueryForm(GenericQueryForm):
 
 
 class FinkBroker(GenericBroker):
+    """
+        In order to install the full plugin, please see the instructions at https://github.com/TOMToolkit/tom_fink.
+    """
     name = 'Fink'
     form = FinkQueryForm
 

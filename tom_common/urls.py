@@ -26,6 +26,7 @@ from tom_base import __version__
 from tom_common.api_views import GroupViewSet
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
 from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
+from tom_common.views import robots_txt
 
 from .api_router import collect_api_urls, SharedAPIRootRouter  # DRF routers are setup in each INSTALL_APPS url.py
 
@@ -35,6 +36,7 @@ router.register(r'groups', GroupViewSet, 'groups')
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'),
          kwargs={'version': __version__}, name='home'),
+    path('robots.txt', robots_txt, name='robots_txt'),
     path('targets/', include('tom_targets.urls', namespace='targets')),
     path('alerts/', include('tom_alerts.urls', namespace='alerts')),
     path('comments/', include('django_comments.urls')),
