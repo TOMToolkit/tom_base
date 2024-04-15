@@ -3,6 +3,7 @@ import mimetypes
 from astropy import units
 import astropy.io.ascii
 from astropy.time import Time, TimezoneInfo
+import numpy as np
 
 from tom_dataproducts.data_processor import DataProcessor
 from tom_dataproducts.exceptions import InvalidFileFormatException
@@ -63,17 +64,16 @@ class AtlasProcessor(DataProcessor):
                 value = {
                     'timestamp': time.to_datetime(timezone=utc),
                     'filter': str(datum['F']),
-                    'error': float(datum['dm']),
                     'telescope': 'ATLAS',
                 }
-                # If the signal is in the noise, set the non-detection limit to the
-                # absolute value of the reported magnitude.
+                # If the signal is in the noise, calculate the non-detection limit from the reported flux uncertainty.
                 # see https://fallingstar-data.com/forcedphot/resultdesc/
-                signal_to_noise = abs(float(datum['uJy']))/abs(float(datum['duJy']))
+                signal_to_noise = float(datum['uJy']) / float(datum['duJy'])
                 if signal_to_noise <= signal_to_noise_cutoff:
-                    value['limit'] = abs(float(datum['m']))
+                    value['limit'] = 23.9 - 2.5 * np.log10(signal_to_noise_cutoff * float(datum['duJy']))
                 else:
-                    value['magnitude'] = abs(float(datum['m']))
+                    value['magnitude'] = float(datum['m'])
+                    value['error'] = float(datum['dm'])
 
                 photometry.append(value)
         except Exception as e:
