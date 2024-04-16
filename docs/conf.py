@@ -52,7 +52,8 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
-    'sphinx_panels'
+    'sphinx_panels',
+    'sphinx_copybutton',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

@@ -91,7 +91,9 @@ Editing ``models.py``
 First you will need to create a custom target model in the `models.py` file of your custom app.
 The following is an example of a custom target model that adds a boolean field and a number field:
 
-.. code:: python
+.. code-block:: python
+    :caption: models.py
+    :linenos:
 
     from django.db import models
 
@@ -156,7 +158,9 @@ running a version of the following code. We incorporate this into a management c
 
 Create a new file in your custom app called ``management/commands/convert_targets.py`` and add the following code:
 
-.. code:: python
+.. code-block:: python
+    :caption: convert_targets.py
+    :linenos:
 
     from django.core.management.base import BaseCommand
 
