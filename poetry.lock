@@ -794,18 +794,18 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 name = "django-bootstrap4"
-version = "24.1"
+version = "24.2"
 description = "Django extensions by Zostera"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "django-bootstrap4-24.1.tar.gz", hash = "sha256:948a620a10efc3e091e55571341ae1749a3f6f521f1f031889242b65767b4c04"},
-    {file = "django_bootstrap4-24.1-py3-none-any.whl", hash = "sha256:accc64255af7bb45df6b518673facbbaf572418c26e3c3579a0cf4e9c4ef1183"},
+    {file = "django_bootstrap4-24.2-py3-none-any.whl", hash = "sha256:041f3aa239d0ebbbd1d54aa1fe83b81242e9b160ab68a16a94b36d9b1565b92c"},
+    {file = "django_bootstrap4-24.2.tar.gz", hash = "sha256:9ad1f0ca62e3c0cf2b26d6e1d433d78a41ce4d4accb472c46f634c769607d2e0"},
 ]
 
 [package.dependencies]
 beautifulsoup4 = ">=4.8.0"
-Django = ">=3.2"
+Django = ">=4.1"
 
 [[package]]
 name = "django-contrib-comments"
