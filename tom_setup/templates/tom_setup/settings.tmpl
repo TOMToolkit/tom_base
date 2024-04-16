@@ -33,7 +33,7 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-TOM_NAME = 'TOM Toolkit'
+TOM_NAME = '{{ PROJECT_NAME }}'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -195,7 +195,7 @@ CACHES = {
 TARGET_TYPE = '{{ TARGET_TYPE }}'
 
 # Set to the full path of a custom target model to extend the BaseTarget Model with custom fields.
-# BASE_TARGET_MODEL = '{{ CUSTOM_CODE_APP_NAME }}.models.UserDefinedTarget'
+# TARGET_MODEL_CLASS = '{{ CUSTOM_CODE_APP_NAME }}.models.UserDefinedTarget'
 
 FACILITIES = {
     'LCO': {
@@ -241,10 +241,6 @@ DATA_PROCESSORS = {
     'photometry': 'tom_dataproducts.processors.photometry_processor.PhotometryProcessor',
     'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
 }
-
-BASE_TARGET_MODELS = [
-    '{{ PROJECT_NAME }}.models.UserDefinedTarget',
-]
 
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',

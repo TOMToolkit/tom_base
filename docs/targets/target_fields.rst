@@ -15,21 +15,21 @@ fields to targets: Extending Target Models and adding Extra Fields.
 
 Extending the Target Model
 ==========================
-Users can extend the `Target` model by creating a custom target model in the app
+Users can extend the ``Target`` model by creating a custom target model in the app
 where they store their custom code. This method is more flexible and allows for
 more intuitive relationships between the new target fields and other code the user
 may create. This method requires database migrations and a greater understanding of
 Django models to implement.
 
-By default the TOM Toolkit will use the `tom_targets.BaseTarget` model as the target model,
-but users can create their own target model by subclassing `tom_targets.BaseTarget` and adding
+By default the TOM Toolkit will use the ``tom_targets.BaseTarget`` model as the target model,
+but users can create their own target model by subclassing ``tom_targets.BaseTarget`` and adding
 their own fields. The TOM Toolkit will then use the custom target model if it is defined
-in the `BASE_TARGET_MODEL` setting of ``settings.py``. To implement this a user will first
+in the ``TARGET_MODEL_CLASS`` setting of ``settings.py``. To implement this a user will first
 have to edit a ``models.py`` file in their custom code app and define a custom target model.
 
-Subclassing `tom_targets.BaseTarget` will give the user access to all the fields and methods
-of the `BaseTarget` model, but the user can also add their own fields and methods to the custom
-target model. Fields from the `BaseTarget` model will be stored in a separate table from the custom
+Subclassing ``tom_targets.BaseTarget`` will give the user access to all the fields and methods
+of the ``BaseTarget`` model, but the user can also add their own fields and methods to the custom
+target model. Fields from the ``BaseTarget`` model will be stored in a separate table from the custom
 fields, and rely on separate migrations. See the
 `Django documentation on multi-table inheritance. <https://docs.djangoproject.com/en/5.0/topics/db/models/#multi-table-inheritance>`__
 
@@ -128,7 +128,7 @@ project, you will need to add the following line:
 
 .. code:: python
 
-    BASE_TARGET_MODEL = 'custom_code.models.UserDefinedTarget'
+    TARGET_MODEL_CLASS = 'custom_code.models.UserDefinedTarget'
 
 Changing `custom_code` to the name of your custom app and `UserDefinedTarget` to the name of your custom target model.
 
