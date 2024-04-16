@@ -73,6 +73,8 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
         return response
 
     def handle_exception(self, exc):
+        """Create Custom Error Message for Http404 errors because Target can have different names based on the supplied
+         Model."""
         if isinstance(exc, Http404):
             return Response({'detail': 'No Target matches the given query.'},
                             status=status.HTTP_404_NOT_FOUND)
