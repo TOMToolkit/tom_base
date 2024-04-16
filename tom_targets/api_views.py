@@ -1,8 +1,10 @@
 from django_filters import rest_framework as drf_filters
+from django.http import Http404
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user
 from rest_framework.mixins import DestroyModelMixin, RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from rest_framework.response import Response
 from rest_framework import status
 
 from tom_targets.filters import TargetFilter
@@ -69,6 +71,13 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
         if response.status_code == status.HTTP_200_OK:
             response.data['message'] = 'Target successfully updated.'
         return response
+
+    def handle_exception(self, exc):
+        if isinstance(exc, Http404):
+            return Response({'detail': 'No Target matches the given query.'},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        return super(TargetViewSet, self).handle_exception(exc)
 
 
 class TargetNameViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMixin, GenericViewSet):
