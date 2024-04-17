@@ -130,7 +130,7 @@ project, you will need to add the following line:
 
     TARGET_MODEL_CLASS = 'custom_code.models.UserDefinedTarget'
 
-Changing ``c`ustom_code`` to the name of your custom app and ``UserDefinedTarget`` to the name of your custom target model.
+Changing ``custom_code`` to the name of your custom app and ``UserDefinedTarget`` to the name of your custom target model.
 
 Creating Migrations
 ~~~~~~~~~~~~~~~~~~~~
