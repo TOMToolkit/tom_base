@@ -16,7 +16,7 @@ def get_target_base_model():
     base_class = BaseTarget
     try:
         TARGET_MODEL_CLASS = settings.TARGET_MODEL_CLASS
-        clazz = import_string(BASE_TARGET_MODEL)
+        clazz = import_string(TARGET_MODEL_CLASS)
         return clazz
     except AttributeError:
         return base_class
