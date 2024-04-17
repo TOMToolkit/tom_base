@@ -1,9 +1,14 @@
 import requests
 import os
+from io import StringIO
+from astropy.table import Table
+from astropy.io import ascii
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib import messages
+from django.http import StreamingHttpResponse
+from django.utils.text import slugify
 
 from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct, ReducedDatum
@@ -247,7 +252,7 @@ def get_sharing_destination_options():
     Customize for a different selection experience.
     :return: Tuple: Possible Destinations and their Display Names
     """
-    choices = []
+    choices = [('download', 'download')]
     try:
         for destination, details in settings.DATA_SHARING.items():
             new_destination = [details.get('DISPLAY_NAME', destination)]
@@ -293,3 +298,21 @@ def sharing_feedback_handler(response, request):
     else:
         messages.success(request, publish_feedback)
     return
+
+
+def download_data(form_data, selected_data):
+    reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
+    serialized_data = [ReducedDatumSerializer(rd).data for rd in reduced_datums]
+    for datum in serialized_data:
+        datum.update(datum.pop('value'))
+    table = Table(serialized_data)
+    if form_data.get('share_message'):
+        table.meta['comments'] = [form_data['share_message']]
+    table.sort('timestamp')
+    file_buffer = StringIO()
+    ascii.write(table, file_buffer, format='csv', comment='# ')
+    file_buffer.seek(0)  # goto the beginning of the buffer
+    response = StreamingHttpResponse(file_buffer, content_type="text/ascii")
+    filename = slugify(form_data['share_title']) + '.csv'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
