@@ -116,8 +116,8 @@ The following is an example of a custom target model that adds a boolean field a
                 ('delete_target', 'Delete Target'),
             )
 
-The model name, ``UserDefinedTarget`` in the example, can be replaced by whatever CamelCase name you want, but
-it must be a subclass of ``tom_targets.BaseTarget``. The permissions in the class Meta are required for the
+The model name, ``UserDefinedTarget`` in the example (line 6), can be replaced by whatever CamelCase name you want, but
+it must be a subclass of ``tom_targets.BaseTarget``. The permissions in the class Meta (lines 15-20) are required for the
 TOM Toolkit to work properly. The ``hidden`` attribute can be set to ``True`` to hide the field from the target
 detail page.
 
