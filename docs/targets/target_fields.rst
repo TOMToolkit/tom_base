@@ -88,7 +88,7 @@ which looks like this:
 
 Editing ``models.py``
 ~~~~~~~~~~~~~~~~~~~~~
-First you will need to create a custom target model in the `models.py` file of your custom app.
+First you will need to create a custom target model in the ``models.py`` file of your custom app.
 The following is an example of a custom target model that adds a boolean field and a number field:
 
 .. code-block:: python
@@ -116,21 +116,21 @@ The following is an example of a custom target model that adds a boolean field a
                 ('delete_target', 'Delete Target'),
             )
 
-The model name, `UserDefinedTarget` in the example, can be replaced by whatever CamelCase name you want, but
-it must be a subclass of `tom_targets.BaseTarget`. The permissions in the class Meta are required for the
-TOM Toolkit to work properly. The `hidden` attribute can be set to `True` to hide the field from the target
+The model name, ``UserDefinedTarget`` in the example, can be replaced by whatever CamelCase name you want, but
+it must be a subclass of ``tom_targets.BaseTarget``. The permissions in the class Meta are required for the
+TOM Toolkit to work properly. The ``hidden`` attribute can be set to ``True`` to hide the field from the target
 detail page.
 
 Editing ``settings.py``
 ~~~~~~~~~~~~~~~~~~~~~~~
-Next you will need to tell the TOM Toolkit to use your custom target model. In the `settings.py` file of your
+Next you will need to tell the TOM Toolkit to use your custom target model. In the ``settings.py`` file of your
 project, you will need to add the following line:
 
 .. code:: python
 
     TARGET_MODEL_CLASS = 'custom_code.models.UserDefinedTarget'
 
-Changing `custom_code` to the name of your custom app and `UserDefinedTarget` to the name of your custom target model.
+Changing ``c`ustom_code`` to the name of your custom app and ``UserDefinedTarget`` to the name of your custom target model.
 
 Creating Migrations
 ~~~~~~~~~~~~~~~~~~~~
@@ -141,7 +141,7 @@ following command:
 
     ./manage.py makemigrations
 
-This will create a migration file in the `migrations` directory of your custom app. You can then apply the migration
+This will create a migration file in the ``migrations`` directory of your custom app. You can then apply the migration
 by running:
 
 .. code:: python
@@ -209,8 +209,8 @@ as the built-in fields from any custom code you write, the API, or from the admi
 
 Adding ``Extra Fields``
 =======================
-If a user does not want to create a custom target model, they can use the `EXTRA_FIELDS`
-setting to add extra fields to the `Target` model. This method is simpler and does not require
+If a user does not want to create a custom target model, they can use the ``EXTRA_FIELDS``
+setting to add extra fields to the ``Target`` model. This method is simpler and does not require
 any database migrations, but is less flexible than creating a custom target model.
 
 **Note**: There is a performance hit when using extra fields. Try to use
@@ -219,7 +219,7 @@ the built in fields whenever possible.
 Enabling extra fields
 ~~~~~~~~~~~~~~~~~~~~~
 
-To start, find the `EXTRA_FIELDS` definition in your ``settings.py``:
+To start, find the ``EXTRA_FIELDS`` definition in your ``settings.py``:
 
 .. code:: python
 
