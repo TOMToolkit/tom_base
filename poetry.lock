@@ -177,17 +177,17 @@ tests = ["mypy (>=0.800)", "pytest", "pytest-asyncio"]
 
 [[package]]
 name = "astroplan"
-version = "0.9.1"
+version = "0.10"
 description = "Observation planning package for astronomers"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "astroplan-0.9.1.tar.gz", hash = "sha256:d98c5ea58f6131de391aa66c78e0b4d77649359b29dbc8fdee9385e0408c2f4b"},
+    {file = "astroplan-0.10.tar.gz", hash = "sha256:1670c9c42143d62924e8a6e0287ec25935fcf985a8b928438bc4da0241f4875a"},
 ]
 
 [package.dependencies]
 astropy = ">=4"
-numpy = ">=1.17"
+numpy = "<2"
 pytz = "*"
 six = "*"
 
@@ -2627,4 +2627,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "961549542fbb45b6ed4ead4d1a3d892e81d8853c2b12fdde5b0d5203f2974ec6"
+content-hash = "66a1768c3f9ec9d69f820ab75e3a2658045d5040446962e22db790fec7a9c84a"
