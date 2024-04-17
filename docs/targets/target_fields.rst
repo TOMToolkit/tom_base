@@ -200,7 +200,12 @@ Once this file is created, you can run the following command to convert your old
 
     ./manage.py convert_targets
 
+Once this command is run, all of your old targets will be converted to the new model, but will not have the new fields
+filled in. You will need to fill in these fields manually, but once you do any non-hidden fields will be displayed on
+the target detail page.
 
+Any fields added in this way are fully accessible in the TOM Toolkit as ``Target``, and can be used in the same way
+as the built-in fields from any custom code you write, the API, or from the admin interface.
 
 Adding ``Extra Fields``
 =======================
