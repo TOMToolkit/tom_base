@@ -12,7 +12,8 @@ from tom_targets.base_models import BaseTarget
 logger = logging.getLogger(__name__)
 
 
-def get_target_base_model():
+def get_target_model_class():
+    """Function to retrieve the target model class from settings.py. If not found, returns the default BaseTarget."""
     base_class = BaseTarget
     try:
         TARGET_MODEL_CLASS = settings.TARGET_MODEL_CLASS
@@ -24,7 +25,7 @@ def get_target_base_model():
         raise ImportError(f'Could not import {TARGET_MODEL_CLASS}. Did you provide the correct path?')
 
 
-Target = get_target_base_model()
+Target = get_target_model_class()
 
 
 class TargetName(models.Model):

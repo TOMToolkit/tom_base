@@ -106,6 +106,7 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
     View for creating a Target. Requires authentication.
     """
 
+    # Target Views require explicit template names since the Model Class names are variable.
     template_name = 'tom_targets/target_form.html'
     model = Target
     fields = '__all__'
