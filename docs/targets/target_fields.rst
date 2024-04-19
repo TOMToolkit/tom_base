@@ -208,13 +208,13 @@ Any fields added in this way are fully accessible in the TOM Toolkit as ``Target
 as the built-in fields from any custom code you write, the API, or from the admin interface.
 
 
-Transferring existing ``Extra Field`` Data to you ``Target`` Fields
+Transferring existing ``Extra Field`` Data to your ``Target`` Fields
 ===================================================================
 
 If you have been using ``Extra Fields`` and have now created a custom target model, you may want to transfer the data
 from the ``Extra Fields`` to the new fields in your custom target model. This can be done by running a management
 command called ``converttargetextras``.  To use this command, be sure to have already created your custom target model.
-You can run the command as is for an interactive walkthrough.
+You can run the command without arguments for an interactive walkthrough.
 
 .. code:: python
 
