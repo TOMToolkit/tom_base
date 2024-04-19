@@ -112,7 +112,6 @@ class Command(BaseCommand):
             target.save()
             extra.delete()
 
-
     def handle(self, *args, **options):
         chosen_extras = options['target_extra']
         chosen_model_fields = options['model_field']
