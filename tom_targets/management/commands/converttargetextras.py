@@ -39,6 +39,11 @@ class Command(BaseCommand):
             action='store_true',
             help='Confirm each Target Extra -> Model Field conversion first.',
         )
+        parser.add_argument(
+            '--list',
+            action='store_true',
+            help='Provide a list of available TargetExtras and Model Fields.',
+        )
 
     def prompt_extra_field(self, extra_field_keys):
         """
@@ -123,6 +128,11 @@ class Command(BaseCommand):
         target_model = Target
         model_field_keys = [field.name for field in target_model._meta.get_fields()
                             if field not in BaseTarget._meta.get_fields() and field.name != 'basetarget_ptr']
+
+        if options['list']:
+            self.stdout.write(f'Available TargetExtras: {self.style.WARNING(extra_field_keys)}')
+            self.stdout.write(f'Available Model Fields: {self.style.WARNING(model_field_keys)}')
+            return
 
         # If no Target Extras were provided, prompt user
         if not chosen_extras:
