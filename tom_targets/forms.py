@@ -72,11 +72,12 @@ class TargetForm(forms.ModelForm):
         if commit:
             for field in settings.EXTRA_FIELDS:
                 if self.cleaned_data.get(field['name']) is not None:
-                    TargetExtra.objects.update_or_create(
-                            target=instance,
-                            key=field['name'],
-                            defaults={'value': self.cleaned_data[field['name']]}
+                    updated_target_extra, _ = TargetExtra.objects.update_or_create(
+                        target=instance,
+                        key=field['name'],
+                        defaults={'value': self.cleaned_data[field['name']]}
                     )
+                    updated_target_extra.save()
             # Save groups for this target
             for group in self.cleaned_data['groups']:
                 assign_perm('tom_targets.view_target', group, instance)
