@@ -207,6 +207,30 @@ the target detail page.
 Any fields added in this way are fully accessible in the TOM Toolkit as ``Target``, and can be used in the same way
 as the built-in fields from any custom code you write, the API, or from the admin interface.
 
+
+Transferring existing ``Extra Field`` Data to your ``Target`` Fields
+===================================================================
+
+If you have been using ``Extra Fields`` and have now created a custom target model, you may want to transfer the data
+from the ``Extra Fields`` to the new fields in your custom target model. This can be done by running a management
+command called ``converttargetextras``.  To use this command, be sure to have already created your custom target model.
+You can run the command without arguments for an interactive walkthrough.
+
+.. code:: python
+
+    ./manage.py converttargetextras
+
+Alternatively, you can run the command with the ``--target_extra`` and/or ``--model_field`` flags to specify one or
+more the of the ``Extra Field`` and ``Target Field`` names respectively.
+
+.. code:: python
+
+    ./manage.py converttargetextras --target_extra extra_bool extra_number --model_field example_bool example_number
+
+This command will go through each target and transfer the data from the ``Extra Field`` to the ``Target Field``. If the
+``Target Field`` is already populated, the data will not be transferred. When finished, the ``Extra Field`` data will be
+deleted, and you will likely want to remove the ``EXTRA_FIELDS`` setting from your ``settings.py`` file.
+
 Adding ``Extra Fields``
 =======================
 If a user does not want to create a custom target model, they can use the ``EXTRA_FIELDS``
