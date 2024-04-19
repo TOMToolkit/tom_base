@@ -302,7 +302,8 @@ class BaseTarget(models.Model):
         if created:
             for extra_field in settings.EXTRA_FIELDS:
                 if extra_field.get('default') is not None:
-                    self.targetextra_set(target=self, key=extra_field['name'], value=extra_field.get('default')).save()
+                    self.targetextra_set.get_or_create(target=self, key=extra_field['name'],
+                                                       value=extra_field.get('default'))
 
         for k, v in extras.items():
             target_extra, _ = self.targetextra_set.get_or_create(target=self, key=k)
