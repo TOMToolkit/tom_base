@@ -291,7 +291,7 @@ class TestTargetCreate(TestCase):
         self.assertTrue(target.targetextra_set.filter(key='category', value='type2').exists())
 
     @override_settings(EXTRA_FIELDS=[
-        {'name': 'wins', 'type': 'number'},
+        {'name': 'wins', 'type': 'number', 'default': '12'},
         {'name': 'checked', 'type': 'boolean'},
         {'name': 'birthdate', 'type': 'datetime'},
         {'name': 'author', 'type': 'string'}
