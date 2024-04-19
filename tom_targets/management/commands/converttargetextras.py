@@ -111,9 +111,7 @@ class Command(BaseCommand):
             setattr(target, chosen_model_field, extra.value)
             target.save()
             extra.delete()
-        else:
-            self.stdout.write(f"{self.style.ERROR('Warning:')} No TargetExtra found for "
-                              f"{self.style.SUCCESS(chosen_extra)}.")
+
 
     def handle(self, *args, **options):
         chosen_extras = options['target_extra']
