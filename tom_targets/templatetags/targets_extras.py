@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from astroplan import moon_illumination
 from astropy import units as u
-from astropy.coordinates import Angle, get_moon, SkyCoord
+from astropy.coordinates import Angle, get_body, SkyCoord
 from astropy.time import Time
 from django import template
 from django.conf import settings
@@ -186,7 +186,7 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
     )
 
     obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
-    moon_pos = get_moon(times)
+    moon_pos = get_body('moon', times)
 
     separations = moon_pos.separation(obj_pos).deg
     phases = moon_illumination(times)
