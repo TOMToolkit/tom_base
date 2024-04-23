@@ -43,21 +43,57 @@ REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME = {
 
 class TargetMatchManager(models.Manager):
     """
-    Search for matches amongst Target names and Aliases
+    Search for matches amongst Target objects.
     Return Queryset containing relevant TARGET matches.
-    NOTE: check_for_fuzzy_match looks for Target names and aliases ignoring capitalization, spaces, dashes, underscores,
-    and parentheses. Additional matching functions can be added.
+
+    NOTE: 
+        ``check_unique`` and ``get_name_match`` are used throughout the code to determine if a target or a name is
+        unique. These functions can be overridden in a subclass to provide custom matching logic.  Examples of this can be
+        found in the documentation (https://tom-toolkit.readthedocs.io/en/stable/targets/target_matcher.html).
     """
 
     def check_unique(self, target, *args, **kwargs):
+        """
+        Check if any other targets match the given target. By default, this checks for a match in the name field using
+        the get_name_match function.
+        This function is used in the ``Target.validate_unique()``  function to check for uniqueness.
+
+        :param target: The target object to be checked against.
+
+        :return: queryset containing matching Target(s).
+
+        """
         queryset = self.get_name_match(target.name)
         return queryset
 
     def get_name_match(self, name):
+        """
+        Returns a queryset of matching names. By default, this checks for a fuzzy match using the
+        ``check_for_fuzzy_name_match`` function.
+
+        :param name: The string against which target names will be matched.
+
+        :return: queryset containing matching Target(s).
+        """
         queryset = self.check_for_fuzzy_name_match(name)
         return queryset
 
-    def check_for_nearby_match(self, ra, dec, radius):
+    def check_for_nearby_match(self, ra: float, dec: float, radius: float):
+        """
+        Returns a queryset containing any targets that are within the given radius of the given ra and dec.
+
+        :param ra: The right ascension of the target in degrees.
+        :type ra: float
+
+        :param dec: The declination of the target in degrees.
+        :type dec: float
+
+        :param radius: The radius in arcseconds within which to search for targets.
+        :type radius: float
+
+        :return: queryset containing matching Target(s).
+
+        """
         radius /= 3600  # Convert radius from arcseconds to degrees
         double_radius = radius * 2
         # print(super().get_queryset())
@@ -79,7 +115,9 @@ class TargetMatchManager(models.Manager):
     def check_for_exact_name_match(self, name):
         """
         Returns a queryset exactly matching name that is received
+
         :param name: The string against which target names will be matched.
+
         :return: queryset containing matching Target(s).
         """
         queryset = super().get_queryset().filter(name=name)
@@ -88,7 +126,9 @@ class TargetMatchManager(models.Manager):
     def check_for_fuzzy_name_match(self, name):
         """
         Check for case-insensitive names ignoring spaces, dashes, underscore, and parentheses.
+
         :param name: The string against which target names and aliases will be matched.
+
         :return: queryset containing matching Targets. Will return targets even when matched value is an alias.
         """
         simple_name = self.make_simple_name(name)
@@ -101,7 +141,14 @@ class TargetMatchManager(models.Manager):
         return queryset
 
     def make_simple_name(self, name):
-        """Create a simplified name to be used for comparison in check_for_fuzzy_name_match."""
+        """
+        Create a simplified name to be used for comparison in check_for_fuzzy_name_match.
+        By default, this method removes capitalization, spaces, dashes, underscores, and parentheses from the name.
+
+        :param name: The string to be simplified.
+
+        :return: A simplified string version of the given name.
+        """
         return name.lower().replace(" ", "").replace("-", "").replace("_", "").replace("(", "").replace(")", "")
 
 
