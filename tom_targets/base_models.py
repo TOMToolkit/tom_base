@@ -47,6 +47,14 @@ class TargetMatchManager(models.Manager):
     and parentheses. Additional matching functions can be added.
     """
 
+    def check_unique(self, name=''):
+        queryset = self.check_for_fuzzy_match(name)
+        return queryset
+
+    def check_for_name_match(self, name):
+        queryset = self.check_for_fuzzy_match(name)
+        return queryset
+
     def check_for_fuzzy_match(self, name):
         """
         Check for case-insensitive names ignoring spaces, dashes, underscore, and parentheses.
@@ -327,11 +335,11 @@ class BaseTarget(models.Model):
         super().validate_unique(*args, **kwargs)
         # Check DB for similar target/alias names.
 
-        matches = self.__class__.matches.check_for_fuzzy_match(self.name)
+        matches = self.__class__.matches.check_unique(self.name)
         for match in matches:
             # Ignore the fact that this target's name matches itself.
             if match.id != self.id:
-                raise ValidationError(f'Target with Name or alias similar to {self.name} already exists')
+                raise ValidationError(f'A Target matching {self.name} already exists. ({match.name})')
         # Alias Check only necessary when updating target existing target. Reverse relationships require Primary Key.
         # If nothing has changed for the Target, do not validate against existing aliases.
         if self.pk and self.name != self.__class__.objects.get(pk=self.pk).name:

@@ -513,8 +513,9 @@ class TestTargetCreate(TestCase):
         self.assertContains(second_response, 'Target name with this Alias already exists.')
 
     def test_create_target_name_conflicting_with_existing_aliases(self):
+        original_name = 'multiple_names_target'
         target_data = {
-            'name': 'multiple_names_target',
+            'name': original_name,
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
@@ -540,8 +541,8 @@ class TestTargetCreate(TestCase):
         for i, name in enumerate(names):
             target_data.pop(f'aliases-{i}-name')
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(second_response, f'Target with Name or alias similar to {target_data["name"]} '
-                                             f'already exists')
+        self.assertContains(second_response, f'A Target matching {target_data["name"]} already exists. '
+                                             f'({original_name})')
         self.assertFalse(Target.objects.filter(name=target_data['name']).exists())
 
     def test_create_target_alias_conflicting_with_existing_target_name(self):
@@ -602,8 +603,9 @@ class TestTargetCreate(TestCase):
         self.assertFalse(TargetName.objects.filter(name=target_data['name']).exists())
 
     def test_create_targets_with_fuzzy_conflicting_names(self):
+        original_name = 'fuzzy_name_Target'
         target_data = {
-            'name': 'fuzzy_name_Target',
+            'name': original_name,
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
@@ -624,11 +626,12 @@ class TestTargetCreate(TestCase):
         for name in names:
             target_data['name'] = name
             second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-            self.assertContains(second_response, f'Target with Name or alias similar to {name} already exists')
+            self.assertContains(second_response, f'A Target matching {name} already exists. ({original_name})')
 
     def test_create_alias_fuzzy_conflict_with_existing_target_name(self):
+        original_name = 'John'
         target_data = {
-            'name': 'John',
+            'name': original_name,
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
@@ -651,7 +654,8 @@ class TestTargetCreate(TestCase):
         target_data['name'] = 'multiple_names_target'
         target_data['aliases-TOTAL_FORMS'] = 2
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(second_response, f'Target with Name or alias similar to {names[0]} already exists')
+        self.assertContains(second_response, f'Target with Name or alias similar to {names[0]} already exists. '
+                                             f'({original_name})')
 
 
 class TestTargetUpdate(TestCase):
