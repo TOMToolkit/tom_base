@@ -2,7 +2,7 @@ Adding Custom Target Matcher
 ----------------------------
 
 The role of the ``TargetMatchManager`` is to return a queryset of targets that match a given set of parameters.
-By default, the TOM Toolkit includes a ``TargetMatchManager`` that contains a ``check_for_fuzzy_match`` function that
+By default, the TOM Toolkit includes a ``TargetMatchManager`` that contains  ``check_for_fuzzy_match`` function that
 will return a queryset of ``TargetNames`` that are "similar" to a given string. This function will check for
 case-insensitive aliases while ignoring spaces, dashes, underscore, and parentheses. This function is used during
 ``validate_unique`` when the target is saved to ensure that redundant targets are not added.

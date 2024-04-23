@@ -197,6 +197,14 @@ TARGET_TYPE = '{{ TARGET_TYPE }}'
 # Set to the full path of a custom target model to extend the BaseTarget Model with custom fields.
 # TARGET_MODEL_CLASS = '{{ CUSTOM_CODE_APP_NAME }}.models.UserDefinedTarget'
 
+# Define MATCH_MANAGERS here. This is a dictionary that contains a dotted module path to the desired match manager
+# for a given model.
+# For example:
+# MATCH_MANAGERS = {
+#    "Target": "custom_code.match_managers.MyCustomTargetMatchManager"
+# }
+MATCH_MANAGERS = {}
+
 FACILITIES = {
     'LCO': {
         'portal_url': 'https://observe.lco.global',

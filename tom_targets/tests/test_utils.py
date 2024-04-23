@@ -28,7 +28,7 @@ class ConeSearchManager(TargetMatchManager):
         :param target: The target object to be checked.
         :return: queryset containing matching Target(s).
         """
-        queryset = self.super().check_unique(target, *args, **kwargs)
+        queryset = super().check_unique(target, *args, **kwargs)
         radius = 2
         cone_search_queryset = self.check_for_nearby_match(target.ra, target.dec, radius)
         return queryset | cone_search_queryset
