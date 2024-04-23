@@ -1,4 +1,4 @@
-Adding Custom Target Matcher
+Customizing a Target Matcher
 ----------------------------
 
 The role of the ``TargetMatchManager`` is to return a queryset of targets that match a given set of parameters.
