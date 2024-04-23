@@ -47,15 +47,24 @@ class TargetMatchManager(models.Manager):
     and parentheses. Additional matching functions can be added.
     """
 
-    def check_unique(self, name=''):
-        queryset = self.check_for_fuzzy_match(name)
+    def check_unique(self, target):
+        queryset = self.get_name_match(target.name)
         return queryset
 
-    def check_for_name_match(self, name):
-        queryset = self.check_for_fuzzy_match(name)
+    def get_name_match(self, name):
+        queryset = self.check_for_fuzzy_name_match(name)
         return queryset
 
-    def check_for_fuzzy_match(self, name):
+    def check_for_exact_name_match(self, name):
+        """
+        Returns a queryset exactly matching name that is received
+        :param name: The string against which target names will be matched.
+        :return: queryset containing matching Target(s).
+        """
+        queryset = super().get_queryset().filter(name=name)
+        return queryset
+
+    def check_for_fuzzy_name_match(self, name):
         """
         Check for case-insensitive names ignoring spaces, dashes, underscore, and parentheses.
         :param name: The string against which target names and aliases will be matched.
@@ -71,7 +80,7 @@ class TargetMatchManager(models.Manager):
         return queryset
 
     def make_simple_name(self, name):
-        """Create a simplified name to be used for comparison in check_for_fuzzy_match."""
+        """Create a simplified name to be used for comparison in check_for_fuzzy_name_match."""
         return name.lower().replace(" ", "").replace("-", "").replace("_", "").replace("(", "").replace(")", "")
 
 
@@ -335,7 +344,7 @@ class BaseTarget(models.Model):
         super().validate_unique(*args, **kwargs)
         # Check DB for similar target/alias names.
 
-        matches = self.__class__.matches.check_unique(self.name)
+        matches = self.__class__.matches.check_unique(self)
         for match in matches:
             # Ignore the fact that this target's name matches itself.
             if match.id != self.id:

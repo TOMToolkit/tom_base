@@ -75,7 +75,7 @@ class TargetName(models.Model):
                                   f'(target_id={self.target.id})')
 
         # Check DB for similar target/alias names.
-        matches = Target.matches.check_for_name_match(self.name)
+        matches = Target.matches.get_name_match(self.name)
         if matches:
             raise ValidationError(f'Target with Name or alias similar to {self.name} already exists.'
                                   f' ({matches.first().name})')
