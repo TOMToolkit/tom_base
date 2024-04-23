@@ -3,10 +3,12 @@ import logging
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
+from django.db.models.functions.math import ACos, Cos, Radians, Pi, Sin
 from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils.module_loading import import_string
 from guardian.shortcuts import assign_perm
+from math import radians
 
 from tom_common.hooks import run_hook
 
@@ -47,13 +49,32 @@ class TargetMatchManager(models.Manager):
     and parentheses. Additional matching functions can be added.
     """
 
-    def check_unique(self, target):
+    def check_unique(self, target, *args, **kwargs):
         queryset = self.get_name_match(target.name)
         return queryset
 
     def get_name_match(self, name):
         queryset = self.check_for_fuzzy_name_match(name)
         return queryset
+
+    def check_for_nearby_match(self, ra, dec, radius):
+        radius /= 3600  # Convert radius from arcseconds to degrees
+        double_radius = radius * 2
+        # print(super().get_queryset())
+        # queryset = super().get_queryset().all().filter(ra__gte=ra - double_radius, ra__lte=ra + double_radius)
+        queryset = super().get_queryset().filter(
+            ra__gte=ra - double_radius, ra__lte=ra + double_radius,
+            dec__gte=dec - double_radius, dec__lte=dec + double_radius
+        )
+
+        separation = models.ExpressionWrapper(
+            180 * ACos(
+                (Sin(radians(dec)) * Sin(Radians('dec'))) +
+                (Cos(radians(dec)) * Cos(Radians('dec')) * Cos(radians(ra) - Radians('ra')))
+            ) / Pi(), models.FloatField()
+        )
+
+        return queryset.annotate(separation=separation).filter(separation__lte=radius)
 
     def check_for_exact_name_match(self, name):
         """

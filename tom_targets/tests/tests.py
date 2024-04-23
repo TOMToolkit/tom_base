@@ -874,25 +874,39 @@ class TestTargetUpdate(TestCase):
         with self.assertRaises(ValidationError):
             new_alias.full_clean()
 
-    @override_settings(MATCH_MANAGERS={'Target': 'tom_targets.tests.test_utils.StrictMatch'})
-    def test_update_with_strict_matching(self):
-        self.form_data.update({
-            'targetextra_set-TOTAL_FORMS': 1,
-            'targetextra_set-INITIAL_FORMS': 0,
-            'targetextra_set-MIN_NUM_FORMS': 0,
-            'targetextra_set-MAX_NUM_FORMS': 1000,
-            'targetextra_set-0-key': 'redshift',
-            'targetextra_set-0-value': '3',
-            'aliases-TOTAL_FORMS': 1,
-            'aliases-INITIAL_FORMS': 0,
-            'aliases-MIN_NUM_FORMS': 0,
-            'aliases-MAX_NUM_FORMS': 1000,
-            'aliases-0-name': 'testtargetname2'
-        })
-        self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
-        self.target.refresh_from_db()
-        self.assertTrue(self.target.targetextra_set.filter(key='redshift').exists())
-        self.assertTrue(self.target.aliases.filter(name='testtargetname2').exists())
+
+class TestTargetMatchManager(TestCase):
+    def setUp(self):
+        self.form_data = {
+            'name': 'testtarget',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1
+        }
+        user = User.objects.create(username='testuser')
+        self.target = Target.objects.create(**self.form_data)
+        assign_perm('tom_targets.change_target', user, self.target)
+        self.client.force_login(user)
+
+    def test_strict_matching(self):
+        fuzzy_name = "test_target"
+        fuzzy_matches = Target.matches.check_for_fuzzy_name_match(fuzzy_name)
+        strict_matches = Target.matches.check_for_exact_name_match(fuzzy_name)
+        self.assertTrue(fuzzy_matches.exists())
+        self.assertFalse(strict_matches.exists())
+
+    def test_cone_search_matching(self):
+        ra = 113.456
+        dec = -22.1
+        radius = 1
+        matches = Target.matches.check_for_nearby_match(ra, dec, radius)
+        self.assertTrue(matches.exists())
+        ra += 0.01
+        matches = Target.matches.check_for_nearby_match(ra, dec, radius)
+        self.assertFalse(matches.exists())
+        radius += 100
+        matches = Target.matches.check_for_nearby_match(ra, dec, radius)
+        self.assertTrue(matches.exists())
 
 
 class TestTargetImport(TestCase):
