@@ -46,10 +46,10 @@ class TargetMatchManager(models.Manager):
     Search for matches amongst Target objects.
     Return Queryset containing relevant TARGET matches.
 
-    NOTE: 
+    NOTE:
         ``check_unique`` and ``get_name_match`` are used throughout the code to determine if a target or a name is
-        unique. These functions can be overridden in a subclass to provide custom matching logic.  Examples of this can be
-        found in the documentation (https://tom-toolkit.readthedocs.io/en/stable/targets/target_matcher.html).
+        unique. These functions can be overridden in a subclass to provide custom matching logic.  Examples of this can
+        be found in the documentation (https://tom-toolkit.readthedocs.io/en/stable/targets/target_matcher.html).
     """
 
     def check_unique(self, target, *args, **kwargs):
