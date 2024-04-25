@@ -176,7 +176,7 @@ def get_photometry_data(context, target, target_share=False):
                    'source': reduced_datum.source_name,
                    'filter': reduced_datum.value.get('filter', ''),
                    'telescope': reduced_datum.value.get('telescope', ''),
-                   'magnitude_error': reduced_datum.value.get('magnitude_error', '')
+                   'error': reduced_datum.value.get('error', '')
                    }
 
         if 'limit' in reduced_datum.value.keys():
