@@ -890,8 +890,8 @@ class TestTargetMatchManager(TestCase):
 
     def test_strict_matching(self):
         fuzzy_name = "test_target"
-        fuzzy_matches = Target.matches.fuzzy_name(fuzzy_name)
-        strict_matches = Target.matches.exact_name(fuzzy_name)
+        fuzzy_matches = Target.matches.match_fuzzy_name(fuzzy_name)
+        strict_matches = Target.matches.match_exact_name(fuzzy_name)
         self.assertTrue(fuzzy_matches.exists())
         self.assertFalse(strict_matches.exists())
 
@@ -900,18 +900,18 @@ class TestTargetMatchManager(TestCase):
         dec = -22.1
         radius = 1
         # Test for exact match
-        matches = Target.matches.cone_search(ra, dec, radius)
+        matches = Target.matches.match_cone_search(ra, dec, radius)
         self.assertTrue(matches.exists())
         # Test for slightly off match
         ra += 0.01
-        matches = Target.matches.cone_search(ra, dec, radius)
+        matches = Target.matches.match_cone_search(ra, dec, radius)
         self.assertFalse(matches.exists())
         # Test for match with larger radius
         radius += 100
-        matches = Target.matches.cone_search(ra, dec, radius)
+        matches = Target.matches.match_cone_search(ra, dec, radius)
         self.assertTrue(matches.exists())
         # Test for moving objects with no RA/DEC
-        matches = Target.matches.cone_search(None, None, radius)
+        matches = Target.matches.match_cone_search(None, None, radius)
         self.assertFalse(matches.exists())
 
 

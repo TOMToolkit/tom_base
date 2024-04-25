@@ -24,7 +24,7 @@ You can use the ``TargetMatchManager`` to return a queryset of targets that sati
     radius = 12   # Arcseconds
 
     # Get the queryset of targets that match the cone search
-    targets = Target.matches.cone_search(ra, dec, radius)
+    targets = Target.matches.match_cone_search(ra, dec, radius)
 
 Extending the TargetMatchManager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,23 +67,23 @@ its name.
         Custom Match Manager for extending the built in TargetMatchManager.
         """
 
-        def name(self, name):
+        def match_name(self, name):
             """
             Returns a queryset exactly matching name that is received
             :param name: The string against which target names will be matched.
             :return: queryset containing matching Target(s).
             """
-            queryset = self.exact_name(name)
+            queryset = self.match_exact_name(name)
             return queryset
 
 
 .. note::
-    The default behavior for ``matches.name`` is to perform a "fuzzy match". This can be computationally expensive
-    for large databases. If you have experienced this issue, you can override the ``name`` method to only
+    The default behavior for ``match_name`` is to perform a "fuzzy match". This can be computationally expensive
+    for large databases. If you have experienced this issue, you can override the ``match_name`` method to only
     return exact matches using the above example.
 
 
-Next we have another example of a ``TargetMatchManager`` that extends the ``target`` matcher to not only include name
+Next we have another example of a ``TargetMatchManager`` that extends the ``match_target`` matcher to not only include name
 matches but also considers any target with an RA and DEC less than 2" away from the given target to be a match for the
 target.
 
@@ -100,16 +100,16 @@ target.
         Custom Match Manager for extending the built in TargetMatchManager.
         """
 
-        def target(self, target, *args, **kwargs):
+        def match_target(self, target, *args, **kwargs):
             """
             Returns a queryset containing any targets that are both a fuzzy match and within 2 arcsec of
             the target that is received
             :param target: The target object to be checked.
             :return: queryset containing matching Target(s).
             """
-            queryset = super().target(target, *args, **kwargs)
+            queryset = super().match_target(target, *args, **kwargs)
             radius = 2  # Arcseconds
-            cone_search_queryset = self.cone_search(target.ra, target.dec, radius)
+            cone_search_queryset = self.match_cone_search(target.ra, target.dec, radius)
             return queryset | cone_search_queryset
 
 
@@ -118,7 +118,7 @@ the database is a match for the target that is being checked. This is extremely 
 by ``Target.validate_unique()`` to determine if a new target can be saved to the database, and thus prevent your TOM
 from accidentally ingesting duplicate targets.
 
-Your ``MatchManager`` should subclass the ``base_model.TargetMatchManager`` which will contain both a ``target``
-method and a ``name`` method, both of which should return a queryset. These methods can be modified or
+Your ``MatchManager`` should subclass the ``base_model.TargetMatchManager`` which will contain both a ``match_target``
+method and a ``match_name`` method, both of which should return a queryset. These methods can be modified or
 extended, as in the above example, as needed.
 
