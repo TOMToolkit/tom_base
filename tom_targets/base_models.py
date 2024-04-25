@@ -94,10 +94,12 @@ class TargetMatchManager(models.Manager):
         :return: queryset containing matching Target(s).
 
         """
+        # Return an empty queryset if any of the parameters are None such as for a NonSidereal target
+        if ra is None or dec is None or radius is None:
+            return self.get_queryset().none()
+
         radius /= 3600  # Convert radius from arcseconds to degrees
         double_radius = radius * 2
-        # print(super().get_queryset())
-        # queryset = super().get_queryset().all().filter(ra__gte=ra - double_radius, ra__lte=ra + double_radius)
         queryset = super().get_queryset().filter(
             ra__gte=ra - double_radius, ra__lte=ra + double_radius,
             dec__gte=dec - double_radius, dec__lte=dec + double_radius

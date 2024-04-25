@@ -899,14 +899,20 @@ class TestTargetMatchManager(TestCase):
         ra = 113.456
         dec = -22.1
         radius = 1
+        # Test for exact match
         matches = Target.matches.check_for_nearby_match(ra, dec, radius)
         self.assertTrue(matches.exists())
+        # Test for slightly off match
         ra += 0.01
         matches = Target.matches.check_for_nearby_match(ra, dec, radius)
         self.assertFalse(matches.exists())
+        # Test for match with larger radius
         radius += 100
         matches = Target.matches.check_for_nearby_match(ra, dec, radius)
         self.assertTrue(matches.exists())
+        # Test for moving objects with no RA/DEC
+        matches = Target.matches.check_for_nearby_match(None, None, radius)
+        self.assertFalse(matches.exists())
 
 
 class TestTargetImport(TestCase):
