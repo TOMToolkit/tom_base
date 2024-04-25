@@ -24,7 +24,7 @@ You can use the ``TargetMatchManager`` to return a queryset of targets that sati
     radius = 12   # Arcseconds
 
     # Get the queryset of targets that match the cone search
-    targets = Target.matches.check_for_nearby_match(ra, dec, radius)
+    targets = Target.matches.cone_search(ra, dec, radius)
 
 Extending the TargetMatchManager
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,13 +44,20 @@ To start, find the ``MATCH_MANAGERS`` definition in your ``settings.py``:
 Add the path to your custom ``TargetMatchManager`` to the "Target" key of the MATCH_MANAGERS dictionary as shown in the
 example.
 
-The following code provides an example of a custom ``TargetMatchManager`` that checks for exact name matches and
-requires that a target must have an RA and DEC more than 2" away from any other target in the database to be considered
-unique:
+Once you have defined your custom ``TargetMatchManager`` in ``settings.py``, you can need to create the custom
+``TargetMatchManager`` in your project. We recommend you do this inside your project's ``custom_code`` app, but can be
+placed anywhere.
+
+The ``TargetMatchManager`` can be extended to include additional methods or to override any of the default methods
+described in :doc:`Target: Models <../api/tom_targets/models>`. The following code provides an example of a custom
+``TargetMatchManager`` that checks for exact name matches instead of the default fuzzy matches. This would change the
+default behavior for several parts of the TOM Toolkit that endeavor to determine if a target or alias is unique based on
+its name.
 
 .. code-block:: python
     :caption: match_managers.py
     :linenos:
+    :emphasize-lines: 15
 
     from tom_targets.base_models import TargetMatchManager
 
@@ -60,32 +67,58 @@ unique:
         Custom Match Manager for extending the built in TargetMatchManager.
         """
 
-        def check_unique(self, target, *args, **kwargs):
+        def name(self, name):
+            """
+            Returns a queryset exactly matching name that is received
+            :param name: The string against which target names will be matched.
+            :return: queryset containing matching Target(s).
+            """
+            queryset = self.exact_name(name)
+            return queryset
+
+
+.. note::
+    The default behavior for ``matches.name`` is to perform a "fuzzy match". This can be computationally expensive
+    for large databases. If you have experienced this issue, you can override the ``name`` method to only
+    return exact matches using the above example.
+
+
+Next we have another example of a ``TargetMatchManager`` that extends the ``target`` matcher to not only include name
+matches but also considers any target with an RA and DEC less than 2" away from the given target to be a match for the
+target.
+
+.. code-block:: python
+    :caption: match_managers.py
+    :linenos:
+    :emphasize-lines: 17, 18
+
+    from tom_targets.base_models import TargetMatchManager
+
+
+    class CustomTargetMatchManager(TargetMatchManager):
+        """
+        Custom Match Manager for extending the built in TargetMatchManager.
+        """
+
+        def target(self, target, *args, **kwargs):
             """
             Returns a queryset containing any targets that are both a fuzzy match and within 2 arcsec of
             the target that is received
             :param target: The target object to be checked.
             :return: queryset containing matching Target(s).
             """
-            queryset = super().check_unique(target, *args, **kwargs)
-            radius = 2
-            cone_search_queryset = self.check_for_nearby_match(target.ra, target.dec, radius)
+            queryset = super().target(target, *args, **kwargs)
+            radius = 2  # Arcseconds
+            cone_search_queryset = self.cone_search(target.ra, target.dec, radius)
             return queryset | cone_search_queryset
 
-        def get_name_match(self, name):
-            """
-            Returns a queryset exactly matching name that is received
-            :param name: The string against which target names will be matched.
-            :return: queryset containing matching Target(s).
-            """
-            queryset = self.check_for_exact_name_match(name)
-            return queryset
 
-Your ``MatchManager`` should extend the ``base_model.TargetMatchManager`` which will contain both a ``check_unique``
-method and a ``get_name_match`` method, both of which should return a queryset. These methods can be modified or
+The highlighted lines could be replaced with any custom logic that you would like to use to determine if a target in
+the database is a match for the target that is being checked. This is extremely powerful since this code is ultimately used
+by ``Target.validate_unique()`` to determine if a new target can be saved to the database, and thus prevent your TOM
+from accidentally ingesting duplicate targets.
+
+Your ``MatchManager`` should subclass the ``base_model.TargetMatchManager`` which will contain both a ``target``
+method and a ``name`` method, both of which should return a queryset. These methods can be modified or
 extended, as in the above example, as needed.
 
-.. note::
-    The default behavior for ``get_name_match`` is to perform a "fuzzy match". This can be computationally expensive
-    for large databases. If you have experienced this issue, you can override the ``get_name_match`` method to only
-    return exact matches using the above example.
