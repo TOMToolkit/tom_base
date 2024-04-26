@@ -122,3 +122,43 @@ Your ``MatchManager`` should subclass the ``base_model.TargetMatchManager`` whic
 method and a ``match_name`` method, both of which should return a queryset. These methods can be modified or
 extended, as in the above example, as needed.
 
+Customizing ``match_fuzzy_name``
+++++++++++++++++++++++++++++++++
+
+The ``match_fuzzy_name`` method is used to query the database for targets whose names ~kind of~ match the given string.
+This method relies on ``simplify_name`` to create a processed version of the input string that can be compared to
+similarly processed names and aliases in the database. By default, ``simplify_name`` removes capitalization, spaces,
+dashes, underscores, and parentheses from the names, thus ``match_fuzzy_name`` will return targets whose names match
+the given string ignoring these characters. (i.e. "My Target" will match both "my_target" and "(mY)tAr-GeT").
+
+If you would like to customize the behavior of ``match_fuzzy_name``, you can override the ``simplify_name`` method in
+your custom ``TargetMatchManager``. The following example demonstrates how to extend ``simplify_name`` to also consider
+two names to be a match if they start with either 'AT' or 'SN'.
+
+
+.. code-block:: python
+    :caption: match_managers.py
+    :linenos:
+    :emphasize-lines: 14, 15
+
+    from tom_targets.base_models import TargetMatchManager
+
+
+    class CustomTargetMatchManager(TargetMatchManager):
+        """
+        Custom Match Manager for extending the built in TargetMatchManager.
+        """
+
+        def simplify_name(self, name):
+            """
+            Create a custom simplified name to be used for comparison in ``match_fuzzy_name``.
+            """
+            simple_name = super().simplify_name(name)  # Use the default simplification
+            if simple_name.startswith('at'):
+                simple_name = simple_name.replace('at', 'sn', 1)
+            return simple_name
+
+
+The highlighted lines could be replaced with any custom logic that you would like to use to determine if a target in
+the database is a match for the name that is being checked. *NOTE* this will only actually be used by
+``match_fuzzy_name``. If you are using ``match_exact_name`` these changes will not be used.
