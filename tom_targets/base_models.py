@@ -3,10 +3,12 @@ import logging
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
+from django.db.models.functions.math import ACos, Cos, Radians, Pi, Sin
 from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils.module_loading import import_string
 from guardian.shortcuts import assign_perm
+from math import radians
 
 from tom_common.hooks import run_hook
 
@@ -41,29 +43,137 @@ REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME = {
 
 class TargetMatchManager(models.Manager):
     """
-    Search for matches amongst Target names and Aliases
+    Search for matches amongst Target objects.
     Return Queryset containing relevant TARGET matches.
-    NOTE: check_for_fuzzy_match looks for Target names and aliases ignoring capitalization, spaces, dashes, underscores,
-    and parentheses. Additional matching functions can be added.
+
+    NOTE:
+        ``is_unique`` and ``match_name`` are used throughout the code to determine if a target or a name is
+        unique. These functions can be overridden in a subclass to provide custom matching logic.  Examples of this can
+        be found in the documentation (https://tom-toolkit.readthedocs.io/en/stable/targets/target_matcher.html).
     """
 
-    def check_for_fuzzy_match(self, name):
+    def is_unique(self, target, *args, **kwargs):
         """
-        Check for case-insensitive names ignoring spaces, dashes, underscore, and parentheses.
+        Check if the given target is unique. This function uses ``TargetMatchManager.match_target()`` to determine if
+        any targets exist in the DB other than the given target would be considered by the user to be a duplicate of
+        the given target.
+
+        This function is used in the ``Target.validate_unique()`` function to check for uniqueness.
+
+        :param target: The target object to be checked against.
+
+        :return: True if the target is unique, False otherwise.
+
+        """
+        if self.match_target(target, *args, **kwargs).exclude(pk=target.pk).exists():
+            return False
+        return True
+
+    def match_target(self, target, *args, **kwargs):
+        """
+        Check if any other targets match the given target. This function returns a queryset that is used by
+        ``TargetMatchManager.is_unique()`` to determine if a target is unique.
+
+        By default, this checks for a match in the name field using the `match_name` function.
+        This can be overridden in a subclass to provide custom matching logic.
+
+        :param target: The target object to be checked against.
+
+        :return: queryset containing matching Target(s).
+
+        """
+        queryset = self.match_name(target.name)
+        return queryset
+
+    def match_name(self, name):
+        """
+        Returns a queryset of targets with matching names.
+
+        By default, this checks for a fuzzy match using the ``match_fuzzy_name`` function.
+        This can be overridden in a subclass to provide custom matching logic.
+
+        :param name: The string against which target names will be matched.
+
+        :return: queryset containing matching Target(s).
+        """
+        queryset = self.match_fuzzy_name(name)
+        return queryset
+
+    def match_cone_search(self, ra: float, dec: float, radius: float):
+        """
+        Returns a queryset containing any targets that are within the given radius of the given ra and dec.
+
+        :param ra: The right ascension of the target in degrees.
+        :type ra: float
+
+        :param dec: The declination of the target in degrees.
+        :type dec: float
+
+        :param radius: The radius in arcseconds within which to search for targets.
+        :type radius: float
+
+        :return: queryset containing matching Target(s).
+
+        """
+        # Return an empty queryset if any of the parameters are None such as for a NonSidereal target
+        if ra is None or dec is None or radius is None:
+            return self.get_queryset().none()
+
+        radius /= 3600  # Convert radius from arcseconds to degrees
+        double_radius = radius * 2
+        queryset = super().get_queryset().filter(
+            ra__gte=ra - double_radius, ra__lte=ra + double_radius,
+            dec__gte=dec - double_radius, dec__lte=dec + double_radius
+        )
+
+        separation = models.ExpressionWrapper(
+            180 * ACos(
+                (Sin(radians(dec)) * Sin(Radians('dec'))) +
+                (Cos(radians(dec)) * Cos(Radians('dec')) * Cos(radians(ra) - Radians('ra')))
+            ) / Pi(), models.FloatField()
+        )
+
+        return queryset.annotate(separation=separation).filter(separation__lte=radius)
+
+    def match_exact_name(self, name):
+        """
+        Returns a queryset of targets with a name that exactly match the name that is received
+
+        :param name: The string against which target names will be matched.
+
+        :return: queryset containing matching Target(s).
+        """
+        queryset = super().get_queryset().filter(name=name)
+        return queryset
+
+    def match_fuzzy_name(self, name):
+        """
+        Returns a queryset of targets with a name OR ALIAS that, when processed by ``simplify_name``, match a similarly
+        processed version of the name that is received.
+
         :param name: The string against which target names and aliases will be matched.
+
         :return: queryset containing matching Targets. Will return targets even when matched value is an alias.
         """
-        simple_name = self.make_simple_name(name)
+        simple_name = self.simplify_name(name)
         matching_names = []
         for target in self.get_queryset().all().prefetch_related('aliases'):
             for alias in target.names:
-                if self.make_simple_name(alias) == simple_name:
+                if self.simplify_name(alias) == simple_name:
                     matching_names.append(target.name)
         queryset = self.get_queryset().filter(name__in=matching_names)
         return queryset
 
-    def make_simple_name(self, name):
-        """Create a simplified name to be used for comparison in check_for_fuzzy_match."""
+    def simplify_name(self, name):
+        """
+        Create a simplified name to be used for comparison in ``match_fuzzy_name``.
+        By default, this method removes capitalization, spaces, dashes, underscores, and parentheses from the name.
+        This can be overridden in a subclass to provide custom name simplification.
+
+        :param name: The string to be simplified.
+
+        :return: A simplified string version of the given name.
+        """
         return name.lower().replace(" ", "").replace("-", "").replace("_", "").replace("(", "").replace(")", "")
 
 
@@ -327,18 +437,16 @@ class BaseTarget(models.Model):
         super().validate_unique(*args, **kwargs)
         # Check DB for similar target/alias names.
 
-        matches = self.__class__.matches.check_for_fuzzy_match(self.name)
-        for match in matches:
-            # Ignore the fact that this target's name matches itself.
-            if match.id != self.id:
-                raise ValidationError(f'Target with Name or alias similar to {self.name} already exists')
+        if not self.__class__.matches.is_unique(self):
+            raise ValidationError(f'A Target matching {self.name} already exists. '
+                                  f'({self.__class__.matches.match_target(self).exclude(id=self.id).first().name})')
         # Alias Check only necessary when updating target existing target. Reverse relationships require Primary Key.
         # If nothing has changed for the Target, do not validate against existing aliases.
         if self.pk and self.name != self.__class__.objects.get(pk=self.pk).name:
             for alias in self.aliases.all():
                 # Check for fuzzy matching
-                if self.__class__.matches.make_simple_name(alias.name) == \
-                        self.__class__.matches.make_simple_name(self.name):
+                if self.__class__.matches.simplify_name(alias.name) == \
+                        self.__class__.matches.simplify_name(self.name):
                     raise ValidationError('Target name and target aliases must be different')
 
     def __str__(self):
