@@ -162,8 +162,9 @@ def create_hermes_phot_table_row(datum, **kwargs):
         phot_table_row['brightness'] = datum.value['magnitude']
     else:
         phot_table_row['limiting_brightness'] = datum.value.get('limit', None)
-    if datum.value.get('error', None):
-        phot_table_row['brightness_error'] = datum.value['error']
+    error_value = datum.value.get('error', datum.value.get('magnitude_error', None))
+    if error_value is not None:
+        phot_table_row['brightness_error'] = error_value
     return phot_table_row
 
 
