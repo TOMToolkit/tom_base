@@ -1107,7 +1107,8 @@ class OCSFullObservationForm(OCSBaseObservationForm):
         instrument_config = {
             'exposure_count': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_count'],
             'exposure_time': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time'],
-            'optical_elements': {}
+            'optical_elements': {},
+            'mode': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode']
         }
         for oe_group in self.get_optical_element_groups():
             instrument_config['optical_elements'][oe_group] = self.cleaned_data.get(
