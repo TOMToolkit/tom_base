@@ -641,6 +641,13 @@ class OCSInstrumentConfigLayout(Layout):
             *self.get_initial_ic_items(config_instance, instance),
             Div(
                 Div(
+                    f'c_{config_instance}_ic_{instance}_readout_mode',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            ),
+            Div(
+                Div(
                     f'c_{config_instance}_ic_{instance}_exposure_time',
                     css_class='col'
                 ),
@@ -971,6 +978,8 @@ class OCSFullObservationForm(OCSBaseObservationForm):
                 label='Substitute Target for this Configuration'
             )
             for i in range(self.facility_settings.get_setting('max_instrument_configs')):
+                self.fields[f'c_{j + 1}_ic_{i + 1}_readout_mode'] = forms.ChoiceField(
+                    choices=self.mode_choices('readout'), required=False, label='Readout Mode')
                 self.fields[f'c_{j+1}_ic_{i+1}_exposure_count'] = forms.IntegerField(
                     min_value=1, label='Exposure Count', initial=1, required=False)
                 self.fields[f'c_{j+1}_ic_{i+1}_exposure_time'] = forms.FloatField(
