@@ -92,7 +92,7 @@ sphinx-panels = "~0.6"
 
 [tool.poetry.group.coverage.dependencies]
 coverage = "~6" # coveralls needs ~6 even though 7.3.2 is latest
-coveralls = "~3"
+coveralls = ">=3,<5"
 
 [tool.poetry.group.lint.dependencies]
 flake8 = ">=6.0,<7.1"
