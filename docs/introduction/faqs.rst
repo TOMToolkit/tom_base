@@ -57,7 +57,7 @@ The ``manage.py`` file can be found in the root of your project.
 
 Alternatively, you can give a user superuser status if you are already
 logged in as a superuser by visiting the admin page for users:
-http://127.0.0.1/admin/auth/user/
+http://127.0.0.1:8000/admin/auth/user/
 
 My science requires more parameters than are provided by the TOM Toolkit.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,7 +80,7 @@ How do I add a new page to my TOM?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We would recommend you read the `Django
-tutorial <https://docs.djangoproject.com/en/2.2/contents/>`__ 🙂. But if
+tutorial <https://docs.djangoproject.com/en/stable/contents/>`__ 🙂. But if
 you want the quick and dirty, edit the ``urls.py`` (located next to
 ``settings.py``):
 
@@ -98,7 +98,7 @@ And make sure ``newpage.html`` is located within the ``templates/``
 directory in your project.
 
 This will make the contents of ``newpage.html`` available under the path
-`/newpage/ <http://127.0.0.1/newpage/>`__.
+`/newpage/ <http://127.0.0.1:8000/newpage/>`__.
 
 Who is AnonymousUser?
 ~~~~~~~~~~~~~~~~~~~~~
