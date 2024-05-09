@@ -351,7 +351,7 @@ class ReducedDatum(models.Model):
 
                     {
                       'magnitude': 18.5,
-                      'magnitude_error': .5,
+                      'error': .5,
                       'filter': 'r',
                       'telescope': 'ELP.domeA.1m0a',
                       'instrument': 'fa07',

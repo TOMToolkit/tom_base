@@ -19,17 +19,17 @@ class TestHermesSharing(TestCase):
         self.rd1 = ReducedDatum.objects.create(
             target=self.target,
             data_type='photometry',
-            value={'magnitude': 18.5, 'magnitude_error': .5, 'filter': 'V', 'telescope': 'tst'}
+            value={'magnitude': 18.5, 'error': .5, 'filter': 'V', 'telescope': 'tst'}
         )
         self.rd2 = ReducedDatum.objects.create(
             target=self.target,
             data_type='photometry',
-            value={'magnitude': 19.5, 'magnitude_error': .5, 'filter': 'B', 'telescope': 'tst'}
+            value={'magnitude': 19.5, 'error': .5, 'filter': 'B', 'telescope': 'tst'}
         )
         self.rd3 = ReducedDatum.objects.create(
             target=self.target,
             data_type='photometry',
-            value={'magnitude': 17.5, 'magnitude_error': .5, 'filter': 'R', 'telescope': 'tst'}
+            value={'magnitude': 17.5, 'error': .5, 'filter': 'R', 'telescope': 'tst'}
         )
         self.message_info = BuildHermesMessage(
             title='Test Title',
@@ -64,7 +64,7 @@ class TestHermesSharing(TestCase):
                 self.assertEqual(hermes_datum['date_obs'], datum.timestamp.isoformat())
                 self.assertEqual(hermes_datum['telescope'], datum.value.get('telescope'))
                 self.assertEqual(hermes_datum['brightness'], datum.value.get('magnitude'))
-                self.assertEqual(hermes_datum['brightness_error'], datum.value.get('magnitude_error'))
+                self.assertEqual(hermes_datum['brightness_error'], datum.value.get('error'))
                 self.assertEqual(hermes_datum['bandpass'], datum.value.get('filter'))
 
     def test_convert_to_hermes_format(self):
