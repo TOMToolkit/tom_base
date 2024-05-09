@@ -55,6 +55,14 @@ class LCOSettings(OCSSettings):
         </a>
     """
 
+    rotator_mode_help = """
+        Only for FLOYDS.
+    """
+
+    rotator_angle_help = """
+        Rotation angle of slit. Only for Floyds `Slit Position Angle` rotator mode.
+    """
+
     fractional_ephemeris_rate_help = """
         <em>Fractional Ephemeris Rate.</em> Will track with target motion if left blank. <br/>
         <b><em>Caution:</em></b> Setting any value other than "1" will cause the target to slowly drift from the central
@@ -658,10 +666,10 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
             for i in range(self.facility_settings.get_setting('max_instrument_configs')):
                 self.fields[f'c_{j+1}_ic_{i+1}_rotator_mode'] = forms.ChoiceField(
                     choices=self.mode_choices('rotator'), label='Rotator Mode', required=False,
-                    help_text='Only for Floyds')
+                    help_text=self.facility_settings.rotator_mode_help)
                 self.fields[f'c_{j+1}_ic_{i+1}_rotator_angle'] = forms.FloatField(
                     min_value=0.0, initial=0.0,
-                    help_text='Rotation angle of slit. Only for Floyds `Slit Position Angle` rotator mode',
+                    help_text=self.facility_settings.rotator_angle_help,
                     label='Rotator Angle', required=False
                 )
                 # Add None option and help text for SOAR Gratings

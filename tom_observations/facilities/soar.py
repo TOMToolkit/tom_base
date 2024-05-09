@@ -1,11 +1,30 @@
 import requests
 
-from tom_observations.facilities.lco import LCOFacility, LCOSettings
+from django import forms
+from crispy_forms.layout import Div
+
+from tom_observations.facilities.lco import LCOFacility, LCOSettings, SpectralInstrumentConfigLayout
 from tom_observations.facilities.lco import LCOImagingObservationForm, LCOSpectroscopyObservationForm
 from tom_common.exceptions import ImproperCredentialsException
 
 
 class SOARSettings(LCOSettings):
+
+    instrument_type_help = """
+            <a href="https://noirlab.edu/science/programs/ctio/telescopes/soar-telescope/instruments" target="_blank">
+                More information about SOAR instruments.
+            </a>
+        """
+
+    exposure_time_help = """
+        """
+
+    rotator_mode_help = """
+        """
+
+    rotator_angle_help = """
+        """
+
     def get_sites(self):
         return {
             'Cerro Pachón': {
@@ -28,6 +47,9 @@ class SOARSettings(LCOSettings):
                 for site in self.get_sites().values()]
         }
 
+    def __init__(self, facility_name='SOAR'):
+        super().__init__(facility_name=facility_name)
+
 
 def make_request(*args, **kwargs):
     response = requests.request(*args, **kwargs)
@@ -38,6 +60,13 @@ def make_request(*args, **kwargs):
 
 
 class SOARImagingObservationForm(LCOImagingObservationForm):
+    def __init__(self, *args, **kwargs):
+        if 'facility_settings' not in kwargs:
+            kwargs['facility_settings'] = SOARSettings("SOAR")
+        super().__init__(*args, **kwargs)
+        for j in range(self.facility_settings.get_setting('max_configurations')):
+            for i in range(self.facility_settings.get_setting('max_instrument_configs')):
+                self.fields[f'c_{j+1}_ic_{i+1}_exposure_time'].help_text = ''
 
     def get_instruments(self):
         instruments = super()._get_instruments()
@@ -51,6 +80,16 @@ class SOARImagingObservationForm(LCOImagingObservationForm):
 
 
 class SOARSpectroscopyObservationForm(LCOSpectroscopyObservationForm):
+
+    def __init__(self, *args, **kwargs):
+        if 'facility_settings' not in kwargs:
+            kwargs['facility_settings'] = SOARSettings("SOAR")
+        super().__init__(*args, **kwargs)
+        for j in range(self.facility_settings.get_setting('max_configurations')):
+            for i in range(self.facility_settings.get_setting('max_instrument_configs')):
+                self.fields[f'c_{j + 1}_ic_{i + 1}_readout_mode'] = forms.ChoiceField(
+                    choices=self.mode_choices('readout'), required=False, label='Readout Mode')
+
     def get_instruments(self):
         instruments = super()._get_instruments()
         return {
@@ -60,6 +99,45 @@ class SOARSpectroscopyObservationForm(LCOSpectroscopyObservationForm):
 
     def configuration_type_choices(self):
         return [('SPECTRUM', 'Spectrum'), ('ARC', 'Arc'), ('LAMP_FLAT', 'Lamp Flat')]
+
+    def instrument_config_layout_class(self):
+        return SoarSpectralInstrumentConfigLayout
+
+
+class SoarSpectralInstrumentConfigLayout(SpectralInstrumentConfigLayout):
+    def _get_ic_layout(self, config_instance, instance, oe_groups):
+        return (
+            Div(
+                Div(
+                    f'c_{config_instance}_ic_{instance}_readout_mode',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            ),
+            Div(
+                Div(
+                    f'c_{config_instance}_ic_{instance}_exposure_time',
+                    css_class='col'
+                ),
+                Div(
+                    f'c_{config_instance}_ic_{instance}_exposure_count',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            ),
+            Div(
+                Div(
+                    f'c_{config_instance}_ic_{instance}_rotator_mode',
+                    css_class='col'
+                ),
+                Div(
+                    f'c_{config_instance}_ic_{instance}_rotator_angle',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            ),
+            *self._get_oe_groups_layout(config_instance, instance, oe_groups)
+        )
 
 
 class SOARFacility(LCOFacility):
@@ -76,7 +154,7 @@ class SOARFacility(LCOFacility):
         'SPECTRA': SOARSpectroscopyObservationForm
     }
 
-    def __init__(self, facility_settings=SOARSettings('LCO')):
+    def __init__(self, facility_settings=SOARSettings("SOAR")):
         super().__init__(facility_settings=facility_settings)
 
     def get_form(self, observation_type):
