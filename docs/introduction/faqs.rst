@@ -20,7 +20,7 @@ launch the notebook server:
 Under the new notebook menu, choose “Django Shell-Plus”. This will
 create a new notebook in the correct TOM context.
 
-There is also a `tutorial <../common/scripts>`__ on interacting with
+There is also a :doc:`tutorial </common/scripts>` on interacting with
 your TOM using Jupyter notebooks.
 
 What are tags on the Target form?
@@ -33,15 +33,15 @@ page, by entering the “key” and/or “value” fields in the filter list.
 They will also be displayed on the target detail pages.
 
 If you’d like to have more control over extra target data, see the
-documentation on `Adding Custom Target
-Fields <../targets/target_fields>`__.
+documentation on :doc:`Adding Custom Target
+Fields </targets/target_fields>`.
 
 I try to observe a target with LCO but get an error.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You might not have added your LCO api key to your settings file under
-the ``FACILITIES`` settings. See `Custom
-Settings <../uncategorized/customsettings#facilities>`__ for more
+the ``FACILITIES`` settings. See :doc:`Custom
+Settings </common/customsettings#facilities>` for more
 details.
 
 How do I create a super user (PI)?
@@ -63,15 +63,15 @@ My science requires more parameters than are provided by the TOM Toolkit.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to add additional parameters to your targets within the
-TOM. See the documentation on `Adding Custom Target
-Fields <../targets/target_fields>`__.
+TOM. See the documentation on :doc:`Adding Custom Target
+Fields </targets/target_fields>`.
 
 Yuck! My TOM is ugly. How do I change how it looks?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You have a few options. If you’d like to rearrange the layout or
-information on the page, you can follow the tutorial on `Customizing
-your TOM <../customization/customize_templates>`__. If you’d like to
+information on the page, you can follow the tutorial on :doc:`Customizing
+your TOM </customization/customize_templates>`. If you’d like to
 modify colors, typography, etc you’ll want to use CSS.
 `W3Schools <https://www.w3schools.com/Css/>`__ is a good resource if you
 are unfamiliar with Cascading Style Sheets.
