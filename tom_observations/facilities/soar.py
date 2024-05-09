@@ -61,12 +61,10 @@ def make_request(*args, **kwargs):
 
 class SOARImagingObservationForm(LCOImagingObservationForm):
     def __init__(self, *args, **kwargs):
+        # Set the facility settings to the SOAR settings
         if 'facility_settings' not in kwargs:
             kwargs['facility_settings'] = SOARSettings("SOAR")
         super().__init__(*args, **kwargs)
-        for j in range(self.facility_settings.get_setting('max_configurations')):
-            for i in range(self.facility_settings.get_setting('max_instrument_configs')):
-                self.fields[f'c_{j+1}_ic_{i+1}_exposure_time'].help_text = ''
 
     def get_instruments(self):
         instruments = super()._get_instruments()
@@ -80,11 +78,12 @@ class SOARImagingObservationForm(LCOImagingObservationForm):
 
 
 class SOARSpectroscopyObservationForm(LCOSpectroscopyObservationForm):
-
     def __init__(self, *args, **kwargs):
+        # Set the facility settings to the SOAR settings
         if 'facility_settings' not in kwargs:
             kwargs['facility_settings'] = SOARSettings("SOAR")
         super().__init__(*args, **kwargs)
+        # Add readout mode field for each instrument configuration since LCO doesn't have this field for spectroscopy
         for j in range(self.facility_settings.get_setting('max_configurations')):
             for i in range(self.facility_settings.get_setting('max_instrument_configs')):
                 self.fields[f'c_{j + 1}_ic_{i + 1}_readout_mode'] = forms.ChoiceField(
