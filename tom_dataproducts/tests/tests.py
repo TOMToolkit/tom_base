@@ -536,7 +536,7 @@ class TestReducedDatumModel(TestCase):
         self.timestamp = datetime.datetime.now()
         self.existing_reduced_datum_value = {
             'magnitude': 18.5,
-            'magnitude_error': .5,
+            'error': .5,
             'filter': 'r',
             'telescope': 'ELP.domeA.1m0a',
             'instrument': 'fa07'}
@@ -551,7 +551,7 @@ class TestReducedDatumModel(TestCase):
         """Test that we can add a second unique ReducedDatum"""
         second_reduced_datum_value = {
             'magnitude': 10.5,
-            'magnitude_error': 1.5,
+            'error': 1.5,
             'filter': 'g',
             'telescope': 'ELP.domeA.1m0a',
             'instrument': 'fa07'}

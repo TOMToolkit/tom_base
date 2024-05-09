@@ -82,7 +82,7 @@ class PanstarrsProcessor(DataProcessor):
                             'timestamp': timestamp,
                             'telescope': 'PanSTARRS 1',
                             'magnitude': mag,
-                            'magnitude_error': mag_err,
+                            'error': mag_err,
                             'filter': optical_filter,
                         }
                         photometry.append(value)

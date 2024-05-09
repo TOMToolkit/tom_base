@@ -162,8 +162,9 @@ def create_hermes_phot_table_row(datum, **kwargs):
         phot_table_row['brightness'] = datum.value['magnitude']
     else:
         phot_table_row['limiting_brightness'] = datum.value.get('limit', None)
-    if datum.value.get('magnitude_error', None):
-        phot_table_row['brightness_error'] = datum.value['magnitude_error']
+    error_value = datum.value.get('error', datum.value.get('magnitude_error', None))
+    if error_value is not None:
+        phot_table_row['brightness_error'] = error_value
     return phot_table_row
 
 
@@ -243,7 +244,7 @@ def get_hermes_phot_value(phot_data):
     :return: Dictionary containing properly formatted parameters for Reduced_Datum
     """
     data_dictionary = {
-        'magnitude_error': phot_data.get('brightness_error', ''),
+        'error': phot_data.get('brightness_error', ''),
         'filter': phot_data['bandpass'],
         'telescope': phot_data.get('telescope', ''),
         'instrument': phot_data.get('instrument', ''),
