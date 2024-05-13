@@ -9,7 +9,7 @@ from django.core.files.base import ContentFile
 from django.utils import timezone
 
 from tom_targets.models import Target
-import tom_dataproducts.forced_photometry.forced_photometry_service as fps
+import tom_dataproducts.single_target_data_service.single_target_data_service as stds
 from tom_dataproducts.models import DataProduct
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.data_processor import run_data_processor
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_CONE_SEARCH_RADIUS_DEGREES = 0.008333  # degrees
 
 
-class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
+class PanstarrsSingleTargetDataServiceQueryForm(stds.BaseSingleTargetDataServiceQueryForm):
 
     min_date_mjd = forms.FloatField(
         label='Min date (MJD):', required=False,
@@ -91,7 +91,7 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
         TODO: describe where in the validation process this method is called.
         """
         cleaned_data = super().clean()
-        logger.debug(f"PanstarrsForcedPhotometryQueryForm.clean() -- cleaned_data: {cleaned_data}")
+        logger.debug(f"PanstarrsSingleTargetDataServiceQueryForm.clean() -- cleaned_data: {cleaned_data}")
 
         # TODO: update cross-field validation
         if not (cleaned_data.get('min_date') or cleaned_data.get('min_date_mjd')):
@@ -100,28 +100,29 @@ class PanstarrsForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
         return cleaned_data
 
 
-class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
+class PanstarrsSingleTargetDataService(stds.BaseSingleTargetDataService):
     name = 'PanSTARRS'
     info_url = 'https://catalogs.mast.stsci.edu/docs/panstarrs.html'
-    service_notes = ("At the momement, only the 'Mean object' catalog is supported. "
+    data_service_type = "Catalog Search"
+    service_notes = ("At the moment, only the 'Mean object' catalog is supported. "
                      "Please contact us (email tomtoolkit@lco.global) to request additional catalog support.")
 
     def __init__(self):
         super().__init__()
-        self.success_message = ('PanSTARRS success message')
+        self.success_message = 'PanSTARRS success message'
 
     def get_form(self):
         """
         This method returns the form for querying this service.
         """
-        return PanstarrsForcedPhotometryQueryForm
+        return PanstarrsSingleTargetDataServiceQueryForm
 
     def query_service(self, query_parameters):
         """
         This method takes in the serialized data from the query form and actually
         submits the query to the service
 
-        Called from views.py ForcedPhotometryQueryView.post() if form.is_valid()
+        Called from views.py SingleTargetDataServiceQueryView.post() if form.is_valid()
         """
         logger.debug(f"Querying PanSTARRS service with params: {query_parameters}")
 
@@ -132,15 +133,15 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
 
         # make sure target exists
         if not Target.objects.filter(pk=query_parameters.get('target_id')).exists():
-            raise fps.ForcedPhotometryServiceException(f"Target {query_parameters.get('target_id')} does not exist")
+            raise stds.SingleTargetDataServiceException(f"Target {query_parameters.get('target_id')} does not exist")
 
         # make sure PANSTARRS service is configured
         if 'PANSTARRS' not in settings.FORCED_PHOTOMETRY_SERVICES:
-            raise fps.ForcedPhotometryServiceException(
+            raise stds.SingleTargetDataServiceException(
                 "Must specify 'PANSTARRS' configuration in settings.py FORCED_PHOTOMETRY_SERVICES"
             )
         if not settings.FORCED_PHOTOMETRY_SERVICES.get('PANSTARRS', {}).get('url'):
-            raise fps.ForcedPhotometryServiceException(
+            raise stds.SingleTargetDataServiceException(
                 "Must specify a 'url' under PANSTARRS settings in FORCED_PHOTOMETRY_SERVICES"
             )
         # it's not clear if this is stricly necessary, so just warn for now
@@ -172,10 +173,10 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
                          f'Data Release: {data_release}, Catalog: {catalog}, '
                          f'request_data: {request_data}')
             logger.error(error_msg)
-            raise fps.ForcedPhotometryServiceException(error_msg)
+            raise stds.SingleTargetDataServiceException(error_msg)
 
         # TODO: consider consistent ContentFile naming scheme between services
-        # and implementing nameing function in base class fps.BaseForcedPhotometryService
+        # and implementing nameing function in base class stds.BaseSingleTargetDataService
 
         # ex. panstarrs-dr2-mean-M101-2013_03_17-2024_03_19.csv
         # (note: dashes-between-fields and underscores within datetime_fields)
@@ -206,7 +207,7 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
         else:
             message = f"DataProduct {data_product_name} already exists, skipping creation"
             logger.warning(message)
-        self.success_message = (message)
+        self.success_message = message
 
         try:
             run_data_processor(dp)
@@ -214,7 +215,7 @@ class PanstarrsForcedPhotometryService(fps.BaseForcedPhotometryService):
             error_msg = (f'Error while processing {data_product_name} (the returned PanSTARRS data) '
                          f'into ReducedDatums: {repr(e)}')
             logger.error(error_msg)
-            raise fps.ForcedPhotometryServiceException(error_msg)
+            raise stds.SingleTargetDataServiceException(error_msg)
 
         return True
 

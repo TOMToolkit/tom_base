@@ -1,12 +1,12 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 static crispy_forms_tags %}
-{% block title %}Query Forced Photometry{% endblock %}
+{% block title %}Query Data Service{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
 {% endblock %}
 {% block content %}
 {{ form|as_crispy_errors }}
-<h2>Query {{ form.service.value }} Forced Photometry Service</h2>
+<h2>Query {{ form.service.value }} {{ data_service_type }}</h2>
 <ul>
     {% if service_notes %}
     <li><em>Service Notes:</em> {{ service_notes }}</li>
@@ -16,7 +16,7 @@
     {% endif %}
 </ul>
 <br />
-<h4>Target <b><a href={% url "targets:detail" target.id %}> {{ target.name }}</a></b>
+<h4>Target <b><a href="{% url 'targets:detail' target.id %}"> {{ target.name }}</a></b>
     at RA {{ target.ra|floatformat:4 }}, DEC {{ target.dec|floatformat:4 }}</h4>
 <hr>
 {% crispy query_form %}
