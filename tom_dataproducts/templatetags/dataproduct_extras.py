@@ -20,7 +20,7 @@ import numpy as np
 from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
-from tom_dataproducts.single_target_data_service.single_target_data_service import get_service_classes,\
+from tom_dataproducts.single_target_data_service.single_target_data_service import get_service_classes, \
     get_service_class
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
