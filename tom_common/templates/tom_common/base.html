@@ -15,6 +15,10 @@
     <link rel="icon" type="image/x-icon" href="{% static 'tom_common/img/favicon-32.ico' %}" sizes="32x32" />
 
     {% bootstrap_javascript jquery='True' %}
+    <!-- there are security risks loading from CDNs. Do not do this in production -->
+    <!-- <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script> -->
+    <!-- htmx.min.js was downloaded manually and added to the project. see https://htmx.org/docs/#download-a-copy -->
+    <script src="{% static 'tom_common/js/htmx.min.js' %}" defer></script>
 
     <title>{% tom_name %} | {% block title %}{% endblock %}</title>
   </head>
