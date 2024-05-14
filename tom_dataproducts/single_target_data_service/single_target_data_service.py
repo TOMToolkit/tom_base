@@ -52,7 +52,7 @@ class BaseSingleTargetDataServiceQueryForm(forms.Form):
     form for a specific single-target data service, including the query parameters it supports.
 
     For an implementation example please see
-    https://github.com/TOMToolkit/tom_base/blob/main/tom_dataproducts/forced_photometry/atlas.py
+    https://github.com/TOMToolkit/tom_base/blob/main/tom_dataproducts/single_target_data_service/atlas.py
     """
     service = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
     target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
