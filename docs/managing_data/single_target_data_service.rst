@@ -114,7 +114,7 @@ The most important method here is the ``query_service`` method which is where yo
 for making the query, given the form parameters and target. This method is expected to create a DataProduct in the database
 at the end of the query, storing the result file or files. If queries to your service are expected to take a long time and
 you would like to make them asynchronously (not blocking the UI while calling), then follow the example in the
-`atlas implementation <https://github.com/TOMToolkit/tom_base/blob/dev/tom_dataproducts/forced_photometry/atlas.py>`_ and place your
+`atlas implementation <https://github.com/TOMToolkit/tom_base/blob/dev/tom_dataproducts/single_target_data_service/atlas.py>`_ and place your
 actual asynchronous query method in your module's ``tasks.py`` file so it can be found by dramatiq. Like in the atlas implementation,
 your code should check to see if ``django_dramatiq`` is in the settings ``INSTALLED_APPS`` before trying to enqueue it with dramatiq.
 
@@ -125,8 +125,8 @@ You will also need to define a
 for this data type. 
 
 
-Subclass BaseForcedPhotometryQueryForm:
-***************************************
+Subclass BaseSingleTargetDataServiceQueryForm:
+**********************************************
 
 This class defines the form users will need to fill out to query the service. It uses
 `django-crispy-forms <https://django-crispy-forms.readthedocs.io/en/latest/>`_ to define the layout
