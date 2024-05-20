@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models.functions.math import ACos, Cos, Radians, Pi, Sin
+from django.db.models.functions import Least
 from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils.module_loading import import_string
@@ -116,21 +117,32 @@ class TargetMatchManager(models.Manager):
 
         """
         # Return an empty queryset if any of the parameters are None such as for a NonSidereal target
-        if ra is None or dec is None or radius is None:
+        # Return an empty queryset if the dec is outside the range -90 to 90
+        if ra is None or dec is None or radius is None or dec < -90 or dec > 90:
             return self.get_queryset().none()
+
+        # Ensure that the search ra is between 0 and 360
+        ra %= 360
 
         radius /= 3600  # Convert radius from arcseconds to degrees
         double_radius = radius * 2
+        # Perform initial filter to reduce the number of targets that need a calculated separation
         queryset = super().get_queryset().filter(
             ra__gte=ra - double_radius, ra__lte=ra + double_radius,
             dec__gte=dec - double_radius, dec__lte=dec + double_radius
         )
 
+        # Calculate the angular separation between the target and the given ra and dec
+        # Uses Django Database Functions, to perform the calculation in the database.
+        # Includes a "Least" function to ensure that the value passed to the ACos function is never greater than 1
+        # due to floating point errors.
         separation = models.ExpressionWrapper(
-            180 * ACos(
-                (Sin(radians(dec)) * Sin(Radians('dec'))) +
-                (Cos(radians(dec)) * Cos(Radians('dec')) * Cos(radians(ra) - Radians('ra')))
-            ) / Pi(), models.FloatField()
+            ACos(
+                Least(
+                    (Sin(radians(dec)) * Sin(Radians('dec'))) +
+                    (Cos(radians(dec)) * Cos(Radians('dec')) * Cos(radians(ra) - Radians('ra'))), 1.0
+                )
+            ) * 180 / Pi(), models.FloatField()
         )
 
         return queryset.annotate(separation=separation).filter(separation__lte=radius)

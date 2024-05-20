@@ -914,6 +914,31 @@ class TestTargetMatchManager(TestCase):
         matches = Target.matches.match_cone_search(None, None, radius)
         self.assertFalse(matches.exists())
 
+    def test_unreasonable_cone_search_matching(self):
+        ra = self.target.ra
+        dec = self.target.dec
+        radius = 1
+        # Test for exact match
+        matches = Target.matches.match_cone_search(ra, dec, radius)
+        self.assertTrue(matches.exists())
+        ra += 360
+        # Test for high RA match
+        matches = Target.matches.match_cone_search(ra, dec, radius)
+        self.assertTrue(matches.exists())
+        ra -= 360 * 3
+        # Test for low RA match
+        matches = Target.matches.match_cone_search(ra, dec, radius)
+        self.assertTrue(matches.exists())
+        dec = 95
+        radius = 360 * 3600  # Cover entire sky
+        # Test for no too high DEC match
+        matches = Target.matches.match_cone_search(ra, dec, radius)
+        self.assertFalse(matches.exists())
+        dec = -95
+        # Test for no too low DEC match
+        matches = Target.matches.match_cone_search(ra, dec, radius)
+        self.assertFalse(matches.exists())
+
 
 class TestTargetImport(TestCase):
     def setUp(self):
