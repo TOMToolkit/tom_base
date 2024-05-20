@@ -219,12 +219,12 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
                 dp.delete()
                 messages.error(
                     self.request,
-                    'File format invalid for file {0} -- error was {1}'.format(str(dp), iffe)
+                    f'File format invalid for file {str(dp)} -- error was {iffe}'
                 )
-            except Exception:
+            except Exception as e:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
-                messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))
+                messages.error(self.request, f'There was a problem processing your file: {str(dp)} -- Error: {e}')
         if successful_uploads:
             messages.success(
                 self.request,
