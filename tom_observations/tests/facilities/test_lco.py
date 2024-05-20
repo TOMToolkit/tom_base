@@ -32,7 +32,7 @@ class TestLCOOldStyleObservationForm(TestCase):
         self.valid_form_data = {
             'name': 'test', 'facility': 'LCO', 'target_id': self.st.id, 'ipp_value': 0.5, 'start': '2020-11-03',
             'end': '2020-11-04', 'exposure_count': 1, 'exposure_time': 30, 'max_airmass': 3,
-            'min_lunar_distance': 20, 'observation_mode': 'NORMAL',
+            'min_lunar_distance': 20, 'observation_mode': 'NORMAL', 'mode': '1x1 binning',
             'proposal': 'sampleproposal', 'filter': 'opaque', 'instrument_type': '0M4-SCICAM-SBIG'
         }
         self.instrument_choices = [(k, v['name']) for k, v in instrument_response.items() if 'SOAR' not in k]
@@ -447,6 +447,7 @@ class TestLCOSpectroscopyObservationForm(TestCase):
                     'exposure_count': self.valid_form_data['c_1_ic_1_exposure_count'],
                     'exposure_time': self.valid_form_data['c_1_ic_1_exposure_time'],
                     'optical_elements': {'slit': self.valid_form_data['c_1_ic_1_slit']},
+                    'mode': '',
                     'rotator_mode': 'SKY',
                     'extra_params': {'rotator_angle': self.valid_form_data['c_1_ic_1_rotator_angle']}
                 },
@@ -462,6 +463,7 @@ class TestLCOSpectroscopyObservationForm(TestCase):
                 {
                     'exposure_count': self.valid_form_data['c_1_ic_1_exposure_count'],
                     'exposure_time': self.valid_form_data['c_1_ic_1_exposure_time'],
+                    'mode': '',
                     'optical_elements': {}
                 },
                 form._build_instrument_config(self.valid_form_data['c_1_instrument_type'], 1, 1)
