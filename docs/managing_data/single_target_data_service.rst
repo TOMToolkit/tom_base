@@ -1,32 +1,32 @@
-Integrating Forced Photometry Service Queries
----------------------------------------------
+Integrating Single-Target Data Service Queries
+----------------------------------------------
 
 The base TOM Toolkit comes with `ATLAS <https://fallingstar-data.com/forcedphot/>`__,
 `PanSTARRS <https://outerspace.stsci.edu/display/PANSTARRS>`__,
-and (coming soon) ZTF query services. These services are optional and require additional configuration
-integrate into your TOM.
+and (coming soon) ZTF query services. These services query a specific catalog to return data for an
+individual target and are optional, requiring additional configuration in order to integrate into your TOM.
 
-Additional services can be added by extending the base ``ForcedPhotometryService`` implementation
-(:ref:`see below<Adding a new Forced Photometry Service>`).
+Additional services can be added by extending the ``BaseSingleTargetDataService`` implementation
+(:ref:`see below<Adding a new Single-Target Data Service>`).
 
 
-Integrating existing Forced Photometry Services
-###############################################
+Integrating existing Single-Target Data Services
+################################################
 
-You must add certain configuration to your TOM's ``settings.py`` to setup the existing forced
-photometry services. This configuration will go in the ``FORCED_PHOTOMETRY_SERVICES`` section 
+You must add certain configuration to your TOM's ``settings.py`` to setup the existing single-target data
+services. This configuration will go in the ``SINGLE_TARGET_DATA_SERVICES`` section
 shown below:
 
 .. code:: python
 
-    FORCED_PHOTOMETRY_SERVICES = {
+    SINGLE_TARGET_DATA_SERVICES = {
         'ATLAS': {
-            'class': 'tom_dataproducts.forced_photometry.atlas.AtlasForcedPhotometryService',
+            'class': 'tom_dataproducts.single_target_data_service.atlas.AtlasForcedPhotometryService',
             'url': "https://fallingstar-data.com/forcedphot",
             'api_key': os.getenv('ATLAS_FORCED_PHOTOMETRY_API_KEY', 'your atlas account api token')
         },
         'PANSTARRS': {
-            'class': 'tom_dataproducts.forced_photometry.panstarrs_service.panstarrs.PanstarrsForcedPhotometryService',
+            'class': 'tom_dataproducts.single_target_data_service.panstarrs_service.panstarrs.PanstarrsSingleTargetDataService',
             'url': 'https://catalogs.mast.stsci.edu/api/v0.1/panstarrs',  # MAST Base URL
             # MAST_API_TOKEN is not required for public data
             'api_key': os.getenv('MAST_API_TOKEN', 'MAST_API_TOKEN not set')
@@ -50,9 +50,9 @@ shown below:
         ...
     }
 
-As you can see in the ``FORCED_PHOTOMETRY_SERVICES`` configuration dictionary above, some services require an API key.
+As you can see in the ``SINGLE_TARGET_DATA_SERVICES`` configuration dictionary above, some services require an API key.
 Information on how to obtain an API key is available for both for `ATLAS <https://fallingstar-data.com/forcedphot/apiguide/>`_
-and for `PanSTARRS <https://auth.mast.stsci.edu/info>`_. (PanSTARRS Forced Photometry is accessed via `Catalogs.MAST <https://catalogs.mast.stsci.edu/>`_).
+and for `PanSTARRS <https://auth.mast.stsci.edu/info>`_. (PanSTARRS Photometry is accessed via `Catalogs.MAST <https://catalogs.mast.stsci.edu/>`_).
 
 Configuring your TOM to serve tasks asynchronously:
 ***************************************************
@@ -92,29 +92,29 @@ Atlas and ZTF, should start querying asynchronously. (Note: You must also start 
 back to synchronous queries.
 
 
-Adding a new Forced Photometry Service
-######################################
+Adding a new Single-Target Data Service
+#######################################
 
-The Forced Photometry services fulfill an interface defined in 
-`BaseForcedPhotometryService <https://github.com/TOMToolkit/tom_base/blob/dev/tom_dataproducts/forced_photometry/forced_photometry_service.py>`_.
-To implement your own Forced Photometry service, you need to do three things:
+The Single-Target Data services fulfill an interface defined in
+`BaseSingleTargetDataService <https://github.com/TOMToolkit/tom_base/blob/dev/tom_dataproducts/single_target_data_service/single_target_data_service.py>`_.
+To implement your own single-target data service, you need to do three things:
 
-#. Subclass ``BaseForcedPhotometryService``
-#. Subclass ``BaseForcedPhotometryQueryForm``
+#. Subclass ``BaseSingleTargetDataService``
+#. Subclass ``BaseSingleTargetDataServiceQueryForm``
 #. Subclass ``DataProcessor``
 
-Once those subclasses are implemented, don't forget to update your settings for ``FORCED_PHOTOMETRY_SERVICES``,
+Once those subclasses are implemented, don't forget to update your settings for ``SINGLE_TARGET_DATA_SERVICES``,
 ``DATA_PRODUCT_TYPES``, and ``DATA_PROCESSORS`` for your new service and its associated data product type.
 
 
-Subclass BaseForcedPhotometryService:
+Subclass BaseSingleTargetDataService:
 *************************************
 
 The most important method here is the ``query_service`` method which is where you put your service's business logic
 for making the query, given the form parameters and target. This method is expected to create a DataProduct in the database
 at the end of the query, storing the result file or files. If queries to your service are expected to take a long time and
 you would like to make them asynchronously (not blocking the UI while calling), then follow the example in the
-`atlas implementation <https://github.com/TOMToolkit/tom_base/blob/dev/tom_dataproducts/forced_photometry/atlas.py>`_ and place your
+`atlas implementation <https://github.com/TOMToolkit/tom_base/blob/dev/tom_dataproducts/single_target_data_service/atlas.py>`_ and place your
 actual asynchronous query method in your module's ``tasks.py`` file so it can be found by dramatiq. Like in the atlas implementation,
 your code should check to see if ``django_dramatiq`` is in the settings ``INSTALLED_APPS`` before trying to enqueue it with dramatiq.
 
@@ -125,8 +125,8 @@ You will also need to define a
 for this data type. 
 
 
-Subclass BaseForcedPhotometryQueryForm:
-***************************************
+Subclass BaseSingleTargetDataServiceQueryForm:
+**********************************************
 
 This class defines the form users will need to fill out to query the service. It uses
 `django-crispy-forms <https://django-crispy-forms.readthedocs.io/en/latest/>`_ to define the layout
