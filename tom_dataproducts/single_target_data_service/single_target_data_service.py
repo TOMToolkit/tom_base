@@ -13,12 +13,16 @@ logger = logging.getLogger(__name__)
 
 def get_service_classes():
     try:
-        forced_photometry_services = settings.FORCED_PHOTOMETRY_SERVICES
+        single_target_data_services = settings.SINGLE_TARGET_DATA_SERVICES
     except AttributeError:
-        return {}
+        # Include some backwards compatibility
+        try:
+            single_target_data_services = settings.FORCED_PHOTOMETRY_SERVICES
+        except AttributeError:
+            return {}
 
     service_choices = {}
-    for service in forced_photometry_services.values():
+    for service in single_target_data_services.values():
         try:
             clazz = import_string(service.get('class'))
         except (ImportError, AttributeError):
@@ -33,22 +37,22 @@ def get_service_class(name):
         return available_classes[name]
     except KeyError:
         raise ImportError((
-            f'Could not a find a forced photometry service with the name {name}. '
-            'Did you add it to TOM_FORCED_PHOTOMETRY_CLASSES?'))
+            f'Could not a find a single target data service with the name {name}. '
+            'Did you add it to SINGLE_TARGET_DATA_SERVICES?'))
 
 
-class ForcedPhotometryServiceException(Exception):
+class SingleTargetDataServiceException(Exception):
     pass
 
 
-class BaseForcedPhotometryQueryForm(forms.Form):
+class BaseSingleTargetDataServiceQueryForm(forms.Form):
     """
-    This is the class that is responsible for displaying the forced photometry request form.
+    This is the class that is responsible for displaying the single-target Data Service request form.
     This form is meant to be subclassed by more specific classes that represent a
-    form for a specific forced photometry service, including the query parameters it supports.
+    form for a specific single-target data service, including the query parameters it supports.
 
     For an implementation example please see
-    https://github.com/TOMToolkit/tom_base/blob/main/tom_dataproducts/forced_photometry/atlas.py
+    https://github.com/TOMToolkit/tom_base/blob/main/tom_dataproducts/single_target_data_service/atlas.py
     """
     service = forms.CharField(required=True, max_length=50, widget=forms.HiddenInput())
     target_id = forms.IntegerField(required=True, widget=forms.HiddenInput())
@@ -72,15 +76,16 @@ class BaseForcedPhotometryQueryForm(forms.Form):
         )
 
 
-class BaseForcedPhotometryService(ABC):
+class BaseSingleTargetDataService(ABC):
     """
-    This is the class that is responsible for defining the base forced photometry service class.
+    This is the class that is responsible for defining the base single-target data service class.
     This form is meant to be subclassed by more specific classes that represent a
-    form for a particular forced photometry service.
+    form for a particular single-target data service.
     """
-    name = 'BaseForcedPhotometryService'
+    name = 'BaseSingleTargetDataService'
     info_url = None
     service_notes = None
+    data_service_type = "Data Service"
 
     @abstractmethod
     def get_form(self):
@@ -135,4 +140,6 @@ class BaseForcedPhotometryService(ABC):
         """
         return {
             'info_url': self.info_url,
-            'service_notes': self.service_notes}
+            'service_notes': self.service_notes,
+            'data_service_type': self.data_service_type,
+        }

@@ -4,12 +4,12 @@ from crispy_forms.layout import Div, HTML
 from django import forms
 from django.conf import settings
 
-import tom_dataproducts.forced_photometry.forced_photometry_service as fps
+import tom_dataproducts.single_target_data_service.single_target_data_service as stds
 from tom_dataproducts.tasks import atlas_query
 from tom_targets.models import Target
 
 
-class AtlasForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
+class AtlasForcedPhotometryQueryForm(stds.BaseSingleTargetDataServiceQueryForm):
     min_date = forms.CharField(
         label='Min date:', required=False,
         widget=forms.TextInput(attrs={'class': 'ml-2', 'type': 'datetime-local'})
@@ -79,9 +79,10 @@ class AtlasForcedPhotometryQueryForm(fps.BaseForcedPhotometryQueryForm):
         return cleaned_data
 
 
-class AtlasForcedPhotometryService(fps.BaseForcedPhotometryService):
+class AtlasForcedPhotometryService(stds.BaseSingleTargetDataService):
     name = 'Atlas'
     info_url = 'https://fallingstar-data.com/forcedphot/'
+    data_service_type = 'Forced Photometry'
 
     def __init__(self):
         super().__init__()
@@ -108,17 +109,17 @@ class AtlasForcedPhotometryService(fps.BaseForcedPhotometryService):
         if not max_date_mjd and query_parameters.get('max_date'):
             max_date_mjd = Time(query_parameters.get('max_date')).mjd
         if not Target.objects.filter(pk=query_parameters.get('target_id')).exists():
-            raise fps.ForcedPhotometryServiceException(f"Target {query_parameters.get('target_id')} does not exist")
+            raise stds.SingleTargetDataServiceException(f"Target {query_parameters.get('target_id')} does not exist")
 
-        if 'ATLAS' not in settings.FORCED_PHOTOMETRY_SERVICES:
-            raise fps.ForcedPhotometryServiceException("Must specify 'ATLAS' settings in FORCED_PHOTOMETRY_SERVICES")
-        if not settings.FORCED_PHOTOMETRY_SERVICES.get('ATLAS', {}).get('url'):
-            raise fps.ForcedPhotometryServiceException(
-                "Must specify a 'url' under ATLAS settings in FORCED_PHOTOMETRY_SERVICES"
+        if 'ATLAS' not in settings.SINGLE_TARGET_DATA_SERVICES:
+            raise stds.SingleTargetDataServiceException("Must specify 'ATLAS' settings in SINGLE_TARGET_DATA_SERVICES")
+        if not settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('url'):
+            raise stds.SingleTargetDataServiceException(
+                "Must specify a 'url' under ATLAS settings in SINGLE_TARGET_DATA_SERVICES"
             )
-        if not settings.FORCED_PHOTOMETRY_SERVICES.get('ATLAS', {}).get('api_key'):
-            raise fps.ForcedPhotometryServiceException(
-                "Must specify an 'api_key' under ATLAS settings in FORCED_PHOTOMETRY_SERVICES"
+        if not settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('api_key'):
+            raise stds.SingleTargetDataServiceException(
+                "Must specify an 'api_key' under ATLAS settings in SINGLE_TARGET_DATA_SERVICES"
             )
 
         if 'django_dramatiq' in settings.INSTALLED_APPS:
@@ -130,7 +131,7 @@ class AtlasForcedPhotometryService(fps.BaseForcedPhotometryService):
                                           query_parameters.get('target_id'),
                                           self.get_data_product_type())
             if not query_succeeded:
-                raise fps.ForcedPhotometryServiceException(
+                raise stds.SingleTargetDataServiceException(
                     "Atlas query failed, check the server logs for more information"
                 )
             self.success_message = "Atlas query completed. View its data product in the 'Manage Data' tab"

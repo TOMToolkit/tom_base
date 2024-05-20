@@ -99,7 +99,7 @@
         {% endif %}
         {% if user.is_authenticated %}
         <hr>
-        {% query_forced_photometry object %}
+        {% query_single_target_data_service object %}
         <hr>
         {% endif %}
         {% dataproduct_list_for_target object %}
