@@ -135,7 +135,8 @@ class TargetMatchManager(models.Manager):
         # Calculate the angular separation between the target and the given ra and dec
         # Uses Django Database Functions, to perform the calculation in the database.
         # Includes a "Least" function to ensure that the value passed to the ACos function is never greater than 1
-        # due to floating point errors.
+        # due to floating point errors. We ignore the case of this being less than -1 since this will only happen when
+        # the target is on the opposite side of the sky from the search coordinates.
         separation = models.ExpressionWrapper(
             ACos(
                 Least(
