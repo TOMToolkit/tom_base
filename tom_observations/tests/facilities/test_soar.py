@@ -46,6 +46,12 @@ instrument_response = {
                 'modes': [
                     {'name': 'Sky Position', 'code': 'SKY'}
                 ]
+            },
+            'readout': {
+                'type': 'readout',
+                'modes': [
+                    {'name': 'GHTS Red Camera 400m1 2x2', 'code': 'GHTS Red Camera 400m1 2x2'},
+                ]
             }
         },
         'default_configuration_type': 'SPECTRUM'
@@ -131,7 +137,8 @@ class TestSOARSpectroscopyObservationForm(TestCase):
             'end': '2020-11-04', 'c_1_ic_1_exposure_count': 1, 'c_1_ic_1_exposure_time': 30.0, 'c_1_max_airmass': 3,
             'c_1_min_lunar_distance': 20, 'observation_mode': 'NORMAL', 'proposal': 'sampleproposal',
             'c_1_ic_1_rotator_mode': 'SKY', 'c_1_ic_1_slit': 'slit_1.0as', 'c_1_ic_1_grating': 'SYZY_400',
-            'c_1_instrument_type': 'SOAR_GHTS_REDCAM', 'c_1_ic_1_rotator_angle': 1.0
+            'c_1_instrument_type': 'SOAR_GHTS_REDCAM', 'c_1_ic_1_rotator_angle': 1.0,
+            'c_1_ic_1_readout_mode': 'GHTS Red Camera 400m1 2x2'
         }
 
     @patch('tom_observations.facilities.ocs.OCSBaseForm.proposal_choices')
@@ -181,7 +188,8 @@ class TestSOARSpectroscopyObservationForm(TestCase):
                     'optical_elements': {'slit': self.valid_form_data['c_1_ic_1_slit'],
                                          'grating': self.valid_form_data['c_1_ic_1_grating']},
                     'rotator_mode': self.valid_form_data['c_1_ic_1_rotator_mode'],
-                    'extra_params': {'rotator_angle': self.valid_form_data['c_1_ic_1_rotator_angle']}
+                    'extra_params': {'rotator_angle': self.valid_form_data['c_1_ic_1_rotator_angle']},
+                    'mode': self.valid_form_data['c_1_ic_1_readout_mode'],
                 },
                 form._build_instrument_config(self.valid_form_data['c_1_instrument_type'], 1, 1)
             )
