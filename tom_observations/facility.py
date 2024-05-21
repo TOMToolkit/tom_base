@@ -82,7 +82,13 @@ class BaseObservationForm(forms.Form):
             self.button_layout()
         )
 
-    def layout(self):
+    def layout(self) -> Layout:
+        """Define (and return) a crispy_forms.Layout for the fields of your subclass.
+        It will be inserted after the common_layout and before the button_layout, as
+        defined above in __init__(), where self.helper.layout is assigned.
+
+        This method should be implemented in your subclass to define the layout of your form fields.
+        """
         return
 
     def button_layout(self):
