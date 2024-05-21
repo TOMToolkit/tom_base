@@ -949,29 +949,29 @@ files = [
 
 [[package]]
 name = "dramatiq"
-version = "1.16.0"
+version = "1.17.0"
 description = "Background Processing for Python 3."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "dramatiq-1.16.0-py3-none-any.whl", hash = "sha256:650860af82a98905ee03f7cc94b7c356f89528e3008c213aee6a35e2faecde05"},
-    {file = "dramatiq-1.16.0.tar.gz", hash = "sha256:00a676a96d0f47ea4ba59a82018dd3d8885fb8cec7765dc8209142f4b493870e"},
+    {file = "dramatiq-1.17.0-py3-none-any.whl", hash = "sha256:5c103de1b2f1d3dbca4f80fa7d32312f5253234a14a33277d48b7b2ca9498456"},
+    {file = "dramatiq-1.17.0.tar.gz", hash = "sha256:7621280160b2f0dcb9cdd20eeee41e009d42bc7cc75a2c4b9b944c641dadd4df"},
 ]
 
 [package.dependencies]
 prometheus-client = ">=0.2"
 redis = {version = ">=2.0,<6.0", optional = true, markers = "extra == \"redis\""}
-watchdog = {version = "*", optional = true, markers = "extra == \"watch\""}
-watchdog-gevent = {version = "*", optional = true, markers = "extra == \"watch\""}
+watchdog = {version = ">=4.0", optional = true, markers = "extra == \"watch\""}
+watchdog-gevent = {version = ">=0.2", optional = true, markers = "extra == \"watch\""}
 
 [package.extras]
-all = ["gevent (>=1.1)", "pika (>=1.0,<2.0)", "pylibmc (>=1.5,<2.0)", "redis (>=2.0,<6.0)", "watchdog", "watchdog-gevent"]
-dev = ["alabaster", "bumpversion", "flake8", "flake8-bugbear", "flake8-quotes", "gevent (>=1.1)", "hiredis", "isort", "pika (>=1.0,<2.0)", "pylibmc (>=1.5,<2.0)", "pytest", "pytest-benchmark[histogram]", "pytest-cov", "redis (>=2.0,<6.0)", "sphinx", "sphinxcontrib-napoleon", "tox", "twine", "watchdog", "watchdog-gevent", "wheel"]
+all = ["gevent (>=1.1)", "pika (>=1.0,<2.0)", "pylibmc (>=1.5,<2.0)", "redis (>=2.0,<6.0)", "watchdog (>=4.0)", "watchdog-gevent (>=0.2)"]
+dev = ["alabaster", "bumpversion", "flake8", "flake8-bugbear", "flake8-quotes", "gevent (>=1.1)", "hiredis", "isort", "mypy", "pika (>=1.0,<2.0)", "pylibmc (>=1.5,<2.0)", "pytest", "pytest-benchmark[histogram]", "pytest-cov", "redis (>=2.0,<6.0)", "sphinx", "sphinxcontrib-napoleon", "tox", "twine", "watchdog (>=4.0)", "watchdog-gevent (>=0.2)", "wheel"]
 gevent = ["gevent (>=1.1)"]
 memcached = ["pylibmc (>=1.5,<2.0)"]
 rabbitmq = ["pika (>=1.0,<2.0)"]
 redis = ["redis (>=2.0,<6.0)"]
-watch = ["watchdog", "watchdog-gevent"]
+watch = ["watchdog (>=4.0)", "watchdog-gevent (>=0.2)"]
 
 [[package]]
 name = "factory-boy"
@@ -2530,18 +2530,21 @@ watchmedo = ["PyYAML (>=3.10)"]
 
 [[package]]
 name = "watchdog-gevent"
-version = "0.1.1"
+version = "0.2.0"
 description = "A gevent-based observer for watchdog."
 optional = false
 python-versions = "*"
 files = [
-    {file = "watchdog_gevent-0.1.1-py3-none-any.whl", hash = "sha256:dcebd07668b472790ad0e7a7b40ad8c365e156c40cf54ffd5499c65c65c4f66f"},
-    {file = "watchdog_gevent-0.1.1.tar.gz", hash = "sha256:71dced5ec451b3deafd1dc73baaf52a7ce4d54d9a1eb606f9370235125f2424a"},
+    {file = "watchdog_gevent-0.2.0-py3-none-any.whl", hash = "sha256:05b643b86b6ed43488ba47c259d81d6ed4f86de271204c8e7fa369c7c502b1dc"},
+    {file = "watchdog_gevent-0.2.0.tar.gz", hash = "sha256:beb63c4484b93301dd3a2383a072a7598269b88ab84df17fc58ca487eda5deff"},
 ]
 
 [package.dependencies]
 gevent = ">=1.1"
-watchdog = ">=0.8"
+watchdog = ">=4.0"
+
+[package.extras]
+dev = ["bumpversion", "flake8", "flake8-quotes", "pytest", "pytest-cov", "twine"]
 
 [[package]]
 name = "webencodings"
