@@ -1,5 +1,5 @@
-from django.apps import AppConfig
+from tom_common.apps import TOMToolkitAppConfig
 
 
-class TomAlertsConfig(AppConfig):
+class TomAlertsConfig(TOMToolkitAppConfig):
     name = 'tom_alerts'

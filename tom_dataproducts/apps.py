@@ -1,5 +1,5 @@
-from django.apps import AppConfig
+from tom_common.apps import TOMToolkitAppConfig
 
 
-class TomDataproductsConfig(AppConfig):
+class TomDataproductsConfig(TOMToolkitAppConfig):
     name = 'tom_dataproducts'
