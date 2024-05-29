@@ -44,6 +44,12 @@ class Command(BaseCommand):
             action='store_true',
             help='Provide a list of available TargetExtras and Model Fields.',
         )
+        parser.add_argument(
+            '--force',
+            action='store_true',
+            help='Overwrite any existing values in the relevant model fields with those from the corresponding '
+                 'TargetExtra.',
+        )
 
     def prompt_extra_field(self, extra_field_keys):
         """
@@ -97,7 +103,7 @@ class Command(BaseCommand):
             else:
                 self.stdout.write('Invalid response. Please try again.')
 
-    def convert_target_extra(self, chosen_extra, chosen_model_field):
+    def convert_target_extra(self, chosen_extra, chosen_model_field, force=False):
         """
         Perform the actual conversion from a `chosen_extra` to a `chosen_model_field` for each target that has one of
         these TargetExtras.
@@ -107,7 +113,10 @@ class Command(BaseCommand):
         """
         for extra in TargetExtra.objects.filter(key=chosen_extra):
             target = Target.objects.get(pk=extra.target.pk)
-            if getattr(target, chosen_model_field, None):
+            model_field_default = Target._meta.get_field(chosen_model_field).get_default()
+            # If model already has a value, don't overwrite unless it's the default value or force is True
+            if not force and getattr(target, chosen_model_field, None) \
+                    and getattr(target, chosen_model_field) != model_field_default:
                 self.stdout.write(f"{self.style.ERROR('Warning:')} {target}.{chosen_model_field} "
                                   f"already has a value: {getattr(target, chosen_model_field)}. Skipping.")
                 continue
@@ -164,6 +173,6 @@ class Command(BaseCommand):
                 if not confirmed:
                     continue
 
-            self.convert_target_extra(chosen_extra, chosen_model_field)
+            self.convert_target_extra(chosen_extra, chosen_model_field, options['force'])
 
         return
