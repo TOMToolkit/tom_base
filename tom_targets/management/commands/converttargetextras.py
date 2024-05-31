@@ -115,8 +115,9 @@ class Command(BaseCommand):
             target = Target.objects.get(pk=extra.target.pk)
             model_field_default = Target._meta.get_field(chosen_model_field).get_default()
             # If model already has a value, don't overwrite unless it's the default value or force is True
-            if not force and getattr(target, chosen_model_field, None) \
-                    and getattr(target, chosen_model_field) != model_field_default:
+            if not force and \
+                    getattr(target, chosen_model_field, None) and \
+                    getattr(target, chosen_model_field) != model_field_default:
                 self.stdout.write(f"{self.style.ERROR('Warning:')} {target}.{chosen_model_field} "
                                   f"already has a value: {getattr(target, chosen_model_field)}. Skipping.")
                 continue
