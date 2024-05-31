@@ -228,7 +228,8 @@ more the of the ``Extra Field`` and ``Target Field`` names respectively.
     ./manage.py converttargetextras --target_extra extra_bool extra_number --model_field example_bool example_number
 
 This command will go through each target and transfer the data from the ``Extra Field`` to the ``Target Field``. If the
-``Target Field`` is already populated, the data will not be transferred. When finished, the ``Extra Field`` data will be
+``Target Field`` is already populated with a value other than the default value, the data will not be transferred unless
+the ``--force`` flag is set. When finished, the ``Extra Field`` data will be
 deleted, and you will likely want to remove the ``EXTRA_FIELDS`` setting from your ``settings.py`` file.
 
 Adding ``Extra Fields``
