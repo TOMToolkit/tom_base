@@ -1,4 +1,3 @@
-import json
 from requests import HTTPError
 from unittest.mock import patch
 

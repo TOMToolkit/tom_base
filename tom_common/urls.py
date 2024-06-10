@@ -31,7 +31,7 @@ from tom_common.views import robots_txt
 from .api_router import collect_api_urls, SharedAPIRootRouter  # DRF routers are setup in each INSTALL_APPS url.py
 
 router = SharedAPIRootRouter()
-# router.register(r'groups', GroupViewSet, 'groups')
+router.register(r'groups', GroupViewSet, 'groups')
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'),

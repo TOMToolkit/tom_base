@@ -1,5 +1,4 @@
 from copy import deepcopy
-import json
 import logging
 from requests import HTTPError
 from typing import List
