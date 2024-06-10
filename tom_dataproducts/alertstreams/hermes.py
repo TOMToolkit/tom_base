@@ -168,7 +168,8 @@ def create_hermes_phot_table_row(datum, **kwargs):
         'telescope': datum.value.get('telescope', settings.DATA_SHARING['hermes'].get('DEFAULT_TELESCOPE', '')),
         'instrument': datum.value.get('instrument', settings.DATA_SHARING['hermes'].get('DEFAULT_INSTRUMENT', '')),
         'bandpass': datum.value.get('filter', ''),
-        'brightness_unit': datum.value.get('unit', settings.DATA_SHARING['hermes'].get('DEFAULT_BRIGHTNESS_UNIT', 'AB mag')),
+        'brightness_unit': datum.value.get('unit', settings.DATA_SHARING['hermes'].get(
+            'DEFAULT_BRIGHTNESS_UNIT', 'AB mag')),
     }
     if datum.value.get('magnitude', None):
         phot_table_row['brightness'] = datum.value['magnitude']
@@ -224,7 +225,8 @@ def create_hermes_spectro_table_row(datum, **kwargs):
         'flux': flux_list,
         'wavelength': wavelength_list,
         'flux_units': datum.value.get('flux_units', settings.DATA_SHARING['hermes'].get('DEFAULT_FLUX_UNITS', 'mJy')),
-        'wavelength_units': datum.value.get('wavelength_units', settings.DATA_SHARING['hermes'].get('DEFAULT_WAVELENGTH_UNITS', 'Å'))
+        'wavelength_units': datum.value.get('wavelength_units',
+                                            settings.DATA_SHARING['hermes'].get('DEFAULT_WAVELENGTH_UNITS', 'Å'))
     }
     if flux_error_list:
         spectroscopy_table_row['flux_error'] = flux_error_list

@@ -283,7 +283,7 @@ def sharing_feedback_handler(response, request):
         if 'message' in response.json():
             publish_feedback = response.json()['message']
         else:
-            publish_feedback = f"Submitted message succesfully"
+            publish_feedback = "Submitted message succesfully"
     except AttributeError:
         publish_feedback = response['message']
     except Exception:
