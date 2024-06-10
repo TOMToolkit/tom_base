@@ -55,4 +55,3 @@ class RSPMultiTargetDataService(GenericBroker):
             mag=None,
             score=None
         )
-        pass
