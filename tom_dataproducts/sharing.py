@@ -4,6 +4,7 @@ import os
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib import messages
+from django.db.models import Q
 
 from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct, ReducedDatum
@@ -43,7 +44,7 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
     :return: json response for the sharing
     """
     # Query relevant Reduced Datums Queryset
-    accepted_data_types = ['photometry']
+    accepted_data_types = ['photometry', 'spectroscopy']
     if product_id:
         product = DataProduct.objects.get(pk=product_id)
         target = product.target
@@ -226,15 +227,13 @@ def check_for_share_safe_datums(destination, reduced_datums, **kwargs):
     :param reduced_datums: selected input datums
     :return: queryset of reduced datums to be shared
     """
-    return reduced_datums
-    # if 'hermes' in destination:
-    #     message_topic = kwargs.get('topic', None)
-    #     # Remove data points previously shared to the given topic
-    #     filtered_datums = reduced_datums.exclude(Q(message__exchange_status='published')
-    #                                              & Q(message__topic=message_topic))
-    # else:
-    #     filtered_datums = reduced_datums
-    # return filtered_datums
+    if 'hermes' in destination:
+        message_topic = kwargs.get('topic', None)
+        filtered_datums = reduced_datums.exclude(Q(message__exchange_status='published')
+                                                 & Q(message__topic=message_topic))
+    else:
+        filtered_datums = reduced_datums
+    return filtered_datums
 
 
 def check_for_save_safe_datums():
@@ -280,13 +279,14 @@ def sharing_feedback_handler(response, request):
     :return:
     """
     try:
+        response.raise_for_status()
         if 'message' in response.json():
             publish_feedback = response.json()['message']
         else:
-            publish_feedback = f"ERROR: {response.text}"
+            publish_feedback = f"Submitted message succesfully"
     except AttributeError:
         publish_feedback = response['message']
-    except ValueError:
+    except Exception:
         publish_feedback = f"ERROR: Returned Response code {response.status_code}"
     if "ERROR" in publish_feedback.upper():
         messages.error(request, publish_feedback)
