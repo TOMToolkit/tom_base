@@ -18,6 +18,11 @@ that, for example, listens to the ZTF, LSST, and SCOUT alert streams and
 creates targets from each alert you might want to look into Postgresql
 or MySQL.
 
+.. note::
+    If you are using a database other than Sqlite, you will need to
+    install the appropriate database driver in your virtual environment. For example,
+    if you are using Postgresql you will need to install the `psycopg2-binary` package.
+
 Set your TOM’s hostname in the default site
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
