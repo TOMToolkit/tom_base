@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from tom_dataproducts.alertstreams.hermes import create_hermes_alert, BuildHermesMessage
 from tom_dataproducts.models import ReducedDatum
@@ -7,6 +7,21 @@ from tom_observations.tests.factories import SiderealTargetFactory, ObservingRec
 from django.contrib.auth.models import User
 
 
+DATA_SHARING = {
+    'hermes': {
+        'DISPLAY_NAME': 'Hermes',
+        'BASE_URL': 'http://hermes.test/',
+        'HERMES_API_KEY': '123fake',
+        'DEFAULT_AUTHORS': 'test author',
+        'USER_TOPICS': ['hermes.test', 'tomtoolkit.test'],
+        'DEFAULT_TELESCOPE': '1m',
+        'DEFAULT_INSTRUMENT': 'Inst01',
+        'DEFAULT_WAVELENGTH_UNITS': 'Å',
+        'DEFAULT_FLUX_UNITS': 'mJy'
+    }
+}
+
+@override_settings(DATA_SHARING=DATA_SHARING)
 class TestHermesSharing(TestCase):
     def setUp(self):
         self.target = SiderealTargetFactory.create()
