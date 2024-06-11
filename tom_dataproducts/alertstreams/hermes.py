@@ -192,7 +192,7 @@ def create_hermes_spectro_table_row(datum, **kwargs):
     if 'flux' in datum.value and 'wavelength' in datum.value:
         flux_list = datum.value['flux']
         wavelength_list = datum.value['wavelength']
-        flux_error_list = datum.value.get('flux_error', [])
+        flux_error_list = datum.value.get('flux_error', datum.value.get('error', []))
     else:
         for entry in datum.value.values():
             if 'flux' in entry:
