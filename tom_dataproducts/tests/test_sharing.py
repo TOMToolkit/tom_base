@@ -71,7 +71,7 @@ class TestHermesSharing(TestCase):
             target=self.target,
             data_type='spectroscopy',
             value={
-                'myflux': [1,2,3],
+                'myflux': [1, 2, 3],
                 'wavelength_function': 'lambda_xyz'
             }
         )
@@ -178,4 +178,4 @@ class TestHermesSharing(TestCase):
     def test_convert_to_hermes_format_bad_spectro_datum_fails(self):
         datums = [self.rd5, self.bad_rd]
         with self.assertRaises(HermesMessageException):
-            alert = create_hermes_alert(self.message_info, datums, [])
+            create_hermes_alert(self.message_info, datums, [])
