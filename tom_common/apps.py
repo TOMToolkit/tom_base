@@ -21,6 +21,40 @@ class TOMToolkitAppConfig(AppConfig):
         super().ready()
         logger.debug(f'{self.name} is a TOM Toolkit app and is ready')
 
+##      integration_points = {
+##          'navbar': {},
+##          'target_detail_button': {},
+##          'api_urls': {},
+##          'target_detail_panels': {},
+##      }
+##
+##      def target_detail_button(self, target):
+##          """Retuns a dictionary of buttons to be displayed on the target detail page.
+##
+##          Called by target_extras.get_buttons inclusion tag.
+##          """
+##          return {}
+##
+##      def install_my_navbar_items_in_other_app(self):
+##          """This method allows an INSTALLED_APP to place navbar items in the navbar
+##          menu of another app. Check that the destination app is installed before
+##          tryiing to install your items into it's navbar menu.
+##          """
+##          # tom_altas....
+##          if TOMTargetsAppConfig:
+##              pass
+##          if TOMObservationsAppConfig:
+##              pass
+##
+##          return []
+##
+##      def receive_navbar_intems_from_other_app(self):
+##          """Returns a list of dictionaries to be displayed in the navbar.
+##
+##          Called by navbar inclusion tag.
+##          """
+##          pass
+
 
 class TomCommonConfig(TOMToolkitAppConfig):
     name = 'tom_common'
