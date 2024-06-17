@@ -59,7 +59,7 @@ astropy = [
     { version = ">=5.3.3,<6", python = ">=3.9" },
     { version = ">=3,<6", python = "<3.12" }
 ]
-django = "<5"
+django = ">4,<6"
 djangorestframework = "<4"
 django-bootstrap4 = ">3,<25"
 beautifulsoup4 = "<5"

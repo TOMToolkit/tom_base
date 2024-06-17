@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django_extensions',
     'guardian',
-    'tom_common',
+    'tom_common.apps.TomCommonConfig',
     'django_comments',
     'bootstrap4',
     'crispy_bootstrap4',
@@ -54,11 +54,11 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_filters',
     'django_gravatar',
-    'tom_targets',
-    'tom_alerts',
-    'tom_catalogs',
-    'tom_observations',
-    'tom_dataproducts',
+    'tom_targets.apps.TomTargetsConfig',
+    'tom_alerts.apps.TomAlertsConfig',
+    'tom_catalogs.apps.TomCatalogsConfig',
+    'tom_observations.apps.TomObservationsConfig',
+    'tom_dataproducts.apps.TomDataproductsConfig',
 ]
 
 SITE_ID = 1
