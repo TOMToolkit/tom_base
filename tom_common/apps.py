@@ -51,9 +51,9 @@ class TOMToolkitAppConfig(AppConfig):
 ##      def receive_navbar_intems_from_other_app(self):
 ##          """Returns a list of dictionaries to be displayed in the navbar.
 ##
-##          Called by navbar inclusion tag.
+##          Called by navbar inclusion tag. (maybe?).
 ##          """
-##          pass
+##          return []
 
 
 class TomCommonConfig(TOMToolkitAppConfig):
