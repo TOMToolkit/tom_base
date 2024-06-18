@@ -20,7 +20,8 @@ import numpy as np
 from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
-from tom_dataproducts.forced_photometry.forced_photometry_service import get_service_classes
+from tom_dataproducts.single_target_data_service.single_target_data_service import get_service_classes, \
+    get_service_class
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
@@ -96,12 +97,16 @@ def dataproduct_list_all(context):
     }
 
 
-@register.inclusion_tag('tom_dataproducts/partials/query_forced_photometry.html')
-def query_forced_photometry(target):
-    services = get_service_classes().keys()
+@register.inclusion_tag('tom_dataproducts/partials/query_single_target_data_service.html')
+def query_single_target_data_service(target):
+    service_names = get_service_classes().keys()
+    services = [{'name': service_name, 'service_type': get_service_class(service_name).data_service_type}
+                for service_name in service_names]
+    data_service_types = set([service['service_type'] for service in services])
     return {
-        'forced_photometry_services': services,
-        'target': target
+        'single_target_data_services': services,
+        'target': target,
+        'data_service_types': data_service_types
     }
 
 

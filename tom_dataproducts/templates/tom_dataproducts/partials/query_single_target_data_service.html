@@ -1,0 +1,12 @@
+<h4>Data Services: Individual Target Query</h4>
+{% for data_service_type in data_service_types %}
+    <h5><em>{{ data_service_type }} Queries:</em></h5>
+    {% for service in single_target_data_services %}
+        {% if service.service_type == data_service_type %}
+            <a href="{% url 'tom_dataproducts:single-target-data-service-query' service=service.name %}?target_id={{ target.id }}" title="{{ service.name }}" class="btn btn-outline-primary">{{ service.name }}</a>
+        {% endif %}
+    {% endfor %}
+    <hr>
+{% empty %}
+    No data services are configured. See the <a href="https://tom-toolkit.readthedocs.io/en/latest/managing_data/single_target_data_service.html" target="_blank">TOMToolkit documentation</a> for more information.
+{% endfor %}
