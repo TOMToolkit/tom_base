@@ -408,7 +408,7 @@ class ReducedDatum(models.Model):
                                                               data_type=self.data_type,
                                                               timestamp=self.timestamp,
                                                               value=self.value)
-            if existing_reduced_datum:
+            if existing_reduced_datum and existing_reduced_datum.id != self.id:  # not the same object
                 # found ReducedDatum with the same values. Don't save this duplicate ReducedDatum.
                 raise ValidationError(f'ReducedDatum already exists: {self.data_type} data with value of {self.value} '
                                       f'found for {self.target} at {self.timestamp}')
