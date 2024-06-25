@@ -1,0 +1,12 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
+{% block title %}Confirm delete{% endblock %}
+{% block content %}
+<h3>Confirm Delete</h3>
+<form method="post">{% csrf_token %}
+    <p>Are you sure you want to delete observation ID {{ object.observation_id }} for target {{ object }}"?</p>
+    {% buttons %}
+    <button type="submit" class="btn btn-danger">Confirm</button>
+    {% endbuttons %}
+</form>
+{% endblock %}
