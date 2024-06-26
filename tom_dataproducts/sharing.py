@@ -301,6 +301,13 @@ def sharing_feedback_handler(response, request):
 
 
 def download_data(form_data, selected_data):
+    """
+    Produces a CSV photometry table from the DataShareForm and provides it for download as a StreamingHttpResponse.
+    The "title" becomes the filename, and the "message" becomes a comment at the top of the file.
+    :param form_data: data from the DataShareForm
+    :param selected_data: ReducucedDatums selected via the checkboxes in the DataShareForm
+    :return: CSV photometry table as a StreamingHttpResponse
+    """
     reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
     serialized_data = [ReducedDatumSerializer(rd).data for rd in reduced_datums]
     for datum in serialized_data:
