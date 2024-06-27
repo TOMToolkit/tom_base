@@ -45,7 +45,7 @@ class PanstarrsProcessor(DataProcessor):
         """
         Processes the photometric data from a plaintext file into a list of dicts. File is read using astropy as
         specified in the below documentation. The file is expected to be a multi-column delimited comma delimited
-        text file (csv), as produced by the PanSTARRS (MAST PS1) forced photometry service.
+        text file (csv), as produced by the PanSTARRS (MAST PS1) Main Catalog photometry service.
 
         NOTE: currently this method makes assumptions about the column names and order of the columns in the file.
         TODO: should be generalized to use the panstarrs_api.py module to get the column names.
@@ -82,7 +82,7 @@ class PanstarrsProcessor(DataProcessor):
                             'timestamp': timestamp,
                             'telescope': 'PanSTARRS 1',
                             'magnitude': mag,
-                            'magnitude_error': mag_err,
+                            'error': mag_err,
                             'filter': optical_filter,
                         }
                         photometry.append(value)
