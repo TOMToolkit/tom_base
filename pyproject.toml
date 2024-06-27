@@ -60,7 +60,7 @@ astropy = [
     { version = ">=3,<6", python = "<3.12" }
 ]
 django = "<5"
-djangorestframework = "<4"
+djangorestframework = ">=3.15,<4"
 django-bootstrap4 = ">3,<25"
 beautifulsoup4 = "<5"
 dramatiq = {version = "<2.0.0", extras = ["redis", "watch"]}
@@ -96,7 +96,7 @@ coverage = ">=6,<8" # coveralls needs ~6 even though 7.3.2 is latest
 coveralls = ">=3,<5"
 
 [tool.poetry.group.lint.dependencies]
-flake8 = ">=6.0,<7.1"
+flake8 = ">=6.0,<7.2"
 
 [tool.poetry-dynamic-versioning]
 enable = true
