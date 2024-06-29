@@ -35,7 +35,6 @@ def navbar_app_addons(context):
                     nav_item_list.append(item)
         except AttributeError:
             pass
-    print(nav_item_list)
     return {'nav_item_list': nav_item_list}
 
 
