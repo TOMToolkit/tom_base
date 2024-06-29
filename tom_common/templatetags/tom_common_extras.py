@@ -3,6 +3,7 @@ from django.db.models import IntegerField
 from django.db.models.functions import Cast
 from django.conf import settings
 from django_comments.models import Comment
+from django.apps import apps
 from guardian.shortcuts import get_objects_for_user
 
 register = template.Library()
@@ -15,6 +16,27 @@ def navbar_login(context):
     account-related buttons.
     """
     return {'user': context['user']}
+
+
+@register.inclusion_tag('tom_common/partials/navbar_app_addons.html', takes_context=True)
+def navbar_app_addons(context):
+    """
+    Imports the navbar content from appropriate apps
+    This should be a list of partials containing an <li> element that you would like displayed in the navbar with the
+    following format:
+     `<li class="nav-item"> <a class="nav-link" href="{% url 'namespace:view_name' %}">Link Text</a> </li>`
+    """
+    nav_item_list = []
+    for app in apps.get_app_configs():
+        try:
+            nav_items = app.nav_items()
+            if nav_items:
+                for item in nav_items:
+                    nav_item_list.append(item)
+        except AttributeError:
+            pass
+    print(nav_item_list)
+    return {'nav_item_list': nav_item_list}
 
 
 @register.simple_tag
