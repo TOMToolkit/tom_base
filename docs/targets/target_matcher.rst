@@ -118,16 +118,34 @@ the database is a match for the target that is being checked. This is extremely 
 by ``Target.validate_unique()`` to determine if a new target can be saved to the database, and thus prevent your TOM
 from accidentally ingesting duplicate targets.
 
-.. warning::
-    The `validate_unique()` method is not called when using the `.save()` or `.create()` methods on a model. If you are
-    creating targets in your TOM's custom code, you should call `validate_unique()` manually to ensure that the target
-    is unique, or the `full_clean()` method to make sure that all of the individual fields are valid as well. See the
-    `Django Docs <https://docs.djangoproject.com/en/5.0/ref/models/instances/#validating-objects>`__
-    for more information.
-
 Your ``MatchManager`` should subclass the ``base_model.TargetMatchManager`` which will contain both a ``match_target``
 method and a ``match_name`` method, both of which should return a queryset. These methods can be modified or
 extended, as in the above example, as needed.
+
+A Note About Saving Targets:
+++++++++++++++++++++++++++++
+
+The `Target.validate_unique()` method is not called when using the `Target.save()` or `Target.objects.create()`
+methods to save a model. If you are creating targets in your TOM's custom code, you should call `validate_unique()`
+manually to ensure that the target is unique, or use the `full_clean()` method to make sure that all of the individual
+fields are valid as well. See the
+`Django Docs <https://docs.djangoproject.com/en/5.0/ref/models/instances/#validating-objects>`__
+for more information.
+
+If you do wish to use your new match manager to validate or updated targets your code should look something like this:
+
+.. code-block:: python
+    :linenos:
+
+    from django.core.exceptions import ValidationError
+    from tom_targets.models import Target
+
+    target = Target(name='My Target', ra=10.68458, dec=41.26906)
+    try:
+        target.validate_unique()  # or `target.full_clean()`
+        target.save()
+    except ValidationError as e:
+        print(f'{target.name} not saved: {e}')
 
 Customizing ``match_fuzzy_name``
 ++++++++++++++++++++++++++++++++
