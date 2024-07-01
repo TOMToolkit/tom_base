@@ -1,4 +1,6 @@
 from django.conf import settings
+from django import forms
+from crispy_forms.layout import HTML, Layout, Fieldset, Row, Column
 import pyvo
 
 from tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
@@ -6,7 +8,58 @@ from tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
 
 class RSPQueryForm(GenericQueryForm):
     """"""
-    pass
+    rubin_id = forms.CharField(
+        required=False,
+        label='Rubin ID',
+    )
+    ra = forms.FloatField(
+        required=False,
+        label='RA',
+        widget=forms.TextInput(attrs={'placeholder': 'RA (Degrees)'})
+    )
+    dec = forms.FloatField(
+        required=False,
+        label='Dec',
+        widget=forms.TextInput(attrs={'placeholder': 'Dec (Degrees)'})
+    )
+    radius = forms.IntegerField(
+        required=False,
+        label='Search Radius',
+        widget=forms.TextInput(attrs={'placeholder': 'Radius (Arcseconds)'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            HTML('''
+                <p>
+                Please see the <a href="http://alerce.science/" target="_blank">ALeRCE homepage</a> for information
+                about the ALeRCE filters.
+            '''),
+            self.common_layout,
+            Fieldset(
+                'Identifier Search',
+                Row(
+                    Column('rubin_id'),
+                )
+            ),
+            Fieldset(
+                'Cone Search',
+                Row(
+                    Column('ra'),
+                    Column('dec'),
+                    Column('radius'),
+                )
+            ),
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Ensure that all cone search fields are present
+        if (any(cleaned_data[k] for k in ['ra', 'dec', 'radius'])
+                and not all(cleaned_data[k] for k in ['ra', 'dec', 'radius'])):
+            raise forms.ValidationError('All of RA, Dec, and Search Radius must be included to execute a cone search.')
 
 
 class RSPMultiTargetDataService(GenericBroker):
@@ -33,13 +86,22 @@ class RSPMultiTargetDataService(GenericBroker):
         results = self.query_service(query)
         return results['table_name']
 
-    def build_query(self):
+    def build_query(self, parameters):
         """"""
+        max_rec = '10'
+        if all([parameters['ra'], parameters['dec'], parameters['radius']]):
+            return f"SELECT TOP {max_rec} * FROM dp02_dc2_catalogs.Object " \
+                   f"WHERE CONTAINS(POINT('ICRS', coord_ra, coord_dec), " \
+                   f"CIRCLE('ICRS', {parameters['ra']}, {parameters['dec']}, {parameters['radius']}/3600.0)) = 1 " \
+                   f"AND detect_isPrimary = 1 "
+        elif parameters['rubin_id']:
+            return f"SELECT * FROM dp02_dc2_catalogs.Object " \
+                   f"WHERE objectId = '{parameters['rubin_id']}'"
         return "SELECT TOP 10 * FROM dp02_dc2_catalogs.Object"
 
     def fetch_alerts(self, parameters):
         """"""
-        query = self.build_query()
+        query = self.build_query(parameters)
         results = self.query_service(query)
         return iter(results)
 
