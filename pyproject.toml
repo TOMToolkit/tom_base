@@ -89,6 +89,7 @@ recommonmark = "~0.7"
 sphinx = ">=4,<8"
 sphinx-rtd-theme = ">=1.0,<2.1"
 sphinx-panels = "~0.6"
+sphinx-copybutton = "~0.5"
 
 [tool.poetry.group.coverage.dependencies]
 coverage = ">=6,<8" # coveralls needs ~6 even though 7.3.2 is latest

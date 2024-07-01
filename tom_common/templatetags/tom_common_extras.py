@@ -5,6 +5,8 @@ from django.conf import settings
 from django_comments.models import Comment
 from guardian.shortcuts import get_objects_for_user
 
+from tom_targets.models import Target
+
 register = template.Library()
 
 
@@ -44,7 +46,7 @@ def recent_comments(context, limit=10):
     Comments will only be displayed for targets which the logged-in user has permission to view.
     """
     user = context['request'].user
-    targets_for_user = get_objects_for_user(user, 'tom_targets.view_target')
+    targets_for_user = get_objects_for_user(user, f'{Target._meta.app_label}.view_target')
 
     # In django-contrib-comments, the Comment model has a field ``object_pk`` which refers to the primary key
     # of the object it is related to, i.e., a comment on a ``Target`` has an ``object_pk`` corresponding with the

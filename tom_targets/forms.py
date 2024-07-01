@@ -7,10 +7,10 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
 from tom_dataproducts.sharing import get_sharing_destination_options
-from .models import (
-    Target, TargetExtra, TargetName, TargetList, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
-    REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
-)
+from .models import Target, TargetExtra, TargetName, TargetList
+from tom_targets.base_models import (SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
+                                     REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME,
+                                     IGNORE_FIELDS)
 
 
 def extra_field_to_form_field(field_type):
@@ -72,11 +72,12 @@ class TargetForm(forms.ModelForm):
         if commit:
             for field in settings.EXTRA_FIELDS:
                 if self.cleaned_data.get(field['name']) is not None:
-                    TargetExtra.objects.update_or_create(
-                            target=instance,
-                            key=field['name'],
-                            defaults={'value': self.cleaned_data[field['name']]}
+                    updated_target_extra, _ = TargetExtra.objects.update_or_create(
+                        target=instance,
+                        key=field['name'],
+                        defaults={'value': self.cleaned_data[field['name']]}
                     )
+                    updated_target_extra.save()
             # Save groups for this target
             for group in self.cleaned_data['groups']:
                 assign_perm('tom_targets.view_target', group, instance)
@@ -113,7 +114,9 @@ class SiderealTargetCreateForm(TargetForm):
             self.fields[field].required = True
 
     class Meta(TargetForm.Meta):
-        fields = SIDEREAL_FIELDS
+        # Include Sidereal Fields and User defined fields that are not included in the Base Target model.
+        fields = SIDEREAL_FIELDS + [field.name for field in Target._meta.get_fields()
+                                    if field.name not in SIDEREAL_FIELDS + IGNORE_FIELDS + NON_SIDEREAL_FIELDS]
 
 
 class NonSiderealTargetCreateForm(TargetForm):
@@ -144,7 +147,9 @@ class NonSiderealTargetCreateForm(TargetForm):
                 )
 
     class Meta(TargetForm.Meta):
-        fields = NON_SIDEREAL_FIELDS
+        # Include Non-Sidereal Fields and User defined fields that are not included in the Base Target model.
+        fields = NON_SIDEREAL_FIELDS + [field.name for field in Target._meta.get_fields()
+                                        if field.name not in SIDEREAL_FIELDS + IGNORE_FIELDS + NON_SIDEREAL_FIELDS]
 
 
 class TargetVisibilityForm(forms.Form):

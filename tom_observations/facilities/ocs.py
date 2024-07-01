@@ -15,7 +15,8 @@ from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.cadence import CadenceForm
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
 from tom_observations.observation_template import GenericTemplateForm
-from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
+from tom_targets.models import Target
+from tom_targets.base_models import REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
 logger = logging.getLogger(__name__)
 
