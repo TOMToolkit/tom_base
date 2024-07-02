@@ -1,4 +1,4 @@
-{% load bootstrap4 %}
+{% load bootstrap4 tom_common_extras %}
 {% comment %}
 The following nav-item list elements (li) are included in the tom_common/base.html navbar-nav (ul).
 For customization instructions, see tom_common/base.html
@@ -13,9 +13,6 @@ For customization instructions, see tom_common/base.html
         <a class="dropdown-item" href="{% url 'targets:list' %}">Targets</a>
         <a class="dropdown-item" href="{% url 'targets:targetgrouping' %}">Target Grouping</a>
     </div>
-</li>
-<li class="nav-item {% if request.resolver_match.namespace == 'alerts' %}active{% endif %}">
-    <a class="nav-link" href="{% url 'alerts:list' %}">Alerts</a>
 </li>
 <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle" data-toggle="dropdown">Observations</a>
@@ -37,6 +34,7 @@ For customization instructions, see tom_common/base.html
 <li class="nav-item {% if request.resolver_match.namespace == 'dataproducts' %}active{% endif %}">
     <a class="nav-link" href="{% url 'tom_dataproducts:list' %}">Data</a>
 </li>
+{% navbar_app_addons %}
 <li class="nav-item {% if 'user' in request.resolver_match.url_name %}active{% endif %}">
     <a class="nav-link" href="{% url 'user-list' %}">Users</a>
 </li>

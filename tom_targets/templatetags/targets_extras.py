@@ -7,6 +7,7 @@ from astropy.time import Time
 from django import template
 from django.conf import settings
 from django.db.models import Q
+from django.apps import apps
 from guardian.shortcuts import get_objects_for_user
 import numpy as np
 from plotly import offline
@@ -334,11 +335,13 @@ def get_buttons(target):
                               }
 
     """
-    from django.apps import apps
     button_list = []
     for app in apps.get_app_configs():
-        integration_points = getattr(app, 'integration_points', {})
-        if integration_points.get('target_detail_button', False):
-            button_list.append(integration_points['target_detail_button'])
+        try:
+            button_info = app.target_detail_buttons()
+            if button_info:
+                button_list.append(button_info)
+        except AttributeError:
+            pass
 
     return {'target': target, 'button_list': button_list}
