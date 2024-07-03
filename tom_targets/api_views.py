@@ -1,12 +1,14 @@
 from django_filters import rest_framework as drf_filters
+from django.http import Http404
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user
 from rest_framework.mixins import DestroyModelMixin, RetrieveModelMixin
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from rest_framework.response import Response
 from rest_framework import status
 
 from tom_targets.filters import TargetFilter
-from tom_targets.models import TargetExtra, TargetName, TargetList
+from tom_targets.models import TargetExtra, TargetName, TargetList, Target
 from tom_targets.serializers import TargetSerializer, TargetExtraSerializer, TargetNameSerializer, TargetListSerializer
 
 
@@ -52,7 +54,7 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
 
     def get_queryset(self):
         permission_required = permissions_map.get(self.request.method)
-        return get_objects_for_user(self.request.user, f'tom_targets.{permission_required}')
+        return get_objects_for_user(self.request.user, f'{Target._meta.app_label}.{permission_required}')
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
@@ -70,6 +72,15 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
             response.data['message'] = 'Target successfully updated.'
         return response
 
+    def handle_exception(self, exc):
+        """Create Custom Error Message for Http404 errors because Target can have different names based on the supplied
+         Model."""
+        if isinstance(exc, Http404):
+            return Response({'detail': 'No Target matches the given query.'},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        return super(TargetViewSet, self).handle_exception(exc)
+
 
 class TargetNameViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMixin, GenericViewSet):
     """
@@ -82,7 +93,7 @@ class TargetNameViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMix
     def get_queryset(self):
         permission_required = permissions_map.get(self.request.method)
         return TargetName.objects.filter(
-            target__in=get_objects_for_user(self.request.user, f'tom_targets.{permission_required}')
+            target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.{permission_required}')
         )
 
 
@@ -97,7 +108,7 @@ class TargetExtraViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMi
     def get_queryset(self):
         permission_required = permissions_map.get(self.request.method)
         return TargetExtra.objects.filter(
-            target__in=get_objects_for_user(self.request.user, f'tom_targets.{permission_required}')
+            target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.{permission_required}')
         )
 
 
@@ -112,5 +123,5 @@ class TargetListViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMix
     def get_queryset(self):
         permission_required = permissions_map.get(self.request.method)
         return TargetList.objects.filter(
-            target__in=get_objects_for_user(self.request.user, f'tom_targets.{permission_required}')
+            target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.{permission_required}')
         )

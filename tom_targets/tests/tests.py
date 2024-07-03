@@ -291,7 +291,7 @@ class TestTargetCreate(TestCase):
         self.assertTrue(target.targetextra_set.filter(key='category', value='type2').exists())
 
     @override_settings(EXTRA_FIELDS=[
-        {'name': 'wins', 'type': 'number'},
+        {'name': 'wins', 'type': 'number', 'default': '12'},
         {'name': 'checked', 'type': 'boolean'},
         {'name': 'birthdate', 'type': 'datetime'},
         {'name': 'author', 'type': 'string'}
@@ -513,8 +513,9 @@ class TestTargetCreate(TestCase):
         self.assertContains(second_response, 'Target name with this Alias already exists.')
 
     def test_create_target_name_conflicting_with_existing_aliases(self):
+        original_name = 'multiple_names_target'
         target_data = {
-            'name': 'multiple_names_target',
+            'name': original_name,
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
@@ -540,8 +541,8 @@ class TestTargetCreate(TestCase):
         for i, name in enumerate(names):
             target_data.pop(f'aliases-{i}-name')
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(second_response, f'Target with Name or alias similar to {target_data["name"]} '
-                                             f'already exists')
+        self.assertContains(second_response, f'A Target matching {target_data["name"]} already exists. '
+                                             f'({original_name})')
         self.assertFalse(Target.objects.filter(name=target_data['name']).exists())
 
     def test_create_target_alias_conflicting_with_existing_target_name(self):
@@ -602,8 +603,9 @@ class TestTargetCreate(TestCase):
         self.assertFalse(TargetName.objects.filter(name=target_data['name']).exists())
 
     def test_create_targets_with_fuzzy_conflicting_names(self):
+        original_name = 'fuzzy_name_Target'
         target_data = {
-            'name': 'fuzzy_name_Target',
+            'name': original_name,
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
@@ -624,11 +626,12 @@ class TestTargetCreate(TestCase):
         for name in names:
             target_data['name'] = name
             second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-            self.assertContains(second_response, f'Target with Name or alias similar to {name} already exists')
+            self.assertContains(second_response, f'A Target matching {name} already exists. ({original_name})')
 
     def test_create_alias_fuzzy_conflict_with_existing_target_name(self):
+        original_name = 'John'
         target_data = {
-            'name': 'John',
+            'name': original_name,
             'type': Target.SIDEREAL,
             'ra': 113.456,
             'dec': -22.1,
@@ -651,7 +654,8 @@ class TestTargetCreate(TestCase):
         target_data['name'] = 'multiple_names_target'
         target_data['aliases-TOTAL_FORMS'] = 2
         second_response = self.client.post(reverse('targets:create'), data=target_data, follow=True)
-        self.assertContains(second_response, f'Target with Name or alias similar to {names[0]} already exists')
+        self.assertContains(second_response, f'Target with Name or alias similar to {names[0]} already exists. '
+                                             f'({original_name})')
 
 
 class TestTargetUpdate(TestCase):
@@ -870,25 +874,70 @@ class TestTargetUpdate(TestCase):
         with self.assertRaises(ValidationError):
             new_alias.full_clean()
 
-    @override_settings(MATCH_MANAGERS={'Target': 'tom_targets.tests.test_utils.StrictMatch'})
-    def test_update_with_strict_matching(self):
-        self.form_data.update({
-            'targetextra_set-TOTAL_FORMS': 1,
-            'targetextra_set-INITIAL_FORMS': 0,
-            'targetextra_set-MIN_NUM_FORMS': 0,
-            'targetextra_set-MAX_NUM_FORMS': 1000,
-            'targetextra_set-0-key': 'redshift',
-            'targetextra_set-0-value': '3',
-            'aliases-TOTAL_FORMS': 1,
-            'aliases-INITIAL_FORMS': 0,
-            'aliases-MIN_NUM_FORMS': 0,
-            'aliases-MAX_NUM_FORMS': 1000,
-            'aliases-0-name': 'testtargetname2'
-        })
-        self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
-        self.target.refresh_from_db()
-        self.assertTrue(self.target.targetextra_set.filter(key='redshift').exists())
-        self.assertTrue(self.target.aliases.filter(name='testtargetname2').exists())
+
+class TestTargetMatchManager(TestCase):
+    def setUp(self):
+        self.form_data = {
+            'name': 'testtarget',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1
+        }
+        user = User.objects.create(username='testuser')
+        self.target = Target.objects.create(**self.form_data)
+        assign_perm('tom_targets.change_target', user, self.target)
+        self.client.force_login(user)
+
+    def test_strict_matching(self):
+        fuzzy_name = "test_target"
+        fuzzy_matches = Target.matches.match_fuzzy_name(fuzzy_name)
+        strict_matches = Target.matches.match_exact_name(fuzzy_name)
+        self.assertTrue(fuzzy_matches.exists())
+        self.assertFalse(strict_matches.exists())
+
+    def test_cone_search_matching(self):
+        ra = 113.456
+        dec = -22.1
+        radius = 1
+        # Test for exact match
+        matches = Target.matches.match_cone_search(ra, dec, radius)
+        self.assertTrue(matches.exists())
+        # Test for slightly off match
+        ra += 0.01
+        matches = Target.matches.match_cone_search(ra, dec, radius)
+        self.assertFalse(matches.exists())
+        # Test for match with larger radius
+        radius += 100
+        matches = Target.matches.match_cone_search(ra, dec, radius)
+        self.assertTrue(matches.exists())
+        # Test for moving objects with no RA/DEC
+        matches = Target.matches.match_cone_search(None, None, radius)
+        self.assertFalse(matches.exists())
+
+    def test_unreasonable_cone_search_matching(self):
+        ra = self.target.ra
+        dec = self.target.dec
+        radius = 1
+        # Test for exact match
+        matches = Target.matches.match_cone_search(ra, dec, radius)
+        self.assertTrue(matches.exists())
+        ra += 360
+        # Test for high RA match
+        matches = Target.matches.match_cone_search(ra, dec, radius)
+        self.assertTrue(matches.exists())
+        ra -= 360 * 3
+        # Test for low RA match
+        matches = Target.matches.match_cone_search(ra, dec, radius)
+        self.assertTrue(matches.exists())
+        dec = 95
+        radius = 360 * 3600  # Cover entire sky
+        # Test for no too high DEC match
+        matches = Target.matches.match_cone_search(ra, dec, radius)
+        self.assertFalse(matches.exists())
+        dec = -95
+        # Test for no too low DEC match
+        matches = Target.matches.match_cone_search(ra, dec, radius)
+        self.assertFalse(matches.exists())
 
 
 class TestTargetImport(TestCase):

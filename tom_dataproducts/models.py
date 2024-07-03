@@ -12,7 +12,7 @@ from fits2image.conversions import fits_to_jpg
 from PIL import Image
 from importlib import import_module
 
-from tom_targets.models import Target
+from tom_targets.base_models import BaseTarget
 from tom_alerts.models import AlertStreamMessage
 from tom_observations.models import ObservationRecord
 
@@ -197,7 +197,7 @@ class DataProduct(models.Model):
         null=True,
         help_text='Data product identifier used by the source of the data product.'
     )
-    target = models.ForeignKey(Target, on_delete=models.CASCADE)
+    target = models.ForeignKey(BaseTarget, on_delete=models.CASCADE)
     observation_record = models.ForeignKey(ObservationRecord, null=True, default=None, on_delete=models.CASCADE)
     data = models.FileField(upload_to=data_product_path, null=True, default=None)
     extra_data = models.TextField(blank=True, default='')
@@ -363,7 +363,7 @@ class ReducedDatum(models.Model):
 
     """
 
-    target = models.ForeignKey(Target, null=False, on_delete=models.CASCADE)
+    target = models.ForeignKey(BaseTarget, null=False, on_delete=models.CASCADE)
     data_product = models.ForeignKey(DataProduct, null=True, blank=True, on_delete=models.CASCADE)
     data_type = models.CharField(
         max_length=100,

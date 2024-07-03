@@ -59,7 +59,8 @@ class TargetListView(PermissionListMixin, FilterView):
     strict = False
     model = Target
     filterset_class = TargetFilter
-    permission_required = 'tom_targets.view_target'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
+    permission_required = f'{Target._meta.app_label}.view_target'
     ordering = ['-created']
 
     def get_context_data(self, *args, **kwargs):
@@ -91,7 +92,7 @@ class TargetNameSearchView(RedirectView):
         # Tests fail without distinct but it works in practice, it is unclear as to why
         # The Django query planner shows different results between in practice and unit tests
         # django-guardian related querying is present in the test planner, but not in practice
-        targets = get_objects_for_user(request.user, 'tom_targets.view_target').filter(
+        targets = get_objects_for_user(request.user, f'{Target._meta.app_label}.view_target').filter(
             Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name)
         ).distinct()
         if targets.count() == 1:
@@ -105,6 +106,8 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
     View for creating a Target. Requires authentication.
     """
 
+    # Target Views require explicit template names since the Model Class names are variable.
+    template_name = 'tom_targets/target_form.html'
     model = Target
     fields = '__all__'
 
@@ -234,7 +237,9 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
     """
     View that handles updating a target. Requires authorization.
     """
-    permission_required = 'tom_targets.change_target'
+    template_name = 'tom_targets/target_form.html'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
+    permission_required = f'{Target._meta.app_label}.change_target'
     model = Target
     fields = '__all__'
 
@@ -288,7 +293,7 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
         :returns: Set of targets
         :rtype: QuerySet
         """
-        return get_objects_for_user(self.request.user, 'tom_targets.change_target')
+        return get_objects_for_user(self.request.user, f'{Target._meta.app_label}.change_target')
 
     def get_form_class(self):
         """
@@ -333,7 +338,9 @@ class TargetDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     """
     View for deleting a target. Requires authorization.
     """
-    permission_required = 'tom_targets.delete_target'
+    template_name = 'tom_targets/target_confirm_delete.html'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
+    permission_required = f'{Target._meta.app_label}.delete_target'
     success_url = reverse_lazy('targets:list')
     model = Target
 
@@ -343,7 +350,8 @@ class TargetShareView(FormView):
     View for sharing a target. Requires authorization.
     """
     template_name = 'tom_targets/target_share.html'
-    permission_required = 'tom_targets.share_target'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
+    permission_required = f'{Target._meta.app_label}.share_target'
     form_class = TargetShareForm
 
     def get_context_data(self, *args, **kwargs):
@@ -413,7 +421,9 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
     """
     View that handles the display of the target details. Requires authorization.
     """
-    permission_required = 'tom_targets.view_target'
+    template_name = 'tom_targets/target_detail.html'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
+    permission_required = f'{Target._meta.app_label}.view_target'
     model = Target
 
     def get_context_data(self, *args, **kwargs):
@@ -433,6 +443,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
             )
         observation_template_form.fields['target'].widget = HiddenInput()
         context['observation_template_form'] = observation_template_form
+        context['target'] = self.object
         return context
 
     def get(self, request, *args, **kwargs):
@@ -474,7 +485,8 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
 
 class TargetHermesPreloadView(SingleObjectMixin, View):
     model = Target
-    permission_required = 'tom_targets.share_target'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
+    permission_required = f'{Target._meta.app_label}.share_target'
 
     def post(self, request, *args, **kwargs):
         target = self.get_object()
@@ -570,7 +582,7 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
         except Exception as e:
             messages.error(request, 'Cannot find the target group with id={}; {}'.format(grouping_id, e))
             return redirect(reverse('tom_targets:list') + '?' + query_string)
-        if not request.user.has_perm('tom_targets.view_targetlist', grouping_object):
+        if not request.user.has_perm(f'{Target._meta.app_label}.view_targetlist', grouping_object):
             messages.error(request, 'Permission denied.')
             return redirect(reverse('tom_targets:list') + '?' + query_string)
 
@@ -600,7 +612,7 @@ class TargetGroupingView(PermissionListMixin, ListView):
     """
     View that handles the display of ``TargetList`` objects, also known as target groups. Requires authorization.
     """
-    permission_required = 'tom_targets.view_targetlist'
+    permission_required = f'{Target._meta.app_label}.view_targetlist'
     template_name = 'tom_targets/target_grouping.html'
     model = TargetList
     paginate_by = 25
@@ -642,9 +654,9 @@ class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
         """
         obj = form.save(commit=False)
         obj.save()
-        assign_perm('tom_targets.view_targetlist', self.request.user, obj)
-        assign_perm('tom_targets.change_targetlist', self.request.user, obj)
-        assign_perm('tom_targets.delete_targetlist', self.request.user, obj)
+        assign_perm(f'{Target._meta.app_label}.view_targetlist', self.request.user, obj)
+        assign_perm(f'{Target._meta.app_label}.change_targetlist', self.request.user, obj)
+        assign_perm(f'{Target._meta.app_label}.delete_targetlist', self.request.user, obj)
         return super().form_valid(form)
 
 
@@ -653,7 +665,8 @@ class TargetGroupingShareView(FormView):
     View for sharing a TargetList. Requires authorization.
     """
     template_name = 'tom_targets/target_group_share.html'
-    permission_required = 'tom_targets.share_target'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
+    permission_required = f'{Target._meta.app_label}.share_target'
     form_class = TargetListShareForm
 
     def get_context_data(self, *args, **kwargs):
@@ -722,7 +735,8 @@ class TargetGroupingShareView(FormView):
 
 class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
     model = TargetList
-    permission_required = 'tom_targets.share_target'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
+    permission_required = f'{Target._meta.app_label}.share_target'
 
     def post(self, request, *args, **kwargs):
         targetlist = self.get_object()
