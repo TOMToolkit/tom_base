@@ -344,7 +344,7 @@ The result is the redshift value being printed on the template:
 
 |image3|
 
-Working with extra fields programatically
+Working with extra fields programmatically
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you’d like to update or save extra fields to your targets in code,
