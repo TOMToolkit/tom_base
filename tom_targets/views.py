@@ -582,7 +582,7 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
         except Exception as e:
             messages.error(request, 'Cannot find the target group with id={}; {}'.format(grouping_id, e))
             return redirect(reverse('tom_targets:list') + '?' + query_string)
-        if not request.user.has_perm(f'{Target._meta.app_label}.view_targetlist', grouping_object):
+        if not request.user.has_perm('tom_targets.view_targetlist', grouping_object):
             messages.error(request, 'Permission denied.')
             return redirect(reverse('tom_targets:list') + '?' + query_string)
 
@@ -612,7 +612,7 @@ class TargetGroupingView(PermissionListMixin, ListView):
     """
     View that handles the display of ``TargetList`` objects, also known as target groups. Requires authorization.
     """
-    permission_required = f'{Target._meta.app_label}.view_targetlist'
+    permission_required = 'tom_targets.view_targetlist'
     template_name = 'tom_targets/target_grouping.html'
     model = TargetList
     paginate_by = 25
@@ -654,9 +654,9 @@ class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
         """
         obj = form.save(commit=False)
         obj.save()
-        assign_perm(f'{Target._meta.app_label}.view_targetlist', self.request.user, obj)
-        assign_perm(f'{Target._meta.app_label}.change_targetlist', self.request.user, obj)
-        assign_perm(f'{Target._meta.app_label}.delete_targetlist', self.request.user, obj)
+        assign_perm('tom_targets.view_targetlist', self.request.user, obj)
+        assign_perm('tom_targets.change_targetlist', self.request.user, obj)
+        assign_perm('tom_targets.delete_targetlist', self.request.user, obj)
         return super().form_valid(form)
 
 

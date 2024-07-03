@@ -139,7 +139,7 @@ following command:
 
 .. code:: python
 
-    ./manage.py makemigrations
+    ./manage.py makemigrations custom_code
 
 This will create a migration file in the ``migrations`` directory of your custom app. You can then apply the migration
 by running:
