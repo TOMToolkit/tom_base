@@ -1,0 +1,44 @@
+<!-- insert this snippet where you want Aladin Lite viewer to appear -->
+<div id="aladin-lite-div" style="width:500px;height:400px;"></div>
+<script type="text/javascript" src="https://aladin.cds.unistra.fr/AladinLite/api/v3/3.2.0/aladin.js" charset="utf-8"></script>
+<script type="text/javascript">
+
+let aladin;
+A.init.then(() => {
+    aladin = A.aladin('#aladin-lite-div',
+    {
+    survey: "P/DSS2/color", 
+    fov:350, 
+    projection:"MOL", 
+    showReticle: false,
+    showCooGrid: false,
+    showCooGridControl: true,
+    });
+    
+    
+    var targets = {{ targets|safe }}; //targets cannot be a queryset; here it is a list of dictionaries
+
+    
+    for (var i = 0; i < targets.length; i++) {
+        var target = targets[i];
+         //console.log(target);
+        var cat = A.catalog({name: 'Some markers', color: 'blue', sourceSize: 18});
+        aladin.addCatalog(cat);
+        popup_info = ['RA: ', target.ra, '<br>' , 'Dec: ', target.dec];
+        cat.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popup_info})]);
+
+    }
+    
+
+  
+
+    });
+</script>
+
+
+{% for target in targets %}
+    {{target.name}}<br>
+    RA: {{target.ra}}<br>
+    Dec: {{target.dec}}<br>
+{% endfor %}
+

@@ -303,14 +303,32 @@ def select_target_js():
     return
 
 
-@register.inclusion_tag('tom_targets/partials/aladin.html')
-def aladin(target):
+@register.inclusion_tag('tom_targets/partials/aladin_finderchart.html')
+def aladin_finderchart(target):
     """
     Displays Aladin skyview of the given target along with basic finder chart annotations including a compass
     and a scale bar. The resulting image is downloadable. This templatetag only works for sidereal targets.
     """
+
     return {'target': target}
 
+@register.inclusion_tag('tom_targets/partials/aladin_skymap.html')
+def aladin_skymap(targets):
+    """
+    IN PROGRESS: should display aladin skyview on Target Distribution skymap
+    convert the targets queryset into a list of dictionaries suitable for javascript and aladin
+    """
+    from django.forms.models import model_to_dict
+    target_list = []
+
+    for target in targets:
+        name = target.name
+        ra = target.ra
+        dec = target.dec
+        target_list.append({'name':name, 'ra':ra, 'dec':dec})
+
+    context = {'targets': target_list}
+    return context
 
 @register.inclusion_tag('tom_targets/partials/target_table.html')
 def target_table(targets, all_checked=False):
