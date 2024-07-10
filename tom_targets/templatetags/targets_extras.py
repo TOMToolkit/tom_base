@@ -322,10 +322,12 @@ def aladin_skymap(targets):
     target_list = []
 
     for target in targets:
-        name = target.name
-        ra = target.ra
-        dec = target.dec
-        target_list.append({'name': name, 'ra': ra, 'dec': dec})
+        print(target.type, target.name)
+        if target.type == Target.SIDEREAL:
+            name = target.name
+            ra = target.ra
+            dec = target.dec
+            target_list.append({'name': name, 'ra': ra, 'dec': dec})
 
     context = {'targets': target_list}
     return context

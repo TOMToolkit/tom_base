@@ -18,7 +18,6 @@ A.init.then(() => {
     aladin.setCooGrid({ color: 'red', labelSize: 10 });
     
     var targets = {{ targets|safe }}; //targets cannot be a queryset; here it is a list of dictionaries
-
     
     for (var i = 0; i < targets.length; i++) {
         var target = targets[i];
