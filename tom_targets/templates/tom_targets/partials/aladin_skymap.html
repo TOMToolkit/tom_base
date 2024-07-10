@@ -22,13 +22,13 @@ A.init.then(() => {
     for (var i = 0; i < targets.length; i++) {
         var target = targets[i];
          //console.log(target);
-        var cat = A.catalog({name: 'Some markers', color: 'blue', sourceSize: 18});
+        var cat = A.catalog({name: target.name , color: 'blue', sourceSize: 18});
         aladin.addCatalog(cat);
         popup_info = ['RA: '.concat(target.ra, '<br>',  'Dec: ', target.dec)];
         cat.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popup_info})]);
 
     }
-    
+
     });
 </script>
 
