@@ -223,54 +223,6 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
     return {'plot': moon_distance_plot}
 
 
-@register.inclusion_tag('tom_targets/partials/target_distribution.html')
-def target_distribution(targets):
-    """
-    Displays a plot showing on a map the locations of all sidereal targets in the TOM.
-    """
-    locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
-    data = [
-        dict(
-            lon=[location[0] for location in locations],
-            lat=[location[1] for location in locations],
-            text=[location[2] for location in locations],
-            hoverinfo='lon+lat+text',
-            mode='markers',
-            type='scattergeo'
-        ),
-        dict(
-            lon=list(range(0, 360, 60))+[180]*4,
-            lat=[0]*6+[-60, -30, 30, 60],
-            text=list(range(0, 360, 60))+[-60, -30, 30, 60],
-            hoverinfo='none',
-            mode='text',
-            type='scattergeo'
-        )
-    ]
-    layout = {
-        'title': 'Target Distribution (sidereal)',
-        'hovermode': 'closest',
-        'showlegend': False,
-        'geo': {
-            'projection': {
-                'type': 'mollweide',
-            },
-            'showcoastlines': False,
-            'showland': False,
-            'lonaxis': {
-                'showgrid': True,
-                'range': [0, 360],
-            },
-            'lataxis': {
-                'showgrid': True,
-                'range': [-90, 90],
-            },
-        }
-    }
-    figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
-    return {'figure': figure}
-
-
 @register.filter
 def deg_to_sexigesimal(value, fmt):
     """
@@ -322,7 +274,6 @@ def aladin_skymap(targets):
     target_list = []
 
     for target in targets:
-        print(target.type, target.name)
         if target.type == Target.SIDEREAL:
             name = target.name
             ra = target.ra
@@ -331,6 +282,11 @@ def aladin_skymap(targets):
 
     context = {'targets': target_list}
     return context
+
+
+@register.inclusion_tag('tom_targets/partials/aladin_skymap.html')
+def target_distribution(targets):
+    return aladin_skymap(targets)
 
 
 @register.inclusion_tag('tom_targets/partials/target_table.html')
