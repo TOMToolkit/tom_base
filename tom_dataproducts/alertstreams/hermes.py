@@ -20,6 +20,28 @@ class HermesMessageException(Exception):
     pass
 
 
+def convert_astropy_brightness_to_hermes(brightness_unit):
+    if not brightness_unit:
+        return brightness_unit
+    elif brightness_unit.uppercase() == 'AB' or brightness_unit.uppercase() == 'ABFLUX':
+        return 'AB mag'
+    else:
+        return brightness_unit
+
+
+def convert_astropy_wavelength_to_hermes(wavelength_unit):
+    if not wavelength_unit:
+        return wavelength_unit
+    elif wavelength_unit.lowercase() == 'angstrom' or wavelength_unit == 'AA':
+        return 'Å'
+    elif wavelength_unit.lowercase() == 'micron':
+        return 'µm'
+    elif wavelength_unit.lowercase() == 'hertz':
+        return 'Hz'
+    else:
+        return wavelength_unit
+
+
 class BuildHermesMessage(object):
     """
     A HERMES Message Object that can be submitted to HOP through HERMES
@@ -65,7 +87,9 @@ def publish_to_hermes(message_info, datums, targets=Target.objects.none(), **kwa
         hermes_alert.save()
         for tomtoolkit_photometry in datums:
             tomtoolkit_photometry.message.add(hermes_alert)
-    except Exception:
+    except Exception as ex:
+        logger.error(repr(ex))
+        logger.error(response.content)
         return response
 
     return response
@@ -165,11 +189,10 @@ def create_hermes_phot_table_row(datum, **kwargs):
     phot_table_row = {
         'target_name': datum.target.name,
         'date_obs': datum.timestamp.isoformat(),
-        'telescope': datum.value.get('telescope', settings.DATA_SHARING['hermes'].get('DEFAULT_TELESCOPE', '')),
-        'instrument': datum.value.get('instrument', settings.DATA_SHARING['hermes'].get('DEFAULT_INSTRUMENT', '')),
+        'telescope': datum.value.get('telescope'),
+        'instrument': datum.value.get('instrument'),
         'bandpass': datum.value.get('filter', ''),
-        'brightness_unit': datum.value.get('unit', settings.DATA_SHARING['hermes'].get(
-            'DEFAULT_BRIGHTNESS_UNIT', 'AB mag')),
+        'brightness_unit': convert_astropy_brightness_to_hermes(datum.value.get('unit')),
     }
     if datum.value.get('magnitude', None):
         phot_table_row['brightness'] = datum.value['magnitude']
@@ -220,13 +243,12 @@ def create_hermes_spectro_table_row(datum, **kwargs):
     spectroscopy_table_row = {
         'target_name': datum.target.name,
         'date_obs': datum.timestamp.isoformat(),
-        'telescope': datum.value.get('telescope', settings.DATA_SHARING['hermes'].get('DEFAULT_TELESCOPE', '')),
-        'instrument': datum.value.get('instrument', settings.DATA_SHARING['hermes'].get('DEFAULT_INSTRUMENT', '')),
+        'telescope': datum.value.get('telescope'),
+        'instrument': datum.value.get('instrument'),
         'flux': flux_list,
         'wavelength': wavelength_list,
-        'flux_units': datum.value.get('flux_units', settings.DATA_SHARING['hermes'].get('DEFAULT_FLUX_UNITS', 'mJy')),
-        'wavelength_units': datum.value.get('wavelength_units',
-                                            settings.DATA_SHARING['hermes'].get('DEFAULT_WAVELENGTH_UNITS', 'Å'))
+        'flux_units': datum.value.get('flux_units'),
+        'wavelength_units': convert_astropy_wavelength_to_hermes(datum.value.get('wavelength_units')),
     }
     if flux_error_list:
         spectroscopy_table_row['flux_error'] = flux_error_list

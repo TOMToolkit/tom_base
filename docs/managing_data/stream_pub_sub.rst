@@ -26,19 +26,15 @@ for the various streams with which you wish to share data.
 .. code:: python
 
    # Define the valid data sharing destinations for your TOM.
-   DATA_SHARING = {
+    DATA_SHARING = {
         'hermes': {
             'DISPLAY_NAME': os.getenv('HERMES_DISPLAY_NAME', 'Hermes'),
             'BASE_URL': os.getenv('HERMES_BASE_URL', 'https://hermes.lco.global/'),
             'HERMES_API_KEY': os.getenv('HERMES_API_KEY', 'set HERMES_API_KEY value in environment'),
             'DEFAULT_AUTHORS': os.getenv('HERMES_DEFAULT_AUTHORS', 'set your default authors here'),
-            'DEFAULT_TELESCOPE': '1meter',  # default telescope to fill in for datums missing telescope key
-            'DEFAULT_INSTRUMENT': 'inst01',  # default instrument to fill in for datums missing instrument key
-            'DEFAULT_WAVELENGTH_UNITS': 'Å',  # default units of wavelength for spectral data in this TOM
-            'DEFAULT_FLUX_UNITS': 'mJy',  # default units of flux for spectral data in this TOM
             'USER_TOPICS': ['hermes.test', 'tomtoolkit.test']  # You must have write permissions on these topics
         },
-   }
+    }
 
 Subscribe to a Kafka Topic
 ##########################

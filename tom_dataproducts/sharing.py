@@ -287,7 +287,7 @@ def sharing_feedback_handler(response, request):
     except AttributeError:
         publish_feedback = response['message']
     except Exception:
-        publish_feedback = f"ERROR: Returned Response code {response.status_code}"
+        publish_feedback = f"ERROR: Returned Response code {response.status_code} with content: {response.content}"
     if "ERROR" in publish_feedback.upper():
         messages.error(request, publish_feedback)
     else:

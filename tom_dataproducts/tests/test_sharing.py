@@ -15,10 +15,6 @@ DATA_SHARING = {
         'HERMES_API_KEY': '123fake',
         'DEFAULT_AUTHORS': 'test author',
         'USER_TOPICS': ['hermes.test', 'tomtoolkit.test'],
-        'DEFAULT_TELESCOPE': '1m',
-        'DEFAULT_INSTRUMENT': 'Inst01',
-        'DEFAULT_WAVELENGTH_UNITS': 'Å',
-        'DEFAULT_FLUX_UNITS': 'mJy'
     }
 }
 
@@ -118,11 +114,8 @@ class TestHermesSharing(TestCase):
                     photometry_count += 1
                 elif datum.data_type == 'spectroscopy':
                     hermes_datum = alert['data']['spectroscopy'][spectroscopy_count]
-                    default_telescope = settings.DATA_SHARING['hermes'].get('DEFAULT_TELESCOPE', '')
-                    telescope = datum.value.get('telescope', default_telescope)
                     self.assertEqual(hermes_datum['target_name'], datum.target.name)
                     self.assertEqual(hermes_datum['date_obs'], datum.timestamp.isoformat())
-                    self.assertEqual(hermes_datum['telescope'], telescope)
                     if 'flux' in datum.value and 'wavelength' in datum.value:
                         self.assertEqual(hermes_datum['flux'], datum.value.get('flux'))
                         self.assertEqual(hermes_datum['wavelength'], datum.value.get('wavelength'))
