@@ -321,7 +321,7 @@ def facility_map(context):
             'projection': {
                 'type': 'mollweide',
             },
-            'showcoastlines': False,
+            'showcoastlines': True,
             'showland': True,
             'lonaxis': {
                 'showgrid': True,
