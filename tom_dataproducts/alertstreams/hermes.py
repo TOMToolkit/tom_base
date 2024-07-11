@@ -297,7 +297,7 @@ def hermes_alert_handler(alert, metadata):
         for row in photometry_table:
             if row['target_name'] != target_name:
                 target_name = row['target_name']
-                query = Target.matches.check_for_fuzzy_match(target_name)
+                query = Target.matches.match_name(target_name)
             if query:
                 target = query[0]
             else:

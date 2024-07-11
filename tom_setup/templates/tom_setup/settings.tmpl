@@ -33,7 +33,7 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-TOM_NAME = 'TOM Toolkit'
+TOM_NAME = '{{ PROJECT_NAME }}'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
+    '{{ CUSTOM_CODE_APP_NAME }}',
 ]
 
 SITE_ID = 1
@@ -193,6 +194,17 @@ CACHES = {
 # TOM Specific configuration
 TARGET_TYPE = '{{ TARGET_TYPE }}'
 
+# Set to the full path of a custom target model to extend the BaseTarget Model with custom fields.
+# TARGET_MODEL_CLASS = '{{ CUSTOM_CODE_APP_NAME }}.models.UserDefinedTarget'
+
+# Define MATCH_MANAGERS here. This is a dictionary that contains a dotted module path to the desired match manager
+# for a given model.
+# For example:
+# MATCH_MANAGERS = {
+#    "Target": "custom_code.match_managers.CustomTargetMatchManager"
+# }
+MATCH_MANAGERS = {}
+
 FACILITIES = {
     'LCO': {
         'portal_url': 'https://observe.lco.global',
@@ -246,11 +258,11 @@ TOM_FACILITY_CLASSES = [
 
 TOM_ALERT_CLASSES = [
     'tom_alerts.brokers.alerce.ALeRCEBroker',
-    'tom_alerts.brokers.antares.ANTARESBroker',
+    #  'tom_alerts.brokers.antares.ANTARESBroker',
     'tom_alerts.brokers.gaia.GaiaBroker',
     'tom_alerts.brokers.lasair.LasairBroker',
     'tom_alerts.brokers.tns.TNSBroker',
-    'tom_alerts.brokers.fink.FinkBroker',
+    #  'tom_alerts.brokers.fink.FinkBroker',
 ]
 
 BROKERS = {
@@ -282,9 +294,9 @@ HARVESTERS = {
 # For example:
 # EXTRA_FIELDS = [
 #     {'name': 'redshift', 'type': 'number'},
-#     {'name': 'discoverer', 'type': 'string'}
+#     {'name': 'discoverer', 'type': 'string'},
 #     {'name': 'eligible', 'type': 'boolean'},
-#     {'name': 'dicovery_date', 'type': 'datetime'}
+#     {'name': 'discovery_date', 'type': 'datetime'}
 # ]
 EXTRA_FIELDS = []
 

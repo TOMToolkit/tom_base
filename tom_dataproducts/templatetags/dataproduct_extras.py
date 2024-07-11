@@ -257,11 +257,13 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
                                         data_type=photometry_data_type))
 
     for datum in datums:
-        photometry_data.setdefault(datum.value['filter'], {})
-        photometry_data[datum.value['filter']].setdefault('time', []).append(datum.timestamp)
-        photometry_data[datum.value['filter']].setdefault('magnitude', []).append(datum.value.get('magnitude'))
-        photometry_data[datum.value['filter']].setdefault('error', []).append(datum.value.get('error'))
-        photometry_data[datum.value['filter']].setdefault('limit', []).append(datum.value.get('limit'))
+        if (isinstance(datum.value.get('magnitude', 0), float) and isinstance(datum.value.get('error', 0), float)) \
+                or isinstance(datum.value.get('limit', 0), float):
+            photometry_data.setdefault(datum.value['filter'], {})
+            photometry_data[datum.value['filter']].setdefault('time', []).append(datum.timestamp)
+            photometry_data[datum.value['filter']].setdefault('magnitude', []).append(datum.value.get('magnitude'))
+            photometry_data[datum.value['filter']].setdefault('error', []).append(datum.value.get('error'))
+            photometry_data[datum.value['filter']].setdefault('limit', []).append(datum.value.get('limit'))
 
     plot_data = []
     all_ydata = []
