@@ -1,5 +1,4 @@
 from django.test import TestCase, override_settings
-from django.conf import settings
 
 from tom_dataproducts.alertstreams.hermes import create_hermes_alert, BuildHermesMessage, HermesMessageException
 from tom_dataproducts.models import ReducedDatum
