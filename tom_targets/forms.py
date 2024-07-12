@@ -116,7 +116,8 @@ class SiderealTargetCreateForm(TargetForm):
     class Meta(TargetForm.Meta):
         # Include Sidereal Fields and User defined fields that are not included in the Base Target model.
         fields = SIDEREAL_FIELDS + [field.name for field in Target._meta.get_fields()
-                                    if field.name not in SIDEREAL_FIELDS + IGNORE_FIELDS + NON_SIDEREAL_FIELDS]
+                                    if field not in Target._meta.related_objects and
+                                    field.name not in SIDEREAL_FIELDS + IGNORE_FIELDS + NON_SIDEREAL_FIELDS]
 
 
 class NonSiderealTargetCreateForm(TargetForm):
@@ -149,7 +150,8 @@ class NonSiderealTargetCreateForm(TargetForm):
     class Meta(TargetForm.Meta):
         # Include Non-Sidereal Fields and User defined fields that are not included in the Base Target model.
         fields = NON_SIDEREAL_FIELDS + [field.name for field in Target._meta.get_fields()
-                                        if field.name not in SIDEREAL_FIELDS + IGNORE_FIELDS + NON_SIDEREAL_FIELDS]
+                                        if field not in Target._meta.related_objects and
+                                        field.name not in SIDEREAL_FIELDS + IGNORE_FIELDS + NON_SIDEREAL_FIELDS]
 
 
 class TargetVisibilityForm(forms.Form):
