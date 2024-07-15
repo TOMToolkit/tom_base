@@ -268,9 +268,9 @@ def aladin_finderchart(target):
 @register.inclusion_tag('tom_targets/partials/aladin_skymap.html')
 def aladin_skymap(targets):
     """
-    Displays aladin skyview on Target Distribution skymap. Markers on the skymap show where your targets are. Max of 25 targets
-    show at a time (one page of targets). This templatetag converts the targets queryset into a list of dictionaries suitable for
-    javascript and aladin, and only works for sidereal targets.
+    Displays aladin skyview on Target Distribution skymap. Markers on the skymap show where your targets are. Max of
+    25 targets show at a time (one page of targets). This templatetag converts the targets queryset into a list of
+    dictionaries suitable for javascript and aladin, and only works for sidereal targets.
     """
     target_list = []
 
