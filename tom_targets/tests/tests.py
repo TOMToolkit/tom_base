@@ -1616,6 +1616,7 @@ class TestShareTargetList(TestCase):
                 'submitter': ['test_submitter'],
                 'target_list': self.target_list.id,
                 'share_destination': [share_destination],
+                'selected-target': [self.target.id, self.target2.id]
             },
             follow=True
         )
