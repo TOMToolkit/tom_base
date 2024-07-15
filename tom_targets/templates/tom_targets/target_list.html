@@ -23,7 +23,7 @@
       </div>
     </div>
     {% select_target_js %}
-    {% target_distribution filter.qs %}
+    {% aladin_skymap object_list %}
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
     <label id="displaySelected"></label>
     <button id="optionSelectAll" type="button" class="btn btn-link" onClick="select_all({{ target_count }})"></button>

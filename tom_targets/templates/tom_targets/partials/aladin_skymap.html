@@ -1,0 +1,31 @@
+<!-- embedding Aladin Lite example code found at: https://aladin.cds.unistra.fr/AladinLite/doc/  -->
+<div id="aladin-lite-div" style="width:auto; height:700px; margin:auto; margin-top: 20px;" ></div>
+<script type="text/javascript" src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
+<script type="text/javascript">
+
+let aladin;
+A.init.then(() => {
+    aladin = A.aladin('#aladin-lite-div',
+    {
+    survey: "P/DSS2/color", 
+    fov:360,
+    projection:"MOL", 
+    showReticle: false,
+    showCooGrid: true,
+    showCooGridControl: true,
+    });
+    
+    aladin.setCooGrid({ color: 'green', labelSize: 10 });
+    
+    var targets = {{ targets|safe }}; //targets cannot be a queryset; here it is a list of dictionaries
+
+    for (var i = 0; i < targets.length; i++) {
+        var target = targets[i];
+        var cat = A.catalog({name: target.name , color: 'blue', sourceSize: 16});
+        aladin.addCatalog(cat);
+        popup_info = ['RA: '.concat(target.ra, '<br>',  'Dec: ', target.dec)];
+        cat.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popup_info})]);
+    }
+    });
+</script>
+
