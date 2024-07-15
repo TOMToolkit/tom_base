@@ -308,7 +308,7 @@ def process_spectro_data_for_download(serialized_datum):
     spectra_data = serialized_datum.pop('value')
     if ('flux' in spectra_data and isinstance(spectra_data['flux'], list)
         and 'wavelength' in spectra_data and isinstance(spectra_data['wavelength'], list)
-        and len(spectra_data['flux']) == len(spectra_data['wavelength'])):
+            and len(spectra_data['flux']) == len(spectra_data['wavelength'])):
         datum_to_copy = serialized_datum.copy()
         # If its a data dict with certain array or dict fields, then first copy the scalar fields over
         for key, value in spectra_data.items():
