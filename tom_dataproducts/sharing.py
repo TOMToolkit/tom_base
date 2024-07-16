@@ -338,7 +338,7 @@ def download_data(form_data, selected_data):
     The "title" becomes the filename, and the "message" becomes a comment at the top of the file.
     :param form_data: data from the DataShareForm
     :param selected_data: ReducucedDatums selected via the checkboxes in the DataShareForm
-    :return: CSV photometry table as a StreamingHttpResponse
+    :return: CSV photometry or spectroscopy table as a StreamingHttpResponse
     """
     reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
     serialized_data = [ReducedDatumSerializer(rd).data for rd in reduced_datums]
