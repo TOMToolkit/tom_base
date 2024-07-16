@@ -33,8 +33,8 @@ class RSPQueryForm(GenericQueryForm):
         self.helper.layout = Layout(
             HTML('''
                 <p>
-                Please see the <a href="https://data.lsst.cloud/" target="_blank">Ruben Science Platform homepage</a> for information
-                about how to access the RSP Portal.
+                Please see the <a href="https://data.lsst.cloud/" target="_blank">Ruben Science Platform homepage</a> 
+                for information about how to access the RSP Portal.
             '''),
             self.common_layout,
             Fieldset(
