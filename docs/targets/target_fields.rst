@@ -102,7 +102,7 @@ The following is an example of a custom target model that adds a boolean field a
 
     class UserDefinedTarget(BaseTarget):
         example_bool = models.BooleanField(default=False)
-        example_number = models.FloatField(default=0)
+        example_number = models.FloatField(null=True, blank=True)
 
         # Set Hidden Fields
         example_bool.hidden = True
@@ -117,7 +117,8 @@ The following is an example of a custom target model that adds a boolean field a
             )
 
 The model name, ``UserDefinedTarget`` in the example (line 6), can be replaced by whatever CamelCase name you want, but
-it must be a subclass of ``tom_targets.BaseTarget``. The permissions in the class Meta (lines 15-20) are required for the
+it must be a subclass of ``tom_targets.BaseTarget``. The ``null=True`` for ``example_number`` will allow for that field
+to be optional in the model form. The permissions in the class Meta (lines 15-20) are required for the
 TOM Toolkit to work properly. The ``hidden`` attribute can be set to ``True`` to hide the field from the target
 detail page.
 
