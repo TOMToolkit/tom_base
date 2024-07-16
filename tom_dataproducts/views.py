@@ -30,7 +30,8 @@ from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
-from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom, sharing_feedback_handler
+from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
+                                      download_data)
 import tom_dataproducts.single_target_data_service.single_target_data_service as stds
 from tom_targets.models import Target
 
@@ -422,6 +423,8 @@ class DataShareView(FormView):
             # Check Destination
             if 'HERMES' in share_destination.upper():
                 response = share_data_with_hermes(share_destination, form_data, product_id, target_id, selected_data)
+            elif share_destination == 'download':
+                return download_data(form_data, selected_data=selected_data)
             else:
                 response = share_data_with_tom(share_destination, form_data, product_id, target_id, selected_data)
             sharing_feedback_handler(response, self.request)

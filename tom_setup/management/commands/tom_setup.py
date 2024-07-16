@@ -48,8 +48,26 @@ class Command(BaseCommand):
         self.status('Checking Python version... ')
         major = sys.version_info.major
         minor = sys.version_info.minor
-        if major < 3 or minor < 7:
-            self.exit('Incompatible Python version found. Please install Python >= 3.7')
+        if major < 3 or minor < 8:
+            self.exit('Incompatible Python version found. Please install Python >= 3.8')
+        self.ok()
+
+    def create_custom_code_app(self):
+        custom_code_app_explanation = ('You will need an app to store your custom code. \n'
+                                       'This app will be created in the same directory as your project and should have '
+                                       'a different name from your main project name. \n')
+        prompt = f'What would you like to name your custom code app? {self.style.WARNING("[custom_code] ")}'
+        self.stdout.write(custom_code_app_explanation)
+        while True:
+            response = input(prompt).lower().replace(' ', '_').replace('-', '_')
+            if response == os.path.basename(BASE_DIR).lower():
+                self.stdout.write('Invalid response. Please try again.')
+            else:
+                if not response:
+                    response = 'custom_code'
+                self.context['CUSTOM_CODE_APP_NAME'] = response
+                break
+        call_command('startapp', response)
         self.ok()
 
     def create_project_dirs(self):
@@ -61,6 +79,18 @@ class Command(BaseCommand):
            ├── templates
            ├── tmp
            ├── mytom
+           │   ├── __init__.py
+           │   ├── settings.py
+           │   ├── urls.py
+           │   └── wsgi.py
+           ├── custom_code
+           │   ├── __init__.py
+           │   └── management
+           │       └── commands
+           │   ├── migrations
+           │   ├── admin.py
+           │   ├── apps.py
+           │   └── models.py
            └── static
                ├── .keep
                └── tom_common
@@ -81,6 +111,17 @@ class Command(BaseCommand):
         static_dir = os.path.join(BASE_DIR, 'static')
         try:
             os.mkdir(static_dir)
+        except FileExistsError:
+            pass
+        # --- set up management command directories for custom code app ---
+        custom_code_app_dir = os.path.join(BASE_DIR, self.context.get('CUSTOM_CODE_APP_NAME', 'custom_code'))
+        management_dir = os.path.join(custom_code_app_dir, 'management')
+        try:
+            os.mkdir(management_dir)
+        except FileExistsError:
+            pass
+        try:
+            os.mkdir(os.path.join(management_dir, 'commands'))
         except FileExistsError:
             pass
         # os.mknod requires superuser permissions on osx, so create a blank file instead
@@ -178,7 +219,8 @@ class Command(BaseCommand):
         rendered = template.render(self.context)
 
         # TODO: Ugly hack to get project name
-        settings_location = os.path.join(BASE_DIR, os.path.basename(BASE_DIR), 'settings.py')
+        project_dir = os.path.join(BASE_DIR, os.path.basename(BASE_DIR))
+        settings_location = os.path.join(project_dir, 'settings.py')
         if not os.path.exists(settings_location):
             msg = f'Could not determine settings.py location. Writing settings.py out to {settings_location}. ' \
                   f'Please copy file to the proper location after script finishes.'
@@ -193,10 +235,21 @@ class Command(BaseCommand):
         template = get_template('tom_setup/css.tmpl')
         rendered = template.render(self.context)
 
-        # TODO: Ugly hack to get project name
         css_location = os.path.join(BASE_DIR, 'static', 'tom_common', 'css', 'custom.css')
         with open(css_location, 'w+') as css_file:
             css_file.write(rendered)
+
+        self.ok()
+
+    def generate_models(self):
+        self.status('Generating models.py... ')
+        template = get_template('tom_setup/models.tmpl')
+        rendered = template.render(self.context)
+
+        # TODO: Ugly hack to get project name
+        models_location = os.path.join(BASE_DIR, self.context['CUSTOM_CODE_APP_NAME'], 'models.py')
+        with open(models_location, 'w+') as models_file:
+            models_file.write(rendered)
 
         self.ok()
 
@@ -237,11 +290,13 @@ class Command(BaseCommand):
         self.context['PROJECT_NAME'] = os.path.basename(BASE_DIR)
         self.welcome_banner()
         self.check_python()
+        self.create_custom_code_app()
         self.create_project_dirs()
         self.generate_secret_key()
         self.get_target_type()
         self.get_hint_preference()
         self.generate_config()
+        self.generate_models()
         self.generate_css()
         self.generate_urls()
         self.run_migrations()

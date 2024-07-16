@@ -7,6 +7,7 @@ from astropy.time import Time
 from django import template
 from django.conf import settings
 from django.db.models import Q
+from django.apps import apps
 from guardian.shortcuts import get_objects_for_user
 import numpy as np
 from plotly import offline
@@ -222,54 +223,6 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
     return {'plot': moon_distance_plot}
 
 
-@register.inclusion_tag('tom_targets/partials/target_distribution.html')
-def target_distribution(targets):
-    """
-    Displays a plot showing on a map the locations of all sidereal targets in the TOM.
-    """
-    locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
-    data = [
-        dict(
-            lon=[location[0] for location in locations],
-            lat=[location[1] for location in locations],
-            text=[location[2] for location in locations],
-            hoverinfo='lon+lat+text',
-            mode='markers',
-            type='scattergeo'
-        ),
-        dict(
-            lon=list(range(0, 360, 60))+[180]*4,
-            lat=[0]*6+[-60, -30, 30, 60],
-            text=list(range(0, 360, 60))+[-60, -30, 30, 60],
-            hoverinfo='none',
-            mode='text',
-            type='scattergeo'
-        )
-    ]
-    layout = {
-        'title': 'Target Distribution (sidereal)',
-        'hovermode': 'closest',
-        'showlegend': False,
-        'geo': {
-            'projection': {
-                'type': 'mollweide',
-            },
-            'showcoastlines': False,
-            'showland': False,
-            'lonaxis': {
-                'showgrid': True,
-                'range': [0, 360],
-            },
-            'lataxis': {
-                'showgrid': True,
-                'range': [-90, 90],
-            },
-        }
-    }
-    figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
-    return {'figure': figure}
-
-
 @register.filter
 def deg_to_sexigesimal(value, fmt):
     """
@@ -302,13 +255,42 @@ def select_target_js():
     return
 
 
-@register.inclusion_tag('tom_targets/partials/aladin.html')
-def aladin(target):
+@register.inclusion_tag('tom_targets/partials/aladin_finderchart.html')
+def aladin_finderchart(target):
     """
     Displays Aladin skyview of the given target along with basic finder chart annotations including a compass
     and a scale bar. The resulting image is downloadable. This templatetag only works for sidereal targets.
     """
+
     return {'target': target}
+
+
+@register.inclusion_tag('tom_targets/partials/aladin_skymap.html')
+def aladin_skymap(targets):
+    """
+    Displays aladin skyview on Target Distribution skymap. Markers on the skymap show where your targets are. Max of
+    25 targets show at a time (one page of targets). This templatetag converts the targets queryset into a list of
+    dictionaries suitable for javascript and aladin, and only works for sidereal targets.
+    """
+    target_list = []
+
+    for target in targets:
+        if target.type == Target.SIDEREAL:
+            name = target.name
+            ra = target.ra
+            dec = target.dec
+            target_list.append({'name': name, 'ra': ra, 'dec': dec})
+
+    context = {'targets': target_list}
+    return context
+
+
+@register.inclusion_tag('tom_targets/partials/aladin_skymap.html')
+def target_distribution(targets):
+    """
+    Allows users to reference the old skymap; target list page won't break.
+    """
+    return aladin_skymap(targets)
 
 
 @register.inclusion_tag('tom_targets/partials/target_table.html')
@@ -334,11 +316,13 @@ def get_buttons(target):
                               }
 
     """
-    from django.apps import apps
     button_list = []
     for app in apps.get_app_configs():
-        integration_points = getattr(app, 'integration_points', {})
-        if integration_points.get('target_detail_button', False):
-            button_list.append(integration_points['target_detail_button'])
+        try:
+            button_info = app.target_detail_buttons()
+            if button_info:
+                button_list.append(button_info)
+        except AttributeError:
+            pass
 
     return {'target': target, 'button_list': button_list}
