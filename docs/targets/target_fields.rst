@@ -31,7 +31,7 @@ Subclassing ``tom_targets.BaseTarget`` will give the user access to all the fiel
 of the ``BaseTarget`` model, but the user can also add their own fields and methods to the custom
 target model. Fields from the ``BaseTarget`` model will be stored in a separate table from the custom
 fields, and rely on separate migrations. See the
-`Django documentation on multi-table inheritance. <https://docs.djangoproject.com/en/5.0/topics/db/models/#multi-table-inheritance>`__
+`Django documentation on multi-table inheritance. <https://docs.djangoproject.com/en/stable/topics/db/models/#multi-table-inheritance>`__
 
 Preparing your project for custom Target Models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,7 +102,7 @@ The following is an example of a custom target model that adds a boolean field a
 
     class UserDefinedTarget(BaseTarget):
         example_bool = models.BooleanField(default=False)
-        example_number = models.FloatField(default=0)
+        example_number = models.FloatField(null=True, blank=True)
 
         # Set Hidden Fields
         example_bool.hidden = True
@@ -117,9 +117,17 @@ The following is an example of a custom target model that adds a boolean field a
             )
 
 The model name, ``UserDefinedTarget`` in the example (line 6), can be replaced by whatever CamelCase name you want, but
-it must be a subclass of ``tom_targets.BaseTarget``. The permissions in the class Meta (lines 15-20) are required for the
+it must be a subclass of ``tom_targets.BaseTarget``. The ``null=True`` for ``example_number`` will allow for that field
+to be optional in the model form. The permissions in the class Meta (lines 15-20) are required for the
 TOM Toolkit to work properly. The ``hidden`` attribute can be set to ``True`` to hide the field from the target
 detail page.
+
+Reference the Django documentation on `Model Fields <https://docs.djangoproject.com/en/stable/ref/models/fields/#field-types>`__
+in order to learn more about Django models and their associated fields. The
+`model field reference documentation <https://docs.djangoproject.com/en/stable/ref/models/fields/>`__
+will help you figure out what field options make sense for your models fields. Also, take special note of the
+relationship between Django models and `Django model forms <https://docs.djangoproject.com/en/stable/topics/forms/modelforms/#modelform>`__.
+This relationship is important because the TOM Toolkit uses model forms to create and edit targets.
 
 Editing ``settings.py``
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -345,7 +353,7 @@ The result is the redshift value being printed on the template:
 |image3|
 
 Working with extra fields programmatically
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you’d like to update or save extra fields to your targets in code,
 there are a few methods you can use. The simplest is to simply pass in a
