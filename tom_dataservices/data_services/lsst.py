@@ -96,7 +96,7 @@ class RSPMultiTargetDataService(GenericBroker):
 
     def build_query(self, parameters):
         """
-        Takes a dictionary of query parameters and builds an SQL query string for the Rubin Science Platform.
+        Takes a dictionary of query parameters and builds an ADQL query string for the Rubin Science Platform.
         """
         max_rec = '10'
         if all([parameters['ra'], parameters['dec'], parameters['radius']]):
