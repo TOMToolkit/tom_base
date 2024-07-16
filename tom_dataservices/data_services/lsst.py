@@ -7,7 +7,10 @@ from tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
 
 
 class RSPQueryForm(GenericQueryForm):
-    """"""
+    """
+    Form for querying the Rubin Science Platform.
+    Currently, just takes a Rubin ID, or RA, Dec, and search radius.
+    """
     rubin_id = forms.CharField(
         required=False,
         label='Rubin ID',
@@ -63,7 +66,9 @@ class RSPQueryForm(GenericQueryForm):
 
 
 class RSPMultiTargetDataService(GenericBroker):
-    """"""
+    """
+    A broker-like data service for the Rubin Science Platform.
+    """
     name = 'RSP'
     form = RSPQueryForm
 
@@ -79,7 +84,10 @@ class RSPMultiTargetDataService(GenericBroker):
         return results.to_table()
 
     def get_catalogs(self):
-        """"""
+        """
+        Retrieve the available catalogs from the Rubin Science Platform.
+        Builds a query to retrieve the table names from the TAP_SCHEMA tables.
+        """
         query = "SELECT * FROM tap_schema.tables " \
             "WHERE tap_schema.tables.schema_name = 'dp02_dc2_catalogs' " \
             "order by table_index ASC"
@@ -87,7 +95,9 @@ class RSPMultiTargetDataService(GenericBroker):
         return results['table_name']
 
     def build_query(self, parameters):
-        """"""
+        """
+        Takes a dictionary of query parameters and builds an SQL query string for the Rubin Science Platform.
+        """
         max_rec = '10'
         if all([parameters['ra'], parameters['dec'], parameters['radius']]):
             return f"SELECT TOP {max_rec} * FROM dp02_dc2_catalogs.Object " \
@@ -100,13 +110,17 @@ class RSPMultiTargetDataService(GenericBroker):
         return "SELECT TOP 10 * FROM dp02_dc2_catalogs.Object"
 
     def fetch_alerts(self, parameters):
-        """"""
+        """
+        Expected Broker function to actually run the requested query and return the results as an iterator.
+        """
         query = self.build_query(parameters)
         results = self.query_service(query)
         return iter(results)
 
     def to_generic_alert(self, alert):
-        """"""
+        """
+        convert results into a GenericAlert object that can be displayed by the generic template
+        """
         return GenericAlert(
             timestamp=None,
             url=None,
