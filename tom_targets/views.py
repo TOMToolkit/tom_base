@@ -42,6 +42,7 @@ from tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
     move_all_to_grouping, move_selected_to_grouping
 )
+from tom_targets.merge import (merge_error_message)
 from tom_targets.models import Target, TargetList
 from tom_targets.utils import import_targets, export_targets
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
@@ -560,6 +561,12 @@ class TargetExportView(TargetListView):
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
         return response
 
+class TargetMergeView(TemplateView):
+    """
+    View that handles the merging of two targets
+    """
+
+    template_name = 'tom_targets/target_merge.html'
 
 class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
     """
@@ -604,6 +611,12 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
             else:
                 target_ids = request.POST.getlist('selected-target')
                 move_selected_to_grouping(target_ids, grouping_object, request)
+        if 'merge' in request.POST:
+            target_ids = request.POST.getlist('selected-target')
+            if len(target_ids) == 2:
+                return redirect('tom_targets:merge')
+            else:
+                merge_error_message(request)
 
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 
