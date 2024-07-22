@@ -33,7 +33,7 @@ from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
-from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm
+from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetMergeForm
 from tom_targets.sharing import share_target_with_tom
 from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
                                       share_target_list_with_hermes)
@@ -561,12 +561,34 @@ class TargetExportView(TargetListView):
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
         return response
 
-class TargetMergeView(TemplateView):
+class TargetMergeView(FormView):
     """
     View that handles the merging of two targets
     """
 
     template_name = 'tom_targets/target_merge.html'
+    # form_class = TargetMergeForm
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds the target information to the context.
+        :returns: context object
+        :rtype: dict
+        """
+        context = super().get_context_data(*args, **kwargs)
+        first_target_id = self.kwargs.get('pk1', None)
+        first_target = Target.objects.get(id=first_target_id)
+        context['target1'] = first_target
+        second_target_id = self.kwargs.get('pk2', None)
+        second_target = Target.objects.get(id=second_target_id)
+        context['target2'] = second_target
+
+        return context
+
+    def get_form_class(self):
+
+        return TargetMergeForm
+    
 
 class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
     """

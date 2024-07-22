@@ -15,6 +15,7 @@ from tom_observations.tests.utils import FakeRoboticFacility
 from tom_observations.tests.factories import ObservingRecordFactory
 from tom_targets.models import Target, TargetExtra, TargetList, TargetName
 from tom_targets.utils import import_targets
+from tom_targets.merge import target_merge
 from tom_dataproducts.models import ReducedDatum
 from guardian.shortcuts import assign_perm, get_perms
 
@@ -1727,3 +1728,31 @@ class TestShareTargetList(TestCase):
             follow=True
         )
         self.assertContains(response, 'No targets shared.')
+
+
+class TestTargetMerge(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(username='testuser')
+        self.st1 = SiderealTargetFactory.create()
+        self.st2 = SiderealTargetFactory.create()
+
+    def test_merge_targets(self):
+        from django.forms.models import model_to_dict
+        self.st2.distance = 12
+        self.st2.save()
+        print("this is on the test.py")
+        print(model_to_dict(self.st2))
+        print("also on the test.py")
+        result = target_merge(self.st1, self.st2)
+        result_dictionary = model_to_dict(result)
+        st1_dictionary = model_to_dict(self.st1) 
+        st2_dictionary = model_to_dict(self.st2)
+        for param in st1_dictionary:
+            print(param)
+
+            if st1_dictionary[param] is not None:
+                self.assertEqual(result_dictionary[param], st1_dictionary[param])
+            else:
+                self.assertEqual(result_dictionary[param], st2_dictionary[param])
+
+

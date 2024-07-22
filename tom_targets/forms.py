@@ -208,3 +208,38 @@ class TargetListShareForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['share_destination'].choices = get_sharing_destination_options()
+
+
+
+
+class TargetMergeForm(forms.Form):
+    """
+    Form for merging two duplicate targets with a primary target and secondary target
+    """
+    choice_test = (
+        ("test","--Please select a primary target--"),
+        ("1", 'one'),
+        ("2", "two"),
+    )
+    name_select= forms.ChoiceField(required=True, choices=choice_test, label="Select Target")
+
+    # name = forms.CharField(label="Target Name")
+    # target_type = forms.CharField(label="Target Type")
+    # ra = forms.CharField(label="Right Ascension", help_text='Right Ascension, in decimal degrees or sexagesimal hours. See '
+    #                                'https://docs.astropy.org/en/stable/api/astropy.coordinates.Angle.html for '
+    #                                'supported sexagesimal inputs.')
+    # dec = forms.CharField(label="Declination", help_text='Declination, in decimal or sexagesimal degrees. See '
+    #                                 ' https://docs.astropy.org/en/stable/api/astropy.coordinates.Angle.html for '
+    #                                 'supported sexagesimal inputs.')
+    # epoch = forms.IntegerField(label="Epoch", help_text='Julian Years. Max 2100.')
+    # proper_motion_ra = forms.IntegerField(label="Proper Motion (RA)")
+    # proper_motion_dec = forms.IntegerField(label="Proper Motion (Declination)")
+    # galactic_longitude = forms.IntegerField(label="Galactic Longitude")
+    # galactic_latitude = forms.IntegerField(label="Galactic Latitude")
+    # distance = forms.IntegerField(label="Distance")
+    # distance_error = forms.IntegerField(label="Distance Error")
+    # parallax = forms.IntegerField(label="Parallax")
+
+
+    # comment = forms.CharField(widget=forms.Textarea)
+    # # comment = forms.CharField(widget=forms.TextInput(attrs={"size": "400"}))
