@@ -567,7 +567,7 @@ class TargetMergeView(FormView):
     """
 
     template_name = 'tom_targets/target_merge.html'
-    # form_class = TargetMergeForm
+    form_class = TargetMergeForm
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -582,6 +582,17 @@ class TargetMergeView(FormView):
         second_target_id = self.kwargs.get('pk2', None)
         second_target = Target.objects.get(id=second_target_id)
         context['target2'] = second_target
+        initial = {'target1': first_target,
+                   'target2': second_target}
+
+        form = TargetMergeForm(initial=initial)
+        choices = [
+            ("default", "--Please select a primary target--"),
+            (first_target.id, first_target.name),
+            (second_target.id, second_target.name)
+        ]
+        form.fields['name_select'].choices = choices
+        context['form'] = form
 
         return context
 
@@ -636,7 +647,7 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
         if 'merge' in request.POST:
             target_ids = request.POST.getlist('selected-target')
             if len(target_ids) == 2:
-                return redirect('tom_targets:merge')
+                return redirect('tom_targets:merge', pk1=target_ids[0], pk2=target_ids[1])
             else:
                 merge_error_message(request)
 
