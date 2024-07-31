@@ -54,7 +54,7 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
 
     def get_queryset(self):
         permission_required = permissions_map.get(self.request.method)
-        return get_objects_for_user(self.request.user, f'{Target._meta.app_label}.{permission_required}')
+        return get_objects_for_user(self.request.user, f'tom_targets.{permission_required}')
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
@@ -93,7 +93,7 @@ class TargetNameViewSet(DestroyModelMixin, PermissionListMixin, RetrieveModelMix
     def get_queryset(self):
         permission_required = permissions_map.get(self.request.method)
         return TargetName.objects.filter(
-            target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.{permission_required}')
+            target__in=get_objects_for_user(self.request.user, f'tom_targets.{permission_required}')
         )
 
 

@@ -60,7 +60,7 @@ class TargetListView(PermissionListMixin, FilterView):
     model = Target
     filterset_class = TargetFilter
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.view_target'
+    permission_required = 'tom_targets.view_target'
     ordering = ['-created']
 
     def get_context_data(self, *args, **kwargs):
@@ -92,7 +92,7 @@ class TargetNameSearchView(RedirectView):
         # Tests fail without distinct but it works in practice, it is unclear as to why
         # The Django query planner shows different results between in practice and unit tests
         # django-guardian related querying is present in the test planner, but not in practice
-        targets = get_objects_for_user(request.user, f'{Target._meta.app_label}.view_target').filter(
+        targets = get_objects_for_user(request.user, 'tom_targets.view_target').filter(
             Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name)
         ).distinct()
         if targets.count() == 1:
