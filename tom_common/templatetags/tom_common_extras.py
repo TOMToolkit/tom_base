@@ -6,8 +6,6 @@ from django_comments.models import Comment
 from django.apps import apps
 from guardian.shortcuts import get_objects_for_user
 
-from tom_targets.models import Target
-
 register = template.Library()
 
 
