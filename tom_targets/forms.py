@@ -216,6 +216,7 @@ class TargetMergeForm(forms.Form):
     """
     Form for merging two duplicate targets with a primary target and secondary target
     """
-    name_select= forms.ChoiceField(required=True, choices=[], label="Select Target")
+    name_select= forms.ChoiceField(required=True, choices=[], label="Select Primary Target")
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

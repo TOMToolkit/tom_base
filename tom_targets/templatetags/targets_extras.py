@@ -284,6 +284,29 @@ def aladin_skymap(targets):
     context = {'targets': target_list}
     return context
 
+@register.inclusion_tag('tom_targets/partials/target_fields.html')
+def target_fields(target1, target2):
+    """
+    Prepares the context for the target_fields.html partial.
+    Make a list of tuples that combines the fields and values of the two targets.
+    """
+    target11 = {}
+    for field in target1._meta.get_fields():
+        if not field.is_relation:
+            target11[field.name] = field.value_to_string(target1)
+
+    target22 = {}
+    for field in target2._meta.get_fields():
+        if not field.is_relation:
+            target22[field.name] = field.value_to_string(target2)
+
+    combined_target_data = [x for x in zip(target11.keys(), target11.values(), target22.values())]
+
+    context = {
+        'combined_target_data': combined_target_data
+    }
+
+    return context
 
 @register.inclusion_tag('tom_targets/partials/aladin_skymap.html')
 def target_distribution(targets):

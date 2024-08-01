@@ -2,7 +2,7 @@ from django.urls import path
 
 from .views import TargetCreateView, TargetUpdateView, TargetDetailView, TargetNameSearchView
 from .views import TargetDeleteView, TargetListView, TargetImportView, TargetExportView, TargetShareView
-from .views import TargetGroupingView, TargetGroupingDeleteView, TargetGroupingCreateView, TargetAddRemoveGroupingView, TargetMergeView
+from .views import TargetGroupingView, TargetGroupingDeleteView, TargetGroupingCreateView, TargetAddRemoveGroupingView, TargetMergeView, TargetPrimaryView
 from .views import TargetGroupingShareView, TargetHermesPreloadView, TargetGroupingHermesPreloadView
 
 from .api_views import TargetViewSet, TargetExtraViewSet, TargetNameViewSet, TargetListViewSet
@@ -23,6 +23,7 @@ urlpatterns = [
     path('import/', TargetImportView.as_view(), name='import'),
     path('export/', TargetExportView.as_view(), name='export'),
     path('merge/<int:pk1>/<int:pk2>', TargetMergeView.as_view(), name='merge'),
+    path('mergeprimary/<int:pk1>/<int:pk2>', TargetPrimaryView.as_view(), name='mergeprimary'),
     path('add-remove-grouping/', TargetAddRemoveGroupingView.as_view(), name='add-remove-grouping'),
     path('name/<str:name>', TargetNameSearchView.as_view(), name='name-search'),
     path('<int:pk>/update/', TargetUpdateView.as_view(), name='update'),
