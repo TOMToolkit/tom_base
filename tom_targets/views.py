@@ -627,29 +627,6 @@ class TargetMergeView(FormView):
             return redirect('tom_targets:merge',
                             pk1=first_target_id, pk2=second_target_id)
 
-class TargetPrimaryView(TemplateView):
-    """
-    View that handles the merging of targets, after the primary target has been selected
-    """
-    template_name = 'tom_targets/target_merge_primary.html'
-
-    def get_context_data(self, *args, **kwargs):
-        """
-        Adds the target information to the context.
-        :returns: context object
-        :rtype: dict
-        """
-        context = super().get_context_data(*args, **kwargs)
-        primary_target_id = self.kwargs.get('pk1', None)
-        primary_target = Target.objects.get(id=primary_target_id)
-        context['primarytarget'] = primary_target
-        secondary_target_id = self.kwargs.get('pk2', None)
-        secondary_target = Target.objects.get(id=secondary_target_id)
-        context['secondarytarget'] = secondary_target
-        initial = {'primarytarget': primary_target,
-                   'secondarytarget': secondary_target}
-        return context
-
 class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
     """
     View that handles addition and removal of targets to target groups. Requires authentication.
