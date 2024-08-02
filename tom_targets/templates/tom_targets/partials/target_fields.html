@@ -7,18 +7,22 @@ list of fields for primary target and secondary target -->
     <thead class="table-secondary">
         <tr>
             <th>Property</th>
-            <th>Primary ({{target1_data.name}})</th>
-            <th>Secondary ({{target2_data.name}})</th>
+            <th>Primary (<a href="{% url 'targets:detail' target1_data.id %}" title="{{ target.name }}">{{target1_data.name}}</a>)</th>
+            <th>Secondary (<a href="{% url 'targets:detail' target2_data.id %}" title="{{ target.name }}">{{target2_data.name}}</a>)</th>
         </tr>
     </thead>
     <tbody>
         <tr></tr>
         {% for key,value1,value2 in combined_target_data %}
-        <tr>
-            <th>{{ key }}</th>
-            <td>{{ value1 }}</td>
-            <td>{{ value2 }}</td>
-        </tr>
+            {% if value1 or value2 %}
+                {% if value1 != 'None' or value2 != 'None' %}
+                <tr>
+                    <th>{{ key }}</th>
+                    <td>{{ value1 }}</td>
+                    <td>{{ value2 }}</td>
+                </tr>
+                {% endif %}
+            {% endif %}
         {% endfor %}
     </tbody>
 </table>

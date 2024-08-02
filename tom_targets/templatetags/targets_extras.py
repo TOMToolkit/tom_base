@@ -290,21 +290,21 @@ def target_fields(target1, target2):
     Prepares the context for the target_fields.html partial.
     Make a list of tuples that combines the fields and values of the two targets.
     """
-    target11 = {}
+    target1_data = {}
     for field in target1._meta.get_fields():
         if not field.is_relation:
-            target11[field.name] = field.value_to_string(target1)
+            target1_data[field.name] = field.value_to_string(target1)
 
-    target22 = {}
+    target2_data = {}
     for field in target2._meta.get_fields():
         if not field.is_relation:
-            target22[field.name] = field.value_to_string(target2)
+            target2_data[field.name] = field.value_to_string(target2)
 
-    combined_target_data = [x for x in zip(target11.keys(), target11.values(), target22.values())]
+    combined_target_data = [x for x in zip(target1_data.keys(), target1_data.values(), target2_data.values())]
 
     context = {
-        'target1_data': target11,
-        'target2_data': target22,
+        'target1_data': target1_data,
+        'target2_data': target2_data,
         'combined_target_data': combined_target_data
     }
 
