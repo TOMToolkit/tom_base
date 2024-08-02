@@ -303,6 +303,8 @@ def target_fields(target1, target2):
     combined_target_data = [x for x in zip(target11.keys(), target11.values(), target22.values())]
 
     context = {
+        'target1_data': target11,
+        'target2_data': target22,
         'combined_target_data': combined_target_data
     }
 
