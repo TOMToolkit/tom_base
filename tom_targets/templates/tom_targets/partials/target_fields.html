@@ -1,0 +1,24 @@
+<!-- this is the partial for mergeprimary to get the
+list of fields for primary target and secondary target -->
+
+
+
+<table class="table table-bordered table-striped table-sm">
+    <thead class="table-secondary">
+        <tr>
+            <th>Property</th>
+            <th>Primary</th>
+            <th>Secondary</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr></tr>
+        {% for key,value1,value2 in combined_target_data %}
+        <tr>
+            <th>{{ key }}</th>
+            <td>{{ value1 }}</td>
+            <td>{{ value2 }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
