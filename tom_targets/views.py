@@ -11,9 +11,12 @@ from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Q
+from django_filters.views import FilterView
+from django.http import HttpResponse
 from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse, HttpResponseBadRequest
 from django.forms import HiddenInput
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
@@ -21,7 +24,6 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormVi
 from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
-from django_filters.views import FilterView
 
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
@@ -44,11 +46,13 @@ from tom_targets.groups import (
 )
 from tom_targets.merge import (merge_error_message)
 from tom_targets.models import Target, TargetList
+from tom_targets.templatetags.targets_extras import target_fields
 from tom_targets.utils import import_targets, export_targets
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class TargetListView(PermissionListMixin, FilterView):
@@ -561,6 +565,7 @@ class TargetExportView(TargetListView):
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
         return response
 
+
 class TargetMergeView(FormView):
     """
     View that handles choosing the primary target in the process of merging targets
@@ -603,7 +608,7 @@ class TargetMergeView(FormView):
     def get_form_class(self):
 
         return TargetMergeForm
-    
+
     def post(self, request, *args, **kwargs):
         form = TargetMergeForm(request.POST)
 
@@ -611,8 +616,8 @@ class TargetMergeView(FormView):
         second_target_id = int(self.kwargs.get('pk2', None))
         # let the form name_select field know what it's choices are
         # these were determined at run time
-        form.fields['name_select'].choices = self.get_name_select_choices(first_target_id, second_target_id)
-        print(f'just set the name_select choices to {form.fields["name_select"].choices}')
+        form.fields['name_select'].choices = self.get_name_select_choices(
+            first_target_id, second_target_id)
 
         if form.is_valid():
             primary_target_id = int(form.cleaned_data['name_select'])
@@ -620,13 +625,48 @@ class TargetMergeView(FormView):
                 secondary_target_id = second_target_id
             else:
                 secondary_target_id = first_target_id
-            return redirect('tom_targets:merge',
-                        pk1=primary_target_id, pk2=secondary_target_id)
+            return redirect('tom_targets:merge', pk1=primary_target_id, pk2=secondary_target_id)
         else:
             messages.warning(request, form.errors)
             return redirect('tom_targets:merge',
                             pk1=first_target_id, pk2=second_target_id)
 
+    def get(self, request, *args, **kwargs):
+        """When called as a result of the Primary Target name_select field being
+        loaded or change, request.htmx will be True and this should update the
+        target_field inclusiontag/partial according to the selected target.
+
+        If this is not an HTMX request, just call super().get.
+        """
+        if request.htmx:
+            pk1 = int(self.kwargs.get('pk1', None))
+            pk2 = int(self.kwargs.get('pk2', None))
+
+            # get the target_id of the selected target: it's the primary
+            primary_target_id = request.GET.get('name_select', None)
+
+            # decide which of pk1 or pk2 is primary (i.e. it matches name_select)
+            if pk1 == primary_target_id:  # first is primary, so
+                secondary_target_id = pk2
+            else:  # second is primary, so
+                secondary_target_id = pk1
+
+            # get the actual Target instances for these target_ids
+            primary_target = Target.objects.get(id=primary_target_id)
+            secondary_target = Target.objects.get(id=secondary_target_id)
+
+            # render the table with those targets via the inclusiontag
+            target_table_html = render_to_string(
+                'tom_targets/partials/target_fields.html',
+                context=target_fields(primary_target, secondary_target))
+
+            # replace the old target_field table with the newly rendered one
+            return HttpResponse(target_table_html)
+        else:
+            # not an HTMX request
+            return super().get(request, *args, **kwargs)
+
+    
 class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
     """
     View that handles addition and removal of targets to target groups. Requires authentication.
