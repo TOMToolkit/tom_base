@@ -3,18 +3,9 @@
 {% block title %}Merge Targets{% endblock %}
 
 {% block content %}
+{% bootstrap_form form %}
 
-
-<div>
-    <form method="post" action="">
-        {% csrf_token %}
-        {% bootstrap_form form %}
-        <button type="submit" class="btn btn-outline-primary float-right" name="submit">Submit</button>
-    </form>
-</div>
-
+<!-- display the target fields table -->
 {% target_fields target1 target2 %}
-
-
 
 {% endblock %}
