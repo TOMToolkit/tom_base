@@ -9,6 +9,7 @@ from django.test import TestCase, override_settings
 from django.conf import settings
 from django.urls import reverse
 from django.core.exceptions import ValidationError
+from django.forms.models import model_to_dict
 
 from .factories import SiderealTargetFactory, NonSiderealTargetFactory, TargetGroupingFactory, TargetNameFactory
 from tom_observations.tests.utils import FakeRoboticFacility
@@ -1737,20 +1738,60 @@ class TestTargetMerge(TestCase):
         self.st2 = SiderealTargetFactory.create()
 
     def test_merge_targets(self):
-        from django.forms.models import model_to_dict
+        self.st1.parallax = 3453
+        self.st1.save()
         self.st2.distance = 12
         self.st2.save()
-        print("this is on the test.py")
-        print(model_to_dict(self.st2))
-        print("also on the test.py")
+        # print(model_to_dict(self.st1))
         result = target_merge(self.st1, self.st2)
         result_dictionary = model_to_dict(result)
         st1_dictionary = model_to_dict(self.st1)
         st2_dictionary = model_to_dict(self.st2)
         for param in st1_dictionary:
-            print(param)
+            # print(param)
 
             if st1_dictionary[param] is not None:
                 self.assertEqual(result_dictionary[param], st1_dictionary[param])
             else:
                 self.assertEqual(result_dictionary[param], st2_dictionary[param])
+
+
+    def test_merge_names(self):
+        """
+        This test makes sure that the secondary targets name has been saved as an alias for the primary target
+        """
+        self.assertNotIn(self.st2.name, self.st1.names)
+        result = target_merge(self.st1, self.st2)
+        self.assertIn(self.st2.name, self.st1.names)
+
+
+    def test_merge_remove_secondary_target(self):
+        """
+        This test makes sure that after the merge there is no secondary target
+        """
+        targets_queryset = Target.objects.all()
+        self.assertEqual(targets_queryset.count(), 2)
+        result = target_merge(self.st1, self.st2) #after run merge there should only be one target that matches st1
+        targets_queryset = Target.objects.all()
+        self.assertEqual(targets_queryset.count(),1)
+        self.assertEqual(targets_queryset[0].id, self.st1.id)
+
+    def test_merge_aliases(self):
+        """
+        This test makes sure that all of the aliases for the secondary target are now aliases for the primary target after the merge
+        """
+        print(self.st1.names)
+        print(self.st2.names)
+        st2_names = self.st2.names
+        for name in st2_names:
+            self.assertNotIn(name, self.st1.names)
+        result = target_merge(self.st1, self.st2)
+        for name in st2_names:
+            self.assertIn(name, self.st1.names)
+
+    def test_merge_data(self):
+        pass
+
+    def test_merge_target_list(self):
+        pass
+
