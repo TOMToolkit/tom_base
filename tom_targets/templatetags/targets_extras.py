@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 
 from astroplan import moon_illumination
 from astropy import units as u
@@ -18,6 +19,9 @@ from tom_targets.models import Target, TargetExtra, TargetList
 from tom_targets.forms import TargetVisibilityForm
 
 register = template.Library()
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 @register.inclusion_tag('tom_targets/partials/recent_targets.html', takes_context=True)
@@ -284,6 +288,7 @@ def aladin_skymap(targets):
     context = {'targets': target_list}
     return context
 
+
 @register.inclusion_tag('tom_targets/partials/target_fields.html')
 def target_fields(target1, target2):
     """
@@ -307,8 +312,8 @@ def target_fields(target1, target2):
         'target2_data': target2_data,
         'combined_target_data': combined_target_data
     }
-
     return context
+
 
 @register.inclusion_tag('tom_targets/partials/aladin_skymap.html')
 def target_distribution(targets):
