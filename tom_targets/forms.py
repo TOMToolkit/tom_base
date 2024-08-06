@@ -222,7 +222,7 @@ class TargetMergeForm(forms.Form):
         widget=forms.Select(
             # set up attributes to trigger folder dropdown update when this field changes
             attrs={
-                'hx-get': '', # send GET request to the source URL's get method
+                'hx-get': '',  # send GET request to the source URL's get method
                 'hx-trigger': 'change',  # when this happens
                 'hx-target': '#id_target_merge_fields',  # replace name_select element
              })

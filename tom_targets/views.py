@@ -667,7 +667,7 @@ class TargetMergeView(FormView):
             # not an HTMX request
             return super().get(request, *args, **kwargs)
 
-    
+
 class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
     """
     View that handles addition and removal of targets to target groups. Requires authentication.

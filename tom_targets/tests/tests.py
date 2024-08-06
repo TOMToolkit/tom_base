@@ -1745,7 +1745,7 @@ class TestTargetMerge(TestCase):
         print("also on the test.py")
         result = target_merge(self.st1, self.st2)
         result_dictionary = model_to_dict(result)
-        st1_dictionary = model_to_dict(self.st1) 
+        st1_dictionary = model_to_dict(self.st1)
         st2_dictionary = model_to_dict(self.st2)
         for param in st1_dictionary:
             print(param)
@@ -1754,5 +1754,3 @@ class TestTargetMerge(TestCase):
                 self.assertEqual(result_dictionary[param], st1_dictionary[param])
             else:
                 self.assertEqual(result_dictionary[param], st2_dictionary[param])
-
-

@@ -2,7 +2,8 @@ from django.urls import path
 
 from .views import TargetCreateView, TargetUpdateView, TargetDetailView, TargetNameSearchView
 from .views import TargetDeleteView, TargetListView, TargetImportView, TargetExportView, TargetShareView
-from .views import TargetGroupingView, TargetGroupingDeleteView, TargetGroupingCreateView, TargetAddRemoveGroupingView, TargetMergeView
+from .views import (TargetGroupingView, TargetGroupingDeleteView, TargetGroupingCreateView,
+                    TargetAddRemoveGroupingView, TargetMergeView)
 from .views import TargetGroupingShareView, TargetHermesPreloadView, TargetGroupingHermesPreloadView
 
 from .api_views import TargetViewSet, TargetExtraViewSet, TargetNameViewSet, TargetListViewSet

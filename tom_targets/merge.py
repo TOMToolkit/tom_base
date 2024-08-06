@@ -4,6 +4,7 @@ from django.contrib import messages
 def merge_error_message(request):
     messages.warning(request, "Please select two targets to merge!")
 
+
 def target_merge(primary_target, secondary_target):
     """
     """
