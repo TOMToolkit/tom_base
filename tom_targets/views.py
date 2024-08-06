@@ -633,8 +633,9 @@ class TargetMergeView(FormView):
 
     def get(self, request, *args, **kwargs):
         """When called as a result of the Primary Target name_select field being
-        loaded or change, request.htmx will be True and this should update the
-        target_field inclusiontag/partial according to the selected target.
+        changed, request.htmx will be True and this should update the
+        target_field inclusiontag/partial (via render_to_string) according to
+        the selected target.
 
         If this is not an HTMX request, just call super().get.
         """
