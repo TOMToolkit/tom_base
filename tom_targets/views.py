@@ -644,7 +644,7 @@ class TargetMergeView(FormView):
             pk2 = int(self.kwargs.get('pk2', None))
 
             # get the target_id of the selected target: it's the primary
-            primary_target_id = request.GET.get('name_select', None)
+            primary_target_id = int(request.GET.get('name_select', None))
 
             # decide which of pk1 or pk2 is primary (i.e. it matches name_select)
             if pk1 == primary_target_id:  # first is primary, so
