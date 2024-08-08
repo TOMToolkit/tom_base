@@ -29,7 +29,11 @@
     <button id="optionSelectAll" type="button" class="btn btn-link" onClick="select_all({{ target_count }})"></button>
     <form id="grouping-form" action="{% url 'targets:add-remove-grouping' %}" method="POST">
       {% csrf_token %}
-      <div class="form-group d-flex justify-content-end align-items-baseline">
+      <div class="d-flex flex-row align-items-baseline">
+        <label>Merge duplicate targets</label>
+        <button type="submit" class="btn btn-outline-success ml-1" name="merge">Merge</button>
+      </div>
+      <div class="form-group d-flex flex-row align-items-baseline">
         <label>Add/Remove from grouping</label>
         <select name="grouping" class="form-control w-25 ml-1">
           {% for grouping in groupings %}
