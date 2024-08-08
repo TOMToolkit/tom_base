@@ -37,6 +37,7 @@ from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetMergeForm
 from tom_targets.sharing import share_target_with_tom
+from tom_targets.merge import target_merge
 from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
                                       share_target_list_with_hermes)
 from tom_dataproducts.models import ReducedDatum
@@ -619,12 +620,18 @@ class TargetMergeView(FormView):
         form.fields['name_select'].choices = self.get_name_select_choices(
             first_target_id, second_target_id)
 
+
         if form.is_valid():
             primary_target_id = int(form.cleaned_data['name_select'])
             if primary_target_id == first_target_id:
                 secondary_target_id = second_target_id
             else:
                 secondary_target_id = first_target_id
+            primary_target = Target.objects.get(id=primary_target_id)
+            secondary_target = Target.objects.get(id=secondary_target_id)
+            if 'confirm' in request.POST:
+                run_merge = target_merge(primary_target,secondary_target)
+                return redirect('tom_targets:detail', pk=primary_target_id)
             return redirect('tom_targets:merge', pk1=primary_target_id, pk2=secondary_target_id)
         else:
             messages.warning(request, form.errors)

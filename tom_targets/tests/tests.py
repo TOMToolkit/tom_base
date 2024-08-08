@@ -5,6 +5,7 @@ import responses
 from django.contrib.auth.models import User, Group
 from django.contrib.messages import get_messages
 from django.contrib.messages.constants import SUCCESS, WARNING
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.conf import settings
 from django.urls import reverse
@@ -17,7 +18,8 @@ from tom_observations.tests.factories import ObservingRecordFactory
 from tom_targets.models import Target, TargetExtra, TargetList, TargetName
 from tom_targets.utils import import_targets
 from tom_targets.merge import target_merge
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import ReducedDatum, DataProduct
+from tom_observations.models import ObservationRecord
 from guardian.shortcuts import assign_perm, get_perms
 
 
@@ -1748,8 +1750,6 @@ class TestTargetMerge(TestCase):
         st1_dictionary = model_to_dict(self.st1)
         st2_dictionary = model_to_dict(self.st2)
         for param in st1_dictionary:
-            # print(param)
-
             if st1_dictionary[param] is not None:
                 self.assertEqual(result_dictionary[param], st1_dictionary[param])
             else:
@@ -1758,7 +1758,7 @@ class TestTargetMerge(TestCase):
 
     def test_merge_names(self):
         """
-        This test makes sure that the secondary targets name has been saved as an alias for the primary target
+        Makes sure that the secondary targets name has been saved as an alias for the primary target
         """
         self.assertNotIn(self.st2.name, self.st1.names)
         result = target_merge(self.st1, self.st2)
@@ -1767,7 +1767,7 @@ class TestTargetMerge(TestCase):
 
     def test_merge_remove_secondary_target(self):
         """
-        This test makes sure that after the merge there is no secondary target
+        Makes sure that after the merge there is no secondary target
         """
         targets_queryset = Target.objects.all()
         self.assertEqual(targets_queryset.count(), 2)
@@ -1778,10 +1778,8 @@ class TestTargetMerge(TestCase):
 
     def test_merge_aliases(self):
         """
-        This test makes sure that all of the aliases for the secondary target are now aliases for the primary target after the merge
+        Makes sure that all of the aliases for the secondary target are now aliases for the primary target after the merge
         """
-        print(self.st1.names)
-        print(self.st2.names)
         st2_names = self.st2.names
         for name in st2_names:
             self.assertNotIn(name, self.st1.names)
@@ -1789,9 +1787,137 @@ class TestTargetMerge(TestCase):
         for name in st2_names:
             self.assertIn(name, self.st1.names)
 
-    def test_merge_data(self):
-        pass
-
     def test_merge_target_list(self):
-        pass
+        """
+        Makes sure that only the primary target included in target lists
+        """
+        # create targetlist1 and associate it with st1
+        targetlist1 = TargetList(name="TL1")
+        targetlist1.save()
+        targetlist1.targets.add(self.st1) # TL1 --> st1
+
+        # create targetlist2 and associate it with st2
+        targetlist2 = TargetList(name="TL2")
+        targetlist2.save()
+        targetlist2.targets.add(self.st2) # TL2 --> st2
+        
+        # create targetlist3 and associate it with st1 and st2
+        targetlist3 = TargetList(name="TL3")
+        targetlist3.save()
+        targetlist3.targets.add(self.st1, self.st2)
+
+        # after we run merge --> TL1, TL2, and TL3 each should only contain st1
+        result = target_merge(self.st1, self.st2)
+        self.assertQuerysetEqual(targetlist1.targets.all(), targetlist2.targets.all())
+        self.assertQuerysetEqual(targetlist1.targets.all(), targetlist3.targets.all())
+        self.assertEqual(self.st1.targetlist_set.all().count(), 3)
+
+    def test_merge_data_products(self):
+        """
+        Makes sure data products are associated with the primary target after the merge
+        """
+        data_product1 = DataProduct.objects.create(
+            product_id='dataproduct1',
+            target=self.st1,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+
+        data_product2 = DataProduct.objects.create(
+            product_id='dataproduct2',
+            target=self.st2,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+
+        data_product3 = DataProduct.objects.create(
+            product_id='dataproduct3',
+            target=self.st2,
+            data=SimpleUploadedFile('afile.fits', b'somedata')
+        )
+
+        st2_dataproducts = list(DataProduct.objects.filter(target=self.st2))
+        # write a test that makes sure that dataproduct1 and dataproduct2 are associated with self.st1 after the merge
+        result = target_merge(self.st1, self.st2)
+        for dataproduct in st2_dataproducts:
+            self.assertIn(dataproduct, DataProduct.objects.filter(target=self.st1))
+
+    def test_merge_reduced_datums(self):
+        """
+        Makes sure that datums are associated with primary target 
+        """
+        data_type = 'photometry'
+        value1 = {
+            'magnitude': 10.5,
+            'error': 1.5,
+            'filter': 'g',
+            'telescope': 'ELP.domeA.1m0a',
+            'instrument': 'fa07'}
+        reduced_datum1 = ReducedDatum.objects.create(
+            target=self.st1,
+            data_type=data_type,
+            value=value1
+            )
+        reduced_datum2 = ReducedDatum.objects.create(
+            target=self.st2,
+            data_type=data_type,
+            value=value1
+            )
+        value2 = value1
+        value2["magnitude"] = 12
+        reduced_datum3 = ReducedDatum.objects.create(
+            target=self.st2,
+            data_type=data_type,
+            value=value2
+            )
+        
+        st2_reduceddatums = list(ReducedDatum.objects.filter(target=self.st2))
+       
+
+        #write a test that makes sure datum1 and datum3 are the only datums associated with self.st1 after the merge (because datum1 and datum2 are the same)
+        result = target_merge(self.st1, self.st2)
+        # TODO: self.assertEqual(ReducedDatum.objects.filter(target=self.st1).count(), 2)
+        for reduceddatum in st2_reduceddatums:
+            self.assertIn(reduceddatum, ReducedDatum.objects.filter(target=self.st1))
+
+    def test_merge_target_extras(self):
+
+        # sets the first key in both target extras equal to each other
+        st1_first = self.st1.targetextra_set.first()
+        st1_first.key = 'key1'
+        st1_first.save()
+        st2_first = self.st2.targetextra_set.first()
+        st2_first.key = 'key1'
+        st2_first.save()
+
+        # setting the st1 queryset and st2 queryset to a variable 
+        st1_te = list(self.st1.targetextra_set.all())
+        st2_te = list(self.st2.targetextra_set.all())
+
+        # write a test where the primary target extra queryset matches the expected queryset
+        expected_queryset1 = st1_te + st2_te[1:]
+        result = target_merge(self.st1, self.st2)
+        self.assertQuerysetEqual(list(self.st1.targetextra_set.all()), expected_queryset1, ordered=False)
+        self.assertEqual(self.st1.targetextra_set.count(), 5)
+
+    def test_merge_observation_records(self):
+        observation_record1 = ObservingRecordFactory.create(
+            target_id=self.st1.id,
+            facility=FakeRoboticFacility.name,
+            parameters={}
+        )
+        observation_record2 = ObservingRecordFactory.create(
+            target_id=self.st2.id,
+            facility=FakeRoboticFacility.name,
+            parameters={}
+        )
+        observation_record3 = ObservingRecordFactory.create(
+            target_id=self.st2.id,
+            facility=FakeRoboticFacility.name,
+            parameters={}
+        )
+
+        st2_observationrecords = list(ObservationRecord.objects.filter(target=self.st2))
+        # write a test that makes sure that observationrecord1 and observationrecord2 are associated with self.st1 after the merge
+        result = target_merge(self.st1, self.st2)
+        for observationrecord in st2_observationrecords:
+            self.assertIn(observationrecord, ObservationRecord.objects.filter(target=self.st1))
 

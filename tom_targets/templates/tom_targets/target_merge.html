@@ -3,12 +3,18 @@
 {% block title %}Merge Targets{% endblock %}
 
 {% block content %}
-{% bootstrap_form form %}
+<div>
+    <form method="post" action="">
+        {% csrf_token %}
+        {% bootstrap_form form %}
 
-<!-- display the target fields table -->
-{% target_fields target1 target2 %}
+        <!-- display the target fields table -->
+        {% target_fields target1 target2 %}
 
-<button type="submit" class="btn btn-outline-danger float-right btn-lg" name="submit"><a href="{% url 'targets:list' %}" style="color: rgb(167, 11, 11)">Cancel</a></button>
-<button type="submit" class="btn btn-outline-primary float-right btn-lg" name="submit">Confirm</button>
+        <button type="submit" class="btn btn-outline-danger float-right btn-lg" name="submit"><a href="{% url 'targets:list' %}" style="color: rgb(167, 11, 11)">Cancel</a></button>
+        <button type="submit" class="btn btn-outline-primary float-right btn-lg" name="confirm">Confirm</button>
 
+
+    </form>
+</div>
 {% endblock %}
