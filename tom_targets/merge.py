@@ -40,9 +40,8 @@ def target_merge(primary_target, secondary_target):
     new_name.save()
 
     merge_aliases = secondary_target.aliases.all()
-    """
-    Secondary target name and aliases all become aliases in the Primary target.
-    """
+    # Secondary target name and aliases all become aliases in the Primary target.
+
     for alias in merge_aliases:
         alias_hold = alias.name
         alias.delete()
