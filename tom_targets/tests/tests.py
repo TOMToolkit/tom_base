@@ -1741,10 +1741,6 @@ class TestTargetMerge(TestCase):
 
     def test_merge_targets(self):
         self.st1.parallax = 3453
-        self.st1.save()
-        self.st2.distance = 12
-        self.st2.save()
-        # print(model_to_dict(self.st1))
         result = target_merge(self.st1, self.st2)
         result_dictionary = model_to_dict(result)
         st1_dictionary = model_to_dict(self.st1)
@@ -1870,8 +1866,6 @@ class TestTargetMerge(TestCase):
 
         st2_reduceddatums = list(ReducedDatum.objects.filter(target=self.st2))
 
-        #  write a test that makes sure datum1 and datum3 are the only datums associated with self.st1 after the merge
-        #  (because datum1 and datum2 are the same)
         target_merge(self.st1, self.st2)
         # TODO: self.assertEqual(ReducedDatum.objects.filter(target=self.st1).count(), 2)
         for reduceddatum in st2_reduceddatums:

@@ -5,12 +5,23 @@ from tom_observations.models import ObservationRecord
 
 
 def merge_error_message(request):
+    """
+    This warns the user if they are selecting too little or too many targets to merge.
+    Will not allow user to continue to merge page unless two targets are selected.
+    """
     messages.warning(request, "Please select two targets to merge!")
 
 
 def target_merge(primary_target, secondary_target):
+    """
+    Merge Primary target and Secondary target into one target.
+    """
 
     model_fields = primary_target._meta.fields
+    """
+    loops through target attributes. If attribute missing from primary target
+    and secondary target has the attribute, the attribute gets merged into Primary target
+    """
     for field in model_fields:
         if getattr(primary_target, field.name, None) is None\
                 and getattr(secondary_target, field.name, None) is not None:
@@ -21,6 +32,9 @@ def target_merge(primary_target, secondary_target):
     new_name.save()
 
     merge_aliases = secondary_target.aliases.all()
+    """
+    Secondary target name and aliases all become aliases in the Primary target.
+    """
     for alias in merge_aliases:
         alias_hold = alias.name
         alias.delete()
@@ -49,7 +63,6 @@ def target_merge(primary_target, secondary_target):
 
     # take secondary target extras without repeated keys and save them as primary target extras
     pt_targetextra_keys = list(TargetExtra.objects.filter(target=primary_target).values_list("key", flat=True))
-    print(pt_targetextra_keys)
     st_targetextras = TargetExtra.objects.filter(target=secondary_target)
     for targetextra in st_targetextras:
         if targetextra.key not in pt_targetextra_keys:

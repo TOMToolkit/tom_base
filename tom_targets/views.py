@@ -576,6 +576,10 @@ class TargetMergeView(FormView):
     form_class = TargetMergeForm
 
     def get_name_select_choices(self, pk1, pk2):
+        """
+        Puts user selected targets in a choice field on the target_merge.html page,
+        using the target pk's.
+        """
         first_target = Target.objects.get(id=pk1)
         second_target = Target.objects.get(id=pk2)
         choices = [
@@ -628,7 +632,7 @@ class TargetMergeView(FormView):
                 secondary_target_id = first_target_id
             primary_target = Target.objects.get(id=primary_target_id)
             secondary_target = Target.objects.get(id=secondary_target_id)
-            if 'confirm' in request.POST:
+            if 'confirm' in request.POST:  # redirects user to an updated target detail page with merged targets
                 target_merge(primary_target, secondary_target)
                 return redirect('tom_targets:detail', pk=primary_target_id)
             return redirect('tom_targets:merge', pk1=primary_target_id, pk2=secondary_target_id)

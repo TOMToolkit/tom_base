@@ -289,11 +289,12 @@ def aladin_skymap(targets):
     return context
 
 
-@register.inclusion_tag('tom_targets/partials/target_fields.html')
-def target_fields(target1, target2):
+@register.inclusion_tag('tom_targets/partials/target_merge_fields.html')
+def target_merge_fields(target1, target2):
     """
-    Prepares the context for the target_fields.html partial.
-    Make a list of tuples that combines the fields and values of the two targets.
+    Prepares the context for the target_merge_fields.html partial.
+    Make a list of tuples that combines the fields and values of the two targets;
+    target1 and target2 are Target objects.
     """
     target1_data = {}
     for field in target1._meta.get_fields():
