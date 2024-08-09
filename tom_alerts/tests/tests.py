@@ -1,4 +1,3 @@
-import json
 from requests import HTTPError
 from unittest.mock import patch
 
@@ -232,7 +231,7 @@ class TestBrokerViews(TestCase):
             }
         })
     def test_create_target(self):
-        cache.set('alert_2', json.dumps(test_alerts[1]))
+        cache.set('alert_2', test_alerts[1])
         query = BrokerQuery.objects.create(
             name='find hoth',
             broker='TEST',
@@ -256,8 +255,8 @@ class TestBrokerViews(TestCase):
             }
         })
     def test_create_multiple_targets(self):
-        cache.set('alert_1', json.dumps(test_alerts[0]))
-        cache.set('alert_2', json.dumps(test_alerts[1]))
+        cache.set('alert_1', test_alerts[0])
+        cache.set('alert_2', test_alerts[1])
         query = BrokerQuery.objects.create(
             name='find anything',
             broker='TEST',

@@ -49,7 +49,10 @@ def export_targets(qs):
         for name in names:
             target_data[f'name{str(name_index)}'] = name.name
             name_index += 1
-        del target_data['id']  # do not export 'id'
+        # do not export 'pk's
+        for pointer_key in [pk for pk in target_data.keys() if pk.endswith('_ptr_id')]:
+            del target_data[pointer_key]
+        del target_data['id']
         writer.writerow(target_data)
     return file_buffer
 

@@ -7,6 +7,7 @@ from astropy.io import ascii
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib import messages
+from django.db.models import Q
 from django.http import StreamingHttpResponse
 from django.utils.text import slugify
 
@@ -48,7 +49,7 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
     :return: json response for the sharing
     """
     # Query relevant Reduced Datums Queryset
-    accepted_data_types = ['photometry']
+    accepted_data_types = ['photometry', 'spectroscopy']
     if product_id:
         product = DataProduct.objects.get(pk=product_id)
         target = product.target
@@ -231,15 +232,13 @@ def check_for_share_safe_datums(destination, reduced_datums, **kwargs):
     :param reduced_datums: selected input datums
     :return: queryset of reduced datums to be shared
     """
-    return reduced_datums
-    # if 'hermes' in destination:
-    #     message_topic = kwargs.get('topic', None)
-    #     # Remove data points previously shared to the given topic
-    #     filtered_datums = reduced_datums.exclude(Q(message__exchange_status='published')
-    #                                              & Q(message__topic=message_topic))
-    # else:
-    #     filtered_datums = reduced_datums
-    # return filtered_datums
+    if 'hermes' in destination:
+        message_topic = kwargs.get('topic', None)
+        filtered_datums = reduced_datums.exclude(Q(message__exchange_status='published')
+                                                 & Q(message__topic=message_topic))
+    else:
+        filtered_datums = reduced_datums
+    return filtered_datums
 
 
 def check_for_save_safe_datums():
@@ -285,14 +284,15 @@ def sharing_feedback_handler(response, request):
     :return:
     """
     try:
+        response.raise_for_status()
         if 'message' in response.json():
             publish_feedback = response.json()['message']
         else:
-            publish_feedback = f"ERROR: {response.text}"
+            publish_feedback = "Submitted message succesfully"
     except AttributeError:
         publish_feedback = response['message']
-    except ValueError:
-        publish_feedback = f"ERROR: Returned Response code {response.status_code}"
+    except Exception:
+        publish_feedback = f"ERROR: Returned Response code {response.status_code} with content: {response.content}"
     if "ERROR" in publish_feedback.upper():
         messages.error(request, publish_feedback)
     else:
@@ -300,22 +300,63 @@ def sharing_feedback_handler(response, request):
     return
 
 
+def process_spectro_data_for_download(serialized_datum):
+    """ Turns a serialized spectrograph datum into a list of serialized datums with the
+        spectrograph info expanded one piece per line
+    """
+    download_datums = []
+    spectra_data = serialized_datum.pop('value')
+    if ('flux' in spectra_data and isinstance(spectra_data['flux'], list)
+        and 'wavelength' in spectra_data and isinstance(spectra_data['wavelength'], list)
+            and len(spectra_data['flux']) == len(spectra_data['wavelength'])):
+        datum_to_copy = serialized_datum.copy()
+        # If its a data dict with certain array or dict fields, then first copy the scalar fields over
+        for key, value in spectra_data.items():
+            if not isinstance(value, (list, dict)) and key not in datum_to_copy:
+                datum_to_copy[key] = value
+        # And then iterate over the expected array fields to build output rows
+        for i, flux in enumerate(spectra_data['flux']):
+            expanded_datum = datum_to_copy.copy()
+            expanded_datum['flux'] = flux
+            expanded_datum['wavelength'] = spectra_data['wavelength'][i]
+            if 'flux_error' in spectra_data and isinstance(spectra_data['flux_error'], list):
+                expanded_datum['flux_error'] = spectra_data['flux_error'][i]
+            download_datums.append(expanded_datum)
+    else:
+        for entry in spectra_data.values():
+            if isinstance(entry, dict):
+                expanded_datum = serialized_datum.copy()
+                # If its an "array" of dicts, just expand each dict into the output
+                expanded_datum.update(entry)
+                download_datums.append(expanded_datum)
+    return download_datums
+
+
 def download_data(form_data, selected_data):
     """
-    Produces a CSV photometry table from the DataShareForm and provides it for download as a StreamingHttpResponse.
+    Produces a CSV photometry or spectroscopy table from the DataShareForm and provides it for download
+    as a StreamingHttpResponse.
     The "title" becomes the filename, and the "message" becomes a comment at the top of the file.
     :param form_data: data from the DataShareForm
     :param selected_data: ReducucedDatums selected via the checkboxes in the DataShareForm
-    :return: CSV photometry table as a StreamingHttpResponse
+    :return: CSV photometry or spectroscopy table as a StreamingHttpResponse
     """
     reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
     serialized_data = [ReducedDatumSerializer(rd).data for rd in reduced_datums]
+    data_to_save = []
+    sort_fields = ['timestamp']
     for datum in serialized_data:
-        datum.update(datum.pop('value'))
-    table = Table(serialized_data)
+        if datum.get('data_type') == 'photometry':
+            datum.update(datum.pop('value'))
+            data_to_save.append(datum)
+        elif datum.get('data_type') == 'spectroscopy':
+            sort_fields = ['timestamp', 'wavelength']
+            # Attempt to expand the photometry table stored in the .value into multiple entries in serialized data
+            data_to_save.extend(process_spectro_data_for_download(datum))
+    table = Table(data_to_save)
     if form_data.get('share_message'):
         table.meta['comments'] = [form_data['share_message']]
-    table.sort('timestamp')
+    table.sort(sort_fields)
     file_buffer = StringIO()
     ascii.write(table, file_buffer, format='csv', comment='# ')
     file_buffer.seek(0)  # goto the beginning of the buffer
