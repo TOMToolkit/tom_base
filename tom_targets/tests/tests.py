@@ -1741,6 +1741,9 @@ class TestTargetMerge(TestCase):
 
     def test_merge_targets(self):
         self.st1.parallax = 3453
+        self.st1.save()
+        self.st2.distance = 12
+        self.st2.save()
         result = target_merge(self.st1, self.st2)
         result_dictionary = model_to_dict(result)
         st1_dictionary = model_to_dict(self.st1)
