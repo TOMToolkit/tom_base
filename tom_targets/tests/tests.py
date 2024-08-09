@@ -1776,7 +1776,8 @@ class TestTargetMerge(TestCase):
 
     def test_merge_aliases(self):
         """
-        Makes sure that all of the aliases for the secondary target are now aliases for the primary target after the merge
+        Makes sure that all of the aliases for the secondary target
+        are now aliases for the primary target after the merge
         """
         st2_names = self.st2.names
         for name in st2_names:
@@ -1840,7 +1841,7 @@ class TestTargetMerge(TestCase):
 
     def test_merge_reduced_datums(self):
         """
-        Makes sure that datums are associated with primary target 
+        Makes sure that datums are associated with primary target
         """
         data_type = 'photometry'
         value1 = {
@@ -1886,7 +1887,7 @@ class TestTargetMerge(TestCase):
         st2_first.key = 'key1'
         st2_first.save()
 
-        # setting the st1 queryset and st2 queryset to a variable 
+        # setting the st1 queryset and st2 queryset to a variable
         st1_te = list(self.st1.targetextra_set.all())
         st2_te = list(self.st2.targetextra_set.all())
 
@@ -1914,8 +1915,8 @@ class TestTargetMerge(TestCase):
         )
 
         st2_observationrecords = list(ObservationRecord.objects.filter(target=self.st2))
-        # write a test that makes sure that observationrecord1 and observationrecord2 are associated with self.st1 after the merge
+        # write a test that makes sure that observationrecord1 and observationrecord2
+        #  are associated with self.st1 after the merge
         target_merge(self.st1, self.st2)
         for observationrecord in st2_observationrecords:
             self.assertIn(observationrecord, ObservationRecord.objects.filter(target=self.st1))
-
