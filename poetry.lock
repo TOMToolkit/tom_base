@@ -956,8 +956,11 @@ name = "docutils"
 version = "0.17.1"
 description = "Docutils -- Python Documentation Utilities"
 optional = false
-python-versions = "*"
-files = []
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+files = [
+    {file = "docutils-0.17.1-py2.py3-none-any.whl", hash = "sha256:cf316c8370a737a022b72b56874f6602acf974a37a9fba42ec2876387549fc61"},
+    {file = "docutils-0.17.1.tar.gz", hash = "sha256:686577d2e4c32380bb50cbb22f575ed742d58168cee37e99117a854bcd88f125"},
+]
 
 [[package]]
 name = "dramatiq"
@@ -2230,13 +2233,13 @@ files = [
 
 [[package]]
 name = "specutils"
-version = "1.15.0"
+version = "1.16.0"
 description = "Package for spectroscopic astronomical data"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "specutils-1.15.0-py3-none-any.whl", hash = "sha256:6df749b100ce9a373628804b93e9d00f26dad97a24513ac34ceb4306affac94c"},
-    {file = "specutils-1.15.0.tar.gz", hash = "sha256:f20a4d1b6432c008fcabf13c519aca532f25435167f551d4697bd59d6c03a93f"},
+    {file = "specutils-1.16.0-py3-none-any.whl", hash = "sha256:c1989b8cf82f4deb0c5559121f03e002dd5a20701feb967d8917aa375d2668cd"},
+    {file = "specutils-1.16.0.tar.gz", hash = "sha256:e383669fb94e26a5a3e98c581c093014745b6f1e0d56c67d7f17317f177061af"},
 ]
 
 [package.dependencies]
