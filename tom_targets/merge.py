@@ -3,17 +3,16 @@ from tom_targets.models import TargetName, TargetExtra
 from tom_dataproducts.models import ReducedDatum, DataProduct
 from tom_observations.models import ObservationRecord
 
+
 def merge_error_message(request):
     messages.warning(request, "Please select two targets to merge!")
 
 
 def target_merge(primary_target, secondary_target):
-    """
-    """
-   
+
     model_fields = primary_target._meta.fields
     for field in model_fields:
-        if  getattr(primary_target, field.name, None) is None and getattr(secondary_target, field.name, None) is not None:
+        if getattr(primary_target, field.name, None) is None and getattr(secondary_target, field.name, None) is not None:
             setattr(primary_target, field.name, getattr(secondary_target, field.name, None))
             primary_target.save()
 
@@ -32,7 +31,6 @@ def target_merge(primary_target, secondary_target):
     for targetlist in st_lists:
         targetlist.targets.add(primary_target)
 
-
     # take secondary_target dataproducts and save them as primary_target dataproducts
     st_dataproducts = DataProduct.objects.filter(target=secondary_target)
     for dataproduct in st_dataproducts:
@@ -48,7 +46,6 @@ def target_merge(primary_target, secondary_target):
     #  TODO: skip reduceddatums with values that are identical (do this with an if statement)
     #  access value with reduceddatum.value
 
-
     # take secondary target extras without repeated keys and save them as primary target extras
     pt_targetextra_keys = list(TargetExtra.objects.filter(target=primary_target).values_list("key", flat=True))
     print(pt_targetextra_keys)
@@ -63,7 +60,6 @@ def target_merge(primary_target, secondary_target):
     for observationrecord in st_observationrecords:
         observationrecord.target = primary_target
         observationrecord.save()
-
 
     secondary_target.delete()
 

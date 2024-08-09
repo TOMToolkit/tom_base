@@ -620,7 +620,6 @@ class TargetMergeView(FormView):
         form.fields['name_select'].choices = self.get_name_select_choices(
             first_target_id, second_target_id)
 
-
         if form.is_valid():
             primary_target_id = int(form.cleaned_data['name_select'])
             if primary_target_id == first_target_id:
@@ -630,7 +629,7 @@ class TargetMergeView(FormView):
             primary_target = Target.objects.get(id=primary_target_id)
             secondary_target = Target.objects.get(id=secondary_target_id)
             if 'confirm' in request.POST:
-                run_merge = target_merge(primary_target,secondary_target)
+                target_merge(primary_target, secondary_target)
                 return redirect('tom_targets:detail', pk=primary_target_id)
             return redirect('tom_targets:merge', pk1=primary_target_id, pk2=secondary_target_id)
         else:
