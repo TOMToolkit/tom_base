@@ -12,7 +12,8 @@ def target_merge(primary_target, secondary_target):
 
     model_fields = primary_target._meta.fields
     for field in model_fields:
-        if getattr(primary_target, field.name, None) is None and getattr(secondary_target, field.name, None) is not None:
+        if getattr(primary_target, field.name, None) is None\
+                and getattr(secondary_target, field.name, None) is not None:
             setattr(primary_target, field.name, getattr(secondary_target, field.name, None))
             primary_target.save()
 
