@@ -28,10 +28,8 @@ def target_merge(primary_target, secondary_target):
     """
 
     model_fields = primary_target._meta.fields
-    """
-    loops through target attributes. If attribute missing from primary target
-    and secondary target has the attribute, the attribute gets merged into Primary target
-    """
+    # loops through target attributes. If attribute missing from primary target
+    # and secondary target has the attribute, the attribute gets merged into Primary target
     for field in model_fields:
         if getattr(primary_target, field.name, None) is None\
                 and getattr(secondary_target, field.name, None) is not None:
