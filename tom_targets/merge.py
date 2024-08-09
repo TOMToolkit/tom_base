@@ -14,7 +14,17 @@ def merge_error_message(request):
 
 def target_merge(primary_target, secondary_target):
     """
-    Merge Primary target and Secondary target into one target.
+    Merge Primary target and Secondary target into one target. Attributes primary_target does not have,
+    but secondary_target does have, will get merged into primary_target. After attributes merged,
+    secondary_target is deleted.
+
+    :param primary_target: Target object which holds all the primary_target attributes
+    :type target: tom_targets.models.Target
+
+    :param secondary_target: Target object which holds all the secondary_target attributes
+    :type target: tom_targets.models.Target
+
+    returns: primary_target
     """
 
     model_fields = primary_target._meta.fields
