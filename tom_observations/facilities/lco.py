@@ -175,6 +175,7 @@ class LCOConfigurationLayout(OCSConfigurationLayout):
                               )
                               )
 
+
 class ImagingConfigurationLayout(LCOConfigurationLayout):
     def _get_basic_config_layout(self, instance):
         return super()._get_basic_config_layout(instance) + (
@@ -183,6 +184,7 @@ class ImagingConfigurationLayout(LCOConfigurationLayout):
                     css_class='form-row'
                 ),
         )
+
 
 class MuscatConfigurationLayout(LCOConfigurationLayout):
     def _get_target_override(self, instance):
