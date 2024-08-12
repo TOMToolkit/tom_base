@@ -499,30 +499,7 @@ class OCSConfigurationLayout(Layout):
 
     def _get_config_layout(self, instance, oe_groups):
         return (
-            Alert(
-                content="""When using multiple configurations, ensure the instrument types are all
-                            available on the same telescope class.
-                        """,
-                css_class='alert-warning'
-            ),
-            Div(
-                Div(
-                    f'c_{instance}_instrument_type',
-                    css_class='col'
-                ),
-                Div(
-                    f'c_{instance}_configuration_type',
-                    css_class='col'
-                ),
-                css_class='form-row'
-            ),
-            Div(
-                Div(
-                    f'c_{instance}_repeat_duration',
-                    css_class='col'
-                ),
-                css_class='form-row'
-            ),
+            *self._get_basic_config_layout(instance),
             *self._get_target_override(instance),
             Accordion(
                 *self.get_initial_accordion_items(instance),
@@ -564,6 +541,34 @@ class OCSConfigurationLayout(Layout):
         """ Override in the subclasses to add items at the end of the accordion group
         """
         return ()
+
+    def _get_basic_config_layout(self, instance):
+        return (
+            Alert(
+                content="""When using multiple configurations, ensure the instrument types are all
+                                        available on the same telescope class.
+                                    """,
+                css_class='alert-warning'
+            ),
+            Div(
+                Div(
+                    f'c_{instance}_instrument_type',
+                    css_class='col'
+                ),
+                Div(
+                    f'c_{instance}_configuration_type',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            ),
+            Div(
+                Div(
+                    f'c_{instance}_repeat_duration',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            ),
+        )
 
     def _get_target_override(self, instance):
         if instance == 1:
