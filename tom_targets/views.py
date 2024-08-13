@@ -610,10 +610,6 @@ class TargetMergeView(FormView):
 
         return context
 
-    def get_form_class(self):
-
-        return TargetMergeForm
-
     def post(self, request, *args, **kwargs):
         form = TargetMergeForm(request.POST)
 
