@@ -210,3 +210,22 @@ class TargetListShareForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['share_destination'].choices = get_sharing_destination_options()
+
+
+class TargetMergeForm(forms.Form):
+    """
+    Form for merging two duplicate targets with a primary target and secondary target
+    """
+    name_select = forms.ChoiceField(
+        label="Select Primary Target",
+        required=True,
+        choices=[],
+        # Select is the default widget for a ChoiceField, but we need to set htmx attributes.
+        widget=forms.Select(
+            # set up attributes to trigger folder dropdown update when this field changes
+            attrs={
+                'hx-get': '',  # send GET request to the source URL's get method
+                'hx-trigger': 'change',  # when this happens
+                'hx-target': '#id_target_merge_fields',  # replace name_select element
+             })
+    )
