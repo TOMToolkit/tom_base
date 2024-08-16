@@ -11,9 +11,12 @@ from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Q
+from django_filters.views import FilterView
+from django.http import HttpResponse
 from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse, HttpResponseBadRequest
 from django.forms import HiddenInput
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
@@ -21,7 +24,6 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormVi
 from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
-from django_filters.views import FilterView
 
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
@@ -33,8 +35,9 @@ from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
-from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm
+from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetMergeForm
 from tom_targets.sharing import share_target_with_tom
+from tom_targets.merge import target_merge
 from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
                                       share_target_list_with_hermes)
 from tom_dataproducts.models import ReducedDatum
@@ -42,12 +45,15 @@ from tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
     move_all_to_grouping, move_selected_to_grouping
 )
+from tom_targets.merge import (merge_error_message)
 from tom_targets.models import Target, TargetList
+from tom_targets.templatetags.targets_extras import target_merge_fields
 from tom_targets.utils import import_targets, export_targets
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class TargetListView(PermissionListMixin, FilterView):
@@ -561,6 +567,113 @@ class TargetExportView(TargetListView):
         return response
 
 
+class TargetMergeView(FormView):
+    """
+    View that handles choosing the primary target in the process of merging targets
+    """
+
+    template_name = 'tom_targets/target_merge.html'
+    form_class = TargetMergeForm
+
+    def get_name_select_choices(self, pk1, pk2):
+        """
+        Puts user selected targets in a choice field on the target_merge.html page,
+        using the target pk's.
+        """
+        first_target = Target.objects.get(id=pk1)
+        second_target = Target.objects.get(id=pk2)
+        choices = [
+            (first_target.id, first_target.name),
+            (second_target.id, second_target.name)
+        ]
+        return choices
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds the target information to the context.
+        :returns: context object
+        :rtype: dict
+        """
+        context = super().get_context_data(*args, **kwargs)
+        first_target_id = self.kwargs.get('pk1', None)
+        first_target = Target.objects.get(id=first_target_id)
+        context['target1'] = first_target
+        second_target_id = self.kwargs.get('pk2', None)
+        second_target = Target.objects.get(id=second_target_id)
+        context['target2'] = second_target
+        initial = {'target1': first_target,
+                   'target2': second_target}
+
+        form = TargetMergeForm(initial=initial)
+        form.fields['name_select'].choices = self.get_name_select_choices(first_target_id, second_target_id)
+        context['form'] = form
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = TargetMergeForm(request.POST)
+
+        first_target_id = int(self.kwargs.get('pk1', None))
+        second_target_id = int(self.kwargs.get('pk2', None))
+        # let the form name_select field know what it's choices are
+        # these were determined at run time
+        form.fields['name_select'].choices = self.get_name_select_choices(
+            first_target_id, second_target_id)
+
+        if form.is_valid():
+            primary_target_id = int(form.cleaned_data['name_select'])
+            if primary_target_id == first_target_id:
+                secondary_target_id = second_target_id
+            else:
+                secondary_target_id = first_target_id
+            primary_target = Target.objects.get(id=primary_target_id)
+            secondary_target = Target.objects.get(id=secondary_target_id)
+            if 'confirm' in request.POST:  # redirects user to an updated target detail page with merged targets
+                target_merge(primary_target, secondary_target)
+                return redirect('tom_targets:detail', pk=primary_target_id)
+            return redirect('tom_targets:merge', pk1=primary_target_id, pk2=secondary_target_id)
+        else:
+            messages.warning(request, form.errors)
+            return redirect('tom_targets:merge',
+                            pk1=first_target_id, pk2=second_target_id)
+
+    def get(self, request, *args, **kwargs):
+        """When called as a result of the Primary Target name_select field being
+        changed, request.htmx will be True and this should update the
+        target_field inclusiontag/partial (via render_to_string) according to
+        the selected target.
+
+        If this is not an HTMX request, just call super().get.
+        """
+        if request.htmx:
+            pk1 = int(self.kwargs.get('pk1', None))
+            pk2 = int(self.kwargs.get('pk2', None))
+
+            # get the target_id of the selected target: it's the primary
+            primary_target_id = int(request.GET.get('name_select', None))
+
+            # decide which of pk1 or pk2 is primary (i.e. it matches name_select)
+            if pk1 == primary_target_id:  # first is primary, so
+                secondary_target_id = pk2
+            else:  # second is primary, so
+                secondary_target_id = pk1
+
+            # get the actual Target instances for these target_ids
+            primary_target = Target.objects.get(id=primary_target_id)
+            secondary_target = Target.objects.get(id=secondary_target_id)
+
+            # render the table with those targets via the inclusiontag
+            target_table_html = render_to_string(
+                'tom_targets/partials/target_merge_fields.html',
+                context=target_merge_fields(primary_target, secondary_target))
+
+            # replace the old target_field table with the newly rendered one
+            return HttpResponse(target_table_html)
+        else:
+            # not an HTMX request
+            return super().get(request, *args, **kwargs)
+
+
 class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
     """
     View that handles addition and removal of targets to target groups. Requires authentication.
@@ -604,6 +717,12 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
             else:
                 target_ids = request.POST.getlist('selected-target')
                 move_selected_to_grouping(target_ids, grouping_object, request)
+        if 'merge' in request.POST:
+            target_ids = request.POST.getlist('selected-target')
+            if len(target_ids) == 2:
+                return redirect('tom_targets:merge', pk1=target_ids[0], pk2=target_ids[1])
+            else:
+                merge_error_message(request)
 
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 

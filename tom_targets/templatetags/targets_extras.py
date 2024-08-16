@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 
 from astroplan import moon_illumination
 from astropy import units as u
@@ -18,6 +19,9 @@ from tom_targets.models import Target, TargetExtra, TargetList
 from tom_targets.forms import TargetVisibilityForm
 
 register = template.Library()
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 @register.inclusion_tag('tom_targets/partials/recent_targets.html', takes_context=True)
@@ -282,6 +286,33 @@ def aladin_skymap(targets):
             target_list.append({'name': name, 'ra': ra, 'dec': dec})
 
     context = {'targets': target_list}
+    return context
+
+
+@register.inclusion_tag('tom_targets/partials/target_merge_fields.html')
+def target_merge_fields(target1, target2):
+    """
+    Prepares the context for the target_merge_fields.html partial.
+    Make a list of tuples that combines the fields and values of the two targets;
+    target1 and target2 are Target objects.
+    """
+    target1_data = {}
+    for field in target1._meta.get_fields():
+        if not field.is_relation:
+            target1_data[field.name] = field.value_to_string(target1)
+
+    target2_data = {}
+    for field in target2._meta.get_fields():
+        if not field.is_relation:
+            target2_data[field.name] = field.value_to_string(target2)
+
+    combined_target_data = [x for x in zip(target1_data.keys(), target1_data.values(), target2_data.values())]
+
+    context = {
+        'target1_data': target1_data,
+        'target2_data': target2_data,
+        'combined_target_data': combined_target_data
+    }
     return context
 
 
