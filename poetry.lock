@@ -1037,13 +1037,13 @@ python-dateutil = ">=2.4"
 
 [[package]]
 name = "fits2image"
-version = "0.4.7"
+version = "0.4.8"
 description = "Common libraries for the conversion and scaling of fits images"
 optional = false
 python-versions = "*"
 files = [
-    {file = "fits2image-0.4.7-py3-none-any.whl", hash = "sha256:0727d0dfef482a1493399f3b44b59085fd0beb1b9d81aa32fd1882272561dae5"},
-    {file = "fits2image-0.4.7.tar.gz", hash = "sha256:25a29c0b442c4d025d6bf546c677b7539d3a57cedfc65ee87315c618feece387"},
+    {file = "fits2image-0.4.8-py3-none-any.whl", hash = "sha256:0e9bb29dade074e35825c506be7b1dae1866915eaba8804318d5053e44672c84"},
+    {file = "fits2image-0.4.8.tar.gz", hash = "sha256:b571a188e387244379cc4d3111c59a9dfea2c219390e4eb6ad5281f3ca3b2e5d"},
 ]
 
 [package.dependencies]
