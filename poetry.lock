@@ -177,17 +177,17 @@ tests = ["mypy (>=0.800)", "pytest", "pytest-asyncio"]
 
 [[package]]
 name = "astroplan"
-version = "0.10"
+version = "0.10.1"
 description = "Observation planning package for astronomers"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "astroplan-0.10.tar.gz", hash = "sha256:1670c9c42143d62924e8a6e0287ec25935fcf985a8b928438bc4da0241f4875a"},
+    {file = "astroplan-0.10.1.tar.gz", hash = "sha256:39d97c3377e1630abff3a94d8c956980f77a3e809e27a0376dd7d30abe3b6959"},
 ]
 
 [package.dependencies]
 astropy = ">=4"
-numpy = "<2"
+numpy = ">=1.17"
 pytz = "*"
 six = "*"
 
