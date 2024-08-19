@@ -2248,13 +2248,13 @@ files = [
 
 [[package]]
 name = "specutils"
-version = "1.15.0"
+version = "1.16.0"
 description = "Package for spectroscopic astronomical data"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "specutils-1.15.0-py3-none-any.whl", hash = "sha256:6df749b100ce9a373628804b93e9d00f26dad97a24513ac34ceb4306affac94c"},
-    {file = "specutils-1.15.0.tar.gz", hash = "sha256:f20a4d1b6432c008fcabf13c519aca532f25435167f551d4697bd59d6c03a93f"},
+    {file = "specutils-1.16.0-py3-none-any.whl", hash = "sha256:c1989b8cf82f4deb0c5559121f03e002dd5a20701feb967d8917aa375d2668cd"},
+    {file = "specutils-1.16.0.tar.gz", hash = "sha256:e383669fb94e26a5a3e98c581c093014745b6f1e0d56c67d7f17317f177061af"},
 ]
 
 [package.dependencies]
