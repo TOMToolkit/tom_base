@@ -13,8 +13,8 @@ def get_base_url():
     """return the PanSTARRS MAST API base URL from settings
     """
     # the configuration in settings.py has all been vetted in
-    # panstarrs.PanstarrsForcedPhotometryService.query_service()
-    base_url = settings.FORCED_PHOTOMETRY_SERVICES.get('PANSTARRS', {}).get('url')
+    # panstarrs.PanstarrsSingleTargetDataServiceQueryForm.query_service()
+    base_url = settings.SINGLE_TARGET_DATA_SERVICES.get('PANSTARRS', {}).get('url')
 
     return base_url
 
