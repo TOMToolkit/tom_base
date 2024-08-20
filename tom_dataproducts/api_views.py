@@ -13,6 +13,7 @@ from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
+from tom_targets.models import Target
 
 
 class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, GenericViewSet, PermissionListMixin):
@@ -65,7 +66,7 @@ class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, Ge
         """
         if settings.TARGET_PERMISSIONS_ONLY:
             return super().get_queryset().filter(
-                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+                target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')
             )
         else:
             return get_objects_for_user(self.request.user, 'tom_dataproducts.view_dataproduct')
