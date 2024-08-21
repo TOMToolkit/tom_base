@@ -88,7 +88,7 @@ a redis server, you would add the following to your ``settings.py``:
 After adding the ``django_dramatiq`` installed app, you will need to run ``./manage.py migrate`` once to setup
 its DB tables. If this configuration is set in your TOM, the existing services which support asynchronous queries,
 Atlas and ZTF, should start querying asynchronously. (Note: You must also start the dramatiq workers:
-``./manage.py rundramatic``. If you do not add these settings, those services will still function but will fall
+``./manage.py rundramatiq``. If you do not add these settings, those services will still function but will fall
 back to synchronous queries.
 
 
