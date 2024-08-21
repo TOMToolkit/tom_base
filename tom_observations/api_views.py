@@ -62,7 +62,7 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
             # Though it's next to impossible for a user to observe a target they don't have permission to view, this
             # queryset ensures that such an edge case is covered.
             return super().get_queryset().filter(
-                Q(target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')) |
+                Q(target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')) |
                 Q(user=self.request.user.id)
             )
         else:
