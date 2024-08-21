@@ -100,39 +100,39 @@ class LCOSettings(OCSSettings):
         return {
             'Siding Spring': {
                 'sitecode': 'coj',
-                'latitude': -31.272,
-                'longitude': 149.07,
+                'latitude': -31.273,
+                'longitude': 149.071,
                 'elevation': 1116
             },
             'Sutherland': {
                 'sitecode': 'cpt',
-                'latitude': -32.38,
-                'longitude': 20.81,
-                'elevation': 1804
+                'latitude': -32.381,
+                'longitude': 20.810,
+                'elevation': 1760
             },
             'Teide': {
                 'sitecode': 'tfn',
-                'latitude': 20.3,
-                'longitude': -16.511,
-                'elevation': 2390
+                'latitude': 28.300,
+                'longitude': -16.512,
+                'elevation': 2330
             },
             'Cerro Tololo': {
                 'sitecode': 'lsc',
                 'latitude': -30.167,
-                'longitude': -70.804,
+                'longitude': -70.805,
                 'elevation': 2198
             },
             'McDonald': {
                 'sitecode': 'elp',
-                'latitude': 30.679,
+                'latitude': 30.680,
                 'longitude': -104.015,
-                'elevation': 2027
+                'elevation': 2070
             },
             'Haleakala': {
                 'sitecode': 'ogg',
-                'latitude': 20.706,
+                'latitude': 20.707,
                 'longitude': -156.258,
-                'elevation': 3065
+                'elevation': 3055
             }
         }
 

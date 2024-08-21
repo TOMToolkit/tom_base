@@ -136,17 +136,17 @@ class PanstarrsSingleTargetDataService(stds.BaseSingleTargetDataService):
             raise stds.SingleTargetDataServiceException(f"Target {query_parameters.get('target_id')} does not exist")
 
         # make sure PANSTARRS service is configured
-        if 'PANSTARRS' not in settings.FORCED_PHOTOMETRY_SERVICES:
+        if 'PANSTARRS' not in settings.SINGLE_TARGET_DATA_SERVICES:
             raise stds.SingleTargetDataServiceException(
-                "Must specify 'PANSTARRS' configuration in settings.py FORCED_PHOTOMETRY_SERVICES"
+                "Must specify 'PANSTARRS' configuration in settings.py SINGLE_TARGET_DATA_SERVICES"
             )
-        if not settings.FORCED_PHOTOMETRY_SERVICES.get('PANSTARRS', {}).get('url'):
+        if not settings.SINGLE_TARGET_DATA_SERVICES.get('PANSTARRS', {}).get('url'):
             raise stds.SingleTargetDataServiceException(
-                "Must specify a 'url' under PANSTARRS settings in FORCED_PHOTOMETRY_SERVICES"
+                "Must specify a 'url' under PANSTARRS settings in SINGLE_TARGET_DATA_SERVICES"
             )
         # it's not clear if this is stricly necessary, so just warn for now
-        if not settings.FORCED_PHOTOMETRY_SERVICES.get('PANSTARRS', {}).get('api_key'):
-            logger.warning('PanSTARRS api_key not specified in setings.py FORCED_PHOTOMETRY_SERVICES: '
+        if not settings.SINGLE_TARGET_DATA_SERVICES.get('PANSTARRS', {}).get('api_key'):
+            logger.warning('PanSTARRS api_key not specified in setings.py SINGLE_TARGET_DATA_SERVICES: '
                            'Only public data will be accessible.')
 
         # submit the query, create the data product, and run the data product processor

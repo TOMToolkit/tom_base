@@ -24,9 +24,9 @@ logger.setLevel(logging.DEBUG)
 def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type):
     logger.debug('Calling atlas query!')
     target = Target.objects.get(pk=target_id)
-    headers = {"Authorization": f"Token {settings.FORCED_PHOTOMETRY_SERVICES.get('ATLAS', {}).get('api_key')}",
+    headers = {"Authorization": f"Token {settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('api_key')}",
                "Accept": "application/json"}
-    base_url = settings.FORCED_PHOTOMETRY_SERVICES.get('ATLAS', {}).get('url')
+    base_url = settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('url')
     task_url = None
     while not task_url:
         with requests.Session() as s:
