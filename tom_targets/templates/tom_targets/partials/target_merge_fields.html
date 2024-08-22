@@ -17,10 +17,18 @@
                     <th>{{ key }}</th>
                     <td>{{ value1 }}</td>
                     <td>{{ value2 }}</td>
-                    {% if value1 and value1 != 'None'%}
-                        <td>{{ value1 }}</td>
+                    {% if key == 'aliases' %}
+                        <td>{{ value1 }}, {{ target2_data.name }}, {{ value2 }}</td>
                     {% else %}
-                        <td>{{ value2 }}</td>
+                        {% if key == 'target lists' %}
+                            <td>{{ value1 }}, {{ value2 }}</td>
+                        {% else %}
+                            {% if value1 and value1 != 'None'%}
+                                <td>{{ value1 }}</td>
+                            {% else %}
+                                <td>{{ value2 }}</td>
+                            {% endif %}
+                        {% endif %}
                     {% endif %}
                 </tr>
                 {% endif %}

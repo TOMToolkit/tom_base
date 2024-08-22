@@ -75,7 +75,7 @@ class ObservationListView(FilterView):
         """
         if settings.TARGET_PERMISSIONS_ONLY:
             return ObservationRecord.objects.filter(
-                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+                target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')
             )
         else:
             return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
@@ -493,7 +493,7 @@ class ObservationRecordDetailView(DetailView):
         """
         if settings.TARGET_PERMISSIONS_ONLY:
             return ObservationRecord.objects.filter(
-                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+                target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')
             )
         else:
             return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')

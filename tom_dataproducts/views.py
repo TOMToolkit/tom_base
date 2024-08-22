@@ -329,7 +329,7 @@ class DataProductListView(FilterView):
         """
         if settings.TARGET_PERMISSIONS_ONLY:
             return super().get_queryset().filter(
-                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+                target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')
             )
         else:
             return get_objects_for_user(self.request.user, 'tom_dataproducts.view_dataproduct')

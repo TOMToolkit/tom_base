@@ -30,7 +30,7 @@ def recent_targets(context, limit=10):
     Displays a list of the most recently created targets in the TOM up to the given limit, or 10 if not specified.
     """
     user = context['request'].user
-    return {'targets': get_objects_for_user(user, 'tom_targets.view_target').order_by('-created')[:limit]}
+    return {'targets': get_objects_for_user(user, f'{Target._meta.app_label}.view_target').order_by('-created')[:limit]}
 
 
 @register.inclusion_tag('tom_targets/partials/recently_updated_targets.html', takes_context=True)
@@ -39,7 +39,8 @@ def recently_updated_targets(context, limit=10):
     Displays a list of the most recently updated targets in the TOM up to the given limit, or 10 if not specified.
     """
     user = context['request'].user
-    return {'targets': get_objects_for_user(user, 'tom_targets.view_target').order_by('-modified')[:limit]}
+    return {'targets': get_objects_for_user(user,
+                                            f'{Target._meta.app_label}.view_target').order_by('-modified')[:limit]}
 
 
 @register.inclusion_tag('tom_targets/partials/target_feature.html')
@@ -300,11 +301,19 @@ def target_merge_fields(target1, target2):
     for field in target1._meta.get_fields():
         if not field.is_relation:
             target1_data[field.name] = field.value_to_string(target1)
+    target1_data['aliases'] = ', '.join(alias.name for alias in target1.aliases.all())
+    target1_data['target lists'] = \
+        ', '.join(target_list.name for target_list in TargetList.objects.filter(targets=target1))
 
     target2_data = {}
     for field in target2._meta.get_fields():
         if not field.is_relation:
             target2_data[field.name] = field.value_to_string(target2)
+        # else:
+        #     print(field.name)
+    target2_data['aliases'] = ', '.join(alias.name for alias in target2.aliases.all())
+    target2_data['target lists'] = \
+        ', '.join(target_list.name for target_list in TargetList.objects.filter(targets=target2))
 
     combined_target_data = [x for x in zip(target1_data.keys(), target1_data.values(), target2_data.values())]
 

@@ -172,6 +172,8 @@ Create a new file in your custom app called ``management/commands/convert_target
 
     from django.core.management.base import BaseCommand
 
+    from guardian.models import GroupObjectPermission, UserObjectPermission
+
     from tom_targets.base_models import BaseTarget
     from tom_targets.models import Target
 
@@ -198,6 +200,13 @@ Create a new file in your custom app called ``management/commands/convert_target
                         target = Target(basetarget_ptr_id=base_target.pk)  # Create a new target with the base_target PK
                         target.__dict__.update(base_target.__dict__)  # add base_target fields to target dictionary
                         target.save()
+                        # re-add permissions for existing users and groups
+                        group_set = set(gop.group for gop in GroupObjectPermission.objects.filter(object_pk=target.pk))
+                        user_set = set(uop.user for uop in UserObjectPermission.objects.filter(object_pk=target.pk))
+                        for group in group_set:
+                            target.give_user_access(group)
+                        for user in user_set:
+                            target.give_user_access(user)
                 self.stdout.write(f'{Target.objects.count()} Targets updated.')
 
             return
