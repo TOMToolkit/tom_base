@@ -24,13 +24,9 @@ DEFAULT_CONE_SEARCH_RADIUS_DEGREES = 0.008333  # degrees
 
 class PanstarrsSingleTargetDataServiceQueryForm(stds.BaseSingleTargetDataServiceQueryForm):
 
-    min_date_mjd = forms.FloatField(
-        label='Min date (MJD):', required=False,
-        widget=forms.NumberInput(attrs={'class': 'ml-2'})
-    )
-    max_date_mjd = forms.FloatField(
-        label='Max date (MJD):', required=False,
-        widget=forms.NumberInput(attrs={'class': 'ml-2'})
+    pagesize = forms.IntegerField(
+        label='Page size:', required=True, initial=500,
+        help_text=('Maximum number of entries to return per page.')
     )
 
     min_detections = forms.IntegerField(
@@ -55,11 +51,6 @@ class PanstarrsSingleTargetDataServiceQueryForm(stds.BaseSingleTargetDataService
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # initialize query time range to reasonable values
-        now = datetime.now()
-        now_mjd = Time((now - timedelta(minutes=1))).mjd
-        past_mjd = Time((now - timedelta(days=20))).mjd
-        self.fields['max_date_mjd'].initial = now_mjd
-        self.fields['min_date_mjd'].initial = past_mjd
 
     def layout(self):
         cone_search_radius_arcsec = round(DEFAULT_CONE_SEARCH_RADIUS_DEGREES * 3600)
@@ -68,17 +59,7 @@ class PanstarrsSingleTargetDataServiceQueryForm(stds.BaseSingleTargetDataService
                 Div('data_release', css_class='col-md-2'),
                 Div('catalog', css_class='col-md-2'),
                 Div('min_detections', css_class='col-md-4'),
-                css_class='row'
-            ),
-            Div(
-                Div(
-                    'min_date_mjd',
-                    css_class='col-md-4'
-                ),
-                Div(
-                    'max_date_mjd',
-                    css_class='col-md-4'
-                ),
+                Div('pagesize', css_class='col-md-2'),
                 css_class='row'
             ),
             Div(HTML(f'<p>Default cone search radius of {cone_search_radius_arcsec} arcsec in use.</p>')),
@@ -94,8 +75,6 @@ class PanstarrsSingleTargetDataServiceQueryForm(stds.BaseSingleTargetDataService
         logger.debug(f"PanstarrsSingleTargetDataServiceQueryForm.clean() -- cleaned_data: {cleaned_data}")
 
         # TODO: update cross-field validation
-        if not (cleaned_data.get('min_date') or cleaned_data.get('min_date_mjd')):
-            raise forms.ValidationError("Must supply a minimum date in either datetime or mjd format")
 
         return cleaned_data
 
@@ -128,9 +107,6 @@ class PanstarrsSingleTargetDataService(stds.BaseSingleTargetDataService):
 
         target = Target.objects.get(pk=query_parameters.get('target_id'))
 
-        min_date_mjd = query_parameters.get('min_date_mjd')
-        max_date_mjd = query_parameters.get('max_date_mjd')
-
         # make sure target exists
         if not Target.objects.filter(pk=query_parameters.get('target_id')).exists():
             raise stds.SingleTargetDataServiceException(f"Target {query_parameters.get('target_id')} does not exist")
@@ -154,13 +130,14 @@ class PanstarrsSingleTargetDataService(stds.BaseSingleTargetDataService):
 
         # initialize the request data with target coordinates and
         # min_ and max_date_mjd  epochMean min and max constraints
+        # Updated to match revised API request data Aug 2024
         request_data = {
             'ra': target.ra,
             'dec': target.dec,
             'radius': DEFAULT_CONE_SEARCH_RADIUS_DEGREES,
-            'epochMean.min': min_date_mjd,
-            'epochMean.max': max_date_mjd,
-            'nDetections.min': query_parameters.get('min_detections'),
+            'nDetections.gte': query_parameters.get('min_detections'),
+            'pagesize': query_parameters.get('pagesize'),
+            'format': 'csv'
         }
 
         catalog = query_parameters.get('catalog')
@@ -181,12 +158,8 @@ class PanstarrsSingleTargetDataService(stds.BaseSingleTargetDataService):
         # ex. panstarrs-dr2-mean-M101-2013_03_17-2024_03_19.csv
         # (note: dashes-between-fields and underscores within datetime_fields)
 
-        min_time = Time(min_date_mjd, format='mjd').datetime.strftime('%Y_%m_%d')
-        data_product_name = f"panstarrs-{data_release}-{catalog}-{target.name}-{min_time}"
+        data_product_name = f"panstarrs-{data_release}-{catalog}-{target.name}"
         # if the max_data_mjd is specified, it will be included in the name
-        if max_date_mjd:
-            max_time = Time(max_date_mjd, format='mjd').datetime.strftime('%Y_%m_%d')
-            data_product_name += f"-{max_time}"
         data_product_name += '.csv'
 
         file = ContentFile(response.content, name=data_product_name)
