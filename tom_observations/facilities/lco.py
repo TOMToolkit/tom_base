@@ -176,6 +176,16 @@ class LCOConfigurationLayout(OCSConfigurationLayout):
                               )
 
 
+class ImagingConfigurationLayout(LCOConfigurationLayout):
+    def _get_basic_config_layout(self, instance):
+        return super()._get_basic_config_layout(instance) + (
+            Div(
+                    f'c_{instance}_guide_mode',
+                    css_class='form-row'
+                ),
+        )
+
+
 class MuscatConfigurationLayout(LCOConfigurationLayout):
     def _get_target_override(self, instance):
         if instance == 1:
@@ -524,6 +534,13 @@ class LCOImagingObservationForm(LCOFullObservationForm):
     Imagers and their details can be found here: https://lco.global/observatory/instruments/
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Need to add guiding
+        for j in range(self.facility_settings.get_setting('max_configurations')):
+            self.fields[f'c_{j+1}_guide_mode'] = forms.ChoiceField(
+                choices=self.mode_choices('guiding'), required=False, initial='ON', label='Guide Mode')
+
     def get_instruments(self):
         instruments = super().get_instruments()
         return {
@@ -531,11 +548,20 @@ class LCOImagingObservationForm(LCOFullObservationForm):
                 'IMAGE' == instrument['type'] and 'MUSCAT' not in code and 'SOAR' not in code)
         }
 
+    def configuration_layout_class(self):
+        return ImagingConfigurationLayout
+
     def form_name(self):
         return 'image'
 
     def configuration_type_choices(self):
         return [('EXPOSE', 'Exposure'), ('REPEAT_EXPOSE', 'Exposure Sequence')]
+
+    def _build_guiding_config(self, configuration_id=1):
+        guiding_config = super()._build_guiding_config()
+        guiding_config['mode'] = self.cleaned_data[f'c_{configuration_id}_guide_mode']
+        guiding_config['optional'] = True
+        return guiding_config
 
 
 class LCOMuscatImagingObservationForm(LCOFullObservationForm):
