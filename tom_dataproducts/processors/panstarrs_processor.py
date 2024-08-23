@@ -4,6 +4,7 @@ import mimetypes
 from astropy import units
 import astropy.io.ascii
 from astropy.time import Time, TimezoneInfo
+from django.core.files.storage import default_storage
 
 from tom_dataproducts.data_processor import DataProcessor
 from tom_dataproducts.exceptions import InvalidFileFormatException
@@ -32,7 +33,10 @@ class PanstarrsProcessor(DataProcessor):
         :rtype: list
         """
 
-        mimetype = mimetypes.guess_type(data_product.data.path)[0]
+        try:
+            mimetype = mimetypes.guess_type(data_product.data.path)[0]
+        except NotImplementedError:
+            mimetype = 'text/plain'
         logger.debug(f'Processing PanSTARRS data with mimetype {mimetype}')
 
         if mimetype in self.PLAINTEXT_MIMETYPES:
@@ -58,7 +62,9 @@ class PanstarrsProcessor(DataProcessor):
         """
         photometry = []
 
-        data = astropy.io.ascii.read(data_product.data.path)
+        data_file = default_storage.open(data_product.data.name, 'r')
+        data = astropy.io.ascii.read(data_file.read())
+
         if len(data) < 1:
             raise InvalidFileFormatException('Empty table or invalid file type')
 
