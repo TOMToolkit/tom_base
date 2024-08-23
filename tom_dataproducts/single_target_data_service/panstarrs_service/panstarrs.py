@@ -57,7 +57,7 @@ class PanstarrsSingleTargetDataServiceQueryForm(stds.BaseSingleTargetDataService
         # initialize query time range to reasonable values
         now = datetime.now()
         now_mjd = Time((now - timedelta(minutes=1))).mjd
-        past_mjd = Time((now - timedelta(days=20))).mjd
+        past_mjd = Time(datetime(2008, 12, 1)).mjd  # Pan-STARRS first went online in December 2008
         self.fields['max_date_mjd'].initial = now_mjd
         self.fields['min_date_mjd'].initial = past_mjd
 
