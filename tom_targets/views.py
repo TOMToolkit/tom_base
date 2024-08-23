@@ -690,40 +690,40 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
         query_string = request.POST.get('query_string', '')
         grouping_id = request.POST.get('grouping')
         filter_data = QueryDict(query_string)
-        try:
-            grouping_object = TargetList.objects.get(pk=grouping_id)
-        except Exception as e:
-            messages.error(request, 'Cannot find the target group with id={}; {}'.format(grouping_id, e))
-            return redirect(reverse('tom_targets:list') + '?' + query_string)
-        if not request.user.has_perm('tom_targets.view_targetlist', grouping_object):
-            messages.error(request, 'Permission denied.')
-            return redirect(reverse('tom_targets:list') + '?' + query_string)
-
-        if 'add' in request.POST:
-            if request.POST.get('isSelectAll') == 'True':
-                add_all_to_grouping(filter_data, grouping_object, request)
-            else:
-                targets_ids = request.POST.getlist('selected-target')
-                add_selected_to_grouping(targets_ids, grouping_object, request)
-        if 'remove' in request.POST:
-            if request.POST.get('isSelectAll') == 'True':
-                remove_all_from_grouping(filter_data, grouping_object, request)
-            else:
-                targets_ids = request.POST.getlist('selected-target')
-                remove_selected_from_grouping(targets_ids, grouping_object, request)
-        if 'move' in request.POST:
-            if request.POST.get('isSelectAll') == 'True':
-                move_all_to_grouping(filter_data, grouping_object, request)
-            else:
-                target_ids = request.POST.getlist('selected-target')
-                move_selected_to_grouping(target_ids, grouping_object, request)
         if 'merge' in request.POST:
             target_ids = request.POST.getlist('selected-target')
             if len(target_ids) == 2:
                 return redirect('tom_targets:merge', pk1=target_ids[0], pk2=target_ids[1])
             else:
                 merge_error_message(request)
+        else:
+            try:
+                grouping_object = TargetList.objects.get(pk=grouping_id)
+            except Exception as e:
+                messages.error(request, 'Cannot find the target group with id={}; {}'.format(grouping_id, e))
+                return redirect(reverse('tom_targets:list') + '?' + query_string)
+            if not request.user.has_perm('tom_targets.view_targetlist', grouping_object):
+                messages.error(request, 'Permission denied.')
+                return redirect(reverse('tom_targets:list') + '?' + query_string)
 
+            if 'add' in request.POST:
+                if request.POST.get('isSelectAll') == 'True':
+                    add_all_to_grouping(filter_data, grouping_object, request)
+                else:
+                    targets_ids = request.POST.getlist('selected-target')
+                    add_selected_to_grouping(targets_ids, grouping_object, request)
+            if 'remove' in request.POST:
+                if request.POST.get('isSelectAll') == 'True':
+                    remove_all_from_grouping(filter_data, grouping_object, request)
+                else:
+                    targets_ids = request.POST.getlist('selected-target')
+                    remove_selected_from_grouping(targets_ids, grouping_object, request)
+            if 'move' in request.POST:
+                if request.POST.get('isSelectAll') == 'True':
+                    move_all_to_grouping(filter_data, grouping_object, request)
+                else:
+                    target_ids = request.POST.getlist('selected-target')
+                    move_selected_to_grouping(target_ids, grouping_object, request)
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 
 
