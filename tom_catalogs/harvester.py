@@ -1,14 +1,8 @@
 from django.conf import settings
+from django.apps import apps
 from importlib import import_module
 
 from tom_targets.models import Target
-
-DEFAULT_HARVESTER_CLASSES = [
-    'tom_catalogs.harvesters.simbad.SimbadHarvester',
-    'tom_catalogs.harvesters.ned.NEDHarvester',
-    'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
-    'tom_catalogs.harvesters.tns.TNSHarvester',
-]
 
 
 class MissingDataException(Exception):
@@ -54,7 +48,7 @@ class AbstractHarvester(object):
 def get_service_classes():
     """
     Gets the harvester classes available to this TOM as specified by ``TOM_HARVESTER_CLASSES`` in ``settings.py``. If
-    none are specified, returns the default set.
+    none are specified, returns the default set based on apps that are installed.
 
     :returns: dict of harvester classes, with keys being the name of the catalog and values being the harvester class
     :rtype: dict
@@ -62,7 +56,15 @@ def get_service_classes():
     try:
         TOM_HARVESTER_CLASSES = settings.TOM_HARVESTER_CLASSES
     except AttributeError:
-        TOM_HARVESTER_CLASSES = DEFAULT_HARVESTER_CLASSES
+        TOM_HARVESTER_CLASSES = []
+        for app in apps.get_app_configs():
+            try:
+                harvester_classes = app.havester_classes()
+                if harvester_classes:
+                    for item in harvester_classes:
+                        TOM_HARVESTER_CLASSES.append(item)
+            except AttributeError:
+                pass
 
     service_choices = {}
     for service in TOM_HARVESTER_CLASSES:
