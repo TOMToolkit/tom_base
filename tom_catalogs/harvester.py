@@ -54,8 +54,8 @@ def get_service_classes():
     :rtype: dict
     """
 
-    TOM_HARVESTER_CLASSES = getattr(settings, 'TOM_HARVESTER_CLASSES', []) + \
-                            getattr(settings, 'INCLUDE_HARVESTER_CLASSES', [])
+    TOM_HARVESTER_CLASSES = getattr(settings, 'TOM_HARVESTER_CLASSES', []) +\
+        getattr(settings, 'INCLUDE_HARVESTER_CLASSES', [])
     if not TOM_HARVESTER_CLASSES:
         for app in apps.get_app_configs():
             try:
