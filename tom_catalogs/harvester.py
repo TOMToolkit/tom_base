@@ -53,16 +53,17 @@ def get_service_classes():
     :returns: dict of harvester classes, with keys being the name of the catalog and values being the harvester class
     :rtype: dict
     """
-    try:
-        TOM_HARVESTER_CLASSES = settings.TOM_HARVESTER_CLASSES
-    except AttributeError:
-        TOM_HARVESTER_CLASSES = []
+
+    TOM_HARVESTER_CLASSES = getattr(settings, 'TOM_HARVESTER_CLASSES', []) + \
+                            getattr(settings, 'INCLUDE_HARVESTER_CLASSES', [])
+    if not TOM_HARVESTER_CLASSES:
         for app in apps.get_app_configs():
             try:
-                harvester_classes = app.havester_classes()
+                harvester_classes = app.harvester_classes()
                 if harvester_classes:
-                    for item in harvester_classes:
-                        TOM_HARVESTER_CLASSES.append(item)
+                    for class_path in harvester_classes:
+                        if class_path not in getattr(settings, 'EXCLUDE_HARVESTER_CLASSES', []):
+                            TOM_HARVESTER_CLASSES.append(class_path)
             except AttributeError:
                 pass
 

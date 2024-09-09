@@ -278,12 +278,11 @@ BROKERS = {
     }
 }
 
-TOM_HARVESTER_CLASSES = [
-    'tom_catalogs.harvesters.simbad.SimbadHarvester',
-    'tom_catalogs.harvesters.ned.NEDHarvester',
-    'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
-    'tom_catalogs.harvesters.tns.TNSHarvester',
-]
+# Include or exclude specific dot separated harvester classes. If not set, all harvesters will be included based on
+# app configurations. If INCLUDE_HARVESTER_CLASSES is set, only those harvesters will be included. If
+# EXCLUDE_HARVESTER_CLASSES is set, all harvesters except those will be included.
+# INCLUDE_HARVESTER_CLASSES = ['app.example.harvesters.ExampleHarvester']
+# EXCLUDE_HARVESTER_CLASSES = ['app.example.harvesters.ExampleHarvester']
 
 HARVESTERS = {
     'TNS': {

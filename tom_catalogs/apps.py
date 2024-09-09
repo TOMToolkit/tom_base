@@ -4,7 +4,7 @@ from django.apps import AppConfig
 class TomCatalogsConfig(AppConfig):
     name = 'tom_catalogs'
 
-    def havester_classes(self):
+    def harvester_classes(self):
         """
         Integration point for adding harvester classes to the dropdown options when ingesting targets from Catalogs.
         This method should return a list of dot separated harvester classes.
