@@ -47,8 +47,9 @@ class AbstractHarvester(object):
 
 def get_service_classes():
     """
-    Gets the harvester classes available to this TOM as specified by ``TOM_HARVESTER_CLASSES`` in ``settings.py``. If
-    none are specified, returns the default set based on apps that are installed.
+    Gets the harvester classes available to this TOM as specified by ``INCLUDE_HARVESTER_CLASSES`` in ``settings.py``.
+    If none are specified, returns the default set based on apps that are installed.
+    Use the ``EXCLUDE_HARVESTER_CLASSES`` setting in settings.py to exclude specific harvester classes.
 
     :returns: dict of harvester classes, with keys being the name of the catalog and values being the harvester class
     :rtype: dict
