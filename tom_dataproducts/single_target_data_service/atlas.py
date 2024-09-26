@@ -3,6 +3,7 @@ from astropy.time import Time
 from crispy_forms.layout import Div, HTML
 from django import forms
 from django.conf import settings
+from django.utils.safestring import mark_safe
 
 import tom_dataproducts.single_target_data_service.single_target_data_service as stds
 from tom_dataproducts.tasks import atlas_query
@@ -26,6 +27,12 @@ class AtlasForcedPhotometryQueryForm(stds.BaseSingleTargetDataServiceQueryForm):
         label='Max date (mjd):', required=False,
         widget=forms.NumberInput(attrs={'class': 'ml-2'})
     )
+    # This link highlights the most relevent help information
+    reduced_data_help_link = 'https://fallingstar-data.com/forcedphot/faq/#:~:text=you%20may%20also%20encounter%20' \
+                             'negative%20flux%20values%20when%20requesting%20%E2%80%9Creduced%E2%80%9D%20mode%2C%20' \
+                             'when%20photometry%20is%20forced%20on%20the%20target%20images%20(before%20differencing)'
+    use_reduced_data = forms.BooleanField(label=mark_safe(f'''<a href='{reduced_data_help_link}' target="_blank">
+    Use reduced data</a>'''), required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -66,6 +73,13 @@ class AtlasForcedPhotometryQueryForm(stds.BaseSingleTargetDataServiceQueryForm):
                 ),
                 css_class='form-row form-inline mb-4'
             ),
+            Div(
+                Div(
+                    'use_reduced_data',
+                    css_class='col-md-4',
+                ),
+                css_class='form-row form-inline mb-4'
+            ),
         )
 
     def clean(self):
@@ -102,6 +116,7 @@ class AtlasForcedPhotometryService(stds.BaseSingleTargetDataService):
         submits the query to the service
         """
         print(f"Querying Atlas service with params: {query_parameters}")
+        use_reduced = query_parameters.get('use_reduced_data', False)
         min_date_mjd = query_parameters.get('min_date_mjd')
         if not min_date_mjd:
             min_date_mjd = Time(query_parameters.get('min_date')).mjd
@@ -129,7 +144,7 @@ class AtlasForcedPhotometryService(stds.BaseSingleTargetDataService):
         else:
             query_succeeded = atlas_query(min_date_mjd, max_date_mjd,
                                           query_parameters.get('target_id'),
-                                          self.get_data_product_type())
+                                          self.get_data_product_type(), use_reduced)
             if not query_succeeded:
                 raise stds.SingleTargetDataServiceException(
                     "Atlas query failed, check the server logs for more information"

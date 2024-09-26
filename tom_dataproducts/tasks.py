@@ -21,7 +21,7 @@ logger.setLevel(logging.DEBUG)
 
 
 @dramatiq.actor(max_retries=0)
-def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type):
+def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type, use_reduced=False):
     logger.debug('Calling atlas query!')
     target = Target.objects.get(pk=target_id)
     headers = {"Authorization": f"Token {settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('api_key')}",
@@ -30,7 +30,8 @@ def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type):
     task_url = None
     while not task_url:
         with requests.Session() as s:
-            task_data = {"ra": target.ra, "dec": target.dec, "mjd_min": min_date_mjd, "send_email": False}
+            task_data = {"ra": target.ra, "dec": target.dec, "mjd_min": min_date_mjd, "send_email": False,
+                         "use_reduced": use_reduced}
             if max_date_mjd:
                 task_data['mjd_max'] = max_date_mjd
             resp = s.post(
