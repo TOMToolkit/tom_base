@@ -55,6 +55,8 @@ def get_service_classes():
     :rtype: dict
     """
 
+    # 'TOM_HARVESTER_CLASSES' in settings.py is deprecated and will be removed in a future release it is included here
+    # for backwards compatibility
     TOM_HARVESTER_CLASSES = getattr(settings, 'TOM_HARVESTER_CLASSES', []) +\
         getattr(settings, 'INCLUDE_HARVESTER_CLASSES', [])
     if not TOM_HARVESTER_CLASSES:
