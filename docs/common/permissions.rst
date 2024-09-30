@@ -14,7 +14,7 @@ The TOM Toolkit provides a permissions system that can be used in two different 
 ---------------
 
 When you first establish your TOM, ``django-guardian`` will create an ``AnonymousUser`` as the default user for the
-TOM. ``AnonymousUser`` is a special user that is used to represent users who are not logged in and only have permission
+TOM. ``AnonymousUser`` is a special user that is used to represent users who are not logged in and only has permission
 to see targets that are associated with the ``public`` group by default. This user is important for establishing what
 permissions are available to users who are not logged in and should not be removed. You can modify the permissions of
 ``AnonymousUser`` by using the Django admin interface or the methods described below.
