@@ -103,12 +103,12 @@ This will make the contents of ``newpage.html`` available under the path
 Who is AnonymousUser?
 ~~~~~~~~~~~~~~~~~~~~~
 
-AnonymousUser is a special profile that django-guardian, our permissions
+`AnonymousUser` is a special profile that django-guardian, our permissions
 library, creates automatically. AnonymousUser represents an
 unauthenticated user. The user has no first name, last name, or
 password, and allows unauthenticated users to view unprotected pages
-within your TOM. You can choose to delete the user if you don’t want any
-pages to be visible without logging in.
+within your TOM. Do not delete this user, as then an unauthorized user will not
+have access to the login page.
 
 How can I display an error message when authentication to an external facility fails?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
