@@ -25,4 +25,4 @@ options are needed.
 
 :doc:`Target Views <../api/tom_targets/views>` - Familiarize yourself with the available Target Views.
 
-:doc:`Target Groups <../api/tom_targets/groups>` - Check out the functions for operating on Target Groups.
+:doc:`Target Lists <../api/tom_targets/groups>` - Check out the functions for operating on Target Lists/Target Groups.
