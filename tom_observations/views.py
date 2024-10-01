@@ -227,7 +227,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         facility_context = facility.get_facility_context_data(target=target)
         context.update(facility_context)
 
-        context['facility_link'] = getattr(facility, 'link')
+        context['facility_link'] = getattr(facility, 'link', '')
 
         try:
             context['missing_configurations'] = ", ".join(facility.facility_settings.get_unconfigured_settings())
