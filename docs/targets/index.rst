@@ -13,7 +13,9 @@ Targets
 
 
 The ``Target``, along with the associated ``TargetList``, ``TargetExtra``, and ``TargetName``, are the core models of the 
-TOM Toolkit. The ``Target`` defines the concept of an astronomical target.
+TOM Toolkit. The ``Target`` defines the concept of an astronomical target through a number of parameters. This
+object is then used throughout the TOM to reference all the information a user or app needs to know about a target.
+More information on Targets can be found using the following pages:
 
 :doc:`Adding Custom Target Fields <target_fields>` - Learn how to add custom fields to your TOM Targets if the
 defaults do not suffice.
