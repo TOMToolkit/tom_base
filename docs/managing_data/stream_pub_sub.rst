@@ -16,6 +16,12 @@ need to copy your Hermes API Key from your Hermes profile page. When hermes shar
 buttons to open your data in hermes with the form pre-filled - this is a good option if you want to make slight changes
 to your message or data before sharing.
 
+To customize what data is sent to hermes from your ReducedDatum or Target models, please re-implement your own
+``tom_dataproducts.alertstreams.hermes.HermesDataConverter`` and customize the `get_hermes_*` methods to pull out
+the proper data you want to share. You then provide the class dotpath to your custom class in your TOM's settings
+for hermes ``DATA_SHARING`` in the `DATA_CONVERTER_CLASS` key. This is especially useful if you store extra target
+or datum information in custom associated models in your TOM or with custom model field keys.
+
 
 Configuring your TOM to Publish Data to a stream:
 *************************************************
@@ -33,6 +39,7 @@ for the various streams with which you wish to share data.
             'HERMES_API_KEY': os.getenv('HERMES_API_KEY', 'set HERMES_API_KEY value in environment'),
             'DEFAULT_AUTHORS': os.getenv('HERMES_DEFAULT_AUTHORS', 'set your default authors here'),
             'USER_TOPICS': ['hermes.test', 'tomtoolkit.test']  # You must have write permissions on these topics
+            'DATA_CONVERTER_CLASS': 'tom_dataproducts.alertstreams.hermes.HermesDataConverter'
         },
     }
 
