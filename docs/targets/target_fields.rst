@@ -260,6 +260,10 @@ the built in fields whenever possible.
 
 Enabling extra fields
 ~~~~~~~~~~~~~~~~~~~~~
+``EXTRA_FIELDS`` can be implemented in two different ways. If a user wants to add a unique extra field to a individual
+target, that can be done by either adding a "Tag" to a target through the UI, or by adding a single extra field
+programmatically. If the user instead wants a common extra field to be available for all targets, they can follow these
+instructions:
 
 To start, find the ``EXTRA_FIELDS`` definition in your ``settings.py``:
 
