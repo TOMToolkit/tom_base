@@ -24,14 +24,14 @@ Please use the [issue tracker](https://github.com/TOMToolkit/tom_base/issues) to
 report any issues or support questions.
 
 ## Development Team 
-The lead developers of the TOM Toolkit are [William Lindstrom](https://lco.global/people/>)
-and [Joey Chatelain](https://sites.google.com/site/josephchatelain>),
+The lead developers of the TOM Toolkit are [William Lindstrom](https://lco.global/people/)
+and [Joey Chatelain](https://sites.google.com/site/josephchatelain),
 professional software developers with the Las Cumbres Observatory software team,
-together with [Jon Nation](https://lco.global/people/>), [Curtis McCully](https://lco.global/people/>),
-[Matt Daily](https://lco.global/people/>) and [Mark Bowman](https://lco.global/people/>).  [Rachel Street](https://lco.global/user/rstreet/>) is the project's Principle Investigator.
+together with [Jon Nation](https://lco.global/people/), [Curtis McCully](https://lco.global/people/),
+[Matt Daily](https://lco.global/people/) and [Mark Bowman](https://lco.global/people/).  [Rachel Street](https://lco.global/user/rstreet/) is the project's Principle Investigator.
 The TOM Toolkit is grateful for the advice and collaboration with [Andy Howell](http://www.dahowell.com/),
-[Edward Gomez](https://www.zemogle.net/>), Craig Pellegrino, Jamie Burke and the rest of the LCO Science team.
-The [original Toolkit](https://zenodo.org/records/4437764>) was developed by
+[Edward Gomez](https://www.zemogle.net/), Craig Pellegrino, Jamie Burke and the rest of the LCO Science team.
+The [original Toolkit](https://zenodo.org/records/4437764) was developed by
 Austin Riba, David Collom and William Lindstrom.
 
 Our team very much welcome input from the community, and we are grateful to
@@ -104,7 +104,7 @@ flows--an open registration, and a registration that requires administrator appr
 ## About the TOM Toolkit
 
 The TOM Toolkit is managed by Las Cumbres Observatory, with generous
-financial support from the [National Science Foundation](https://www.nsf.gov/>) grant 2209852.
-We are also grateful for support from the [Heising-Simons Foundation](https://hsfoundation.org>) 
-and the [Zegar Family Foundation](https://sites.google.com/zegarff.org/site>) at the start
+financial support from the [National Science Foundation](https://www.nsf.gov/) grant 2209852.
+We are also grateful for support from the [Heising-Simons Foundation](https://hsfoundation.org) 
+and the [Zegar Family Foundation](https://sites.google.com/zegarff.org/site) at the start
 of the project.  
