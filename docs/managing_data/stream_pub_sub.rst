@@ -20,7 +20,9 @@ To customize what data is sent to hermes from your ReducedDatum or Target models
 ``tom_dataproducts.alertstreams.hermes.HermesDataConverter`` and customize the `get_hermes_*` methods to pull out
 the proper data you want to share. You then provide the class dotpath to your custom class in your TOM's settings
 for hermes ``DATA_SHARING`` in the `DATA_CONVERTER_CLASS` key. This is especially useful if you store extra target
-or datum information in custom associated models in your TOM or with custom model field keys.
+or datum information in custom associated models in your TOM or with custom model field keys. For more information on
+the structure of data HERMES expects, check the `API Schema Registry here <https://hermes.lco.global/about>`_. This is
+the structure you should be mapping your ReducedDatum values to in the Data Converter Class.
 
 
 Configuring your TOM to Publish Data to a stream:

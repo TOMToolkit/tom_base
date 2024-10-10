@@ -77,8 +77,10 @@ class HermesDataConverter():
             'telescope': datum.value.get('telescope'),
             'instrument': datum.value.get('instrument'),
             'bandpass': datum.value.get('filter', ''),
-            'brightness_unit': convert_astropy_brightness_to_hermes(datum.value.get('unit')),
         }
+        brightness_unit = convert_astropy_brightness_to_hermes(datum.value.get('unit'))
+        if brightness_unit:
+            phot_table_row['brightness_unit'] = brightness_unit
         if datum.value.get('magnitude', None):
             phot_table_row['brightness'] = datum.value['magnitude']
         else:
