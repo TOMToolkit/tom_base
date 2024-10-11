@@ -81,7 +81,7 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
         observation_ids = []
         try:
             facility = get_service_class(self.request.data['facility'])()
-            observation_form_class = facility.observation_forms[self.request.data['observation_type']]
+            observation_form_class = facility.get_form_classes_for_display()[self.request.data['observation_type']]
             target = Target.objects.get(pk=self.request.data['target_id'])
             observing_parameters = self.request.data['observing_parameters']
         except KeyError as ke:
