@@ -1100,9 +1100,11 @@ class LCOSpectroscopicSequenceForm(LCOOldStyleObservationForm):
 class LCOFacility(OCSFacility):
     """
     The ``LCOFacility`` is the interface to the Las Cumbres Observatory Observation Portal. For information regarding
-    LCO observing and the available parameters, please see https://observe.lco.global/help/.
+    LCO observing and the available parameters, please see the Getting Started Guide at
+    https://lco.global/documents/2505/GettingStartedontheLCONetwork.latest.pdf.
     """
     name = 'LCO'
+    link = 'https://lco.global/documents/2505/GettingStartedontheLCONetwork.latest.pdf'
     observation_forms = {
         'IMAGING': LCOImagingObservationForm,
         'MUSCAT_IMAGING': LCOMuscatImagingObservationForm,
