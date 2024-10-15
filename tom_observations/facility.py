@@ -190,6 +190,7 @@ class BaseObservationFacility(ABC):
     the other BaseObservationFacilities.
     """
     name = 'BaseObservation'
+    observation_forms = {}
 
     def __init__(self):
         self.user = None
@@ -226,6 +227,16 @@ class BaseObservationFacility(ABC):
         """
         This method takes in an observation type and returns the form type that matches it.
         """
+
+    def get_form_classes_for_display(self, **kwargs):
+        """
+        This method returns a dictionary of the format:
+
+            {'OBSERVATION_TYPE': FacilityFormClass}
+
+        Typically this will be all or a subset of the forms in `self.observation_forms`
+        """
+        return self.observation_forms
 
     def get_facility_context_data(self, **kwargs):
         """

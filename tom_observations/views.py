@@ -205,7 +205,8 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         # reloaded due to form errors, only repopulate the form that was submitted.
         observation_type_choices = []
         initial = self.get_initial()
-        for observation_type, observation_form_class in self.get_facility_class().observation_forms.items():
+        observation_form_classes = self.get_facility_class()().get_form_classes_for_display(**kwargs)
+        for observation_type, observation_form_class in observation_form_classes.items():
             form_data = {**initial, **{'observation_type': observation_type}}
             # Repopulate the appropriate form with form data if the original submission was invalid
             if observation_type == self.request.POST.get('observation_type'):
