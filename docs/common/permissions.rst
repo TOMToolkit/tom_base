@@ -2,7 +2,7 @@ The Permissions System
 ======================
 
 The permissions system is built on top of
-`django-guardian <https://django-guardian.readthedocs.io/en/stable/>`_. It has been
+`django-guardian <https://django-guardian.readthedocs.io/en/stable/>`__. It has been
 kept as simple as possible, but TOM developers may extend the capabilities if
 needed.
 
@@ -18,6 +18,9 @@ TOM. ``AnonymousUser`` is a special user that is used to represent users who are
 to see targets that are associated with the ``public`` group by default. This user is important for establishing what
 permissions are available to users who are not logged in and should not be removed. You can modify the permissions of
 ``AnonymousUser`` by using the Django admin interface or the methods described below.
+
+*Note:* This ``AnonymousUser`` is not the same as the ``AnonymousUser`` object that is part of
+`Django's authentication system. <https://docs.djangoproject.com/en/5.1/ref/contrib/auth/#anonymoususer-object>`__
 
 
 

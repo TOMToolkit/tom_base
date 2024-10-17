@@ -40,8 +40,8 @@ I try to observe a target with LCO but get an error.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You might not have added your LCO api key to your settings file under
-the ``FACILITIES`` settings. See :doc:`Custom
-Settings </common/customsettings#facilities>` for more
+the ``FACILITIES`` settings. See :ref:`Custom
+Settings <custom_facility_settings>` for more
 details.
 
 How do I create a super user (PI)?
@@ -109,6 +109,9 @@ unauthenticated user. The user has no first name, last name, or
 password, and allows unauthenticated users to view unprotected pages
 within your TOM. Do not delete this user, as then an unauthorized user will not
 have access to the login page.
+
+*Note:* This ``AnonymousUser`` is not the same as the ``AnonymousUser`` object that is part of
+`Django's authentication system. <https://docs.djangoproject.com/en/5.1/ref/contrib/auth/#anonymoususer-object>`_
 
 How can I display an error message when authentication to an external facility fails?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
