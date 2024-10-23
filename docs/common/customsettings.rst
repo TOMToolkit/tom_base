@@ -86,6 +86,8 @@ documentation on `Adding Custom Fields to
 Targets </targets/target_fields>`__ for an explanation of how to use
 this feature.
 
+.. _custom_facility_settings:
+
 `FACILITIES <#facilities>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
