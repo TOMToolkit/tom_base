@@ -9,6 +9,7 @@ Observing Facilities and Observations
   ../common/scripts
   strategies
   observation_module
+  ../api/tom_observations/models
   ../api/tom_observations/facilities
   ../api/tom_observations/views
 
@@ -24,6 +25,8 @@ the result of prior observations, as well as how to leverage observing templates
 
 :doc:`Building a TOM Observation Facility Module <observation_module>` - Learn to build a module which will
 allow your TOM to submit observation requests to observatories.
+
+:doc:`Observation Models <../api/tom_observations/models>` - Learn about the models used to store observation data.
 
 :doc:`Facility Modules <../api/tom_observations/facilities>` - Take a look at the supported facilities.
 
