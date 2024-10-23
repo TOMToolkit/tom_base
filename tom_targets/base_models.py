@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils.module_loading import import_string
 from guardian.shortcuts import assign_perm
 from math import radians
+from astropy.coordinates import get_constellation, SkyCoord
 
 from tom_common.hooks import run_hook
 
@@ -487,6 +488,20 @@ class BaseTarget(models.Model):
         :rtype: list
         """
         return [self.name] + [alias.name for alias in self.aliases.all()]
+
+    @property
+    def constellation(self):
+        """
+        Gets the constellation of this target if it is sidereal
+
+        :returns: The constellation of this target according to astropy
+        :rtype: str
+        """
+        constellation = None
+        if self.type == 'SIDEREAL':
+            coordinates = SkyCoord(self.ra, self.dec, frame='icrs', unit='deg')
+            constellation = get_constellation(coordinates)
+        return constellation
 
     @property
     def future_observations(self):
