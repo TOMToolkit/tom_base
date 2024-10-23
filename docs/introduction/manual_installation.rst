@@ -11,15 +11,8 @@ Manually Installing the TOM Toolkit and Django
 
 If you prefer to build your system manually, here's how.
 
-Firstly, the TOM toolkit requires you to have Python >= 3.7 installed
+Firstly, the TOM toolkit requires you to have Python >= 3.8.1, < 3.12 installed
 on your machine.
-
-If you are using Python 3.6 and cannot upgrade to 3.7, install the
-``dataclasses`` backport:
-
-::
-
-   pip install dataclasses
 
 We recommend using a `virtual
 environment <https://docs.python.org/3/tutorial/venv.html>`__ for your
@@ -82,7 +75,8 @@ that it looks like this:
 
 
 Now you can run the ``tom_setup`` app.  It contains a script that will
-bootstrap a new TOM in your current project. Run it like this:
+bootstrap a new TOM in your current project. First return to the main folder that contains ``manage.py`` and run
+``tom_setup`` like this:
 
 ::
 
