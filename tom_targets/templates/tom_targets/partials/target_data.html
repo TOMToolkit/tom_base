@@ -20,6 +20,10 @@
     {% if key == 'dec' %}
       <dt class="col-sm-6">&nbsp;</dt>
       <dd class="col-sm-6">{{ value|deg_to_sexigesimal:"dms" }}</dd>
+      {% if target.constellation %}
+        <dt class="col-sm-6">Constellation</dt>
+        <dd class="col-sm-6">{{ target.constellation }}</dd>
+      {% endif %}
     {% endif%}
   {% endfor %}
 </dl>
