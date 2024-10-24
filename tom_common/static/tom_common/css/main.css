@@ -27,3 +27,66 @@ textarea {
     overflow-y: auto;
     overflow-x: hidden;
 }
+
+/* Create copy button class*/
+.copy-button {
+    opacity: 0.75; /* Make it slightly transparent */
+    cursor: pointer; /* change cursor on hover */
+    font-size: x-small; /* smaller font */
+    color: var(--secondary); /* secondary color */
+    padding: 0.25rem;
+    position: absolute;
+    top: 0.1rem; /* set close to the top of container */
+}
+
+.copy-button:hover {
+    opacity: 1; /* Make it fully opaque on hover */
+}
+
+/* extend basic toast to appear at top of page */
+.toast {
+  visibility: hidden; /* Hidden by default. Visible on click */
+  min-width: 250px; /* Set a default minimum width */
+  margin-left: -125px; /* Divide value of min-width by 2 */
+  background-color: var(--dark); /* success background color */
+  color: var(--light); /* White text color */
+  text-align: center; /* Centered text */
+  border-radius: 1rem; /* Rounded borders */
+  padding: 16px; /* Padding */
+  position: fixed; /* Sit on top of the screen */
+  z-index: 1; /* Add a z-index if needed */
+  left: 50%; /* Center the toast */
+  top: 60px; /* 30px from the bottom */
+}
+
+/* Change color of toast depending on class */
+.toast.success {
+  background-color: var(--success); /* success background color */
+  color: var(--light); /* White text color */
+}
+
+.toast.primary {
+  background-color: var(--primary); /* success background color */
+  color: var(--light); /* White text color */
+}
+
+.toast.warning {
+  background-color: var(--warning); /* success background color */
+  color: var(--dark); /* White text color */
+}
+
+.toast.danger {
+  background-color: var(--danger); /* success background color */
+  color: var(--light); /* White text color */
+}
+
+.toast.info {
+  background-color: var(--info); /* success background color */
+  color: var(--light); /* White text color */
+}
+
+/* Show the toast when set */
+.toast.show {
+  opacity: 1; /* Show the Toast */
+  visibility: visible; /* Show the Toast */
+}
