@@ -10,10 +10,14 @@ Copy Button:
 .. automodule:: tom_common.templatetags.tom_common_extras.copy_button
     :members:
 
-Toast:
-------------
+Popup Notification (Toast):
+---------------------------
+
+If you wish to add a small, but obvious, non-intrusive popup notification that will temporarily appear at the top
+of the page (commonly referred to as a Toast Notification), the TOMtoolkit provides the following strategy to do so.
+
 Add the toast class to a div to create a temporary notification at the top of the TOM.
-Add something like the following codeblock to your template. Anything tha can trigger a javascript function can be
+Add something like the following codeblock to your template. Anything that can trigger a javascript function can be
 used to show the toast.
 
 .. code-block:: html
@@ -37,7 +41,9 @@ used to show the toast.
     {% endblock scripts %}
 
 Change the background color of the toast by adding a class to the toast div.
-i.e. ``class="toast warning"`` will change the background color to yellow.
+i.e. ``class="toast warning"`` will change the background color to yellow (unless you have changed your root colors):
+
+|image0|
 
 The following classes are available:
  - primary
@@ -46,4 +52,4 @@ The following classes are available:
  - warning
  - danger
 
-
+.. |image0| image:: /_static/customize_templates_doc/toast_example.png
