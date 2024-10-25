@@ -96,6 +96,30 @@ def truncate_number(value):
         return value
 
 
+@register.filter
+def addstr(arg1, arg2):
+    """
+    Concatenate strings arg1 & arg2.
+    This filter is necessary when adding strings because the default `|add:` will try to add the args as INTs first
+    rather than concatenating them.
+    Example:
+    ``` {% some_var|addstr:'string' %} ```
+    """
+    return str(arg1) + str(arg2)
+
+
 @register.simple_tag
 def tom_name():
     return getattr(settings, 'TOM_NAME', 'TOM Toolkit')
+
+
+@register.inclusion_tag('tom_common/partials/copy_button.html')
+def copy_button(text_to_copy='', help_text='Copy'):
+    """Uses the `copy_button.html` partial to copy the `text_to_copy` to the clipboard.
+    The `help_text` is displayed as a tooltip when hovering over the button.
+    Use this tag to include a low-profile copy button in your template.
+    Example:
+    ```{% copy_button 'text to be copied' 'Help Text' %}```
+    """
+    return {'copy_text': str(text_to_copy),
+            'copy_help': str(help_text)}

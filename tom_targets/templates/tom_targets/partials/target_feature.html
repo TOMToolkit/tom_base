@@ -1,5 +1,15 @@
 {% load cache %}
-<h3>{{ target.name }}</h3>
+{% load tom_common_extras targets_extras %}
+
+<h3>{{ target.name }}
+{% if target.type == 'SIDEREAL' %}
+    {% with target.ra|deg_to_sexigesimal:"hms" as ra %}
+        {% with target.dec|deg_to_sexigesimal:"dms" as dec %}
+            {% copy_button ra|addstr:" "|addstr:dec 'Copy Coordinates' %}
+        {% endwith %}
+    {% endwith %}
+{% endif %}
+</h3>
 {% if target.featured_image %}
 {% cache None featured_image target.id %}
 <img src="{{ target.featured_image.get_preview }}" id="featured-image" onerror="this.style.display='none'">

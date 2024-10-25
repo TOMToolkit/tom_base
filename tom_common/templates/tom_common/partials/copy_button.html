@@ -1,0 +1,19 @@
+<a class="copy-button" title="{{ copy_help }}" onclick="CopyText('{{ copy_text }}')"><i class="fa fa-clone" aria-hidden="true"></i></a>
+
+<div id="copy-message" class="toast success">"{{ copy_text }}" copied to clipboard!</div>
+
+{% block scripts %}
+<script>
+  function CopyText( Text ) {
+  navigator.clipboard.writeText(Text);
+  // Get the toast DIV
+  var x = document.getElementById("copy-message");
+
+  // Add the "show" class to DIV
+  x.className += " show";
+
+  // After 3 seconds, remove the show class from DIV
+  setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+}
+</script>
+{% endblock scripts %}
