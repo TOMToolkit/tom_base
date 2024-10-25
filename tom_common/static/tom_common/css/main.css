@@ -28,7 +28,7 @@ textarea {
     overflow-x: hidden;
 }
 
-/* Create copy button class*/
+/* Create copy button class */
 .copy-button {
     opacity: 0.75; /* Make it slightly transparent */
     cursor: pointer; /* change cursor on hover */
