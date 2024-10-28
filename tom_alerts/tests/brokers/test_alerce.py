@@ -536,8 +536,9 @@ class TestALeRCEModuleCanary(TestCase):
         and are therefore consistent.
         """
         alert = self.broker.fetch_alert('ZTF20acnsdjd')
+        expected_alert = {'oid': 'ZTF20acnsdjd',
+                          'firstmjd': 59149.1119328998,
+                          }
 
-        self.assertDictContainsSubset({
-            'oid': 'ZTF20acnsdjd',
-            'firstmjd': 59149.1119328998,
-        }, alert)
+        self.assertEqual(alert, alert | expected_alert)
+
