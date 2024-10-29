@@ -541,4 +541,3 @@ class TestALeRCEModuleCanary(TestCase):
                           }
 
         self.assertEqual(alert, alert | expected_alert)
-
