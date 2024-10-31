@@ -158,7 +158,7 @@ class TestOCSBaseForm(TestCase):
             form = OCSTemplateBaseForm()
 
             instruments = form._get_instruments()
-            self.assertDictContainsSubset(test_instruments, instruments)
+            self.assertEqual(instruments, instruments | test_instruments)
             self.assertNotIn('0M4-SCICAM-SBIG', instruments)
 
         # Test that empty cache results in mock_instruments, and cache.set is called
@@ -169,7 +169,7 @@ class TestOCSBaseForm(TestCase):
             instruments = form._get_instruments()
             self.assertIn('0M4-SCICAM-SBIG', instruments)
             self.assertIn('SOAR_GHTS_REDCAM', instruments)
-            self.assertDictContainsSubset({'type': 'IMAGE'}, instruments['0M4-SCICAM-SBIG'])
+            self.assertEqual(instruments['0M4-SCICAM-SBIG'], instruments['0M4-SCICAM-SBIG'] | {'type': 'IMAGE'})
             mock_cache.set.assert_called()
 
     @patch('tom_observations.facilities.ocs.OCSBaseForm._get_instruments')

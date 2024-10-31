@@ -384,13 +384,13 @@ class TestUpdatingObservations(TestCase):
     def test_update_all_observations_for_facility(self):
         with mock.patch.object(FakeRoboticFacility, 'update_observation_status') as uos_mock:
             FakeRoboticFacility().update_all_observation_statuses()
-            self.assertEquals(uos_mock.call_count, 2)
+            self.assertEqual(uos_mock.call_count, 2)
 
     # Tests that only the observing records associated with the given target are updated
     def test_update_individual_target_observations_for_facility(self):
         with mock.patch.object(FakeRoboticFacility, 'update_observation_status', return_value='COMPLETED') as uos_mock:
             FakeRoboticFacility().update_all_observation_statuses(target=self.t1)
-            self.assertEquals(uos_mock.call_count, 2)
+            self.assertEqual(uos_mock.call_count, 2)
 
 
 class TestGetVisibility(TestCase):
