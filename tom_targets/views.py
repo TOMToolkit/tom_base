@@ -35,7 +35,8 @@ from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
-from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetMergeForm
+from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetMergeForm,\
+    UnknownTypeTargetCreateForm
 from tom_targets.sharing import share_target_with_tom
 from tom_targets.merge import target_merge
 from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
@@ -312,6 +313,8 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
             return SiderealTargetCreateForm
         elif self.object.type == Target.NON_SIDEREAL:
             return NonSiderealTargetCreateForm
+        else:
+            return UnknownTypeTargetCreateForm
 
     def get_initial(self):
         """
