@@ -59,6 +59,14 @@ def verbose_name(instance, field_name):
     return instance._meta.get_field(field_name).verbose_name.title()
 
 
+@register.simple_tag
+def help_text(instance, field_name):
+    """
+    Displays the help text from a Django model field
+    """
+    return instance._meta.get_field(field_name).help_text
+
+
 @register.inclusion_tag('comments/list.html', takes_context=True)
 def recent_comments(context, limit=10):
     """
