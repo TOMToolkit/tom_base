@@ -10,7 +10,7 @@
   {% endfor %}
   {% for key, value in target.as_dict.items %}
     {% if value and key != 'name' %}
-      <dt class="col-sm-6">{% verbose_name target key %}</dt>
+      <dt class="col-sm-6" title="{% help_text target key %}">{% verbose_name target key %}</dt>
       <dd class="col-sm-6">{{ value|truncate_number }}</dd>
     {% endif %}
     {% if key == 'ra' %}
