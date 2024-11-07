@@ -367,7 +367,7 @@ class TestTargetCreate(TestCase):
         target = SiderealTargetFactory.create()
         target.save(extras={'foo': '1984'})
         te = target.targetextra_set.get(key='foo')
-        self.assertEquals(te.typed_value('number'), 1984.0)
+        self.assertEqual(te.typed_value('number'), 1984.0)
         self.assertIsNone(te.typed_value('datetime'))
 
     def test_non_sidereal_required_fields(self):

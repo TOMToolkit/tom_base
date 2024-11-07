@@ -154,6 +154,18 @@ class NonSiderealTargetCreateForm(TargetForm):
                                         field.name not in SIDEREAL_FIELDS + IGNORE_FIELDS + NON_SIDEREAL_FIELDS]
 
 
+class UnknownTypeTargetCreateForm(TargetForm):
+    """If we don't know the type, this provides a generic Target Creation form that requires type to be set.
+    The only difference between this and the base TargetForm is that the 'type' field is required, and not hidden.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['type'].required = True
+
+    class Meta(TargetForm.Meta):
+        widgets = {}
+
+
 class TargetVisibilityForm(forms.Form):
     start_time = forms.DateTimeField(required=True, label='Start Time', widget=forms.TextInput(attrs={'type': 'date'}))
     end_time = forms.DateTimeField(required=True, label='End Time', widget=forms.TextInput(attrs={'type': 'date'}))

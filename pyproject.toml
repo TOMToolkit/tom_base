@@ -52,8 +52,8 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<3.12"
-numpy = "~1.24,<2"
+python = ">=3.9.0,<3.13"
+numpy = ">1.24,<2.2"
 astroquery = "<1"
 astroplan = ">=0.8,<0.11"
 astropy = [
@@ -81,16 +81,18 @@ plotly = "<6"
 python-dateutil = "<3"
 requests = "<3"
 specutils = "<2"
+docutils = "!=0.21.post1"
+sphinx-design = "^0.6.1"
 
 [tool.poetry.group.test.dependencies]
 responses = ">=0.23,<0.26"
 factory_boy = ">3.2.1,<3.4"
+psycopg2 = "*" # for testing postgres
 
 [tool.poetry.group.docs.dependencies]
 recommonmark = "~0.7"
-sphinx = ">=4,<8"
+sphinx = ">=5,<8"
 sphinx-rtd-theme = ">=1.0,<2.1"
-sphinx-panels = "~0.6"
 sphinx-copybutton = "~0.5"
 
 [tool.poetry.group.coverage.dependencies]

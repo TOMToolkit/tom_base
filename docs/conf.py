@@ -52,7 +52,7 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
-    'sphinx_panels',
+    'sphinx_design',
     'sphinx_copybutton',
 ]
 
