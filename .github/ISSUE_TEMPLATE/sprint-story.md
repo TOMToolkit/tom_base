@@ -1,3 +1,12 @@
+---
+name: Sprint Story
+about: This is a template for a sprint story.
+title: ''
+labels: ''
+assignees: ''
+
+---
+
 **Effort:** 3
 
 ### Description:
@@ -10,4 +19,4 @@ As a Softie, I like code
 
 
 ### Blockers:
-- TOMToolkit/<<repo>>#<<issue>>
+- TOMToolkit/repo#issue
