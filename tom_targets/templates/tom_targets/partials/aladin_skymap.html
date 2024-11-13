@@ -37,6 +37,30 @@ A.init.then(() => {
         popup_info = ['RA: '.concat(target.ra, '<br>',  'Dec: ', target.dec)];
         cat.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popup_info})]);
     }
+
+    const now = new Date();
+    const moonIllumination = SunCalc.getMoonIllumination(now);
+    const moonPhase = moonIllumination.phase;
+    console.log("geocentric moon phase" , moonPhase);
+
+    // get geocentric Moon coordinates, since we dont have a lat/lon
+    const moon = SunCalc.geocentricMoonCoords(now);
+    console.log("geocentric moon coords" , moon);
+
+    // add catalogs for Moom and Sun
+    const moonCatalog = A.catalog(
+        {name: 'Moon',
+        shape: 'circle',
+        color: 'white',
+        sourceSize: 26});
+
+    moonCatalog.addSources([A.marker(moon.ra, moon.dec,
+        {popupTitle: 'Geocentric Moon position',
+         popupDesc: 'Moon phase: ' + moonPhase, // TODO: make this descriptive (like "Waxing Crescent")
+        })]);
+
+    aladin.addCatalog(moonCatalog);
+
     });
 </script>
 
