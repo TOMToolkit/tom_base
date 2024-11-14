@@ -33,12 +33,14 @@ A.init.then(() => {
         cat.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popup_info})]);
     }
 
+    const moonIllumination = {{ moon_illumination|safe }}.toFixed(3);
+    const moonGreyscale = 255 * moonIllumination;
 
-    // add catalogs for Moom and Sun
+    // add catalog for the Moon
     const moonCatalog = A.catalog(
         {name: 'Moon',
         shape: 'circle',
-        color: 'white',
+        color: `rgb(${moonGreyscale}, ${moonGreyscale}, ${moonGreyscale})`,
         sourceSize: 26});
 
     moonCatalog.addSources([A.marker(moon.ra, moon.dec,
