@@ -22,12 +22,12 @@ A.init.then(() => {
     for (var i = 0; i < targets.length; i++) {
         var target = targets[i];
 
-        var dot_definition = {
+        var catalogOptions = {
             name: target.name,
-            color: 'blue',
+            color: 'rgb(46, 107, 131)', // TOMToolkit Blue
             sourceSize: 16};
 
-        var cat = A.catalog(dot_definition);
+        var cat = A.catalog(catalogOptions);
         aladin.addCatalog(cat);
         popup_info = ['RA: '.concat(target.ra, '<br>',  'Dec: ', target.dec)];
         cat.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popup_info})]);
