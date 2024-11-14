@@ -1,11 +1,6 @@
-{% load static %}
 <!-- embedding Aladin Lite example code found at: https://aladin.cds.unistra.fr/AladinLite/doc/  -->
 <div id="aladin-lite-div" style="width:auto; height:700px; margin:auto; margin-top: 20px;" ></div>
 <script type="text/javascript" src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
-
-<!-- SunCalc is a tiny library for calculating sun/moon positions and phases. -->
-<script src="{% static 'tom_targets/js/suncalc.js' %}" defer></script>
-
 <script type="text/javascript">
 
 let aladin;
@@ -38,14 +33,6 @@ A.init.then(() => {
         cat.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popup_info})]);
     }
 
-    const now = new Date();
-    const moonIllumination = SunCalc.getMoonIllumination(now);
-    const moonPhase = moonIllumination.phase;
-    console.log("geocentric moon phase" , moonPhase);
-
-    // get geocentric Moon coordinates, since we dont have a lat/lon
-    const moon = SunCalc.geocentricMoonCoords(now);
-    console.log("geocentric moon coords" , moon);
 
     // add catalogs for Moom and Sun
     const moonCatalog = A.catalog(
