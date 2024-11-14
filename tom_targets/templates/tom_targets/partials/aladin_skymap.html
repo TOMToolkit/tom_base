@@ -43,9 +43,14 @@ A.init.then(() => {
         color: `rgb(${moonGreyscale}, ${moonGreyscale}, ${moonGreyscale})`,
         sourceSize: 26});
 
-    moonCatalog.addSources([A.marker(moon.ra, moon.dec,
-        {popupTitle: 'Geocentric Moon position',
-         popupDesc: 'Moon phase: ' + moonPhase, // TODO: make this descriptive (like "Waxing Crescent")
+    const moonRaDeg = {{ moon_ra|safe }};
+    const moonDecDeg = {{ moon_dec|safe }};
+
+    const popupMoonDescription = `Illumination: ${moonIllumination} <br> RA: ${moonRaDeg.toFixed(4)} <br> Dec: ${moonDecDeg.toFixed(4)}`;
+
+    moonCatalog.addSources([A.marker(moonRaDeg, moonDecDeg,
+        {popupTitle: 'Geocentric Moon',
+        popupDesc: popupMoonDescription
         })]);
 
     aladin.addCatalog(moonCatalog);
