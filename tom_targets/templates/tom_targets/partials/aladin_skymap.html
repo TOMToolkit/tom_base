@@ -55,6 +55,25 @@ A.init.then(() => {
 
     aladin.addCatalog(moonCatalog);
 
+    // now add the sun in its own catalog
+    const sunCatalog = A.catalog(
+        {name: 'Sun',
+        shape: 'circle',
+        color: 'yellow',
+        sourceSize: 15});
+
+    const sunRaDeg = {{ sun_ra|safe }};
+    const sunDecDeg = {{ sun_dec|safe }};
+
+    const popupSunDescription = `RA: ${sunRaDeg.toFixed(4)} <br> Dec: ${sunDecDeg.toFixed(4)}`;
+
+    sunCatalog.addSources([A.marker(sunRaDeg, sunDecDeg,
+        {popupTitle: 'Geocentric Sun',
+        popupDesc: popupSunDescription,
+        })]);
+
+    aladin.addCatalog(sunCatalog);
+
     });
 </script>
 
