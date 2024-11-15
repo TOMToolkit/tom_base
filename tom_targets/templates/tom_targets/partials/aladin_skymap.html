@@ -20,19 +20,20 @@ A.init.then(() => {
     // extract the targets from the context
     var targets = {{ targets|safe }}; //targets cannot be a queryset; here it is a list of dictionaries
 
+    // define catalog for the targets
+    var catalogOptions = {
+        name: 'Targets',
+        color: 'rgb(46, 107, 131)', // TOMToolkit Blue
+        sourceSize: 16};
+    var targetCatalog = A.catalog(catalogOptions);
+
+    // add targets to the catalog
     for (var i = 0; i < targets.length; i++) {
         var target = targets[i];
-
-        var catalogOptions = {
-            name: target.name,
-            color: 'rgb(46, 107, 131)', // TOMToolkit Blue
-            sourceSize: 16};
-
-        var cat = A.catalog(catalogOptions);
-        aladin.addCatalog(cat);
-        popup_info = ['RA: '.concat(target.ra, '<br>',  'Dec: ', target.dec)];
-        cat.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popup_info})]);
+        popupInfo = ['RA: '.concat(target.ra, '<br>',  'Dec: ', target.dec)];
+        targetCatalog.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popupInfo})]);
     }
+    aladin.addCatalog(targetCatalog);
 
     // extract Moon information from the context
     const moonRaDeg = {{ moon_ra|safe }};
