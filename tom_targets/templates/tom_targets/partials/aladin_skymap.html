@@ -16,7 +16,8 @@ A.init.then(() => {
     });
     
     aladin.setCooGrid({ color: 'grey', labelSize: 10 });
-    
+
+    // extract the targets from the context
     var targets = {{ targets|safe }}; //targets cannot be a queryset; here it is a list of dictionaries
 
     for (var i = 0; i < targets.length; i++) {
@@ -33,18 +34,18 @@ A.init.then(() => {
         cat.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popup_info})]);
     }
 
+    // extract Moon information from the context
+    const moonRaDeg = {{ moon_ra|safe }};
+    const moonDecDeg = {{ moon_dec|safe }};
     const moonIllumination = {{ moon_illumination|safe }}.toFixed(3);
     const moonGreyscale = 255 * moonIllumination;
 
     // add catalog for the Moon
-    const moonCatalog = A.catalog(
-        {name: 'Moon',
+    const moonCatalog = A.catalog({
+        name: 'Moon',
         shape: 'circle',
         color: `rgb(${moonGreyscale}, ${moonGreyscale}, ${moonGreyscale})`,
         sourceSize: 26});
-
-    const moonRaDeg = {{ moon_ra|safe }};
-    const moonDecDeg = {{ moon_dec|safe }};
 
     const popupMoonDescription = `Illumination: ${moonIllumination} <br> RA: ${moonRaDeg.toFixed(4)} <br> Dec: ${moonDecDeg.toFixed(4)}`;
 
@@ -56,8 +57,8 @@ A.init.then(() => {
     aladin.addCatalog(moonCatalog);
 
     // now add the sun in its own catalog
-    const sunCatalog = A.catalog(
-        {name: 'Sun',
+    const sunCatalog = A.catalog({
+        name: 'Sun',
         shape: 'circle',
         color: 'yellow',
         sourceSize: 15});
