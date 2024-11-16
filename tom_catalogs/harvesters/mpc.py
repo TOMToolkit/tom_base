@@ -1,3 +1,5 @@
+import json
+import requests
 from tom_catalogs.harvester import AbstractHarvester
 
 from astroquery.mpc import MPC
@@ -29,4 +31,27 @@ class MPCHarvester(AbstractHarvester):
         target.inclination = result['inclination']
         target.mean_daily_motion = result['mean_daily_motion']
         target.semimajor_axis = result['semimajor_axis']
+        return target
+
+
+class MPCExplorerHarvester(AbstractHarvester):
+    """
+    The ``MPCExplorerHarvester`` is the new API interfact to the Minor Planet Center catalog. For information regarding the Minor Planet
+    Center catalog, please see https://minorplanetcenter.net/ or
+    https://data.minorplanetcenter.net/explorer/
+    """
+
+    name = 'MPC'
+
+    def query(self, term):
+        response = requests.get("https://data.minorplanetcenter.net/api/query-identifier", data=term)
+        if response.ok:
+            self.catalog_data = response.json()
+
+    def to_target(self):
+        target = super().to_target()
+        result = self.catalog_data
+        print(result)
+        target.type = 'NON_SIDEREAL'
+
         return target
