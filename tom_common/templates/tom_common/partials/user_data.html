@@ -1,0 +1,44 @@
+{% load tom_common_extras %}
+
+<div class="card">
+    <div class="card-header">
+        <div style="display: flex; justify-content: space-between">
+            <h4 class="card-title">User Info</h4>
+            <div>
+                <a title="Edit" href="{% url 'user-update' pk=user.id %}" ><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                <a title="Remove User" data-toggle="modal" data-target="#userDeleteModal" href="#" ><i class="fa fa-trash" aria-hidden="true"></i></a>
+            </div>
+        </div>
+    </div>
+  <div class="card-body">
+    <dl class="row">
+        {% for key, value in profile_data.items %}
+            {% if value %}
+                <dt class="col-sm-6" >{% verbose_name user key %}</dt>
+                <dd class="col-sm-6">{{ value }}</dd>
+            {% endif %}
+        {% endfor %}
+    </dl>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="userDeleteModal" tabindex="-1" role="dialog" aria-labelledby="userDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header alert-danger">
+        <h5 class="modal-title" id="userDeleteModalLabel">Warning: This will permanently delete user.</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          Are you sure that you want to remove <b>{{ user.username }}</b> from {% tom_name %}?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+       <a href="{% url 'user-delete' user.id %}" class="btn btn-danger">Delete User</a>
+      </div>
+    </div>
+  </div>
+</div>

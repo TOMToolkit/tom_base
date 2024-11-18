@@ -2,6 +2,7 @@ import logging
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.edit import UpdateView, CreateView
+from django.views.generic.detail import DetailView
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -68,6 +69,14 @@ class UserDeleteView(SuperuserRequiredMixin, DeleteView):
     View that handles deletion of a ``User``. Requires authorization.
     """
     success_url = reverse_lazy('user-list')
+    model = User
+
+
+class UserDetailView(LoginRequiredMixin, DetailView):
+    """
+    View to handle creating a user profile page. Requires a login.
+    """
+    template_name = 'tom_common/user_profile.html'
     model = User
 
 

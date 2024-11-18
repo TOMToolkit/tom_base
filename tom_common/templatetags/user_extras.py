@@ -1,5 +1,6 @@
 from django import template
 from django.contrib.auth.models import Group, User
+from django.forms.models import model_to_dict
 
 register = template.Library()
 
@@ -23,4 +24,17 @@ def user_list(context):
     return {
         'request': context['request'],
         'users': User.objects.all()
+    }
+
+
+@register.inclusion_tag('tom_common/partials/user_data.html')
+def user_data(user):
+    """
+    Returns the user information as a dictionary.
+    """
+    exlcude_fields = ['password', 'last_login', 'id', 'is_active']
+    user_fields = [field.name for field in user._meta.fields if field.name not in exlcude_fields]
+    return {
+        'user': user,
+        'profile_data': model_to_dict(user, fields=user_fields),
     }
