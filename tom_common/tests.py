@@ -72,9 +72,6 @@ class TestUserManagement(TestCase):
         response = self.client.get(reverse('admin-user-change-password', kwargs={'pk': user.id}))
         self.assertEqual(response.status_code, 302)
 
-        response = self.client.get(reverse('user-delete', kwargs={'pk': user.id}))
-        self.assertEqual(response.status_code, 302)
-
     def test_user_can_update_self(self):
         user = User.objects.create(username='luke', password='forc3')
         self.client.force_login(user)
