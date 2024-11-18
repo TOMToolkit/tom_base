@@ -64,9 +64,9 @@ class UserListView(LoginRequiredMixin, TemplateView):
     template_name = 'auth/user_list.html'
 
 
-class UserDeleteView(SuperuserRequiredMixin, DeleteView):
+class UserDeleteView(LoginRequiredMixin, DeleteView):
     """
-    View that handles deletion of a ``User``. Requires authorization.
+    View that handles deletion of a ``User``. Requires login.
     """
     success_url = reverse_lazy('user-list')
     model = User
