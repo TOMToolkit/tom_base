@@ -41,21 +41,43 @@ A.init.then(() => {
     const moonIllumination = {{ moon_illumination|safe }}.toFixed(3);
     const moonGreyscale = 255 * moonIllumination;
 
-    // add catalog for the Moon
-    const moonCatalog = A.catalog({
-        name: 'Moon',
-        shape: 'circle',
-        color: `rgb(${moonGreyscale}, ${moonGreyscale}, ${moonGreyscale})`,
-        sourceSize: 26});
+    // get a unicode representation of the Moon based on illumination fraction
+    var unicodeMoon;
+    if (moonIllumination <= 0.125 ) {
+        unicodeMoon = "\uD83C\uDF11";
+    } else if (moonIllumination <= 0.375) {
+        unicodeMoon = "\uD83C\uDF12";
+    } else if (moonIllumination <= 0.625) {
+        unicodeMoon = "\uD83C\uDF13";
+    } else if (moonIllumination <= 0.875) {
+        unicodeMoon = "\uD83C\uDF14";
+    } else if (moonIllumination <= 1.0) {
+        unicodeMoon = "\uD83C\uDF15";
+    }
+
+    // Create a text based symbol for the moon centered on the source coordinates
+    var drawMoon = function(source, canvasCtx) {
+
+        canvasCtx.globalAlpha = 1;
+
+        canvasCtx.font = '25px Arial';
+        canvasCtx.fillStyle = '#eee';
+        canvasCtx.textBaseline = 'middle';
+        canvasCtx.textAlign = 'center';
+        canvasCtx.fillText(unicodeMoon, source.x, source.y);
+    };
+
+    // create a catalog for the moon
+    const moonImage = A.catalog({shape: drawMoon});
 
     const popupMoonDescription = `Illumination: ${moonIllumination} <br> RA: ${moonRaDeg.toFixed(4)} <br> Dec: ${moonDecDeg.toFixed(4)}`;
 
-    moonCatalog.addSources([A.marker(moonRaDeg, moonDecDeg,
+    moonImage.addSources([A.marker(moonRaDeg, moonDecDeg,
         {popupTitle: 'Geocentric Moon',
-        popupDesc: popupMoonDescription
+        popupDesc: popupMoonDescription,
         })]);
 
-    aladin.addCatalog(moonCatalog);
+    aladin.addCatalog(moonImage);
 
     // now add the sun in its own catalog
     const sunCatalog = A.catalog({
