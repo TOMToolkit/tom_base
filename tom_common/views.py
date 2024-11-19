@@ -89,6 +89,16 @@ class UserDetailView(LoginRequiredMixin, DetailView):
     template_name = 'tom_common/user_profile.html'
     model = User
 
+    def dispatch(self, *args, **kwargs):
+        """
+        Directs the class-based view to the correct method for the HTTP request method. Ensures that non-superusers
+        are not incorrectly updating the profiles of other users.
+        """
+        if not self.request.user.is_superuser and self.request.user.id != self.kwargs['pk']:
+            return redirect('user-profile', self.request.user.id)
+        else:
+            return super().dispatch(*args, **kwargs)
+
 
 class UserPasswordChangeView(SuperuserRequiredMixin, FormView):
     """
