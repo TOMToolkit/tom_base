@@ -66,6 +66,13 @@ class TestUserManagement(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertFalse(User.objects.filter(pk=user.id).exists())
 
+    def test_non_superuser_cannot_delete_other_user(self):
+        user = User.objects.create(username='deleteme', email='deleteme@example.com', password='deleted')
+        other_user = User.objects.create_user(username='other', email='other@example.com', password='other')
+        self.client.force_login(user)
+        response = self.client.post(reverse('user-delete', kwargs={'pk': other_user.id}))
+        self.assertRedirects(response, reverse('user-delete', kwargs={'pk': user.id}))
+
     def test_must_be_superuser(self):
         user = User.objects.create_user(username='notallowed', email='notallowed@example.com', password='notallowed')
         self.client.force_login(user)

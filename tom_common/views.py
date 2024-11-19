@@ -71,6 +71,16 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('user-list')
     model = User
 
+    def dispatch(self, *args, **kwargs):
+        """
+        Directs the class-based view to the correct method for the HTTP request method. Ensures that non-superusers
+        are not incorrectly updating the profiles of other users.
+        """
+        if not self.request.user.is_superuser and self.request.user.id != self.kwargs['pk']:
+            return redirect('user-delete', self.request.user.id)
+        else:
+            return super().dispatch(*args, **kwargs)
+
 
 class UserDetailView(LoginRequiredMixin, DetailView):
     """
