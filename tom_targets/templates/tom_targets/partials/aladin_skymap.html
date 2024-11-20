@@ -71,7 +71,7 @@ A.init.then(() => {
     const popupMoonDescription = `Illumination: ${moonIllumination} <br> RA: ${moonRaDeg.toFixed(4)} <br> Dec: ${moonDecDeg.toFixed(4)}`;
 
     moonImage.addSources([A.marker(moonRaDeg, moonDecDeg,
-        {popupTitle: 'Geocentric Moon',
+        {popupTitle: 'Moon (Geocentric)',
         popupDesc: popupMoonDescription,
         })]);
 
@@ -90,7 +90,7 @@ A.init.then(() => {
     const popupSunDescription = `RA: ${sunRaDeg.toFixed(4)} <br> Dec: ${sunDecDeg.toFixed(4)}`;
 
     sunCatalog.addSources([A.marker(sunRaDeg, sunDecDeg,
-        {popupTitle: 'Geocentric Sun',
+        {popupTitle: 'Sun (Geocentric)',
         popupDesc: popupSunDescription,
         })]);
 
