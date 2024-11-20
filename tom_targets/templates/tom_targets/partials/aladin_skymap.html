@@ -23,7 +23,7 @@ A.init.then(() => {
     // define catalog for the targets
     var catalogOptions = {
         name: 'Targets',
-        color: 'rgb(46, 107, 131)', // TOMToolkit Blue
+        color: 'blue',
         sourceSize: 16};
     var targetCatalog = A.catalog(catalogOptions);
 
@@ -57,9 +57,7 @@ A.init.then(() => {
 
     // Create a text based symbol for the moon centered on the source coordinates
     var drawMoon = function(source, canvasCtx) {
-
         canvasCtx.globalAlpha = 1;
-
         canvasCtx.font = '25px Arial';
         canvasCtx.fillStyle = '#eee';
         canvasCtx.textBaseline = 'middle';
