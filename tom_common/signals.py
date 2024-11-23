@@ -5,7 +5,7 @@ from tom_common.models import Profile
 
 
 @receiver(post_save, sender=User)
-def save_profile(sender, instance, created, **kwargs):
+def create_profile(sender, instance, created, **kwargs):
     """When a new user is created, create a profile for them."""
     if created:
         Profile.objects.create(user=instance)
