@@ -32,9 +32,13 @@ def user_data(user):
     """
     Returns the user information as a dictionary.
     """
-    exlcude_fields = ['password', 'last_login', 'id', 'is_active']
-    user_fields = [field.name for field in user._meta.fields if field.name not in exlcude_fields]
+
+    exclude_fields = ['password', 'last_login', 'id', 'is_active', 'user']
+    user_dict = model_to_dict(user, exclude=exclude_fields)
+    profile_dict = model_to_dict(user.profile, exclude=exclude_fields)
     return {
         'user': user,
-        'profile_data': model_to_dict(user, fields=user_fields),
+        'profile': user.profile,
+        'user_data': user_dict,
+        'profile_data': profile_dict,
     }

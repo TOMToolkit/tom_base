@@ -12,9 +12,15 @@
     </div>
   <div class="card-body">
     <dl class="row">
-        {% for key, value in profile_data.items %}
+        {% for key, value in user_data.items %}
             {% if value %}
                 <dt class="col-sm-6" >{% verbose_name user key %}</dt>
+                <dd class="col-sm-6">{{ value }}</dd>
+            {% endif %}
+        {% endfor %}
+        {% for key, value in profile_data.items %}
+            {% if value %}
+                <dt class="col-sm-6" >{% verbose_name profile key %}</dt>
                 <dd class="col-sm-6">{{ value }}</dd>
             {% endif %}
         {% endfor %}
