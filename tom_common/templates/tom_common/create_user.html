@@ -9,6 +9,7 @@
 {% endif %}
 {% csrf_token %}
 {% bootstrap_form form %}
+{% bootstrap_formset form.user_profile_formset %}
 {% buttons %}
   <button type="submit" class="btn btn-primary">
     {% if object %}
