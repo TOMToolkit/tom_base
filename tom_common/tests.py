@@ -9,7 +9,7 @@ from django.urls import reverse
 from django_comments.models import Comment
 
 from tom_targets.tests.factories import SiderealTargetFactory
-from tom_common.templatetags.tom_common_extras import *
+from tom_common.templatetags.tom_common_extras import verbose_name
 
 
 class TestCommonViews(TestCase):
