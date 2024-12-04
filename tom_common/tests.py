@@ -9,6 +9,7 @@ from django.urls import reverse
 from django_comments.models import Comment
 
 from tom_targets.tests.factories import SiderealTargetFactory
+from tom_common.templatetags.tom_common_extras import *
 
 
 class TestCommonViews(TestCase):
@@ -24,6 +25,17 @@ class TestCommonViews(TestCase):
         # from http import HTTPStatus
         # assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.status_code, 200)
+
+
+class TestCommonExtras(TestCase):
+    def setUp(self):
+        pass
+
+    def test_verbose_name(self):
+        # Check that the verbose name for a model field is returned correctly
+        self.assertEqual(verbose_name(User, 'email'), 'Email Address')
+        # Check that the verbose name for a non-existent field is returned correctly
+        self.assertEqual(verbose_name(User, 'definitely_not_a_field'), 'Definitely_Not_A_Field')
 
 
 class TestUserManagement(TestCase):
