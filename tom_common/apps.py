@@ -7,7 +7,6 @@ class TomCommonConfig(AppConfig):
     name = 'tom_common'
 
     def ready(self):
-
         # Set default plotly theme on startup
         valid_themes = ['plotly', 'plotly_white', 'plotly_dark', 'ggplot2', 'seaborn', 'simple_white', 'none']
 

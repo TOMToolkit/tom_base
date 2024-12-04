@@ -38,6 +38,8 @@ class TestUserManagement(TestCase):
 
     def test_user_create(self):
         user_data = {
+            'profile-TOTAL_FORMS': '1',
+            'profile-INITIAL_FORMS': '0',
             'username': 'testuser',
             'first_name': 'first',
             'last_name': 'last',
@@ -83,6 +85,8 @@ class TestUserManagement(TestCase):
         user = User.objects.create(username='luke', password='forc3')
         self.client.force_login(user)
         user_data = {
+            'profile-TOTAL_FORMS': '1',
+            'profile-INITIAL_FORMS': '0',
             'username': 'luke',
             'first_name': 'Luke',
             'last_name': 'Skywalker',
@@ -99,6 +103,8 @@ class TestUserManagement(TestCase):
         user = User.objects.create(username='luke', password='forc3')
         self.client.force_login(user)
         user_data = {
+            'profile-TOTAL_FORMS': '1',
+            'profile-INITIAL_FORMS': '0',
             'username': 'luke',
             'first_name': 'Luke',
             'last_name': 'Skywalker',
@@ -110,6 +116,37 @@ class TestUserManagement(TestCase):
         self.admin.refresh_from_db()
         self.assertRedirects(response, reverse('user-update', kwargs={'pk': user.id}))
         self.assertNotEqual(self.admin.username, user_data['username'])
+
+    def test_user_can_delete_self(self):
+        user = User.objects.create(username='luke', password='forc3')
+        self.client.force_login(user)
+        self.assertTrue(User.objects.filter(username='luke').exists())
+        response = self.client.post(reverse('user-delete', kwargs={'pk': user.id}), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(username='luke').exists())
+
+
+class TestUserProfile(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(username='admin', password='admin', email='test@example.com')
+        self.client.force_login(self.admin)
+
+    def test_user_profile(self):
+        user_data = {
+            'profile-TOTAL_FORMS': '1',
+            'profile-INITIAL_FORMS': '0',
+            'username': 'testuser',
+            'first_name': 'first',
+            'last_name': 'last',
+            'email': 'testuser@example.com',
+            'password1': 'suchsecure543',
+            'password2': 'suchsecure543',
+            'profile-0-affiliation': 'Test University',
+        }
+        response = self.client.post(reverse('user-create'), data=user_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        user = User.objects.get(username='testuser')
+        self.assertEqual(user.profile.affiliation, 'Test University')
 
 
 class TestAuthScheme(TestCase):
