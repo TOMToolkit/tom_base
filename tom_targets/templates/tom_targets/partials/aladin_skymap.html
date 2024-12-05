@@ -25,15 +25,16 @@ A.init.then(() => {
         name: 'Targets',
         color: 'blue',
         sourceSize: 16};
-    var targetCatalog = A.catalog(catalogOptions);
 
     // add targets to the catalog
     for (var i = 0; i < targets.length; i++) {
         var target = targets[i];
+        var targetCatalog = A.catalog({name: target.name , color: 'blue', sourceSize: 16});
+        aladin.addCatalog(targetCatalog);
         popupInfo = ['RA: '.concat(target.ra, '<br>',  'Dec: ', target.dec)];
         targetCatalog.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popupInfo})]);
     }
-    aladin.addCatalog(targetCatalog);
+
 
     // extract Moon information from the context
     const moonRaDeg = {{ moon_ra|safe }};
@@ -66,7 +67,7 @@ A.init.then(() => {
     };
 
     // create a catalog for the moon
-    const moonImage = A.catalog({shape: drawMoon});
+    const moonImage = A.catalog({shape: drawMoon, color: 'gray', name: 'Moon'});
 
     const popupMoonDescription = `Illumination: ${moonIllumination} <br> RA: ${moonRaDeg.toFixed(4)} <br> Dec: ${moonDecDeg.toFixed(4)}`;
 
