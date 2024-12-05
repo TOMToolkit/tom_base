@@ -4,6 +4,7 @@ from django.db.models.functions import Cast
 from django.conf import settings
 from django_comments.models import Comment
 from django.apps import apps
+from django.core.exceptions import FieldDoesNotExist
 from guardian.shortcuts import get_objects_for_user
 
 from tom_targets.models import Target
@@ -56,7 +57,10 @@ def verbose_name(instance, field_name):
     """
     Displays the more descriptive field name from a Django model field
     """
-    return instance._meta.get_field(field_name).verbose_name.title()
+    try:
+        return instance._meta.get_field(field_name).verbose_name.title()
+    except FieldDoesNotExist:
+        return field_name.title()
 
 
 @register.simple_tag
