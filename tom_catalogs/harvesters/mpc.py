@@ -36,9 +36,10 @@ class MPCHarvester(AbstractHarvester):
 
 class MPCExplorerHarvester(AbstractHarvester):
     """
-    The ``MPCExplorerHarvester`` is the new API interfact to the Minor Planet Center catalog. For information regarding the Minor Planet
-    Center catalog, please see https://minorplanetcenter.net/ or
-    https://data.minorplanetcenter.net/explorer/
+    The ``MPCExplorerHarvester`` is the new API interface to the Minor Planet Center catalog.
+    For information regarding the Minor Planet Center catalog, please see:
+    https://minorplanetcenter.net/ or
+    https://minorplanetcenter.net/mpcops/documentation/orbits-api/
     """
 
     name = 'MPC'
@@ -57,7 +58,22 @@ class MPCExplorerHarvester(AbstractHarvester):
     def to_target(self):
         target = super().to_target()
         result = self.catalog_data[0]['mpc_orb']
-        print(result)
+        #print(result)
         target.type = 'NON_SIDEREAL'
-
+        target.name = result['designation_data']['iau_designation']
+        target.extra_names = [result['designation_data']['unpacked_primary_provisional_designation']] if result['designation_data']['unpacked_primary_provisional_designation'] else []
+        target.epoch_of_elements = result['epoch_data']['epoch']
+        # Map coefficients to elements
+        element_names = result['COM']['coefficient_names']
+        element_values = result['COM']['coefficient_values']
+        target.arg_of_perihelion = element_values[element_names.index('argperi')]
+        target.eccentricity = element_values[element_names.index('e')]
+        target.lng_asc_node = element_values[element_names.index('node')]
+        target.inclination = element_values[element_names.index('i')]
+        target.perihdist = element_values[element_names.index('q')]
+        target.epoch_of_perihelion = element_values[element_names.index('peri_time')]
+        # These need converters
+        #target.mean_anomaly = result['mean_anomaly']
+        #target.mean_daily_motion = result['mean_daily_motion']
+        #target.semimajor_axis = result['semimajor_axis']
         return target
