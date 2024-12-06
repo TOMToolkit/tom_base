@@ -2,7 +2,7 @@ import json
 from importlib_resources import files
 
 from django.test import TestCase
-from unittest.mock import MagicMock
+# from unittest.mock import MagicMock
 
 from tom_catalogs.harvesters.mpc import MPCExplorerHarvester
 
@@ -12,7 +12,7 @@ class TestMPCExplorerHarvester(TestCase):
         self.broker = MPCExplorerHarvester()
         test_json_fp = files('tom_catalogs.tests.harvesters.data').joinpath('test_65803_mpc_orb.json')
         test_json = json.loads(test_json_fp.read_text())
-        self.broker.catalog_data = [{'mpc_orb' : test_json}, ]
+        self.broker.catalog_data = [{'mpc_orb': test_json}, ]
 
     def test_query_failure(self):
         # Needs Mocking of requests.get...

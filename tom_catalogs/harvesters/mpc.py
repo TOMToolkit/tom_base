@@ -1,4 +1,3 @@
-import json
 import requests
 from math import sqrt, degrees
 
@@ -50,7 +49,7 @@ class MPCExplorerHarvester(AbstractHarvester):
     k = degrees(sqrt(GM_sun.value) * au.value**-1.5 * 86400.0)
 
     def query(self, term):
-        response = requests.get("https://data.minorplanetcenter.net/api/get-orb", json={"desig" : term})
+        response = requests.get("https://data.minorplanetcenter.net/api/get-orb", json={"desig": term})
         if response.ok:
             response_data = response.json()
             if len(response_data) >= 2 and 'mpc_orb' in response_data[0]:
@@ -63,10 +62,11 @@ class MPCExplorerHarvester(AbstractHarvester):
     def to_target(self):
         target = super().to_target()
         result = self.catalog_data[0]['mpc_orb']
-        #print(result)
+
         target.type = 'NON_SIDEREAL'
         target.name = result['designation_data']['iau_designation']
-        target.extra_names = [result['designation_data']['unpacked_primary_provisional_designation']] if result['designation_data']['unpacked_primary_provisional_designation'] else []
+        extra_desigs = result['designation_data']['unpacked_primary_provisional_designation']
+        target.extra_names = [extra_desigs] if extra_desigs else []
         target.epoch_of_elements = result['epoch_data']['epoch']
         # Map coefficients to elements
         element_names = result['COM']['coefficient_names']
@@ -79,7 +79,7 @@ class MPCExplorerHarvester(AbstractHarvester):
         target.epoch_of_perihelion = element_values[element_names.index('peri_time')]
         # These need converters
         if result['categorization']['object_type_int'] != 10 or \
-            result['categorization']['object_type_int'] != 11:
+                result['categorization']['object_type_int'] != 11:
             # Don't do for comets... (Object type #'s from:
             # https://minorplanetcenter.net/mpcops/documentation/object-types/ )
             try:
