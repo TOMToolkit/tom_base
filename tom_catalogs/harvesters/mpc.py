@@ -1,5 +1,8 @@
 import json
 import requests
+from math import sqrt, degrees
+
+from astropy.constants import GM_sun, au
 from tom_catalogs.harvester import AbstractHarvester
 
 from astroquery.mpc import MPC
@@ -43,6 +46,8 @@ class MPCExplorerHarvester(AbstractHarvester):
     """
 
     name = 'MPC'
+    # Gaussian gravitational constant
+    k = degrees(sqrt(GM_sun.value) * au.value**-1.5 * 86400.0)
 
     def query(self, term):
         response = requests.get("https://data.minorplanetcenter.net/api/get-orb", json={"desig" : term})
@@ -73,7 +78,25 @@ class MPCExplorerHarvester(AbstractHarvester):
         target.perihdist = element_values[element_names.index('q')]
         target.epoch_of_perihelion = element_values[element_names.index('peri_time')]
         # These need converters
-        #target.mean_anomaly = result['mean_anomaly']
-        #target.mean_daily_motion = result['mean_daily_motion']
-        #target.semimajor_axis = result['semimajor_axis']
+        if result['categorization']['object_type_int'] != 10 or \
+            result['categorization']['object_type_int'] != 11:
+            # Don't do for comets... (Object type #'s from:
+            # https://minorplanetcenter.net/mpcops/documentation/object-types/ )
+            try:
+                target.semimajor_axis = target.perihdist / (1.0 - target.eccentricity)
+                if target.semimajor_axis < 0 or target.semimajor_axis > 1000.0:
+                    target.semimajor_axis = None
+            except ZeroDivisionError:
+                target.semimajor_axis = None
+            if target.semimajor_axis:
+                target.mean_daily_motion = self.k / (target.semimajor_axis * sqrt(target.semimajor_axis))
+            if target.mean_daily_motion:
+                td = target.epoch_of_elements - target.epoch_of_perihelion
+                mean_anomaly = td * target.mean_daily_motion
+                # Normalize into 0...360 range
+                mean_anomaly = mean_anomaly % 360.0
+                if mean_anomaly < 0.0:
+                    mean_anomaly += 360.0
+                target.mean_anomaly = mean_anomaly
+
         return target
