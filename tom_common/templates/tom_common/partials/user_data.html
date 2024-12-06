@@ -1,0 +1,32 @@
+{% load tom_common_extras %}
+
+<div class="card">
+    <div class="card-header">
+        <div style="display: flex; justify-content: space-between">
+            <h4 class="card-title">User Info</h4>
+            <div>
+                <a title="Edit" href="{% url 'user-update' pk=user.id %}" ><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                <a title="Remove User" data-toggle="modal" data-target="#userDeleteModal" href="#" ><i class="fa fa-trash" aria-hidden="true"></i></a>
+            </div>
+        </div>
+    </div>
+  <div class="card-body">
+    <dl class="row">
+        {% for key, value in user_data.items %}
+            {% if value %}
+                <dt class="col-sm-6" >{% verbose_name user key %}</dt>
+                <dd class="col-sm-6">{{ value }}</dd>
+            {% endif %}
+        {% endfor %}
+        {% for key, value in profile_data.items %}
+            {% if value %}
+                <dt class="col-sm-6" >{% verbose_name profile key %}</dt>
+                <dd class="col-sm-6">{{ value }}</dd>
+            {% endif %}
+        {% endfor %}
+    </dl>
+  </div>
+</div>
+
+<!-- Modal -->
+{% include 'tom_common/partials/confirm_user_delete.html' %}

@@ -2,6 +2,7 @@ import logging
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.edit import UpdateView, CreateView
+from django.views.generic.detail import DetailView
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -63,12 +64,40 @@ class UserListView(LoginRequiredMixin, TemplateView):
     template_name = 'auth/user_list.html'
 
 
-class UserDeleteView(SuperuserRequiredMixin, DeleteView):
+class UserDeleteView(LoginRequiredMixin, DeleteView):
     """
-    View that handles deletion of a ``User``. Requires authorization.
+    View that handles deletion of a ``User``. Requires login.
     """
     success_url = reverse_lazy('user-list')
     model = User
+
+    def dispatch(self, *args, **kwargs):
+        """
+        Directs the class-based view to the correct method for the HTTP request method. Ensures that non-superusers
+        are not incorrectly updating the profiles of other users.
+        """
+        if not self.request.user.is_superuser and self.request.user.id != self.kwargs['pk']:
+            return redirect('user-delete', self.request.user.id)
+        else:
+            return super().dispatch(*args, **kwargs)
+
+
+class UserDetailView(LoginRequiredMixin, DetailView):
+    """
+    View to handle creating a user profile page. Requires a login.
+    """
+    template_name = 'tom_common/user_profile.html'
+    model = User
+
+    def dispatch(self, *args, **kwargs):
+        """
+        Directs the class-based view to the correct method for the HTTP request method. Ensures that non-superusers
+        are not incorrectly updating the profiles of other users.
+        """
+        if not self.request.user.is_superuser and self.request.user.id != self.kwargs['pk']:
+            return redirect('user-profile', self.request.user.id)
+        else:
+            return super().dispatch(*args, **kwargs)
 
 
 class UserPasswordChangeView(SuperuserRequiredMixin, FormView):
