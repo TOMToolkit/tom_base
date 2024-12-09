@@ -1,7 +1,7 @@
 import json
 from importlib_resources import files
 
-from django.test import TestCase
+from django.test import tag, TestCase
 # from unittest.mock import MagicMock
 
 from tom_catalogs.harvesters.mpc import MPCExplorerHarvester
@@ -87,3 +87,20 @@ class TestMPCExplorerHarvester(TestCase):
         self.assertEqual(target.dec, None)
         self.assertEqual(target.pm_ra, None)
         self.assertEqual(target.pm_dec, None)
+
+
+@tag('canary')
+class TestMPCExplorerHarvesterCanary(TestCase):
+    def setUp(self):
+        self.broker = MPCExplorerHarvester()
+
+    def test_query(self):
+        self.broker.query('Eros')
+        target = self.broker.to_target()
+        # Only test things that are not likely to change (much) with time
+        self.assertEqual(target.name, '(433)')
+        self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.ra, None)
+        self.assertEqual(target.dec, None)
+        self.assertAlmostEqual(target.eccentricity, 0.223, places=3)
+        self.assertAlmostEqual(target.inclination, 10.828, places=3)
