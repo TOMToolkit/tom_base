@@ -39,10 +39,17 @@ urlpatterns = [
     path('targetgrouping/<int:pk>/hermes-preload/', TargetGroupingHermesPreloadView.as_view(),
          name='group-hermes-preload'),
     path('persistentshare/manage/', PersistentShareManageFormView.as_view(), name='persistent-share-manage-form'),
-    path('<int:target_pk>/persistentshare/manage/', TargetPersistentShareManageFormView.as_view(), name='target-persistent-share-manage-form'),
-    path('persistentshare/manage/table', PersistentShareManageTable.as_view(), name='persistent-share-manage-table'),
-    path('<int:target_pk>/persistentshare/manage/table', TargetPersistentShareManageTable.as_view(), name='target-persistent-share-manage-table'),
-    path('persistentshare/', PersistentShareViewSet.as_view({'get': 'list', 'post': 'create'}), name='persistent-share'),
-    path('persistentshare/<int:pk>/', PersistentShareViewSet.as_view({'get': 'retrieve', 'delete': 'destroy', 'patch': 'update'}), name='persistent-share-detail'),
-    path('<int:target_pk>/persistentshare/', PersistentShareViewSet.as_view({'get': 'list'}), name='target-persistent-share')
+    path('<int:target_pk>/persistentshare/manage/', TargetPersistentShareManageFormView.as_view(),
+         name='target-persistent-share-manage-form'),
+    path('persistentshare/manage/table', PersistentShareManageTable.as_view(),
+         name='persistent-share-manage-table'),
+    path('<int:target_pk>/persistentshare/manage/table', TargetPersistentShareManageTable.as_view(),
+         name='target-persistent-share-manage-table'),
+    path('persistentshare/', PersistentShareViewSet.as_view({'get': 'list', 'post': 'create'}),
+         name='persistent-share'),
+    path('persistentshare/<int:pk>/',
+         PersistentShareViewSet.as_view({'get': 'retrieve', 'delete': 'destroy', 'patch': 'update'}),
+         name='persistent-share-detail'),
+    path('<int:target_pk>/persistentshare/',PersistentShareViewSet.as_view({'get': 'list'}),
+         name='target-persistent-share')
 ]

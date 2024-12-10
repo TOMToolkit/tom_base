@@ -32,7 +32,7 @@ class PersistentShareAdmin(admin.ModelAdmin):
         # This line is needed because the ModelAdmin uses the form to get its fields if fields is passed as None
         # In that case, a partial will not work, so just return the base form. The partial is necessary to filter
         # On the targets a user has access to.
-        if kwargs.get('fields') == None:
+        if kwargs.get('fields') is None:
             return Form
         return functools.partial(Form, user=request.user)
 

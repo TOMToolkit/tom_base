@@ -12,4 +12,3 @@ class TargetFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
         if not (request and queryset):
             return None
         return get_objects_for_user(request.user, 'tom_targets.change_target')
-

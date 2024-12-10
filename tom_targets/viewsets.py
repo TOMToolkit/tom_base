@@ -1,5 +1,4 @@
 from rest_framework import viewsets, permissions
-from django.conf import settings
 
 from tom_targets.models import Target, PersistentShare
 from tom_targets.serializers import PersistentShareSerializer
@@ -13,7 +12,7 @@ class TargetAccessPermission(permissions.BasePermission):
             target = Target.objects.get(pk=view.kwargs.get('target_pk'))
             return request.user.has_perm(f'{Target._meta.app_label}.share_target', target)
         return True
-    
+
     def has_object_permission(self, request, view, obj):
         return request.user.has_perm(f'{Target._meta.app_label}.share_target', obj.target)
 

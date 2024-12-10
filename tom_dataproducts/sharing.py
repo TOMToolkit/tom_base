@@ -19,7 +19,8 @@ from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSeri
 
 def share_data_with_destination(share_destination, reduced_datum):
     """
-    Triggered by PersistentShare when new ReducedDatums are created. Shares that ReducedDatum to the sharing destination.
+    Triggered by PersistentShare when new ReducedDatums are created.
+    Shares that ReducedDatum to the sharing destination.
     :param share_destination: Topic or location to share data to from `DATA_SHARING` settings
     :param reduced_datum: ReducedDatum instance to share
     """
@@ -34,7 +35,7 @@ def share_data_with_destination(share_destination, reduced_datum):
                                      authors=sharing.get('hermes', {}).get('DEFAULT_AUTHORS', None),
                                      message=None,
                                      topic=hermes_topic
-                                    )
+                                     )
         publish_to_hermes(message, filtered_reduced_datums)
     else:
         share_data_with_tom(share_destination, None, None, None, selected_data=[reduced_datum.pk])

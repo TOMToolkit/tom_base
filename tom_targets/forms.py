@@ -3,7 +3,7 @@ from astropy.coordinates import Angle
 from astropy import units as u
 from django.forms import ValidationError, inlineformset_factory
 from django.conf import settings
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm, get_objects_for_user
 
 from tom_dataproducts.sharing import get_sharing_destination_options
@@ -266,6 +266,7 @@ class PersistentShareForm(forms.ModelForm):
             self.fields['target'].queryset = Target.objects.filter(pk=self.target_id)
         else:
             if self.user:
-                self.fields['target'].queryset = get_objects_for_user(self.user, f'{Target._meta.app_label}.share_target')
+                self.fields['target'].queryset = get_objects_for_user(
+                    self.user, f'{Target._meta.app_label}.share_target')
             else:
                 self.fields['target'].queryset = Target.objects.none()

@@ -909,13 +909,13 @@ class TargetPersistentShareManageFormView(PersistentShareManageFormView):
 class PersistentShareManageTable(View):
     def get(self, request):
         return render(request,
-            'tom_targets/partials/persistent_share_table.html',
-            context=persistent_share_table(None))
+                      'tom_targets/partials/persistent_share_table.html',
+                      context=persistent_share_table(None))
 
 
 class TargetPersistentShareManageTable(View):
     def get(self, request, target_pk):
         target = Target.objects.get(pk=target_pk)
         return render(request,
-            'tom_targets/partials/persistent_share_table.html',
-            context=persistent_share_table(target))
+                      'tom_targets/partials/persistent_share_table.html',
+                      context=persistent_share_table(target))

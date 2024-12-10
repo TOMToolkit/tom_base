@@ -212,7 +212,8 @@ class PersistentShare(models.Model):
     """
     target = models.ForeignKey(BaseTarget, on_delete=models.CASCADE)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
-    destination = models.CharField(max_length=200, help_text='The sharing destination, as it appears in your DATA_SHARING settings dict')
+    destination = models.CharField(
+        max_length=200, help_text='The sharing destination, as it appears in your DATA_SHARING settings dict')
     created = models.DateTimeField(
         auto_now_add=True, help_text='The time which this PersistentShare was created in the TOM database.'
     )
