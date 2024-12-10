@@ -50,6 +50,6 @@ urlpatterns = [
     path('persistentshare/<int:pk>/',
          PersistentShareViewSet.as_view({'get': 'retrieve', 'delete': 'destroy', 'patch': 'update'}),
          name='persistent-share-detail'),
-    path('<int:target_pk>/persistentshare/',PersistentShareViewSet.as_view({'get': 'list'}),
+    path('<int:target_pk>/persistentshare/', PersistentShareViewSet.as_view({'get': 'list'}),
          name='target-persistent-share')
 ]
