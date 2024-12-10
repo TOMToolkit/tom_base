@@ -2,7 +2,7 @@ import json
 from importlib_resources import files
 
 from django.test import tag, TestCase
-# from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from tom_catalogs.harvesters.mpc import MPCExplorerHarvester
 
@@ -14,13 +14,22 @@ class TestMPCExplorerHarvester(TestCase):
         test_json = json.loads(test_json_fp.read_text())
         self.broker.catalog_data = [{'mpc_orb': test_json}, ]
 
-    def test_query_failure(self):
-        # Needs Mocking of requests.get...
-        pass
+    @patch('requests.get')
+    def test_query_failure_no_object(self, mock_get):
+        """test query of non-existant object"""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = [None,  200]
+        mock_get.return_value = mock_response
+
+        result = self.broker.query('123456P')
+        self.assertEqual(result, None)
+        self.assertIsNone(self.broker.catalog_data)
 
     def test_to_target(self):
         target = self.broker.to_target()
         self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
         self.assertEqual(target.name, '(65803)')
         orbit_data = self.broker.catalog_data[0]['mpc_orb']
         elements = orbit_data['COM']['coefficient_values']
@@ -42,9 +51,11 @@ class TestMPCExplorerHarvester(TestCase):
     def test_comet_to_target(self):
         # Make fake parabolic comet
         self.broker.catalog_data[0]['mpc_orb']['COM']['coefficient_values'][1] = 1.0
+        self.broker.catalog_data[0]['mpc_orb']['categorization']['object_type_int'] = 10
 
         target = self.broker.to_target()
         self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_COMET')
         self.assertEqual(target.name, '(65803)')
         orbit_data = self.broker.catalog_data[0]['mpc_orb']
         elements = orbit_data['COM']['coefficient_values']
@@ -66,10 +77,11 @@ class TestMPCExplorerHarvester(TestCase):
     def test_comet_to_target2(self):
         # Make fake near parabolic comet of right type
         self.broker.catalog_data[0]['mpc_orb']['COM']['coefficient_values'][1] = 0.999
-        self.broker.catalog_data[0]['mpc_orb']['categorization']['object_type_int'] = 10
+        self.broker.catalog_data[0]['mpc_orb']['categorization']['object_type_int'] = 11
 
         target = self.broker.to_target()
         self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_COMET')
         self.assertEqual(target.name, '(65803)')
         orbit_data = self.broker.catalog_data[0]['mpc_orb']
         elements = orbit_data['COM']['coefficient_values']
@@ -94,12 +106,13 @@ class TestMPCExplorerHarvesterCanary(TestCase):
     def setUp(self):
         self.broker = MPCExplorerHarvester()
 
-    def test_query(self):
+    def test_query_neo(self):
         self.broker.query('Eros')
         target = self.broker.to_target()
         # Only test things that are not likely to change (much) with time
         self.assertEqual(target.name, '(433)')
         self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
         self.assertEqual(target.ra, None)
         self.assertEqual(target.dec, None)
         self.assertAlmostEqual(target.eccentricity, 0.223, places=3)
