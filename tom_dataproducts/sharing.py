@@ -17,6 +17,29 @@ from tom_dataproducts.alertstreams.hermes import publish_to_hermes, BuildHermesM
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
 
 
+def share_data_with_destination(share_destination, reduced_datum):
+    """
+    Triggered by PersistentShare when new ReducedDatums are created. Shares that ReducedDatum to the sharing destination.
+    :param share_destination: Topic or location to share data to from `DATA_SHARING` settings
+    :param reduced_datum: ReducedDatum instance to share
+    """
+    if 'HERMES' in share_destination.upper():
+        hermes_topic = share_destination.split(':')[1]
+        destination = share_destination.split(':')[0]
+        filtered_reduced_datums = check_for_share_safe_datums(
+            destination, ReducedDatum.objects.filter(pk=reduced_datum.pk), topic=hermes_topic)
+        sharing = getattr(settings, "DATA_SHARING", {})
+        message = BuildHermesMessage(title=f"Updated data for {reduced_datum.target.name} from "
+                                           f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
+                                     authors=sharing.get('hermes', {}).get('DEFAULT_AUTHORS', None),
+                                     message=None,
+                                     topic=hermes_topic
+                                    )
+        publish_to_hermes(message, filtered_reduced_datums)
+    else:
+        share_data_with_tom(share_destination, None, None, None, selected_data=[reduced_datum.pk])
+
+
 def share_target_list_with_hermes(share_destination, form_data, selected_targets=None, include_all_data=False):
     """
     Serialize and share a set of selected targets and their data with Hermes

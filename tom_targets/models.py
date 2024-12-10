@@ -3,6 +3,7 @@ from dateutil.parser import parse
 import logging
 
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.module_loading import import_string
@@ -193,3 +194,32 @@ class TargetList(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class PersistentShare(models.Model):
+    """
+    Class representing a persistent share setup between a sharing destination and a Target
+
+    :param target: The ``Target`` you want to share
+
+    :param user: The ``User`` that created this PersistentShare, for accountability purposes.
+
+    :param destination: The sharing destination, as it appears in your TOM's DATA_SHARING settings dict
+    :type destination: str
+
+    :param created: The time at which this PersistentShare was created
+    :type created: datetime
+    """
+    target = models.ForeignKey(BaseTarget, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+    destination = models.CharField(max_length=200, help_text='The sharing destination, as it appears in your DATA_SHARING settings dict')
+    created = models.DateTimeField(
+        auto_now_add=True, help_text='The time which this PersistentShare was created in the TOM database.'
+    )
+
+    class Meta:
+        ordering = ('-created',)
+        unique_together = ['target', 'destination']
+
+    def __str__(self):
+        return f'{self.target}-{self.destination}'

@@ -1,0 +1,73 @@
+{% load bootstrap4 targets_extras static %}
+
+<form method="post" class="form" id='target-persistent-share-create-form'>
+  {% csrf_token %}
+  <div class="form-row" style="padding-inline:1rem">
+      <div class="col-sm-3">
+          {% bootstrap_field form.destination %}
+      </div>
+      <div class="col-sm-5">
+          {% bootstrap_field form.target %}
+      </div>
+      <div class="col-sm-1">
+        {% if target %}
+        <input type="button" class="btn btn-primary" value="Create" onclick="createPersistentShare('{% url 'targets:persistent-share' %}', '{% url 'targets:target-persistent-share-manage-table' target.pk %}')" style="position:absolute; bottom:1rem"/>
+        {% else %}
+        <input type="button" class="btn btn-primary" value="Create" onclick="createPersistentShare('{% url 'targets:persistent-share' %}', '{% url 'targets:persistent-share-manage-table' %}')" style="position:absolute; bottom:1rem"/>
+        {% endif %}
+      </div>
+  </div>
+  <div class="form-row">
+    <div class="alert alert-danger" role="alert" id="create_persistent_share_error" style="display:none">
+      <div class="row">
+        <div class="col-sm-11">
+          <p id="create_persistent_share_error_msg"></p>
+        </div>
+        <div class="col-sm-1">
+          <button type="button" class="close" aria-label="Close" onclick="hidePSErrorAlert()">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% buttons %}
+  {% endbuttons %}
+</form>
+<script>
+  async function createPersistentShare(createUrl, updateUrl) {
+    var target_id = document.getElementById('id_target').value;
+    var destination = document.getElementById('id_destination').value;
+    var payload = {
+      "destination": destination,
+      "target": target_id
+    }
+    const response = await fetch(createUrl, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: {
+        'X-CSRFToken': "{{ csrf_token }}",
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    if (response.ok) {
+      updatePersistentShareTable(updateUrl);
+    }
+    else{
+      const responseJson = await response.json()
+      var error_msg = document.getElementById('create_persistent_share_error_msg');
+      error_msg.innerText = 'Failed to create Persisten Share: ' + JSON.stringify(responseJson);
+      var error_msg_alert = document.getElementById('create_persistent_share_error');
+      error_msg_alert.style.display = "block";
+    }
+  }
+
+  function hidePSErrorAlert() {
+    var error_msg = document.getElementById('create_persistent_share_error_msg');
+    error_msg.innerText = '';
+    var error_msg_alert = document.getElementById('create_persistent_share_error');
+    error_msg_alert.style.display = "none";
+  }
+</script>

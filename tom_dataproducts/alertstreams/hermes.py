@@ -209,7 +209,7 @@ def publish_to_hermes(message_info, datums, targets=Target.objects.none(), **kwa
         response = requests.post(url=submit_url, json=alert, headers=headers)
         response.raise_for_status()
         # Only mark the datums as shared if the sharing was successful
-        hermes_alert = AlertStreamMessage(topic=message_info.topic, exchange_status='published')
+        hermes_alert = AlertStreamMessage(topic=message_info.topic, message_id=response.json().get('uuid'), exchange_status='published')
         hermes_alert.save()
         for tomtoolkit_photometry in datums:
             tomtoolkit_photometry.message.add(hermes_alert)

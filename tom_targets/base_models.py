@@ -403,6 +403,7 @@ class BaseTarget(models.Model):
         permissions = (
             ('view_target', 'View Target'),
             ('add_target', 'Add Target'),
+            ('share_target', 'Share Target'),
             ('change_target', 'Change Target'),
             ('delete_target', 'Delete Target'),
         )
@@ -573,5 +574,6 @@ class BaseTarget(models.Model):
         :return:
         """
         assign_perm('tom_targets.view_target', user, self)
+        assign_perm('tom_targets.share_target', user, self)
         assign_perm('tom_targets.change_target', user, self)
         assign_perm('tom_targets.delete_target', user, self)

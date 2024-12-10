@@ -3,11 +3,11 @@ from astropy.coordinates import Angle
 from astropy import units as u
 from django.forms import ValidationError, inlineformset_factory
 from django.conf import settings
-from django.contrib.auth.models import Group
-from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
+from django.contrib.auth.models import Group, User
+from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm, get_objects_for_user
 
 from tom_dataproducts.sharing import get_sharing_destination_options
-from .models import Target, TargetExtra, TargetName, TargetList
+from .models import Target, TargetExtra, TargetName, TargetList, PersistentShare
 from tom_targets.base_models import (SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
                                      REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME,
                                      IGNORE_FIELDS)
@@ -241,3 +241,31 @@ class TargetMergeForm(forms.Form):
                 'hx-target': '#id_target_merge_fields',  # replace name_select element
              })
     )
+
+
+class PersistentShareForm(forms.ModelForm):
+    destination = forms.ChoiceField(choices=[], label='Share Destination', required=True)
+    target = forms.ModelChoiceField(queryset=Target.objects.all(), label='Target', initial=0, required=True)
+
+    class Meta:
+        model = PersistentShare
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        try:
+            self.target_id = kwargs.pop('target_id')
+        except KeyError:
+            self.target_id = None
+        try:
+            self.user = kwargs.pop('user')
+        except KeyError:
+            self.user = None
+        super().__init__(*args, **kwargs)
+        self.fields['destination'].choices = get_sharing_destination_options()
+        if self.target_id:
+            self.fields['target'].queryset = Target.objects.filter(pk=self.target_id)
+        else:
+            if self.user:
+                self.fields['target'].queryset = get_objects_for_user(self.user, f'{Target._meta.app_label}.share_target')
+            else:
+                self.fields['target'].queryset = Target.objects.none()

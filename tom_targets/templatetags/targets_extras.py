@@ -15,8 +15,8 @@ from plotly import offline
 from plotly import graph_objs as go
 
 from tom_observations.utils import get_sidereal_visibility
-from tom_targets.models import Target, TargetExtra, TargetList
-from tom_targets.forms import TargetVisibilityForm
+from tom_targets.models import Target, TargetExtra, TargetList, PersistentShare
+from tom_targets.forms import TargetVisibilityForm, PersistentShareForm
 
 register = template.Library()
 
@@ -341,6 +341,32 @@ def target_table(targets, all_checked=False):
     """
 
     return {'targets': targets, 'all_checked': all_checked}
+
+
+@register.inclusion_tag('tom_targets/partials/persistent_share_table.html')
+def persistent_share_table(target):
+    """
+    Returns a partial for a table of persistent shares, used in persistent share management forms
+    """
+    if target:
+        persistentshares = PersistentShare.objects.filter(target__pk=target.pk)
+    else:
+        persistentshares = PersistentShare.objects.all()
+    return {'persistentshares': persistentshares, 'target': target}
+
+
+@register.inclusion_tag('tom_targets/partials/create_persistent_share.html', takes_context=True)
+def create_persistent_share(context, target):
+    """
+    Returns a partial for a creation form for creating persistent shares
+    """
+    request = context['request']
+    if target:
+        form = PersistentShareForm(user=request.user, target_id=target.pk)
+    else:
+        form = PersistentShareForm(user=request.user, target_id=None)
+
+    return {'form': form, 'target': target}
 
 
 @register.inclusion_tag('tom_targets/partials/module_buttons.html')
