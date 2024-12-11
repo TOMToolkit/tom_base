@@ -149,7 +149,7 @@ class HermesDataConverter():
 def convert_astropy_brightness_to_hermes(brightness_unit):
     if not brightness_unit:
         return brightness_unit
-    elif brightness_unit.uppercase() == 'AB' or brightness_unit.uppercase() == 'ABFLUX':
+    elif brightness_unit.upper() == 'AB' or brightness_unit.upper() == 'ABFLUX':
         return 'AB mag'
     else:
         return brightness_unit
@@ -158,11 +158,11 @@ def convert_astropy_brightness_to_hermes(brightness_unit):
 def convert_astropy_wavelength_to_hermes(wavelength_unit):
     if not wavelength_unit:
         return wavelength_unit
-    elif wavelength_unit.lowercase() == 'angstrom' or wavelength_unit == 'AA':
+    elif wavelength_unit.lower() == 'angstrom' or wavelength_unit == 'AA':
         return 'Å'
-    elif wavelength_unit.lowercase() == 'micron':
+    elif wavelength_unit.lower() == 'micron':
         return 'µm'
-    elif wavelength_unit.lowercase() == 'hertz':
+    elif wavelength_unit.lower() == 'hertz':
         return 'Hz'
     else:
         return wavelength_unit
