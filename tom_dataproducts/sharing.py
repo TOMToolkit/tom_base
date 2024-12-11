@@ -35,11 +35,11 @@ def continuous_share_data(target, reduced_datums):
                 destination, ReducedDatum.objects.filter(pk__in=reduced_datum_pks), topic=hermes_topic)
             sharing = getattr(settings, "DATA_SHARING", {})
             message = BuildHermesMessage(title=f"Updated data for {target.name} from "
-                                            f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
-                                        authors=sharing.get('hermes', {}).get('DEFAULT_AUTHORS', None),
-                                        message=None,
-                                        topic=hermes_topic
-                                        )
+                                         f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
+                                         authors=sharing.get('hermes', {}).get('DEFAULT_AUTHORS', None),
+                                         message=None,
+                                         topic=hermes_topic
+                                         )
             publish_to_hermes(message, filtered_reduced_datums)
         else:
             share_data_with_tom(share_destination, None, None, None, selected_data=reduced_datum_pks)
