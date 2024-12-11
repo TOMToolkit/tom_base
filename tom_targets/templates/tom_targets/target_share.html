@@ -62,11 +62,11 @@
   </div>
   <div class="tab-pane" id="persistentshare">
     <div class="col-md-12">
-      <h3>Create Persistent Share for Target <a href="{% url 'targets:detail' pk=target.id %}" title="Back">{{ target.name }}</a></h3>
+      <h3>Continously Share data for Target <a href="{% url 'targets:detail' pk=target.id %}" title="Back">{{ target.name }}</a></h3>
       <div id='target-persistent-share-create'>
         {% create_persistent_share target %}
       </div>
-      <h3>Manage Persistent Shares for Target <a href="{% url 'targets:detail' pk=target.id %}"
+      <h3>Manage Continuous Sharing for Target <a href="{% url 'targets:detail' pk=target.id %}"
           title="Back">{{ target.name }}</a></h3>
       <div id='target-persistent-share-table'>
         {% persistent_share_table target %}

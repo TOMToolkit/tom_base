@@ -7,16 +7,14 @@
 <script src="https://cdn.jsdelivr.net/npm/js-base64@3.7.5/base64.min.js"></script>
 {% endblock %}
 {% block content %}
-<h3>Create Persistent Share {% if target %} for Target <a href="{% url 'targets:detail' pk=target.id %}" title="Back">{{ target.name }}</a>{% endif %}</h3>
+<h3>Continuously Share data {% if target %} for Target <a href="{% url 'targets:detail' pk=target.id %}" title="Back">{{ target.name }}</a>{% endif %}</h3>
 <div id='target-persistent-share-create'>
   {% create_persistent_share target %}
 </div>
-<h3>Manage Persistent Shares {% if target %} for Target <a href="{% url 'targets:detail' pk=target.id %}" title="Back">{{ target.name }}</a>{% endif %}</h3>
+<h3>Manage Continous Sharing {% if target %} for Target <a href="{% url 'targets:detail' pk=target.id %}" title="Back">{{ target.name }}</a>{% endif %}</h3>
 <div id='target-persistent-share-table'>
-  {% csrf_token %}
   {% persistent_share_table target %}
-  {% buttons %}
-  {% endbuttons %}
 </div>
-
+{% buttons %}
+{% endbuttons %}
 {% endblock %}
