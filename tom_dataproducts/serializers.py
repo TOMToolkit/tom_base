@@ -8,7 +8,7 @@ from tom_dataproducts.models import DataProductGroup, DataProduct, ReducedDatum
 from tom_observations.models import ObservationRecord
 from tom_observations.serializers import ObservationRecordFilteredPrimaryKeyRelatedField
 from tom_targets.models import Target
-from tom_targets.serializers import TargetFilteredPrimaryKeyRelatedField
+from tom_targets.fields import TargetFilteredPrimaryKeyRelatedField
 
 
 class DataProductGroupSerializer(serializers.ModelSerializer):
