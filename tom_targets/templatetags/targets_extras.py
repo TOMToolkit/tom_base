@@ -343,16 +343,17 @@ def target_table(targets, all_checked=False):
     return {'targets': targets, 'all_checked': all_checked}
 
 
-@register.inclusion_tag('tom_targets/partials/persistent_share_table.html')
-def persistent_share_table(target):
+@register.inclusion_tag('tom_targets/partials/persistent_share_table.html', takes_context=True)
+def persistent_share_table(context, target):
     """
     Returns a partial for a table of persistent shares, used in persistent share management forms
     """
+    request = context['request']
+    persistentshares = get_objects_for_user(request.user, f'{Target._meta.app_label}.view_persistentshare')
     if target:
-        persistentshares = PersistentShare.objects.filter(target__pk=target.pk)
-    else:
-        persistentshares = PersistentShare.objects.all()
-    return {'persistentshares': persistentshares, 'target': target}
+        persistentshares = persistentshares.filter(target__pk=target.pk)
+    can_delete = request.user.has_perm(f'{Target._meta.app_label}.delete_persistentshare')
+    return {'persistentshares': persistentshares, 'target': target, 'can_delete': can_delete}
 
 
 @register.inclusion_tag('tom_targets/partials/create_persistent_share.html', takes_context=True)
@@ -361,10 +362,13 @@ def create_persistent_share(context, target):
     Returns a partial for a creation form for creating persistent shares
     """
     request = context['request']
-    if target:
-        form = PersistentShareForm(user=request.user, target_id=target.pk)
+    if request.user.has_perm(f'{Target._meta.app_label}.add_persistentshare'):
+        if target:
+            form = PersistentShareForm(user=request.user, target_id=target.pk)
+        else:
+            form = PersistentShareForm(user=request.user, target_id=None)
     else:
-        form = PersistentShareForm(user=request.user, target_id=None)
+        form = None
 
     return {'form': form, 'target': target}
 

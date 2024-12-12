@@ -267,6 +267,6 @@ class PersistentShareForm(forms.ModelForm):
         else:
             if self.user:
                 self.fields['target'].queryset = get_objects_for_user(
-                    self.user, f'{Target._meta.app_label}.share_target')
+                    self.user, f'{Target._meta.app_label}.change_target')
             else:
                 self.fields['target'].queryset = Target.objects.none()

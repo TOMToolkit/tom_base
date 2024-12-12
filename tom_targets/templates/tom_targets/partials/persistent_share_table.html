@@ -4,7 +4,9 @@
       <th>Target</th>
       <th>Share Destination</th>
       <th>Creator</th>
+      {% if can_delete %}
       <th>Delete?</th>
+      {% endif %}
     </tr>
   </thead>
   <tbody>
@@ -15,6 +17,7 @@
       </td>
       <td>{{ persistentshare.destination }}</td>
       <td>{{ persistentshare.user.username }}</td>
+      {% if can_delete %}
       <td>
         {% if target %}
         <input type="button" class="btn btn-primary" value="Delete" onclick="deletePersistentShare('{% url 'targets:persistent-share-detail' persistentshare.pk %}', '{% url 'targets:target-persistent-share-manage-table' target.pk %}')"/>
@@ -22,6 +25,7 @@
         <input type="button" class="btn btn-primary" value="Delete" onclick="deletePersistentShare('{% url 'targets:persistent-share-detail' persistentshare.pk %}', '{% url 'targets:persistent-share-manage-table' %}')"/>
         {% endif %}
       </td>
+      {% endif %}
     {% endfor %}
   </tbody>
 </table>
@@ -30,8 +34,10 @@
     fetch(deleteUrl, {
       method: 'DELETE',
       headers: {'X-CSRFToken': "{{ csrf_token }}"}
-    }).then(() => {
-      updatePersistentShareTable(updateUrl);
+    }).then((response) => {
+      if (response.ok && !response.redirected) {
+        updatePersistentShareTable(updateUrl);
+      }
     })
   }
 

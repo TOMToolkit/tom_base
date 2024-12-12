@@ -364,7 +364,7 @@ class TargetShareView(FormView):
     """
     template_name = 'tom_targets/target_share.html'
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.share_target'
+    permission_required = f'{Target._meta.app_label}.change_target'
     form_class = TargetShareForm
 
     def get_context_data(self, *args, **kwargs):
@@ -499,7 +499,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
 class TargetHermesPreloadView(SingleObjectMixin, View):
     model = Target
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.share_target'
+    permission_required = f'{Target._meta.app_label}.change_target'
 
     def post(self, request, *args, **kwargs):
         target = self.get_object()
@@ -792,7 +792,7 @@ class TargetGroupingShareView(FormView):
     """
     template_name = 'tom_targets/target_group_share.html'
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.share_target'
+    permission_required = f'{Target._meta.app_label}.change_target'
     form_class = TargetListShareForm
 
     def get_context_data(self, *args, **kwargs):
@@ -862,7 +862,7 @@ class TargetGroupingShareView(FormView):
 class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
     model = TargetList
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.share_target'
+    permission_required = f'{Target._meta.app_label}.change_target'
 
     def post(self, request, *args, **kwargs):
         targetlist = self.get_object()
@@ -894,7 +894,7 @@ class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
 class PersistentShareManageFormView(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     template_name = 'tom_targets/target_manage_persistent_shares.html'
-    permission_required = f'{Target._meta.app_label}.share_target'
+    permission_required = f'{Target._meta.app_label}.change_target'
     serializer_class = PersistentShareSerializer
 
     def get(self, request):
@@ -908,14 +908,16 @@ class TargetPersistentShareManageFormView(PersistentShareManageFormView):
 
 class PersistentShareManageTable(View):
     def get(self, request):
+        context = {'request': request}
         return render(request,
                       'tom_targets/partials/persistent_share_table.html',
-                      context=persistent_share_table(None))
+                      context=persistent_share_table(context, None))
 
 
 class TargetPersistentShareManageTable(View):
     def get(self, request, target_pk):
+        context = {'request': request}
         target = Target.objects.get(pk=target_pk)
         return render(request,
                       'tom_targets/partials/persistent_share_table.html',
-                      context=persistent_share_table(target))
+                      context=persistent_share_table(context, target))
