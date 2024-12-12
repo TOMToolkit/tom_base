@@ -276,9 +276,10 @@ def aladin_skymap(targets):
     Displays aladin skyview on Target Distribution skymap. Markers on the skymap show where your targets are. Max of
     25 targets show at a time (one page of targets). This templatetag converts the targets queryset into a list of
     dictionaries suitable for javascript and aladin, and only works for sidereal targets.
+
+    Also, puts the current Moon and Sun positions (from astropy) into the context.
     """
     target_list = []
-
     for target in targets:
         if target.type == Target.SIDEREAL:
             name = target.name
@@ -286,7 +287,21 @@ def aladin_skymap(targets):
             dec = target.dec
             target_list.append({'name': name, 'ra': ra, 'dec': dec})
 
-    context = {'targets': target_list}
+    # To display the Moon and Sun on the skymap, calculate postions for
+    # them here and pass them to the template in the context
+    now = Time.now()
+    moon_pos = get_body('moon', now)
+    moon_illum = moon_illumination(now)
+    sun_pos = get_body('sun', now)
+
+    context = {
+        'targets': target_list,
+        'moon_ra': moon_pos.ra.deg,
+        'moon_dec': moon_pos.dec.deg,
+        'moon_illumination': moon_illum,
+        'sun_ra': sun_pos.ra.deg,
+        'sun_dec': sun_pos.dec.deg,
+    }
     return context
 
 
