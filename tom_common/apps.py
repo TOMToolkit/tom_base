@@ -7,6 +7,10 @@ class TomCommonConfig(AppConfig):
     name = 'tom_common'
 
     def ready(self):
+        # Import signals for automatically saving profiles when updating User objects
+        # https://docs.djangoproject.com/en/5.1/topics/signals/#connecting-receiver-functions
+        import tom_common.signals  # noqa
+
         # Set default plotly theme on startup
         valid_themes = ['plotly', 'plotly_white', 'plotly_dark', 'ggplot2', 'seaborn', 'simple_white', 'none']
 
