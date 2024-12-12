@@ -15,7 +15,7 @@ from plotly import offline
 from plotly import graph_objs as go
 
 from tom_observations.utils import get_sidereal_visibility
-from tom_targets.models import Target, TargetExtra, TargetList, PersistentShare
+from tom_targets.models import Target, TargetExtra, TargetList
 from tom_targets.forms import TargetVisibilityForm, PersistentShareForm
 
 register = template.Library()

@@ -6,7 +6,7 @@ from tom_targets.serializers import PersistentShareSerializer
 
 class PSModelPermission(permissions.DjangoModelPermissions):
     perms_map = {
-        'GET':[f'{Target._meta.app_label}.view_persistentshare'],
+        'GET': [f'{Target._meta.app_label}.view_persistentshare'],
         'OPTIONS': [],
         'HEAD': [],
         'POST': [f'{Target._meta.app_label}.add_persistentshare'],
