@@ -243,13 +243,20 @@ class TargetMergeForm(forms.Form):
     )
 
 
-class PersistentShareForm(forms.ModelForm):
+class AdminPersistentShareForm(forms.ModelForm):
     destination = forms.ChoiceField(choices=[], label='Share Destination', required=True)
-    target = forms.IntegerField(label='Target ID', initial=0, required=True)
 
     class Meta:
         model = PersistentShare
         fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['destination'].choices = get_sharing_destination_options()
+
+
+class PersistentShareForm(AdminPersistentShareForm):
+    target = forms.IntegerField(label='Target ID', initial=0, required=True)
 
     def __init__(self, *args, **kwargs):
         try:
@@ -257,7 +264,6 @@ class PersistentShareForm(forms.ModelForm):
         except KeyError:
             self.target_id = None
         super().__init__(*args, **kwargs)
-        self.fields['destination'].choices = get_sharing_destination_options()
         if self.target_id:
             self.fields['target'].initial = self.target_id
             self.fields['target'].disabled = True
