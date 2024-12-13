@@ -1,4 +1,3 @@
-import functools
 from django.contrib import admin
 from .models import Target, TargetList, TargetExtra, PersistentShare
 from .forms import AdminPersistentShareForm
