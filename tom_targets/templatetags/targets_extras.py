@@ -364,9 +364,9 @@ def create_persistent_share(context, target):
     request = context['request']
     if request.user.has_perm(f'{Target._meta.app_label}.add_persistentshare'):
         if target:
-            form = PersistentShareForm(user=request.user, target_id=target.pk)
+            form = PersistentShareForm(target_id=target.pk)
         else:
-            form = PersistentShareForm(user=request.user, target_id=None)
+            form = PersistentShareForm(target_id=None)
     else:
         form = None
 
