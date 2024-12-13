@@ -24,5 +24,7 @@ TOM from uploaded data products.
 
 :doc:`Publish and Subscribe to a Kafka Stream <stream_pub_sub>` - Learn how to publish and subscribe to a Kafka stream topic.
 
+:doc:`Setting up Continuous Sharing of a target's data to a TOM or Kafka stream <continuous_sharing>` - Learn how to set up continuous sharing of a Target's data products.
+
 :doc:`Integrating Single-Target Data Service Queries <single_target_data_service>` - Learn how to integrate the existing Atlas, panSTARRS, and ZTF
 single-target data services into your TOM, and learn how to add new services.
