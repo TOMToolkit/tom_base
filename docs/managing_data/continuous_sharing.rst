@@ -14,6 +14,7 @@ add, view, and delete `PersistentShare` objects. A superuser account will have a
 permissions to another user, you can use code like this one time in the console:
 
 .. code:: python
+
     from guardian.shortcuts import assign_perm
 
     # To assign the permission to a single user
@@ -45,6 +46,7 @@ If you have a custom target details page, you can integrate the controls for cre
 template partials below:
 
 .. code:: html
+
     <h3>Continously Share data for Target <a href="{% url 'targets:detail' pk=target.id %}" title="Back">{{ target.name }}</a></h3>
     <div id='target-persistent-share-create'>
         {% create_persistent_share target %}
@@ -60,9 +62,10 @@ destination then continuous shares using it will fail.
 
 Also note that by default, continuous sharing will occur when a ReducedDatum is saved, or when the default `tom_base` `DataProcessor` is used
 to load in a `DataProduct`. If you create your own `DataProcessor` subclass in your TOM, you must add the following lines to trigger continuous
-sharing after you have bulk created the `ReducedDatum`s:
+sharing after you have bulk created the `ReducedDatums`:
 
 .. code:: python
+
     from tom_dataproducts.sharing import continuous_share_data
     # After all your logic to bulk_create ReducedDatums
     # Trigger any sharing you may have set to occur when new data comes in

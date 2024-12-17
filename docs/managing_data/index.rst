@@ -11,6 +11,7 @@ Managing Data
   customizing_data_processing
   tom_direct_sharing
   stream_pub_sub
+  continuous_sharing
   single_target_data_service
 
 
