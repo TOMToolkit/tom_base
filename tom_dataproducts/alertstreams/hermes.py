@@ -149,7 +149,7 @@ class HermesDataConverter():
 def convert_astropy_brightness_to_hermes(brightness_unit):
     if not brightness_unit:
         return brightness_unit
-    elif brightness_unit.uppercase() == 'AB' or brightness_unit.uppercase() == 'ABFLUX':
+    elif brightness_unit.upper() == 'AB' or brightness_unit.upper() == 'ABFLUX':
         return 'AB mag'
     else:
         return brightness_unit
@@ -158,11 +158,11 @@ def convert_astropy_brightness_to_hermes(brightness_unit):
 def convert_astropy_wavelength_to_hermes(wavelength_unit):
     if not wavelength_unit:
         return wavelength_unit
-    elif wavelength_unit.lowercase() == 'angstrom' or wavelength_unit == 'AA':
+    elif wavelength_unit.lower() == 'angstrom' or wavelength_unit == 'AA':
         return 'Å'
-    elif wavelength_unit.lowercase() == 'micron':
+    elif wavelength_unit.lower() == 'micron':
         return 'µm'
-    elif wavelength_unit.lowercase() == 'hertz':
+    elif wavelength_unit.lower() == 'hertz':
         return 'Hz'
     else:
         return wavelength_unit
@@ -209,7 +209,8 @@ def publish_to_hermes(message_info, datums, targets=Target.objects.none(), **kwa
         response = requests.post(url=submit_url, json=alert, headers=headers)
         response.raise_for_status()
         # Only mark the datums as shared if the sharing was successful
-        hermes_alert = AlertStreamMessage(topic=message_info.topic, exchange_status='published')
+        hermes_alert = AlertStreamMessage(
+            topic=message_info.topic, message_id=response.json().get('uuid'), exchange_status='published')
         hermes_alert.save()
         for tomtoolkit_photometry in datums:
             tomtoolkit_photometry.message.add(hermes_alert)

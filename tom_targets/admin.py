@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Target, TargetList, TargetExtra
+from .models import Target, TargetList, TargetExtra, PersistentShare
+from .forms import AdminPersistentShareForm
 
 
 class TargetExtraInline(admin.TabularInline):
@@ -17,6 +18,17 @@ class TargetListAdmin(admin.ModelAdmin):
     model = TargetList
 
 
+class PersistentShareAdmin(admin.ModelAdmin):
+    model = PersistentShare
+    form = AdminPersistentShareForm
+    raw_id_fields = (
+        'target',
+        'user'
+    )
+
+
 admin.site.register(Target, TargetAdmin)
 
 admin.site.register(TargetList, TargetListAdmin)
+
+admin.site.register(PersistentShare, PersistentShareAdmin)
