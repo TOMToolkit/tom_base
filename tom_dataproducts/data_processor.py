@@ -6,7 +6,7 @@ from django.conf import settings
 from importlib import import_module
 
 from tom_dataproducts.models import ReducedDatum
-from tom_dataproducts.sharing import continuous_share_data
+from tom_targets.sharing import continuous_share_data
 
 logger = logging.getLogger(__name__)
 
