@@ -6,6 +6,7 @@ from astropy import units as u
 from astropy.coordinates import Angle, get_body, SkyCoord
 from astropy.time import Time
 from django import template
+from django.utils.safestring import mark_safe
 from django.conf import settings
 from django.db.models import Q
 from django.apps import apps
@@ -22,6 +23,14 @@ register = template.Library()
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+
+@register.filter(name='bold_sharing_source')
+def bold_sharing_source(value):
+    pieces = value.split(':')
+    if len(pieces) > 1:
+        return mark_safe(f"<strong>{pieces[0]}</strong>:{':'.join(pieces[1:])}")
+    return value
 
 
 @register.inclusion_tag('tom_targets/partials/recent_targets.html', takes_context=True)
