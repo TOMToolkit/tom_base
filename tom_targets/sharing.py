@@ -4,7 +4,66 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 from tom_targets.serializers import TargetSerializer
-from tom_dataproducts.sharing import get_destination_target
+from tom_targets.models import PersistentShare
+from tom_dataproducts.sharing import check_for_share_safe_datums, share_data_with_tom, get_destination_target
+from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.alertstreams.hermes import publish_to_hermes, BuildHermesMessage
+
+
+def share_target_and_all_data(share_destination, target):
+    """
+    Given a sharing destination, shares the target and all its current dataproducts
+    with that destination. Will raise an Exception is any portion of sharing fails.
+    :param share_destination: String sharing destination from the DATA_SHARING setting
+    :param target: Target instance that should be shared with all its data
+    """
+    if 'HERMES' in share_destination.upper():
+        hermes_topic = share_destination.split(':')[1]
+        destination = share_destination.split(':')[0]
+        filtered_reduced_datums = check_for_share_safe_datums(
+            destination, ReducedDatum.objects.filter(target=target), topic=hermes_topic)
+        sharing = getattr(settings, "DATA_SHARING", {})
+        message = BuildHermesMessage(title=f"Setting up continuous sharing for {target.name} from "
+                                        f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
+                                        authors=sharing.get('hermes', {}).get('DEFAULT_AUTHORS', None),
+                                        message=None,
+                                        topic=hermes_topic
+                                        )
+        response = publish_to_hermes(message, filtered_reduced_datums)
+        response.raise_for_status()
+    else:
+        response = share_target_with_tom(share_destination, {'target': target})
+        response.raise_for_status()
+        response = share_data_with_tom(share_destination, None, target_id=target.id)
+        response.raise_for_status()
+
+
+def continuous_share_data(target, reduced_datums):
+    """
+    Triggered when new ReducedDatums are created.
+    Shares those ReducedDatums to the sharing destination of any PersistentShares on the target.
+    :param target: Target instance that these reduced_datums belong to
+    :param reduced_datums: list of ReducedDatum instances to share
+    """
+    persistentshares = PersistentShare.objects.filter(target=target)
+    for persistentshare in persistentshares:
+        share_destination = persistentshare.destination
+        reduced_datum_pks = [rd.pk for rd in reduced_datums]
+        if 'HERMES' in share_destination.upper():
+            hermes_topic = share_destination.split(':')[1]
+            destination = share_destination.split(':')[0]
+            filtered_reduced_datums = check_for_share_safe_datums(
+                destination, ReducedDatum.objects.filter(pk__in=reduced_datum_pks), topic=hermes_topic)
+            sharing = getattr(settings, "DATA_SHARING", {})
+            message = BuildHermesMessage(title=f"Updated data for {target.name} from "
+                                         f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
+                                         authors=sharing.get('hermes', {}).get('DEFAULT_AUTHORS', None),
+                                         message=None,
+                                         topic=hermes_topic
+                                         )
+            publish_to_hermes(message, filtered_reduced_datums)
+        else:
+            share_data_with_tom(share_destination, None, None, None, selected_data=reduced_datum_pks)
 
 
 def share_target_with_tom(share_destination, form_data, target_lists=()):

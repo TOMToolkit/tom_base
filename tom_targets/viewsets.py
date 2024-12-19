@@ -1,7 +1,7 @@
 from rest_framework import viewsets, permissions
 
 from tom_targets.models import Target, PersistentShare
-from tom_targets.serializers import PersistentShareSerializer
+from tom_targets.persistent_sharing_serializers import PersistentShareSerializer
 
 
 class PSModelPermission(permissions.DjangoModelPermissions):

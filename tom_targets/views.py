@@ -51,7 +51,7 @@ from tom_targets.groups import (
 )
 from tom_targets.merge import (merge_error_message)
 from tom_targets.models import Target, TargetList
-from tom_targets.serializers import PersistentShareSerializer
+from tom_targets.persistent_sharing_serializers import PersistentShareSerializer
 from tom_targets.templatetags.targets_extras import target_merge_fields, persistent_share_table
 from tom_targets.utils import import_targets, export_targets
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes

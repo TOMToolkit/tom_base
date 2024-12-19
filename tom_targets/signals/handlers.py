@@ -2,7 +2,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 
 from tom_dataproducts.models import ReducedDatum
-from tom_dataproducts.sharing import continuous_share_data
+from tom_targets.sharing import continuous_share_data
 
 
 @receiver(post_save, sender=ReducedDatum)
