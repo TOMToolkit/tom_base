@@ -11,14 +11,6 @@
     {% endif %}
 </h3>
 
-<div class="container">
-    <div class="row">
-        <div class="col-lg">
-            {% user_data user %}
-        </div>
-        <div class="col-lg">
-        </div>
-    </div>
-</div>
+{% profile_app_addons user %}
 
 {% endblock %}

@@ -1,0 +1,19 @@
+{% load user_extras %}
+{% load bootstrap4 %}
+
+<div class="container">
+
+        <div class="row">
+            {% for profile in profile_list %}
+                <div class="col-6">
+                    {% include profile %}
+                </div>
+                {% if forloop.counter|divisibleby:2 %}
+                    </div>
+                    <div class="row">
+                {% endif %}
+            {% empty %}
+                This user has no profile.
+            {% endfor %}
+        </div>
+</div>
