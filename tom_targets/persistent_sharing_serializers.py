@@ -6,7 +6,9 @@ from tom_targets.models import PersistentShare, Target
 
 
 class PersistentShareSerializer(serializers.ModelSerializer):
-    destination = serializers.ChoiceField(choices=get_sharing_destination_options(include_download=False), required=True)
+    destination = serializers.ChoiceField(
+        choices=get_sharing_destination_options(include_download=False), required=True
+    )
     target = TargetFilteredPrimaryKeyRelatedField(queryset=Target.objects.all(), required=True)
     share_existing_data = serializers.BooleanField(default=False, required=False, write_only=True)
 

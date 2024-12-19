@@ -24,11 +24,11 @@ def share_target_and_all_data(share_destination, target):
             destination, ReducedDatum.objects.filter(target=target), topic=hermes_topic)
         sharing = getattr(settings, "DATA_SHARING", {})
         message = BuildHermesMessage(title=f"Setting up continuous sharing for {target.name} from "
-                                        f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
-                                        authors=sharing.get('hermes', {}).get('DEFAULT_AUTHORS', None),
-                                        message=None,
-                                        topic=hermes_topic
-                                        )
+                                     f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
+                                     authors=sharing.get('hermes', {}).get('DEFAULT_AUTHORS', None),
+                                     message=None,
+                                     topic=hermes_topic
+                                    )
         response = publish_to_hermes(message, filtered_reduced_datums)
         response.raise_for_status()
     else:
