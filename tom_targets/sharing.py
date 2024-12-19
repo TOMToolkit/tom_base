@@ -23,12 +23,14 @@ def share_target_and_all_data(share_destination, target):
         filtered_reduced_datums = check_for_share_safe_datums(
             destination, ReducedDatum.objects.filter(target=target), topic=hermes_topic)
         sharing = getattr(settings, "DATA_SHARING", {})
+        tom_name = f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}"
         message = BuildHermesMessage(title=f"Setting up continuous sharing for {target.name} from "
-                                     f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
+                                     f"{tom_name}.",
                                      authors=sharing.get('hermes', {}).get('DEFAULT_AUTHORS', None),
-                                     message=None,
+                                     submitter=tom_name,
+                                     message='',
                                      topic=hermes_topic
-                                    )
+                                     )
         response = publish_to_hermes(message, filtered_reduced_datums)
         response.raise_for_status()
     else:
@@ -55,10 +57,12 @@ def continuous_share_data(target, reduced_datums):
             filtered_reduced_datums = check_for_share_safe_datums(
                 destination, ReducedDatum.objects.filter(pk__in=reduced_datum_pks), topic=hermes_topic)
             sharing = getattr(settings, "DATA_SHARING", {})
+            tom_name = f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}"
             message = BuildHermesMessage(title=f"Updated data for {target.name} from "
-                                         f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
+                                         f"{tom_name}.",
                                          authors=sharing.get('hermes', {}).get('DEFAULT_AUTHORS', None),
-                                         message=None,
+                                         submitter=tom_name,
+                                         message='',
                                          topic=hermes_topic
                                          )
             publish_to_hermes(message, filtered_reduced_datums)
