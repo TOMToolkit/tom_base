@@ -61,21 +61,22 @@ def profile_app_addons(context, user):
     for app in apps.get_app_configs():
         try:
             profile_details = app.profile_details()
-            if profile_details:
-                for profile in profile_details:
-                    try:
-                        clazz = import_string(profile['context'])
-                    except ImportError:
-                        logger.warning(f'WARNING: Could not import context for {app.name} profile from '
-                                       f'{profile["context"]}.\n'
-                                       f'Are you sure you have the right path?')
-                        continue
-                    new_context = clazz(user)
-                    for item in new_context:
-                        context[item] = new_context[item]
-                    partial_list.append(profile['partial'])
         except AttributeError:
-            pass
+            continue
+        if profile_details:
+            for profile in profile_details:
+                try:
+                    clazz = import_string(profile['context'])
+                except ImportError:
+                    logger.warning(f'WARNING: Could not import context for {app.name} profile from '
+                                   f'{profile["context"]}.\n'
+                                   f'Are you sure you have the right path?')
+                    continue
+                new_context = clazz(user)
+                for item in new_context:
+                    context[item] = new_context[item]
+                partial_list.append(profile['partial'])
+
     context['user'] = user
     context['profile_list'] = partial_list
     return context

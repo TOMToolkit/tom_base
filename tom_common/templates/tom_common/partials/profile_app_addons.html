@@ -1,19 +1,20 @@
-{% load user_extras %}
+{% load user_extras tom_common_extras %}
 {% load bootstrap4 %}
 
 <div class="container">
-
         <div class="row">
+            <div class="col-6">
             {% for profile in profile_list %}
-                <div class="col-6">
-                    {% include profile %}
-                </div>
-                {% if forloop.counter|divisibleby:2 %}
+
+                {% if forloop.counter > profile_list|length|add:"1"|multiplyby:"0.5" and forloop.counter <= profile_list|length|add:"1"|multiplyby:"0.5"|add:"1" %}
                     </div>
-                    <div class="row">
+
+                    <div class="col-6">
                 {% endif %}
+                        {% include profile %}
             {% empty %}
                 This user has no profile.
             {% endfor %}
+                    </div>
         </div>
 </div>

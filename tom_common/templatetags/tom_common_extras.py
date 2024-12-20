@@ -109,6 +109,15 @@ def truncate_number(value):
 
 
 @register.filter
+def multiplyby(value, arg):
+    """
+    Multiply the value by a number and return a float.
+    `{% value|multiplyby:"x.y" %}`
+    """
+    return float(value) * float(arg)
+
+
+@register.filter
 def addstr(arg1, arg2):
     """
     Concatenate strings arg1 & arg2.
