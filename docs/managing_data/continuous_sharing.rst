@@ -66,7 +66,7 @@ sharing after you have bulk created the `ReducedDatums`:
 
 .. code:: python
 
-    from tom_dataproducts.sharing import continuous_share_data
+    from tom_targets.sharing import continuous_share_data
     # After all your logic to bulk_create ReducedDatums
     # Trigger any sharing you may have set to occur when new data comes in
     # Encapsulate this in a try/catch so sharing failure doesn't prevent dataproduct ingestion
