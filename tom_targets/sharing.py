@@ -5,7 +5,8 @@ from django.core.exceptions import ImproperlyConfigured
 
 from tom_targets.serializers import TargetSerializer
 from tom_targets.models import PersistentShare
-from tom_dataproducts.sharing import check_for_share_safe_datums, share_data_with_tom, get_destination_target
+from tom_dataproducts.sharing import (check_for_share_safe_datums, share_data_with_tom,
+                                      get_destination_target, sharing_feedback_converter)
 from tom_dataproducts.models import ReducedDatum
 from tom_dataproducts.alertstreams.hermes import publish_to_hermes, BuildHermesMessage
 
@@ -27,17 +28,17 @@ def share_target_and_all_data(share_destination, target):
         message = BuildHermesMessage(title=f"Setting up continuous sharing for {target.name} from "
                                      f"{tom_name}.",
                                      authors=sharing.get('hermes', {}).get('DEFAULT_AUTHORS', None),
-                                     submitter=tom_name,
+                                     submitter='',
                                      message='',
                                      topic=hermes_topic
                                      )
-        response = publish_to_hermes(message, filtered_reduced_datums)
-        response.raise_for_status()
+        return sharing_feedback_converter(publish_to_hermes(message, filtered_reduced_datums))
     else:
         response = share_target_with_tom(share_destination, {'target': target})
-        response.raise_for_status()
-        response = share_data_with_tom(share_destination, None, target_id=target.id)
-        response.raise_for_status()
+        response_feedback = sharing_feedback_converter(response)
+        if 'ERROR' in response_feedback.upper():
+            return response_feedback
+        return sharing_feedback_converter(share_data_with_tom(share_destination, None, target_id=target.id))
 
 
 def continuous_share_data(target, reduced_datums):

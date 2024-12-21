@@ -282,21 +282,30 @@ def get_sharing_destination_options(include_download=True):
     return tuple(choices)
 
 
+def sharing_feedback_converter(response):
+    """
+    Takes a sharing feedback response and returns its error or success message
+    """
+    try:
+        response.raise_for_status()
+        if 'message' in response.json():
+            feedback_message = response.json()['message']
+        else:
+            feedback_message = "Submitted message succesfully"
+    except AttributeError:
+        feedback_message = response['message']
+    except Exception:
+        feedback_message = f"ERROR: Returned Response code {response.status_code} with content: {response.content}"
+
+    return feedback_message
+
+
 def sharing_feedback_handler(response, request):
     """
     Handle the response from a sharing request and prepare a message to the user
     :return:
     """
-    try:
-        response.raise_for_status()
-        if 'message' in response.json():
-            publish_feedback = response.json()['message']
-        else:
-            publish_feedback = "Submitted message succesfully"
-    except AttributeError:
-        publish_feedback = response['message']
-    except Exception:
-        publish_feedback = f"ERROR: Returned Response code {response.status_code} with content: {response.content}"
+    publish_feedback = sharing_feedback_converter(response)
     if "ERROR" in publish_feedback.upper():
         messages.error(request, publish_feedback)
     else:
