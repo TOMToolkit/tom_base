@@ -5,13 +5,16 @@
         <div class="row">
             <div class="col-6">
             {% for profile in profile_list %}
+                {% include profile %}
 
-                {% if forloop.counter > profile_list|length|add:"1"|multiplyby:"0.5" and forloop.counter <= profile_list|length|add:"1"|multiplyby:"0.5"|add:"1" %}
+                {% comment %}
+                    Start new column halfway through the list of profiles.
+                {% endcomment %}
+                {% if forloop.counter == profile_list|length|add:"1"|multiplyby:"0.5"|add:"0" %}
                     </div>
-
                     <div class="col-6">
                 {% endif %}
-                        {% include profile %}
+
             {% empty %}
                 This user has no profile.
             {% endfor %}
