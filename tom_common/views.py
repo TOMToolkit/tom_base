@@ -2,7 +2,6 @@ import logging
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.edit import UpdateView, CreateView
-from django.views.generic.detail import DetailView
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.mixins import LoginRequiredMixin
