@@ -84,6 +84,11 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
 class UserProfileView(LoginRequiredMixin, TemplateView):
     """
     View to handle creating a user profile page. Requires a login.
+
+    Note: This is NOT a User Detail view that would require a primary Key tying it to a specific user.
+    This is a profile page that always displays the information for the logged in user.
+    A User Detail view would allow admin users to view the profile of any user which is not what we want here for
+    security reasons.
     """
     template_name = 'tom_common/user_profile.html'
 
