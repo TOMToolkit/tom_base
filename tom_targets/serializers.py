@@ -1,10 +1,12 @@
 from django.contrib.auth.models import Group
-from guardian.shortcuts import assign_perm, get_groups_with_perms, get_objects_for_user
+from guardian.shortcuts import assign_perm, get_groups_with_perms
 from rest_framework import serializers
 
 from tom_common.serializers import GroupSerializer
-from tom_targets.models import Target, TargetExtra, TargetName, TargetList
+from tom_targets.models import Target, TargetExtra, TargetName, TargetList, PersistentShare
 from tom_targets.validators import RequiredFieldsTogetherValidator
+from tom_targets.fields import TargetFilteredPrimaryKeyRelatedField
+from tom_dataproducts.sharing import get_sharing_destination_options
 
 
 class TargetNameSerializer(serializers.ModelSerializer):
@@ -181,13 +183,10 @@ class TargetSerializer(serializers.ModelSerializer):
         return instance
 
 
-class TargetFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
-    # This PrimaryKeyRelatedField subclass is used to implement get_queryset based on the permissions of the user
-    # submitting the request. The pattern was taken from this StackOverflow answer: https://stackoverflow.com/a/32683066
+class PersistentShareSerializer(serializers.ModelSerializer):
+    destination = serializers.ChoiceField(choices=get_sharing_destination_options(), required=True)
+    target = TargetFilteredPrimaryKeyRelatedField(queryset=Target.objects.all(), required=True)
 
-    def get_queryset(self):
-        request = self.context.get('request', None)
-        queryset = super().get_queryset()
-        if not (request and queryset):
-            return None
-        return get_objects_for_user(request.user, 'tom_targets.change_target')
+    class Meta:
+        model = PersistentShare
+        fields = ('id', 'target', 'destination', 'user', 'created')

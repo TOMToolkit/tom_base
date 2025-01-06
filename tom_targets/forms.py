@@ -7,7 +7,7 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
 from tom_dataproducts.sharing import get_sharing_destination_options
-from .models import Target, TargetExtra, TargetName, TargetList
+from .models import Target, TargetExtra, TargetName, TargetList, PersistentShare
 from tom_targets.base_models import (SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
                                      REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME,
                                      IGNORE_FIELDS)
@@ -241,3 +241,29 @@ class TargetMergeForm(forms.Form):
                 'hx-target': '#id_target_merge_fields',  # replace name_select element
              })
     )
+
+
+class AdminPersistentShareForm(forms.ModelForm):
+    destination = forms.ChoiceField(choices=[], label='Share Destination', required=True)
+
+    class Meta:
+        model = PersistentShare
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['destination'].choices = get_sharing_destination_options()
+
+
+class PersistentShareForm(AdminPersistentShareForm):
+    target = forms.IntegerField(label='Target ID', initial=0, required=True)
+
+    def __init__(self, *args, **kwargs):
+        try:
+            self.target_id = kwargs.pop('target_id')
+        except KeyError:
+            self.target_id = None
+        super().__init__(*args, **kwargs)
+        if self.target_id:
+            self.fields['target'].initial = self.target_id
+            self.fields['target'].disabled = True

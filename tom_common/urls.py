@@ -26,7 +26,7 @@ from rest_framework.authtoken import views
 from tom_base import __version__
 from tom_common.api_views import GroupViewSet
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
-from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView, UserDetailView
+from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView, UserProfileView
 from tom_common.views import robots_txt
 
 from .api_router import collect_api_urls, SharedAPIRootRouter  # DRF routers are setup in each INSTALL_APPS url.py
@@ -49,7 +49,7 @@ urlpatterns = [
     path('users/create/', UserCreateView.as_view(), name='user-create'),
     path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user-delete'),
     path('users/<int:pk>/update/', UserUpdateView.as_view(), name='user-update'),
-    path('users/<int:pk>/profile/', UserDetailView.as_view(), name='user-profile'),
+    path('users/profile/', UserProfileView.as_view(), name='user-profile'),
     path('groups/create/', GroupCreateView.as_view(), name='group-create'),
     path('groups/<int:pk>/update/', GroupUpdateView.as_view(), name='group-update'),
     path('groups/<int:pk>/delete/', GroupDeleteView.as_view(), name='group-delete'),

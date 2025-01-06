@@ -57,8 +57,8 @@ numpy = ">1.24,<2.2"
 astroquery = "<1"
 astroplan = ">=0.8,<0.11"
 astropy = [
-    { version = ">=5.3.3,<6", python = ">=3.9" },
-    { version = ">=3,<6", python = "<3.12" }
+    { version = ">=5.3.3,<7", python = ">=3.10" },
+    { version = ">=5.3.3,<6", python = "<3.10" }
 ]
 django = "<5"
 djangorestframework = ">=3.15,<4"

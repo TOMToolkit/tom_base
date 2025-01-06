@@ -1,0 +1,20 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 targets_extras static %}
+{% block title %}Persistent Share Form{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
+<link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/js-base64@3.7.5/base64.min.js"></script>
+{% endblock %}
+{% block content %}
+<h3>Continuously Share data {% if target %} for Target <a href="{% url 'targets:detail' pk=target.id %}" title="Back">{{ target.name }}</a>{% endif %}</h3>
+<div id='target-persistent-share-create'>
+  {% create_persistent_share target %}
+</div>
+<h3>Manage Continous Sharing {% if target %} for Target <a href="{% url 'targets:detail' pk=target.id %}" title="Back">{{ target.name }}</a>{% endif %}</h3>
+<div id='target-persistent-share-table'>
+  {% persistent_share_table target %}
+</div>
+{% buttons %}
+{% endbuttons %}
+{% endblock %}
