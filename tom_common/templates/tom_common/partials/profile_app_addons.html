@@ -5,7 +5,7 @@
         <div class="row">
             <div class="col-6">
             {% for profile in profile_list %}
-                {% include profile %}
+                {% add_profile_data_to_context profile %}
 
                 {% comment %}
                     Start new column halfway through the list of profiles.
