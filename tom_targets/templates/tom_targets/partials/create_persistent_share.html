@@ -3,11 +3,16 @@
 <form method="post" class="form" id='target-persistent-share-create-form'>
   {% csrf_token %}
   <div class="form-row" style="padding-inline:1rem">
-      <div class="col-sm-3">
+      <div class="col-sm-4">
           {% bootstrap_field form.destination %}
       </div>
-      <div class="col-sm-5">
+      {% if not target %}
+      <div class="col-sm-2">
           {% bootstrap_field form.target %}
+      </div>
+      {% endif %}
+      <div class="col-sm-4 offset-sm-1" style="align-content:end;">
+        {% bootstrap_field form.share_existing_data %}
       </div>
       <div class="col-sm-1">
         {% if target %}
@@ -43,9 +48,11 @@
   async function createPersistentShare(createUrl, updateUrl) {
     var target_id = document.getElementById('id_target').value;
     var destination = document.getElementById('id_destination').value;
+    var share_existing = document.getElementById('id_share_existing_data').checked;
     var payload = {
       "destination": destination,
-      "target": target_id
+      "target": target_id,
+      "share_existing_data": share_existing
     }
     const response = await fetch(createUrl, {
       method: 'POST',
