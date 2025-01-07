@@ -59,7 +59,7 @@ def verbose_name(instance, field_name):
     """
     try:
         return instance._meta.get_field(field_name).verbose_name.title()
-    except FieldDoesNotExist:
+    except (FieldDoesNotExist, AttributeError):
         return field_name.title()
 
 
