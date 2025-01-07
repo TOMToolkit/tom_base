@@ -252,11 +252,12 @@ class AdminPersistentShareForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['destination'].choices = get_sharing_destination_options()
+        self.fields['destination'].choices = get_sharing_destination_options(include_download=False)
 
 
 class PersistentShareForm(AdminPersistentShareForm):
     target = forms.IntegerField(label='Target ID', initial=0, required=True)
+    share_existing_data = forms.BooleanField(label='Share existing data immediately', required=False, initial=False)
 
     def __init__(self, *args, **kwargs):
         try:
