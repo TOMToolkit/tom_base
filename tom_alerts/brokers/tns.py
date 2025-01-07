@@ -132,7 +132,7 @@ class TNSBroker(GenericBroker):
         transients = cls.fetch_tns_transients(parameters)
 
         alerts = []
-        for transient in transients['data']['reply']:
+        for transient in transients['data']:
 
             alert = cls.get_tns_object_info(transient)
 
@@ -232,6 +232,6 @@ class TNSBroker(GenericBroker):
         }
         response = requests.post(TNS_OBJECT_URL, data, headers=cls.tns_headers())
         response.raise_for_status()
-        obj_info = response.json()['data']['reply']
+        obj_info = response.json()['data']
 
         return obj_info
