@@ -48,16 +48,20 @@ def user_data(user):
     }
 
 
-@register.inclusion_tag('tom_common/partials/profile_app_addons.html', takes_context=True)
-def profile_app_addons(context, user):
+@register.inclusion_tag('tom_common/partials/app_profiles.html', takes_context=True)
+def show_app_profiles(context, user):
     """
-    Imports the profile content from relevant apps.
+    Imports the profile content from relevant apps into the template.
 
     Each profile should be contained in a list of dictionaries in an app's apps.py `profile_details` method.
     Each profile dictionary should contain a 'context' key with the path to the context processor class (typically a
     templatetag), and a 'partial' key with the path to the html partial template.
+
+    FOR EXAMPLE:
+    [{'partial': 'path/to/partial.html',
+                 'context': 'path/to/context/data/method'}]
     """
-    profile_list = []
+    profiles_to_display = []
     for app in apps.get_app_configs():
         try:
             profile_details = app.profile_details()
@@ -66,22 +70,22 @@ def profile_app_addons(context, user):
         if profile_details:
             for profile in profile_details:
                 try:
-                    clazz = import_string(profile['context'])
+                    context_method = import_string(profile['context'])
                 except ImportError:
                     logger.warning(f'WARNING: Could not import context for {app.name} profile from '
                                    f'{profile["context"]}.\n'
                                    f'Are you sure you have the right path?')
                     continue
-                new_context = clazz(user)
-                profile_list.append({'partial': profile['partial'], 'context': new_context})
+                new_context = context_method(user)
+                profiles_to_display.append({'partial': profile['partial'], 'context': new_context})
 
     context['user'] = user
-    context['profile_list'] = profile_list
+    context['profiles_to_display'] = profiles_to_display
     return context
 
 
-@register.inclusion_tag('tom_common/partials/import_profile_card.html', takes_context=True)
-def add_profile_data_to_context(context, profile_data):
+@register.inclusion_tag('tom_common/partials/include_profile_card.html', takes_context=True)
+def show_individual_app_profile(context, profile_data):
     """
     An Inclusion tag for setting the unique context for each app's user profile.
     """
