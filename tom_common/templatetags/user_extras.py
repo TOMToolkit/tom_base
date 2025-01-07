@@ -57,7 +57,7 @@ def profile_app_addons(context, user):
     Each profile dictionary should contain a 'context' key with the path to the context processor class (typically a
     templatetag), and a 'partial' key with the path to the html partial template.
     """
-    partial_list = []
+    profile_list = []
     for app in apps.get_app_configs():
         try:
             profile_details = app.profile_details()
@@ -73,10 +73,19 @@ def profile_app_addons(context, user):
                                    f'Are you sure you have the right path?')
                     continue
                 new_context = clazz(user)
-                for item in new_context:
-                    context[item] = new_context[item]
-                partial_list.append(profile['partial'])
+                profile_list.append({'partial': profile['partial'], 'context': new_context})
 
     context['user'] = user
-    context['profile_list'] = partial_list
+    context['profile_list'] = profile_list
+    return context
+
+
+@register.inclusion_tag('tom_common/partials/import_profile_card.html', takes_context=True)
+def add_profile_data_to_context(context, profile_data):
+    """
+    An Inclusion tag for setting the unique context for each app's user profile.
+    """
+    for item in profile_data['context']:
+        context[item] = profile_data['context'][item]
+    context['profile_partial'] = profile_data['partial']
     return context
