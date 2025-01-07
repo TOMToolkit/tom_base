@@ -59,7 +59,7 @@ def show_app_profiles(context, user):
 
     FOR EXAMPLE:
     [{'partial': 'path/to/partial.html',
-                 'context': 'path/to/context/data/method'}]
+      'context': 'path/to/context/data/method'}]
     """
     profiles_to_display = []
     for app in apps.get_app_configs():
