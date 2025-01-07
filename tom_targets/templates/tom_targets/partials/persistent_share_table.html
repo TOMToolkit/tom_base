@@ -1,3 +1,4 @@
+{% load targets_extras %}
 <table class="table table-hover">
   <thead>
     <tr>
@@ -15,7 +16,7 @@
       <td>
         <a href="{% url 'targets:detail' persistentshare.target.id %}" title="{{ persistentshare.target.name }}">{{ persistentshare.target.names|join:", " }}</a>
       </td>
-      <td>{{ persistentshare.destination }}</td>
+      <td>{{ persistentshare.destination|bold_sharing_source }}</td>
       <td>{{ persistentshare.user.username }}</td>
       {% if can_delete %}
       <td>

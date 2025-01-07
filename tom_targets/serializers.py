@@ -3,10 +3,8 @@ from guardian.shortcuts import assign_perm, get_groups_with_perms
 from rest_framework import serializers
 
 from tom_common.serializers import GroupSerializer
-from tom_targets.models import Target, TargetExtra, TargetName, TargetList, PersistentShare
+from tom_targets.models import Target, TargetExtra, TargetName, TargetList
 from tom_targets.validators import RequiredFieldsTogetherValidator
-from tom_targets.fields import TargetFilteredPrimaryKeyRelatedField
-from tom_dataproducts.sharing import get_sharing_destination_options
 
 
 class TargetNameSerializer(serializers.ModelSerializer):
@@ -181,12 +179,3 @@ class TargetSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
-
-
-class PersistentShareSerializer(serializers.ModelSerializer):
-    destination = serializers.ChoiceField(choices=get_sharing_destination_options(), required=True)
-    target = TargetFilteredPrimaryKeyRelatedField(queryset=Target.objects.all(), required=True)
-
-    class Meta:
-        model = PersistentShare
-        fields = ('id', 'target', 'destination', 'user', 'created')
