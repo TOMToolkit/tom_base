@@ -59,7 +59,7 @@ def verbose_name(instance, field_name):
     """
     try:
         return instance._meta.get_field(field_name).verbose_name.title()
-    except FieldDoesNotExist:
+    except (FieldDoesNotExist, AttributeError):
         return field_name.title()
 
 
@@ -106,6 +106,15 @@ def truncate_number(value):
         return '%.4f' % value
     except Exception:
         return value
+
+
+@register.filter
+def multiplyby(value, arg):
+    """
+    Multiply the value by a number and return a float.
+    `{% value|multiplyby:"x.y" %}`
+    """
+    return float(value) * float(arg)
 
 
 @register.filter
