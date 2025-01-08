@@ -1,17 +1,5 @@
 [project]
 name = "tomtoolkit"  # must match PyPI package name
-packages = [ # tell poetry build that the repo is named tom_base (which != name, above)
-    { include="tom_alerts"},
-    { include="tom_base"},
-    { include="tom_catalogs"},
-    { include="tom_common"},
-    { include="tom_dataproducts"},
-    { include="tom_dataservices"},
-    { include="tom_observations"},
-    { include="tom_setup"},
-    { include="tom_targets"},
-    { include="*", format="sdist"},
-]
 description = "TOM Toolkit and base modules"
 authors = [
     {name = "TOM Toolkit Project", email = "tomtoolkit-maintainers@lco.global"},
@@ -85,6 +73,18 @@ dependencies = [
 ]
 
 [tool.poetry]
+packages = [ # tell poetry build that the repo is named tom_base (which != name, above)
+    { include="tom_alerts"},
+    { include="tom_base"},
+    { include="tom_catalogs"},
+    { include="tom_common"},
+    { include="tom_dataproducts"},
+    { include="tom_dataservices"},
+    { include="tom_observations"},
+    { include="tom_setup"},
+    { include="tom_targets"},
+    { include="*", format="sdist"},
+]
 version = "0.0.0" # version supplied by poetry-dynamic-versioning
 
 [tool.poetry.group.test.dependencies]
@@ -119,10 +119,10 @@ style = "pep440"
 pattern = "(?x)^[v]?((?P<epoch>\\d+)!)?(?P<base>\\d+(\\.\\d+)*)([-._]?((?P<stage>[a-zA-Z]+)[-._]?(?P<revision>\\d+)?))?(\\+(?P<tagged_metadata>.+))?$"
 
 # substitute version not only in pyproject.toml (which the config block above does)
-# but also the __version__.py file
+# but also the __version__.py file (using the default value of the files property).
 [tool.poetry-dynamic-versioning.substitution]
 
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core >=1.0.0", "poetry-dynamic-versioning >=1.0.0, <2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
