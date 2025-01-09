@@ -26,4 +26,4 @@ jobs:
         poetry build -f wheel
         poetry build -f sdist
     - name: Publish to PyPI with pypi-publish (trusted publishing)
-      uses: pypa/gh-action-pypi-publish@v1.8.5
+      uses: pypa/gh-action-pypi-publish
