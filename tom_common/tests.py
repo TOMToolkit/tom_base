@@ -9,7 +9,7 @@ from django.urls import reverse
 from django_comments.models import Comment
 
 from tom_targets.tests.factories import SiderealTargetFactory
-from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby
+from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
 
 
 class TestCommonViews(TestCase):
@@ -42,6 +42,15 @@ class TestCommonExtras(TestCase):
         self.assertEqual(multiplyby(2, 3), 6)
         self.assertEqual(multiplyby(-3, 4), -12)
         self.assertEqual(multiplyby(0.5, 5), 2.5)
+
+    def test_truncate_value_for_display(self):
+        # Check that the truncate_value_for_display template filter works correctly
+        self.assertEqual(truncate_value_for_display('Thisisalongstring', 10), 'Thisisalongstri\nng')
+        self.assertEqual(truncate_value_for_display('Thisisalongstring', 20), 'Thisisalongstring')
+        self.assertEqual(truncate_value_for_display(12, 10), '12')
+        self.assertEqual(truncate_value_for_display(-0.003245678654356787, 10), '-0.0032456')
+        self.assertEqual(truncate_value_for_display(-0.0003245678654356787, 10), '-3.245679e-04')
+        self.assertEqual(truncate_value_for_display((12, 'jk', 12345, 'oop'), 10), "(12, 'jk',\n12345, 'oop')")
 
 
 class TestUserManagement(TestCase):

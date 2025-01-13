@@ -119,11 +119,8 @@ def truncate_value_for_display(value, width=12):
             return str(value)[:width]
         return "{:e}".format(value)
     else:
-        try:
-            word_length = int(width + width / 2)
-            return textwrap.fill(value, width=word_length, max_lines=5, placeholder='...')
-        except TypeError:
-            return value
+        word_length = int(width + width / 2)
+        return textwrap.fill(str(value), width=word_length, max_lines=5, placeholder='...')
 
 
 @register.filter
