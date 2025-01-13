@@ -9,7 +9,7 @@
     <dd class="col-sm-6">{{ target_name }}</dd>
   {% endfor %}
   {% for key, value in target.as_dict.items %}
-    {% if value and key != 'name' %}
+    {% if value != None and value != '' and key != 'name' %}
       <dt class="col-sm-6" title="{% help_text target key %}">{% verbose_name target key %}</dt>
       <dd class="col-sm-6">{{ value|truncate_number }}</dd>
     {% endif %}
