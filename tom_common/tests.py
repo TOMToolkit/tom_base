@@ -9,7 +9,7 @@ from django.urls import reverse
 from django_comments.models import Comment
 
 from tom_targets.tests.factories import SiderealTargetFactory
-from tom_common.templatetags.tom_common_extras import verbose_name
+from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby
 
 
 class TestCommonViews(TestCase):
@@ -36,6 +36,12 @@ class TestCommonExtras(TestCase):
         self.assertEqual(verbose_name(User, 'email'), 'Email Address')
         # Check that the verbose name for a non-existent field is returned correctly
         self.assertEqual(verbose_name(User, 'definitely_not_a_field'), 'Definitely_Not_A_Field')
+
+    def test_multiplyby(self):
+        # Check that the multiplyby template filter works correctly
+        self.assertEqual(multiplyby(2, 3), 6)
+        self.assertEqual(multiplyby(-3, 4), -12)
+        self.assertEqual(multiplyby(0.5, 5), 2.5)
 
 
 class TestUserManagement(TestCase):
