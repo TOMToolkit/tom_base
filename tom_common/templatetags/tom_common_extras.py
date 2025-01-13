@@ -102,7 +102,7 @@ def recent_comments(context, limit=10):
 def truncate_value_for_display(value, width=12):
     """
     Limits the length and format of displayed values to width:
-    
+
     Call using `{% value|truncate_value_for_display:width %}`
 
      - anything with characters less than or equal to the given width is displayed as-is
