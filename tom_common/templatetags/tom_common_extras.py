@@ -99,23 +99,29 @@ def recent_comments(context, limit=10):
 
 
 @register.filter
-def truncate_number(value):
+def truncate_value_for_display(value, width=12):
     """
-    Limits the length and format of displayed values:
-     - anything with 12 or fewer characters is displayed as-is
-     - numbers with more than 12 characters are truncated to 12 digits if the number is between 10^-3 and 10^12
+    Limits the length and format of displayed values to width:
+    Call using `{% value|truncate_value_for_display:width %}`
+     - anything with characters less than or equal to the given width is displayed as-is
+     - numbers with more digits than the width are truncated to that width digits if the number is between
+        10^-3 and 10^width
      - numbers outside that range are converted to scientific notation
-     - Words larger than 18 characters are split and display is limited to 5 lines of text
+     - Words larger than 50% over width characters are split and display is limited to 5 lines of text
     """
 
-    if len(str(value)) <= 12:
+    if len(str(value)) <= width:
         return str(value)
-    elif not isinstance(value, str):
-        if 10**12 > abs(value) >= 0.001:
-            return str(value)[:12]
+    elif isinstance(value, float) or isinstance(value, int):
+        if 10**width > abs(value) >= 0.001:
+            return str(value)[:width]
         return "{:e}".format(value)
     else:
-        return textwrap.fill(value, width=18, max_lines=5, placeholder='...')
+        try:
+            word_length = int(width + width / 2)
+            return textwrap.fill(value, width=word_length, max_lines=5, placeholder='...')
+        except TypeError:
+            return value
 
 
 @register.filter
