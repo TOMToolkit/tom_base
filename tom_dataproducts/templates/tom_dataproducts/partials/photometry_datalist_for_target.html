@@ -34,10 +34,10 @@
                 <td>
                     <!-- prepend greater-than sign if this is a magnitude limit -->
                     {% if datum.limit %}>{% endif %}
-                    {{ datum.magnitude|truncate_number }}
+                    {{ datum.magnitude|truncate_value_for_display }}
                 </td>
                 {% if datum.error %}
-                    <td>{{ datum.error|floatformat:4 }}</td>
+                    <td>{{ datum.error|truncate_value_for_display:5 }}</td>
                 {% else %}
                     <td>{{ datum.magnitude_error|floatformat:4 }}</td>
                 {% endif %}

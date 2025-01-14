@@ -1,3 +1,5 @@
+import textwrap
+
 from django import template
 from django.db.models import IntegerField
 from django.db.models.functions import Cast
@@ -97,15 +99,28 @@ def recent_comments(context, limit=10):
 
 
 @register.filter
-def truncate_number(value):
+def truncate_value_for_display(value, width=12):
     """
-    Truncates a numerical value to four decimal places for display purposes. Etienne Bachelet advised that three
-    decimal places was insufficient precision, but that four would be more acceptable.
+    Limits the length and format of displayed values to width:
+
+    Call using `{% value|truncate_value_for_display:width %}`
+
+     - anything with characters less than or equal to the given width is displayed as-is
+     - numbers longer than the width are truncated to that width digits if the number is between 10^-3 and 10^width
+     - numbers outside that range are converted to scientific notation
+     - Words larger than 50% over width characters are split and display is limited to 5 lines of text
+
     """
-    try:
-        return '%.4f' % value
-    except Exception:
-        return value
+
+    if len(str(value)) <= width:
+        return str(value)
+    elif isinstance(value, float) or isinstance(value, int):
+        if 10**width > abs(value) >= 0.001:
+            return str(value)[:width]
+        return "{:e}".format(value)
+    else:
+        word_length = int(width + width / 2)
+        return textwrap.fill(str(value), width=word_length, max_lines=5, placeholder='...')
 
 
 @register.filter
