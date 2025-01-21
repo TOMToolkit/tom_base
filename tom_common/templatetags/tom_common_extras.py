@@ -20,7 +20,18 @@ def navbar_login(context):
     Renders the username as a link to the user page, as well as the login button. Can be overridden to render additional
     account-related buttons.
     """
-    return {'user': context['user']}
+    nav_item_list = []
+    for app in apps.get_app_configs():
+        try:
+            nav_items = app.nav_items()
+            if nav_items:
+                for item in nav_items:
+                    if item.get('position', 'left') == 'right':
+                        nav_item_list.append(item)
+        except AttributeError:
+            pass
+    return {'user': context['user'],
+            'nav_item_list': nav_item_list}
 
 
 @register.inclusion_tag('tom_common/partials/navbar_app_addons.html', takes_context=True)
@@ -37,7 +48,8 @@ def navbar_app_addons(context):
             nav_items = app.nav_items()
             if nav_items:
                 for item in nav_items:
-                    nav_item_list.append(item)
+                    if item.get('position', 'left') != 'right':
+                        nav_item_list.append(item)
         except AttributeError:
             pass
     return {'nav_item_list': nav_item_list}
