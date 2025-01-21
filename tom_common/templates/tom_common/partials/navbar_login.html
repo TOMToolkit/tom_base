@@ -1,5 +1,5 @@
 {% for nav_item in nav_item_list %}
-    {% include nav_item.partial with user=user %}
+    {% include nav_item.partial %}
 {% endfor %}
 {% if user.is_authenticated %}
 <li class="nav-item">
