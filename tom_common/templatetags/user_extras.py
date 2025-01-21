@@ -31,6 +31,41 @@ def user_list(context):
     }
 
 
+@register.inclusion_tag('auth/partials/app_user_lists.html', takes_context=True)
+def include_app_user_lists(context):
+    """
+    Imports the user list content from relevant apps into the template.
+
+    Each user_list should be contained in a list of dictionaries in an app's apps.py `user_lists` method.
+    Each user_list dictionary should contain a 'context' key with the path to the context processor class (typically a
+    templatetag), and a 'partial' key with the path to the html partial template.
+
+    FOR EXAMPLE:
+    [{'partial': 'path/to/partial.html',
+      'context': 'path/to/context/data/method'}]
+    """
+    user_lists_to_display = []
+    for app in apps.get_app_configs():
+        try:
+            user_lists = app.user_lists()
+        except AttributeError:
+            continue
+        if user_lists:
+            for app_users in user_lists:
+                try:
+                    context_method = import_string(app_users['context'])
+                except ImportError:
+                    logger.warning(f'WARNING: Could not import context for {app.name} user list from '
+                                   f'{app_users["context"]}.\n'
+                                   f'Are you sure you have the right path?')
+                    continue
+                new_context = context_method(context)
+                user_lists_to_display.append({'partial': app_users['partial'], 'context': new_context})
+
+    context['user_lists_to_display'] = user_lists_to_display
+    return context
+
+
 @register.inclusion_tag('tom_common/partials/user_data.html')
 def user_data(user):
     """
@@ -84,12 +119,12 @@ def show_app_profiles(context, user):
     return context
 
 
-@register.inclusion_tag('tom_common/partials/include_profile_card.html', takes_context=True)
-def show_individual_app_profile(context, profile_data):
+@register.inclusion_tag('tom_common/partials/include_app_partial.html', takes_context=True)
+def show_individual_app_partial(context, app_partial_data):
     """
-    An Inclusion tag for setting the unique context for each app's user profile.
+    An Inclusion tag for setting the unique context for an app's partial.
     """
-    for item in profile_data['context']:
-        context[item] = profile_data['context'][item]
-    context['profile_partial'] = profile_data['partial']
+    for item in app_partial_data['context']:
+        context[item] = app_partial_data['context'][item]
+    context['app_partial'] = app_partial_data['partial']
     return context

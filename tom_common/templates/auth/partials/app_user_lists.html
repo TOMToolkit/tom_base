@@ -1,0 +1,5 @@
+{% load user_extras %}
+{% for user_list in user_lists_to_display %}
+    {% show_individual_app_partial user_list %}
+    <hr/>
+{% endfor %}
