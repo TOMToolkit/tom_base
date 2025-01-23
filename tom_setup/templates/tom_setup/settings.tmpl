@@ -344,6 +344,9 @@ REST_FRAMEWORK = {
 # 'plotly', 'plotly_white', 'plotly_dark', 'ggplot2', 'seaborn', 'simple_white', 'none'
 PLOTLY_THEME = 'plotly_white'
 
+# Setting for displaying pagination information (e.g., "showing 0-0 of 0").
+SHOW_PAGINATION_INFO = True
+
 try:
     from local_settings import * # noqa
 except ImportError:

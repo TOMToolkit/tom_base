@@ -7,9 +7,11 @@ from django.contrib.sites.models import Site
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django_comments.models import Comment
+from django.core.paginator import Paginator, Page
 
 from tom_targets.tests.factories import SiderealTargetFactory
 from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
+from tom_common.templatetags.bootstrap4_overrides import bootstrap_pagination
 
 
 class TestCommonViews(TestCase):
@@ -25,6 +27,24 @@ class TestCommonViews(TestCase):
         # from http import HTTPStatus
         # assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.status_code, 200)
+
+
+class TestBootstrap4Overrides(TestCase):
+    def setUp(self):
+        # Set up a dataset for pagination.
+        self.items = list(range(1, 101))
+        self.paginator = Paginator(self.items, 10)
+
+    def test_bootstrap_pagination(self):
+        # Get the first page.
+        page = self.paginator.page(1)
+        context = bootstrap_pagination(page)
+
+        # Assert the context contains the correct data.
+        self.assertEqual(context["start_index"], 1)
+        self.assertEqual(context["end_index"], 10)
+        self.assertEqual(context["total_count"], 100)
+        self.assertEqual(context["show_pagination_info"], True)
 
 
 class TestCommonExtras(TestCase):
