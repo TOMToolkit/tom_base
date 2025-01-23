@@ -2,7 +2,6 @@ import logging
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.edit import UpdateView, CreateView
-from django.views.generic.detail import DetailView
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -82,22 +81,16 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
             return super().dispatch(*args, **kwargs)
 
 
-class UserDetailView(LoginRequiredMixin, DetailView):
+class UserProfileView(LoginRequiredMixin, TemplateView):
     """
     View to handle creating a user profile page. Requires a login.
+
+    Note: This is NOT a User Detail view that would require a primary Key tying it to a specific user.
+    This is a profile page that always displays the information for the logged in user.
+    A User Detail view would allow admin users to view the profile of any user which is not what we want here for
+    security reasons.
     """
     template_name = 'tom_common/user_profile.html'
-    model = User
-
-    def dispatch(self, *args, **kwargs):
-        """
-        Directs the class-based view to the correct method for the HTTP request method. Ensures that non-superusers
-        are not incorrectly updating the profiles of other users.
-        """
-        if not self.request.user.is_superuser and self.request.user.id != self.kwargs['pk']:
-            return redirect('user-profile', self.request.user.id)
-        else:
-            return super().dispatch(*args, **kwargs)
 
 
 class UserPasswordChangeView(SuperuserRequiredMixin, FormView):

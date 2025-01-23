@@ -6,6 +6,7 @@ from astropy import units as u
 from astropy.coordinates import Angle, get_body, SkyCoord
 from astropy.time import Time
 from django import template
+from django.utils.safestring import mark_safe
 from django.conf import settings
 from django.db.models import Q
 from django.apps import apps
@@ -16,12 +17,20 @@ from plotly import graph_objs as go
 
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target, TargetExtra, TargetList
-from tom_targets.forms import TargetVisibilityForm
+from tom_targets.forms import TargetVisibilityForm, PersistentShareForm
 
 register = template.Library()
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+
+@register.filter(name='bold_sharing_source')
+def bold_sharing_source(value):
+    pieces = value.split(':')
+    if len(pieces) > 1:
+        return mark_safe(f"<strong>{pieces[0]}</strong>:{':'.join(pieces[1:])}")
+    return value
 
 
 @register.inclusion_tag('tom_targets/partials/recent_targets.html', takes_context=True)
@@ -356,6 +365,36 @@ def target_table(targets, all_checked=False):
     """
 
     return {'targets': targets, 'all_checked': all_checked}
+
+
+@register.inclusion_tag('tom_targets/partials/persistent_share_table.html', takes_context=True)
+def persistent_share_table(context, target):
+    """
+    Returns a partial for a table of persistent shares, used in persistent share management forms
+    """
+    request = context['request']
+    persistentshares = get_objects_for_user(request.user, f'{Target._meta.app_label}.view_persistentshare')
+    if target:
+        persistentshares = persistentshares.filter(target__pk=target.pk)
+    can_delete = request.user.has_perm(f'{Target._meta.app_label}.delete_persistentshare')
+    return {'persistentshares': persistentshares, 'target': target, 'can_delete': can_delete}
+
+
+@register.inclusion_tag('tom_targets/partials/create_persistent_share.html', takes_context=True)
+def create_persistent_share(context, target):
+    """
+    Returns a partial for a creation form for creating persistent shares
+    """
+    request = context['request']
+    if request.user.has_perm(f'{Target._meta.app_label}.add_persistentshare'):
+        if target:
+            form = PersistentShareForm(target_id=target.pk)
+        else:
+            form = PersistentShareForm(target_id=None)
+    else:
+        form = None
+
+    return {'form': form, 'target': target}
 
 
 @register.inclusion_tag('tom_targets/partials/module_buttons.html')

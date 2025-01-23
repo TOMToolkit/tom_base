@@ -6,6 +6,7 @@ from django.conf import settings
 from importlib import import_module
 
 from tom_dataproducts.models import ReducedDatum
+from tom_targets.sharing import continuous_share_data
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,14 @@ def run_data_processor(dp):
     #                                timestamp=datum[0], value=datum[1], source_name=datum[2]) for datum in data]
 
     # 3. Finally, insert the new ReducedDatum objects into the database
-    ReducedDatum.objects.bulk_create(new_reduced_datums)
+    reduced_datums = ReducedDatum.objects.bulk_create(new_reduced_datums)
+
+    # 4. Trigger any sharing you may have set to occur when new data comes in
+    # Encapsulate this in a try/catch so sharing failure doesn't prevent dataproduct ingestion
+    try:
+        continuous_share_data(dp.target, reduced_datums)
+    except Exception as e:
+        logger.warning(f"Failed to share new dataproduct {dp.product_id}: {repr(e)}")
 
     # log what happened
     if skipped_data:

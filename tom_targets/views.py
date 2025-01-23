@@ -15,7 +15,7 @@ from django_filters.views import FilterView
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse, HttpResponseBadRequest
 from django.forms import HiddenInput
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
@@ -24,6 +24,9 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormVi
 from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
+from rest_framework.views import APIView
+from rest_framework.renderers import TemplateHTMLRenderer
+from rest_framework.response import Response
 
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
@@ -48,7 +51,8 @@ from tom_targets.groups import (
 )
 from tom_targets.merge import (merge_error_message)
 from tom_targets.models import Target, TargetList
-from tom_targets.templatetags.targets_extras import target_merge_fields
+from tom_targets.persistent_sharing_serializers import PersistentShareSerializer
+from tom_targets.templatetags.targets_extras import target_merge_fields, persistent_share_table
 from tom_targets.utils import import_targets, export_targets
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
 
@@ -360,7 +364,7 @@ class TargetShareView(FormView):
     """
     template_name = 'tom_targets/target_share.html'
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.share_target'
+    permission_required = f'{Target._meta.app_label}.change_target'
     form_class = TargetShareForm
 
     def get_context_data(self, *args, **kwargs):
@@ -495,7 +499,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
 class TargetHermesPreloadView(SingleObjectMixin, View):
     model = Target
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.share_target'
+    permission_required = f'{Target._meta.app_label}.change_target'
 
     def post(self, request, *args, **kwargs):
         target = self.get_object()
@@ -788,7 +792,7 @@ class TargetGroupingShareView(FormView):
     """
     template_name = 'tom_targets/target_group_share.html'
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.share_target'
+    permission_required = f'{Target._meta.app_label}.change_target'
     form_class = TargetListShareForm
 
     def get_context_data(self, *args, **kwargs):
@@ -858,7 +862,7 @@ class TargetGroupingShareView(FormView):
 class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
     model = TargetList
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.share_target'
+    permission_required = f'{Target._meta.app_label}.change_target'
 
     def post(self, request, *args, **kwargs):
         targetlist = self.get_object()
@@ -885,3 +889,35 @@ class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
             return HttpResponseRedirect(load_url)
         else:
             return HttpResponseBadRequest("Must have hermes section with HERMES_API_KEY set in DATA_SHARING settings")
+
+
+class PersistentShareManageFormView(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'tom_targets/target_manage_persistent_shares.html'
+    permission_required = f'{Target._meta.app_label}.change_target'
+    serializer_class = PersistentShareSerializer
+
+    def get(self, request):
+        return Response({'target': None})
+
+
+class TargetPersistentShareManageFormView(PersistentShareManageFormView):
+    def get(self, request, target_pk):
+        return Response({'target': Target.objects.get(pk=target_pk)})
+
+
+class PersistentShareManageTable(View):
+    def get(self, request):
+        context = {'request': request}
+        return render(request,
+                      'tom_targets/partials/persistent_share_table.html',
+                      context=persistent_share_table(context, None))
+
+
+class TargetPersistentShareManageTable(View):
+    def get(self, request, target_pk):
+        context = {'request': request}
+        target = Target.objects.get(pk=target_pk)
+        return render(request,
+                      'tom_targets/partials/persistent_share_table.html',
+                      context=persistent_share_table(context, target))

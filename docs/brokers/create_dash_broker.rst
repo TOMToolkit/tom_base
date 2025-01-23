@@ -267,7 +267,7 @@ original alert. Each key in the dictionary corresponds to a column defined in ``
 
 The MARS example also does some further data transformation. The objectId value is rendered as a markdown link, enabling an 
 embedded link in the DataTable. The example also uses a couple of TOM Toolkit utility methods to convert RA/Declination to 
-sexagesimal and to truncate decimals to 4 places.
+sexagesimal and to truncate values for better display.
 
 It should be noted that in this example, and in all built-in Dash broker modules, ``flatten_dash_alerts`` includes the
 original alert with the key ``alert``. This is critical in order to enable creation of targets from alerts.
@@ -275,7 +275,7 @@ original alert with the key ``alert``. This is critical in order to enable creat
 .. code-block:: python
 
     from tom_alerts.brokers.mars import MARSBroker, MARSQueryForm, MARS_URL
-    from tom_common.templatetags.tom_common_extras import truncate_number
+    from tom_common.templatetags.tom_common_extras import truncate_value_for_display
     from tom_targets.templatetags.targets_extras import deg_to_sexigesimal
 
 
@@ -289,8 +289,8 @@ original alert with the key ``alert``. This is critical in order to enable creat
                     'objectId': f'[{alert["objectId"]}]({url})',
                     'ra': deg_to_sexigesimal(alert['candidate']['ra'], 'hms'),
                     'dec': deg_to_sexigesimal(alert['candidate']['dec'], 'dms'),
-                    'magpsf': truncate_number(alert['candidate']['magpsf']),
-                    'rb': truncate_number(alert['candidate']['rb']),
+                    'magpsf': truncate_value_for_display(alert['candidate']['magpsf']),
+                    'rb': truncate_value_for_display(alert['candidate']['rb']),
                     'alert': alert
                 })
             return flattened_alerts

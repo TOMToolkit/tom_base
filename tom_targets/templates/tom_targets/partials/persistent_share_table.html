@@ -1,0 +1,59 @@
+{% load targets_extras %}
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th>Target</th>
+      <th>Share Destination</th>
+      <th>Creator</th>
+      {% if can_delete %}
+      <th>Delete?</th>
+      {% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for persistentshare in persistentshares %}
+    <tr>
+      <td>
+        <a href="{% url 'targets:detail' persistentshare.target.id %}" title="{{ persistentshare.target.name }}">{{ persistentshare.target.names|join:", " }}</a>
+      </td>
+      <td>{{ persistentshare.destination|bold_sharing_source }}</td>
+      <td>{{ persistentshare.user.username }}</td>
+      {% if can_delete %}
+      <td>
+        {% if target %}
+        <input type="button" class="btn btn-primary" value="Delete" onclick="deletePersistentShare('{% url 'targets:persistent-share-detail' persistentshare.pk %}', '{% url 'targets:target-persistent-share-manage-table' target.pk %}')"/>
+        {% else %}
+        <input type="button" class="btn btn-primary" value="Delete" onclick="deletePersistentShare('{% url 'targets:persistent-share-detail' persistentshare.pk %}', '{% url 'targets:persistent-share-manage-table' %}')"/>
+        {% endif %}
+      </td>
+      {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+<script>
+  function deletePersistentShare(deleteUrl, updateUrl) {
+    fetch(deleteUrl, {
+      method: 'DELETE',
+      headers: {'X-CSRFToken': "{{ csrf_token }}"}
+    }).then((response) => {
+      if (response.ok && !response.redirected) {
+        updatePersistentShareTable(updateUrl);
+      }
+    })
+  }
+
+  var table = document.getElementById('target-persistent-share-table');
+
+  function updatePersistentShareTable(updateUrl) {
+    // This assumes you are using this partial in a div id "target-persistent-share-table"
+    // This loads the new table into that div rather than reloading the page, which could be costly
+    fetch(updateUrl, {
+      method: 'GET',
+      headers: {'X-CSRFToken': "{{ csrf_token }}"}
+    }).then((response) => {
+      return response.text();
+    }).then((html) => {
+      table.innerHTML = html;
+    })
+  }
+</script>

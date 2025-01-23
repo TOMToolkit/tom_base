@@ -3,8 +3,10 @@ from django.urls import path
 from .views import TargetCreateView, TargetUpdateView, TargetDetailView, TargetNameSearchView
 from .views import TargetDeleteView, TargetListView, TargetImportView, TargetExportView, TargetShareView
 from .views import (TargetGroupingView, TargetGroupingDeleteView, TargetGroupingCreateView,
-                    TargetAddRemoveGroupingView, TargetMergeView)
+                    TargetAddRemoveGroupingView, TargetMergeView, TargetPersistentShareManageFormView,
+                    PersistentShareManageFormView, TargetPersistentShareManageTable, PersistentShareManageTable)
 from .views import TargetGroupingShareView, TargetHermesPreloadView, TargetGroupingHermesPreloadView
+from .viewsets import PersistentShareViewSet
 
 from .api_views import TargetViewSet, TargetExtraViewSet, TargetNameViewSet, TargetListViewSet
 from tom_common.api_router import SharedAPIRootRouter
@@ -36,5 +38,18 @@ urlpatterns = [
     path('targetgrouping/<int:pk>/share/', TargetGroupingShareView.as_view(), name='share-group'),
     path('targetgrouping/<int:pk>/hermes-preload/', TargetGroupingHermesPreloadView.as_view(),
          name='group-hermes-preload'),
-
+    path('persistentshare/manage/', PersistentShareManageFormView.as_view(), name='persistent-share-manage-form'),
+    path('<int:target_pk>/persistentshare/manage/', TargetPersistentShareManageFormView.as_view(),
+         name='target-persistent-share-manage-form'),
+    path('persistentshare/manage/table', PersistentShareManageTable.as_view(),
+         name='persistent-share-manage-table'),
+    path('<int:target_pk>/persistentshare/manage/table', TargetPersistentShareManageTable.as_view(),
+         name='target-persistent-share-manage-table'),
+    path('persistentshare/', PersistentShareViewSet.as_view({'get': 'list', 'post': 'create'}),
+         name='persistent-share'),
+    path('persistentshare/<int:pk>/',
+         PersistentShareViewSet.as_view({'get': 'retrieve', 'delete': 'destroy', 'patch': 'update'}),
+         name='persistent-share-detail'),
+    path('<int:target_pk>/persistentshare/', PersistentShareViewSet.as_view({'get': 'list'}),
+         name='target-persistent-share')
 ]

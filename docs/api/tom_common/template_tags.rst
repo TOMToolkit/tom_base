@@ -21,5 +21,5 @@ Filters
 *******
 
 .. automodule:: tom_common.templatetags.tom_common_extras
-   :members: truncate_number
+   :members: truncate_value_for_display
    :noindex:

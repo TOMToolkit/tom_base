@@ -46,7 +46,7 @@ def get(term):
         raise ImproperCredentialsException(f"TNS Catalog Search. This requires TNS Broker configuration. "
                                            f"Please see {TNSBroker.help_url} for more information")
 
-    reply = response_data['data']['reply']
+    reply = response_data['data']
     # If TNS succeeds in finding an object, it returns a reply containing the `objname`.
     # If TNS fails to find the object, it returns a reply in the form:
     # {'name': {'110': {'message': 'No results found.', 'message_id': 110}},
@@ -54,7 +54,7 @@ def get(term):
     # In this case, we return None
     if not reply.get('objname', None):
         return None
-    return response_data['data']['reply']
+    return response_data['data']
 
 
 class TNSHarvester(AbstractHarvester):

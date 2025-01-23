@@ -12,6 +12,7 @@ from django.http import StreamingHttpResponse
 from django.utils.text import slugify
 
 from tom_targets.models import Target
+
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.alertstreams.hermes import publish_to_hermes, BuildHermesMessage, get_hermes_topics
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
@@ -245,13 +246,16 @@ def check_for_save_safe_datums():
     return
 
 
-def get_sharing_destination_options():
+def get_sharing_destination_options(include_download=True):
     """
     Build the Display options and headers for the dropdown form for choosing sharing topics.
     Customize for a different selection experience.
     :return: Tuple: Possible Destinations and their Display Names
     """
-    choices = [('download', 'download')]
+    if include_download:
+        choices = [('download', 'download')]
+    else:
+        choices = []
     try:
         for destination, details in settings.DATA_SHARING.items():
             new_destination = [details.get('DISPLAY_NAME', destination)]
@@ -278,21 +282,30 @@ def get_sharing_destination_options():
     return tuple(choices)
 
 
+def sharing_feedback_converter(response):
+    """
+    Takes a sharing feedback response and returns its error or success message
+    """
+    try:
+        response.raise_for_status()
+        if 'message' in response.json():
+            feedback_message = response.json()['message']
+        else:
+            feedback_message = "Submitted message succesfully"
+    except AttributeError:
+        feedback_message = response['message']
+    except Exception:
+        feedback_message = f"ERROR: Returned Response code {response.status_code} with content: {response.content}"
+
+    return feedback_message
+
+
 def sharing_feedback_handler(response, request):
     """
     Handle the response from a sharing request and prepare a message to the user
     :return:
     """
-    try:
-        response.raise_for_status()
-        if 'message' in response.json():
-            publish_feedback = response.json()['message']
-        else:
-            publish_feedback = "Submitted message succesfully"
-    except AttributeError:
-        publish_feedback = response['message']
-    except Exception:
-        publish_feedback = f"ERROR: Returned Response code {response.status_code} with content: {response.content}"
+    publish_feedback = sharing_feedback_converter(response)
     if "ERROR" in publish_feedback.upper():
         messages.error(request, publish_feedback)
     else:
