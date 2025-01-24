@@ -2,6 +2,7 @@ import requests
 from math import sqrt, degrees
 
 from astropy.constants import GM_sun, au
+from tom_targets.models import TargetName
 from tom_catalogs.harvester import AbstractHarvester
 
 from astroquery.mpc import MPC
@@ -66,9 +67,13 @@ class MPCExplorerHarvester(AbstractHarvester):
 
         target.type = 'NON_SIDEREAL'
         target.scheme = 'MPC_COMET'
-        target.name = result['designation_data']['iau_designation']
-        extra_desigs = result['designation_data']['unpacked_primary_provisional_designation']
-        target.extra_names = [extra_desigs] if extra_desigs else []
+        target.name = result['designation_data']['iau_designation'].replace('(', '').replace(')', '')
+        extra_desigs = []
+        if result['designation_data'].get('name', "") != "":
+            extra_desigs.append(result['designation_data']['name'])
+        extra_desigs.append(result['designation_data']['unpacked_primary_provisional_designation'])
+        extra_desigs += result['designation_data']['unpacked_secondary_provisional_designations']
+
         target.epoch_of_elements = result['epoch_data']['epoch']
         # Map coefficients to elements
         element_names = result['COM']['coefficient_names']
@@ -101,5 +106,12 @@ class MPCExplorerHarvester(AbstractHarvester):
                 if mean_anomaly < 0.0:
                     mean_anomaly += 360.0
                 target.mean_anomaly = mean_anomaly
+
+        # Save Target, adding in additional names
+        #target.save(names=extra_desigs)
+        target.save()
+        for name in extra_desigs:
+            if name != target.name:
+                TargetName.objects.get_or_create(target=target, name=name)
 
         return target

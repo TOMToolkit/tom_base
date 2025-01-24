@@ -30,7 +30,8 @@ class TestMPCExplorerHarvester(TestCase):
         target = self.broker.to_target()
         self.assertEqual(target.type, 'NON_SIDEREAL')
         self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
-        self.assertEqual(target.name, '(65803)')
+        self.assertEqual(target.name, '65803')
+        self.assertEqual(target.names, ['65803', 'Didymos', '1996 GT'])
         orbit_data = self.broker.catalog_data[0]['mpc_orb']
         elements = orbit_data['COM']['coefficient_values']
         self.assertEqual(target.epoch_of_elements, orbit_data['epoch_data']['epoch'])
@@ -48,6 +49,39 @@ class TestMPCExplorerHarvester(TestCase):
         self.assertEqual(target.pm_ra, None)
         self.assertEqual(target.pm_dec, None)
 
+    def test_to_target_no_name(self):
+        # Modify designation data to one with a provisional id only
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['iau_designation'] = "2025 AA"
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['iau_name'] = ""
+        del(self.broker.catalog_data[0]['mpc_orb']['designation_data']['name'])
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['orbfit_name'] = "2025 AA"
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_primary_provisional_designation'] = "2025 AA"
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_secondary_provisional_designations'] = []
+
+        target = self.broker.to_target()
+        self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
+        self.assertEqual(target.name, '2025 AA')
+        self.assertEqual(target.names, ['2025 AA',])
+
+    def test_to_target_multiple_alternative_desigs(self):
+        # Modify designation data to one with a provisional id only
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['iau_designation'] = "(709)"
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['iau_name'] = ""
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['name'] = 'Fringilla'
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['orbfit_name'] = "709"
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_primary_provisional_designation'] = "A911 CC"
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_secondary_provisional_designations'] = [
+                                                                                                                        "A906 DA",
+                                                                                                                        "1948 PK1",
+                                                                                                                        "1956 CA"
+                                                                                                                    ]
+        target = self.broker.to_target()
+        self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
+        self.assertEqual(target.name, '709')
+        self.assertEqual(target.names, ['709', 'Fringilla', 'A911 CC', 'A906 DA', '1948 PK1', '1956 CA'])
+
     def test_comet_to_target(self):
         # Make fake parabolic comet
         self.broker.catalog_data[0]['mpc_orb']['COM']['coefficient_values'][1] = 1.0
@@ -56,7 +90,7 @@ class TestMPCExplorerHarvester(TestCase):
         target = self.broker.to_target()
         self.assertEqual(target.type, 'NON_SIDEREAL')
         self.assertEqual(target.scheme, 'MPC_COMET')
-        self.assertEqual(target.name, '(65803)')
+        self.assertEqual(target.name, '65803')
         orbit_data = self.broker.catalog_data[0]['mpc_orb']
         elements = orbit_data['COM']['coefficient_values']
         self.assertEqual(target.epoch_of_elements, orbit_data['epoch_data']['epoch'])
@@ -82,7 +116,7 @@ class TestMPCExplorerHarvester(TestCase):
         target = self.broker.to_target()
         self.assertEqual(target.type, 'NON_SIDEREAL')
         self.assertEqual(target.scheme, 'MPC_COMET')
-        self.assertEqual(target.name, '(65803)')
+        self.assertEqual(target.name, '65803')
         orbit_data = self.broker.catalog_data[0]['mpc_orb']
         elements = orbit_data['COM']['coefficient_values']
         self.assertEqual(target.epoch_of_elements, orbit_data['epoch_data']['epoch'])
@@ -110,7 +144,8 @@ class TestMPCExplorerHarvesterCanary(TestCase):
         self.broker.query('Eros')
         target = self.broker.to_target()
         # Only test things that are not likely to change (much) with time
-        self.assertEqual(target.name, '(433)')
+        self.assertEqual(target.name, '433')
+        self.assertEqual(target.names, ['433', 'Eros', 'A898 PA', '1956 PC'])
         self.assertEqual(target.type, 'NON_SIDEREAL')
         self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
         self.assertEqual(target.ra, None)
