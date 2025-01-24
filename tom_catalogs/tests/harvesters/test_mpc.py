@@ -53,9 +53,10 @@ class TestMPCExplorerHarvester(TestCase):
         # Modify designation data to one with a provisional id only
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['iau_designation'] = "2025 AA"
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['iau_name'] = ""
-        del(self.broker.catalog_data[0]['mpc_orb']['designation_data']['name'])
+        del (self.broker.catalog_data[0]['mpc_orb']['designation_data']['name'])
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['orbfit_name'] = "2025 AA"
-        self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_primary_provisional_designation'] = "2025 AA"
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_primary_provisional_designation'] = \
+            "2025 AA"
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_secondary_provisional_designations'] = []
 
         target = self.broker.to_target()
@@ -70,12 +71,14 @@ class TestMPCExplorerHarvester(TestCase):
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['iau_name'] = ""
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['name'] = 'Fringilla'
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['orbfit_name'] = "709"
-        self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_primary_provisional_designation'] = "A911 CC"
-        self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_secondary_provisional_designations'] = [
-                                                                                                                        "A906 DA",
-                                                                                                                        "1948 PK1",
-                                                                                                                        "1956 CA"
-                                                                                                                    ]
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_primary_provisional_designation'] = \
+            "A911 CC"
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_secondary_provisional_designations'] = \
+            [
+                "A906 DA",
+                "1948 PK1",
+                "1956 CA"
+            ]
         target = self.broker.to_target()
         self.assertEqual(target.type, 'NON_SIDEREAL')
         self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')

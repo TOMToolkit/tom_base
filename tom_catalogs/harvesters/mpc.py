@@ -108,7 +108,7 @@ class MPCExplorerHarvester(AbstractHarvester):
                 target.mean_anomaly = mean_anomaly
 
         # Save Target, adding in additional names
-        #target.save(names=extra_desigs)
+        # target.save(names=extra_desigs)
         target.save()
         for name in extra_desigs:
             if name != target.name:
