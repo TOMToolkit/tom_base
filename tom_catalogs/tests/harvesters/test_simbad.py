@@ -27,7 +27,7 @@ class TestSimbadHarvester(TestCase):
         self.assertEqual(target.dec, self.broker.catalog_data['dec'])
         self.assertEqual(target.pm_ra, None)
         self.assertEqual(target.pm_dec, None)
-        self.assertEqual(target.distance, self.broker.catalog_data['mesdistance.dist'] *1000000)
+        self.assertEqual(target.distance, self.broker.catalog_data['mesdistance.dist'] * 1000000)
         self.assertEqual(target.name, 'M31')
 
 
