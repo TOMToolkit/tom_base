@@ -7,7 +7,7 @@ from django.contrib.sites.models import Site
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django_comments.models import Comment
-from django.core.paginator import Paginator, Page
+from django.core.paginator import Paginator
 
 from tom_targets.tests.factories import SiderealTargetFactory
 from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
