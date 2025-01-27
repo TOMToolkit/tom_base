@@ -14,7 +14,7 @@ class SimbadHarvester(AbstractHarvester):
 
     def __init__(self, *args, **kwargs):
         self.simbad = Simbad()
-        self.simbad.add_votable_fields('pmra', 'pmdec', 'ra(d)', 'dec(d)', 'id', 'parallax', 'distance')
+        self.simbad.add_votable_fields('pmra', 'pmdec', 'ra', 'dec', 'main_id', 'parallax', 'distance')
 
     def query(self, term):
         try:
@@ -24,18 +24,24 @@ class SimbadHarvester(AbstractHarvester):
 
     def to_target(self):
         target = super().to_target()
-        votable_fields = ['RA_d', 'DEC_d', 'PMRA', 'PMDEC', 'ID', 'Distance_distance']
+        votable_fields = ['RA', 'DEC', 'PMRA', 'PMDEC', 'MAIN_ID', 'MESDISTANCE.dist', 'MESDISTANCE.unit']
         result = {}
         for key in votable_fields:
-            if str(self.catalog_data[key][0]) not in ['--', '']:
-                result[key] = self.catalog_data[key][0]
+            if str(self.catalog_data[key.lower()][0]) not in ['--', '']:
+                result[key] = self.catalog_data[key.lower()][0]
         target.type = 'SIDEREAL'
-        target.ra = result.get('RA_d')
-        target.dec = result.get('DEC_d')
+        target.ra = result.get('RA')
+        target.dec = result.get('DEC')
         target.pm_ra = result.get('PMRA')
         target.pm_dec = result.get('PMDEC')
-        target.distance = result.get('Distance_distance')
-        result_id = result.get('ID', b'')
+        result_id = result.get('MAIN_ID', b'')
+        # Convert Distance to pc
+        if 'kpc' in result.get('MESDISTANCE.unit').lower():
+            target.distance = result.get('MESDISTANCE.dist') * 1000
+        elif 'mpc' in result.get('MESDISTANCE.unit').lower():
+            target.distance = result.get('MESDISTANCE.dist') * 1000000
+        else:
+            target.distance = result.get('MESDISTANCE.dist')
         if isinstance(result_id, bytes):  # NOTE: SIMBAD used to return a bytestring, we leave this here in case
             result_id = result_id.decode('UTF-8')
         target.name = result_id.split(',')[0].replace(' ', '')

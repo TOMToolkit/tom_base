@@ -416,6 +416,7 @@ class BaseTarget(models.Model):
         :Keyword Arguments:
             * extras (`dict`): dictionary of key/value pairs representing target attributes
         """
+
         extras = kwargs.pop('extras', {})
         names = kwargs.pop('names', [])
 
@@ -435,7 +436,7 @@ class BaseTarget(models.Model):
             target_extra.save()
 
         for name in names:
-            name, _ = self.targetname_set.get_or_create(target=self, name=name)
+            name, _ = self.aliases.get_or_create(target=self, name=name)
             name.full_clean()
             name.save()
 
