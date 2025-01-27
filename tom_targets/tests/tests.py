@@ -463,6 +463,19 @@ class TestTargetCreate(TestCase):
         for target_name in names:
             self.assertTrue(TargetName.objects.filter(target=target, name=target_name).exists())
 
+    def test_direct_creation_of_targets_with_multiple_names(self):
+        target_data = {
+            'name': 'multiple_names_target',
+            'type': Target.SIDEREAL,
+            'ra': 113.456,
+            'dec': -22.1}
+        names = ['John', 'Doe']
+        target = Target(**target_data)
+        target.save(names=names)
+        self.assertEqual(target.name, target_data['name'])
+        for target_name in names:
+            self.assertTrue(TargetName.objects.filter(target=target, name=target_name).exists())
+
     def test_create_targets_with_conflicting_names(self):
         target_data = {
             'name': 'multiple_names_target',
