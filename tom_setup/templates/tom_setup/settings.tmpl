@@ -344,6 +344,10 @@ REST_FRAMEWORK = {
 # 'plotly', 'plotly_white', 'plotly_dark', 'ggplot2', 'seaborn', 'simple_white', 'none'
 PLOTLY_THEME = 'plotly_white'
 
+# Setting for displaying pagination information (e.g., "(0-0 of 0)").
+# Set this to False if you have a particularly large DB and paginated views are slow.
+SHOW_PAGINATION_INFO = True
+
 try:
     from local_settings import * # noqa
 except ImportError:
