@@ -43,6 +43,8 @@ class MPCExplorerHarvester(AbstractHarvester):
     For information regarding the Minor Planet Center catalog, please see:
     https://minorplanetcenter.net/ or
     https://minorplanetcenter.net/mpcops/documentation/orbits-api/
+    To enable this for use, add 'tom_catalogs.harvesters.mpc.MPCExplorerHarveter',
+    into TOM_HARVESTER_CLASSES in your TOM's settings.py
     """
 
     name = 'MPC Explorer'
