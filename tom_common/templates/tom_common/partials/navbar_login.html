@@ -1,3 +1,6 @@
+{% for nav_item in nav_item_list %}
+    {% include nav_item.partial %}
+{% endfor %}
 {% if user.is_authenticated %}
 <li class="nav-item">
     {% if user.first_name or user.last_name %}

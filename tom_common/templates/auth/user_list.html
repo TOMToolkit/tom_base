@@ -2,6 +2,7 @@
 {% load user_extras %}
 {% block title %}User Management{% endblock %}
 {% block content %}
+{% include_app_user_lists %}
 {% group_list %}
 <hr/>
 {% user_list %}
