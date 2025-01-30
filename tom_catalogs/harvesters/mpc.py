@@ -2,7 +2,6 @@ import requests
 from math import sqrt, degrees
 
 from astropy.constants import GM_sun, au
-from tom_targets.models import TargetName
 from tom_catalogs.harvester import AbstractHarvester
 
 from astroquery.mpc import MPC
