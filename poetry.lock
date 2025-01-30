@@ -292,15 +292,15 @@ typing = ["typing_extensions (>=4.0.0)"]
 
 [[package]]
 name = "astropy-iers-data"
-version = "0.2025.1.20.0.32.27"
+version = "0.2025.1.27.0.32.44"
 description = "IERS Earth Rotation and Leap Second tables for the astropy core package"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 markers = "python_version >= \"3.10\""
 files = [
-    {file = "astropy_iers_data-0.2025.1.20.0.32.27-py3-none-any.whl", hash = "sha256:91f4a18afbd129a48555e27fa3b32dd9507835afd9b02f898d273538a619c759"},
-    {file = "astropy_iers_data-0.2025.1.20.0.32.27.tar.gz", hash = "sha256:b1ba36295cd64dda4203928ec283d28c7dc529b6503ed036418dcc09d26b9be4"},
+    {file = "astropy_iers_data-0.2025.1.27.0.32.44-py3-none-any.whl", hash = "sha256:3e445ad9699787c6b907f71aaeff7ccc21f702d822dcf2dbf72020186f7e800e"},
+    {file = "astropy_iers_data-0.2025.1.27.0.32.44.tar.gz", hash = "sha256:c03c3a7cb18d6419e3e64c197e0388854d111abea0328ea1ecabb19af6b44709"},
 ]
 
 [package.extras]
@@ -309,14 +309,14 @@ test = ["hypothesis", "pytest", "pytest-remotedata"]
 
 [[package]]
 name = "astroquery"
-version = "0.4.8"
+version = "0.4.9.post1"
 description = "Functions and classes to access online astronomical data resources"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "astroquery-0.4.8-py3-none-any.whl", hash = "sha256:8e0090693b3f005fc8130f2cbcde40b507ee12afcf51110cf76de9fcd3bb14b8"},
-    {file = "astroquery-0.4.8.tar.gz", hash = "sha256:5c11088897d9d590007d1833ca4d76314d7658bd98433c87597799db453aecb5"},
+    {file = "astroquery-0.4.9.post1-py3-none-any.whl", hash = "sha256:d3e4af26bc57ce1822c1a89963f5096e89f3b8eb414341e0643cb235fee32f50"},
+    {file = "astroquery-0.4.9.post1.tar.gz", hash = "sha256:5c116bf19036d71e9321d4a049875af55349a4888e24844558fe9984b9f57197"},
 ]
 
 [package.dependencies]
@@ -329,7 +329,7 @@ pyvo = ">=1.5"
 requests = ">=2.19"
 
 [package.extras]
-all = ["astropy-healpix", "boto3", "mocpy (>=0.9)", "regions (>=0.5)"]
+all = ["astropy-healpix", "boto3", "mocpy (>=0.12)", "regions (>=0.5)"]
 docs = ["fsspec[http]", "matplotlib", "scipy", "sphinx-astropy (>=1.5)", "sphinx-automodapi (<0.18)"]
 test = ["fsspec[http]", "matplotlib", "moto[s3]", "pytest-astropy", "pytest-dependency", "pytest-rerunfailures"]
 
@@ -348,14 +348,14 @@ files = [
 
 [[package]]
 name = "attrs"
-version = "24.3.0"
+version = "25.1.0"
 description = "Classes Without Boilerplate"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "attrs-24.3.0-py3-none-any.whl", hash = "sha256:ac96cd038792094f438ad1f6ff80837353805ac950cd2aa0e0625ef19850c308"},
-    {file = "attrs-24.3.0.tar.gz", hash = "sha256:8f5c07333d543103541ba7be0e2ce16eeee8130cb0b3f9238ab904ce1e85baff"},
+    {file = "attrs-25.1.0-py3-none-any.whl", hash = "sha256:c75a69e28a550a7e93789579c22aa26b0f5b83b75dc4e08fe092980051e1090a"},
+    {file = "attrs-25.1.0.tar.gz", hash = "sha256:1c97078a80c814273a76b2a298a932eb681c87415c11dee0a6921de7f1b02c3e"},
 ]
 
 [package.extras]
@@ -877,18 +877,18 @@ django = ">=4.2"
 
 [[package]]
 name = "django-dramatiq"
-version = "0.11.6"
+version = "0.12.0"
 description = "A Django app for Dramatiq."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "django_dramatiq-0.11.6-py3-none-any.whl", hash = "sha256:9843f5e4d019bf8f8c89e78b39ba037b3552f17f587f49633cc5e13774ac0ab0"},
-    {file = "django_dramatiq-0.11.6.tar.gz", hash = "sha256:f8b47a1654c4a8a1a0b4d3215b6b3ec189cb28dd4dec5afb5437ada48ee38ff1"},
+    {file = "django_dramatiq-0.12.0-py3-none-any.whl", hash = "sha256:f9b8fff9510e7e780e993fcd3b8fd31c503c3caa09a535cbead284fb4b636262"},
+    {file = "django_dramatiq-0.12.0.tar.gz", hash = "sha256:d4f4a6ecccb104b10b2b743052a703b7749cd671d492a0f6f2a7e13e846923a8"},
 ]
 
 [package.dependencies]
-django = ">=3.2"
+django = ">=4.2"
 dramatiq = ">=1.11"
 
 [package.extras]
@@ -1053,14 +1053,14 @@ doc = ["Sphinx", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
 
 [[package]]
 name = "faker"
-version = "35.0.0"
+version = "35.2.0"
 description = "Faker is a Python package that generates fake data for you."
 optional = false
 python-versions = ">=3.8"
 groups = ["test"]
 files = [
-    {file = "Faker-35.0.0-py3-none-any.whl", hash = "sha256:926d2301787220e0554c2e39afc4dc535ce4b0a8d0a089657137999f66334ef4"},
-    {file = "faker-35.0.0.tar.gz", hash = "sha256:42f2da8cf561e38c72b25e9891168b1e25fec42b6b0b5b0b6cd6041da54af885"},
+    {file = "Faker-35.2.0-py3-none-any.whl", hash = "sha256:609abe555761ff31b0e5e16f958696e9b65c9224a7ac612ac96bfc2b8f09fe35"},
+    {file = "faker-35.2.0.tar.gz", hash = "sha256:28c24061780f83b45d9cb15a72b8f143b09d276c9ff52eb557744b7a89e8ba19"},
 ]
 
 [package.dependencies]
@@ -2909,4 +2909,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9.0,<3.13"
-content-hash = "d97a69a3ebbbb48b8207ee9123f3eefd2894c7801098b1c427f34ee8e66f8472"
+content-hash = "8720f742a36e2bf3b8b452260c73d83fa47b36d65204a9033fccec1b6410e27c"
