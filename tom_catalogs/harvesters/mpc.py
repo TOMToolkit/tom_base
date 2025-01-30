@@ -75,6 +75,7 @@ class MPCExplorerHarvester(AbstractHarvester):
             extra_desigs.append(result['designation_data']['name'])
         extra_desigs.append(result['designation_data']['unpacked_primary_provisional_designation'])
         extra_desigs += result['designation_data']['unpacked_secondary_provisional_designations']
+        target.extra_names = extra_desigs
 
         target.epoch_of_elements = result['epoch_data']['epoch']
         # Map coefficients to elements
@@ -108,12 +109,5 @@ class MPCExplorerHarvester(AbstractHarvester):
                 if mean_anomaly < 0.0:
                     mean_anomaly += 360.0
                 target.mean_anomaly = mean_anomaly
-
-        # Save Target, adding in additional names
-        # target.save(names=extra_desigs)
-        target.save()
-        for name in extra_desigs:
-            if name != target.name:
-                TargetName.objects.get_or_create(target=target, name=name)
 
         return target
