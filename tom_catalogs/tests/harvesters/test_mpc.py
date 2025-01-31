@@ -28,6 +28,7 @@ class TestMPCExplorerHarvester(TestCase):
 
     def test_to_target(self):
         target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
         self.assertEqual(target.type, 'NON_SIDEREAL')
         self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
         self.assertEqual(target.name, '65803')
@@ -60,10 +61,11 @@ class TestMPCExplorerHarvester(TestCase):
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_secondary_provisional_designations'] = []
 
         target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
         self.assertEqual(target.type, 'NON_SIDEREAL')
         self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
         self.assertEqual(target.name, '2025 AA')
-        self.assertEqual(target.names, ['2025 AA',])
+        self.assertEqual(target.names, ['2025 AA'])
 
     def test_to_target_multiple_alternative_desigs(self):
         # Modify designation data to one with a provisional id only
@@ -80,6 +82,7 @@ class TestMPCExplorerHarvester(TestCase):
                 "1956 CA"
             ]
         target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
         self.assertEqual(target.type, 'NON_SIDEREAL')
         self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
         self.assertEqual(target.name, '709')
@@ -91,6 +94,7 @@ class TestMPCExplorerHarvester(TestCase):
         self.broker.catalog_data[0]['mpc_orb']['categorization']['object_type_int'] = 10
 
         target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
         self.assertEqual(target.type, 'NON_SIDEREAL')
         self.assertEqual(target.scheme, 'MPC_COMET')
         self.assertEqual(target.name, '65803')
@@ -117,6 +121,7 @@ class TestMPCExplorerHarvester(TestCase):
         self.broker.catalog_data[0]['mpc_orb']['categorization']['object_type_int'] = 11
 
         target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
         self.assertEqual(target.type, 'NON_SIDEREAL')
         self.assertEqual(target.scheme, 'MPC_COMET')
         self.assertEqual(target.name, '65803')
@@ -146,6 +151,7 @@ class TestMPCExplorerHarvesterCanary(TestCase):
     def test_query_neo(self):
         self.broker.query('Eros')
         target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
         # Only test things that are not likely to change (much) with time
         self.assertEqual(target.name, '433')
         self.assertEqual(target.names, ['433', 'Eros', 'A898 PA', '1956 PC'])

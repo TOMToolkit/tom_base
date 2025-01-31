@@ -74,6 +74,11 @@ class MPCExplorerHarvester(AbstractHarvester):
             extra_desigs.append(result['designation_data']['name'])
         extra_desigs.append(result['designation_data']['unpacked_primary_provisional_designation'])
         extra_desigs += result['designation_data']['unpacked_secondary_provisional_designations']
+        # Make sure we don't include the primary designation twice
+        try:
+            extra_desigs.remove(target.name)
+        except ValueError:
+            pass
         target.extra_names = extra_desigs
 
         target.epoch_of_elements = result['epoch_data']['epoch']
