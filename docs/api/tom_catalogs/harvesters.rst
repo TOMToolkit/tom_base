@@ -30,6 +30,10 @@ astroquery using the following command:
     pip install astroquery --upgrade --pre --use-deprecated=legacy-resolver
 
 
+There is also an alternative interface which uses the more modern `MPC Explorer <https://data.minorplanetcenter.net/explorer/>`_
+API interface which can be enabled by adding ``tom_catalogs.harvesters.mpc.MPCExplorerHarveter`` to  ``settings.TOM_HARVESTER_CLASSES``.
+As of 2025 January, the MPC Explorer interface is still listed as beta by the MPC and lacks support for comets and natural satellites.
+
 .. automodule:: tom_catalogs.harvesters.mpc
     :members:
 
