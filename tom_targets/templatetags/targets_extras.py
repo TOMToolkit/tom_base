@@ -367,7 +367,8 @@ def target_table(context, targets, all_checked=False):
     return {
         'targets': targets,
         'all_checked': all_checked,
-        'target_count': context['target_count'],
+        'empty_database': context['empty_database'],
+        'authenticated': context['request'].user.is_authenticated,
         'query_string': context['query_string']
     }
 
