@@ -1,6 +1,6 @@
 from tom_targets.models import Target, TargetList
 
-targets = [
+messier_targets = [
     ("M1", 83.6330833, 22.0145),
     ("M2", 323.3625833, -0.82325),
     ("M3", 205.5484167, 28.3772778),
@@ -114,8 +114,8 @@ targets = [
 ]
 
 
-def seed_targets():
+def seed_messier_targets():
     target_list, _ = TargetList.objects.get_or_create(name='Messier Catalog')
-    for target in targets:
+    for target in messier_targets:
         t, _ = Target.objects.get_or_create(name=target[0], ra=target[1], dec=target[2], type=Target.SIDEREAL)
         target_list.targets.add(t)

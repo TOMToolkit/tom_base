@@ -54,7 +54,7 @@ from tom_targets.models import Target, TargetList
 from tom_targets.persistent_sharing_serializers import PersistentShareSerializer
 from tom_targets.templatetags.targets_extras import target_merge_fields, persistent_share_table
 from tom_targets.utils import import_targets, export_targets
-from tom_targets.seed import seed_targets
+from tom_targets.seed import seed_messier_targets
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
 
 
@@ -926,5 +926,5 @@ class TargetPersistentShareManageTable(View):
 
 class TargetSeedView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
-        seed_targets()
+        seed_messier_targets()
         return redirect(reverse('targets:list'))
