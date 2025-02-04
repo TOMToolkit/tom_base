@@ -46,8 +46,8 @@
         <button type="submit" class="btn btn-outline-primary ml-1" name="move">Move</button>
         <button type="submit" class="btn btn-outline-danger ml-1" name="remove">Remove</button>
       </div>
-      {% target_table object_list %}
     </form>
+    {% target_table object_list %}
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
   </div>
   {{ filter.fields }}
