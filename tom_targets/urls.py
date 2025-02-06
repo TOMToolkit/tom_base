@@ -6,6 +6,7 @@ from .views import (TargetGroupingView, TargetGroupingDeleteView, TargetGrouping
                     TargetAddRemoveGroupingView, TargetMergeView, TargetPersistentShareManageFormView,
                     PersistentShareManageFormView, TargetPersistentShareManageTable, PersistentShareManageTable)
 from .views import TargetGroupingShareView, TargetHermesPreloadView, TargetGroupingHermesPreloadView
+from .views import TargetSeedView
 from .viewsets import PersistentShareViewSet
 
 from .api_views import TargetViewSet, TargetExtraViewSet, TargetNameViewSet, TargetListViewSet
@@ -25,6 +26,7 @@ urlpatterns = [
     path('create/', TargetCreateView.as_view(), name='create'),
     path('import/', TargetImportView.as_view(), name='import'),
     path('export/', TargetExportView.as_view(), name='export'),
+    path('seed/', TargetSeedView.as_view(), name='seed'),
     path('merge/<int:pk1>/<int:pk2>', TargetMergeView.as_view(), name='merge'),
     path('add-remove-grouping/', TargetAddRemoveGroupingView.as_view(), name='add-remove-grouping'),
     path('name/<str:name>', TargetNameSearchView.as_view(), name='name-search'),

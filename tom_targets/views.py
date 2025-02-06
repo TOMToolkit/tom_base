@@ -54,6 +54,7 @@ from tom_targets.models import Target, TargetList
 from tom_targets.persistent_sharing_serializers import PersistentShareSerializer
 from tom_targets.templatetags.targets_extras import target_merge_fields, persistent_share_table
 from tom_targets.utils import import_targets, export_targets
+from tom_targets.seed import seed_messier_targets
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
 
 
@@ -84,6 +85,7 @@ class TargetListView(PermissionListMixin, FilterView):
         """
         context = super().get_context_data(*args, **kwargs)
         context['target_count'] = context['paginator'].count
+        context['empty_database'] = not Target.objects.exists()
         # hide target grouping list if user not logged in
         context['groupings'] = (TargetList.objects.all()
                                 if self.request.user.is_authenticated
@@ -921,3 +923,12 @@ class TargetPersistentShareManageTable(View):
         return render(request,
                       'tom_targets/partials/persistent_share_table.html',
                       context=persistent_share_table(context, target))
+
+
+class TargetSeedView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        seed_messier_targets()
+        return redirect(reverse('targets:list'))
+
+    def get(self, request, *args, **kwargs):
+        return redirect(reverse('targets:list'))

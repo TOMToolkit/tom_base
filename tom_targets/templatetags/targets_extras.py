@@ -39,7 +39,11 @@ def recent_targets(context, limit=10):
     Displays a list of the most recently created targets in the TOM up to the given limit, or 10 if not specified.
     """
     user = context['request'].user
-    return {'targets': get_objects_for_user(user, f'{Target._meta.app_label}.view_target').order_by('-created')[:limit]}
+    return {
+        'empty_database': not Target.objects.exists(),
+        'authenticated': user.is_authenticated,
+        'targets': get_objects_for_user(user, f'{Target._meta.app_label}.view_target').order_by('-created')[:limit]
+    }
 
 
 @register.inclusion_tag('tom_targets/partials/recently_updated_targets.html', takes_context=True)
@@ -357,14 +361,20 @@ def target_distribution(targets):
     return aladin_skymap(targets)
 
 
-@register.inclusion_tag('tom_targets/partials/target_table.html')
-def target_table(targets, all_checked=False):
+@register.inclusion_tag('tom_targets/partials/target_table.html', takes_context=True)
+def target_table(context, targets, all_checked=False):
     """
     Returns a partial for a table of targets, used in the target_list.html template
     by default
     """
 
-    return {'targets': targets, 'all_checked': all_checked}
+    return {
+        'targets': targets,
+        'all_checked': all_checked,
+        'empty_database': context['empty_database'],
+        'authenticated': context['request'].user.is_authenticated,
+        'query_string': context['query_string']
+    }
 
 
 @register.inclusion_tag('tom_targets/partials/persistent_share_table.html', takes_context=True)
