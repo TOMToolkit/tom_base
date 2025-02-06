@@ -36,9 +36,9 @@ class SimbadHarvester(AbstractHarvester):
         target.pm_dec = result.get('PMDEC')
         result_id = result.get('MAIN_ID', b'')
         # Convert Distance to pc
-        if 'kpc' in result.get('MESDISTANCE.unit').lower():
+        if 'kpc' in result.get('MESDISTANCE.unit', '').lower():
             target.distance = result.get('MESDISTANCE.dist') * 1000
-        elif 'mpc' in result.get('MESDISTANCE.unit').lower():
+        elif 'mpc' in result.get('MESDISTANCE.unit', '').lower():
             target.distance = result.get('MESDISTANCE.dist') * 1000000
         else:
             target.distance = result.get('MESDISTANCE.dist')

@@ -309,15 +309,13 @@ test = ["hypothesis", "pytest", "pytest-remotedata"]
 
 [[package]]
 name = "astroquery"
-version = "0.4.9.post1"
+version = "0.4.10.dev9803"
 description = "Functions and classes to access online astronomical data resources"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
-files = [
-    {file = "astroquery-0.4.9.post1-py3-none-any.whl", hash = "sha256:d3e4af26bc57ce1822c1a89963f5096e89f3b8eb414341e0643cb235fee32f50"},
-    {file = "astroquery-0.4.9.post1.tar.gz", hash = "sha256:5c116bf19036d71e9321d4a049875af55349a4888e24844558fe9984b9f57197"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 astropy = ">=5.0"
@@ -332,6 +330,12 @@ requests = ">=2.19"
 all = ["astropy-healpix", "boto3", "mocpy (>=0.12)", "regions (>=0.5)"]
 docs = ["fsspec[http]", "matplotlib", "scipy", "sphinx-astropy (>=1.5)", "sphinx-automodapi (<0.18)"]
 test = ["fsspec[http]", "matplotlib", "moto[s3]", "pytest-astropy", "pytest-dependency", "pytest-rerunfailures"]
+
+[package.source]
+type = "git"
+url = "https://github.com/astropy/astroquery.git"
+reference = "e2db773"
+resolved_reference = "e2db773ac2c9aaf4e2d79bcd0961b9cbb22f166e"
 
 [[package]]
 name = "async-timeout"
@@ -2909,4 +2913,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9.0,<3.13"
-content-hash = "8720f742a36e2bf3b8b452260c73d83fa47b36d65204a9033fccec1b6410e27c"
+content-hash = "1272df5258c20c8953226c1ff814a31ef5afbb48058b76249f0e21d8b3630f25"
