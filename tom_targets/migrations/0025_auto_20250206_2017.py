@@ -17,7 +17,7 @@ def remove_public_group(apps, schema_editor):
     UserObjectPermission = apps.get_model('guardian', 'UserObjectPermission')
     GroupObjectPermission = apps.get_model('guardian', 'GroupObjectPermission')
 
-    group = Group.objects.get(name='Public')
+    group, _ = Group.objects.get_or_create(name='Public')
 
     # Delete Target permissions for public group
     GroupObjectPermission.objects.filter(group=group, content_type__model=target_model.lower()).delete()
