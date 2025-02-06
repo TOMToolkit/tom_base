@@ -39,7 +39,11 @@ def recent_targets(context, limit=10):
     Displays a list of the most recently created targets in the TOM up to the given limit, or 10 if not specified.
     """
     user = context['request'].user
-    return {'targets': get_objects_for_user(user, f'{Target._meta.app_label}.view_target').order_by('-created')[:limit]}
+    return {
+        'empty_database': not Target.objects.exists(),
+        'authenticated': user.is_authenticated,
+        'targets': get_objects_for_user(user, f'{Target._meta.app_label}.view_target').order_by('-created')[:limit]
+    }
 
 
 @register.inclusion_tag('tom_targets/partials/recently_updated_targets.html', takes_context=True)
