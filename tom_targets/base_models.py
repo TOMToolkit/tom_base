@@ -299,7 +299,8 @@ class BaseTarget(models.Model):
     )
     created = models.DateTimeField(
         auto_now_add=True, verbose_name='Time Created',
-        help_text='The time which this target was created in the TOM database.'
+        help_text='The time which this target was created in the TOM database.',
+        db_index=True
     )
     modified = models.DateTimeField(
         auto_now=True, verbose_name='Last Modified',
