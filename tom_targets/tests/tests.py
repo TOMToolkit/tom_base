@@ -2,7 +2,7 @@ import pytz
 from datetime import datetime
 import responses
 
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import AnonymousUser, User, Group
 from django.contrib.messages import get_messages
 from django.contrib.messages.constants import SUCCESS, WARNING
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -18,6 +18,7 @@ from tom_observations.tests.factories import ObservingRecordFactory
 from tom_targets.models import Target, TargetExtra, TargetList, TargetName
 from tom_targets.utils import import_targets
 from tom_targets.merge import target_merge
+from tom_targets.views import target_permission_filter
 from tom_dataproducts.models import ReducedDatum, DataProduct
 from tom_observations.models import ObservationRecord
 from guardian.shortcuts import assign_perm, get_perms
@@ -1946,3 +1947,53 @@ class TestTargetSeed(TestCase):
         response = self.client.post(reverse('targets:seed'))
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Target.objects.exists())
+
+
+class TestTargetPermissionFiltering(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(username='testuser')
+        self.group = Group.objects.create(name='testgroup')
+        self.open_target = SiderealTargetFactory.create(permissions=Target.Permissions.OPEN)
+        self.public_target = SiderealTargetFactory.create(permissions=Target.Permissions.PUBLIC)
+        self.private_group_target = SiderealTargetFactory.create(permissions=Target.Permissions.PRIVATE)
+        self.private_user_target = SiderealTargetFactory.create(permissions=Target.Permissions.PRIVATE)
+
+    def test_open_targets_visible(self):
+        result = target_permission_filter(AnonymousUser(), Target.objects.all())
+        self.assertIn(self.open_target, result)
+        self.assertNotIn(self.public_target, result)
+        self.assertNotIn(self.private_group_target, result)
+        self.assertNotIn(self.private_user_target, result)
+
+    def test_public_targets_visible(self):
+        result = target_permission_filter(self.user, Target.objects.all())
+        self.assertIn(self.open_target, result)
+        self.assertIn(self.public_target, result)
+        self.assertNotIn(self.private_group_target, result)
+        self.assertNotIn(self.private_user_target, result)
+
+    def test_private_group_permission(self):
+        self.group.user_set.add(self.user)
+        assign_perm('tom_targets.view_target', self.group, self.private_group_target)
+        result = target_permission_filter(self.user, Target.objects.all())
+        self.assertIn(self.open_target, result)
+        self.assertIn(self.public_target, result)
+        self.assertIn(self.private_group_target, result)
+        self.assertNotIn(self.private_user_target, result)
+
+    def test_private_user_permission(self):
+        assign_perm('tom_targets.view_target', self.user, self.private_user_target)
+        result = target_permission_filter(self.user, Target.objects.all())
+        self.assertIn(self.open_target, result)
+        self.assertIn(self.public_target, result)
+        self.assertNotIn(self.private_group_target, result)
+        self.assertIn(self.private_user_target, result)
+
+    def test_superuser_permission(self):
+        self.user.is_superuser = True
+        self.user.save()
+        result = target_permission_filter(self.user, Target.objects.all())
+        self.assertIn(self.open_target, result)
+        self.assertIn(self.public_target, result)
+        self.assertIn(self.private_group_target, result)
+        self.assertIn(self.private_user_target, result)

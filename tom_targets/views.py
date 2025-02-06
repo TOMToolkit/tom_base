@@ -61,6 +61,19 @@ from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+def target_permission_filter(user, qs):
+    if user.is_authenticated:
+        if user.is_superuser:
+            # Do not filter the queryset by permissions at all
+            return qs
+        else:
+            # Exclude targets that are private except for those that the user has explicit permissions to view
+            private_targets = qs.filter(permissions=Target.Permissions.PRIVATE)
+            public_targets = qs.exclude(permissions=Target.Permissions.PRIVATE)
+            return public_targets | get_objects_for_user(user, f'{Target._meta.app_label}.view_target', private_targets)
+    else:
+        # Only allow open targets
+        return qs.exclude(permissions__in=[Target.Permissions.PUBLIC, Target.Permissions.PRIVATE])
 
 class TargetListView(FilterView):
     """
@@ -94,21 +107,7 @@ class TargetListView(FilterView):
 
     def get_queryset(self, *args, **kwargs):
         qs = super().get_queryset(*args, **kwargs)
-
-        if self.request.user.is_authenticated:
-            if self.request.user.is_superuser:
-                # Do not filter the queryset by permissions at all
-                return qs
-            else:
-                # Exclude targets that are private except for those that the user has explicit permissions to view
-                private_targets = qs.filter(permissions=Target.Permissions.PRIVATE)
-                public_targets = qs.exclude(permissions=Target.Permissions.PRIVATE)
-                return public_targets | get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target', private_targets)
-        else:
-            # Only allow open targets
-            return qs.exclude(permissions__in=[Target.Permissions.PUBLIC, Target.Permissions.PRIVATE])
-
-
+        return target_permission_filter(self.request.user, qs)
 
 
 class TargetNameSearchView(RedirectView):
