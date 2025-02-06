@@ -26,6 +26,7 @@ class SimbadHarvester(AbstractHarvester):
         target = super().to_target()
         votable_fields = ['RA', 'DEC', 'PMRA', 'PMDEC', 'MAIN_ID', 'MESDISTANCE.dist', 'MESDISTANCE.unit']
         result = {}
+        print(self.catalog_data)
         for key in votable_fields:
             if str(self.catalog_data[key.lower()][0]) not in ['--', '']:
                 result[key] = self.catalog_data[key.lower()][0]
@@ -36,9 +37,9 @@ class SimbadHarvester(AbstractHarvester):
         target.pm_dec = result.get('PMDEC')
         result_id = result.get('MAIN_ID', b'')
         # Convert Distance to pc
-        if 'kpc' in result.get('MESDISTANCE.unit').lower():
+        if 'kpc' in result.get('MESDISTANCE.unit', '').lower():
             target.distance = result.get('MESDISTANCE.dist') * 1000
-        elif 'mpc' in result.get('MESDISTANCE.unit').lower():
+        elif 'mpc' in result.get('MESDISTANCE.unit', '').lower():
             target.distance = result.get('MESDISTANCE.dist') * 1000000
         else:
             target.distance = result.get('MESDISTANCE.dist')

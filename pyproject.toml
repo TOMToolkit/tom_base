@@ -43,7 +43,7 @@ dynamic = ["version"]
 requires-python = ">=3.9.0,<3.13"
 dependencies = [
     "numpy >1.24,<2.2",
-    "astroquery <1",
+    "astroquery @ git+https://github.com/astropy/astroquery.git@e2db773",
     "astroplan >=0.8,<0.11",
     "astropy >=5.3.3,<7 ; python_version >= '3.10'",
     "astropy >=5.3.3,<6 ; python_version < '3.10'",
