@@ -62,7 +62,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class TargetListView(PermissionListMixin, FilterView):
+class TargetListView(FilterView):
     """
     View for listing targets in the TOM. Only shows targets that the user is authorized to view. Requires authorization.
     """
@@ -72,7 +72,6 @@ class TargetListView(PermissionListMixin, FilterView):
     model = Target
     filterset_class = TargetFilter
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.view_target'
     ordering = ['-created']
 
     def get_context_data(self, *args, **kwargs):
@@ -92,6 +91,24 @@ class TargetListView(PermissionListMixin, FilterView):
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
         return context
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+
+        if self.request.user.is_authenticated:
+            if self.request.user.is_superuser:
+                # Do not filter the queryset by permissions at all
+                return qs
+            else:
+                # Exclude targets that are private except for those that the user has explicit permissions to view
+                private_targets = qs.filter(permissions=Target.Permissions.PRIVATE)
+                public_targets = qs.exclude(permissions=Target.Permissions.PRIVATE)
+                return public_targets | get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target', private_targets)
+        else:
+            # Only allow open targets
+            return qs.exclude(permissions__in=[Target.Permissions.PUBLIC, Target.Permissions.PRIVATE])
+
+
 
 
 class TargetNameSearchView(RedirectView):
