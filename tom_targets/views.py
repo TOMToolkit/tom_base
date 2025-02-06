@@ -929,3 +929,6 @@ class TargetSeedView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         seed_messier_targets()
         return redirect(reverse('targets:list'))
+
+    def get(self, request, *args, **kwargs):
+        return redirect(reverse('targets:list'))
