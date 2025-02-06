@@ -26,7 +26,6 @@ class SimbadHarvester(AbstractHarvester):
         target = super().to_target()
         votable_fields = ['RA', 'DEC', 'PMRA', 'PMDEC', 'MAIN_ID', 'MESDISTANCE.dist', 'MESDISTANCE.unit']
         result = {}
-        print(self.catalog_data)
         for key in votable_fields:
             if str(self.catalog_data[key.lower()][0]) not in ['--', '']:
                 result[key] = self.catalog_data[key.lower()][0]
