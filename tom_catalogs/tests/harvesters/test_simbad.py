@@ -9,16 +9,28 @@ from tom_catalogs.harvesters.simbad import SimbadHarvester
 class TestSimbadHarvester(TestCase):
     def setUp(self):
         self.broker = SimbadHarvester()
-        table_data = {'main_id': ['M  31'], 'ra': [10.684708333333333],
-                      'dec': [41.268750000000004], 'pmra': ['--'], 'pmdec': ['--'],
-                      'mesdistance.dist': [761.0], 'mesdistance.unit': ['kpc ']}
+        table_data = {'main_id': ['M  31'],
+                      'ra': [10.684708333333333],
+                      'dec': [41.268750000000004],
+                      'pmra': ['--'],
+                      'pmdec': ['--'],
+                      'mesdistance.dist': [761.0],
+                      'mesdistance.unit': ['kpc ']}
         self.broker.catalog_data = Table(table_data)
-        self.empty_table_data = {'main_id': [], 'ra': [], 'dec': [], 'pmra': [], 'pmdec': [],
-                                 'plx_value': [], 'mesdistance.dist': [], 'mesdistance.unit': []}
+        self.empty_table_data = {'main_id': [],
+                                 'ra': [],
+                                 'dec': [],
+                                 'pmra': [],
+                                 'pmdec': [],
+                                 'plx_value': [],
+                                 'mesdistance.dist': [],
+                                 'mesdistance.unit': []}
 
     def test_query_failure(self):
         self.broker.simbad.query_object = Mock(return_value=Table(self.empty_table_data))
         self.broker.query('M31')
+        # Check that the empty table was returned and is falsey so it would trigger the MissingDataException in the
+        # AbstractHarvester
         self.assertFalse(self.broker.catalog_data)
 
     def test_to_target(self):

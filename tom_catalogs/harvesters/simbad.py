@@ -1,6 +1,7 @@
 from tom_catalogs.harvester import AbstractHarvester
 
 from astroquery.simbad import Simbad
+from astropy.table import Table
 
 
 class SimbadHarvester(AbstractHarvester):
@@ -16,10 +17,10 @@ class SimbadHarvester(AbstractHarvester):
         self.simbad.add_votable_fields('pmra', 'pmdec', 'ra', 'dec', 'main_id', 'parallax', 'distance')
 
     def query(self, term):
-        self.catalog_data = self.simbad.query_object(term)
-        # astroquery <0.4.10, > 0.4.7 has issues joining the distance field. This workaround tries the query a 2nd time
-        # without the distance field when that issue is experienced.
-
+        self.catalog_data: Table = self.simbad.query_object(term)
+        # astroquery <0.4.10, > 0.4.7 has issues joining the distance field, failing to find any results.
+        # This workaround checks if the query result is an ampty table and then tries the query a 2nd time without the
+        # distance field.
         if not self.catalog_data:
             self.simbad.reset_votable_fields()
             self.simbad.add_votable_fields('pmra', 'pmdec', 'ra', 'dec', 'main_id', 'parallax')
