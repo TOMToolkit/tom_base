@@ -17,17 +17,21 @@ class SimbadHarvester(AbstractHarvester):
         self.simbad.add_votable_fields('pmra', 'pmdec', 'ra', 'dec', 'main_id', 'parallax', 'distance')
 
     def query(self, term):
-        try:
+        self.catalog_data = self.simbad.query_object(term)
+        # astroquery <0.4.10, > 0.4.7 has issues joining the distance field. This workaround tries the query a 2nd time
+        # without the distance field when that issue is experienced.
+
+        if not self.catalog_data:
+            self.simbad.reset_votable_fields()
+            self.simbad.add_votable_fields('pmra', 'pmdec', 'ra', 'dec', 'main_id', 'parallax')
             self.catalog_data = self.simbad.query_object(term)
-        except TableParseError:  # SIMBAD will raise a TableParseError if a result is not found
-            self.catalog_data = None  # The CatalogQueryView will display a proper error if catalog_data is None
 
     def to_target(self):
         target = super().to_target()
         votable_fields = ['RA', 'DEC', 'PMRA', 'PMDEC', 'MAIN_ID', 'MESDISTANCE.dist', 'MESDISTANCE.unit']
         result = {}
         for key in votable_fields:
-            if str(self.catalog_data[key.lower()][0]) not in ['--', '']:
+            if key.lower() in self.catalog_data.colnames and str(self.catalog_data[key.lower()][0]) not in ['--', '']:
                 result[key] = self.catalog_data[key.lower()][0]
         target.type = 'SIDEREAL'
         target.ra = result.get('RA')
