@@ -1,7 +1,6 @@
 from tom_catalogs.harvester import AbstractHarvester
 
 from astroquery.simbad import Simbad
-from astroquery.exceptions import TableParseError
 
 
 class SimbadHarvester(AbstractHarvester):
