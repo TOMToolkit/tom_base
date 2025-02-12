@@ -52,6 +52,7 @@ from tom_targets.groups import (
 from tom_targets.merge import (merge_error_message)
 from tom_targets.models import Target, TargetList
 from tom_targets.persistent_sharing_serializers import PersistentShareSerializer
+from tom_targets.permissions import targets_for_user
 from tom_targets.templatetags.targets_extras import target_merge_fields, persistent_share_table
 from tom_targets.utils import import_targets, export_targets
 from tom_targets.seed import seed_messier_targets
@@ -61,21 +62,6 @@ from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-def target_permission_filter(user, qs, action):
-    assert action in ['view_target', 'change_target', 'delete_target']
-
-    if user.is_authenticated:
-        if user.is_superuser:
-            # Do not filter the queryset by permissions at all
-            return qs
-        else:
-            # Exclude targets that are private except for those that the user has explicit permissions to view
-            private_targets = qs.filter(permissions=Target.Permissions.PRIVATE)
-            public_targets = qs.exclude(permissions=Target.Permissions.PRIVATE)
-            return public_targets | get_objects_for_user(user, f'{Target._meta.app_label}.{action}', private_targets)
-    else:
-        # Only allow open targets
-        return qs.exclude(permissions__in=[Target.Permissions.PUBLIC, Target.Permissions.PRIVATE])
 
 class TargetListView(FilterView):
     """
@@ -109,7 +95,7 @@ class TargetListView(FilterView):
 
     def get_queryset(self, *args, **kwargs):
         qs = super().get_queryset(*args, **kwargs)
-        return target_permission_filter(self.request.user, qs, 'view_target')
+        return targets_for_user(self.request.user, qs, 'view_target')
 
 
 class TargetNameSearchView(RedirectView):
