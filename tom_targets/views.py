@@ -30,7 +30,7 @@ from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.response import Response
 
 from guardian.mixins import PermissionListMixin
-from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
+from guardian.shortcuts import get_groups_with_perms, assign_perm
 
 from tom_common.hints import add_hint
 from tom_common.hooks import run_hook
@@ -447,13 +447,13 @@ class TargetDetailView(DetailView):
     model = Target
 
     def get_queryset(self, *args, **kwargs):
-            qs = super().get_queryset(*args, **kwargs)
-            qs = targets_for_user(self.request.user, qs, 'view_target')
-            if not qs.exists() and Target.objects.filter(pk=self.kwargs.get("pk")).exists():
-                # Not great hack in order to permission denied instead of 404
-                raise PermissionDenied('You do not have permission to view this target')
-            else:
-                return qs
+        qs = super().get_queryset(*args, **kwargs)
+        qs = targets_for_user(self.request.user, qs, 'view_target')
+        if not qs.exists() and Target.objects.filter(pk=self.kwargs.get("pk")).exists():
+            # Not great hack in order to permission denied instead of 404
+            raise PermissionDenied('You do not have permission to view this target')
+        else:
+            return qs
 
     def get_context_data(self, *args, **kwargs):
         """
