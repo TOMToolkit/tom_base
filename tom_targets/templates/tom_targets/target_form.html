@@ -4,7 +4,7 @@
 {% block content %}
 {% if not object %}
   <h3>Create a Target</h3>
-  <ul class="nav nav-tabs">
+  <ul class="nav nav-tabs mb-2">
     {% for k, v in type_choices %}
       <li class="nav-item">
         <a class="nav-link {% if form.type.initial == k %} active {% endif %}" href="{% url 'targets:create' %}?type={{ k }}">{{ v  }}</a>
@@ -12,19 +12,18 @@
     {% endfor %}
 {% else %}
 <h3> Update {{ object.name }}</h3>
-
 {% endif %}
 </ul>
-{% if not object %}
-  <form method="post" class="form">
-{% else %}
-  <form method="post" class="form">
-{% endif %}
+{% bootstrap_form_errors form %}
+<form method="post" class="form">
 {% csrf_token %}
-{% bootstrap_form form %}
-{% bootstrap_formset names_form %}
-<h3>Tags</h3>
-{% bootstrap_formset extra_form %}
+{% if form.type.initial == 'SIDEREAL' %}
+    {% include 'tom_targets/partials/sidereal_target_form.html' %}
+{% elif form.type.initial == 'NON_SIDEREAL' %}
+    {% include 'tom_targets/partials/non_sidereal_target_form.html' %}
+{% else %}
+    {% bootstrap_form form %}
+{% endif %}
 {% buttons %}
   {% if not object %}
   <button type="submit" formaction="{% url 'targets:create' %}"class="btn btn-primary">Submit</button>
@@ -34,4 +33,7 @@
   {% endif %}
 {% endbuttons %}
 </form>
+{% endblock %}
+{% block extra_javascript %}
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 {% endblock %}
