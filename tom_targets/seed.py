@@ -1,6 +1,4 @@
 from tom_targets.models import Target, TargetList
-from guardian.shortcuts import assign_perm
-from django.contrib.auth.models import Group
 
 messier_targets = [
     ("M1", 83.6330833, 22.0145),
@@ -117,11 +115,7 @@ messier_targets = [
 
 
 def seed_messier_targets():
-    public, _ = Group.objects.get_or_create(name='Public')
     target_list, _ = TargetList.objects.get_or_create(name='Messier Catalog')
     for target in messier_targets:
         t, _ = Target.objects.get_or_create(name=target[0], ra=target[1], dec=target[2], type=Target.SIDEREAL)
         target_list.targets.add(t)
-        assign_perm('tom_targets.view_target', public, t)
-        assign_perm('tom_targets.change_target', public, t)
-        assign_perm('tom_targets.delete_target', public, t)
