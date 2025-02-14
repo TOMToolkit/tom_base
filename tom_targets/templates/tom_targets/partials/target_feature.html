@@ -1,7 +1,7 @@
 {% load cache %}
 {% load tom_common_extras targets_extras %}
 
-<h3>{{ target.name }}
+<h3 class="mb-0">{{ target.name }}
 {% if target.type == 'SIDEREAL' %}
     {% with target.ra|deg_to_sexigesimal:"hms" as ra %}
         {% with target.dec|deg_to_sexigesimal:"dms" as dec %}
@@ -10,6 +10,13 @@
     {% endwith %}
 {% endif %}
 </h3>
+<div class="mb-1">
+{% for list in target.targetlist_set.all %}
+    <span onclick="document.getElementById('manage-groups-tab').click()" class="pointer badge badge-pill badge-{{ list.color }}">
+        {{ list.name }}
+    </span>
+{% endfor %}
+</div>
 {% if target.featured_image %}
 {% cache None featured_image target.id %}
 <img src="{{ target.featured_image.get_preview }}" id="featured-image" onerror="this.style.display='none'">

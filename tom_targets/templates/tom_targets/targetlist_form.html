@@ -2,8 +2,19 @@
 {% load bootstrap4 %}
 {% block title %}New Target Group{% endblock %}
 {% block content %}
-<form method="post">{% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Create">
+<h4>New Target List</h4>
+<form method="post">
+    {% csrf_token %}
+    <div class="form-row">
+        <div class="col-md-3">
+            {% bootstrap_field form.name %}
+        </div>
+        <div class="col-2">
+            {% bootstrap_field form.color %}
+        </div>
+    </div>
+    {% buttons %}
+    <input class="btn btn-primary" type="submit" value="Create">
+    {% endbuttons %}
 </form>
 {% endblock %}

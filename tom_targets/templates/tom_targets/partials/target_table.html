@@ -1,4 +1,5 @@
 <table class="table table-hover">
+
   <thead>
     <tr>
       <th>
@@ -30,6 +31,15 @@
       </td>
       <td>
           <a href="{% url 'targets:detail' target.id %}" title="{{ target.name }}">{{ target.names|join:", " }}</a>
+          <div class="target-lists">
+            {% for l in target.targetlist_set.all %}
+            <a href="{% url 'targets:list' %}?targetlist__name={{ l.id }}">
+                <span class="badge badge-pill badge-{{ l.color }}">
+                    {{ l.name }}
+                </span>
+            </a>
+            {% endfor %}
+          </div>
       </td>
       <td>{{ target.get_type_display }}</td>
       {% if request.GET.type == 'SIDEREAL' %}

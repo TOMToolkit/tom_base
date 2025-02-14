@@ -178,8 +178,23 @@ class TargetList(models.Model):
 
     :param modified: The time at which this target list was modified in the TOM database.
     :type modified: datetime
+
+    :param color: The color used to represent this list in UI elements.
+    :type color: str
     """
+
+    class Color(models.TextChoices):
+        BLUE = 'primary'
+        GREY = 'secondary'
+        GREEN = 'success'
+        YELLOW = 'warning'
+        RED = 'danger'
+        CYAN = 'info'
+        LIGHT = 'light'
+        DARK = 'dark'
+
     name = models.CharField(max_length=200, help_text='The name of the target list.')
+    color = models.CharField(max_length=20, choices=Color.choices, default=Color.BLUE)
     targets = models.ManyToManyField(BaseTarget)
     created = models.DateTimeField(
         auto_now_add=True, help_text='The time which this target list was created in the TOM database.'

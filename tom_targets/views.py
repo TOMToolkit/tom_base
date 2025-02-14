@@ -770,7 +770,7 @@ class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
     View that handles the creation of ``TargetList`` objects, also known as target groups. Requires authentication.
     """
     model = TargetList
-    fields = ['name']
+    fields = ['name', 'color']
     success_url = reverse_lazy('targets:targetgrouping')
 
     def form_valid(self, form):

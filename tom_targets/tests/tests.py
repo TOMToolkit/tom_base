@@ -1137,7 +1137,8 @@ class TestTargetGrouping(TestCase):
 
     def test_create_group(self):
         group_data = {
-            'name': 'test_group'
+            'name': 'test_group',
+            'color': TargetList.Color.BLUE
         }
         response = self.client.post(reverse('targets:create-group'), data=group_data)
 
