@@ -23,8 +23,7 @@
       </div>
     </div>
     {% select_target_js %}
-    {% aladin_skymap object_list %}
-    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+    {% aladin_skymap targets %}
     <label id="displaySelected"></label>
     <button id="optionSelectAll" type="button" class="btn btn-link" onClick="select_all({{ target_count }})"></button>
     <form id="grouping-form" action="{% url 'targets:add-remove-grouping' %}" method="POST">
@@ -47,8 +46,7 @@
         <button type="submit" class="btn btn-outline-danger ml-1" name="remove">Remove</button>
       </div>
     </form>
-    {% target_table object_list %}
-    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+    {% target_table targets %}
   </div>
   {{ filter.fields }}
   <div class="col-md-2">

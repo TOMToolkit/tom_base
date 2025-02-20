@@ -1,3 +1,4 @@
+{% load partials static tom_common_extras %}
 <table class="table table-hover">
   <thead>
     <tr>
@@ -19,8 +20,16 @@
     </tr>
   </thead>
   <tbody>
+    {% partialdef target-table-inline inline %}
     {% for target in targets %}
-    <tr>
+      {% if forloop.last and page_obj.has_next %}
+        <tr hx-get="{% url 'targets:list' %}{% querystring page=page_obj.next_page_number %}"
+            hx-trigger="revealed"
+            hx-swap="afterend"
+            hx-indicator=".htmx-indicator">
+      {% else %}
+        <tr>
+      {% endif %}
       <td>
         {% if all_checked %}
           <input type="checkbox" name="selected-target" value="{{ target.id }}" onClick="single_select()" form="grouping-form" checked/>
@@ -61,5 +70,9 @@
       </td>
     </tr>
     {% endfor %}
+    {% endpartialdef %}
   </tbody>
 </table>
+<center>
+  <img class="htmx-indicator" width="60" src="{% static 'tom_common/img/bluespinner.gif' %}">
+</center>

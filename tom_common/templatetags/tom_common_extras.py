@@ -1,5 +1,6 @@
 import textwrap
 
+from collections.abc import Iterable
 from django import template
 from django.db.models import IntegerField
 from django.db.models.functions import Cast
@@ -171,3 +172,46 @@ def copy_button(text_to_copy='', help_text='Copy'):
     """
     return {'copy_text': str(text_to_copy),
             'copy_help': str(help_text)}
+
+
+@register.simple_tag(name="querystring", takes_context=True)
+def querystring(context, query_dict=None, **kwargs) -> str:
+    """
+    Copied from Django's querystring function included in Django 5.1. Remove this
+    tag when tom_base is upgraded to Django 5.1.
+
+    Add, remove, and change parameters of a ``QueryDict`` and return the result
+    as a query string. If the ``query_dict`` argument is not provided, default
+    to ``request.GET``.
+
+    For example::
+
+        {% querystring foo=3 %}
+
+    To remove a key::
+
+        {% querystring foo=None %}
+
+    To use with pagination::
+
+        {% querystring page=page_obj.next_page_number %}
+
+    A custom ``QueryDict`` can also be used::
+
+        {% querystring my_query_dict foo=3 %}
+    """
+    if query_dict is None:
+        query_dict = context.request.GET
+    params = query_dict.copy()
+    for key, value in kwargs.items():
+        if value is None:
+            if key in params:
+                del params[key]
+        elif isinstance(value, Iterable) and not isinstance(value, str):
+            params.setlist(key, value)
+        else:
+            params[key] = value
+    if not params and not query_dict:
+        return ""
+    query_string = params.urlencode()
+    return f"?{query_string}"

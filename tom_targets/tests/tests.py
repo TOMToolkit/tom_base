@@ -40,6 +40,15 @@ class TestTargetListUserPermissions(TestCase):
         self.assertContains(response, self.st1.name)
         self.assertContains(response, self.st2.name)
 
+    def test_list_targets_partial(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('targets:list'), headers={'HX-Request': 'true'})
+        # The following assertion is a hack until django-template-partials is merged into django
+        # https://github.com/carltongibson/django-template-partials/issues/54#issuecomment-2316852787
+        self.assertNotContains(response, '<tbody>')
+        self.assertContains(response, self.st1.name)
+        self.assertContains(response, self.st2.name)
+
     def test_list_targets_limited_permissions(self):
         self.client.force_login(self.user2)
         response = self.client.get(reverse('targets:list'))
