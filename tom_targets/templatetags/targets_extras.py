@@ -3,7 +3,7 @@ import logging
 
 from astroplan import moon_illumination
 from astropy import units as u
-from astropy.coordinates import GCRS, Angle, get_body, SkyCoord
+from astropy.coordinates import Angle, get_body, SkyCoord
 from astropy.time import Time
 from django import template
 from django.utils.safestring import mark_safe
@@ -204,10 +204,10 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
         format='iso', scale='utc'
     )
 
-    obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg, frame=GCRS(obstime=times))
+    obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
     moon_pos = get_body('moon', times)
 
-    separations = moon_pos.separation(obj_pos).deg
+    separations = moon_pos.separation(obj_pos, origin_mismatch="ignore").deg
     phases = moon_illumination(times)
 
     distance_color = 'rgb(0, 0, 255)'
