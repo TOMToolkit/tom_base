@@ -6,7 +6,7 @@ from .views import (TargetGroupingView, TargetGroupingDeleteView, TargetGrouping
                     TargetAddRemoveGroupingView, TargetMergeView, TargetPersistentShareManageFormView,
                     PersistentShareManageFormView, TargetPersistentShareManageTable, PersistentShareManageTable)
 from .views import TargetGroupingShareView, TargetHermesPreloadView, TargetGroupingHermesPreloadView
-from .views import TargetSeedView
+from .views import TargetSeedView, AladinTargetListView
 from .viewsets import PersistentShareViewSet
 
 from .api_views import TargetViewSet, TargetExtraViewSet, TargetNameViewSet, TargetListViewSet
@@ -22,6 +22,7 @@ app_name = 'tom_targets'
 
 urlpatterns = [
     path('', TargetListView.as_view(), name='list'),
+    path('aladin/', AladinTargetListView.as_view(), name='aladin'),
     path('targetgrouping/', TargetGroupingView.as_view(), name='targetgrouping'),
     path('create/', TargetCreateView.as_view(), name='create'),
     path('import/', TargetImportView.as_view(), name='import'),
