@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'django_filters',
     'django_gravatar',
     'django_htmx',
+    'template_partials',
     'tom_targets',
     'tom_alerts',
     'tom_catalogs',

@@ -74,6 +74,7 @@ class TargetListView(PermissionListMixin, FilterView):
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
     permission_required = f'{Target._meta.app_label}.view_target'
     ordering = ['-created']
+    context_object_name = 'targets'
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -92,6 +93,11 @@ class TargetListView(PermissionListMixin, FilterView):
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
         return context
+
+    def get_template_names(self) -> list[str]:
+        if self.request.htmx:
+            return ['tom_targets/partials/target_table.html#target-table-inline']
+        return super().get_template_names()
 
 
 class TargetNameSearchView(RedirectView):

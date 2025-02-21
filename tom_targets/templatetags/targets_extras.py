@@ -368,14 +368,10 @@ def target_table(context, targets, all_checked=False):
     Returns a partial for a table of targets, used in the target_list.html template
     by default
     """
-
-    return {
-        'targets': targets,
-        'all_checked': all_checked,
-        'empty_database': context['empty_database'],
-        'authenticated': context['request'].user.is_authenticated,
-        'query_string': context['query_string']
-    }
+    context['targets'] = targets
+    context['all_checked'] = all_checked
+    context['authenticated'] = context['request'].user.is_authenticated,
+    return context
 
 
 @register.inclusion_tag('tom_targets/partials/persistent_share_table.html', takes_context=True)

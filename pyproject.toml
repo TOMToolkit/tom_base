@@ -61,6 +61,7 @@ dependencies = [
     "django-gravatar2 >=1.0.0,<2.0.0",
     "django-guardian >=2.0.0,<3.0.0",
     "django-htmx >=1.0.0,<2.0.0",
+    "django-template-partials>=24.4,<25.0",
     "fits2image >=0.4,<0.5",
     "markdown <4",
     "pillow >9.2,<12.0",
