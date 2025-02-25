@@ -36,7 +36,16 @@ router.register(r'groups', GroupViewSet, 'groups')
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'),
-         kwargs={'version': __version__}, name='home'),
+         kwargs={'version': __version__}, name='home')]
+
+# Add the urls from each app that has an include_url_paths method in its AppConfig
+for app in apps.get_app_configs():
+    try:
+        urlpatterns += app.include_url_paths()
+    except AttributeError:
+        pass
+
+urlpatterns += [
     path('robots.txt', robots_txt, name='robots_txt'),
     path('targets/', include('tom_targets.urls', namespace='targets')),
     path('alerts/', include('tom_alerts.urls', namespace='alerts')),
@@ -64,9 +73,4 @@ urlpatterns = [
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
  ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-# Add the urls from each app that has an include_url_paths method in its AppConfig
-for app in apps.get_app_configs():
-    try:
-        urlpatterns += app.include_url_paths()
-    except AttributeError:
-        pass
+
