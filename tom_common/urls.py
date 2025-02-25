@@ -72,5 +72,3 @@ urlpatterns += [
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
  ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-
