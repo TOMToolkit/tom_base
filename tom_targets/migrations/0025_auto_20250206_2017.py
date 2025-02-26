@@ -14,38 +14,24 @@ def remove_public_group(apps, schema_editor):
     target_app, target_model = get_target_model()
     Group = apps.get_model('auth', 'Group')
     Target = apps.get_model(target_app, target_model)
-    UserObjectPermission = apps.get_model('guardian', 'UserObjectPermission')
     GroupObjectPermission = apps.get_model('guardian', 'GroupObjectPermission')
 
     group, _ = Group.objects.get_or_create(name='Public')
 
-    # Delete Target permissions for public group
-    GroupObjectPermission.objects.filter(group=group, content_type__model=target_model.lower()).delete()
+    # Iterate over all these public targets and set the new permission field to PUBLIC
+    # The batching is necessary to avoid memory issues with huge datasets
+    group_perms = GroupObjectPermission.objects.filter(group=group, content_type__model=target_model.lower())
+    total = group_perms.count()
+    batch_size = 10000
+    for start in range(0, total, batch_size):
+        target_ids = group_perms[start:start+batch_size].values_list('object_pk', flat=True)
+        # Without this, the sql blows up on mismatched types
+        target_ids = [int(t) for t in target_ids]
+        Target.objects.filter(pk__in=target_ids).update(permissions='PUBLIC')
 
-    # Any remaining permissions means target should be private
-    private_group_permissions = GroupObjectPermission.objects.filter(
-        content_type__model=target_model.lower()
-    )
-    private_user_permissions = UserObjectPermission.objects.filter(
-        content_type__model=target_model.lower()
-    )
-
-    # get a list of target ids that still have permissions
-    target_ids = set(
-        list(private_group_permissions.values_list('object_pk', flat=True)) \
-        + list(private_user_permissions.values_list('object_pk', flat=True))
-    )
-
-    # Update targets to private
-    Target.objects.filter(pk__in=target_ids).update(permissions='PRIVATE')
-
-    # Delete public group
+    # Cleanup the group and permissions
+    group_perms.delete()
     group.delete()
-
-def set_all_to_public(apps, schema_editor):
-    target_app, target_model = get_target_model()
-    Target = apps.get_model(target_app, target_model)
-    Target.objects.update(permissions='PUBLIC')
 
 class Migration(migrations.Migration):
 
@@ -53,6 +39,7 @@ class Migration(migrations.Migration):
         ('tom_targets', '0024_basetarget_permissions'),
     ]
 
+    # The lambda is a noop so this migration remains reversible.
     operations = [
-        migrations.RunPython(remove_public_group, set_all_to_public),
+        migrations.RunPython(remove_public_group, lambda *args, **kwargs: None),
     ]

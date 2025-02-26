@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='basetarget',
             name='permissions',
-            field=models.CharField(choices=[('OPEN', 'Open'), ('PUBLIC', 'Public'), ('PRIVATE', 'Private')], default='PUBLIC', help_text='The acess level of this target, see the docs on public vs private targets.', max_length=100),
+            field=models.CharField(choices=[('OPEN', 'Open'), ('PUBLIC', 'Public'), ('PRIVATE', 'Private')], default='PRIVATE', help_text='The acess level of this target, see the docs on public vs private targets.', max_length=100),
         ),
     ]
