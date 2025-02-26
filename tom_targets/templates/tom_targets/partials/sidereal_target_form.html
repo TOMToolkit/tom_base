@@ -61,19 +61,3 @@
         {% bootstrap_field form.galactic_lat %}
     </div>
 </div>
-<h4>Permissions</h4>
-<div class="row mb-3" x-data="{permission: 'PUBLIC' }">
-    <div class="col-md-6">
-        <select x-model="permission" name="permissions" class="form-control" id="id_permissions">
-          <option value="OPEN">Open</option>
-          <option value="PUBLIC">Public</option>
-          <option value="PRIVATE">Private</option>
-        </select>
-    </div>
-    <div class="col-md-6">
-        <div x-show="permission == 'PRIVATE'" x-transition>
-            <span>Target will only be visibile to members of these groups:</span>
-            {% bootstrap_field form.groups show_label=False %}
-        </div>
-    </div>
-</div>
