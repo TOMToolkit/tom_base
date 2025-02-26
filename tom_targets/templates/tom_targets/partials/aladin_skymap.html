@@ -6,7 +6,8 @@
 <div id="aladin-lite-div" style="width:auto; height:450px; margin:auto; margin-top: 10px;" ></div>
 <script type="text/javascript">
 async function fetchAladinTargets() {
-  const url = "{% url 'tom_targets:aladin' %}{% querystring %}".replace("&amp;", "&");
+  {% querystring as params %}
+  const url = "{% url 'tom_targets:aladin' %}{{ params|safe }}";
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -48,8 +49,9 @@ async function fetchAladinTargets() {
 
     // Fetch the targets
     const targets = await fetchAladinTargets();
-    const largeTargetsWarning = document.getElementById("aladin-target-warning");
+
     // Display a warning if there are too many targets to display on the map at once.
+    const largeTargetsWarning = document.getElementById("aladin-target-warning");
     if (targets.length >= 10000) {
       largeTargetsWarning.classList.remove("d-none");
     } else {
@@ -76,6 +78,7 @@ async function fetchAladinTargets() {
             color: 'blue',
             sourceSize: 16};
 
+        // One catalog for all targets. The map becomes unstable at ~200 catalogs.
         const targetCatalog = A.catalog({name: "Targets" , color: 'blue', sourceSize: 16});
         const markers = targets.map(target =>{
           const popupInfo = ['RA: '.concat(target.ra, '<br>',  'Dec: ', target.dec)];
