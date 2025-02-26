@@ -724,8 +724,7 @@ class TestTargetUpdate(TestCase):
             'aliases-MAX_NUM_FORMS': 1000,
             'aliases-0-name': 'testtargetname2'
         })
-        response = self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
-        print(response.content)
+        self.client.post(reverse('targets:update', kwargs={'pk': self.target.id}), data=self.form_data)
         self.target.refresh_from_db()
         self.assertTrue(self.target.targetextra_set.filter(key='redshift').exists())
         self.assertTrue(self.target.aliases.filter(name='testtargetname2').exists())
