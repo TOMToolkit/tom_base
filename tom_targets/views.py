@@ -39,7 +39,7 @@ from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetMergeForm, \
-    UnknownTypeTargetCreateForm
+    UnknownTypeTargetCreateForm, TargetListForm
 from tom_targets.sharing import share_target_with_tom
 from tom_targets.merge import target_merge
 from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
@@ -88,9 +88,9 @@ class TargetListView(PermissionListMixin, FilterView):
         context['target_count'] = context['paginator'].count
         context['empty_database'] = not Target.objects.exists()
         # hide target grouping list if user not logged in
-        context['groupings'] = (TargetList.objects.all()
-                                if self.request.user.is_authenticated
-                                else TargetList.objects.none())
+        context['groupings'] = get_objects_for_user(
+            self.request.user, 'tom_targets.view_targetlist', TargetList
+        )
         context['query_string'] = self.request.META['QUERY_STRING']
         return context
 
@@ -776,12 +776,17 @@ class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
     View that handles the creation of ``TargetList`` objects, also known as target groups. Requires authentication.
     """
     model = TargetList
-    fields = ['name']
+    form_class = TargetListForm
     success_url = reverse_lazy('targets:targetgrouping')
+
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+        form.fields['groups'].queryset = self.request.user.groups.all()
+        return form
 
     def form_valid(self, form):
         """
-        Runs after form validation. Saves the target group and assigns the user's permissions to the group.
+        Runs after form validation. Saves the target group and assigns the user and group permissions to the group.
 
         :param form: Form data for target creation
         :type form: django.forms.ModelForm
@@ -791,6 +796,11 @@ class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
         assign_perm('tom_targets.view_targetlist', self.request.user, obj)
         assign_perm('tom_targets.change_targetlist', self.request.user, obj)
         assign_perm('tom_targets.delete_targetlist', self.request.user, obj)
+
+        for group in form.cleaned_data['groups']:
+            assign_perm('tom_targets.view_targetlist', group, obj)
+            assign_perm('tom_targets.change_targetlist', group, obj)
+            assign_perm('tom_targets.delete_targetlist', group, obj)
         return super().form_valid(form)
 
 

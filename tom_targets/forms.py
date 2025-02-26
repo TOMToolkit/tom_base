@@ -268,3 +268,16 @@ class PersistentShareForm(AdminPersistentShareForm):
         if self.target_id:
             self.fields['target'].initial = self.target_id
             self.fields['target'].disabled = True
+
+
+class TargetListForm(forms.ModelForm):
+    groups = forms.ModelMultipleChoiceField(
+        Group.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text='Select groups to share this target list with.'
+    )
+
+    class Meta:
+        model = TargetList
+        fields = ['name', 'groups']

@@ -21,6 +21,7 @@ from tom_targets.merge import target_merge
 from tom_dataproducts.models import ReducedDatum, DataProduct
 from tom_observations.models import ObservationRecord
 from guardian.shortcuts import assign_perm, get_perms
+from guardian.core import ObjectPermissionChecker
 
 
 class TestTargetListUserPermissions(TestCase):
@@ -1128,8 +1129,8 @@ class TestTargetSearch(TestCase):
 
 class TestTargetGrouping(TestCase):
     def setUp(self):
-        user = User.objects.create(username='testuser')
-        self.client.force_login(user)
+        self.user = User.objects.create(username='testuser')
+        self.client.force_login(self.user)
 
     def test_view_groupings(self):
         # create a group, check it is added to DB
@@ -1152,6 +1153,20 @@ class TestTargetGrouping(TestCase):
 
         self.assertRedirects(response, reverse('targets:targetgrouping'), status_code=302)
         self.assertTrue(TargetList.objects.filter(name=group_data['name']).exists())
+
+    def test_create_target_list_with_user_group(self):
+        # so many groups, this is extremely confusing.
+        user_group = Group.objects.create(name="targetlist_test")
+        perm_checker = ObjectPermissionChecker(user_group)
+        self.user.groups.add(user_group)
+        group_data = {
+            'name': 'test_target_list',
+            'groups': [user_group.pk]
+        }
+        response = self.client.post(reverse('targets:create-group'), data=group_data)
+        targetlist = TargetList.objects.get(name=group_data['name'])
+        self.assertRedirects(response, reverse('targets:targetgrouping'), status_code=302)
+        self.assertTrue(perm_checker.has_perm('tom_targets.view_targetlist', targetlist))
 
     def test_delete_group(self):
         # create a group, check it is added to DB
