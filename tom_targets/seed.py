@@ -117,5 +117,7 @@ messier_targets = [
 def seed_messier_targets():
     target_list, _ = TargetList.objects.get_or_create(name='Messier Catalog')
     for target in messier_targets:
-        t, _ = Target.objects.get_or_create(name=target[0], ra=target[1], dec=target[2], type=Target.SIDEREAL)
+        t, _ = Target.objects.get_or_create(
+            name=target[0], ra=target[1], dec=target[2], type=Target.SIDEREAL, permissions=Target.Permissions.PUBLIC
+        )
         target_list.targets.add(t)
