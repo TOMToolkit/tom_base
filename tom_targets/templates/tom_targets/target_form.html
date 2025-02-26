@@ -42,6 +42,11 @@
         <div x-show="permission == 'PRIVATE'" x-transition>
             <span>Target will only be visibile to members of these groups:</span>
             {% bootstrap_field form.groups show_label=False %}
+            {% if not form.groups.value %}
+                <p class="text-muted">No groups have been created.<br/>
+                  <a href="{% url 'group-create' %}">Create groups.</a>
+                </p>
+            {% endif %}
         </div>
     </div>
 </div>
