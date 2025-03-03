@@ -30,7 +30,7 @@ def share_target_list_with_hermes(share_destination, form_data, selected_targets
     if selected_targets is None:
         selected_targets = []
     target_list = form_data.get('target_list')
-    title_name = f"{target_list.name } target list"
+    title_name = f"{target_list.name} target list"
     targets = Target.objects.filter(id__in=selected_targets)
     if include_all_data:
         reduced_datums = ReducedDatum.objects.filter(target__id__in=selected_targets, data_type='photometry')
