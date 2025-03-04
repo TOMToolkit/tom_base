@@ -3,7 +3,7 @@ import logging
 
 from astroplan import moon_illumination
 from astropy import units as u
-from astropy.coordinates import Angle, get_body, SkyCoord
+from astropy.coordinates import GCRS, Angle, get_body, SkyCoord
 from astropy.time import Time
 from django import template
 from django.utils.safestring import mark_safe
@@ -39,7 +39,11 @@ def recent_targets(context, limit=10):
     Displays a list of the most recently created targets in the TOM up to the given limit, or 10 if not specified.
     """
     user = context['request'].user
-    return {'targets': get_objects_for_user(user, f'{Target._meta.app_label}.view_target').order_by('-created')[:limit]}
+    return {
+        'empty_database': not Target.objects.exists(),
+        'authenticated': user.is_authenticated,
+        'targets': get_objects_for_user(user, f'{Target._meta.app_label}.view_target').order_by('-created')[:limit]
+    }
 
 
 @register.inclusion_tag('tom_targets/partials/recently_updated_targets.html', takes_context=True)
@@ -199,11 +203,12 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
         [str(datetime.utcnow() + timedelta(days=delta)) for delta in np.arange(0, day_range, 0.2)],
         format='iso', scale='utc'
     )
+    separations = []
+    for time in times:
+        obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg, frame=GCRS(obstime=time))
+        moon_pos = get_body('moon', time)
+        separations.append(moon_pos.separation(obj_pos).deg)
 
-    obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
-    moon_pos = get_body('moon', times)
-
-    separations = moon_pos.separation(obj_pos).deg
     phases = moon_illumination(times)
 
     distance_color = 'rgb(0, 0, 255)'
@@ -357,14 +362,20 @@ def target_distribution(targets):
     return aladin_skymap(targets)
 
 
-@register.inclusion_tag('tom_targets/partials/target_table.html')
-def target_table(targets, all_checked=False):
+@register.inclusion_tag('tom_targets/partials/target_table.html', takes_context=True)
+def target_table(context, targets, all_checked=False):
     """
     Returns a partial for a table of targets, used in the target_list.html template
     by default
     """
 
-    return {'targets': targets, 'all_checked': all_checked}
+    return {
+        'targets': targets,
+        'all_checked': all_checked,
+        'empty_database': context['empty_database'],
+        'authenticated': context['request'].user.is_authenticated,
+        'query_string': context['query_string']
+    }
 
 
 @register.inclusion_tag('tom_targets/partials/persistent_share_table.html', takes_context=True)

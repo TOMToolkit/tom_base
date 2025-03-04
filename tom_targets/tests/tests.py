@@ -1930,3 +1930,19 @@ class TestTargetMerge(TestCase):
         target_merge(self.st1, self.st2)
         for observationrecord in st2_observationrecords:
             self.assertIn(observationrecord, ObservationRecord.objects.filter(target=self.st1))
+
+
+class TestTargetSeed(TestCase):
+    def test_seed_targets_authenticated(self):
+        user = User.objects.create(username='testuser')
+        self.client.force_login(user)
+        self.assertFalse(Target.objects.exists())
+        response = self.client.post(reverse('targets:seed'))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Target.objects.exists())
+
+    def test_seed_targets_unauthenticated(self):
+        self.assertFalse(Target.objects.exists())
+        response = self.client.post(reverse('targets:seed'))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Target.objects.exists())
