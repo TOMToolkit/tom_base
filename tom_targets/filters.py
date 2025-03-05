@@ -130,6 +130,13 @@ class TargetFilter(django_filters.FilterSet):
         }
     )
 
+    limit = django_filters.NumberFilter(label="Result Limit", method='filter_limit')
+
+    def filter_limit(self, queryset, name, value):
+        if value is not None:
+            return queryset[:value]
+        return queryset
+
     class Meta:
         model = Target
         fields = ['type', 'name', 'key', 'value', 'cone_search', 'targetlist__name']

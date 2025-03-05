@@ -12,7 +12,7 @@ from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Q
 from django_filters.views import FilterView
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse, HttpResponseBadRequest
 from django.forms import HiddenInput
 from django.shortcuts import redirect, render
@@ -98,6 +98,27 @@ class TargetListView(PermissionListMixin, FilterView):
         if self.request.htmx:
             return ['tom_targets/partials/target_table.html#target-table-inline']
         return super().get_template_names()
+
+
+class AladinTargetListView(PermissionListMixin, FilterView):
+    model = Target
+    filterset_class = TargetFilter
+    permission_required = f'{Target._meta.app_label}.view_target'
+    ordering = ['-created']
+
+    def render_to_response(self, context, **kwargs) -> HttpResponse:
+        qs = context['object_list'].only("name", "ra", "dec")
+        target_count = qs.count()
+
+        # If the queryset is too large, take a random sample
+        if target_count >= 10_000:
+            qs = qs.order_by('?')[:10_000]
+
+        targets = [
+            {'name': target.name, 'ra': target.ra, 'dec': target.dec}
+            for target in qs
+        ]
+        return JsonResponse({"targets": targets})
 
 
 class TargetNameSearchView(RedirectView):

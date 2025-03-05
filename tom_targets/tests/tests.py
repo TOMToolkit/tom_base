@@ -1955,3 +1955,26 @@ class TestTargetSeed(TestCase):
         response = self.client.post(reverse('targets:seed'))
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Target.objects.exists())
+
+
+class TestAladinTargetView(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(username='testuser')
+        self.client.force_login(self.user)
+        self.st = SiderealTargetFactory.create()
+        self.ns = NonSiderealTargetFactory.create()
+        assign_perm('tom_targets.view_target', self.user, self.st)
+        assign_perm('tom_targets.view_target', self.user, self.ns)
+
+    def test_aladin_response(self):
+        response = self.client.get(reverse('targets:aladin'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['targets']), 2)
+        self.assertContains(response, self.st.name)
+
+    def test_aladin_filter(self):
+        response = self.client.get(reverse('targets:aladin') + '?name=' + self.st.name)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['targets']), 1)
+        self.assertContains(response, self.st.name)
+        self.assertNotContains(response, self.ns.name)

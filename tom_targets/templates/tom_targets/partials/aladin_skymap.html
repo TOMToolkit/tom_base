@@ -1,7 +1,26 @@
 <!-- embedding Aladin Lite example code found at: https://aladin.cds.unistra.fr/AladinLite/doc/  -->
-<div id="aladin-lite-div" style="width:auto; height:700px; margin:auto; margin-top: 20px;" ></div>
-
+{% load bootstrap4 tom_common_extras %}
+<div id="aladin-target-warning" class="d-none mt-2">
+{% bootstrap_alert "Map display will be limited to 10,000 randomly sampled targets" alert_type="warning" %}
+</div>
+<div id="aladin-lite-div" style="width:auto; height:450px; margin:auto; margin-top: 10px;" ></div>
 <script type="text/javascript">
+async function fetchAladinTargets() {
+  {% querystring as params %}
+  const url = "{% url 'tom_targets:aladin' %}{{ params|safe }}";
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error("Failed to fetch Aladin targets");
+    }
+
+    const jsonTargets = await response.json();
+    return jsonTargets.targets;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 (async function loadAladin() {
     const scriptKey = "cachedAladinJS";
 
@@ -28,6 +47,17 @@
         console.log("Fetched aladin.js and saved to sessionStorage");
     }
 
+    // Fetch the targets
+    const targets = await fetchAladinTargets();
+
+    // Display a warning if there are too many targets to display on the map at once.
+    const largeTargetsWarning = document.getElementById("aladin-target-warning");
+    if (targets.length >= 10000) {
+      largeTargetsWarning.classList.remove("d-none");
+    } else {
+      largeTargetsWarning.classList.add("d-none");
+    }
+
     // Initialize Aladin after script loads
 
     A.init.then(() => {
@@ -42,23 +72,20 @@
 
         aladin.setCooGrid({ color: 'grey', labelSize: 10 });
 
-        // extract the targets from the context
-        var targets = {{ targets|safe }}; //targets cannot be a queryset; here it is a list of dictionaries
-
         // define catalog for the targets
         var catalogOptions = {
             name: 'Targets',
             color: 'blue',
             sourceSize: 16};
 
-        // add targets to the catalog
-        for (var i = 0; i < targets.length; i++) {
-            var target = targets[i];
-            var targetCatalog = A.catalog({name: target.name , color: 'blue', sourceSize: 16});
-            aladin.addCatalog(targetCatalog);
-            popupInfo = ['RA: '.concat(target.ra, '<br>',  'Dec: ', target.dec)];
-            targetCatalog.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popupInfo})]);
-        }
+        // One catalog for all targets. The map becomes unstable at ~200 catalogs.
+        const targetCatalog = A.catalog({name: "Targets" , color: 'blue', sourceSize: 16});
+        const markers = targets.map(target =>{
+          const popupInfo = ['RA: '.concat(target.ra, '<br>',  'Dec: ', target.dec)];
+          return A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popupInfo})
+        });
+        targetCatalog.addSources(markers);
+        aladin.addCatalog(targetCatalog);
 
         // extract Moon information from the context
         const moonRaDeg = {{ moon_ra|safe }};
