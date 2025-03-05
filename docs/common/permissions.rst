@@ -43,7 +43,7 @@ via the TOM web interface.
 
 When creating a Target programmatically, the ``permissions`` field can be set to a member of the
 ``BaseTarget.Permissions`` tuple corresponding to the desired mode. Note that ``PRIVATE`` targets
-created this way will need to have group or user permissions assigned manually.
+created this way will need to have additional group or user permissions assigned manually.
 
 
 First Mode -- Permissions on Targets and Observation Records
