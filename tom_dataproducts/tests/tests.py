@@ -14,6 +14,7 @@ from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
+from django.utils import timezone
 from guardian.shortcuts import assign_perm
 import numpy as np
 from specutils import Spectrum1D
@@ -533,7 +534,7 @@ class TestReducedDatumModel(TestCase):
         self.target = SiderealTargetFactory.create()
         self.data_type = 'photometry'
         self.source_name = 'test_source'
-        self.timestamp = datetime.datetime.now(datetime.UTC)
+        self.timestamp = timezone.now()
         self.existing_reduced_datum_value = {
             'magnitude': 18.5,
             'error': .5,
