@@ -90,3 +90,8 @@ textarea {
   opacity: 1; /* Show the Toast */
   visibility: visible; /* Show the Toast */
 }
+
+/* Indicates interactivity */
+.pointer {
+  cursor: pointer;
+}

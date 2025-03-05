@@ -18,6 +18,7 @@ from plotly import graph_objs as go
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target, TargetExtra, TargetList
 from tom_targets.forms import TargetVisibilityForm, PersistentShareForm
+from tom_targets.permissions import targets_for_user
 
 register = template.Library()
 
@@ -42,7 +43,7 @@ def recent_targets(context, limit=10):
     return {
         'empty_database': not Target.objects.exists(),
         'authenticated': user.is_authenticated,
-        'targets': get_objects_for_user(user, f'{Target._meta.app_label}.view_target').order_by('-created')[:limit]
+        'targets': targets_for_user(user, Target.objects.all(), 'view_target').order_by('-created')[:limit]
     }
 
 

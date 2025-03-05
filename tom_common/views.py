@@ -123,19 +123,6 @@ class UserCreateView(SuperuserRequiredMixin, CreateView):
     success_url = reverse_lazy('user-list')
     form_class = CustomUserCreationForm
 
-    def form_valid(self, form):
-        """
-        Called after form is validated. Creates the ``User`` and adds them to the public ``Group``.
-
-        :param form: User creation form
-        :type form: django.forms.Form
-        """
-        super().form_valid(form)
-        group, _ = Group.objects.get_or_create(name='Public')
-        group.user_set.add(self.object)
-        group.save()
-        return redirect(self.get_success_url())
-
 
 class UserUpdateView(LoginRequiredMixin, UpdateView):
     """

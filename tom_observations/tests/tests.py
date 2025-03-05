@@ -234,7 +234,7 @@ class TestObservationCancelView(TestCase):
                    TARGET_PERMISSIONS_ONLY=True)
 class TestAddExistingObservationView(TestCase):
     def setUp(self):
-        self.target = SiderealTargetFactory.create()
+        self.target = SiderealTargetFactory.create(permissions='PUBLIC')
         self.user = User.objects.create_user(username='vincent_adultman', password='important')
         self.client.force_login(self.user)
 
