@@ -312,7 +312,7 @@ class BaseTarget(models.Model):
         help_text='The time which this target was changed in the TOM database.'
     )
     permissions = models.CharField(
-        max_length=100, default=Permissions.PUBLIC, choices=Permissions.choices,
+        max_length=100, default=Permissions.PRIVATE, choices=Permissions.choices,
         help_text='The access level of this target, see the docs on public vs private targets.'
     )
     ra = models.FloatField(
