@@ -533,7 +533,7 @@ class TestReducedDatumModel(TestCase):
         self.target = SiderealTargetFactory.create()
         self.data_type = 'photometry'
         self.source_name = 'test_source'
-        self.timestamp = datetime.datetime.now()
+        self.timestamp = datetime.datetime.now(datetime.UTC)
         self.existing_reduced_datum_value = {
             'magnitude': 18.5,
             'error': .5,

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from http import HTTPStatus
 from unittest import mock
 
@@ -204,8 +204,8 @@ class TestObservationCancelView(TestCase):
     @mock.patch('tom_observations.tests.utils.FakeRoboticFacility.get_observation_status')
     def test_cancel_observation(self, mock_get_status):
         mock_get_status.return_value = {'state': 'CANCELED',
-                                        'scheduled_start': datetime.now(),
-                                        'scheduled_end': datetime.now()}
+                                        'scheduled_start': datetime.now(UTC),
+                                        'scheduled_end': datetime.now(UTC)}
         self.observation_record.status = 'PENDING'
         self.observation_record.save()
 
