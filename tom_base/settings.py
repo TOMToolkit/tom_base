@@ -174,6 +174,8 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/data/'
 
+TEST_RUNNER = 'tom_common.tests.SilenceLogsTestRunner'
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

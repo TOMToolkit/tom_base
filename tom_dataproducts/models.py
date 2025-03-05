@@ -1,4 +1,3 @@
-from datetime import datetime
 import logging
 import os
 import tempfile
@@ -7,6 +6,7 @@ from astropy.io import fits
 from django.conf import settings
 from django.core.files import File
 from django.db import models
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from fits2image.conversions import fits_to_jpg
 from PIL import Image
@@ -371,7 +371,7 @@ class ReducedDatum(models.Model):
     )
     source_name = models.CharField(max_length=100, default='', blank=True)
     source_location = models.CharField(max_length=200, default='', blank=True)
-    timestamp = models.DateTimeField(null=False, blank=False, default=datetime.now, db_index=True)
+    timestamp = models.DateTimeField(null=False, blank=False, default=timezone.now, db_index=True)
     value = models.JSONField(null=False, blank=False)
     message = models.ManyToManyField(AlertStreamMessage, blank=True)
 

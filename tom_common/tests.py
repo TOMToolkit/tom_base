@@ -1,5 +1,6 @@
 from http import HTTPStatus
 import tempfile
+import logging
 
 from django.test import TestCase, override_settings
 
@@ -8,10 +9,18 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django_comments.models import Comment
 from django.core.paginator import Paginator
+from django.test.runner import DiscoverRunner
 
 from tom_targets.tests.factories import SiderealTargetFactory
 from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
 from tom_common.templatetags.bootstrap4_overrides import bootstrap_pagination
+
+
+class SilenceLogsTestRunner(DiscoverRunner):
+    def run_tests(self, *args, **kwargs):
+        # Silence log output in tests.
+        logging.root.handlers = [logging.NullHandler()]
+        return super().run_tests(*args, **kwargs)
 
 
 class TestCommonViews(TestCase):

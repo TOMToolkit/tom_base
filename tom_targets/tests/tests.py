@@ -1094,7 +1094,7 @@ class TestTargetSearch(TestCase):
 
     @override_settings(EXTRA_FIELDS=[{'name': 'birthday', 'type': 'datetime'}])
     def test_search_extra_datetime(self):
-        TargetExtra.objects.create(target=self.st, key='birthday', value='2019-02-14')
+        TargetExtra.objects.create(target=self.st, key='birthday', value="2019-02-14T00:00:00.000000+00:00")
 
         response = self.client.get(reverse('targets:list') + '?birthday_after=2019-02-13&birthday_before=2019-02-15')
         self.assertContains(response, '1337target')
