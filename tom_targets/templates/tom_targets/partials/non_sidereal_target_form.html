@@ -1,0 +1,80 @@
+{% load bootstrap4 %}
+{% bootstrap_field form.type %}
+<div class="form-row">
+    <div class="col">
+        {% bootstrap_field form.name size="large" show_help=False %}
+    </div>
+</div>
+<div class="row" x-data="{open: false}">
+    <div class="col mb-2">
+        <span @click="open = ! open" class="text-primary pointer" x-text="open ? '▾ Aliases' : '▸ Aliases'"></span>
+        {% bootstrap_formset_errors names_form %}
+        <div x-show="open" class="border p-3 bg-light" x-transition>
+            {% bootstrap_formset names_form %}
+        </div>
+    </div>
+</div>
+<div class="row" x-data="{open: false}">
+    <div class="col mb-2">
+        <span @click="open = ! open" class="text-primary pointer" x-text="open ? '▾ Tags' : '▸ Tags'"></span>
+        {% bootstrap_formset_errors extra_form %}
+        <div x-show="open" class="border p-3 bg-light" x-transition>
+            {% bootstrap_formset extra_form %}
+        </div>
+    </div>
+</div>
+<div class="form-row">
+    <div class="col-md-4">
+        {% bootstrap_field form.scheme %}
+    </div>
+    <div class="col-md-4">
+        {% bootstrap_field form.mean_anomaly %}
+    </div>
+    <div class="col-md-4">
+        {% bootstrap_field form.arg_of_perihelion %}
+    </div>
+</div>
+<div class="form-row">
+    <div class="col-md-4">
+        {% bootstrap_field form.lng_asc_node %}
+    </div>
+    <div class="col-md-4">
+        {% bootstrap_field form.inclination %}
+    </div>
+    <div class="col-md-4">
+        {% bootstrap_field form.mean_daily_motion %}
+    </div>
+</div>
+<div class="form-row">
+    <div class="col-md-4">
+        {% bootstrap_field form.semimajor_axis %}
+    </div>
+    <div class="col-md-4">
+        {% bootstrap_field form.eccentricity %}
+    </div>
+    <div class="col-md-4">
+        {% bootstrap_field form.epoch_of_elements %}
+    </div>
+</div>
+<div class="form-row">
+    <div class="col-md-4">
+        {% bootstrap_field form.epoch_of_perihelion %}
+    </div>
+    <div class="col-md-4">
+        {% bootstrap_field form.ephemeris_period %}
+    </div>
+    <div class="col-md-4">
+        {% bootstrap_field form.ephemeris_period_err %}
+    </div>
+</div>
+<div class="form-row">
+    <div class="col-md-4">
+        {% bootstrap_field form.ephemeris_epoch %}
+    </div>
+    <div class="col-md-4">
+        {% bootstrap_field form.ephemeris_epoch_err %}
+    </div>
+    <div class="col-md-4">
+        {% bootstrap_field form.perihdist %}
+    </div>
+</div>

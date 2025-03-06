@@ -55,7 +55,7 @@ class CustomUserCreationForm(UserCreationForm):
     Form used for creation of new users and update of existing users.
     """
     email = forms.EmailField(required=True)
-    groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
+    groups = forms.ModelMultipleChoiceField(Group.objects.all(),
                                             required=False, widget=forms.CheckboxSelectMultiple)
 
     class Meta:

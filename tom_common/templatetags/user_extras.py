@@ -16,7 +16,7 @@ def group_list(context):
     """
     return {
         'request': context['request'],
-        'groups': Group.objects.all().exclude(name='Public')
+        'groups': Group.objects.all()
     }
 
 
