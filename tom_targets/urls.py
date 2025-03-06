@@ -2,7 +2,7 @@ from django.urls import path
 
 from .views import TargetCreateView, TargetUpdateView, TargetDetailView, TargetNameSearchView
 from .views import TargetDeleteView, TargetListView, TargetImportView, TargetExportView, TargetShareView
-from .views import (TargetGroupingView, TargetGroupingDeleteView, TargetGroupingCreateView,
+from .views import (TargetGroupingView, TargetGroupingDeleteView, TargetListCreateView,
                     TargetAddRemoveGroupingView, TargetMergeView, TargetPersistentShareManageFormView,
                     PersistentShareManageFormView, TargetPersistentShareManageTable, PersistentShareManageTable)
 from .views import TargetGroupingShareView, TargetHermesPreloadView, TargetGroupingHermesPreloadView
@@ -37,7 +37,7 @@ urlpatterns = [
     path('<int:pk>/hermes-preload/', TargetHermesPreloadView.as_view(), name='hermes-preload'),
     path('<int:pk>/', TargetDetailView.as_view(), name='detail'),
     path('targetgrouping/<int:pk>/delete/', TargetGroupingDeleteView.as_view(), name='delete-group'),
-    path('targetgrouping/create/', TargetGroupingCreateView.as_view(), name='create-group'),
+    path('targetgrouping/create/', TargetListCreateView.as_view(), name='create-group'),
     path('targetgrouping/<int:pk>/share/', TargetGroupingShareView.as_view(), name='share-group'),
     path('targetgrouping/<int:pk>/hermes-preload/', TargetGroupingHermesPreloadView.as_view(),
          name='group-hermes-preload'),
