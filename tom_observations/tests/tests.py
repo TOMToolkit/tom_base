@@ -7,6 +7,7 @@ from django.contrib.messages import get_messages
 from django.forms import ValidationError
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from astroplan import FixedTarget
 from astropy.coordinates import get_sun, SkyCoord
@@ -204,8 +205,8 @@ class TestObservationCancelView(TestCase):
     @mock.patch('tom_observations.tests.utils.FakeRoboticFacility.get_observation_status')
     def test_cancel_observation(self, mock_get_status):
         mock_get_status.return_value = {'state': 'CANCELED',
-                                        'scheduled_start': datetime.now(),
-                                        'scheduled_end': datetime.now()}
+                                        'scheduled_start': timezone.now(),
+                                        'scheduled_end': timezone.now()}
         self.observation_record.status = 'PENDING'
         self.observation_record.save()
 
