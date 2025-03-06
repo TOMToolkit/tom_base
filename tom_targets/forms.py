@@ -271,7 +271,7 @@ class PersistentShareForm(AdminPersistentShareForm):
 
 
 class TargetListForm(forms.ModelForm):
-    groups = forms.ModelMultipleChoiceField(
+    user_groups = forms.ModelMultipleChoiceField(
         Group.objects.none(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
@@ -280,4 +280,4 @@ class TargetListForm(forms.ModelForm):
 
     class Meta:
         model = TargetList
-        fields = ['name', 'groups']
+        fields = ['name', 'user_groups']

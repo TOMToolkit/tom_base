@@ -1155,13 +1155,12 @@ class TestTargetGrouping(TestCase):
         self.assertTrue(TargetList.objects.filter(name=group_data['name']).exists())
 
     def test_create_target_list_with_user_group(self):
-        # so many groups, this is extremely confusing.
         user_group = Group.objects.create(name="targetlist_test")
         perm_checker = ObjectPermissionChecker(user_group)
         self.user.groups.add(user_group)
         group_data = {
             'name': 'test_target_list',
-            'groups': [user_group.pk]
+            'user_groups': [user_group.pk]
         }
         response = self.client.post(reverse('targets:create-group'), data=group_data)
         targetlist = TargetList.objects.get(name=group_data['name'])

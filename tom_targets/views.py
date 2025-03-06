@@ -771,7 +771,7 @@ class TargetGroupingDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     success_url = reverse_lazy('targets:targetgrouping')
 
 
-class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
+class TargetListCreateView(LoginRequiredMixin, CreateView):
     """
     View that handles the creation of ``TargetList`` objects, also known as target groups. Requires authentication.
     """
@@ -781,12 +781,12 @@ class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
 
     def get_form(self, *args, **kwargs):
         form = super().get_form(*args, **kwargs)
-        form.fields['groups'].queryset = self.request.user.groups.all()
+        form.fields['user_groups'].queryset = self.request.user.groups.all()
         return form
 
     def form_valid(self, form):
         """
-        Runs after form validation. Saves the target group and assigns the user and group permissions to the group.
+        Runs after form validation. Saves the target list and assigns the user and group permissions to the list.
 
         :param form: Form data for target creation
         :type form: django.forms.ModelForm
@@ -797,10 +797,10 @@ class TargetGroupingCreateView(LoginRequiredMixin, CreateView):
         assign_perm('tom_targets.change_targetlist', self.request.user, obj)
         assign_perm('tom_targets.delete_targetlist', self.request.user, obj)
 
-        for group in form.cleaned_data['groups']:
-            assign_perm('tom_targets.view_targetlist', group, obj)
-            assign_perm('tom_targets.change_targetlist', group, obj)
-            assign_perm('tom_targets.delete_targetlist', group, obj)
+        for user_group in form.cleaned_data['user_groups']:
+            assign_perm('tom_targets.view_targetlist', user_group, obj)
+            assign_perm('tom_targets.change_targetlist', user_group, obj)
+            assign_perm('tom_targets.delete_targetlist', user_group, obj)
         return super().form_valid(form)
 
 
