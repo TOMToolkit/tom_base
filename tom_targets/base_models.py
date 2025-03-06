@@ -290,6 +290,11 @@ class BaseTarget(models.Model):
         ('JPL_MAJOR_PLANET', 'JPL Major Planet')
     )
 
+    class Permissions(models.TextChoices):
+        OPEN = 'OPEN'
+        PUBLIC = 'PUBLIC'
+        PRIVATE = 'PRIVATE'
+
     name = models.CharField(
         max_length=100, default='', verbose_name='Name', help_text='The name of this target e.g. Barnard\'s star.',
         unique=True
@@ -305,6 +310,10 @@ class BaseTarget(models.Model):
     modified = models.DateTimeField(
         auto_now=True, verbose_name='Last Modified',
         help_text='The time which this target was changed in the TOM database.'
+    )
+    permissions = models.CharField(
+        max_length=100, default=Permissions.PRIVATE, choices=Permissions.choices,
+        help_text='The access level of this target, see the docs on public vs private targets.'
     )
     ra = models.FloatField(
         null=True, blank=True, verbose_name='Right Ascension', help_text='Right Ascension, in degrees.'

@@ -18,6 +18,8 @@
     {% bootstrap_javascript jquery='True' %}
     <!-- htmx.min.js was downloaded manually and added to the project. see https://htmx.org/docs/#download-a-copy -->
     <script src="{% static 'tom_common/js/htmx.min.js' %}" defer></script>
+    <!-- Loading AlpineJS from a CDN For now, todo solution for 3rd party static assets. -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <title>{% tom_name %} | {% block title %}{% endblock %}</title>
   </head>

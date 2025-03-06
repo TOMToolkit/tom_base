@@ -314,7 +314,7 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
                 # Give the user access to the target they created
                 target.give_user_access(self.request.user)
                 broker_class().process_reduced_data(target, cached_alert)
-                for group in request.user.groups.all().exclude(name='Public'):
+                for group in request.user.groups.all():
                     assign_perm('tom_targets.view_target', group, target)
                     assign_perm('tom_targets.change_target', group, target)
                     assign_perm('tom_targets.delete_target', group, target)

@@ -227,7 +227,7 @@ class CommentDeleteViewTest(TestCase):
         self.superuser = User.objects.create_superuser(username='admin', password='admin')
 
         # Create a content object and a comment linked to that object.
-        self.content_object = SiderealTargetFactory.create(ra=123.456, dec=-32.1)
+        self.content_object = SiderealTargetFactory.create(ra=123.456, dec=-32.1, permissions="PUBLIC")
         self.comment = Comment.objects.create(user=self.user, content_object=self.content_object,
                                               comment="Test Comment", site=self.site)
 

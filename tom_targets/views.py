@@ -8,6 +8,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
+from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Q
@@ -29,7 +30,7 @@ from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.response import Response
 
 from guardian.mixins import PermissionListMixin
-from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
+from guardian.shortcuts import get_groups_with_perms, assign_perm
 
 from tom_common.hints import add_hint
 from tom_common.hooks import run_hook
@@ -52,6 +53,7 @@ from tom_targets.groups import (
 from tom_targets.merge import (merge_error_message)
 from tom_targets.models import Target, TargetList
 from tom_targets.persistent_sharing_serializers import PersistentShareSerializer
+from tom_targets.permissions import targets_for_user
 from tom_targets.templatetags.targets_extras import target_merge_fields, persistent_share_table
 from tom_targets.utils import import_targets, export_targets
 from tom_targets.seed import seed_messier_targets
@@ -62,7 +64,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class TargetListView(PermissionListMixin, FilterView):
+class TargetListView(FilterView):
     """
     View for listing targets in the TOM. Only shows targets that the user is authorized to view. Requires authorization.
     """
@@ -72,7 +74,6 @@ class TargetListView(PermissionListMixin, FilterView):
     model = Target
     filterset_class = TargetFilter
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.view_target'
     ordering = ['-created']
 
     def get_context_data(self, *args, **kwargs):
@@ -93,6 +94,10 @@ class TargetListView(PermissionListMixin, FilterView):
         context['query_string'] = self.request.META['QUERY_STRING']
         return context
 
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        return targets_for_user(self.request.user, qs, 'view_target')
+
 
 class TargetNameSearchView(RedirectView):
     """
@@ -105,7 +110,7 @@ class TargetNameSearchView(RedirectView):
         # Tests fail without distinct but it works in practice, it is unclear as to why
         # The Django query planner shows different results between in practice and unit tests
         # django-guardian related querying is present in the test planner, but not in practice
-        targets = get_objects_for_user(request.user, f'{Target._meta.app_label}.view_target').filter(
+        targets = targets_for_user(request.user, Target.objects.all(), 'view_target').filter(
             Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name)
         ).distinct()
         if targets.count() == 1:
@@ -246,13 +251,11 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         return form
 
 
-class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
+class TargetUpdateView(LoginRequiredMixin, UpdateView):
     """
     View that handles updating a target. Requires authorization.
     """
     template_name = 'tom_targets/target_form.html'
-    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.change_target'
     model = Target
     fields = '__all__'
 
@@ -306,7 +309,8 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
         :returns: Set of targets
         :rtype: QuerySet
         """
-        return get_objects_for_user(self.request.user, f'{Target._meta.app_label}.change_target')
+        qs = super().get_queryset(*args, **kwargs)
+        return targets_for_user(self.request.user, qs, 'change_target')
 
     def get_form_class(self):
         """
@@ -349,15 +353,18 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
         return form
 
 
-class TargetDeleteView(Raise403PermissionRequiredMixin, DeleteView):
+class TargetDeleteView(LoginRequiredMixin, DeleteView):
     """
     View for deleting a target. Requires authorization.
     """
     template_name = 'tom_targets/target_confirm_delete.html'
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.delete_target'
     success_url = reverse_lazy('targets:list')
     model = Target
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        return targets_for_user(self.request.user, qs, 'delete_target')
 
 
 class TargetShareView(FormView):
@@ -432,14 +439,21 @@ class TargetShareView(FormView):
         return redirect(self.get_success_url())
 
 
-class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
+class TargetDetailView(DetailView):
     """
-    View that handles the display of the target details. Requires authorization.
+    View that handles the display of the target details.
     """
     template_name = 'tom_targets/target_detail.html'
-    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.view_target'
     model = Target
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        qs = targets_for_user(self.request.user, qs, 'view_target')
+        if not qs.exists() and Target.objects.filter(pk=self.kwargs.get("pk")).exists():
+            # Not great hack in order to permission denied instead of 404
+            raise PermissionDenied('You do not have permission to view this target')
+        else:
+            return qs
 
     def get_context_data(self, *args, **kwargs):
         """
