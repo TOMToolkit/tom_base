@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django_extensions',
+    'django_tasks',
+    'django_tasks.backends.database',
     'guardian',
     'tom_common',
     'django_comments',
@@ -59,6 +61,7 @@ INSTALLED_APPS = [
     'tom_observations',
     'tom_dataproducts',
     'tom_dataservices',
+    'tom_async_demo',
 ]
 
 SITE_ID = 1
@@ -175,6 +178,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/data/'
 
 TEST_RUNNER = 'tom_common.tests.SilenceLogsTestRunner'
+
+TASKS = {
+    "default": {
+        "BACKEND": "django_tasks.backends.database.DatabaseBackend"
+        # "BACKEND": "django_tasks.backends.immediate.ImmediateBackend"
+    }
+}
 
 LOGGING = {
     'version': 1,

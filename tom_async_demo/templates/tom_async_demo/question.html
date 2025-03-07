@@ -1,0 +1,56 @@
+{% extends 'tom_common/base.html' %}
+{% load static %}
+
+{% block content %}
+    <h1>What is the meaning of life?</h1>
+    <p>Try un-commenting the different backends the TASKS setting in settings.py between the immedate and database
+      backends and notice the difference in behavior.
+      <pre>
+TASKS = {
+    "default": {
+        "BACKEND": "django_tasks.backends.database.DatabaseBackend"
+        # "BACKEND": "django_tasks.backends.immediate.ImmediateBackend"
+    }
+}
+      </pre>
+
+      Note you will need to run the
+      <pre>./manage.py db_worker -v3</pre>
+      command for the database backend to work (unless you don't want
+      the tasks to run). Don't forget to run migrations.
+    </p>
+    <p>
+      Work time: <strong>{{ work_time }}</strong> seconds.</br>
+      Current task backend: <strong>{{ backend.alias }}</strong>.</br>
+      Supports defer: <strong>{{ backend.supports_defer }}</strong> (Can tasks be enqueued with the run_after attribute)</br>
+      Supports async: <strong>{{ backend.supports_async_task }}</strong> (Can coroutines be enqueued)</br>
+      Supports get result: <strong>{{ backend.supports_get_result }}</strong> (Can results be retrieved after the fact (from **any** thread / process))</br>
+    </p>
+    <a class="btn btn-outline btn-secondary"
+        hx-get="{% url 'async:start' %}"
+        hx-target="#result-row"
+        hx-swap="afterend"
+        hx-indicator=".htmx-indicator">
+          Get an Answer
+    </a>
+    <a href="{% url 'admin:django_tasks_database_dbtaskresult_changelist' %}"
+      class="btn btn-outline btn-secondary">View Admin Page</a>
+    <img class="htmx-indicator" width="40" src="{% static 'tom_common/img/bluespinner.gif' %}">
+    <table class="table my-3">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Status</th>
+          <th>Result</th>
+          <th>Enqueued</th>
+          <th>Started</th>
+          <th>Finished</th>
+          <th>Backend</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr id="result-row">
+        </tr>
+      </tbody>
+    </table>
+{% endblock %}

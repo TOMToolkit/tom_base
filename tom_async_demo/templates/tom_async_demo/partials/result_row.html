@@ -1,0 +1,15 @@
+<tr
+  {% if result.status != 'SUCCEEDED' %}
+  hx-get="{% url 'async:answer' result.id %}"
+  hx-trigger="every 1s"
+  hx-swap="outerHTML"
+  {% endif %}
+>
+  <td>{{ result.id }}</td>
+  <td>{{ result.status }}</td>
+  <td>{% if result.status == 'SUCCEEDED' %}{{ result.return_value }}{% endif %}</td>
+  <td>{{ result.enqueued_at }}</td>
+  <td>{{ result.started_at }}</td>
+  <td>{{ result.finished_at }}</td>
+  <td>{{ result.backend }}</td>
+</tr>
