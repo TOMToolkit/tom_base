@@ -259,11 +259,15 @@ class RunQueryView(TemplateView):
         context['query'] = query
         context['score_description'] = broker_class.score_description
         context['broker_feedback'] = broker_feedback
+        context['too_many_alerts'] = False
 
         context['alerts'] = []
         try:
-            while True:
-                alert = next(alerts)
+            for (i, alert) in enumerate(alerts):
+                if i > 99:
+                    # issue 1172 too many alerts causes the cache to overflow
+                    context['too_many_alerts'] = True
+                    break
                 generic_alert = broker_class.to_generic_alert(alert)
                 cache.set(f'alert_{generic_alert.id}', alert, 3600)
                 context['alerts'].append(generic_alert)

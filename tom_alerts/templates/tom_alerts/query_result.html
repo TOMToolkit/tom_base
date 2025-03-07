@@ -2,6 +2,12 @@
 {% block title %}Query Result for {{ query }}{% endblock %}
 {% block content %}
 <h2>Query Result for {{ query }}</h2>
+{% if too_many_alerts %}
+  <div class="alert alert-danger" role="alert">
+    Query returned too many results, only showing the first 100.
+    Please refine the query to reduce the number of results.
+  </div>
+{% endif %}
 <form method="POST" action="{% url 'tom_alerts:create-target' %}">
   {% csrf_token %}
   <div class="">
