@@ -4,6 +4,7 @@ from crispy_forms.layout import Div, HTML
 from django import forms
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from django_tasks import ResultStatus, default_task_backend
 
 import tom_dataproducts.single_target_data_service.single_target_data_service as stds
 from tom_dataproducts.tasks import atlas_query
@@ -137,14 +138,17 @@ class AtlasForcedPhotometryService(stds.BaseSingleTargetDataService):
                 "Must specify an 'api_key' under ATLAS settings in SINGLE_TARGET_DATA_SERVICES"
             )
 
-        if 'django_dramatiq' in settings.INSTALLED_APPS:
-            atlas_query.send(min_date_mjd, max_date_mjd,
-                             query_parameters.get('target_id'),
-                             self.get_data_product_type())
+        result = atlas_query.enqueue(
+            min_date_mjd,
+            max_date_mjd,
+            query_parameters.get('target_id'),
+            self.get_data_product_type(),
+            use_reduced
+        )
+        if default_task_backend.supports_get_result:
+            return True
         else:
-            query_succeeded = atlas_query(min_date_mjd, max_date_mjd,
-                                          query_parameters.get('target_id'),
-                                          self.get_data_product_type(), use_reduced)
+            query_succeeded = result.status == ResultStatus.SUCCEEDED
             if not query_succeeded:
                 raise stds.SingleTargetDataServiceException(
                     "Atlas query failed, check the server logs for more information"
