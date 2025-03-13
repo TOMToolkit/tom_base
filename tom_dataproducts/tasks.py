@@ -1,5 +1,3 @@
-# Place dramatiq asynchronous tasks here - they are auto-discovered
-
 import requests
 import time
 import logging
