@@ -58,37 +58,32 @@ Configuring your TOM to serve tasks asynchronously:
 ***************************************************
 
 Several of the services are best suited to be queried asynchronously, especially if you plan to make large
-queries that would take a long time. The TOM Toolkit can be setup to use `dramatiq <https://dramatiq.io/index.html>`_
-as an asynchronous task manager, and doing so requires you to run either a `redis <https://github.com/redis/redis>`_
-or `rabbitmq <https://github.com/rabbitmq/rabbitmq-server>`_ server to act as the task queue. To use dramatiq with
-a redis server, you would add the following to your ``settings.py``:
+queries that would take a long time. The TOM Toolkit can be setup to use `django-tasks <https://github.com/realOrangeOne/django-tasks>`_
+as an asynchronous task manager. To use django-tasks you can enable it by adding the following to your settings.py file:
 
 .. code:: python
 
     INSTALLED_APPS = [
         ...
-        'django_dramatiq',
+        'django_tasks',
+        'django_tasks.backends.database',
         ...
     ]
 
-    DRAMATIQ_BROKER = {
-        "BROKER": "dramatiq.brokers.redis.RedisBroker",
-        "OPTIONS": {
-            "url": "redis://your-redis-service-url:your-redis-port"
-        },
-        "MIDDLEWARE": [
-            "dramatiq.middleware.AgeLimit",
-            "dramatiq.middleware.TimeLimit",
-            "dramatiq.middleware.Callbacks",
-            "dramatiq.middleware.Retries",
-            "django_dramatiq.middleware.DbConnectionsMiddleware",
-        ]
+
+.. code:: python
+    TASKS = {
+        "default": {
+             "BACKEND": "django_tasks.backends.database.DatabaseBackend"
+            # "BACKEND": "django_tasks.backends.immediate.ImmediateBackend"
+        }
     }
 
-After adding the ``django_dramatiq`` installed app, you will need to run ``./manage.py migrate`` once to setup
+
+After adding the ``django_tasks`` installed app, you will need to run ``./manage.py migrate`` once to setup
 its DB tables. If this configuration is set in your TOM, the existing services which support asynchronous queries,
-Atlas and ZTF, should start querying asynchronously. (Note: You must also start the dramatiq workers:
-``./manage.py rundramatiq``. If you do not add these settings, those services will still function but will fall
+Atlas and ZTF, should start querying asynchronously. (Note: You must also start the task workers:
+``./manage.py db_worker``. If you do not add these settings, those services will still function but will fall
 back to synchronous queries.
 
 
@@ -115,14 +110,14 @@ for making the query, given the form parameters and target. This method is expec
 at the end of the query, storing the result file or files. If queries to your service are expected to take a long time and
 you would like to make them asynchronously (not blocking the UI while calling), then follow the example in the
 `atlas implementation <https://github.com/TOMToolkit/tom_base/blob/dev/tom_dataproducts/single_target_data_service/atlas.py>`_ and place your
-actual asynchronous query method in your module's ``tasks.py`` file so it can be found by dramatiq. Like in the atlas implementation,
-your code should check to see if ``django_dramatiq`` is in the settings ``INSTALLED_APPS`` before trying to enqueue it with dramatiq.
+actual asynchronous query method in your module's ``tasks.py`` file so it can be found by django-tasks. Like in the atlas implementation,
+your code should check to see if the current task backend is asynchronous or immediate and handle the result appropriately.
 
 The ``get_data_product_type`` method should return the name of your new data product type you are going to define a
 DataProcessor for. This must match the name you add to ``DATA_PROCESSORS`` and ``DATA_PRODUCT_TYPES`` in your ``settings.py``.
 You will also need to define a
 `DataProcessor <https://github.com/TOMToolkit/tom_base/blob/dev/tom_dataproducts/data_processor.py#L46>`_
-for this data type. 
+for this data type.
 
 
 Subclass BaseSingleTargetDataServiceQueryForm:
@@ -143,5 +138,5 @@ Subclass DataProcessor:
 You must create a custom DataProcessor that knows how to convert data returned from your service into
 a series of either photometry or spectroscopy datums. Without defining this step, your queries will still
 result in a DataProduct file being stored from the service's ``query_service`` method, but those files will
-not be parsed into photometry or spectroscopy datums. You can read more about how to implement a custom 
+not be parsed into photometry or spectroscopy datums. You can read more about how to implement a custom
 DataProcessor `here <./customizing_data_processing.html>`_.
