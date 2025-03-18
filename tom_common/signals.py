@@ -64,7 +64,7 @@ def get_session_cipher(user) -> Fernet:
     return None
 
 
-def create_cipher(user, password: str) -> Fernet:
+def create_cipher_encryption_key(user, password: str) -> bytes:
     """Create a Fernet cipher and save it to be used to encrypt API keys and
     other external service credentials for this User. Uses their login password
     to generate the encryption_key.
@@ -85,40 +85,54 @@ def create_cipher(user, password: str) -> Fernet:
         backend=default_backend(),
     )
     encryption_key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+    return encryption_key
 
-    cipher = Fernet(encryption_key)  # create cipher
-    return cipher
 
+SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY = 'key'
 
 # Signal: Set cipher on login
 @receiver(user_logged_in)
 def set_cipher_on_login(sender, request, user, **kwargs) -> None:
     """When the user logs in, capture their password and use it to
-    generate a cipher (Fernet instance). Save it in the User's Session.
-
-    The cipher will be used to encrypt/decrypt sensitive user data (passwords
-    and API keys).
+    generate a cipher encryption key and save it in the User's Session.
     """
     logger.debug(f"User {user.username} has logged in. sender: {sender}; request: {request}")
 
-    if hasattr(user, "profile"):
-        password = request.POST.get("password")  # Capture password from login
-        if password:
-            logger.debug(f"Creating cipher for user: {user.username} with password {password}")
-            cipher = create_cipher(user, password)
-            request.session['cipher'] = cipher  # save cipher in session
+    password = request.POST.get("password")  # Capture password from login
+    if password:
+        logger.debug(f"Creating encryption key for user: {user.username} with password {password} ...")
+        key = create_cipher_encryption_key(user, password)
+
+        logger.debug(f"key: {type(key)} = {key}")
+
+        # Save key in Session (key must be encoded as a string)
+        b64encoded_key_as_str = base64.b64encode(key).decode('utf-8')  # encde key as str
+        request.session[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY] = b64encoded_key_as_str  # save key in Session
+
+        logger.debug(f"b64encoded_key: {type(b64encoded_key_as_str)} = {b64encoded_key_as_str}")
+
+        # TESTING FOLLOWS: test key recovery and cipher
+        # 1. encode plaintext with cipher created with original key
+        cipher = Fernet(key)
+        plaintext = 'This is a test message.'
+        ciphertext = cipher.encrypt(plaintext.encode())
+        cipher = None  # destroy cipher (not really necessary for this test)
+
+        # 2. decode ciphertext with cipher created with recovered key
+        key_from_session = request.session.get(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY)  # get the key from the session
+        recovered_key = base64.b64decode(key_from_session.encode('utf-8'))  # decode key from str
+        new_cipher = Fernet(recovered_key)  # create cipher from recovered key
+        recovered_plaintext = new_cipher.decrypt(ciphertext).decode()
+
+        logger.debug(f"Test: {plaintext} -> {recovered_plaintext} via {ciphertext}")
 
 
-# Signal: Clear cipher on logout
+# Signal: Clear cipher encyption key on logout
 @receiver(user_logged_out)
-def clear_cipher_on_logout(sender, request, user, **kwargs) -> None:
-    """Clear the cipher when a user logs out."""
+def clear_encryption_key_on_logout(sender, request, user, **kwargs) -> None:
+    """Clear the cipher encryption key when a user logs out."""
     logger.debug(f"User {user.username} has logged out. sender: {sender}; request: {request}")
-    # examine cipher before clearing it
-    cipher = request.session.get('cipher')
-    if cipher:
-        logger.debug(f'Cipher exists ({cipher}), proceeding to clear it.')
-    request.session.pop('cipher', None)
+    request.session.pop(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, None)
 
 
 def reencrypt_sensitive_data(password):
@@ -135,12 +149,12 @@ def reencrypt_sensitive_data(password):
 @receiver(pre_save, sender=get_user_model())
 def user_updated(sender, instance, **kwargs):
     """When the User model is saved, detect if the password has changed.
+    If the User's password has changed, take the following actions:
 
     Current list of actions to be taken upon User password change:
-     * re-encrypt the user's sensitive data with the new password
+     * re-encrypt the user's sensitive data (see reencrypt_sensitive_data() function)
      *
     """
-    # TODO: sort out what the signiture of the receiver should be
     user = kwargs.get("instance", None)
 
     if user:
