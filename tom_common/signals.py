@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # NOTE: there are two ways to reference the User model,
-# see https://docs.djangoproject.com/en/5.2/topics/auth/customizing/#referencing-the-user-model
+# see https://docs.djangoproject.com/en/stable/topics/auth/customizing/#referencing-the-user-model
 # Basically, settings.AUTH_USER_MODEL is for code that is executed upon import,
 # while get_user_model() is valid after INSTALLED_APPS are loaded.
 
