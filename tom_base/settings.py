@@ -61,7 +61,6 @@ INSTALLED_APPS = [
     'tom_observations',
     'tom_dataproducts',
     'tom_dataservices',
-    'tom_async_demo',
 ]
 
 SITE_ID = 1

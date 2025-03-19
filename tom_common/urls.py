@@ -69,7 +69,6 @@ urlpatterns += [
     path('api-auth/', include('rest_framework.urls')),
     path('api/', include((collect_api_urls(), 'api'), namespace='api')),
     path('api/token-auth/', views.obtain_auth_token),
-    path('async/', include('tom_async_demo.urls', namespace='async')),
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
  ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
