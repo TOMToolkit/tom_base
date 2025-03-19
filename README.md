@@ -23,7 +23,7 @@ will guide you through the process of setting up a TOM for the first time.
 Please use the [issue tracker](https://github.com/TOMToolkit/tom_base/issues) to
 report any issues or support questions.
 
-## Development Team 
+## Development Team
 The lead developers of the TOM Toolkit are [William Lindstrom](https://lco.global/people/)
 and [Joey Chatelain](https://sites.google.com/site/josephchatelain),
 professional software developers with the Las Cumbres Observatory software team,
@@ -48,11 +48,11 @@ the following people for their many contributions:
 ## Acknowledgements
 
 We hope you find our software useful for your research.  If so, we would be grateful
-if you can include a brief acknowledgement in your papers and presentations, for example 
-"This research made use of [The TOM Toolkit](https://tom-toolkit.readthedocs.io/)". 
-We would also very much appreciate you including a citation to our paper describing 
-the Toolkit [Street, R.A. et al., 2018, SPIE, 10707, 11](http://adsabs.harvard.edu/abs/2018SPIE10707E..11S) 
-(to export the BibTeX please click [here](https://ui.adsabs.harvard.edu/abs/2018SPIE10707E..11S/exportcitation)).  
+if you can include a brief acknowledgement in your papers and presentations, for example
+"This research made use of [The TOM Toolkit](https://tom-toolkit.readthedocs.io/)".
+We would also very much appreciate you including a citation to our paper describing
+the Toolkit [Street, R.A. et al., 2018, SPIE, 10707, 11](http://adsabs.harvard.edu/abs/2018SPIE10707E..11S)
+(to export the BibTeX please click [here](https://ui.adsabs.harvard.edu/abs/2018SPIE10707E..11S/exportcitation)).
 
 
 ## Contributing to the project
@@ -105,6 +105,6 @@ flows--an open registration, and a registration that requires administrator appr
 
 The TOM Toolkit is managed by Las Cumbres Observatory, with generous
 financial support from the [National Science Foundation](https://www.nsf.gov/) grant 2209852.
-We are also grateful for support from the [Heising-Simons Foundation](https://hsfoundation.org) 
+We are also grateful for support from the [Heising-Simons Foundation](https://hsfoundation.org)
 and the [Zegar Family Foundation](https://sites.google.com/zegarff.org/site) at the start
-of the project.  
+of the project.
