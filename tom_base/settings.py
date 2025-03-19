@@ -180,8 +180,8 @@ TEST_RUNNER = 'tom_common.tests.SilenceLogsTestRunner'
 
 TASKS = {
     "default": {
-        "BACKEND": "django_tasks.backends.database.DatabaseBackend"
-        # "BACKEND": "django_tasks.backends.immediate.ImmediateBackend"
+        # "BACKEND": "django_tasks.backends.database.DatabaseBackend"
+        "BACKEND": "django_tasks.backends.immediate.ImmediateBackend"
     }
 }
 
