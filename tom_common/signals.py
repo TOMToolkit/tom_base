@@ -44,6 +44,9 @@ def save_profile(sender, instance, **kwargs):
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     """Create a token for the User when the User instance is created.
 
+    This is the API token used by the User to authenticate with the
+    Django REST framework API.
+
     For more information, see the Django REST framework documentation:
     https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
     """
