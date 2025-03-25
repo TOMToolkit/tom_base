@@ -10,12 +10,13 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.contrib.sessions.models import Session
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from rest_framework.authtoken.models import Token
 
-from tom_common.models import Profile
+from tom_common.models import Profile, UserSession
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -86,6 +87,36 @@ def create_cipher_encryption_key(user, password: str) -> bytes:
     )
     encryption_key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
     return encryption_key
+
+
+# Signal: Create UserSession on login
+@receiver(user_logged_in)
+def create_user_session_on_login(sender, request, user, **kwargs) -> None:
+    """Whenever a user logs in, create a UserSession instance to associate
+    the User with the new Session.
+    """
+    logger.debug(f"User {user.username} has logged in. sender: {sender}; request: {request}")
+    logger.debug(f"Request session: {type(request.session)} = {request.session}")
+    # the request.session is a SessionStore object, we need the Session
+    # and we can get it using the session_key
+    session = Session.objects.get(pk=request.session.session_key)
+    logger.debug(f"Session: {type(session)} = {session}")
+
+    user_session, created = UserSession.objects.get_or_create(user=user, session=session)
+    if created:
+        logger.debug(f"UserSession created: {user_session}")
+    else:
+        logger.debug(f"UserSession already exists: {user_session}")
+
+
+# Signal: Delete UserSession on logout
+@receiver(user_logged_out)
+def delete_user_session_on_logout(sender, request, user, **kwargs) -> None:
+    """Whenever a user logs out, delete all their UserSession instances.
+    """
+    user_sessions = UserSession.objects.filter(user=user)
+    for user_session in user_sessions:
+        user_session.session.delete()
 
 
 SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY = 'key'
