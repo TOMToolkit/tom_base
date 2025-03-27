@@ -54,8 +54,8 @@ In this tutorial, we will go over how to run tasks asynchronously in
 your TOM if you have the need to do so.
 
 Running tasks with django-tasks
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-`django-tasks <https://github.com/django/deps/blob/a83080652411e34e6afa8e1f0a97b675a76358e5/accepted/0014-background-workers.rst>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`django-tasks <https://github.com/django/deps/blob/a83080652411e34e6afa8e1f0a97b675a76358e5/accepted/0014-background-workers.rst>`__
 is a reference implementation of Django’s official background tasks library.
 It provides an interface for marking functions as tasks and a worker
 for executing them. The database backend utilizes the Django ORM,
@@ -66,7 +66,9 @@ Setting up django-tasks in a TOM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Check to make sure your TOM has django_tasks installed:
 
-.. code:: python
+.. code-block:: python
+    :caption: settings.py
+
     INSTALLED_APPS = [
         ...
         'django_tasks',
@@ -78,7 +80,9 @@ By default, the immediate mode is enabled which means tasks are not run
 asynchronously. To enable asynchronous execution, you need to configure
 the django_tasks to use a the database backend:
 
-.. code:: python
+.. code-block:: python
+    :caption: settings.py
+
     TASKS = {
         "default": {
              "BACKEND": "django_tasks.backends.database.DatabaseBackend"
@@ -119,22 +123,24 @@ you can do so with:
 
 In ``tasks.py``:
 
-.. code:: python
+.. code-block:: python
+    :caption: mytom/myapp/tasks.py
+    :linenos:
 
-   from django_tasks import task
-   import time
-   import logging
+    from django_tasks import task
+    import time
+    import logging
 
-   logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
 
 
-   @task
-   def super_complicated_task():
-       logger.info('starting task...')
-       time.sleep(2)
-       logger.info('still running...')
-       time.sleep(2)
-       logger.info('done!')
+    @task
+    def super_complicated_task():
+        logger.info('starting task...')
+        time.sleep(2)
+        logger.info('still running...')
+        time.sleep(2)
+        logger.info('done!')
 
 This task will emulate a function that blocks for 4 seconds, in practice
 this would be a network call or some kind of heavy processing task.
@@ -164,7 +170,7 @@ shell!) you should see the following output:
     done!
     Task id=f323fdc8-4088-424d-a4d4-74ad741c5c04 path=tom_async_demo.views.super_complicated_task state=SUCCEEDED
 
-Notice how calling the enqueue() function returned immediately in the shell, but the
+Notice how calling the ``enqueue()`` function returned immediately in the shell, but the
 task took a few seconds to complete. This is how it would work in
 practice in your django app: Somewhere in your code, for example in your
 app’s ``views.py``, you would import the task just like we did in the
@@ -172,7 +178,7 @@ terminal. Now when the view gets called, the task will be queued for
 execution and the response can be sent back to the user’s browser right
 away. The task will finish in the background.
 
-A few more things about the enqueue() function: First, if your task function
+A few more things about the ``enqueue()`` function: First, if your task function
 takes any arguments, you pass them into the enqueue function. Secondly,
 the object returned from this function is a TaskResult. This object can be used to
 check the status of the task, retrieve its result, or cancel it.
