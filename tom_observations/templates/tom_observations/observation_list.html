@@ -41,7 +41,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for observation in filter.qs %}
+        {% for observation in object_list %}
         <tr>
           <td><input type="checkbox" name="selected" value="{{observation.id}}"></td>
           <td><a class="btn btn-success" href="{% url 'tom_observations:detail' observation.id %}">Details</a></td>
