@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
 
 
+class MissingDataException(Exception):
+    pass
+
+
 class BaseDataService(ABC):
     """
     Base class for all Data Services. Data Services are classes that are responsible for querying external services
@@ -18,7 +22,7 @@ class BaseDataService(ABC):
     query_results = {}
 
     @abstractmethod
-    def pre_query_validation_service(self, query_parameters):
+    def pre_query_validation(self, query_parameters):
         """Same thing as query_service, but a dry run"""
 
     @abstractmethod
