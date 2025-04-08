@@ -46,7 +46,7 @@ class ObservationFilter(FilterSet):
         fields=['scheduled_start', 'scheduled_end', 'status', 'created', 'modified']
     )
     scheduled_start = DateTimeFromToRangeFilter()
-    scheduled_end = DateTimeFromToRangeFilter
+    scheduled_end = DateTimeFromToRangeFilter()
     target_id = ModelMultipleChoiceFilter(
         queryset=Target.objects.filter(observationrecord__isnull=False).distinct().order_by('name')
     )
