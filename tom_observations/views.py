@@ -47,6 +47,9 @@ class ObservationFilter(FilterSet):
     )
     scheduled_start = DateTimeFromToRangeFilter()
     scheduled_end = DateTimeFromToRangeFilter
+    target_id = ModelMultipleChoiceFilter(
+        queryset=Target.objects.filter(observationrecord__isnull=False).distinct().order_by('name')
+    )
     observationgroup = ModelMultipleChoiceFilter(
         label='Observation Groups', queryset=ObservationGroup.objects.all()
     )
