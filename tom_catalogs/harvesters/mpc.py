@@ -65,9 +65,12 @@ class MPCExplorerHarvester(AbstractHarvester):
     def to_target(self):
         target = super().to_target()
         result = self.catalog_data[0]['mpc_orb']
+        if isinstance(result, list):
+            result = result[0]
 
         target.type = 'NON_SIDEREAL'
         target.scheme = 'MPC_COMET'
+
         target.name = result['designation_data']['iau_designation'].replace('(', '').replace(')', '')
         extra_desigs = []
         if result['designation_data'].get('name', "") != "":
