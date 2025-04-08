@@ -54,12 +54,15 @@ class ObservationFilter(FilterSet):
         label='Observation Groups', queryset=ObservationGroup.objects.all()
     )
     facility = MultipleChoiceFilter(choices=facility_choices())
-    # status = MultipleChoiceFilter(
-    #     choices=[
-    #         (s, s) for s in
-    #         ObservationRecord.objects.values_list('status', flat=True).order_by('status').distinct()
-    #     ]
-    # )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.status = MultipleChoiceFilter(
+        choices=[
+            (s, s) for s in
+            ObservationRecord.objects.values_list('status', flat=True).order_by('status').distinct()
+        ]
+    )
 
     class Meta:
         model = ObservationRecord
