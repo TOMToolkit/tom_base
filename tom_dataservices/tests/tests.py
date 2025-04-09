@@ -42,8 +42,8 @@ class TestDataService(BaseDataService):
 
 
 class TestDataServiceClass(TestCase):
-    """ Test the functionality of the TestDataService, we modify the django settings to make sure
-    it is the only installed broker.
+    """
+    Test the functionality of the TestDataService.
     """
 
     def test_to_target(self):
