@@ -58,7 +58,8 @@ class ObservationFilter(FilterSet):
     def __init__(self, *args, **kwargs):
         """
         The "status" filter is populated dynamically via list comprehension here in the __init__ (at runtime).
-        This is necessary because the `ObservationRecord` db table doesn't necessarily exist at Class-interpretation-time
+        This is important because the `ObservationRecord` db table doesn't necessarily exist at
+        Class-interpretation-time
         """
         super().__init__(*args, **kwargs)
         self.status = MultipleChoiceFilter(
