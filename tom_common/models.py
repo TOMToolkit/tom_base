@@ -29,4 +29,3 @@ class UserSession(models.Model):
 
     def __str__(self):
         return f'UserSession for {self.user.username} with Session key {self.session.session_key}'
-
