@@ -12,7 +12,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.management import call_command
 from django_filters import (CharFilter, ChoiceFilter, DateTimeFromToRangeFilter, FilterSet, ModelMultipleChoiceFilter,
-                            OrderingFilter)
+                            OrderingFilter, MultipleChoiceFilter)
 from django_filters.views import FilterView
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -31,7 +31,7 @@ from tom_dataproducts.models import is_fits_image_file
 from tom_observations.cadence import CadenceForm, get_cadence_strategy
 from tom_observations.facility import get_service_class, get_service_classes
 from tom_observations.facility import BaseManualObservationFacility
-from tom_observations.forms import AddExistingObservationForm
+from tom_observations.forms import AddExistingObservationForm, facility_choices
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
 from tom_targets.models import Target
 
@@ -46,10 +46,28 @@ class ObservationFilter(FilterSet):
         fields=['scheduled_start', 'scheduled_end', 'status', 'created', 'modified']
     )
     scheduled_start = DateTimeFromToRangeFilter()
-    scheduled_end = DateTimeFromToRangeFilter
+    scheduled_end = DateTimeFromToRangeFilter()
+    target_id = ModelMultipleChoiceFilter(
+        queryset=Target.objects.filter(observationrecord__isnull=False).distinct().order_by('name')
+    )
     observationgroup = ModelMultipleChoiceFilter(
         label='Observation Groups', queryset=ObservationGroup.objects.all()
     )
+    facility = MultipleChoiceFilter(choices=facility_choices())
+
+    def __init__(self, *args, **kwargs):
+        """
+        The "status" filter is populated dynamically via list comprehension here in the __init__ (at runtime).
+        This is important because the `ObservationRecord` db table doesn't necessarily exist at
+        Class-interpretation-time
+        """
+        super().__init__(*args, **kwargs)
+        self.status = MultipleChoiceFilter(
+            choices=[
+                (s, s) for s in
+                ObservationRecord.objects.values_list('status', flat=True).order_by('status').distinct()
+            ]
+        )
 
     class Meta:
         model = ObservationRecord
