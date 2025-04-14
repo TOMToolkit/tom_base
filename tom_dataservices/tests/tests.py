@@ -1,5 +1,3 @@
-from abc import ABC
-
 from django import forms
 from django.test import TestCase
 
@@ -52,7 +50,7 @@ class TestDataServiceClass(TestCase):
     """
     def test_query_service(self):
         new_test_query = TestDataService()
-        self.assertEqual(new_test_query.query_results,{})
+        self.assertEqual(new_test_query.query_results, {})
         new_test_query.query_service('mytarget')
         self.assertEqual(new_test_query.query_results, test_query_results)
 
