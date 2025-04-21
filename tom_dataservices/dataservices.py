@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
 
 
+class MissingDataException(Exception):
+    pass
+
+
 class BaseDataService(ABC):
     """
     Base class for all Data Services. Data Services are classes that are responsible for querying external services
@@ -18,16 +22,16 @@ class BaseDataService(ABC):
     query_results = {}
 
     @abstractmethod
-    def pre_query_validation_service(self, query_parameters):
-        """Same thing as query_service, but a dry run"""
-
-    @abstractmethod
     def query_service(self, query_parameters):
         """takes in the serialized data from the query form and actually submits the query to the service"""
 
-    @abstractmethod
+    def pre_query_validation(self, query_parameters):
+        """Same thing as query_service, but a dry run"""
+        raise NotImplementedError
+
     def get_form_class(self):
         """Returns the full form class for querying this service"""
+        raise NotImplementedError
 
     def get_additional_context_data(self):
         """
@@ -63,14 +67,53 @@ class BaseDataService(ABC):
         """Set up and run a specialized query for retrieving targets from a DataService."""
         return self.query_service(query_parameters)
 
-    def to_data_product(self, query_results):
+    def to_data_product(self, query_results=None, **kwargs):
+        """
+        Upper level function to create a new DataProduct from the query results
+        Can take either new query results, or use stored results form a recent `query_service()`
+        :param query_results: Query results from the DataService
+        :returns: Target object
+        """
+        query_results = query_results or self.query_results
+        if not query_results:
+            raise MissingDataException('No query results. Did you call query_service()?')
+        else:
+            return self.create_data_product_from_query(query_results, **kwargs)
+
+    def create_data_product_from_query(self, query_results=None, **kwargs):
         """Create a new DataProduct from the query results"""
         raise NotImplementedError
 
-    def to_reduced_datums(self, query_results):
-        """Create a new ReducedDatum of the appropriate type from the query results"""
+    def to_reduced_datums(self, query_results=None, **kwargs):
+        """
+        Upper level function to create a new ReducedDatum from the query results
+        Can take either new query results, or use stored results form a recent `query_service()`
+        :param query_results: Query results from the DataService
+        :returns: Target object
+        """
+        query_results = query_results or self.query_results
+        if not query_results:
+            raise MissingDataException('No query results. Did you call query_service()?')
+        else:
+            return self.create_reduced_datums_from_query(query_results, **kwargs)
+
+    def create_reduced_datums_from_query(self, query_results=None, **kwargs):
+        """Create a new reduced_datum of the appropriate type from the query results"""
         raise NotImplementedError
 
-    def to_target(self, query_results):
+    def to_target(self, query_results=None, **kwargs):
+        """
+        Upper level function to create a new target from the query results
+        Can take either new query results, or use stored results form a recent `query_service()`
+        :param query_results: Query results from the DataService
+        :returns: Target object
+        """
+        target_parameters = query_results or self.query_results
+        if not target_parameters:
+            raise MissingDataException('No query results. Did you call query_service()?')
+        else:
+            return self.create_target_from_query(target_parameters, **kwargs)
+
+    def create_target_from_query(self, query_results, **kwargs):
         """Create a new target from the query results"""
         raise NotImplementedError
