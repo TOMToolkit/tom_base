@@ -4,9 +4,9 @@ Customizing Template Tags
 The TOM Toolkit is designed to be as customizable as possible. A number
 of UI objects are rendered as Django templatetags. Django has quite a
 few `built-in template
-tags <https://docs.djangoproject.com/en/3.0/ref/templates/builtins/>`__,
+tags <https://docs.djangoproject.com/en/stable/ref/templates/builtins/>`__,
 but also allows the creation of `custom template
-tags <https://docs.djangoproject.com/en/3.0/howto/custom-template-tags/>`__,
+tags <https://docs.djangoproject.com/en/stable/howto/custom-template-tags/>`__,
 which the TOM Toolkit leverages heavily.
 
 However, it’s possible that a TOM Toolkit template tag doesn’t quite
@@ -14,6 +14,15 @@ meet your needs. Maybe the axis labels for photometry plotting aren’t
 quite what you’re looking for, or the target data isn’t formatted the
 way you’d like. This tutorial will show you how to write your own
 template tag to suit your own program better.
+
+Basics of Django Templating Vocabulary
+--------------------------------------
+Sometimes the different terms involved in Django Templating that we use here can be confusing.
+If you find yourself needing a reminder of what the different terms mean, we've included this graphic, for a more
+detailed description please see the
+`Django Template Documentation <https://docs.djangoproject.com/en/stable/topics/templates/>`__.
+
+|image0|
 
 Preparing your project for custom template tags
 -----------------------------------------------
@@ -320,3 +329,5 @@ easily modified.
 As far as this template tag goes, as of this tutorial, it’s now a part
 of the base TOM Toolkit, but all of the information here should provide
 you with the ability to write your own.
+
+.. |image0| image:: /_static/customize_template_tags_doc/Templatetags.png
