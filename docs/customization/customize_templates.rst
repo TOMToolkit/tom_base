@@ -237,7 +237,7 @@ include, automatic app compatibility, simpler app installation, and the ability 
 without updating your existing code.
 
 The key to accessing these integration points is adding the integration methods to your AppConfig in your
-`custom_code.apps.py`file.
+`custom_code.apps.py` file.
 
 Current integration points include adding items to the navigation bar, adding tom_specific profile information to the
 user profile page, and more. A complete `list of integrations <https://github.com/TOMToolkit/tom_demoapp/wiki>`__,
