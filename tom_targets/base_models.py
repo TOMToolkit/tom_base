@@ -160,12 +160,13 @@ class TargetMatchManager(models.Manager):
         queryset = super().get_queryset().filter(name=name)
         return queryset
 
-    def match_fuzzy_name(self, name):
+    def match_fuzzy_name(self, name, input_queryset=None):
         """
         Returns a queryset of targets with a name OR ALIAS that, when processed by ``simplify_name``, match a similarly
         processed version of the name that is received.
 
         :param name: The string against which target names and aliases will be matched.
+        :param input_queryset: Optional queryset to filter the results. If not provided, all targets will be considered.
 
         :return: queryset containing matching Targets. Will return targets even when matched value is an alias.
         """
@@ -175,7 +176,8 @@ class TargetMatchManager(models.Manager):
             for alias in target.names:
                 if self.simplify_name(alias) == simple_name:
                     matching_names.append(target.name)
-        queryset = self.get_queryset().filter(name__in=matching_names)
+        initial_queryset = input_queryset or self.get_queryset()
+        queryset = initial_queryset.filter(name__in=matching_names)
         return queryset
 
     def simplify_name(self, name):
