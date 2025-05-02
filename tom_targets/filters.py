@@ -3,7 +3,6 @@ from django.db.models import Q
 import django_filters
 
 from tom_targets.models import Target, TargetList
-from tom_targets.base_models import TargetMatchManager
 from tom_targets.utils import cone_search_filter
 
 
