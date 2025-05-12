@@ -26,11 +26,18 @@ class TestDataService(BaseDataService):
         self.query_results = test_query_results
         return
 
-    def get_form_class(self):
+    @classmethod
+    def get_form_class(cls):
         return TestDataServiceForm
 
     def create_target_from_query(self, query_results, **kwargs):
         return Target(**query_results)
+
+    @classmethod
+    def configuration(cls):
+        return {
+            'api_key': '1234567890',
+        }
 
 
 class EmptyTestDataService(BaseDataService):
@@ -53,6 +60,9 @@ class TestDataServiceClass(TestCase):
         self.assertEqual(new_test_query.query_results, {})
         new_test_query.query_service('mytarget')
         self.assertEqual(new_test_query.query_results, test_query_results)
+
+    def test_credentials(self):
+        self.assertEqual(TestDataService().get_credentials(), '1234567890')
 
     def test_to_target(self):
         new_test_query = TestDataService()
@@ -92,3 +102,12 @@ class TestUnimplementedDataServiceClass(TestCase):
         # Show to_data_product() returns error when create_data_product_from_query undefined
         with self.assertRaises(NotImplementedError):
             new_test_query.to_reduced_datums(test_query_results)
+
+    def test_no_urls(self):
+        urls = EmptyTestDataService().get_urls()
+        self.assertEqual(urls, ['base_url', 'info_url'])
+        self.assertEqual(EmptyTestDataService().get_urls('not_a_url', 'fake_url.com'), 'fake_url.com')
+
+    def test_no_configs(self):
+        configs = EmptyTestDataService().get_configuration()
+        self.assertEqual(configs, [])

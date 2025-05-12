@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from django.conf import settings
 
 
 class MissingDataException(Exception):
@@ -16,22 +17,86 @@ class BaseDataService(ABC):
     verbose_name = name
     # Url for more info about the DataService
     info_url = None
+    # Base url for the DataService
+    base_url = None
     # Notes or limitations on using the DataService
     service_notes = None
-    # Class variable that can store query results if necessary
-    query_results = {}
+
+    def __init__(self, query_parameters=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Instance variable that can store query results if necessary
+        self.query_results = {}
+        # Instance variable that can store query parameters if necessary
+        self.query_parameters = query_parameters or {}
 
     @abstractmethod
-    def query_service(self, query_parameters):
-        """takes in the serialized data from the query form and actually submits the query to the service"""
+    def query_service(self, query_parameters, **kwargs):
+        """Takes in the serialized data from the query form and actually submits the query to the service"""
 
     def pre_query_validation(self, query_parameters):
         """Same thing as query_service, but a dry run"""
         raise NotImplementedError
 
-    def get_form_class(self):
+    def build_query_parameters(self, *args, **kwargs):
+        """Builds the query parameters from the form data"""
+        raise NotImplementedError
+
+    def build_headers(self, *args, **kwargs):
+        """Builds the headers for the query"""
+        return {}
+
+    @classmethod
+    def get_form_class(cls):
         """Returns the full form class for querying this service"""
         raise NotImplementedError
+
+    @classmethod
+    def configuration(cls) -> dict:
+        """Returns the configuration dictionary for this service"""
+        try:
+            return settings.DATA_SERVICES.get(cls.name, {})
+        except AttributeError:
+            return {}
+
+    @classmethod
+    def get_configuration(cls, config_type=None, value=None, **kwargs):
+        """
+        Syntax: get_configuration([config_type], [value])
+        Parameters:
+            config_type: The type of configuration to return. If None, returns all configurations.
+            value: The default value to return if configuration not found.
+        Returns:
+            A list of available configurations, or a requested configuration, or if not found the default value.
+        """
+        data_service_config = cls.configuration()
+        if config_type:
+            return data_service_config.get(config_type, value)
+        return [*data_service_config]
+
+    @classmethod
+    def get_credentials(cls, **kwargs):
+        """Returns the credentials for this service. Checks the configuration for an api_key by default."""
+        return cls.get_configuration('api_key')
+
+    @classmethod
+    def urls(cls, **kwargs) -> dict:
+        """Dictionary of URLS for the DataService"""
+        return {'base_url': cls.base_url, 'info_url': cls.info_url}
+
+    @classmethod
+    def get_urls(cls, url_type=None, value=None, **kwargs):
+        """
+        Syntax: get_configuration([config_type], [value])
+        Parameters:
+            url_type: The type of URL to return. If None, returns all available url types.
+            value: The default value to return if the requested url is not found.
+        Returns:
+            A list of available uls, or a requested url, or if not found the default value.
+        """
+        urls = cls.urls()
+        if url_type:
+            return urls.get(url_type, value)
+        return [*urls]
 
     def get_additional_context_data(self):
         """
