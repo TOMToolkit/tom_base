@@ -2,9 +2,78 @@ from datetime import datetime, timedelta
 import requests
 import json
 
-from tom_dataservices.dataservices import BaseDataService, MissingDataException
+from django import forms
+from crispy_forms.layout import Div, Fieldset, HTML, Layout
+
+from tom_dataservices.dataservices import BaseDataService
 from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import Target
+
+class TNSForm(BaseQueryForm):
+    target_name = forms.CharField(required=False,
+                                  label='Target (IAU) Name',
+                                  help_text='Omit the AT or SN prefix')
+    internal_name = forms.CharField(required=False,
+                                    label='Internal (Survey) Name')
+    ra = forms.FloatField(required=False, min_value=0., max_value=360.,
+                          label='R.A.',
+                          help_text='Right ascension in degrees')
+    dec = forms.FloatField(required=False, min_value=-90., max_value=90.,
+                           label='Dec.',
+                           help_text='Declination in degrees')
+    radius = forms.FloatField(required=False, min_value=0.,
+                              label='Cone Radius')
+    units = forms.ChoiceField(required=False,
+                              label='Radius Units',
+                              choices=[('', ''), ('arcsec', 'arcsec'), ('arcmin', 'arcmin'), ('deg', 'deg')])
+    days_ago = forms.FloatField(required=False, min_value=0.,
+                                label='Discovered in the Last __ Days',
+                                help_text='Leave blank to use the "Discovered After" field')
+    min_date = forms.CharField(required=False,
+                               label='Discovered After',
+                               help_text='Most valid date formats are recognized')
+    days_from_nondet = forms.FloatField(required=False, min_value=0.,
+                                        label='Days From Nondetection',
+                                        help_text='Maximum time between last nondetection and first detection')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout = Layout(
+            HTML('''
+                <p>
+                Please see <a href="https://wis-tns.weizmann.ac.il/sites/default/files/api/TNS_APIs_manual.pdf"
+                target="_blank">the TNS API Manual</a> for a detailed description of available filters.
+                </p>
+            '''),
+            self.common_layout,
+            'target_name',
+            'internal_name',
+            Fieldset(
+                'Cone Search',
+                Div(
+                    Div(
+                        'ra',
+                        'radius',
+                        css_class='col',
+                    ),
+                    Div(
+                        'dec',
+                        'units',
+                        css_class='col',
+                    ),
+                    css_class="form-row",
+                )
+            ),
+            Fieldset(
+                'Discovery Date',
+                Div(
+                    Div('days_ago', css_class='col'),
+                    Div('min_date', css_class='col'),
+                    css_class='form-row'
+                ),
+                'days_from_nondet'
+            )
+        )
 
 
 class TNSDataService(BaseDataService):
@@ -36,7 +105,7 @@ class TNSDataService(BaseDataService):
                 },
             }
 
-        """
+    """
     name = 'TNS'
     info_url = 'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html#module-tom_alerts.brokers.tns'
 
@@ -112,7 +181,7 @@ class TNSDataService(BaseDataService):
         return self.query_service(query_parameters)
 
     def get_form_class(self):
-        return TestDataServiceForm
+        return TNSForm
 
     def create_target_from_query(self, query_results, **kwargs):
         return Target(**query_results)
