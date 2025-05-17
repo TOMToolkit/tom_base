@@ -9,6 +9,7 @@ from tom_dataservices.dataservices import BaseDataService
 from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import Target
 
+
 class TNSForm(BaseQueryForm):
     target_name = forms.CharField(required=False,
                                   label='Target (IAU) Name',

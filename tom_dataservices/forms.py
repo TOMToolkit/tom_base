@@ -1,6 +1,6 @@
 from django import forms
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from crispy_forms.layout import Layout, Submit
 
 
 class BaseQueryForm(forms.Form):
@@ -12,3 +12,4 @@ class BaseQueryForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit('submit', 'Submit'))
+        self.common_layout = Layout('query_name', 'broker')

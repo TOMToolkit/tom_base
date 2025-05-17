@@ -1,5 +1,60 @@
 from abc import ABC, abstractmethod
+import logging
+
 from django.conf import settings
+from django.apps import apps
+from django.utils.module_loading import import_string
+
+logger = logging.getLogger(__name__)
+
+
+def get_data_service_classes():
+    """
+    Imports the user list content from relevant apps into the template.
+
+    Each user_list should be contained in a list of dictionaries in an app's apps.py `user_lists` method.
+    Each user_list dictionary should contain a 'context' key with the path to the context processor class (typically a
+    templatetag), and a 'partial' key with the path to the html partial template.
+
+    FOR EXAMPLE:
+    [{'partial': 'path/to/partial.html',
+      'context': 'path/to/context/data/method'}]
+    """
+    data_service_choices = {}
+    for app in apps.get_app_configs():
+        try:
+            data_services = app.data_services()
+        except AttributeError:
+            continue
+        if data_services:
+            for data_service in data_services:
+                try:
+                    clazz = import_string(data_service['class'])
+                except ImportError:
+                    logger.warning(f'WARNING: Could not import data service class for {app.name} from '
+                                   f'{data_services["class"]}.\n'
+                                   f'Are you sure you have the right path?')
+                    continue
+                data_service_choices[clazz.name] = clazz
+
+    return data_service_choices
+
+
+def get_data_service_class(name):
+    """
+    Gets the specific broker class for a given broker name.
+
+    :returns: Broker class
+    :rtype: class
+    """
+    available_classes = get_data_service_classes()
+    try:
+        return available_classes[name]
+    except KeyError:
+        raise ImportError(
+            '''Could not a find a broker with that name.
+            Did you add it to TOM_ALERT_CLASSES?'''
+        )
 
 
 class MissingDataException(Exception):
