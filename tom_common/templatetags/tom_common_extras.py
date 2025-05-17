@@ -11,9 +11,9 @@ from django.core.exceptions import FieldDoesNotExist
 from guardian.shortcuts import get_objects_for_user
 from django.utils.module_loading import import_string
 
-logger = logging.getLogger(__name__)
-
 from tom_targets.models import Target
+
+logger = logging.getLogger(__name__)
 
 register = template.Library()
 
@@ -34,7 +34,6 @@ def navbar_app_addons(context, position='left'):
             continue
         if nav_items:
             for item in nav_items:
-                print(item)
                 context_method_path = item.get('context', None)
                 if context_method_path:
                     try:
@@ -51,7 +50,6 @@ def navbar_app_addons(context, position='left'):
                     nav_items_to_display.append({'partial': item['partial'], 'context': new_context})
 
     context['nav_items_to_display'] = nav_items_to_display
-    print(context['nav_items_to_display'])
     return context
 
 
@@ -178,8 +176,6 @@ def show_individual_app_partial(context, app_partial_data):
     """
     An Inclusion tag for setting the unique context for an app's partial.
     """
-    print(app_partial_data)
-    print("==========================")
     for item in app_partial_data['context']:
         context[item] = app_partial_data['context'][item]
     context['app_partial'] = app_partial_data['partial']

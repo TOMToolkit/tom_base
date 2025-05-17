@@ -12,5 +12,5 @@ def dataservices_list(context):
     """
 
     data_services = get_data_service_classes()
-    context['data_services'] = data_services
+    context['data_services'] = data_services.keys()
     return context
