@@ -15,6 +15,9 @@ from tom_targets.tests.factories import SiderealTargetFactory
 from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
 from tom_common.templatetags.bootstrap4_overrides import bootstrap_pagination
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 class SilenceLogsTestRunner(DiscoverRunner):
     def run_tests(self, *args, **kwargs):
@@ -308,3 +311,181 @@ class TestRobotsDotTxt(TestCase):
             assert response["content-type"] == "text/plain"
             # check for default content
             assert response.content.startswith(b"User-Agent: *\n")  # known a priori from default robots.txt
+
+
+import datetime
+from django.contrib.sessions.backends.db import SessionStore
+from django.contrib.sessions.models import Session
+
+from django.db.models import QuerySet
+
+from tom_common.models import UserSession
+from tom_common.signals import extract_key_from_session_store, extract_key_from_session
+
+from cryptography.fernet import Fernet
+
+class TestUserSession(TestCase):
+    """Test that a UserSession instance is created when a user logs in.
+    """
+    def setUp(self):
+        # Create a user and log them in.
+        username = 'testuser'
+        password = 'testpassword'
+        self.user = User.objects.create_user(username=username, password=password)
+        # don't user client.force_login() here, because it matters how the user logs in
+        self.client.login(username=username, password=password)
+
+    def test_user_session_created(self):
+        """The UserSession links the User to the User's SessionStore instance.
+
+        Here we just test that the UserSession instance is created when the user logs in.
+        The UserSession instance is created in the `user_logged_in` signal receiver,
+        `tom_common.signals.create_user_session_on_login`
+        """
+        # Check that a UserSession instance is created for the logged-in user.
+        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
+        self.assertEqual(user_sessions.count(), 1)  # make sure there's only one
+
+        user_session = user_sessions.first()
+        self.assertIsInstance(user_session, UserSession)  # check that it's a UserSession instance
+        self.assertEqual(user_session.user, self.user)    # that links to the correct User
+
+    def test_user_session_deleted(self):
+        # Check that the UserSession instance is deleted when the user logs out.
+        self.client.logout()
+        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
+        self.assertEqual(user_sessions.count(), 0)  # there should be none left
+
+    def test_user_session_properties(self):
+        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
+        self.assertEqual(user_sessions.count(), 1)  # make sure there's only one
+
+        user_session: UserSession = user_sessions.first()
+
+        session: Session = user_session.session
+        self.assertIsInstance(session, Session)  # make sure it's a Session instance
+
+
+class TestEncryptionKeyManagement(TestCase):
+    def setUp(self):
+        # Create a user and log in.
+        username = 'testuser'
+        password = 'testpassword'
+        self.user = User.objects.create_user(username=username, password=password)
+        self.plaintext = f'this is a plaintext test message on {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
+
+        # don't use client.login() here, because we need the request to go through the middleware
+        # and create a SessionStore instance.
+        # this doesn't work: self.client.login(username=username, password=password)  # NOPE
+        response = self.client.post("/accounts/login/", {"username": username, "password": password})
+
+    def test_encryption_key_extraction(self):
+        """The UserSession.session field is a ForeignKey to the the Session model.
+        So, `user_session.session` should be an instance of the Session model. This is the
+        dictionary-like object saved in the SessionStore. We use it to hold the User's
+        encryption key.
+
+        This test checks that after setUp, where we create a user and log them in:
+        1. the UserSession instance is created and that there's only one
+        2. the encryption key can be extracted from the session store.
+        3. the encryption key is a bytes object that can be used to create a Fernet cipher
+        4. the Fernet cipher can be used to encrypt and decrypt a plaintext message.
+        """
+        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
+        self.assertEqual(user_sessions.count(), 1)  # make sure there's only one
+
+        user_session: UserSession = user_sessions.first()
+        session: Session = user_session.session
+
+        # extract the encryption key from the session store
+        encryption_key: bytes = extract_key_from_session(session)
+        self.assertIsInstance(encryption_key, bytes)  # check that it's a bytes object
+        cipher = Fernet(encryption_key)  # and we can use it to create a Fernet cipher
+
+        # make sure the cipher works (i.e. the key is not weird).
+        ciphertext = cipher.encrypt(self.plaintext.encode())
+        decoded_ciphertext = cipher.decrypt(ciphertext).decode()
+        self.assertEqual(self.plaintext, decoded_ciphertext)
+
+    def test_encryption_key_update_upon_password_change(self):
+        """Test that the encryption key is updated when the user changes their password.
+
+        The basic structure of this test is to:
+        1. log in and make sure the UserSession, SessionStore, encryption_key, etc is working.
+        2. change the user's password
+        3. log out and back in again with the new password
+        4. check that the encryption key in the new session store has changed
+
+        Along the way, we check that the encryption keys (old and new) work and
+        a cipher created with them can be used to encrypt and decrypt a plaintext
+        message.
+
+        This test does not test the re-encryption of the model fields up on
+        a password change.
+        """
+        # Get the UserSession instance for the logged-in user.
+        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
+        self.assertEqual(user_sessions.count(), 1)
+        user_session: UserSession = user_sessions.first()
+        session: Session = user_session.session
+        self.assertIsInstance(session, Session)  # make sure it's a Session instance
+
+        # TODO: make sure these type-hints are accurate!!!!
+        # why are calling extract_key_from_session_store with what looks
+        # like a Session object? Is it really a Session instance or is it really a
+        # SessionStore instance?
+
+        # here, we are calling extract_key_from_session_store with a Session instance
+        weird_encryption_key: bytes = extract_key_from_session_store(session)
+
+
+        # Extract the encryption key from the session.
+        encryption_key: bytes = extract_key_from_session(session)
+        self.assertIsInstance(encryption_key, bytes)
+
+        self.assertEqual(encryption_key, weird_encryption_key)  # check that they are the same
+        # if they are the same, that's weird
+
+        #
+        cipher = Fernet(encryption_key)
+
+        # Encrypt the plaintext message with the current key.
+        ciphertext = cipher.encrypt(self.plaintext.encode())
+        decoded_ciphertext = cipher.decrypt(ciphertext).decode()
+        self.assertEqual(self.plaintext, decoded_ciphertext)  # check that the key works
+
+        # Change the user's password.
+        new_password = 'newpassword'
+        self.user.set_password(new_password)
+        self.user.save()  # triggers pre_save signal on User model
+
+        # check that the password was changed
+        self.assertFalse(self.user.check_password('testpassword'))
+        self.assertTrue(self.user.check_password(new_password))
+
+        # Log out and back in again to create a new session
+        self.client.post("/accounts/logout/")
+        response = self.client.post("/accounts/login/",
+                                    {"username": self.user.username, "password": new_password})
+        logger.debug(f'login response: {response}')
+
+        # Get the new UserSession instance for the logged-in user.
+        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
+        self.assertEqual(user_sessions.count(), 1)
+        user_session: UserSession = user_sessions.first()
+        session: Session = user_session.session
+
+        # Extract the new encryption key from the session store.
+        new_encryption_key: bytes = extract_key_from_session(session)
+        self.assertIsInstance(new_encryption_key, bytes)
+
+        # The new encryption key should be different from the old one.
+        self.assertNotEqual(new_encryption_key, encryption_key)
+
+        # Encrypt the plaintext message with the new key.
+        cipher = Fernet(new_encryption_key)
+        ciphertext = cipher.encrypt(self.plaintext.encode())
+        decoded_ciphertext = cipher.decrypt(ciphertext).decode()
+
+        # Check that the new key works.
+        self.assertEqual(self.plaintext, decoded_ciphertext)
