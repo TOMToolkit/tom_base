@@ -258,7 +258,7 @@ def reencrypt_sensitive_data(user) -> None:
     decoding_cipher = Fernet(current_encryption_key)
 
     #  Get the new raw password from the User instance
-    new_raw_password = user._password  # CAUTION: this is implemenation dependent (using _<property>)
+    new_raw_password = user._password  # CAUTION: this is implementation dependent (using _<property>)
     #  Generate a new encryption_key with the new raw password
     new_encryption_key: bytes = create_cipher_encryption_key(user, new_raw_password)
     #  Generate a new encoding Fernet cipher with the new encryption key
