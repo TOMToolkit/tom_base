@@ -5,7 +5,6 @@ from django.views.generic.edit import UpdateView, CreateView
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth import update_session_auth_hash
 from django_comments.models import Comment
 from django.views.decorators.http import require_GET
 from django.urls import reverse_lazy
@@ -15,6 +14,7 @@ from django.shortcuts import redirect
 
 from tom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm, GroupForm
 from tom_common.mixins import SuperuserRequiredMixin
+
 
 logger = logging.getLogger(__name__)
 
@@ -172,14 +172,16 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         """
-        Called after form is validated. Updates the ``User`` and the session hash to maintain login session.
+        Called after form is validated.
+
+        For now, do not update the session hash and instead let the user be logged out.
+        This is to help maintain any encrypted fields in the database.
 
         :param form: User creation form
         :type form: django.forms.Form
         """
         super().form_valid(form)
-        if self.get_object() == self.request.user:
-            update_session_auth_hash(self.request, self.object)
+
         messages.success(self.request, 'Profile updated')
         return redirect(self.get_success_url())
 
