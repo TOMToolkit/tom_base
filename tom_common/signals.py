@@ -21,14 +21,16 @@ from tom_common.models import Profile, UserSession
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-# NOTE: there are two ways to reference the User model,
+
+# NOTE: there are two ways to reference the User model: settings.AUTH_USER_MODEL and get_user_model()
 # see https://docs.djangoproject.com/en/stable/topics/auth/customizing/#referencing-the-user-model
 # Basically, settings.AUTH_USER_MODEL is for code that is executed upon import,
 # while get_user_model() is valid after INSTALLED_APPS are loaded.
 
 
+# Signal: Create a Profile for the User when the User instance is created
 @receiver(post_save, sender=User)
-def save_profile(sender, instance, **kwargs):
+def save_profile_on_user_pre_save(sender, instance, **kwargs):
     """When a user is saved, save their profile."""
     # Take advantage of the fact that logging in updates a user's last_login field
     # to create a profile for users that don't have one.
@@ -39,9 +41,9 @@ def save_profile(sender, instance, **kwargs):
         Profile.objects.create(user=instance)
 
 
-# Signal: Create a token for the User when the User instance is created
+# Signal: Create a DRF token for the User when the User instance is created
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_auth_token(sender, instance=None, created=False, **kwargs):
+def create_auth_token_on_user_pre_save(sender, instance=None, created=False, **kwargs):
     """Create a token for the User when the User instance is created.
 
     This is the API token used by the User to authenticate with the
@@ -69,9 +71,11 @@ def get_session_cipher(user) -> Fernet:
 
 
 def create_cipher_encryption_key(user, password: str) -> bytes:
-    """Create a Fernet cipher and save it to be used to encrypt API keys and
-    other external service credentials for this User. Uses their login password
-    to generate the encryption_key.
+    """Create a Fernet cipher encryption_key.
+
+    It will be saved and used to create Fernet ciphers to encrypt/decrypt
+    API keys and other external service credentials for this User.
+    Uses User's login password to generate the encryption_key.
 
     see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet
     """
@@ -94,7 +98,7 @@ def create_cipher_encryption_key(user, password: str) -> bytes:
 
 # Signal: Create UserSession on login
 @receiver(user_logged_in)
-def create_user_session_on_login(sender, request, user, **kwargs) -> None:
+def create_user_session_on_user_logged_in(sender, request, user, **kwargs) -> None:
     """Whenever a user logs in, create a UserSession instance to associate
     the User with the new Session.
     """
@@ -114,7 +118,7 @@ def create_user_session_on_login(sender, request, user, **kwargs) -> None:
 
 # Signal: Delete UserSession on logout
 @receiver(user_logged_out)
-def delete_user_session_on_logout(sender, request, user, **kwargs) -> None:
+def delete_user_session_on_user_logged_out(sender, request, user, **kwargs) -> None:
     """Whenever a user logs out, delete all their UserSession instances.
     """
     user_sessions = UserSession.objects.filter(user=user)
@@ -126,7 +130,7 @@ SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY = 'key'
 
 # Signal: Set cipher on login
 @receiver(user_logged_in)
-def set_cipher_on_login(sender, request, user, **kwargs) -> None:
+def set_cipher_on_user_logged_in(sender, request, user, **kwargs) -> None:
     """When the user logs in, capture their password and use it to
     generate a cipher encryption key and save it in the User's Session.
     """
@@ -161,15 +165,20 @@ def set_cipher_on_login(sender, request, user, **kwargs) -> None:
         logger.debug(f"Test: {plaintext} -> {recovered_plaintext} via {ciphertext}")
 
 
-# Signal: Clear cipher encyption key on logout
+# Signal: Clear cipher encryption key on logout
 @receiver(user_logged_out)
-def clear_encryption_key_on_logout(sender, request, user, **kwargs) -> None:
-    """Clear the cipher encryption key when a user logs out."""
-    logger.debug(f"User {user.username} has logged out. sender: {sender}; request: {request}")
-    request.session.pop(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, None)
+def clear_encryption_key_on_user_logged_out(sender, request, user, **kwargs) -> None:
+    """Clear the cipher encryption key when a user logs out.
+    """
+    logger.debug(f"********** {inspect.currentframe().f_code.co_name} sender: {sender} **********")
+
+    if user:
+        logger.debug(f'User {user.username} has logged out. Deleting key from Session.'
+                     f'sender: {sender}; request: {request}')
+        request.session.pop(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, None)
 
 
-def reencrypt_sensitive_data(password):
+def reencrypt_sensitive_data(user) -> None:
     """Re-encrypt the user's sensitive data with the new password."""
     logger.debug("Re-encrypting sensitive data...")
     logger.debug("re-create cipher")
@@ -181,8 +190,16 @@ def reencrypt_sensitive_data(password):
 
 # Signal: Update the User's sensitive data when the password changes
 @receiver(pre_save, sender=get_user_model())
-def user_updated(sender, instance, **kwargs):
+def user_updated_on_user_pre_save(sender, **kwargs):
     """When the User model is saved, detect if the password has changed.
+
+    kwargs:
+     * signal: <django.db.models.signals.ModelSignal>
+     * instance: <User>
+     * raw: Boolean
+     * using: str
+     * update_fields: frozenset | NoneType
+
     If the User's password has changed, take the following actions:
 
     Current list of actions to be taken upon User password change:
