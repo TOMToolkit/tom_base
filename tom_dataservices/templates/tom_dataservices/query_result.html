@@ -1,0 +1,70 @@
+{% extends 'tom_common/base.html' %}
+{% block title %}Query Result for {{ query }}{% endblock %}
+{% block content %}
+<h2>Query Result for {{ query }}</h2>
+{% if too_many_alerts %}
+  <div class="alert alert-danger" role="alert">
+    Query returned too many results, only showing the first 100.
+    Please refine the query to reduce the number of results.
+  </div>
+{% endif %}
+<form method="POST" action="{% url 'dataservice:create-target' %}">
+  {% csrf_token %}
+  <div class="">
+    <input type="hidden" name="data_service" value="{{ query.data_service }}"/>
+    <input type="hidden" name="query_id" value="{{ query.id }}"/>
+    <input type="submit" value="Create Targets" class="btn btn-primary"/>
+  </div>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="selectAll"/></th>
+        <th>Time</th>
+        <th>Name</th>
+        <th>RA</th>
+        <th>Dec</th>
+        <th>Mag</th>
+        <th><span title="{{ score_description }}">Score</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for alert in alerts %}
+      <tr>
+        <td><input type="checkbox" name="alerts" value="{{ alert.id }}"/></td>
+        <td>{{ alert.timestamp }}</td>
+        <td><a href="{{ alert.url }}" target="_blank" title="View alert">{{ alert.name }}</a></td>
+        <td>{{ alert.ra|floatformat:3 }}</td>
+        <td>{{ alert.dec|floatformat:3 }}</td>
+        <td>{{ alert.mag|floatformat:3 }}</td>
+        <td>{{ alert.score|floatformat:3 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</form>
+{% if broker_feedback %}
+  <div class="alert alert-danger" role="alert">{{broker_feedback |safe }}</div>
+{% endif %}
+
+<script>
+  document.getElementById("selectAll").addEventListener("change", function() {
+    // If the select all checkbox state changes, this will change the state
+    // of all checkboxes with the name attribute "alerts.
+    document.querySelectorAll(`input[name="alerts"]`).forEach(item => {
+      item.checked = this.checked;
+    });
+  });
+
+  document.querySelectorAll(`input[name="alerts"]`).forEach(item => {
+    item.addEventListener("change", function() {
+      let selectAllCheckbox = document.getElementById("selectAll");
+      // If all checkboxes with the name attribute "alerts" are checked, this
+      // will also check the "selectAll" checkbox.
+      const alertsCheckboxes = document.querySelectorAll(`input[name="alerts"]`);
+      const allChecked = Array.from(alertsCheckboxes).every(checkbox => checkbox.checked);
+      selectAllCheckbox.checked = allChecked;
+    });
+  });
+</script>
+
+{% endblock %}

@@ -5,7 +5,7 @@ from django.urls import path, include
 class TomDataservicesConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'tom_dataservices'
-    label = 'dataservices'
+    trimmed_name = 'dataservices'
 
     def include_url_paths(self):
         """
@@ -13,7 +13,7 @@ class TomDataservicesConfig(AppConfig):
         This method should return a list of URL patterns to be included in the main URL configuration.
         """
         urlpatterns = [
-            path(f'{self.label}/', include(f'{self.name}.urls', namespace=f'{self.label}'))
+            path(f'{self.label}/', include(f'{self.name}.urls', namespace=f'{self.trimmed_name}'))
         ]
         return urlpatterns
 

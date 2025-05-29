@@ -52,8 +52,8 @@ def get_data_service_class(name):
         return available_classes[name]
     except KeyError:
         raise ImportError(
-            '''Could not a find a broker with that name.
-            Did you add it to TOM_ALERT_CLASSES?'''
+            f'''Could not a find a data Service with named {name}.
+            Did you install the app?'''
         )
 
 

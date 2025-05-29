@@ -16,7 +16,7 @@
       <tbody>
         {% for query in filter.qs %}
         <tr>
-          <td><a href="{% url 'tom_alerts:update' query.id %}" title="Update {{ query.name }}">{{ query.name }}</a></td>
+          <td><a href="{% url 'dataservices:update' query.id %}" title="Update {{ query.name }}">{{ query.name }}</a></td>
           <td>{{ query.data_service }}</td>
           <td>{{ query.created }}</td>
           <td>{{ query.last_run }}</td>

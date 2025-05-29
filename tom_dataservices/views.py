@@ -1,12 +1,18 @@
+from typing import List
+import logging
+
 from django_filters.views import FilterView
 from django_filters import FilterSet, ChoiceFilter, CharFilter
 from django.views.generic.edit import DeleteView, FormMixin, FormView, ProcessFormView
+from django.views.generic.base import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect
-from django.urls import reverse
+from django.shortcuts import redirect, get_object_or_404
+from django.urls import reverse, reverse_lazy
 
 from tom_dataservices.models import DataServiceQuery
 from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class
+
+logger = logging.getLogger(__name__)
 
 
 class DataServiceQueryFilter(FilterSet):
@@ -53,7 +59,7 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         """
         Returns the data service specified in the request
 
-        :returns: Broker name
+        :returns: DataService name
         :rtype: str
         """
         if self.request.method == 'GET':
@@ -69,7 +75,7 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         data_service_name = self.get_data_service_name()
 
         if not data_service_name:
-            raise ValueError('Must provide a broker name')
+            raise ValueError('Must provide a data service name')
 
         return get_data_service_class(data_service_name).get_form_class(self)
 
@@ -99,5 +105,172 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         """
         Saves the associated ``DataServiceQuery`` and redirects to the ``DataServiceQuery`` list.
         """
-        form.save()
+        if form.cleaned_data['query_save']:
+            form.save()
         return redirect(reverse('tom_dataservices:query_list'))
+
+
+class RunQueryView(TemplateView):
+    """
+    View that handles the running of a specific ``BrokerQuery``.
+    """
+    template_name = 'tom_dataservices/query_result.html'
+
+    def get_template_names(self) -> List[str]:
+        """Override the base class method to ask the broker if it has
+        specified a Broker-specific template to use. If so, put it at the
+        front of the returned list of template_names.
+        """
+        template_names = super().get_template_names()
+
+        # if the data service class has defined a template to use add it to template names (at the front)
+        query = get_object_or_404(DataServiceQuery, pk=self.kwargs['pk'])
+        data_service_class = get_data_service_class(query.data_service)()
+        logger.debug(f'RunQueryView.get_template_name data_service_class: {data_service_class}')
+
+        try:
+            if data_service_class.template_name:
+                # add to front of list b/c first template will be tried first
+                template_names.insert(0, data_service_class.template_name)
+        except AttributeError:
+            # many Brokers won't have a template_name defined and will just
+            # use the one defined above.
+            pass
+
+        logger.debug(f'RunQueryView.get_template_name template_names: {template_names}')
+        return template_names
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Runs the ``fetch_alerts`` method specific to the given ``BrokerQuery`` and adds the matching alerts to the
+        context dictionary.
+
+        :returns: context
+        :rtype: dict
+        """
+        context = super().get_context_data()
+
+        # get the Broker class
+        query = get_object_or_404(DataServiceQuery, pk=self.kwargs['pk'])
+        data_service_class = get_data_service_class(query.broker)()
+
+        # Do query and get query results (fetch_alerts)
+        # TODO: Should the deepcopy be in the brokers?
+        try:
+            alert_query_results = data_service_class.fetch_alerts(deepcopy(query.parameters))
+
+            # Check if feedback is available for fetch_alerts, and allow for backwards compatibility if not.
+            if isinstance(alert_query_results, tuple):
+                alerts, broker_feedback = alert_query_results
+            else:
+                alerts = alert_query_results
+                broker_feedback = ''
+        except AttributeError:
+            # If the broker isn't configured in settings.py, display error instead of query results
+            alerts = iter(())
+            broker_help = getattr(data_service_class, 'help_url',
+                                  'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html')
+            broker_feedback = f"""The {data_service_class.name} Broker is not properly configured in settings.py.
+                                </br>
+                                Please see the <a href="{broker_help}" target="_blank">documentation</a> for more
+                                information.
+                                """
+        except HTTPError as e:
+            alerts = iter(())
+            broker_feedback = f"Issue fetching alerts, please try again.</br>{e}"
+
+        # Post-query tasks
+        query.last_run = timezone.now()
+        query.save()
+
+        # create context for template
+        context['query'] = query
+        context['score_description'] = broker_class.score_description
+        context['broker_feedback'] = broker_feedback
+        context['too_many_alerts'] = False
+
+        context['alerts'] = []
+        try:
+            for (i, alert) in enumerate(alerts):
+                if i > 99:
+                    # issue 1172 too many alerts causes the cache to overflow
+                    context['too_many_alerts'] = True
+                    break
+                generic_alert = broker_class.to_generic_alert(alert)
+                cache.set(f'alert_{generic_alert.id}', alert, 3600)
+                context['alerts'].append(generic_alert)
+        except StopIteration:
+            pass
+
+        # allow the Broker to add to the context (besides the query_results)
+        broker_context_additions = broker_class.get_broker_context_data(alerts)
+        context.update(broker_context_additions)
+        # TODO: in python 3.9 we could use the merge operator context |= broker_dict
+        # context |= broker_context_additions
+
+        return context
+
+
+class DataServiceQueryDeleteView(LoginRequiredMixin, DeleteView):
+    """
+    View that handles the deletion of a saved ``DataServiceQuery``. Requires authentication.
+    """
+    model = DataServiceQuery
+    success_url = reverse_lazy('dataservices:query_list')
+
+
+class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
+    """
+    View that handles the modification of a previously saved ``DataServiceQuery``. Requires authentication.
+    """
+    template_name = 'tom_dataservices/query_form.html'
+
+    def get_object(self):
+        """
+        Returns the ``DataServiceQuery`` object that corresponds with the ID in the query path.
+
+        :returns: ``DataServiceQuery`` object
+        :rtype: ``DataServiceQuery``
+        """
+        return DataServiceQuery.objects.get(pk=self.kwargs['pk'])
+
+    def get_form_class(self):
+        """
+        Returns the form class to use in this view. The form class will be the one defined in the specific data service
+        module for which the query is being updated.
+        """
+        self.object = self.get_object()
+        return get_data_service_class(self.object.data_service).get_form_class(self)
+
+    def get_form(self, form_class=None):
+        """
+        Returns an instance of the form to be used in this view.
+
+        :returns: Form instance
+        :rtype: django.forms.Form
+        """
+        form = super().get_form()
+        form.helper.form_action = reverse(
+            'dataservices:update', kwargs={'pk': self.object.id}
+        )
+        return form
+
+    def get_initial(self):
+        """
+        Returns the initial data to use for forms on this view. Initial data for this form consists of the name of
+        the Data Service that the query is for and the saved query parameters.
+
+        :returns: dict of initial values
+        :rtype: dict
+        """
+        initial = super().get_initial()
+        initial.update(self.object.parameters)
+        initial['data_service'] = self.object.data_service
+        return initial
+
+    def form_valid(self, form):
+        """
+        Saves the associated ``DataServiceQuery`` and redirects to the ``DataServiceQuery`` list.
+        """
+        form.save(query_id=self.object.id)
+        return redirect(reverse('dataservices:query_list'))

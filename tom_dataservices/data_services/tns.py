@@ -46,7 +46,6 @@ class TNSForm(BaseQueryForm):
                 target="_blank">the TNS API Manual</a> for a detailed description of available filters.
                 </p>
             '''),
-            self.common_layout,
             'target_name',
             'internal_name',
             Fieldset(
@@ -73,7 +72,8 @@ class TNSForm(BaseQueryForm):
                     css_class='form-row'
                 ),
                 'days_from_nondet'
-            )
+            ),
+            self.common_layout,
         )
 
 
@@ -123,7 +123,7 @@ class TNSDataService(BaseDataService):
         # https://www.wis-tns.org/content/tns-newsfeed#comment-wrapper-23710
         return {
             'User-Agent': f'tns_marker{{"tns_id": "{self.get_configuration("bot_id")}", '
-                        f'"type": "bot", "name": "{self.get_configuration("bot_name")}"}}'
+                          f'"type": "bot", "name": "{self.get_configuration("bot_name")}"}}'
             }
 
     def build_query_parameters(self, parameters):
