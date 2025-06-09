@@ -296,6 +296,7 @@ def reencrypt_sensitive_data(user) -> None:
                 logger.debug(f'App: {app.name} encrypted fields  {app.encrypted_profile_fields()}')
                 app.reencrypt_app_fields(user, decoding_cipher, encoding_cipher)  # TODO: remove this line it's just here to generate a stack trace
             continue
+        #testtesttest
 
 
 # Signal: Update the User's sensitive data when the password changes
