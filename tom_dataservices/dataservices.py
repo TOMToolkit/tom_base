@@ -198,16 +198,17 @@ class BaseDataService(ABC):
         if not query_results:
             raise MissingDataException('No query results. Did you call query_service()?')
         else:
-            return self.create_data_product_from_query(query_results, **kwargs)
+            return self.create_data_product_from_query(self, query_results, **kwargs)
 
     def create_data_product_from_query(self, query_results=None, **kwargs):
         """Create a new DataProduct from the query results"""
         raise NotImplementedError
 
-    def to_reduced_datums(self, query_results=None, **kwargs):
+    def to_reduced_datums(self, target, query_results=None, **kwargs):
         """
         Upper level function to create a new ReducedDatum from the query results
         Can take either new query results, or use stored results form a recent `query_service()`
+        :param target: Target object to associate with the ReducedDatum
         :param query_results: Query results from the DataService
         :returns: Target object
         """
@@ -215,9 +216,9 @@ class BaseDataService(ABC):
         if not query_results:
             raise MissingDataException('No query results. Did you call query_service()?')
         else:
-            return self.create_reduced_datums_from_query(query_results, **kwargs)
+            return self.create_reduced_datums_from_query(target, query_results, **kwargs)
 
-    def create_reduced_datums_from_query(self, query_results=None, **kwargs):
+    def create_reduced_datums_from_query(self, target, query_results=None, **kwargs):
         """Create a new reduced_datum of the appropriate type from the query results"""
         raise NotImplementedError
 

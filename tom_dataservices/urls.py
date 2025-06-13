@@ -1,7 +1,7 @@
 from django.urls import path
 
 from tom_dataservices.views import DataServiceQueryListView, DataServiceQueryCreateView, RunQueryView
-from tom_dataservices.views import DataServiceQueryUpdateView, DataServiceQueryDeleteView
+from tom_dataservices.views import DataServiceQueryUpdateView, DataServiceQueryDeleteView, CreateTargetFromQueryView
 
 app_name = 'tom_dataservices'
 
@@ -11,6 +11,6 @@ urlpatterns = [
     path('query/<int:pk>/update/', DataServiceQueryUpdateView.as_view(), name='update'),
     path('query/<int:pk>/run/', RunQueryView.as_view(), name='run'),
     path('query/<int:pk>/delete/', DataServiceQueryDeleteView.as_view(), name='delete'),
-    # path('alert/create/', CreateTargetFromAlertView.as_view(), name='create-target'),
+    path('query/create_targets/', CreateTargetFromQueryView.as_view(), name='create-target'),
     # path('<str:broker>/submit/', SubmitAlertUpstreamView.as_view(), name='submit-alert')
 ]

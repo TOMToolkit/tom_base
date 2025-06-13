@@ -110,10 +110,11 @@ class TNSDataService(BaseDataService):
     name = 'TNS'
     info_url = 'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html#module-tom_alerts.brokers.tns'
 
-    def urls(self) -> dict:
+    @classmethod
+    def urls(cls) -> dict:
         """Dictionary of URLS for the TNS API."""
         urls = super().urls()
-        urls['base_url'] = self.get_configuration('base_url', 'https://sandbox.wis-tns.org/')
+        urls['base_url'] = cls.get_configuration('base_url', 'https://sandbox.wis-tns.org')
         urls['object_url'] = f'{urls["base_url"]}/api/get/object'
         urls['search_url'] = f'{urls["base_url"]}/api/get/search'
         return urls
@@ -140,16 +141,6 @@ class TNSDataService(BaseDataService):
         Returns:
             json containing response from TNS including TNS name and prefix.
         """
-        try:
-            if parameters['days_ago'] is not None:
-                public_timestamp = (datetime.utcnow() - timedelta(days=parameters['days_ago'])) \
-                    .strftime('%Y-%m-%d %H:%M:%S')
-            elif parameters['min_date'] is not None:
-                public_timestamp = parameters['min_date']
-            else:
-                public_timestamp = ''
-        except KeyError:
-            raise Exception('Missing fields (days_ago, min_date) from the parameters dictionary.')
 
         # TNS expects either (ra, dec, radius, unit) or just target_name.
         # target_name has to be a TNS name of the target without a prefix.
@@ -157,13 +148,16 @@ class TNSDataService(BaseDataService):
         data = {
             'api_key': self.get_credentials(),
             'data': json.dumps({
+
                 'name': parameters.get('target_name', ''),
                 'internal_name': parameters.get('internal_name', ''),
                 'ra': parameters.get('ra', ''),
                 'dec': parameters.get('dec', ''),
                 'radius': parameters.get('radius', ''),
                 'units': parameters.get('units', ''),
-                'public_timestamp': public_timestamp,
+                'objname': parameters.get('objname', ''),
+                'photometry': 1,
+                'spectroscopy': 0,
             }
             )
         }
@@ -171,18 +165,44 @@ class TNSDataService(BaseDataService):
         return data
 
     def query_service(self, data, **kwargs):
-        response = requests.post(self.get_urls('search_url'), data, headers=self.build_headers())
+        response = requests.post(kwargs['url'], data, headers=self.build_headers())
         response.raise_for_status()
-        transients = response.json()
-        self.query_results = transients
-        return transients
+        json_response = response.json()
+        self.query_results = json_response['data']
+        return self.query_results
 
     def query_targets(self, query_parameters):
         """Set up and run a specialized query for retrieving targets from a DataService."""
-        return self.query_service(query_parameters)
+        targets = []
+        results = self.query_service(query_parameters, url=self.get_urls('search_url'))
+        for result in results:
+            target_parameters = self.build_query_parameters(result)
+            target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
+            targets.append(target_data)
+        return targets
 
     def get_form_class(self):
         return TNSForm
 
     def create_target_from_query(self, query_results, **kwargs):
-        return Target(**query_results)
+        """
+            Returns a Target instance for an object defined by an alert, as well as
+            any TargetExtra or additional TargetNames.
+
+            :returns: representation of object for an alert
+            :rtype: `Target`
+
+            :returns: dict of extras to be added to the new Target
+            :rtype: `dict`
+
+            :returns: list of aliases to be added to the new Target
+            :rtype: `list`
+        """
+
+        target = Target(
+            name=query_results['name_prefix'] + query_results['objname'],
+            type='SIDEREAL',
+            ra=query_results['radeg'],
+            dec=query_results['decdeg']
+        )
+        return target, {}, []

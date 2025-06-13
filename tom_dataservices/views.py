@@ -4,10 +4,15 @@ import logging
 from django_filters.views import FilterView
 from django_filters import FilterSet, ChoiceFilter, CharFilter
 from django.views.generic.edit import DeleteView, FormMixin, FormView, ProcessFormView
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, View
+from django.db import IntegrityError
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
+from guardian.shortcuts import assign_perm
+from django.utils import timezone
+from django.core.cache import cache
+from django.contrib import messages
 
 from tom_dataservices.models import DataServiceQuery
 from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class
@@ -112,7 +117,7 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
 
 class RunQueryView(TemplateView):
     """
-    View that handles the running of a specific ``BrokerQuery``.
+    View that handles the running of a specific ``DataServiceQuery``.
     """
     template_name = 'tom_dataservices/query_result.html'
 
@@ -133,7 +138,7 @@ class RunQueryView(TemplateView):
                 # add to front of list b/c first template will be tried first
                 template_names.insert(0, data_service_class.template_name)
         except AttributeError:
-            # many Brokers won't have a template_name defined and will just
+            # many Data Services won't have a template_name defined and will just
             # use the one defined above.
             pass
 
@@ -150,34 +155,36 @@ class RunQueryView(TemplateView):
         """
         context = super().get_context_data()
 
-        # get the Broker class
+        # get the DataService class
         query = get_object_or_404(DataServiceQuery, pk=self.kwargs['pk'])
-        data_service_class = get_data_service_class(query.broker)()
+        data_service_class = get_data_service_class(query.data_service)()
 
         # Do query and get query results (fetch_alerts)
-        # TODO: Should the deepcopy be in the brokers?
-        try:
-            alert_query_results = data_service_class.fetch_alerts(deepcopy(query.parameters))
+        # try:
+        #     query_results = data_service_class.fetch_alerts(deepcopy(query.parameters))
+        #
+        #     # Check if feedback is available for fetch_alerts, and allow for backwards compatibility if not.
+        #     if isinstance(query_results, tuple):
+        #         results, query_feedback = query_results
+        #     else:
+        #         results = query_results
+        #         query_feedback = ''
+        # except AttributeError:
+        #     # If the broker isn't configured in settings.py, display error instead of query results
+        #     results = iter(())
+        #     broker_help = getattr(data_service_class, 'help_url',
+        #                           'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html')
+        #     query_feedback = f"""The {data_service_class.name} Broker is not properly configured in settings.py.
+        #                         </br>
+        #                         Please see the <a href="{broker_help}" target="_blank">documentation</a> for more
+        #                         information.
+        #                         """
+        # except HTTPError as e:
+        #     results = iter(())
+        #     query_feedback = f"Issue fetching alerts, please try again.</br>{e}"
 
-            # Check if feedback is available for fetch_alerts, and allow for backwards compatibility if not.
-            if isinstance(alert_query_results, tuple):
-                alerts, broker_feedback = alert_query_results
-            else:
-                alerts = alert_query_results
-                broker_feedback = ''
-        except AttributeError:
-            # If the broker isn't configured in settings.py, display error instead of query results
-            alerts = iter(())
-            broker_help = getattr(data_service_class, 'help_url',
-                                  'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html')
-            broker_feedback = f"""The {data_service_class.name} Broker is not properly configured in settings.py.
-                                </br>
-                                Please see the <a href="{broker_help}" target="_blank">documentation</a> for more
-                                information.
-                                """
-        except HTTPError as e:
-            alerts = iter(())
-            broker_feedback = f"Issue fetching alerts, please try again.</br>{e}"
+        query_parameters = data_service_class.build_query_parameters(query.parameters)
+        results = data_service_class.query_targets(query_parameters)
 
         # Post-query tasks
         query.last_run = timezone.now()
@@ -185,28 +192,25 @@ class RunQueryView(TemplateView):
 
         # create context for template
         context['query'] = query
-        context['score_description'] = broker_class.score_description
-        context['broker_feedback'] = broker_feedback
-        context['too_many_alerts'] = False
+        # context['query_feedback'] = query_feedback
+        context['too_many_results'] = False
 
-        context['alerts'] = []
+        context['results'] = []
         try:
-            for (i, alert) in enumerate(alerts):
+            for (i, result) in enumerate(results):
                 if i > 99:
                     # issue 1172 too many alerts causes the cache to overflow
-                    context['too_many_alerts'] = True
+                    context['too_many_results'] = True
                     break
-                generic_alert = broker_class.to_generic_alert(alert)
-                cache.set(f'alert_{generic_alert.id}', alert, 3600)
-                context['alerts'].append(generic_alert)
+                result['id'] = i
+                cache.set(f'result_{i}', result, 3600)
+                context['results'].append(result)
         except StopIteration:
             pass
 
         # allow the Broker to add to the context (besides the query_results)
-        broker_context_additions = broker_class.get_broker_context_data(alerts)
-        context.update(broker_context_additions)
-        # TODO: in python 3.9 we could use the merge operator context |= broker_dict
-        # context |= broker_context_additions
+        data_service_context_additions = data_service_class.get_additional_context_data()
+        context |= data_service_context_additions
 
         return context
 
@@ -272,5 +276,51 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         """
         Saves the associated ``DataServiceQuery`` and redirects to the ``DataServiceQuery`` list.
         """
-        form.save(query_id=self.object.id)
-        return redirect(reverse('dataservices:query_list'))
+        if form.cleaned_data['query_save']:
+            form.save(query_id=self.object.id)
+        return redirect(reverse('tom_dataservices:query_list'))
+
+
+class CreateTargetFromQueryView(LoginRequiredMixin, View):
+    """
+    View that handles the creation of ``Target`` objects from a Data Service Query result. Requires authentication.
+    """
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handles the POST requests to this view. Creates a ``Target`` for each query result sent in the POST. Redirects
+        to the ``TargetListView`` if multiple targets were created, and the ``TargetUpdateView`` if only one was
+        created. Redirects to the ``RunQueryView`` if no ``Target`` objects were successfully created.
+        """
+        query_id = self.request.POST['query_id']
+        data_service_name = self.request.POST['data_service']
+        data_service_class = get_data_service_class(data_service_name)()
+        results = self.request.POST.getlist('selected_results')
+        errors = []
+        if not results:
+            messages.warning(request, 'Please select at least one alert from which to create a target.')
+            return redirect(reverse('dataservices:run', kwargs={'pk': query_id}))
+        for result_id in results:
+            cached_result = cache.get(f'result_{result_id}')
+            if not cached_result:
+                messages.error(request, 'Could not create targets. Try re running the query again.')
+                return redirect(reverse('dataservices:run', kwargs={'pk': query_id}))
+            target, extras, aliases = data_service_class.to_target(cached_result)
+            try:
+                target.save(extras=extras, names=aliases)
+                # Give the user access to the target they created
+                target.give_user_access(self.request.user)
+                try:
+                    data_service_class.to_reduced_datums(target, cached_result)
+                except NotImplementedError:
+                    pass
+                for group in request.user.groups.all():
+                    assign_perm('tom_targets.view_target', group, target)
+                    assign_perm('tom_targets.change_target', group, target)
+                    assign_perm('tom_targets.delete_target', group, target)
+            except IntegrityError:
+                messages.warning(request, f'Unable to save {target.name}, target with that name already exists.')
+                errors.append(target.name)
+        if len(results) == len(errors):
+            return redirect(reverse('dataservices:run', kwargs={'pk': query_id}))
+        return redirect(reverse('tom_targets:list'))
