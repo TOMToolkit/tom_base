@@ -21,13 +21,24 @@ SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY = 'key'
 
 
 def create_cipher_encryption_key(user, password: str) -> bytes:
-    """Create a Fernet cipher encryption_key.
+    """Creates a Fernet cipher encryption key derived from the user's password.
 
-    It will be saved and used to create Fernet ciphers to encrypt/decrypt
-    API keys and other external service credentials for this User.
-    Uses User's login password to generate the encryption_key.
+    This key is intended to be stored (e.g., in the session) and used to
+    instantiate Fernet ciphers for encrypting and decrypting sensitive data
+    associated with the user, such as API keys or external service credentials.
 
-    see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet
+    The key derivation process uses PBKDF2HMAC with a salt generated from
+    the user's username, making the key unique per user and password.
+
+    Args:
+        user: The Django User object.
+        password: The user's plaintext password.
+
+    Returns:
+        A URL-safe base64-encoded Fernet encryption key as bytes.
+
+    See Also:
+        https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet
     """
 
     # Generate a salt from hash and username
@@ -47,7 +58,14 @@ def create_cipher_encryption_key(user, password: str) -> bytes:
 
 
 def save_key_to_session_store(key: bytes, session_store: SessionStore) -> None:
-    """
+    """Saves the provided encryption key to the given Django session store.
+
+    The key is first base64 encoded and converted to a string before being
+    stored in the session under a predefined session key.
+
+    Args:
+        key: The encryption key (bytes) to be saved.
+        session_store: The Django SessionStore instance where the key will be saved.
     """
     try:
         assert isinstance(session_store, SessionStore), \
@@ -62,6 +80,17 @@ def save_key_to_session_store(key: bytes, session_store: SessionStore) -> None:
 
 
 def extract_key_from_session(session: Session) -> bytes:
+    """Extracts and decodes the encryption key from a Django Session object.
+
+    Retrieves the base64 encoded key string from the session, decodes it
+    from base64, and returns the raw bytes of the encryption key.
+
+    Args:
+        session: The Django Session object from which to extract the key.
+
+    Returns:
+        The encryption key as bytes.
+    """
     logger.debug(f"********** {inspect.currentframe().f_code.co_name} **********")
     logger.debug(f"Extracting key from Session: {type(session)} = {session} - {session.get_decoded()}")
     b64encoded_key: str = session.get_decoded()[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY]  # get the key from the session
@@ -70,6 +99,18 @@ def extract_key_from_session(session: Session) -> bytes:
 
 
 def extract_key_from_session_store(session_store: SessionStore) -> bytes:
+    """Extracts the encryption key from a Django SessionStore instance.
+
+    This function first retrieves the underlying Session object using the
+    session_key from the SessionStore. It then calls
+    `extract_key_from_session` to get the actual key.
+
+    Args:
+        session_store: The Django SessionStore instance.
+
+    Returns:
+        The encryption key as bytes.
+    """
     try:
         assert isinstance(session_store, SessionStore), \
             f"session_store is not a SessionStore; it's a {type(session_store)}"
@@ -90,8 +131,20 @@ def extract_key_from_session_store(session_store: SessionStore) -> bytes:
 
 
 def reencrypt_sensitive_data(user) -> None:
-    """Re-encrypt the user's sensitive data with the new password."""
-    logger.debug(f"********** {inspect.currentframe().f_code.co_name} **********")
+    """Re-encrypts sensitive data for a user after a password change.
+
+    This function is typically called when a user changes their password. It performs
+    the following steps:
+    1. Retrieves the current encryption key from the user's session.
+    2. Creates a new encryption key based on the user's new password.
+    3. Iterates through all installed Django apps, calling a `reencrypt_app_fields`
+       method on each app's config (if it exists). This method is responsible for
+       decrypting data with the old key and re-encrypting it with the new key.
+    4. Saves the new encryption key to the user's session.
+
+    Args:
+        user: The Django User object whose sensitive data needs re-encryption.
+    """
     logger.debug("Re-encrypting sensitive data...")
 
     #  Get the current Session from the UserSession
