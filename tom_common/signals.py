@@ -1,29 +1,28 @@
-import base64
 import logging
+import inspect
 
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.backends import default_backend
-
-from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.contrib.sessions.models import Session
-from django.contrib.sessions.backends.db import SessionStore
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from rest_framework.authtoken.models import Token
 
 from tom_common.models import Profile, UserSession
-
-import inspect
+from .session_utils import (
+    create_cipher_encryption_key,
+    save_key_to_session_store,
+    extract_key_from_session_store,
+    reencrypt_sensitive_data,
+    SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY
+)
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 # NOTE: there are two ways to reference the User model: settings.AUTH_USER_MODEL and get_user_model()
@@ -65,41 +64,6 @@ def create_auth_token_on_user_pre_save(sender, instance=None, created=False, **k
 # above create and clear the pher upon login and logout, respevely.
 # We use the user_logged_in signal to intercept the User's password and
 # use that to derive the encryption_key and use that to create the cipher.
-
-def get_session_cipher(user) -> Fernet:
-    """Return the User's Fernet cipher"""
-    cipher = user.request.session.get('cipher')
-    if cipher:
-        return Fernet(cipher)
-    raise "this function is not called and can be removed"
-    return None
-
-
-def create_cipher_encryption_key(user, password: str) -> bytes:
-    """Create a Fernet cipher encryption_key.
-
-    It will be saved and used to create Fernet ciphers to encrypt/decrypt
-    API keys and other external service credentials for this User.
-    Uses User's login password to generate the encryption_key.
-
-    see https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet
-    """
-
-    # Generate a salt from hash and username
-    salt = hashes.Hash(hashes.SHA256(), backend=default_backend())
-    salt.update(user.username.encode())
-
-    # Derive encryption_key using PBKDF2-HMAC and the newly generated salt
-    kdf = PBKDF2HMAC(  # key derivation function
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=salt.finalize()[:16],  # only finalize once; returns bytes; use 16 bytes
-        iterations=1_000_000,  # Django recommendation of jan-2025
-        backend=default_backend(),
-    )
-    encryption_key: bytes = base64.urlsafe_b64encode(kdf.derive(password.encode()))
-    return encryption_key
-
 
 # Signal: Create UserSession on login
 @receiver(user_logged_in)
@@ -145,52 +109,6 @@ def delete_user_session_on_user_logged_out(sender, request, user, **kwargs) -> N
     # (i.e. we want to delete all their sessions or just the one they logged out from)
     # this could probably be done by filtering on the session_key of the request in
     # addition to the user above.
-
-
-# this pair of functions is used to save/retrieve the encryption key to/from the Session
-SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY = 'key'
-
-
-def save_key_to_session_store(key: bytes, session_store: SessionStore) -> None:
-    logger.debug(f"********** {inspect.currentframe().f_code.co_name} **********")
-    assert isinstance(session_store, SessionStore), f"session_store is not a SessionStore; it's a {type(session_store)}"
-    # Save key in Session (encryption_key must be encoded as a string to store in Session)
-    logger.debug(f"Saving key to Session: {type(session_store)} = {session_store}")
-    b64encoded_key_as_str: str = base64.b64encode(key).decode('utf-8')  # encode key as str
-    session_store[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY] = b64encoded_key_as_str  # save key in Session
-    session_store.save()  # we might be accessing the session before it's saved (in the middleware?)
-
-    # some debug logging
-    session = Session.objects.get(pk=session_store.session_key)
-    assert isinstance(session, Session), f"session is not a Session; it's a {type(session)}"
-    logger.debug(f"Session: {type(session)} = {session} - {session.get_decoded()}")
-
-
-def extract_key_from_session_store(session_store: SessionStore) -> bytes:
-    logger.debug(f"********** {inspect.currentframe().f_code.co_name} **********")
-    try:
-        assert isinstance(session_store, SessionStore), f"session_store is not a SessionStore; it's a {type(session_store)}"
-    except AssertionError as e:
-        logger.error(str(e))
-        # the session_store is not a SessionStore, but a Session instance
-        # does the session instance have the same session_key attribute as the SessionStore?
-        # log the attributes of the session_store
-        logger.debug(f"Session attributes: {vars(session_store)}")  # log the attributes of the session_store
-
-        session: Session = Session.objects.get(pk=session_store.session_key)
-
-        assert session == session_store
-
-    session: Session = Session.objects.get(pk=session_store.session_key)
-    return extract_key_from_session(session)
-
-
-def extract_key_from_session(session: Session) -> bytes:
-    logger.debug(f"********** {inspect.currentframe().f_code.co_name} **********")
-    logger.debug(f"Extracting key from Session: {type(session)} = {session} - {session.get_decoded()}")
-    b64encoded_key: str = session.get_decoded()[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY]  # get the key from the session
-    recovered_key: bytes = base64.b64decode(b64encoded_key.encode('utf-8'))  # decode key to bytes from str
-    return recovered_key
 
 
 # Signal: Set cipher on login
