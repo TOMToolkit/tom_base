@@ -91,7 +91,7 @@ def extract_key_from_session(session: Session) -> bytes:
     Returns:
         The encryption key as bytes.
     """
-    logger.debug(f"********** {inspect.currentframe().f_code.co_name} **********")
+
     logger.debug(f"Extracting key from Session: {type(session)} = {session} - {session.get_decoded()}")
     b64encoded_key: str = session.get_decoded()[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY]  # get the key from the session
     recovered_key: bytes = base64.b64decode(b64encoded_key.encode('utf-8'))  # decode key to bytes from str

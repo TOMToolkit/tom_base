@@ -320,7 +320,7 @@ from django.contrib.sessions.models import Session
 from django.db.models import QuerySet
 
 from tom_common.models import UserSession
-from tom_common.signals import extract_key_from_session_store, extract_key_from_session
+from tom_common.session_utils import extract_key_from_session_store, extract_key_from_session
 
 from cryptography.fernet import Fernet
 

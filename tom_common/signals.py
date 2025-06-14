@@ -1,25 +1,21 @@
 import logging
-import inspect
 
 from cryptography.fernet import Fernet
+
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.contrib.sessions.models import Session
+from django.contrib.sessions.backends.db import SessionStore
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from rest_framework.authtoken.models import Token
 
 from tom_common.models import Profile, UserSession
-from .session_utils import (
-    create_cipher_encryption_key,
-    save_key_to_session_store,
-    extract_key_from_session_store,
-    reencrypt_sensitive_data,
-    SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY
-)
+from tom_common import session_utils
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -71,7 +67,6 @@ def create_user_session_on_user_logged_in(sender, request, user, **kwargs) -> No
     """Whenever a user logs in, create a UserSession instance to associate
     the User with the new Session.
     """
-    logger.debug(f"********** {inspect.currentframe().f_code.co_name} sender: {sender} **********")
     logger.debug(f"User {user.username} has logged in. request: {request}")
     logger.debug(f"Request session: {type(request.session)} = {request.session}")
 
@@ -100,8 +95,6 @@ def create_user_session_on_user_logged_in(sender, request, user, **kwargs) -> No
 def delete_user_session_on_user_logged_out(sender, request, user, **kwargs) -> None:
     """Whenever a user logs out, delete all their UserSession instances.
     """
-    logger.debug(f"********** {inspect.currentframe().f_code.co_name} sender: {sender} **********")
-
     user_sessions = UserSession.objects.filter(user=user)
     for user_session in user_sessions:
         user_session.session.delete()
@@ -117,15 +110,14 @@ def set_cipher_on_user_logged_in(sender, request, user, **kwargs) -> None:
     """When the user logs in, capture their password and use it to
     generate a cipher encryption key and save it in the User's Session.
     """
-    logger.debug(f"********** {inspect.currentframe().f_code.co_name} sender: {sender} **********")
     logger.debug(f"User {user.username} has logged in. request: {request}")
 
     password = request.POST.get("password")  # Capture password from login
     logger.debug(f"Password: {password}")
     if password:
         logger.debug(f"Creating encryption key for user: {user.username} with password {password} ...")
-        encryption_key: bytes = create_cipher_encryption_key(user, password)
-        save_key_to_session_store(encryption_key, request.session)
+        encryption_key: bytes = session_utils.create_cipher_encryption_key(user, password)
+        session_utils.save_key_to_session_store(encryption_key, request.session)
 
         # TODO: remove this testing code
         # TESTING FOLLOWS: test key recovery and cipher
@@ -136,7 +128,7 @@ def set_cipher_on_user_logged_in(sender, request, user, **kwargs) -> None:
         cipher = None  # destroy cipher (not really necessary for this test)
 
         # 2. decode ciphertext with cipher created with recovered key
-        recovered_key: bytes = extract_key_from_session_store(request.session)  # get the key from the session
+        recovered_key: bytes = session_utils.extract_key_from_session_store(request.session)  # get the key from the session
         new_cipher = Fernet(recovered_key)  # create cipher from recovered key
         recovered_plaintext = new_cipher.decrypt(ciphertext).decode()
 
@@ -150,17 +142,14 @@ def set_cipher_on_user_logged_in(sender, request, user, **kwargs) -> None:
 def clear_encryption_key_on_user_logged_out(sender, request, user, **kwargs) -> None:
     """Clear the cipher encryption key when a user logs out.
     """
-    logger.debug(f"********** {inspect.currentframe().f_code.co_name} sender: {sender} **********")
-
     if user:
         logger.debug(f'User {user.username} has logged out. Deleting key from Session.'
                      f'sender: {sender}; request: {request}')
-        request.session.pop(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, None)
+        request.session.pop(session_utils.SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, None)
 
 
 def reencrypt_sensitive_data(user) -> None:
     """Re-encrypt the user's sensitive data with the new password."""
-    logger.debug(f"********** {inspect.currentframe().f_code.co_name} **********")
     logger.debug("Re-encrypting sensitive data...")
 
     #  Get the current Session from the UserSession
@@ -171,14 +160,14 @@ def reencrypt_sensitive_data(user) -> None:
         return
 
     #  Get the current encryption_key from the Session
-    current_encryption_key: bytes = extract_key_from_session(session)
+    current_encryption_key: bytes = session_utils.extract_key_from_session(session)
     #  Generate a decoding Fernet cipher with the current encryption key
     decoding_cipher = Fernet(current_encryption_key)
 
     #  Get the new raw password from the User instance
     new_raw_password = user._password  # CAUTION: this is implementation dependent (using _<property>)
     #  Generate a new encryption_key with the new raw password
-    new_encryption_key: bytes = create_cipher_encryption_key(user, new_raw_password)
+    new_encryption_key: bytes = session_utils.create_cipher_encryption_key(user, new_raw_password)
     #  Generate a new encoding Fernet cipher with the new encryption key
     encoding_cipher = Fernet(new_encryption_key)
 
@@ -200,7 +189,7 @@ def reencrypt_sensitive_data(user) -> None:
 
     #  Save the new encryption key in the User's Session
     session_store: SessionStore = SessionStore(session_key=session.session_key)
-    save_key_to_session_store(new_encryption_key, session_store)
+    session_utils.save_key_to_session_store(new_encryption_key, session_store)
     # TODO: clean up the SessionStore/Session APIs/function signitures - we're going in circles
 
     # Loop through all the installed apps and ask them to reencrypt their encrypted profile fields
@@ -234,7 +223,6 @@ def user_updated_on_user_pre_save(sender, **kwargs):
      * re-encrypt the user's sensitive data (see reencrypt_sensitive_data() function)
      *
     """
-    logger.debug(f"********** {inspect.currentframe().f_code.co_name} sender: {sender} **********")
     logger.debug(f"kwargs: {kwargs}")
     user = kwargs.get("instance", None)
 
