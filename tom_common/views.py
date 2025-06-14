@@ -9,9 +9,11 @@ from django_comments.models import Comment
 from django.views.decorators.http import require_GET
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import redirect
+from django.contrib.auth import update_session_auth_hash
 
+from tom_common.models import UserSession # Added import
 from tom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm, GroupForm
 from tom_common.mixins import SuperuserRequiredMixin
 
@@ -172,18 +174,55 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         """
-        Called after form is validated.
-
-        For now, do not update the session hash and instead let the user be logged out.
-        This is to help maintain any encrypted fields in the database.
+        Called after form is validated. Updates the session hash if the password was changed
+        to keep the user logged in, and ensures the UserSession is updated to the new session.
 
         :param form: User creation form
         :type form: django.forms.Form
         """
-        super().form_valid(form)
+        self.object = form.save() # self.object is the user
+
+        if form.cleaned_data.get("password1"):
+            # Check if new password was provided, update the session hash
+            update_session_auth_hash(self.request, self.object)
+
+        # If password was changed, the session key has been rotated by update_session_auth_hash.
+        # The old UserSession (if any) linked to the old session key would have been deleted by cascade
+        # when the old Django Session object was deleted.
+        # We need to create a new UserSession linking the user to the new session.
+            new_session_key = self.request.session.session_key
+            if new_session_key:
+                try:
+                    # Get the new Django Session object from the database
+                    # Need to import Session model: from django.contrib.sessions.models import Session
+                    from django.contrib.sessions.models import Session
+                    new_session = Session.objects.get(session_key=new_session_key)
+
+                    # Create a UserSession entry for the user and their new session.
+                    # This mirrors the logic in the user_logged_in signal.
+                    user_sesion, created = UserSession.objects.get_or_create(
+                        user=self.object,
+                        session=new_session
+                    )
+                    if created:
+                        logger.info(f"Created UserSession for {self.object.username} with new "
+                                    f"session {new_session.session_key} after password change.")
+                    # else: (not created) implies a UserSession for this user and this *new* session already existed,
+                    # which would be unusual immediately after update_session_auth_hash.
+                except Session.DoesNotExist:
+                    logger.error(
+                        f"New session {new_session_key} not found in database for user {self.object.username} "
+                        f"after password change. Cannot create UserSession."
+                    )
+                except Exception as e:
+                    logger.error(f"Error creating UserSession for user {self.object.username} "
+                                 f"after password change: {e}")
+            else:
+                logger.error(f"No session key found in request for user {self.object.username} "
+                             f"after password change. Cannot create UserSession.")
 
         messages.success(self.request, 'Profile updated')
-        return redirect(self.get_success_url())
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class CommentDeleteView(LoginRequiredMixin, DeleteView):
