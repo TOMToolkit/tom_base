@@ -180,7 +180,7 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         :param form: User creation form
         :type form: django.forms.Form
         """
-        self.object = form.save() # self.object is the user
+        self.object = form.save()  # self.object is the user
 
         if form.cleaned_data.get("password1"):
             # Check if new password was provided, update the session hash
