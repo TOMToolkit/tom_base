@@ -167,8 +167,8 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         Directs the class-based view to the correct method for the HTTP request method. Ensures that non-superusers
         are not incorrectly updating the profiles of other users.
         """
-        if not self.request.user.is_superuser and self.request.user.id != self.kwargs['pk']:
-            return redirect('user-update', self.request.user.id)
+        if not self.request.user.is_superuser and self.request.user.id != int(self.kwargs['pk']):
+            return redirect('user-update', pk=self.request.user.id)
         else:
             return super().dispatch(*args, **kwargs)
 
