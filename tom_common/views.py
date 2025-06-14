@@ -13,7 +13,7 @@ from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirec
 from django.shortcuts import redirect
 from django.contrib.auth import update_session_auth_hash
 
-from tom_common.models import UserSession # Added import
+from tom_common.models import UserSession
 from tom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm, GroupForm
 from tom_common.mixins import SuperuserRequiredMixin
 

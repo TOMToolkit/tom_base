@@ -1,6 +1,5 @@
 import base64
 import logging
-import inspect
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -8,6 +7,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 
 from django.apps import apps
+from django.contrib.auth.models import User
 from django.contrib.sessions.models import Session
 from django.contrib.sessions.backends.db import SessionStore
 
@@ -20,7 +20,7 @@ logger.setLevel(logging.INFO)
 SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY = 'key'
 
 
-def create_cipher_encryption_key(user, password: str) -> bytes:
+def create_cipher_encryption_key(user: User, password: str) -> bytes:
     """Creates a Fernet cipher encryption key derived from the user's password.
 
     This key is intended to be stored (e.g., in the session) and used to

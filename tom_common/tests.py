@@ -314,7 +314,7 @@ class TestRobotsDotTxt(TestCase):
 
 
 import datetime
-from django.contrib.sessions.backends.db import SessionStore
+
 from django.contrib.sessions.models import Session
 
 from django.db.models import QuerySet
@@ -323,6 +323,7 @@ from tom_common.models import UserSession
 from tom_common.session_utils import extract_key_from_session_store, extract_key_from_session
 
 from cryptography.fernet import Fernet
+
 
 class TestUserSession(TestCase):
     """Test that a UserSession instance is created when a user logs in.
@@ -374,10 +375,13 @@ class TestEncryptionKeyManagement(TestCase):
         self.user = User.objects.create_user(username=username, password=password)
         self.plaintext = f'this is a plaintext test message on {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
 
-        # don't use client.login() here, because we need the request to go through the middleware
-        # and create a SessionStore instance.
-        # this doesn't work: self.client.login(username=username, password=password)  # NOPE
-        response = self.client.post("/accounts/login/", {"username": username, "password": password})
+        # Don't use client.login() here, because we need the request to go through the middleware
+        # in order to create a SessionStore instance. So, this doesn't work:
+        # self.client.login(username=username, password=password)  # NOPE
+
+        # Instead, we use the client.post() method to log in, which will create a SessionStore instance
+        # as the User is logged in. (it returns an HTTPResponse object, but we don't need it)
+        _ = self.client.post("/accounts/login/", {"username": username, "password": password})
 
     def test_encryption_key_extraction(self):
         """The UserSession.session field is a ForeignKey to the the Session model.
@@ -437,7 +441,6 @@ class TestEncryptionKeyManagement(TestCase):
 
         # here, we are calling extract_key_from_session_store with a Session instance
         weird_encryption_key: bytes = extract_key_from_session_store(session)
-
 
         # Extract the encryption key from the session.
         encryption_key: bytes = extract_key_from_session(session)

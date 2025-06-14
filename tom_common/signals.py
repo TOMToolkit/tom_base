@@ -113,26 +113,9 @@ def set_cipher_on_user_logged_in(sender, request, user, **kwargs) -> None:
     logger.debug(f"User {user.username} has logged in. request: {request}")
 
     password = request.POST.get("password")  # Capture password from login
-    logger.debug(f"Password: {password}")
     if password:
-        logger.debug(f"Creating encryption key for user: {user.username} with password {password} ...")
         encryption_key: bytes = session_utils.create_cipher_encryption_key(user, password)
         session_utils.save_key_to_session_store(encryption_key, request.session)
-
-        # TODO: remove this testing code
-        # TESTING FOLLOWS: test key recovery and cipher
-        # 1. encode plaintext with cipher created with original key
-        cipher = Fernet(encryption_key)
-        plaintext = 'This is a test message.'
-        ciphertext = cipher.encrypt(plaintext.encode())
-        cipher = None  # destroy cipher (not really necessary for this test)
-
-        # 2. decode ciphertext with cipher created with recovered key
-        recovered_key: bytes = session_utils.extract_key_from_session_store(request.session)  # get the key from the session
-        new_cipher = Fernet(recovered_key)  # create cipher from recovered key
-        recovered_plaintext = new_cipher.decrypt(ciphertext).decode()
-
-        logger.debug(f"Test: {plaintext} -> {recovered_plaintext} via {ciphertext}")
     else:
         logger.error(f'User {user.username} logged in without a password. Cannot create encryption key.')
 
@@ -171,22 +154,6 @@ def reencrypt_sensitive_data(user) -> None:
     #  Generate a new encoding Fernet cipher with the new encryption key
     encoding_cipher = Fernet(new_encryption_key)
 
-    # test both those ciphers to see if they work
-    test_plaintext = 'this is a test'
-    # first test the decoding cipher
-    ciphertext_d = decoding_cipher.encrypt(test_plaintext.encode())
-    decoded_ciphertext = decoding_cipher.decrypt(ciphertext_d).decode()
-    logger.debug(f'**** decoding_cypher: {test_plaintext} -> {decoded_ciphertext}')
-    # now test the encoding cipher
-    ciphertext_e = encoding_cipher.encrypt(test_plaintext.encode())
-    decoded_ciphertext = encoding_cipher.decrypt(ciphertext_e).decode()
-    logger.debug(f'**** encoding_cypher: {test_plaintext} -> {decoded_ciphertext}')
-    # show that the ciphertext is different
-    logger.debug(f'**** ciphertext_d: {type(ciphertext_d)} = {ciphertext_d}')
-    logger.debug(f'**** ciphertext_e: {type(ciphertext_e)} = {ciphertext_e}')
-    assert ciphertext_d != ciphertext_e, "Ciphertext should be different for different keys"
-
-
     #  Save the new encryption key in the User's Session
     session_store: SessionStore = SessionStore(session_key=session.session_key)
     session_utils.save_key_to_session_store(new_encryption_key, session_store)
@@ -198,10 +165,6 @@ def reencrypt_sensitive_data(user) -> None:
             app.reencrypt_app_fields(user, decoding_cipher, encoding_cipher)
         except AttributeError as e:
             logger.debug(f'App: {app.name}: {type(app)} does not have a reencrypt_profile_fields method. Error: {e}')
-            if app.name == 'tom_eso':
-                logger.debug(f'App: {app.name} directory: {dir(app)}')
-                logger.debug(f'App: {app.name} encrypted fields  {app.encrypted_profile_fields()}')
-                app.reencrypt_app_fields(user, decoding_cipher, encoding_cipher)  # TODO: remove this line it's just here to generate a stack trace
             continue
 
 
@@ -226,19 +189,7 @@ def user_updated_on_user_pre_save(sender, **kwargs):
     logger.debug(f"kwargs: {kwargs}")
     user = kwargs.get("instance", None)
 
-    # logger.debug('here are the kwargs of the pre_save signal (filtered by sender=get_user_model()):')
-    # for key, value in kwargs.items():
-    #     logger.debug(f'    {key}: {value}: {type(value)}')
-    # here are the kwargs of the pre_save signal (filtered by sender=get_user_model()):
-    # signal: <django.db.models.signals.ModelSignal object at 0x7fb74963cd90>: <class 'django.db.models.signals.ModelSignal'>
-    # instance: admin: <class 'django.contrib.auth.models.User'>
-    # raw: False: <class 'bool'>
-    # using: default: <class 'str'>
-    # update_fields: None: <class 'NoneType'>
-
     if user and not user.username == 'AnonymousUser' and not user.is_anonymous:
-        # TODO: It's bad design to have a User with username: AnonymousUser and is_anonymous=True !!!
-
         # user.password vs. user._password:
         # the user.password field is used for authentication (via comparison to the (hashed) password
         # being tested for validity). The _password field is the raw password and is what we need to
@@ -257,10 +208,8 @@ def user_updated_on_user_pre_save(sender, **kwargs):
 
         if new_hashed_password != old_hashed_password:
             # New password detected
-            new_raw_password = user._password  # CAUTION: this is implemenation dependent (using _<property>)
-            logger.debug(f'User {user.username} is changing their password to {new_raw_password}')
+            logger.debug(f'User {user.username} is changing their password.')
             reencrypt_sensitive_data(user)  # need new RAW password to re-create cipher and re-encrypt
         else:
             # No new password detected
             logger.debug(f'User {user.username} is updating their profile without a password change.')
-            pass
