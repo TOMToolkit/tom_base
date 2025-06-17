@@ -1,14 +1,10 @@
 import logging
 
-from cryptography.fernet import Fernet
-
-from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.contrib.sessions.models import Session
-from django.contrib.sessions.backends.db import SessionStore
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
@@ -131,43 +127,6 @@ def clear_encryption_key_on_user_logged_out(sender, request, user, **kwargs) -> 
         request.session.pop(session_utils.SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, None)
 
 
-def reencrypt_sensitive_data(user) -> None:
-    """Re-encrypt the user's sensitive data with the new password."""
-    logger.debug("Re-encrypting sensitive data...")
-
-    #  Get the current Session from the UserSession
-    try:
-        session: Session = UserSession.objects.get(user=user).session
-    except UserSession.DoesNotExist:
-        logger.error(f"User {user.username} does not have a UserSession. Cannot re-encrypt sensitive data.")
-        return
-
-    #  Get the current encryption_key from the Session
-    current_encryption_key: bytes = session_utils.extract_key_from_session(session)
-    #  Generate a decoding Fernet cipher with the current encryption key
-    decoding_cipher = Fernet(current_encryption_key)
-
-    #  Get the new raw password from the User instance
-    new_raw_password = user._password  # CAUTION: this is implementation dependent (using _<property>)
-    #  Generate a new encryption_key with the new raw password
-    new_encryption_key: bytes = session_utils.create_cipher_encryption_key(user, new_raw_password)
-    #  Generate a new encoding Fernet cipher with the new encryption key
-    encoding_cipher = Fernet(new_encryption_key)
-
-    #  Save the new encryption key in the User's Session
-    session_store: SessionStore = SessionStore(session_key=session.session_key)
-    session_utils.save_key_to_session_store(new_encryption_key, session_store)
-    # TODO: clean up the SessionStore/Session APIs/function signitures - we're going in circles
-
-    # Loop through all the installed apps and ask them to reencrypt their encrypted profile fields
-    for app in apps.get_app_configs():
-        try:
-            app.reencrypt_app_fields(user, decoding_cipher, encoding_cipher)
-        except AttributeError as e:
-            logger.debug(f'App: {app.name}: {type(app)} does not have a reencrypt_profile_fields method. Error: {e}')
-            continue
-
-
 # Signal: Update the User's sensitive data when the password changes
 @receiver(pre_save, sender=get_user_model())
 def user_updated_on_user_pre_save(sender, **kwargs):
@@ -183,7 +142,7 @@ def user_updated_on_user_pre_save(sender, **kwargs):
     If the User's password has changed, take the following actions:
 
     Current list of actions to be taken upon User password change:
-     * re-encrypt the user's sensitive data (see reencrypt_sensitive_data() function)
+     * re-encrypt the user's sensitive data (see session_utils.reencrypt_sensitive_data() function)
      *
     """
     logger.debug(f"kwargs: {kwargs}")
@@ -209,7 +168,7 @@ def user_updated_on_user_pre_save(sender, **kwargs):
         if new_hashed_password != old_hashed_password:
             # New password detected
             logger.debug(f'User {user.username} is changing their password.')
-            reencrypt_sensitive_data(user)  # need new RAW password to re-create cipher and re-encrypt
+            session_utils.reencrypt_sensitive_data(user)  # need new RAW password to re-create cipher and re-encrypt
         else:
             # No new password detected
             logger.debug(f'User {user.username} is updating their profile without a password change.')

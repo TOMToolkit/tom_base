@@ -155,9 +155,9 @@ def reencrypt_sensitive_data(user) -> None:
         return
 
     #  Get the current encryption_key from the Session
-    current_encrytption_key: bytes = extract_key_from_session(session)
+    current_encryption_key: bytes = extract_key_from_session(session)
     #  Generate a decoding Fernet cipher with the current encryption key
-    decoding_cipher = Fernet(current_encrytption_key)
+    decoding_cipher = Fernet(current_encryption_key)
 
     #  Get the new raw password from the User instance
     new_raw_password = user._password  # CAUTION: this is implemenation dependent (using _<property>)
@@ -166,24 +166,13 @@ def reencrypt_sensitive_data(user) -> None:
     #  Generate a new encoding Fernet cipher with the new encryption key
     encoding_cipher = Fernet(new_encryption_key)
 
-    # test both those ciphers to see if they work
-    test_plaintext = 'this is a test'
-    # first test the decoding cipher
-    ciphertext_d = decoding_cipher.encrypt(test_plaintext.encode())
-    decoded_ciphertext = decoding_cipher.decrypt(ciphertext_d).decode()
-    logger.debug(f'**** decoding_cypher: {test_plaintext} -> {decoded_ciphertext}')
-    # now test the encoding cipher
-    ciphertext_e = encoding_cipher.encrypt(test_plaintext.encode())
-    decoded_ciphertext = encoding_cipher.decrypt(ciphertext_e).decode()
-    logger.debug(f'**** encoding_cypher: {test_plaintext} -> {decoded_ciphertext}')
-    # show that the ciphertext is different
-    logger.debug(f'**** ciphertext_d: {type(ciphertext_d)} = {ciphertext_d}')
-    logger.debug(f'**** ciphertext_e: {type(ciphertext_e)} = {ciphertext_e}')
-    assert ciphertext_d != ciphertext_e, "Ciphertext should be different for different keys"
-
     #  Save the new encryption key in the User's Session
     session_store: SessionStore = SessionStore(session_key=session.session_key)
     save_key_to_session_store(new_encryption_key, session_store)
+    # also, attach the new encryption key to the User instance so it can be inserted
+    # into the Session before we call update_session_auth_hash in
+    # tom_common.views.UserUpdateView.form_valid()
+    user._temp_new_fernet_key = new_encryption_key
 
     # Loop through all the installed apps and ask them to reencrypt their encrypted profile fields
     for app_config in apps.get_app_configs():
