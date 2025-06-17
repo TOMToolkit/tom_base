@@ -53,7 +53,7 @@ def create_auth_token_on_user_pre_save(sender, instance=None, created=False, **k
 
 # Here, we're setting up a mechanism to encrypt sensitive User data like
 # API keys and password for Facilities and data services, etc. The Signals
-# above create and clear the pher upon login and logout, respevely.
+# above create and clear the cipher (or key) upon login and logout, respectively.
 # We use the user_logged_in signal to intercept the User's password and
 # use that to derive the encryption_key and use that to create the cipher.
 

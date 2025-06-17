@@ -210,7 +210,7 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
 
                     # Create a UserSession entry for the user and their new session.
                     # This mirrors the logic in the user_logged_in signal.
-                    user_sesion, created = UserSession.objects.get_or_create(
+                    user_session, created = UserSession.objects.get_or_create(
                         user=self.object,
                         session=new_session
                     )
