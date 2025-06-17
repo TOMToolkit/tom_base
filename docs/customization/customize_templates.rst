@@ -228,6 +228,23 @@ display the image:
 After reloading the page, you should now see ``mytom.jpg`` displayed
 instead of the remote cat image.
 
+Using Integration Points:
+=========================
+
+The TOM toolkit provides a number of "integration points" that allow you to integrate your code with the base TOM
+Toolkit code so you don't have to overwrite templates. This has several benefits, including flexibility what apps you
+include, automatic app compatibility, simpler app installation, and the ability to gain new TOM Base improvements
+without updating your existing code.
+
+The key to accessing these integration points is adding the integration methods to your AppConfig in your
+`custom_code.apps.py` file.
+
+Current integration points include adding items to the navigation bar, adding tom_specific profile information to the
+user profile page, and more. A complete `list of integrations <https://github.com/TOMToolkit/tom_demoapp/wiki>`__,
+`example code <https://github.com/TOMToolkit/tom_demoapp/blob/dev/tom_demoapp/apps.py>`__, and
+`descriptions <https://github.com/TOMToolkit/tom_demoapp/wiki/Integration-Points#example-integration-points>`__ are
+available in the `tom_demoapp <https://github.com/TOMToolkit/tom_demoapp>`__ repository.
+
 Further Reading
 ~~~~~~~~~~~~~~~
 

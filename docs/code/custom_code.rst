@@ -108,6 +108,7 @@ an email in your hook becomes as simple as this:
 
 That is all that is necessary for sending an email, though you might
 want to look into using asynchronous task runners such as
+`django-tasks <https://github.com/realOrangeOne/django-tasks>`__ or
 `dramatiq <https://dramatiq.io/>`__ or
 `celery <http://www.celeryproject.org/>`__.
 

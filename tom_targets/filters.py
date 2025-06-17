@@ -3,7 +3,6 @@ from django.db.models import Q
 import django_filters
 
 from tom_targets.models import Target, TargetList
-from tom_targets.base_models import TargetMatchManager
 from tom_targets.utils import cone_search_filter
 
 
@@ -71,14 +70,7 @@ class TargetFilter(django_filters.FilterSet):
         Return a queryset for targets with names or aliases fuzzy matching the given coma-separated list of terms.
         A fuzzy match is determined by the `make_simple_name` method of the `TargetMatchManager` class.
         """
-        matching_names = []
-        for term in value.split(','):
-            simple_name = TargetMatchManager.make_simple_name(self, term)
-            for target in Target.objects.all().prefetch_related('aliases'):
-                for alias in target.names:
-                    if TargetMatchManager.make_simple_name(self, alias) == simple_name:
-                        matching_names.append(target.name)
-        return queryset.filter(name__in=matching_names).distinct()
+        return Target.matches.match_fuzzy_name(value, queryset).distinct()
 
     cone_search = django_filters.CharFilter(method='filter_cone_search', label='Cone Search',
                                             help_text='RA, Dec, Search Radius (degrees)')

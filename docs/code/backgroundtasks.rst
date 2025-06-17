@@ -53,153 +53,64 @@ cycle, just in case it takes longer than usual or errors in some way.
 In this tutorial, we will go over how to run tasks asynchronously in
 your TOM if you have the need to do so.
 
-Running tasks with Dramatiq
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Running tasks with django-tasks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`django-tasks <https://github.com/django/deps/blob/a83080652411e34e6afa8e1f0a97b675a76358e5/accepted/0014-background-workers.rst>`__
+is a reference implementation of Django’s official background tasks library.
+It provides an interface for marking functions as tasks and a worker
+for executing them. The database backend utilizes the Django ORM,
+which makes it easy to get started without having to install any additional
+software.
 
-`Dramatiq <https://dramatiq.io/>`__ is a task processing library for
-python. Simply put: it allows you to define functions as *actors* and
-then execute those function using *workers*. None of this can happen
-without a *broker*, though, which is the piece that is responsible for
-passing messages from the *web process* to the *workers*.
+Setting up django-tasks in a TOM
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Check to make sure your TOM has django_tasks installed:
 
-Installing Redis
-^^^^^^^^^^^^^^^^
+.. code-block:: python
+    :caption: settings.py
 
-Unfortunately, the broker is a separate piece of software outside of the
-task library. Dramatiq supports using either RabbitMQ or Redis. We’ll
-use Redis because of its versatility: not only can it be used as a
-message broker but it can also be used in your TOM as a cache (though
-not covered in this tutorial).
+    INSTALLED_APPS = [
+        ...
+        'django_tasks',
+        'django_tasks.backends.database',
+        ...
+    ]
 
-Depending on your OS, there are a few ways to `install
-Redis <https://redis.io/download>`__.
+By default, the immediate mode is enabled which means tasks are not run
+asynchronously. To enable asynchronous execution, you need to configure
+the django_tasks to use a the database backend:
 
-Using Docker
-''''''''''''
+.. code-block:: python
+    :caption: settings.py
 
-One of the easiest ways to install Redis is to use Docker:
+    TASKS = {
+        "default": {
+             "BACKEND": "django_tasks.backends.database.DatabaseBackend"
+            # "BACKEND": "django_tasks.backends.immediate.ImmediateBackend"
+        }
+    }
 
-::
+Running in immediate mode is still useful for development and testing.
 
-   docker run --name tom-redis -d -p6379:6379 redis
+Running the worker
+^^^^^^^^^^^^^^^^^^
 
-Building from source
-''''''''''''''''''''
+To run the worker, you can use the following command:
 
-You can also download Redis directly from the website and compile it:
+.. code:: bash
 
-::
+   ./manage.py db_worker -v3
 
-   $ wget http://download.redis.io/releases/redis-5.0.5.tar.gz
-   $ tar xzf redis-5.0.5.tar.gz
-   $ cd redis-5.0.5
-   $ make
 
-You can now run the server with:
+The ``v`` parameter is the verbosity level, set it to 3 for debugging purposes.
 
-::
-
-   ./src/redis-server
-
-Using a package manager
-'''''''''''''''''''''''
-
-If you are running Linux, most likely Redis is included with your
-distribution via its package manager. For example:
-
-::
-
-   apt install Redis
-
-Whichever way works for you, we should now have a Redis server up and
-running and listening on port 6379.
-
-Installing Dramatiq
-^^^^^^^^^^^^^^^^^^^
-
-Now that we have our broker running, we can install and configure our
-TOM to run Dramatiq. Start by installing the required dependencies into
-your virtualenv:
-
-::
-
-   pip install 'dramatiq[watch, redis]' django-dramatiq
-
-`django-dramatiq <https://github.com/Bogdanp/django_dramatiq>`__ will
-offer us some conveniences while working with tasks in our TOM.
-
-Install django-dramatiq to your ``INSTALLED_APPS`` setting, above the
-tom_* apps:
-
-.. code:: python
-
-   INSTALLED_APPS = [
-       ...
-       'django_gravatar',
-       'django_dramatiq',
-       'tom_targets',
-       ...
-   ]
-
-Add a section for dramatiq in ``settings.py``:
-
-.. code:: python
-
-   DRAMATIQ_BROKER = {
-       "BROKER": "dramatiq.brokers.redis.RedisBroker",
-       "OPTIONS": {
-           "url": "redis://localhost:6379",
-       },
-       "MIDDLEWARE": [
-           "dramatiq.middleware.AgeLimit",
-           "dramatiq.middleware.TimeLimit",
-           "dramatiq.middleware.Callbacks",
-           "dramatiq.middleware.Retries",
-           "django_dramatiq.middleware.AdminMiddleware",
-           "django_dramatiq.middleware.DbConnectionsMiddleware",
-       ]
-   }
-
-If you want to store the results of your tasks add a section in
-``settings.py`` for that as well:
-
-.. code:: python
-
-   DRAMATIQ_RESULT_BACKEND = {
-       "BACKEND": "dramatiq.results.backends.redis.RedisBackend",
-       "BACKEND_OPTIONS": {
-           "url": "redis://localhost:6379",
-       },
-       "MIDDLEWARE_OPTIONS": {
-           "result_ttl": 60000
-       }
-   }
-
-Now that all the settings are in place, we need to run a
-``manage.py migrate`` in order to create the ``django_dramatiq`` table.
-Then, we can test installation by starting up some workers:
-
-::
-
-   ./manage.py rundramatiq
-
-If all goes well you will see output that looks like this:
-
-::
-
-   % ./manage.py rundramatiq
-    * Discovered tasks module: 'django_dramatiq.tasks'
-    * Running dramatiq: "dramatiq --path . --processes 8 --threads 8 --watch . django_dramatiq.setup django_dramatiq.tasks"
-
-   [2019-08-21 17:52:30,216] [PID 27267] [MainThread] [dramatiq.MainProcess] [INFO] Dramatiq '1.6.1' is booting up.
-   Worker process is ready for action.
-
-Your task workers are up and running!
+Note that this command is run in addition to the Django development server, i.e. ``./manage.py runserver``.
+You should now be ready to write and execute tasks.
 
 Writing a task
 ^^^^^^^^^^^^^^
 
-Now that we have some workers, lets put them to work. In order to do
+Now that we have some a worker, lets put it to work. In order to do
 that we’ll write a task.
 
 Create a file ``mytom/myapp/tasks.py`` where ``myapp`` is a django app
@@ -212,22 +123,24 @@ you can do so with:
 
 In ``tasks.py``:
 
-.. code:: python
+.. code-block:: python
+    :caption: mytom/myapp/tasks.py
+    :linenos:
 
-   import dramatiq
-   import time
-   import logging
+    from django_tasks import task
+    import time
+    import logging
 
-   logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
 
 
-   @dramatiq.actor
-   def super_complicated_task():
-       logger.info('starting task...')
-       time.sleep(2)
-       logger.info('still running...')
-       time.sleep(2)
-       logger.info('done!')
+    @task
+    def super_complicated_task():
+        logger.info('starting task...')
+        time.sleep(2)
+        logger.info('still running...')
+        time.sleep(2)
+        logger.info('done!')
 
 This task will emulate a function that blocks for 4 seconds, in practice
 this would be a network call or some kind of heavy processing task.
@@ -243,20 +156,21 @@ And import and call the task:
 ::
 
    In [1]: from myapp.tasks import super_complicated_task
+   In [2]: super_complicated_task.enqueue()
+   Out[2]: TaskResult(task=Task(priority=0, func=<function super_complicated_task at 0x778d881c0e00>, backend='default', queue_name='default', run_after=None, enqueue_on_commit=None), id='f323fdc8-4088-424d-a4d4-74ad741c5c04', status=ResultStatus.NEW, enqueued_at=datetime.datetime(2025, 3, 13, 21, 13, 0, 8578, tzinfo=datetime.timezone.utc), started_at=None, finished_at=None, args=[], kwargs={}, backend='default', _exception_class=None, _traceback=None, _return_value=None, db_result=<DBTaskResult: DBTaskResult object (f323fdc8-4088-424d-a4d4-74ad741c5c04)>)
 
-   In [2]: super_complicated_task.send()
-   Out[2]: Message(queue_name='default', actor_name='super_complicated_task', args=(), kwargs={}, options={'redis_message_id': '667821da-f236-4c4e-969a-9d1f1ff54be2'}, message_id='2c8893d8-4211-4cac-b0b9-0f2e9672d0ae', message_timestamp=1566416600481)
-
-In the terminal where you started the dramatiq workers (not the django
+In the terminal where you started the task worker (not the django
 shell!) you should see the following output:
 
 ::
 
-   starting task...
-   still running...
-   done!
+    Task id=f323fdc8-4088-424d-a4d4-74ad741c5c04 path=tom_async_demo.views.super_complicated_task state=RUNNING
+    starting task...
+    still running...
+    done!
+    Task id=f323fdc8-4088-424d-a4d4-74ad741c5c04 path=tom_async_demo.views.super_complicated_task state=SUCCEEDED
 
-Notice how calling the task returned immediately in the shell, but the
+Notice how calling the ``enqueue()`` function returned immediately in the shell, but the
 task took a few seconds to complete. This is how it would work in
 practice in your django app: Somewhere in your code, for example in your
 app’s ``views.py``, you would import the task just like we did in the
@@ -264,13 +178,22 @@ terminal. Now when the view gets called, the task will be queued for
 execution and the response can be sent back to the user’s browser right
 away. The task will finish in the background.
 
+A few more things about the ``enqueue()`` function: First, if your task function
+takes any arguments, you pass them into the enqueue function. Secondly,
+the object returned from this function is a TaskResult. This object can be used to
+check the status of the task, retrieve its result, or cancel it.
+
+A common pattern is to call ``enqueue()`` in a view function and pass the
+result ID immediately in the response. This ID can be used to check the status of the task,
+using the ``task.get_result()`` method, via polling or some other mechanism.
+
 Conclusion
 ^^^^^^^^^^
 
-In this tutorial we went over the need for asynchronous tasks, the
-installation of Dramatiq and the broker, and finally writing a running a
+In this tutorial we went over why asynchronous tasks are needed, the
+installation of django-tasks, and finally writing a running a
 task.
 
-We recommend reading the `Dramatiq <https://dramatiq.io/guide.html>`__
+We recommend reading the `django-tasks <https://github.com/realOrangeOne/django-tasks>`__
 documentation for full details on what the library is capable of, as
 well as additional usage examples.

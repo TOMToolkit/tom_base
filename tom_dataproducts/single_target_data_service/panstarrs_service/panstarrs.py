@@ -150,7 +150,7 @@ class PanstarrsSingleTargetDataService(stds.BaseSingleTargetDataService):
                            'Only public data will be accessible.')
 
         # submit the query, create the data product, and run the data product processor
-        # synchronous query, so we can return the result immediately, no dramatiq needed
+        # synchronous query, so we can return the result immediately
 
         # initialize the request data with target coordinates and
         # min_ and max_date_mjd  epochMean min and max constraints
