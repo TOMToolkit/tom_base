@@ -182,20 +182,30 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         """
         self.object = form.save()  # self.object is the user
 
+        # if new password was provided, update the session hash and UserSession
         if form.cleaned_data.get("password1"):
-            # Check if new password was provided, update the session hash
+            from tom_common import session_utils
+            # But, before we update the session hash, we need to put the new Fernet key into
+            # the Session so that it gets copied over to the new Session when we update the
+            # session hash. (It was stashed in the User object when we called reencrypt_sensitive_data).
+
+            if hasattr(self.object, '_temp_new_fernet_key'):
+                new_fernet_key = self.object._temp_new_fernet_key
+                session_utils.save_key_to_session_store(new_fernet_key, self.request.session)
+                del self.object._temp_new_fernet_key  # clean up that temporary attribute
+
+            # now we're ready to update the session hash
             update_session_auth_hash(self.request, self.object)
 
-        # If password was changed, the session key has been rotated by update_session_auth_hash.
-        # The old UserSession (if any) linked to the old session key would have been deleted by cascade
-        # when the old Django Session object was deleted.
-        # We need to create a new UserSession linking the user to the new session.
+            # The old UserSession (if any) linked to the old Session would have been deleted by CASCADE.
+            # We need to create a new UserSession linking the User to the new Session.
             new_session_key = self.request.session.session_key
             if new_session_key:
                 try:
                     # Get the new Django Session object from the database
                     # Need to import Session model: from django.contrib.sessions.models import Session
                     from django.contrib.sessions.models import Session
+
                     new_session = Session.objects.get(session_key=new_session_key)
 
                     # Create a UserSession entry for the user and their new session.
