@@ -325,7 +325,7 @@ class TestUserSession(TestCase):
     def setUp(self):
         # Create a user and log them in.
         username = 'testuser'
-        password = 'testpassword'
+        password = 'testpassword'  # noqa
         self.user = User.objects.create_user(username=username, password=password)
         # don't user client.force_login() here, because it matters how the user logs in
         self.client.login(username=username, password=password)
@@ -452,7 +452,7 @@ class TestEncryptionKeyManagement(TestCase):
         self.assertEqual(self.plaintext, decoded_ciphertext)  # check that the key works
 
         # Change the user's password.
-        new_password = 'newpassword'
+        new_password = 'newpassword'  # noqa
         self.user.set_password(new_password)
         self.user.save()  # triggers pre_save signal on User model
 
