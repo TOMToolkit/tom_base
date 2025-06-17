@@ -1,22 +1,28 @@
+import datetime
 from http import HTTPStatus
 import tempfile
 import logging
 
-from django.test import TestCase, override_settings
+from cryptography.fernet import Fernet
 
-from django.contrib.sites.models import Site
 from django.contrib.auth.models import User
+from django.contrib.sessions.models import Session
+from django.contrib.sites.models import Site
 from django.urls import reverse
 from django_comments.models import Comment
 from django.core.paginator import Paginator
+from django.db.models import QuerySet
+from django.test import TestCase, override_settings
 from django.test.runner import DiscoverRunner
 
+from tom_common.models import UserSession
+from tom_common.session_utils import extract_key_from_session_store, extract_key_from_session
 from tom_targets.tests.factories import SiderealTargetFactory
 from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
 from tom_common.templatetags.bootstrap4_overrides import bootstrap_pagination
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class SilenceLogsTestRunner(DiscoverRunner):
@@ -311,18 +317,6 @@ class TestRobotsDotTxt(TestCase):
             assert response["content-type"] == "text/plain"
             # check for default content
             assert response.content.startswith(b"User-Agent: *\n")  # known a priori from default robots.txt
-
-
-import datetime
-
-from django.contrib.sessions.models import Session
-
-from django.db.models import QuerySet
-
-from tom_common.models import UserSession
-from tom_common.session_utils import extract_key_from_session_store, extract_key_from_session
-
-from cryptography.fernet import Fernet
 
 
 class TestUserSession(TestCase):
