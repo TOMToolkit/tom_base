@@ -40,14 +40,19 @@ def auto_reencrypt_model_instances_for_user(
                     instance = model_class.objects.get(**{user_relation_field_name: user})
                     instance.reencrypt_model_fields(decoding_cipher, encoding_cipher)
                 except model_class.DoesNotExist:
-                    logger.info(f"No {model_class.__name__} instance found for user {user.username} via field '{user_relation_field_name}'.")
+                    logger.info(f"No {model_class.__name__} instance found for user {user.username} "
+                                f"via field '{user_relation_field_name}'.")
                 except model_class.MultipleObjectsReturned:
                     # Handles non-unique ForeignKey to User
-                    logger.warning(f"Multiple {model_class.__name__} instances found for user {user.username} via field '{user_relation_field_name}'. Re-encrypting all.")
+                    logger.warning(f"Multiple {model_class.__name__} instances found for user {user.username} via "
+                                   f"field '{user_relation_field_name}'. Re-encrypting all.")
                     instances = model_class.objects.filter(**{user_relation_field_name: user})
                     for instance in instances:
                         instance.reencrypt_model_fields(decoding_cipher, encoding_cipher)
                 except Exception as e:
-                    logger.error(f"Error processing model {model_class.__name__} for re-encryption for user {user.username}: {e}")
+                    logger.error(f"Error processing model {model_class.__name__} for re-encryption for "
+                                 f"user {user.username}: {e}")
             else:
-                logger.warning(f"Model {model_class.__name__} is Encryptable but does not have a direct '{user_relation_field_name}' attribute. Cannot automatically fetch instance for user {user.username} for re-encryption.")
+                logger.warning(f"Model {model_class.__name__} is Encryptable but does not have a direct "
+                               f"'{user_relation_field_name}' attribute. Cannot automatically fetch instance "
+                               f"for user {user.username} for re-encryption.")

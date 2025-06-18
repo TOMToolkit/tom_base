@@ -31,7 +31,7 @@ def save_profile_on_user_pre_save(sender, instance, **kwargs):
     # to create a profile for users that don't have one.
     try:
         instance.profile.save()
-    except User.profile.RelatedObjectDoesNotExist:
+    except User.profile.RelatedObjectDoesNotExist:  # type: ignore
         logger.info(f'No Profile found for {instance}. Creating Profile.')
         Profile.objects.create(user=instance)
 
