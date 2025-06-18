@@ -1,7 +1,9 @@
+import base64
 import datetime
 from http import HTTPStatus
 import tempfile
 import logging
+from unittest.mock import MagicMock, patch
 
 from cryptography.fernet import Fernet
 
@@ -16,7 +18,9 @@ from django.test import TestCase, override_settings
 from django.test.runner import DiscoverRunner
 
 from tom_common.models import UserSession
-from tom_common.session_utils import extract_key_from_session_store, extract_key_from_session
+from tom_common import session_utils  # noqa Import the whole module for patching
+from tom_common.session_utils import (extract_key_from_session_store, extract_key_from_session,
+                                      SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY)
 from tom_targets.tests.factories import SiderealTargetFactory
 from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
 from tom_common.templatetags.bootstrap4_overrides import bootstrap_pagination
@@ -486,3 +490,103 @@ class TestEncryptionKeyManagement(TestCase):
 
         # Check that the new key works.
         self.assertEqual(self.plaintext, decoded_ciphertext)
+
+
+class TestSignalHandlers(TestCase):
+    def setUp(self):
+        self.username = 'signaltestuser'
+        self.password = 'signaltestpass'
+        self.user = User.objects.create_user(username=self.username, password=self.password, email='signal@example.com')
+
+    def test_create_user_session_on_user_logged_in(self):
+        # Initially, no UserSession for this user
+        self.assertFalse(UserSession.objects.filter(user=self.user).exists())
+        # Log in the user
+        self.client.login(username=self.username, password=self.password)
+        # Check UserSession is created
+        self.assertTrue(UserSession.objects.filter(user=self.user).exists())
+        user_session = UserSession.objects.get(user=self.user)
+        self.assertIsNotNone(user_session.session)
+
+    def test_delete_user_session_on_user_logged_out(self):
+        # Log in the user to create a session
+        self.client.login(username=self.username, password=self.password)
+        self.assertTrue(UserSession.objects.filter(user=self.user).exists())
+        session_key = self.client.session.session_key
+        self.assertTrue(Session.objects.filter(session_key=session_key).exists())
+
+        # Log out the user
+        self.client.logout()
+
+        # Check UserSession is deleted
+        self.assertFalse(UserSession.objects.filter(user=self.user).exists())
+        # Check the associated Session is also deleted
+        self.assertFalse(Session.objects.filter(session_key=session_key).exists())
+
+    def test_set_cipher_on_user_logged_in(self):
+        # Log in the user using client.post to simulate form submission with password
+        self.client.post(reverse('login'), {'username': self.username, 'password': self.password})
+
+        # Check that the encryption key is in the session
+        self.assertIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, self.client.session)
+        key_from_session_store = self.client.session[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY]
+        self.assertIsNotNone(key_from_session_store)
+
+        # Verify the key can be used
+        try:
+            # key_from_session_store is base64.b64encode(output_of_create_cipher_encryption_key).decode('utf-8')
+            # output_of_create_cipher_encryption_key is the actual Fernet key (44 bytes, base64 encoded raw 32 bytes)
+            # So, we need to decode key_from_session_store once to get the Fernet key.
+            retrieved_fernet_key = base64.b64decode(key_from_session_store.encode('utf-8'))
+
+            # retrieved_fernet_key should now be the original Fernet key and usable by Fernet.
+            Fernet(retrieved_fernet_key)  # This should not raise an error if the key is valid
+        except Exception as e:
+            self.fail(f"Encryption key from session is not a valid Fernet key: {e}")
+
+    def test_set_cipher_on_user_logged_in_no_password_in_request(self):
+        # Simulate a login scenario where request.POST does not contain 'password'
+        # This can happen with force_login or other custom auth backends
+        # We expect an error to be logged, but the login should still proceed.
+        # The key won't be set in the session by this specific signal handler.
+
+        # Use force_login which doesn't populate request.POST['password']
+        self.client.force_login(self.user)
+
+        # Check that the encryption key is NOT in the session from this signal
+        # (it might be set by other mechanisms, but not by set_cipher_on_user_logged_in)
+        # We can't directly assert it's not there if other parts of the login process add it.
+        # Instead, we check that our logger.error was called.
+        with self.assertLogs('tom_common.signals', level='ERROR') as cm:
+            # Manually trigger the signal with a mock request that has no POST data
+            from django.contrib.auth.signals import user_logged_in
+            mock_request = MagicMock()
+            mock_request.POST = {}  # No password
+            mock_request.session = self.client.session  # Use the actual session object
+            user_logged_in.send(sender=self.user.__class__, request=mock_request, user=self.user)
+        self.assertIn(f'User {self.username} logged in without a password. Cannot create encryption key.', cm.output[0])
+        # Key should not be in session from *this* signal call
+        self.assertNotIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, mock_request.session)
+
+    def test_clear_encryption_key_on_user_logged_out(self):
+        # Log in and ensure key is set
+        self.client.post(reverse('login'), {'username': self.username, 'password': self.password})
+        self.assertIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, self.client.session)
+
+        # Log out
+        self.client.logout()
+
+        # Check that the encryption key is removed from the session
+        self.assertNotIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, self.client.session)
+
+    @patch('tom_common.signals.session_utils.reencrypt_sensitive_data')
+    def test_user_updated_on_user_pre_save_password_changed(self, mock_reencrypt):
+        self.user.set_password('newpassword123')
+        self.user.save()  # Triggers pre_save signal
+        mock_reencrypt.assert_called_once_with(self.user)
+
+    @patch('tom_common.signals.session_utils.reencrypt_sensitive_data')
+    def test_user_updated_on_user_pre_save_password_not_changed(self, mock_reencrypt):
+        self.user.first_name = 'Signal'
+        self.user.save()  # Triggers pre_save signal
+        mock_reencrypt.assert_not_called()
