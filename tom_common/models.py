@@ -1,7 +1,12 @@
+import logging
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.sessions.models import Session
+from cryptography.fernet import Fernet
+
+
+logger = logging.getLogger(__name__)
 
 
 class Profile(models.Model):
@@ -51,3 +56,68 @@ class EncryptedBinaryField(models.BinaryField):
         self.encrypted: bool = kwargs.pop('encrypted', False)
         self.property_name: str = kwargs.pop('property_name', None)
         super().__init__(*args, **kwargs)
+
+
+class EncryptableModelMixin(models.Model):
+    """
+    A mixin for models that contain EncryptedBinaryFields.
+    Provides helper methods for encryption/decryption and a generic
+    re-encryption mechanism for all encrypted fields in the model.
+
+    TOMToolkit apps with encrypted models should define `get_<property_name>`
+    and `set_<property_name>` methods for each EncryptedBinaryField,
+    using the `_generic_decrypt` and `_generic_encrypt` helpers provided by this mixin.
+    """
+
+    def _generic_decrypt(self, encrypted_value, cipher: Fernet) -> str:
+        """Generic decryption handling bytes vs memoryview."""
+        if not encrypted_value:
+            return ''
+        if isinstance(encrypted_value, bytes):
+            return cipher.decrypt(encrypted_value).decode()  # probably sqlite3 backend db
+        else:  # Assumes memoryview or similar that has tobytes()
+            return cipher.decrypt(encrypted_value.tobytes()).decode()  # probably postgresql backend db
+
+    def _generic_encrypt(self, plaintext_value: str, cipher: Fernet) -> bytes:
+        """Use the given to encrypt the plaintext, returning the encrypted bytes."""
+        return cipher.encrypt(plaintext_value.encode())
+
+    def reencrypt_model_fields(self, decoding_cipher: Fernet, encoding_cipher: Fernet) -> None:
+        """Re-encrypts all fields in this model marked with 'encrypted=True'.
+
+        Relies on the model having get_<property_name> and set_<property_name> methods
+        for each field where `property_name` is defined on the EncryptedBinaryField.
+        """
+        model_save_needed = False
+        for field in self._meta.fields:
+            if getattr(field, 'encrypted', False):
+                # make sure the field has a 'property_name' attribute
+                if not hasattr(field, 'property_name') or not field.property_name:
+                    logger.error(f"Field '{field.name}' in {self.__class__.__name__} is marked as "
+                                 f" 'encrypted' but lacks 'property_name' for getter and setter. Skipping.")
+                    continue
+
+                # construct the setter/getter method names from the 'property_name' field attribute
+                getter_name = f'get_{field.property_name}'
+                setter_name = f'set_{field.property_name}'
+
+                # make sure the model (self) has methods for the constructed method names
+                if not hasattr(self, getter_name) or not hasattr(self, setter_name):
+                    logger.error(f"Getter '{getter_name}' or setter '{setter_name}' not found for encrypted field "
+                                 f"'{field.property_name}' in {self.__class__.__name__}. Skipping re-encryption.")
+                    continue
+                try:
+                    field_getter = getattr(self, getter_name)
+                    plaintext = field_getter(decoding_cipher)  # decryption finally happens here
+
+                    field_setter = getattr(self, setter_name)
+                    field_setter(plaintext, cipher=encoding_cipher)  # re-encryption finally happens here
+                    model_save_needed = True
+                except Exception as e:
+                    logger.error(f"Error re-encrypting field {field.property_name} for {self.__class__.__name__}"
+                                 f" instance {getattr(self, 'pk', 'UnknownPK')}: {e}")
+        if model_save_needed:
+            self.save()
+
+    class Meta:
+        abstract = True
