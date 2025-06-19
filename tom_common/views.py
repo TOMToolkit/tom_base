@@ -215,7 +215,7 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
                         session=new_session
                     )
                     if created:
-                        logger.info(f"Created UserSession for {self.object.username} with new "
+                        logger.debug(f"Created UserSession for {self.object.username} with new "
                                     f"session {new_session.session_key} after password change.")
                     # else: (not created) implies a UserSession for this user and this *new* session already existed,
                     # which would be unusual immediately after update_session_auth_hash.
