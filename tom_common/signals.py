@@ -25,7 +25,7 @@ logger.setLevel(logging.INFO)
 
 # Signal: Create a Profile for the User when the User instance is created
 @receiver(post_save, sender=User)
-def save_profile_on_user_pre_save(sender, instance, **kwargs):
+def save_profile_on_user_post_save(sender, instance, **kwargs):
     """When a user is saved, save their profile."""
     # Take advantage of the fact that logging in updates a user's last_login field
     # to create a profile for users that don't have one.
@@ -38,7 +38,7 @@ def save_profile_on_user_pre_save(sender, instance, **kwargs):
 
 # Signal: Create a DRF token for the User when the User instance is created
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_auth_token_on_user_pre_save(sender, instance=None, created=False, **kwargs):
+def create_auth_token_on_user_post_save(sender, instance=None, created=False, **kwargs):
     """Create a token for the User when the User instance is created.
 
     This is the API token used by the User to authenticate with the
