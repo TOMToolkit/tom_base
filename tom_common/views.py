@@ -5,16 +5,18 @@ from django.views.generic.edit import UpdateView, CreateView
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth import update_session_auth_hash
 from django_comments.models import Comment
 from django.views.decorators.http import require_GET
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import redirect
+from django.contrib.auth import update_session_auth_hash
 
+from tom_common.models import UserSession
 from tom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm, GroupForm
 from tom_common.mixins import SuperuserRequiredMixin
+
 
 logger = logging.getLogger(__name__)
 
@@ -165,23 +167,72 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         Directs the class-based view to the correct method for the HTTP request method. Ensures that non-superusers
         are not incorrectly updating the profiles of other users.
         """
-        if not self.request.user.is_superuser and self.request.user.id != self.kwargs['pk']:
-            return redirect('user-update', self.request.user.id)
+        if not self.request.user.is_superuser and self.request.user.id != int(self.kwargs['pk']):
+            return redirect('user-update', pk=self.request.user.id)
         else:
             return super().dispatch(*args, **kwargs)
 
     def form_valid(self, form):
         """
-        Called after form is validated. Updates the ``User`` and the session hash to maintain login session.
+        Called after form is validated. Updates the session hash if the password was changed
+        to keep the user logged in, and ensures the UserSession is updated to the new session.
 
         :param form: User creation form
         :type form: django.forms.Form
         """
-        super().form_valid(form)
-        if self.get_object() == self.request.user:
+        self.object = form.save()  # self.object is the user
+
+        # if new password was provided, update the session hash and UserSession
+        if form.cleaned_data.get("password1"):
+            from tom_common import session_utils
+            # But, before we update the session hash, we need to put the new Fernet key into
+            # the Session so that it gets copied over to the new Session when we update the
+            # session hash. (It was stashed in the User object when we called reencrypt_sensitive_data).
+
+            if hasattr(self.object, '_temp_new_fernet_key'):
+                new_fernet_key = self.object._temp_new_fernet_key
+                session_utils.save_key_to_session_store(new_fernet_key, self.request.session)
+                del self.object._temp_new_fernet_key  # clean up that temporary attribute
+
+            # now we're ready to update the session hash
             update_session_auth_hash(self.request, self.object)
+
+            # The old UserSession (if any) linked to the old Session would have been deleted by CASCADE.
+            # We need to create a new UserSession linking the User to the new Session.
+            new_session_key = self.request.session.session_key
+            if new_session_key:
+                try:
+                    # Get the new Django Session object from the database
+                    # Need to import Session model: from django.contrib.sessions.models import Session
+                    from django.contrib.sessions.models import Session
+
+                    new_session = Session.objects.get(session_key=new_session_key)
+
+                    # Create a UserSession entry for the user and their new session.
+                    # This mirrors the logic in the user_logged_in signal.
+                    _, created = UserSession.objects.get_or_create(
+                        user=self.object,
+                        session=new_session
+                    )
+                    if created:
+                        logger.debug(f"Created UserSession for {self.object.username} with new session "
+                                     f"{new_session.session_key} after password change.")
+                    # else: (not created) implies a UserSession for this user and this *new* session already existed,
+                    # which would be unusual immediately after update_session_auth_hash.
+                except Session.DoesNotExist:
+                    logger.error(
+                        f"New session {new_session_key} not found in database for user {self.object.username} "
+                        f"after password change. Cannot create UserSession."
+                    )
+                except Exception as e:
+                    logger.error(f"Error creating UserSession for user {self.object.username} "
+                                 f"after password change: {e}")
+            else:
+                logger.error(f"No session key found in request for user {self.object.username} "
+                             f"after password change. Cannot create UserSession.")
+
         messages.success(self.request, 'Profile updated')
-        return redirect(self.get_success_url())
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class CommentDeleteView(LoginRequiredMixin, DeleteView):
