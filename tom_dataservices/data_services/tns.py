@@ -105,10 +105,10 @@ class TNSDataService(BaseDataService):
                     'group_name': os.getenv('TNS_GROUP_NAME', 'BestTOMGroup'),
                 },
             }
-
     """
     name = 'TNS'
     info_url = 'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html#module-tom_alerts.brokers.tns'
+    query_results_partial = 'tom_dataservices/data_services/partials/tns_query_results_table.html'
 
     @classmethod
     def urls(cls) -> dict:
@@ -156,7 +156,7 @@ class TNSDataService(BaseDataService):
                 'radius': parameters.get('radius', ''),
                 'units': parameters.get('units', ''),
                 'objname': parameters.get('objname', ''),
-                'photometry': 1,
+                'photometry': 0,
                 'spectroscopy': 0,
             }
             )
