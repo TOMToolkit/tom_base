@@ -408,6 +408,34 @@ class TestEncryptionKeyManagement(TestCase):
         decoded_ciphertext = cipher.decrypt(ciphertext).decode()
         self.assertEqual(self.plaintext, decoded_ciphertext)
 
+    def test_encryption_key_extraction_from_session_store(self):
+        """Test that get_key_from_session_store() and get_key_from_session_model()
+        return the same key.
+
+        Use get_key_from_session_store() when you have a SessionStore instance,
+        probably from a decorated HTTPRequest. Use get_key_from_session_model()
+        only have a UserSession instance.
+        """
+        # Get the UserSession instance for the logged-in user.
+        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
+        self.assertEqual(user_sessions.count(), 1)  # make sure there's only one in the QuerySet
+        user_session: UserSession = user_sessions.first()
+        session: Session = user_session.session
+        self.assertIsInstance(session, Session)  # make sure it's a Session instance
+
+        # To demonstrate the difference between Session and SessionStore:
+        # Get the key from the Session model instance
+        key_from_session: bytes = get_key_from_session_model(session)
+        self.assertIsInstance(key_from_session, bytes)
+
+        # Create a SessionStore...
+        from django.contrib.sessions.backends.db import SessionStore
+        # (the session has a session_key we can use to create a SessionStore instance)
+        session_store = SessionStore(session_key=session.session_key)
+        # ...and get the key from it
+        key_from_session_store: bytes = get_key_from_session_store(session_store)
+        self.assertEqual(key_from_session, key_from_session_store)  # check that they are the same
+
     def test_encryption_key_update_upon_password_change(self):
         """Test that the encryption key is updated when the user changes their password.
 
@@ -431,18 +459,10 @@ class TestEncryptionKeyManagement(TestCase):
         session: Session = user_session.session
         self.assertIsInstance(session, Session)  # make sure it's a Session instance
 
-        # To demonstrate the difference between Session and SessionStore:
-        # 1. Get the key from the Session model instance
+        # Get the key from the Session model instance
         encryption_key: bytes = get_key_from_session_model(session)
         self.assertIsInstance(encryption_key, bytes)
 
-        # 2. Create a SessionStore and get the key from it
-        from django.contrib.sessions.backends.db import SessionStore
-        session_store = SessionStore(session_key=session.session_key)
-        key_from_store: bytes = get_key_from_session_store(session_store)
-        self.assertEqual(encryption_key, key_from_store)  # check that they are the same
-
-        #
         cipher = Fernet(encryption_key)
 
         # Encrypt the plaintext message with the current key.
