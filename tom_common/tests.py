@@ -1,4 +1,3 @@
-import base64
 import datetime
 from http import HTTPStatus
 import tempfile
@@ -19,7 +18,7 @@ from django.test.runner import DiscoverRunner
 
 from tom_common.models import UserSession
 from tom_common import session_utils  # noqa Import the whole module for patching
-from tom_common.session_utils import (extract_key_from_session_store, extract_key_from_session,
+from tom_common.session_utils import (get_key_from_session_store, get_key_from_session_model,
                                       SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY)
 from tom_targets.tests.factories import SiderealTargetFactory
 from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
@@ -400,7 +399,7 @@ class TestEncryptionKeyManagement(TestCase):
         session: Session = user_session.session
 
         # extract the encryption key from the session store
-        encryption_key: bytes = extract_key_from_session(session)
+        encryption_key: bytes = get_key_from_session_model(session)
         self.assertIsInstance(encryption_key, bytes)  # check that it's a bytes object
         cipher = Fernet(encryption_key)  # and we can use it to create a Fernet cipher
 
@@ -432,20 +431,16 @@ class TestEncryptionKeyManagement(TestCase):
         session: Session = user_session.session
         self.assertIsInstance(session, Session)  # make sure it's a Session instance
 
-        # TODO: make sure these type-hints are accurate!!!!
-        # why are calling extract_key_from_session_store with what looks
-        # like a Session object? Is it really a Session instance or is it really a
-        # SessionStore instance?
-
-        # here, we are calling extract_key_from_session_store with a Session instance
-        weird_encryption_key: bytes = extract_key_from_session_store(session)
-
-        # Extract the encryption key from the session.
-        encryption_key: bytes = extract_key_from_session(session)
+        # To demonstrate the difference between Session and SessionStore:
+        # 1. Get the key from the Session model instance
+        encryption_key: bytes = get_key_from_session_model(session)
         self.assertIsInstance(encryption_key, bytes)
 
-        self.assertEqual(encryption_key, weird_encryption_key)  # check that they are the same
-        # if they are the same, that's weird
+        # 2. Create a SessionStore and get the key from it
+        from django.contrib.sessions.backends.db import SessionStore
+        session_store = SessionStore(session_key=session.session_key)
+        key_from_store: bytes = get_key_from_session_store(session_store)
+        self.assertEqual(encryption_key, key_from_store)  # check that they are the same
 
         #
         cipher = Fernet(encryption_key)
@@ -477,7 +472,7 @@ class TestEncryptionKeyManagement(TestCase):
         session: Session = user_session.session
 
         # Extract the new encryption key from the session store.
-        new_encryption_key: bytes = extract_key_from_session(session)
+        new_encryption_key: bytes = get_key_from_session_model(session)
         self.assertIsInstance(new_encryption_key, bytes)
 
         # The new encryption key should be different from the old one.
@@ -530,14 +525,12 @@ class TestSignalHandlers(TestCase):
         # Check that the encryption key is in the session
         self.assertIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, self.client.session)
         key_from_session_store = self.client.session[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY]
+        self.assertIsInstance(key_from_session_store, str)
         self.assertIsNotNone(key_from_session_store)
 
         # Verify the key can be used
         try:
-            # key_from_session_store is base64.b64encode(output_of_create_cipher_encryption_key).decode('utf-8')
-            # output_of_create_cipher_encryption_key is the actual Fernet key (44 bytes, base64 encoded raw 32 bytes)
-            # So, we need to decode key_from_session_store once to get the Fernet key.
-            retrieved_fernet_key = base64.b64decode(key_from_session_store.encode('utf-8'))
+            retrieved_fernet_key = get_key_from_session_store(self.client.session)
 
             # retrieved_fernet_key should now be the original Fernet key and usable by Fernet.
             Fernet(retrieved_fernet_key)  # This should not raise an error if the key is valid

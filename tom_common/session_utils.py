@@ -73,13 +73,13 @@ def save_key_to_session_store(key: bytes, session_store: SessionStore) -> None:
     except AssertionError as e:
         logger.error(str(e))
 
-    # Save key in Session (encryption_key must be encoded as a string to store in Session)
-    b64encoded_key_as_str: str = base64.b64encode(key).decode('utf-8')  # encode key as str
-    session_store[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY] = b64encoded_key_as_str  # save key in Session
+    # The key is bytes, but session values must be JSON-serializable.
+    # A Fernet key is already base64-encoded, so we just decode it to a string for storage.
+    session_store[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY] = key.decode('utf-8')
     session_store.save()  # we might be accessing the session before it's saved (in the middleware?)
 
 
-def extract_key_from_session(session: Session) -> bytes:
+def get_key_from_session_model(session: Session) -> bytes:
     """Extracts and decodes the encryption key from a Django Session object.
 
     Retrieves the base64 encoded key string from the session, decodes it
@@ -92,13 +92,13 @@ def extract_key_from_session(session: Session) -> bytes:
         The encryption key as bytes.
     """
 
-    logger.debug(f"Extracting key from Session: {type(session)} = {session} - {session.get_decoded()}")
-    b64encoded_key: str = session.get_decoded()[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY]  # get the key from the session
-    recovered_key: bytes = base64.b64decode(b64encoded_key.encode('utf-8'))  # decode key to bytes from str
-    return recovered_key
+    logger.debug(f"Extracting key from Session model: {type(session)} = {session} - {session.get_decoded()}")
+    key_as_str: str = session.get_decoded()[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY]  # type: ignore
+    # The key was stored as a string, so we encode it back to bytes.
+    return key_as_str.encode('utf-8')
 
 
-def extract_key_from_session_store(session_store: SessionStore) -> bytes:
+def get_key_from_session_store(session_store: SessionStore) -> bytes:
     """Extracts the encryption key from a Django SessionStore instance.
 
     This function first retrieves the underlying Session object using the
@@ -111,23 +111,12 @@ def extract_key_from_session_store(session_store: SessionStore) -> bytes:
     Returns:
         The encryption key as bytes.
     """
-    try:
-        assert isinstance(session_store, SessionStore), \
-            f"session_store is not a SessionStore; it's a {type(session_store)}"
-    except AssertionError as e:
-        logger.error(str(e))
+    if not isinstance(session_store, SessionStore):
+        # manual type checking
+        raise TypeError(f"Expected a SessionStore object, but got {type(session_store)}")
 
-        # the session_store is not a SessionStore, but a Session instance
-        # does the session instance have the same session_key attribute as the SessionStore?
-        # log the attributes of the session_store
-        logger.debug(f"Session attributes: {vars(session_store)}")  # log the attributes of the session_store
-
-        session: Session = Session.objects.get(pk=session_store.session_key)
-
-        assert session == session_store
-
-    session: Session = Session.objects.get(pk=session_store.session_key)
-    return extract_key_from_session(session)
+    key_as_str: str = session_store[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY]
+    return key_as_str.encode('utf-8')
 
 
 def reencrypt_sensitive_data(user) -> None:
@@ -155,7 +144,7 @@ def reencrypt_sensitive_data(user) -> None:
         return
 
     #  Get the current encryption_key from the Session
-    current_encryption_key: bytes = extract_key_from_session(session)
+    current_encryption_key: bytes = get_key_from_session_model(session)
     #  Generate a decoding Fernet cipher with the current encryption key
     decoding_cipher = Fernet(current_encryption_key)
 
@@ -177,7 +166,7 @@ def reencrypt_sensitive_data(user) -> None:
     # Loop through all the installed apps and ask them to reencrypt their encrypted profile fields
     for app_config in apps.get_app_configs():
         try:
-            app_config.reencrypt_app_fields(user, decoding_cipher, encoding_cipher)
+            app_config.reencrypt_app_fields(user, decoding_cipher, encoding_cipher)  # type: ignore
         except AttributeError:
             logger.debug(f'App: {app_config.name} does not have a reencrypt_app_fields method.')
             continue
