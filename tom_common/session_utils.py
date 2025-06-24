@@ -119,7 +119,7 @@ def get_key_from_session_store(session_store: SessionStore) -> bytes:
     return key_as_str.encode('utf-8')
 
 
-def reencrypt_sensitive_data(user) -> None:
+def reencrypt_data(user) -> None:
     """Re-encrypts sensitive data for a user after a password change.
 
     This function is typically called when a user changes their password. It performs

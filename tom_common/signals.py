@@ -136,7 +136,7 @@ def user_updated_on_user_pre_save(sender, **kwargs):
     If the User's password has changed, take the following actions:
 
     Current list of actions to be taken upon User password change:
-     * re-encrypt the user's sensitive data (see session_utils.reencrypt_sensitive_data() function)
+     * re-encrypt the user's sensitive data (see session_utils.reencrypt_data() function)
      *
     """
     logger.debug(f"kwargs: {kwargs}")
@@ -162,7 +162,7 @@ def user_updated_on_user_pre_save(sender, **kwargs):
         if new_hashed_password != old_hashed_password:
             # New password detected
             logger.debug(f'User {user.username} is changing their password.')
-            session_utils.reencrypt_sensitive_data(user)  # need new RAW password to re-create cipher and re-encrypt
+            session_utils.reencrypt_data(user)  # need new RAW password to re-create cipher and re-encrypt
         else:
             # No new password detected
             logger.debug(f'User {user.username} is updating their profile without a password change.')

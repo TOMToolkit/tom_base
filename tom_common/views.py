@@ -187,7 +187,7 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
             from tom_common import session_utils
             # But, before we update the session hash, we need to put the new Fernet key into
             # the Session so that it gets copied over to the new Session when we update the
-            # session hash. (It was stashed in the User object when we called reencrypt_sensitive_data).
+            # session hash. (It was stashed in the User object when we called reencrypt_data).
 
             if hasattr(self.object, '_temp_new_fernet_key'):
                 new_fernet_key = self.object._temp_new_fernet_key

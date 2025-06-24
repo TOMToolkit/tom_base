@@ -69,7 +69,7 @@ class EncryptableModelMixin(models.Model):
     using the `_generic_decrypt` and `_generic_encrypt` helpers provided by this mixin.
     """
 
-    def _generic_decrypt(self, encrypted_value, cipher: Fernet) -> str:
+    def _decrypt_encrypted_value(self, encrypted_value, cipher: Fernet) -> str:
         """Generic decryption handling bytes vs memoryview."""
         if not encrypted_value:
             return ''
@@ -78,7 +78,7 @@ class EncryptableModelMixin(models.Model):
         else:  # Assumes memoryview or similar that has tobytes()
             return cipher.decrypt(encrypted_value.tobytes()).decode()  # probably postgresql backend db
 
-    def _generic_encrypt(self, plaintext_value: str, cipher: Fernet) -> bytes:
+    def _encrypt_plaintext_value(self, plaintext_value: str, cipher: Fernet) -> bytes:
         """Use the given to encrypt the plaintext, returning the encrypted bytes."""
         return cipher.encrypt(plaintext_value.encode())
 

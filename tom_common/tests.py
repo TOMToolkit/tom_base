@@ -592,13 +592,13 @@ class TestSignalHandlers(TestCase):
         # Check that the encryption key is removed from the session
         self.assertNotIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, self.client.session)
 
-    @patch('tom_common.signals.session_utils.reencrypt_sensitive_data')
+    @patch('tom_common.signals.session_utils.reencrypt_data')
     def test_user_updated_on_user_pre_save_password_changed(self, mock_reencrypt):
         self.user.set_password('newpassword123')
         self.user.save()  # Triggers pre_save signal
         mock_reencrypt.assert_called_once_with(self.user)
 
-    @patch('tom_common.signals.session_utils.reencrypt_sensitive_data')
+    @patch('tom_common.signals.session_utils.reencrypt_data')
     def test_user_updated_on_user_pre_save_password_not_changed(self, mock_reencrypt):
         self.user.first_name = 'Signal'
         self.user.save()  # Triggers pre_save signal
