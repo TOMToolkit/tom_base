@@ -129,16 +129,16 @@ class TestUserManagement(TestCase):
         # Step 1: Simulate POSTing from the confirmation page.
         # This should trigger the view to render the password change form.
         response_step1 = self.client.post(change_password_url)
-        self.assertEqual(response_step1.status_code, 200) # Expect 200 to render the form
+        self.assertEqual(response_step1.status_code, 200)  # Expect 200 to render the form
 
         # Step 2: Simulate POSTing the actual password change form.
         # Include the hidden 'change_password_form' field to signal this is the form submission.
         password_change_data = {
             'password': 'changed',
-            'change_password_form': '1', # Hidden field to indicate this is the form submission
+            'change_password_form': '1',  # Hidden field to indicate this is the form submission
         }
         response_step2 = self.client.post(change_password_url, data=password_change_data)
-        self.assertEqual(response_step2.status_code, 302) # Expect 302 redirect after successful change
+        self.assertEqual(response_step2.status_code, 302)  # Expect 302 redirect after successful change
 
         user.refresh_from_db()
         self.assertTrue(user.check_password('changed'))
