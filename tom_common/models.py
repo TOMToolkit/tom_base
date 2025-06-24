@@ -36,92 +36,101 @@ class UserSession(models.Model):
         return f'UserSession for {self.user.username} with Session key {self.session.session_key}'
 
 
-class EncryptedBinaryField(models.BinaryField):
-    """A BinaryField that encrypts and decrypts its value using a Fernet cipher.
-
-    This field is designed to securely store sensitive information by encrypting it before saving to the database
-    and decrypting it when accessed.
+class EncryptedProperty:
     """
-    def __init__(self, *args, **kwargs):
-        """Wrap the BinaryField class to extend the constructor and the two new properties:
+    A Python descriptor that provides transparent encryption and decryption for a
+    model field.
 
-            :param encrypted: A boolean indicating whether the field should be encrypted.
-            :param property_name: The name of the property (setter and getter) that will be used to set and get
-            the encrypted value.
+    This descriptor is used in conjunction with the EncryptableModelMixin. It
+    requires a cipher to be temporarily attached to the model instance as `_cipher`
+    before accessing the property.
 
-        The new properties are used by tom_common/session_utils.py to update each INSTALLED_APP's encrypted fields
-        when the User changes their password.
-        """
-        # pop the encrypted and property_name from kwargs before calling super()
-        self.encrypted: bool = kwargs.pop('encrypted', False)
-        self.property_name: str = kwargs.pop('property_name', None)
-        super().__init__(*args, **kwargs)
+    Usage:
+        class MyModel(EncryptableModelMixin, models.Model):
+            _my_secret_encrypted = models.BinaryField(null=True)
+            my_secret = EncryptedProperty('_my_secret_encrypted')
+    """
+    def __init__(self, db_field_name: str):
+        self.db_field_name = db_field_name
+        self.property_name = None  # Set by __set_name__
+
+    def __set_name__(self, owner, name):
+        self.property_name = name
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+
+        cipher = getattr(instance, '_cipher', None)
+        if not isinstance(cipher, Fernet):
+            raise AttributeError(
+                f"A Fernet cipher must be set on the '{owner.__name__}' instance "
+                f"as '_cipher' to access property '{self.property_name}'."
+            )
+
+        encrypted_value = getattr(instance, self.db_field_name)
+        if not encrypted_value:
+            return ''
+
+        # Handle bytes vs memoryview
+        if isinstance(encrypted_value, memoryview):
+            encrypted_value = encrypted_value.tobytes()
+
+        return cipher.decrypt(encrypted_value).decode()
+
+    def __set__(self, instance, value: str):
+        cipher = getattr(instance, '_cipher', None)
+        if not isinstance(cipher, Fernet):
+            raise AttributeError(
+                f"A Fernet cipher must be set on the '{instance.__class__.__name__}' instance "
+                f"as '_cipher' to set property '{self.property_name}'."
+            )
+
+        if not value:
+            encrypted_value = None
+        else:
+            encrypted_value = cipher.encrypt(str(value).encode())
+
+        setattr(instance, self.db_field_name, encrypted_value)
 
 
 class EncryptableModelMixin(models.Model):
     """
-    A mixin for models that contain EncryptedBinaryFields.
-    Provides helper methods for encryption/decryption and a generic
-    re-encryption mechanism for all encrypted fields in the model.
+    A mixin for models that use EncryptedProperty to handle sensitive data.
 
-    TOMToolkit apps with encrypted models should define `get_<property_name>`
-    and `set_<property_name>` methods for each EncryptedBinaryField,
-    using the `_generic_decrypt` and `_generic_encrypt` helpers provided by this mixin.
+    Provides a generic re-encryption mechanism for all encrypted properties
+    in the model.
     """
 
-    def _decrypt_encrypted_value(self, encrypted_value, cipher: Fernet) -> str:
-        """Generic decryption handling bytes vs memoryview."""
-        if not encrypted_value:
-            return ''
-        if isinstance(encrypted_value, bytes):
-            return cipher.decrypt(encrypted_value).decode()  # probably sqlite3 backend db
-        else:  # Assumes memoryview or similar that has tobytes()
-            return cipher.decrypt(encrypted_value.tobytes()).decode()  # probably postgresql backend db
-
-    def _encrypt_plaintext_value(self, plaintext_value: str, cipher: Fernet) -> bytes:
-        """Use the given to encrypt the plaintext, returning the encrypted bytes."""
-        return cipher.encrypt(plaintext_value.encode())
-
     def reencrypt_model_fields(self, decoding_cipher: Fernet, encoding_cipher: Fernet) -> None:
-        """Re-encrypts all fields in this model marked with 'encrypted=True'.
-
-        Relies on the model having get_<property_name> and set_<property_name> methods
-        for each field where `property_name` is defined on the EncryptedBinaryField.
-        """
+        """Re-encrypts all fields managed by an EncryptedProperty descriptor."""
         model_save_needed = False
-        for field in self._meta.fields:
-            if getattr(field, 'encrypted', False):
-                # make sure the field has a 'property_name' attribute
-                if not hasattr(field, 'property_name') or not field.property_name:
-                    logger.error(f"Field '{field.name}' in {self.__class__.__name__} is marked as "
-                                 f" 'encrypted' but lacks 'property_name' for getter and setter. Skipping.")
-                    continue
-
-                # construct the setter/getter method names from the 'property_name' field attribute
-                getter_name = f'get_{field.property_name}'
-                setter_name = f'set_{field.property_name}'
-
-                # make sure the model (self) has methods for the constructed method names
-                if not hasattr(self, getter_name) or not hasattr(self, setter_name):
-                    logger.error(f"Getter '{getter_name}' or setter '{setter_name}' not found for encrypted field "
-                                 f"'{field.property_name}' in {self.__class__.__name__}. Skipping re-encryption.")
-                    continue
+        for attr_name in dir(self.__class__):
+            attr = getattr(self.__class__, attr_name)
+            if isinstance(attr, EncryptedProperty):
                 try:
-                    field_getter = getattr(self, getter_name)
-                    plaintext = field_getter(decoding_cipher)  # decryption finally happens here
+                    # Set decoding cipher and get plaintext
+                    self._cipher = decoding_cipher
+                    plaintext = getattr(self, attr_name)
 
-                    field_setter = getattr(self, setter_name)
-                    field_setter(plaintext, cipher=encoding_cipher)  # re-encryption finally happens here
-                    model_save_needed = True
+                    if plaintext:
+                        # Set encoding cipher and set new value
+                        self._cipher = encoding_cipher
+                        setattr(self, attr_name, plaintext)
+                        model_save_needed = True
                 except Exception as e:
-                    logger.error(f"Error re-encrypting field {field.property_name} for {self.__class__.__name__}"
+                    logger.error(f"Error re-encrypting property {attr_name} for {self.__class__.__name__}"
                                  f" instance {getattr(self, 'pk', 'UnknownPK')}: {e}")
+                finally:
+                    # Clean up the temporary cipher
+                    if hasattr(self, '_cipher'):
+                        del self._cipher
         if model_save_needed:
             self.save()
 
     def clear_encrypted_fields(self) -> None:
         """
-        Clears all fields in this model marked with 'encrypted=True'.
+        Clears all fields managed by an EncryptedProperty descriptor.
 
         This is a destructive operation used when re-encryption is not possible,
         e.g., when a user's password is reset by an admin and the old
@@ -129,13 +138,13 @@ class EncryptableModelMixin(models.Model):
         field to None.
         """
         model_save_needed = False
-        for field in self._meta.fields:
-            if getattr(field, 'encrypted', False):
-                # Directly set the field's value to None.
-                # This bypasses the getter/setter logic which requires a cipher.
-                setattr(self, field.attname, None)
+        for attr_name in dir(self.__class__):
+            attr = getattr(self.__class__, attr_name)
+            if isinstance(attr, EncryptedProperty):
+                # Directly set the underlying db field to None
+                setattr(self, attr.db_field_name, None)
                 model_save_needed = True
-                logger.info(f"Cleared encrypted field '{field.name}' for {self.__class__.__name__} "
+                logger.info(f"Cleared encrypted property '{attr_name}' for {self.__class__.__name__} "
                             f"instance {getattr(self, 'pk', 'UnknownPK')}.")
         if model_save_needed:
             self.save()
