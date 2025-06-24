@@ -99,16 +99,50 @@ class UserPasswordChangeView(SuperuserRequiredMixin, FormView):
     """
     View that handles modification of the password for a ``User``. Requires authorization.
     """
-    template_name = 'tom_common/change_user_password.html'
+    template_name = 'tom_common/change_user_password.html'  # The form template
+    confirmation_template_name = 'auth/user_confirm_change_password.html'
     success_url = reverse_lazy('user-list')
     form_class = ChangeUserPasswordForm
+
+    def get_context_data(self, **kwargs):
+        """Add the user object to the context for all templates."""
+        context = super().get_context_data(**kwargs)
+        if 'object' not in context:
+            context['object'] = User.objects.get(pk=self.kwargs['pk'])
+        return context
+
+    def get(self, request, *args, **kwargs):
+        """
+        On a GET request, show a confirmation page before allowing the password change.
+        This follows the pattern of Django's DeleteView.
+        """
+        # The render_to_response method from TemplateResponseMixin doesn't accept
+        # a template_name argument. We need to render the confirmation template
+        # without instantiating a form, which get_context_data() would do.
+        context = super(FormView, self).get_context_data(**kwargs)
+        context['object'] = User.objects.get(pk=self.kwargs['pk'])
+        return self.response_class(
+            request=self.request,
+            template=[self.confirmation_template_name],
+            context=context,
+        )
+
+    def post(self, request, *args, **kwargs):
+        """
+        A POST can come from the confirmation page (to show the form) or from the
+        password change form itself (to perform the change).
+        """
+        # If the post is from the confirmation page, show the password change form.
+        if 'change_password_form' not in self.request.POST:
+            form = self.get_form_class()()  # Get an unbound form
+            return self.render_to_response(self.get_context_data(form=form))
+
+        # Otherwise, process the form using the parent class's post method.
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         """
         Called after form is validated. Updates the password for the current specified user.
-
-        :param form: Password submission form
-        :type form: django.forms.Form
         """
         user = User.objects.get(pk=self.kwargs['pk'])
         user.set_password(form.cleaned_data['password'])

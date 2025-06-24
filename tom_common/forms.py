@@ -18,6 +18,7 @@ except ImportError:
 
 class ChangeUserPasswordForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput())
+    change_password_form = forms.CharField(widget=forms.HiddenInput(), initial='1', required=False)
 
 
 class GroupForm(forms.ModelForm):
