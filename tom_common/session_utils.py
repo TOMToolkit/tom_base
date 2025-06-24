@@ -140,7 +140,11 @@ def reencrypt_sensitive_data(user) -> None:
     try:
         session: Session = UserSession.objects.get(user=user).session
     except UserSession.DoesNotExist:
-        logger.error(f"User {user.username} does not have a UserSession. Cannot re-encrypt sensitive data.")
+        logger.warning(f"User {user.username} is not logged in. Cannot re-encrypt sensitive data. "
+                       f"Clearing all encrypted fields instead.")
+        # Loop through all the installed apps and ask them to clear their encrypted profile fields
+        for app_config in apps.get_app_configs():
+            clear_encrypted_fields_for_user(app_config, user)  # type: ignore
         return
 
     #  Get the current encryption_key from the Session
@@ -166,13 +170,13 @@ def reencrypt_sensitive_data(user) -> None:
     # Loop through all the installed apps and ask them to reencrypt their encrypted profile fields
     for app_config in apps.get_app_configs():
         try:
-            reencrypt_model_instances_for_app_user(app_config, user, decoding_cipher, encoding_cipher)  # type: ignore
+            reencrypt_encypted_fields_for_user(app_config, user, decoding_cipher, encoding_cipher)  # type: ignore
         except AttributeError:
             logger.debug(f'App: {app_config.name} does not have a reencrypt_app_fields method.')
             continue
 
 
-def reencrypt_model_instances_for_app_user(
+def reencrypt_encypted_fields_for_user(
     app_config: AppConfig,
     user: 'User',  # noqa # type: ignore
     decoding_cipher: Fernet,
@@ -221,4 +225,43 @@ def reencrypt_model_instances_for_app_user(
                                f"for user {user.username} for re-encryption.")
 
 
+def clear_encrypted_fields_for_user(
+    app_config: AppConfig,
+    user: 'User',
+    user_relation_field_name: str = 'user'
+):
+    """
+    Finds models in an app that are Encryptable and clears their encrypted fields for a given user.
 
+    This is a destructive operation used when a user's password is reset without
+    them being logged in, making the old decryption key unavailable.
+
+    :param app_config: The AppConfig instance of the plugin app.
+    :param user: The User whose data needs to be cleared.
+    :param user_relation_field_name: The name of the field on the plugin's model
+                                     that links to the Django User model.
+    """
+    from tom_common.models import EncryptableModelMixin
+
+    for model_class in app_config.get_models():
+        if issubclass(model_class, EncryptableModelMixin):
+            logger.debug(f"Found EncryptableModelMixin subclass: {model_class.__name__} in "
+                         f"app {app_config.name} for clearing.")
+            if hasattr(model_class, user_relation_field_name):
+                try:
+                    # Handles OneToOneField or unique ForeignKey to User
+                    instance = model_class.objects.get(**{user_relation_field_name: user})
+                    instance.clear_encrypted_fields()
+                except model_class.DoesNotExist:
+                    logger.info(f"No {model_class.__name__} instance found for user {user.username} "
+                                f"via field '{user_relation_field_name}' to clear.")
+                except model_class.MultipleObjectsReturned:
+                    # Handles non-unique ForeignKey to User
+                    logger.warning(f"Multiple {model_class.__name__} instances found for user {user.username} via "
+                                   f"field '{user_relation_field_name}'. Clearing all.")
+                    instances = model_class.objects.filter(**{user_relation_field_name: user})
+                    for instance in instances:
+                        instance.clear_encrypted_fields()
+                except Exception as e:
+                    logger.error(f"Error clearing encrypted fields for model {model_class.__name__} for "
+                                 f"user {user.username}: {e}")

@@ -119,5 +119,26 @@ class EncryptableModelMixin(models.Model):
         if model_save_needed:
             self.save()
 
+    def clear_encrypted_fields(self) -> None:
+        """
+        Clears all fields in this model marked with 'encrypted=True'.
+
+        This is a destructive operation used when re-encryption is not possible,
+        e.g., when a user's password is reset by an admin and the old
+        decryption key is unavailable. It sets the value of each encrypted
+        field to None.
+        """
+        model_save_needed = False
+        for field in self._meta.fields:
+            if getattr(field, 'encrypted', False):
+                # Directly set the field's value to None.
+                # This bypasses the getter/setter logic which requires a cipher.
+                setattr(self, field.attname, None)
+                model_save_needed = True
+                logger.info(f"Cleared encrypted field '{field.name}' for {self.__class__.__name__} "
+                            f"instance {getattr(self, 'pk', 'UnknownPK')}.")
+        if model_save_needed:
+            self.save()
+
     class Meta:
         abstract = True
