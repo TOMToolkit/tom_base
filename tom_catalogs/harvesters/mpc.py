@@ -71,11 +71,23 @@ class MPCExplorerHarvester(AbstractHarvester):
         target.type = 'NON_SIDEREAL'
         target.scheme = 'MPC_COMET'
 
-        target.name = result['designation_data']['iau_designation'].replace('(', '').replace(')', '')
+        unpacked_primary_desig = result['designation_data']['unpacked_primary_provisional_designation']
+        orbfit_name = result['designation_data']['orbfit_name']
+        # If the unpacked primary designation (minus any spaces in the middle) is the same as the orbfit_name,
+        # then we have a provisional-only and no permanent designation. In this case, set the target's name
+        # to the unpacked primary designation (with the space). Otherwise we have a permanent desigination,
+        # and it's safe (hopefully) to use the orbfit_name without having to unpack into year & half-month plus
+        # running designation
+        target_name = None
+        if unpacked_primary_desig.replace(' ', '') == orbfit_name:
+            target_name = unpacked_primary_desig
+        else:
+            target_name = orbfit_name
+        target.name = target_name
         extra_desigs = []
         if result['designation_data'].get('name', "") != "":
             extra_desigs.append(result['designation_data']['name'])
-        extra_desigs.append(result['designation_data']['unpacked_primary_provisional_designation'])
+        extra_desigs.append(unpacked_primary_desig)
         extra_desigs += result['designation_data']['unpacked_secondary_provisional_designations']
         # Make sure we don't include the primary designation twice
         try:
