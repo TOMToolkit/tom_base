@@ -192,15 +192,10 @@
         "orbit_type_str": "Inner Solar System"
     },
     "designation_data": {
-        "designation_count": 0,
-        "found": 1,
-        "iau_designation": "(65803)",
+        "designation_count": 1,
         "iau_name": "",
         "name": "Didymos",
-        "new_style_packed_permid": "000065803",
-        "new_style_packed_primary_provisional_designation": "J96G00000T",
         "orbfit_name": "65803",
-        "packed_permid": "65803",
         "packed_primary_provisional_designation": "J96G00T",
         "packed_secondary_provisional_designations": [],
         "permid": "65803",
