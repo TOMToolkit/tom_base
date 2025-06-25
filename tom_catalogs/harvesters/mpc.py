@@ -1,3 +1,4 @@
+import re
 import requests
 from math import sqrt, degrees
 
@@ -17,7 +18,20 @@ class MPCHarvester(AbstractHarvester):
     name = 'MPC'
 
     def query(self, term):
-        self.catalog_data = MPC.query_object('asteroid', name=term)
+        object_type = 'asteroid'
+        numbered_object = re.compile(r'(\d+)(P*)')
+
+        match = re.search(numbered_object, term)
+        if match:
+            print("Match")
+            object_number = match.groups()[0]
+            if match.groups()[1] == 'P':
+                # Periodic comet
+                object_type = 'comet'
+            self.catalog_data = MPC.query_object(object_type, number=object_number)
+        else:
+            print("No match")
+            self.catalog_data = MPC.query_object(object_type, name=term)
 
     def to_target(self):
         target = super().to_target()
