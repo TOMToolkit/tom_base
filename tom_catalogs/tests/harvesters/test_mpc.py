@@ -52,10 +52,9 @@ class TestMPCExplorerHarvester(TestCase):
 
     def test_to_target_no_name(self):
         # Modify designation data to one with a provisional id only
-        self.broker.catalog_data[0]['mpc_orb']['designation_data']['iau_designation'] = "2025 AA"
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['iau_name'] = ""
         del (self.broker.catalog_data[0]['mpc_orb']['designation_data']['name'])
-        self.broker.catalog_data[0]['mpc_orb']['designation_data']['orbfit_name'] = "2025 AA"
+        self.broker.catalog_data[0]['mpc_orb']['designation_data']['orbfit_name'] = "2025AA"
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_primary_provisional_designation'] = \
             "2025 AA"
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['unpacked_secondary_provisional_designations'] = []
@@ -69,7 +68,6 @@ class TestMPCExplorerHarvester(TestCase):
 
     def test_to_target_multiple_alternative_desigs(self):
         # Modify designation data to one with a provisional id only
-        self.broker.catalog_data[0]['mpc_orb']['designation_data']['iau_designation'] = "(709)"
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['iau_name'] = ""
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['name'] = 'Fringilla'
         self.broker.catalog_data[0]['mpc_orb']['designation_data']['orbfit_name'] = "709"
