@@ -22,7 +22,97 @@ class TestMPCHarvester(TestCase):
         self.assertEqual(result, None)
         self.assertEqual(self.broker._object_type, 'asteroid')
         self.assertEqual(self.broker._object_term, 'didymos')
+        self.assertEqual(self.broker._query_type, 'name')
         self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_asteroid_number(self, mock_query):
+        mock_response = MagicMock()
+        mock_response.content = self.test_response
+        # XXX This doesn't feel right...
+        mock_query.return_value = self.test_response
+
+        result = self.broker.query('1627')
+        self.assertEqual(result, None)
+        self.assertEqual(self.broker._object_type, 'asteroid')
+        self.assertEqual(self.broker._query_type, 'number')
+        self.assertEqual(self.broker._object_term, '1627')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_asteroid_number_ws(self, mock_query):
+        mock_response = MagicMock()
+        mock_response.content = self.test_response
+        # XXX This doesn't feel right...
+        mock_query.return_value = self.test_response
+
+        result = self.broker.query('  1627    ')
+        self.assertEqual(result, None)
+        self.assertEqual(self.broker._object_type, 'asteroid')
+        self.assertEqual(self.broker._query_type, 'number')
+        self.assertEqual(self.broker._object_term, '1627')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_comet_number(self, mock_query):
+        mock_response = MagicMock()
+        mock_response.content = self.test_response
+        # XXX This doesn't feel right...
+        mock_query.return_value = self.test_response
+
+        result = self.broker.query('67P')
+        self.assertEqual(result, None)
+        self.assertEqual(self.broker._object_type, 'comet')
+        self.assertEqual(self.broker._query_type, 'number')
+        self.assertEqual(self.broker._object_term, '67P')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_comet_number_ws(self, mock_query):
+        mock_response = MagicMock()
+        mock_response.content = self.test_response
+        # XXX This doesn't feel right...
+        mock_query.return_value = self.test_response
+
+        result = self.broker.query('  67P    ')
+        self.assertEqual(result, None)
+        self.assertEqual(self.broker._object_type, 'comet')
+        self.assertEqual(self.broker._query_type, 'number')
+        self.assertEqual(self.broker._object_term, '67P')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_provisional_cometlike(self, mock_query):
+        # This tests if we have a provisional id such as '1999PA123' or '2025PM' which shouldn't
+        # match with periodic comets despite being "number" followed by "P"
+        mock_response = MagicMock()
+        mock_response.content = self.test_response
+        # XXX This doesn't feel right...
+        mock_query.return_value = self.test_response
+
+        result = self.broker.query('2025PM')
+        self.assertEqual(result, None)
+        self.assertNotEqual(self.broker._object_type, 'comet')
+        self.assertNotEqual(self.broker._query_type, 'number')
+        self.assertEqual(self.broker._object_term, '2025PM')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_provisional_cometlike_ws(self, mock_query):
+        # This tests if we have a provisional id such as '1999 PA123' or '2025 PM' which shouldn't
+        # match with periodic comets despite being "number" followed by " P"
+        mock_response = MagicMock()
+        mock_response.content = self.test_response
+        # XXX This doesn't feel right...
+        mock_query.return_value = self.test_response
+
+        result = self.broker.query('2025 PM')
+        self.assertEqual(result, None)
+        self.assertNotEqual(self.broker._object_type, 'comet')
+        self.assertNotEqual(self.broker._query_type, 'number')
+        self.assertEqual(self.broker._object_term, '2025 PM')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
 
 class TestMPCExplorerHarvester(TestCase):
     def setUp(self):
