@@ -18,20 +18,23 @@ class MPCHarvester(AbstractHarvester):
     name = 'MPC'
 
     def query(self, term):
-        object_type = 'asteroid'
+        self._object_type = 'asteroid'
+        self._query_type = 'name'
         numbered_object = re.compile(r'(\d+)(P*)')
 
         match = re.search(numbered_object, term)
         if match:
             print("Match")
-            object_number = match.groups()[0]
+            self._object_term = match.groups()[0]
+            self._query_type = 'number'
             if match.groups()[1] == 'P':
                 # Periodic comet
-                object_type = 'comet'
-            self.catalog_data = MPC.query_object(object_type, number=object_number)
+                self._object_type = 'comet'
+            self.catalog_data = MPC.query_object(self._object_type, number=self._object_term)
         else:
             print("No match")
-            self.catalog_data = MPC.query_object(object_type, name=term)
+            self._object_term = term
+            self.catalog_data = MPC.query_object(self._object_type, name=self._object_term)
 
     def to_target(self):
         target = super().to_target()

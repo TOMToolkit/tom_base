@@ -4,8 +4,25 @@ from importlib_resources import files
 from django.test import tag, TestCase
 from unittest.mock import MagicMock, patch
 
-from tom_catalogs.harvesters.mpc import MPCExplorerHarvester
+from tom_catalogs.harvesters.mpc import MPCHarvester, MPCExplorerHarvester
 
+class TestMPCHarvester(TestCase):
+    def setUp(self):
+        self.broker = MPCHarvester()
+        self.test_response = [{'foo' : 42}]
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_name(self, mock_query):
+        mock_response = MagicMock()
+        mock_response.content = self.test_response
+        # XXX This doesn't feel right...
+        mock_query.return_value = self.test_response
+
+        result = self.broker.query('didymos')
+        self.assertEqual(result, None)
+        self.assertEqual(self.broker._object_type, 'asteroid')
+        self.assertEqual(self.broker._object_term, 'didymos')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
 
 class TestMPCExplorerHarvester(TestCase):
     def setUp(self):
