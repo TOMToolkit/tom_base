@@ -60,16 +60,30 @@ class MPCHarvester(AbstractHarvester):
         target = super().to_target()
         result = self.catalog_data[0]
         target.type = 'NON_SIDEREAL'
-        target.name = result['name']
-        target.extra_names = [result['designation']] if result['designation'] else []
+        if result.get('name', None) is not None:
+            target.name = result['name']
+            target.extra_names = [result['designation']] if result['designation'] else []
+        else:
+            target.name = result['designation']
         target.epoch_of_elements = self.jd_to_mjd(result['epoch_jd'])
-        target.mean_anomaly = result['mean_anomaly']
         target.arg_of_perihelion = result['argument_of_perihelion']
         target.eccentricity = result['eccentricity']
         target.lng_asc_node = result['ascending_node']
         target.inclination = result['inclination']
         target.mean_daily_motion = result['mean_daily_motion']
-        target.semimajor_axis = result['semimajor_axis']
+        object_type = result.get('object_type', '')
+        target.scheme = 'MPC_MINOR_PLANET'
+        if object_type == 'C' or object_type == 'P':
+            target.scheme = 'MPC_COMET'
+            target.perihdist = result['perihelion_distance']
+            try:
+                # Convert JD to MJD
+                target.epoch_of_perihelion = float(result['perihelion_date_jd'][2:]) - 0.5
+            except ValueError:
+                raise
+        else:
+            target.mean_anomaly = result['mean_anomaly']
+            target.semimajor_axis = result['semimajor_axis']
         return target
 
 
