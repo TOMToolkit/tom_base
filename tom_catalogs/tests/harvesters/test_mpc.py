@@ -134,11 +134,25 @@ class TestMPCHarvester(TestCase):
         # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
-        result = self.broker.query('1999PA')
+        result = self.broker.query('2022PA')
         self.assertEqual(result, None)
         self.assertEqual(self.broker._object_type, 'asteroid')
         self.assertEqual(self.broker._query_type, 'desig')
-        self.assertEqual(self.broker._object_term, '1999PA')
+        self.assertEqual(self.broker._object_term, '2022PA')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_designation_cometish_with_ws(self, mock_query):
+        mock_response = MagicMock()
+        mock_response.content = self.test_response
+        # XXX This doesn't feel right...
+        mock_query.return_value = self.test_response
+
+        result = self.broker.query('2022 PA')
+        self.assertEqual(result, None)
+        self.assertEqual(self.broker._object_type, 'asteroid')
+        self.assertEqual(self.broker._query_type, 'desig')
+        self.assertEqual(self.broker._object_term, '2022 PA')
         self.assertEqual(self.broker.catalog_data, self.test_response)
 
     @patch('astroquery.mpc.MPC.query_object')
@@ -168,6 +182,22 @@ class TestMPCHarvester(TestCase):
         self.assertEqual(self.broker._query_type, 'desig')
         self.assertEqual(self.broker._object_term, '2025MB18')
         self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_provisional_comets(self, mock_query):
+        mock_response = MagicMock()
+        mock_response.content = self.test_response
+        # XXX This doesn't feel right...
+        mock_query.return_value = self.test_response
+
+        comets = ['C/2024 S4', 'P/2017 A1', 'D/1853 X1', 'C/2001 OG108', 'P/2002 EJ57']
+        for comet in comets:
+            result = self.broker.query(comet)
+            self.assertEqual(result, None)
+            self.assertEqual(self.broker._object_type, 'comet', msg=f'Failure on _object_type for {comet}')
+            self.assertEqual(self.broker._query_type, 'desig', msg=f'Failure on _query_type for {comet}')
+            self.assertEqual(self.broker._object_term, comet, msg=f'Failure on _object_term for {comet}')
+            self.assertEqual(self.broker.catalog_data, self.test_response)
 
 
 class TestMPCExplorerHarvester(TestCase):

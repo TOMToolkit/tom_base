@@ -22,28 +22,39 @@ class MPCHarvester(AbstractHarvester):
         self._query_type = 'name'
         numbered_object = re.compile(r'(\d+)(P?)\s*$')
         provisional_desig = re.compile(r'^\s*(\d{4}\s*[A-Z]{2}\d*)')
+        provisional_comets = re.compile(r'([C,P,A,D]/\d{4} [A-H,J-Y]{1,2}\d+)')
 
         match = re.search(provisional_desig, term)
         if match:
             print("Desig match")
             self._query_type = 'desig'
             self._object_term = match.groups()[0]
+            print(self._object_term, self._object_type)
             self.catalog_data = MPC.query_object(self._object_type, designation=self._object_term)
         else:
-            match = re.search(numbered_object, term)
+            match =re.search(provisional_comets, term)
             if match:
-                print("Num Match")
+                print("Comet match")
+                self._object_type = 'comet'
+                self._query_type = 'desig'
                 self._object_term = match.groups()[0]
-                self._query_type = 'number'
-                if match.groups()[1] == 'P':
-                    # Periodic comet
-                    self._object_type = 'comet'
-                    self._object_term = ''.join(match.groups())
-                self.catalog_data = MPC.query_object(self._object_type, number=self._object_term)
+                self.catalog_data = MPC.query_object(self._object_type, designation=self._object_term)
             else:
-                print("No match")
-                self._object_term = term
-                self.catalog_data = MPC.query_object(self._object_type, name=self._object_term)
+                match = re.search(numbered_object, term)
+                if match:
+                    # Numbered object (asteroid or comet)
+                    print("Num Match")
+                    self._object_term = match.groups()[0]
+                    self._query_type = 'number'
+                    if match.groups()[1] == 'P':
+                        # Periodic comet
+                        self._object_type = 'comet'
+                        self._object_term = ''.join(match.groups())
+                    self.catalog_data = MPC.query_object(self._object_type, number=self._object_term)
+                else:
+                    print("No match")
+                    self._object_term = term
+                    self.catalog_data = MPC.query_object(self._object_type, name=self._object_term)
 
     def to_target(self):
         target = super().to_target()
