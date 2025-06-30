@@ -72,8 +72,11 @@ class EncryptedProperty:
         if not encrypted_value:
             return ''
 
-        # Handle bytes vs memoryview
+        # Handle bytes (sqlite3) vs memoryview (postgresql)
         if isinstance(encrypted_value, memoryview):
+            # postgresql/psycopg uses a memoryview object for BinaryFields.
+            # Sqlite3 uses bytes. When needed, convert to the encrypted_value
+            # to bytes before we decrypt and decode it.
             encrypted_value = encrypted_value.tobytes()
 
         return cipher.decrypt(encrypted_value).decode()
@@ -103,7 +106,32 @@ class EncryptableModelMixin(models.Model):
     """
 
     def reencrypt_model_fields(self, decoding_cipher: Fernet, encoding_cipher: Fernet) -> None:
-        """Re-encrypts all fields managed by an EncryptedProperty descriptor."""
+        """Re-encrypts all fields managed by an EncryptedProperty descriptor.
+
+        Re-encryption means decypting to plaintext with the old cipher based on the old
+        password and re-encrypting the plaintext with the new cipher based on the new
+        password.
+
+        The `EncryptableModelMixin` and the `EncyptedProperty` descriptor work together
+        to access the `Model`'s encytped `BinaryField`s (for setting, getting, and
+        re-encrypting, which involves both).
+
+        The `EncryptedProperty` descriptor uses the `_cipher` attribute on the encyrpted
+        `BinaryField`-containing `Model` and this method sets and resets `_cipher` in the
+        process of re-encrypting: First, `Model._cipher` is the `decoding_cipher` to get the
+        plaintext value from the encrypted `BinaryField`. Second, `Model._cipher` is reset
+        to the `encoding_cipher` to encrypt the plaintext value and save it in the
+        `BinaryField`. Third, the `_cipher` attribute is removed from the `Model` until
+        the next time it's needed, when it's attached again.
+
+        So, to re-encrpyt, for each of the Model's encrypted `BinaryField`s, we need to:
+          1. Use the `decoding_cipher` to get the `plaintext` of the value stored in the
+             BinaryField. `self._cipher` is set to the `decoding_cipher` for this purpose
+             and the `EncyptedProperty` descriptor handles the getting.
+          2. Reset `self._cipher` to be the `encoding_cipher` and have the `EncyptedProperty`
+             descriptor handle the encryption and setting.
+          3. Remove the `_cipher` attribute from the Model.
+        """
         model_save_needed = False
         for attr_name in dir(self.__class__):
             attr = getattr(self.__class__, attr_name)
