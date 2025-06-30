@@ -1,5 +1,6 @@
 import base64
 import logging
+from typing import Optional, TypeVar
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -7,6 +8,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 
 from django.apps import AppConfig, apps
+from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.sessions.models import Session
 from django.contrib.sessions.backends.db import SessionStore
@@ -18,6 +20,11 @@ logger.setLevel(logging.INFO)
 
 # Constant for storing the cipher encryption key in the session
 SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY = 'key'
+
+# A generic TypeVar for a Django models.Model subclass instance.
+# The `bound=models.Model` constraint ensures that any
+# type used for ModelType must be a subclass of `models.Model`.
+ModelType = TypeVar('ModelType', bound=models.Model)
 
 
 def create_cipher_encryption_key(user: User, password: str) -> bytes:
@@ -116,6 +123,94 @@ def get_key_from_session_store(session_store: SessionStore) -> bytes:
 
     key_as_str: str = session_store[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY]
     return key_as_str.encode('utf-8')
+
+
+def get_encrypted_field(user: User,
+                        model_instance: ModelType,  # type: ignore
+                        field_name: str) -> Optional[str]:
+    """
+    Helper function to safely get the decrypted value of an EncryptedProperty.
+
+    This function encapsulates the logic of fetching the user's session key,
+    creating a cipher, attaching it to the model instance, reading the
+    decrypted value, and cleaning up.
+
+    Args:
+        user: The User object associated with the encrypted data.
+        instance: The model instance containing the EncryptedProperty.
+        field_name: The string name of the EncryptedProperty to access.
+
+    Returns:
+        The decrypted string value, or None if decryption fails for any reason
+        (e.g., no active session, key not found).
+    """
+    try:
+        session: Session = UserSession.objects.get(user=user).session
+        cipher_key: bytes = get_key_from_session_model(session)
+        cipher: Fernet = Fernet(cipher_key)
+
+        # Attach the cipher, get the value, and then clean up
+        model_instance._cipher = cipher  # type: ignore
+        decrypted_value = getattr(model_instance, field_name)
+        return decrypted_value
+    except (UserSession.DoesNotExist, KeyError) as e:
+        logger.warning(f"Could not get encryption key for user {user.username} to access "
+                       f"'{field_name}': {e}")
+        return None
+    except Exception as e:
+        logger.error(f"An unexpected error occurred while decrypting field '{field_name}' "
+                     f"for user {user.username}: {e}")
+        return None
+    finally:
+        # Ensure the temporary cipher is always removed from the instance
+        if hasattr(model_instance, '_cipher'):
+            del model_instance._cipher  # type: ignore
+
+
+def set_encrypted_field(user: User,
+                        model_instance: ModelType,  # type: ignore
+                        field_name: str,
+                        value: str) -> bool:
+    """
+    Helper function to safely set the value of an EncryptedProperty.
+
+    This function encapsulates the logic of fetching the user's session key,
+    creating a cipher, attaching it to the model instance, setting the new
+    encrypted value, and cleaning up.
+
+    Note: This function does NOT save the instance. The caller is responsible
+    for calling `instance.save()` after the field has been set.
+
+    Args:
+        user: The User object associated with the encrypted data.
+        instance: The model instance containing the EncryptedProperty.
+        field_name: The string name of the EncryptedProperty to set.
+        value: The plaintext string value to encrypt and set.
+
+    Returns:
+        True if the field was set successfully, False otherwise.
+    """
+    try:
+        session: Session = UserSession.objects.get(user=user).session
+        cipher_key: bytes = get_key_from_session_model(session)
+        cipher = Fernet(cipher_key)
+
+        # Attach the cipher, set the value, and then clean up
+        model_instance._cipher = cipher  # type: ignore
+        setattr(model_instance, field_name, value)
+        return True
+    except (UserSession.DoesNotExist, KeyError) as e:
+        logger.error(f"Could not get encryption key for user {user.username} to set "
+                     f"'{field_name}': {e}")
+        return False
+    except Exception as e:
+        logger.error(f"An unexpected error occurred while encrypting field '{field_name}' "
+                     f"for user {user.username}: {e}")
+        return False
+    finally:
+        # Ensure the temporary cipher is always removed from the instance
+        if hasattr(model_instance, '_cipher'):
+            del model_instance._cipher  # type: ignore
 
 
 def reencrypt_data(user) -> None:
