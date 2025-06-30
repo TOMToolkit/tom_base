@@ -101,9 +101,8 @@ def get_key_from_session_model(session: Session) -> bytes:
 def get_key_from_session_store(session_store: SessionStore) -> bytes:
     """Extracts the encryption key from a Django SessionStore instance.
 
-    This function first retrieves the underlying Session object using the
-    session_key from the SessionStore. It then calls
-    `extract_key_from_session` to get the actual key.
+    Use the dictionary-like API that the SessionStore provides to retreive
+    the encryption key.
 
     Args:
         session_store: The Django SessionStore instance.
@@ -122,17 +121,15 @@ def get_key_from_session_store(session_store: SessionStore) -> bytes:
 def reencrypt_data(user) -> None:
     """Re-encrypts sensitive data for a user after a password change.
 
-    This function is typically called when a user changes their password. It performs
-    the following steps:
-    1. Retrieves the current encryption key from the user's session.
-    2. Creates a new encryption key based on the user's new password.
-    3. Iterates through all installed Django apps, calling a `reencrypt_app_fields`
-       method on each app's config (if it exists). This method is responsible for
-       decrypting data with the old key and re-encrypting it with the new key.
-    4. Saves the new encryption key to the user's session.
+    If an Administrator is changing another user's password, and
+    the `user: User` is not logged-in, then they have no SessionStore,
+    and, thus, no encryption key is available. In that case, the User's
+    encrypted fields are cleared out because they are stale, having
+    been ecrypted with an encryption key derived from a password that
+    is no longer in use.
 
     Args:
-        user: The Django User object whose sensitive data needs re-encryption.
+        user: The Django User object whose password has changed.
     """
     logger.debug("Re-encrypting sensitive data...")
 
@@ -201,11 +198,13 @@ def reencrypt_encypted_fields_for_user(
     for model_class in app_config.get_models():
         if issubclass(model_class, EncryptableModelMixin):
             logger.debug(f"Found EncryptableModelMixin subclass: {model_class.__name__} in app {app_config.name}")
+            # the Model must have a ForeignKey to the User (and AppProfile Models do)
             if hasattr(model_class, user_relation_field_name):
                 try:
                     # Handles OneToOneField or unique ForeignKey to User
                     instance = model_class.objects.get(**{user_relation_field_name: user})
-                    instance.reencrypt_model_fields(decoding_cipher, encoding_cipher)
+                    # instance of the Model which is a subclass of EncryptableModelMixin
+                    instance.reencrypt_model_fields(decoding_cipher, encoding_cipher)  # do the re-encryption here
                 except model_class.DoesNotExist:
                     logger.info(f"No {model_class.__name__} instance found for user {user.username} "
                                 f"via field '{user_relation_field_name}'.")
@@ -251,7 +250,8 @@ def clear_encrypted_fields_for_user(
                 try:
                     # Handles OneToOneField or unique ForeignKey to User
                     instance = model_class.objects.get(**{user_relation_field_name: user})
-                    instance.clear_encrypted_fields()
+                    # instance of the Model which is a subclass of EncryptableModelMixin
+                    instance.clear_encrypted_fields()  # do the clearing of the fields here
                 except model_class.DoesNotExist:
                     logger.info(f"No {model_class.__name__} instance found for user {user.username} "
                                 f"via field '{user_relation_field_name}' to clear.")
