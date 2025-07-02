@@ -137,7 +137,7 @@ def get_encrypted_field(user: User,
 
     Args:
         user: The User object associated with the encrypted data.
-        instance: The model instance containing the EncryptedProperty.
+        model_instance: The model instance containing the EncryptedProperty.
         field_name: The string name of the EncryptedProperty to access.
 
     Returns:
@@ -183,7 +183,7 @@ def set_encrypted_field(user: User,
 
     Args:
         user: The User object associated with the encrypted data.
-        instance: The model instance containing the EncryptedProperty.
+        model_instance: The model instance containing the EncryptedProperty.
         field_name: The string name of the EncryptedProperty to set.
         value: The plaintext string value to encrypt and set.
 
