@@ -145,7 +145,15 @@ def get_encrypted_field(user: User,
         (e.g., no active session, key not found).
     """
     try:
-        session: Session = UserSession.objects.get(user=user).session
+        #  Get the current Session from the UserSession
+        # A user can be logged in from multiple browsers, resulting in multiple
+        # UserSession objects. Since the encryption key is derived from the
+        # password and is the same for all sessions, we can safely take the first one.
+        user_session = UserSession.objects.filter(user=user).first()
+        if not user_session:
+            raise UserSession.DoesNotExist(f"No active session found for user {user.username}")
+
+        session: Session = user_session.session
         cipher_key: bytes = get_key_from_session_model(session)
         cipher: Fernet = Fernet(cipher_key)
 
@@ -191,7 +199,12 @@ def set_encrypted_field(user: User,
         True if the field was set successfully, False otherwise.
     """
     try:
-        session: Session = UserSession.objects.get(user=user).session
+        #  Get the current Session from the UserSession
+        user_session = UserSession.objects.filter(user=user).first()  # see comment above
+        if not user_session:
+            raise UserSession.DoesNotExist(f"No active session found for user {user.username}")
+
+        session: Session = user_session.session
         cipher_key: bytes = get_key_from_session_model(session)
         cipher = Fernet(cipher_key)
 
@@ -229,9 +242,9 @@ def reencrypt_data(user) -> None:
     logger.debug("Re-encrypting sensitive data...")
 
     #  Get the current Session from the UserSession
-    try:
-        session: Session = UserSession.objects.get(user=user).session
-    except UserSession.DoesNotExist:
+    user_session = UserSession.objects.filter(user=user).first()  # see comment above
+
+    if not user_session:
         logger.warning(f"User {user.username} is not logged in. Cannot re-encrypt sensitive data. "
                        f"Clearing all encrypted fields instead.")
         # Loop through all the installed apps and ask them to clear their encrypted profile fields
@@ -239,6 +252,7 @@ def reencrypt_data(user) -> None:
             clear_encrypted_fields_for_user(app_config, user)  # type: ignore
         return
 
+    session: Session = user_session.session
     #  Get the current encryption_key from the Session
     current_encryption_key: bytes = get_key_from_session_model(session)
     #  Generate a decoding Fernet cipher with the current encryption key
