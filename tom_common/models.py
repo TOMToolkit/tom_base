@@ -104,6 +104,12 @@ class EncryptableModelMixin(models.Model):
     Provides a generic re-encryption mechanism for all encrypted properties
     in the model.
     """
+    # By defining the user relationship here, we ensure that any model using this
+    # mixin has a standardized way to associate with a user. This removes
+    # ambiguity and the need for assumptions in utility functions that need to
+    # find the user associated with an encryptable model instance.
+    # Subclasses should not redefine this field.
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     def reencrypt_model_fields(self, decoding_cipher: Fernet, encoding_cipher: Fernet) -> None:
         """Re-encrypts all fields managed by an EncryptedProperty descriptor.
