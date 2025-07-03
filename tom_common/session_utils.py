@@ -288,19 +288,19 @@ def reencrypt_encypted_fields_for_user(app_config: AppConfig, user: 'User',
             logger.debug(f"Found EncryptableModelMixin subclass: {model_class.__name__} in app {app_config.name}")
             # The EncryptableModelMixin guarantees a 'user' field, which is a OneToOneField.
             try:
-                instance = model_class.objects.get(user=user)
+                encryptable_model_instance = model_class.objects.get(user=user)
                 # instance of the Model which is a subclass of EncryptableModelMixin
-                instance.reencrypt_model_fields(decoding_cipher, encoding_cipher)  # do the re-encryption here
+                encryptable_model_instance.reencrypt_model_fields(decoding_cipher, encoding_cipher)  # re-entrpt here
             except model_class.DoesNotExist:
                 logger.info(f"No {model_class.__name__} instance found for user {user.username}.")
             except model_class.MultipleObjectsReturned:
                 # This should not be reached if the mixin correctly enforces a OneToOneField.
                 # It's kept here as a safeguard against unexpected configurations.
                 logger.error(f"Multiple {model_class.__name__} instances found for user {user.username}. "
-                               f"This is unexpected for an EncryptableModelMixin. Re-encrypting all found.")
+                             f"This is unexpected for an EncryptableModelMixin. Re-encrypting all found.")
                 instances = model_class.objects.filter(user=user)
-                for instance in instances:
-                    instance.reencrypt_model_fields(decoding_cipher, encoding_cipher)
+                for encryptable_model_instance in instances:
+                    encryptable_model_instance.reencrypt_model_fields(decoding_cipher, encoding_cipher)
             except Exception as e:
                 logger.error(f"Error processing model {model_class.__name__} for re-encryption for "
                              f"user {user.username}: {e}")
@@ -325,19 +325,19 @@ def clear_encrypted_fields_for_user(app_config: AppConfig, user: 'User',) -> Non
                          f"app {app_config.name} for clearing.")
             # The EncryptableModelMixin now guarantees a 'user' field, which is a OneToOneField.
             try:
-                instance = model_class.objects.get(user=user)
+                encryptable_model_instance = model_class.objects.get(user=user)
                 # instance of the Model which is a subclass of EncryptableModelMixin
-                instance.clear_encrypted_fields()  # do the clearing of the fields here
+                encryptable_model_instance.clear_encrypted_fields()  # do the clearing of the fields here
             except model_class.DoesNotExist:
                 logger.info(f"No {model_class.__name__} instance found for user {user.username} to clear.")
             except model_class.MultipleObjectsReturned:
                 # This should not be reached if the mixin correctly enforces a OneToOneField.
                 # It's kept here as a safeguard against unexpected configurations.
                 logger.error(f"Multiple {model_class.__name__} instances found for user {user.username}. "
-                               f"This is unexpected for an EncryptableModelMixin. Clearing all found.")
+                             f"This is unexpected for an EncryptableModelMixin. Clearing all found.")
                 instances = model_class.objects.filter(user=user)
-                for instance in instances:
-                    instance.clear_encrypted_fields()
+                for encryptable_model_instance in instances:
+                    encryptable_model_instance.clear_encrypted_fields()
             except Exception as e:
                 logger.error(f"Error clearing encrypted fields for model {model_class.__name__} for "
                              f"user {user.username}: {e}")
