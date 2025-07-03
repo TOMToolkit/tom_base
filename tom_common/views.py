@@ -114,13 +114,25 @@ class UserPasswordChangeView(SuperuserRequiredMixin, FormView):
     def get(self, request, *args, **kwargs):
         """
         On a GET request, show a confirmation page before allowing the password change.
-        This follows the pattern of Django's DeleteView.
+        This follows the pattern of Django's DeleteView, but bypasses the confirmation
+        if a superuser is changing their own password.
         """
+        user_to_change: User = User.objects.get(pk=self.kwargs['pk'])
+
+        # If the logged-in superuser is changing their own password, bypass the
+        # confirmation page and show the password change form directly.
+        if self.request.user == user_to_change:
+            # This renders the password change form directly.
+            form = self.get_form()  # get_form() will return an unbound form instance.
+            context_data = self.get_context_data(form=form)
+            return self.render_to_response(context_data)
+
+        # For any other case (admin changing another user's password), show the confirmation page first.
         # The render_to_response method from TemplateResponseMixin doesn't accept
         # a template_name argument. We need to render the confirmation template
         # without instantiating a form, which get_context_data() would do.
         context = super(FormView, self).get_context_data(**kwargs)
-        context['object'] = User.objects.get(pk=self.kwargs['pk'])
+        context['object'] = user_to_change
         return self.response_class(
             request=self.request,
             template=[self.confirmation_template_name],
