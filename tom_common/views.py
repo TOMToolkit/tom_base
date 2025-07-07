@@ -193,6 +193,12 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         else:
             return reverse_lazy('user-update', kwargs={'pk': self.request.user.id})
 
+    def get_context_data(self, **kwargs):
+        """Add current user to the context for all templates."""
+        context = super().get_context_data(**kwargs)
+        context['current_user'] = self.request.user
+        return context
+
     def get_form(self, form_class=None):
         """
         Gets the user update form and removes the password requirement. Removes the groups field if the user is not a
