@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 from django.contrib.sessions.models import Session
 from django.contrib.sessions.backends.db import SessionStore
 
-from tom_common.models import UserSession
+from tom_common.models import EncryptableModelMixin, UserSession
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -293,10 +293,6 @@ def reencrypt_encypted_fields_for_user(app_config: AppConfig, user: 'User',
     :param decoding_cipher: Fernet cipher to decrypt existing data.
     :param encoding_cipher: Fernet cipher to encrypt new data.
     """
-    # Import models here, when the function is called, ensuring apps are ready.
-    from django.contrib.auth.models import User  # noqa
-    from tom_common.models import EncryptableModelMixin
-
     for model_class in app_config.get_models():
         if issubclass(model_class, EncryptableModelMixin):
             logger.debug(f"Found EncryptableModelMixin subclass: {model_class.__name__} in app {app_config.name}")
@@ -331,8 +327,6 @@ def clear_encrypted_fields_for_user(app_config: AppConfig, user: 'User',) -> Non
     :param app_config: The AppConfig instance of the plugin app.
     :param user: The User whose data needs to be cleared.
     """
-    from tom_common.models import EncryptableModelMixin
-
     for model_class in app_config.get_models():
         if issubclass(model_class, EncryptableModelMixin):
             logger.debug(f"Found EncryptableModelMixin subclass: {model_class.__name__} in "
