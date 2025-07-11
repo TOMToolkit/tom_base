@@ -6,10 +6,11 @@ from unittest.mock import MagicMock, patch
 
 from tom_catalogs.harvesters.mpc import MPCHarvester, MPCExplorerHarvester
 
+
 class TestMPCHarvester(TestCase):
     def setUp(self):
         self.broker = MPCHarvester()
-        self.test_response = [{'foo' : 42}]
+        self.test_response = [{'foo': 42}]
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_query_name(self, mock_query):

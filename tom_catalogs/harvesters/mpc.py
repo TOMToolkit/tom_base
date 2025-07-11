@@ -32,7 +32,7 @@ class MPCHarvester(AbstractHarvester):
             print(self._object_term, self._object_type)
             self.catalog_data = MPC.query_object(self._object_type, designation=self._object_term)
         else:
-            match =re.search(provisional_comets, term)
+            match = re.search(provisional_comets, term)
             if match:
                 print("Comet match")
                 self._object_type = 'comet'
