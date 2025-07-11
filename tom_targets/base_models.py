@@ -242,7 +242,7 @@ class BaseTarget(models.Model):
     :param scheme: Orbital Element Scheme
     :type scheme: str
 
-    :param epoch_of_elements: Epoch of elements in JD.
+    :param epoch_of_elements: Epoch of elements as Modified Julian Date (MJD).
     :type epoch_of_elements: float
 
     :param mean_anomaly: Angle in degrees.
@@ -266,7 +266,7 @@ class BaseTarget(models.Model):
     :param semimajor_axis: Semimajor Axis in AU
     :type semimajor_axis: float
 
-    :param epoch_of_perihelion: Julian Date.
+    :param epoch_of_perihelion: Time of perihelion as a Modified Julian Date (MJD).
     :type epoch_of_perihelion: float
 
     :param ephemeris_period: Ephemeris period in days
@@ -352,7 +352,7 @@ class BaseTarget(models.Model):
         max_length=50, choices=TARGET_SCHEMES, verbose_name='Orbital Element Scheme', default='', blank=True
     )
     epoch_of_elements = models.FloatField(
-        null=True, blank=True, verbose_name='Epoch of Elements', help_text='Julian date.'
+        null=True, blank=True, verbose_name='Epoch of Elements', help_text='Modified Julian date.'
     )
     mean_anomaly = models.FloatField(
         null=True, blank=True, verbose_name='Mean Anomaly', help_text='Angle in degrees.'
@@ -379,7 +379,7 @@ class BaseTarget(models.Model):
         null=True, blank=True, verbose_name='Semimajor Axis', help_text='In AU'
     )
     epoch_of_perihelion = models.FloatField(
-        null=True, blank=True, verbose_name='Epoch of Perihelion', help_text='Julian Date.'
+        null=True, blank=True, verbose_name='Epoch of Perihelion', help_text='Modified Julian Date.'
     )
     ephemeris_period = models.FloatField(
         null=True, blank=True, verbose_name='Ephemeris Period', help_text='Days'
