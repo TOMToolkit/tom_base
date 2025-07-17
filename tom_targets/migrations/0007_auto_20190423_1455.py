@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='target',
             name='epoch_of_perihelion',
-            field=models.FloatField(blank=True, help_text='Modified Julian Date.', null=True, verbose_name='Epoch of Perihelion'),
+            field=models.FloatField(blank=True, help_text='Julian Date.', null=True, verbose_name='Epoch of Perihelion'),
         ),
     ]
