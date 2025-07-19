@@ -14,9 +14,6 @@ class TestMPCHarvester(TestCase):
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_query_name(self, mock_query):
-        mock_response = MagicMock()
-        mock_response.content = self.test_response
-        # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
         result = self.broker.query('didymos')
@@ -28,9 +25,6 @@ class TestMPCHarvester(TestCase):
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_query_asteroid_number(self, mock_query):
-        mock_response = MagicMock()
-        mock_response.content = self.test_response
-        # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
         result = self.broker.query('1627')
@@ -42,9 +36,6 @@ class TestMPCHarvester(TestCase):
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_query_asteroid_number_ws(self, mock_query):
-        mock_response = MagicMock()
-        mock_response.content = self.test_response
-        # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
         result = self.broker.query('  1627    ')
@@ -56,9 +47,6 @@ class TestMPCHarvester(TestCase):
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_query_comet_number(self, mock_query):
-        mock_response = MagicMock()
-        mock_response.content = self.test_response
-        # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
         result = self.broker.query('67P')
@@ -70,9 +58,6 @@ class TestMPCHarvester(TestCase):
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_query_comet_number_ws(self, mock_query):
-        mock_response = MagicMock()
-        mock_response.content = self.test_response
-        # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
         result = self.broker.query('  67P    ')
@@ -86,9 +71,6 @@ class TestMPCHarvester(TestCase):
     def test_query_provisional_cometlike(self, mock_query):
         # This tests if we have a provisional id such as '1999PA123' or '2025PM' which shouldn't
         # match with periodic comets despite being "number" followed by "P"
-        mock_response = MagicMock()
-        mock_response.content = self.test_response
-        # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
         result = self.broker.query('2025PM')
@@ -102,9 +84,6 @@ class TestMPCHarvester(TestCase):
     def test_query_provisional_cometlike_ws(self, mock_query):
         # This tests if we have a provisional id such as '1999 PA123' or '2025 PM' which shouldn't
         # match with periodic comets despite being "number" followed by " P"
-        mock_response = MagicMock()
-        mock_response.content = self.test_response
-        # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
         result = self.broker.query('2025 PM')
@@ -116,9 +95,6 @@ class TestMPCHarvester(TestCase):
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_designation(self, mock_query):
-        mock_response = MagicMock()
-        mock_response.content = self.test_response
-        # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
         result = self.broker.query('2025 MB18')
@@ -130,9 +106,6 @@ class TestMPCHarvester(TestCase):
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_designation_cometish(self, mock_query):
-        mock_response = MagicMock()
-        mock_response.content = self.test_response
-        # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
         result = self.broker.query('2022PA')
@@ -144,9 +117,6 @@ class TestMPCHarvester(TestCase):
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_designation_cometish_with_ws(self, mock_query):
-        mock_response = MagicMock()
-        mock_response.content = self.test_response
-        # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
         result = self.broker.query('2022 PA')
@@ -158,9 +128,6 @@ class TestMPCHarvester(TestCase):
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_designation_ws(self, mock_query):
-        mock_response = MagicMock()
-        mock_response.content = self.test_response
-        # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
         result = self.broker.query('  2025 MB18   ')
@@ -172,9 +139,6 @@ class TestMPCHarvester(TestCase):
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_designation_nospace(self, mock_query):
-        mock_response = MagicMock()
-        mock_response.content = self.test_response
-        # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
         result = self.broker.query('2025MB18')
@@ -186,9 +150,6 @@ class TestMPCHarvester(TestCase):
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_provisional_comets(self, mock_query):
-        mock_response = MagicMock()
-        mock_response.content = self.test_response
-        # XXX This doesn't feel right...
         mock_query.return_value = self.test_response
 
         comets = ['C/2024 S4', 'P/2017 A1', 'D/1853 X1', 'C/2001 OG108', 'P/2002 EJ57']
