@@ -1,4 +1,5 @@
 import re
+import logging
 import requests
 from math import sqrt, degrees
 
@@ -6,6 +7,9 @@ from astropy.constants import GM_sun, au
 from tom_catalogs.harvester import AbstractHarvester
 
 from astroquery.mpc import MPC
+
+logger = logging.getLogger(__name__)
+# logger.setLevel(logging.DEBUG)
 
 
 class MPCHarvester(AbstractHarvester):
@@ -26,15 +30,15 @@ class MPCHarvester(AbstractHarvester):
 
         match = re.search(provisional_desig, term)
         if match:
-            print("Desig match")
+            logger.debug("Desig match")
             self._query_type = 'desig'
             self._object_term = match.groups()[0]
-            print(self._object_term, self._object_type)
+            logger.debug(self._object_term, self._object_type)
             self.catalog_data = MPC.query_object(self._object_type, designation=self._object_term)
         else:
             match = re.search(provisional_comets, term)
             if match:
-                print("Comet match")
+                logger.debug("Comet match")
                 self._object_type = 'comet'
                 self._query_type = 'desig'
                 self._object_term = match.groups()[0]
@@ -43,7 +47,7 @@ class MPCHarvester(AbstractHarvester):
                 match = re.search(numbered_object, term)
                 if match:
                     # Numbered object (asteroid or comet)
-                    print("Num Match")
+                    logger.debug("Num Match")
                     self._object_term = match.groups()[0]
                     self._query_type = 'number'
                     if match.groups()[1] == 'P':
@@ -52,7 +56,7 @@ class MPCHarvester(AbstractHarvester):
                         self._object_term = ''.join(match.groups())
                     self.catalog_data = MPC.query_object(self._object_type, number=self._object_term)
                 else:
-                    print("No match")
+                    logger.debug("No match")
                     self._object_term = term
                     self.catalog_data = MPC.query_object(self._object_type, name=self._object_term)
 
