@@ -1,3 +1,5 @@
+import re
+import logging
 import requests
 from math import sqrt, degrees
 
@@ -5,6 +7,9 @@ from astropy.constants import GM_sun, au
 from tom_catalogs.harvester import AbstractHarvester
 
 from astroquery.mpc import MPC
+
+logger = logging.getLogger(__name__)
+# logger.setLevel(logging.DEBUG)
 
 
 class MPCHarvester(AbstractHarvester):
@@ -17,22 +22,79 @@ class MPCHarvester(AbstractHarvester):
     name = 'MPC'
 
     def query(self, term):
-        self.catalog_data = MPC.query_object('asteroid', name=term)
+        self._object_type = 'asteroid'
+        self._query_type = 'name'
+        numbered_object = re.compile(r'(\d+)(P?)\s*$')
+        provisional_desig = re.compile(r'^\s*(\d{4}\s*[A-Z]{2}\d*)')
+        provisional_comets = re.compile(r'([C,P,A,D]/\d{4} [A-H,J-Y]{1,2}\d+)')
+
+        match = re.search(provisional_desig, term)
+        if match:
+            logger.debug("Desig match")
+            self._query_type = 'desig'
+            self._object_term = match.groups()[0]
+            logger.debug(self._object_term, self._object_type)
+            self.catalog_data = MPC.query_object(self._object_type, designation=self._object_term)
+        else:
+            match = re.search(provisional_comets, term)
+            if match:
+                logger.debug("Comet match")
+                self._object_type = 'comet'
+                self._query_type = 'desig'
+                self._object_term = match.groups()[0]
+                self.catalog_data = MPC.query_object(self._object_type, designation=self._object_term)
+            else:
+                match = re.search(numbered_object, term)
+                if match:
+                    # Numbered object (asteroid or comet)
+                    logger.debug("Num Match")
+                    self._object_term = match.groups()[0]
+                    self._query_type = 'number'
+                    if match.groups()[1] == 'P':
+                        # Periodic comet
+                        self._object_type = 'comet'
+                        self._object_term = ''.join(match.groups())
+                    self.catalog_data = MPC.query_object(self._object_type, number=self._object_term)
+                else:
+                    logger.debug("No match")
+                    self._object_term = term
+                    self.catalog_data = MPC.query_object(self._object_type, name=self._object_term)
 
     def to_target(self):
         target = super().to_target()
         result = self.catalog_data[0]
         target.type = 'NON_SIDEREAL'
-        target.name = result['name']
-        target.extra_names = [result['designation']] if result['designation'] else []
+        if result.get('number', None) is not None:
+            if result.get('name', None) is not None:
+                target.name = str(result['number'])
+                target.extra_names = [str(result['name']),]
+                target.extra_names += [result['designation']] if result['designation'] else []
+            else:
+                target.name = str(result['number'])
+                if result.get('object_type'):
+                    # Add comet object type if it exists
+                    target.name += result['object_type']
+        else:
+            target.name = result['designation']
         target.epoch_of_elements = self.jd_to_mjd(result['epoch_jd'])
-        target.mean_anomaly = result['mean_anomaly']
-        target.arg_of_perihelion = result['argument_of_perihelion']
-        target.eccentricity = result['eccentricity']
-        target.lng_asc_node = result['ascending_node']
-        target.inclination = result['inclination']
-        target.mean_daily_motion = result['mean_daily_motion']
-        target.semimajor_axis = result['semimajor_axis']
+        target.arg_of_perihelion = float(result['argument_of_perihelion'])
+        target.eccentricity = float(result['eccentricity'])
+        target.lng_asc_node = float(result['ascending_node'])
+        target.inclination = float(result['inclination'])
+        target.mean_daily_motion = float(result['mean_daily_motion'])
+        object_type = result.get('object_type', '')
+        target.scheme = 'MPC_MINOR_PLANET'
+        if object_type == 'C' or object_type == 'P':
+            target.scheme = 'MPC_COMET'
+            target.perihdist = float(result['perihelion_distance'])
+            try:
+                # Convert JD to MJD as string (avoid losing precision)
+                target.epoch_of_perihelion = float(result['perihelion_date_jd'][2:]) - 0.5
+            except ValueError:
+                raise
+        else:
+            target.mean_anomaly = float(result['mean_anomaly'])
+            target.semimajor_axis = float(result['semimajor_axis'])
         return target
 
 
