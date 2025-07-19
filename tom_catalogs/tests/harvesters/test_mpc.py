@@ -220,6 +220,34 @@ class TestMPCHarvesterCanary(TestCase):
         self.assertAlmostEqual(target.eccentricity, 0.092, places=3)
         self.assertAlmostEqual(target.inclination, 4.1688, places=4)
 
+    def test_query_designation_only(self):
+        self.broker.query('2025 MB18')
+        target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
+        # Only test things that are not likely to change (much) with time
+        self.assertEqual(target.name, '2025 MB18')
+        self.assertEqual(target.names, ['2025 MB18'])
+        self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
+        self.assertEqual(target.ra, None)
+        self.assertEqual(target.dec, None)
+        self.assertAlmostEqual(target.eccentricity, 0.1398, places=4)
+        self.assertAlmostEqual(target.inclination, 19.3561, places=4)
+
+    def test_query_name(self):
+        self.broker.query('1627')
+        target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
+        # Only test things that are not likely to change (much) with time
+        self.assertEqual(target.name, '1627')
+        self.assertEqual(target.names, ['1627', 'Ivar'])
+        self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
+        self.assertEqual(target.ra, None)
+        self.assertEqual(target.dec, None)
+        self.assertAlmostEqual(target.eccentricity, 0.3972, places=4)
+        self.assertAlmostEqual(target.inclination, 8.4561, places=4)
+
 
 class TestMPCExplorerHarvester(TestCase):
     def setUp(self):

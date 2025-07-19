@@ -62,8 +62,9 @@ class MPCHarvester(AbstractHarvester):
         target.type = 'NON_SIDEREAL'
         if result.get('number', None) is not None:
             if result.get('name', None) is not None:
-                target.name = str(result['name'])
-                target.extra_names = [result['designation']] if result['designation'] else []
+                target.name = str(result['number'])
+                target.extra_names = [str(result['name']),]
+                target.extra_names += [result['designation']] if result['designation'] else []
             else:
                 target.name = str(result['number'])
         else:
