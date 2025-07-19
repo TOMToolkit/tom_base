@@ -71,6 +71,9 @@ class MPCHarvester(AbstractHarvester):
                 target.extra_names += [result['designation']] if result['designation'] else []
             else:
                 target.name = str(result['number'])
+                if result.get('object_type'):
+                    # Add comet object type if it exists
+                    target.name += result['object_type']
         else:
             target.name = result['designation']
         target.epoch_of_elements = self.jd_to_mjd(result['epoch_jd'])
@@ -83,15 +86,15 @@ class MPCHarvester(AbstractHarvester):
         target.scheme = 'MPC_MINOR_PLANET'
         if object_type == 'C' or object_type == 'P':
             target.scheme = 'MPC_COMET'
-            target.perihdist = result['perihelion_distance']
+            target.perihdist = float(result['perihelion_distance'])
             try:
                 # Convert JD to MJD as string (avoid losing precision)
                 target.epoch_of_perihelion = float(result['perihelion_date_jd'][2:]) - 0.5
             except ValueError:
                 raise
         else:
-            target.mean_anomaly = result['mean_anomaly']
-            target.semimajor_axis = result['semimajor_axis']
+            target.mean_anomaly = float(result['mean_anomaly'])
+            target.semimajor_axis = float(result['semimajor_axis'])
         return target
 
 
