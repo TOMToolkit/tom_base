@@ -200,6 +200,24 @@ class TestMPCHarvester(TestCase):
             self.assertEqual(self.broker._object_term, comet, msg=f'Failure on _object_term for {comet}')
             self.assertEqual(self.broker.catalog_data, self.test_response)
 
+@tag('canary')
+class TestMPCHarvesterCanary(TestCase):
+    def setUp(self):
+        self.broker = MPCHarvester()
+
+    def test_query_number_only(self):
+        self.broker.query('700000')
+        target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
+        # Only test things that are not likely to change (much) with time
+        self.assertEqual(target.name, '700000')
+        self.assertEqual(target.names, [])
+        self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
+        self.assertEqual(target.ra, None)
+        self.assertEqual(target.dec, None)
+        self.assertAlmostEqual(target.eccentricity, 0.092, places=3)
+        self.assertAlmostEqual(target.inclination, 4.1688, places=4)
 
 class TestMPCExplorerHarvester(TestCase):
     def setUp(self):
