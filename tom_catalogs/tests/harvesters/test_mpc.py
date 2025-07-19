@@ -200,6 +200,7 @@ class TestMPCHarvester(TestCase):
             self.assertEqual(self.broker._object_term, comet, msg=f'Failure on _object_term for {comet}')
             self.assertEqual(self.broker.catalog_data, self.test_response)
 
+
 @tag('canary')
 class TestMPCHarvesterCanary(TestCase):
     def setUp(self):
@@ -218,6 +219,7 @@ class TestMPCHarvesterCanary(TestCase):
         self.assertEqual(target.dec, None)
         self.assertAlmostEqual(target.eccentricity, 0.092, places=3)
         self.assertAlmostEqual(target.inclination, 4.1688, places=4)
+
 
 class TestMPCExplorerHarvester(TestCase):
     def setUp(self):
