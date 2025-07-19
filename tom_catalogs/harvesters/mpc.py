@@ -60,24 +60,27 @@ class MPCHarvester(AbstractHarvester):
         target = super().to_target()
         result = self.catalog_data[0]
         target.type = 'NON_SIDEREAL'
-        if result.get('name', None) is not None:
-            target.name = result['name']
-            target.extra_names = [result['designation']] if result['designation'] else []
+        if result.get('number', None) is not None:
+            if result.get('name', None) is not None:
+                target.name = str(result['name'])
+                target.extra_names = [result['designation']] if result['designation'] else []
+            else:
+                target.name = str(result['number'])
         else:
             target.name = result['designation']
         target.epoch_of_elements = self.jd_to_mjd(result['epoch_jd'])
-        target.arg_of_perihelion = result['argument_of_perihelion']
-        target.eccentricity = result['eccentricity']
-        target.lng_asc_node = result['ascending_node']
-        target.inclination = result['inclination']
-        target.mean_daily_motion = result['mean_daily_motion']
+        target.arg_of_perihelion = float(result['argument_of_perihelion'])
+        target.eccentricity = float(result['eccentricity'])
+        target.lng_asc_node = float(result['ascending_node'])
+        target.inclination = float(result['inclination'])
+        target.mean_daily_motion = float(result['mean_daily_motion'])
         object_type = result.get('object_type', '')
         target.scheme = 'MPC_MINOR_PLANET'
         if object_type == 'C' or object_type == 'P':
             target.scheme = 'MPC_COMET'
             target.perihdist = result['perihelion_distance']
             try:
-                # Convert JD to MJD
+                # Convert JD to MJD as string (avoid losing precision)
                 target.epoch_of_perihelion = float(result['perihelion_date_jd'][2:]) - 0.5
             except ValueError:
                 raise

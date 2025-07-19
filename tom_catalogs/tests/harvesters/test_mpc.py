@@ -212,7 +212,7 @@ class TestMPCHarvesterCanary(TestCase):
         target.save(names=getattr(target, 'extra_names', []))
         # Only test things that are not likely to change (much) with time
         self.assertEqual(target.name, '700000')
-        self.assertEqual(target.names, [])
+        self.assertEqual(target.names, ['700000'])
         self.assertEqual(target.type, 'NON_SIDEREAL')
         self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
         self.assertEqual(target.ra, None)
