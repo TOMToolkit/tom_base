@@ -10,7 +10,7 @@ from rest_framework.viewsets import GenericViewSet
 
 from tom_common.hooks import run_hook
 from tom_dataproducts.data_processor import run_data_processor
-from tom_dataproducts.filters import DataProductFilter
+from tom_dataproducts.filters import DataProductFilter, ReducedDatumFilter
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
 from tom_targets.models import Target
@@ -86,6 +86,7 @@ class ReducedDatumViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, G
     queryset = ReducedDatum.objects.all()
     serializer_class = ReducedDatumSerializer
     filter_backends = (drf_filters.DjangoFilterBackend,)
+    filterset_class = ReducedDatumFilter
     permission_required = 'tom_dataproducts.view_reduceddatum'
     parser_classes = [FormParser, JSONParser]
 
