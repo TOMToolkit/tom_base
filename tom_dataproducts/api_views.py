@@ -77,11 +77,6 @@ class ReducedDatumViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, G
     Viewset for ReducedDatum objects. Supports list, create, and delete.
 
     To view supported query parameters, please use the OPTIONS endpoint, which can be accessed through the web UI.
-
-    **Please note that ``groups`` are an accepted query parameters for the ``CREATE`` endpoint. The groups parameter
-    will specify which ``groups`` can view the created ``DataProduct``. If no ``groups`` are specified, the
-    ``ReducedDatum`` will only be visible to the user that created the ``DataProduct``. Make sure to check your
-    ``groups``!!**
     """
     queryset = ReducedDatum.objects.all()
     serializer_class = ReducedDatumSerializer
