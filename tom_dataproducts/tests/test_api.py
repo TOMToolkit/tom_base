@@ -192,6 +192,6 @@ class TestReducedDatumViewset(APITestCase):
         self.assertContains(response2, rd2.data_type, status_code=status.HTTP_200_OK, count=2)
 
         # test filter for no objects
-        response3 = self.client.get(reverse('api:reduceddatums-list'), QUERY_STRING=f'source_name=thin_air')
+        response3 = self.client.get(reverse('api:reduceddatums-list'), QUERY_STRING='source_name=thin_air')
         self.assertEqual(response3.data['count'], 0)
         self.assertEqual(response3.data['results'], [])
