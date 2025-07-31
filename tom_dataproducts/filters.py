@@ -39,12 +39,15 @@ class ReducedDatumFilter(django_filters.rest_framework.FilterSet):
     """
     target_name = django_filters.CharFilter(label='Target Name', method='filter_name')
     data_product_pk = django_filters.NumberFilter(field_name='data_product__pk', label='Data Product Primary Key')
-    data_product_product_id = django_filters.CharFilter(field_name='data_product__product_id',
-                                                        label='Data Product "Product ID" or filename')
+    data_product_name = django_filters.CharFilter(method='filter_data_product_name', label='Data Product filename')
 
     class Meta:
         model = ReducedDatum
-        fields = ['target__id', 'target_name', 'data_product_pk', 'data_product_product_id', 'source_name', 'data_type']
+        fields = ['target__id', 'target_name', 'data_product_pk', 'source_name', 'data_type']
 
     def filter_name(self, queryset, name, value):
         return queryset.filter(Q(target__name__icontains=value) | Q(target__aliases__name__icontains=value))
+
+    def filter_data_product_name(self, queryset, name, value):
+        return queryset.filter(data_product__product_id__icontains=value) | \
+               queryset.filter(data_product__data__icontains=value)
