@@ -41,7 +41,7 @@ def filter_text(queryset, name, value):
     return queryset.filter(targetextra__key=name, targetextra__value__icontains=value)
 
 
-class TargetFilter(django_filters.FilterSet):
+class TargetFilter(django_filters.rest_framework.FilterSet):
     key = django_filters.CharFilter(field_name='targetextra__key', label='Key')
     value = django_filters.CharFilter(field_name='targetextra__value', label='Value')
 
