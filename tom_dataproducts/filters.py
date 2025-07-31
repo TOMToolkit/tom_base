@@ -38,12 +38,11 @@ class ReducedDatumFilter(django_filters.rest_framework.FilterSet):
         `GET /api/reduceddatums/?target__id=<id>&data_type=<type>`
     """
     target_name = django_filters.CharFilter(label='Target Name', method='filter_name')
-    data_product_pk = django_filters.NumberFilter(field_name='data_product__pk', label='Data Product Primary Key')
     data_product_name = django_filters.CharFilter(method='filter_data_product_name', label='Data Product filename')
 
     class Meta:
         model = ReducedDatum
-        fields = ['target__id', 'target_name', 'data_product_pk', 'source_name', 'data_type']
+        fields = ['target__id', 'target_name', 'data_product__id', 'source_name', 'data_type']
 
     def filter_name(self, queryset, name, value):
         return queryset.filter(Q(target__name__icontains=value) | Q(target__aliases__name__icontains=value))
