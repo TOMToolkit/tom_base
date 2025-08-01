@@ -4,7 +4,227 @@ from importlib_resources import files
 from django.test import tag, TestCase
 from unittest.mock import MagicMock, patch
 
-from tom_catalogs.harvesters.mpc import MPCExplorerHarvester
+from tom_catalogs.harvesters.mpc import MPCHarvester, MPCExplorerHarvester
+
+
+class TestMPCHarvester(TestCase):
+    def setUp(self):
+        self.broker = MPCHarvester()
+        self.test_response = [{'foo': 42}]
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_name(self, mock_query):
+        mock_query.return_value = self.test_response
+
+        self.broker.query('didymos')
+        self.assertEqual(self.broker._object_type, 'asteroid')
+        self.assertEqual(self.broker._object_term, 'didymos')
+        self.assertEqual(self.broker._query_type, 'name')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_asteroid_number(self, mock_query):
+        mock_query.return_value = self.test_response
+
+        self.broker.query('1627')
+        self.assertEqual(self.broker._object_type, 'asteroid')
+        self.assertEqual(self.broker._query_type, 'number')
+        self.assertEqual(self.broker._object_term, '1627')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_asteroid_number_ws(self, mock_query):
+        mock_query.return_value = self.test_response
+
+        self.broker.query('  1627    ')
+        self.assertEqual(self.broker._object_type, 'asteroid')
+        self.assertEqual(self.broker._query_type, 'number')
+        self.assertEqual(self.broker._object_term, '1627')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_comet_number(self, mock_query):
+        mock_query.return_value = self.test_response
+
+        self.broker.query('67P')
+        self.assertEqual(self.broker._object_type, 'comet')
+        self.assertEqual(self.broker._query_type, 'number')
+        self.assertEqual(self.broker._object_term, '67P')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_comet_number_ws(self, mock_query):
+        mock_query.return_value = self.test_response
+
+        self.broker.query('  67P    ')
+        self.assertEqual(self.broker._object_type, 'comet')
+        self.assertEqual(self.broker._query_type, 'number')
+        self.assertEqual(self.broker._object_term, '67P')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_provisional_cometlike(self, mock_query):
+        # This tests if we have a provisional id such as '1999PA123' or '2025PM' which shouldn't
+        # match with periodic comets despite being "number" followed by "P"
+        mock_query.return_value = self.test_response
+
+        self.broker.query('2025PM')
+        self.assertNotEqual(self.broker._object_type, 'comet')
+        self.assertNotEqual(self.broker._query_type, 'number')
+        self.assertEqual(self.broker._object_term, '2025PM')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_query_provisional_cometlike_ws(self, mock_query):
+        # This tests if we have a provisional id such as '1999 PA123' or '2025 PM' which shouldn't
+        # match with periodic comets despite being "number" followed by " P"
+        mock_query.return_value = self.test_response
+
+        self.broker.query('2025 PM')
+        self.assertNotEqual(self.broker._object_type, 'comet')
+        self.assertNotEqual(self.broker._query_type, 'number')
+        self.assertEqual(self.broker._object_term, '2025 PM')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_designation(self, mock_query):
+        mock_query.return_value = self.test_response
+
+        self.broker.query('2025 MB18')
+        self.assertEqual(self.broker._object_type, 'asteroid')
+        self.assertEqual(self.broker._query_type, 'desig')
+        self.assertEqual(self.broker._object_term, '2025 MB18')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_designation_cometish(self, mock_query):
+        mock_query.return_value = self.test_response
+
+        self.broker.query('2022PA')
+        self.assertEqual(self.broker._object_type, 'asteroid')
+        self.assertEqual(self.broker._query_type, 'desig')
+        self.assertEqual(self.broker._object_term, '2022PA')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_designation_cometish_with_ws(self, mock_query):
+        mock_query.return_value = self.test_response
+
+        self.broker.query('2022 PA')
+        self.assertEqual(self.broker._object_type, 'asteroid')
+        self.assertEqual(self.broker._query_type, 'desig')
+        self.assertEqual(self.broker._object_term, '2022 PA')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_designation_ws(self, mock_query):
+        mock_query.return_value = self.test_response
+
+        self.broker.query('  2025 MB18   ')
+        self.assertEqual(self.broker._object_type, 'asteroid')
+        self.assertEqual(self.broker._query_type, 'desig')
+        self.assertEqual(self.broker._object_term, '2025 MB18')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_designation_nospace(self, mock_query):
+        mock_query.return_value = self.test_response
+
+        self.broker.query('2025MB18')
+        self.assertEqual(self.broker._object_type, 'asteroid')
+        self.assertEqual(self.broker._query_type, 'desig')
+        self.assertEqual(self.broker._object_term, '2025MB18')
+        self.assertEqual(self.broker.catalog_data, self.test_response)
+
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_provisional_comets(self, mock_query):
+        mock_query.return_value = self.test_response
+
+        comets = ['C/2024 S4', 'P/2017 A1', 'D/1853 X1', 'C/2001 OG108', 'P/2002 EJ57']
+        for comet in comets:
+            self.broker.query(comet)
+            self.assertEqual(self.broker._object_type, 'comet', msg=f'Failure on _object_type for {comet}')
+            self.assertEqual(self.broker._query_type, 'desig', msg=f'Failure on _query_type for {comet}')
+            self.assertEqual(self.broker._object_term, comet, msg=f'Failure on _object_term for {comet}')
+            self.assertEqual(self.broker.catalog_data, self.test_response)
+
+
+@tag('canary')
+class TestMPCHarvesterCanary(TestCase):
+    def setUp(self):
+        self.broker = MPCHarvester()
+
+    def test_query_number_only(self):
+        self.broker.query('700000')
+        target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
+        # Only test things that are not likely to change (much) with time
+        self.assertEqual(target.name, '700000')
+        self.assertEqual(target.names, ['700000'])
+        self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
+        self.assertEqual(target.ra, None)
+        self.assertEqual(target.dec, None)
+        self.assertAlmostEqual(target.eccentricity, 0.092, places=3)
+        self.assertAlmostEqual(target.inclination, 4.1688, places=4)
+        self.assertAlmostEqual(target.mean_anomaly, 315.8420, places=4)
+        self.assertAlmostEqual(target.semimajor_axis, 2.6555, places=4)
+
+    def test_query_designation_only(self):
+        self.broker.query('2025 MB18')
+        target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
+        # Only test things that are not likely to change (much) with time
+        self.assertEqual(target.name, '2025 MB18')
+        self.assertEqual(target.names, ['2025 MB18'])
+        self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
+        self.assertEqual(target.ra, None)
+        self.assertEqual(target.dec, None)
+        self.assertAlmostEqual(target.eccentricity, 0.1398, places=4)
+        self.assertAlmostEqual(target.inclination, 19.3561, places=4)
+
+    def test_query_name(self):
+        self.broker.query('1627')
+        target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
+        # Only test things that are not likely to change (much) with time
+        self.assertEqual(target.name, '1627')
+        self.assertEqual(target.names, ['1627', 'Ivar'])
+        self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
+        self.assertEqual(target.ra, None)
+        self.assertEqual(target.dec, None)
+        self.assertAlmostEqual(target.eccentricity, 0.3972, places=4)
+        self.assertAlmostEqual(target.inclination, 8.4561, places=4)
+
+    def test_query_comet_name(self):
+        self.broker.query('29P')
+        target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
+        # Only test things that are not likely to change (much) with time
+        self.assertEqual(target.name, '29P')
+        self.assertEqual(target.names, ['29P'])
+        self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_COMET')
+        self.assertEqual(target.ra, None)
+        self.assertEqual(target.dec, None)
+        self.assertAlmostEqual(target.eccentricity, 0.0433, places=4)
+        self.assertAlmostEqual(target.lng_asc_node, 312.4041, places=4)
+
+    def test_query_comet_designation(self):
+        self.broker.query('C/2017 K2')
+        target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
+        # Only test things that are not likely to change (much) with time
+        self.assertEqual(target.name, 'C/2017 K2')
+        self.assertEqual(target.names, ['C/2017 K2'])
+        self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_COMET')
+        self.assertEqual(target.ra, None)
+        self.assertEqual(target.dec, None)
+        self.assertAlmostEqual(target.perihdist, 1.7998, places=4)
+        self.assertAlmostEqual(target.arg_of_perihelion, 236.17910, places=4)
 
 
 class TestMPCExplorerHarvester(TestCase):
