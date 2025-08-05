@@ -47,6 +47,7 @@ dependencies = [
     "astroplan >=0.8,<0.11",
     "astropy >=5.3.3,<7 ; python_version >= '3.10'",
     "astropy >=5.3.3,<6 ; python_version < '3.10'",
+    "cryptography <=46",
     "django <5",
     "djangorestframework >=3.15,<4",
     "django-bootstrap4 >3,<25",
@@ -66,8 +67,6 @@ dependencies = [
     "python-dateutil <3",
     "requests <3",
     "specutils <2",
-    "docutils !=0.21.post1",
-    "sphinx-design >=0.6,<0.7",
     "importlib-resources >=6.4.5,<6.5.0",
     "django-tasks (>=0.6.1,<0.7.0)",
 ]
@@ -93,8 +92,10 @@ factory_boy = ">3.2.1,<3.4"
 psycopg2-binary = "*" # for testing postgres
 
 [tool.poetry.group.docs.dependencies]
+docutils = "!=0.21.post1"
 recommonmark = "~0.7"
 sphinx = ">=5,<8"
+sphinx-design = ">=0.6,<0.7"
 sphinx-rtd-theme = ">=1.0,<3.1"
 sphinx-copybutton = "~0.5"
 
