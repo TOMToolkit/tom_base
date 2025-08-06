@@ -305,6 +305,11 @@ class TestTargetCreate(TestCase):
         target = Target.objects.get(name=target_data['name'])
         self.assertTrue(target.targetextra_set.filter(key='category', value='type2').exists())
 
+    @override_settings(TARGET_DEFAULT_PERMISSION='OPEN')
+    def test_create_target_configurable_permissions(self):
+        target = Target.objects.create(name='test_target', type=Target.SIDEREAL, ra='83.6', dec='30.21')
+        self.assertEqual(target.permissions, 'OPEN')
+
     @override_settings(EXTRA_FIELDS=[
         {'name': 'wins', 'type': 'number', 'default': '12'},
         {'name': 'checked', 'type': 'boolean'},
