@@ -13,6 +13,7 @@ Austin Riba, David Collom and William Lindstrom.
 
 Our team very much welcome input from the community, and we are grateful to
 the following people for their many contributions:
+
  - Dan Avner, NOIRLab
  - Doug Arnold, Liverpool Telescope
  - Etienne Bachelet, IPAC/Caltech

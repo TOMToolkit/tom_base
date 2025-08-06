@@ -11,8 +11,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.management import call_command
-from django_filters import (CharFilter, ChoiceFilter, DateTimeFromToRangeFilter, FilterSet, ModelMultipleChoiceFilter,
-                            OrderingFilter, MultipleChoiceFilter)
+from django_filters import CharFilter, ChoiceFilter, DateTimeFromToRangeFilter, ModelMultipleChoiceFilter
+from django_filters import OrderingFilter, MultipleChoiceFilter, rest_framework
 from django_filters.views import FilterView
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -38,7 +38,7 @@ from tom_targets.models import Target
 logger = logging.getLogger(__name__)
 
 
-class ObservationFilter(FilterSet):
+class ObservationFilter(rest_framework.FilterSet):
     """
     Defines the available fields for filtering the list of ``ObservationRecord`` objects.
     """
@@ -622,7 +622,7 @@ class ObservationGroupDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     success_url = reverse_lazy('tom_observations:group-list')
 
 
-class ObservationTemplateFilter(FilterSet):
+class ObservationTemplateFilter(rest_framework.FilterSet):
     """
     Defines the available fields for filtering the list of ``ObservationTemplate`` objects.
     """
