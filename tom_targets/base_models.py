@@ -193,6 +193,13 @@ class TargetMatchManager(models.Manager):
         return name.lower().replace(" ", "").replace("-", "").replace("_", "").replace("(", "").replace(")", "")
 
 
+def get_default_target_permission():
+    try:
+        return settings.TARGET_DEFAULT_PERMISSION
+    except AttributeError:
+        return BaseTarget.Permissions.PRIVATE
+
+
 class BaseTarget(models.Model):
     """
     Class representing a target in a TOM
@@ -314,7 +321,7 @@ class BaseTarget(models.Model):
         help_text='The time which this target was changed in the TOM database.'
     )
     permissions = models.CharField(
-        max_length=100, default=Permissions.PRIVATE, choices=Permissions.choices,
+        max_length=100, default=get_default_target_permission, choices=Permissions.choices,
         help_text='The access level of this target, see the docs on public vs private targets.'
     )
     ra = models.FloatField(
