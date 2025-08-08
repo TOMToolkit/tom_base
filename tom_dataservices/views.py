@@ -114,6 +114,22 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
             form.save()
         return redirect(reverse('tom_dataservices:query_list'))
 
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds any form partials to the context.
+
+        :returns: context
+        :rtype: dict
+        """
+        context = super().get_context_data()
+
+        data_service_name = self.get_data_service_name()
+        simple_form = get_data_service_class(data_service_name).get_simple_form_partial(self)
+        advanced_form = get_data_service_class(data_service_name).get_advanced_form_partial(self)
+        context['simple_form'] = simple_form
+        context['advanced_form'] = advanced_form
+        return context
+
 
 class RunQueryView(TemplateView):
     """
@@ -280,6 +296,22 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         if form.cleaned_data['query_save']:
             form.save(query_id=self.object.id)
         return redirect(reverse('tom_dataservices:query_list'))
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds any form partials to the context.
+
+        :returns: context
+        :rtype: dict
+        """
+        context = super().get_context_data()
+
+        data_service_name = self.object.data_service
+        simple_form = get_data_service_class(data_service_name).get_simple_form_partial(self)
+        advanced_form = get_data_service_class(data_service_name).get_advanced_form_partial(self)
+        context['simple_form'] = simple_form
+        context['advanced_form'] = advanced_form
+        return context
 
 
 class CreateTargetFromQueryView(LoginRequiredMixin, View):

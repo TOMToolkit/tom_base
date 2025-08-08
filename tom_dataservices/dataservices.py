@@ -163,9 +163,13 @@ class BaseDataService(ABC):
         """Returns a success message to display in the UI after making the query."""
         return "Query completed successfully."
 
-    def get_simple_form_class(self):
-        """Returns a simplified bare-minimum form that can be used to access the DataService."""
-        raise NotImplementedError
+    def get_simple_form_partial(self):
+        """Returns a path to a simplified bare-minimum partial form that can be used to access the DataService."""
+        return None
+
+    def get_advanced_form_partial(self):
+        """Returns a path to a full or advanced partial form that can be used to access the DataService."""
+        return None
 
     def query_forced_photometry(self, query_parameters):
         """Set up and run a specialized query for a DataService’s forced photometry service."""

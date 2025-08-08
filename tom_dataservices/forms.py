@@ -1,6 +1,5 @@
 from django import forms
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit
 
 from tom_dataservices.models import DataServiceQuery
 
@@ -9,7 +8,10 @@ class BaseQueryForm(forms.Form):
     """
     Form class representing the default form for a dataservice.
     """
-    query_save = forms.BooleanField(required=False, initial=False, label="Save Query")
+    query_save = forms.BooleanField(
+        required=False,
+        initial=False,
+        label="Save Query",)
     query_name = forms.CharField(required=False)
     data_service = forms.CharField(
         required=True,
@@ -20,8 +22,7 @@ class BaseQueryForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.add_input(Submit('submit', 'Submit'))
-        self.common_layout = Layout('query_save', 'query_name', 'data_service')
+        self.helper.form_tag = False
 
     def save(self, query_id=None):
         """

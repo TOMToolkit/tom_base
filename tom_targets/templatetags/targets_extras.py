@@ -339,8 +339,6 @@ def target_merge_fields(target1, target2):
     for field in target2._meta.get_fields():
         if not field.is_relation:
             target2_data[field.name] = field.value_to_string(target2)
-        # else:
-        #     print(field.name)
     target2_data['aliases'] = ', '.join(alias.name for alias in target2.aliases.all())
     target2_data['target lists'] = \
         ', '.join(target_list.name for target_list in TargetList.objects.filter(targets=target2))

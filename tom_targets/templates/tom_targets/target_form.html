@@ -52,9 +52,9 @@
 </div>
 {% buttons %}
   {% if not object %}
-  <button type="submit" formaction="{% url 'targets:create' %}"class="btn btn-primary">Submit</button>
+  <button type="submit" formaction="{% url 'targets:create' %}" class="btn btn-primary">Submit</button>
   {% else %}
-  <button type="submit" formaction="{% url 'targets:update' pk=object.id %}"class="btn btn-primary">Save</button>
+  <button type="submit" formaction="{% url 'targets:update' pk=object.id %}" class="btn btn-primary">Save</button>
   <a href="{% url 'targets:detail' pk=object.id %}" class="btn btn-primary" title="Back">Back</a>
   {% endif %}
 {% endbuttons %}
