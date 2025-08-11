@@ -276,18 +276,18 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
 
         return context
 
-    def get_form_class(self):
+    def get_form_class(self, observation_type=None):
         """
         Gets the observation form class for the facility and selected observation type in the query parameters.
 
         :returns: observation form
         :rtype: subclass of GenericObservationForm
         """
-        observation_type = None
-        if self.request.method == 'GET':
-            observation_type = self.request.GET.get('observation_type')
-        elif self.request.method == 'POST':
-            observation_type = self.request.POST.get('observation_type')
+        if not observation_type:
+            if self.request.method == 'GET':
+                observation_type = self.request.GET.get('observation_type')
+            elif self.request.method == 'POST':
+                observation_type = self.request.POST.get('observation_type')
         form_class = type(f'Composite{observation_type}Form',
                           (self.facility_instance.get_form(observation_type), self.get_cadence_strategy_form()),
                           {})
@@ -300,8 +300,15 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :returns: observation form
         :rtype: subclass of GenericObservationForm
         """
+        if form_class is None:
+            form_class = self.get_form_class()
+
+        form_kwargs = self.get_form_kwargs()
         try:
-            form = super().get_form()
+            form = form_class(**form_kwargs)
+        except TypeError:
+            form_kwargs.pop('user', None)
+            form = form_class(**form_kwargs)
         except Exception as ex:
             logger.error(f"Error loading {self.get_facility()} form: {repr(ex)}")
             raise BadRequest(f"Error loading {self.get_facility()} form: {repr(ex)}")
@@ -343,7 +350,29 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         return kwargs
 
     def post(self, request, *args, **kwargs):
-        form = self.get_form()
+        """
+        Handles the POST request to the view.
+
+        This method is responsible for processing the form submission. It
+        instantiates the form with the POST data and files, and then
+        checks if the form is valid. If the form is valid, it calls
+        form_valid(); otherwise, it calls form_invalid().
+
+        We override this method to handle a TypeError that may occur
+        when instantiating the form. Some forms may not accept the 'user'
+        keyword argument. In this case, we catch the TypeError, remove
+        the 'user' from the keyword arguments, and try to instantiate
+        the form again.
+        """
+        form_class = self.get_form_class()
+        form_kwargs = self.get_form_kwargs()
+
+        try:
+            form = form_class(**form_kwargs)
+        except TypeError:
+            form_kwargs.pop('user', None)
+            form = form_class(**form_kwargs)
+
         if form.is_valid():
             if 'validate' in request.POST:
                 return self.form_validation_valid(form)
