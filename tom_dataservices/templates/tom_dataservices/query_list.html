@@ -20,7 +20,7 @@
           <td>{{ query.data_service }}</td>
           <td>{{ query.created }}</td>
           <td>{{ query.last_run }}</td>
-          <td><a href="{% url 'dataservices:run' query.id %}" title="Run query" class="btn btn-primary">Run</a></td>
+          <td><a href="{% url 'dataservices:run_saved' query.id %}" title="Run query" class="btn btn-primary">Run</a></td>
           <td><a href="{% url 'dataservices:delete' query.id %}" title="Delete query" class="btn btn-danger">Delete</a></td>
         </tr>
         {% empty %}

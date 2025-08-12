@@ -76,6 +76,8 @@ class BaseDataService(ABC):
     base_url = None
     # Notes or limitations on using the DataService
     service_notes = None
+    # The path to a specialized table partial for displaying query results
+    query_results_table = None
 
     def __init__(self, query_parameters=None, *args, **kwargs):
         super().__init__(*args, **kwargs)

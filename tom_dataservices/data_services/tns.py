@@ -106,7 +106,7 @@ class TNSDataService(BaseDataService):
     """
     name = 'TNS'
     info_url = 'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html#module-tom_alerts.brokers.tns'
-    query_results_partial = 'tom_dataservices/tns/partials/tns_query_results_table.html'
+    query_results_table = 'tom_dataservices/tns/partials/tns_query_results_table.html'
 
     def get_simple_form_partial(self):
         """Returns a path to a simplified bare-minimum partial form that can be used to access the DataService."""

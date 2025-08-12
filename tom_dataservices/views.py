@@ -1,5 +1,6 @@
 from typing import List
 import logging
+from requests import HTTPError
 
 from django_filters.views import FilterView
 from django_filters import FilterSet, ChoiceFilter, CharFilter
@@ -59,6 +60,7 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
     View for creating a new query to a data service. Requires authentication.
     """
     template_name = 'tom_dataservices/query_form.html'
+    success_url = reverse_lazy('tom_dataservices:run')
 
     def get_data_service_name(self):
         """
@@ -110,9 +112,13 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         """
         Saves the associated ``DataServiceQuery`` and redirects to the ``DataServiceQuery`` list.
         """
+
         if form.cleaned_data['query_save']:
             form.save()
-        return redirect(reverse('tom_dataservices:query_list'))
+
+        self.request.session['query_parameters'] = form.cleaned_data
+
+        return redirect(self.success_url)
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -137,29 +143,29 @@ class RunQueryView(TemplateView):
     """
     template_name = 'tom_dataservices/query_result.html'
 
-    def get_template_names(self) -> List[str]:
-        """Override the base class method to ask the broker if it has
-        specified a Broker-specific template to use. If so, put it at the
-        front of the returned list of template_names.
-        """
-        template_names = super().get_template_names()
-
-        # if the data service class has defined a template to use add it to template names (at the front)
-        query = get_object_or_404(DataServiceQuery, pk=self.kwargs['pk'])
-        data_service_class = get_data_service_class(query.data_service)()
-        logger.debug(f'RunQueryView.get_template_name data_service_class: {data_service_class}')
-
-        try:
-            if data_service_class.template_name:
-                # add to front of list b/c first template will be tried first
-                template_names.insert(0, data_service_class.template_name)
-        except AttributeError:
-            # many Data Services won't have a template_name defined and will just
-            # use the one defined above.
-            pass
-
-        logger.debug(f'RunQueryView.get_template_name template_names: {template_names}')
-        return template_names
+    # def get_template_names(self) -> List[str]:
+    #     """Override the base class method to ask the DataService if it has
+    #     specified a Broker-specific template to use. If so, put it at the
+    #     front of the returned list of template_names.
+    #     """
+    #     template_names = super().get_template_names()
+    #
+    #     # if the data service class has defined a template to use add it to template names (at the front)
+    #     query = get_object_or_404(DataServiceQuery, pk=self.kwargs['pk'])
+    #     data_service_class = get_data_service_class(query.data_service)()
+    #     logger.debug(f'RunQueryView.get_template_name data_service_class: {data_service_class}')
+    #
+    #     try:
+    #         if data_service_class.template_name:
+    #             # add to front of list b/c first template will be tried first
+    #             template_names.insert(0, data_service_class.template_name)
+    #     except AttributeError:
+    #         # many Data Services won't have a template_name defined and will just
+    #         # use the one defined above.
+    #         pass
+    #
+    #     logger.debug(f'RunQueryView.get_template_name template_names: {template_names}')
+    #     return template_names
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -170,10 +176,26 @@ class RunQueryView(TemplateView):
         :rtype: dict
         """
         context = super().get_context_data()
+        query = None
+        query_feedback = ""
 
         # get the DataService class
-        query = get_object_or_404(DataServiceQuery, pk=self.kwargs['pk'])
-        data_service_class = get_data_service_class(query.data_service)()
+        if self.kwargs.get('pk', None) is not None:
+            query = get_object_or_404(DataServiceQuery, pk=self.kwargs['pk'])
+            data_service_class = get_data_service_class(query.data_service)()
+            query_parameters = data_service_class.build_query_parameters(query.parameters)
+            query.last_run = timezone.now()
+            query.save()
+        else:
+            query_parameters = self.request.session.get('query_parameters', {})
+            data_service_class = get_data_service_class(query_parameters['data_service'])()
+
+        # Do query and get query results
+        try:
+            results = data_service_class.query_targets(query_parameters)
+        except HTTPError as e:
+            results = iter(())
+            query_feedback += f"Issue fetching alerts, please try again.</br>{e}</br>"
 
         # Do query and get query results (fetch_alerts)
         # try:
@@ -199,18 +221,12 @@ class RunQueryView(TemplateView):
         #     results = iter(())
         #     query_feedback = f"Issue fetching alerts, please try again.</br>{e}"
 
-        query_parameters = data_service_class.build_query_parameters(query.parameters)
-        results = data_service_class.query_targets(query_parameters)
-
-        # Post-query tasks
-        query.last_run = timezone.now()
-        query.save()
-
         # create context for template
         context['query'] = query
-        # context['query_feedback'] = query_feedback
+        context['query_feedback'] = query_feedback
         context['too_many_results'] = False
-        # context['query_results_table'] = data_service_class.query_results_partial or 'tom_dataservices/partials/query_results_table.html'
+        context['query_results_table'] = data_service_class.query_results_table or\
+                                         'tom_dataservices/partials/query_results_table.html'
 
         context['results'] = []
         try:
@@ -245,6 +261,7 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
     View that handles the modification of a previously saved ``DataServiceQuery``. Requires authentication.
     """
     template_name = 'tom_dataservices/query_form.html'
+    success_url = reverse_lazy('tom_dataservices:run_saved')
 
     def get_object(self):
         """
@@ -295,7 +312,7 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         """
         if form.cleaned_data['query_save']:
             form.save(query_id=self.object.id)
-        return redirect(reverse('tom_dataservices:query_list'))
+        return redirect(self.success_url, kwargs={'pk': self.object.id})
 
     def get_context_data(self, *args, **kwargs):
         """
