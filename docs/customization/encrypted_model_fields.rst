@@ -71,7 +71,9 @@ methods provided in ``tom_common.session_utils.py``:
     set_encrypted_field(user, profile, 'api_key', new_api_key)
 
 Note here that the User instance (``user``) is used to access the ``EncryptableModelMixin``
-subclass and it's encrypted data. (This is user-specific sensitive data).
+subclass and it's encrypted data. The ``user`` property of the encrypted field-containing
+Model subclass (``MyAppModel`` in our example) is provided by the ``EncryptableModelMixin``.
+As such, the model *should not define a* ``user`` *property of it's own*.
 
 Some Explainations
 -------------------
