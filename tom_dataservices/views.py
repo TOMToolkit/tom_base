@@ -312,7 +312,10 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         """
         if form.cleaned_data['query_save']:
             form.save(query_id=self.object.id)
-        return redirect(self.success_url, kwargs={'pk': self.object.id})
+            return redirect(self.success_url, kwargs={'pk': self.object.id})
+        else:
+            self.request.session['query_parameters'] = form.cleaned_data
+            return redirect(reverse_lazy('tom_dataservices:run'))
 
     def get_context_data(self, *args, **kwargs):
         """
