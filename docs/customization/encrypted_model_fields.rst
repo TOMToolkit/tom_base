@@ -81,14 +81,14 @@ Some Explanations
 -----------------
 
 EncryptableModelMixin (`source <https://github.com/TOMToolkit/tom_base/blob/069024f954e5540c1441c5186378de538f7d606f/tom_common/models.py#L100>`__)
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The User's data is encrypted using (among other things) their password (i.e the
 password they use to login to your TOM). When the User changes their password,
 their encrypted data re-encrypted accordingly. The ``EncryptableModelMixin`` adds
 method for this to your otherwise normal Django model.
 
 EncryptedProperty (`source <https://github.com/TOMToolkit/tom_base/blob/069024f954e5540c1441c5186378de538f7d606f/tom_common/models.py#L39>`__)
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 A *property descriptor* implements the Python descriptor protocol (``__get__``,
 ``__set__``, etc). The ``EncryptedProperty`` property descriptor handles the details
 of decrypting the encrypted ``BinaryField`` on its way out of the database and
@@ -96,7 +96,7 @@ encrypting it on the way in. It is invoked when the property is accessed
 (e.g. ``model_instance.api_key``).
 
 Session Utils (`example <https://github.com/TOMToolkit/tom_eso/blob/b74fe3b951ead6f6f332594724731d036944da47/tom_eso/eso.py#L209>`__)
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``get_encrypted_field`` and ``set_encrypted_field`` functions implement
 boilerplate code for creating and destroying the cipher used to encrypt and
 decrypt the ``BinaryField``. *These methods must always be used to access any
