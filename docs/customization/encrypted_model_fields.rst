@@ -8,7 +8,7 @@ Examples of user-specific sensitive
 data include a password or API key for an external service that your TOM uses.
 For example, TOMToolkit Facility modules can use the mechanism described here to store,
 encrypted, user-specific credentials in a user profile model. Examples include
-the ``tom_eso`` and (soon) the ``tom_swift`` facility modules.
+the ``tom_eso`` and the ``tom_swift`` facility modules.
 
 As we explain below, TOMToolkit provides a *_mix-in_* class, a *property descriptor*, and
 utility functions to help encrypt user-specific sensitive data and access it when it's needed.
@@ -78,14 +78,14 @@ As such, the model *should not define a* ``user`` *property of its own*.
 Some Explanations
 -----------------
 
-EncryptableModelMixin
+EncryptableModelMixin (`source <https://github.com/TOMToolkit/tom_base/blob/069024f954e5540c1441c5186378de538f7d606f/tom_common/models.py#L100>`__)
 ~~~~~~~~~~~~~~~~~~~~~
 The User's data is encrypted using (among other things) their password (i.e the
 password they use to login to your TOM). When the User changes their password,
 their encrypted data re-encrypted accordingly. The ``EncryptableModelMixin`` adds
 method for this to your otherwise normal Django model.
 
-EncryptedProperty
+EncryptedProperty (`source <https://github.com/TOMToolkit/tom_base/blob/069024f954e5540c1441c5186378de538f7d606f/tom_common/models.py#L39>`__)
 ~~~~~~~~~~~~~~~~~
 A *property descriptor* implements the Python descriptor protocol (``__get__``,
 ``__set__``, etc). The ``EncryptedProperty`` property descriptor handles the details
@@ -93,7 +93,7 @@ of decrypting the encrypted ``BinaryField`` on its way out of the database and
 encrypting it on the way in. It is invoked when the property is accessed
 (e.g. ``model_instance.api_key``).
 
-Session Utils
+Session Utils (`example <https://github.com/TOMToolkit/tom_eso/blob/b74fe3b951ead6f6f332594724731d036944da47/tom_eso/eso.py#L209>`__)
 ~~~~~~~~~~~~~
 The ``get_encrypted_field`` and ``set_encrypted_field`` functions implement
 boilerplate code for creating and destroying the cipher used to encrypt and
