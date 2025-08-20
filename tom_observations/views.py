@@ -149,7 +149,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         to handle this request.
 
         Here, we extend the method to attach the Facility class to the View so
-        we don't have to create more and one instances of it. So,
+        we don't have to create more than one instances of it. So,
         instantiate the facility class once and store it on the view instance
         for the duration of the request-response cycle.
         """
