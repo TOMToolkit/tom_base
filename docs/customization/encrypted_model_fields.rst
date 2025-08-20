@@ -7,8 +7,9 @@ sensitive data, then you may want to encrypt that data.
 Examples of user-specific sensitive
 data include a password or API key for an external service that your TOM uses.
 For example, TOMToolkit Facility modules can use the mechanism described here to store,
-encrypted, user-specific credentials in a user profile model. Examples include
-the ``tom_eso`` and the ``tom_swift`` facility modules.
+encrypted, user-specific credentials in a user profile model. Examples include the
+`tom_eso <https://github.com/TOMToolkit/tom_eso>`__ and the
+`tom_swift <https://github.com/TOMToolkit/tom_swift>`__ facility modules.
 
 As we explain below, TOMToolkit provides a *_mix-in_* class, a *property descriptor*, and
 utility functions to help encrypt user-specific sensitive data and access it when it's needed.
