@@ -14,8 +14,9 @@ encrypted, user-specific credentials in a user profile model. Examples include t
 As we explain below, TOMToolkit provides a *_mix-in_* class, a *property descriptor*, and
 utility functions to help encrypt user-specific sensitive data and access it when it's needed.
 
-NOTE: For sensitive data that is used by the TOM itself and is not user-specific, we suggest
-that this data be stored outside the TOM and accessed through environment variables.
+.. note:: For sensitive data that is used by the TOM itself and is not user-specific,
+    we suggest that this data be stored outside the TOM and accessed through
+    environment variables.
 
 Creating and accessing an encrypted Model field
 -----------------------------------------------
