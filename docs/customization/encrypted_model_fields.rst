@@ -63,7 +63,7 @@ methods provided in ``tom_common.session_utils.py``:
     from tom_common.session_utils import get_encrypted_field, set_encrypted_field
     from tom_app_example.models import MyAppModel
     
-    profile: MyAppModel = user.myappmodel  # encrypted field-containing Model instance
+    profile: MyAppModel = user.myappmodel  # Model instance containing an encrypted field
     
     # getter example
     decrypted_api_key: str = get_encrypted_field(user, profile, 'api_key')
