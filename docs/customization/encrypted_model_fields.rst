@@ -17,8 +17,8 @@ utility functions to help encrypt user-specific sensitive data and access it whe
 NOTE: For sensitive data that is used by the TOM itself and is not user-specific, we suggest
 that this data be stored outside the TOM and accessed through environment variables.
 
-Quick Start
------------
+Creating and accessing an encrypted Model field
+-----------------------------------------------
 
 Creating an encrypted Model field
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
