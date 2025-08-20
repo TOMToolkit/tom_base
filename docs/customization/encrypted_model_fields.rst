@@ -11,7 +11,7 @@ encrypted, user-specific credentials in a user profile model. Examples include t
 `tom_eso <https://github.com/TOMToolkit/tom_eso>`__ and the
 `tom_swift <https://github.com/TOMToolkit/tom_swift>`__ facility modules.
 
-As we explain below, TOMToolkit provides a *_mix-in_* class, a *property descriptor*, and
+As we explain below, TOMToolkit provides a *mix-in* class, a *property descriptor*, and
 utility functions to help encrypt user-specific sensitive data and access it when it's needed.
 
 .. note:: For sensitive data that is used by the TOM itself and is not user-specific,
