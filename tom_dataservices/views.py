@@ -16,7 +16,7 @@ from django.core.cache import cache
 from django.contrib import messages
 
 from tom_dataservices.models import DataServiceQuery
-from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class
+from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class, NotConfiguredError
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +139,7 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
 
 class RunQueryView(TemplateView):
     """
-    View that handles the running of a specific ``DataServiceQuery``.
+    View that handles the running of a query that was either submitted via the form or saved as a ``DataServiceQuery``.
     """
     template_name = 'tom_dataservices/query_result.html'
 
@@ -169,8 +169,8 @@ class RunQueryView(TemplateView):
 
     def get_context_data(self, *args, **kwargs):
         """
-        Runs the ``fetch_alerts`` method specific to the given ``BrokerQuery`` and adds the matching alerts to the
-        context dictionary.
+        Collects the query parameters from either a saved ``DataServiceQuery`` or from the session data,
+        runs the query, and returns the results as context for the list template.
 
         :returns: context
         :rtype: dict
@@ -179,48 +179,27 @@ class RunQueryView(TemplateView):
         query = None
         query_feedback = ""
 
-        # get the DataService class
-        if self.kwargs.get('pk', None) is not None:
-            query = get_object_or_404(DataServiceQuery, pk=self.kwargs['pk'])
-            data_service_class = get_data_service_class(query.data_service)()
-            query_parameters = data_service_class.build_query_parameters(query.parameters)
-            query.last_run = timezone.now()
-            query.save()
-        else:
-            input_parameters = self.request.session.get('query_parameters', {})
-            data_service_class = get_data_service_class(input_parameters['data_service'])()
-            query_parameters = data_service_class.build_query_parameters(input_parameters)
-
         # Do query and get query results
         try:
+            # get the DataService class. Pull saved query if PK available, otherwise use session data.
+            if self.kwargs.get('pk', None) is not None:
+                query = get_object_or_404(DataServiceQuery, pk=self.kwargs['pk'])
+                data_service_class = get_data_service_class(query.data_service)()
+                query_parameters = data_service_class.build_query_parameters(query.parameters)
+                query.last_run = timezone.now()
+                query.save()
+            else:
+                input_parameters = self.request.session.get('query_parameters', {})
+                data_service_class = get_data_service_class(input_parameters['data_service'])()
+                query_parameters = data_service_class.build_query_parameters(input_parameters)
+
             results = data_service_class.query_targets(query_parameters)
         except HTTPError as e:
             results = iter(())
-            query_feedback += f"Issue fetching alerts, please try again.</br>{e}</br>"
-
-        # Do query and get query results (fetch_alerts)
-        # try:
-        #     query_results = data_service_class.fetch_alerts(deepcopy(query.parameters))
-        #
-        #     # Check if feedback is available for fetch_alerts, and allow for backwards compatibility if not.
-        #     if isinstance(query_results, tuple):
-        #         results, query_feedback = query_results
-        #     else:
-        #         results = query_results
-        #         query_feedback = ''
-        # except AttributeError:
-        #     # If the broker isn't configured in settings.py, display error instead of query results
-        #     results = iter(())
-        #     broker_help = getattr(data_service_class, 'help_url',
-        #                           'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html')
-        #     query_feedback = f"""The {data_service_class.name} Broker is not properly configured in settings.py.
-        #                         </br>
-        #                         Please see the <a href="{broker_help}" target="_blank">documentation</a> for more
-        #                         information.
-        #                         """
-        # except HTTPError as e:
-        #     results = iter(())
-        #     query_feedback = f"Issue fetching alerts, please try again.</br>{e}"
+            query_feedback += f"Issue fetching query results, please try again.</br>{e}</br>"
+        except NotConfiguredError as e:
+            results = iter(())
+            query_feedback += f"Configuration Error. Please contact your TOM Administrator: </br>{e}</br>"
 
         # create context for template
         context['query'] = query
@@ -242,7 +221,7 @@ class RunQueryView(TemplateView):
         except StopIteration:
             pass
 
-        # allow the Broker to add to the context (besides the query_results)
+        # allow the Data Service to add to the context (besides the query_results)
         data_service_context_additions = data_service_class.get_additional_context_data()
         context |= data_service_context_additions
 

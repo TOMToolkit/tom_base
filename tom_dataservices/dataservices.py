@@ -61,6 +61,10 @@ class MissingDataException(Exception):
     pass
 
 
+class NotConfiguredError(Exception):
+    pass
+
+
 class BaseDataService(ABC):
     """
     Base class for all Data Services. Data Services are classes that are responsible for querying external services
@@ -111,9 +115,15 @@ class BaseDataService(ABC):
     def configuration(cls) -> dict:
         """Returns the configuration dictionary for this service"""
         try:
-            return settings.DATA_SERVICES.get(cls.name, {})
-        except AttributeError:
-            return {}
+            return settings.DATA_SERVICES[cls.name]
+        except AttributeError as e:
+            raise NotConfiguredError(e)
+        except KeyError as e:
+            raise NotConfiguredError(
+                f"""The {e} DataService is not configured.
+                </br>
+                Please see the <a href="{cls.info_url}" target="_blank">documentation</a> for more information."""
+            )
 
     @classmethod
     def get_configuration(cls, config_type=None, value=None, **kwargs):
