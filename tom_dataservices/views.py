@@ -187,8 +187,9 @@ class RunQueryView(TemplateView):
             query.last_run = timezone.now()
             query.save()
         else:
-            query_parameters = self.request.session.get('query_parameters', {})
-            data_service_class = get_data_service_class(query_parameters['data_service'])()
+            input_parameters = self.request.session.get('query_parameters', {})
+            data_service_class = get_data_service_class(input_parameters['data_service'])()
+            query_parameters = data_service_class.build_query_parameters(input_parameters)
 
         # Do query and get query results
         try:
@@ -261,7 +262,8 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
     View that handles the modification of a previously saved ``DataServiceQuery``. Requires authentication.
     """
     template_name = 'tom_dataservices/query_form.html'
-    success_url = reverse_lazy('tom_dataservices:run_saved')
+    success_url = reverse_lazy('tom_dataservices:run')
+    object = None
 
     def get_object(self):
         """
@@ -312,10 +314,8 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         """
         if form.cleaned_data['query_save']:
             form.save(query_id=self.object.id)
-            return redirect(self.success_url, kwargs={'pk': self.object.id})
-        else:
-            self.request.session['query_parameters'] = form.cleaned_data
-            return redirect(reverse_lazy('tom_dataservices:run'))
+        self.request.session['query_parameters'] = form.cleaned_data
+        return redirect(self.success_url)
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -331,6 +331,7 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         advanced_form = get_data_service_class(data_service_name).get_advanced_form_partial(self)
         context['simple_form'] = simple_form
         context['advanced_form'] = advanced_form
+        context['object'] = self.object
         return context
 
 
