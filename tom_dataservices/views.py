@@ -181,8 +181,8 @@ class RunQueryView(TemplateView):
         context['query'] = query
         context['query_feedback'] = query_feedback
         context['too_many_results'] = False
-        context['query_results_table'] = data_service_class.query_results_table or\
-                                         'tom_dataservices/partials/query_results_table.html'
+        context['query_results_table'] = data_service_class.query_results_table or 'tom_dataservices/partials/' \
+                                                                                   'query_results_table.html'
 
         context['results'] = []
         try:
