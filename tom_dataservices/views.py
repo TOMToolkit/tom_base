@@ -1,10 +1,9 @@
-from typing import List
 import logging
 from requests import HTTPError
 
 from django_filters.views import FilterView
 from django_filters import FilterSet, ChoiceFilter, CharFilter
-from django.views.generic.edit import DeleteView, FormMixin, FormView, ProcessFormView
+from django.views.generic.edit import DeleteView, FormView
 from django.views.generic.base import TemplateView, View
 from django.db import IntegrityError
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -143,30 +142,6 @@ class RunQueryView(TemplateView):
     """
     template_name = 'tom_dataservices/query_result.html'
 
-    # def get_template_names(self) -> List[str]:
-    #     """Override the base class method to ask the DataService if it has
-    #     specified a Broker-specific template to use. If so, put it at the
-    #     front of the returned list of template_names.
-    #     """
-    #     template_names = super().get_template_names()
-    #
-    #     # if the data service class has defined a template to use add it to template names (at the front)
-    #     query = get_object_or_404(DataServiceQuery, pk=self.kwargs['pk'])
-    #     data_service_class = get_data_service_class(query.data_service)()
-    #     logger.debug(f'RunQueryView.get_template_name data_service_class: {data_service_class}')
-    #
-    #     try:
-    #         if data_service_class.template_name:
-    #             # add to front of list b/c first template will be tried first
-    #             template_names.insert(0, data_service_class.template_name)
-    #     except AttributeError:
-    #         # many Data Services won't have a template_name defined and will just
-    #         # use the one defined above.
-    #         pass
-    #
-    #     logger.debug(f'RunQueryView.get_template_name template_names: {template_names}')
-    #     return template_names
-
     def get_context_data(self, *args, **kwargs):
         """
         Collects the query parameters from either a saved ``DataServiceQuery`` or from the session data,
@@ -178,6 +153,7 @@ class RunQueryView(TemplateView):
         context = super().get_context_data()
         query = None
         query_feedback = ""
+        data_service_class = None
 
         # Do query and get query results
         try:

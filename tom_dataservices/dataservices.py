@@ -214,7 +214,7 @@ class BaseDataService(ABC):
         if not query_results:
             raise MissingDataException('No query results. Did you call query_service()?')
         else:
-            return self.create_data_product_from_query(self, query_results, **kwargs)
+            return self.create_data_product_from_query(query_results, **kwargs)
 
     def create_data_product_from_query(self, query_results=None, **kwargs):
         """Create a new DataProduct from the query results"""
