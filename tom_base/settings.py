@@ -311,6 +311,11 @@ TARGET_PERMISSIONS_ONLY = True
 # Default permission for newly created targets. Values can be 'PRIVATE', 'PUBLIC', or 'OPEN'
 TARGET_DEFAULT_PERMISSION = 'PRIVATE'
 
+# Display these columns in the target list table
+TARGET_LIST_COLUMNS = [
+    "name", "type", "observations", "saved_data"
+]
+
 # URLs that should be allowed access even with AUTH_STRATEGY = LOCKED
 # for example: OPEN_URLS = ['/', '/about']
 OPEN_URLS = []

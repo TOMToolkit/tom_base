@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
 import logging
+from typing import Any
 
 from astroplan import moon_illumination
 from astropy import units as u
 from astropy.coordinates import GCRS, Angle, get_body, SkyCoord
 from astropy.time import Time
 from django import template
+from django.core.exceptions import FieldDoesNotExist
 from django.utils.safestring import mark_safe
 from django.conf import settings
 from django.db.models import Q
@@ -16,6 +18,7 @@ from plotly import offline
 from plotly import graph_objs as go
 
 from tom_observations.utils import get_sidereal_visibility
+from tom_targets.base_models import BaseTarget
 from tom_targets.models import Target, TargetExtra, TargetList
 from tom_targets.forms import TargetVisibilityForm, PersistentShareForm
 from tom_targets.permissions import targets_for_user
@@ -363,6 +366,51 @@ def target_distribution(targets):
     return aladin_skymap(targets)
 
 
+def target_table_headers(model: type[BaseTarget]) -> list[str]:
+    headers = []
+    for column in settings.TARGET_LIST_COLUMNS:
+        # Special fields
+        if column == "observations":
+            headers.append("Observations")
+        elif column == "saved_data":
+            headers.append("Saved Data")
+        else:
+            try:
+                field = model._meta.get_field(column)  # type: ignore[attr-defined])
+                headers.append(field.verbose_name)
+            except FieldDoesNotExist:
+                headers.append(column)
+    return headers
+
+
+@register.simple_tag
+def target_table_row(target: BaseTarget) -> list[Any]:
+    row = []
+    for column in settings.TARGET_LIST_COLUMNS:
+        # Special Fields
+        if column == "observations":
+            row.append(target.observationrecord_set.count())
+        elif column == "saved_data":
+            row.append(target.dataproduct_set.count())
+        else:
+            try:
+                field = target._meta.get_field(column)  # type: ignore[attr-defined])
+                value = getattr(target, column)
+                if field.get_internal_type() == "FloatField":
+                    value = f"{value:.2f}"
+                row.append(value)
+            except FieldDoesNotExist:
+                # See if a TargetExtra exits with this name
+                if column in target.extra_fields:
+                    row.append(target.extra_fields[column])
+                elif column in target.tags:
+                    row.append(target.tags[column])
+                else:
+                    row.append("")
+
+    return row
+
+
 @register.inclusion_tag('tom_targets/partials/target_table.html', takes_context=True)
 def target_table(context, targets, all_checked=False):
     """
@@ -370,8 +418,11 @@ def target_table(context, targets, all_checked=False):
     by default
     """
 
+    headers = target_table_headers(BaseTarget)
+
     return {
         'targets': targets,
+        'headers': headers,
         'all_checked': all_checked,
         'empty_database': context['empty_database'],
         'authenticated': context['request'].user.is_authenticated,
