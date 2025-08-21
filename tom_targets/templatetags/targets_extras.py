@@ -388,7 +388,9 @@ def target_table_row(target: BaseTarget) -> list[Any]:
     row = []
     for column in settings.TARGET_LIST_COLUMNS:
         # Special Fields
-        if column == "observations":
+        if column == "name":
+            row.append(", ".join(target.names))
+        elif column == "observations":
             row.append(target.observationrecord_set.count())
         elif column == "saved_data":
             row.append(target.dataproduct_set.count())
@@ -396,17 +398,21 @@ def target_table_row(target: BaseTarget) -> list[Any]:
             try:
                 field = target._meta.get_field(column)  # type: ignore[attr-defined])
                 value = getattr(target, column)
-                if field.get_internal_type() == "FloatField":
+                if field.get_internal_type() in ["FloatField", "DecimalField"]:
                     value = f"{value:.2f}"
                 row.append(value)
             except FieldDoesNotExist:
                 # See if a TargetExtra exits with this name
-                if column in target.extra_fields:
-                    row.append(target.extra_fields[column])
-                elif column in target.tags:
-                    row.append(target.tags[column])
-                else:
-                    row.append("")
+                # The assignment and continue weirdness is to avoid querying twice
+                extra_fields = target.extra_fields
+                if column in extra_fields:
+                    row.append(extra_fields[column])
+                    continue
+                tags = target.tags
+                if column in tags:
+                    row.append(tags[column])
+                    continue
+                row.append("")
 
     return row
 
