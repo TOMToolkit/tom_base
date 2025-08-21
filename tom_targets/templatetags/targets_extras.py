@@ -366,9 +366,16 @@ def target_distribution(targets):
     return aladin_skymap(targets)
 
 
+def get_target_list_columns() -> list[str]:
+    try:
+        return settings.TARGET_LIST_COLUMNS
+    except Exception:
+        return ["name", "type", "observations", "saved_data"]
+
+
 def target_table_headers(model: type[BaseTarget]) -> list[str]:
     headers = []
-    for column in settings.TARGET_LIST_COLUMNS:
+    for column in get_target_list_columns():
         # Special fields
         if column == "observations":
             headers.append("Observations")
@@ -386,7 +393,7 @@ def target_table_headers(model: type[BaseTarget]) -> list[str]:
 @register.simple_tag
 def target_table_row(target: BaseTarget) -> list[Any]:
     row = []
-    for column in settings.TARGET_LIST_COLUMNS:
+    for column in get_target_list_columns():
         # Special Fields
         if column == "name":
             row.append(", ".join(target.names))
