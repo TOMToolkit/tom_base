@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 
 class DataServiceQueryFilter(FilterSet):
     """
-    Defines the available fields for filtering the list of broker queries.
+    Defines the available fields for filtering the list of queries.
     """
-    broker = ChoiceFilter(
+    data_service = ChoiceFilter(
         choices=[(k, k) for k in get_data_service_classes().keys()]
     )
     name = CharFilter(lookup_expr='icontains')
@@ -265,7 +265,7 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         """
-        Saves the associated ``DataServiceQuery`` and redirects to the ``DataServiceQuery`` list.
+        Saves the associated ``DataServiceQuery`` if requested and redirects to the ``DataServiceQuery`` list.
         """
         if form.cleaned_data['query_save']:
             form.save(query_id=self.object.id)
