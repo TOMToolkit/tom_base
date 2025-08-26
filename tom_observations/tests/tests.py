@@ -26,6 +26,7 @@ from guardian.shortcuts import assign_perm
 class TestObservationViews(TestCase):
     def setUp(self):
         self.target = SiderealTargetFactory.create()
+        self.target2 = SiderealTargetFactory.create()
         self.target_name = TargetNameFactory.create(target=self.target)
         self.observation_record = ObservingRecordFactory.create(
             target_id=self.target.id,
@@ -76,6 +77,17 @@ class TestObservationViews(TestCase):
         """Test that an unauthenticated user is redirected to login screen if they attempt to update observations."""
         response = self.client.get(reverse('tom_observations:list') + '?update_status=True')
         self.assertEqual(response.status_code, 302)
+
+    def test_update_observations_two_observation(self):
+        """Test that updating observations doesn't crash for multiple targets with the same observation ID."""
+        observation_record2 = ObservingRecordFactory.create(
+            facility=FakeRoboticFacility.name,
+            target_id=self.target2.id,
+            observation_id=self.observation_record.observation_id,
+            parameters={}
+        )
+        response = self.client.get(reverse('tom_observations:list') + '?update_status=True', follow=True)
+        self.assertContains(response, 'COMPLETED', status_code=200)
 
     def test_get_observation_form(self):
         url = f"{reverse('tom_observations:create', kwargs={'facility': 'FakeRoboticFacility'})}" \
