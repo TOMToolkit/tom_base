@@ -80,7 +80,7 @@ class TestObservationViews(TestCase):
 
     def test_update_observations_two_observation(self):
         """Test that updating observations doesn't crash for multiple targets with the same observation ID."""
-        observation_record2 = ObservingRecordFactory.create(
+        ObservingRecordFactory.create(
             facility=FakeRoboticFacility.name,
             target_id=self.target2.id,
             observation_id=self.observation_record.observation_id,
