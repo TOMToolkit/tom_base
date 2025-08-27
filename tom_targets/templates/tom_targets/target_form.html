@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load bootstrap4 targets_extras %}
 {% block title %}New Target{% endblock %}
 {% block content %}
 {% if not object %}
@@ -24,6 +24,9 @@
 {% else %}
     {% bootstrap_form form %}
 {% endif %}
+{% for field in form.extra_fields %}
+  {% bootstrap_field form|extra_form_field:field %}
+{% endfor %}
 <h4>Permissions</h4>
 <div class="row mb-3" x-data="{permission: '{{ form.permissions.value }}' }">
     <div class="col-md-6">
