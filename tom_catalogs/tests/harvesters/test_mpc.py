@@ -201,6 +201,8 @@ class TestMPCHarvesterCanary(TestCase):
         self.assertAlmostEqual(target.inclination, 4.1688, places=4)
         self.assertAlmostEqual(target.mean_anomaly, 315.8420, places=4)
         self.assertAlmostEqual(target.semimajor_axis, 2.6555, places=4)
+        self.assertAlmostEqual(target.abs_mag, 17.76, places=2)
+        self.assertAlmostEqual(target.slope, 0.15, places=2)
 
     def test_query_designation_only(self):
         self.broker.query('2025 MB18')
@@ -215,6 +217,8 @@ class TestMPCHarvesterCanary(TestCase):
         self.assertEqual(target.dec, None)
         self.assertAlmostEqual(target.eccentricity, 0.1398, places=4)
         self.assertAlmostEqual(target.inclination, 19.3561, places=4)
+        self.assertAlmostEqual(target.abs_mag, 24.33, places=2)
+        self.assertAlmostEqual(target.slope, 0.15, places=2)
 
     def test_query_name(self):
         self.broker.query('1627')
@@ -229,6 +233,8 @@ class TestMPCHarvesterCanary(TestCase):
         self.assertEqual(target.dec, None)
         self.assertAlmostEqual(target.eccentricity, 0.3972, places=4)
         self.assertAlmostEqual(target.inclination, 8.4561, places=4)
+        self.assertAlmostEqual(target.abs_mag, 12.79, places=2)
+        self.assertAlmostEqual(target.slope, 0.15, places=2)
 
     def test_query_comet_name(self):
         self.broker.query('29P')
@@ -297,6 +303,8 @@ class TestMPCExplorerHarvester(TestCase):
         self.assertAlmostEqual(target.semimajor_axis, 1.6425997626135918, places=10)
         self.assertAlmostEqual(target.mean_daily_motion, 0.4681730823025772, places=10)
         self.assertAlmostEqual(target.mean_anomaly, 339.9299636288955, places=6)
+        self.assertAlmostEqual(target.abs_mag, 18.105, places=3)
+        self.assertAlmostEqual(target.slope, 0.15, places=2)
         self.assertEqual(target.ra, None)
         self.assertEqual(target.dec, None)
         self.assertEqual(target.pm_ra, None)
@@ -411,3 +419,5 @@ class TestMPCExplorerHarvesterCanary(TestCase):
         self.assertEqual(target.dec, None)
         self.assertAlmostEqual(target.eccentricity, 0.223, places=3)
         self.assertAlmostEqual(target.inclination, 10.828, places=3)
+        self.assertAlmostEqual(target.abs_mag, 10.39, places=2)
+        self.assertAlmostEqual(target.slope, 0.15, places=2)
