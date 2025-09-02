@@ -35,15 +35,15 @@
         </tr>
         {% for entry in observable_targets %}
             <tr>
-                {% if forloop.counter0 == 0 %}
-                    <td>
-                        <a href="{% url 'targets:detail' entry.id %}" title="{{ entry.name }}">{{ entry.names|join:", " }}</a>
-                    </td>
-                {% else %}
-                    {% for item in entry %}
+                {% for item in entry %}
+                    {% if forloop.counter0 == 0 %}
+                        <td>
+                            <a href="{% url 'targets:detail' item.id %}" title="{{ item.name }}">{{ item.names|join:", " }}</a>
+                        </td>
+                    {% else %}
                         <td>{{item}}</td>
-                    {% endfor %}
-                {% endif %}
+                    {% endif %}
+                {% endfor %}
             </tr>
         {% endfor %}
     {% endif %}

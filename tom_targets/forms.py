@@ -12,7 +12,7 @@ from .models import Target, TargetExtra, TargetName, TargetList, PersistentShare
 from tom_targets.base_models import (SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
                                      REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME,
                                      IGNORE_FIELDS)
-from datetime import datetime
+import datetime
 
 def extra_field_to_form_field(field_type):
     if field_type == 'number':
