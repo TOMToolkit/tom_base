@@ -62,7 +62,7 @@ from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_
 import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy import units as u
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -910,6 +910,7 @@ class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
         else:
             return HttpResponseBadRequest("Must have hermes section with HERMES_API_KEY set in DATA_SHARING settings")
 
+
 class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
     """
     View to select targets suitable to observe from a specific facility/location, taking into account target visibility
@@ -951,13 +952,9 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         visibiliy_intervals = 10
         context = super().get_context_data(*args, **kwargs)
 
-        # Gather the list of targets, either from the selected target list, or all targets accessible
-        # to the user.  This produces a QuerySet either way.
-        if len(request.POST.get('target_list')) > 0:
-            target_list = TargetList.objects.get(id=request.POST.get('target_list'))
-            targets = target_list.targets.all()
-        else:
-            targets = get_objects_for_user(request.user, 'tom_targets.view_target').distinct()
+        # Gather the list of targets from the selected target list.
+        target_list = TargetList.objects.get(id=request.POST.get('target_list'))
+        targets = target_list.targets.all()
 
         # Configure output target table.
         # The displayed table can be extended to include selected extra_fields for each target,
@@ -1002,6 +999,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         context['observable_targets'] = observable_targets
 
         return self.render_to_response(context)
+
 
 class PersistentShareManageFormView(APIView):
     renderer_classes = [TemplateHTMLRenderer]

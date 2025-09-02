@@ -14,6 +14,7 @@ from tom_targets.base_models import (SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUI
                                      IGNORE_FIELDS)
 import datetime
 
+
 def extra_field_to_form_field(field_type):
     if field_type == 'number':
         return forms.FloatField(required=False)
@@ -224,6 +225,7 @@ class TargetListShareForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['share_destination'].choices = get_sharing_destination_options()
 
+
 class TargetMergeForm(forms.Form):
     """
     Form for merging two duplicate targets with a primary target and secondary target
@@ -269,6 +271,7 @@ class PersistentShareForm(AdminPersistentShareForm):
             self.fields['target'].initial = self.target_id
             self.fields['target'].disabled = True
 
+
 class TargetSelectionForm(forms.Form):
     """
     Form for selecting the targets from a pre-existing TargetList
@@ -284,5 +287,6 @@ class TargetSelectionForm(forms.Form):
         widget=forms.TextInput(attrs={'type': 'date'}),
         help_text='YYYY-MM-DD'
     )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
