@@ -32,6 +32,9 @@ class JPLHorizonsHarvester(AbstractHarvester):
         for column in self.catalog_data.columns.values():
             if column[0] == 9.999999999999998e+99:
                 column[0] = None
+        # This needs additional work to "tidy up" the JPL response which is of the form
+        # '700000 (1994 UX10)' or '1627 Ivar (1929 SH)' and split the extra bits out into
+        # target.names
         target.name = str(self.catalog_data['targetname'][0])
         target.mean_anomaly = self.catalog_data['M'][0]  # mean anomaly in JPL astroquery column names
         target.arg_of_perihelion = self.catalog_data['w'][0]  # argument of the perifocus in JPL
@@ -46,4 +49,8 @@ class JPLHorizonsHarvester(AbstractHarvester):
         target.perihdist = self.catalog_data['q'][0]  # periapsis distance in JPL
         # undocumented in JPL astroquery column names -- presuming P is the orbital period in JPL
         target.ephemeris_period = self.catalog_data['P'][0]
+        # Extract absolute magnitude (H) and slope (G)
+        if 'H' in self.catalog_data.colnames and 'G' in self.catalog_data.colnames:
+            target.abs_mag = self.catalog_data['H'][0]
+            target.slope = self.catalog_data['G'][0]
         return target
