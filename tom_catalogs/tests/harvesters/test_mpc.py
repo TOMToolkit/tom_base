@@ -16,17 +16,15 @@ class TestMPCHarvester(TestCase):
                                        'ascending_node': '133.0747611',
                                        'designation': None,
                                        'eccentricity': '0.3972474',
-                                       'epoch_jd' : '2460800.5',
+                                       'epoch_jd': '2460800.5',
                                        'inclination': '8.45614',
                                        'mean_anomaly': '233.93148',
                                        'mean_daily_motion': '0.3875921',
                                        'name': 'Ivar',
                                        'neo': True,
                                        'number': 1627,
-                                       'phase_slope' : '0.6',
-                                       'semimajor_axis': '1.86303',
-        }
-        ]
+                                       'phase_slope': '0.6',
+                                       'semimajor_axis': '1.86303'}]
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_query_name(self, mock_query):

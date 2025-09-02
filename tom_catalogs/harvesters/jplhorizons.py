@@ -28,6 +28,11 @@ class JPLHorizonsHarvester(AbstractHarvester):
         target = super().to_target()
         target.type = 'NON_SIDEREAL'
         target.scheme = 'MPC_MINOR_PLANET'
+        asteroid = True
+        if 'M1' in self.catalog_data.colnames and 'k1' in self.catalog_data.colnames:
+            asteroid = False
+            target.scheme = 'MPC_COMET'
+
         # Remove awkward infinities from the catalog data
         for column in self.catalog_data.columns.values():
             if column[0] == 9.999999999999998e+99:
@@ -49,8 +54,11 @@ class JPLHorizonsHarvester(AbstractHarvester):
         target.perihdist = self.catalog_data['q'][0]  # periapsis distance in JPL
         # undocumented in JPL astroquery column names -- presuming P is the orbital period in JPL
         target.ephemeris_period = self.catalog_data['P'][0]
-        # Extract absolute magnitude (H) and slope (G)
-        if 'H' in self.catalog_data.colnames and 'G' in self.catalog_data.colnames:
+        # Extract absolute magnitude (H) and slope (G) or M1, k1 for comets
+        if asteroid:
             target.abs_mag = self.catalog_data['H'][0]
             target.slope = self.catalog_data['G'][0]
+        else:
+            target.abs_mag = self.catalog_data['M1'][0]
+            target.slope = self.catalog_data['k1'][0]
         return target

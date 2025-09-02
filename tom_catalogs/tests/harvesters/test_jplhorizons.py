@@ -1,10 +1,7 @@
-import json
-from importlib_resources import files
-
 from django.test import tag, TestCase
-from unittest.mock import MagicMock, patch
 
 from tom_catalogs.harvesters.jplhorizons import JPLHorizonsHarvester
+
 
 @tag('canary')
 class TestJPLHorizonsHarvesterCanary(TestCase):
@@ -24,7 +21,6 @@ class TestJPLHorizonsHarvesterCanary(TestCase):
         self.assertEqual(target.dec, None)
         self.assertAlmostEqual(target.eccentricity, 0.093, places=3)
         self.assertAlmostEqual(target.inclination, 4.1682, places=4)
-        self.assertAlmostEqual(target.mean_anomaly, 28.913, places=3)
         self.assertAlmostEqual(target.semimajor_axis, 2.6573, places=4)
         self.assertAlmostEqual(target.abs_mag, 17.76, places=2)
         self.assertAlmostEqual(target.slope, 0.15, places=2)
@@ -60,3 +56,19 @@ class TestJPLHorizonsHarvesterCanary(TestCase):
         self.assertAlmostEqual(target.inclination, 8.4563, places=4)
         self.assertAlmostEqual(target.abs_mag, 12.79, places=2)
         self.assertAlmostEqual(target.slope, 0.60, places=2)
+
+    def test_comet_query_desig(self):
+        self.broker.query('C/2025 A6')
+        target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
+        # Only test things that are not likely to change (much) with time
+        self.assertEqual(target.name, 'Lemmon (C/2025 A6)')
+        self.assertEqual(target.names, ['Lemmon (C/2025 A6)'])
+        self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_COMET')
+        self.assertEqual(target.ra, None)
+        self.assertEqual(target.dec, None)
+        self.assertAlmostEqual(target.eccentricity, 0.9956, places=4)
+        self.assertAlmostEqual(target.inclination, 143.6634, places=4)
+        self.assertAlmostEqual(target.abs_mag, 9.10, places=2)
+        self.assertAlmostEqual(target.slope, 15.0, places=2)
