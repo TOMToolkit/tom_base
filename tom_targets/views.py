@@ -8,12 +8,16 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
+from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Q
+from django_filters.views import FilterView
+from django.http import HttpResponse
 from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse, HttpResponseBadRequest
 from django.forms import HiddenInput
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
@@ -21,10 +25,12 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormVi
 from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
-from django_filters.views import FilterView
+from rest_framework.views import APIView
+from rest_framework.renderers import TemplateHTMLRenderer
+from rest_framework.response import Response
 
 from guardian.mixins import PermissionListMixin
-from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
+from guardian.shortcuts import get_groups_with_perms, assign_perm
 
 from tom_common.hints import add_hint
 from tom_common.hooks import run_hook
@@ -33,8 +39,10 @@ from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
-from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetSelectionForm
+from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetMergeForm, \
+    UnknownTypeTargetCreateForm, TargetSelectionForm
 from tom_targets.sharing import share_target_with_tom
+from tom_targets.merge import target_merge
 from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
                                       share_target_list_with_hermes)
 from tom_dataproducts.models import ReducedDatum
@@ -42,18 +50,24 @@ from tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
     move_all_to_grouping, move_selected_to_grouping
 )
+from tom_targets.merge import (merge_error_message)
 from tom_targets.models import Target, TargetList
+from tom_targets.persistent_sharing_serializers import PersistentShareSerializer
+from tom_targets.permissions import targets_for_user
+from tom_targets.templatetags.targets_extras import target_merge_fields, persistent_share_table
 from tom_targets.utils import import_targets, export_targets
 from tom_observations.utils import get_sidereal_visibility
+from tom_targets.seed import seed_messier_targets
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
 import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
-class TargetListView(PermissionListMixin, FilterView):
+class TargetListView(FilterView):
     """
     View for listing targets in the TOM. Only shows targets that the user is authorized to view. Requires authorization.
     """
@@ -62,7 +76,7 @@ class TargetListView(PermissionListMixin, FilterView):
     strict = False
     model = Target
     filterset_class = TargetFilter
-    permission_required = 'tom_targets.view_target'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
     ordering = ['-created']
 
     def get_context_data(self, *args, **kwargs):
@@ -75,12 +89,17 @@ class TargetListView(PermissionListMixin, FilterView):
         """
         context = super().get_context_data(*args, **kwargs)
         context['target_count'] = context['paginator'].count
+        context['empty_database'] = not Target.objects.exists()
         # hide target grouping list if user not logged in
         context['groupings'] = (TargetList.objects.all()
                                 if self.request.user.is_authenticated
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
         return context
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        return targets_for_user(self.request.user, qs, 'view_target')
 
 
 class TargetNameSearchView(RedirectView):
@@ -94,7 +113,7 @@ class TargetNameSearchView(RedirectView):
         # Tests fail without distinct but it works in practice, it is unclear as to why
         # The Django query planner shows different results between in practice and unit tests
         # django-guardian related querying is present in the test planner, but not in practice
-        targets = get_objects_for_user(request.user, 'tom_targets.view_target').filter(
+        targets = targets_for_user(request.user, Target.objects.all(), 'view_target').filter(
             Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name)
         ).distinct()
         if targets.count() == 1:
@@ -108,6 +127,8 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
     View for creating a Target. Requires authentication.
     """
 
+    # Target Views require explicit template names since the Model Class names are variable.
+    template_name = 'tom_targets/target_form.html'
     model = Target
     fields = '__all__'
 
@@ -233,11 +254,11 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
         return form
 
 
-class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
+class TargetUpdateView(LoginRequiredMixin, UpdateView):
     """
     View that handles updating a target. Requires authorization.
     """
-    permission_required = 'tom_targets.change_target'
+    template_name = 'tom_targets/target_form.html'
     model = Target
     fields = '__all__'
 
@@ -291,7 +312,8 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
         :returns: Set of targets
         :rtype: QuerySet
         """
-        return get_objects_for_user(self.request.user, 'tom_targets.change_target')
+        qs = super().get_queryset(*args, **kwargs)
+        return targets_for_user(self.request.user, qs, 'change_target')
 
     def get_form_class(self):
         """
@@ -304,6 +326,8 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
             return SiderealTargetCreateForm
         elif self.object.type == Target.NON_SIDEREAL:
             return NonSiderealTargetCreateForm
+        else:
+            return UnknownTypeTargetCreateForm
 
     def get_initial(self):
         """
@@ -332,13 +356,18 @@ class TargetUpdateView(Raise403PermissionRequiredMixin, UpdateView):
         return form
 
 
-class TargetDeleteView(Raise403PermissionRequiredMixin, DeleteView):
+class TargetDeleteView(LoginRequiredMixin, DeleteView):
     """
     View for deleting a target. Requires authorization.
     """
-    permission_required = 'tom_targets.delete_target'
+    template_name = 'tom_targets/target_confirm_delete.html'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
     success_url = reverse_lazy('targets:list')
     model = Target
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        return targets_for_user(self.request.user, qs, 'delete_target')
 
 
 class TargetShareView(FormView):
@@ -346,7 +375,8 @@ class TargetShareView(FormView):
     View for sharing a target. Requires authorization.
     """
     template_name = 'tom_targets/target_share.html'
-    permission_required = 'tom_targets.share_target'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
+    permission_required = f'{Target._meta.app_label}.change_target'
     form_class = TargetShareForm
 
     def get_context_data(self, *args, **kwargs):
@@ -412,12 +442,21 @@ class TargetShareView(FormView):
         return redirect(self.get_success_url())
 
 
-class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
+class TargetDetailView(DetailView):
     """
-    View that handles the display of the target details. Requires authorization.
+    View that handles the display of the target details.
     """
-    permission_required = 'tom_targets.view_target'
+    template_name = 'tom_targets/target_detail.html'
     model = Target
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        qs = targets_for_user(self.request.user, qs, 'view_target')
+        if not qs.exists() and Target.objects.filter(pk=self.kwargs.get("pk")).exists():
+            # Not great hack in order to permission denied instead of 404
+            raise PermissionDenied('You do not have permission to view this target')
+        else:
+            return qs
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -436,6 +475,7 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
             )
         observation_template_form.fields['target'].widget = HiddenInput()
         context['observation_template_form'] = observation_template_form
+        context['target'] = self.object
         return context
 
     def get(self, request, *args, **kwargs):
@@ -477,7 +517,8 @@ class TargetDetailView(Raise403PermissionRequiredMixin, DetailView):
 
 class TargetHermesPreloadView(SingleObjectMixin, View):
     model = Target
-    permission_required = 'tom_targets.share_target'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
+    permission_required = f'{Target._meta.app_label}.change_target'
 
     def post(self, request, *args, **kwargs):
         target = self.get_object()
@@ -552,6 +593,113 @@ class TargetExportView(TargetListView):
         return response
 
 
+class TargetMergeView(FormView):
+    """
+    View that handles choosing the primary target in the process of merging targets
+    """
+
+    template_name = 'tom_targets/target_merge.html'
+    form_class = TargetMergeForm
+
+    def get_name_select_choices(self, pk1, pk2):
+        """
+        Puts user selected targets in a choice field on the target_merge.html page,
+        using the target pk's.
+        """
+        first_target = Target.objects.get(id=pk1)
+        second_target = Target.objects.get(id=pk2)
+        choices = [
+            (first_target.id, first_target.name),
+            (second_target.id, second_target.name)
+        ]
+        return choices
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds the target information to the context.
+        :returns: context object
+        :rtype: dict
+        """
+        context = super().get_context_data(*args, **kwargs)
+        first_target_id = self.kwargs.get('pk1', None)
+        first_target = Target.objects.get(id=first_target_id)
+        context['target1'] = first_target
+        second_target_id = self.kwargs.get('pk2', None)
+        second_target = Target.objects.get(id=second_target_id)
+        context['target2'] = second_target
+        initial = {'target1': first_target,
+                   'target2': second_target}
+
+        form = TargetMergeForm(initial=initial)
+        form.fields['name_select'].choices = self.get_name_select_choices(first_target_id, second_target_id)
+        context['form'] = form
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = TargetMergeForm(request.POST)
+
+        first_target_id = int(self.kwargs.get('pk1', None))
+        second_target_id = int(self.kwargs.get('pk2', None))
+        # let the form name_select field know what it's choices are
+        # these were determined at run time
+        form.fields['name_select'].choices = self.get_name_select_choices(
+            first_target_id, second_target_id)
+
+        if form.is_valid():
+            primary_target_id = int(form.cleaned_data['name_select'])
+            if primary_target_id == first_target_id:
+                secondary_target_id = second_target_id
+            else:
+                secondary_target_id = first_target_id
+            primary_target = Target.objects.get(id=primary_target_id)
+            secondary_target = Target.objects.get(id=secondary_target_id)
+            if 'confirm' in request.POST:  # redirects user to an updated target detail page with merged targets
+                target_merge(primary_target, secondary_target)
+                return redirect('tom_targets:detail', pk=primary_target_id)
+            return redirect('tom_targets:merge', pk1=primary_target_id, pk2=secondary_target_id)
+        else:
+            messages.warning(request, form.errors)
+            return redirect('tom_targets:merge',
+                            pk1=first_target_id, pk2=second_target_id)
+
+    def get(self, request, *args, **kwargs):
+        """When called as a result of the Primary Target name_select field being
+        changed, request.htmx will be True and this should update the
+        target_field inclusiontag/partial (via render_to_string) according to
+        the selected target.
+
+        If this is not an HTMX request, just call super().get.
+        """
+        if request.htmx:
+            pk1 = int(self.kwargs.get('pk1', None))
+            pk2 = int(self.kwargs.get('pk2', None))
+
+            # get the target_id of the selected target: it's the primary
+            primary_target_id = int(request.GET.get('name_select', None))
+
+            # decide which of pk1 or pk2 is primary (i.e. it matches name_select)
+            if pk1 == primary_target_id:  # first is primary, so
+                secondary_target_id = pk2
+            else:  # second is primary, so
+                secondary_target_id = pk1
+
+            # get the actual Target instances for these target_ids
+            primary_target = Target.objects.get(id=primary_target_id)
+            secondary_target = Target.objects.get(id=secondary_target_id)
+
+            # render the table with those targets via the inclusiontag
+            target_table_html = render_to_string(
+                'tom_targets/partials/target_merge_fields.html',
+                context=target_merge_fields(primary_target, secondary_target))
+
+            # replace the old target_field table with the newly rendered one
+            return HttpResponse(target_table_html)
+        else:
+            # not an HTMX request
+            return super().get(request, *args, **kwargs)
+
+
 class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
     """
     View that handles addition and removal of targets to target groups. Requires authentication.
@@ -568,34 +716,40 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
         query_string = request.POST.get('query_string', '')
         grouping_id = request.POST.get('grouping')
         filter_data = QueryDict(query_string)
-        try:
-            grouping_object = TargetList.objects.get(pk=grouping_id)
-        except Exception as e:
-            messages.error(request, 'Cannot find the target group with id={}; {}'.format(grouping_id, e))
-            return redirect(reverse('tom_targets:list') + '?' + query_string)
-        if not request.user.has_perm('tom_targets.view_targetlist', grouping_object):
-            messages.error(request, 'Permission denied.')
-            return redirect(reverse('tom_targets:list') + '?' + query_string)
+        if 'merge' in request.POST:
+            target_ids = request.POST.getlist('selected-target')
+            if len(target_ids) == 2:
+                return redirect('tom_targets:merge', pk1=target_ids[0], pk2=target_ids[1])
+            else:
+                merge_error_message(request)
+        else:
+            try:
+                grouping_object = TargetList.objects.get(pk=grouping_id)
+            except Exception as e:
+                messages.error(request, 'Cannot find the target group with id={}; {}'.format(grouping_id, e))
+                return redirect(reverse('tom_targets:list') + '?' + query_string)
+            if not request.user.has_perm('tom_targets.view_targetlist', grouping_object):
+                messages.error(request, 'Permission denied.')
+                return redirect(reverse('tom_targets:list') + '?' + query_string)
 
-        if 'add' in request.POST:
-            if request.POST.get('isSelectAll') == 'True':
-                add_all_to_grouping(filter_data, grouping_object, request)
-            else:
-                targets_ids = request.POST.getlist('selected-target')
-                add_selected_to_grouping(targets_ids, grouping_object, request)
-        if 'remove' in request.POST:
-            if request.POST.get('isSelectAll') == 'True':
-                remove_all_from_grouping(filter_data, grouping_object, request)
-            else:
-                targets_ids = request.POST.getlist('selected-target')
-                remove_selected_from_grouping(targets_ids, grouping_object, request)
-        if 'move' in request.POST:
-            if request.POST.get('isSelectAll') == 'True':
-                move_all_to_grouping(filter_data, grouping_object, request)
-            else:
-                target_ids = request.POST.getlist('selected-target')
-                move_selected_to_grouping(target_ids, grouping_object, request)
-
+            if 'add' in request.POST:
+                if request.POST.get('isSelectAll') == 'True':
+                    add_all_to_grouping(filter_data, grouping_object, request)
+                else:
+                    targets_ids = request.POST.getlist('selected-target')
+                    add_selected_to_grouping(targets_ids, grouping_object, request)
+            if 'remove' in request.POST:
+                if request.POST.get('isSelectAll') == 'True':
+                    remove_all_from_grouping(filter_data, grouping_object, request)
+                else:
+                    targets_ids = request.POST.getlist('selected-target')
+                    remove_selected_from_grouping(targets_ids, grouping_object, request)
+            if 'move' in request.POST:
+                if request.POST.get('isSelectAll') == 'True':
+                    move_all_to_grouping(filter_data, grouping_object, request)
+                else:
+                    target_ids = request.POST.getlist('selected-target')
+                    move_selected_to_grouping(target_ids, grouping_object, request)
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 
 
@@ -656,7 +810,8 @@ class TargetGroupingShareView(FormView):
     View for sharing a TargetList. Requires authorization.
     """
     template_name = 'tom_targets/target_group_share.html'
-    permission_required = 'tom_targets.share_target'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
+    permission_required = f'{Target._meta.app_label}.change_target'
     form_class = TargetListShareForm
 
     def get_context_data(self, *args, **kwargs):
@@ -725,7 +880,8 @@ class TargetGroupingShareView(FormView):
 
 class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
     model = TargetList
-    permission_required = 'tom_targets.share_target'
+    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
+    permission_required = f'{Target._meta.app_label}.change_target'
 
     def post(self, request, *args, **kwargs):
         targetlist = self.get_object()
@@ -752,7 +908,6 @@ class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
             return HttpResponseRedirect(load_url)
         else:
             return HttpResponseBadRequest("Must have hermes section with HERMES_API_KEY set in DATA_SHARING settings")
-
 
 class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
     """
@@ -846,3 +1001,43 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         context['observable_targets'] = observable_targets
 
         return self.render_to_response(context)
+
+class PersistentShareManageFormView(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'tom_targets/target_manage_persistent_shares.html'
+    permission_required = f'{Target._meta.app_label}.change_target'
+    serializer_class = PersistentShareSerializer
+
+    def get(self, request):
+        return Response({'target': None})
+
+
+class TargetPersistentShareManageFormView(PersistentShareManageFormView):
+    def get(self, request, target_pk):
+        return Response({'target': Target.objects.get(pk=target_pk)})
+
+
+class PersistentShareManageTable(View):
+    def get(self, request):
+        context = {'request': request}
+        return render(request,
+                      'tom_targets/partials/persistent_share_table.html',
+                      context=persistent_share_table(context, None))
+
+
+class TargetPersistentShareManageTable(View):
+    def get(self, request, target_pk):
+        context = {'request': request}
+        target = Target.objects.get(pk=target_pk)
+        return render(request,
+                      'tom_targets/partials/persistent_share_table.html',
+                      context=persistent_share_table(context, target))
+
+
+class TargetSeedView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        seed_messier_targets()
+        return redirect(reverse('targets:list'))
+
+    def get(self, request, *args, **kwargs):
+        return redirect(reverse('targets:list'))

@@ -18,7 +18,7 @@ class LasairBrokerForm(GenericQueryForm):
                                widget=forms.TextInput(attrs={'placeholder': '1.2345'}))
     cone_radius = forms.CharField(required=False, label='Radius', help_text='Search Radius (Arcsec)', initial='10',
                                   widget=forms.TextInput(attrs={'placeholder': '10'}))
-    sqlquery = forms.CharField(required=False, label='SQL Query Conditions',
+    sqlquery = forms.CharField(required=False, label='SQL Query the "Objects" table.',
                                help_text='The "WHERE" criteria to restrict which objects are returned. '
                                          '(i.e. gmag < 12.0)')
 
@@ -27,8 +27,8 @@ class LasairBrokerForm(GenericQueryForm):
         self.helper.layout = Layout(
             HTML('''
                     <p>
-                    Please see the <a href="https://lasair-ztf.lsst.ac.uk/api" target="_blank">Lasair website</a> for
-                    more detailed instructions on querying the broker.
+                    Please see the <a href="https://lasair.readthedocs.io/en/main/core_functions/rest-api.html#"
+                    target="_blank">Lasair website</a> for more detailed instructions on querying the broker.
                 '''),
             self.common_layout,
             Fieldset(
@@ -79,11 +79,34 @@ def get_lasair_object(obj):
 
 class LasairBroker(GenericBroker):
     """
-    The ``LasairBroker`` is the interface to the Lasair alert broker. For information regarding the query format for
-    Lasair, please see https://lasair-ztf.lsst.ac.uk/.
+    The ``LasairBroker`` is the interface to the Lasair alert broker.
 
-    Requires a LASAIR_TOKEN in settings.py.
-    See https://lasair-ztf.lsst.ac.uk/api for details about how to acquire an authorization token.
+    To include the ``LasairBroker`` in your TOM, add the broker module location to your `TOM_ALERT_CLASSES` list in
+    your ``settings.py``:
+
+    .. code-block:: python
+
+        TOM_ALERT_CLASSES = [
+            'tom_alerts.brokers.lasair.LasairBroker',
+            ...
+        ]
+
+    Requires a `LASAIR['api_key']` value in the `BROKERS` dictionary in your settings.py.
+
+    Create an account at https://lasair-ztf.lsst.ac.uk/, log in, and check your profile page for your API token.
+    Add the api key to your settings.py file as follows, storing the token in an environment variable for security:
+
+    .. code-block:: python
+
+        BROKERS = {
+            'LASAIR': {
+                'api_key': os.getenv('LASAIR_API_KEY', ''),
+            },
+            ...
+        }
+
+    For information regarding the query format for
+    Lasair, please see https://lasair.readthedocs.io/en/main/core_functions/rest-api.html#.
     """
 
     name = 'Lasair'
@@ -94,11 +117,14 @@ class LasairBroker(GenericBroker):
         broker_feedback = ''
         object_ids = ''
         try:
-            token = settings.LASAIR_TOKEN
-        except AttributeError:
-            broker_feedback += 'Requires a LASAIR_TOKEN in settings.py. See https://lasair-ztf.lsst.ac.uk/api' \
-                               ' for details about how to acquire an authorization token.'
-            return iter(alerts), broker_feedback
+            token = settings.BROKERS['LASAIR']['api_key']
+        except KeyError:
+            try:
+                token = settings.LASAIR_TOKEN
+            except AttributeError:
+                broker_feedback += "Requires a `api_key` in settings.BROKERS['LASAIR']. Log in or create an" \
+                                   " account at https://lasair-ztf.lsst.ac.uk/ to acquire an API token."
+                return iter(alerts), broker_feedback
 
         # Check for Cone Search
         if 'cone_ra' in parameters and len(parameters['cone_ra'].strip()) > 0 and\

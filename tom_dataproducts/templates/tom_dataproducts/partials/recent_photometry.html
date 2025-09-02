@@ -16,7 +16,7 @@
             <td>
                 <!-- prepend greater-than sign if this is a magnitude limit -->
                 {% if datum.limit %}>{% endif %}
-                {{ datum.magnitude|truncate_number }}
+                {{ datum.magnitude|truncate_value_for_display:8 }}
             </td>
         </tr>
         {% empty %}

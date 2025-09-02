@@ -7,6 +7,7 @@ from django.contrib.messages import get_messages
 from django.forms import ValidationError
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from astroplan import FixedTarget
 from astropy.coordinates import get_sun, SkyCoord
@@ -204,8 +205,8 @@ class TestObservationCancelView(TestCase):
     @mock.patch('tom_observations.tests.utils.FakeRoboticFacility.get_observation_status')
     def test_cancel_observation(self, mock_get_status):
         mock_get_status.return_value = {'state': 'CANCELED',
-                                        'scheduled_start': datetime.now(),
-                                        'scheduled_end': datetime.now()}
+                                        'scheduled_start': timezone.now(),
+                                        'scheduled_end': timezone.now()}
         self.observation_record.status = 'PENDING'
         self.observation_record.save()
 
@@ -234,7 +235,7 @@ class TestObservationCancelView(TestCase):
                    TARGET_PERMISSIONS_ONLY=True)
 class TestAddExistingObservationView(TestCase):
     def setUp(self):
-        self.target = SiderealTargetFactory.create()
+        self.target = SiderealTargetFactory.create(permissions='PUBLIC')
         self.user = User.objects.create_user(username='vincent_adultman', password='important')
         self.client.force_login(self.user)
 
@@ -384,13 +385,13 @@ class TestUpdatingObservations(TestCase):
     def test_update_all_observations_for_facility(self):
         with mock.patch.object(FakeRoboticFacility, 'update_observation_status') as uos_mock:
             FakeRoboticFacility().update_all_observation_statuses()
-            self.assertEquals(uos_mock.call_count, 2)
+            self.assertEqual(uos_mock.call_count, 2)
 
     # Tests that only the observing records associated with the given target are updated
     def test_update_individual_target_observations_for_facility(self):
         with mock.patch.object(FakeRoboticFacility, 'update_observation_status', return_value='COMPLETED') as uos_mock:
             FakeRoboticFacility().update_all_observation_statuses(target=self.t1)
-            self.assertEquals(uos_mock.call_count, 2)
+            self.assertEqual(uos_mock.call_count, 2)
 
 
 class TestGetVisibility(TestCase):

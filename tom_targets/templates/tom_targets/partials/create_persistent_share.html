@@ -1,0 +1,90 @@
+{% load bootstrap4 targets_extras static %}
+{% if form %}
+<form method="post" class="form" id='target-persistent-share-create-form'>
+  {% csrf_token %}
+  <div class="form-row" style="padding-inline:1rem">
+      <div class="col-sm-4">
+          {% bootstrap_field form.destination %}
+      </div>
+      {% if not target %}
+      <div class="col-sm-2">
+          {% bootstrap_field form.target %}
+      </div>
+      {% endif %}
+      <div class="col-sm-4 offset-sm-1" style="align-content:end;">
+        {% bootstrap_field form.share_existing_data %}
+      </div>
+      <div class="col-sm-1">
+        {% if target %}
+        <input type="button" class="btn btn-primary" value="Create" onclick="createPersistentShare('{% url 'targets:persistent-share' %}', '{% url 'targets:target-persistent-share-manage-table' target.pk %}')" style="position:absolute; bottom:1rem"/>
+        {% else %}
+        <input type="button" class="btn btn-primary" value="Create" onclick="createPersistentShare('{% url 'targets:persistent-share' %}', '{% url 'targets:persistent-share-manage-table' %}')" style="position:absolute; bottom:1rem"/>
+        {% endif %}
+      </div>
+  </div>
+  <div class="form-row">
+    <div class="alert alert-danger" role="alert" id="create_persistent_share_error" style="display:none">
+      <div class="row">
+        <div class="col-sm-11">
+          <p id="create_persistent_share_error_msg"></p>
+        </div>
+        <div class="col-sm-1">
+          <button type="button" class="close" aria-label="Close" onclick="hidePSErrorAlert()">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% buttons %}
+  {% endbuttons %}
+</form>
+{% else %}
+<div>
+  <p>You do not have permission to Continuously Share data. Please contact the TOM administrator.</p>
+</div>
+{% endif %}
+<script>
+  async function createPersistentShare(createUrl, updateUrl) {
+    var target_id = document.getElementById('id_target').value;
+    var destination = document.getElementById('id_destination').value;
+    var share_existing = document.getElementById('id_share_existing_data').checked;
+    var payload = {
+      "destination": destination,
+      "target": target_id,
+      "share_existing_data": share_existing
+    }
+    const response = await fetch(createUrl, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: {
+        'X-CSRFToken': "{{ csrf_token }}",
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    if (response.ok && !response.redirected) {
+      updatePersistentShareTable(updateUrl);
+    }
+    else{
+      var error_msg = document.getElementById('create_persistent_share_error_msg');
+      if (!response.redirected) {
+        const responseJson = await response.json();
+        error_msg.innerText = 'Failed to create Persisten Share: ' + JSON.stringify(responseJson);
+      }
+      else {
+        error_msg.innerText = 'Failed to create Persisten Share: Your account lacks the proper permissions. Please contact the TOM administrator.';
+      }
+      var error_msg_alert = document.getElementById('create_persistent_share_error');
+      error_msg_alert.style.display = "block";
+    }
+  }
+
+  function hidePSErrorAlert() {
+    var error_msg = document.getElementById('create_persistent_share_error_msg');
+    error_msg.innerText = '';
+    var error_msg_alert = document.getElementById('create_persistent_share_error');
+    error_msg_alert.style.display = "none";
+  }
+</script>

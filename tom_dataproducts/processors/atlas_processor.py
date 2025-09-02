@@ -1,11 +1,16 @@
+import logging
 import mimetypes
 
 from astropy import units
 import astropy.io.ascii
 from astropy.time import Time, TimezoneInfo
+import numpy as np
+from django.core.files.storage import default_storage
 
 from tom_dataproducts.data_processor import DataProcessor
 from tom_dataproducts.exceptions import InvalidFileFormatException
+
+logger = logging.getLogger(__name__)
 
 
 class AtlasProcessor(DataProcessor):
@@ -15,7 +20,7 @@ class AtlasProcessor(DataProcessor):
 
     def process_data(self, data_product):
         """
-        Routes a atlas processing call to a method specific to a file-format.
+        Routes an atlas processing call to a method specific to a file-format.
 
         :param data_product: Photometric DataProduct which will be processed into the specified format for database
         ingestion
@@ -25,7 +30,12 @@ class AtlasProcessor(DataProcessor):
         :rtype: list
         """
 
-        mimetype = mimetypes.guess_type(data_product.data.path)[0]
+        try:
+            mimetype = mimetypes.guess_type(data_product.data.path)[0]
+        except NotImplementedError:
+            mimetype = 'text/plain'
+        logger.debug(f'Processing Atlas data with mimetype {mimetype}')
+
         if mimetype in self.PLAINTEXT_MIMETYPES:
             photometry = self._process_photometry_from_plaintext(data_product)
             return [(datum.pop('timestamp'), datum, datum.pop('source', 'ATLAS')) for datum in photometry]
@@ -51,7 +61,8 @@ class AtlasProcessor(DataProcessor):
         photometry = []
         signal_to_noise_cutoff = 3.0  # cutoff to turn magnitudes into non-detection limits
 
-        data = astropy.io.ascii.read(data_product.data.path)
+        data_file = default_storage.open(data_product.data.name, 'r')
+        data = astropy.io.ascii.read(data_file.read())
         if len(data) < 1:
             raise InvalidFileFormatException('Empty table or invalid file type')
 
@@ -63,17 +74,16 @@ class AtlasProcessor(DataProcessor):
                 value = {
                     'timestamp': time.to_datetime(timezone=utc),
                     'filter': str(datum['F']),
-                    'error': float(datum['dm']),
                     'telescope': 'ATLAS',
                 }
-                # If the signal is in the noise, set the non-detection limit to the
-                # absolute value of the reported magnitude.
+                # If the signal is in the noise, calculate the non-detection limit from the reported flux uncertainty.
                 # see https://fallingstar-data.com/forcedphot/resultdesc/
-                signal_to_noise = abs(float(datum['uJy']))/abs(float(datum['duJy']))
+                signal_to_noise = float(datum['uJy']) / float(datum['duJy'])
                 if signal_to_noise <= signal_to_noise_cutoff:
-                    value['limit'] = abs(float(datum['m']))
+                    value['limit'] = 23.9 - 2.5 * np.log10(signal_to_noise_cutoff * float(datum['duJy']))
                 else:
-                    value['magnitude'] = abs(float(datum['m']))
+                    value['magnitude'] = float(datum['m'])
+                    value['error'] = float(datum['dm'])
 
                 photometry.append(value)
         except Exception as e:

@@ -4,7 +4,7 @@
 {% block content %}
 {% if not object %}
   <h3>Create a Target</h3>
-  <ul class="nav nav-tabs">
+  <ul class="nav nav-tabs mb-2">
     {% for k, v in type_choices %}
       <li class="nav-item">
         <a class="nav-link {% if form.type.initial == k %} active {% endif %}" href="{% url 'targets:create' %}?type={{ k }}">{{ v  }}</a>
@@ -12,19 +12,44 @@
     {% endfor %}
 {% else %}
 <h3> Update {{ object.name }}</h3>
-
 {% endif %}
 </ul>
-{% if not object %}
-  <form method="post" class="form">
-{% else %}
-  <form method="post" class="form">
-{% endif %}
+{% bootstrap_form_errors form %}
+<form method="post" class="form">
 {% csrf_token %}
-{% bootstrap_form form %}
-{% bootstrap_formset names_form %}
-<h3>Tags</h3>
-{% bootstrap_formset extra_form %}
+{% if form.type.initial == 'SIDEREAL' %}
+    {% include 'tom_targets/partials/sidereal_target_form.html' %}
+{% elif form.type.initial == 'NON_SIDEREAL' %}
+    {% include 'tom_targets/partials/non_sidereal_target_form.html' %}
+{% else %}
+    {% bootstrap_form form %}
+{% endif %}
+<h4>Permissions</h4>
+<div class="row mb-3" x-data="{permission: '{{ form.permissions.value }}' }">
+    <div class="col-md-6">
+        <select x-model="permission" name="permissions" class="form-control" id="id_permissions">
+          <option value="OPEN">Open</option>
+          <option value="PUBLIC">Public</option>
+          <option value="PRIVATE">Private</option>
+        </select>
+        <div class="form-text text-muted">
+          <small>Open: Targets will be visible to all users, even if not logged-in.<br/>
+          Public: Targets will be visible to all logged in users.<br/>
+          Private: Targets will be visible only to members of the selected groups.</small>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div x-show="permission == 'PRIVATE'" x-transition>
+            <span>Target will only be visibile to members of these groups:</span>
+            {% bootstrap_field form.groups show_label=False %}
+            {% if not request.user.groups.exists %}
+                <p class="text-muted">No groups have been created.<br/>
+                  <a href="{% url 'group-create' %}">Create groups.</a>
+                </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% buttons %}
   {% if not object %}
   <button type="submit" formaction="{% url 'targets:create' %}"class="btn btn-primary">Submit</button>

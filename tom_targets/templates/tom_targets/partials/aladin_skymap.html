@@ -1,0 +1,127 @@
+<!-- embedding Aladin Lite example code found at: https://aladin.cds.unistra.fr/AladinLite/doc/  -->
+<div id="aladin-lite-div" style="width:auto; height:700px; margin:auto; margin-top: 20px;" ></div>
+
+<script type="text/javascript">
+(async function loadAladin() {
+    const scriptKey = "cachedAladinJS";
+
+    if (sessionStorage.getItem(scriptKey)) {
+        // Load script from sessionStorage
+        const scriptContent = sessionStorage.getItem(scriptKey);
+        const script = document.createElement("script");
+        script.type = "text/javascript";
+        script.text = scriptContent;
+        document.head.appendChild(script);
+        console.log("Loaded aladin.js from sessionStorage");
+    } else {
+        // Fetch and cache the script
+        console.log("Fetching aladin.js ...");
+        const response = await fetch("https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js");
+        const scriptText = await response.text();
+        sessionStorage.setItem(scriptKey, scriptText);
+
+        // Inject script into the document
+        const script = document.createElement("script");
+        script.type = "text/javascript";
+        script.text = scriptText;
+        document.head.appendChild(script);
+        console.log("Fetched aladin.js and saved to sessionStorage");
+    }
+
+    // Initialize Aladin after script loads
+
+    A.init.then(() => {
+        window.aladin = A.aladin("#aladin-lite-div", {
+            survey: "P/DSS2/color",
+            fov: 360,
+            projection: "MOL",
+            showReticle: false,
+            showCooGrid: true,
+            showCooGridControl: true,
+        });
+
+        aladin.setCooGrid({ color: 'grey', labelSize: 10 });
+
+        // extract the targets from the context
+        var targets = {{ targets|safe }}; //targets cannot be a queryset; here it is a list of dictionaries
+
+        // define catalog for the targets
+        var catalogOptions = {
+            name: 'Targets',
+            color: 'blue',
+            sourceSize: 16};
+
+        // add targets to the catalog
+        for (var i = 0; i < targets.length; i++) {
+            var target = targets[i];
+            var targetCatalog = A.catalog({name: target.name , color: 'blue', sourceSize: 16});
+            aladin.addCatalog(targetCatalog);
+            popupInfo = ['RA: '.concat(target.ra, '<br>',  'Dec: ', target.dec)];
+            targetCatalog.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popupInfo})]);
+        }
+
+        // extract Moon information from the context
+        const moonRaDeg = {{ moon_ra|safe }};
+        const moonDecDeg = {{ moon_dec|safe }};
+        const moonIllumination = {{ moon_illumination|safe }}.toFixed(3);
+        const moonGreyscale = 255 * moonIllumination;
+
+        // get a unicode representation of the Moon based on illumination fraction
+        var unicodeMoon;
+        if (moonIllumination <= 0.125 ) {
+            unicodeMoon = "\uD83C\uDF11";
+        } else if (moonIllumination <= 0.375) {
+            unicodeMoon = "\uD83C\uDF12";
+        } else if (moonIllumination <= 0.625) {
+            unicodeMoon = "\uD83C\uDF13";
+        } else if (moonIllumination <= 0.875) {
+            unicodeMoon = "\uD83C\uDF14";
+        } else if (moonIllumination <= 1.0) {
+            unicodeMoon = "\uD83C\uDF15";
+        }
+
+        // Create a text based symbol for the moon centered on the source coordinates
+        var drawMoon = function(source, canvasCtx) {
+            canvasCtx.globalAlpha = 1;
+            canvasCtx.font = '25px Arial';
+            canvasCtx.fillStyle = '#eee';
+            canvasCtx.textBaseline = 'middle';
+            canvasCtx.textAlign = 'center';
+            canvasCtx.fillText(unicodeMoon, source.x, source.y);
+        };
+
+        // create a catalog for the moon
+        const moonImage = A.catalog({shape: drawMoon, color: 'gray', name: 'Moon'});
+
+        const popupMoonDescription = `Illumination: ${moonIllumination} <br> RA: ${moonRaDeg.toFixed(4)} <br> Dec: ${moonDecDeg.toFixed(4)}`;
+
+        moonImage.addSources([A.marker(moonRaDeg, moonDecDeg,
+            {popupTitle: 'Moon (Geocentric)',
+            popupDesc: popupMoonDescription,
+            })]);
+
+        aladin.addCatalog(moonImage);
+
+        // now add the sun in its own catalog
+        const sunCatalog = A.catalog({
+            name: 'Sun',
+            shape: 'circle',
+            color: 'yellow',
+            sourceSize: 30}); // fontSize from Moon canvas plus 5 to match sizes
+
+        const sunRaDeg = {{ sun_ra|safe }};
+        const sunDecDeg = {{ sun_dec|safe }};
+
+        const popupSunDescription = `RA: ${sunRaDeg.toFixed(4)} <br> Dec: ${sunDecDeg.toFixed(4)}`;
+
+        sunCatalog.addSources([A.marker(sunRaDeg, sunDecDeg,
+            {popupTitle: 'Sun (Geocentric)',
+            popupDesc: popupSunDescription,
+            })]);
+
+        aladin.addCatalog(sunCatalog);
+
+    }); // closes A.init.then(() { ...
+
+})();
+</script>

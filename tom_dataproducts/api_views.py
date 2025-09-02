@@ -10,9 +10,10 @@ from rest_framework.viewsets import GenericViewSet
 
 from tom_common.hooks import run_hook
 from tom_dataproducts.data_processor import run_data_processor
-from tom_dataproducts.filters import DataProductFilter
+from tom_dataproducts.filters import DataProductFilter, ReducedDatumFilter
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
+from tom_targets.models import Target
 
 
 class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, GenericViewSet, PermissionListMixin):
@@ -65,7 +66,7 @@ class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, Ge
         """
         if settings.TARGET_PERMISSIONS_ONLY:
             return super().get_queryset().filter(
-                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+                target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')
             )
         else:
             return get_objects_for_user(self.request.user, 'tom_dataproducts.view_dataproduct')
@@ -76,15 +77,11 @@ class ReducedDatumViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, G
     Viewset for ReducedDatum objects. Supports list, create, and delete.
 
     To view supported query parameters, please use the OPTIONS endpoint, which can be accessed through the web UI.
-
-    **Please note that ``groups`` are an accepted query parameters for the ``CREATE`` endpoint. The groups parameter
-    will specify which ``groups`` can view the created ``DataProduct``. If no ``groups`` are specified, the
-    ``ReducedDatum`` will only be visible to the user that created the ``DataProduct``. Make sure to check your
-    ``groups``!!**
     """
     queryset = ReducedDatum.objects.all()
     serializer_class = ReducedDatumSerializer
     filter_backends = (drf_filters.DjangoFilterBackend,)
+    filterset_class = ReducedDatumFilter
     permission_required = 'tom_dataproducts.view_reduceddatum'
     parser_classes = [FormParser, JSONParser]
 

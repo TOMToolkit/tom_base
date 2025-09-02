@@ -1,0 +1,38 @@
+<table id="id_target_merge_fields" class="table table-bordered table-striped table-sm">
+    <thead class="table-secondary">
+        <tr>
+            <th>Property</th>
+            <th>Primary (<a href="{% url 'targets:detail' target1_data.id %}" title="{{ target.name }}">{{target1_data.name}}</a>)</th>
+            <th>Secondary (<a href="{% url 'targets:detail' target2_data.id %}" title="{{ target.name }}">{{target2_data.name}}</a>)</th>
+            <th>Result</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr></tr>
+        {% for key,value1,value2 in combined_target_data %}
+        {# these if statements filter out the rows without data #}
+            {% if value1 or value2 %}
+                {% if value1 != 'None' or value2 != 'None' %}
+                <tr>
+                    <th>{{ key }}</th>
+                    <td>{{ value1 }}</td>
+                    <td>{{ value2 }}</td>
+                    {% if key == 'aliases' %}
+                        <td>{{ value1 }}, {{ target2_data.name }}, {{ value2 }}</td>
+                    {% else %}
+                        {% if key == 'target lists' %}
+                            <td>{{ value1 }}, {{ value2 }}</td>
+                        {% else %}
+                            {% if value1 and value1 != 'None'%}
+                                <td>{{ value1 }}</td>
+                            {% else %}
+                                <td>{{ value2 }}</td>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                </tr>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </tbody>
+</table>

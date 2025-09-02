@@ -46,7 +46,8 @@ class TestObservationViewset(APITestCase):
 
         with self.subTest('Test that a user cannot view an ObservationRecord for a target they cannot view.'):
             response = self.client.get(reverse('api:observations-detail', args=(self.obsr3.id,)))
-            self.assertContains(response, 'Not found.', status_code=status.HTTP_404_NOT_FOUND)
+            self.assertContains(response, 'No ObservationRecord matches the given query.',
+                                status_code=status.HTTP_404_NOT_FOUND)
 
     def test_observation_list(self):
         """Test observation API list endpoint."""
@@ -68,7 +69,7 @@ class TestObservationViewset(APITestCase):
         }
         response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
         self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
-        self.assertDictContainsSubset({'test_input': 'gnomes'}, response.json()[0]['parameters'])
+        self.assertEqual(response.json()[0]['parameters'], response.json()[0]['parameters'] | {'test_input': 'gnomes'})
 
     def test_observation_submit_invalid_parameters(self):
         """Test observation API submit endpoint with unsuccessful submissions."""
@@ -123,8 +124,9 @@ class TestObservationViewset(APITestCase):
 
         response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
         self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
-        self.assertDictContainsSubset({'name': f'{self.st.name} at FakeRoboticFacility'},
-                                      response.json()[0].get('observation_groups', [])[0])
+        obs_group_response = response.json()[0].get('observation_groups', [])[0]
+        expected_name = {'name': f'{self.st.name} at FakeRoboticFacility'}
+        self.assertEqual(obs_group_response, obs_group_response | expected_name)
         self.assertIn(
             'ResumeCadenceAfterFailureStrategy with parameters {\'cadence_frequency\': 24}',
             response.json()[0].get('observation_groups', [])[0].get('dynamic_cadences', []))
@@ -146,8 +148,9 @@ class TestObservationViewset(APITestCase):
 
         response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
         self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
-        self.assertDictContainsSubset({'name': f'{self.st.name} at FakeRoboticFacility'},
-                                      response.json()[0].get('observation_groups', [])[0])
+        obs_group_response = response.json()[0].get('observation_groups', [])[0]
+        expected_name = {'name': f'{self.st.name} at FakeRoboticFacility'}
+        self.assertEqual(obs_group_response, obs_group_response | expected_name)
 
     def test_observation_submit_cadence_invalid_parameters(self):
         """Test observation API submit endpoint with cadences that are unsuccessful submissions."""
@@ -204,7 +207,8 @@ class TestObservationViewset(APITestCase):
 
         self.client.force_login(user2)
         response = self.client.patch(reverse('api:observations-cancel', kwargs={'pk': self.obsr2.id}))
-        self.assertContains(response, 'Not found.', status_code=status.HTTP_404_NOT_FOUND)
+        self.assertContains(response, 'No ObservationRecord matches the given query.',
+                            status_code=status.HTTP_404_NOT_FOUND)
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility',
@@ -241,7 +245,8 @@ class TestObservationViewsetRowLevelPermissions(APITestCase):
 
         with self.subTest('Test that a user cannot view an ObservationRecord for which they lack permissions.'):
             response = self.client.get(reverse('api:observations-detail', args=(self.obsr3.id,)))
-            self.assertContains(response, 'Not found.', status_code=status.HTTP_404_NOT_FOUND)
+            self.assertContains(response, 'No ObservationRecord matches the given query.',
+                                status_code=status.HTTP_404_NOT_FOUND)
 
     def test_observation_submit_with_permissions(self):
         """Test observation API submit endpoint with groups."""
@@ -260,7 +265,7 @@ class TestObservationViewsetRowLevelPermissions(APITestCase):
 
         response = self.client.post(reverse('api:observations-list'), data=form_data, follow=True)
         self.assertContains(response, 'fakeid', status_code=status.HTTP_201_CREATED)
-        self.assertDictContainsSubset({'test_input': 'gnomes'}, response.json()[0]['parameters'])
+        self.assertEqual(response.json()[0]['parameters'], response.json()[0]['parameters'] | {'test_input': 'gnomes'})
 
         # Test that user in testgroup can see observation
         self.client.force_login(self.user)
@@ -286,4 +291,5 @@ class TestObservationViewsetRowLevelPermissions(APITestCase):
 
         self.client.force_login(user2)
         response = self.client.patch(reverse('api:observations-cancel', kwargs={'pk': self.obsr2.id}))
-        self.assertContains(response, 'Not found.', status_code=status.HTTP_404_NOT_FOUND)
+        self.assertContains(response, 'No ObservationRecord matches the given query.',
+                            status_code=status.HTTP_404_NOT_FOUND)

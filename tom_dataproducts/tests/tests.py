@@ -1,5 +1,6 @@
-import os
+import datetime
 from http import HTTPStatus
+import os
 import tempfile
 import responses
 
@@ -10,8 +11,10 @@ from datetime import date, time
 from django.test import TestCase, override_settings
 from django.conf import settings
 from django.contrib.auth.models import Group, User
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
+from django.utils import timezone
 from guardian.shortcuts import assign_perm
 import numpy as np
 from specutils import Spectrum1D
@@ -523,6 +526,84 @@ class TestDataProductModel(TestCase):
                         'ignore_missing_simple=True')
 
             self.assertIn(expected, logs.output)
+
+
+class TestReducedDatumModel(TestCase):
+    def setUp(self):
+        # set up a ReducedDatum instance to test against
+        self.target = SiderealTargetFactory.create()
+        self.data_type = 'photometry'
+        self.source_name = 'test_source'
+        self.timestamp = timezone.now()
+        self.existing_reduced_datum_value = {
+            'magnitude': 18.5,
+            'error': .5,
+            'filter': 'r',
+            'telescope': 'ELP.domeA.1m0a',
+            'instrument': 'fa07'}
+        self.existing_reduced_datum = ReducedDatum.objects.create(
+            target=self.target,
+            data_type=self.data_type,
+            source_name=self.source_name,
+            timestamp=self.timestamp,
+            value=self.existing_reduced_datum_value)
+
+    def test_create_reduced_datum(self):
+        """Test that we can add a second unique ReducedDatum"""
+        second_reduced_datum_value = {
+            'magnitude': 10.5,
+            'error': 1.5,
+            'filter': 'g',
+            'telescope': 'ELP.domeA.1m0a',
+            'instrument': 'fa07'}
+
+        ReducedDatum.objects.create(
+            target=self.target,
+            data_type='photometry',
+            source_name='test_source',
+            timestamp=self.timestamp,
+            value=second_reduced_datum_value)
+
+        self.assertEqual(2, ReducedDatum.objects.count())
+
+    def test_create_reduced_datum_duplicate(self):
+        """Test that we cannot add a second ReducedDatum with the same target, data_type,
+        timestamp, and value dict"""
+        # in this case ALL fields are the same as the self.existing_reduced_datum
+        with self.assertRaises(ValidationError):
+            ReducedDatum.objects.create(
+                target=self.target,
+                data_type=self.data_type,
+                source_name=self.source_name,
+                timestamp=self.timestamp,
+                value=self.existing_reduced_datum_value)
+
+        # in this case only the target, data_type and value fields
+        # are the same as the self.existing_reduced_datum
+        # so an exception should NOT be raised
+        try:
+            ReducedDatum.objects.create(
+                target=self.target,
+                data_type=self.data_type,
+                source_name='new_source_name',
+                timestamp=(self.timestamp - datetime.timedelta(days=1)),  # different timestamp
+                value=self.existing_reduced_datum_value)
+        except ValidationError:
+            self.fail("ValidationError raised when it should not have been (timestamps differ)")
+
+        # by NOT raising ValidationError, this shows that
+        # ReducedDatum.objects.bulk_create() bypasses the ReducedDatum.save()
+        # method which validated uniqueness!!
+        # (this is a duplicate ReducedDatum that we are trying to add here
+        unsaved_reduced_datum = ReducedDatum(
+            target=self.target,
+            data_type=self.data_type,
+            source_name=self.source_name,
+            timestamp=self.timestamp,
+            value=self.existing_reduced_datum_value)
+        # does bulk_create bypass the ReducedDatum.save() method which validated uniqueness?
+        # (this is a duplicate ReducedDatum that we are trying to add here
+        ReducedDatum.objects.bulk_create([unsaved_reduced_datum])
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],

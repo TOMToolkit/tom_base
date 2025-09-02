@@ -1,0 +1,16 @@
+{% extends 'tom_common/base.html' %}
+{% load tom_common_extras user_extras %}
+{% load bootstrap4 %}
+{% block title %}User Profile{% endblock %}
+{% block content %}
+<h3>
+    {% if user.first_name or user.last_name %}
+        {{ user.first_name }} {{ user.last_name }} ({{ user.username }})
+    {% else %}
+        {{ user.username }}
+    {% endif %}
+</h3>
+
+{% show_app_profiles user %}
+
+{% endblock %}

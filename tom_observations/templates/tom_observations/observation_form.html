@@ -8,6 +8,9 @@
 {% block content %}
 {{ form|as_crispy_errors }}
 <h3>Submit an observation to {{ form.facility.value }} for <a href="{% url 'targets:detail' pk=target.id %}">{{target.name}}</a></h3>
+{% if facility_link %}
+    Please see the <a href="{{ facility_link }}" target="_blank">facility documentation</a> for more information.
+{% endif %}
 {% if missing_configurations %}
     <div class="alert alert-danger">Some {{ form.facility.value }} Facility settings ({{ missing_configurations }}) are not configured.</div>
 {% endif %}
@@ -17,6 +20,8 @@
     {% observation_plan target form.facility.value %}
     </div>
 </div>
+{% else %}
+<hr>
 {% endif %}
 <div class="row">
     <div class="col-md-6">

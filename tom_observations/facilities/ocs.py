@@ -15,7 +15,8 @@ from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.cadence import CadenceForm
 from tom_observations.facility import BaseRoboticObservationFacility, BaseRoboticObservationForm, get_service_class
 from tom_observations.observation_template import GenericTemplateForm
-from tom_targets.models import Target, REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
+from tom_targets.models import Target
+from tom_targets.base_models import REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 
 logger = logging.getLogger(__name__)
 
@@ -498,30 +499,7 @@ class OCSConfigurationLayout(Layout):
 
     def _get_config_layout(self, instance, oe_groups):
         return (
-            Alert(
-                content="""When using multiple configurations, ensure the instrument types are all
-                            available on the same telescope class.
-                        """,
-                css_class='alert-warning'
-            ),
-            Div(
-                Div(
-                    f'c_{instance}_instrument_type',
-                    css_class='col'
-                ),
-                Div(
-                    f'c_{instance}_configuration_type',
-                    css_class='col'
-                ),
-                css_class='form-row'
-            ),
-            Div(
-                Div(
-                    f'c_{instance}_repeat_duration',
-                    css_class='col'
-                ),
-                css_class='form-row'
-            ),
+            *self._get_basic_config_layout(instance),
             *self._get_target_override(instance),
             Accordion(
                 *self.get_initial_accordion_items(instance),
@@ -563,6 +541,34 @@ class OCSConfigurationLayout(Layout):
         """ Override in the subclasses to add items at the end of the accordion group
         """
         return ()
+
+    def _get_basic_config_layout(self, instance):
+        return (
+            Alert(
+                content="""When using multiple configurations, ensure the instrument types are all
+                                        available on the same telescope class.
+                                    """,
+                css_class='alert-warning'
+            ),
+            Div(
+                Div(
+                    f'c_{instance}_instrument_type',
+                    css_class='col'
+                ),
+                Div(
+                    f'c_{instance}_configuration_type',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            ),
+            Div(
+                Div(
+                    f'c_{instance}_repeat_duration',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            ),
+        )
 
     def _get_target_override(self, instance):
         if instance == 1:
@@ -639,6 +645,13 @@ class OCSInstrumentConfigLayout(Layout):
     def _get_ic_layout(self, config_instance, instance, oe_groups):
         return (
             *self.get_initial_ic_items(config_instance, instance),
+            Div(
+                Div(
+                    f'c_{config_instance}_ic_{instance}_readout_mode',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            ),
             Div(
                 Div(
                     f'c_{config_instance}_ic_{instance}_exposure_time',
@@ -971,6 +984,8 @@ class OCSFullObservationForm(OCSBaseObservationForm):
                 label='Substitute Target for this Configuration'
             )
             for i in range(self.facility_settings.get_setting('max_instrument_configs')):
+                self.fields[f'c_{j + 1}_ic_{i + 1}_readout_mode'] = forms.ChoiceField(
+                    choices=self.mode_choices('readout'), required=False, label='Readout Mode')
                 self.fields[f'c_{j+1}_ic_{i+1}_exposure_count'] = forms.IntegerField(
                     min_value=1, label='Exposure Count', initial=1, required=False)
                 self.fields[f'c_{j+1}_ic_{i+1}_exposure_time'] = forms.FloatField(
@@ -1098,7 +1113,8 @@ class OCSFullObservationForm(OCSBaseObservationForm):
         instrument_config = {
             'exposure_count': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_count'],
             'exposure_time': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time'],
-            'optical_elements': {}
+            'optical_elements': {},
+            'mode': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode']
         }
         for oe_group in self.get_optical_element_groups():
             instrument_config['optical_elements'][oe_group] = self.cleaned_data.get(

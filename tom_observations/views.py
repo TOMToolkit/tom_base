@@ -11,8 +11,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.management import call_command
-from django_filters import (CharFilter, ChoiceFilter, DateTimeFromToRangeFilter, FilterSet, ModelMultipleChoiceFilter,
-                            OrderingFilter)
+from django_filters import CharFilter, ChoiceFilter, DateTimeFromToRangeFilter, ModelMultipleChoiceFilter
+from django_filters import OrderingFilter, MultipleChoiceFilter, rest_framework
 from django_filters.views import FilterView
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -31,14 +31,14 @@ from tom_dataproducts.models import is_fits_image_file
 from tom_observations.cadence import CadenceForm, get_cadence_strategy
 from tom_observations.facility import get_service_class, get_service_classes
 from tom_observations.facility import BaseManualObservationFacility
-from tom_observations.forms import AddExistingObservationForm
+from tom_observations.forms import AddExistingObservationForm, facility_choices
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
 from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 
 
-class ObservationFilter(FilterSet):
+class ObservationFilter(rest_framework.FilterSet):
     """
     Defines the available fields for filtering the list of ``ObservationRecord`` objects.
     """
@@ -46,10 +46,28 @@ class ObservationFilter(FilterSet):
         fields=['scheduled_start', 'scheduled_end', 'status', 'created', 'modified']
     )
     scheduled_start = DateTimeFromToRangeFilter()
-    scheduled_end = DateTimeFromToRangeFilter
+    scheduled_end = DateTimeFromToRangeFilter()
+    target_id = ModelMultipleChoiceFilter(
+        queryset=Target.objects.filter(observationrecord__isnull=False).distinct().order_by('name')
+    )
     observationgroup = ModelMultipleChoiceFilter(
         label='Observation Groups', queryset=ObservationGroup.objects.all()
     )
+    facility = MultipleChoiceFilter(choices=facility_choices())
+
+    def __init__(self, *args, **kwargs):
+        """
+        The "status" filter is populated dynamically via list comprehension here in the __init__ (at runtime).
+        This is important because the `ObservationRecord` db table doesn't necessarily exist at
+        Class-interpretation-time
+        """
+        super().__init__(*args, **kwargs)
+        self.status = MultipleChoiceFilter(
+            choices=[
+                (s, s) for s in
+                ObservationRecord.objects.values_list('status', flat=True).order_by('status').distinct()
+            ]
+        )
 
     class Meta:
         model = ObservationRecord
@@ -75,7 +93,7 @@ class ObservationListView(FilterView):
         """
         if settings.TARGET_PERMISSIONS_ONLY:
             return ObservationRecord.objects.filter(
-                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+                target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')
             )
         else:
             return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
@@ -205,7 +223,10 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         # reloaded due to form errors, only repopulate the form that was submitted.
         observation_type_choices = []
         initial = self.get_initial()
-        for observation_type, observation_form_class in self.get_facility_class().observation_forms.items():
+        facility = self.get_facility_class()()
+        facility.set_user(self.request.user)
+        observation_form_classes = facility.get_form_classes_for_display(**kwargs)
+        for observation_type, observation_form_class in observation_form_classes.items():
             form_data = {**initial, **{'observation_type': observation_type}}
             # Repopulate the appropriate form with form data if the original submission was invalid
             if observation_type == self.request.POST.get('observation_type'):
@@ -222,10 +243,10 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         context['target'] = target
 
         # allow the Facility class to add data to the context
-        facility = self.get_facility_class()()
-        facility.set_user(self.request.user)
         facility_context = facility.get_facility_context_data(target=target)
         context.update(facility_context)
+
+        context['facility_link'] = getattr(facility, 'link', '')
 
         try:
             context['missing_configurations'] = ", ".join(facility.facility_settings.get_unconfigured_settings())
@@ -493,7 +514,7 @@ class ObservationRecordDetailView(DetailView):
         """
         if settings.TARGET_PERMISSIONS_ONLY:
             return ObservationRecord.objects.filter(
-                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+                target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')
             )
         else:
             return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
@@ -573,7 +594,7 @@ class ObservationGroupDeleteView(Raise403PermissionRequiredMixin, DeleteView):
     success_url = reverse_lazy('tom_observations:group-list')
 
 
-class ObservationTemplateFilter(FilterSet):
+class ObservationTemplateFilter(rest_framework.FilterSet):
     """
     Defines the available fields for filtering the list of ``ObservationTemplate`` objects.
     """

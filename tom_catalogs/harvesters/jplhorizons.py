@@ -28,6 +28,10 @@ class JPLHorizonsHarvester(AbstractHarvester):
         target = super().to_target()
         target.type = 'NON_SIDEREAL'
         target.scheme = 'MPC_MINOR_PLANET'
+        # Remove awkward infinities from the catalog data
+        for column in self.catalog_data.columns.values():
+            if column[0] == 9.999999999999998e+99:
+                column[0] = None
         target.name = str(self.catalog_data['targetname'][0])
         target.mean_anomaly = self.catalog_data['M'][0]  # mean anomaly in JPL astroquery column names
         target.arg_of_perihelion = self.catalog_data['w'][0]  # argument of the perifocus in JPL

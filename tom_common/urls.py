@@ -20,12 +20,14 @@ from django.views.generic import TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.conf import settings
 from django.conf.urls.static import static
+from django.apps import apps
 from rest_framework.authtoken import views
 
 from tom_base import __version__
 from tom_common.api_views import GroupViewSet
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
-from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
+from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView, UserProfileView
+from tom_common.views import robots_txt
 
 from .api_router import collect_api_urls, SharedAPIRootRouter  # DRF routers are setup in each INSTALL_APPS url.py
 
@@ -34,7 +36,17 @@ router.register(r'groups', GroupViewSet, 'groups')
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'),
-         kwargs={'version': __version__}, name='home'),
+         kwargs={'version': __version__}, name='home')]
+
+# Add the urls from each app that has an include_url_paths method in its AppConfig
+for app in apps.get_app_configs():
+    try:
+        urlpatterns += app.include_url_paths()
+    except AttributeError:
+        pass
+
+urlpatterns += [
+    path('robots.txt', robots_txt, name='robots_txt'),
     path('targets/', include('tom_targets.urls', namespace='targets')),
     path('alerts/', include('tom_alerts.urls', namespace='alerts')),
     path('comments/', include('django_comments.urls')),
@@ -46,6 +58,7 @@ urlpatterns = [
     path('users/create/', UserCreateView.as_view(), name='user-create'),
     path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user-delete'),
     path('users/<int:pk>/update/', UserUpdateView.as_view(), name='user-update'),
+    path('users/profile/', UserProfileView.as_view(), name='user-profile'),
     path('groups/create/', GroupCreateView.as_view(), name='group-create'),
     path('groups/<int:pk>/update/', GroupUpdateView.as_view(), name='group-update'),
     path('groups/<int:pk>/delete/', GroupDeleteView.as_view(), name='group-delete'),
@@ -55,7 +68,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     path('api/', include((collect_api_urls(), 'api'), namespace='api')),
-    path('api/token-auth/', views.obtain_auth_token)
+    path('api/token-auth/', views.obtain_auth_token),
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
  ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

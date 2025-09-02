@@ -8,6 +8,7 @@
 
     <!-- Bootstrap CSS -->
     {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'font-awesome-4.7.0/css/font-awesome.min.css' %}">
     <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
     <link rel="stylesheet" href="{% static 'tom_common/css/custom.css' %}">
     {% block additional_css %}
@@ -15,6 +16,10 @@
     <link rel="icon" type="image/x-icon" href="{% static 'tom_common/img/favicon-32.ico' %}" sizes="32x32" />
 
     {% bootstrap_javascript jquery='True' %}
+    <!-- htmx.min.js was downloaded manually and added to the project. see https://htmx.org/docs/#download-a-copy -->
+    <script src="{% static 'tom_common/js/htmx.min.js' %}" defer></script>
+    <!-- Loading AlpineJS from a CDN For now, todo solution for 3rd party static assets. -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <title>{% tom_name %} | {% block title %}{% endblock %}</title>
   </head>

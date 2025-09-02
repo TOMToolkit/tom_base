@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db.models import Q
 import django_filters
 
-from tom_targets.models import Target, TargetList, TargetMatchManager
+from tom_targets.models import Target, TargetList
 from tom_targets.utils import cone_search_filter
 
 
@@ -41,7 +41,22 @@ def filter_text(queryset, name, value):
     return queryset.filter(targetextra__key=name, targetextra__value__icontains=value)
 
 
-class TargetFilter(django_filters.FilterSet):
+class TargetFilter(django_filters.rest_framework.FilterSet):
+    """
+    Filters are available for Target objects:
+        - type: Filter by target type (e.g., 'SIDEREAL', 'NON_SIDEREAL').
+        - name: Filter by target name or alias.
+        - key: Filter by a specific key in the target's extra fields.
+        - value: Filter by a specific value in the target's extra fields.
+        - cone_search: Perform a cone search around a given position (RA,Dec,Radius).
+        - targetlist__name: Filter by the name of the target list the target belongs to.
+        - name_fuzzy: Perform a fuzzy search on the target name or aliases.
+        - target_cone_search: Perform a cone search on the target's position (radius).
+        - order: Order the results by a specific field ('name', 'created', 'modified')
+
+    Access these filters via the API endpoint:
+        `GET /api/targets/?type=<type>&cone_search=<ra,dec,radius>`
+    """
     key = django_filters.CharFilter(field_name='targetextra__key', label='Key')
     value = django_filters.CharFilter(field_name='targetextra__value', label='Value')
 
@@ -70,14 +85,7 @@ class TargetFilter(django_filters.FilterSet):
         Return a queryset for targets with names or aliases fuzzy matching the given coma-separated list of terms.
         A fuzzy match is determined by the `make_simple_name` method of the `TargetMatchManager` class.
         """
-        matching_names = []
-        for term in value.split(','):
-            simple_name = TargetMatchManager.make_simple_name(self, term)
-            for target in Target.objects.all().prefetch_related('aliases'):
-                for alias in target.names:
-                    if TargetMatchManager.make_simple_name(self, alias) == simple_name:
-                        matching_names.append(target.name)
-        return queryset.filter(name__in=matching_names).distinct()
+        return Target.matches.match_fuzzy_name(value, queryset).distinct()
 
     cone_search = django_filters.CharFilter(method='filter_cone_search', label='Cone Search',
                                             help_text='RA, Dec, Search Radius (degrees)')

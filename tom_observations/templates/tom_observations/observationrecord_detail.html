@@ -18,7 +18,12 @@
       {% endif %}
       <p class="my-auto"><strong>Observation ID:</strong> {{ object.observation_id }}</p>
       <p class="my-auto"><strong>Created:</strong> {{ object.created }} <strong>Modified:</strong> {{ object.modified }}</p>
-      <p class="my-auto"><strong>Status:</strong> {{ object.status }}</p>
+      <p class="my-auto">
+        <strong>Status:</strong> {{ object.status }}
+        {% if object.status == 'PENDING' %}
+          <a class="btn btn-danger" href="{% url 'tom_observations:cancel' pk=object.pk %}">Cancel Observation</a>
+        {% endif %}
+      </p>
     </div>
     <p></p>
     {% upload_dataproduct object %}

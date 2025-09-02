@@ -62,7 +62,7 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
             # Though it's next to impossible for a user to observe a target they don't have permission to view, this
             # queryset ensures that such an edge case is covered.
             return super().get_queryset().filter(
-                Q(target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')) |
+                Q(target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')) |
                 Q(user=self.request.user.id)
             )
         else:
@@ -81,7 +81,7 @@ class ObservationRecordViewSet(GenericViewSet, CreateModelMixin, ListModelMixin,
         observation_ids = []
         try:
             facility = get_service_class(self.request.data['facility'])()
-            observation_form_class = facility.observation_forms[self.request.data['observation_type']]
+            observation_form_class = facility.get_form_classes_for_display()[self.request.data['observation_type']]
             target = Target.objects.get(pk=self.request.data['target_id'])
             observing_parameters = self.request.data['observing_parameters']
         except KeyError as ke:

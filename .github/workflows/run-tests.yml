@@ -13,7 +13,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install poetry
+        python -m pip install "poetry>=2.0,<3.0"
         poetry install --with lint
     - name: Style Checks
       run: poetry run flake8 tom_* --exclude=*/migrations/* --max-line-length=120
@@ -22,8 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.10", "3.9", "3.8"]
-        # 3.12 not working yet for numpy 1.24
+        python-version: ["3.12", "3.11", "3.10", "3.9"]
         os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v2
@@ -33,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install poetry
+          python -m pip install "poetry>=2.0,<3.0"
           poetry env info  # display poetry's env info for debugging
           poetry install  --with test,coverage,lint
       - name: Run Tests
@@ -50,7 +49,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install poetry
+          python -m pip install "poetry>=2.0,<3.0"
           poetry install --with test,coverage,lint
       - name: Run Tests
         run: poetry run coverage run --include=tom_* manage.py test --exclude-tag=canary

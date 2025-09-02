@@ -82,7 +82,13 @@ class BaseObservationForm(forms.Form):
             self.button_layout()
         )
 
-    def layout(self):
+    def layout(self) -> Layout:
+        """Define (and return) a crispy_forms.Layout for the fields of your subclass.
+        It will be inserted after the common_layout and before the button_layout, as
+        defined above in __init__(), where self.helper.layout is assigned.
+
+        This method should be implemented in your subclass to define the layout of your form fields.
+        """
         return
 
     def button_layout(self):
@@ -184,6 +190,7 @@ class BaseObservationFacility(ABC):
     the other BaseObservationFacilities.
     """
     name = 'BaseObservation'
+    observation_forms = {}
 
     def __init__(self):
         self.user = None
@@ -220,6 +227,16 @@ class BaseObservationFacility(ABC):
         """
         This method takes in an observation type and returns the form type that matches it.
         """
+
+    def get_form_classes_for_display(self, **kwargs):
+        """
+        This method returns a dictionary of the format:
+
+            {'OBSERVATION_TYPE': FacilityFormClass}
+
+        Typically this will be all or a subset of the forms in `self.observation_forms`
+        """
+        return self.observation_forms
 
     def get_facility_context_data(self, **kwargs):
         """

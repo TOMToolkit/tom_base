@@ -1,6 +1,3 @@
-# Place dramatiq asynchronous tasks here - they are auto-discovered
-
-import dramatiq
 import requests
 import time
 import logging
@@ -10,6 +7,7 @@ from urllib.parse import urlparse
 from django.conf import settings
 from django.utils import timezone
 from django.core.files.base import ContentFile
+from django_tasks import task
 
 from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct
@@ -20,17 +18,18 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-@dramatiq.actor(max_retries=0)
-def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type):
+@task
+def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type, use_reduced=False):
     logger.debug('Calling atlas query!')
     target = Target.objects.get(pk=target_id)
-    headers = {"Authorization": f"Token {settings.FORCED_PHOTOMETRY_SERVICES.get('ATLAS', {}).get('api_key')}",
+    headers = {"Authorization": f"Token {settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('api_key')}",
                "Accept": "application/json"}
-    base_url = settings.FORCED_PHOTOMETRY_SERVICES.get('ATLAS', {}).get('url')
+    base_url = settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('url')
     task_url = None
     while not task_url:
         with requests.Session() as s:
-            task_data = {"ra": target.ra, "dec": target.dec, "mjd_min": min_date_mjd, "send_email": False}
+            task_data = {"ra": target.ra, "dec": target.dec, "mjd_min": min_date_mjd, "send_email": False,
+                         "use_reduced": use_reduced}
             if max_date_mjd:
                 task_data['mjd_max'] = max_date_mjd
             resp = s.post(

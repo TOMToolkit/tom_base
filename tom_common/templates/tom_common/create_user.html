@@ -9,6 +9,11 @@
 {% endif %}
 {% csrf_token %}
 {% bootstrap_form form %}
+{% bootstrap_formset form.user_profile_formset %}
+  {% if object.pk != current_user.pk %}
+  <p class="text-danger">WARNING: Changing the password for user <b>{{ object.username }}</b> will clear out all of
+    their saved external service API keys and passwords (if any).</p>
+  {% endif %}
 {% buttons %}
   <button type="submit" class="btn btn-primary">
     {% if object %}

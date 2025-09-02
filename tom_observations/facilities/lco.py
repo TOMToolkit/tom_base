@@ -55,6 +55,14 @@ class LCOSettings(OCSSettings):
         </a>
     """
 
+    rotator_mode_help = """
+        Only for FLOYDS.
+    """
+
+    rotator_angle_help = """
+        Rotation angle of slit. Only for Floyds `Slit Position Angle` rotator mode.
+    """
+
     fractional_ephemeris_rate_help = """
         <em>Fractional Ephemeris Rate.</em> Will track with target motion if left blank. <br/>
         <b><em>Caution:</em></b> Setting any value other than "1" will cause the target to slowly drift from the central
@@ -92,39 +100,39 @@ class LCOSettings(OCSSettings):
         return {
             'Siding Spring': {
                 'sitecode': 'coj',
-                'latitude': -31.272,
-                'longitude': 149.07,
+                'latitude': -31.273,
+                'longitude': 149.071,
                 'elevation': 1116
             },
             'Sutherland': {
                 'sitecode': 'cpt',
-                'latitude': -32.38,
-                'longitude': 20.81,
-                'elevation': 1804
+                'latitude': -32.381,
+                'longitude': 20.810,
+                'elevation': 1760
             },
             'Teide': {
                 'sitecode': 'tfn',
-                'latitude': 20.3,
-                'longitude': -16.511,
-                'elevation': 2390
+                'latitude': 28.300,
+                'longitude': -16.512,
+                'elevation': 2330
             },
             'Cerro Tololo': {
                 'sitecode': 'lsc',
                 'latitude': -30.167,
-                'longitude': -70.804,
+                'longitude': -70.805,
                 'elevation': 2198
             },
             'McDonald': {
                 'sitecode': 'elp',
-                'latitude': 30.679,
+                'latitude': 30.680,
                 'longitude': -104.015,
-                'elevation': 2027
+                'elevation': 2070
             },
             'Haleakala': {
                 'sitecode': 'ogg',
-                'latitude': 20.706,
+                'latitude': 20.707,
                 'longitude': -156.258,
-                'elevation': 3065
+                'elevation': 3055
             }
         }
 
@@ -166,6 +174,16 @@ class LCOConfigurationLayout(OCSConfigurationLayout):
                                   css_class='form-col'
                               )
                               )
+
+
+class ImagingConfigurationLayout(LCOConfigurationLayout):
+    def _get_basic_config_layout(self, instance):
+        return super()._get_basic_config_layout(instance) + (
+            Div(
+                    f'c_{instance}_guide_mode',
+                    css_class='form-row'
+                ),
+        )
 
 
 class MuscatConfigurationLayout(LCOConfigurationLayout):
@@ -516,6 +534,13 @@ class LCOImagingObservationForm(LCOFullObservationForm):
     Imagers and their details can be found here: https://lco.global/observatory/instruments/
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Need to add guiding
+        for j in range(self.facility_settings.get_setting('max_configurations')):
+            self.fields[f'c_{j+1}_guide_mode'] = forms.ChoiceField(
+                choices=self.mode_choices('guiding'), required=False, initial='ON', label='Guide Mode')
+
     def get_instruments(self):
         instruments = super().get_instruments()
         return {
@@ -523,11 +548,20 @@ class LCOImagingObservationForm(LCOFullObservationForm):
                 'IMAGE' == instrument['type'] and 'MUSCAT' not in code and 'SOAR' not in code)
         }
 
+    def configuration_layout_class(self):
+        return ImagingConfigurationLayout
+
     def form_name(self):
         return 'image'
 
     def configuration_type_choices(self):
         return [('EXPOSE', 'Exposure'), ('REPEAT_EXPOSE', 'Exposure Sequence')]
+
+    def _build_guiding_config(self, configuration_id=1):
+        guiding_config = super()._build_guiding_config()
+        guiding_config['mode'] = self.cleaned_data[f'c_{configuration_id}_guide_mode']
+        guiding_config['optional'] = True
+        return guiding_config
 
 
 class LCOMuscatImagingObservationForm(LCOFullObservationForm):
@@ -658,10 +692,10 @@ class LCOSpectroscopyObservationForm(LCOFullObservationForm):
             for i in range(self.facility_settings.get_setting('max_instrument_configs')):
                 self.fields[f'c_{j+1}_ic_{i+1}_rotator_mode'] = forms.ChoiceField(
                     choices=self.mode_choices('rotator'), label='Rotator Mode', required=False,
-                    help_text='Only for Floyds')
+                    help_text=self.facility_settings.rotator_mode_help)
                 self.fields[f'c_{j+1}_ic_{i+1}_rotator_angle'] = forms.FloatField(
                     min_value=0.0, initial=0.0,
-                    help_text='Rotation angle of slit. Only for Floyds `Slit Position Angle` rotator mode',
+                    help_text=self.facility_settings.rotator_angle_help,
                     label='Rotator Angle', required=False
                 )
                 # Add None option and help text for SOAR Gratings
@@ -1066,9 +1100,11 @@ class LCOSpectroscopicSequenceForm(LCOOldStyleObservationForm):
 class LCOFacility(OCSFacility):
     """
     The ``LCOFacility`` is the interface to the Las Cumbres Observatory Observation Portal. For information regarding
-    LCO observing and the available parameters, please see https://observe.lco.global/help/.
+    LCO observing and the available parameters, please see the Getting Started Guide at
+    https://lco.global/documents/2505/GettingStartedontheLCONetwork.latest.pdf.
     """
     name = 'LCO'
+    link = 'https://lco.global/documents/2505/GettingStartedontheLCONetwork.latest.pdf'
     observation_forms = {
         'IMAGING': LCOImagingObservationForm,
         'MUSCAT_IMAGING': LCOMuscatImagingObservationForm,

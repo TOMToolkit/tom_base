@@ -1,14 +1,8 @@
 from django.conf import settings
+from django.apps import apps
 from importlib import import_module
 
 from tom_targets.models import Target
-
-DEFAULT_HARVESTER_CLASSES = [
-    'tom_catalogs.harvesters.simbad.SimbadHarvester',
-    'tom_catalogs.harvesters.ned.NEDHarvester',
-    'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
-    'tom_catalogs.harvesters.tns.TNSHarvester',
-]
 
 
 class MissingDataException(Exception):
@@ -53,16 +47,28 @@ class AbstractHarvester(object):
 
 def get_service_classes():
     """
-    Gets the harvester classes available to this TOM as specified by ``TOM_HARVESTER_CLASSES`` in ``settings.py``. If
-    none are specified, returns the default set.
+    Gets the harvester classes available to this TOM as specified by ``INCLUDE_HARVESTER_CLASSES`` in ``settings.py``.
+    If none are specified, returns the default set based on apps that are installed.
+    Use the ``EXCLUDE_HARVESTER_CLASSES`` setting in settings.py to exclude specific harvester classes.
 
     :returns: dict of harvester classes, with keys being the name of the catalog and values being the harvester class
     :rtype: dict
     """
-    try:
-        TOM_HARVESTER_CLASSES = settings.TOM_HARVESTER_CLASSES
-    except AttributeError:
-        TOM_HARVESTER_CLASSES = DEFAULT_HARVESTER_CLASSES
+
+    # 'TOM_HARVESTER_CLASSES' in settings.py is deprecated and will be removed in a future release it is included here
+    # for backwards compatibility
+    TOM_HARVESTER_CLASSES = getattr(settings, 'TOM_HARVESTER_CLASSES', []) +\
+        getattr(settings, 'INCLUDE_HARVESTER_CLASSES', [])
+    if not TOM_HARVESTER_CLASSES:
+        for app in apps.get_app_configs():
+            try:
+                harvester_classes = app.harvester_classes()
+                if harvester_classes:
+                    for class_path in harvester_classes:
+                        if class_path not in getattr(settings, 'EXCLUDE_HARVESTER_CLASSES', []):
+                            TOM_HARVESTER_CLASSES.append(class_path)
+            except AttributeError:
+                pass
 
     service_choices = {}
     for service in TOM_HARVESTER_CLASSES:

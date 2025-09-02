@@ -25,7 +25,18 @@ ANTARES
 .. automodule:: tom_alerts.brokers.antares
     :members:
 
-.. automodule:: tom_antares.antares
+*******
+Fink
+*******
+
+.. automodule:: tom_alerts.brokers.fink
+    :members:
+
+*******
+GAIA
+*******
+
+.. automodule:: tom_alerts.brokers.gaia
     :members:
 
 ******
@@ -42,15 +53,13 @@ Hermes
 .. automodule:: tom_alerts.brokers.hermes
     :members:
 
-.. automodule:: tom_hermes.hermes
-    :members:
+..
+    *****
+    Scout
+    *****
 
-*****
-Scout
-*****
-
-.. automodule:: tom_alerts.brokers.scout
-    :members:
+    .. automodule:: tom_alerts.brokers.scout
+        :members:
 
 
 *********************

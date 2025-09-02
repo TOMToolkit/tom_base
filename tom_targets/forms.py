@@ -8,10 +8,10 @@ from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from tom_observations import facility
 
 from tom_dataproducts.sharing import get_sharing_destination_options
-from .models import (
-    Target, TargetExtra, TargetName, TargetList, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
-    REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
-)
+from .models import Target, TargetExtra, TargetName, TargetList, PersistentShare
+from tom_targets.base_models import (SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
+                                     REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME,
+                                     IGNORE_FIELDS)
 
 
 def extra_field_to_form_field(field_type):
@@ -73,11 +73,12 @@ class TargetForm(forms.ModelForm):
         if commit:
             for field in settings.EXTRA_FIELDS:
                 if self.cleaned_data.get(field['name']) is not None:
-                    TargetExtra.objects.update_or_create(
-                            target=instance,
-                            key=field['name'],
-                            defaults={'value': self.cleaned_data[field['name']]}
+                    updated_target_extra, _ = TargetExtra.objects.update_or_create(
+                        target=instance,
+                        key=field['name'],
+                        defaults={'value': self.cleaned_data[field['name']]}
                     )
+                    updated_target_extra.save()
             # Save groups for this target
             for group in self.cleaned_data['groups']:
                 assign_perm('tom_targets.view_target', group, instance)
@@ -114,7 +115,10 @@ class SiderealTargetCreateForm(TargetForm):
             self.fields[field].required = True
 
     class Meta(TargetForm.Meta):
-        fields = SIDEREAL_FIELDS
+        # Include Sidereal Fields and User defined fields that are not included in the Base Target model.
+        fields = SIDEREAL_FIELDS + [field.name for field in Target._meta.get_fields()
+                                    if field not in Target._meta.related_objects and
+                                    field.name not in SIDEREAL_FIELDS + IGNORE_FIELDS + NON_SIDEREAL_FIELDS]
 
 
 class NonSiderealTargetCreateForm(TargetForm):
@@ -145,7 +149,22 @@ class NonSiderealTargetCreateForm(TargetForm):
                 )
 
     class Meta(TargetForm.Meta):
-        fields = NON_SIDEREAL_FIELDS
+        # Include Non-Sidereal Fields and User defined fields that are not included in the Base Target model.
+        fields = NON_SIDEREAL_FIELDS + [field.name for field in Target._meta.get_fields()
+                                        if field not in Target._meta.related_objects and
+                                        field.name not in SIDEREAL_FIELDS + IGNORE_FIELDS + NON_SIDEREAL_FIELDS]
+
+
+class UnknownTypeTargetCreateForm(TargetForm):
+    """If we don't know the type, this provides a generic Target Creation form that requires type to be set.
+    The only difference between this and the base TargetForm is that the 'type' field is required, and not hidden.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['type'].required = True
+
+    class Meta(TargetForm.Meta):
+        widgets = {}
 
 
 class TargetVisibilityForm(forms.Form):
@@ -205,6 +224,50 @@ class TargetListShareForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['share_destination'].choices = get_sharing_destination_options()
 
+class TargetMergeForm(forms.Form):
+    """
+    Form for merging two duplicate targets with a primary target and secondary target
+    """
+    name_select = forms.ChoiceField(
+        label="Select Primary Target",
+        required=True,
+        choices=[],
+        # Select is the default widget for a ChoiceField, but we need to set htmx attributes.
+        widget=forms.Select(
+            # set up attributes to trigger folder dropdown update when this field changes
+            attrs={
+                'hx-get': '',  # send GET request to the source URL's get method
+                'hx-trigger': 'change',  # when this happens
+                'hx-target': '#id_target_merge_fields',  # replace name_select element
+             })
+    )
+
+
+class AdminPersistentShareForm(forms.ModelForm):
+    destination = forms.ChoiceField(choices=[], label='Share Destination', required=True)
+
+    class Meta:
+        model = PersistentShare
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['destination'].choices = get_sharing_destination_options(include_download=False)
+
+
+class PersistentShareForm(AdminPersistentShareForm):
+    target = forms.IntegerField(label='Target ID', initial=0, required=True)
+    share_existing_data = forms.BooleanField(label='Share existing data immediately', required=False, initial=False)
+
+    def __init__(self, *args, **kwargs):
+        try:
+            self.target_id = kwargs.pop('target_id')
+        except KeyError:
+            self.target_id = None
+        super().__init__(*args, **kwargs)
+        if self.target_id:
+            self.fields['target'].initial = self.target_id
+            self.fields['target'].disabled = True
 
 class TargetSelectionForm(forms.Form):
     """

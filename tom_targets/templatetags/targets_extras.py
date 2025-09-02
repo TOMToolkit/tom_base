@@ -1,12 +1,15 @@
 from datetime import datetime, timedelta
+import logging
 
 from astroplan import moon_illumination
 from astropy import units as u
-from astropy.coordinates import Angle, get_moon, SkyCoord
+from astropy.coordinates import GCRS, Angle, get_body, SkyCoord
 from astropy.time import Time
 from django import template
+from django.utils.safestring import mark_safe
 from django.conf import settings
 from django.db.models import Q
+from django.apps import apps
 from guardian.shortcuts import get_objects_for_user
 import numpy as np
 from plotly import offline
@@ -14,9 +17,21 @@ from plotly import graph_objs as go
 
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target, TargetExtra, TargetList
-from tom_targets.forms import TargetVisibilityForm
+from tom_targets.forms import TargetVisibilityForm, PersistentShareForm
+from tom_targets.permissions import targets_for_user
 
 register = template.Library()
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+
+@register.filter(name='bold_sharing_source')
+def bold_sharing_source(value):
+    pieces = value.split(':')
+    if len(pieces) > 1:
+        return mark_safe(f"<strong>{pieces[0]}</strong>:{':'.join(pieces[1:])}")
+    return value
 
 
 @register.inclusion_tag('tom_targets/partials/recent_targets.html', takes_context=True)
@@ -25,7 +40,11 @@ def recent_targets(context, limit=10):
     Displays a list of the most recently created targets in the TOM up to the given limit, or 10 if not specified.
     """
     user = context['request'].user
-    return {'targets': get_objects_for_user(user, 'tom_targets.view_target').order_by('-created')[:limit]}
+    return {
+        'empty_database': not Target.objects.exists(),
+        'authenticated': user.is_authenticated,
+        'targets': targets_for_user(user, Target.objects.all(), 'view_target').order_by('-created')[:limit]
+    }
 
 
 @register.inclusion_tag('tom_targets/partials/recently_updated_targets.html', takes_context=True)
@@ -34,7 +53,8 @@ def recently_updated_targets(context, limit=10):
     Displays a list of the most recently updated targets in the TOM up to the given limit, or 10 if not specified.
     """
     user = context['request'].user
-    return {'targets': get_objects_for_user(user, 'tom_targets.view_target').order_by('-modified')[:limit]}
+    return {'targets': get_objects_for_user(user,
+                                            f'{Target._meta.app_label}.view_target').order_by('-modified')[:limit]}
 
 
 @register.inclusion_tag('tom_targets/partials/target_feature.html')
@@ -184,11 +204,12 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
         [str(datetime.utcnow() + timedelta(days=delta)) for delta in np.arange(0, day_range, 0.2)],
         format='iso', scale='utc'
     )
+    separations = []
+    for time in times:
+        obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg, frame=GCRS(obstime=time))
+        moon_pos = get_body('moon', time)
+        separations.append(moon_pos.separation(obj_pos).deg)
 
-    obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
-    moon_pos = get_moon(times)
-
-    separations = moon_pos.separation(obj_pos).deg
     phases = moon_illumination(times)
 
     distance_color = 'rgb(0, 0, 255)'
@@ -220,54 +241,6 @@ def moon_distance(target, day_range=30, width=600, height=400, background=None, 
     )
 
     return {'plot': moon_distance_plot}
-
-
-@register.inclusion_tag('tom_targets/partials/target_distribution.html')
-def target_distribution(targets):
-    """
-    Displays a plot showing on a map the locations of all sidereal targets in the TOM.
-    """
-    locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
-    data = [
-        dict(
-            lon=[location[0] for location in locations],
-            lat=[location[1] for location in locations],
-            text=[location[2] for location in locations],
-            hoverinfo='lon+lat+text',
-            mode='markers',
-            type='scattergeo'
-        ),
-        dict(
-            lon=list(range(0, 360, 60))+[180]*4,
-            lat=[0]*6+[-60, -30, 30, 60],
-            text=list(range(0, 360, 60))+[-60, -30, 30, 60],
-            hoverinfo='none',
-            mode='text',
-            type='scattergeo'
-        )
-    ]
-    layout = {
-        'title': 'Target Distribution (sidereal)',
-        'hovermode': 'closest',
-        'showlegend': False,
-        'geo': {
-            'projection': {
-                'type': 'mollweide',
-            },
-            'showcoastlines': False,
-            'showland': False,
-            'lonaxis': {
-                'showgrid': True,
-                'range': [0, 360],
-            },
-            'lataxis': {
-                'showgrid': True,
-                'range': [-90, 90],
-            },
-        }
-    }
-    figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
-    return {'figure': figure}
 
 
 @register.filter
@@ -302,23 +275,138 @@ def select_target_js():
     return
 
 
-@register.inclusion_tag('tom_targets/partials/aladin.html')
-def aladin(target):
+@register.inclusion_tag('tom_targets/partials/aladin_finderchart.html')
+def aladin_finderchart(target):
     """
     Displays Aladin skyview of the given target along with basic finder chart annotations including a compass
     and a scale bar. The resulting image is downloadable. This templatetag only works for sidereal targets.
     """
+
     return {'target': target}
 
 
-@register.inclusion_tag('tom_targets/partials/target_table.html')
-def target_table(targets, all_checked=False):
+@register.inclusion_tag('tom_targets/partials/aladin_skymap.html')
+def aladin_skymap(targets):
+    """
+    Displays aladin skyview on Target Distribution skymap. Markers on the skymap show where your targets are. Max of
+    25 targets show at a time (one page of targets). This templatetag converts the targets queryset into a list of
+    dictionaries suitable for javascript and aladin, and only works for sidereal targets.
+
+    Also, puts the current Moon and Sun positions (from astropy) into the context.
+    """
+    target_list = []
+    for target in targets:
+        if target.type == Target.SIDEREAL:
+            name = target.name
+            ra = target.ra
+            dec = target.dec
+            target_list.append({'name': name, 'ra': ra, 'dec': dec})
+
+    # To display the Moon and Sun on the skymap, calculate postions for
+    # them here and pass them to the template in the context
+    now = Time.now()
+    moon_pos = get_body('moon', now)
+    moon_illum = moon_illumination(now)
+    sun_pos = get_body('sun', now)
+
+    context = {
+        'targets': target_list,
+        'moon_ra': moon_pos.ra.deg,
+        'moon_dec': moon_pos.dec.deg,
+        'moon_illumination': moon_illum,
+        'sun_ra': sun_pos.ra.deg,
+        'sun_dec': sun_pos.dec.deg,
+    }
+    return context
+
+
+@register.inclusion_tag('tom_targets/partials/target_merge_fields.html')
+def target_merge_fields(target1, target2):
+    """
+    Prepares the context for the target_merge_fields.html partial.
+    Make a list of tuples that combines the fields and values of the two targets;
+    target1 and target2 are Target objects.
+    """
+    target1_data = {}
+    for field in target1._meta.get_fields():
+        if not field.is_relation:
+            target1_data[field.name] = field.value_to_string(target1)
+    target1_data['aliases'] = ', '.join(alias.name for alias in target1.aliases.all())
+    target1_data['target lists'] = \
+        ', '.join(target_list.name for target_list in TargetList.objects.filter(targets=target1))
+
+    target2_data = {}
+    for field in target2._meta.get_fields():
+        if not field.is_relation:
+            target2_data[field.name] = field.value_to_string(target2)
+        # else:
+        #     print(field.name)
+    target2_data['aliases'] = ', '.join(alias.name for alias in target2.aliases.all())
+    target2_data['target lists'] = \
+        ', '.join(target_list.name for target_list in TargetList.objects.filter(targets=target2))
+
+    combined_target_data = [x for x in zip(target1_data.keys(), target1_data.values(), target2_data.values())]
+
+    context = {
+        'target1_data': target1_data,
+        'target2_data': target2_data,
+        'combined_target_data': combined_target_data
+    }
+    return context
+
+
+@register.inclusion_tag('tom_targets/partials/aladin_skymap.html')
+def target_distribution(targets):
+    """
+    Allows users to reference the old skymap; target list page won't break.
+    """
+    return aladin_skymap(targets)
+
+
+@register.inclusion_tag('tom_targets/partials/target_table.html', takes_context=True)
+def target_table(context, targets, all_checked=False):
     """
     Returns a partial for a table of targets, used in the target_list.html template
     by default
     """
 
-    return {'targets': targets, 'all_checked': all_checked}
+    return {
+        'targets': targets,
+        'all_checked': all_checked,
+        'empty_database': context['empty_database'],
+        'authenticated': context['request'].user.is_authenticated,
+        'query_string': context['query_string']
+    }
+
+
+@register.inclusion_tag('tom_targets/partials/persistent_share_table.html', takes_context=True)
+def persistent_share_table(context, target):
+    """
+    Returns a partial for a table of persistent shares, used in persistent share management forms
+    """
+    request = context['request']
+    persistentshares = get_objects_for_user(request.user, f'{Target._meta.app_label}.view_persistentshare')
+    if target:
+        persistentshares = persistentshares.filter(target__pk=target.pk)
+    can_delete = request.user.has_perm(f'{Target._meta.app_label}.delete_persistentshare')
+    return {'persistentshares': persistentshares, 'target': target, 'can_delete': can_delete}
+
+
+@register.inclusion_tag('tom_targets/partials/create_persistent_share.html', takes_context=True)
+def create_persistent_share(context, target):
+    """
+    Returns a partial for a creation form for creating persistent shares
+    """
+    request = context['request']
+    if request.user.has_perm(f'{Target._meta.app_label}.add_persistentshare'):
+        if target:
+            form = PersistentShareForm(target_id=target.pk)
+        else:
+            form = PersistentShareForm(target_id=None)
+    else:
+        form = None
+
+    return {'form': form, 'target': target}
 
 
 @register.inclusion_tag('tom_targets/partials/module_buttons.html')
@@ -334,11 +422,13 @@ def get_buttons(target):
                               }
 
     """
-    from django.apps import apps
     button_list = []
     for app in apps.get_app_configs():
-        integration_points = getattr(app, 'integration_points', {})
-        if integration_points.get('target_detail_button', False):
-            button_list.append(integration_points['target_detail_button'])
+        try:
+            button_info = app.target_detail_buttons()
+            if button_info:
+                button_list.append(button_info)
+        except AttributeError:
+            pass
 
     return {'target': target, 'button_list': button_list}

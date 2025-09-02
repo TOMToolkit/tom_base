@@ -2,12 +2,48 @@ The Permissions System
 ======================
 
 The permissions system is built on top of
-`django-guardian <https://django-guardian.readthedocs.io/en/stable/>`_. It has been
+`django-guardian <https://django-guardian.readthedocs.io/en/stable/>`__. It has been
 kept as simple as possible, but TOM developers may extend the capabilities if
 needed.
 
 The TOM Toolkit provides a permissions system that can be used in two different modes. The mode is controlled by the
 ``TARGET_PERMISSIONS_ONLY`` boolean in ``settings.py``.
+
+
+`AnonymousUser`
+---------------
+
+When you first establish your TOM, ``django-guardian`` will create an ``AnonymousUser`` as the default user for the
+TOM. ``AnonymousUser`` is a special user that is used to represent users who are not logged in and only has permission
+to see targets that have ``OPEN`` permissions. This user is important for establishing what
+permissions are available to users who are not logged in and should not be removed. You can modify the permissions of
+``AnonymousUser`` by using the Django admin interface or the methods described below.
+
+*Note:* This ``AnonymousUser`` is not the same as the ``AnonymousUser`` object that is part of
+`Django's authentication system. <https://docs.djangoproject.com/en/5.1/ref/contrib/auth/#anonymoususer-object>`__
+
+
+Target Permissions
+------------------
+
+
+Targets have three permission modes: ``OPEN``, ``PUBLIC`` and ``PRIVATE``.
+
+``OPEN`` targets are visible to anyone, even users that are not authenticated. If your TOM is available
+on the internet these targets are visible to the world.
+
+``PUBLIC`` targets are available to any authenticated user on your TOM.
+
+``PRIVATE`` targets are only visible to users that have been given explicit access to them, either through
+groups or user-specific permissions. Super users do not have these restrictions.
+
+By default all targets are ``PRIVATE`` and only the user who created them (and super users) can access them.
+Assigning additional groups or changing the permission mode to ``OPEN`` or ``PUBLIC`` can be done
+via the TOM web interface.
+
+When creating a Target programmatically, the ``permissions`` field can be set to a member of the
+``BaseTarget.Permissions`` tuple corresponding to the desired mode. Note that ``PRIVATE`` targets
+created this way will need to have additional group or user permissions assigned manually.
 
 
 First Mode -- Permissions on Targets and Observation Records
@@ -25,17 +61,12 @@ button found at the top of the groups table:
 
 .. image:: /_static/permissions_doc/addgroup.png
 
-![](/_static/permissions_doc/addgroup.png)
-
 Modifying a group will allow you to change it's name and add/remove users.
 
 When a user adds or modifies a target, they are able to choose the groups to
 assign to the target:
 
 .. image:: /_static/permissions_doc/targetgroups.png
-
-![](/_static/permissions_doc/targetgroups.png)
-
 
 By default the target will be assigned to all groups the user belongs to.
 

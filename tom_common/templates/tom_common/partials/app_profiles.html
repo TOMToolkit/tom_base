@@ -1,0 +1,23 @@
+{% load user_extras tom_common_extras %}
+{% load bootstrap4 %}
+
+<div class="container">
+        <div class="row">
+            <div class="col-6">
+            {% for profile in profiles_to_display %}
+                {% show_individual_app_partial profile %}
+
+                {% comment %}
+                    Start new column halfway through the list of profiles.
+                {% endcomment %}
+                {% if forloop.counter == profile_list|length|add:"1"|multiplyby:"0.5"|add:"0" %}
+                    </div>
+                    <div class="col-6">
+                {% endif %}
+
+            {% empty %}
+                This user has no profile.
+            {% endfor %}
+                    </div>
+        </div>
+</div>

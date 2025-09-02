@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django_extensions',
+    'django_tasks',
+    'django_tasks.backends.database',
     'guardian',
     'tom_common',
     'django_comments',
@@ -52,11 +54,13 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_filters',
     'django_gravatar',
+    'django_htmx',
     'tom_targets',
     'tom_alerts',
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
+    'tom_dataservices',
 ]
 
 SITE_ID = 1
@@ -69,6 +73,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
     'tom_common.middleware.Raise403Middleware',
     'tom_common.middleware.ExternalServiceMiddleware',
     'tom_common.middleware.AuthStrategyMiddleware',
@@ -171,6 +176,15 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/data/'
 
+TEST_RUNNER = 'tom_common.tests.SilenceLogsTestRunner'
+
+TASKS = {
+    "default": {
+        # "BACKEND": "django_tasks.backends.database.DatabaseBackend"
+        "BACKEND": "django_tasks.backends.immediate.ImmediateBackend"
+    }
+}
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -218,13 +232,14 @@ MATCH_MANAGERS = {}
 #
 # tom_alerts configuration
 #
-LASAIR_TOKEN = os.getenv('LASAIR_TOKEN', None)
-
 
 #
 # tom_dataproducts configuration
 #
-# Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
+# Define the valid data product types for your TOM.
+# This is a dictionary of tuples to be used as ChoiceField options, with the first element being the type and the
+# second being the display name.
+# Be careful when removing items, as previously valid types will no
 # longer be valid, and may cause issues unless the offending records are modified.
 DATA_PRODUCT_TYPES = {
     'photometry': ('photometry', 'Photometry'),
@@ -276,7 +291,7 @@ TOM_CADENCE_STRATEGIES = [
 #     {'name': 'redshift', 'type': 'number', 'default': 0},
 #     {'name': 'discoverer', 'type': 'string'},
 #     {'name': 'eligible', 'type': 'boolean', 'hidden': True},
-#     {'name': 'dicovery_date', 'type': 'datetime'}
+#     {'name': 'discovery_date', 'type': 'datetime'}
 # ]
 EXTRA_FIELDS = []
 
@@ -292,6 +307,9 @@ AUTH_STRATEGY = 'READ_ONLY'
 # objects to be seen by everyone. Setting it to False will allow users to specify which groups can access
 # `ObservationRecord`, `DataProduct`, and `ReducedDatum` objects.
 TARGET_PERMISSIONS_ONLY = True
+
+# Default permission for newly created targets. Values can be 'PRIVATE', 'PUBLIC', or 'OPEN'
+TARGET_DEFAULT_PERMISSION = 'PRIVATE'
 
 # URLs that should be allowed access even with AUTH_STRATEGY = LOCKED
 # for example: OPEN_URLS = ['/', '/about']

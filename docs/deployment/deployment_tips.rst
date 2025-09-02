@@ -18,6 +18,11 @@ that, for example, listens to the ZTF, LSST, and SCOUT alert streams and
 creates targets from each alert you might want to look into Postgresql
 or MySQL.
 
+.. note::
+    If you are using a database other than Sqlite, you will need to
+    install the appropriate database driver in your virtual environment. For example,
+    if you are using Postgresql you will need to install the `psycopg2-binary` package.
+
 Set your TOM’s hostname in the default site
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -48,3 +53,22 @@ sensitive data.
 Enforce basic password requirements (TOMs by default will do this) and
 encourage your users to exercise basic security measures, like using a
 password manager and not reusing passwords.
+
+robots.txt
+~~~~~~~~~~
+As of version 2.17, TOM Toolkit serves a default ``robots.txt`` file
+that disallows all (well-behaved) web crawlers. Point a browser to the
+``/robots.txt`` endpoint of your TOM to see it. If you want to change that
+behavior, you can supply the path to a custom ``robots.txt`` file in the
+``settings.py`` file:
+
+.. code:: python
+
+    ROBOTS_TXT_PATH = '/path/to/your/robots.txt'
+
+
+If you provide the path to a file that does not exist, TOM Toolkit will still
+serve the default ``robots.txt`` file and log a warning message to that effect.
+
+Additional background on the ``robots.txt`` file can be found
+`here <https://en.wikipedia.org/wiki/Robots_exclusion_standard>`_.

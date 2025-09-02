@@ -30,8 +30,9 @@ from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
-from tom_dataproducts.sharing import share_data_with_hermes, share_data_with_tom, sharing_feedback_handler
-import tom_dataproducts.forced_photometry.forced_photometry_service as fps
+from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
+                                      download_data)
+import tom_dataproducts.single_target_data_service.single_target_data_service as stds
 from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
@@ -81,11 +82,11 @@ class DataProductSaveView(LoginRequiredMixin, View):
         )
 
 
-class ForcedPhotometryQueryView(LoginRequiredMixin, FormView):
+class SingleTargetDataServiceQueryView(LoginRequiredMixin, FormView):
     """
-    View that handles queries for forced photometry services
+    View that handles queries for single target data services
     """
-    template_name = 'tom_dataproducts/forced_photometry_form.html'
+    template_name = 'tom_dataproducts/single_target_data_service_form.html'
 
     def get_target_id(self):
         """
@@ -107,19 +108,19 @@ class ForcedPhotometryQueryView(LoginRequiredMixin, FormView):
 
     def get_service(self):
         """
-        Gets the forced photometry service that you want to query
+        Gets the single target data service that you want to query
         """
         return self.kwargs['service']
 
     def get_service_class(self):
         """
-        Gets the forced photometry service class
+        Gets the single target data service class
         """
-        return fps.get_service_class(self.get_service())
+        return stds.get_service_class(self.get_service())
 
     def get_form_class(self):
         """
-        Gets the forced photometry service form class
+        Gets the single target data service form class
         """
         return self.get_service_class()().get_form()
 
@@ -128,6 +129,12 @@ class ForcedPhotometryQueryView(LoginRequiredMixin, FormView):
         Adds the target to the context object.
         """
         context = super().get_context_data(*args, **kwargs)
+
+        # give the service class a chance to add to the context data
+        service_class = self.get_service_class()
+        service_class_context_data = service_class().get_context_data()
+        context.update(service_class_context_data)
+
         context['target'] = self.get_target()
         context['query_form'] = self.get_form_class()(initial=self.get_initial())
         return context
@@ -150,8 +157,8 @@ class ForcedPhotometryQueryView(LoginRequiredMixin, FormView):
             service = self.get_service_class()()
             try:
                 service.query_service(form.cleaned_data)
-            except fps.ForcedPhotometryServiceException as e:
-                form.add_error(None, f"Problem querying forced photometry service: {repr(e)}")
+            except stds.SingleTargetDataServiceException as e:
+                form.add_error(None, f"Problem querying single target data service: {repr(e)}")
                 return self.form_invalid(form)
             messages.info(self.request, service.get_success_message())
             return redirect(
@@ -213,12 +220,12 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
                 dp.delete()
                 messages.error(
                     self.request,
-                    'File format invalid for file {0} -- error was {1}'.format(str(dp), iffe)
+                    f'File format invalid for file {str(dp)} -- error was {iffe}'
                 )
-            except Exception:
+            except Exception as e:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
-                messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))
+                messages.error(self.request, f'There was a problem processing your file: {str(dp)} -- Error: {e}')
         if successful_uploads:
             messages.success(
                 self.request,
@@ -322,7 +329,7 @@ class DataProductListView(FilterView):
         """
         if settings.TARGET_PERMISSIONS_ONLY:
             return super().get_queryset().filter(
-                target__in=get_objects_for_user(self.request.user, 'tom_targets.view_target')
+                target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')
             )
         else:
             return get_objects_for_user(self.request.user, 'tom_dataproducts.view_dataproduct')
@@ -416,6 +423,8 @@ class DataShareView(FormView):
             # Check Destination
             if 'HERMES' in share_destination.upper():
                 response = share_data_with_hermes(share_destination, form_data, product_id, target_id, selected_data)
+            elif share_destination == 'download':
+                return download_data(form_data, selected_data=selected_data)
             else:
                 response = share_data_with_tom(share_destination, form_data, product_id, target_id, selected_data)
             sharing_feedback_handler(response, self.request)

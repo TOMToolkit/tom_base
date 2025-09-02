@@ -32,7 +32,7 @@ class TestLCOOldStyleObservationForm(TestCase):
         self.valid_form_data = {
             'name': 'test', 'facility': 'LCO', 'target_id': self.st.id, 'ipp_value': 0.5, 'start': '2020-11-03',
             'end': '2020-11-04', 'exposure_count': 1, 'exposure_time': 30, 'max_airmass': 3,
-            'min_lunar_distance': 20, 'observation_mode': 'NORMAL',
+            'min_lunar_distance': 20, 'observation_mode': 'NORMAL', 'mode': '1x1 binning',
             'proposal': 'sampleproposal', 'filter': 'opaque', 'instrument_type': '0M4-SCICAM-SBIG'
         }
         self.instrument_choices = [(k, v['name']) for k, v in instrument_response.items() if 'SOAR' not in k]
@@ -101,12 +101,14 @@ class TestLCOOldStyleObservationForm(TestCase):
             self.valid_form_data['target_id'] = self.nst.id
             form = LCOOldStyleObservationForm(self.valid_form_data)
             self.assertTrue(form.is_valid())
-            self.assertDictContainsSubset({
+            expected_target = {
                 'name': self.nst.name, 'type': 'ORBITAL_ELEMENTS', 'epochofel': self.nst.epoch_of_elements,
                 'orbinc': self.nst.inclination, 'longascnode': self.nst.lng_asc_node,
                 'argofperih': self.nst.arg_of_perihelion, 'meananom': self.nst.mean_anomaly,
                 'meandist': self.nst.semimajor_axis
-            }, form._build_target_fields(self.nst.id))
+            }
+            self.assertEqual(form._build_target_fields(self.nst.id),
+                             form._build_target_fields(self.nst.id) | expected_target)
 
         # Test that fractional_ephemeris_rate is handled correctly when present
         with self.subTest():
@@ -115,9 +117,9 @@ class TestLCOOldStyleObservationForm(TestCase):
             self.valid_form_data['fractional_ephemeris_rate'] = fractional_ephemeris_rate
             form = LCOOldStyleObservationForm(self.valid_form_data)
             self.assertTrue(form.is_valid())
-            self.assertDictContainsSubset({
-                'extra_params': {'fractional_ephemeris_rate': fractional_ephemeris_rate}
-            }, form._build_target_fields(self.nst.id))
+            self.assertEqual(form._build_target_fields(self.nst.id),
+                             form._build_target_fields(self.nst.id) |
+                             {'extra_params': {'fractional_ephemeris_rate': fractional_ephemeris_rate}})
 
     def test_build_instrument_config(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         """Test _build_instrument_config method."""
@@ -172,10 +174,11 @@ class TestLCOOldStyleObservationForm(TestCase):
         form = LCOOldStyleObservationForm(self.valid_form_data)
         self.assertTrue(form.is_valid())
         configuration = form._build_configuration()
-        self.assertDictContainsSubset(
-            {'type': 'EXPOSE', 'instrument_type': '0M4-SCICAM-SBIG',
-             'constraints': {'max_airmass': 3, 'min_lunar_distance': 20}},
-            configuration)
+        expected_configuration = {
+            'type': 'EXPOSE', 'instrument_type': '0M4-SCICAM-SBIG',
+            'constraints': {'max_airmass': 3, 'min_lunar_distance': 20}
+        }
+        self.assertEqual(configuration, configuration | expected_configuration)
         for key in ['target', 'instrument_configs', 'acquisition_config', 'guiding_config']:
             self.assertIn(key, configuration)
 
@@ -213,10 +216,11 @@ class TestLCOOldStyleObservationForm(TestCase):
             form = LCOOldStyleObservationForm(self.valid_form_data)
             self.assertTrue(form.is_valid())
             obs_payload = form.observation_payload()
-            self.assertDictContainsSubset(
-                {'name': 'test', 'proposal': 'sampleproposal', 'ipp_value': 0.5, 'operator': 'SINGLE',
-                 'observation_type': 'NORMAL'}, obs_payload
-            )
+            expected_payload = {
+                'name': 'test', 'proposal': 'sampleproposal', 'ipp_value': 0.5, 'operator': 'SINGLE',
+                'observation_type': 'NORMAL'
+            }
+            self.assertEqual(obs_payload, obs_payload | expected_payload)
             self.assertNotIn('cadence', obs_payload['requests'][0])
 
         # Test a static cadence form
@@ -447,6 +451,7 @@ class TestLCOSpectroscopyObservationForm(TestCase):
                     'exposure_count': self.valid_form_data['c_1_ic_1_exposure_count'],
                     'exposure_time': self.valid_form_data['c_1_ic_1_exposure_time'],
                     'optical_elements': {'slit': self.valid_form_data['c_1_ic_1_slit']},
+                    'mode': '',
                     'rotator_mode': 'SKY',
                     'extra_params': {'rotator_angle': self.valid_form_data['c_1_ic_1_rotator_angle']}
                 },
@@ -462,6 +467,7 @@ class TestLCOSpectroscopyObservationForm(TestCase):
                 {
                     'exposure_count': self.valid_form_data['c_1_ic_1_exposure_count'],
                     'exposure_time': self.valid_form_data['c_1_ic_1_exposure_time'],
+                    'mode': '',
                     'optical_elements': {}
                 },
                 form._build_instrument_config(self.valid_form_data['c_1_instrument_type'], 1, 1)
@@ -674,7 +680,7 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
                 form = LCOSpectroscopicSequenceForm(self.valid_form_data)
                 self.assertTrue(form.is_valid())
                 location = form._build_location()
-                self.assertDictContainsSubset(params[1], location)
+                self.assertEqual(location, location | params[1])
 
     @patch('tom_observations.facilities.ocs.OCSBaseForm.proposal_choices')
     @patch('tom_observations.facilities.lco.LCOSpectroscopicSequenceForm.all_optical_element_choices')
@@ -692,7 +698,7 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
         self.assertEqual(form.cleaned_data['instrument_type'], '2M0-FLOYDS-SCICAM')
 
         # Make sure Cadence Frequency is passed through clean()
-        self.assertEquals(form.cleaned_data['cadence_frequency'], self.valid_form_data['cadence_frequency'])
+        self.assertEqual(form.cleaned_data['cadence_frequency'], self.valid_form_data['cadence_frequency'])
 
         # Convert Cleaned "Start" to datetime, make sure close to now (2 seconds)
         seconds_from_start = (datetime.now() - datetime.strptime(form.cleaned_data['start'],

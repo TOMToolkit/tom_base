@@ -1,0 +1,24 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 targets_extras %}
+{% block title %}Merge Targets{% endblock %}
+
+{% block content %}
+<div>
+    <form method="post" action="">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+
+        <div class="alert alert-primary">
+            <b>Note:</b> Confirming the merge will also combine the DataProducts, ReducedDatums, TargetExtras, and ObservationRecords of the two targets.
+            The primary target will take precedence in any conflicts that occur, and the secondary target's name will become an alias of the merged target.
+        </div>
+        <!-- display the target fields table -->
+        {% target_merge_fields target1 target2 %}
+
+
+        <button type="submit" class="btn btn-outline-danger float-right btn-lg" name="submit"><a href="{% url 'targets:list' %}" style="color: rgb(167, 11, 11)">Cancel</a></button>
+        <button type="submit" class="btn btn-outline-primary float-right btn-lg" name="confirm">Confirm</button>
+
+    </form>
+</div>
+{% endblock %}

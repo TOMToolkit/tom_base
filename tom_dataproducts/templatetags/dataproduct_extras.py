@@ -20,7 +20,8 @@ import numpy as np
 from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
-from tom_dataproducts.forced_photometry.forced_photometry_service import get_service_classes
+from tom_dataproducts.single_target_data_service.single_target_data_service import get_service_classes, \
+    get_service_class
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
@@ -96,12 +97,16 @@ def dataproduct_list_all(context):
     }
 
 
-@register.inclusion_tag('tom_dataproducts/partials/query_forced_photometry.html')
-def query_forced_photometry(target):
-    services = get_service_classes().keys()
+@register.inclusion_tag('tom_dataproducts/partials/query_single_target_data_service.html')
+def query_single_target_data_service(target):
+    service_names = get_service_classes().keys()
+    services = [{'name': service_name, 'service_type': get_service_class(service_name).data_service_type}
+                for service_name in service_names]
+    data_service_types = set([service['service_type'] for service in services])
     return {
-        'forced_photometry_services': services,
-        'target': target
+        'single_target_data_services': services,
+        'target': target,
+        'data_service_types': data_service_types
     }
 
 
@@ -176,7 +181,7 @@ def get_photometry_data(context, target, target_share=False):
                    'source': reduced_datum.source_name,
                    'filter': reduced_datum.value.get('filter', ''),
                    'telescope': reduced_datum.value.get('telescope', ''),
-                   'magnitude_error': reduced_datum.value.get('magnitude_error', '')
+                   'error': reduced_datum.value.get('error', reduced_datum.value.get('magnitude_error', ''))
                    }
 
         if 'limit' in reduced_datum.value.keys():
@@ -237,22 +242,28 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
         'i': 'black'
     }
 
+    try:
+        photometry_data_type = settings.DATA_PRODUCT_TYPES['photometry'][0]
+    except (AttributeError, KeyError):
+        photometry_data_type = 'photometry'
     photometry_data = {}
     if settings.TARGET_PERMISSIONS_ONLY:
-        datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
+        datums = ReducedDatum.objects.filter(target=target, data_type=photometry_data_type)
     else:
         datums = get_objects_for_user(context['request'].user,
                                       'tom_dataproducts.view_reduceddatum',
                                       klass=ReducedDatum.objects.filter(
                                         target=target,
-                                        data_type=settings.DATA_PRODUCT_TYPES['photometry'][0]))
+                                        data_type=photometry_data_type))
 
     for datum in datums:
-        photometry_data.setdefault(datum.value['filter'], {})
-        photometry_data[datum.value['filter']].setdefault('time', []).append(datum.timestamp)
-        photometry_data[datum.value['filter']].setdefault('magnitude', []).append(datum.value.get('magnitude'))
-        photometry_data[datum.value['filter']].setdefault('error', []).append(datum.value.get('error'))
-        photometry_data[datum.value['filter']].setdefault('limit', []).append(datum.value.get('limit'))
+        if (isinstance(datum.value.get('magnitude', 0), float) and isinstance(datum.value.get('error', 0), float)) \
+                or isinstance(datum.value.get('limit', 0), float):
+            photometry_data.setdefault(datum.value['filter'], {})
+            photometry_data[datum.value['filter']].setdefault('time', []).append(datum.timestamp)
+            photometry_data[datum.value['filter']].setdefault('magnitude', []).append(datum.value.get('magnitude'))
+            photometry_data[datum.value['filter']].setdefault('error', []).append(datum.value.get('error'))
+            photometry_data[datum.value['filter']].setdefault('limit', []).append(datum.value.get('limit'))
 
     plot_data = []
     all_ydata = []
@@ -362,8 +373,12 @@ def spectroscopy_for_target(context, target, dataproduct=None):
     Renders a spectroscopic plot for a ``Target``. If a ``DataProduct`` is specified, it will only render a plot with
     that spectrum.
     """
+    try:
+        spectroscopy_data_type = settings.DATA_PRODUCT_TYPES['spectroscopy'][0]
+    except (AttributeError, KeyError):
+        spectroscopy_data_type = 'spectroscopy'
     spectral_dataproducts = DataProduct.objects.filter(target=target,
-                                                       data_product_type=settings.DATA_PRODUCT_TYPES['spectroscopy'][0])
+                                                       data_product_type=spectroscopy_data_type)
     if dataproduct:
         spectral_dataproducts = DataProduct.objects.get(data_product=dataproduct)
 

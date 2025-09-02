@@ -4,9 +4,9 @@ TOM Specific Settings
 The following is a list of TOM Specific settings to be added/edited in
 your project’s ``settings.py``. For explanations of Django specific
 settings, see the `official
-documentation <https://docs.djangoproject.com/en/2.1/ref/settings/>`__.
+documentation <https://docs.djangoproject.com/en/stable/ref/settings/>`__.
 
-`AUTH_STRATEGY <#auth_strategy>`__
+`AUTH_STRATEGY <#auth-strategy>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default: ‘READ_ONLY’
@@ -15,10 +15,10 @@ Determines how your TOM treats unauthenticated users. A value of
 **READ_ONLY** allows unauthenticated users to view most pages on your
 TOM, but not to change anything. A value of **LOCKED** requires all
 users to login before viewing any page. Use the
-`OPEN_URLS <#open_urls>`__ setting for adding exemptions.
+`OPEN_URLS <#open-urls>`__ setting for adding exemptions.
 
 `BROKERS <#brokers>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 Default:
 
@@ -42,7 +42,7 @@ Credentials and settings for any brokers that require them. At the moment, the o
 built-in TOM Toolkit broker module that requires credentials is the TNS. SCIMMA and
 ANTARES, which are available as add-on modules, also use this setting.
 
-`DATA_PROCESSORS <#data_processors>`__
+`DATA_PROCESSORS <#data-processors>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default:
@@ -58,8 +58,8 @@ The ``DATA_PROCESSORS`` dict specifies the subclasses of
 ``DataProcessor`` that should be used for processing the corresponding
 ``data_type``\ s.
 
-`DATA_PRODUCT_TYPES <#data_types>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`DATA_PRODUCT_TYPES <#data-product-types>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default:
 
@@ -75,16 +75,18 @@ Default:
 A list of machine readable, human readable tuples which determine the
 choices available to categorize reduced data.
 
-`EXTRA_FIELDS <#extra_fields>`__
+`EXTRA_FIELDS <#extra-fields>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default: []
 
 A list of extra fields to add to your targets. These can be used if the
 predefined target fields do not match your needs. Please see the
-documentation on `Adding Custom Fields to
-Targets </targets/target_fields>`__ for an explanation of how to use
+documentation on :doc:`Adding Custom Fields to
+Targets <../targets/target_fields>` for an explanation of how to use
 this feature.
+
+.. _custom_facility_settings:
 
 `FACILITIES <#facilities>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -107,7 +109,7 @@ facility requires you to provide a value for the ``api_key``
 configuration value.
 
 `HARVESTERS <#harvesters>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default:
 
@@ -136,7 +138,7 @@ A few messages are sprinkled throughout the TOM Toolkit that offer
 suggestions on things you might want to change right out of the gate.
 These can be turned on and off, and the level adjusted. For more
 information on Django message levels, see the `Django messages framework
-documentation <https://docs.djangoproject.com/en/2.2/ref/contrib/messages/#message-levels>`__.
+documentation <https://docs.djangoproject.com/en/stable/ref/contrib/messages/#message-levels>`__.
 
 `HOOKS <#hooks>`__
 ~~~~~~~~~~~~~~~~~~
@@ -153,20 +155,20 @@ Default:
 
 A dictionary of action, method code hooks to run. These hooks allow
 running arbitrary python code when specific actions happen within a TOM,
-such as an observation changing state. See the documentation on `Running
-Custom Code on Actions in your TOM </code/custom_code>`__ for more
+such as an observation changing state. See the documentation on :doc:`Running
+Custom Code on Actions in your TOM <../code/custom_code>` for more
 details and available hooks.
 
-`OPEN_URLS <#open_urls>`__
+`OPEN_URLS <#open-urls>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default: []
 
-With an `AUTH_STRATEGY <#auth_strategy>`__ value of **LOCKED**, urls in
+With an `AUTH_STRATEGY <#auth-strategy>`__ value of **LOCKED**, urls in
 this list will remain visible to unauthenticated users. You might add
 the homepage (‘/’), for example.
 
-`TARGET_PERMISSIONS_ONLY <#target_permissions_only>`__
+`TARGET_PERMISSIONS_ONLY <#target-permissions-only>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default: True
@@ -178,7 +180,7 @@ ObservationRecords and Data associated with the Target. When set to
 False, permissions can be set for a group at the Target level, the
 ObservationRecord level, or the DataProduct level.
 
-`TARGET_TYPE <#target_type>`__
+`TARGET_TYPE <#target-type>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default: No default
@@ -188,7 +190,7 @@ the default target type for your TOM. TOMs can still create and work
 with targets of both types even after this option is set, but setting it
 to one of the values will optimize the workflow for that target type.
 
-`TOM_ALERT_CLASSES <#tom_alert_classes>`__
+`TOM_ALERT_CLASSES <#tom-alert-classes>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default:
@@ -207,10 +209,10 @@ Default:
 A list of tom alert classes to make available to your TOM. If you have
 written or downloaded additional alert classes you would make them
 available here. If you’d like to write your own alert module please see
-the documentation on `Creating an Alert Module for the TOM
-Toolkit </brokers/create_broker>`__.
+the documentation on :doc:`Creating an Alert Module for the TOM
+Toolkit <../brokers/create_broker>`.
 
-`TOM_ALERT_DASH_CLASSES <#tom_alert_dash_classes>`__
+`TOM_ALERT_DASH_CLASSES <#tom-alert-dash-classes>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default:
@@ -225,9 +227,9 @@ Default:
 A list of tom alert dash classes to make available to your TOM. If you have
 written or downloaded additional alert classes you would make them
 available here. If you’d like to write your own dash alert module, please see
-the documentation on `Plotly Dash Broker Modules in the TOM Toolkit </brokers/create_dash_broker>`__.
+the documentation on :doc:`Plotly Dash Broker Modules in the TOM Toolkit <../brokers/create_dash_broker>`.
 
-`TOM_FACILITY_CLASSES <#tom_facility_classes>`__
+`TOM_FACILITY_CLASSES <#tom-facility-classes>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default:
@@ -245,7 +247,7 @@ A list of observation facility classes to make available to your TOM. If
 you have written or downloaded a custom observation facility you would
 add the class to this list to make your TOM load it.
 
-`TOM_HARVESTER_CLASSES <#tom_harvester_classes>`__
+`TOM_HARVESTER_CLASSES <#tom-harvester-classes>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default:
@@ -264,7 +266,7 @@ A list of TOM harverster classes to make available to your TOM. If you
 have written or downloaded additional harvester classes you would make
 them available here.
 
-`TOM_LATEX_PROCESSORS <#tom_latex_processors>`__
+`TOM_LATEX_PROCESSORS <#tom-latex-processors>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default:
@@ -280,7 +282,7 @@ A dictionary with the keys being TOM models classes and the values being
 the modules that should be used to generate latex tables for those
 models.
 
-`TOM_REGISTRATION <#tom_registration>`__
+`TOM_REGISTRATION <#tom-registration>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default: None
@@ -295,7 +297,7 @@ Example:
       'SEND_APPROVAL_EMAILS': True
    }
 
-`TOM_NAME <#tom_name>`__
+`TOM_NAME <#tom-name>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Default: TOM Toolkit

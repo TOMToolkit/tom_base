@@ -33,7 +33,7 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-TOM_NAME = 'TOM Toolkit'
+TOM_NAME = '{{ PROJECT_NAME }}'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django_extensions',
+    'django_tasks',
+    'django_tasks.backends.database',
     'guardian',
     'tom_common',
     'django_comments',
@@ -54,11 +56,13 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_filters',
     'django_gravatar',
+    'django_htmx',
     'tom_targets',
     'tom_alerts',
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
+    '{{ CUSTOM_CODE_APP_NAME }}',
 ]
 
 SITE_ID = 1
@@ -71,6 +75,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
     'tom_common.middleware.Raise403Middleware',
     'tom_common.middleware.ExternalServiceMiddleware',
     'tom_common.middleware.AuthStrategyMiddleware',
@@ -190,8 +195,26 @@ CACHES = {
     }
 }
 
+TASKS = {
+    "default": {
+        # "BACKEND": "django_tasks.backends.database.DatabaseBackend"
+        "BACKEND": "django_tasks.backends.immediate.ImmediateBackend"
+    }
+}
+
 # TOM Specific configuration
 TARGET_TYPE = '{{ TARGET_TYPE }}'
+
+# Set to the full path of a custom target model to extend the BaseTarget Model with custom fields.
+# TARGET_MODEL_CLASS = '{{ CUSTOM_CODE_APP_NAME }}.models.UserDefinedTarget'
+
+# Define MATCH_MANAGERS here. This is a dictionary that contains a dotted module path to the desired match manager
+# for a given model.
+# For example:
+# MATCH_MANAGERS = {
+#    "Target": "custom_code.match_managers.CustomTargetMatchManager"
+# }
+MATCH_MANAGERS = {}
 
 FACILITIES = {
     'LCO': {
@@ -221,7 +244,10 @@ FACILITIES = {
     },
 }
 
-# Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
+# Define the valid data product types for your TOM.
+# This is a dictionary of tuples to be used as ChoiceField options, with the first element being the type and the
+# second being the display name.
+# Be careful when removing items, as previously valid types will no
 # longer be valid, and may cause issues unless the offending records are modified.
 DATA_PRODUCT_TYPES = {
     'photometry': ('photometry', 'Photometry'),
@@ -243,12 +269,11 @@ TOM_FACILITY_CLASSES = [
 
 TOM_ALERT_CLASSES = [
     'tom_alerts.brokers.alerce.ALeRCEBroker',
-    'tom_alerts.brokers.antares.ANTARESBroker',
+    #  'tom_alerts.brokers.antares.ANTARESBroker',
     'tom_alerts.brokers.gaia.GaiaBroker',
     'tom_alerts.brokers.lasair.LasairBroker',
-    'tom_alerts.brokers.scout.ScoutBroker',
     'tom_alerts.brokers.tns.TNSBroker',
-    'tom_alerts.brokers.fink.FinkBroker',
+    #  'tom_alerts.brokers.fink.FinkBroker',
 ]
 
 BROKERS = {
@@ -256,15 +281,17 @@ BROKERS = {
         'api_key': '',
         'bot_id': '',
         'bot_name': '',
+    },
+    'LASAIR': {
+        'api_key': '',
     }
 }
 
-TOM_HARVESTER_CLASSES = [
-    'tom_catalogs.harvesters.simbad.SimbadHarvester',
-    'tom_catalogs.harvesters.ned.NEDHarvester',
-    'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
-    'tom_catalogs.harvesters.tns.TNSHarvester',
-]
+# Include or exclude specific dot separated harvester classes. If not set, all harvesters will be included based on
+# app configurations. If INCLUDE_HARVESTER_CLASSES is set, only those harvesters will be included. If
+# EXCLUDE_HARVESTER_CLASSES is set, all harvesters except those will be included.
+# INCLUDE_HARVESTER_CLASSES = ['app.example.harvesters.ExampleHarvester']
+# EXCLUDE_HARVESTER_CLASSES = ['app.example.harvesters.ExampleHarvester']
 
 HARVESTERS = {
     'TNS': {
@@ -277,9 +304,9 @@ HARVESTERS = {
 # For example:
 # EXTRA_FIELDS = [
 #     {'name': 'redshift', 'type': 'number'},
-#     {'name': 'discoverer', 'type': 'string'}
+#     {'name': 'discoverer', 'type': 'string'},
 #     {'name': 'eligible', 'type': 'boolean'},
-#     {'name': 'dicovery_date', 'type': 'datetime'}
+#     {'name': 'discovery_date', 'type': 'datetime'}
 # ]
 EXTRA_FIELDS = []
 SELECTION_EXTRA_FIELDS = []
@@ -293,6 +320,9 @@ AUTH_STRATEGY = 'READ_ONLY'
 # objects to be seen by everyone. Setting it to False will allow users to specify which groups can access
 # `ObservationRecord`, `DataProduct`, and `ReducedDatum` objects.
 TARGET_PERMISSIONS_ONLY = True
+
+# Default permission for newly created targets. Values can be 'PRIVATE', 'PUBLIC', or 'OPEN'
+TARGET_DEFAULT_PERMISSION = 'PRIVATE'
 
 # URLs that should be allowed access even with AUTH_STRATEGY = LOCKED
 # for example: OPEN_URLS = ['/', '/about']
@@ -326,6 +356,10 @@ REST_FRAMEWORK = {
 # Default Plotly theme setting, can set to any valid theme:
 # 'plotly', 'plotly_white', 'plotly_dark', 'ggplot2', 'seaborn', 'simple_white', 'none'
 PLOTLY_THEME = 'plotly_white'
+
+# Setting for displaying pagination information (e.g., "(0-0 of 0)").
+# Set this to False if you have a particularly large DB and paginated views are slow.
+SHOW_PAGINATION_INFO = True
 
 try:
     from local_settings import * # noqa

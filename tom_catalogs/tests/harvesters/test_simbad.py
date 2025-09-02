@@ -1,6 +1,5 @@
-from unittest.mock import MagicMock
+from unittest.mock import Mock
 
-from astroquery.exceptions import TableParseError
 from astropy.table import Table
 from django.test import tag, TestCase
 
@@ -10,24 +9,37 @@ from tom_catalogs.harvesters.simbad import SimbadHarvester
 class TestSimbadHarvester(TestCase):
     def setUp(self):
         self.broker = SimbadHarvester()
-        table_data = {'RA_d': [10.68470800], 'DEC_d': [41.26875000],
-                      'PMRA': ['--'], 'PMDEC': ['--'], 'ID': ['M 31, 2C 56, DA 21'],
-                      'Distance_distance': [0.8200]}
+        table_data = {'main_id': ['M  31'],
+                      'ra': [10.684708333333333],
+                      'dec': [41.268750000000004],
+                      'pmra': ['--'],
+                      'pmdec': ['--'],
+                      'mesdistance.dist': [761.0],
+                      'mesdistance.unit': ['kpc ']}
         self.broker.catalog_data = Table(table_data)
+        self.empty_table_data = {'main_id': [],
+                                 'ra': [],
+                                 'dec': [],
+                                 'pmra': [],
+                                 'pmdec': [],
+                                 'plx_value': [],
+                                 'mesdistance.dist': [],
+                                 'mesdistance.unit': []}
 
     def test_query_failure(self):
-        self.broker.simbad = MagicMock()
-        self.broker.simbad.query_object.side_effect = TableParseError()
+        self.broker.simbad.query_object = Mock(return_value=Table(self.empty_table_data))
         self.broker.query('M31')
-        self.assertIsNone(self.broker.catalog_data)
+        # Check that the empty table was returned and is falsey so it would trigger the MissingDataException in the
+        # AbstractHarvester
+        self.assertFalse(self.broker.catalog_data)
 
     def test_to_target(self):
         target = self.broker.to_target()
-        self.assertEqual(target.ra, self.broker.catalog_data['RA_d'])
-        self.assertEqual(target.dec, self.broker.catalog_data['DEC_d'])
+        self.assertEqual(target.ra, self.broker.catalog_data['ra'])
+        self.assertEqual(target.dec, self.broker.catalog_data['dec'])
         self.assertEqual(target.pm_ra, None)
         self.assertEqual(target.pm_dec, None)
-        self.assertEqual(target.distance, self.broker.catalog_data['Distance_distance'])
+        self.assertEqual(target.distance, self.broker.catalog_data['mesdistance.dist'] * 1000)
         self.assertEqual(target.name, 'M31')
 
 

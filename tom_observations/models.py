@@ -1,9 +1,9 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-from tom_targets.models import Target
 from tom_observations.facility import get_service_class
 from tom_common.hooks import run_hook
+from tom_targets.base_models import BaseTarget
 
 
 class ObservationRecord(models.Model):
@@ -39,7 +39,7 @@ class ObservationRecord(models.Model):
     :param modified: The time at which this object was last updated.
     :type modified: datetime
     """
-    target = models.ForeignKey(Target, on_delete=models.CASCADE)
+    target = models.ForeignKey(BaseTarget, on_delete=models.CASCADE)
     user = models.ForeignKey(User, null=True, default=None, on_delete=models.DO_NOTHING)
     facility = models.CharField(max_length=50)
     parameters = models.JSONField()

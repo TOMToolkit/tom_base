@@ -59,7 +59,19 @@ class GaiaQueryForm(GenericQueryForm):
 
 class GaiaBroker(GenericBroker):
     """
-    The ``GaiaBroker`` is the interface to the Gaia alert broker. For information regarding the Gaia Science Alerts
+    The ``GaiaBroker`` is the interface to the Gaia alert broker.
+
+    To include the ``GaiaBroker`` in your TOM, add the broker module location to your `TOM_ALERT_CLASSES` list in
+    your ``settings.py``:
+
+    .. code-block:: python
+
+        TOM_ALERT_CLASSES = [
+            'tom_alerts.brokers.gaia.GaiaBroker',
+            ...
+        ]
+
+    For information regarding the Gaia Science Alerts
     Project, please see http://gsaweb.ast.cam.ac.uk/alerts/about.
     """
 
@@ -181,6 +193,5 @@ class GaiaBroker(GenericBroker):
                         source_location=alert_url,
                         data_type='photometry',
                         target=target)
-                    rd.save()
 
         return

@@ -11,8 +11,17 @@ class SharedAPIRootRouter(SimpleRouter):
 
     def register(self, *args, **kwargs):
         logger.info(f'registering new views: args: {args}, kwargs: {kwargs}')
-        self.shared_router.register(*args, **kwargs)
-        super().register(*args, **kwargs)
+        viewset = kwargs.get('viewset') or args[1]
+        basename = kwargs.get('basename') or (args[2] if len(args) > 2 else None)
+        if not basename:
+            basename = self.shared_router.get_default_basename(viewset)
+        if self.shared_router.is_already_registered(basename):
+            logger.warning(
+                f'Cannot register new views: args: {args}, kwargs: {kwargs} -> {basename} is already registered'
+            )
+        else:
+            self.shared_router.register(*args, **kwargs)
+            super().register(*args, **kwargs)
 
 
 def collect_api_urls():

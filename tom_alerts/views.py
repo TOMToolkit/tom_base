@@ -1,5 +1,4 @@
 from copy import deepcopy
-import json
 import logging
 from requests import HTTPError
 from typing import List
@@ -260,13 +259,17 @@ class RunQueryView(TemplateView):
         context['query'] = query
         context['score_description'] = broker_class.score_description
         context['broker_feedback'] = broker_feedback
+        context['too_many_alerts'] = False
 
         context['alerts'] = []
         try:
-            while True:
-                alert = next(alerts)
+            for (i, alert) in enumerate(alerts):
+                if i > 99:
+                    # issue 1172 too many alerts causes the cache to overflow
+                    context['too_many_alerts'] = True
+                    break
                 generic_alert = broker_class.to_generic_alert(alert)
-                cache.set(f'alert_{generic_alert.id}', json.dumps(alert), 3600)
+                cache.set(f'alert_{generic_alert.id}', alert, 3600)
                 context['alerts'].append(generic_alert)
         except StopIteration:
             pass
@@ -304,14 +307,14 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             if not cached_alert:
                 messages.error(request, 'Could not create targets. Try re running the query again.')
                 return redirect(reverse('tom_alerts:run', kwargs={'pk': query_id}))
-            generic_alert = broker_class().to_generic_alert(json.loads(cached_alert))
+            generic_alert = broker_class().to_generic_alert(cached_alert)
             target, extras, aliases = generic_alert.to_target()
             try:
                 target.save(extras=extras, names=aliases)
                 # Give the user access to the target they created
                 target.give_user_access(self.request.user)
-                broker_class().process_reduced_data(target, json.loads(cached_alert))
-                for group in request.user.groups.all().exclude(name='Public'):
+                broker_class().process_reduced_data(target, cached_alert)
+                for group in request.user.groups.all():
                     assign_perm('tom_targets.view_target', group, target)
                     assign_perm('tom_targets.change_target', group, target)
                     assign_perm('tom_targets.delete_target', group, target)
