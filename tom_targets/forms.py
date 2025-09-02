@@ -12,7 +12,7 @@ from .models import Target, TargetExtra, TargetName, TargetList, PersistentShare
 from tom_targets.base_models import (SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
                                      REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME,
                                      IGNORE_FIELDS)
-
+from datetime import datetime
 
 def extra_field_to_form_field(field_type):
     if field_type == 'number':
@@ -275,10 +275,14 @@ class TargetSelectionForm(forms.Form):
     """
     target_list = forms.ModelChoiceField(
         TargetList.objects.all(),
-        required=False)
+        required=True)
     facilities = [(x, x) for x in facility.get_service_classes()]
     observatory = forms.ChoiceField(required=True, choices=facilities)
-    date = forms.DateTimeField(required=True, help_text='YYYY-MM-DD')
-
+    date = forms.DateField(
+        required=True,
+        initial=datetime.date.today,
+        widget=forms.TextInput(attrs={'type': 'date'}),
+        help_text='YYYY-MM-DD'
+    )
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

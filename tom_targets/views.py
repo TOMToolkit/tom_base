@@ -62,6 +62,7 @@ from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_
 import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy import units as u
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -963,36 +964,36 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         # if configured in the TOM's settings.py. So we set the list of table columns accordingly.
         table_columns = [
             'Target', 'RA', 'Dec', 'Site', 'Min airmass'
-        ] + settings.SELECTION_EXTRA_FIELDS
+        ] + getattr(settings, 'SELECTION_EXTRA_FIELDS', [])
         # for param in settings.SELECTION_EXTRA_FIELDS:
         #    table_columns.append(param)
 
         # Calculate the visibility of all selected targets on the date given
-        # Since some observatories include multiple sites, the visibiliy_data returned is always
+        # Since some observatories include multiple sites, the visibility_data returned is always
         # a dictionary indexed by site code.  Our purpose here is to verify whether each target is ever
         # visible at lower airmass than the limit from any site - if so the target is considered to be visible
         observable_targets = []
-        for object in targets:
-            start_time = datetime.strptime(request.POST.get('date')+'T00:00:00', '%Y-%m-%dT%H:%M:%S')
-            end_time = datetime.strptime(request.POST.get('date')+'T23:59:59', '%Y-%m-%dT%H:%M:%S')
+        for target in targets:
+            start_time = datetime.strptime(request.POST.get('date'), '%Y-%m-%d')
+            end_time = start_time + timedelta(days=1)
             visibility_data = get_sidereal_visibility(
-                object, start_time, end_time,
+                target, start_time, end_time,
                 visibiliy_intervals, airmass_max,
                 observation_facility=request.POST.get('observatory')
             )
             for site, vis_data in visibility_data.items():
                 airmass_data = np.array([x for x in vis_data[1] if x])
                 if len(airmass_data) > 0:
-                    s = SkyCoord(object.ra, object.dec, frame='icrs', unit=(u.deg, u.deg))
+                    s = SkyCoord(target.ra, target.dec, frame='icrs', unit=(u.deg, u.deg))
                     target_data = [
-                        object.name, s.ra.to_string(u.hour), s.dec.to_string(u.deg, alwayssign=True),
+                        target, s.ra.to_string(u.hour), s.dec.to_string(u.deg, alwayssign=True),
                         site, round(airmass_data.min(), 1)
                     ]
 
                     # Extract any requested extra parameters for this object, if available
-                    for param in settings.SELECTION_EXTRA_FIELDS:
-                        if param in object.extra_fields.keys():
-                            target_data.append(object.extra_fields[param])
+                    for param in getattr(settings, 'SELECTION_EXTRA_FIELDS', []):
+                        if param in target.extra_fields.keys():
+                            target_data.append(target.extra_fields[param])
                         else:
                             target_data.append(None)
                     observable_targets.append(target_data)
