@@ -496,3 +496,10 @@ def get_buttons(target):
             pass
 
     return {'target': target, 'button_list': button_list}
+
+
+@register.filter
+def extra_form_field(form, field):
+    if field not in [e['name'] for e in settings.EXTRA_FIELDS]:
+        raise AttributeError("Attempted to lookup non-defined extra field")
+    return form[field]
