@@ -380,7 +380,7 @@ class BaseRoboticObservationFacility(BaseObservationFacility):
         from tom_observations.models import ObservationRecord
         records = ObservationRecord.objects.filter(observation_id=observation_id)
         if not records:
-            raise Exception('No record exists for that observation id')
+            raise Exception('No records exist for that observation id')
         status = self.get_observation_status(observation_id)
         for record in records:
             record.status = status['state']
