@@ -1,7 +1,9 @@
+from crispy_forms.layout import Layout, Div
 from django import forms
 from django.conf import settings
 from astropy.coordinates import Angle
 from astropy import units as u
+from crispy_forms.helper import FormHelper
 from django.forms import ValidationError, inlineformset_factory
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
@@ -68,6 +70,18 @@ class TargetForm(forms.ModelForm):
                     self.extra_fields[field_name].initial = te.first().typed_value(extra_field['type'])
 
             self.fields.update(self.extra_fields)
+
+        # Crispy forms
+        crispy_exclude = ['type', 'name', 'groups', 'permissions']
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.disable_csrf = True
+
+        layout_fields = []
+        for field_name in [f for f in self.fields if f not in crispy_exclude]:
+            layout_fields.append(Div(field_name, css_class="col-md-6"))
+
+        self.helper.layout = Layout(Div(*layout_fields, css_class="form-row"))
 
     def save(self, commit=True):
         instance = super().save(commit=commit)
