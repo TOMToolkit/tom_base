@@ -11,6 +11,20 @@ class TestMPCHarvester(TestCase):
     def setUp(self):
         self.broker = MPCHarvester()
         self.test_response = [{'foo': 42}]
+        self.test_obj1627_response = [{'absolute_magnitude': '12.79',
+                                       'argument_of_perihelion': '167.84169',
+                                       'ascending_node': '133.0747611',
+                                       'designation': None,
+                                       'eccentricity': '0.3972474',
+                                       'epoch_jd': '2460800.5',
+                                       'inclination': '8.45614',
+                                       'mean_anomaly': '233.93148',
+                                       'mean_daily_motion': '0.3875921',
+                                       'name': 'Ivar',
+                                       'neo': True,
+                                       'number': 1627,
+                                       'phase_slope': '0.6',
+                                       'semimajor_axis': '1.86303'}]
 
     @patch('astroquery.mpc.MPC.query_object')
     def test_query_name(self, mock_query):
@@ -148,6 +162,22 @@ class TestMPCHarvester(TestCase):
             self.assertEqual(self.broker._object_term, comet, msg=f'Failure on _object_term for {comet}')
             self.assertEqual(self.broker.catalog_data, self.test_response)
 
+    @patch('astroquery.mpc.MPC.query_object')
+    def test_to_target_HG_fields(self, mock_query):
+        mock_query.return_value = self.test_obj1627_response
+
+        self.broker.query('1627')
+        target = self.broker.to_target()
+        target.save(names=getattr(target, 'extra_names', []))
+        self.assertEqual(target.name, '1627')
+        self.assertEqual(target.names, ['1627', 'Ivar'])
+        self.assertEqual(target.type, 'NON_SIDEREAL')
+        self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
+        self.assertEqual(target.ra, None)
+        self.assertEqual(target.dec, None)
+        self.assertAlmostEqual(target.abs_mag, 12.79, places=3)
+        self.assertAlmostEqual(target.slope, 0.6, places=3)
+
 
 @tag('canary')
 class TestMPCHarvesterCanary(TestCase):
@@ -169,6 +199,8 @@ class TestMPCHarvesterCanary(TestCase):
         self.assertAlmostEqual(target.inclination, 4.1688, places=4)
         self.assertAlmostEqual(target.mean_anomaly, 315.8420, places=4)
         self.assertAlmostEqual(target.semimajor_axis, 2.6555, places=4)
+        self.assertAlmostEqual(target.abs_mag, 17.76, places=2)
+        self.assertAlmostEqual(target.slope, 0.15, places=2)
 
     def test_query_designation_only(self):
         self.broker.query('2025 MB18')
@@ -183,6 +215,8 @@ class TestMPCHarvesterCanary(TestCase):
         self.assertEqual(target.dec, None)
         self.assertAlmostEqual(target.eccentricity, 0.1398, places=4)
         self.assertAlmostEqual(target.inclination, 19.3561, places=4)
+        self.assertAlmostEqual(target.abs_mag, 24.33, places=2)
+        self.assertAlmostEqual(target.slope, 0.15, places=2)
 
     def test_query_name(self):
         self.broker.query('1627')
@@ -197,6 +231,8 @@ class TestMPCHarvesterCanary(TestCase):
         self.assertEqual(target.dec, None)
         self.assertAlmostEqual(target.eccentricity, 0.3972, places=4)
         self.assertAlmostEqual(target.inclination, 8.4561, places=4)
+        self.assertAlmostEqual(target.abs_mag, 12.79, places=2)
+        self.assertAlmostEqual(target.slope, 0.15, places=2)
 
     def test_query_comet_name(self):
         self.broker.query('29P')
@@ -265,6 +301,8 @@ class TestMPCExplorerHarvester(TestCase):
         self.assertAlmostEqual(target.semimajor_axis, 1.6425997626135918, places=10)
         self.assertAlmostEqual(target.mean_daily_motion, 0.4681730823025772, places=10)
         self.assertAlmostEqual(target.mean_anomaly, 339.9299636288955, places=6)
+        self.assertAlmostEqual(target.abs_mag, 18.105, places=3)
+        self.assertAlmostEqual(target.slope, 0.15, places=2)
         self.assertEqual(target.ra, None)
         self.assertEqual(target.dec, None)
         self.assertEqual(target.pm_ra, None)
@@ -379,3 +417,5 @@ class TestMPCExplorerHarvesterCanary(TestCase):
         self.assertEqual(target.dec, None)
         self.assertAlmostEqual(target.eccentricity, 0.223, places=3)
         self.assertAlmostEqual(target.inclination, 10.828, places=3)
+        self.assertAlmostEqual(target.abs_mag, 10.39, places=2)
+        self.assertAlmostEqual(target.slope, 0.15, places=2)
