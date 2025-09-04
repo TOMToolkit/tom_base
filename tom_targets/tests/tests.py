@@ -2057,3 +2057,10 @@ class TestTargetTagsFilters(TestCase):
         TargetName.objects.create(target=self.target_1, name="Target One")
         row = target_table_row(self.target_1)
         assert row == ["Target 1, Target One", 0, "12.34", "bar"]
+
+    @override_settings(TARGET_LIST_COLUMNS=["name", "saved_data", "ra", "userdata"])
+    def test_target_list_rows_none(self):
+        self.target_1.ra = None
+        self.target_1.save()
+        row = target_table_row(self.target_1)
+        assert row == ["Target 1", 0, "None", "bar"]
