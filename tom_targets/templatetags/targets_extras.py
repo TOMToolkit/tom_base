@@ -406,7 +406,10 @@ def target_table_row(target: BaseTarget) -> list[Any]:
                 field = target._meta.get_field(column)  # type: ignore[attr-defined])
                 value = getattr(target, column)
                 if field.get_internal_type() in ["FloatField", "DecimalField"]:
-                    value = f"{value:.2f}"
+                    try:
+                        value = f"{value:.2f}"
+                    except TypeError:
+                        value = str(value)
                 row.append(value)
             except FieldDoesNotExist:
                 # See if a TargetExtra exits with this name
