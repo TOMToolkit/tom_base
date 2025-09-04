@@ -742,6 +742,25 @@ class OCSBaseObservationForm(BaseRoboticObservationForm, OCSBaseForm):
             else:
                 self.initial['end'] = parse(f"{end_0}T00:00")
 
+    def full_clean(self):
+        # Modify incoming form if it's using original start and end fields, not the split ones
+        if self.data.get('start') and (not self.data.get('start_0') or not self.data.get('start_1')):
+            try:
+                dt = parse(self.data['start'])
+                self.data['start_0'] = dt.date().isoformat()
+                self.data['start_1'] = dt.time().isoformat()
+            except ValueError:
+                self.add_error('start', 'Invalid date and time format')
+        if self.data.get('end') and (not self.data.get('end_0') or not self.data.get('end_1')):
+            # using old fields
+            try:
+                dt = parse(self.data['end'])
+                self.data['end_0'] = dt.date().isoformat()
+                self.data['end_1'] = dt.time().isoformat()
+            except ValueError:
+                self.add_error('end', 'Invalid date and time format')
+        return super().full_clean()
+
     def validate_at_facility(self):
         obs_module = get_service_class(self.cleaned_data['facility'])
         response = obs_module().validate_observation(self.observation_payload())
