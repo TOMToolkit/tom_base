@@ -7,12 +7,13 @@ Targets
 
   target_fields
   target_matcher
+  target_table
   ../api/tom_targets/models
   ../api/tom_targets/views
   ../api/tom_targets/groups
 
 
-The ``Target``, along with the associated ``TargetList``, ``TargetExtra``, and ``TargetName``, are the core models of the 
+The ``Target``, along with the associated ``TargetList``, ``TargetExtra``, and ``TargetName``, are the core models of the
 TOM Toolkit. The ``Target`` defines the concept of an astronomical target through a number of parameters. This
 object is then used throughout the TOM to reference all the information a user or app needs to know about a target.
 More information on Targets can be found using the following pages:
@@ -22,6 +23,8 @@ defaults do not suffice.
 
 :doc:`Customizing a Target Matcher <target_matcher>` - Learn how to replace or modify the TargetMatchManager if more
 options are needed.
+
+:doc:`Customizing the Target List Table <target_table>` - Learn how to modify which columns are displayed in the target list table.
 
 :doc:`Target Models <../api/tom_targets/models>` - Take a look at the available properties for a ``Target`` and its associated models.
 
