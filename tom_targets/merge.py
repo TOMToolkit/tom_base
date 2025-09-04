@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from tom_targets.models import TargetName, TargetExtra
 from tom_dataproducts.models import ReducedDatum, DataProduct
 from tom_observations.models import ObservationRecord
@@ -63,10 +64,12 @@ def target_merge(primary_target, secondary_target):
     st_reduceddatums = ReducedDatum.objects.filter(target=secondary_target)
     for reduceddatum in st_reduceddatums:
         reduceddatum.target = primary_target
-        reduceddatum.save()
-
-    #  TODO: skip reduceddatums with values that are identical (do this with an if statement)
-    #  access value with reduceddatum.value
+        try:
+            reduceddatum.validate_unique()
+        except ValidationError:
+            reduceddatum.delete()  # delete what would become a duplicate reduceddatum
+        else:
+            reduceddatum.save()
 
     # take secondary target extras without repeated keys and save them as primary target extras
     pt_targetextra_keys = list(TargetExtra.objects.filter(target=primary_target).values_list("key", flat=True))
