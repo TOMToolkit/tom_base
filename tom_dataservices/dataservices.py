@@ -121,8 +121,9 @@ class BaseDataService(ABC):
         except KeyError as e:
             raise NotConfiguredError(
                 f"""The {e} DataService is not configured.
-                </br>
-                Please see the <a href="{cls.info_url}" target="_blank">documentation</a> for more information."""
+                    </br>
+                    Please see the <a href="{cls.info_url}" target="_blank">documentation</a> for more information.
+                """
             )
 
     @classmethod
@@ -243,7 +244,7 @@ class BaseDataService(ABC):
         Upper level function to create a new target from the query results
         Can take either new query results, or use stored results form a recent `query_service()`
         :param query_results: Query results from the DataService
-        :returns: Target object
+        :returns: Target object, dictionary of target_extras, and list of aliases
         """
         target_parameters = query_results or self.query_results
         if not target_parameters:

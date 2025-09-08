@@ -181,6 +181,7 @@ class RunQueryView(TemplateView):
         context['query'] = query
         context['query_feedback'] = query_feedback
         context['too_many_results'] = False
+        context['data_service'] = data_service_class.name
         context['query_results_table'] = data_service_class.query_results_table or 'tom_dataservices/partials/' \
                                                                                    'query_results_table.html'
 
@@ -306,6 +307,7 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
         data_service_class = get_data_service_class(data_service_name)()
         results = self.request.POST.getlist('selected_results')
         errors = []
+        target = None
         if not results:
             messages.warning(request, 'Please select at least one alert from which to create a target.')
             return redirect(reverse('dataservices:run', kwargs={'pk': query_id}))
@@ -331,5 +333,7 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                 messages.warning(request, f'Unable to save {target.name}, target with that name already exists.')
                 errors.append(target.name)
         if len(results) == len(errors):
-            return redirect(reverse('dataservices:run', kwargs={'pk': query_id}))
+            return redirect(reverse('dataservices:run'))
+        if len(results) == 1 and target:
+            return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
         return redirect(reverse('tom_targets:list'))

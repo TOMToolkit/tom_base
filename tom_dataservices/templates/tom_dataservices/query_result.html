@@ -11,7 +11,7 @@
 <form method="POST" action="{% url 'dataservices:create-target' %}">
   {% csrf_token %}
   <div class="">
-    <input type="hidden" name="data_service" value="{{ query.data_service }}"/>
+    <input type="hidden" name="data_service" value="{{ data_service }}"/>
     <input type="hidden" name="query_id" value="{{ query.id }}"/>
     <input type="submit" value="Create Targets" class="btn btn-primary"/>
   </div>
