@@ -89,6 +89,12 @@ which looks like this:
 Editing ``models.py``
 ~~~~~~~~~~~~~~~~~~~~~
 First you will need to create a custom target model in the ``models.py`` file of your custom app.
+
+**NOTE: If you already have other models in your ``models.py`` that require a reference to `tom_targets.models.Target`
+this will cause a circular import that will prevent your new target model from loading. You will either need to define
+your `UserDefinedTarget` in a different place, or change the references in your other models to the name of your
+`UserDefinedTarget` and remove the import.**
+
 The following is an example of a custom target model that adds a boolean field and a number field:
 
 .. code-block:: python
