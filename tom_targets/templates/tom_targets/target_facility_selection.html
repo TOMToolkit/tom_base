@@ -26,13 +26,16 @@
   </form>
 </div>
 <div class="row">
-    {% if observable_targets %}
+    {% if request.method == 'POST' %}
+    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+    <label id="displaySelected"></label>
     <table class="table table-striped">
         <tr>
             {% for col in table_columns %}
                 <th>{{col}}</th>
             {% endfor %}
         </tr>
+        {% if observable_targets %}
         {% for entry in observable_targets %}
             <tr>
                 {% for item in entry %}
@@ -46,7 +49,13 @@
                 {% endfor %}
             </tr>
         {% endfor %}
-    {% endif %}
+        {% else %}
+        <tr>
+            <td colspan="100">No visible targets found</td>
+        </tr>
+        {% endif %}
     </table>
+    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+    {% endif %}
 </div>
 {% endblock %}

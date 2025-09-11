@@ -3,7 +3,7 @@ Selecting Targets for an Observing Facility
 
 During observing runs, particularly at manually- or remotely-operated telescope
 facilities, it can often be very useful to display a selection of targets to be
-observed on a particular night.  This needs to take into account target visibiliy from
+observed on a particular night.  This needs to take into account target visibility from
 the telescope site, as well as any prioritization of targets that the team have made.
 
 TOMs provide support for this through the Target Selection option under the Target menu
@@ -13,11 +13,10 @@ in the main navigation bar.
   :alt: Menu option for Target Selection view
 
 Observers can select the telescope facility that they are observing from using the form
-provided, indicating the date of the observing run.  The selected targets can be draw
-from a predefined Target Grouping, but if none is specified then targets will be drawn
-from all of the targets that the user has permission to see.
+provided, indicating the date of the observing run.  The selected targets will be draw
+from a predefined Target Grouping, which users can chose from the pulldown menu.
 
-The TOM will evaluate the visibility of the selected targets for the telescope on the
+The TOM will evaluate the visibility of the selected sidereal targets for the telescope on the
 night in question, and the resulting table will include all objects with a minimum
 airmass less than 2.0.
 

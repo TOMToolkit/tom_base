@@ -1,8 +1,11 @@
 import logging
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import StringIO
 from urllib.parse import urlencode
+import numpy as np
+from astropy.coordinates import SkyCoord
+from astropy import units as u
 
 from django.conf import settings
 from django.contrib import messages
@@ -59,10 +62,6 @@ from tom_targets.utils import import_targets, export_targets
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.seed import seed_messier_targets
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
-import numpy as np
-from astropy.coordinates import SkyCoord
-from astropy import units as u
-from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -754,14 +753,13 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 
 
-class TargetGroupingView(PermissionListMixin, ListView):
+class TargetGroupingView(PermissionListMixin, FormView):
     """
     View that handles the display of ``TargetList`` objects, also known as target groups. Requires authorization.
     """
     permission_required = 'tom_targets.view_targetlist'
     template_name = 'tom_targets/target_grouping.html'
     model = TargetList
-    paginate_by = 25
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -911,17 +909,34 @@ class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
             return HttpResponseBadRequest("Must have hermes section with HERMES_API_KEY set in DATA_SHARING settings")
 
 
-class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
+class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, ListView):
     """
     View to select targets suitable to observe from a specific facility/location, taking into account target visibility
     from that site, as well as other user-defined constraints.
     """
     template_name = 'tom_targets/target_facility_selection.html'
-    paginate_by = 25
+    paginate_by = 5
     strict = False
     model = Target
     permission_required = 'tom_targets.view_target'
     form_class = TargetSelectionForm
+
+    def get_queryset(self):
+        observable_targets = []
+
+        form = TargetSelectionForm(self.request.GET)
+        if form.is_valid():
+            targetlistname = form.cleaned_data('target_list')
+            date = form.cleaned_data('date')
+            observatory = form.cleaned_data('observatory')
+
+            observable_targets = self.get_observable_targets(
+                targetlistname,
+                date,
+                observatory
+            )
+
+        return observable_targets
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -929,17 +944,23 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         :returns: context object
         :rtype: dict
         """
+
         context = super().get_context_data(*args, **kwargs)
         # Surely this needs to verify that the user has permission?
         context['form'] = TargetSelectionForm()
 
+        # The displayed table can be extended to include selected extra_fields for each target,
+        # if configured in the TOM's settings.py. So we set the list of table columns accordingly.
+        context['table_columns'] = [
+                            'Target', 'RA', 'Dec', 'Site', 'Min airmass'
+                        ] + getattr(settings, 'SELECTION_EXTRA_FIELDS', [])
+
         return context
 
-    def post(self, request, *args, **kwargs):
+    def get_observable_targets(self, targetlistname, date, observatory):
         """
         Handles POST requests to select targets suitable for observation from this facility
 
-        :param request: The HTML request object
         :param args: Optional arguments if any
         :param kwargs: Optional kwargs if any
         :return: HTTPRequest
@@ -950,33 +971,24 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         # Number of intervals with which to calculate visibility throughout a single night
         airmass_max = 2.0
         visibiliy_intervals = 10
-        context = super().get_context_data(*args, **kwargs)
 
         # Gather the list of targets from the selected target list.
-        target_list = TargetList.objects.get(id=request.POST.get('target_list'))
+        target_list = TargetList.objects.get(id=targetlistname)
         targets = target_list.targets.all()
-
-        # Configure output target table.
-        # The displayed table can be extended to include selected extra_fields for each target,
-        # if configured in the TOM's settings.py. So we set the list of table columns accordingly.
-        table_columns = [
-            'Target', 'RA', 'Dec', 'Site', 'Min airmass'
-        ] + getattr(settings, 'SELECTION_EXTRA_FIELDS', [])
-        # for param in settings.SELECTION_EXTRA_FIELDS:
-        #    table_columns.append(param)
 
         # Calculate the visibility of all selected targets on the date given
         # Since some observatories include multiple sites, the visibility_data returned is always
         # a dictionary indexed by site code.  Our purpose here is to verify whether each target is ever
         # visible at lower airmass than the limit from any site - if so the target is considered to be visible
         observable_targets = []
+        # Select here? targets[page_obj.start_index()-1:page_obj.end_index()]
         for target in targets:
-            start_time = datetime.strptime(request.POST.get('date'), '%Y-%m-%d')
+            start_time = datetime.strptime(date, '%Y-%m-%d')
             end_time = start_time + timedelta(days=1)
             visibility_data = get_sidereal_visibility(
                 target, start_time, end_time,
                 visibiliy_intervals, airmass_max,
-                observation_facility=request.POST.get('observatory')
+                observation_facility=observatory
             )
             for site, vis_data in visibility_data.items():
                 airmass_data = np.array([x for x in vis_data[1] if x])
@@ -995,10 +1007,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
                             target_data.append(None)
                     observable_targets.append(target_data)
 
-        context['table_columns'] = table_columns
-        context['observable_targets'] = observable_targets
-
-        return self.render_to_response(context)
+        return observable_targets
 
 
 class PersistentShareManageFormView(APIView):
