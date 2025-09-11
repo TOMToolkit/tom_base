@@ -25,7 +25,7 @@ By default the TOM Toolkit will use the ``tom_targets.BaseTarget`` model as the 
 but users can create their own target model by subclassing ``tom_targets.BaseTarget`` and adding
 their own fields. The TOM Toolkit will then use the custom target model if it is defined
 in the ``TARGET_MODEL_CLASS`` setting of ``settings.py``. To implement this a user will first
-have to edit a ``models.py`` file in their custom code app and define a custom target model.
+have to edit a ``target_models.py`` file in their custom code app and define a custom target model.
 
 Subclassing ``tom_targets.BaseTarget`` will give the user access to all the fields and methods
 of the ``BaseTarget`` model, but the user can also add their own fields and methods to the custom
@@ -86,19 +86,20 @@ which looks like this:
    ├── templates
    └── tmp
 
-Editing ``models.py``
-~~~~~~~~~~~~~~~~~~~~~
-First you will need to create a custom target model in the ``models.py`` file of your custom app.
+``target_models.py``
+~~~~~~~~~~~~~~~~~~~~
+First you will need to create a custom target model. We recommend doing this in a new ``target_models.py`` file within
+your ``custom_code`` app.
 
-**NOTE: If you already have other models in your ``models.py`` that require a reference to `tom_targets.models.Target`
-this will cause a circular import that will prevent your new target model from loading. You will either need to define
-your `UserDefinedTarget` in a different place, or change the references in your other models to the name of your
-`UserDefinedTarget` and remove the import.**
+.. note::
+    You can also define your custom target model in the ``models.py`` file of your custom_code app, but this can cause
+    complications if any of your existing or future models require a foreign key relationship to the
+    `tom_targets.Target` model. This is why we recommend that you keep your custom target model in a separate file.
 
 The following is an example of a custom target model that adds a boolean field and a number field:
 
 .. code-block:: python
-    :caption: models.py
+    :caption: target_models.py
     :linenos:
 
     from django.db import models
@@ -143,7 +144,7 @@ project, you will need to add the following line:
 
 .. code:: python
 
-    TARGET_MODEL_CLASS = 'custom_code.models.UserDefinedTarget'
+    TARGET_MODEL_CLASS = 'custom_code.target_models.UserDefinedTarget'
 
 Changing ``custom_code`` to the name of your custom app and ``UserDefinedTarget`` to the name of your custom target model.
 
