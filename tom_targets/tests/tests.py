@@ -18,6 +18,8 @@ from tom_observations.tests.factories import ObservingRecordFactory
 from tom_targets.models import Target, TargetExtra, TargetList, TargetName
 from tom_targets.utils import import_targets
 from tom_targets.merge import target_merge
+from tom_targets.base_models import BaseTarget
+from tom_targets.templatetags.targets_extras import target_table_headers, target_table_row
 from tom_targets.permissions import targets_for_user
 from tom_dataproducts.models import ReducedDatum, DataProduct
 from tom_observations.models import ObservationRecord
@@ -2036,3 +2038,29 @@ class TestTargetPermissionFiltering(TestCase):
         """Make sure a typo doesn't expose data"""
         with self.assertRaises(AssertionError):
             targets_for_user(self.user, Target.objects.all(), 'view_targett')
+
+
+class TestTargetTagsFilters(TestCase):
+    def setUp(self):
+        self.target_1 = SiderealTargetFactory.create(name="Target 1", ra=12.34, aliases=[])
+        TargetExtra.objects.create(target=self.target_1, key="userdata", value="bar")
+        self.target_2 = SiderealTargetFactory.create(name="Target 2", ra=34.56, aliases=[])
+        TargetExtra.objects.create(target=self.target_2, key="userdata", value="baz")
+
+    @override_settings(TARGET_LIST_COLUMNS=["name", "saved_data", "ra", "userdata"])
+    def test_target_list_column_headers(self):
+        headers = target_table_headers(BaseTarget)
+        assert headers == ["Name", "Saved Data", "Right Ascension", "userdata"]
+
+    @override_settings(TARGET_LIST_COLUMNS=["name", "saved_data", "ra", "userdata"])
+    def test_target_list_rows(self):
+        TargetName.objects.create(target=self.target_1, name="Target One")
+        row = target_table_row(self.target_1)
+        assert row == ["Target 1, Target One", 0, "12.34", "bar"]
+
+    @override_settings(TARGET_LIST_COLUMNS=["name", "saved_data", "ra", "userdata"])
+    def test_target_list_rows_none(self):
+        self.target_1.ra = None
+        self.target_1.save()
+        row = target_table_row(self.target_1)
+        assert row == ["Target 1", 0, "None", "bar"]

@@ -131,7 +131,7 @@ Default:
 
 .. code-block::
 
-    HINTS_ENABLED = False 
+    HINTS_ENABLED = False
     HINT_LEVEL = 20
 
 A few messages are sprinkled throughout the TOM Toolkit that offer
@@ -189,6 +189,18 @@ Can be either **SIDEREAL** or **NON_SIDEREAL**. This setting determines
 the default target type for your TOM. TOMs can still create and work
 with targets of both types even after this option is set, but setting it
 to one of the values will optimize the workflow for that target type.
+
+`TARGET_LIST_COLUMNS <#target-list-columns>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default:
+
+.. code-block::
+
+    ["name", "type", "observations", "saved_data"]
+
+Display these columns in the target list table. Values can be attributes or properties on
+the Target model, tags or extra fields. See :doc:`Customizing the Target List Table <../targets/target_table>`.
 
 `TOM_ALERT_CLASSES <#tom-alert-classes>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

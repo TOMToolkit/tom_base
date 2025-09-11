@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
 import logging
+from typing import Any
 
 from astroplan import moon_illumination
 from astropy import units as u
 from astropy.coordinates import GCRS, Angle, get_body, SkyCoord
 from astropy.time import Time
 from django import template
+from django.core.exceptions import FieldDoesNotExist
 from django.utils.safestring import mark_safe
 from django.conf import settings
 from django.db.models import Q
@@ -16,6 +18,7 @@ from plotly import offline
 from plotly import graph_objs as go
 
 from tom_observations.utils import get_sidereal_visibility
+from tom_targets.base_models import BaseTarget
 from tom_targets.models import Target, TargetExtra, TargetList
 from tom_targets.forms import TargetVisibilityForm, PersistentShareForm
 from tom_targets.permissions import targets_for_user
@@ -363,6 +366,67 @@ def target_distribution(targets):
     return aladin_skymap(targets)
 
 
+def get_target_list_columns() -> list[str]:
+    try:
+        return settings.TARGET_LIST_COLUMNS
+    except Exception:
+        return ["name", "type", "observations", "saved_data"]
+
+
+def target_table_headers(model: type[BaseTarget]) -> list[str]:
+    headers = []
+    for column in get_target_list_columns():
+        # Special fields
+        if column == "observations":
+            headers.append("Observations")
+        elif column == "saved_data":
+            headers.append("Saved Data")
+        else:
+            try:
+                field = model._meta.get_field(column)  # type: ignore[attr-defined])
+                headers.append(field.verbose_name)
+            except FieldDoesNotExist:
+                headers.append(column)
+    return headers
+
+
+@register.simple_tag
+def target_table_row(target: BaseTarget) -> list[Any]:
+    row = []
+    for column in get_target_list_columns():
+        # Special Fields
+        if column == "name":
+            row.append(", ".join(target.names))
+        elif column == "observations":
+            row.append(target.observationrecord_set.count())
+        elif column == "saved_data":
+            row.append(target.dataproduct_set.count())
+        else:
+            try:
+                field = target._meta.get_field(column)  # type: ignore[attr-defined])
+                value = getattr(target, column)
+                if field.get_internal_type() in ["FloatField", "DecimalField"]:
+                    try:
+                        value = f"{value:.2f}"
+                    except TypeError:
+                        value = str(value)
+                row.append(value)
+            except FieldDoesNotExist:
+                # See if a TargetExtra exits with this name
+                # The assignment and continue weirdness is to avoid querying twice
+                extra_fields = target.extra_fields
+                if column in extra_fields:
+                    row.append(extra_fields[column])
+                    continue
+                tags = target.tags
+                if column in tags:
+                    row.append(tags[column])
+                    continue
+                row.append("")
+
+    return row
+
+
 @register.inclusion_tag('tom_targets/partials/target_table.html', takes_context=True)
 def target_table(context, targets, all_checked=False):
     """
@@ -370,8 +434,11 @@ def target_table(context, targets, all_checked=False):
     by default
     """
 
+    headers = target_table_headers(BaseTarget)
+
     return {
         'targets': targets,
+        'headers': headers,
         'all_checked': all_checked,
         'empty_database': context['empty_database'],
         'authenticated': context['request'].user.is_authenticated,
@@ -432,3 +499,10 @@ def get_buttons(target):
             pass
 
     return {'target': target, 'button_list': button_list}
+
+
+@register.filter
+def extra_form_field(form, field):
+    if field not in [e['name'] for e in settings.EXTRA_FIELDS]:
+        raise AttributeError("Attempted to lookup non-defined extra field")
+    return form[field]
