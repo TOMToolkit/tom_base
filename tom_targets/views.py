@@ -13,6 +13,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
 from django_filters.views import FilterView
@@ -909,34 +910,18 @@ class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
             return HttpResponseBadRequest("Must have hermes section with HERMES_API_KEY set in DATA_SHARING settings")
 
 
-class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, ListView):
+class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
     """
     View to select targets suitable to observe from a specific facility/location, taking into account target visibility
     from that site, as well as other user-defined constraints.
     """
     template_name = 'tom_targets/target_facility_selection.html'
-    paginate_by = 5
     strict = False
     model = Target
+    paginate_by = 5
     permission_required = 'tom_targets.view_target'
     form_class = TargetSelectionForm
-
-    def get_queryset(self):
-        observable_targets = []
-
-        form = TargetSelectionForm(self.request.GET)
-        if form.is_valid():
-            targetlistname = form.cleaned_data('target_list')
-            date = form.cleaned_data('date')
-            observatory = form.cleaned_data('observatory')
-
-            observable_targets = self.get_observable_targets(
-                targetlistname,
-                date,
-                observatory
-            )
-
-        return observable_targets
+    observable_targets = []
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -957,7 +942,47 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, ListView):
 
         return context
 
-    def get_observable_targets(self, targetlistname, date, observatory):
+    def post(self, request, *args, **kwargs):
+        targets_visibilities_page = None
+
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            targetlist = form.cleaned_data['target_list']
+            date = form.cleaned_data['date']
+            observatory = form.cleaned_data['observatory']
+
+            observable_targets = self.get_observable_targets(
+                targetlist,
+                date,
+                observatory
+            )
+
+            paginator = Paginator(observable_targets, self.paginate_by)
+            targets_visibilities_page = paginator.get_page(1)
+
+            request.session['observable_targets'] = observable_targets
+
+        context = super().get_context_data(*args, **kwargs)
+        context['targets_visibilities_page'] = targets_visibilities_page
+
+        return render(request, self.template_name, context)
+
+    def get(self, request, *args, **kwargs):
+
+        context = super().get_context_data(*args, **kwargs)
+
+        page = request.GET.get('page')
+
+        if page and 'observable_targets' in request.session.keys():
+            paginator = Paginator(request.session['observable_targets'], self.paginate_by)
+            targets_visibilities_page = paginator.get_page(page)
+            context['targets_visibilities_page'] = targets_visibilities_page
+        else:
+            context['targets_visibilities_page'] = None
+
+        return render(request, self.template_name, context)
+
+    def get_observable_targets(self, targetlist, date, observatory):
         """
         Handles POST requests to select targets suitable for observation from this facility
 
@@ -973,8 +998,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, ListView):
         visibiliy_intervals = 10
 
         # Gather the list of targets from the selected target list.
-        target_list = TargetList.objects.get(id=targetlistname)
-        targets = target_list.targets.all()
+        targets = targetlist.targets.all()
 
         # Calculate the visibility of all selected targets on the date given
         # Since some observatories include multiple sites, the visibility_data returned is always
@@ -983,7 +1007,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, ListView):
         observable_targets = []
         # Select here? targets[page_obj.start_index()-1:page_obj.end_index()]
         for target in targets:
-            start_time = datetime.strptime(date, '%Y-%m-%d')
+            start_time = datetime.combine(date, datetime.min.time())
             end_time = start_time + timedelta(days=1)
             visibility_data = get_sidereal_visibility(
                 target, start_time, end_time,
@@ -995,8 +1019,12 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, ListView):
                 if len(airmass_data) > 0:
                     s = SkyCoord(target.ra, target.dec, frame='icrs', unit=(u.deg, u.deg))
                     target_data = [
-                        target, s.ra.to_string(u.hour), s.dec.to_string(u.deg, alwayssign=True),
-                        site, round(airmass_data.min(), 1)
+                        target.id,
+                        target.name,
+                        s.ra.to_string(u.hour),
+                        s.dec.to_string(u.deg, alwayssign=True),
+                        site,
+                        round(airmass_data.min(), 1)
                     ]
 
                     # Extract any requested extra parameters for this object, if available

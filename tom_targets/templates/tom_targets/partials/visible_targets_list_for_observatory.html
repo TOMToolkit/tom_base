@@ -1,0 +1,35 @@
+{% load bootstrap4 %}
+{% if targets_visibilities_page.has_other_pages %}
+  {% bootstrap_pagination targets_visibilities_page %}
+{% endif%}
+<label id="displaySelected"></label>
+<table class="table table-striped">
+    <tr>
+        {% for col in table_columns %}
+            <th>{{col}}</th>
+        {% endfor %}
+    </tr>
+    {% if targets_visibilities_page %}
+        {% if targets_visibilities_page.paginator.count > 0 %}
+            {% for entry in targets_visibilities_page %}
+                <tr>
+                    <td>
+                        <a href="{% url 'targets:detail' entry.0 %}" title="{{ entry.1 }}">{{ entry.1 }}</a>
+                    </td>
+                    {% for item in entry %}
+                        {% if forloop.counter0 > 1 %}
+                            <td>{{item}}</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="100">No visible targets found</td>
+        </tr>
+        {% endif %}
+    {% endif %}
+</table>
+{% if targets_visibilities_page.has_other_pages %}
+  {% bootstrap_pagination targets_visibilities_page %}
+{% endif%}

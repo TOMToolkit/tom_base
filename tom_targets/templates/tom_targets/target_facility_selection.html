@@ -26,8 +26,9 @@
   </form>
 </div>
 <div class="row">
-    {% if request.method == 'POST' %}
-    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+    {% if targets_visibilities_page.has_other_pages %}
+      {% bootstrap_pagination targets_visibilities_page %}
+    {% endif%}
     <label id="displaySelected"></label>
     <table class="table table-striped">
         <tr>
@@ -35,27 +36,29 @@
                 <th>{{col}}</th>
             {% endfor %}
         </tr>
-        {% if observable_targets %}
-        {% for entry in observable_targets %}
-            <tr>
-                {% for item in entry %}
-                    {% if forloop.counter0 == 0 %}
+        {% if targets_visibilities_page %}
+            {% if targets_visibilities_page.paginator.count > 0 %}
+                {% for entry in targets_visibilities_page %}
+                    <tr>
                         <td>
-                            <a href="{% url 'targets:detail' item.id %}" title="{{ item.name }}">{{ item.names|join:", " }}</a>
+                            <a href="{% url 'targets:detail' entry.0 %}" title="{{ entry.1 }}">{{ entry.1 }}</a>
                         </td>
-                    {% else %}
-                        <td>{{item}}</td>
-                    {% endif %}
+                        {% for item in entry %}
+                            {% if forloop.counter0 > 1 %}
+                                <td>{{item}}</td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
                 {% endfor %}
+            {% else %}
+            <tr>
+                <td colspan="100">No visible targets found</td>
             </tr>
-        {% endfor %}
-        {% else %}
-        <tr>
-            <td colspan="100">No visible targets found</td>
-        </tr>
+            {% endif %}
         {% endif %}
     </table>
-    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
-    {% endif %}
+    {% if targets_visibilities_page.has_other_pages %}
+      {% bootstrap_pagination targets_visibilities_page %}
+    {% endif%}
 </div>
 {% endblock %}

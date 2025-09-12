@@ -8,6 +8,7 @@ from astropy.coordinates import GCRS, Angle, get_body, SkyCoord
 from astropy.time import Time
 from django import template
 from django.core.exceptions import FieldDoesNotExist
+from django.core.paginator import Paginator
 from django.utils.safestring import mark_safe
 from django.conf import settings
 from django.db.models import Q
@@ -506,3 +507,4 @@ def extra_form_field(form, field):
     if field not in [e['name'] for e in settings.EXTRA_FIELDS]:
         raise AttributeError("Attempted to lookup non-defined extra field")
     return form[field]
+
