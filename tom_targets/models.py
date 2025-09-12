@@ -22,8 +22,8 @@ def get_target_model_class():
         return clazz
     except AttributeError:
         return base_class
-    except ImportError:
-        raise ImportError(f'Could not import {TARGET_MODEL_CLASS}. Did you provide the correct path?')
+    except ImportError as e:
+        raise ImportError(f'Could not import {TARGET_MODEL_CLASS}: {e}')
 
 
 Target = get_target_model_class()
