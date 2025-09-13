@@ -951,19 +951,31 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
             date = form.cleaned_data['date']
             observatory = form.cleaned_data['observatory']
 
-            observable_targets = self.get_observable_targets(
-                targetlist,
+            # Retrieve the full list of targets for this targetlist.
+            # This is paginated so that the visibility calculations
+            # are performed on a limited number of targets rather than
+            # all of them at once, which can be time consuming.
+            targets = targetlist.targets.all().order_by('name')
+            paginator = Paginator(targets, self.paginate_by)
+            targets_page = paginator.get_page(1)
+
+            # This list is stored in the session so that future GETs
+            # can retrieve different pages.  The Target query set and date have to be
+            # in a format that can serialize to JSON
+            request.session['targets'] = [t.pk for t in targets]
+            request.session['date'] = date.strftime('%Y-%m-%d')
+            request.session['observatory'] = observatory
+
+            # Now calculate the visibilities of the restricted list of objects
+            target_visibilities = self.get_observable_targets(
+                targets_page,
                 date,
                 observatory
             )
 
-            paginator = Paginator(observable_targets, self.paginate_by)
-            targets_visibilities_page = paginator.get_page(1)
-
-            request.session['observable_targets'] = observable_targets
-
         context = super().get_context_data(*args, **kwargs)
-        context['targets_visibilities_page'] = targets_visibilities_page
+        context['target_visibilities'] = target_visibilities
+        context['targets_page'] = targets_page
 
         return render(request, self.template_name, context)
 
@@ -974,15 +986,24 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         page = request.GET.get('page')
 
         if page and 'observable_targets' in request.session.keys():
-            paginator = Paginator(request.session['observable_targets'], self.paginate_by)
-            targets_visibilities_page = paginator.get_page(page)
-            context['targets_visibilities_page'] = targets_visibilities_page
+            targets = Target.objects.filter(pk__in=request.session['targets'])
+            date = datetime.strptime(request.session['date'], "%Y-%m-%d")
+            paginator = Paginator(targets, self.paginate_by)
+            targets_page = paginator.get_page(page)
+            target_visibilities = self.get_observable_targets(
+                targets_page,
+                date,
+                request.session['observatory']
+            )
+            context['target_visibilities'] = target_visibilities
+            context['targets_page'] = targets_page
         else:
-            context['targets_visibilities_page'] = None
+            context['target_visibilities'] = None
+            context['targets_page'] = None
 
         return render(request, self.template_name, context)
 
-    def get_observable_targets(self, targetlist, date, observatory):
+    def get_observable_targets(self, targets_page, date, observatory):
         """
         Handles POST requests to select targets suitable for observation from this facility
 
@@ -997,16 +1018,13 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         airmass_max = 2.0
         visibiliy_intervals = 10
 
-        # Gather the list of targets from the selected target list.
-        targets = targetlist.targets.all()
-
         # Calculate the visibility of all selected targets on the date given
         # Since some observatories include multiple sites, the visibility_data returned is always
         # a dictionary indexed by site code.  Our purpose here is to verify whether each target is ever
         # visible at lower airmass than the limit from any site - if so the target is considered to be visible
         observable_targets = []
         # Select here? targets[page_obj.start_index()-1:page_obj.end_index()]
-        for target in targets:
+        for target in targets_page:
             start_time = datetime.combine(date, datetime.min.time())
             end_time = start_time + timedelta(days=1)
             visibility_data = get_sidereal_visibility(

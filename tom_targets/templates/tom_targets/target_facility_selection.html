@@ -26,8 +26,8 @@
   </form>
 </div>
 <div class="row">
-    {% if targets_visibilities_page.has_other_pages %}
-      {% bootstrap_pagination targets_visibilities_page %}
+    {% if targets_page.has_other_pages %}
+      {% bootstrap_pagination targets_page %}
     {% endif%}
     <label id="displaySelected"></label>
     <table class="table table-striped">
@@ -36,9 +36,9 @@
                 <th>{{col}}</th>
             {% endfor %}
         </tr>
-        {% if targets_visibilities_page %}
-            {% if targets_visibilities_page.paginator.count > 0 %}
-                {% for entry in targets_visibilities_page %}
+        {% if target_visibilities %}
+            {% if target_visibilities|length > 0 %}
+                {% for entry in target_visibilities %}
                     <tr>
                         <td>
                             <a href="{% url 'targets:detail' entry.0 %}" title="{{ entry.1 }}">{{ entry.1 }}</a>
@@ -57,8 +57,8 @@
             {% endif %}
         {% endif %}
     </table>
-    {% if targets_visibilities_page.has_other_pages %}
-      {% bootstrap_pagination targets_visibilities_page %}
+    {% if targets_page.has_other_pages %}
+      {% bootstrap_pagination targets_page %}
     {% endif%}
 </div>
 {% endblock %}
