@@ -27,7 +27,6 @@ from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.views.generic.detail import DetailView, SingleObjectMixin
-from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
 from rest_framework.views import APIView
 from rest_framework.renderers import TemplateHTMLRenderer
@@ -943,7 +942,6 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         return context
 
     def post(self, request, *args, **kwargs):
-        targets_visibilities_page = None
 
         form = self.form_class(request.POST)
         if form.is_valid():
