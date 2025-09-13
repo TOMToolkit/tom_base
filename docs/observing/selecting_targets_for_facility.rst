@@ -56,63 +56,6 @@ This produces the table displayed below.
 .. image:: target_selection_table_extra_fields.png
   :alt: Target Selection table with additional columns added
 
-
-Adding An Observing Facility to the Target Selection Form
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The Target selection form inherits all of the TOM's built-in observing facility classes.
-This can be extended to include additional telescopes, including those that are
-operated manually, just by declaring a new telescope class.
-
-In the top level of your TOM's code directory, add a new directory called ``facilities``:
-
-.. code:: python
-
-   cd mytom/
-   mkdir facilities
-
-::
-
-   ├── facilities/
-   ├── data
-   ├── db.sqlite3
-   ├── manage.py
-   ├── mytom
-   │   ├── __init__.py
-   │   ├── settings.py
-   │   ├── urls.py
-   │   └── wsgi.py
-   ├── static
-   ├── templates
-   └── tmp
-
-We need to add an ``__init__.py`` file to this sub-directory, to let Python know that
-this is an application.  This file should be empty, so we just create it:
-
-.. code:: python
-
-   touch facilities/__init__.py
-
-Now we can create the new telescope facility class within this ``facilities`` directory.
-The easiest way to do this is to download a copy of the `example facility <https://github.com/TOMToolkit/tom_base/blob/dev/tom_observations/facilities/manual.py>`__
-provided in the TOM Toolkit's repository.  You can rename this file to distinguish it
-from other facilities.  In this example, we will add the El Leoncito Astronomical Complex,
-also known as CASLEO:
-
-::
-
-   ├── facilities/
-   │   ├── __init__.py
-   │   ├── casleo.py
-
-The new telescope class file can now be updated to provide the essential information
-about the site.  The code block below highlights the sections of the file that need to be
-updated by comparing the default with the customized example.
-
-First we need to declare the exact location of the observatory site.  Note that the sites
-dictionary can accept multiple dictionaries, each describing a different site.  This is how
-the TOM handles observatories that have multiple sites, such as the `LCO network <https://github.com/TOMToolkit/tom_base/blob/dev/tom_observations/facilities/lco.py>`__.
-
 .. code:: python
 
     # casleo.py
