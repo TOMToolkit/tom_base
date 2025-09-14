@@ -59,6 +59,7 @@ class ObservationRecordFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRela
         else:
             return get_objects_for_user(request.user, 'tom_observations.change_observation')
 
+
 class FacilitySerializer(serializers.ModelSerializer):
     """
     Class describing the serialization process for a General Facility

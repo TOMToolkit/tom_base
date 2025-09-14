@@ -184,6 +184,7 @@ class ObservationTemplate(models.Model):
     def __str__(self):
         return self.name
 
+
 class Facility(models.Model):
     """
     Class representing individual telescope facilities.
