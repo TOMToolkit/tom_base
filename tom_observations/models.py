@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+
 
 from tom_observations.facility import get_service_class
 from tom_common.hooks import run_hook
@@ -181,3 +183,100 @@ class ObservationTemplate(models.Model):
 
     def __str__(self):
         return self.name
+
+class Facility(models.Model):
+    """
+    Class representing individual telescope facilities.
+
+    :param site_code: Short-hand code used to reference the facility
+    :type site_code: str
+
+    :param mpc_site_code: Three-digit reference code for the facility from the Minor Planet Center
+    :type mpc_site_code: str
+
+    :param full_name: Name of the facility
+    :type full_name: str
+
+    :param short_name: Abbreviated name for the facility
+    :type short_name: str
+
+    :param location: Location of observatory
+    :type location: str choice field
+
+    :param latitude: Latitude of facility if Earth-based in decimal degrees
+    :type latitude: float
+
+    :param longitude: Langitude of facility if Earth-base in decimal degrees
+    :type longitude: float
+
+    :param elevation: Elevation of facility above mean sealevel if Earth-based
+    :type elevation: float, may be negative
+
+    :param orbit: Type of orbit if facility is space-based
+    :type orbit: str choice field
+
+    :param diameter: Diameter of primary optic or detector
+    :type diameter: float
+
+    :param typical_seeing: Typical seeing at the facility, units of arcsec
+    :type typical_seeing: float
+
+    :param detector_type: Descriptor of the messenger or wavelength range measured by the facility
+    :type detector_type: str
+
+    :param info_url: URL where more information on the facility can be found
+    :type info_url: URL
+
+    :param api_url: URL of the facility's API if any
+    :type api_url: URL
+    """
+    LOCATION_OPTIONS = [
+        ("ground", "Ground-based"),
+        ("space", "Space-based")
+    ]
+    ORBIT_OPTIONS = [
+        ("leo", "Low-Earth Orbit"),
+        ("l2", "Lagrange Point 2"),
+        ("earth-trailing", "Earth-trailing orbit"),
+        ("geosync", "Geosynchronous orbit"),
+        ("polar", "Polar orbit"),
+        ("elliptical", "Elliptical orbit")
+    ]
+
+    site_code = models.CharField(max_length=20, null=True, blank=True)
+    mpc_site_code = models.CharField(max_length=3, null=True, blank=True)
+    full_name = models.CharField(max_length=100)
+    short_name = models.CharField(max_length=50)
+    location = models.CharField(max_length=15, choices=LOCATION_OPTIONS)
+    latitude = models.FloatField(
+        validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)],
+        null=True,
+        blank=True
+    )
+    longitude = models.FloatField(
+        validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)],
+        null=True,
+        blank=True
+    )
+    elevation = models.FloatField(
+        validators=[MinValueValidator(-3000.0), MaxValueValidator(5000.0)],
+        null=True,
+        blank=True
+    )
+    orbit = models.CharField(max_length=20, choices=ORBIT_OPTIONS, null=True, blank=True)
+    diameter = models.FloatField(
+        validators=[MinValueValidator(0.0), MaxValueValidator(50.0)],
+        null=True,
+        blank=True
+    )
+    typical_seeing = models.FloatField(
+        validators=[MinValueValidator(0.0), MaxValueValidator(15.0)],
+        null=True,
+        blank=True
+    )
+    detector_type = models.CharField(max_length=30)
+    info_url = models.URLField(max_length=400, null=True, blank=True)
+    api_url = models.URLField(max_length=200, null=True, blank=True)
+
+    def __str__(self):
+        return self.short_name
