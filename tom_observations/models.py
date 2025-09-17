@@ -192,8 +192,8 @@ class Facility(models.Model):
     :param site_code: Short-hand code used to reference the facility
     :type site_code: str
 
-    :param mpc_site_code: Three-digit reference code for the facility from the Minor Planet Center
-    :type mpc_site_code: str
+    :param mpc_observatory_code: Three-digit reference code for the facility from the Minor Planet Center
+    :type mpc_observatory_code: str
 
     :param full_name: Name of the facility
     :type full_name: str
@@ -243,41 +243,90 @@ class Facility(models.Model):
         ("polar", "Polar orbit"),
         ("elliptical", "Elliptical orbit")
     ]
-
-    site_code = models.CharField(max_length=20, null=True, blank=True)
-    mpc_site_code = models.CharField(max_length=3, null=True, blank=True)
+    DETECTOR_OPTIONS = [
+        ("gammaray", "Gammay-ray"),
+        ("xray", "X-ray"),
+        ("uv", "Ultraviolet"),
+        ("optical", "Optical"),
+        ("nir", "Near Infrared"),
+        ("uvoir", "UV/optical/NIR"),
+        ("submm", "Submillimeter"),
+        ("microwave", "Microwave"),
+        ("radio", "Radio"),
+        ("gw", "Gravitational Waves"),
+        ("neutrino", "Neutrinos"),
+        ("cherenkov", "Cherenkov radiation"),
+        ("multiband", "Multiple detectors")
+    ]
+    site_code = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        help_text="Short-hand identifier for the facility"
+    )
+    mpc_observatory_code = models.CharField(
+        max_length=3,
+        null=True,
+        blank=True,
+        help_text="<a href='https://minorplanetcenter.net/iau/lists/ObsCodesF.html'>" "MPC Observatory Code List</a>"
+    )
     full_name = models.CharField(max_length=100)
     short_name = models.CharField(max_length=50)
     location = models.CharField(max_length=15, choices=LOCATION_OPTIONS)
     latitude = models.FloatField(
         validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)],
         null=True,
-        blank=True
+        blank=True,
+        help_text="Latitude in decimal degrees"
     )
     longitude = models.FloatField(
         validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)],
         null=True,
-        blank=True
+        blank=True,
+        help_text="Longitude in decimal degrees"
     )
     elevation = models.FloatField(
-        validators=[MinValueValidator(-3000.0), MaxValueValidator(5000.0)],
+        validators=[MinValueValidator(-3000.0), MaxValueValidator(6000.0)],
         null=True,
-        blank=True
+        blank=True,
+        help_text="Elevation in meters"
     )
-    orbit = models.CharField(max_length=20, choices=ORBIT_OPTIONS, null=True, blank=True)
-    diameter = models.FloatField(
-        validators=[MinValueValidator(0.0), MaxValueValidator(50.0)],
+    orbit = models.CharField(
+        max_length=20,
+        choices=ORBIT_OPTIONS,
         null=True,
-        blank=True
+        blank=True,
+        help_text="Orbit regime of space-based facility"
+    )
+    diameter = models.FloatField(
+        validators=[MinValueValidator(0.0), MaxValueValidator(600.0)],
+        null=True,
+        blank=True,
+        help_text="Diameter of primary detector in meters"
     )
     typical_seeing = models.FloatField(
         validators=[MinValueValidator(0.0), MaxValueValidator(15.0)],
         null=True,
-        blank=True
+        blank=True,
+        help_text="Seeing in arcsec"
     )
-    detector_type = models.CharField(max_length=30)
-    info_url = models.URLField(max_length=400, null=True, blank=True)
-    api_url = models.URLField(max_length=200, null=True, blank=True)
+    detector_type = models.CharField(
+        max_length=30,
+        choices=DETECTOR_OPTIONS,
+        help_text="Electromagnetic wavelength or messenger type detected"
+    )
+    info_url = models.URLField(
+        max_length=400,
+        null=True,
+        blank=True,
+        help_text="URL of website where more information about the facility can be found"
+    )
+    api_url = models.URLField(
+        max_length=200,
+        null=True,
+        blank=True,
+        help_text="Root URL of the facilities API endpoints"
+    )
 
     def __str__(self):
         return self.short_name
