@@ -338,139 +338,139 @@ class OCSAdvancedExpansionsLayout(Layout):
     def _get_accordion_group(self, form_name):
         return (
             [
-            AccordionGroup(
-                'Cadence / Dither / Mosaic',
-                Alert(
-                    content="""Using the following sections each result in expanding portions of the Request
+                AccordionGroup(
+                    'Cadence / Dither / Mosaic',
+                    Alert(
+                        content="""Using the following sections each result in expanding portions of the Request
                                 on submission. You should only combine these if you know what you are doing.
                             """,
-                    css_class='alert-warning'
-                ),
-                TabHolder(
-                    Tab('Cadence',
-                        Div(
-                            HTML(f'''<br/><p>{self.facility_settings.static_cadencing_help}</p>'''),
-                        ),
-                        Div(
+                        css_class='alert-warning'
+                    ),
+                    TabHolder(
+                        Tab('Cadence',
                             Div(
-                                'period',
-                                css_class='col'
+                                HTML(f'''<br/><p>{self.facility_settings.static_cadencing_help}</p>'''),
                             ),
                             Div(
-                                'jitter',
-                                css_class='col'
+                                Div(
+                                    'period',
+                                    css_class='col'
+                                ),
+                                Div(
+                                    'jitter',
+                                    css_class='col'
+                                ),
+                                css_class='form-row'
                             ),
-                            css_class='form-row'
-                        ),
-                        css_id=f'{form_name}_cadence'
-                        ),
-                    Tab('Dithering',
-                        Alert(
-                            content="Dithering will only be applied if you have a single Configuration specified.",
-                            css_class='alert-warning'
-                        ),
-                        Div(
-                            Div(
-                                'dither_pattern',
-                                css_class='col'
+                            css_id=f'{form_name}_cadence'
                             ),
-                            Div(
-                                'dither_num_points',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        Div(
-                            Div(
-                                'dither_point_spacing',
-                                css_class='col'
+                        Tab('Dithering',
+                            Alert(
+                                content="Dithering will only be applied if you have a single Configuration specified.",
+                                css_class='alert-warning'
                             ),
                             Div(
-                                'dither_line_spacing',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        Div(
-                            Div(
-                                'dither_num_rows',
-                                css_class='col'
-                            ),
-                            Div(
-                                'dither_num_columns',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        Div(
-                            Div(
-                                'dither_orientation',
-                                css_class='col'
+                                Div(
+                                    'dither_pattern',
+                                    css_class='col'
+                                ),
+                                Div(
+                                    'dither_num_points',
+                                    css_class='col'
+                                ),
+                                css_class='form-row'
                             ),
                             Div(
-                                'dither_center',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        css_id=f'{form_name}_dithering'
-                        ),
-                    Tab('Mosaicing',
-                        Alert(
-                            content="Mosaicing will only be applied if you have a single Configuration specified.",
-                            css_class='alert-warning'
-                        ),
-                        Div(
-                            Div(
-                                'mosaic_pattern',
-                                css_class='col'
+                                Div(
+                                    'dither_point_spacing',
+                                    css_class='col'
+                                ),
+                                Div(
+                                    'dither_line_spacing',
+                                    css_class='col'
+                                ),
+                                css_class='form-row'
                             ),
                             Div(
-                                'mosaic_num_points',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        Div(
-                            Div(
-                                'mosaic_point_overlap',
-                                css_class='col'
-                            ),
-                            Div(
-                                'mosaic_line_overlap',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        Div(
-                            Div(
-                                'mosaic_num_rows',
-                                css_class='col'
+                                Div(
+                                    'dither_num_rows',
+                                    css_class='col'
+                                ),
+                                Div(
+                                    'dither_num_columns',
+                                    css_class='col'
+                                ),
+                                css_class='form-row'
                             ),
                             Div(
-                                'mosaic_num_columns',
-                                css_class='col'
+                                Div(
+                                    'dither_orientation',
+                                    css_class='col'
+                                ),
+                                Div(
+                                    'dither_center',
+                                    css_class='col'
+                                ),
+                                css_class='form-row'
                             ),
-                            css_class='form-row'
-                        ),
-                        Div(
+                            css_id=f'{form_name}_dithering'
+                            ),
+                        Tab('Mosaicing',
+                            Alert(
+                                content="Mosaicing will only be applied if you have a single Configuration specified.",
+                                css_class='alert-warning'
+                            ),
                             Div(
-                                'mosaic_orientation',
-                                css_class='col'
+                                Div(
+                                    'mosaic_pattern',
+                                    css_class='col'
+                                ),
+                                Div(
+                                    'mosaic_num_points',
+                                    css_class='col'
+                                ),
+                                css_class='form-row'
                             ),
                             Div(
-                                'mosaic_center',
-                                css_class='col'
+                                Div(
+                                    'mosaic_point_overlap',
+                                    css_class='col'
+                                ),
+                                Div(
+                                    'mosaic_line_overlap',
+                                    css_class='col'
+                                ),
+                                css_class='form-row'
                             ),
-                            css_class='form-row'
-                        ),
-                        css_id=f'{form_name}_mosaicing'
-                        )
-                ),
-                active=False,
-                css_id=f'{form_name}-expansions-group'
-            )
-                ]
+                            Div(
+                                Div(
+                                    'mosaic_num_rows',
+                                    css_class='col'
+                                ),
+                                Div(
+                                    'mosaic_num_columns',
+                                    css_class='col'
+                                ),
+                                css_class='form-row'
+                            ),
+                            Div(
+                                Div(
+                                    'mosaic_orientation',
+                                    css_class='col'
+                                ),
+                                Div(
+                                    'mosaic_center',
+                                    css_class='col'
+                                ),
+                                css_class='form-row'
+                            ),
+                            css_id=f'{form_name}_mosaicing'
+                            )
+                    ),
+                    active=False,
+                    css_id=f'{form_name}-expansions-group'
+                )
+            ]
         )
 
 
