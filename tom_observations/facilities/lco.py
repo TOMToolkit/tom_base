@@ -165,7 +165,7 @@ class LCOConfigurationLayout(OCSConfigurationLayout):
     def get_final_accordion_items(self, instance):
         """ Override in the subclasses to add items at the end of the accordion group
         """
-        return AccordionGroup('Fractional Ephemeris Rate',
+        return [AccordionGroup('Fractional Ephemeris Rate',
                               Div(
                                   HTML(f'''<br/><p>{self.facility_settings.fractional_ephemeris_rate_help}</p>''')
                               ),
@@ -174,6 +174,7 @@ class LCOConfigurationLayout(OCSConfigurationLayout):
                                   css_class='form-col'
                               )
                               )
+        ]
 
 
 class ImagingConfigurationLayout(LCOConfigurationLayout):

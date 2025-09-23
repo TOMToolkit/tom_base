@@ -337,6 +337,7 @@ class OCSAdvancedExpansionsLayout(Layout):
 
     def _get_accordion_group(self, form_name):
         return (
+            [
             AccordionGroup(
                 'Cadence / Dither / Mosaic',
                 Alert(
@@ -469,6 +470,7 @@ class OCSAdvancedExpansionsLayout(Layout):
                 active=False,
                 css_id=f'{form_name}-expansions-group'
             )
+                ]
         )
 
 
