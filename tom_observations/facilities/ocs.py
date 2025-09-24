@@ -1156,7 +1156,7 @@ class OCSFullObservationForm(OCSBaseObservationForm):
         # If the cleaned data did not have a readout mode, then there is only currently one option.
         if not self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode'):
             self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode'] = \
-                self.data.get(f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode')
+                self.data.get(f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode', '')
 
         instrument_config = {
             'exposure_count': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_count'],
