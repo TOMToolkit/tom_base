@@ -776,7 +776,7 @@ class OCSBaseObservationForm(BaseRoboticObservationForm, OCSBaseForm):
         super().is_valid()
         self.validate_at_facility()
         if self._errors:
-            logger.warn(f'Facility submission has errors {self._errors}')
+            logger.warning(f'Facility submission has errors {self._errors}')
         return not self._errors
 
     def _flatten_error_dict(self, error_dict):
@@ -1153,6 +1153,11 @@ class OCSFullObservationForm(OCSBaseObservationForm):
         # If the instrument config did not have an exposure time set, leave it out by returning None
         if not self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time'):
             return None
+        # If the cleaned data did not have a readout mode, then there is only currently one option.
+        if not self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode'):
+            self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode'] = \
+                self.data.get(f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode')
+
         instrument_config = {
             'exposure_count': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_count'],
             'exposure_time': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time'],
@@ -1176,9 +1181,12 @@ class OCSFullObservationForm(OCSBaseObservationForm):
         return ics
 
     def _build_configuration(self, build_id):
-        instrument_configs = self._build_instrument_configs(
-            self.cleaned_data[f'c_{build_id}_instrument_type'], build_id
-            )
+        # If there is no instrument type in cleaned_data, then only one option is available at this time.
+        if not self.cleaned_data.get(f'c_{build_id}_instrument_type'):
+            self.cleaned_data[f'c_{build_id}_instrument_type'] = self.data.get(f'c_{build_id}_instrument_type')
+
+        instrument_configs = self._build_instrument_configs(self.cleaned_data[f'c_{build_id}_instrument_type'],
+                                                            build_id)
         # Check if the instrument configs are empty, and if so, leave this configuration out by returning None
         if not instrument_configs:
             return None

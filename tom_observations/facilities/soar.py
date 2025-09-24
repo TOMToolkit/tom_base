@@ -3,6 +3,7 @@ import requests
 from django import forms
 from crispy_forms.bootstrap import Tab, Alert
 from crispy_forms.layout import Div
+from django.forms.widgets import HiddenInput
 
 from tom_observations.facilities.lco import LCOFacility, LCOSettings, SpectralInstrumentConfigLayout
 from tom_observations.facilities.lco import LCOImagingObservationForm, LCOSpectroscopyObservationForm
@@ -107,22 +108,38 @@ class SOARSpectroscopyObservationForm(LCOSpectroscopyObservationForm):
 
 class SOARSimpleGoodmanSpectroscopyObservationForm(SOARSpectroscopyObservationForm):
     def __init__(self, *args, **kwargs):
+        if 'facility_settings' not in kwargs:
+            kwargs['facility_settings'] = SOARSettings("SOAR")
         super().__init__(*args, **kwargs)
         self.fields['c_2_configuration_type'].initial = "ARC"
         self.fields['c_2_ic_1_exposure_time'].initial = 0.5
-        self.fields['c_2_ic_1_exposure_time'].help_text = "Exposure time is hard-coded, and therefore ignored for Arcs."
+        self.fields['c_2_target_override'].widget = HiddenInput()
+        for i in range(self.facility_settings.get_setting('max_instrument_configs')):
+            self.fields[f'c_2_ic_{i+1}_readout_mode'].widget = HiddenInput()
+            self.fields[f'c_2_ic_{i+1}_exposure_time'].help_text = "Exposure time is hard-coded, " \
+                                                                   "and the value is ignored for Arcs. " \
+                                                                   "Any value will cause the Arc to be scheduled."
 
     def form_name(self):
-        if 'BLUE' in self.initial.get('observation_type'):
+        if 'BLUE' in self.initial.get('observation_type', ''):
             return 'BlueCam'
         return 'RedCam'
 
     def get_instruments(self):
-        instruments = super().get_instruments()
+        instruments = super()._get_instruments()
         return {
-            code: instrument for (code, instrument) in instruments.items() if (
-                    self.form_name() in instrument['name'])
+            code: instrument for (code, instrument) in instruments.items() if ('SPECTRA' == instrument['type'] and
+                                                                               'SOAR' in code and
+                                                                               self.form_name() in instrument['name'])
         }
+
+    def _build_instrument_configs(self, instrument_type, configuration_id):
+        ics = super()._build_instrument_configs(instrument_type, configuration_id)
+        # Overwrite the Arc readout mode to be the same mode as the initial spectrum
+        if configuration_id == 2:
+            for j, ic in enumerate(ics):
+                ic['mode'] = self._build_instrument_config(instrument_type, 1, j + 1)['mode']
+        return ics
 
     def configuration_layout_class(self):
         return SOARSimpleConfigurationLayout
