@@ -92,7 +92,6 @@ class TargetListView(FilterView):
                                 if self.request.user.is_authenticated
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
-
         return context
 
     def get_queryset(self, *args, **kwargs):
