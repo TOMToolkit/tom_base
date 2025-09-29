@@ -14,3 +14,9 @@ def dataservices_list(context):
     data_services = get_data_service_classes()
     context['data_services'] = data_services.keys()
     return context
+
+
+@register.inclusion_tag('tom_dataservices/partials/catalog_query_menu.html', takes_context=True)
+def catalog_query_menu(context):
+    context['catalogs'] = get_data_service_classes().keys()
+    return context

@@ -157,3 +157,41 @@ class TestReducedDatumViewset(APITestCase):
         del self.rd_data['source_name']
         response = self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_reduced_datum_list(self):
+        rd = ReducedDatum.objects.create(
+            target=self.st,
+            data_type='photometry',
+            source_name='TOM Toolkit',
+            value={'magnitude': 15.582, 'filter': 'r', 'error': 0.005},
+        )
+
+        response = self.client.get(reverse('api:reduceddatums-list'))
+        self.assertContains(response, rd.data_type, status_code=status.HTTP_200_OK)
+
+    def test_reduced_datum_filter(self):
+        rd1 = ReducedDatum.objects.create(
+            target=self.st,
+            data_type='photometry',
+            source_name='TOM Toolkit',
+            value={'magnitude': 15.582, 'filter': 'r', 'error': 0.005},
+        )
+        rd2 = ReducedDatum.objects.create(
+            target=self.st,
+            data_type='spectroscopy',
+            source_name='TOM Toolkit',
+            value={'wavelength': 150, 'flux': 12, 'error': 0.005},
+        )
+
+        # test filter for one object
+        response = self.client.get(reverse('api:reduceddatums-list'), QUERY_STRING='data_type=photometry')
+        self.assertContains(response, rd1.data_type, status_code=status.HTTP_200_OK, count=1)
+
+        # test filter for both objects
+        response2 = self.client.get(reverse('api:reduceddatums-list'), QUERY_STRING=f'target_name={self.st.name}')
+        self.assertContains(response2, rd2.data_type, status_code=status.HTTP_200_OK, count=2)
+
+        # test filter for no objects
+        response3 = self.client.get(reverse('api:reduceddatums-list'), QUERY_STRING='source_name=thin_air')
+        self.assertEqual(response3.data['count'], 0)
+        self.assertEqual(response3.data['results'], [])

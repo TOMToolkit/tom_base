@@ -1,5 +1,5 @@
-API Views
-=========
+Data API Views
+==============
 
 .. warning:: Check your groups!
 
@@ -10,8 +10,13 @@ API Views
 
 .. tip:: Better API documentation
 
-    The available parameters for RESTful API calls are not available here. However, if you navigate to ``/api/targets/``
-    and click the ``OPTIONS`` button, you can easily view all of the available parameters.
+    The available parameters for RESTful API calls are not available here. However, if you navigate to
+    ``/api/reduceddatums/`` and click the ``OPTIONS`` button, you can easily view all of the available parameters.
+
+    From the ``GET`` view, you can experiment with the available filters and see an example of the request.
 
 .. automodule:: tom_dataproducts.api_views
+    :members:
+
+.. automodule:: tom_dataproducts.filters
     :members:
