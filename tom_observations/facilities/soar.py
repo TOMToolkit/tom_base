@@ -111,14 +111,20 @@ class SOARSimpleGoodmanSpectroscopyObservationForm(SOARSpectroscopyObservationFo
         if 'facility_settings' not in kwargs:
             kwargs['facility_settings'] = SOARSettings("SOAR")
         super().__init__(*args, **kwargs)
+        # Set default values for Arcs/Flats
         self.fields['c_2_configuration_type'].initial = "ARC"
         self.fields['c_2_ic_1_exposure_time'].initial = 0.5
         self.fields['c_2_target_override'].widget = HiddenInput()
-        for i in range(self.facility_settings.get_setting('max_instrument_configs')):
-            self.fields[f'c_2_ic_{i+1}_readout_mode'].widget = HiddenInput()
-            self.fields[f'c_2_ic_{i+1}_exposure_time'].help_text = "Exposure time is hard-coded, " \
-                                                                   "and the value is ignored for Arcs. " \
-                                                                   "Any value will cause the Arc to be scheduled."
+        self.fields['c_3_configuration_type'].initial = "LAMP_FLAT"
+        self.fields['c_3_ic_1_exposure_time'].initial = 0.5
+        self.fields['c_3_target_override'].widget = HiddenInput()
+        for j in range(2, 4):
+            for i in range(self.facility_settings.get_setting('max_instrument_configs')):
+                self.fields[f'c_{j}_ic_{i+1}_readout_mode'].widget = HiddenInput()
+                self.fields[f'c_{j}_ic_{i+1}_exposure_time'].help_text = "Exposure time is hard-coded, " \
+                                                                         "and the value is ignored for Flats/Arcs. " \
+                                                                         "Any value will cause the calibration to be " \
+                                                                         "scheduled."
 
     def form_name(self):
         if 'BLUE' in self.initial.get('observation_type', ''):
@@ -135,8 +141,8 @@ class SOARSimpleGoodmanSpectroscopyObservationForm(SOARSpectroscopyObservationFo
 
     def _build_instrument_configs(self, instrument_type, configuration_id):
         ics = super()._build_instrument_configs(instrument_type, configuration_id)
-        # Overwrite the Arc readout mode to be the same mode as the initial spectrum
-        if configuration_id == 2:
+        # Overwrite the Lamp/Arc readout mode to be the same mode as the initial spectrum
+        if configuration_id != 1:
             for j, ic in enumerate(ics):
                 ic['mode'] = self._build_instrument_config(instrument_type, 1, j + 1)['mode']
         return ics
@@ -154,6 +160,10 @@ class SOARSimpleConfigurationLayout(SpectralConfigurationLayout):
                 Tab('Arc',
                     *self._get_config_layout(2, oe_groups),
                     css_id=f'{self.form_name}_config_{2}'
+                    ),
+                Tab('Lamp Flat',
+                    *self._get_config_layout(3, oe_groups),
+                    css_id=f'{self.form_name}_config_{3}'
                     )
                 ]
 
@@ -167,7 +177,7 @@ class SOARSimpleConfigurationLayout(SpectralConfigurationLayout):
                 css_class='alert-warning'
             ),
             Alert(
-                content="""An Arc will be automatically generated for this observation.
+                content="""An Arc and a Lamp FLat will be automatically generated for this observation.
                                     """,
                 css_class='alert-success'
             ),
@@ -232,9 +242,9 @@ class SOARFacility(LCOFacility):
     name = 'SOAR'
     observation_forms = {
         'IMAGING': SOARImagingObservationForm,
-        'Goodman_BLUE': SOARSimpleGoodmanSpectroscopyObservationForm,
-        'Goodman_RED': SOARSimpleGoodmanSpectroscopyObservationForm,
-        'SPECTRA': SOARSpectroscopyObservationForm,
+        'Goodman_BLUE_Spectra': SOARSimpleGoodmanSpectroscopyObservationForm,
+        'Goodman_RED_Spectra': SOARSimpleGoodmanSpectroscopyObservationForm,
+        'SPECTRA_Advanced': SOARSpectroscopyObservationForm,
     }
 
     def __init__(self, facility_settings=SOARSettings("SOAR")):
