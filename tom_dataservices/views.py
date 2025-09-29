@@ -11,8 +11,10 @@ from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from guardian.shortcuts import assign_perm
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.core.cache import cache
 from django.contrib import messages
+from urllib.parse import urlencode
 
 from tom_dataservices.models import DataServiceQuery
 from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class, NotConfiguredError
@@ -309,12 +311,12 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
         errors = []
         target = None
         if not results:
-            messages.warning(request, 'Please select at least one alert from which to create a target.')
+            messages.warning(request, 'Please select at least one result from which to create a target.')
             return redirect(reverse('dataservices:run', kwargs={'pk': query_id}))
         for result_id in results:
             cached_result = cache.get(f'result_{result_id}')
             if not cached_result:
-                messages.error(request, 'Could not create targets. Try re running the query again.')
+                messages.error(request, 'Could not create targets. Try re-running the query again.')
                 return redirect(reverse('dataservices:run', kwargs={'pk': query_id}))
             target, extras, aliases = data_service_class.to_target(cached_result)
             try:
@@ -330,7 +332,13 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                     assign_perm('tom_targets.change_target', group, target)
                     assign_perm('tom_targets.delete_target', group, target)
             except IntegrityError:
-                messages.warning(request, f'Unable to save {target.name}, target with that name already exists.')
+                messages.warning(request, mark_safe(
+                                 f"""Unable to save {target.name}, target with that name already exists.
+                                 You can <a href="{reverse('targets:create') + '?' + 
+                                                          urlencode(target.as_dict())}">create</a> 
+                                 a new target anyway.
+                                 """)
+                                 )
                 errors.append(target.name)
         if len(results) == len(errors):
             return redirect(reverse('dataservices:run'))
