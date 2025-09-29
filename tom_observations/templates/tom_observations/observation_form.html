@@ -49,3 +49,16 @@
     </div>
 </div>
 {% endblock %}
+{% block extra_javascript %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Default unitialized time fields to midnight
+    timeInputs = document.querySelectorAll('input[type="time"]');
+    timeInputs.forEach(input => {
+      if (input.value === '') {
+        input.value = '00:00';
+      }
+    });
+});
+</script>
+{% endblock %}

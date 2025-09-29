@@ -72,6 +72,7 @@ as an asynchronous task manager. To use django-tasks you can enable it by adding
 
 
 .. code:: python
+
     TASKS = {
         "default": {
              "BACKEND": "django_tasks.backends.database.DatabaseBackend"

@@ -378,15 +378,15 @@ class BaseRoboticObservationFacility(BaseObservationFacility):
 
     def update_observation_status(self, observation_id):
         from tom_observations.models import ObservationRecord
-        try:
-            record = ObservationRecord.objects.get(observation_id=observation_id)
-            status = self.get_observation_status(observation_id)
+        records = ObservationRecord.objects.filter(observation_id=observation_id)
+        if not records:
+            raise Exception('No records exist for that observation id')
+        status = self.get_observation_status(observation_id)
+        for record in records:
             record.status = status['state']
             record.scheduled_start = status['scheduled_start']
             record.scheduled_end = status['scheduled_end']
             record.save()
-        except ObservationRecord.DoesNotExist:
-            raise Exception('No record exists for that observation id')
 
     def update_all_observation_statuses(self, target=None):
         from tom_observations.models import ObservationRecord

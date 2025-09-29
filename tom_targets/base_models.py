@@ -27,7 +27,7 @@ SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
 NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'scheme', 'mean_anomaly', 'arg_of_perihelion', 'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
     'eccentricity', 'epoch_of_elements', 'epoch_of_perihelion', 'ephemeris_period', 'ephemeris_period_err',
-    'ephemeris_epoch', 'ephemeris_epoch_err', 'perihdist'
+    'ephemeris_epoch', 'ephemeris_epoch_err', 'perihdist', 'abs_mag', 'slope'
 ]
 
 REQUIRED_SIDEREAL_FIELDS = ['ra', 'dec']
@@ -193,6 +193,13 @@ class TargetMatchManager(models.Manager):
         return name.lower().replace(" ", "").replace("-", "").replace("_", "").replace("(", "").replace(")", "")
 
 
+def get_default_target_permission():
+    try:
+        return settings.TARGET_DEFAULT_PERMISSION
+    except AttributeError:
+        return BaseTarget.Permissions.PRIVATE
+
+
 class BaseTarget(models.Model):
     """
     Class representing a target in a TOM
@@ -280,6 +287,12 @@ class BaseTarget(models.Model):
 
     :param ephemeris_epoch_err: Days
     :type ephemeris_epoch_err: float
+
+    :param abs_mag: Asteroid/Comet absolute magnitude (H or m1)
+    :type abs_mag: float
+
+    :param slope: Asteroid/Comet slope parameter (G or k1)
+    :type slope: float
     """
 
     SIDEREAL = 'SIDEREAL'
@@ -314,7 +327,7 @@ class BaseTarget(models.Model):
         help_text='The time which this target was changed in the TOM database.'
     )
     permissions = models.CharField(
-        max_length=100, default=Permissions.PRIVATE, choices=Permissions.choices,
+        max_length=100, default=get_default_target_permission, choices=Permissions.choices,
         help_text='The access level of this target, see the docs on public vs private targets.'
     )
     ra = models.FloatField(
@@ -395,6 +408,12 @@ class BaseTarget(models.Model):
     )
     perihdist = models.FloatField(
         null=True, blank=True, verbose_name='Perihelion Distance', help_text='AU'
+    )
+    abs_mag = models.FloatField(
+        null=True, blank=True, verbose_name='Absolute Magnitude', help_text='mag'
+    )
+    slope = models.FloatField(
+        null=True, blank=True, default=0.15, verbose_name='Slope parameter', help_text='mag'
     )
 
     objects = models.Manager()
