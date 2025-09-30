@@ -116,7 +116,7 @@ class TNSDataService(BaseDataService):
     #     return 'tom_dataservices/tns/partials/tns_advanced_form.html'
 
     @classmethod
-    def urls(cls) -> dict:
+    def urls(cls, **kwargs) -> dict:
         """Dictionary of URLS for the TNS API."""
         urls = super().urls()
         urls['base_url'] = cls.get_configuration('base_url', 'https://sandbox.wis-tns.org')
@@ -124,7 +124,7 @@ class TNSDataService(BaseDataService):
         urls['search_url'] = f'{urls["base_url"]}/api/get/search'
         return urls
 
-    def build_headers(self):
+    def build_headers(self, *args, **kwargs):
         # More info about this user agent header can be found here.
         # https://www.wis-tns.org/content/tns-newsfeed#comment-wrapper-23710
         return {
@@ -132,7 +132,7 @@ class TNSDataService(BaseDataService):
                           f'"type": "bot", "name": "{self.get_configuration("bot_name")}"}}'
             }
 
-    def build_query_parameters(self, parameters):
+    def build_query_parameters(self, parameters, **kwargs):
         """
         Args:
             parameters: dictionary containing days_ago (str), min_date (str)
