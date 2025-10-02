@@ -216,6 +216,7 @@ TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.gemini.GEMFacility',
     'tom_observations.facilities.soar.SOARFacility',
     'tom_observations.facilities.lt.LTFacility',
+    'tom_observations.facilities.blanco.BlancoFacility',
 
 ]
 
