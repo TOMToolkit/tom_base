@@ -3,7 +3,8 @@ import requests
 from django import forms
 from crispy_forms.layout import Div, HTML
 
-from tom_observations.facilities.ocs import OCSInstrumentConfigLayout, OCSConfigurationLayout, OCSFullObservationForm, OCSAdvancedExpansionsLayout
+from tom_observations.facilities.ocs import (OCSInstrumentConfigLayout, OCSConfigurationLayout,
+                                             OCSFullObservationForm, OCSAdvancedExpansionsLayout)
 from tom_observations.facilities.lco import LCOFacility, LCOSettings
 from tom_common.exceptions import ImproperCredentialsException
 
@@ -118,7 +119,8 @@ class BLANCOImagingObservationForm(OCSFullObservationForm):
     """
     The BLANCOImagingObservationForm allows selection of blanco specific instrument parameters
     """
-    DETECTOR_CENTERING_CHOICES = [('none', 'none'), ('det_1', 'det_1'), ('det_2', 'det_2'), ('det_3', 'det_3'), ('det_4', 'det_4')]
+    DETECTOR_CENTERING_CHOICES = [('none', 'none'), ('det_1', 'det_1'), ('det_2', 'det_2'),
+                                  ('det_3', 'det_3'), ('det_4', 'det_4')]
     DITHER_SEQUENCE_CHOICES = [('2x2', '2x2'), ('3x3', '3x3'), ('4x4', '4x4'), ('5-point', '5-point')]
 
     def __init__(self, *args, **kwargs):
@@ -139,12 +141,15 @@ class BLANCOImagingObservationForm(OCSFullObservationForm):
                 help_text="Place my target in the center of this detector")
             self.fields[f'c_{j+1}_dither_sequence_random_offset'] = forms.BooleanField(
                 required=True, label='Dither Sequence Random Offset', initial=True,
-                help_text="Implements a random offset between dither patterns if repeating the dither pattern, i.e. when sequence repeats > 1")
+                help_text="Implements a random offset between dither patterns if repeating the dither pattern,"
+                " i.e. when sequence repeats > 1")
             self.fields[f'c_{j+1}_repeat_duration'].widget = forms.HiddenInput()
             for i in range(self.facility_settings.get_setting('max_instrument_configs')):
                 self.fields[f'c_{j+1}_ic_{i+1}_coadds'] = forms.IntegerField(
                     min_value=1, max_value=100, label='Coadds', initial=1,
-                    help_text="This reduces data volume with short integration times necessary for broadband H and Ks observations. Coadding is digital summation of the images to avoid long integrations that could cause saturation of the detector.",
+                    help_text="This reduces data volume with short integration times necessary for broadband H and Ks"
+                    " observations. Coadding is digital summation of the images to avoid long integrations that could"
+                    " cause saturation of the detector.",
                     widget=forms.TextInput(attrs={'placeholder': 'Number'}), required=True)
                 self.fields[f'c_{j+1}_ic_{i+1}_sequence_repeats'] = forms.IntegerField(
                     min_value=1, max_value=100, label='Sequence Repeats', initial=1,
@@ -191,7 +196,9 @@ class BLANCOImagingObservationForm(OCSFullObservationForm):
         if instrument_config:
             instrument_config['extra_params'] = {
                 'coadds': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_coadds'],
-                'sequence_repeats': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_sequence_repeats']
+                'sequence_repeats': self.cleaned_data[
+                    f'c_{configuration_id}_ic_{instrument_config_id}_sequence_repeats'
+                ]
             }
         return instrument_config
 
@@ -199,7 +206,8 @@ class BLANCOImagingObservationForm(OCSFullObservationForm):
 class BLANCOFacility(LCOFacility):
     """
     The ``BLANCOFacility`` is the interface to the BLANCO Telescope. For information regarding BLANCO observing and the
-    available parameters, please see https://noirlab.edu/science/observing-noirlab/observing-ctio/cerro-tololo/observing-blanco.
+    available parameters, please see:
+    https://noirlab.edu/science/observing-noirlab/observing-ctio/cerro-tololo/observing-blanco.
 
     Please note that BLANCO is only available in AEON-mode. It also uses the LCO API key, so to use this module, the
     LCO dictionary in FACILITIES in `settings.py` will need to be completed.
