@@ -1,0 +1,58 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 crispy_forms_tags %}
+{% block title %}Query a Data Service{% endblock %}
+{% block content %}
+<h2>{{ form.data_service.value }} Query Form</h2>
+<form method="post" class="form">
+    {% csrf_token %}
+    {% bootstrap_field form.data_service %}
+    {% if simple_form %}
+        {% include simple_form %}
+
+        <div class="row" x-data="{open: false}">
+            <div class="col mb-2">
+                <span @click="open = ! open" class="text-primary pointer" x-text="open ? '▾ Advanced' : '▸ Advanced'"></span>
+                <div x-show="open" class="border p-3 bg-light" x-transition>
+                    {% if advanced_form %}
+                        {% include advanced_form %}
+                    {% else %}
+                        {% crispy form %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        {% if advanced_form %}
+            {% include advanced_form %}
+        {% else %}
+            {% crispy form %}
+        {% endif %}
+    {% endif %}
+
+    <div class="row align-items-center" x-data="{save: {{ form.query_save.value|lower }}}" >
+        <div class="col-1">
+            <div class="form-group">
+                <div>
+                    {% if object %}
+                        <input type="submit" formaction="{% url 'tom_dataservices:update' object.id %}" name="submit" value="Run" id="submit-id-update" class="btn btn-primary">
+                    {% else %}
+                        <input type="submit" formaction="{% url 'tom_dataservices:create' %}" name="submit" value="Run" id="submit-id-submit" class="btn btn-primary">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-1">
+            <div class="form-check">
+                <input type="checkbox" name="query_save" class="form-check-input" id="id_query_save" x-model="save">
+                <label for="id_query_save" class="form-check-label">Save Query</label>
+            </div>
+        </div>
+        <div class="col-6" >
+            <span x-show="save" x-transition>
+                {% bootstrap_field form.query_name show_label=False %}
+            </span>
+        </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
