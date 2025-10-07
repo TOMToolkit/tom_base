@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import copy
+from enum import Enum
 import logging
 import requests
 
@@ -8,12 +9,31 @@ from crispy_forms.layout import ButtonHolder, Layout, Submit, Div, HTML
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
 from django.utils.module_loading import import_string
 
 from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
+
+
+class CredentialStatus(Enum):
+    """
+    Enum representing the status of facility credentials.
+
+    This enum is used to track the state of credentials throughout the facility lifecycle,
+    providing clear information about whether credentials are available, where they came from,
+    and any validation issues.
+    """
+    NOT_INITIALIZED = "not_initialized"  # set_user() hasn't been called yet
+    NO_PROFILE = "no_profile"            # User has no Profile (raises ImproperlyConfigured)
+    PROFILE_EMPTY = "profile_empty"      # Profile exists but credentials empty
+    USING_DEFAULTS = "using_defaults"    # Using settings.FACILITIES defaults
+    USING_USER_CREDS = "using_user_creds"  # Using user's Profile credentials
+    VALIDATION_FAILED_AUTH = "validation_failed_auth"  # Credentials failed (401/403)
+    VALIDATION_FAILED_NETWORK = "validation_failed_network"  # Network/server issue
+
 
 DEFAULT_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
@@ -66,8 +86,17 @@ class BaseObservationForm(forms.Form):
     observation_type = forms.CharField(required=False, max_length=50, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
+        # DEBUG: Log what parameters are being passed
+        logger.debug(f'BaseObservationForm.__init__ kwargs: {kwargs}')
+
+        # Accept facility parameter but don't require it (for backward compatibility)
+        facility = kwargs.pop('facility', None)
         self.validation_message = 'This observation is valid.'
         super().__init__(*args, **kwargs)
+
+        # Store facility reference if provided
+        if facility is not None:
+            self.facility = facility
         self.helper = FormHelper()
         if settings.TARGET_PERMISSIONS_ONLY:
             self.common_layout = Layout('facility', 'target_id', 'observation_type')
@@ -194,9 +223,91 @@ class BaseObservationFacility(ABC):
 
     def __init__(self):
         self.user = None
+        self.credential_status = CredentialStatus.NOT_INITIALIZED
 
     def set_user(self, user):
         self.user = user
+
+
+    def _is_credential_empty(self, credential):
+        """
+        Check if a credential is empty (None, empty string, or whitespace only).
+
+        Args:
+            credential: The credential value to check
+
+        Returns:
+            bool: True if credential is empty, False otherwise
+        """
+        return credential is None or (isinstance(credential, str) and not credential.strip())
+
+    def _get_setting_credentials(self, facility_name, credential_keys):
+        """
+        Safely get credentials from settings.FACILITIES.
+
+        Args:
+            facility_name (str): Name of the facility in settings.FACILITIES
+            credential_keys (list): List of credential key names to retrieve
+
+        Returns:
+            dict: Dictionary mapping credential keys to their values
+
+        Raises:
+            ImproperlyConfigured: If facility or required keys are missing from settings
+        """
+        if not hasattr(settings, 'FACILITIES') or facility_name not in settings.FACILITIES:
+            raise ImproperlyConfigured(
+                f"No configuration found for '{facility_name}' in settings.FACILITIES. "
+                f"Please add default credentials to settings.FACILITIES['{facility_name}']."
+            )
+
+        facility_settings = settings.FACILITIES[facility_name]
+        credentials = {}
+
+        for key in credential_keys:
+            if key not in facility_settings:
+                raise ImproperlyConfigured(
+                    f"Required credential key '{key}' not found in "
+                    f"settings.FACILITIES['{facility_name}']. "
+                    f"Please add '{key}' to the facility configuration."
+                )
+            credentials[key] = facility_settings[key]
+
+        return credentials
+
+    def _raise_no_profile_error(self, user, facility_name):
+        """
+        Raise ImproperlyConfigured for missing user profile.
+
+        Args:
+            user: Django User instance
+            facility_name (str): Name of the facility
+
+        Raises:
+            ImproperlyConfigured: Always raises with informative message
+        """
+        raise ImproperlyConfigured(
+            f"User '{user.username}' has no {facility_name}Profile configured. "
+            f"Please create a {facility_name}Profile for this user in the admin interface."
+        )
+
+    def _raise_no_defaults_error(self, user, facility_name):
+        """
+        Raise ImproperlyConfigured when default credentials are needed but missing.
+
+        Args:
+            user: Django User instance
+            facility_name (str): Name of the facility
+
+        Raises:
+            ImproperlyConfigured: Always raises with informative message
+        """
+        raise ImproperlyConfigured(
+            f"User '{user.username}' has no credentials configured and no default credentials "
+            f"found in settings.FACILITIES['{facility_name}']. "
+            f"Please configure either user credentials in {facility_name}Profile or "
+            f"default credentials in settings."
+        )
 
     def all_data_products(self, observation_record):
         from tom_dataproducts.models import DataProduct
@@ -226,7 +337,27 @@ class BaseObservationFacility(ABC):
     def get_form(self, observation_type):
         """
         This method takes in an observation type and returns the form type that matches it.
+        
+        Note: This method returns form classes, not instances, to support composite form creation
+        in ObservationCreateView. Use create_form_instance() for direct form instantiation.
         """
+    
+    def create_form_instance(self, observation_type, **kwargs):
+        """
+        Create a form instance with facility context injected.
+        
+        The ObservationCreateView handles setting the user context on the facility instance
+        via set_user() in its dispatch() method. Forms receive the facility instance and
+        can query it for user-specific data (credentials, API clients, etc.) rather than
+        handling business logic themselves.
+        
+        :param observation_type: The type of observation form to create
+        :param kwargs: Additional keyword arguments for form instantiation
+        :return: Form instance configured for the observation type
+        """
+        form_class = self.get_form(observation_type)
+        kwargs['facility'] = self
+        return form_class(**kwargs)
 
     def get_form_classes_for_display(self, **kwargs):
         """

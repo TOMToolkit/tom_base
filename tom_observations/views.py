@@ -246,13 +246,9 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
                 form_data.update(**self.request.POST.dict())
             observation_form_class = type(f'Composite{observation_type}Form',
                                           (self.get_cadence_strategy_form(), observation_form_class), {})
-            # Pass user parameter to form instantiation for facilities that need user context
-            form_kwargs = {'initial': form_data, 'user': self.request.user}
-            try:
-                form_instance = observation_form_class(**form_kwargs)
-            except TypeError:
-                # Fallback: if user parameter is not accepted, create form without it
-                form_instance = observation_form_class(initial=form_data)
+            # Pass facility parameter to form instantiation for user context
+            form_kwargs = {'initial': form_data, 'facility': self.facility_instance}
+            form_instance = observation_form_class(**form_kwargs)
             observation_type_choices.append((observation_type, form_instance))
         context['observation_type_choices'] = observation_type_choices
 
@@ -306,9 +302,6 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         form_kwargs = self.get_form_kwargs()
         try:
             form = form_class(**form_kwargs)
-        except TypeError:
-            form_kwargs.pop('user', None)
-            form = form_class(**form_kwargs)
         except Exception as ex:
             logger.error(f"Error loading {self.get_facility()} form: {repr(ex)}")
             raise BadRequest(f"Error loading {self.get_facility()} form: {repr(ex)}")
@@ -341,12 +334,12 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     def get_form_kwargs(self) -> dict[str, Any]:
         """Return the keyword arguments for instantiating the form.
 
-        Here, we extend the super-class method to add the User instance:
-        call the super() and then add the user to the form kwargs,
-        here, in the View where, we can get the User instance from the request.
+        Here, we extend the super-class method to add the facility instance:
+        call the super() and then add the facility to the form kwargs.
+        The facility already has user context set via set_user() in dispatch().
         """
         kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
+        kwargs['facility'] = self.facility_instance
         return kwargs
 
     def post(self, request, *args, **kwargs):
@@ -367,11 +360,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         form_class = self.get_form_class()
         form_kwargs = self.get_form_kwargs()
 
-        try:
-            form = form_class(**form_kwargs)
-        except TypeError:
-            form_kwargs.pop('user', None)
-            form = form_class(**form_kwargs)
+        form = form_class(**form_kwargs)
 
         if form.is_valid():
             if 'validate' in request.POST:
