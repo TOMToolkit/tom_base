@@ -943,7 +943,9 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
 
     def post(self, request, *args, **kwargs):
 
+        # Populate the form with data from the request
         form = self.form_class(request.POST)
+
         if form.is_valid():
             targetlist = form.cleaned_data['target_list']
             date = form.cleaned_data['date']
@@ -971,19 +973,21 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
                 observatory
             )
 
-        context = super().get_context_data(*args, **kwargs)
+        context = self.get_context_data(*args, **kwargs)
+
         context['target_visibilities'] = target_visibilities
         context['targets_page'] = targets_page
+        context['use_table'] = True
 
         return render(request, self.template_name, context)
 
     def get(self, request, *args, **kwargs):
 
-        context = super().get_context_data(*args, **kwargs)
+        context = self.get_context_data(*args, **kwargs)
 
         page = request.GET.get('page')
 
-        if page and 'observable_targets' in request.session.keys():
+        if page and 'targets' in request.session.keys():
             targets = Target.objects.filter(pk__in=request.session['targets'])
             date = datetime.strptime(request.session['date'], "%Y-%m-%d")
             paginator = Paginator(targets, self.paginate_by)
@@ -995,9 +999,11 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
             )
             context['target_visibilities'] = target_visibilities
             context['targets_page'] = targets_page
+            context['use_table'] = True
         else:
             context['target_visibilities'] = None
             context['targets_page'] = None
+            context['use_table'] = False
 
         return render(request, self.template_name, context)
 

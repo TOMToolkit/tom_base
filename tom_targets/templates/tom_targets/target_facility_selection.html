@@ -31,12 +31,12 @@
     {% endif%}
     <label id="displaySelected"></label>
     <table class="table table-striped">
-        <tr>
-            {% for col in table_columns %}
-                <th>{{col}}</th>
-            {% endfor %}
-        </tr>
-        {% if target_visibilities %}
+        {%if use_table %}
+            <tr>
+                {% for col in table_columns %}
+                    <th>{{col}}</th>
+                {% endfor %}
+            </tr>
             {% if target_visibilities|length > 0 %}
                 {% for entry in target_visibilities %}
                     <tr>
@@ -51,9 +51,9 @@
                     </tr>
                 {% endfor %}
             {% else %}
-            <tr>
-                <td colspan="100">No visible targets found</td>
-            </tr>
+                <tr>
+                    <td colspan="100">No visible targets found</td>
+                </tr>
             {% endif %}
         {% endif %}
     </table>
