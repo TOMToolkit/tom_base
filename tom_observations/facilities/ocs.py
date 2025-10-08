@@ -674,7 +674,9 @@ class OCSBaseObservationForm(BaseRoboticObservationForm, OCSBaseForm):
     It must be subclassed to be used, as some methods are not implemented in this class.
     """
     name = forms.CharField()
-    start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
+    start = forms.SplitDateTimeField(
+        widget=forms.SplitDateTimeWidget(date_attrs={'type': 'date'}, time_attrs={'type': 'time'})
+    )
     configuration_repeats = forms.IntegerField(
         min_value=1,
         initial=1,
@@ -687,6 +689,7 @@ class OCSBaseObservationForm(BaseRoboticObservationForm, OCSBaseForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.parse_incoming_start_end_fields()
         self.fields['proposal'] = forms.ChoiceField(choices=self.proposal_choices())
         self.fields['ipp_value'] = forms.FloatField(
             label='Intra Proposal Priority (IPP factor)',
@@ -695,8 +698,10 @@ class OCSBaseObservationForm(BaseRoboticObservationForm, OCSBaseForm):
             initial=1.05,
             help_text=self.facility_settings.ipp_value_help
         )
-        self.fields['end'] = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}),
-                                             help_text=self.facility_settings.end_help)
+        self.fields['end'] = forms.SplitDateTimeField(
+            widget=forms.SplitDateTimeWidget(date_attrs={'type': 'date'}, time_attrs={'type': 'time'}),
+            help_text=self.facility_settings.end_help
+        )
         self.fields['observation_mode'] = forms.ChoiceField(
             choices=(('NORMAL', 'Normal'), ('RAPID_RESPONSE', 'Rapid-Response'), ('TIME_CRITICAL', 'Time-Critical')),
             help_text=self.facility_settings.observation_mode_help
@@ -714,11 +719,47 @@ class OCSBaseObservationForm(BaseRoboticObservationForm, OCSBaseForm):
 
     def clean_start(self):
         start = self.cleaned_data['start']
-        return parse(start).isoformat()
+        return start.isoformat()
 
     def clean_end(self):
         end = self.cleaned_data['end']
-        return parse(end).isoformat()
+        return end.isoformat()
+
+    def parse_incoming_start_end_fields(self):
+        start_0 = self.initial.pop('start_0', None)
+        start_1 = self.initial.pop('start_1', None)
+        if start_0:
+            if start_1:
+                self.initial['start'] = parse(f"{start_0}T{start_1}")
+            else:
+                self.initial['start'] = parse(f"{start_0}T00:00")
+
+        end_0 = self.initial.pop('end_0', None)
+        end_1 = self.initial.pop('end_1', None)
+        if end_0:
+            if end_1:
+                self.initial['end'] = parse(f"{end_0}T{end_1}")
+            else:
+                self.initial['end'] = parse(f"{end_0}T00:00")
+
+    def full_clean(self):
+        # Modify incoming form if it's using original start and end fields, not the split ones
+        if self.data.get('start') and (not self.data.get('start_0') or not self.data.get('start_1')):
+            try:
+                dt = parse(self.data['start'])
+                self.data['start_0'] = dt.date().isoformat()
+                self.data['start_1'] = dt.time().isoformat()
+            except ValueError:
+                self.add_error('start', 'Invalid date and time format')
+        if self.data.get('end') and (not self.data.get('end_0') or not self.data.get('end_1')):
+            # using old fields
+            try:
+                dt = parse(self.data['end'])
+                self.data['end_0'] = dt.date().isoformat()
+                self.data['end_1'] = dt.time().isoformat()
+            except ValueError:
+                self.add_error('end', 'Invalid date and time format')
+        return super().full_clean()
 
     def validate_at_facility(self):
         obs_module = get_service_class(self.cleaned_data['facility'])

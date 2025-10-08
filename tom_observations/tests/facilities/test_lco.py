@@ -52,8 +52,8 @@ class TestLCOOldStyleObservationForm(TestCase):
         # Test that a valid form returns True, and that start and end are cleaned properly
         form = LCOOldStyleObservationForm(self.valid_form_data)
         self.assertTrue(form.is_valid())
-        self.assertEqual('2020-11-03T00:00:00', form.cleaned_data['start'])
-        self.assertEqual('2020-11-04T00:00:00', form.cleaned_data['end'])
+        self.assertEqual('2020-11-03T00:00:00+00:00', form.cleaned_data['start'])
+        self.assertEqual('2020-11-04T00:00:00+00:00', form.cleaned_data['end'])
 
         # Test that an invalid form returns False
         self.valid_form_data.pop('target_id')
