@@ -10,7 +10,15 @@ from tom_observations import facility
 logger = logging.getLogger(__name__)
 
 
-def get_sidereal_visibility(target, start_time, end_time, interval, airmass_limit, observation_facility=None):
+def get_sidereal_visibility(
+        target,
+        start_time,
+        end_time,
+        interval,
+        airmass_limit,
+        observation_facility=None,
+        general_facility=None
+    ):
     """
     Uses astroplan to calculate the airmass for a sidereal target
     for each given interval between the start and end times.
@@ -34,9 +42,13 @@ def get_sidereal_visibility(target, start_time, end_time, interval, airmass_limi
     :param airmass_limit: maximum acceptable airmass for the resulting calculations
     :type airmass_limit: int
 
-    :param observation_facility: observing facility for which to calculate the airmass. None indicates all available
-        facilities.
+    :param observation_facility: observing facility declared as a facility class for which to calculate the airmass.
+                        None indicates all available facilities.
     :type observation_facility: BaseObservationFacility
+
+    :param general_facility: entry in the general facility table for which to calculate the airmass.
+                        None indicates that the default facility classes should be used
+    :type general_facility: Facility
 
     :returns: A dictionary containing the airmass data for each site. The dict keys consist of the site name prepended
         with the observing facility. The values are the airmass data, structured as an array containing two arrays. The
@@ -57,35 +69,53 @@ def get_sidereal_visibility(target, start_time, end_time, interval, airmass_limi
     if airmass_limit is None:
         airmass_limit = 10
 
-    if observation_facility is None:
-        facilities = facility.get_service_classes()
-    else:
+    # Build list of observers, including all sites for a given facility
+    observers = {}
+
+    # First add general facilities if any were selected.  This allows us to calculate for a single facility
+    # if that's what the user asked for
+    if general_facility is not None:
+        observers[f'{general_facility.short_name}'] = Observer(longitude=general_facility.longitude * units.deg,
+                                                               latitude=general_facility.latitude * units.deg,
+                                                               elevation=general_facility.elevation * units.m)
+
+    # If the user did not select a general facility, but selected a facility module,
+    # this function should calculate for that facility alone.
+    # If the user selected neither a general facility or a facility module, calculate for the default
+    # list of facility modules
+    if observation_facility is None and general_facility is None:
+        facilities = [clazz for name, clazz in facility.get_service_classes().items()]
+    elif observation_facility and general_facility is None:
         facilities = [observation_facility]
+    else:
+        facilities = []
+
+    # Add observers to the list for the facility modules, including all sites for a given facility
+    for observing_facility_class in facilities:
+        sites = observing_facility_class().get_observing_sites()
+        for site, site_details in sites.items():
+            observers[f'({observing_facility_class.name}) {site}'] = Observer(longitude=site_details.get('longitude') * units.deg,
+                         latitude=site_details.get('latitude') * units.deg,
+                         elevation=site_details.get('elevation') * units.m)
 
     body = FixedTarget(name=target.name, coord=SkyCoord(target.ra, target.dec, unit='deg'))
 
     visibility = {}
     sun, time_range = get_astroplan_sun_and_time(start_time, end_time, interval)
-    for observing_facility in facilities:
-        observing_facility_class = facility.get_service_class(observing_facility)
-        sites = observing_facility_class().get_observing_sites()
-        for site, site_details in sites.items():
-            observer = Observer(longitude=site_details.get('longitude')*units.deg,
-                                latitude=site_details.get('latitude')*units.deg,
-                                elevation=site_details.get('elevation')*units.m)
+    for observer_name, observer in observers.items():
+        sun_alt = observer.altaz(time_range, sun).alt
+        obj_airmass = observer.altaz(time_range, body).secz
 
-            sun_alt = observer.altaz(time_range, sun).alt
-            obj_airmass = observer.altaz(time_range, body).secz
+        bad_indices = np.argwhere(
+            (obj_airmass >= airmass_limit) |
+            (obj_airmass <= 1) |
+            (sun_alt > -18*units.deg)  # between astronomical twilights, i.e. sun is up
+        )
 
-            bad_indices = np.argwhere(
-                (obj_airmass >= airmass_limit) |
-                (obj_airmass <= 1) |
-                (sun_alt > -18*units.deg)  # between astronomical twilights, i.e. sun is up
-            )
+        obj_airmass = [None if i in bad_indices else float(airmass) for i, airmass in enumerate(obj_airmass)]
 
-            obj_airmass = [None if i in bad_indices else float(airmass) for i, airmass in enumerate(obj_airmass)]
+        visibility[observer_name] = (time_range.datetime, obj_airmass)
 
-            visibility[f'({observing_facility}) {site}'] = (time_range.datetime, obj_airmass)
     return visibility
 
 

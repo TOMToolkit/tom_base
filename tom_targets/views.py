@@ -40,6 +40,8 @@ from tom_common.hooks import run_hook
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
+from tom_observations.models import Facility as ObservingFacility
+from tom_observations import facility
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetMergeForm, \
@@ -1011,8 +1013,10 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         """
         Handles POST requests to select targets suitable for observation from this facility
 
-        :param args: Optional arguments if any
-        :param kwargs: Optional kwargs if any
+        :param targets_page: int Index of the page of targets to compute visbilities for
+        :param date: datetime object for the day to calculate for
+        :param observatory: str Full name of the observatory to compute for. This can refer to either
+                                a facility module or general facilty entry
         :return: HTTPRequest
         """
 
@@ -1022,19 +1026,33 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         airmass_max = 2.0
         visibiliy_intervals = 10
 
+        # Resolve observatory
+        # This string can refer to either a facility class or an entry in the general facilities table
+        # First test to see if the requested facility is a general one because if an invalid facility is
+        # passed to get_service_class it will return a list of all of them
+        qs = ObservingFacility.objects.filter(full_name=observatory, location='ground')
+
+        if qs.count() > 0:
+            general_facility = qs[0]
+            observation_facility = None
+        else:
+            general_facility = None
+            observation_facility = facility.get_service_class(observatory)
+
         # Calculate the visibility of all selected targets on the date given
         # Since some observatories include multiple sites, the visibility_data returned is always
         # a dictionary indexed by site code.  Our purpose here is to verify whether each target is ever
         # visible at lower airmass than the limit from any site - if so the target is considered to be visible
         observable_targets = []
-        # Select here? targets[page_obj.start_index()-1:page_obj.end_index()]
+
         for target in targets_page:
             start_time = datetime.combine(date, datetime.min.time())
             end_time = start_time + timedelta(days=1)
             visibility_data = get_sidereal_visibility(
                 target, start_time, end_time,
                 visibiliy_intervals, airmass_max,
-                observation_facility=observatory
+                observation_facility=observation_facility,
+                general_facility=general_facility
             )
             for site, vis_data in visibility_data.items():
                 airmass_data = np.array([x for x in vis_data[1] if x])
