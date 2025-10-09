@@ -18,7 +18,7 @@ def get_sidereal_visibility(
         airmass_limit,
         observation_facility=None,
         general_facility=None
-    ):
+):
     """
     Uses astroplan to calculate the airmass for a sidereal target
     for each given interval between the start and end times.
@@ -94,9 +94,11 @@ def get_sidereal_visibility(
     for observing_facility_class in facilities:
         sites = observing_facility_class().get_observing_sites()
         for site, site_details in sites.items():
-            observers[f'({observing_facility_class.name}) {site}'] = Observer(longitude=site_details.get('longitude') * units.deg,
-                         latitude=site_details.get('latitude') * units.deg,
-                         elevation=site_details.get('elevation') * units.m)
+            observers[f'({observing_facility_class.name}) {site}'] = Observer(
+                longitude=site_details.get('longitude') * units.deg,
+                latitude=site_details.get('latitude') * units.deg,
+                elevation=site_details.get('elevation') * units.m
+            )
 
     body = FixedTarget(name=target.name, coord=SkyCoord(target.ra, target.dec, unit='deg'))
 
