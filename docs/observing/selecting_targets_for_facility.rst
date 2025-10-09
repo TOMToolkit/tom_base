@@ -192,3 +192,29 @@ an option in the Observatory pulldown menu.
 
 .. image:: target_selection_table_new_facility.png
   :alt: Target selection table with new telescope facility added
+
+
+Adding Facilities to the Observing Facilities Table
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you would like to record a telescope facility for the purposes of observation planning, but don't want to
+add code for a new facility module, you can add it to the TOM's table of observing facilities.
+
+Currently, this can be done by the TOM's administrator, by navigating to the TOM's built-in admin interface.
+This page can be reached by adding ``/admin/`` to the end of the TOM's root URL in your browser's navigation bar, e.g.:
+
+.. code-block:: html
+> https://demo.lco.global/admin/
+
+Scrolling down the list of database tables, you will find ``Facilitys`` under the tables from the ``tom_observations`` app.
+Clicking on this link will take you to a list of telescopes recorded in the TOM's database.  Note that this list
+is distinct (and does not include) telescopes already known to the TOM through installed facility modules.
+
+You can record new telescopes to this table using the admin interface's ``Add Facility`` button; this will present you
+with the following form:
+
+.. image:: add_facility_form_admin.png
+  :alt: Form to add a new telescope facility
+
+Fill in the form and click ``save``. Now if you return to your TOM's usual interface, and navigate to the ``Target Selection``
+page, the facility you added will appear in the list of facilities for which visibilities can be calculated. 

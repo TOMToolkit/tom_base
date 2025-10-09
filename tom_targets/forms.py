@@ -10,7 +10,7 @@ from django.forms import ValidationError, inlineformset_factory
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
-from tom_observations import facility
+from tom_observations.facility import get_service_classes
 from tom_observations.models import Facility as ObservingFacility
 from tom_dataproducts.sharing import get_sharing_destination_options
 from .models import Target, TargetExtra, TargetName, TargetList, PersistentShare
@@ -295,7 +295,7 @@ class TargetSelectionForm(forms.Form):
     target_list = forms.ModelChoiceField(
         TargetList.objects.all(),
         required=True)
-    facilities = [(x, x) for x in facility.get_service_classes()]
+    facilities = [(x, x) for x in get_service_classes()]
     facilities += [(x.full_name, x.full_name) for x in ObservingFacility.objects.all()]
     observatory = forms.ChoiceField(required=True, choices=facilities)
     date = forms.DateField(
