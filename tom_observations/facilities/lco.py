@@ -439,7 +439,7 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
             code: instrument
             for (code, instrument) in instruments.items()
             if (instrument['type'] in ['IMAGE', 'SPECTRA'] and
-                ('MUSCAT' not in code and 'SOAR' not in code))
+                ('MUSCAT' not in code and 'SOAR' not in code and 'BLANCO' not in code))
         }
         return filtered_instruments
 
@@ -547,7 +547,7 @@ class LCOImagingObservationForm(LCOFullObservationForm):
         instruments = super().get_instruments()
         return {
             code: instrument for (code, instrument) in instruments.items() if (
-                'IMAGE' == instrument['type'] and 'MUSCAT' not in code and 'SOAR' not in code)
+                'IMAGE' == instrument['type'] and 'MUSCAT' not in code and 'SOAR' not in code and 'BLANCO' not in code)
         }
 
     def configuration_layout_class(self):
