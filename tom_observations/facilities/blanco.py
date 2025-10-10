@@ -11,11 +11,10 @@ from tom_common.exceptions import ImproperCredentialsException
 
 class BLANCOSettings(LCOSettings):
 
-    instrument_type_help = """
-            <a href="https://noirlab.edu/science/programs/ctio/telescopes/victor-blanco-4m-telescope/Instruments-Available-Blanco-Telescope" target="_blank">
-                More information about BLANCO instruments.
-            </a>
-        """
+    instrument_type_help = '<a href="https://noirlab.edu/science/programs/ctio/telescopes/victor-blanco-4m-telescope/' \
+                           'Instruments-Available-Blanco-Telescope" target="_blank">' \
+                           'More information about BLANCO instruments.' \
+                           '</a>'
 
     exposure_time_help = """
         """
@@ -64,10 +63,9 @@ class BLANCOAdvancedExpansionLayout(OCSAdvancedExpansionsLayout):
     def _get_dithering_tab(self):
         return (
                     Div(
-                        HTML(f'''<br/><p>Dithering settings are a part of the BLANCO configuration above</p>'''),
+                        HTML('''<br/><p>Dithering settings are a part of the BLANCO configuration above</p>'''),
                     )
                 )
-                
 
 
 class BLANCOConfigurationLayout(OCSConfigurationLayout):
@@ -95,7 +93,7 @@ class BLANCOConfigurationLayout(OCSConfigurationLayout):
                 ),
                 css_class='form-row'
             ),
-        ) 
+        )
 
 
 class BLANCOInstrumentConfigLayout(OCSInstrumentConfigLayout):
