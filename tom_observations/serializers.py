@@ -5,7 +5,7 @@ from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import serializers
 
 from tom_common.serializers import GroupSerializer
-from tom_observations.models import ObservationGroup, ObservationRecord
+from tom_observations.models import ObservationGroup, ObservationRecord, Facility
 
 
 class ObservationGroupField(serializers.RelatedField):
@@ -58,3 +58,27 @@ class ObservationRecordFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRela
             return ObservationRecord.objects.all()
         else:
             return get_objects_for_user(request.user, 'tom_observations.change_observation')
+
+
+class FacilitySerializer(serializers.ModelSerializer):
+    """
+    Class describing the serialization process for a General Facility
+    """
+    site_code = serializers.CharField(max_length=20, required=False)
+    mpc_site_code = serializers.CharField(max_length=3, required=False)
+    full_name = serializers.CharField(max_length=100)
+    short_name = serializers.CharField(max_length=50)
+    location = serializers.CharField(max_length=15)
+    latitude = serializers.FloatField(min_value=-90.0, max_value=90.0, required=False)
+    longitude = serializers.FloatField(min_value=-180.0, max_value=180.0, required=False)
+    elevation = serializers.FloatField(min_value=-3000.0, max_value=6000.0, required=False)
+    orbit = serializers.CharField(max_length=20, required=False)
+    diameter = serializers.FloatField(min_value=0, max_value=600.0, required=False)
+    typical_seeing = serializers.FloatField(min_value=0.0, max_value=15.0, required=False)
+    detector_type = serializers.CharField(max_length=30)
+    info_url = serializers.URLField(max_length=400, required=False)
+    api_url = serializers.URLField(max_length=200, required=False)
+
+    class Meta:
+        model = Facility
+        fields = '__all__'
