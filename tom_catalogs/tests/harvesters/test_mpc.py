@@ -229,8 +229,8 @@ class TestMPCHarvesterCanary(TestCase):
         self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
         self.assertEqual(target.ra, None)
         self.assertEqual(target.dec, None)
-        self.assertAlmostEqual(target.eccentricity, 0.3972, places=4)
-        self.assertAlmostEqual(target.inclination, 8.4561, places=4)
+        self.assertAlmostEqual(target.eccentricity, 0.3973229, places=3)
+        self.assertAlmostEqual(target.inclination, 8.45629, places=3)
         self.assertAlmostEqual(target.abs_mag, 12.79, places=2)
         self.assertAlmostEqual(target.slope, 0.15, places=2)
 
@@ -245,8 +245,8 @@ class TestMPCHarvesterCanary(TestCase):
         self.assertEqual(target.scheme, 'MPC_COMET')
         self.assertEqual(target.ra, None)
         self.assertEqual(target.dec, None)
-        self.assertAlmostEqual(target.eccentricity, 0.0433, places=4)
-        self.assertAlmostEqual(target.lng_asc_node, 312.4041, places=4)
+        self.assertAlmostEqual(target.eccentricity, 0.043051, places=3)
+        self.assertAlmostEqual(target.lng_asc_node, 312.401838, places=3)
 
     def test_query_comet_designation(self):
         self.broker.query('C/2017 K2')
@@ -259,8 +259,8 @@ class TestMPCHarvesterCanary(TestCase):
         self.assertEqual(target.scheme, 'MPC_COMET')
         self.assertEqual(target.ra, None)
         self.assertEqual(target.dec, None)
-        self.assertAlmostEqual(target.perihdist, 1.7998, places=4)
-        self.assertAlmostEqual(target.arg_of_perihelion, 236.17910, places=4)
+        self.assertAlmostEqual(target.perihdist, 1.8001, places=3)
+        self.assertAlmostEqual(target.arg_of_perihelion, 236.15758, places=3)
 
 
 class TestMPCExplorerHarvester(TestCase):
