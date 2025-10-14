@@ -65,7 +65,8 @@ class EncryptedProperty:
         if not isinstance(cipher, Fernet):
             raise AttributeError(
                 f"A Fernet cipher must be set on the '{owner.__name__}' instance "
-                f"as '_cipher' to access property '{self.property_name}'."
+                f"as '_cipher' to access property '{self.property_name}'. "
+                f"Please use session_utils.get_encrypted_field() instead of direct access."
             )
 
         encrypted_value = getattr(instance, self.db_field_name)
