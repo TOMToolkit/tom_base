@@ -32,6 +32,10 @@ jobs:
         poetry install
     - name: Check for new migrations
       run: poetry run python manage.py makemigrations --check
+    - name: Missing Migrations
+        if: ${{ failure() }}
+        run: echo "::error title=Title:: Message"
+
 
   run_tests:
     runs-on: ubuntu-latest
