@@ -31,7 +31,7 @@ jobs:
         python -m pip install "poetry>=2.0,<3.0"
         poetry install
     - name: Check for new migrations
-      run: poetry run manage.py makemigrations --check
+      run: poetry run python manage.py makemigrations --check
 
   run_tests:
     runs-on: ubuntu-latest
