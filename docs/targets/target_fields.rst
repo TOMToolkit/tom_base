@@ -166,6 +166,12 @@ by running:
 
 This will build the appropriate tables in your database for your custom target model.
 
+.. note::
+    If you are updating a more developed TOM that already has existing custom migrations that rely on foreign key
+    relationships with `tom_targets` models, you may experience errors when trying to migrate. If this happens, you
+    may need to edit your existing migrations to reference `'tom_targets.basetarget'` and update the dependencies to
+    include a reference to a `tom_targets` migration ``0021_rename_target_basetarget_alter_basetarget_options`` or later.
+
 Convert old targets to new model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
