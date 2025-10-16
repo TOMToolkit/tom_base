@@ -252,6 +252,7 @@ Default:
       'tom_observations.facilities.lco.LCOFacility',
       'tom_observations.facilities.gemini.GEMFacility',
       'tom_observations.facilities.soar.SOARFacility',
+      'tom_observations.facilities.blanco.BLANCOFacility',
       'tom_observations.facilities.lt.LTFacility'
    ]
 
