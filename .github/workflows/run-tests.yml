@@ -31,10 +31,10 @@ jobs:
         python -m pip install "poetry>=2.0,<3.0"
         poetry install
     - name: Check for new migrations
-      run: poetry run python manage.py makemigrations --check
-    - name: Missing Migrations
-      if: ${{ failure() }}
-      run: echo "::error::Message"
+      run: |
+        echo "::warning::If this check fails, you have model changes that are missing the corresponding migration files:"
+        poetry run python manage.py makemigrations --check
+
 
 
   run_tests:
