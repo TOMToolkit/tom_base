@@ -117,14 +117,3 @@ def show_app_profiles(context, user):
     context['user'] = user
     context['profiles_to_display'] = profiles_to_display
     return context
-
-
-@register.inclusion_tag('tom_common/partials/include_app_partial.html', takes_context=True)
-def show_individual_app_partial(context, app_partial_data):
-    """
-    An Inclusion tag for setting the unique context for an app's partial.
-    """
-    for item in app_partial_data['context']:
-        context[item] = app_partial_data['context'][item]
-    context['app_partial'] = app_partial_data['partial']
-    return context
