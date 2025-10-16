@@ -165,15 +165,17 @@ class LCOConfigurationLayout(OCSConfigurationLayout):
     def get_final_accordion_items(self, instance):
         """ Override in the subclasses to add items at the end of the accordion group
         """
-        return AccordionGroup('Fractional Ephemeris Rate',
-                              Div(
-                                  HTML(f'''<br/><p>{self.facility_settings.fractional_ephemeris_rate_help}</p>''')
+        return [
+            AccordionGroup('Fractional Ephemeris Rate',
+                           Div(
+                               HTML(f'''<br/><p>{self.facility_settings.fractional_ephemeris_rate_help}</p>''')
                               ),
-                              Div(
-                                  f'c_{instance}_fractional_ephemeris_rate',
-                                  css_class='form-col'
-                              )
-                              )
+                           Div(
+                               f'c_{instance}_fractional_ephemeris_rate',
+                               css_class='form-col'
+                           )
+                           )
+        ]
 
 
 class ImagingConfigurationLayout(LCOConfigurationLayout):
@@ -437,7 +439,7 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
             code: instrument
             for (code, instrument) in instruments.items()
             if (instrument['type'] in ['IMAGE', 'SPECTRA'] and
-                ('MUSCAT' not in code and 'SOAR' not in code))
+                ('MUSCAT' not in code and 'SOAR' not in code and 'BLANCO' not in code))
         }
         return filtered_instruments
 
@@ -545,7 +547,7 @@ class LCOImagingObservationForm(LCOFullObservationForm):
         instruments = super().get_instruments()
         return {
             code: instrument for (code, instrument) in instruments.items() if (
-                'IMAGE' == instrument['type'] and 'MUSCAT' not in code and 'SOAR' not in code)
+                'IMAGE' == instrument['type'] and 'MUSCAT' not in code and 'SOAR' not in code and 'BLANCO' not in code)
         }
 
     def configuration_layout_class(self):
