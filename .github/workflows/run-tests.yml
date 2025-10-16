@@ -30,9 +30,8 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install "poetry>=2.0,<3.0"
         poetry install
-    - name: Check for new migrations
+    - name: Missing Migrations
       run: |
-        echo "::warning::If this check fails, you have model changes that are missing the corresponding migration files:"
         poetry run python manage.py makemigrations --check
 
 

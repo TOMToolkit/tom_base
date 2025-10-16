@@ -51,7 +51,6 @@ class ObservationRecord(models.Model):
     scheduled_end = models.DateTimeField(null=True)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    extra_thing = models.CharField(max_length=50)
 
     class Meta:
         ordering = ('-created',)
