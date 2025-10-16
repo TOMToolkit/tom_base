@@ -34,7 +34,7 @@ jobs:
       run: poetry run python manage.py makemigrations --check
     - name: Missing Migrations
       if: ${{ failure() }}
-      run: echo "::error title=Title:: Message"
+      run: echo "::error::Message"
 
 
   run_tests:
