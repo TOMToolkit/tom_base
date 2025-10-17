@@ -1,8 +1,11 @@
 import logging
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import StringIO
 from urllib.parse import urlencode
+import numpy as np
+from astropy.coordinates import SkyCoord
+from astropy import units as u
 
 from django.conf import settings
 from django.contrib import messages
@@ -10,6 +13,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
 from django_filters.views import FilterView
@@ -23,7 +27,6 @@ from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.views.generic.detail import DetailView, SingleObjectMixin
-from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
 from rest_framework.views import APIView
 from rest_framework.renderers import TemplateHTMLRenderer
@@ -37,10 +40,12 @@ from tom_common.hooks import run_hook
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
+from tom_observations.models import Facility as ObservingFacility
+from tom_observations import facility
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetMergeForm, \
-    UnknownTypeTargetCreateForm
+    UnknownTypeTargetCreateForm, TargetSelectionForm
 from tom_targets.sharing import share_target_with_tom
 from tom_targets.merge import target_merge
 from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
@@ -56,9 +61,9 @@ from tom_targets.persistent_sharing_serializers import PersistentShareSerializer
 from tom_targets.permissions import targets_for_user
 from tom_targets.templatetags.targets_extras import target_merge_fields, persistent_share_table
 from tom_targets.utils import import_targets, export_targets
+from tom_observations.utils import get_sidereal_visibility
 from tom_targets.seed import seed_messier_targets
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -750,14 +755,13 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 
 
-class TargetGroupingView(PermissionListMixin, ListView):
+class TargetGroupingView(PermissionListMixin, FormView):
     """
     View that handles the display of ``TargetList`` objects, also known as target groups. Requires authorization.
     """
     permission_required = 'tom_targets.view_targetlist'
     template_name = 'tom_targets/target_grouping.html'
     model = TargetList
-    paginate_by = 25
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -905,6 +909,173 @@ class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
             return HttpResponseRedirect(load_url)
         else:
             return HttpResponseBadRequest("Must have hermes section with HERMES_API_KEY set in DATA_SHARING settings")
+
+
+class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
+    """
+    View to select targets suitable to observe from a specific facility/location, taking into account target visibility
+    from that site, as well as other user-defined constraints.
+    """
+    template_name = 'tom_targets/target_facility_selection.html'
+    strict = False
+    model = Target
+    paginate_by = 5
+    permission_required = 'tom_targets.view_target'
+    form_class = TargetSelectionForm
+    observable_targets = []
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds the ``TargetListShareForm`` to the context and prepopulates the hidden fields.
+        :returns: context object
+        :rtype: dict
+        """
+
+        context = super().get_context_data(*args, **kwargs)
+        # Surely this needs to verify that the user has permission?
+        context['form'] = TargetSelectionForm()
+
+        # The displayed table can be extended to include selected extra_fields for each target,
+        # if configured in the TOM's settings.py. So we set the list of table columns accordingly.
+        context['table_columns'] = [
+                            'Target', 'RA', 'Dec', 'Site', 'Min airmass'
+                        ] + getattr(settings, 'SELECTION_EXTRA_FIELDS', [])
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+
+        # Populate the form with data from the request
+        form = self.form_class(request.POST)
+
+        if form.is_valid():
+            targetlist = form.cleaned_data['target_list']
+            date = form.cleaned_data['date']
+            observatory = form.cleaned_data['observatory']
+
+            # Retrieve the full list of targets for this targetlist.
+            # This is paginated so that the visibility calculations
+            # are performed on a limited number of targets rather than
+            # all of them at once, which can be time consuming.
+            targets = targetlist.targets.all().order_by('name')
+            paginator = Paginator(targets, self.paginate_by)
+            targets_page = paginator.get_page(1)
+
+            # This list is stored in the session so that future GETs
+            # can retrieve different pages.  The Target query set and date have to be
+            # in a format that can serialize to JSON
+            request.session['targets'] = [t.pk for t in targets]
+            request.session['date'] = date.strftime('%Y-%m-%d')
+            request.session['observatory'] = observatory
+
+            # Now calculate the visibilities of the restricted list of objects
+            target_visibilities = self.get_observable_targets(
+                targets_page,
+                date,
+                observatory
+            )
+
+        context = self.get_context_data(*args, **kwargs)
+
+        context['target_visibilities'] = target_visibilities
+        context['targets_page'] = targets_page
+        context['use_table'] = True
+
+        return render(request, self.template_name, context)
+
+    def get(self, request, *args, **kwargs):
+
+        context = self.get_context_data(*args, **kwargs)
+
+        page = request.GET.get('page')
+
+        if page and 'targets' in request.session.keys():
+            targets = Target.objects.filter(pk__in=request.session['targets'])
+            date = datetime.strptime(request.session['date'], "%Y-%m-%d")
+            paginator = Paginator(targets, self.paginate_by)
+            targets_page = paginator.get_page(page)
+            target_visibilities = self.get_observable_targets(
+                targets_page,
+                date,
+                request.session['observatory']
+            )
+            context['target_visibilities'] = target_visibilities
+            context['targets_page'] = targets_page
+            context['use_table'] = True
+        else:
+            context['target_visibilities'] = None
+            context['targets_page'] = None
+            context['use_table'] = False
+
+        return render(request, self.template_name, context)
+
+    def get_observable_targets(self, targets_page, date, observatory):
+        """
+        Handles POST requests to select targets suitable for observation from this facility
+
+        :param targets_page: int Index of the page of targets to compute visbilities for
+        :param date: datetime object for the day to calculate for
+        :param observatory: str Full name of the observatory to compute for. This can refer to either
+                                a facility module or general facilty entry
+        :return: HTTPRequest
+        """
+
+        # Configuration:
+        # Maximum airmass limit to consider a target visible
+        # Number of intervals with which to calculate visibility throughout a single night
+        airmass_max = 2.0
+        visibiliy_intervals = 10
+
+        # Resolve observatory
+        # This string can refer to either a facility class or an entry in the general facilities table
+        # First test to see if the requested facility is a general one because if an invalid facility is
+        # passed to get_service_class it will return a list of all of them
+        qs = ObservingFacility.objects.filter(full_name=observatory, location='ground')
+
+        if qs.count() > 0:
+            general_facility = qs[0]
+            observation_facility = None
+        else:
+            general_facility = None
+            observation_facility = facility.get_service_class(observatory)
+
+        # Calculate the visibility of all selected targets on the date given
+        # Since some observatories include multiple sites, the visibility_data returned is always
+        # a dictionary indexed by site code.  Our purpose here is to verify whether each target is ever
+        # visible at lower airmass than the limit from any site - if so the target is considered to be visible
+        observable_targets = []
+
+        for target in targets_page:
+            start_time = datetime.combine(date, datetime.min.time())
+            end_time = start_time + timedelta(days=1)
+            visibility_data = get_sidereal_visibility(
+                target, start_time, end_time,
+                visibiliy_intervals, airmass_max,
+                observation_facility=observation_facility,
+                general_facility=general_facility
+            )
+            for site, vis_data in visibility_data.items():
+                airmass_data = np.array([x for x in vis_data[1] if x])
+                if len(airmass_data) > 0:
+                    s = SkyCoord(target.ra, target.dec, frame='icrs', unit=(u.deg, u.deg))
+                    target_data = [
+                        target.id,
+                        target.name,
+                        s.ra.to_string(u.hour),
+                        s.dec.to_string(u.deg, alwayssign=True),
+                        site,
+                        round(airmass_data.min(), 1)
+                    ]
+
+                    # Extract any requested extra parameters for this object, if available
+                    for param in getattr(settings, 'SELECTION_EXTRA_FIELDS', []):
+                        if param in target.extra_fields.keys():
+                            target_data.append(target.extra_fields[param])
+                        else:
+                            target_data.append(None)
+                    observable_targets.append(target_data)
+
+        return observable_targets
 
 
 class PersistentShareManageFormView(APIView):
