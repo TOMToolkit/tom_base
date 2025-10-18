@@ -39,10 +39,10 @@ def navbar_app_addons(context, position='left'):
                     try:
                         context_method = import_string(item.get('context'))
                         new_context = context_method({})
-                    except ImportError:
-                        logger.warning(f'WARNING: Could not import context for {app.name} user list from '
-                                       f'{item["context"]}.\n'
-                                       f'Are you sure you have the right path?')
+                    except ImportError as e:
+                        logger.warning(f'WARNING: Could not import context for {app.name} navbar item from '
+                                       f'{item["context"]}: \n'
+                                       f'{e}')
                         continue
                 else:
                     new_context = {}

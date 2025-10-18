@@ -3,6 +3,7 @@ import json
 
 from django import forms
 from crispy_forms.layout import Div, Fieldset, HTML, Layout
+from datetime import datetime, timedelta
 
 from tom_dataservices.dataservices import BaseDataService
 from tom_dataservices.forms import BaseQueryForm
@@ -32,9 +33,9 @@ class TNSForm(BaseQueryForm):
     min_date = forms.CharField(required=False,
                                label='Discovered After',
                                help_text='Most valid date formats are recognized')
-    days_from_nondet = forms.FloatField(required=False, min_value=0.,
-                                        label='Days From Nondetection',
-                                        help_text='Maximum time between last nondetection and first detection')
+    # days_from_nondet = forms.FloatField(required=False, min_value=0.,
+    #                                     label='Days From Nondetection',
+    #                                     help_text='Maximum time between last nondetection and first detection')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -69,7 +70,7 @@ class TNSForm(BaseQueryForm):
                     Div('min_date', css_class='col'),
                     css_class='form-row'
                 ),
-                'days_from_nondet'
+                # 'days_from_nondet'
             ),
         )
 
@@ -78,16 +79,6 @@ class TNSDataService(BaseDataService):
     """
         The ``TNSDataService`` is the interface to the Transient Name Server. For information regarding the TNS,
         please see https://www.wis-tns.org/
-
-        To include the ``TNSBroker`` in your TOM, add the broker module location to your `TOM_ALERT_CLASSES` list in
-        your ``settings.py``:
-
-        .. code-block:: python
-
-            TOM_ALERT_CLASSES = [
-                'tom_alerts.brokers.tns.TNSBroker',
-                ...
-            ]
 
         Requires the following configuration in settings.py:
 
@@ -147,6 +138,14 @@ class TNSDataService(BaseDataService):
             json containing response from TNS including TNS name and prefix.
         """
 
+        # set a date range for the object's discovery. Will return objects discovered after this date.
+        if parameters.get('days_ago') is not None:
+            public_timestamp = (datetime.now() - timedelta(days=parameters['days_ago'])).strftime('%Y-%m-%d %H:%M:%S')
+        elif parameters.get('min_date') is not None:
+            public_timestamp = parameters['min_date']
+        else:
+            public_timestamp = ''
+
         # TNS expects either (ra, dec, radius, unit) or just target_name.
         # target_name has to be a TNS name of the target without a prefix.
         # Unused fields can be empty strings
@@ -161,6 +160,7 @@ class TNSDataService(BaseDataService):
                 'radius': parameters.get('radius', ''),
                 'units': parameters.get('units', ''),
                 'objname': parameters.get('objname', ''),
+                'public_timestamp': public_timestamp,
                 'photometry': 0,
                 'spectroscopy': 0,
             }
@@ -191,10 +191,10 @@ class TNSDataService(BaseDataService):
 
     def create_target_from_query(self, query_results, **kwargs):
         """
-            Returns a Target instance for an object defined by an alert, as well as
+            Returns a Target instance for an object defined by a query result, as well as
             any TargetExtra or additional TargetNames.
 
-            :returns: representation of object for an alert
+            :returns: target object
             :rtype: `Target`
 
             :returns: dict of extras to be added to the new Target
