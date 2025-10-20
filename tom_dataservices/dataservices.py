@@ -10,15 +10,14 @@ logger = logging.getLogger(__name__)
 
 def get_data_service_classes():
     """
-    Imports the user list content from relevant apps into the template.
+    Imports the Dataservice class from relevant apps and generates a list of data service names.
 
-    Each user_list should be contained in a list of dictionaries in an app's apps.py `user_lists` method.
-    Each user_list dictionary should contain a 'context' key with the path to the context processor class (typically a
-    templatetag), and a 'partial' key with the path to the html partial template.
+    Each dataservice class should be contained in a list of dictionaries in an app's apps.py `dataservices` method.
+    Each dataservice dictionary should contain a 'class' key with the dot separated path to the dataservice class
+    (typically an extension of BaseDataService).
 
     FOR EXAMPLE:
-    [{'partial': 'path/to/partial.html',
-      'context': 'path/to/context/data/method'}]
+    [{'class': 'path.to.dataservice.class'}]
     """
     data_service_choices = {}
     for app in apps.get_app_configs():
@@ -30,10 +29,10 @@ def get_data_service_classes():
             for data_service in data_services:
                 try:
                     clazz = import_string(data_service['class'])
-                except ImportError:
+                except ImportError as e:
                     logger.warning(f'WARNING: Could not import data service class for {app.name} from '
                                    f'{data_services["class"]}.\n'
-                                   f'Are you sure you have the right path?')
+                                   f'{e}')
                     continue
                 data_service_choices[clazz.name] = clazz
 
@@ -42,7 +41,7 @@ def get_data_service_classes():
 
 def get_data_service_class(name):
     """
-    Gets the specific broker class for a given broker name.
+    Gets the specific dataservice class for a given dataservice name.
 
     :returns: Broker class
     :rtype: class
@@ -154,12 +153,12 @@ class BaseDataService(ABC):
     @classmethod
     def get_urls(cls, url_type=None, value=None, **kwargs):
         """
-        Syntax: get_configuration([config_type], [value])
+        Syntax: get_urls([url_type], [value])
         Parameters:
             url_type: The type of URL to return. If None, returns all available url types.
             value: The default value to return if the requested url is not found.
         Returns:
-            A list of available uls, or a requested url, or if not found the default value.
+            A list of available uls, or a requested url, or if not found, the default value.
         """
         urls = cls.urls()
         if url_type:
@@ -209,7 +208,7 @@ class BaseDataService(ABC):
         Upper level function to create a new DataProduct from the query results
         Can take either new query results, or use stored results form a recent `query_service()`
         :param query_results: Query results from the DataService
-        :returns: Target object
+        :returns: DataProduct object
         """
         query_results = query_results or self.query_results
         if not query_results:
@@ -227,7 +226,7 @@ class BaseDataService(ABC):
         Can take either new query results, or use stored results form a recent `query_service()`
         :param target: Target object to associate with the ReducedDatum
         :param query_results: Query results from the DataService
-        :returns: Target object
+        :returns: ReducedDatum object
         """
         query_results = query_results or self.query_results
         if not query_results:
