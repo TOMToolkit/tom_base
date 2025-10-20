@@ -250,18 +250,28 @@ class BaseDataService(ABC):
         if not target_parameters:
             raise MissingDataException('No query results. Did you call query_service()?')
         else:
-            target, extras, aliases = self.create_target_from_query(target_parameters, **kwargs)
+            target = self.create_target_from_query(target_parameters, **kwargs)
+            extras = self.create_target_extras_from_query(target_parameters, **kwargs)
+            aliases = self.create_aliases_from_query(target_parameters, **kwargs)
             return target, extras, aliases
 
     def create_target_from_query(self, query_results, **kwargs):
         """Create a new target from the query results
         :returns: target object
         :rtype: `Target`
-
-        :returns: dict of extras to be added to the new Target
-        :rtype: `dict`
-
-        :returns: list of aliases to be added to the new Target
-        :rtype: `list`
         """
         raise NotImplementedError
+
+    def create_target_extras_from_query(self, query_results, **kwargs):
+        """Create a new target from the query results
+        :returns: dict of extras to be added to a new Target
+        :rtype: `dict`
+        """
+        return {}
+
+    def create_aliases_from_query(self, query_results, **kwargs):
+        """Create a new target from the query results
+        :returns: list of aliases to be added to a new Target
+        :rtype: `list`
+        """
+        return []

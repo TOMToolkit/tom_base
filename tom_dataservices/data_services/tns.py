@@ -210,4 +210,4 @@ class TNSDataService(BaseDataService):
             ra=query_results['radeg'],
             dec=query_results['decdeg']
         )
-        return target, {}, []
+        return target
