@@ -77,7 +77,7 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
 
     def get_form_class(self):
         """
-        Returns the form class to use in this view. The form class will be the one defined in the specific broker
+        Returns the form class to use in this view. The form class will be the one defined in the specific dataservice
         module for which a new query is being created.
         """
         data_service_name = self.get_data_service_name()
