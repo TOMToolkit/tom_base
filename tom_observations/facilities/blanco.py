@@ -7,12 +7,12 @@ from crispy_forms.layout import Div
 from tom_observations.observation_template import GenericTemplateForm
 from aeonlib.models import SiderealTarget
 
-from tom_observations.pydantic_forms import PydanticModelForm
+from pydantic_django_forms.forms import PydanticModelForm
 
 
 class BlancoObservationForm(PydanticModelForm, BaseRoboticObservationForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(SiderealTarget, *args, **kwargs)
+    class Meta:
+        model = SiderealTarget
 
     def layout(self):
         return Div(
