@@ -171,3 +171,14 @@ def copy_button(text_to_copy='', help_text='Copy'):
     """
     return {'copy_text': str(text_to_copy),
             'copy_help': str(help_text)}
+
+
+@register.inclusion_tag('tom_common/partials/include_app_partial.html', takes_context=True)
+def show_individual_app_partial(context, app_partial_data):
+    """
+    An Inclusion tag for setting the unique context for an app's partial.
+    """
+    for item in app_partial_data['context']:
+        context[item] = app_partial_data['context'][item]
+    context['app_partial'] = app_partial_data['partial']
+    return context
