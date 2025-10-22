@@ -97,7 +97,7 @@ class BaseDataService(ABC):
         """Same thing as query_service, but a dry run"""
         raise NotImplementedError
 
-    def build_query_parameters(self, *args, **kwargs):
+    def build_query_parameters(self, parameters, **kwargs):
         """Builds the query parameters from the form data"""
         raise NotImplementedError
 

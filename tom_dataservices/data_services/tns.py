@@ -186,7 +186,8 @@ class TNSDataService(BaseDataService):
             targets.append(target_data)
         return targets
 
-    def get_form_class(self):
+    @classmethod
+    def get_form_class(cls):
         return TNSForm
 
     def create_target_from_query(self, query_results, **kwargs):
