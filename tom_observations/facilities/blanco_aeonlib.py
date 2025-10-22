@@ -5,21 +5,23 @@ from tom_observations.facility import (
 )
 from crispy_forms.layout import Div
 from tom_observations.observation_template import GenericTemplateForm
-from aeonlib.models import SiderealTarget
+from aeonlib.ocs.request_models import RequestGroup
 
 from pydantic_django_forms.forms import PydanticModelForm
 
 
 class BlancoObservationForm(PydanticModelForm, BaseRoboticObservationForm):
     class Meta:
-        model = SiderealTarget
+        model = RequestGroup
 
     def layout(self):
         return Div(
-            Div("name", css_class="col"),
-            Div("type", css_class="col"),
-            Div("ra", css_class="col"),
-            Div("dec", css_class="col"),
+            Div("name", css_class="col-md-6"),
+            Div("proposal", css_class="col-md-6"),
+            Div("ipp_value", css_class="col-md-6"),
+            Div("operator", css_class="col-md-6"),
+            Div("observation_type", css_class="col-md-6"),
+            css_class="row",
         )
 
 
