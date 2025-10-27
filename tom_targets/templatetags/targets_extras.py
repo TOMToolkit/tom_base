@@ -16,6 +16,7 @@ from guardian.shortcuts import get_objects_for_user
 import numpy as np
 from plotly import offline
 from plotly import graph_objs as go
+from django.utils.module_loading import import_string
 
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.base_models import BaseTarget
@@ -381,7 +382,7 @@ def target_table_headers(model: type[BaseTarget]) -> list[str]:
             headers.append("Saved Data")
         else:
             try:
-                field = model._meta.get_field(column)  # type: ignore[attr-defined])
+                field = model._meta.get_field(column)
                 headers.append(field.verbose_name)
             except FieldDoesNotExist:
                 headers.append(column)
@@ -401,7 +402,7 @@ def target_table_row(target: BaseTarget) -> list[Any]:
             row.append(target.dataproduct_set.count())
         else:
             try:
-                field = target._meta.get_field(column)  # type: ignore[attr-defined])
+                field = target._meta.get_field(column)
                 value = getattr(target, column)
                 if field.get_internal_type() in ["FloatField", "DecimalField"]:
                     try:
@@ -504,3 +505,53 @@ def extra_form_field(form, field):
     if field not in [e['name'] for e in settings.EXTRA_FIELDS]:
         raise AttributeError("Attempted to lookup non-defined extra field")
     return form[field]
+
+
+def get_app_tabs(context):
+    """
+    Imports the target detail tab content from relevant apps into the template.
+
+    Each target_tab should be contained in a list of dictionaries in an app's apps.py `target_detail_tabs` method.
+    Each target_tab dictionary should contain a 'context' key with the path to the context processor class
+    (typically a templatetag), a 'partial' key with the path to the html partial template, and a 'label' key with
+    a string describing the label for the tab.
+
+    FOR EXAMPLE:
+    [{'partial': 'path/to/partial.html',
+      'context': 'path/to/context/data/method',
+      'label: 'Nice String'}]
+    """
+    target_tabs_to_display = []
+    for app in apps.get_app_configs():
+        try:
+            target_tabs = app.target_detail_tabs()
+        except AttributeError:
+            continue
+        if target_tabs:
+            for tab in target_tabs:
+                new_context = {}
+                if tab.get('context'):
+                    try:
+                        context_method = import_string(tab.get('context'))
+                    except ImportError as e:
+                        logger.warning(f'WARNING: Could not import context for {app.name} target detail tab from '
+                                       f'{tab["context"]}.\n'
+                                       f'{e}')
+                        continue
+                    new_context = context_method(context)
+                target_tabs_to_display.append({'partial': tab['partial'],
+                                               'context': new_context,
+                                               'label': tab['label']})
+    return target_tabs_to_display
+
+
+@register.inclusion_tag('tom_targets/partials/app_tab_divs.html', takes_context=True)
+def include_app_tab_divs(context):
+    context['target_tabs_to_display'] = get_app_tabs(context)
+    return context
+
+
+@register.inclusion_tag('tom_targets/partials/app_tabs.html', takes_context=True)
+def include_app_tabs(context):
+    context['target_tabs_to_display'] = get_app_tabs(context)
+    return context

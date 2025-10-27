@@ -1,0 +1,6 @@
+{% load targets_extras %}
+{% for target_tab in target_tabs_to_display %}
+    <li class="nav-item">
+        <a class="nav-link" id="{{target_tab.label|slugify}}-tab" href="#{{target_tab.label|slugify}}" role="tab" data-toggle="tab">{{target_tab.label}}</a>
+    </li>
+{% endfor %}

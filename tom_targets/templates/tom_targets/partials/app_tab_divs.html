@@ -1,0 +1,6 @@
+{% load targets_extras tom_common_extras%}
+{% for target_tab in target_tabs_to_display %}
+    <div class="tab-pane" id="{{target_tab.label|slugify}}">
+        {% show_individual_app_partial target_tab %}
+    </div>
+{% endfor %}
