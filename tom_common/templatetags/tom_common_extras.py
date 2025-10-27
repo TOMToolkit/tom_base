@@ -1,4 +1,5 @@
 import textwrap
+import logging
 
 from django import template
 from django.db.models import IntegerField
@@ -8,51 +9,48 @@ from django_comments.models import Comment
 from django.apps import apps
 from django.core.exceptions import FieldDoesNotExist
 from guardian.shortcuts import get_objects_for_user
+from django.utils.module_loading import import_string
 
 from tom_targets.models import Target
+
+logger = logging.getLogger(__name__)
 
 register = template.Library()
 
 
-@register.inclusion_tag('tom_common/partials/navbar_login.html', takes_context=True)
-def navbar_login(context):
-    """
-    Renders the username as a link to the user page, as well as the login button. Can be overridden to render additional
-    account-related buttons.
-    """
-    nav_item_list = []
-    for app in apps.get_app_configs():
-        try:
-            nav_items = app.nav_items()
-            if nav_items:
-                for item in nav_items:
-                    if item.get('position', 'left') == 'right':
-                        nav_item_list.append(item)
-        except AttributeError:
-            pass
-    return {'user': context['user'],
-            'nav_item_list': nav_item_list}
-
-
 @register.inclusion_tag('tom_common/partials/navbar_app_addons.html', takes_context=True)
-def navbar_app_addons(context):
+def navbar_app_addons(context, position='left'):
     """
     Imports the navbar content from appropriate apps
     This should be a list of partials containing an <li> element that you would like displayed in the navbar with the
     following format:
      `<li class="nav-item"> <a class="nav-link" href="{% url 'namespace:view_name' %}">Link Text</a> </li>`
     """
-    nav_item_list = []
+    nav_items_to_display = []
     for app in apps.get_app_configs():
         try:
             nav_items = app.nav_items()
-            if nav_items:
-                for item in nav_items:
-                    if item.get('position', 'left') != 'right':
-                        nav_item_list.append(item)
         except AttributeError:
-            pass
-    return {'nav_item_list': nav_item_list}
+            continue
+        if nav_items:
+            for item in nav_items:
+                context_method_path = item.get('context', None)
+                if context_method_path:
+                    try:
+                        context_method = import_string(item.get('context'))
+                        new_context = context_method({})
+                    except ImportError as e:
+                        logger.warning(f'WARNING: Could not import context for {app.name} navbar item from '
+                                       f'{item["context"]}: \n'
+                                       f'{e}')
+                        continue
+                else:
+                    new_context = {}
+                if item.get('position', 'left') == position:
+                    nav_items_to_display.append({'partial': item['partial'], 'context': new_context})
+
+    context['nav_items_to_display'] = nav_items_to_display
+    return context
 
 
 @register.simple_tag

@@ -1,6 +1,5 @@
-{% for nav_item in nav_item_list %}
-    {% include nav_item.partial %}
-{% endfor %}
+{% load tom_common_extras %}
+{% navbar_app_addons 'right' %}
 {% if user.is_authenticated %}
 <li class="nav-item">
     {% if user.first_name or user.last_name %}
