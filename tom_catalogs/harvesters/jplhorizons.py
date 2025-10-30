@@ -27,7 +27,13 @@ class JPLHorizonsHarvester(AbstractHarvester):
     def to_target(self):
         target = super().to_target()
         target.type = 'NON_SIDEREAL'
-        target.scheme = 'MPC_MINOR_PLANET'
+        # Special case for ingesting asteroids as comets, see tom_base #1180
+        target.eccentricity = self.catalog_data['e'][0]  # eccentricity in JPL
+        target.epoch_of_perihelion = self.jd_to_mjd(self.catalog_data['Tp_jd'][0])  # time of periapsis in JPL
+        if target.eccentricity > 0.9 and target.epoch_of_perihelion is not None and target.epoch_of_perihelion != 0:
+            target.scheme = 'MPC_COMET'
+        else:
+            target.scheme = 'MPC_MINOR_PLANET'
         asteroid = True
         if 'M1' in self.catalog_data.colnames and 'k1' in self.catalog_data.colnames:
             asteroid = False
@@ -47,10 +53,8 @@ class JPLHorizonsHarvester(AbstractHarvester):
         target.inclination = self.catalog_data['incl'][0]  # inclination in JPL
         target.mean_daily_motion = self.catalog_data['n'][0]  # mean motion in JPL
         target.semimajor_axis = self.catalog_data['a'][0]  # semi-major axis in JPL
-        target.eccentricity = self.catalog_data['e'][0]  # eccentricity in JPL
         # epoch Julian Date in JPL
         target.epoch_of_elements = self.jd_to_mjd(self.catalog_data['datetime_jd'][0])
-        target.epoch_of_perihelion = self.jd_to_mjd(self.catalog_data['Tp_jd'][0])  # time of periapsis in JPL
         target.perihdist = self.catalog_data['q'][0]  # periapsis distance in JPL
         # undocumented in JPL astroquery column names -- presuming P is the orbital period in JPL
         target.ephemeris_period = self.catalog_data['P'][0]
