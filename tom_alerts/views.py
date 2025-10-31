@@ -154,7 +154,7 @@ class BrokerQueryFilter(FilterSet):
         fields = ['broker', 'name']
 
 
-class BrokerQueryListView(FilterView):
+class BrokerQueryListView(LoginRequiredMixin, FilterView):
     """
     View that displays all saved ``BrokerQuery`` objects.
     """
@@ -182,7 +182,7 @@ class BrokerQueryDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('tom_alerts:list')
 
 
-class RunQueryView(TemplateView):
+class RunQueryView(LoginRequiredMixin, TemplateView):
     """
     View that handles the running of a specific ``BrokerQuery``.
     """
