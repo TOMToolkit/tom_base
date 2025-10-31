@@ -1,0 +1,45 @@
+{% extends 'tom_common/base.html' %}
+{% block title %}Query Result for {{ query }}{% endblock %}
+{% block content %}
+<h2>Query Result for {{ query }}</h2>
+{% if too_many_results %}
+  <div class="alert alert-danger" role="alert">
+    Query returned too many results, only showing the first 100.
+    Please refine the query to reduce the number of results.
+  </div>
+{% endif %}
+<form method="POST" action="{% url 'dataservices:create-target' %}">
+  {% csrf_token %}
+  <div class="">
+    <input type="hidden" name="data_service" value="{{ data_service }}"/>
+    <input type="hidden" name="query_id" value="{{ query.id }}"/>
+    <input type="submit" value="Create Targets" class="btn btn-primary"/>
+  </div>
+  {% include query_results_table %}
+</form>
+{% if query_feedback %}
+  <div class="alert alert-danger" role="alert">{{query_feedback |safe }}</div>
+{% endif %}
+
+<script>
+  document.getElementById("selectAll").addEventListener("change", function() {
+    // If the select all checkbox state changes, this will change the state
+    // of all checkboxes with the name attribute "selected_results".
+    document.querySelectorAll(`input[name="selected_results"]`).forEach(item => {
+      item.checked = this.checked;
+    });
+  });
+
+  document.querySelectorAll(`input[name="results"]`).forEach(item => {
+    item.addEventListener("change", function() {
+      let selectAllCheckbox = document.getElementById("selectAll");
+      // If all checkboxes with the name attribute "selcected_results" are checked, this
+      // will also check the "selectAll" checkbox.
+      const selectedResultsCheckboxes = document.querySelectorAll(`input[name="selected_results"]`);
+      const allChecked = Array.from(selectedResultsCheckboxes).every(checkbox => checkbox.checked);
+      selectAllCheckbox.checked = allChecked;
+    });
+  });
+</script>
+
+{% endblock %}

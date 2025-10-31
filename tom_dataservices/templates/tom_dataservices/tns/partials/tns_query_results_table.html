@@ -1,0 +1,24 @@
+<table class="table table-striped">
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="selectAll"/></th>
+        <th>Name</th>
+        <th>RA</th>
+        <th>Dec</th>
+        <th>Redshift</th>
+        <th>Discovery Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for result in results %}
+      <tr>
+        <td><input type="checkbox" name="selected_results" value="{{ result.id }}"/></td>
+        <td>{{ result.name_prefix }}{{result.objname}}</td>
+        <td>{{ result.ra }}</td>
+        <td>{{ result.dec }}</td>
+        <td>{{ result.redshift }}</td>
+        <td>{{ result.discovery_date }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+</table>
