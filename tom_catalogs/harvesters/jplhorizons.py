@@ -57,8 +57,8 @@ class JPLHorizonsHarvester(AbstractHarvester):
         # Extract absolute magnitude (H) and slope (G) or M1, k1 for comets
         if asteroid:
             target.abs_mag = self.catalog_data['H'][0]
-            target.slope = self.catalog_data['G'][0]
+            target._slope = self.catalog_data['G'][0]
         else:
             target.abs_mag = self.catalog_data['M1'][0]
-            target.slope = self.catalog_data['k1'][0]
+            target._slope = self.catalog_data['k1'][0]
         return target
