@@ -1,6 +1,5 @@
 Customizing TOM Templates
 -------------------------
-
 So you’ve got a TOM up and running, and your homepage looks something
 like this:
 
@@ -24,12 +23,27 @@ have a project layout that looks something like this:
        ├── urls.py
        └── wsgi.py
 
-We are going to override the html template included with the TOM
-Toolkit, ``tom_common/index.html``, so that we can edit some text and
-change the image. Overriding and extending templates is `documented
+Using Themes
+~~~~~~~~~~~~
+You can set the color theme for your TOM to "Dark Mode" by setting the `CSS_THEME = 'Dark'` in your ``settings.py``.
+|image2|
+
+Making your own pages
+~~~~~~~~~~~~~~~~~~~~~
+
+One very powerful, but more work intensive way to customize your TOM is
+to override the html templates included with the TOM
+Toolkit. In this example we are going to override the home page, ``tom_common/index.html``, so
+that we can edit some text and change the image. Overriding and extending templates is `documented
 extensively <https://docs.djangoproject.com/en/2.1/howto/overriding-templates/>`__
 on Django’s website and we highly recommend reading these docs if you
 plan on customizing your TOM further.
+
+.. note::
+
+    You should generally try to avoid overriding entire templates when possible, instead using integration points
+    (described below) or overriding specific partials. This lets you continue to benefit from maintenance done to these
+    pages by the TOM Development team without having to continually update your TOM's versions of these templates.
 
 Since the template we want to override is already part of the TOM
 Toolkit source code, we can use it as a starting point for our
@@ -127,7 +141,7 @@ alone. Reload your homepage, and you should see something like this:
 
 |image1|
 
-Thats it! You’ve just customized your TOM homepage.
+That's it! You’ve just customized your TOM homepage.
 
 Using static files
 ~~~~~~~~~~~~~~~~~~
@@ -162,7 +176,8 @@ Customize default CSS:
 The default styling is mostly based on Bootstrap v4.6.2 (`https://getbootstrap.com/ <https://getbootstrap.com/>`__).
 If you ran the tom_setup script, you should have a directory ``static`` at the top level of your project.
 Within this folder, find the ``tom_common/css`` directory. In this folder, is a file named ``custom.css``.
-Editing this file will allow you to overwrite any of the custom css used at the base level in the TOM Toolkit.
+Editing this file will allow you to overwrite any of the css used at the base level in the TOM Toolkit, including the
+styling established by TOMToolkit themes such as "Dark Mode".
 
 As an example, let's change the background color from white (#ffffff) to an off-white (#efead6).
 
@@ -255,3 +270,4 @@ for more details.
 
 .. |image0| image:: /_static/customize_templates_doc/tomhomepagenew.png
 .. |image1| image:: /_static/customize_templates_doc/tomhomepagemod.png
+.. |image2| image:: /_static/customize_templates_doc/darkmode.png
