@@ -513,11 +513,6 @@ class BaseTarget(models.Model):
 
     @property
     def slope(self):
-        """
-        Returns the value stored in `_slope` unless this number doesn't exist, and then returns a default of 0.15.
-        The Slope parameter is a measure of how the brightness of a non-sidereal object changes with phase angle,
-        and 0.15 is widely accepted as a reasonable default for asteroids when the proper value is unknown.
-        """
         return self._slope or 0.15
 
     @property
