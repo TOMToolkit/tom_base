@@ -58,31 +58,6 @@ a:active {
   background-color: #272626;
 }
 
-.target-banner {
-    width: 100%;
-    margin: 0rem 0rem;
-    padding: 1rem 0rem 0rem 0rem;
-    background-color: #191c17;
-    color: white;
-    justify-content: center;
-}
-
-.target-parameters {
-    background-color: #272626;
-    padding: 10px 10px 10px 10px;
-    color: #fff;
-    border-radius: 10px;
-    overflow: scroll;
-}
-
-.target-content {
-    background-color: #272626;
-    color: #fff;
-    border-radius: 10px;
-    margin: 0rem 0rem 0rem 0rem;
-    overflow: scroll;
-}
-
 table {
   background-color: #191c17;
   border: none;
