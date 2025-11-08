@@ -51,7 +51,7 @@ class NonSiderealTargetFactory(factory.django.DjangoModelFactory):
     ephemeris_epoch = factory.Faker('pyfloat')
     ephemeris_epoch_err = factory.Faker('pyfloat')
     abs_mag = factory.Faker('pyfloat')
-    _slope = factory.Faker('pyfloat')
+    slope = factory.Faker('pyfloat')
 
     targetextra_set = factory.RelatedFactoryList(TargetExtraFactory, factory_related_name='target', size=3)
     aliases = factory.RelatedFactoryList(TargetNameFactory, factory_related_name='target', size=2)
