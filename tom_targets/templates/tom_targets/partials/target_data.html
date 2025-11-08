@@ -12,9 +12,6 @@
     {% if value != None and value != '' and key != 'name' %}
       <dt class="col-sm-6" title="{% help_text target key %}">{% verbose_name target key %}</dt>
       <dd class="col-sm-6">{{ value|truncate_value_for_display }}</dd>
-    {% elif key == '_slope' and target.type == target.NON_SIDEREAL %}
-      <dt class="col-sm-6" title="{% help_text target key %}">{% verbose_name target key %}</dt>
-      <dd class="col-sm-6">{{ target.slope|truncate_value_for_display }}</dd>
     {% endif %}
     {% if key == 'ra' %}
       <dt class="col-sm-6">&nbsp;</dt>

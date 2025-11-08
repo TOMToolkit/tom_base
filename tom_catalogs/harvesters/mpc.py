@@ -96,7 +96,7 @@ class MPCHarvester(AbstractHarvester):
             target.mean_anomaly = float(result['mean_anomaly'])
             target.semimajor_axis = float(result['semimajor_axis'])
             target.abs_mag = float(result['absolute_magnitude'])
-            target._slope = float(result.get('phase_slope', 0.15))
+            target.slope = float(result.get('phase_slope', 0.15))
         return target
 
 
@@ -162,7 +162,7 @@ class MPCExplorerHarvester(AbstractHarvester):
 
         # Get magnitude data
         target.abs_mag = result['magnitude_data']['H']
-        target._slope = result['magnitude_data']['G']
+        target.slope = result['magnitude_data']['G']
 
         target.epoch_of_elements = result['epoch_data']['epoch']
         # Map coefficients to elements
