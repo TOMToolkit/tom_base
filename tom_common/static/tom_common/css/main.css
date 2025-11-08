@@ -33,7 +33,6 @@ textarea {
     opacity: 0.75; /* Make it slightly transparent */
     cursor: pointer; /* change cursor on hover */
     font-size: x-small; /* smaller font */
-    color: var(--secondary); /* secondary color */
     padding: 0.25rem;
     position: absolute;
     top: 0.1rem; /* set close to the top of container */
