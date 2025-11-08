@@ -26,6 +26,8 @@ have a project layout that looks something like this:
 Using Themes
 ~~~~~~~~~~~~
 You can set the color theme for your TOM to "Dark Mode" by setting the `CSS_THEME = 'Dark'` in your ``settings.py``.
+If the theme doesn't seem to be working properly, make sure you aren't overriding key components in your
+`static/tom_common/css/custom.css` file.
 |image2|
 
 Making your own pages
