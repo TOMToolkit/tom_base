@@ -1,21 +1,80 @@
+:root {
+    --primary: #007bff;
+    --secondary: #6c757d;
+    --success: #28a745;
+    --info: #17a2b8;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --light: #f8f9fa;
+    --dark: #343a40;
+    --theme_primary: #fff;
+    --theme_text_primary: #000;
+    --theme_accent1: #fff;
+    --theme_accent2: rgba(0, 0, 0, .03);
+    --theme_accent3: #fff;
+    --theme_link_text: #007bff;
+    --theme_link_hover: #0056b3;
+    --theme_link_active: #0056b3;
+}
+
 body {
   padding-top: 5rem;
+  background-color: var(--theme_primary);
+  color: var(--theme_text_primary);
 }
 
 .content {
   padding: 3rem 1.5rem;
 }
 
+.card {
+  background-color: var(--theme_accent1);
+  color: var(--theme_text_primary);
+}
+
+.card-header {
+  background-color: var(--theme_accent2);
+}
+
+.media {
+  background-color: var(--theme_accent2);
+}
+
+/* Set Navbar themes */
+.navbar {
+  background-color: var(--theme_accent1);
+  color: var(--theme_text_primary);
+}
+
 .navbar-brand > img {
   max-height: 25px;
 }
 
-.input-group-text {
-  font-family: monospace;
-}
-
 .nav-item {
   cursor: pointer;
+}
+.dropdown-menu {
+  background-color: var(--theme_accent3);
+}
+
+.dropdown-item {
+  color: var(--theme_text_primary);
+  background-color: var(--theme_accent3);
+}
+
+.nav-link {
+  color: var(--theme_text_primary);
+}
+
+.nav-link:active, .nav-item:active {
+  color: var(--theme_text_primary);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.input-group-text {
+  font-family: monospace;
+  color: var(--theme_text_primary);
 }
 
 #login-buttons > li {
@@ -26,6 +85,48 @@ body {
 textarea {
     overflow-y: auto;
     overflow-x: hidden;
+}
+
+/* Set link themes */
+a {
+  color: var(--theme_link_text);
+}
+
+a:hover {
+  color: var(--theme_link_hover);
+}
+
+a:active {
+  color: var(--theme_link_active);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Set Table Themes */
+table {
+  background-color: var(--theme_accent1);
+  border: none;
+  border: 1pt solid var(--theme_accent1);
+  border-radius: 10px;
+}
+
+thead {
+  color: var(--theme_text_primary);
+  border: 1pt solid var(--theme_accent1);
+}
+
+tbody {
+  border: 1pt solid var(--theme_accent1);
+}
+
+tr {
+  border: 1pt solid var(--theme_accent1);
+}
+
+td, th {
+  border: 1pt solid var(--theme_accent2);
+  background-color: var(--theme_accent1);
+  color: var(--theme_text_primary);
 }
 
 /* Create copy button class */
@@ -94,3 +195,35 @@ textarea {
 .pointer {
   cursor: pointer;
 }
+
+/* Set Pagination Theme */
+.pagination {
+  background-color: var(--theme_accent1);
+  color: var(--theme_text_primary);
+}
+
+.pagination a {
+  background-color: var(--theme_accent2);
+  color: var(--theme_text_primary);
+}
+
+.pagination a:hover {
+  background-color: var(--theme_accent3);
+  color: var(--theme_text_primary);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

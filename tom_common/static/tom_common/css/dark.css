@@ -2,107 +2,21 @@
  * Adapted from MOP CSS v5.2.16
  */
 
-body {
-  background-color: #313232;
-  color: #fff;
-}
-
-.navbar {
-  background-color: #000;
-  color: #fff;
-}
-
-a {
-  color: #8eb8e6;
-}
-
-a:hover {
-  color: #00effe;
-}
-
-a:active {
-  color: #fead00;
-  font-weight: 700;
-  text-decoration: underline;
-}
-
-.dropdown-menu {
-  background-color: #7f837b;
-}
-
-.dropdown-item {
-  color: #fff;
-  background-color: #7f837b;
-}
-
-.nav-link {
-  color: #fff;
-}
-
-.nav-link:active, .nav-item:active {
-  color: #fead00;
-  font-weight: 700;
-  text-decoration: underline;
-}
-
-.card {
-  background-color: #191c17;
-  color: #fff;
-}
-
-.card-header {
-  background-color: #272626;
-}
-
-.media {
-  background-color: #272626;
-}
-
-table {
-  background-color: #191c17;
-  border: none;
-  border: 1pt solid #191c17;
-  border-radius: 10px;
-}
-
-thead {
-  color: #fff;
-  border: 1pt solid #191c17;
-}
-
-tbody {
-  border: 1pt solid #191c17;
-}
-
-tr {
-  border: 1pt solid #191c17;
-}
-
-td, th {
-  border: 1pt solid #191c17;
-  background-color: #272626;
-  color: #fff;
-}
-
-.pagination {
-  background-color: #313232;
-  color: #fff;
-}
-
-.pagination a {
-  background-color: #272626;
-  color: #fff;
-}
-
-.pagination a:hover {
-  background-color: #4e4c51;
-  color: #fff;
-}
-
-.warning {
-  color: #fe8300;
-}
-
-.input-group-text {
-  color: #d3d8dd;
+:root {
+    --primary: #007bff;
+    --secondary: #6c757d;
+    --success: #28a745;
+    --info: #17a2b8;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --light: #f8f9fa;
+    --dark: #343a40;
+    --theme_primary: #313232;
+    --theme_text_primary: #fff;
+    --theme_accent1: #191c17;
+    --theme_accent2: #272626;
+    --theme_accent3: #7f837b;
+    --theme_link_text: #8eb8e6;
+    --theme_link_hover: #00effe;
+    --theme_link_active: #fead00;
 }

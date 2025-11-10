@@ -181,12 +181,17 @@ Within this folder, find the ``tom_common/css`` directory. In this folder, is a 
 Editing this file will allow you to overwrite any of the css used at the base level in the TOM Toolkit, including the
 styling established by TOMToolkit themes such as "Dark Mode".
 
+The TOMToolkit has several built in variables that allow you to establish a theme for your TOM. You can see these in
+`root` dictionay in yoyr ``custom.css``. Altering these will change the appearance of large portions of the website.
+
 As an example, let's change the background color from white (#ffffff) to an off-white (#efead6).
+Add the following in your ``custom.css`` after the comments:
+
 
 .. code:: css
 
-    body {
-        background-color: #efead6;
+    :root {
+        --theme_primary: #efead6;
     }
 
 Once you have added these images to the ``static/tom_common/img`` directory and reloaded the page (you may need to
