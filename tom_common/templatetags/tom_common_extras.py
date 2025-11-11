@@ -180,3 +180,12 @@ def show_individual_app_partial(context, app_partial_data):
         context[item] = app_partial_data['context'][item]
     context['app_partial'] = app_partial_data['partial']
     return context
+
+
+@register.simple_tag
+def get_theme():
+    """Check for theme in settings.py"""
+    theme = getattr(settings, 'CSS_THEME', None)
+    if theme is not None:
+        return f'tom_common/css/{theme.lower()}.css'
+    return None
