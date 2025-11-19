@@ -413,7 +413,7 @@ class BaseTarget(models.Model):
         null=True, blank=True, verbose_name='Absolute Magnitude', help_text='mag'
     )
     slope = models.FloatField(
-        null=True, blank=True, default=0.15, verbose_name='Slope parameter', help_text='mag'
+        null=True, blank=True, verbose_name='Slope parameter', help_text='mag'
     )
 
     objects = models.Manager()

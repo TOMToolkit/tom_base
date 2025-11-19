@@ -14,7 +14,7 @@ from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, text
 from guardian.shortcuts import assign_perm
 import numpy as np
 from specutils import Spectrum1D
@@ -171,13 +171,21 @@ class TestModels(TestCase):
         """Test that the default path is used if no overide is set"""
         filename = 'afile.fits'
         path = data_product_path(self.data_product, filename)
-        self.assertIn(f'FakeRoboticFacility/{filename}', path)
+        self.assertIn(f'{text.slugify(FakeRoboticFacility.name)}/{filename}', path)
 
     @override_settings(DATA_PRODUCT_PATH='tom_dataproducts.tests.tests.dp_path')
     def test_path_overide(self):
         """Test that the overide path is used if set"""
         path = data_product_path(self.data_product, 'afile.fits')
         self.assertIn('new_path/afile.fits', path)
+
+    def test_target_name_with_slashes(self):
+        """Test that a target with a name such as C/2021 G2 (ATLAS) doesn't create
+        mutiple directories in the filesystem. TOMToolkit/tom_base #1185"""
+        self.target.name = 'C/2021 G2 (ATLAS)'
+        self.target.save()
+        path = data_product_path(self.data_product, 'afile.fits')
+        self.assertEqual('c2021-g2-atlas/fakeroboticfacility/afile.fits', path)
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
@@ -309,7 +317,9 @@ class TestUploadDataProducts(TestCase):
             },
             follow=True
         )
-        self.assertContains(response, 'Successfully uploaded: {0}/none/afile.fits'.format(self.target.name))
+        self.assertContains(response, 'Successfully uploaded: {0}/none/afile.fits'.format(
+            text.slugify(self.target.name)
+        ))
 
     def test_upload_data_for_observation(self, run_data_processor_mock):
         response = self.client.post(
@@ -326,8 +336,8 @@ class TestUploadDataProducts(TestCase):
             follow=True
         )
         self.assertContains(response, 'Successfully uploaded: {0}/{1}/bfile.fits'.format(
-            self.target.name, FakeRoboticFacility.name)
-        )
+            text.slugify(self.target.name), text.slugify(FakeRoboticFacility.name)
+        ))
 
 
 class TestDeleteDataProducts(TestCase):

@@ -38,8 +38,8 @@ def get_service_classes():
     for service in TOM_FACILITY_CLASSES:
         try:
             clazz = import_string(service)
-        except (ImportError, AttributeError):
-            raise ImportError(f'Could not import {service}. Did you provide the correct path?')
+        except (ImportError, AttributeError) as e:
+            raise ImportError(f'Could not import {service}: {e}')
         service_choices[clazz.name] = clazz
     return service_choices
 
