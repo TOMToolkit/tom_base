@@ -40,8 +40,6 @@ from tom_common.hooks import run_hook
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
-from tom_observations.models import Facility as ObservingFacility
-from tom_observations import facility
 from tom_targets.filters import TargetFilter
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetMergeForm, \
@@ -1026,19 +1024,6 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         # Number of intervals with which to calculate visibility throughout a single night
         airmass_max = 2.0
         visibiliy_intervals = 10
-
-        # Resolve observatory
-        # This string can refer to either a facility class or an entry in the general facilities table
-        # First test to see if the requested facility is a general one because if an invalid facility is
-        # passed to get_service_class it will return a list of all of them
-        #qs = ObservingFacility.objects.filter(full_name=observatory, location='ground')
-
-        #if qs.count() > 0:
-        #    general_facility = qs[0]
-        #    observation_facility = None
-        #else:
-        #    general_facility = None
-        #    observation_facility = facility.get_service_class(observatory)
 
         # Calculate the visibility of all selected targets on the date given
         # Since some observatories include multiple sites, the visibility_data returned is always

@@ -10,7 +10,6 @@ from django.forms import ValidationError, inlineformset_factory
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
-import tom_observations.facility
 from tom_observations.utils import get_facilities
 from tom_dataproducts.sharing import get_sharing_destination_options
 from .models import Target, TargetExtra, TargetName, TargetList, PersistentShare

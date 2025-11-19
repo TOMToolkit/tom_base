@@ -173,6 +173,7 @@ def get_astroplan_sun_and_time(start_time, end_time, interval):
 
     return sun, time_range
 
+
 def get_facilities():
     """
     Function to return a complete list of all available observing facilities, including
