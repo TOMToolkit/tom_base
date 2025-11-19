@@ -217,4 +217,4 @@ with the following form:
   :alt: Form to add a new telescope facility
 
 Fill in the form and click ``save``. Now if you return to your TOM's usual interface, and navigate to the ``Target Selection``
-page, the facility you added will appear in the list of facilities for which visibilities can be calculated. 
+page, the facility you added will appear in the list of facilities for which visibilities can be calculated.
