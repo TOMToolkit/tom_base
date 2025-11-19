@@ -6,6 +6,7 @@ import numpy as np
 import logging
 
 from tom_observations import facility
+from tom_observations.models import Facility as GeneralFacility
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +17,7 @@ def get_sidereal_visibility(
         end_time,
         interval,
         airmass_limit,
-        observation_facility=None,
-        general_facility=None
+        facility_name=None
 ):
     """
     Uses astroplan to calculate the airmass for a sidereal target
@@ -42,13 +42,10 @@ def get_sidereal_visibility(
     :param airmass_limit: maximum acceptable airmass for the resulting calculations
     :type airmass_limit: int
 
-    :param observation_facility: observing facility declared as a facility class for which to calculate the airmass.
+    :param facility_name: name string of a declared observing facility class OR general facility,
+                            for which to calculate the airmass.
                         None indicates all available facilities.
-    :type observation_facility: BaseObservationFacility
-
-    :param general_facility: entry in the general facility table for which to calculate the airmass.
-                        None indicates that the default facility classes should be used
-    :type general_facility: Facility
+    :type facility_name: string
 
     :returns: A dictionary containing the airmass data for each site. The dict keys consist of the site name prepended
         with the observing facility. The values are the airmass data, structured as an array containing two arrays. The
@@ -72,26 +69,37 @@ def get_sidereal_visibility(
     # Build list of observers, including all sites for a given facility
     observers = {}
 
-    # First add general facilities if any were selected.  This allows us to calculate for a single facility
+    # First check whether a general facility was selected.  This allows us to calculate for a single facility
     # if that's what the user asked for
-    if general_facility is not None:
-        observers[f'{general_facility.short_name}'] = Observer(longitude=general_facility.longitude * units.deg,
-                                                               latitude=general_facility.latitude * units.deg,
-                                                               elevation=general_facility.elevation * units.m)
+    observation_facility = None
+    general_facility = None
+    if facility_name is not None:
+        qs = GeneralFacility.objects.filter(full_name=facility_name, location='ground')
+
+        # If the observatory refers to a general facility, build a list of observers from that DB entry.
+        # The zero-length class_facilities list indicates that these are not required
+        if qs.count() > 0:
+            general_facility = qs[0]
+            observation_facility = None
+            class_facilities = []
+            observers[f'{general_facility.short_name}'] = Observer(longitude=general_facility.longitude * units.deg,
+                                                                   latitude=general_facility.latitude * units.deg,
+                                                                   elevation=general_facility.elevation * units.m)
+        else:
+            general_facility = None
+            observation_facility = facility.get_service_class(facility_name)
 
     # If the user did not select a general facility, but selected a facility module,
     # this function should calculate for that facility alone.
-    # If the user selected neither a general facility or a facility module, calculate for the default
+    # If the user selected neither a general facility nor a facility module, calculate for the default
     # list of facility modules
     if observation_facility is None and general_facility is None:
-        facilities = [clazz for name, clazz in facility.get_service_classes().items()]
+        class_facilities = [clazz for name, clazz in facility.get_service_classes().items()]
     elif observation_facility and general_facility is None:
-        facilities = [observation_facility]
-    else:
-        facilities = []
+        class_facilities = [observation_facility]
 
     # Add observers to the list for the facility modules, including all sites for a given facility
-    for observing_facility_class in facilities:
+    for observing_facility_class in class_facilities:
         sites = observing_facility_class().get_observing_sites()
         for site, site_details in sites.items():
             observers[f'({observing_facility_class.name}) {site}'] = Observer(
@@ -164,3 +172,14 @@ def get_astroplan_sun_and_time(start_time, end_time, interval):
         sun = get_sun(time_range)
 
     return sun, time_range
+
+def get_facilities():
+    """
+    Function to return a complete list of all available observing facilities, including
+    both facility classes and general facilities.
+    """
+
+    facilities = [(x, x) for x in facility.get_service_classes()]
+    facilities += [(x.full_name, x.full_name) for x in GeneralFacility.objects.all()]
+
+    return facilities

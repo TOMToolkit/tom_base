@@ -762,6 +762,7 @@ class TargetGroupingView(PermissionListMixin, FormView):
     permission_required = 'tom_targets.view_targetlist'
     template_name = 'tom_targets/target_grouping.html'
     model = TargetList
+    paginate_by = 25
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -1030,14 +1031,14 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         # This string can refer to either a facility class or an entry in the general facilities table
         # First test to see if the requested facility is a general one because if an invalid facility is
         # passed to get_service_class it will return a list of all of them
-        qs = ObservingFacility.objects.filter(full_name=observatory, location='ground')
+        #qs = ObservingFacility.objects.filter(full_name=observatory, location='ground')
 
-        if qs.count() > 0:
-            general_facility = qs[0]
-            observation_facility = None
-        else:
-            general_facility = None
-            observation_facility = facility.get_service_class(observatory)
+        #if qs.count() > 0:
+        #    general_facility = qs[0]
+        #    observation_facility = None
+        #else:
+        #    general_facility = None
+        #    observation_facility = facility.get_service_class(observatory)
 
         # Calculate the visibility of all selected targets on the date given
         # Since some observatories include multiple sites, the visibility_data returned is always
@@ -1051,8 +1052,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
             visibility_data = get_sidereal_visibility(
                 target, start_time, end_time,
                 visibiliy_intervals, airmass_max,
-                observation_facility=observation_facility,
-                general_facility=general_facility
+                facility_name=observatory
             )
             for site, vis_data in visibility_data.items():
                 airmass_data = np.array([x for x in vis_data[1] if x])
