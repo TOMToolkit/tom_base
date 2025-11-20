@@ -31,7 +31,7 @@ def get_data_service_classes():
                     clazz = import_string(data_service['class'])
                 except ImportError as e:
                     logger.warning(f'WARNING: Could not import data service class for {app.name} from '
-                                   f'{data_services["class"]}.\n'
+                                   f'{data_service["class"]}.\n'
                                    f'{e}')
                     continue
                 data_service_choices[clazz.name] = clazz
@@ -108,7 +108,7 @@ class BaseDataService(ABC):
     @classmethod
     def get_form_class(cls):
         """Returns the full form class for querying this service"""
-        raise NotImplementedError
+        raise NotImplementedError(f"No Form Class for {cls.name} Data Service")
 
     @classmethod
     def configuration(cls) -> dict:
