@@ -20,11 +20,11 @@ class LCORedirectForm(GenericObservationForm):
         request = self.initial.get('request', None)
         if not request:
             raise ValueError("LCORedirectForm requires request in initial data")
-        redirect_url = request.build_absolute_uri(
+        redirect_uri = request.build_absolute_uri(
             reverse("tom_observations:callback")
         ) + f"?target_id={target.pk}&facility=LCO"
-        redirect_url = urllib.parse.quote_plus(redirect_url)
-        url = f"https://observe.lco.global/create?{query_params}&redirect_url={redirect_url}"
+        redirect_uri = urllib.parse.quote_plus(redirect_uri)
+        url = f"https://observe.lco.global/create?{query_params}&redirect_uri={redirect_uri}"
         self.helper.layout = Layout(
             HTML(f'''
                 <p>
