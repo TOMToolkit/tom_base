@@ -309,6 +309,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             raise Exception('Must provide target_id')
         initial['target_id'] = self.get_target_id()
         initial['facility'] = self.get_facility()
+        initial['request'] = self.request
         initial.update(self.request.GET.dict())
         return initial
 

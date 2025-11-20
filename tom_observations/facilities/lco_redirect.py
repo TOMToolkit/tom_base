@@ -17,7 +17,12 @@ class LCORedirectForm(GenericObservationForm):
         target_id = self.initial.get('target_id')
         target = get_object_or_404(Target, pk=target_id)
         query_params = self.target_to_query_params(target)
-        redirect_url = reverse("tom_observations:callback") + f"?target_id={target.pk}&facility=LCO"
+        request = self.initial.get('request', None)
+        if not request:
+            raise ValueError("LCORedirectForm requires request in initial data")
+        redirect_url = request.build_absolute_uri(
+            reverse("tom_observations:callback")
+        ) + f"?target_id={target.pk}&facility=LCO"
         redirect_url = urllib.parse.quote_plus(redirect_url)
         url = f"https://observe.lco.global/create?{query_params}&redirect_url={redirect_url}"
         self.helper.layout = Layout(
@@ -25,7 +30,7 @@ class LCORedirectForm(GenericObservationForm):
                 <p>
                 This plugin will redirect you to the LCO global observation portal to
                 create an observation for this target.
-                You will be redirected back to the TOM once the observation is sumbmitted.
+                You will be redirected back to the TOM once the observation is submitted.
                 </p>
                 <a class="btn btn-outline-primary" href="{url}">
                     Continue to lco.global
