@@ -14,7 +14,7 @@ from django.core.management import call_command
 from django_filters import CharFilter, ChoiceFilter, DateTimeFromToRangeFilter, ModelMultipleChoiceFilter
 from django_filters import OrderingFilter, MultipleChoiceFilter, rest_framework
 from django_filters.views import FilterView
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic import View, TemplateView
@@ -419,6 +419,32 @@ class ObservationRecordCancelView(LoginRequiredMixin, View):
             messages.error(self.request, f'Unable to cancel observation: {ve}')
 
         return redirect(reverse('tom_observations:detail', kwargs={'pk': obsr.id}))
+
+
+class ObservationCallbackView(LoginRequiredMixin, View):
+    def get(self, request):
+        facility = request.GET.get('facility')
+        target_id = request.GET.get('target_id')
+        observation_id = request.GET.get('observation_id')
+        user = request.user
+        if not all([facility, target_id, observation_id]):
+            messages.error(self.request, 'Missing required parameters: facility, target_id, observation_id')
+            return redirect(reverse('tom_observations:list'))
+        target = get_object_or_404(Target, id=target_id)
+        observation, created = ObservationRecord.objects.get_or_create(
+            user=user,
+            facility=facility,
+            target=target,
+            observation_id=observation_id,
+            parameters=request.GET
+        )
+        assign_perm('tom_observations.view_observationrecord', user, observation)
+        assign_perm('tom_observations.change_observationrecord', user, observation)
+        assign_perm('tom_observations.delete_observationrecord', user, observation)
+        if not created:
+            messages.warning(self.request, "Observation record for this target and facility already exists.")
+
+        return redirect(reverse('tom_observations:detail', kwargs={'pk': observation.pk}))
 
 
 class AddExistingObservationView(LoginRequiredMixin, FormView):
