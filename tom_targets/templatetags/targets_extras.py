@@ -481,7 +481,7 @@ def get_buttons(context):
     Imports the target detail Button content from relevant apps into the template.
 
     Each target_button should be contained in a list of dictionaries in an app's apps.py `target_detail_buttons` method.
-    Each target_button dictionary should contain a 'partial' key with the path to the html partial template and 
+    Each target_button dictionary should contain a 'partial' key with the path to the html partial template and
     optionally a 'context' key with the path to the context processor class (typically a templatetag).
 
     FOR EXAMPLE:
@@ -507,7 +507,7 @@ def get_buttons(context):
                         continue
                     new_context = context_method(context)
                 target_buttons_to_display.append({'partial': button['partial'],
-                                               'context': new_context})
+                                                  'context': new_context})
     context['target_buttons_to_display'] = target_buttons_to_display
     return context
 

@@ -23,8 +23,8 @@ def navbar_app_addons(context, position='left'):
     """
     Imports the navbar content from appropriate apps
     Each nav_item should be contained in a list of dictionaries in an app's apps.py `nav_items` method.
-    Each nav_item dictionary should contain a 'partial' key with the path to the html partial template and 
-    optionally a 'context' key with the path to the context processor class (typically a templatetag). An optional 
+    Each nav_item dictionary should contain a 'partial' key with the path to the html partial template and
+    optionally a 'context' key with the path to the context processor class (typically a templatetag). An optional
     'position' key will add the partial to either the right or left side of the nav bar.
 
     FOR EXAMPLE:
