@@ -22,9 +22,15 @@ register = template.Library()
 def navbar_app_addons(context, position='left'):
     """
     Imports the navbar content from appropriate apps
-    This should be a list of partials containing an <li> element that you would like displayed in the navbar with the
-    following format:
-     `<li class="nav-item"> <a class="nav-link" href="{% url 'namespace:view_name' %}">Link Text</a> </li>`
+    Each nav_item should be contained in a list of dictionaries in an app's apps.py `nav_items` method.
+    Each nav_item dictionary should contain a 'partial' key with the path to the html partial template and
+    optionally a 'context' key with the path to the context processor class (typically a templatetag). An optional
+    'position' key will add the partial to either the right or left side of the nav bar.
+
+    FOR EXAMPLE:
+    [{'partial': 'path/to/partial.html',
+      'context': 'path/to/context/data/method',
+      'position: 'left'}]
     """
     nav_items_to_display = []
     for app in apps.get_app_configs():
