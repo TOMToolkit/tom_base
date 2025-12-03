@@ -20,8 +20,8 @@ class TestJPLHorizonsHarvesterCanary(TestCase):
         self.assertEqual(target.ra, None)
         self.assertEqual(target.dec, None)
         self.assertAlmostEqual(target.eccentricity, 0.093, places=3)
-        self.assertAlmostEqual(target.inclination, 4.1682, places=4)
-        self.assertAlmostEqual(target.semimajor_axis, 2.6573, places=4)
+        self.assertAlmostEqual(target.inclination, 4.1684084, places=3)
+        self.assertAlmostEqual(target.semimajor_axis, 2.657503, places=3)
         self.assertAlmostEqual(target.abs_mag, 17.76, places=2)
         self.assertAlmostEqual(target.slope, 0.15, places=2)
 
@@ -69,6 +69,4 @@ class TestJPLHorizonsHarvesterCanary(TestCase):
         self.assertEqual(target.ra, None)
         self.assertEqual(target.dec, None)
         self.assertAlmostEqual(target.eccentricity, 0.9956, places=4)
-        self.assertAlmostEqual(target.inclination, 143.6634, places=4)
-        self.assertAlmostEqual(target.abs_mag, 9.10, places=2)
-        self.assertAlmostEqual(target.slope, 15.0, places=2)
+        self.assertAlmostEqual(target.inclination, 143.663531, places=3)

@@ -35,6 +35,9 @@ ALLOWED_HOSTS = []
 
 TOM_NAME = '{{ PROJECT_NAME }}'
 
+# Use built-in css theme to change the look of your TOM. (Valid themes = [Dark,])
+# CSS_THEME = 'Dark'
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -265,6 +268,7 @@ TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
     'tom_observations.facilities.soar.SOARFacility',
+    'tom_observations.facilities.blanco.BLANCOFacility',
 ]
 
 TOM_ALERT_CLASSES = [

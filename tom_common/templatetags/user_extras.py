@@ -54,10 +54,10 @@ def include_app_user_lists(context):
             for app_users in user_lists:
                 try:
                     context_method = import_string(app_users['context'])
-                except ImportError:
+                except ImportError as e:
                     logger.warning(f'WARNING: Could not import context for {app.name} user list from '
                                    f'{app_users["context"]}.\n'
-                                   f'Are you sure you have the right path?')
+                                   f'{e}')
                     continue
                 new_context = context_method(context)
                 user_lists_to_display.append({'partial': app_users['partial'], 'context': new_context})
@@ -116,15 +116,4 @@ def show_app_profiles(context, user):
 
     context['user'] = user
     context['profiles_to_display'] = profiles_to_display
-    return context
-
-
-@register.inclusion_tag('tom_common/partials/include_app_partial.html', takes_context=True)
-def show_individual_app_partial(context, app_partial_data):
-    """
-    An Inclusion tag for setting the unique context for an app's partial.
-    """
-    for item in app_partial_data['context']:
-        context[item] = app_partial_data['context'][item]
-    context['app_partial'] = app_partial_data['partial']
     return context

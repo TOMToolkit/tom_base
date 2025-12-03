@@ -6,7 +6,7 @@ from astropy.io import fits
 from django.conf import settings
 from django.core.files import File
 from django.db import models
-from django.utils import timezone
+from django.utils import timezone, text
 from django.core.exceptions import ValidationError
 from fits2image.conversions import fits_to_jpg
 from PIL import Image
@@ -113,10 +113,13 @@ def data_product_path(instance, filename):
         return clazz(instance, filename)
     except AttributeError:
         # Uploads go to MEDIA_ROOT
+        # Slugify ensures strings are both FS and URL safe.
+        name = text.slugify(instance.target.name)
         if instance.observation_record is not None:
-            return f'{instance.target.name}/{instance.observation_record.facility}/{filename}'
+            facility = text.slugify(instance.observation_record.facility)
+            return f'{name}/{facility}/{filename}'
         else:
-            return f'{instance.target.name}/none/{filename}'
+            return f'{name}/none/{filename}'
 
 
 class DataProductGroup(models.Model):
