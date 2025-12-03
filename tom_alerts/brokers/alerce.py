@@ -473,7 +473,7 @@ class ALeRCEBroker(GenericBroker):
         elif parameters['lc_classifier_bhrf_top']:
             class_type = 'lc_classifier_BHRF_forced_phot_top'
         elif parameters['lc_classifier_atat']:
-            class_type = ' LC_classifier_ATAT_forced_phot(beta)'
+            class_type = 'LC_classifier_ATAT_forced_phot(beta)'
 
         if class_type:
             classifier_parameters.append(('classifier', class_type))
