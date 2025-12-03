@@ -278,10 +278,10 @@ class ALeRCEQueryForm(GenericQueryForm):
 
         for classifier in all_classifiers:
             if classifier['classifier_name'] == 'lc_classifier':
-                    new_version = classifier['classifier_version'].split('_')[-1]
-                    if new_version > version:
-                        light_curve_classifiers = [(c, c) for c in classifier['classes']]
-                        current_version = new_version
+                new_version = classifier['classifier_version'].split('_')[-1]
+                if new_version > version:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
+                    current_version = new_version
 
         if current_version == version:
             for classifier in all_classifiers:
@@ -302,11 +302,11 @@ class ALeRCEQueryForm(GenericQueryForm):
 
         for classifier in all_classifiers:
             if classifier['classifier_name'] == 'lc_classifier_top':
-                    new_version = classifier['classifier_version'].split('_')[-1]
-                    if new_version > version:
-                        light_curve_classifiers = [(c, c) for c in classifier['classes']]
-                    else:
-                        light_curve_classifiers = [(c, c) for c in classifier['classes']]
+                new_version = classifier['classifier_version'].split('_')[-1]
+                if new_version > version:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
+                else:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
 
         return [(None, '')] + light_curve_classifiers
 
@@ -321,10 +321,10 @@ class ALeRCEQueryForm(GenericQueryForm):
 
         for classifier in all_classifiers:
             if classifier['classifier_name'] == 'lc_classifier_BHRF_forced_phot':
-                    new_version = classifier['classifier_version'].split('_')[-1]
-                    if new_version > version:
-                        light_curve_classifiers = [(c, c) for c in classifier['classes']]
-                        current_version = new_version
+                new_version = classifier['classifier_version'].split('_')[-1]
+                if new_version > version:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
+                    current_version = new_version
 
         if current_version == version:
             for classifier in all_classifiers:
@@ -345,11 +345,11 @@ class ALeRCEQueryForm(GenericQueryForm):
 
         for classifier in all_classifiers:
             if classifier['classifier_name'] == 'lc_classifier_BHRF_forced_phot_top':
-                    new_version = classifier['classifier_version'].split('_')[-1]
-                    if new_version > version:
-                        light_curve_classifiers = [(c, c) for c in classifier['classes']]
-                    else:
-                        light_curve_classifiers = [(c, c) for c in classifier['classes']]
+                new_version = classifier['classifier_version'].split('_')[-1]
+                if new_version > version:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
+                else:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
 
         return [(None, '')] + light_curve_classifiers
 
