@@ -2,6 +2,7 @@ import logging
 import urllib.parse
 
 from crispy_forms.layout import HTML, Layout
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
@@ -24,7 +25,8 @@ class LCORedirectForm(GenericObservationForm):
             reverse("tom_observations:callback")
         ) + f"?target_id={target.pk}&facility=LCO"
         redirect_uri = urllib.parse.quote_plus(redirect_uri)
-        url = f"https://observe.lco.global/create?{query_params}&redirect_uri={redirect_uri}"
+        portal_uri = self.observation_portal_uri()
+        url = f"{portal_uri}/create?{query_params}&redirect_uri={redirect_uri}"
         self.helper.layout = Layout(
             HTML(f'''
                 <p>
@@ -43,6 +45,9 @@ class LCORedirectForm(GenericObservationForm):
     def target_to_query_params(self, target) -> str:
         set_fields = {"target_" + k: v for k, v in target.as_dict().items() if v is not None}
         return urllib.parse.urlencode(set_fields)
+
+    def observation_portal_uri(self) -> str:
+        return settings.FACILITIES.get('LCO', {}).get('portal_url', 'https://observe.lco.global')
 
 
 class LCORedirectFacility(GenericObservationFacility):
