@@ -3,10 +3,17 @@ Adding a Data Service Module for the TOM Toolkit
 
 This guide is to walk you step by step through the process of creating a Data Service.
 This assumes that you want a user interface for querying your data service via a form.
-Many of these steps can be skipped if your service wis only intended to be accessed internally.
+Many of these steps can be skipped if your service is only intended to be accessed internally.
 
 Setting up the Basic Data Service:
 **********************************
+
+First we will build the bare bones of our data service. This is the bare minimum to get the service to show up in the 
+TOM. We'll start with three peices of code:
+
+First the actual query class:
++++++++++++++++++++++++++++++
+
 
 .. code-block:: python
     :caption: my_dataservice.py
@@ -45,7 +52,7 @@ Setting up the Basic Data Service:
 
 
 Your Data Service needs a form:
-*******************************
++++++++++++++++++++++++++++++++
 
 .. code-block:: python
     :caption: forms.py
@@ -61,7 +68,7 @@ Your Data Service needs a form:
 
 
 Adding the integration point:
-*****************************
++++++++++++++++++++++++++++++
 
 .. code-block:: python
     :caption: apps.py
@@ -80,3 +87,8 @@ Adding the integration point:
         This method should return a list of dictionaries containing dot separated DataService classes
         """
         return [{'class': f'{self.name}.my_dataservice.MyDataService'}]
+
+
+Customizing your Data Service:
+******************************
+
