@@ -92,7 +92,8 @@ Adding the integration point:
 Customizing your Data Service:
 ******************************
 
-The next step is to update our code to have all specific features relevent for our data service.
+The next step is to update our code to have all specific features relevent for our data service. Here we will focus on
+extending several methods of `BaseDataService` to be relevent for your data service.
 
 
 `BaseDataService.build_query_parameters`
@@ -167,11 +168,16 @@ will be extracting Target data from the query results and creating a dictionary.
             This code calls `query_dataservice` and returns a dictionary of results.
             This call and the results should be tailroed towards describing targets.
             """
-            quey_results = super().query_targets(data)
+            query_results = super().query_targets(data)
             results = []
-            for result in quey_results:
+            for result in query_results:
                 result['name'] = f"MyService:{result['ra']},{result['dec']}"
                 results.append(result)
             return results
 
 In this example, we create or modify the name of a query result so we will have something to enter into the TOM.
+Line 6 calls the super which will either retrieve `self.query_results` if it exists or run `query_service`. 
+The final output should be a dictionary of results.
+
+`BaseDataService.to_target`
++++++++++++++++++++++++++++
