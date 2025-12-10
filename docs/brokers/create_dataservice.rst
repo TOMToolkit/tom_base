@@ -92,3 +92,86 @@ Adding the integration point:
 Customizing your Data Service:
 ******************************
 
+The next step is to update our code to have all specific features relevent for our data service.
+
+
+`BaseDataService.build_query_parameters`
+++++++++++++++++++++++++++++++++++++++++
+
+For starters, let's make our `build_query_parameters` function inside of `MyDataService` actually do something.
+This code is to convert all of the form fields into a data dictionary or set of query parameters that is understood by
+the data service (or more specifically our `query_service` method.)
+
+.. code-block:: python
+    :caption: my_dataservice.MyDataService
+    :linenos:
+
+    def build_query_parameters(self, parameters, **kwargs):
+        """
+        Use this function to convert the form results into the query parameters understood
+        by the Data Service.
+        """
+        data = {
+            'example_field': parameters.get('first_field')
+        }
+
+        self.query_parameters = data
+        return data
+
+In some cases, this can be very straightforward, while in others this can involve complex constructions of query
+commands. Ultimately this is based on the API or client of your Data Service, and how you chose to name your form 
+fields.
+
+`BaseDataService.query_service`
++++++++++++++++++++++++++++++++
+
+Next we will need to fill out our `query_service` module. This is the function that actualy goes and calls the query
+service using the parameters created by `build_query_parameters`. This function produces query results that can then be
+interpreted by `query_targets`, `query_photometry`, or other functions to produce specific kinds of results that can be 
+interpreted by your TOM.
+
+.. code-block:: python
+    :caption: my_dataservice.MyDataService
+    :linenos:
+
+    def query_service(self, data, **kwargs):
+            """
+            This is where you actually make the call to the Data Service. 
+            Return the results.
+            """
+            if self.get_urls(url_type='search'):
+                results = requests.post(self.get_urls(url_type='search'), data, headers=self.build_headers())
+            else:
+                results = data_service_client.search(data)
+            self.query_results = results
+            return self.query_results
+
+Again, depending on the nature of your data service, the `query_service` function could take many different forms. 
+This may also require you to create a `build_headers` method, or make use of the `urls`, `get_configuration`, or 
+`get_credentials`methods. Saving the results to `self.query_results` could save time in other methods by not requireing 
+you to redo the query.
+
+`BaseDataService.query_target`
+++++++++++++++++++++++++++++++
+
+We will just use `query_target` as an example. The same ideas apply to any of the individual query functions.
+This is the function that pulls useful data from the query results in a way that the TOM understands. In this case, we 
+will be extracting Target data from the query results and creating a dictionary.
+
+.. code-block:: python
+    :caption: my_dataservice.MyDataService
+    :linenos:
+
+    def query_target(self, data, **kwargs):
+            """
+            This code calls `query_dataservice` and returns a dictionary of results.
+            This call and the results should be tailroed towards describing targets.
+            """
+            quey_results = super().query_targets(data)
+            results = []
+            for result in quey_results:
+                result['name'] = f"MyService:{result['ra']},{result['dec']}"
+                results.append(result)
+            return results
+
+In this example, we create or modify the name of a query result so we will have something to enter into the TOM.

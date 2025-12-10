@@ -183,25 +183,35 @@ class BaseDataService(ABC):
         """Returns a path to a full or advanced partial form that can be used to access the DataService."""
         return None
 
-    def query_forced_photometry(self, query_parameters):
+    def query_forced_photometry(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s forced photometry service."""
-        return self.query_service(query_parameters)
+        if self.query_results:
+            return self.query_results
+        return self.query_service(query_parameters, **kwargs)
 
-    def query_photometry(self, query_parameters):
+    def query_photometry(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s photometry service."""
-        return self.query_service(query_parameters)
+        if self.query_results:
+            return self.query_results
+        return self.query_service(query_parameters, **kwargs)
 
-    def query_spectroscopy(self, query_parameters):
+    def query_spectroscopy(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s spectroscopy service."""
-        return self.query_service(query_parameters)
+        if self.query_results:
+            return self.query_results
+        return self.query_service(query_parameters, **kwargs)
 
-    def query_aliases(self, query_parameters):
+    def query_aliases(self, query_parameters, **kwargs):
         """Set up and run a specialized query for retrieving alternate names from a DataService."""
-        return self.query_service(query_parameters)
+        if self.query_results:
+            return self.query_results
+        return self.query_service(query_parameters, **kwargs)
 
-    def query_targets(self, query_parameters):
+    def query_targets(self, query_parameters, **kwargs):
         """Set up and run a specialized query for retrieving targets from a DataService."""
-        return self.query_service(query_parameters)
+        if self.query_results:
+            return self.query_results
+        return self.query_service(query_parameters, **kwargs)
 
     def to_data_product(self, query_results=None, **kwargs):
         """

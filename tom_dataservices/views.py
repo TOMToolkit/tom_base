@@ -238,7 +238,7 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         module for which the query is being updated.
         """
         self.object = self.get_object()
-        return get_data_service_class(self.object.data_service).get_form_class(self)
+        return get_data_service_class(self.object.data_service).get_form_class()
 
     def get_form(self, form_class=None):
         """
