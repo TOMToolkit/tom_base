@@ -225,7 +225,8 @@ class OCSBaseForm(forms.Form):
                 cached_instruments = {k: v for k, v in response.json().items()}
             except ImproperCredentialsException:
                 cached_instruments = self.facility_settings.default_instrument_config
-            cache.set(f'{self.facility_settings.facility_name}_instruments', cached_instruments, 3600)
+            if not cached_instruments.get('No Instrument Found'):
+                cache.set(f'{self.facility_settings.facility_name}_instruments', cached_instruments, 3600)
         return cached_instruments
 
     def get_instruments(self):
