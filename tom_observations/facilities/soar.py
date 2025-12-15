@@ -238,6 +238,17 @@ class SOARFacility(LCOFacility):
 
     Please note that SOAR is only available in AEON-mode. It also uses the LCO API key, so to use this module, the
     LCO dictionary in FACILITIES in `settings.py` will need to be completed.
+
+    .. code-block:: python
+        :caption: settings.py
+
+        FACILITIES = {
+            'SOAR': {
+                'portal_url': 'https://observe.lco.global',
+                'api_key': os.getenv('LCO_API_KEY'),
+            },
+        }
+
     """
     name = 'SOAR'
     observation_forms = {
