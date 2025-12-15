@@ -1102,8 +1102,8 @@ class LCOSpectroscopicSequenceForm(LCOOldStyleObservationForm):
 class LCOFacility(OCSFacility):
     """
     The ``LCOFacility`` is the interface to the Las Cumbres Observatory Observation Portal. For information regarding
-    LCO observing and the available parameters, please see the 
-    `LCO Documentation <https://lco.global/documentation/>` __.
+    LCO observing and the available parameters, please see the
+    `LCO Documentation <https://lco.global/documentation/>`__ .
     To use this facility you will need to update the `FACILITIES` in your ``settings.py`` with a `portal_url` and an
     `api_key`.
 
