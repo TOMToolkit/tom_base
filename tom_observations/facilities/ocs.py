@@ -223,9 +223,9 @@ class OCSBaseForm(forms.Form):
                     headers={'Authorization': 'Token {0}'.format(self.facility_settings.get_setting('api_key'))}
                 )
                 cached_instruments = {k: v for k, v in response.json().items()}
-                cache.set(f'{self.facility_settings.facility_name}_instruments', cached_instruments, 3600)
             except ImproperCredentialsException:
                 cached_instruments = self.facility_settings.default_instrument_config
+            cache.set(f'{self.facility_settings.facility_name}_instruments', cached_instruments, 60)
         return cached_instruments
 
     def get_instruments(self):
