@@ -169,15 +169,17 @@ will be extracting Target data from the query results and creating a dictionary.
             This call and the results should be tailroed towards describing targets.
             """
             query_results = super().query_targets(data)
-            results = []
+            targets = []
             for result in query_results:
                 result['name'] = f"MyService:{result['ra']},{result['dec']}"
-                results.append(result)
-            return results
+                targets.append(result)
+            return targets
 
 In this example, we create or modify the name of a query result so we will have something to enter into the TOM.
 Line 6 calls the super which will either retrieve `self.query_results` if it exists or run `query_service`. 
 The final output should be a dictionary of results.
 
-`BaseDataService.to_target`
-+++++++++++++++++++++++++++
+`BaseDataService.create_target_from_query`
+++++++++++++++++++++++++++++++++++++++++++
+
+

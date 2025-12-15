@@ -84,8 +84,8 @@ class BaseDataService(ABC):
 
     def __init__(self, query_parameters=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Instance variable that can store query results if necessary
-        self.query_results = {}
+        # Instance variable that can store target query results if necessary
+        self.target_results = {}
         # Instance variable that can store query parameters if necessary
         self.query_parameters = query_parameters or {}
 
@@ -185,32 +185,22 @@ class BaseDataService(ABC):
 
     def query_forced_photometry(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s forced photometry service."""
-        if self.query_results:
-            return self.query_results
         return self.query_service(query_parameters, **kwargs)
 
     def query_photometry(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s photometry service."""
-        if self.query_results:
-            return self.query_results
         return self.query_service(query_parameters, **kwargs)
 
     def query_spectroscopy(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s spectroscopy service."""
-        if self.query_results:
-            return self.query_results
         return self.query_service(query_parameters, **kwargs)
 
     def query_aliases(self, query_parameters, **kwargs):
         """Set up and run a specialized query for retrieving alternate names from a DataService."""
-        if self.query_results:
-            return self.query_results
         return self.query_service(query_parameters, **kwargs)
 
     def query_targets(self, query_parameters, **kwargs):
         """Set up and run a specialized query for retrieving targets from a DataService."""
-        if self.query_results:
-            return self.query_results
         return self.query_service(query_parameters, **kwargs)
 
     def to_data_product(self, query_results=None, **kwargs):
