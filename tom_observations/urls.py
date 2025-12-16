@@ -5,7 +5,7 @@ from tom_observations.views import (AddExistingObservationView, FacilityStatusVi
                                     ObservationGroupListView, ObservationListView, ObservationRecordCancelView,
                                     ObservationRecordDetailView, ObservationTemplateCreateView,
                                     ObservationTemplateDeleteView, ObservationTemplateListView,
-                                    ObservationTemplateUpdateView)
+                                    ObservationTemplateUpdateView, ObservationCallbackView)
 from tom_observations.api_views import ObservationRecordViewSet
 from tom_common.api_router import SharedAPIRootRouter
 
@@ -31,4 +31,5 @@ urlpatterns = [
     path('<int:pk>/cancel/', ObservationRecordCancelView.as_view(), name='cancel'),
     path('<int:pk>/update/', ObservationRecordUpdateView.as_view(), name='update'),
     path('<int:pk>/', ObservationRecordDetailView.as_view(), name='detail'),
+    path('callback/', ObservationCallbackView.as_view(), name='callback'),
 ]
