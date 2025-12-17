@@ -182,4 +182,25 @@ The final output should be a dictionary of results.
 `BaseDataService.create_target_from_query`
 ++++++++++++++++++++++++++++++++++++++++++
 
+Continuing with our `target` example, we need to be able to `create_target_from_query` in order to actually save the
+target object resulting from a succesful result for `query_target` above. This function expects a single instance with
+the same format as the list of dictionaries created by `query_targets` and converts that dictionary into a Target Object
+returning that object.
 
+.. code-block:: python
+    :caption: my_dataservice.MyDataService
+    :linenos:
+
+    def create_target_from_query(self, target_result, **kwargs):
+            """Create a new target from the query results
+            :returns: target object
+            :rtype: `Target`
+            """
+
+            target = Target(
+                name=target_result['name'],
+                type='SIDEREAL',
+                ra=target_result['ra'],
+                dec=target_result['dec']
+            )
+            return target

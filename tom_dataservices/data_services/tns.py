@@ -185,31 +185,25 @@ class TNSDataService(BaseDataService):
             target_parameters = self.build_query_parameters(result)
             target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
             targets.append(target_data)
+        self.target_results = targets
         return targets
 
     @classmethod
     def get_form_class(cls):
         return TNSForm
 
-    def create_target_from_query(self, query_results, **kwargs):
+    def create_target_from_query(self, target_results, **kwargs):
         """
-            Returns a Target instance for an object defined by a query result, as well as
-            any TargetExtra or additional TargetNames.
+            Returns a Target instance for an object defined by a query result, 
 
             :returns: target object
             :rtype: `Target`
-
-            :returns: dict of extras to be added to the new Target
-            :rtype: `dict`
-
-            :returns: list of aliases to be added to the new Target
-            :rtype: `list`
         """
 
         target = Target(
-            name=query_results['name_prefix'] + query_results['objname'],
+            name=target_results['name_prefix'] + target_results['objname'],
             type='SIDEREAL',
-            ra=query_results['radeg'],
-            dec=query_results['decdeg']
+            ra=target_results['radeg'],
+            dec=target_results['decdeg']
         )
         return target

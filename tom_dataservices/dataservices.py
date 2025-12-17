@@ -86,6 +86,8 @@ class BaseDataService(ABC):
         super().__init__(*args, **kwargs)
         # Instance variable that can store target query results if necessary
         self.target_results = {}
+        # Instance variable that can store query results if necessary
+        self.query_results = {}
         # Instance variable that can store query parameters if necessary
         self.query_parameters = query_parameters or {}
 
@@ -238,14 +240,14 @@ class BaseDataService(ABC):
         """Create a new reduced_datum of the appropriate type from the query results"""
         raise NotImplementedError
 
-    def to_target(self, query_results=None, **kwargs):
+    def to_target(self, target_results=None, **kwargs):
         """
         Upper level function to create a new target from the query results
         Can take either new query results, or use stored results form a recent `query_service()`
         :param query_results: Query results from the DataService
         :returns: Target object, dictionary of target_extras, and list of aliases
         """
-        target_parameters = query_results or self.query_results
+        target_parameters = target_results or self.target_results
         if not target_parameters:
             raise MissingDataException('No query results. Did you call query_service()?')
         else:
@@ -254,8 +256,9 @@ class BaseDataService(ABC):
             aliases = self.create_aliases_from_query(target_parameters, **kwargs)
             return target, extras, aliases
 
-    def create_target_from_query(self, query_results, **kwargs):
-        """Create a new target from the query results
+    def create_target_from_query(self, target_result, **kwargs):
+        """Create a new target from a single instance of the target results.
+        :param target_result: dictionary describing target details based on query result
         :returns: target object
         :rtype: `Target`
         """
