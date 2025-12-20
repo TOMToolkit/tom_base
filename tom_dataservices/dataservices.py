@@ -86,6 +86,8 @@ class BaseDataService(ABC):
         super().__init__(*args, **kwargs)
         # Instance variable that can store target query results if necessary
         self.target_results = {}
+        # Instance variable that can store photometry query results if necessary
+        self.photometry_results = {}
         # Instance variable that can store query results if necessary
         self.query_results = {}
         # Instance variable that can store query parameters if necessary
@@ -130,12 +132,12 @@ class BaseDataService(ABC):
     @classmethod
     def get_configuration(cls, config_type=None, value=None, **kwargs):
         """
-        Syntax: get_configuration([config_type], [value])
-        Parameters:
-            config_type: The type of configuration to return. If None, returns all configurations.
-            value: The default value to return if configuration not found.
-        Returns:
-            A list of available configurations, or a requested configuration, or if not found the default value.
+        Get all of the configuration or specific configuration values associated with this dataservice.
+
+        :Syntax: get_configuration([config_type], [value])
+        :param config_type: The type of configuration to return. If None, returns all configurations.
+        :param value: The default value to return if configuration not found.
+        :return: A list of available configurations, or a requested configuration, or if not found, the default value.
         """
         data_service_config = cls.configuration()
         if config_type:
@@ -155,12 +157,12 @@ class BaseDataService(ABC):
     @classmethod
     def get_urls(cls, url_type=None, value=None, **kwargs):
         """
-        Syntax: get_urls([url_type], [value])
-        Parameters:
-            url_type: The type of URL to return. If None, returns all available url types.
-            value: The default value to return if the requested url is not found.
-        Returns:
-            A list of available uls, or a requested url, or if not found, the default value.
+        Get all urls or a specific url associated with the dataservice.
+
+        :Syntax: get_urls([url_type], [value])
+        :param url_type: The type of URL to return. If None, returns all available url types.
+        :param value: The default value to return if the requested url is not found.
+        :return: A list of available uls, or a requested url, or if not found, the default value.
         """
         urls = cls.urls()
         if url_type:
@@ -222,7 +224,7 @@ class BaseDataService(ABC):
         """Create a new DataProduct from the query results"""
         raise NotImplementedError
 
-    def to_reduced_datums(self, target, query_results=None, **kwargs):
+    def to_reduced_datums(self, target, photometry_results=None, **kwargs):
         """
         Upper level function to create a new ReducedDatum from the query results
         Can take either new query results, or use stored results form a recent `query_service()`
@@ -230,14 +232,15 @@ class BaseDataService(ABC):
         :param query_results: Query results from the DataService
         :returns: ReducedDatum object
         """
-        query_results = query_results or self.query_results
-        if not query_results:
-            raise MissingDataException('No query results. Did you call query_service()?')
-        else:
-            return self.create_reduced_datums_from_query(target, query_results, **kwargs)
+        photometry_results = photometry_results or self.photometry_results
+        # TODO add other reduced Datums
+        phot_for_target = photometry_results.get(target.name)
+        self.create_reduced_datums_from_query(target, phot_for_target, 'photometry', **kwargs)
 
-    def create_reduced_datums_from_query(self, target, query_results=None, **kwargs):
-        """Create a new reduced_datum of the appropriate type from the query results"""
+        return
+
+    def create_reduced_datums_from_query(self, target, data=None, data_type=None, **kwargs):
+        """Create and save new reduced_datums of the appropriate data_type from the query results"""
         raise NotImplementedError
 
     def to_target(self, target_results=None, **kwargs):
