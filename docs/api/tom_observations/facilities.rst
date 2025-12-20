@@ -31,3 +31,10 @@ SOAR
 
 .. automodule:: tom_observations.facilities.soar
     :members:
+
+******
+Blanco
+******
+
+.. automodule:: tom_observations.facilities.blanco
+    :members:
