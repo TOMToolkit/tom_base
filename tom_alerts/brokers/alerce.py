@@ -462,17 +462,17 @@ class ALeRCEBroker(GenericBroker):
 
         if parameters['stamp_classifier']:
             class_type = 'stamp_classifier'
-        elif parameters['stamp_classifier_beta']:
+        elif parameters.get('stamp_classifier_beta'):
             class_type = 'stamp_classifier_2025_beta'
         elif parameters['lc_classifier']:
             class_type = 'lc_classifier'
-        elif parameters['lc_classifier_top']:
+        elif parameters.get('lc_classifier_top'):
             class_type = 'lc_classifier_top'
-        elif parameters['lc_classifier_bhrf']:
+        elif parameters.get('lc_classifier_bhrf'):
             class_type = 'lc_classifier_BHRF_forced_phot'
-        elif parameters['lc_classifier_bhrf_top']:
+        elif parameters.get('lc_classifier_bhrf_top'):
             class_type = 'lc_classifier_BHRF_forced_phot_top'
-        elif parameters['lc_classifier_atat']:
+        elif parameters.get('lc_classifier_atat'):
             class_type = 'LC_classifier_ATAT_forced_phot(beta)'
 
         if class_type:
