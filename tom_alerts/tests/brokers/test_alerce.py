@@ -167,9 +167,9 @@ class TestALeRCEBrokerForm(TestCase):
         lc_classifiers = ALeRCEQueryForm._get_light_curve_classifier_choices()
         expected_classifiers = [
             (None, ''),
-            ('SNIa', 'SNIa - transient'),
-            ('QSO', 'QSO - stochastic'),
-            ('LPV', 'LPV - periodic')
+            ('SNIa', 'Transient - SNIa'),
+            ('QSO', 'Stochastic - QSO'),
+            ('LPV', 'Periodic - LPV')
         ]
         for classifier in expected_classifiers:
             self.assertIn(classifier, lc_classifiers)
@@ -226,17 +226,43 @@ class TestALeRCEBrokerClass(TestCase):
 
         # Test that classifiers are populated correctly
         parameters_list = [
-            ({'stamp_classifier': None, 'p_stamp_classifier': None, 'lc_classifier': None, 'p_lc_classifier': None},
+            ({'stamp_classifier': None, 'p_stamp_classifier': None,
+              'stamp_classifier_beta': None, 'p_stamp_classifier_beta': None,
+              'lc_classifier': None, 'p_lc_classifier': None,
+              'lc_classifier_top': None, 'p_lc_classifier_top': None,
+              'lc_classifier_bhrf': None, 'p_lc_classifier_bhrf': None,
+              'lc_classifier_atat': None, 'p_lc_classifier_atat': None},
              []),
-            ({'stamp_classifier': 'SN', 'p_stamp_classifier': None, 'lc_classifier': None, 'p_lc_classifier': None},
+            ({'stamp_classifier': 'SN', 'p_stamp_classifier': None,
+              'stamp_classifier_beta': None, 'p_stamp_classifier_beta': None,
+              'lc_classifier': None, 'p_lc_classifier': None,
+              'lc_classifier_top': None, 'p_lc_classifier_top': None,
+              'lc_classifier_bhrf': None, 'p_lc_classifier_bhrf': None,
+              'lc_classifier_atat': None, 'p_lc_classifier_atat': None},
              [('classifier', 'stamp_classifier'), ('class', 'SN')]),
-            ({'stamp_classifier': 'SN', 'p_stamp_classifier': 0.5, 'lc_classifier': None, 'p_lc_classifier': None},
+            ({'stamp_classifier': 'SN', 'p_stamp_classifier': 0.5,
+              'stamp_classifier_beta': None, 'p_stamp_classifier_beta': None,
+              'lc_classifier': None, 'p_lc_classifier': None,
+              'lc_classifier_top': None, 'p_lc_classifier_top': None,
+              'lc_classifier_bhrf': None, 'p_lc_classifier_bhrf': None,
+              'lc_classifier_atat': None, 'p_lc_classifier_atat': None},
              [('classifier', 'stamp_classifier'), ('class', 'SN'), ('probability', 0.5)]),
-            ({'stamp_classifier': None, 'p_stamp_classifier': None, 'lc_classifier': 'SNIa', 'p_lc_classifier': None},
+            ({'stamp_classifier': None, 'p_stamp_classifier': None,
+              'stamp_classifier_beta': None, 'p_stamp_classifier_beta': None,
+              'lc_classifier': 'SNIa', 'p_lc_classifier': None,
+              'lc_classifier_top': None, 'p_lc_classifier_top': None,
+              'lc_classifier_bhrf': None, 'p_lc_classifier_bhrf': None,
+              'lc_classifier_atat': None, 'p_lc_classifier_atat': None},
              [('classifier', 'lc_classifier'), ('class', 'SNIa')]),
-            ({'stamp_classifier': None, 'p_stamp_classifier': None, 'lc_classifier': 'SNIa', 'p_lc_classifier': 0.5},
+            ({'stamp_classifier': None, 'p_stamp_classifier': None,
+              'stamp_classifier_beta': None, 'p_stamp_classifier_beta': None,
+              'lc_classifier': 'SNIa', 'p_lc_classifier': 0.5,
+              'lc_classifier_top': None, 'p_lc_classifier_top': None,
+              'lc_classifier_bhrf': None, 'p_lc_classifier_bhrf': None,
+              'lc_classifier_atat': None, 'p_lc_classifier_atat': None},
              [('classifier', 'lc_classifier'), ('class', 'SNIa'), ('probability', 0.5)]),
         ]
+
         for parameters, expected_list in parameters_list:
             with self.subTest():
                 for expected in expected_list:
@@ -458,16 +484,16 @@ class TestALeRCEModuleCanary(TestCase):
     #         ({'stamp_classifier': 'SN', 'p_stamp_classifier': 0.5},
     #          {'class': 'SN', 'classifier': 'stamp_classifier', 'probability': 0.5})
     #     ]
-
+    #
     #     for parameters, expected in parameters_list:
     #         with self.subTest():
     #             parameters.update(self.base_form_parameters)
     #             form = ALeRCEQueryForm(parameters)
     #             form.is_valid()
     #             query = form.save()
-
+    #
     #             alerts = [alert for alert in self.broker.fetch_alerts(query.parameters)]
-
+    #
     #             self.assertGreaterEqual(len(alerts), 1)
     #             for alert in alerts:
     #                 self.assertEqual(alert['class'], expected['class'])
