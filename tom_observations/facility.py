@@ -228,7 +228,6 @@ class BaseObservationFacility(ABC):
     def set_user(self, user):
         self.user = user
 
-
     def _is_credential_empty(self, credential):
         """
         Check if a credential is empty (None, empty string, or whitespace only).
@@ -337,20 +336,20 @@ class BaseObservationFacility(ABC):
     def get_form(self, observation_type):
         """
         This method takes in an observation type and returns the form type that matches it.
-        
+
         Note: This method returns form classes, not instances, to support composite form creation
         in ObservationCreateView. Use create_form_instance() for direct form instantiation.
         """
-    
+
     def create_form_instance(self, observation_type, **kwargs):
         """
         Create a form instance with facility context injected.
-        
+
         The ObservationCreateView handles setting the user context on the facility instance
         via set_user() in its dispatch() method. Forms receive the facility instance and
         can query it for user-specific data (credentials, API clients, etc.) rather than
         handling business logic themselves.
-        
+
         :param observation_type: The type of observation form to create
         :param kwargs: Additional keyword arguments for form instantiation
         :return: Form instance configured for the observation type
