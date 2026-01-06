@@ -1,10 +1,13 @@
 import requests
 
 from django import forms
+from crispy_forms.bootstrap import Tab, Alert
 from crispy_forms.layout import Div
+from django.forms.widgets import HiddenInput
 
 from tom_observations.facilities.lco import LCOFacility, LCOSettings, SpectralInstrumentConfigLayout
 from tom_observations.facilities.lco import LCOImagingObservationForm, LCOSpectroscopyObservationForm
+from tom_observations.facilities.lco import SpectralConfigurationLayout
 from tom_common.exceptions import ImproperCredentialsException
 
 
@@ -103,6 +106,95 @@ class SOARSpectroscopyObservationForm(LCOSpectroscopyObservationForm):
         return SoarSpectralInstrumentConfigLayout
 
 
+class SOARSimpleGoodmanSpectroscopyObservationForm(SOARSpectroscopyObservationForm):
+    def __init__(self, *args, **kwargs):
+        if 'facility_settings' not in kwargs:
+            kwargs['facility_settings'] = SOARSettings("SOAR")
+        super().__init__(*args, **kwargs)
+        # Set default values for Arcs/Flats
+        self.fields['c_2_configuration_type'].initial = "ARC"
+        self.fields['c_2_ic_1_exposure_time'].initial = 0.5
+        self.fields['c_2_target_override'].widget = HiddenInput()
+        self.fields['c_3_configuration_type'].initial = "LAMP_FLAT"
+        self.fields['c_3_ic_1_exposure_time'].initial = 0.5
+        self.fields['c_3_target_override'].widget = HiddenInput()
+        for j in range(2, 4):
+            for i in range(self.facility_settings.get_setting('max_instrument_configs')):
+                self.fields[f'c_{j}_ic_{i+1}_readout_mode'].widget = HiddenInput()
+                self.fields[f'c_{j}_ic_{i+1}_exposure_time'].help_text = "Exposure time is hard-coded, " \
+                                                                         "and the value is ignored for Flats/Arcs. " \
+                                                                         "Any value will cause the calibration to be " \
+                                                                         "scheduled."
+
+    def form_name(self):
+        if 'BLUE' in self.initial.get('observation_type', ''):
+            return 'BlueCam'
+        return 'RedCam'
+
+    def get_instruments(self):
+        instruments = super()._get_instruments()
+        return {
+            code: instrument for (code, instrument) in instruments.items() if ('SPECTRA' == instrument['type'] and
+                                                                               'SOAR' in code and
+                                                                               self.form_name() in instrument['name'])
+        }
+
+    def _build_instrument_configs(self, instrument_type, configuration_id):
+        ics = super()._build_instrument_configs(instrument_type, configuration_id)
+        # Overwrite the Lamp/Arc readout mode to be the same mode as the initial spectrum
+        if configuration_id != 1:
+            for j, ic in enumerate(ics):
+                ic['mode'] = self._build_instrument_config(instrument_type, 1, j + 1)['mode']
+        return ics
+
+    def configuration_layout_class(self):
+        return SOARSimpleConfigurationLayout
+
+
+class SOARSimpleConfigurationLayout(SpectralConfigurationLayout):
+    def _get_config_tabs(self, oe_groups, num_tabs):
+        tabs = [Tab('Spectrum',
+                    *self._get_config_layout(1, oe_groups),
+                    css_id=f'{self.form_name}_config_{1}'
+                    ),
+                Tab('Arc',
+                    *self._get_config_layout(2, oe_groups),
+                    css_id=f'{self.form_name}_config_{2}'
+                    ),
+                Tab('Lamp Flat',
+                    *self._get_config_layout(3, oe_groups),
+                    css_id=f'{self.form_name}_config_{3}'
+                    )
+                ]
+
+        return tuple(tabs)
+
+    def _get_basic_config_layout(self, instance):
+        return (
+            Alert(
+                content="""Make sure the instrument and readout match the current load-out for SOAR.
+                                    """,
+                css_class='alert-warning'
+            ),
+            Alert(
+                content="""An Arc and a Lamp FLat will be automatically generated for this observation.
+                                    """,
+                css_class='alert-success'
+            ),
+            Div(
+                Div(
+                    f'c_{instance}_instrument_type',
+                    css_class='col'
+                ),
+                Div(
+                    f'c_{instance}_configuration_type',
+                    css_class='col'
+                ),
+                css_class='form-row'
+            ),
+        )
+
+
 class SoarSpectralInstrumentConfigLayout(SpectralInstrumentConfigLayout):
     def _get_ic_layout(self, config_instance, instance, oe_groups):
         return (
@@ -146,11 +238,24 @@ class SOARFacility(LCOFacility):
 
     Please note that SOAR is only available in AEON-mode. It also uses the LCO API key, so to use this module, the
     LCO dictionary in FACILITIES in `settings.py` will need to be completed.
+
+    .. code-block:: python
+        :caption: settings.py
+
+        FACILITIES = {
+            'SOAR': {
+                'portal_url': 'https://observe.lco.global',
+                'api_key': os.getenv('LCO_API_KEY'),
+            },
+        }
+
     """
     name = 'SOAR'
     observation_forms = {
         'IMAGING': SOARImagingObservationForm,
-        'SPECTRA': SOARSpectroscopyObservationForm
+        'Goodman_BLUE_Spectra': SOARSimpleGoodmanSpectroscopyObservationForm,
+        'Goodman_RED_Spectra': SOARSimpleGoodmanSpectroscopyObservationForm,
+        'SPECTRA_Advanced': SOARSpectroscopyObservationForm,
     }
 
     def __init__(self, facility_settings=SOARSettings("SOAR")):

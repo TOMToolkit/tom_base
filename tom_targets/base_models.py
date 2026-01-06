@@ -27,7 +27,7 @@ SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
 NON_SIDEREAL_FIELDS = GLOBAL_TARGET_FIELDS + [
     'scheme', 'mean_anomaly', 'arg_of_perihelion', 'lng_asc_node', 'inclination', 'mean_daily_motion', 'semimajor_axis',
     'eccentricity', 'epoch_of_elements', 'epoch_of_perihelion', 'ephemeris_period', 'ephemeris_period_err',
-    'ephemeris_epoch', 'ephemeris_epoch_err', 'perihdist'
+    'ephemeris_epoch', 'ephemeris_epoch_err', 'perihdist', 'abs_mag', 'slope'
 ]
 
 REQUIRED_SIDEREAL_FIELDS = ['ra', 'dec']
@@ -287,6 +287,12 @@ class BaseTarget(models.Model):
 
     :param ephemeris_epoch_err: Days
     :type ephemeris_epoch_err: float
+
+    :param abs_mag: Asteroid/Comet absolute magnitude (H or m1)
+    :type abs_mag: float
+
+    :param slope: Asteroid/Comet slope parameter (G or k1)
+    :type slope: float
     """
 
     SIDEREAL = 'SIDEREAL'
@@ -402,6 +408,12 @@ class BaseTarget(models.Model):
     )
     perihdist = models.FloatField(
         null=True, blank=True, verbose_name='Perihelion Distance', help_text='AU'
+    )
+    abs_mag = models.FloatField(
+        null=True, blank=True, verbose_name='Absolute Magnitude', help_text='mag'
+    )
+    slope = models.FloatField(
+        null=True, blank=True, verbose_name='Slope parameter', help_text='mag'
     )
 
     objects = models.Manager()

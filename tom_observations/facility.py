@@ -39,6 +39,7 @@ DEFAULT_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
     'tom_observations.facilities.soar.SOARFacility',
+    'tom_observations.facilities.blanco.BLANCOFacility',
 ]
 
 try:
@@ -57,8 +58,8 @@ def get_service_classes():
     for service in TOM_FACILITY_CLASSES:
         try:
             clazz = import_string(service)
-        except (ImportError, AttributeError):
-            raise ImportError(f'Could not import {service}. Did you provide the correct path?')
+        except (ImportError, AttributeError) as e:
+            raise ImportError(f'Could not import {service}: {e}')
         service_choices[clazz.name] = clazz
     return service_choices
 
@@ -508,15 +509,15 @@ class BaseRoboticObservationFacility(BaseObservationFacility):
 
     def update_observation_status(self, observation_id):
         from tom_observations.models import ObservationRecord
-        try:
-            record = ObservationRecord.objects.get(observation_id=observation_id)
-            status = self.get_observation_status(observation_id)
+        records = ObservationRecord.objects.filter(observation_id=observation_id)
+        if not records:
+            raise Exception('No records exist for that observation id')
+        status = self.get_observation_status(observation_id)
+        for record in records:
             record.status = status['state']
             record.scheduled_start = status['scheduled_start']
             record.scheduled_end = status['scheduled_end']
             record.save()
-        except ObservationRecord.DoesNotExist:
-            raise Exception('No record exists for that observation id')
 
     def update_all_observation_statuses(self, target=None):
         from tom_observations.models import ObservationRecord

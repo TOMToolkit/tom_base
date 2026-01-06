@@ -225,7 +225,7 @@ class OCSBaseForm(forms.Form):
                 cached_instruments = {k: v for k, v in response.json().items()}
             except ImproperCredentialsException:
                 cached_instruments = self.facility_settings.default_instrument_config
-            cache.set(f'{self.facility_settings.facility_name}_instruments', cached_instruments, 3600)
+            cache.set(f'{self.facility_settings.facility_name}_instruments', cached_instruments, 60)
         return cached_instruments
 
     def get_instruments(self):
@@ -335,140 +335,161 @@ class OCSAdvancedExpansionsLayout(Layout):
             )
         )
 
+    def _get_cadence_tab(self):
+        return (
+                    Div(
+                        HTML(f'''<br/><p>{self.facility_settings.static_cadencing_help}</p>'''),
+                    ),
+                    Div(
+                        Div(
+                            'period',
+                            css_class='col'
+                        ),
+                        Div(
+                            'jitter',
+                            css_class='col'
+                        ),
+                        css_class='form-row'
+                    )
+                )
+
+    def _get_dithering_tab(self):
+        return (
+                    Alert(
+                        content="Dithering will only be applied if you have a single Configuration specified.",
+                        css_class='alert-warning'
+                    ),
+                    Div(
+                        Div(
+                            'dither_pattern',
+                            css_class='col'
+                        ),
+                        Div(
+                            'dither_num_points',
+                            css_class='col'
+                        ),
+                        css_class='form-row'
+                    ),
+                    Div(
+                        Div(
+                            'dither_point_spacing',
+                            css_class='col'
+                        ),
+                        Div(
+                            'dither_line_spacing',
+                            css_class='col'
+                        ),
+                        css_class='form-row'
+                    ),
+                    Div(
+                        Div(
+                            'dither_num_rows',
+                            css_class='col'
+                        ),
+                        Div(
+                            'dither_num_columns',
+                            css_class='col'
+                        ),
+                        css_class='form-row'
+                    ),
+                    Div(
+                        Div(
+                            'dither_orientation',
+                            css_class='col'
+                        ),
+                        Div(
+                            'dither_center',
+                            css_class='col'
+                        ),
+                        css_class='form-row'
+                    )
+                )
+
+    def _get_mosaicing_tab(self):
+        return (
+                    Alert(
+                        content="Mosaicing will only be applied if you have a single Configuration specified.",
+                        css_class='alert-warning'
+                    ),
+                    Div(
+                        Div(
+                            'mosaic_pattern',
+                            css_class='col'
+                        ),
+                        Div(
+                            'mosaic_num_points',
+                            css_class='col'
+                        ),
+                        css_class='form-row'
+                    ),
+                    Div(
+                        Div(
+                            'mosaic_point_overlap',
+                            css_class='col'
+                        ),
+                        Div(
+                            'mosaic_line_overlap',
+                            css_class='col'
+                        ),
+                        css_class='form-row'
+                    ),
+                    Div(
+                        Div(
+                            'mosaic_num_rows',
+                            css_class='col'
+                        ),
+                        Div(
+                            'mosaic_num_columns',
+                            css_class='col'
+                        ),
+                        css_class='form-row'
+                    ),
+                    Div(
+                        Div(
+                            'mosaic_orientation',
+                            css_class='col'
+                        ),
+                        Div(
+                            'mosaic_center',
+                            css_class='col'
+                        ),
+                        css_class='form-row'
+                    )
+                )
+
     def _get_accordion_group(self, form_name):
         return (
-            AccordionGroup(
-                'Cadence / Dither / Mosaic',
-                Alert(
-                    content="""Using the following sections each result in expanding portions of the Request
+            [
+                AccordionGroup(
+                    'Cadence / Dither / Mosaic',
+                    Alert(
+                        content="""Using the following sections each result in expanding portions of the Request
                                 on submission. You should only combine these if you know what you are doing.
                             """,
-                    css_class='alert-warning'
-                ),
-                TabHolder(
-                    Tab('Cadence',
-                        Div(
-                            HTML(f'''<br/><p>{self.facility_settings.static_cadencing_help}</p>'''),
+                        css_class='alert-warning'
+                    ),
+                    TabHolder(
+                        Tab(
+                            'Cadence',
+                            *self._get_cadence_tab(),
+                            css_id=f'{form_name}_cadence'
                         ),
-                        Div(
-                            Div(
-                                'period',
-                                css_class='col'
-                            ),
-                            Div(
-                                'jitter',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
+                        Tab(
+                            'Dither',
+                            *self._get_dithering_tab(),
+                            css_id=f'{form_name}_dithering'
                         ),
-                        css_id=f'{form_name}_cadence'
-                        ),
-                    Tab('Dithering',
-                        Alert(
-                            content="Dithering will only be applied if you have a single Configuration specified.",
-                            css_class='alert-warning'
-                        ),
-                        Div(
-                            Div(
-                                'dither_pattern',
-                                css_class='col'
-                            ),
-                            Div(
-                                'dither_num_points',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        Div(
-                            Div(
-                                'dither_point_spacing',
-                                css_class='col'
-                            ),
-                            Div(
-                                'dither_line_spacing',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        Div(
-                            Div(
-                                'dither_num_rows',
-                                css_class='col'
-                            ),
-                            Div(
-                                'dither_num_columns',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        Div(
-                            Div(
-                                'dither_orientation',
-                                css_class='col'
-                            ),
-                            Div(
-                                'dither_center',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        css_id=f'{form_name}_dithering'
-                        ),
-                    Tab('Mosaicing',
-                        Alert(
-                            content="Mosaicing will only be applied if you have a single Configuration specified.",
-                            css_class='alert-warning'
-                        ),
-                        Div(
-                            Div(
-                                'mosaic_pattern',
-                                css_class='col'
-                            ),
-                            Div(
-                                'mosaic_num_points',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        Div(
-                            Div(
-                                'mosaic_point_overlap',
-                                css_class='col'
-                            ),
-                            Div(
-                                'mosaic_line_overlap',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        Div(
-                            Div(
-                                'mosaic_num_rows',
-                                css_class='col'
-                            ),
-                            Div(
-                                'mosaic_num_columns',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        Div(
-                            Div(
-                                'mosaic_orientation',
-                                css_class='col'
-                            ),
-                            Div(
-                                'mosaic_center',
-                                css_class='col'
-                            ),
-                            css_class='form-row'
-                        ),
-                        css_id=f'{form_name}_mosaicing'
+                        Tab(
+                            'Mosaic',
+                            *self._get_mosaicing_tab(),
+                            css_id=f'{form_name}_mosaicing'
                         )
-                ),
-                active=False,
-                css_id=f'{form_name}-expansions-group'
-            )
+                    ),
+                    active=False,
+                    css_id=f'{form_name}-expansions-group'
+                )
+            ]
+
         )
 
 
@@ -674,7 +695,9 @@ class OCSBaseObservationForm(BaseRoboticObservationForm, OCSBaseForm):
     It must be subclassed to be used, as some methods are not implemented in this class.
     """
     name = forms.CharField()
-    start = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}))
+    start = forms.SplitDateTimeField(
+        widget=forms.SplitDateTimeWidget(date_attrs={'type': 'date'}, time_attrs={'type': 'time'})
+    )
     configuration_repeats = forms.IntegerField(
         min_value=1,
         initial=1,
@@ -687,6 +710,7 @@ class OCSBaseObservationForm(BaseRoboticObservationForm, OCSBaseForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.parse_incoming_start_end_fields()
         self.fields['proposal'] = forms.ChoiceField(choices=self.proposal_choices())
         self.fields['ipp_value'] = forms.FloatField(
             label='Intra Proposal Priority (IPP factor)',
@@ -695,8 +719,10 @@ class OCSBaseObservationForm(BaseRoboticObservationForm, OCSBaseForm):
             initial=1.05,
             help_text=self.facility_settings.ipp_value_help
         )
-        self.fields['end'] = forms.CharField(widget=forms.TextInput(attrs={'type': 'date'}),
-                                             help_text=self.facility_settings.end_help)
+        self.fields['end'] = forms.SplitDateTimeField(
+            widget=forms.SplitDateTimeWidget(date_attrs={'type': 'date'}, time_attrs={'type': 'time'}),
+            help_text=self.facility_settings.end_help
+        )
         self.fields['observation_mode'] = forms.ChoiceField(
             choices=(('NORMAL', 'Normal'), ('RAPID_RESPONSE', 'Rapid-Response'), ('TIME_CRITICAL', 'Time-Critical')),
             help_text=self.facility_settings.observation_mode_help
@@ -714,11 +740,47 @@ class OCSBaseObservationForm(BaseRoboticObservationForm, OCSBaseForm):
 
     def clean_start(self):
         start = self.cleaned_data['start']
-        return parse(start).isoformat()
+        return start.isoformat()
 
     def clean_end(self):
         end = self.cleaned_data['end']
-        return parse(end).isoformat()
+        return end.isoformat()
+
+    def parse_incoming_start_end_fields(self):
+        start_0 = self.initial.pop('start_0', None)
+        start_1 = self.initial.pop('start_1', None)
+        if start_0:
+            if start_1:
+                self.initial['start'] = parse(f"{start_0}T{start_1}")
+            else:
+                self.initial['start'] = parse(f"{start_0}T00:00")
+
+        end_0 = self.initial.pop('end_0', None)
+        end_1 = self.initial.pop('end_1', None)
+        if end_0:
+            if end_1:
+                self.initial['end'] = parse(f"{end_0}T{end_1}")
+            else:
+                self.initial['end'] = parse(f"{end_0}T00:00")
+
+    def full_clean(self):
+        # Modify incoming form if it's using original start and end fields, not the split ones
+        if self.data.get('start') and (not self.data.get('start_0') or not self.data.get('start_1')):
+            try:
+                dt = parse(self.data['start'])
+                self.data['start_0'] = dt.date().isoformat()
+                self.data['start_1'] = dt.time().isoformat()
+            except ValueError:
+                self.add_error('start', 'Invalid date and time format')
+        if self.data.get('end') and (not self.data.get('end_0') or not self.data.get('end_1')):
+            # using old fields
+            try:
+                dt = parse(self.data['end'])
+                self.data['end_0'] = dt.date().isoformat()
+                self.data['end_1'] = dt.time().isoformat()
+            except ValueError:
+                self.add_error('end', 'Invalid date and time format')
+        return super().full_clean()
 
     def validate_at_facility(self):
         obs_module = get_service_class(self.cleaned_data['facility'])
@@ -733,7 +795,7 @@ class OCSBaseObservationForm(BaseRoboticObservationForm, OCSBaseForm):
         super().is_valid()
         self.validate_at_facility()
         if self._errors:
-            logger.warn(f'Facility submission has errors {self._errors}')
+            logger.warning(f'Facility submission has errors {self._errors}')
         return not self._errors
 
     def _flatten_error_dict(self, error_dict):
@@ -1110,6 +1172,11 @@ class OCSFullObservationForm(OCSBaseObservationForm):
         # If the instrument config did not have an exposure time set, leave it out by returning None
         if not self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time'):
             return None
+        # If the cleaned data did not have a readout mode, then there is only currently one option.
+        if not self.cleaned_data.get(f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode'):
+            self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode'] = \
+                self.data.get(f'c_{configuration_id}_ic_{instrument_config_id}_readout_mode', '')
+
         instrument_config = {
             'exposure_count': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_count'],
             'exposure_time': self.cleaned_data[f'c_{configuration_id}_ic_{instrument_config_id}_exposure_time'],
@@ -1133,9 +1200,12 @@ class OCSFullObservationForm(OCSBaseObservationForm):
         return ics
 
     def _build_configuration(self, build_id):
-        instrument_configs = self._build_instrument_configs(
-            self.cleaned_data[f'c_{build_id}_instrument_type'], build_id
-            )
+        # If there is no instrument type in cleaned_data, then only one option is available at this time.
+        if not self.cleaned_data.get(f'c_{build_id}_instrument_type'):
+            self.cleaned_data[f'c_{build_id}_instrument_type'] = self.data.get(f'c_{build_id}_instrument_type')
+
+        instrument_configs = self._build_instrument_configs(self.cleaned_data[f'c_{build_id}_instrument_type'],
+                                                            build_id)
         # Check if the instrument configs are empty, and if so, leave this configuration out by returning None
         if not instrument_configs:
             return None

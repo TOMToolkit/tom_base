@@ -165,15 +165,17 @@ class LCOConfigurationLayout(OCSConfigurationLayout):
     def get_final_accordion_items(self, instance):
         """ Override in the subclasses to add items at the end of the accordion group
         """
-        return AccordionGroup('Fractional Ephemeris Rate',
-                              Div(
-                                  HTML(f'''<br/><p>{self.facility_settings.fractional_ephemeris_rate_help}</p>''')
+        return [
+            AccordionGroup('Fractional Ephemeris Rate',
+                           Div(
+                               HTML(f'''<br/><p>{self.facility_settings.fractional_ephemeris_rate_help}</p>''')
                               ),
-                              Div(
-                                  f'c_{instance}_fractional_ephemeris_rate',
-                                  css_class='form-col'
-                              )
-                              )
+                           Div(
+                               f'c_{instance}_fractional_ephemeris_rate',
+                               css_class='form-col'
+                           )
+                           )
+        ]
 
 
 class ImagingConfigurationLayout(LCOConfigurationLayout):
@@ -437,7 +439,7 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
             code: instrument
             for (code, instrument) in instruments.items()
             if (instrument['type'] in ['IMAGE', 'SPECTRA'] and
-                ('MUSCAT' not in code and 'SOAR' not in code))
+                ('MUSCAT' not in code and 'SOAR' not in code and 'BLANCO' not in code))
         }
         return filtered_instruments
 
@@ -545,7 +547,7 @@ class LCOImagingObservationForm(LCOFullObservationForm):
         instruments = super().get_instruments()
         return {
             code: instrument for (code, instrument) in instruments.items() if (
-                'IMAGE' == instrument['type'] and 'MUSCAT' not in code and 'SOAR' not in code)
+                'IMAGE' == instrument['type'] and 'MUSCAT' not in code and 'SOAR' not in code and 'BLANCO' not in code)
         }
 
     def configuration_layout_class(self):
@@ -1100,8 +1102,21 @@ class LCOSpectroscopicSequenceForm(LCOOldStyleObservationForm):
 class LCOFacility(OCSFacility):
     """
     The ``LCOFacility`` is the interface to the Las Cumbres Observatory Observation Portal. For information regarding
-    LCO observing and the available parameters, please see the Getting Started Guide at
-    https://lco.global/documents/2505/GettingStartedontheLCONetwork.latest.pdf.
+    LCO observing and the available parameters, please see the
+    `LCO Documentation <https://lco.global/documentation/>`__ .
+    To use this facility you will need to update the `FACILITIES` in your ``settings.py`` with a `portal_url` and an
+    `api_key`.
+
+    .. code-block:: python
+        :caption: settings.py
+
+        FACILITIES = {
+            'LCO': {
+                'portal_url': 'https://observe.lco.global',
+                'api_key': os.getenv('LCO_API_KEY'),
+            },
+        }
+
     """
     name = 'LCO'
     link = 'https://lco.global/documents/2505/GettingStartedontheLCONetwork.latest.pdf'

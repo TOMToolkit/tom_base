@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
 import logging
+from typing import Any
 
 from astroplan import moon_illumination
 from astropy import units as u
 from astropy.coordinates import GCRS, Angle, get_body, SkyCoord
 from astropy.time import Time
 from django import template
+from django.core.exceptions import FieldDoesNotExist
 from django.utils.safestring import mark_safe
 from django.conf import settings
 from django.db.models import Q
@@ -14,8 +16,10 @@ from guardian.shortcuts import get_objects_for_user
 import numpy as np
 from plotly import offline
 from plotly import graph_objs as go
+from django.utils.module_loading import import_string
 
 from tom_observations.utils import get_sidereal_visibility
+from tom_targets.base_models import BaseTarget
 from tom_targets.models import Target, TargetExtra, TargetList
 from tom_targets.forms import TargetVisibilityForm, PersistentShareForm
 from tom_targets.permissions import targets_for_user
@@ -339,8 +343,6 @@ def target_merge_fields(target1, target2):
     for field in target2._meta.get_fields():
         if not field.is_relation:
             target2_data[field.name] = field.value_to_string(target2)
-        # else:
-        #     print(field.name)
     target2_data['aliases'] = ', '.join(alias.name for alias in target2.aliases.all())
     target2_data['target lists'] = \
         ', '.join(target_list.name for target_list in TargetList.objects.filter(targets=target2))
@@ -363,6 +365,67 @@ def target_distribution(targets):
     return aladin_skymap(targets)
 
 
+def get_target_list_columns() -> list[str]:
+    try:
+        return settings.TARGET_LIST_COLUMNS
+    except Exception:
+        return ["name", "type", "observations", "saved_data"]
+
+
+def target_table_headers(model: type[BaseTarget]) -> list[str]:
+    headers = []
+    for column in get_target_list_columns():
+        # Special fields
+        if column == "observations":
+            headers.append("Observations")
+        elif column == "saved_data":
+            headers.append("Saved Data")
+        else:
+            try:
+                field = model._meta.get_field(column)
+                headers.append(field.verbose_name)
+            except FieldDoesNotExist:
+                headers.append(column)
+    return headers
+
+
+@register.simple_tag
+def target_table_row(target: BaseTarget) -> list[Any]:
+    row = []
+    for column in get_target_list_columns():
+        # Special Fields
+        if column == "name":
+            row.append(", ".join(target.names))
+        elif column == "observations":
+            row.append(target.observationrecord_set.count())
+        elif column == "saved_data":
+            row.append(target.dataproduct_set.count())
+        else:
+            try:
+                field = target._meta.get_field(column)
+                value = getattr(target, column)
+                if field.get_internal_type() in ["FloatField", "DecimalField"]:
+                    try:
+                        value = f"{value:.2f}"
+                    except TypeError:
+                        value = str(value)
+                row.append(value)
+            except FieldDoesNotExist:
+                # See if a TargetExtra exits with this name
+                # The assignment and continue weirdness is to avoid querying twice
+                extra_fields = target.extra_fields
+                if column in extra_fields:
+                    row.append(extra_fields[column])
+                    continue
+                tags = target.tags
+                if column in tags:
+                    row.append(tags[column])
+                    continue
+                row.append("")
+
+    return row
+
+
 @register.inclusion_tag('tom_targets/partials/target_table.html', takes_context=True)
 def target_table(context, targets, all_checked=False):
     """
@@ -370,8 +433,11 @@ def target_table(context, targets, all_checked=False):
     by default
     """
 
+    headers = target_table_headers(BaseTarget)
+
     return {
         'targets': targets,
+        'headers': headers,
         'all_checked': all_checked,
         'empty_database': context['empty_database'],
         'authenticated': context['request'].user.is_authenticated,
@@ -409,26 +475,95 @@ def create_persistent_share(context, target):
     return {'form': form, 'target': target}
 
 
-@register.inclusion_tag('tom_targets/partials/module_buttons.html')
-def get_buttons(target):
+@register.inclusion_tag('tom_targets/partials/module_buttons.html', takes_context=True)
+def get_buttons(context):
     """
-    Returns a list of buttons from imported modules to be displayed on the target detail page.
-    In order to add a button to the target detail page, an app must contain an integration points attribute.
-    The Integration Points attribute must be a dictionary with a key of 'target_detail_button':
-    'target_detail_button' = {'namespace': <<redirect path, i.e. 'app:name'>>,
-                              'title': <<Button title>>,
-                              'class': <<Button class i.e 'btn  btn-info'>>,
-                              'text': <<What you want the button to actually say>>,
-                              }
+    Imports the target detail Button content from relevant apps into the template.
 
+    Each target_button should be contained in a list of dictionaries in an app's apps.py `target_detail_buttons` method.
+    Each target_button dictionary should contain a 'partial' key with the path to the html partial template and
+    optionally a 'context' key with the path to the context processor class (typically a templatetag).
+
+    FOR EXAMPLE:
+    [{'partial': 'path/to/partial.html',
+      'context': 'path/to/context/data/method'}]
     """
-    button_list = []
+    target_buttons_to_display = []
     for app in apps.get_app_configs():
         try:
-            button_info = app.target_detail_buttons()
-            if button_info:
-                button_list.append(button_info)
+            target_buttons = app.target_detail_buttons()
         except AttributeError:
-            pass
+            continue
+        if target_buttons:
+            for button in target_buttons:
+                new_context = {}
+                if button.get('context'):
+                    try:
+                        context_method = import_string(button.get('context'))
+                    except ImportError as e:
+                        logger.warning(f'WARNING: Could not import context for {app.name} target detail button from '
+                                       f'{button["context"]}.\n'
+                                       f'{e}')
+                        continue
+                    new_context = context_method(context)
+                target_buttons_to_display.append({'partial': button['partial'],
+                                                  'context': new_context})
+    context['target_buttons_to_display'] = target_buttons_to_display
+    return context
 
-    return {'target': target, 'button_list': button_list}
+
+@register.filter
+def extra_form_field(form, field):
+    if field not in [e['name'] for e in settings.EXTRA_FIELDS]:
+        raise AttributeError("Attempted to lookup non-defined extra field")
+    return form[field]
+
+
+def get_app_tabs(context):
+    """
+    Imports the target detail tab content from relevant apps into the template.
+
+    Each target_tab should be contained in a list of dictionaries in an app's apps.py `target_detail_tabs` method.
+    Each target_tab dictionary should contain a 'context' key with the path to the context processor class
+    (typically a templatetag), a 'partial' key with the path to the html partial template, and a 'label' key with
+    a string describing the label for the tab.
+
+    FOR EXAMPLE:
+    [{'partial': 'path/to/partial.html',
+      'context': 'path/to/context/data/method',
+      'label: 'Nice String'}]
+    """
+    target_tabs_to_display = []
+    for app in apps.get_app_configs():
+        try:
+            target_tabs = app.target_detail_tabs()
+        except AttributeError:
+            continue
+        if target_tabs:
+            for tab in target_tabs:
+                new_context = {}
+                if tab.get('context'):
+                    try:
+                        context_method = import_string(tab.get('context'))
+                    except ImportError as e:
+                        logger.warning(f'WARNING: Could not import context for {app.name} target detail tab from '
+                                       f'{tab["context"]}.\n'
+                                       f'{e}')
+                        continue
+                    new_context = context_method(context)
+                target_tabs_to_display.append({'partial': tab['partial'],
+                                               'context': new_context,
+                                               'label': tab['label']})
+    return target_tabs_to_display
+
+
+@register.inclusion_tag('tom_targets/partials/app_tab_divs.html', takes_context=True)
+def include_app_tab_divs(context):
+    context['target_tabs_to_display'] = get_app_tabs(context)
+    return context
+
+
+@register.inclusion_tag('tom_targets/partials/app_tabs.html', takes_context=True)
+def include_app_tabs(context):
+    context['target_tabs_to_display'] = get_app_tabs(context)
+    return context

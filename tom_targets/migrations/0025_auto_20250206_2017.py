@@ -12,9 +12,17 @@ def get_target_model():
 
 def remove_public_group(apps, schema_editor):
     target_app, target_model = get_target_model()
-    Group = apps.get_model('auth', 'Group')
-    Target = apps.get_model(target_app, target_model)
-    GroupObjectPermission = apps.get_model('guardian', 'GroupObjectPermission')
+    # The following methods try to reference apps outside tom_targets. When trying to run this migration for the first
+    # time on an empty database, these outside apps may not be installed yet, unless there is a migration from these
+    # apps in the dependencies list. Since the purpose of this data migration is to transfer the previous permission
+    # system to a newer one, this migration can be skipped for an empty database.
+    # See https://docs.djangoproject.com/en/dev/topics/migrations/#accessing-models-from-other-apps
+    try:
+        Group = apps.get_model('auth', 'Group')
+        Target = apps.get_model(target_app, target_model)
+        GroupObjectPermission = apps.get_model('guardian', 'GroupObjectPermission')
+    except LookupError:
+        return
 
     group, _ = Group.objects.get_or_create(name='Public')
 

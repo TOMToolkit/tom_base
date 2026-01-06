@@ -67,7 +67,7 @@ class MPCHarvester(AbstractHarvester):
         if result.get('number', None) is not None:
             if result.get('name', None) is not None:
                 target.name = str(result['number'])
-                target.extra_names = [str(result['name']),]
+                target.extra_names = [str(result['name']), ]
                 target.extra_names += [result['designation']] if result['designation'] else []
             else:
                 target.name = str(result['number'])
@@ -95,6 +95,8 @@ class MPCHarvester(AbstractHarvester):
         else:
             target.mean_anomaly = float(result['mean_anomaly'])
             target.semimajor_axis = float(result['semimajor_axis'])
+            target.abs_mag = float(result['absolute_magnitude'])
+            target.slope = float(result.get('phase_slope', 0.15))
         return target
 
 
@@ -157,6 +159,10 @@ class MPCExplorerHarvester(AbstractHarvester):
         except ValueError:
             pass
         target.extra_names = extra_desigs
+
+        # Get magnitude data
+        target.abs_mag = result['magnitude_data']['H']
+        target.slope = result['magnitude_data']['G']
 
         target.epoch_of_elements = result['epoch_data']['epoch']
         # Map coefficients to elements

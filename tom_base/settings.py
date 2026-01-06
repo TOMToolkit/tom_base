@@ -215,6 +215,7 @@ TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
     'tom_observations.facilities.soar.SOARFacility',
+    'tom_observations.facilities.blanco.BLANCOFacility',
     'tom_observations.facilities.lt.LTFacility',
 
 ]
@@ -310,6 +311,13 @@ TARGET_PERMISSIONS_ONLY = True
 
 # Default permission for newly created targets. Values can be 'PRIVATE', 'PUBLIC', or 'OPEN'
 TARGET_DEFAULT_PERMISSION = 'PRIVATE'
+
+# Display these columns in the target list table. Values can be attributes or properties on
+# the Target model, tags or extra fields. The fields `observations` and `saved_data` are
+# special cases with custom implementation.
+TARGET_LIST_COLUMNS = [
+    "name", "type", "observations", "saved_data"
+]
 
 # URLs that should be allowed access even with AUTH_STRATEGY = LOCKED
 # for example: OPEN_URLS = ['/', '/about']

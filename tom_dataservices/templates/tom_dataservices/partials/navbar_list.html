@@ -1,0 +1,14 @@
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" data-toggle="dropdown">Data Services</a>
+    <ul class="dropdown-menu">
+        {% for data_service in data_services %}
+            <li class="nav-item {% if request.resolver_match.namespace == 'dataservices' %}active{% endif %}">
+                <a class="nav-link" href="{% url 'dataservices:create' %}?data_service={{ data_service }}" style="color:black" title="{{ data_service }}"> {{data_service}} </a>
+            </li>
+        {% endfor %}
+        <div class="dropdown-divider"></div>
+        <li class="nav-item {% if request.resolver_match.namespace == 'dataservices' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'dataservices:query_list' %}" style="color:black">Saved Queries</a>
+        </li>
+    </ul>
+</li>

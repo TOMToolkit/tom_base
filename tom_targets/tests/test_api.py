@@ -131,10 +131,12 @@ class TestTargetViewset(APITestCase):
         target_data = {
             'name': 'test_target_name_wtf',
             'type': Target.NON_SIDEREAL,
-            'epoch_of_elements': 2000,
+            'epoch_of_elements': 60000,
             'inclination': '0.0005',
             'lng_asc_node': '0.12345',
             'arg_of_perihelion': '57',
+            'abs_mag': 22.0,
+            'slope': 0.15,
             'targetextra_set': [
                 {'key': 'foo', 'value': 5}
             ],
