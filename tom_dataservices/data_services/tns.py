@@ -194,7 +194,7 @@ class TNSDataService(BaseDataService):
 
     def create_target_from_query(self, target_results, **kwargs):
         """
-            Returns a Target instance for an object defined by a query result, 
+            Returns a Target instance for an object defined by a query result,
 
             :returns: target object
             :rtype: `Target`
