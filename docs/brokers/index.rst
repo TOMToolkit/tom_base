@@ -9,6 +9,7 @@ Brokers
   create_dash_broker
   ../api/tom_alerts/brokers
   ../api/tom_alerts/views
+  create_dataservice
 
 
 What is an Alert Broker Module?
@@ -24,3 +25,5 @@ A TOM Toolkit Alert Broker Module is an object which contains the logic for quer
 :doc:`Broker Modules <../api/tom_alerts/brokers>` - Take a look at the supported brokers.
 
 :doc:`Broker Views <../api/tom_alerts/views>` - Familiarize yourself with the available Broker Views.
+
+:doc:`Create Data Service <create_dataservice>` - Walk through the creation of your own Data Service.

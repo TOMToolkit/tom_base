@@ -11,8 +11,9 @@ class BaseQueryForm(forms.Form):
     query_save = forms.BooleanField(
         required=False,
         initial=False,
-        label="Save Query",)
-    query_name = forms.CharField(required=False)
+        label="Save Query")
+    query_name = forms.CharField(
+        required=False)
     data_service = forms.CharField(
         required=True,
         max_length=50,
@@ -23,6 +24,7 @@ class BaseQueryForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        # self.helper['query_save'].wrap(Field, type='hidden')
 
     def save(self, query_id=None):
         """
