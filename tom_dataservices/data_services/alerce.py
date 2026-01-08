@@ -1,5 +1,5 @@
-from alerce.exceptions import ObjectNotFoundError
 from alerce.core import Alerce
+from alerce.exceptions import ObjectNotFoundError
 from crispy_forms.layout import HTML, Column, Field, Layout, Row
 from django import forms
 from django.core.cache import cache
@@ -22,13 +22,8 @@ class AlerceForm(BaseQueryForm):
         classifier_fields = self.add_classifiers_fields()
         # Static fields layout
         layout_fields = [Field("survey"), Field("object_id")]
-        for (field, prob_field) in classifier_fields:
-            layout_fields.append(
-                Row(
-                    Column(Field(field)),
-                    Column(Field(prob_field))
-                )
-            )
+        for field, prob_field in classifier_fields:
+            layout_fields.append(Row(Column(Field(field)), Column(Field(prob_field))))
 
         return Layout(
             HTML("""
@@ -58,7 +53,9 @@ class AlerceForm(BaseQueryForm):
                 required=False,
                 help_text=c["classifier_version"],
             )
-            prob_field_name = f"prob_{self.CLASSIFIER_FIELD_PREFIX}{c['classifier_name']}"
+            prob_field_name = (
+                f"prob_{self.CLASSIFIER_FIELD_PREFIX}{c['classifier_name']}"
+            )
             self.fields[prob_field_name] = forms.FloatField(
                 label=f"{c['classifier_name']} Probability",
                 required=False,
@@ -72,13 +69,15 @@ class AlerceForm(BaseQueryForm):
         classifiers: list[dict] = []
 
         # Find the classifiers, if any
-        for (k, v) in cleaned_data.items():
+        for k, v in cleaned_data.items():
             if k.startswith(self.CLASSIFIER_FIELD_PREFIX) and v:
-                classifiers.append({
-                    "classifier": k.split(self.CLASSIFIER_FIELD_PREFIX)[1],
-                    "class": v,
-                    "probability": cleaned_data.get(f"prob_{k}", None)
-                })
+                classifiers.append(
+                    {
+                        "classifier": k.split(self.CLASSIFIER_FIELD_PREFIX)[1],
+                        "class": v,
+                        "probability": cleaned_data.get(f"prob_{k}", None),
+                    }
+                )
         cleaned_data["classifiers"] = classifiers
 
         return cleaned_data
@@ -94,14 +93,13 @@ class AlerceDataService(BaseDataService):
     def query_service(self, query_parameters, **kwargs) -> list[dict]:
         params = {
             "format": "json",
-            "survey": query_parameters.get("survey", "").lower()
+            "survey": query_parameters.get("survey", "").lower(),
         }
         results = []
         try:
             if query_parameters.get("object_id"):
                 object_result = alerce.query_object(
-                    oid=query_parameters.get("object_id"),
-                    **params
+                    oid=query_parameters.get("object_id"), **params
                 )
                 if object_result:
                     results.append(object_result)
@@ -111,7 +109,7 @@ class AlerceDataService(BaseDataService):
                     classifier=classifier["classifier"],
                     class_name=classifier["class"],
                     probability=classifier["probability"],
-                    **params
+                    **params,
                 ).get("items", [])
                 results.extend(classifier_results)
         except (ObjectNotFoundError, ValueError) as e:
