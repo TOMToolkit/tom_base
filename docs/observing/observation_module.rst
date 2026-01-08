@@ -349,6 +349,39 @@ Even if the facilities you observe at are not API-accessible, you
 can still add them to your TOM’s airmass plots to judge what targets to
 observe when.
 
+How to add User-specific credentials to your Facility
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Observation facilities typically require credentials (username and password or API key)
+to interact and submit observation requests. That is, you have to "log in" to use the Facility's
+API or client library.
+
+A TOM can be configured to provide common Facility credentials for every User of the TOM.
+These are specified in the ``FACILITIES`` dictionary of ``settings.py``. In this case, the TOM
+administrator would be resposible for maintaining the appropriate credentials. All observation
+requests from the TOM would use those same credentials.
+
+While you may write your Facility to use that mechanism, a few additional steps allow your
+Facility to provide for individual, User-specific credentials. Each TOM user can thus manage
+their own credentials and use them to submit their own observation requests.
+
+In outline, your Facility must:
+
+  1. Create a FaciltyProfile model in your Facility's ``models.py``. (Your Facility is typically
+  implmemented as an ``INSTALLED_APP`` and as such has a ``models.py`` module). This is described
+  and demonstrated in the `tom_demoapp <https://github.com/TOMToolkit/tom_demoapp>`__ and documented
+  `here <https://github.com/TOMToolkit/tom_demoapp/wiki/Integration-Points#profile-details>`__.
+
+  2. The fields of your Facility's Profile model would store the required credentials (for example,
+  a username and password or an API-key). Sensitive data such as passwords and API-keys should be
+  saved in an encrypted fashion and that is described
+  :doc:`here <../customization/encrypted_model_fields>`.
+
+  3. Finally, your Facility class must access these credentials to intereact with your Facility.
+  An example of this can be found in the TOMToolkit
+  `ESOFacility <https://github.com/TOMToolkit/tom_eso/blob/6e3575c7e44cdb09f3df83740f2e9f522afbb603/tom_eso/eso.py#L378>`__.
+
+
 Happy developing!
 
 
