@@ -6,6 +6,7 @@ from django.core.cache import cache
 
 from tom_dataservices.dataservices import BaseDataService, QueryServiceError
 from tom_dataservices.forms import BaseQueryForm
+from tom_targets.models import get_target_model_class
 
 alerce = Alerce()
 
@@ -123,3 +124,13 @@ class AlerceDataService(BaseDataService):
             "classifiers": parameters.get("classifiers", []),
             "survey": parameters.get("survey"),
         }
+
+    def create_target_from_query(self, target_result: dict, **kwrags):
+        Target = get_target_model_class()
+
+        return Target.objects.create(
+            name=target_result["oid"],
+            type="SIDEREAL",
+            ra=target_result["meanra"],
+            dec=target_result["meandec"],
+        )
