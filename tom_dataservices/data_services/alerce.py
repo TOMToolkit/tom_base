@@ -1,9 +1,10 @@
+from alerce.exceptions import ObjectNotFoundError
 from alerce.core import Alerce
 from crispy_forms.layout import HTML, Column, Field, Layout, Row
 from django import forms
 from django.core.cache import cache
 
-from tom_dataservices.dataservices import BaseDataService
+from tom_dataservices.dataservices import BaseDataService, QueryServiceError
 from tom_dataservices.forms import BaseQueryForm
 
 alerce = Alerce()
@@ -17,24 +18,19 @@ class AlerceForm(BaseQueryForm):
     )
     object_id = forms.CharField(required=False, label="Object ID")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def get_layout(self, *args, **kwargs) -> Layout:
         classifier_fields = self.add_classifiers_fields()
         # Static fields layout
         layout_fields = [Field("survey"), Field("object_id")]
-        # Dynamic 2-column layout
-        for i in range(0, len(classifier_fields), 2):
-            if i + 1 < len(classifier_fields):
-                layout_fields.append(
-                    Row(
-                        Column(Field(classifier_fields[i])),
-                        Column(Field(classifier_fields[i + 1])),
-                    )
+        for (field, prob_field) in classifier_fields:
+            layout_fields.append(
+                Row(
+                    Column(Field(field)),
+                    Column(Field(prob_field))
                 )
-            else:
-                layout_fields.append(Row(Column(Field(classifier_fields[i]))))
+            )
 
-        self.helper.layout = Layout(
+        return Layout(
             HTML("""
                 <p>
                 Please see the <a href="http://alerce.science/" target="_blank">ALeRCE homepage</a> for information
@@ -51,47 +47,41 @@ class AlerceForm(BaseQueryForm):
 
         return classifiers
 
-    def add_classifiers_fields(self) -> list[str]:
+    def add_classifiers_fields(self) -> list[tuple[str, str]]:
         classifiers = self.get_classifiers()
         field_names = []
         for c in classifiers:
             field_name = f"{self.CLASSIFIER_FIELD_PREFIX}{c['classifier_name']}"
             self.fields[field_name] = forms.ChoiceField(
+                label=f"{c['classifier_name']}",
                 choices=[(None, "")] + [(k, k) for k in c["classes"]],
                 required=False,
                 help_text=c["classifier_version"],
             )
-            field_names.append(field_name)
+            prob_field_name = f"prob_{self.CLASSIFIER_FIELD_PREFIX}{c['classifier_name']}"
+            self.fields[prob_field_name] = forms.FloatField(
+                label=f"{c['classifier_name']} Probability",
+                required=False,
+            )
+            field_names.append((field_name, prob_field_name))
 
         return field_names
 
     def clean(self):
         cleaned_data = super().clean()
-        classifier_name = None
-        classifier_class = None
-        object_id = cleaned_data.get("object_id")
+        classifiers: list[dict] = []
 
-        # Find the classifier, if any
+        # Find the classifiers, if any
         for (k, v) in cleaned_data.items():
             if k.startswith(self.CLASSIFIER_FIELD_PREFIX) and v:
-                if classifier_name or classifier_class:
-                    raise forms.ValidationError("At most one classifier can be selected.")
-                else:
-                    classifier_name = k.split(self.CLASSIFIER_FIELD_PREFIX)[1]
-                    classifier_class = v
+                classifiers.append({
+                    "classifier": k.split(self.CLASSIFIER_FIELD_PREFIX)[1],
+                    "class": v,
+                    "probability": cleaned_data.get(f"prob_{k}", None)
+                })
+        cleaned_data["classifiers"] = classifiers
 
-        # Make sure only object_id or classifier is provided
-        if classifier_name and object_id:
-            raise forms.ValidationError("Choose either an object or a classifier.")
-        elif classifier_name:
-            cleaned_data["classifier_name"] = classifier_name
-            cleaned_data["classifier_class"] = classifier_class
-            return cleaned_data
-        elif object_id:
-            cleaned_data["object_id"] = object_id
-            return cleaned_data
-        else:
-            raise forms.ValidationError("Choose either an object or a classifier.")
+        return cleaned_data
 
 
 class AlerceDataService(BaseDataService):
@@ -101,10 +91,37 @@ class AlerceDataService(BaseDataService):
     def get_form_class(cls):
         return AlerceForm
 
-    def query_service(self, query_parameters, **kwargs):
-        print("query_service", query_parameters)
-        return []
+    def query_service(self, query_parameters, **kwargs) -> list[dict]:
+        params = {
+            "format": "json",
+            "survey": query_parameters.get("survey", "").lower()
+        }
+        results = []
+        try:
+            if query_parameters.get("object_id"):
+                object_result = alerce.query_object(
+                    oid=query_parameters.get("object_id"),
+                    **params
+                )
+                if object_result:
+                    results.append(object_result)
+
+            for classifier in query_parameters.get("classifiers", []):
+                classifier_results = alerce.query_objects(
+                    classifier=classifier["classifier"],
+                    class_name=classifier["class"],
+                    probability=classifier["probability"],
+                    **params
+                ).get("items", [])
+                results.extend(classifier_results)
+        except (ObjectNotFoundError, ValueError) as e:
+            raise QueryServiceError(str(e))
+
+        return results
 
     def build_query_parameters(self, parameters: dict, **kwargs):
-        print("build_query_parameters", parameters)
-        return {}
+        return {
+            "object_id": parameters.get("object_id"),
+            "classifiers": parameters.get("classifiers", []),
+            "survey": parameters.get("survey"),
+        }
