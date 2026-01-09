@@ -31,7 +31,7 @@ def get_data_service_classes():
                     clazz = import_string(data_service['class'])
                 except ImportError as e:
                     logger.warning(f'WARNING: Could not import data service class for {app.name} from '
-                                   f'{data_services["class"]}.\n'
+                                   f'{data_service["class"]}.\n'
                                    f'{e}')
                     continue
                 data_service_choices[clazz.name] = clazz
@@ -64,6 +64,13 @@ class NotConfiguredError(Exception):
     pass
 
 
+class QueryServiceError(Exception):
+    """
+    Represents a higher level error when an underlying service or client library fails.
+    """
+    pass
+
+
 class BaseDataService(ABC):
     """
     Base class for all Data Services. Data Services are classes that are responsible for querying external services
@@ -84,6 +91,8 @@ class BaseDataService(ABC):
 
     def __init__(self, query_parameters=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Instance variable that can store target query results if necessary
+        self.target_results = {}
         # Instance variable that can store query results if necessary
         self.query_results = {}
         # Instance variable that can store query parameters if necessary
@@ -108,7 +117,7 @@ class BaseDataService(ABC):
     @classmethod
     def get_form_class(cls):
         """Returns the full form class for querying this service"""
-        raise NotImplementedError
+        raise NotImplementedError(f"No Form Class for {cls.name} Data Service")
 
     @classmethod
     def configuration(cls) -> dict:
@@ -183,25 +192,25 @@ class BaseDataService(ABC):
         """Returns a path to a full or advanced partial form that can be used to access the DataService."""
         return None
 
-    def query_forced_photometry(self, query_parameters):
+    def query_forced_photometry(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s forced photometry service."""
-        return self.query_service(query_parameters)
+        return self.query_service(query_parameters, **kwargs)
 
-    def query_photometry(self, query_parameters):
+    def query_photometry(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s photometry service."""
-        return self.query_service(query_parameters)
+        return self.query_service(query_parameters, **kwargs)
 
-    def query_spectroscopy(self, query_parameters):
+    def query_spectroscopy(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s spectroscopy service."""
-        return self.query_service(query_parameters)
+        return self.query_service(query_parameters, **kwargs)
 
-    def query_aliases(self, query_parameters):
+    def query_aliases(self, query_parameters, **kwargs):
         """Set up and run a specialized query for retrieving alternate names from a DataService."""
-        return self.query_service(query_parameters)
+        return self.query_service(query_parameters, **kwargs)
 
-    def query_targets(self, query_parameters):
+    def query_targets(self, query_parameters, **kwargs):
         """Set up and run a specialized query for retrieving targets from a DataService."""
-        return self.query_service(query_parameters)
+        return self.query_service(query_parameters, **kwargs)
 
     def to_data_product(self, query_results=None, **kwargs):
         """
@@ -238,14 +247,14 @@ class BaseDataService(ABC):
         """Create a new reduced_datum of the appropriate type from the query results"""
         raise NotImplementedError
 
-    def to_target(self, query_results=None, **kwargs):
+    def to_target(self, target_results=None, **kwargs):
         """
         Upper level function to create a new target from the query results
         Can take either new query results, or use stored results form a recent `query_service()`
         :param query_results: Query results from the DataService
         :returns: Target object, dictionary of target_extras, and list of aliases
         """
-        target_parameters = query_results or self.query_results
+        target_parameters = target_results or self.target_results
         if not target_parameters:
             raise MissingDataException('No query results. Did you call query_service()?')
         else:
@@ -254,8 +263,9 @@ class BaseDataService(ABC):
             aliases = self.create_aliases_from_query(target_parameters, **kwargs)
             return target, extras, aliases
 
-    def create_target_from_query(self, query_results, **kwargs):
-        """Create a new target from the query results
+    def create_target_from_query(self, target_result, **kwargs):
+        """Create a new target from a single instance of the target results.
+        :param target_result: dictionary describing target details based on query result
         :returns: target object
         :rtype: `Target`
         """

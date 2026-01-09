@@ -18,6 +18,7 @@ from urllib.parse import urlencode
 
 from tom_dataservices.models import DataServiceQuery
 from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class, NotConfiguredError
+from tom_dataservices.dataservices import QueryServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +86,7 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         if not data_service_name:
             raise ValueError('Must provide a data service name')
 
-        return get_data_service_class(data_service_name).get_form_class(self)
+        return get_data_service_class(data_service_name).get_form_class()
 
     def get_form(self, form_class=None):
         """
@@ -178,6 +179,9 @@ class RunQueryView(TemplateView):
         except NotConfiguredError as e:
             results = iter(())
             query_feedback += f"Configuration Error. Please contact your TOM Administrator: </br>{e}</br>"
+        except QueryServiceError as e:
+            results = iter(())
+            query_feedback += f"There was an error with the underlying query service: </br>{e}</br>"
 
         # create context for template
         context['query'] = query
@@ -238,7 +242,7 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         module for which the query is being updated.
         """
         self.object = self.get_object()
-        return get_data_service_class(self.object.data_service).get_form_class(self)
+        return get_data_service_class(self.object.data_service).get_form_class()
 
     def get_form(self, form_class=None):
         """

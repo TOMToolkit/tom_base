@@ -19,16 +19,16 @@ For customization instructions, see tom_common/base.html
     <a class="nav-link dropdown-toggle" data-toggle="dropdown">Observations</a>
     <ul class="dropdown-menu">
         <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
-            <a class="nav-link" href="{% url 'tom_observations:list' %}" style="color:black">Observations</a>
+            <a class="dropdown-item" href="{% url 'tom_observations:list' %}" >Observations</a>
         </li>
         <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
-            <a class="nav-link" href="{% url 'tom_observations:group-list' %}" style="color:black">Observation Groups</a>
+            <a class="dropdown-item" href="{% url 'tom_observations:group-list' %}" >Observation Groups</a>
         </li>
         <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
-            <a class="nav-link" href="{% url 'tom_observations:template-list' %}" style="color:black">Observation Templates</a>
+            <a class="dropdown-item" href="{% url 'tom_observations:template-list' %}" >Observation Templates</a>
         </li>
         <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
-            <a class="nav-link" href="{% url 'tom_observations:facility-status' %}" style="color:black">Facility Status</a>
+            <a class="dropdown-item" href="{% url 'tom_observations:facility-status' %}" >Facility Status</a>
         </li>
     </ul>
 </li>

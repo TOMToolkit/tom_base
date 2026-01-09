@@ -14,6 +14,7 @@ API Documentation
   tom_catalogs/index
   tom_common/index
   tom_dataproducts/index
+  tom_dataservices/index
   tom_observations/index
   tom_targets/index
   management_commands

@@ -1,3 +1,4 @@
+from crispy_forms.layout import Layout
 from django import forms
 from crispy_forms.helper import FormHelper
 
@@ -11,8 +12,9 @@ class BaseQueryForm(forms.Form):
     query_save = forms.BooleanField(
         required=False,
         initial=False,
-        label="Save Query",)
-    query_name = forms.CharField(required=False)
+        label="Save Query")
+    query_name = forms.CharField(
+        required=False)
     data_service = forms.CharField(
         required=True,
         max_length=50,
@@ -23,6 +25,12 @@ class BaseQueryForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.layout = self.get_layout()
+
+    def get_layout(self):
+        exclude = ["query_save", "query_name"]
+        field_keys = [f for f in self.fields.keys() if f not in exclude]
+        return Layout(*field_keys)
 
     def save(self, query_id=None):
         """
