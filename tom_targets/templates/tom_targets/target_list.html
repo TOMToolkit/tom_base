@@ -1,5 +1,6 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 targets_extras dataproduct_extras dataservices_extras %}
+{% load render_table from django_tables2 %}
 {% block title %}Targets{% endblock %}
 {% block content %}
 <div class="row">
@@ -48,7 +49,13 @@
         <button type="submit" class="btn btn-outline-danger ml-1" name="remove">Remove</button>
       </div>
     </form>
+    <hr>
+    <h1>django_tables2:TargetTable</h1>
+    {% render_table table %}
+    <hr>
+    <h1>old table</h1>
     {% target_table object_list %}
+
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
   </div>
   {{ filter.fields }}
