@@ -25,6 +25,9 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormVi
 from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
+
+from django_tables2 import SingleTableMixin
+
 from rest_framework.views import APIView
 from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.response import Response
@@ -57,6 +60,7 @@ from tom_targets.permissions import targets_for_user
 from tom_targets.templatetags.targets_extras import target_merge_fields, persistent_share_table
 from tom_targets.utils import import_targets, export_targets
 from tom_targets.seed import seed_messier_targets
+from tom_targets.tables import TargetHTMXTable
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
 
 
@@ -64,7 +68,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class TargetListView(FilterView):
+class TargetListView(SingleTableMixin, FilterView):
     """
     View for listing targets in the TOM. Only shows targets that the user is authorized to view. Requires authorization.
     """
@@ -73,8 +77,34 @@ class TargetListView(FilterView):
     strict = False
     model = Target
     filterset_class = TargetFilter
+    table_class = TargetHTMXTable  # for django_tables2 Table
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
     ordering = ['-created']
+
+#    def get_template_names(self) -> list[str]:
+#        """
+#        Check to see if this is an HTMX request.
+#        If so, user the partial template. Otherwise, use the full page template.
+#
+#        Initial requests to the TargetListView won't be HTMX requests, so the full page template will be used.
+#
+#        :param self: Description
+#        :return: Description
+#        :rtype: list[str]
+#        """
+#        templates_names_from_super: list[str] = super().get_template_names()
+#        logger.debug(f'templates_names_from_super: {templates_names_from_super}')
+#
+#        if self.request.htmx:
+#            new_template_names = ["target_table_partial.html"]
+#        else:
+#            new_template_names = ["I'm a weird filename that doesn't exist"]
+#
+#        # put the new template names at the front of the list
+#        template_names = new_template_names + templates_names_from_super
+#        logger.debug(f'template_names:, {template_names}')
+#
+#        return template_names
 
     def get_context_data(self, *args, **kwargs):
         """
