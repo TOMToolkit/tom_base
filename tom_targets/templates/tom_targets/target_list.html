@@ -1,6 +1,11 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 targets_extras dataproduct_extras dataservices_extras %}
+{% load render_table from django_tables2 %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
 {% block title %}Targets{% endblock %}
+
 {% block content %}
 <div class="row">
   <div class="col-md-10">
@@ -48,8 +53,32 @@
         <button type="submit" class="btn btn-outline-danger ml-1" name="remove">Remove</button>
       </div>
     </form>
+
+    {% block target_table_content %}
+    <hr>
+    <h1>Target Table (via django_tables2)</h1>
+    {# Search form #}
+    <form hx-get="{% url 'tom_targets:list' %}"
+          hx-target="div.table-container"
+          hx-swap="outerHTML"
+          hx-indicator=".progress"
+          class="form-inline">
+        {% crispy filter.form %}
+    </form>
+
+    {# Progress indicator #}
+    <div class="progress">
+        <div class="indeterminate"></div>
+    </div>
+
+    {# The actual table #}
+    {% render_table table %}
+    <hr>
+    <h1>old table</h1>
     {% target_table object_list %}
+
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+    {% endblock target_table_content %}
   </div>
   {{ filter.fields }}
   <div class="col-md-2">
@@ -65,4 +94,4 @@
     </form>
   </div>
 </div>
-{% endblock %}
+{% endblock content %}
