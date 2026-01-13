@@ -9,6 +9,9 @@ logger.setLevel(logging.DEBUG)
 
 
 class TargetHTMXTable(tables.Table):
+
+    name = tables.Column(linkify=True)
+
     class Meta:
         model = Target
         # this is the default template from django_tables2 (it does not have HTMX attributes)
@@ -17,7 +20,7 @@ class TargetHTMXTable(tables.Table):
         # this template extends the bootstrap.html template with HTMX attributes.
         template_name = 'tom_targets/bootstrap_htmx.html'
 
-        fields = ['id', 'name', 'ra', 'dec', ]
+        fields = ['id', 'name', 'type', 'ra', 'dec', ]
 
     def get_partial_template_name(self) -> str:
         """
