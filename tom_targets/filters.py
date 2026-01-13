@@ -1,3 +1,4 @@
+from django import forms
 from django.conf import settings
 from django.db.models import Q
 import django_filters
@@ -135,6 +136,20 @@ class TargetFilter(django_filters.rest_framework.FilterSet):
             'created': 'Creation Date',
             'modified': 'Last Update'
         }
+    )
+
+    # Here's we override the default 'type' ChoiceFilter so we can add htmx attributes to it's widget
+    type = django_filters.ChoiceFilter(
+        choices=Target.TARGET_TYPES,
+        widget=forms.Select(
+            attrs={
+                'hx-get': '',  # triggered GET goes to the source URL by default (I think).
+                'hx-trigger': 'change',  # make the AJAX call when the selection changes
+                'hx-target': "div.table-container",
+                'hx-swap': "outerHTML",
+                'hx-indicator': ".progress",
+            }
+        )
     )
 
     class Meta:
