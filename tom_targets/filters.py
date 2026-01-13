@@ -127,7 +127,19 @@ class TargetFilter(django_filters.rest_framework.FilterSet):
         else:
             return TargetList.objects.none()
 
-    targetlist__name = django_filters.ModelChoiceFilter(queryset=get_target_list_queryset, label="Target Grouping")
+    targetlist__name = django_filters.ModelChoiceFilter(
+        queryset=get_target_list_queryset,
+        label="Target Grouping",
+        widget=forms.Select(  # override Select widget (even thought it's the default) to add htmx attributes
+            attrs={
+                'hx-get': '',  # triggered GET goes to the source URL by default
+                'hx-trigger': 'change',  # make the AJAX call when the selection changes
+                'hx-target': "div.table-container",
+                'hx-swap': "outerHTML",
+                'hx-indicator': ".progress",
+            }
+        )
+    )
 
     order = django_filters.OrderingFilter(
         fields=['name', 'created', 'modified'],
@@ -138,12 +150,12 @@ class TargetFilter(django_filters.rest_framework.FilterSet):
         }
     )
 
-    # Here's we override the default 'type' ChoiceFilter so we can add htmx attributes to it's widget
+    # Here, we override the default 'type' ChoiceFilter so we can add htmx attributes to it's widget
     type = django_filters.ChoiceFilter(
         choices=Target.TARGET_TYPES,
         widget=forms.Select(
             attrs={
-                'hx-get': '',  # triggered GET goes to the source URL by default (I think).
+                'hx-get': '',  # triggered GET goes to the source URL by default
                 'hx-trigger': 'change',  # make the AJAX call when the selection changes
                 'hx-target': "div.table-container",
                 'hx-swap': "outerHTML",
