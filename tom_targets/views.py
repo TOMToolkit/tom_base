@@ -40,7 +40,7 @@ from tom_common.hooks import run_hook
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
-from tom_targets.filters import TargetFilter
+from tom_targets.filters import TargetFilterSet
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetMergeForm, \
     UnknownTypeTargetCreateForm
@@ -76,7 +76,7 @@ class TargetListView(SingleTableMixin, FilterView):
     paginate_by = 10
     strict = False
     model = Target
-    filterset_class = TargetFilter  # this view is a FilterView subclass
+    filterset_class = TargetFilterSet  # this view is a FilterView subclass
     table_class = TargetHTMXTable  # this view is also django_tables2.SingleTableMixin subclass
 
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model

@@ -42,7 +42,7 @@ def filter_text(queryset, name, value):
     return queryset.filter(targetextra__key=name, targetextra__value__icontains=value)
 
 
-class TargetFilter(django_filters.rest_framework.FilterSet):
+class TargetFilterSet(django_filters.rest_framework.FilterSet):
     """
     Filters are available for Target objects:
         - type: Filter by target type (e.g., 'SIDEREAL', 'NON_SIDEREAL').
