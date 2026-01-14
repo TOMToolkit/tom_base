@@ -132,11 +132,12 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
         label="Target Grouping",
         widget=forms.Select(  # override Select widget (even thought it's the default) to add htmx attributes
             attrs={
-                'hx-get': '',  # triggered GET goes to the source URL by default
-                'hx-trigger': 'change',  # make the AJAX call when the selection changes
+                'hx-get': "",  # triggered GET goes to the source URL by default
+                'hx-trigger': "change",  # make the AJAX call when the selection changes
                 'hx-target': "div.table-container",
                 'hx-swap': "outerHTML",
                 'hx-indicator': ".progress",
+                'hx-include': "closest form",  # include the other filters in this FilterSet
             }
         )
     )
@@ -155,11 +156,12 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
         choices=Target.TARGET_TYPES,
         widget=forms.Select(
             attrs={
-                'hx-get': '',  # triggered GET goes to the source URL by default
-                'hx-trigger': 'change',  # make the AJAX call when the selection changes
+                'hx-get': "",  # triggered GET goes to the source URL by default
+                'hx-trigger': "change",  # make the AJAX call when the selection changes
                 'hx-target': "div.table-container",
                 'hx-swap': "outerHTML",
                 'hx-indicator': ".progress",
+                'hx-include': "closest form",  # include the other filters in this FilterSet
             }
         )
     )
