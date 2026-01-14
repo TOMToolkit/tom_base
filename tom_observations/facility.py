@@ -192,6 +192,7 @@ class BaseObservationFacility(ABC):
     """
     name = 'BaseObservation'
     observation_forms = {}
+    is_redirect = False
 
     def __init__(self):
         self.user = None
@@ -461,3 +462,22 @@ class BaseManualObservationFacility(BaseObservationFacility):
     This specific class is intended for use with classical-style manual facilities.
     """
     name = 'BaseManual'  # rename in concrete subclasses
+
+
+class BaseRedirectObservationFacility(BaseObservationFacility):
+    is_redirect = True
+
+    def redirect_url(self, target_id: str, callback_url: str):
+        raise NotImplementedError("Must implement redirect_url")
+
+    def get_form(self, observation_type):
+        return None
+
+    def get_template_form(self, observation_type):
+        return None
+
+    def submit_observation(self, observation_payload):
+        return None
+
+    def validate_observation(self, observation_payload):
+        return None

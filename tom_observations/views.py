@@ -390,6 +390,18 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         )
 
 
+class ObservationRedirectView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        facility_name = self.kwargs['facility']
+        facility_instance = get_service_class(facility_name)()
+        target_id = request.GET.get("target_id")
+        callback_url = request.build_absolute_uri(
+            reverse("tom_observations:callback")
+        ) + f"?target_id={target_id}&facility={facility_name}"
+
+        return redirect(facility_instance.redirect_url(target_id, callback_url))
+
+
 class ObservationRecordUpdateView(LoginRequiredMixin, UpdateView):
     """
     This view allows for the updating of the observation id, which will eventually be expanded to more fields.
