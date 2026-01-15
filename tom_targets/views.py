@@ -94,8 +94,9 @@ class TargetListView(SingleTableMixin, FilterView):
         :rtype: list[str]
         """
         templates_names_from_super: list[str] = super().get_template_names()
-        logger.debug(f'templates_names_from_super: {templates_names_from_super}')
+        # logger.debug(f'templates_names_from_super: {templates_names_from_super}')
 
+        # Here, we're getting the appropriate template for this request
         if self.request.htmx:
             logger.debug(f'This is an HTMX request: {self.request}')
             # we save the name of the partial for the table in the Table subclass so it can be overridden
@@ -104,9 +105,9 @@ class TargetListView(SingleTableMixin, FilterView):
             # the whole page (not just the partial for the table)
             new_template_names = ["tom_targets/target_list.html"]  # was template_name class property
 
-        # put the new template names at the front of the list
+        # Here, we're putting the new template(s) at the front of the list
         template_names = new_template_names + templates_names_from_super
-        logger.debug(f'template_names:, {template_names}')
+        # logger.debug(f'template_names: {template_names}')
 
         return template_names
 
