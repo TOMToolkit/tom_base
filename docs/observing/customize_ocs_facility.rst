@@ -460,5 +460,6 @@ In order to create a Redirect Facility, you need to subclass `BaseRedirectObserv
 
 The outside website that the facility redirects to must also return the user to the specified callback_url
 that is passed in as part of the call to `redirect_url`. In addition, it needs to add a `observation_id`
-parameter to this URL which is the ID of the newly created observation on the facility side.
-This is how the TOM links a specific observation with a Target in the database.
+parameter to this URL which is the ID of the newly created observation on the facility side. The `target_id`
+and `facility` parameters must also be present, and should match the values passed in by the original
+callback_url.
