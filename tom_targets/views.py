@@ -986,7 +986,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
 
     def get(self, request, *args, **kwargs):
 
-        context = self.get_context_data(request=request,*args, **kwargs)
+        context = self.get_context_data(request=request, *args, **kwargs)
 
         page = request.GET.get('page')
 
