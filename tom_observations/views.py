@@ -391,6 +391,10 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
 
 
 class ObservationRedirectView(LoginRequiredMixin, View):
+    """
+    This view redirects the user to an outside facility using the URL
+    provided by the facility's redirect_url method (must be a RedirectFacility)
+    """
     def get(self, request, *args, **kwargs):
         facility_name = self.kwargs['facility']
         facility_instance = get_service_class(facility_name)()
@@ -435,6 +439,13 @@ class ObservationRecordCancelView(LoginRequiredMixin, View):
 
 
 class ObservationCallbackView(LoginRequiredMixin, View):
+    """
+    This is the view that handles the user returning **from** the facility back to the TOM.
+    The query parameters must include facility, target_id and observation_id as these are
+    the required parameters for creating an ObservationRecord. Once an ObservationRecord object
+    is created, permissions are assigned to it for the current user, and the user is redirected
+    to the observation detail page.
+    """
     def get(self, request):
         facility = request.GET.get('facility')
         target_id = request.GET.get('target_id')
