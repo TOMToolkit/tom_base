@@ -496,9 +496,9 @@ class TargetDetailView(DetailView):
             call_command('updatestatus', target_id=target_id, stdout=out)
             messages.info(request, out.getvalue())
             add_hint(request, mark_safe(
-                              'Did you know updating observation statuses can be automated? Learn how in'
-                              '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
-                              ' the docs.</a>'))
+                'Did you know updating observation statuses can be automated? Learn how in'
+                '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
+                ' the docs.</a>'))
             return redirect(reverse('tom_targets:detail', args=(target_id,)) + '?tab=observations')
 
         obs_template_form = ApplyObservationTemplateForm(request.GET)
@@ -574,6 +574,7 @@ class TargetExportView(TargetListView):
     """
     View that handles the export of targets to a CSV. Only exports selected targets.
     """
+
     def render_to_response(self, context, **response_kwargs):
         """
         Returns a response containing the exported CSV of selected targets.
@@ -843,7 +844,7 @@ class TargetGroupingShareView(FormView):
         """
         Redirects to the target list page with the target list name as a query parameter.
         """
-        return reverse_lazy('targets:list')+f'?targetlist__name={self.kwargs.get("pk", None)}'
+        return reverse_lazy('targets:list') + f'?targetlist__name={self.kwargs.get("pk", None)}'
 
     def form_invalid(self, form):
         """
@@ -937,9 +938,9 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         # The displayed table can be extended to include selected extra_fields for each target,
         # if configured in the TOM's settings.py. So we set the list of table columns accordingly.
         context['table_columns'] = [
-                            'Target', 'Site', 'Min airmass', 'Rise time',
+                                       'Target', 'Site', 'Min airmass', 'Rise time',
                                        'Time of min airmass', 'Set time', 'Duration [hrs]'
-                        ] + getattr(settings, 'SELECTION_EXTRA_FIELDS', [])
+                                   ] + getattr(settings, 'SELECTION_EXTRA_FIELDS', [])
 
         return context
 
@@ -1040,14 +1041,12 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
                 facility_name=observatory
             )
             for site, vis_data in visibility_data.items():
-                airmass_data = np.array([[vis_data[0][i],x] for i,x in enumerate(vis_data[1]) if x])
+                airmass_data = np.array([[vis_data[0][i], x] for i, x in enumerate(vis_data[1]) if x])
 
                 if len(airmass_data) > 0:
-                    s = SkyCoord(target.ra, target.dec, frame='icrs', unit=(u.deg, u.deg))
-
                     # Find the timestamp of the minimum airmass
                     imin = np.where(airmass_data[:, 1] == airmass_data[:, 1].min())[0][0]
-                    duration = airmass_data[:,0][-1] - airmass_data[:,0][0]
+                    duration = airmass_data[:, 0][-1] - airmass_data[:, 0][0]
 
                     # Target entry includes:
                     # PK, name, site, minimum airmass, time of minimum airmass, rise time, set time
@@ -1055,10 +1054,10 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
                         target.id,
                         target.name,
                         site,
-                        round(airmass_data[:,1].min(), 1),
-                        airmass_data[:,0][0].time().strftime("%H:%M:%S"),
-                        airmass_data[:,0][imin].time().strftime("%H:%M:%S"),
-                        airmass_data[:,0][-1].time().strftime("%H:%M:%S"),
+                        round(airmass_data[:, 1].min(), 1),
+                        airmass_data[:, 0][0].time().strftime("%H:%M:%S"),
+                        airmass_data[:, 0][imin].time().strftime("%H:%M:%S"),
+                        airmass_data[:, 0][-1].time().strftime("%H:%M:%S"),
                         str(duration).split('.')[0]
                     ]
 
