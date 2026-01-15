@@ -201,15 +201,6 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
         )
     )
 
-    order = django_filters.OrderingFilter(
-        fields=['name', 'created', 'modified'],
-        field_labels={
-            'name': 'Name',
-            'created': 'Creation Date',
-            'modified': 'Last Update'
-        }
-    )
-
     # Here, we override the default 'type' ChoiceFilter so we can add htmx attributes to it's widget
     type = django_filters.ChoiceFilter(
         choices=Target.TARGET_TYPES,
@@ -224,6 +215,50 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
             }
         )
     )
+
+    # Set up a search box that filters the Targets
+    query = django_filters.CharFilter(
+        # TODO: make this customizable like TargetFilterSet.get_universal_search_callable
+        method='universal_search',
+        label="General search",
+        # override widget in order to add htmx attributes
+        widget=forms.TextInput(
+            attrs={
+                'hx-get': "",  # triggered GET goes to the source URL by default
+                'hx-trigger': "input",  # make the AJAX call when the input changes
+                'hx-target': "div.table-container",
+                'hx-swap': "outerHTML",
+                'hx-indicator': ".progress",
+                'hx-include': "closest form",  # include the other filters in this FilterSet
+            }
+        ))
+
+    # TODO: this method should be customizable and it needs a lot of work atm.
+    def universal_search(self, queryset, name, value):
+        """
+        Docstring for TargetFilterSet.universal_search
+
+        :param self: Description
+        :param queryset: Description
+        :param name: Description
+        :param value: Description
+        """
+        logger.debug(f'**** universal_search --  value: {value}')
+        logger.debug(f'**** universal_search --  name: {name}')
+        logger.debug(f'**** universal_search --  queryset: {queryset}')
+        logger.debug(f'**** universal_search --  request: {self.request}')
+
+        from decimal import Decimal
+        # if a digit is being entered, query the RA, and DEC fields
+        if value.replace(".", "", 1).isdigit():
+            value = Decimal(value)
+            return Target.objects.filter(
+                Q(ra=value) | Q(dec=value)
+            )
+
+        return Target.objects.filter(
+            Q(name__icontains=value)  ## | Q(type__icontains=value)
+        )
 
     class Meta:
         model = Target
