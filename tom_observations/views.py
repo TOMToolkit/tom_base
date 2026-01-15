@@ -440,9 +440,12 @@ class ObservationCallbackView(LoginRequiredMixin, View):
         target_id = request.GET.get('target_id')
         observation_id = request.GET.get('observation_id')
         user = request.user
-        if not all([facility, target_id, observation_id]):
-            messages.error(self.request, 'Missing required parameters: facility, target_id, observation_id')
+        if not target_id:
+            messages.error(self.request, 'Missing required parameter: target_id')
             return redirect(reverse('tom_observations:list'))
+        elif not all([facility, observation_id]):
+            messages.error(self.request, 'Missing required parameters: facility, observation_id')
+            return redirect(reverse('targets:detail', kwargs={'pk': target_id}))
         target = get_object_or_404(Target, id=target_id)
         observation, created = ObservationRecord.objects.get_or_create(
             user=user,
