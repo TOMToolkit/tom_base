@@ -1,10 +1,19 @@
+import logging
+
 from django import forms
 from django.conf import settings
 from django.db.models import Q
+
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Row, Column, Div, HTML
+
 import django_filters
 
 from tom_targets.models import Target, TargetList
 from tom_targets.utils import cone_search_filter
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 def filter_for_field(field):
@@ -58,15 +67,62 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
     Access these filters via the API endpoint:
         `GET /api/targets/?type=<type>&cone_search=<ra,dec,radius>`
     """
-    key = django_filters.CharFilter(field_name='targetextra__key', label='Key')
-    value = django_filters.CharFilter(field_name='targetextra__value', label='Value')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         for field in settings.EXTRA_FIELDS:
             new_filter = filter_for_field(field)
             new_filter.parent = self
             self.filters[field['name']] = new_filter
+
+
+    @property
+    def form(self):
+        """Override form property to configure crispy forms helper. This is to remove
+        the Submit button which is not needed because HTMX is making AJAX requests.
+
+        Also, add the FormHelper.Layout definition
+        """
+        if not hasattr(self, '_form'):
+            self._form = super().form
+            # Configure crispy forms helper - no submit button, no form tag
+            self._form.helper = FormHelper()
+            self._form.helper.form_tag = False  # Don't render <form> tags (template handles it)
+            self._form.helper.disable_csrf = True  # Template handles CSRF if needed
+            self._form.helper.form_show_labels = True  # Explicitly clear any inputs/buttons
+
+            # Prepare extra fields for the layout
+            extra_field_names = [f['name'] for f in settings.EXTRA_FIELDS]
+            extra_columns = [Column(name, css_class='form-group col-md-3') for name in extra_field_names]
+
+            # Define the structure using Bootstrap Grid (Row/Column)
+            self._form.helper.layout = Layout(
+                # Row 1: Primary Search parameters
+                Row(
+                    Column('query', css_class='form-group col-md-3'),
+                    Column('name', css_class='form-group col-md-3'),
+                    Column('type', css_class='form-group col-md-3'),
+                    Column('targetlist__name', css_class='form-group col-md-3'),
+                ),
+                # Row 2: Location and Coordinates
+                Row(
+                    Column('cone_search', css_class='form-group col-md-6'),
+                    Column('target_cone_search', css_class='form-group col-md-6'),
+                ),
+                # Row 3: Key/Value and Fuzzy search
+                Row(
+                    Column('key', css_class='form-group col-md-3'),
+                    Column('value', css_class='form-group col-md-3'),
+                    Column('name_fuzzy', css_class='form-group col-md-3'),
+                ),
+                # Row 4: Dynamically added extra fields
+                Row(
+                    *extra_columns,
+                ) if extra_columns else HTML("")
+            )
+        return self._form
+
 
     name = django_filters.CharFilter(method='filter_name', label='Name')
 
@@ -119,6 +175,9 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
         dec = float(dec)
 
         return cone_search_filter(queryset, ra, dec, radius)
+
+    key = django_filters.CharFilter(field_name='targetextra__key', label='Key')
+    value = django_filters.CharFilter(field_name='targetextra__value', label='Value')
 
     # hide target grouping list if user not logged in
     def get_target_list_queryset(request):
