@@ -4,8 +4,6 @@ from datetime import datetime, timedelta
 from io import StringIO
 from urllib.parse import urlencode
 import numpy as np
-from astropy.coordinates import SkyCoord
-from astropy import units as u
 
 from django.conf import settings
 from django.contrib import messages
