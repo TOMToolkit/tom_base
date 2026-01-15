@@ -1,7 +1,7 @@
 from io import StringIO
 from urllib.parse import urlencode
 import logging
-from typing import List
+from typing import Any, List
 
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import HTML, Layout, Submit
@@ -144,6 +144,22 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     """
     template_name = 'tom_observations/observation_form.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        """Figure out what HTTP method (GET, POST, etc) should be called
+        to handle this request.
+
+        Here, we extend the method to attach the Facility class to the View so
+        we don't have to create more than one instances of it. So,
+        instantiate the facility class once and store it on the view instance
+        for the duration of the request-response cycle.
+        """
+        self.facility_instance = self.get_facility_class()()
+        # attach the user the Faciliy after instantiation -- not in __init__()
+        self.facility_instance.set_user(request.user)
+
+        # now go find the HTTP method to use...
+        return super().dispatch(request, *args, **kwargs)
+
     def get_template_names(self) -> List[str]:
         """Override the base class method to ask the Facility if it has
         specified a Facility-specific template to use. If so, put it at the
@@ -152,11 +168,10 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         template_names = super().get_template_names()
 
         # get the facility_class and its template_name, if defined
-        facility_class = self.get_facility_class()
         try:
-            if facility_class.template_name:
+            if self.facility_instance.template_name:
                 # add to front of list b/c first template will be tried first
-                template_names.insert(0, facility_class.template_name)
+                template_names.insert(0, self.facility_instance.template_name)
         except AttributeError:
             # some Facilities won't have a custom template_name defined and so
             # we will just use the one defined above.
@@ -223,9 +238,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         # reloaded due to form errors, only repopulate the form that was submitted.
         observation_type_choices = []
         initial = self.get_initial()
-        facility = self.get_facility_class()()
-        facility.set_user(self.request.user)
-        observation_form_classes = facility.get_form_classes_for_display(**kwargs)
+        observation_form_classes = self.facility_instance.get_form_classes_for_display(**kwargs)
         for observation_type, observation_form_class in observation_form_classes.items():
             form_data = {**initial, **{'observation_type': observation_type}}
             # Repopulate the appropriate form with form data if the original submission was invalid
@@ -233,7 +246,10 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
                 form_data.update(**self.request.POST.dict())
             observation_form_class = type(f'Composite{observation_type}Form',
                                           (self.get_cadence_strategy_form(), observation_form_class), {})
-            observation_type_choices.append((observation_type, observation_form_class(initial=form_data)))
+            # Pass facility parameter to form instantiation for user context
+            form_kwargs = {'initial': form_data, 'facility': self.facility_instance}
+            form_instance = observation_form_class(**form_kwargs)
+            observation_type_choices.append((observation_type, form_instance))
         context['observation_type_choices'] = observation_type_choices
 
         # Ensure correct tab is active if submission is unsuccessful
@@ -243,34 +259,33 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         context['target'] = target
 
         # allow the Facility class to add data to the context
-        facility_context = facility.get_facility_context_data(target=target)
+        facility_context = self.facility_instance.get_facility_context_data(target=target)
         context.update(facility_context)
 
-        context['facility_link'] = getattr(facility, 'link', '')
+        context['facility_link'] = getattr(self.facility_instance, 'link', '')
 
         try:
-            context['missing_configurations'] = ", ".join(facility.facility_settings.get_unconfigured_settings())
+            missing_settings = self.facility_instance.facility_settings.get_unconfigured_settings()
+            context['missing_configurations'] = ", ".join(missing_settings)
         except AttributeError:
             context['missing_configurations'] = ''
 
         return context
 
-    def get_form_class(self):
+    def get_form_class(self, observation_type=None):
         """
         Gets the observation form class for the facility and selected observation type in the query parameters.
 
         :returns: observation form
         :rtype: subclass of GenericObservationForm
         """
-        observation_type = None
-        if self.request.method == 'GET':
-            observation_type = self.request.GET.get('observation_type')
-        elif self.request.method == 'POST':
-            observation_type = self.request.POST.get('observation_type')
-        facility = self.get_facility_class()()
-        facility.set_user(self.request.user)
+        if not observation_type:
+            if self.request.method == 'GET':
+                observation_type = self.request.GET.get('observation_type')
+            elif self.request.method == 'POST':
+                observation_type = self.request.POST.get('observation_type')
         form_class = type(f'Composite{observation_type}Form',
-                          (facility.get_form(observation_type), self.get_cadence_strategy_form()),
+                          (self.facility_instance.get_form(observation_type), self.get_cadence_strategy_form()),
                           {})
         return form_class
 
@@ -281,8 +296,12 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :returns: observation form
         :rtype: subclass of GenericObservationForm
         """
+        if form_class is None:
+            form_class = self.get_form_class()
+
+        form_kwargs = self.get_form_kwargs()
         try:
-            form = super().get_form()
+            form = form_class(**form_kwargs)
         except Exception as ex:
             logger.error(f"Error loading {self.get_facility()} form: {repr(ex)}")
             raise BadRequest(f"Error loading {self.get_facility()} form: {repr(ex)}")
@@ -313,8 +332,37 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         initial.update(self.request.GET.dict())
         return initial
 
+    def get_form_kwargs(self) -> dict[str, Any]:
+        """Return the keyword arguments for instantiating the form.
+
+        Here, we extend the super-class method to add the facility instance:
+        call the super() and then add the facility to the form kwargs.
+        The facility already has user context set via set_user() in dispatch().
+        """
+        kwargs = super().get_form_kwargs()
+        kwargs['facility'] = self.facility_instance
+        return kwargs
+
     def post(self, request, *args, **kwargs):
-        form = self.get_form()
+        """
+        Handles the POST request to the view.
+
+        This method is responsible for processing the form submission. It
+        instantiates the form with the POST data and files, and then
+        checks if the form is valid. If the form is valid, it calls
+        form_valid(); otherwise, it calls form_invalid().
+
+        We override this method to handle a TypeError that may occur
+        when instantiating the form. Some forms may not accept the 'user'
+        keyword argument. In this case, we catch the TypeError, remove
+        the 'user' from the keyword arguments, and try to instantiate
+        the form again.
+        """
+        form_class = self.get_form_class()
+        form_kwargs = self.get_form_kwargs()
+
+        form = form_class(**form_kwargs)
+
         if form.is_valid():
             if 'validate' in request.POST:
                 return self.form_validation_valid(form)
@@ -339,10 +387,8 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         :type form: subclass of GenericObservationForm
         """
         # Submit the observation
-        facility = self.get_facility_class()()
-        facility.set_user(self.request.user)
         target = self.get_target()
-        observation_ids = facility.submit_observation(form.observation_payload())
+        observation_ids = self.facility_instance.submit_observation(form.observation_payload())
         records = []
 
         for observation_id in observation_ids:
@@ -350,7 +396,7 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
             record = ObservationRecord.objects.create(
                 target=target,
                 user=self.request.user,
-                facility=facility.name,
+                facility=self.facility_instance.name,
                 parameters=form.serialize_parameters(),
                 observation_id=observation_id
             )
