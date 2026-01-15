@@ -74,24 +74,7 @@
     {# The actual table #}
     {% render_table table %}
     <hr>
-    <h1>old table</h1>
-    {% target_table object_list %}
-
-    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
-    {% endblock target_table_content %}
+      {% endblock target_table_content %}
   </div>
-  {{ filter.fields }}
-  <div class="col-md-2">
-    <form action="" method="get" class="form">
-      {% bootstrap_form filter.form %}
-      {% buttons %}
-        <button type="submit" class="btn btn-primary">
-          Filter
-        </button>
-        <a href="{% url 'targets:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
-        <button type="submit" formaction="{% url 'targets:export' %}" id="invisible-export-button" style="display:none"></button>
-      {% endbuttons %}
-    </form>
   </div>
-</div>
 {% endblock content %}
