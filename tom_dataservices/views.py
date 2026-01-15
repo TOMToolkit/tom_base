@@ -336,6 +336,7 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                                  """)
                                  )
                 errors.append(target.name)
+                target = None
             # Do not attempt to store Reduced Datums if no Target Created.
             if target:
                 try:
