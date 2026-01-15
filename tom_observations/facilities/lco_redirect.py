@@ -35,7 +35,7 @@ class LCORedirectFacility(BaseRedirectObservationFacility):
         return url
 
     def get_observation_url(self, observation_id):
-        return
+        return ""
 
     def get_terminal_observing_states(self):
         return []
