@@ -6,6 +6,10 @@
 {% endblock %}
 {% block content %}
 <h3>Select Targets for an Observing Facility</h3>
+<p>The form below will calculate the visibility of targets on a selected target list from your observatory of choice, for
+    a 24hr window starting at the date/time given (UTC).  Note the visibility is calculated at 10min intervals, so
+    rise/set times are approximate.
+</p>
 <div class="row">
   <form method="post" class="form" id='target-selection-form'>
     {% csrf_token %}
@@ -14,7 +18,7 @@
             {% bootstrap_field form.observatory %}
         </div>
         <div class="col-sm-5">
-            {% bootstrap_field form.date %}
+            {% bootstrap_field form.window_start %}
         </div>
         <div class="col-sm-3">
             {% bootstrap_field form.target_list %}

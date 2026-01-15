@@ -328,5 +328,8 @@ class Facility(models.Model):
         help_text="Root URL of the facilities API endpoints"
     )
 
+    class Meta:
+        verbose_name_plural = "facilities"
+
     def __str__(self):
         return self.short_name

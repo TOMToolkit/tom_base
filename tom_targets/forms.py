@@ -295,11 +295,11 @@ class TargetSelectionForm(forms.Form):
         TargetList.objects.all(),
         required=True)
     observatory = forms.ChoiceField(required=True, choices=[])
-    date = forms.DateField(
+    window_start = forms.DateTimeField(
         required=True,
-        initial=datetime.date.today,
-        widget=forms.TextInput(attrs={'type': 'date'}),
-        help_text='YYYY-MM-DD'
+        initial=datetime.datetime.today,
+        widget=forms.TextInput(attrs={'type': 'datetime'}),
+        help_text='YYYY-MM-DD HH:MM:SS UTC'
     )
 
     def __init__(self, *args, **kwargs):

@@ -923,7 +923,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
     form_class = TargetSelectionForm
     observable_targets = []
 
-    def get_context_data(self, *args, **kwargs):
+    def get_context_data(self, request, *args, **kwargs):
         """
         Adds the ``TargetListShareForm`` to the context and prepopulates the hidden fields.
         :returns: context object
@@ -932,12 +932,13 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
 
         context = super().get_context_data(*args, **kwargs)
         # Surely this needs to verify that the user has permission?
-        context['form'] = TargetSelectionForm()
+        context['form'] = TargetSelectionForm(request.POST or None)
 
         # The displayed table can be extended to include selected extra_fields for each target,
         # if configured in the TOM's settings.py. So we set the list of table columns accordingly.
         context['table_columns'] = [
-                            'Target', 'RA', 'Dec', 'Site', 'Min airmass'
+                            'Target', 'Site', 'Min airmass', 'Rise time',
+                                       'Time of min airmass', 'Set time', 'Duration [hrs]'
                         ] + getattr(settings, 'SELECTION_EXTRA_FIELDS', [])
 
         return context
@@ -949,7 +950,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
 
         if form.is_valid():
             targetlist = form.cleaned_data['target_list']
-            date = form.cleaned_data['date']
+            window_start = form.cleaned_data['window_start']
             observatory = form.cleaned_data['observatory']
 
             # Retrieve the full list of targets for this targetlist.
@@ -964,17 +965,17 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
             # can retrieve different pages.  The Target query set and date have to be
             # in a format that can serialize to JSON
             request.session['targets'] = [t.pk for t in targets]
-            request.session['date'] = date.strftime('%Y-%m-%d')
+            request.session['window_start'] = window_start.strftime('%Y-%m-%d %H:%M:%S')
             request.session['observatory'] = observatory
 
             # Now calculate the visibilities of the restricted list of objects
             target_visibilities = self.get_observable_targets(
                 targets_page,
-                date,
+                window_start,
                 observatory
             )
 
-        context = self.get_context_data(*args, **kwargs)
+        context = self.get_context_data(request, *args, **kwargs)
 
         context['target_visibilities'] = target_visibilities
         context['targets_page'] = targets_page
@@ -984,18 +985,18 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
 
     def get(self, request, *args, **kwargs):
 
-        context = self.get_context_data(*args, **kwargs)
+        context = self.get_context_data(request, *args, **kwargs)
 
         page = request.GET.get('page')
 
         if page and 'targets' in request.session.keys():
             targets = Target.objects.filter(pk__in=request.session['targets'])
-            date = datetime.strptime(request.session['date'], "%Y-%m-%d")
+            window_start = datetime.strptime(request.session['window_start'], "%Y-%m-%d %H:%M:%S")
             paginator = Paginator(targets, self.paginate_by)
             targets_page = paginator.get_page(page)
             target_visibilities = self.get_observable_targets(
                 targets_page,
-                date,
+                window_start,
                 request.session['observatory']
             )
             context['target_visibilities'] = target_visibilities
@@ -1008,12 +1009,12 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
 
         return render(request, self.template_name, context)
 
-    def get_observable_targets(self, targets_page, date, observatory):
+    def get_observable_targets(self, targets_page, window_start, observatory):
         """
         Handles POST requests to select targets suitable for observation from this facility
 
         :param targets_page: int Index of the page of targets to compute visbilities for
-        :param date: datetime object for the day to calculate for
+        :param window_start: datetime object for the start of the time window to calculate for
         :param observatory: str Full name of the observatory to compute for. This can refer to either
                                 a facility module or general facilty entry
         :return: HTTPRequest
@@ -1021,43 +1022,49 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
 
         # Configuration:
         # Maximum airmass limit to consider a target visible
-        # Number of intervals with which to calculate visibility throughout a single night
-        airmass_max = 2.0
+        # Intervals in minutes for which to calculate visibility throughout a single night
+        airmass_max = 2
         visibiliy_intervals = 10
 
-        # Calculate the visibility of all selected targets on the date given
+        # Calculate the visibility of all selected targets for a 24hr window begining on the datetime given
         # Since some observatories include multiple sites, the visibility_data returned is always
         # a dictionary indexed by site code.  Our purpose here is to verify whether each target is ever
         # visible at lower airmass than the limit from any site - if so the target is considered to be visible
         observable_targets = []
 
         for target in targets_page:
-            start_time = datetime.combine(date, datetime.min.time())
-            end_time = start_time + timedelta(days=1)
+            window_end = window_start + timedelta(days=1)
             visibility_data = get_sidereal_visibility(
-                target, start_time, end_time,
+                target, window_start, window_end,
                 visibiliy_intervals, airmass_max,
                 facility_name=observatory
             )
             for site, vis_data in visibility_data.items():
-                airmass_data = np.array([x for x in vis_data[1] if x])
+                airmass_data = np.array([[vis_data[0][i],x] for i,x in enumerate(vis_data[1]) if x])
+
                 if len(airmass_data) > 0:
                     s = SkyCoord(target.ra, target.dec, frame='icrs', unit=(u.deg, u.deg))
+
+                    # Find the timestamp of the minimum airmass
+                    imin = np.where(airmass_data[:, 1] == airmass_data[:, 1].min())[0][0]
+                    duration = airmass_data[:,0][-1] - airmass_data[:,0][0]
+
+                    # Target entry includes:
+                    # PK, name, site, minimum airmass, time of minimum airmass, rise time, set time
                     target_data = [
                         target.id,
                         target.name,
-                        s.ra.to_string(u.hour),
-                        s.dec.to_string(u.deg, alwayssign=True),
                         site,
-                        round(airmass_data.min(), 1)
+                        round(airmass_data[:,1].min(), 1),
+                        airmass_data[:,0][0].time().strftime("%H:%M:%S"),
+                        airmass_data[:,0][imin].time().strftime("%H:%M:%S"),
+                        airmass_data[:,0][-1].time().strftime("%H:%M:%S"),
+                        str(duration).split('.')[0]
                     ]
 
                     # Extract any requested extra parameters for this object, if available
                     for param in getattr(settings, 'SELECTION_EXTRA_FIELDS', []):
-                        if param in target.extra_fields.keys():
-                            target_data.append(target.extra_fields[param])
-                        else:
-                            target_data.append(None)
+                        target_data.append(getattr(target, param, None))
                     observable_targets.append(target_data)
 
         return observable_targets
