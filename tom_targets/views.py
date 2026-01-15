@@ -923,7 +923,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
     form_class = TargetSelectionForm
     observable_targets = []
 
-    def get_context_data(self, request, *args, **kwargs):
+    def get_context_data(self, *args, **kwargs):
         """
         Adds the ``TargetListShareForm`` to the context and prepopulates the hidden fields.
         :returns: context object
@@ -931,6 +931,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
         """
 
         context = super().get_context_data(*args, **kwargs)
+        request = kwargs['request']
         # Surely this needs to verify that the user has permission?
         context['form'] = TargetSelectionForm(request.POST or None)
 
@@ -975,7 +976,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
                 observatory
             )
 
-        context = self.get_context_data(request, *args, **kwargs)
+        context = self.get_context_data(request=request, *args, **kwargs)
 
         context['target_visibilities'] = target_visibilities
         context['targets_page'] = targets_page
@@ -985,7 +986,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
 
     def get(self, request, *args, **kwargs):
 
-        context = self.get_context_data(request, *args, **kwargs)
+        context = self.get_context_data(request=request,*args, **kwargs)
 
         page = request.GET.get('page')
 
