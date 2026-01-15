@@ -25,6 +25,7 @@ from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.views.generic.detail import DetailView, SingleObjectMixin
+from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
 from rest_framework.views import APIView
 from rest_framework.renderers import TemplateHTMLRenderer
@@ -752,7 +753,7 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 
 
-class TargetGroupingView(PermissionListMixin, FormView):
+class TargetGroupingView(PermissionListMixin, ListView):
     """
     View that handles the display of ``TargetList`` objects, also known as target groups. Requires authorization.
     """
