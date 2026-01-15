@@ -460,7 +460,6 @@ class TestGetVisibility(TestCase):
         mock_facility.return_value = {'Fake Robotic Facility': FakeRoboticFacility}
         end = self.start + timedelta(minutes=60)
         airmass = get_sidereal_visibility(self.target, self.start, end, self.interval, self.airmass_limit)
-        print(airmass)
 
         airmass_data = airmass['(FakeRoboticFacility) Siding Spring'][1]
         expected_airmass = [
