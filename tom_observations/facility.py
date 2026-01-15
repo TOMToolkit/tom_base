@@ -493,13 +493,13 @@ class BaseRedirectObservationFacility(BaseObservationFacility):
         raise NotImplementedError("Must implement redirect_url")
 
     def get_form(self, observation_type):
-        return None
+        raise TypeError("RedirectFacility does not provide a form for observation creation")
 
     def get_template_form(self, observation_type):
-        return None
+        raise TypeError("RedirectFacility does not provide a form for observation creation")
 
     def submit_observation(self, observation_payload):
-        return None
+        raise TypeError("RedirectFacility does not submit observations on remote facilities")
 
     def validate_observation(self, observation_payload):
-        return None
+        raise TypeError("RedirectFacility does no observation creation or validation")
