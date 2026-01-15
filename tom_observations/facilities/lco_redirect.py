@@ -20,7 +20,7 @@ class LCORedirectFacility(BaseRedirectObservationFacility):
         }
         return urllib.parse.urlencode(set_fields)
 
-    def observation_portal_uri(self) -> str:
+    def observation_portal_url(self) -> str:
         return settings.FACILITIES.get("LCO", {}).get(
             "portal_url", "https://observe.lco.global"
         )
@@ -29,8 +29,8 @@ class LCORedirectFacility(BaseRedirectObservationFacility):
         target = get_object_or_404(Target, pk=target_id)
         query_params = self.target_to_query_params(target)
         callback_url = urllib.parse.quote_plus(callback_url)
-        portal_uri = self.observation_portal_uri()
-        url = f"{portal_uri}/create?{query_params}&redirect_uri={callback_url}"
+        portal_url = self.observation_portal_url()
+        url = f"{portal_url}/create?{query_params}&redirect_uri={callback_url}"
 
         return url
 
@@ -44,7 +44,7 @@ class LCORedirectFacility(BaseRedirectObservationFacility):
         return {}
 
     def get_observation_status(self, observation_id):
-        return
+        return None
 
     def data_products(self, observation_id, product_id=None):
         return []
