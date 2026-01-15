@@ -323,10 +323,6 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                 target.save(extras=extras, names=aliases)
                 # Give the user access to the target they created
                 target.give_user_access(self.request.user)
-                try:
-                    data_service_class.to_reduced_datums(target, cached_result)
-                except NotImplementedError:
-                    pass
                 for group in request.user.groups.all():
                     assign_perm('tom_targets.view_target', group, target)
                     assign_perm('tom_targets.change_target', group, target)
@@ -340,6 +336,12 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                                  """)
                                  )
                 errors.append(target.name)
+            # Do not attempt to store Reduced Datums if no Target Created.
+            if target:
+                try:
+                    data_service_class.to_reduced_datums(target, cached_result.get('reduced_datums'))
+                except NotImplementedError:
+                    pass
         if len(results) == len(errors):
             return redirect(reverse('dataservices:run'))
         if len(results) == 1 and target:

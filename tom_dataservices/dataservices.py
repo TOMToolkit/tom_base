@@ -224,19 +224,17 @@ class BaseDataService(ABC):
         """Create a new DataProduct from the query results"""
         raise NotImplementedError
 
-    def to_reduced_datums(self, target, photometry_results=None, **kwargs):
+    def to_reduced_datums(self, target, data_results=None, **kwargs):
         """
         Upper level function to create a new ReducedDatum from the query results
-        Can take either new query results, or use stored results form a recent `query_service()`
+        Can take either new data results, or use stored results form a recent `query_service()`
         :param target: Target object to associate with the ReducedDatum
-        :param query_results: Query results from the DataService
-        :returns: ReducedDatum object
+        :param data_results: Query results from the DataService storing observation data. This should be a dictionary
+            with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
         """
-        photometry_results = photometry_results or self.photometry_results
-        # TODO add other reduced Datums
-        phot_for_target = photometry_results.get(target.name)
-        self.create_reduced_datums_from_query(target, phot_for_target, 'photometry', **kwargs)
-
+        data_results = data_results or self.data_results
+        for key in data_results.keys():
+            self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
         return
 
     def create_reduced_datums_from_query(self, target, data=None, data_type=None, **kwargs):
