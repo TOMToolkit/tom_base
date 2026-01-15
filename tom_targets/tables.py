@@ -10,6 +10,8 @@ logger.setLevel(logging.DEBUG)
 
 class TargetHTMXTable(tables.Table):
 
+    selection = tables.CheckBoxColumn(accessor="pk", orderable=False)
+
     name = tables.Column(linkify=True)
 
     class Meta:
@@ -20,7 +22,7 @@ class TargetHTMXTable(tables.Table):
         # this template extends the bootstrap.html template with HTMX attributes.
         template_name = 'tom_targets/bootstrap_htmx.html'
 
-        fields = ['id', 'name', 'type', 'ra', 'dec', ]
+        fields = ['selection', 'id', 'name', 'type', 'ra', 'dec', ]
 
     def get_partial_template_name(self) -> str:
         """
