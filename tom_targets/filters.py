@@ -236,29 +236,24 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
     # TODO: this method should be customizable and it needs a lot of work atm.
     def universal_search(self, queryset, name, value):
         """
-        Docstring for TargetFilterSet.universal_search
 
-        :param self: Description
-        :param queryset: Description
-        :param name: Description
-        :param value: Description
+        :param queryset: this is the result of the previous filters. By returning
+            queryset.fitler(new_Q), we are respecting the filters that preceed this method
+            the filter chain.
+        :param name: the Filter calling here (the query CharFilter above, for example)
+        :param value: what the user has typed in the query CharField so far
         """
-        logger.debug(f'**** universal_search --  value: {value}')
-        logger.debug(f'**** universal_search --  name: {name}')
-        logger.debug(f'**** universal_search --  queryset: {queryset}')
-        logger.debug(f'**** universal_search --  request: {self.request}')
+        if not value:
+            return queryset  # early return
 
         from decimal import Decimal
         # if a digit is being entered, query the RA, and DEC fields
         if value.replace(".", "", 1).isdigit():
             value = Decimal(value)
-            return Target.objects.filter(
-                Q(ra=value) | Q(dec=value)
-            )
+            logger.debug(f'**** universal_search --  decoded digit value: {value}')
+            return queryset.filter(Q(ra__icontains=value) | Q(dec__icontains=value))
 
-        return Target.objects.filter(
-            Q(name__icontains=value)  ## | Q(type__icontains=value)
-        )
+        return queryset.filter(Q(name__icontains=value))
 
     class Meta:
         model = Target
