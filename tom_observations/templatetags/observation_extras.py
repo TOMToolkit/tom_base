@@ -108,7 +108,14 @@ def observation_plan(target, facility=None, length=2, interval=60, airmass_limit
     start_time = datetime.now()
     end_time = start_time + timedelta(days=length)
 
-    visibility_data = get_sidereal_visibility(target, start_time, end_time, interval, airmass_limit, facility)
+    visibility_data = get_sidereal_visibility(
+        target,
+        start_time,
+        end_time,
+        interval,
+        airmass_limit,
+        facility_name=facility
+    )
     i = 0
     plot_data = []
     for site, data in visibility_data.items():

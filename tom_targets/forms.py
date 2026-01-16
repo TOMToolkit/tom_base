@@ -1,13 +1,16 @@
+import datetime
+
 from crispy_forms.layout import Layout, Div
 from django import forms
+from django.conf import settings
 from astropy.coordinates import Angle
 from astropy import units as u
 from crispy_forms.helper import FormHelper
 from django.forms import ValidationError, inlineformset_factory
-from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
+from tom_observations.utils import get_facilities
 from tom_dataproducts.sharing import get_sharing_destination_options
 from .models import Target, TargetExtra, TargetName, TargetList, PersistentShare
 from tom_targets.base_models import (SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
@@ -282,3 +285,23 @@ class PersistentShareForm(AdminPersistentShareForm):
         if self.target_id:
             self.fields['target'].initial = self.target_id
             self.fields['target'].disabled = True
+
+
+class TargetSelectionForm(forms.Form):
+    """
+    Form for selecting the targets from a pre-existing TargetList
+    """
+    target_list = forms.ModelChoiceField(
+        TargetList.objects.all(),
+        required=True)
+    observatory = forms.ChoiceField(required=True, choices=[])
+    window_start = forms.DateTimeField(
+        required=True,
+        initial=datetime.datetime.today,
+        widget=forms.TextInput(attrs={'type': 'datetime'}),
+        help_text='YYYY-MM-DD HH:MM:SS UTC'
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['observatory'].choices = get_facilities()
