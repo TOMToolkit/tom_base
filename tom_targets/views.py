@@ -1061,10 +1061,24 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
                         str(duration).split('.')[0]
                     ]
 
-                    # Extract any requested extra parameters for this object, if available
-                    for param in getattr(settings, 'SELECTION_EXTRA_FIELDS', []):
-                        target_data.append(getattr(target, param, None))
-                    observable_targets.append(target_data)
+                # Populate the results table with null entries for any targets
+                # that are not visible
+                else:
+                    target_data = [
+                        target.id,
+                        target.name,
+                        site,
+                        '<'+str(airmass_max),
+                        '-',
+                        '-',
+                        '-',
+                        0
+                    ]
+
+                # Extract any requested extra parameters for this object, if available
+                for param in getattr(settings, 'SELECTION_EXTRA_FIELDS', []):
+                    target_data.append(getattr(target, param, None))
+                observable_targets.append(target_data)
 
         return observable_targets
 

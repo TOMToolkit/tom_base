@@ -34,20 +34,24 @@ from a customized target model.
 The columns of the table can be configured by editing the TOM's ``settings.py`` file,
 and adding a list called ``SELECTION_EXTRA_FIELDS``, as shown in the example below.  The entries
 in this list can be one or more of the exact names of attributes on your custom Target model.
+``SELECTION_EXTRA_FIELDS`` can also include the names of methods on the custom Target model,
+provided that they return output that can be rendered as a string entry in the table.
 The list can be left empty if no additional fields should be added to the table.
 
 .. code-block:: python
 
     # settings.py
     SELECTION_EXTRA_FIELDS = [
-        'Mag_now',
-        'Priority1',
-        'Priority2',
+        'mag_now',
+        'priority1',
+        'priority2',
     ]
 
-In this example, the custom Target model has fields named ``Mag_now``, ``Priority1``
-and ``Priority2``.   We can add those fields to
-the target selection table by adding the parameter names to the list of ``SELECTION_EXTRA_FIELDS``.
+In this example, the custom Target model has fields named ``priority1``
+and ``priority2`` and a method called ``mag_now``.   Adding those fields names to
+the ``SELECTION_EXTRA_FIELDS`` list will cause three columns of the same names to appear
+in the selected targets table output, containing the priority values and the calculated output of
+the ``mag_now`` method.
 
 Adding Facilities to the Observing Facilities Table
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
