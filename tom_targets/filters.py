@@ -225,7 +225,7 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
         widget=forms.TextInput(
             attrs={
                 'hx-get': "",  # triggered GET goes to the source URL by default
-                'hx-trigger': "input",  # make the AJAX call when the input changes
+                'hx-trigger': "input delay:200ms",  # AJAX call when input changes (delayed to debounce)
                 'hx-target': "div.table-container",
                 'hx-swap': "outerHTML",
                 'hx-indicator': ".progress",
