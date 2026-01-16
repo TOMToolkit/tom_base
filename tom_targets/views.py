@@ -1068,7 +1068,7 @@ class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):
                         target.id,
                         target.name,
                         site,
-                        '<'+str(airmass_max),
+                        '>'+str(airmass_max),
                         '-',
                         '-',
                         '-',
