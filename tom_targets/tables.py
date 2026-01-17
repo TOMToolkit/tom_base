@@ -10,7 +10,23 @@ logger.setLevel(logging.DEBUG)
 
 class TargetHTMXTable(tables.Table):
 
-    selection = tables.CheckBoxColumn(accessor="pk", orderable=False)
+    selection = tables.CheckBoxColumn(
+        accessor="pk",
+        orderable=False,
+        # these attrs of the CheckBoxColumn bind the input to the grouping-form
+        attrs={
+            "input": {
+                "name": "selected-target",  # Match the name expected by TOM views
+                "form": "grouping-form"     # Bind to the form id defined in target_list.html
+            },
+            "th__input": {
+                "class": "header-checkbox",  # Optional class for JS targeting
+                "form": "grouping-form",
+                # this prevents the click from bubbling up to the sorting header
+                "onclick": "event.stopPropagation();"
+            }
+        }
+    )
 
     name = tables.Column(linkify=True)
 
