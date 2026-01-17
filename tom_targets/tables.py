@@ -53,5 +53,5 @@ class TargetHTMXTable(tables.Table):
         {% render_table table %}
         ```
         """
-        partial_template_name = "tom_targets/target_table_partial.html"
+        partial_template_name = "tom_targets/partials/target_table_partial.html"
         return partial_template_name
