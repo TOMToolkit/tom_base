@@ -243,15 +243,18 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
         :param name: the Filter calling here (the query CharFilter above, for example)
         :param value: what the user has typed in the query CharField so far
         """
+        logger.debug(f'**** universal_search -- value: {value}')
+
+        # TODO:  collect entire string from query CharFilter
         if not value:
             return queryset  # early return
 
-        from decimal import Decimal
+        #from decimal import Decimal
         # if a digit is being entered, query the RA, and DEC fields
-        if value.replace(".", "", 1).isdigit():
-            value = Decimal(value)
-            logger.debug(f'**** universal_search --  decoded digit value: {value}')
-            return queryset.filter(Q(ra__icontains=value) | Q(dec__icontains=value))
+        #if value.replace(".", "", 1).isdigit():
+        #    value = Decimal(value)
+        #    logger.debug(f'**** universal_search --  decoded digit value: {value}')
+        #    return queryset.filter(Q(ra__icontains=value) | Q(dec__icontains=value))
 
         return queryset.filter(Q(name__icontains=value))
 

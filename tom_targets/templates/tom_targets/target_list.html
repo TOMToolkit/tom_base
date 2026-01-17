@@ -21,18 +21,15 @@
           <a class="dropdown-item" href="{% url 'targets:import' %}" title="Import Targets">Import Targets</a>
           <a class="dropdown-item" href="{% url 'tom_catalogs:query' %}" title="Catalog Search">Catalog Search</a>
         </div>
-          {% catalog_query_menu %}
+        {% catalog_query_menu %}
+
         {% update_broker_data_button %}
         <button onclick="document.getElementById('invisible-export-button').click()" class="btn btn-primary">Export Filtered Targets</button>
          <!-- use an invisible button, because the key "Enter" event will triggered the first submit button and we want the default action to be applying filter -->
       </span>
       </div>
     </div>
-    {% select_target_js %}
     {% aladin_skymap object_list %}
-    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
-    <label id="displaySelected"></label>
-    <button id="optionSelectAll" type="button" class="btn btn-link" onClick="select_all({{ target_count }})"></button>
     <form id="grouping-form" action="{% url 'targets:add-remove-grouping' %}" method="POST">
       {% csrf_token %}
       <div class="d-flex flex-row align-items-baseline">
@@ -56,7 +53,6 @@
 
     {% block target_table_content %}
     <hr>
-    <h1>Target Table (via django_tables2)</h1>
     {# Search form #}
     <form class="mb-3"
       hx-get="{% url 'tom_targets:list' %}"
