@@ -24,8 +24,12 @@
         {% catalog_query_menu %}
 
         {% update_broker_data_button %}
-        <button onclick="document.getElementById('invisible-export-button').click()" class="btn btn-primary">Export Filtered Targets</button>
-         <!-- use an invisible button, because the key "Enter" event will triggered the first submit button and we want the default action to be applying filter -->
+
+        <!-- Export Filtered Targets button (gets current filter form values for export list)-->
+        <button type="button" class="btn btn-primary" title="Export Filtered Targets"
+                onclick="const queryString = new URLSearchParams(new FormData(document.querySelector('form.mb-3'))).toString(); window.location.href = '{% url 'targets:export' %}?' + queryString;">
+          Export Filtered Targets
+        </button>
       </span>
       </div>
     </div>
