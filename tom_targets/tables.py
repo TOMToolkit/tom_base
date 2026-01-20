@@ -37,8 +37,17 @@ class TargetHTMXTable(tables.Table):
 
         # this template extends the bootstrap.html template with HTMX attributes.
         template_name = 'tom_targets/bootstrap_htmx.html'
-
         fields = ['selection', 'id', 'name', 'type', 'ra', 'dec', ]
+
+        # Add hx-include here to ensure sorting/pagination preserves filters
+        attrs = {
+            # these attrs are applied to the <table> element
+            "class": "table table-striped table-hover table-sm",
+            "hx-include": "#filter-form",  # include filter-form data in the requests from this element
+            "hx-target": "div.table-container", # Result replaces the table container
+            "hx-swap": "outerHTML",  # Replace the whole container
+            "hx-boost": "true"  # Turn sort/pagination links into HTMX requests so only the partial is rendered
+        }
 
     def get_partial_template_name(self) -> str:
         """

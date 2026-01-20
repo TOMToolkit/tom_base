@@ -34,7 +34,7 @@
       </div>
     </div>
 
-    {# htmx wrapper allows the skymap to be updated when the filterset changes#}
+    {# htmx wrapper allows the skymap to be updated when the filterset changes #}
     {% include "tom_targets/partials/aladin_skymap_htmx.html" with is_htmx=False %}
     <hr>
 
@@ -61,8 +61,8 @@
 
     {% block target_table_content %}
     <hr>
-    {# Search form #}
-    <form class="mb-3"
+    {# Search form (we refer to this id="filter-form" in the TargetTable.Meta.attrs) #}
+    <form id="filter-form" class="mb-3"
       hx-get="{% url 'tom_targets:list' %}"
       hx-target="div.table-container"
       hx-swap="outerHTML"
