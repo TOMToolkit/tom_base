@@ -5,7 +5,7 @@ from django.conf import settings
 from django.db.models import Q
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Row, Column, Div, HTML
+from crispy_forms.layout import Layout, Row, Column, HTML
 
 import django_filters
 
@@ -76,7 +76,6 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
             new_filter.parent = self
             self.filters[field['name']] = new_filter
 
-
     @property
     def form(self):
         """Override form property to configure crispy forms helper. This is to remove
@@ -122,7 +121,6 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
                 ) if extra_columns else HTML("")
             )
         return self._form
-
 
     name = django_filters.CharFilter(method='filter_name', label='Name')
 
@@ -249,12 +247,12 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
         if not value:
             return queryset  # early return
 
-        #from decimal import Decimal
-        # if a digit is being entered, query the RA, and DEC fields
-        #if value.replace(".", "", 1).isdigit():
-        #    value = Decimal(value)
-        #    logger.debug(f'**** universal_search --  decoded digit value: {value}')
-        #    return queryset.filter(Q(ra__icontains=value) | Q(dec__icontains=value))
+        # from decimal import Decimal
+        #  if a digit is being entered, query the RA, and DEC fields
+        # if value.replace(".", "", 1).isdigit():
+        #     value = Decimal(value)
+        #     logger.debug(f'**** universal_search --  decoded digit value: {value}')
+        #     return queryset.filter(Q(ra__icontains=value) | Q(dec__icontains=value))
 
         return queryset.filter(Q(name__icontains=value))
 
