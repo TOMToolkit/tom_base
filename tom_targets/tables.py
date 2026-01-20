@@ -28,7 +28,11 @@ class TargetHTMXTable(tables.Table):
         }
     )
 
-    name = tables.Column(linkify=True)
+    name = tables.Column(
+        linkify=True,  # make it a link to the TargetDetail page
+        attrs={"a": {"hx-boost": "false"}}  # override the boot in the <table> attrs (see below)
+        # we reset the hx-boost for this element so the TargetDetail page is a full reload.
+    )
 
     class Meta:
         model = Target
