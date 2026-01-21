@@ -6,6 +6,7 @@ from .views import (TargetGroupingView, TargetGroupingDeleteView, TargetGrouping
                     TargetAddRemoveGroupingView, TargetMergeView, TargetPersistentShareManageFormView,
                     PersistentShareManageFormView, TargetPersistentShareManageTable, PersistentShareManageTable)
 from .views import TargetGroupingShareView, TargetHermesPreloadView, TargetGroupingHermesPreloadView
+from .views import TargetFacilitySelectionView
 from .views import TargetSeedView
 from .viewsets import PersistentShareViewSet
 
@@ -53,5 +54,6 @@ urlpatterns = [
          PersistentShareViewSet.as_view({'get': 'retrieve', 'delete': 'destroy', 'patch': 'update'}),
          name='persistent-share-detail'),
     path('<int:target_pk>/persistentshare/', PersistentShareViewSet.as_view({'get': 'list'}),
-         name='target-persistent-share')
+         name='target-persistent-share'),
+    path('targetselection/', TargetFacilitySelectionView.as_view(), name='target-selection'),
 ]
