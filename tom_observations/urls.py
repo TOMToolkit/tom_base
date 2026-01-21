@@ -5,7 +5,7 @@ from tom_observations.views import (AddExistingObservationView, FacilityStatusVi
                                     ObservationGroupListView, ObservationListView, ObservationRecordCancelView,
                                     ObservationRecordDetailView, ObservationTemplateCreateView,
                                     ObservationTemplateDeleteView, ObservationTemplateListView,
-                                    ObservationTemplateUpdateView)
+                                    ObservationTemplateUpdateView, ObservationCallbackView, ObservationRedirectView)
 from tom_observations.api_views import ObservationRecordViewSet
 from tom_common.api_router import SharedAPIRootRouter
 
@@ -28,7 +28,9 @@ urlpatterns = [
     path('groups/list/', ObservationGroupListView.as_view(), name='group-list'),
     path('groups/<int:pk>/delete/', ObservationGroupDeleteView.as_view(), name='group-delete'),
     path('<str:facility>/create/', ObservationCreateView.as_view(), name='create'),
+    path('<str:facility>/redirect/', ObservationRedirectView.as_view(), name='redirect'),
     path('<int:pk>/cancel/', ObservationRecordCancelView.as_view(), name='cancel'),
     path('<int:pk>/update/', ObservationRecordUpdateView.as_view(), name='update'),
     path('<int:pk>/', ObservationRecordDetailView.as_view(), name='detail'),
+    path('callback/', ObservationCallbackView.as_view(), name='callback'),
 ]
