@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class TargetHTMXTable(tables.Table):
+class TargetTable(tables.Table):
 
     selection = tables.CheckBoxColumn(
         accessor="pk",

@@ -60,7 +60,7 @@ from tom_targets.permissions import targets_for_user
 from tom_targets.templatetags.targets_extras import target_merge_fields, persistent_share_table
 from tom_targets.utils import import_targets, export_targets
 from tom_targets.seed import seed_messier_targets
-from tom_targets.tables import TargetHTMXTable
+from tom_targets.tables import TargetTable
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
 
 
@@ -77,7 +77,7 @@ class TargetListView(SingleTableMixin, FilterView):
     strict = False
     model = Target
     filterset_class = TargetFilterSet  # this view is a FilterView subclass
-    table_class = TargetHTMXTable  # this view is also django_tables2.SingleTableMixin subclass
+    table_class = TargetTable  # this view is also django_tables2.SingleTableMixin subclass
 
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
     ordering = ['-created']
