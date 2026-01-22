@@ -16,7 +16,7 @@
                     {% if advanced_form %}
                         {% include advanced_form %}
                     {% else %}
-                        {% crispy form %}
+                        {% bootstrap_form form exclude='query_name,query_save' %}
                     {% endif %}
                 </div>
             </div>

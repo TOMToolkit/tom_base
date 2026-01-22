@@ -199,6 +199,15 @@ class BaseDataService(ABC):
         """Set up and run a specialized query for a DataService’s spectroscopy service."""
         return self.query_service(query_parameters, **kwargs)
 
+    def query_data_services(self, query_parameters, **kwargs):
+        """Set up and run a specialized query for a DataService’s spectroscopy service."""
+        phot_results = self.query_photometry(self, query_parameters, **kwargs)
+        spec_results = self.query_spectroscopy(self, query_parameters, **kwargs)
+        forced_phot_results = self.query_forced_photometry(self, query_parameters, **kwargs)
+        return {'photometry': phot_results,
+                'spectroscopy': spec_results,
+                'forced_photometry': forced_phot_results}
+
     def query_aliases(self, query_parameters, **kwargs):
         """Set up and run a specialized query for retrieving alternate names from a DataService."""
         return self.query_service(query_parameters, **kwargs)
@@ -233,6 +242,8 @@ class BaseDataService(ABC):
             with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
         """
         data_results = data_results or self.data_results
+        if not data_results:
+            raise MissingDataException('No Reduced Data dictionary found.')
         for key in data_results.keys():
             self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
         return

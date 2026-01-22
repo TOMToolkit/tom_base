@@ -18,6 +18,7 @@ from urllib.parse import urlencode
 
 from tom_dataservices.models import DataServiceQuery
 from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class, NotConfiguredError
+from tom_dataservices.dataservices import MissingDataException
 
 logger = logging.getLogger(__name__)
 
@@ -354,7 +355,7 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
             if target:
                 try:
                     data_service_class.to_reduced_datums(target, cached_result.get('reduced_datums'))
-                except NotImplementedError:
+                except MissingDataException:
                     pass
         if len(results) == len(errors):
             if query_id:
