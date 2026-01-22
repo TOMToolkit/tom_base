@@ -35,7 +35,8 @@
     </div>
 
     {# htmx wrapper allows the skymap to be updated when the filterset changes #}
-    {% include "tom_targets/partials/aladin_skymap_htmx.html" with is_htmx=False %}
+    {% include "tom_targets/partials/aladin_skymap_htmx.html" with is_htmx=False  object_list=skymap_objects %}
+
     <hr>
 
     <form id="grouping-form" action="{% url 'targets:add-remove-grouping' %}" method="POST">

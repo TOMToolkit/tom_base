@@ -127,6 +127,17 @@ class TargetListView(SingleTableMixin, FilterView):
                                 if self.request.user.is_authenticated
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
+
+        # Prepare list of targets for Aladin skymap (avoiding BoundRow wrappers)
+        table = context['table']
+        # If the table is paginated, table.page.object_list contains BoundRow objects.
+        # We need the actual model instances (row.record) for the aladin_skymap tag.
+        if hasattr(table, 'page') and table.page:
+            context['skymap_objects'] = [row.record for row in table.page.object_list]
+        else:
+            # Fallback if not paginated (e.g. export or no data)
+            context['skymap_objects'] = context['object_list']
+
         return context
 
     def get_queryset(self, *args, **kwargs):
