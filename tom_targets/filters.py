@@ -100,20 +100,17 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
                 # Row 1: Primary Search parameters
                 Row(
                     Column('query', css_class='form-group col-md-3'),
-                    Column('name', css_class='form-group col-md-3'),
+                    # Column('name', css_class='form-group col-md-3'),
+                ),
+                # Row 2: Filters
+                Row(
                     Column('type', css_class='form-group col-md-3'),
                     Column('targetlist__name', css_class='form-group col-md-3'),
                 ),
-                # Row 2: Location and Coordinates
+                # Row 3: Cone Searches
                 Row(
                     Column('cone_search', css_class='form-group col-md-6'),
                     Column('target_cone_search', css_class='form-group col-md-6'),
-                ),
-                # Row 3: Key/Value and Fuzzy search
-                Row(
-                    Column('key', css_class='form-group col-md-3'),
-                    Column('value', css_class='form-group col-md-3'),
-                    Column('name_fuzzy', css_class='form-group col-md-3'),
                 ),
                 # Row 4: Dynamically added extra fields
                 Row(
@@ -124,6 +121,7 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
 
     name = django_filters.CharFilter(method='filter_name', label='Name')
 
+    # NOTE: this field is not displayed; the 'query' field is used instead
     def filter_name(self, queryset, name, value):
         """
         Return a queryset for targets with names or aliases containing the given coma-separated list of terms.
@@ -133,6 +131,7 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
             q_set |= Q(name__icontains=term) | Q(aliases__name__icontains=term)
         return queryset.filter(q_set).distinct()
 
+    # NOTE: this field is not displayed; the 'query' field is used instead
     name_fuzzy = django_filters.CharFilter(method='filter_name_fuzzy', label='Name (Fuzzy)')
 
     def filter_name_fuzzy(self, queryset, name, value):
@@ -179,11 +178,14 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
         Perform a cone search filter on this filter's queryset,
         using the cone search utlity method and either specified RA, DEC
         or the RA/DEC from the named target.
+
+        This method prepares the arguments for tom_targets.utils.cone_search_filter.
         """
         if name == 'cone_search':
             ra, dec, radius = value.split(',')
         elif name == 'target_cone_search':
             target_name, radius = value.split(',')
+            # try to get the ra, dec of the given Target
             targets = Target.objects.filter(
                 Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name)
             ).distinct()
@@ -212,7 +214,7 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
 
     targetlist__name = django_filters.ModelChoiceFilter(
         queryset=get_target_list_queryset,
-        label="Target Grouping",
+        label="Target Group",
         widget=forms.Select(  # override Select widget (even thought it's the default) to add htmx attributes
             attrs={
                 'hx-get': "",  # triggered GET goes to the source URL by default
