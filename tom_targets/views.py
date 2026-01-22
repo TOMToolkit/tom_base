@@ -40,7 +40,7 @@ from tom_common.hooks import run_hook
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
-from tom_targets.filters import TargetFilter
+from tom_targets.filters import TargetFilterSet
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetMergeForm, \
     UnknownTypeTargetCreateForm
@@ -60,7 +60,7 @@ from tom_targets.permissions import targets_for_user
 from tom_targets.templatetags.targets_extras import target_merge_fields, persistent_share_table
 from tom_targets.utils import import_targets, export_targets
 from tom_targets.seed import seed_messier_targets
-from tom_targets.tables import TargetHTMXTable
+from tom_targets.tables import TargetTable
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
 
 
@@ -73,11 +73,11 @@ class TargetListView(SingleTableMixin, FilterView):
     View for listing targets in the TOM. Only shows targets that the user is authorized to view. Requires authorization.
     """
     # template_name = 'tom_targets/target_list.html'  # using get_template_names() instead of class property
-    paginate_by = 10
+    paginate_by = 20
     strict = False
     model = Target
-    filterset_class = TargetFilter  # this view is a FilterView subclass
-    table_class = TargetHTMXTable  # this view is also django_tables2.SingleTableMixin subclass
+    filterset_class = TargetFilterSet  # this view is a FilterView subclass
+    table_class = TargetTable  # this view is also django_tables2.SingleTableMixin subclass
 
     # Set app_name for Django-Guardian Permissions in case of Custom Target Model
     ordering = ['-created']
@@ -94,8 +94,9 @@ class TargetListView(SingleTableMixin, FilterView):
         :rtype: list[str]
         """
         templates_names_from_super: list[str] = super().get_template_names()
-        logger.debug(f'templates_names_from_super: {templates_names_from_super}')
+        # logger.debug(f'templates_names_from_super: {templates_names_from_super}')
 
+        # Here, we're getting the appropriate template for this request
         if self.request.htmx:
             logger.debug(f'This is an HTMX request: {self.request}')
             # we save the name of the partial for the table in the Table subclass so it can be overridden
@@ -104,9 +105,9 @@ class TargetListView(SingleTableMixin, FilterView):
             # the whole page (not just the partial for the table)
             new_template_names = ["tom_targets/target_list.html"]  # was template_name class property
 
-        # put the new template names at the front of the list
+        # Here, we're putting the new template(s) at the front of the list
         template_names = new_template_names + templates_names_from_super
-        logger.debug(f'template_names:, {template_names}')
+        # logger.debug(f'template_names: {template_names}')
 
         return template_names
 
@@ -126,6 +127,17 @@ class TargetListView(SingleTableMixin, FilterView):
                                 if self.request.user.is_authenticated
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
+
+        # Prepare list of targets for Aladin skymap (avoiding BoundRow wrappers)
+        table = context['table']
+        # If the table is paginated, table.page.object_list contains BoundRow objects.
+        # We need the actual model instances (row.record) for the aladin_skymap tag.
+        if hasattr(table, 'page') and table.page:
+            context['skymap_objects'] = [row.record for row in table.page.object_list]
+        else:
+            # Fallback if not paginated (e.g. export or no data)
+            context['skymap_objects'] = context['object_list']
+
         return context
 
     def get_queryset(self, *args, **kwargs):

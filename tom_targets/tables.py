@@ -8,7 +8,32 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class TargetHTMXTable(tables.Table):
+class TargetTable(tables.Table):
+
+    selection = tables.CheckBoxColumn(
+        accessor="pk",
+        orderable=False,
+        # these attrs of the CheckBoxColumn bind the input to the grouping-form
+        attrs={
+            "input": {
+                "name": "selected-target",  # Match the name expected by TOM views
+                "form": "grouping-form"     # Bind to the form id defined in target_list.html
+            },
+            "th__input": {
+                "class": "header-checkbox",  # Optional class for JS targeting
+                "form": "grouping-form",
+                # this prevents the click from bubbling up to the sorting header
+                "onclick": "event.stopPropagation();"
+            }
+        }
+    )
+
+    name = tables.Column(
+        linkify=True,  # make it a link to the TargetDetail page
+        attrs={"a": {"hx-boost": "false"}}  # override the boot in the <table> attrs (see below)
+        # we reset the hx-boost for this element so the TargetDetail page is a full reload.
+    )
+
     class Meta:
         model = Target
         # this is the default template from django_tables2 (it does not have HTMX attributes)
@@ -16,8 +41,17 @@ class TargetHTMXTable(tables.Table):
 
         # this template extends the bootstrap.html template with HTMX attributes.
         template_name = 'tom_targets/bootstrap_htmx.html'
+        fields = ['selection', 'name', 'type', 'ra', 'dec', ]
 
-        fields = ['id', 'name', 'ra', 'dec', ]
+        # Add hx-include here to ensure sorting/pagination preserves filters
+        attrs = {
+            # these attrs are applied to the <table> element
+            "class": "table table-striped table-hover table-sm",
+            "hx-include": "#filter-form",  # include filter-form data in the requests from this element
+            "hx-target": "div.table-container",  # Result replaces the table container
+            "hx-swap": "outerHTML",  # Replace the whole container
+            "hx-boost": "true"  # Turn sort/pagination links into HTMX requests so only the partial is rendered
+        }
 
     def get_partial_template_name(self) -> str:
         """
@@ -32,5 +66,5 @@ class TargetHTMXTable(tables.Table):
         {% render_table table %}
         ```
         """
-        partial_template_name = "tom_targets/target_table_partial.html"
+        partial_template_name = "tom_targets/partials/target_table_partial.html"
         return partial_template_name

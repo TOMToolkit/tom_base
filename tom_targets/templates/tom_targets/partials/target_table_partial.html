@@ -1,0 +1,8 @@
+{# tom_targets/partials/target_table_partial.html #}
+{% load render_table from django_tables2 %}
+
+{# 1. render the table #}
+{% render_table table %}
+
+{# 2. also, update the skymap #}
+{% include "tom_targets/partials/aladin_skymap_htmx.html" with is_htmx=True object_list=skymap_objects %}
