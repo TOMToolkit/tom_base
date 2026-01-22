@@ -1,3 +1,4 @@
+from tom_targets.validators import validate_mjd
 import datetime
 
 from crispy_forms.layout import Layout, Div
@@ -142,6 +143,16 @@ class NonSiderealTargetCreateForm(TargetForm):
         super().__init__(*args, **kwargs)
         for field in REQUIRED_NON_SIDEREAL_FIELDS:
             self.fields[field].required = True
+
+    def clean_epoch_of_perihelion(self):
+        if value := self.cleaned_data.get('epoch_of_perihelion'):
+            validate_mjd(value)
+        return value
+
+    def clean_epoch_of_elements(self):
+        if value := self.cleaned_data.get('epoch_of_elements'):
+            validate_mjd(value)
+        return value
 
     def clean(self):
         """
