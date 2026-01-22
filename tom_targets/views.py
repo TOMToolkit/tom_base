@@ -73,7 +73,7 @@ class TargetListView(SingleTableMixin, FilterView):
     View for listing targets in the TOM. Only shows targets that the user is authorized to view. Requires authorization.
     """
     # template_name = 'tom_targets/target_list.html'  # using get_template_names() instead of class property
-    paginate_by = 10
+    paginate_by = 20
     strict = False
     model = Target
     filterset_class = TargetFilterSet  # this view is a FilterView subclass

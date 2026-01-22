@@ -41,7 +41,7 @@ class TargetTable(tables.Table):
 
         # this template extends the bootstrap.html template with HTMX attributes.
         template_name = 'tom_targets/bootstrap_htmx.html'
-        fields = ['selection', 'id', 'name', 'type', 'ra', 'dec', ]
+        fields = ['selection', 'name', 'type', 'ra', 'dec', ]
 
         # Add hx-include here to ensure sorting/pagination preserves filters
         attrs = {
