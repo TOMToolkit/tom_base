@@ -5,7 +5,7 @@ from django.conf import settings
 from django.db.models import Q
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Row, Column, HTML
+from crispy_forms.layout import Layout, Div, Row, Column, HTML
 
 import django_filters
 
@@ -102,20 +102,37 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
                     Column('query', css_class='form-group col-md-3'),
                     # Column('name', css_class='form-group col-md-3'),
                 ),
-                # Row 2: Filters
-                Row(
-                    Column('type', css_class='form-group col-md-3'),
-                    Column('targetlist__name', css_class='form-group col-md-3'),
-                ),
-                # Row 3: Cone Searches
-                Row(
-                    Column('cone_search', css_class='form-group col-md-6'),
-                    Column('target_cone_search', css_class='form-group col-md-6'),
-                ),
-                # Row 4: Dynamically added extra fields
-                Row(
-                    *extra_columns,
-                ) if extra_columns else HTML("")
+                # 2. The Toggle Button (HTML)
+                HTML("""
+                <div class="row">
+                    <div class="col-md-12 mb-2">
+                        <a class="btn btn-link p-0" data-toggle="collapse"
+                           href="#advancedFilters"
+                           role="button" aria-expanded="false" aria-controls="advancedFilters">Advanced &rsaquo;</a>
+                    </div>
+                </div>
+                """),
+                # 3. The Collapsible Container (Hidden by default)
+                Div(
+                    # Row 2: Filters
+                    Row(
+                        Column('type', css_class='form-group col-md-3'),
+                        Column('targetlist__name', css_class='form-group col-md-3'),
+                    ),
+                    # Row 3: Cone Searches
+                    Row(
+                        Column('cone_search', css_class='form-group col-md-6'),
+                        Column('target_cone_search', css_class='form-group col-md-6'),
+                    ),
+                    # Row 4: Dynamically added extra fields
+                    Row(
+                        *extra_columns,
+                    ) if extra_columns else HTML(""),
+
+                    # Bootstrap classes for functionality
+                    css_class='collapse',
+                    css_id='advancedFilters'  # must match the href in the "Advanced" HTML button above
+                )
             )
         return self._form
 
