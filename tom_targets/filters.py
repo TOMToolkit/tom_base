@@ -142,11 +142,37 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
         """
         return Target.matches.match_fuzzy_name(value, queryset).distinct()
 
-    cone_search = django_filters.CharFilter(method='filter_cone_search', label='Cone Search',
-                                            help_text='RA, Dec, Search Radius (degrees)')
+    cone_search = django_filters.CharFilter(
+        method='filter_cone_search',
+        label='Cone Search',
+        help_text='RA, Dec, Search Radius (degrees)',
+        widget=forms.TextInput(
+            attrs={
+                'placeholder': 'RA, Dec, Radius',
+                'hx-get': "",
+                'hx-trigger': "keyup[keyCode==13]",  # Trigger only on Enter key
+                'hx-target': "div.table-container",
+                'hx-swap': "outerHTML",
+                'hx-indicator': ".progress",
+                'hx-include': "closest form",
+            }),
+        )
 
-    target_cone_search = django_filters.CharFilter(method='filter_cone_search', label='Cone Search (Target)',
-                                                   help_text='Target Name, Search Radius (degrees)')
+    target_cone_search = django_filters.CharFilter(
+        method='filter_cone_search',
+        label='Cone Search (Target)',
+        help_text='Target Name, Search Radius (degrees)',
+        widget=forms.TextInput(
+            attrs={
+                'placeholder': 'Target Name, Radius',
+                'hx-get': "",
+                'hx-trigger': "keyup[keyCode==13]",  # Trigger only on Enter key
+                'hx-target': "div.table-container",
+                'hx-swap': "outerHTML",
+                'hx-indicator': ".progress",
+                'hx-include': "closest form",
+            }),
+        )
 
     def filter_cone_search(self, queryset, name, value):
         """
