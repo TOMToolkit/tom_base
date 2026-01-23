@@ -241,6 +241,7 @@ td, th {
 .htmx-request .progress {
     opacity: 1;
 }
+
 .htmx-request.progress {
     opacity: 1;
 }
