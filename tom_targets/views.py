@@ -108,17 +108,19 @@ class TargetNameSearchView(RedirectView):
     """
 
     def get(self, request, *args, **kwargs):
-        target_name = self.kwargs['name']
-        # Tests fail without distinct but it works in practice, it is unclear as to why
+        target_name = self.kwargs['name'].strip()
         # The Django query planner shows different results between in practice and unit tests
         # django-guardian related querying is present in the test planner, but not in practice
-        targets = targets_for_user(request.user, Target.objects.all(), 'view_target').filter(
-            Q(name__icontains=target_name) | Q(aliases__name__icontains=target_name)
-        ).distinct()
-        if targets.count() == 1:
-            return HttpResponseRedirect(reverse('targets:detail', kwargs={'pk': targets.first().id}))
-        else:
+        all_targets = targets_for_user(request.user, Target.objects.all(), 'view_target')
+        targets_main = all_targets.filter(name__icontains=target_name)
+        targets_alias = all_targets.filter(aliases__name__icontains=target_name)
+        targets = targets_main.union(targets_alias)
+        try:
+            target = targets.get()
+        except (Target.DoesNotExist, Target.MultipleObjectsReturned):
             return HttpResponseRedirect(reverse('targets:list') + f'?name={target_name}')
+        else:
+            return HttpResponseRedirect(reverse('targets:detail', kwargs={'pk': target.id}))
 
 
 class TargetCreateView(LoginRequiredMixin, CreateView):
