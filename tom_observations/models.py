@@ -82,7 +82,7 @@ class ObservationRecord(models.Model):
 
     def update_status(self):
         facility = get_service_class(self.facility)
-        facility().update_observation_status(self.id)
+        facility().update_observation_status(self.observation_id)
 
     def save_data(self):
         facility = get_service_class(self.facility)
