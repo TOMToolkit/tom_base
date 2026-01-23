@@ -131,12 +131,12 @@ td, th {
 }
 
 /* add up and down sorting arrows to column headers  */
-.table-container th.asc:after {
+.table-container th.asc::after {
     content: '\0000a0\0025b2';
     float: right;
 }
 
-.table-container th.desc:after {
+.table-container th.desc::after {
     content: '\0000a0\0025bc';
     float: right;
 }
@@ -249,7 +249,7 @@ td, th {
     background-color: var(--theme_primary);
 }
 
-.progress .indeterminate:before {
+.progress .indeterminate::before {
     content: '';
     position: absolute;
     background-color: inherit;
@@ -260,7 +260,8 @@ td, th {
     -webkit-animation: indeterminate 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
     animation: indeterminate 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
 }
-.progress .indeterminate:after {
+
+.progress .indeterminate::after {
     content: '';
     position: absolute;
     background-color: inherit;
@@ -279,10 +280,12 @@ td, th {
         left: -35%;
         right: 100%;
     }
+
     60% {
         left: 100%;
         right: -90%;
     }
+
     100% {
         left: 100%;
         right: -90%;
@@ -294,10 +297,12 @@ td, th {
         left: -200%;
         right: 100%;
     }
+
     60% {
         left: 107%;
         right: -8%;
     }
+
     100% {
         left: 107%;
         right: -8%;
