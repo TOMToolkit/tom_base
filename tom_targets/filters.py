@@ -168,7 +168,7 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
                 'hx-get': "",
                 'hx-trigger': "keyup[keyCode==13]",  # Trigger only on Enter key
                 'hx-target': "div.table-container",
-                'hx-swap': "outerHTML",
+                'hx-swap': "innerHTML",
                 'hx-indicator': ".progress",
                 'hx-include': "closest form",
             }),
@@ -184,7 +184,7 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
                 'hx-get': "",
                 'hx-trigger': "keyup[keyCode==13]",  # Trigger only on Enter key
                 'hx-target': "div.table-container",
-                'hx-swap': "outerHTML",
+                'hx-swap': "innerHTML",
                 'hx-indicator': ".progress",
                 'hx-include': "closest form",
             }),
@@ -237,7 +237,7 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
                 'hx-get': "",  # triggered GET goes to the source URL by default
                 'hx-trigger': "change",  # make the AJAX call when the selection changes
                 'hx-target': "div.table-container",
-                'hx-swap': "outerHTML",
+                'hx-swap': "innerHTML",
                 'hx-indicator': ".progress",
                 'hx-include': "closest form",  # include the other filters in this FilterSet
             }
@@ -252,7 +252,7 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
                 'hx-get': "",  # triggered GET goes to the source URL by default
                 'hx-trigger': "change",  # make the AJAX call when the selection changes
                 'hx-target': "div.table-container",
-                'hx-swap': "outerHTML",
+                'hx-swap': "innerHTML",
                 'hx-indicator': ".progress",
                 'hx-include': "closest form",  # include the other filters in this FilterSet
             }
@@ -268,9 +268,10 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
         widget=forms.TextInput(
             attrs={
                 'hx-get': "",  # triggered GET goes to the source URL by default
-                'hx-trigger': "input delay:200ms",  # AJAX call when input changes (delayed to debounce)
+                'hx-trigger': "input changed delay:200ms",  # AJAX call when input changes (delayed to debounce)
+                'hx-sync': 'this:replace',
                 'hx-target': "div.table-container",
-                'hx-swap': "outerHTML",
+                'hx-swap': "innerHTML",
                 'hx-indicator': ".progress",
                 'hx-include': "closest form",  # include the other filters in this FilterSet
             }

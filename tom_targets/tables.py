@@ -49,7 +49,7 @@ class TargetTable(tables.Table):
             "class": "table table-striped table-hover table-sm",
             "hx-include": "#filter-form",  # include filter-form data in the requests from this element
             "hx-target": "div.table-container",  # Result replaces the table container
-            "hx-swap": "outerHTML",  # Replace the whole container
+            "hx-swap": "innerHTML",  # Replace the whole container
             "hx-boost": "true"  # Turn sort/pagination links into HTMX requests so only the partial is rendered
         }
 
