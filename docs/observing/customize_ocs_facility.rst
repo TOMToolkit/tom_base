@@ -74,7 +74,7 @@ Now add some code to this file to create a new observation module:
         name = 'CustomOCS'
         observation_forms = {
             'Instrument1': Instrument1ObservationForm,
-            'Spectra': SpectraObservationForm    
+            'Spectra': SpectraObservationForm
         }
 
 So what does the above code do?
@@ -156,7 +156,7 @@ by subclassing the base class of the full OCS observation form:
             # The init method is where you will define fields, since the field names are
             # set based on the number of configurations and instrument configurations our
             # form supports. You can also remove base fields here if you don't want them
-            # in your form. 
+            # in your form.
             for j in range(self.facility_settings.get_setting('max_configurations')):
                 for i in range(self.facility_settings.get_setting('max_instrument_configs')):
                     self.fields[f'c_{j+1}_ic_{i+1}_defocus'] = forms.IntegerField(
@@ -192,8 +192,8 @@ by subclassing the base class of the full OCS observation form:
             return Instrument1InstrumentConfigLayout
 
         def _build_instrument_config(self, instrument_type, configuration_id, id):
-            # This is called when submitting or validating the form, and it constructs the 
-            # payload to send to the OCS observation portal. You can get the payload with 
+            # This is called when submitting or validating the form, and it constructs the
+            # payload to send to the OCS observation portal. You can get the payload with
             # base fields and then add your new fields in here.
             instrument_config = super()._build_instrument_config(instrument_type, configuration_id, id)
             if self.cleaned_data.get(f'c_{j+1}_ic_{i+1}_readout_mode'):
@@ -251,8 +251,8 @@ the full OCS observation form: ``tom_observations.facilities.ocs.OCSFullObservat
                     ),
                     css_class='form-row'
                 )
-            )       
-            
+            )
+
             def get_final_ic_items(self, config_instance, instance):
             # This piece of layout will be added at the end of the base Instrument Config
             # Layout. There is also a method that could be overridden to add to the beginning,
@@ -319,7 +319,7 @@ the full OCS observation form: ``tom_observations.facilities.ocs.OCSFullObservat
             return SpectrographConfigurationLayout
 
         def _build_acquisition_config(self, configuration_id):
-            # This is called when submitting or validating the form, and it constructs the 
+            # This is called when submitting or validating the form, and it constructs the
             # acquisition config payload. Here we will add our extra fields into the payload
             acquisition_config = super()._build_acquisition_config(configuration_id)
             if self.cleaned_data.get(f'c_{configuration_id}_acquisition_mode'):
@@ -337,7 +337,7 @@ the full OCS observation form: ``tom_observations.facilities.ocs.OCSFullObservat
             return acquisition_config
 
 The above code should define a form which only has spectrograph instruments, and adds three new
-fields to the `acquisition_config` section of the form. 
+fields to the `acquisition_config` section of the form.
 
 Now that you have defined both new forms, your new OCS-based facility module should be complete!
 Try reloading your TOM and navigating to the details page for a specific Target. You should see
@@ -403,7 +403,7 @@ class, start by subclassing ``OCSSettings`` like this:
                     'elevation': 1804
                 },
             }
-        
+
         def get_weather_urls(self):
             # Returns a dictionary of sites with weather urls for retrieving weather data for each site
             return {
@@ -420,7 +420,7 @@ class, start by subclassing ``OCSSettings`` like this:
         name = 'CustomOCS'
         observation_forms = {
             'Instrument1': Instrument1ObservationForm,
-            'Spectra': SpectraObservationForm    
+            'Spectra': SpectraObservationForm
         }
 
         def __init__(self, facility_settings=CustomOCSSettings('CustomOCS')):
@@ -432,3 +432,34 @@ class. Please review
 `the base OCSSettings class <https://github.com/TOMToolkit/tom_base/blob/dev/tom_observations/facilities/ocs.py#L23>`__
 to see what other behaviour can be customized, including certain fields `help_text` or certain archive
 data configuration information.
+
+Redirect Faciltiies
+~~~~~~~~~~~~~~~~~~~
+
+Facilities that subclass `BaseRedirectObservationFacility` work differently than other facilities
+in that they do not provide any forms or validation logic. When a user decides to submit an observation
+using a redirect facility they are redirected to an outside URL where they will create an observation
+and be redirected back to the TOM when they are finished.
+
+In order to create a Redirect Facility, you need to subclass `BaseRedirectObservationFacility` and implement the
+`get_redirect_url()` method. Here is a simplified example from the `LcoRedirectFacility` class:
+
+
+.. code-block:: python
+
+    class LCORedirectFacility(BaseRedirectObservationFacility):
+        name = "LCORedirect"
+
+        def redirect_url(self, target_id, callback_url):
+            target = get_object_or_404(Target, pk=target_id)
+            query_params = self.target_to_query_params(target)
+            url = f"https://observe.lco.global/create?{query_params}&redirect_uri={callback_url}"
+
+            return url
+
+
+The outside website that the facility redirects to must also return the user to the specified callback_url
+that is passed in as part of the call to `redirect_url`. In addition, it needs to add a `observation_id`
+parameter to this URL which is the ID of the newly created observation on the facility side. The `target_id`
+and `facility` parameters must also be present, and should match the values passed in by the original
+callback_url.
