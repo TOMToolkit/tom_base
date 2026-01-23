@@ -13,7 +13,6 @@ from django.core.exceptions import PermissionDenied
 from django.core.management import call_command
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Q
 from django_filters.views import FilterView
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse, HttpResponseBadRequest
