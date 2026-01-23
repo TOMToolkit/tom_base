@@ -77,7 +77,10 @@
     </div>
 
     {# The actual table #}
-    {% render_table table %}
+    <div class="table-container">
+        {% include "tom_targets/partials/target_table_partial.html" %}
+    </div>
+
     <hr>
       {% endblock target_table_content %}
   </div>
