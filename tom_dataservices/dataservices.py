@@ -248,7 +248,6 @@ class BaseDataService(ABC):
         :param data_results: Query results from the DataService storing observation data. This should be a dictionary
             with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
         """
-        data_results = data_results or self.data_results
         if not data_results:
             raise MissingDataException('No Reduced Data dictionary found.')
         for key in data_results.keys():
