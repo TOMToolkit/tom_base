@@ -176,6 +176,8 @@ class RunQueryView(TemplateView):
             # Check cached query is the same and pull cache if needed.
             if query_parameters == cache.get('query_params'):
                 cached_results = cache.get_many([f'result_{result_id}' for result_id in range(0, 99)])
+            else:
+                cache.clear()
             if cached_results:
                 results = [cached_results[key] for key in cached_results]
             else:

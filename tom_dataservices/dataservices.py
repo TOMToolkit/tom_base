@@ -208,9 +208,9 @@ class BaseDataService(ABC):
 
     def query_data_services(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s spectroscopy service."""
-        phot_results = self.query_photometry(self, query_parameters, **kwargs)
-        spec_results = self.query_spectroscopy(self, query_parameters, **kwargs)
-        forced_phot_results = self.query_forced_photometry(self, query_parameters, **kwargs)
+        phot_results = self.query_photometry(query_parameters, **kwargs)
+        spec_results = self.query_spectroscopy(query_parameters, **kwargs)
+        forced_phot_results = self.query_forced_photometry(query_parameters, **kwargs)
         return {'photometry': phot_results,
                 'spectroscopy': spec_results,
                 'forced_photometry': forced_phot_results}
