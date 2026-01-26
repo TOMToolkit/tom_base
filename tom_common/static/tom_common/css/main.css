@@ -132,13 +132,13 @@ td, th {
 
 /* add up and down sorting arrows to column headers  */
 .table-container th.asc::after {
-    content: '\0000a0\0025b2';
-    float: right;
+    content: '\0000a0\0025bc';
+    float: left;
 }
 
 .table-container th.desc::after {
-    content: '\0000a0\0025bc';
-    float: right;
+    content: '\0000a0\0025b2';
+    float: left;
 }
 
 /* Create copy button class */
