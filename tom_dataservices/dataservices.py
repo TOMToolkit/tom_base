@@ -64,6 +64,13 @@ class NotConfiguredError(Exception):
     pass
 
 
+class QueryServiceError(Exception):
+    """
+    Represents a higher level error when an underlying service or client library fails.
+    """
+    pass
+
+
 class BaseDataService(ABC):
     """
     Base class for all Data Services. Data Services are classes that are responsible for querying external services

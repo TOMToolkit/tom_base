@@ -221,6 +221,7 @@ class BaseObservationFacility(ABC):
     """
     name = 'BaseObservation'
     observation_forms = {}
+    is_redirect = False
 
     def __init__(self):
         self.user = None
@@ -591,3 +592,44 @@ class BaseManualObservationFacility(BaseObservationFacility):
     This specific class is intended for use with classical-style manual facilities.
     """
     name = 'BaseManual'  # rename in concrete subclasses
+
+
+class BaseRedirectObservationFacility(BaseObservationFacility):
+    """
+    A Redirect Facility is a facility which delegates observation creation to
+    an external website. A RedirectFacility does not need to provide a UI for
+    observation creation, meaning it does not include a Form. It does still
+    implement other methods inherited from BaseObservationFacility, such as those
+    related to fetching status, data products, etc.
+
+    Implementations will need to provide the redirect_url method. This constructs
+    a URL that the user will be redirected to. The arguments the target id and a
+    callback URL. The external website should be able to redirect the user back
+    to the callback URL in order to complete the observation creation process
+    on the TOM side, by fetching the observation either by API endpoint or
+    some other means, and storing it in the TOM database.
+
+    The passed in callback URL will contain the following query parameters:
+    - target_id: The ID of the target for which the observation was created.
+    - facility: The name of the facility that created the observation.
+
+    The remote facility is responsible for adding these query params:
+    - observation_id: The ID of the observation that was created.
+
+    """
+    is_redirect = True
+
+    def redirect_url(self, target_id: str, callback_url: str):
+        raise NotImplementedError("Must implement redirect_url")
+
+    def get_form(self, observation_type):
+        raise TypeError("RedirectFacility does not provide a form for observation creation")
+
+    def get_template_form(self, observation_type):
+        raise TypeError("RedirectFacility does not provide a form for observation creation")
+
+    def submit_observation(self, observation_payload):
+        raise TypeError("RedirectFacility does not submit observations on remote facilities")
+
+    def validate_observation(self, observation_payload):
+        raise TypeError("RedirectFacility does no observation creation or validation")

@@ -18,7 +18,8 @@ from urllib.parse import urlencode
 
 from tom_dataservices.models import DataServiceQuery
 from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class, NotConfiguredError
-from tom_dataservices.dataservices import MissingDataException
+from tom_dataservices.dataservices import MissingDataException, QueryServiceError
+
 
 logger = logging.getLogger(__name__)
 
@@ -185,6 +186,9 @@ class RunQueryView(TemplateView):
         except NotConfiguredError as e:
             results = iter(())
             query_feedback += f"Configuration Error. Please contact your TOM Administrator: </br>{e}</br>"
+        except QueryServiceError as e:
+            results = iter(())
+            query_feedback += f"There was an error with the underlying query service: </br>{e}</br>"
 
         # create context for template
         context['query'] = query

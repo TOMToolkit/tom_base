@@ -1,4 +1,5 @@
 from rest_framework.serializers import ValidationError
+from django.forms import ValidationError as FormValidationError
 
 
 class RequiredFieldsTogetherValidator(object):
@@ -21,3 +22,8 @@ class RequiredFieldsTogetherValidator(object):
 
         if missing_fields:
             raise ValidationError(f'The following fields are required for {self.type_value} targets: {missing_fields}')
+
+
+def validate_mjd(value):
+    if not (0 <= value <= 100000.0):
+        raise FormValidationError("Value must be in MJD between 0 and 100000")
