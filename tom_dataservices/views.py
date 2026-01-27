@@ -203,6 +203,9 @@ class RunQueryView(TemplateView):
             context['query_results_table'] = 'tom_dataservices/partials/query_results_table.html'
 
         context['results'] = []
+
+        # Set Cache and context
+        cache.set('query_params', query_parameters, 3600)
         try:
             for (i, result) in enumerate(results):
                 if i > 99:
@@ -211,7 +214,6 @@ class RunQueryView(TemplateView):
                     break
                 result['id'] = i
                 cache.set(f'result_{i}', result, 3600)
-                cache.set('query_params', query_parameters, 3600)
                 context['results'].append(result)
         except StopIteration:
             pass

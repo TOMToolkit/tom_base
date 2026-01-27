@@ -206,8 +206,8 @@ class BaseDataService(ABC):
         """Set up and run a specialized query for a DataService’s spectroscopy service."""
         return self.query_service(query_parameters, **kwargs)
 
-    def query_data_services(self, query_parameters, **kwargs):
-        """Set up and run a specialized query for a DataService’s spectroscopy service."""
+    def query_reduced_data(self, query_parameters, **kwargs):
+        """Set up and run a specialized query to retrieve Reduced Datums from a Data Service"""
         phot_results = self.query_photometry(query_parameters, **kwargs)
         spec_results = self.query_spectroscopy(query_parameters, **kwargs)
         forced_phot_results = self.query_forced_photometry(query_parameters, **kwargs)
