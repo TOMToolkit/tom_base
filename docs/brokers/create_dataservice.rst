@@ -204,3 +204,19 @@ returning that object.
                 dec=target_result['dec']
             )
             return target
+
+
+Integrating Additional Query Types:
+***********************************
+
+Above we discussed creating targets from queries, but usually the point of a query is to get data from a data service 
+beyond the basic target information. This is where we need to build out methods like `query_aliases` and 
+`query_photometry`.
+
+Each of these different kinds of data will require functions in `MyDataService` titled `query_foo()` and
+`create_foo_from_query()`. These behave the same way as `query_targets` and `create_target_from_query` above, querying 
+the data service and returning a list of dictionaries in `query_foo()`, and then translating an instance of that dictionary
+into a model object with `create_foo_from_query()`.
+
+Depending on the specifics of your data service, it may be reasonable to call the `query_foo()` methods indipendently, 
+and/or part of `query_targets`.
