@@ -88,6 +88,10 @@ class BaseDataService(ABC):
     service_notes = None
     # The path to a specialized table partial for displaying query results
     query_results_table = None
+    # App Version
+    app_version = None
+    # Link to app github repo
+    app_link = None
 
     def __init__(self, query_parameters=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
