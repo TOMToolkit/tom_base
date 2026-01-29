@@ -7,7 +7,7 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.response import Response
 from rest_framework import status
 
-from tom_targets.filters import TargetFilter
+from tom_targets.filters import TargetFilterSet
 from tom_targets.models import TargetExtra, TargetName, TargetList, Target
 from tom_targets.serializers import TargetSerializer, TargetExtraSerializer, TargetNameSerializer, TargetListSerializer
 
@@ -50,7 +50,7 @@ class TargetViewSet(ModelViewSet, PermissionListMixin):
     """
     serializer_class = TargetSerializer
     filter_backends = (drf_filters.DjangoFilterBackend,)
-    filterset_class = TargetFilter
+    filterset_class = TargetFilterSet
 
     def get_queryset(self):
         permission_required = permissions_map.get(self.request.method)
