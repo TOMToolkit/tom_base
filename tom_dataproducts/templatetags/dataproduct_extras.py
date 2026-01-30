@@ -165,6 +165,12 @@ def get_photometry_data(context, target, target_share=False):
     Displays a table of the all photometric points for a target.
     """
     photometry = ReducedDatum.objects.filter(data_type='photometry', target=target).order_by('-timestamp')
+    if not settings.TARGET_PERMISSIONS_ONLY:
+        photometry = get_objects_for_user(
+            context["request"].user,
+            "tom_dataproducts.view_reduceddatum",
+            klass=photometry,
+        )
 
     # Possibilities for reduced_datums from ZTF/MARS:
     # reduced_datum.value: {'error': 0.0929680392146111, 'filter': 'r', 'magnitude': 18.2364940643311}

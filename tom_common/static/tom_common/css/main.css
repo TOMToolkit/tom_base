@@ -130,6 +130,17 @@ td, th {
   color: var(--theme_text_primary);
 }
 
+/* add up and down sorting arrows to column headers  */
+.table-container th.asc::after {
+    content: '\0000a0\0025bc';
+    float: left;
+}
+
+.table-container th.desc::after {
+    content: '\0000a0\0025b2';
+    float: left;
+}
+
 /* Create copy button class */
 .copy-button {
     opacity: 0.75; /* Make it slightly transparent */
@@ -211,4 +222,90 @@ td, th {
 .pagination a:hover {
   background-color: var(--theme_accent3);
   color: var(--theme_text_primary);
+}
+
+/* HTMX progress bar for Tables */
+.progress {
+    height: 6px;
+    width: 100%;
+    border-radius: 2px;
+    background-clip: padding-box;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress {
+    opacity: 0;
+}
+
+.htmx-request .progress {
+    opacity: 1;
+}
+
+.htmx-request.progress {
+    opacity: 1;
+}
+
+.progress .indeterminate {
+    background-color: var(--theme_primary);
+}
+
+.progress .indeterminate::before {
+    content: '';
+    position: absolute;
+    background-color: inherit;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    will-change: left, right;
+    -webkit-animation: indeterminate 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+    animation: indeterminate 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+}
+
+.progress .indeterminate::after {
+    content: '';
+    position: absolute;
+    background-color: inherit;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    will-change: left, right;
+    -webkit-animation: indeterminate-short 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+    animation: indeterminate-short 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+    -webkit-animation-delay: 1.15s;
+    animation-delay: 1.15s;
+}
+
+@keyframes indeterminate {
+    0% {
+        left: -35%;
+        right: 100%;
+    }
+
+    60% {
+        left: 100%;
+        right: -90%;
+    }
+
+    100% {
+        left: 100%;
+        right: -90%;
+    }
+}
+
+@keyframes indeterminate-short {
+    0% {
+        left: -200%;
+        right: 100%;
+    }
+
+    60% {
+        left: 107%;
+        right: -8%;
+    }
+
+    100% {
+        left: 107%;
+        right: -8%;
+    }
 }
