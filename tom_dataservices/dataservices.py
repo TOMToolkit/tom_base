@@ -88,11 +88,17 @@ class BaseDataService(ABC):
     service_notes = None
     # The path to a specialized table partial for displaying query results
     query_results_table = None
+    # App Version
+    app_version = None
+    # Link to app github repo
+    app_link = None
 
     def __init__(self, query_parameters=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Instance variable that can store target query results if necessary
         self.target_results = {}
+        # Instance variable that can store photometry query results if necessary
+        self.photometry_results = {}
         # Instance variable that can store query results if necessary
         self.query_results = {}
         # Instance variable that can store query parameters if necessary
@@ -137,12 +143,12 @@ class BaseDataService(ABC):
     @classmethod
     def get_configuration(cls, config_type=None, value=None, **kwargs):
         """
-        Syntax: get_configuration([config_type], [value])
-        Parameters:
-            config_type: The type of configuration to return. If None, returns all configurations.
-            value: The default value to return if configuration not found.
-        Returns:
-            A list of available configurations, or a requested configuration, or if not found the default value.
+        Get all of the configuration or specific configuration values associated with this dataservice.
+
+        :Syntax: get_configuration([config_type], [value])
+        :param config_type: The type of configuration to return. If None, returns all configurations.
+        :param value: The default value to return if configuration not found.
+        :return: A list of available configurations, or a requested configuration, or if not found, the default value.
         """
         data_service_config = cls.configuration()
         if config_type:
@@ -162,12 +168,12 @@ class BaseDataService(ABC):
     @classmethod
     def get_urls(cls, url_type=None, value=None, **kwargs):
         """
-        Syntax: get_urls([url_type], [value])
-        Parameters:
-            url_type: The type of URL to return. If None, returns all available url types.
-            value: The default value to return if the requested url is not found.
-        Returns:
-            A list of available uls, or a requested url, or if not found, the default value.
+        Get all urls or a specific url associated with the dataservice.
+
+        :Syntax: get_urls([url_type], [value])
+        :param url_type: The type of URL to return. If None, returns all available url types.
+        :param value: The default value to return if the requested url is not found.
+        :return: A list of available uls, or a requested url, or if not found, the default value.
         """
         urls = cls.urls()
         if url_type:
@@ -204,6 +210,15 @@ class BaseDataService(ABC):
         """Set up and run a specialized query for a DataService’s spectroscopy service."""
         return self.query_service(query_parameters, **kwargs)
 
+    def query_reduced_data(self, query_parameters, **kwargs):
+        """Set up and run a specialized query to retrieve Reduced Datums from a Data Service"""
+        phot_results = self.query_photometry(query_parameters, **kwargs)
+        spec_results = self.query_spectroscopy(query_parameters, **kwargs)
+        forced_phot_results = self.query_forced_photometry(query_parameters, **kwargs)
+        return {'photometry': phot_results,
+                'spectroscopy': spec_results,
+                'forced_photometry': forced_phot_results}
+
     def query_aliases(self, query_parameters, **kwargs):
         """Set up and run a specialized query for retrieving alternate names from a DataService."""
         return self.query_service(query_parameters, **kwargs)
@@ -229,22 +244,22 @@ class BaseDataService(ABC):
         """Create a new DataProduct from the query results"""
         raise NotImplementedError
 
-    def to_reduced_datums(self, target, query_results=None, **kwargs):
+    def to_reduced_datums(self, target, data_results=None, **kwargs):
         """
         Upper level function to create a new ReducedDatum from the query results
-        Can take either new query results, or use stored results form a recent `query_service()`
+        Can take either new data results, or use stored results form a recent `query_service()`
         :param target: Target object to associate with the ReducedDatum
-        :param query_results: Query results from the DataService
-        :returns: ReducedDatum object
+        :param data_results: Query results from the DataService storing observation data. This should be a dictionary
+            with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
         """
-        query_results = query_results or self.query_results
-        if not query_results:
-            raise MissingDataException('No query results. Did you call query_service()?')
-        else:
-            return self.create_reduced_datums_from_query(target, query_results, **kwargs)
+        if not data_results:
+            raise MissingDataException('No Reduced Data dictionary found.')
+        for key in data_results.keys():
+            self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
+        return
 
-    def create_reduced_datums_from_query(self, target, query_results=None, **kwargs):
-        """Create a new reduced_datum of the appropriate type from the query results"""
+    def create_reduced_datums_from_query(self, target, data=None, data_type=None, **kwargs):
+        """Create and save new reduced_datums of the appropriate data_type from the query results"""
         raise NotImplementedError
 
     def to_target(self, target_results=None, **kwargs):

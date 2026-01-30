@@ -16,7 +16,7 @@
                     {% if advanced_form %}
                         {% include advanced_form %}
                     {% else %}
-                        {% crispy form %}
+                        {% bootstrap_form form exclude='query_name,query_save' %}
                     {% endif %}
                 </div>
             </div>
@@ -55,4 +55,7 @@
         </div>
     </div>
 </form>
+{% if app_version %}
+    <p><em>TOM Toolkit Module (<a href={{ app_link }} target="_blank">{{form.data_service.value}}</a>) version {{ app_version }}</em></p>
+{% endif %}
 {% endblock %}
