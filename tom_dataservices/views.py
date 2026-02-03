@@ -137,6 +137,9 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         advanced_form = get_data_service_class(data_service_name).get_advanced_form_partial(self)
         context['simple_form'] = simple_form
         context['advanced_form'] = advanced_form
+        context['app_link'] = get_data_service_class(data_service_name).app_link
+        context['app_version'] = get_data_service_class(data_service_name).app_version
+
         return context
 
 
