@@ -262,20 +262,23 @@ class BaseDataService(ABC):
         """Create and save new reduced_datums of the appropriate data_type from the query results"""
         raise NotImplementedError
 
-    def to_target(self, target_results=None, **kwargs):
+    def to_target(self, target_result=None, **kwargs):
         """
         Upper level function to create a new target from the query results
-        Can take either new query results, or use stored results form a recent `query_service()`
-        :param query_results: Query results from the DataService
+        This method is not intended to be extended. This method passes a single instance of the output
+        of query_targets() to create_target_from_query(), create_target_extras_from_query() and
+        create_aliases_from_query().
+        Intended usage: Call to_target on each element of the target_data list of dictionaries from query_target.
+        (see views.py::CreateTargetFromQueryView)
+        :param target_results: Dictionary containing target information.
         :returns: Target object, dictionary of target_extras, and list of aliases
         """
-        target_parameters = target_results or self.target_results
-        if not target_parameters:
+        if not target_result:
             raise MissingDataException('No query results. Did you call query_service()?')
         else:
-            target = self.create_target_from_query(target_parameters, **kwargs)
-            extras = self.create_target_extras_from_query(target_parameters, **kwargs)
-            aliases = self.create_aliases_from_query(target_parameters, **kwargs)
+            target = self.create_target_from_query(target_result, **kwargs)
+            extras = self.create_target_extras_from_query(target_result, **kwargs)
+            aliases = self.create_aliases_from_query(target_result, **kwargs)
             return target, extras, aliases
 
     def create_target_from_query(self, target_result, **kwargs):

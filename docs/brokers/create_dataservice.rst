@@ -152,32 +152,33 @@ This may also require you to create a `build_headers` method, or make use of the
 `get_credentials`methods. Saving the results to `self.query_results` could save time in other methods by not requireing 
 you to redo the query.
 
-`BaseDataService.query_target`
+`BaseDataService.query_targets`
 ++++++++++++++++++++++++++++++
 
-We will just use `query_target` as an example. The same ideas apply to any of the individual query functions.
+We will just use `query_targets` as an example. The same ideas apply to any of the individual query functions.
 This is the function that pulls useful data from the query results in a way that the TOM understands. In this case, we 
-will be extracting Target data from the query results and creating a dictionary.
+will be extracting Target data from the query results and creating a list of dictionaries containing this target data.
 
 .. code-block:: python
     :caption: my_dataservice.MyDataService
     :linenos:
 
-    def query_target(self, data, **kwargs):
+    def query_targets(self, query_parameters, **kwargs):
             """
-            This code calls `query_dataservice` and returns a dictionary of results.
-            This call and the results should be tailroed towards describing targets.
+            This code calls `query_service` and returns a list of dictionaries containing target results.
+            This call and the results should be tailored towards describing targets.
             """
-            query_results = super().query_targets(data)
+            # I can update my query parameters to include target specific information here if necessary
+            query_results = self.query_service(query_parameters)
             targets = []
             for result in query_results:
                 result['name'] = f"MyService:{result['ra']},{result['dec']}"
                 targets.append(result)
-            return targets
+            return targets # This should always be a list of dictionaries.
 
 In this example, we create or modify the name of a query result so we will have something to enter into the TOM.
 Line 6 calls the super which will either retrieve `self.query_results` if it exists or run `query_service`. 
-The final output should be a dictionary of results.
+The final output should be a list of dictionaries containing target results.
 
 `BaseDataService.create_target_from_query`
 ++++++++++++++++++++++++++++++++++++++++++

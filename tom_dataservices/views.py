@@ -24,7 +24,7 @@ from tom_dataservices.dataservices import MissingDataException, QueryServiceErro
 logger = logging.getLogger(__name__)
 
 
-class DataServiceQueryFilter(FilterSet):
+class DataServiceQueryFilterSet(FilterSet):
     """
     Defines the available fields for filtering the list of queries.
     """
@@ -44,7 +44,7 @@ class DataServiceQueryListView(FilterView):
     """
     model = DataServiceQuery
     template_name = 'tom_dataservices/query_list.html'
-    filterset_class = DataServiceQueryFilter
+    filterset_class = DataServiceQueryFilterSet
 
     def get_context_data(self, *args, **kwargs):
         """
