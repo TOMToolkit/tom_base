@@ -215,8 +215,8 @@ beyond the basic target information. This is where we need to build out methods 
 
 Each of these different kinds of data will require functions in `MyDataService` titled `query_foo()` and
 `create_foo_from_query()`. These behave the same way as `query_targets` and `create_target_from_query` above, querying 
-the data service and returning a list of dictionaries dictionary, and then translating an instance of that dictionary 
-into a model object.
+the data service and returning a list of dictionaries in `query_foo()`, and then translating an instance of that dictionary
+into a model object with `create_foo_from_query()`.
 
 Depending on the specifics of your data service, it may be reasonable to call the `query_foo()` methods indipendently, 
 and/or part of `query_targets`.
