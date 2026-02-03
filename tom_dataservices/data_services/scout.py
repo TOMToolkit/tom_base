@@ -29,7 +29,15 @@ class ScoutDataService(BaseDataService):
         Returns:
             json containing parameters for querying the Scout API.
         """
-        return super().build_query_parameters(parameters, **kwargs)
+        data = {}
+        if parameters.get('tdes') is not None:
+            data['tdes'] = parameters['tdes']
+
+        # Return at least one orbit
+        data['orbits'] = 1
+        data['n-orbits'] = 1
+        self.query_parameters = data
+        return data
 
     def create_target_from_query(self, target_results, **kwargs):
         """
