@@ -5,7 +5,7 @@ from django import forms
 from crispy_forms.layout import Div, Fieldset, HTML, Layout
 from datetime import datetime, timedelta
 
-from tom_dataservices.dataservices import BaseDataService
+from tom_dataservices.dataservices import DataService
 from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import Target
 
@@ -75,7 +75,7 @@ class TNSForm(BaseQueryForm):
         )
 
 
-class TNSDataService(BaseDataService):
+class TNSDataService(DataService):
     """
         The ``TNSDataService`` is the interface to the Transient Name Server. For information regarding the TNS,
         please see https://www.wis-tns.org/

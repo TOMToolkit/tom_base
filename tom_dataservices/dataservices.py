@@ -15,7 +15,7 @@ def get_data_service_classes():
 
     Each dataservice class should be contained in a list of dictionaries in an app's apps.py `dataservices` method.
     Each dataservice dictionary should contain a 'class' key with the dot separated path to the dataservice class
-    (typically an extension of BaseDataService).
+    (typically an extension of DataService).
 
     FOR EXAMPLE:
     [{'class': 'path.to.dataservice.class'}]
@@ -72,7 +72,7 @@ class QueryServiceError(Exception):
     pass
 
 
-class BaseDataService(ABC):
+class DataService(ABC):
     """
     Base class for all Data Services. Data Services are classes that are responsible for querying external services
     and returning data.

@@ -19,10 +19,10 @@ First the actual query class:
     :caption: my_dataservice.py
     :linenos:
 
-    from tom_dataservices.dataservices import BaseDataService
+    from tom_dataservices.dataservices import DataService
     from my_dataservice.forms import MyServiceForm
 
-    class MyDataService(BaseDataService):
+    class MyDataService(DataService):
         """
         This is an Example Data Service with the minimum required 
         functionality.
@@ -93,10 +93,10 @@ Customizing your Data Service:
 ******************************
 
 The next step is to update our code to have all specific features relevent for our data service. Here we will focus on
-extending several methods of `BaseDataService` to be relevent for your data service.
+extending several methods of `DataService` to be relevent for your data service.
 
 
-`BaseDataService.build_query_parameters`
+`DataService.build_query_parameters`
 ++++++++++++++++++++++++++++++++++++++++
 
 For starters, let's make our `build_query_parameters` function inside of `MyDataService` actually do something.
@@ -123,7 +123,7 @@ In some cases, this can be very straightforward, while in others this can involv
 commands. Ultimately this is based on the API or client of your Data Service, and how you chose to name your form 
 fields.
 
-`BaseDataService.query_service`
+`DataService.query_service`
 +++++++++++++++++++++++++++++++
 
 Next we will need to fill out our `query_service` module. This is the function that actualy goes and calls the query
@@ -152,7 +152,7 @@ This may also require you to create a `build_headers` method, or make use of the
 `get_credentials`methods. Saving the results to `self.query_results` could save time in other methods by not requireing 
 you to redo the query.
 
-`BaseDataService.query_targets`
+`DataService.query_targets`
 ++++++++++++++++++++++++++++++
 
 We will just use `query_targets` as an example. The same ideas apply to any of the individual query functions.
@@ -180,7 +180,7 @@ In this example, we create or modify the name of a query result so we will have 
 Line 6 calls the super which will either retrieve `self.query_results` if it exists or run `query_service`. 
 The final output should be a list of dictionaries containing target results.
 
-`BaseDataService.create_target_from_query`
+`DataService.create_target_from_query`
 ++++++++++++++++++++++++++++++++++++++++++
 
 Continuing with our `target` example, we need to be able to `create_target_from_query` in order to actually save the

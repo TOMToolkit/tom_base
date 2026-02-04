@@ -1,7 +1,7 @@
 from django import forms
 from django.test import TestCase
 
-from tom_dataservices.dataservices import BaseDataService, MissingDataException, NotConfiguredError
+from tom_dataservices.dataservices import DataService, MissingDataException, NotConfiguredError
 from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import Target
 
@@ -16,7 +16,7 @@ class TestDataServiceForm(BaseQueryForm):
     name = forms.CharField(required=True)
 
 
-class TestDataService(BaseDataService):
+class TestDataService(DataService):
     name = 'TEST'
     service_notes = "This is a test DataService."
 
@@ -25,6 +25,7 @@ class TestDataService(BaseDataService):
             raise MissingDataException
         self.query_results = test_query_results
         return
+
     def query_target(self, term):
         self.query_results = self.query_service(term)
         return
@@ -43,7 +44,7 @@ class TestDataService(BaseDataService):
         }
 
 
-class EmptyTestDataService(BaseDataService):
+class EmptyTestDataService(DataService):
     name = 'TEST'
     service_notes = "This is a test DataService."
 
