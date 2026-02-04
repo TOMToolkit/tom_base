@@ -25,6 +25,9 @@ class TestDataService(BaseDataService):
             raise MissingDataException
         self.query_results = test_query_results
         return
+    def query_target(self, term):
+        self.query_results = self.query_service(term)
+        return
 
     @classmethod
     def get_form_class(cls):
