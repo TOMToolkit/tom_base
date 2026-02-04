@@ -1,7 +1,12 @@
 {% for facility, facility_class in facilities.items %}
+  <a
   {% if facility_class.is_redirect %}
-    <a href="{% url 'tom_observations:redirect' facility=facility %}?target_id={{ target.id }}" class="btn btn-outline-primary">{{ facility }}</a>
+    href="{% url 'tom_observations:redirect' facility=facility %}?target_id={{ target.id }}"
   {% else %}
-    <a href="{% url 'tom_observations:create' facility=facility %}?target_id={{ target.id }}" class="btn btn-outline-primary">{{ facility }}</a>
+    href="{% url 'tom_observations:create' facility=facility %}?target_id={{ target.id }}"
   {% endif %}
+    class="btn btn-outline-primary"
+    title="{{ facility_class.get_button_tooltip }}">
+      {{ facility_class.get_button_label }}
+  </a>
 {% endfor %}

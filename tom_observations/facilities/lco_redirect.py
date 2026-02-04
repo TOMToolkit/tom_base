@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 class LCORedirectFacility(BaseRedirectObservationFacility):
     name = "LCORedirect"
     observation_types = [("Default", "")]
+    button_label = "LCO/SOAR/BLANCO"
+    button_tooltip = "Redirect to LCO/SOAR/BLANCO observation portal"
 
     def target_to_query_params(self, target) -> str:
         set_fields = {
