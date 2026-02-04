@@ -259,7 +259,7 @@ class DataService(ABC):
 
     def create_data_product_from_query(self, query_results=None, **kwargs):
         """Create a new DataProduct from the query results"""
-        raise NotImplementedError (f'create_data_product_from_query method has not been implemented for {self.name}')
+        raise NotImplementedError(f'create_data_product_from_query method has not been implemented for {self.name}')
 
     def to_reduced_datums(self, target, data_results=None, **kwargs):
         """

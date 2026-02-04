@@ -359,7 +359,7 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                     messages.warning(request, mark_safe(
                                     f"""Unable to save {target.name}, target with that name already exists.
                                     You can <a href="{reverse('targets:create') + '?' +
-                                                    urlencode(target.as_dict())}">create</a>
+                                                      urlencode(target.as_dict())}">create</a>
                                     a new target anyway.
                                     """)
                                     )
