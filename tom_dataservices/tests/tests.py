@@ -24,11 +24,11 @@ class TestDataService(DataService):
         if term == 'notfound':
             raise MissingDataException
         self.query_results = test_query_results
-        return
+        return self.query_results
 
-    def query_target(self, term):
+    def query_targets(self, term):
         self.query_results = self.query_service(term)
-        return
+        return [self.query_results]
 
     @classmethod
     def get_form_class(cls):
@@ -74,8 +74,8 @@ class TestDataServiceClass(TestCase):
         with self.assertRaises(MissingDataException):
             new_test_query.to_target()
         # Show to_target() works with the default query_results
-        new_test_query.query_targets('mytarget')
-        target, _extras, _aliases = new_test_query.to_target(target_results=new_test_query.query_results)
+        target_results = new_test_query.query_targets('mytarget')
+        target, _extras, _aliases = new_test_query.to_target(target_result=target_results[0])
         self.assertEqual(target.name, test_query_results['name'])
         # Show to_target() works independently of the query.
         new_test_query_results = test_query_results.copy()
