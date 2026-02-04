@@ -279,7 +279,7 @@ class BaseDataService(ABC):
         """Create and save new reduced_datums of the appropriate data_type from the query results"""
         raise NotImplementedError
 
-    def to_target(self, target_result=None, **kwargs) -> Tuple[dict,dict,dict]:
+    def to_target(self, target_result=None, **kwargs) -> Tuple[dict, dict, dict]:
         """
         Upper level function to create a new target from the query results
         This method is not intended to be extended. This method passes a single instance of the output
