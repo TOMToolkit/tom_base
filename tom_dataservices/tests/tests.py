@@ -27,7 +27,7 @@ class TestDataService(DataService):
         self.query_results = test_query_results
         return self.query_results
 
-    def query_targets(self, term) -> List[dict]:
+    def query_targets(self, term, **kwargs) -> List[dict]:
         self.query_results = self.query_service(term)
         return [self.query_results]
 
