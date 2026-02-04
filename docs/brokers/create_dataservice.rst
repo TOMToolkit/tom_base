@@ -5,11 +5,19 @@ This guide is to walk you step by step through the process of creating a Data Se
 This assumes that you want a user interface for querying your data service via a form.
 Many of these steps can be skipped if your service is only intended to be accessed internally.
 
+Once fully implemented, a dataservice should automatically show up in the proper nav bar drop downs, and be able to 
+query a service via a form, displaying results to a custom table, then finally saving desired results to a TOM's DB.
+
 Setting up the Basic Data Service:
 **********************************
 
 First we will build the bare bones of our data service. This is the bare minimum to get the service to show up in the 
-TOM. We'll start with three peices of code:
+TOM. We'll start with three peices of generic code:
+
+ - Our Query class (an extension of `tom_dataservices.dataservice.DataService`)
+ - Our Form Class (an extension of `tom_dataservices.forms.BaseQueryForm`)
+ - An integration point for our data service in `Apps.py`
+
 
 First the actual query class:
 +++++++++++++++++++++++++++++
@@ -88,18 +96,31 @@ Adding the integration point:
         """
         return [{'class': f'{self.name}.my_dataservice.MyDataService'}]
 
+Once all of these are done, you should be able to see your basic form in a test TOM:
+
+
+|image0|
 
 Customizing your Data Service:
 ******************************
 
 The next step is to update our code to have all specific features relevent for our data service. Here we will focus on
 extending several methods of `DataService` to be relevent for your data service.
+Ultimately there are many things that can be customized for your DataService, and many tools built into the base class
+to help you do this. This section will take you through the fundamentals to get you started, but you should review the
+:doc:`full class documentation <../api/tom_dataservices/data_services>` before you procede.
+
+
+Filling out our `MyServiceForm`
++++++++++++++++++++++++++++++++
+First, we will need actual fields in our Form. For more on this, see the `official Django
+docs <https://docs.djangoproject.com/en/stable/topics/forms/>`__.
 
 
 `DataService.build_query_parameters`
 ++++++++++++++++++++++++++++++++++++++++
 
-For starters, let's make our `build_query_parameters` function inside of `MyDataService` actually do something.
+Next, let's make our `build_query_parameters` function inside of `MyDataService` actually do something.
 This code is to convert all of the form fields into a data dictionary or set of query parameters that is understood by
 the data service (or more specifically our `query_service` method.)
 
@@ -180,6 +201,8 @@ In this example, we create or modify the name of a query result so we will have 
 Line 6 calls the super which will either retrieve `self.query_results` if it exists or run `query_service`. 
 The final output should be a list of dictionaries containing target results.
 
+At this point you should be seeing a list of Targets showing up in your TOM after you perform a query.
+
 `DataService.create_target_from_query`
 ++++++++++++++++++++++++++++++++++++++++++
 
@@ -221,3 +244,5 @@ into a model object with `create_foo_from_query()`.
 
 Depending on the specifics of your data service, it may be reasonable to call the `query_foo()` methods indipendently, 
 and/or part of `query_targets`.
+
+.. |image0| image:: /_static/dataservices_doc/demo_Data_Service.png

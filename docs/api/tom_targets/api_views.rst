@@ -17,5 +17,5 @@ Target API Views
 .. automodule:: tom_targets.api_views
     :members:
 
-.. automodule:: tom_targets.filters.TargetFilter
+.. automodule:: tom_targets.filters.TargetFilterSet
     :members:

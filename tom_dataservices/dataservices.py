@@ -264,7 +264,8 @@ class DataService(ABC):
     def to_reduced_datums(self, target, data_results=None, **kwargs):
         """
         Upper level function to create a new ReducedDatum from the query results
-        Can take either new data results, or use stored results form a recent `query_service()`
+        This method is not intended to be extended. This method passes the output
+        of query_reduced_data() to create_reduced_datums_from_query()
         :param target: Target object to associate with the ReducedDatum
         :param data_results: Query results from the DataService storing observation data. This should be a dictionary
             with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
