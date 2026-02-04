@@ -178,7 +178,7 @@ class TNSDataService(BaseDataService):
 
     def query_targets(self, query_parameters):
         """Set up and run a specialized query for retrieving targets from a DataService."""
-        results = super().query_targets(query_parameters, url=self.get_urls('search_url'))
+        results = self.query_service(query_parameters, url=self.get_urls('search_url'))
         targets = []
         # results = self.query_service(query_parameters, url=self.get_urls('search_url'))
         for result in results:

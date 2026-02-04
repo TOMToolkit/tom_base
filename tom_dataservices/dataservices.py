@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
+from typing import List, Tuple
 
 from django.conf import settings
 from django.apps import apps
@@ -219,13 +220,29 @@ class BaseDataService(ABC):
                 'spectroscopy': spec_results,
                 'forced_photometry': forced_phot_results}
 
-    def query_aliases(self, query_parameters, **kwargs):
-        """Set up and run a specialized query for retrieving alternate names from a DataService."""
-        return self.query_service(query_parameters, **kwargs)
+    def query_aliases(self, query_parameters, **kwargs) -> List[dict]:
+        """
+        Set up and run a specialized query for retrieving target names from a DataService.
+        This method will usually call `query_service()` and translate the results from the dataservice into a
+        list of dictionaries describing the returned target names.
 
-    def query_targets(self, query_parameters, **kwargs):
-        """Set up and run a specialized query for retrieving targets from a DataService."""
-        return self.query_service(query_parameters, **kwargs)
+        :param query_parameters: This is the output from build_query_parameters()
+        :return: A list of dictionaries describing the resulting target names
+        :rtype: List[dict]
+        """
+        return [{}]
+
+    def query_targets(self, query_parameters, **kwargs) -> List[dict]:
+        """
+        Set up and run a specialized query for retrieving targets from a DataService.
+        This method will usually call `query_service()` and translate the results from the dataservice into a
+        list of dictionaries describing the returned targets.
+
+        :param query_parameters: This is the output from build_query_parameters()
+        :return: A list of dictionaries describing the resulting targets
+        :rtype: List[dict]
+        """
+        return [{}]
 
     def to_data_product(self, query_results=None, **kwargs):
         """
@@ -262,7 +279,7 @@ class BaseDataService(ABC):
         """Create and save new reduced_datums of the appropriate data_type from the query results"""
         raise NotImplementedError
 
-    def to_target(self, target_result=None, **kwargs):
+    def to_target(self, target_result=None, **kwargs) -> Tuple[dict,dict,dict]:
         """
         Upper level function to create a new target from the query results
         This method is not intended to be extended. This method passes a single instance of the output
