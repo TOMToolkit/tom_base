@@ -111,11 +111,11 @@ class DataService(ABC):
 
     def pre_query_validation(self, query_parameters):
         """Same thing as query_service, but a dry run"""
-        raise NotImplementedError
+        raise NotImplementedError(f'pre_query_validation method has not been implemented for {self.name}')
 
     def build_query_parameters(self, parameters, **kwargs):
         """Builds the query parameters from the form data"""
-        raise NotImplementedError
+        raise NotImplementedError(f'build_query_parameters method has not been implemented for {self.name}')
 
     def build_headers(self, *args, **kwargs):
         """Builds the headers for the query"""
@@ -259,7 +259,7 @@ class DataService(ABC):
 
     def create_data_product_from_query(self, query_results=None, **kwargs):
         """Create a new DataProduct from the query results"""
-        raise NotImplementedError
+        raise NotImplementedError (f'create_data_product_from_query method has not been implemented for {self.name}')
 
     def to_reduced_datums(self, target, data_results=None, **kwargs):
         """
@@ -305,7 +305,7 @@ class DataService(ABC):
         :returns: target object
         :rtype: `Target`
         """
-        raise NotImplementedError
+        raise NotImplementedError(f'create_target_from_query method has not been implemented for {self.name}')
 
     def create_target_extras_from_query(self, query_results, **kwargs):
         """Create a new target from the query results
