@@ -356,12 +356,12 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                         assign_perm('tom_targets.change_target', group, target)
                         assign_perm('tom_targets.delete_target', group, target)
                 except IntegrityError:
-                    messages.warning(request, mark_safe(
-                                    f"""Unable to save {target.name}, target with that name already exists.
-                                    You can <a href="{reverse('targets:create') + '?' +
-                                                      urlencode(target.as_dict())}">create</a>
-                                    a new target anyway.
-                                    """)
+                    messages.warning(request, 
+                                     mark_safe(
+                                         f"""Unable to save {target.name}, target with that name already exists.
+                                         You can <a href="{reverse('targets:create') + '?' +
+                                                           urlencode(target.as_dict())}">create</a> a new target anyway.
+                                         """)
                                     )
                     errors.append(target.name)
                     target = None
