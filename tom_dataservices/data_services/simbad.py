@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, List
 
 from django import forms
 
@@ -8,7 +8,7 @@ from tom_dataservices.forms import BaseQueryForm as QueryForm
 from tom_targets.models import Target, TargetName
 
 from astroquery.simbad import Simbad
-from astropy.table import Table, Row
+from astropy.table import Table
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -128,10 +128,6 @@ class SimbadDataService(DataService):
         :return: Unsaved Target instance populated with SIMBAD data
         :rtype: Target
         """
-        logger.debug(f'SIMBAD.create_target_from_query.target_result: {target_result}')
-
-        votable_fields = ['RA', 'DEC', 'PMRA', 'PMDEC', 'MAIN_ID', 'MESDISTANCE.dist', 'MESDISTANCE.unit']
-
         target = Target(
             name=target_result['name'],
             type='SIDEREAL',
@@ -146,7 +142,7 @@ class SimbadDataService(DataService):
         if 'kpc' in target_result.get('mesdistance.unit', ''):
             target.distance = target.distance * 1000
         elif 'mpc' in target_result.get('mesdistance.unit', '').lower():
-            target.distance = target_distance * 1000000
+            target.distance = target.distance * 1000000
 
         target.save()  # save it b/c it needs to exist so we can create TargetName aliases.
 
