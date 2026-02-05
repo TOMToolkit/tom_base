@@ -11,7 +11,7 @@ from astroquery.simbad import Simbad
 from astropy.table import Table
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 
 class SimbadDataService(DataService):
