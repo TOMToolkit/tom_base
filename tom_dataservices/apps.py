@@ -30,4 +30,6 @@ class TomDataservicesConfig(AppConfig):
         integration point for including data services in the TOM
         This method should return a list of dictionaries containing dot separated DataService classes
         """
-        return [{'class': f'{self.name}.data_services.tns.TNSDataService'}]
+        return [{'class': f'{self.name}.data_services.tns.TNSDataService'},
+                {'class': f'{self.name}.data_services.scout.ScoutDataService'},
+                ]
