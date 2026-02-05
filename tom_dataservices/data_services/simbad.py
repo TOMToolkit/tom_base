@@ -144,9 +144,7 @@ class SimbadDataService(DataService):
         elif 'mpc' in target_result.get('mesdistance.unit', '').lower():
             target.distance = target.distance * 1000000
 
-        target.save()  # save it b/c it needs to exist so we can create TargetName aliases.
-
-        return target
+        return target  # not saved yet
 
     def create_aliases_from_query(self, query_results, **kwargs) -> List[TargetName]:
         """
@@ -154,10 +152,9 @@ class SimbadDataService(DataService):
         It has name and alias fields. Use the name to get the Target and give it
         the alias.
         """
-        target = Target.objects.get(name=query_results['name'])
-        alias = TargetName.objects.create(name=query_results['alias'], target=target)
+        alias = TargetName(name=query_results['alias'])
 
-        return [alias]
+        return [alias]  # not saved yet
 
 
 class SimbadForm(QueryForm):
