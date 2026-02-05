@@ -106,21 +106,21 @@ class SimbadDataService(DataService):
         """Create a new target from the query results. This method will be called from
         `SimbadDataService.to_target()` via `DataService.CreateTargetFromQueryView.post()`.
 
-        :param target_result: Dictionary containing target data with keys like 'RA', 'DEC',
-                             'PMRA', 'PMDEC', 'MAIN_ID'. For example:
-
-                             ```python
-                            {
-                                'RA': np.float64(213.915300294925),
-                                'DEC': np.float64(19.1824091615312),
-                                'PMRA': np.float64(-1093.39),
-                                'PMDEC': np.float64(-2000.06),
-                                'MAIN_ID': '* alf Boo',
-                                'name': 'Arcturus',
-                                'alias': '*alfBoo',
-                                'id': 0
-                            }
-                            ```
+        :param target_result: Dictionary containing target data. For example:
+         ```python
+         {
+             'ra': np.float64(350.8584),
+             'dec': np.float64(58.8113),
+             'pmra': masked,
+             'pmdec': masked,
+             'main_id': 'NAME Cas A',
+             'mesdistance.dist': np.float64(3.4),
+             'mesdistance.unit': 'kpc ',
+             'name': 'Cas A',
+             'alias': 'aliase for CasA',
+             'id': 0
+             }
+        ```
         :type target_result: Dict[str, Any]
         :param kwargs: Additional keyword arguments
         :type kwargs: dict
