@@ -138,11 +138,11 @@ class SimbadDataService(DataService):
         )
 
         # Convert all distances to pc
-        target.distance = target_result.get('MESDISTANCE.dist')  # default is pc
-        if 'kpc' in target_result.get('mesdistance.unit', ''):
-            target.distance = target.distance * 1000
-        elif 'mpc' in target_result.get('mesdistance.unit', '').lower():
-            target.distance = target.distance * 1000000
+        target_distance = target_result.get('mesdistance.dist', None)
+        if target_distance and 'kpc' in target_result.get('mesdistance.unit', ''):
+            target.distance = target_distance * 1000  # kilo
+        elif target_distance and 'mpc' in target_result.get('mesdistance.unit', ''):
+            target.distance = target_distance * 1000000  # mega
 
         return target  # not saved yet
 
