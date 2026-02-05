@@ -34,6 +34,7 @@ from tom_observations.facility import BaseManualObservationFacility
 from tom_observations.forms import AddExistingObservationForm, facility_choices
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
 from tom_targets.models import Target
+from tom_targets.permissions import targets_for_user
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +94,7 @@ class ObservationListView(FilterView):
         """
         if settings.TARGET_PERMISSIONS_ONLY:
             return ObservationRecord.objects.filter(
-                target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')
+                target__in=targets_for_user(self.request.user, Target.objects.all(), 'view_target')
             )
         else:
             return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
@@ -617,7 +618,7 @@ class ObservationRecordDetailView(DetailView):
         """
         if settings.TARGET_PERMISSIONS_ONLY:
             return ObservationRecord.objects.filter(
-                target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')
+                target__in=targets_for_user(self.request.user, Target.objects.all(), 'view_target')
             )
         else:
             return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
