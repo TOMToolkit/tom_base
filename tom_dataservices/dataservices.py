@@ -316,7 +316,9 @@ class DataService(ABC):
 
     def create_aliases_from_query(self, query_results, **kwargs):
         """Create a new target from the query results
-        :returns: list of aliases to be added to a new Target
+        This method should be over ridden with a method that creates a list of TargetName objects:
+        `TargetName(name=alias)` that will be saved as part of the `Target.save(extras=extras, names=aliases)` call.
+        :returns: list of TargetName objects to be added to a new Target
         :rtype: `list`
         """
         return []
