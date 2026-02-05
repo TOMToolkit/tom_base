@@ -318,6 +318,7 @@ class DataService(ABC):
         """Create a new target from the query results
         This method should be over ridden with a method that creates a list of TargetName objects:
         `TargetName(name=alias)` that will be saved as part of the `Target.save(extras=extras, names=aliases)` call.
+        :param query_result: dictionary describing target details based on query result
         :returns: list of TargetName objects to be added to a new Target
         :rtype: `list`
         """
