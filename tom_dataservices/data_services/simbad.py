@@ -152,9 +152,11 @@ class SimbadDataService(DataService):
         It has name and alias fields. Use the name to get the Target and give it
         the alias.
         """
-        alias = TargetName(name=query_results['alias'])
+        aliases = []
+        if alias := query_results.get('alias', None):
+            aliases.append(TargetName(name=alias))
 
-        return [alias]  # not saved yet
+        return aliases  # not saved yet
 
 
 class SimbadForm(QueryForm):
