@@ -514,6 +514,10 @@ class ObservationCallbackView(LoginRequiredMixin, View):
         assign_perm('tom_observations.view_observationrecord', user, observation)
         assign_perm('tom_observations.change_observationrecord', user, observation)
         assign_perm('tom_observations.delete_observationrecord', user, observation)
+        for group in request.user.groups.all():
+            assign_perm('tom_observations.view_observationrecord', group, observation)
+            assign_perm('tom_observations.change_observationrecord', group, observation)
+            assign_perm('tom_observations.delete_observationrecord', group, observation)
         if not created:
             messages.warning(self.request, "Observation record for this target and facility already exists.")
 
