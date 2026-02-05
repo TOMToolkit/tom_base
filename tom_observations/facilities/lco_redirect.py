@@ -1,3 +1,4 @@
+from tom_observations.facilities.lco import LCOFacility
 import logging
 import urllib.parse
 
@@ -15,6 +16,9 @@ class LCORedirectFacility(BaseRedirectObservationFacility):
     observation_types = [("Default", "")]
     button_label = "LCO/SOAR/BLANCO"
     button_tooltip = "Redirect to LCO/SOAR/BLANCO observation portal"
+
+    def __init__(self, *args, **kwargs):
+        self.lco_facility = LCOFacility(name_override=self.name)
 
     def target_to_query_params(self, target) -> str:
         set_fields = {
@@ -36,17 +40,20 @@ class LCORedirectFacility(BaseRedirectObservationFacility):
 
         return url
 
+    def update_all_observation_statuses(self, *args, **kwargs):
+        return self.lco_facility.update_all_observation_statuses(*args, **kwargs)
+
     def get_observation_url(self, observation_id):
-        return ""
+        return self.lco_facility.get_observation_url(observation_id)
 
     def get_terminal_observing_states(self):
-        return []
+        return self.lco_facility.get_terminal_observing_states()
 
     def get_observing_sites(self):
-        return {}
+        return self.lco_facility.get_observing_sites()
 
     def get_observation_status(self, observation_id):
-        return None
+        return self.lco_facility.get_observation_status(observation_id)
 
     def data_products(self, observation_id, product_id=None):
-        return []
+        return self.lco_facility.data_products(observation_id, product_id)
