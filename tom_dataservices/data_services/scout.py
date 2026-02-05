@@ -60,7 +60,7 @@ class ScoutDataService(BaseDataService):
         return data
 
     def query_service(self, data, **kwargs):
-        response = requests.get(self.get_urls('search_url'), data)
+        response = requests.get(kwargs['url'], data)
         response.raise_for_status()
         json_response = response.json()
         if 'data' in json_response:
@@ -71,9 +71,16 @@ class ScoutDataService(BaseDataService):
         return self.query_results
 
     def query_targets(self, query_parameters):
-        target_parameters = self.build_query_parameters(query_parameters)
-        target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
-        return target_data
+        """Set up and run a specialized query for retrieving targets from a DataService."""
+        results = super().query_targets(query_parameters, url=self.get_urls('search_url'))
+        targets = []
+        for result in results:
+            query_parameters['tdes'] = result['objectName']
+            target_parameters = self.build_query_parameters(query_parameters)
+            print(target_parameters)
+            target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
+            targets.append(target_data)
+        return targets
 
     @classmethod
     def get_form_class(cls):
