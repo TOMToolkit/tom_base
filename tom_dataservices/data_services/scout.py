@@ -21,6 +21,8 @@ class ScoutDataService(BaseDataService):
     """
     name = 'Scout'
     info_url = 'https://cneos.jpl.nasa.gov/scout/intro.html'
+    query_results_table = 'tom_dataservices/scout/partials/scout_query_results_table.html'
+
     # Gaussian gravitational constant
     _k = degrees(sqrt(GM_sun.value) * au.value**-1.5 * 86400.0)
 
@@ -46,12 +48,14 @@ class ScoutDataService(BaseDataService):
             json containing parameters for querying the Scout API.
         """
         data = {}
-        if parameters.get('tdes') is not None:
+        # import pprint
+        # pprint.pprint(parameters)
+        if parameters.get('tdes') is not None and parameters['tdes'] != '':
             data['tdes'] = parameters['tdes']
 
-        # Return at least one orbit
-        data['orbits'] = 1
-        data['n-orbits'] = 1
+            # Return at least one orbit
+            data['orbits'] = 1
+            data['n-orbits'] = 1
         self.query_parameters = data
         return data
 
