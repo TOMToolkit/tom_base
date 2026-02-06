@@ -220,17 +220,17 @@ class DataService(ABC):
                 'spectroscopy': spec_results,
                 'forced_photometry': forced_phot_results}
 
-    def query_aliases(self, query_parameters, **kwargs) -> List[dict]:
+    def query_aliases(self, query_parameters, **kwargs) -> List:
         """
         Set up and run a specialized query for retrieving target names from a DataService.
         This method will usually call `query_service()` and translate the results from the dataservice into a
-        list of dictionaries describing the returned target names.
+        list of target names.
 
         :param query_parameters: This is the output from build_query_parameters()
-        :return: A list of dictionaries describing the resulting target names
-        :rtype: List[dict]
+        :return: A list of target names
+        :rtype: List
         """
-        return [{}]
+        return []
 
     def query_targets(self, query_parameters, **kwargs) -> List[dict]:
         """
@@ -297,7 +297,7 @@ class DataService(ABC):
         else:
             target = self.create_target_from_query(target_result, **kwargs)
             extras = self.create_target_extras_from_query(target_result, **kwargs)
-            aliases = self.create_aliases_from_query(target_result.get('aliases', [{}]), **kwargs)
+            aliases = self.create_aliases_from_query(target_result.get('aliases', []), **kwargs)
             return target, extras, aliases
 
     def create_target_from_query(self, target_result, **kwargs):
@@ -315,7 +315,7 @@ class DataService(ABC):
         """
         return {}
 
-    def create_aliases_from_query(self, alias_results:List[dict], **kwargs)->List:
+    def create_aliases_from_query(self, alias_results:List, **kwargs)->List:
         """Create a new target from the query results
         This method should be over ridden with a method that creates a list of TargetName objects:
         `TargetName(name=alias)` that will be saved as part of the `Target.save(extras=extras, names=aliases)` call.
