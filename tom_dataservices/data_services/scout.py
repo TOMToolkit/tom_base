@@ -2,8 +2,9 @@ from math import sqrt, degrees
 
 from astropy.constants import GM_sun, au
 from django import forms
+from django.contrib import messages
 import requests
-
+import pprint
 
 from tom_dataservices.dataservices import BaseDataService
 from tom_dataservices.forms import BaseQueryForm
@@ -70,17 +71,25 @@ class ScoutDataService(BaseDataService):
             self.query_results = json_response
         return self.query_results
 
-    def query_targets(self, query_parameters):
+    def query_targets(self, query_parameters, **kwargs):
         """Set up and run a specialized query for retrieving targets from a DataService."""
-        results = super().query_targets(query_parameters, url=self.get_urls('search_url'))
+        pprint.pprint(query_parameters)
+        results = super().query_targets(self.build_query_parameters(query_parameters), url=self.get_urls('search_url'))
+
         targets = []
         if results is not None and 'error' not in results:
             for result in results:
-                query_parameters['tdes'] = result['objectName']
-                target_parameters = self.build_query_parameters(query_parameters)
-                print(target_parameters)
-                target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
-                targets.append(target_data)
+                if result['neoScore'] >= self.input_parameters.get('neo_score_min', 0):
+                    query_parameters['tdes'] = result['objectName']
+                    target_parameters = self.build_query_parameters(query_parameters)
+                    target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
+                    targets.append(target_data)
+        else:
+            msg = "Error retrieving data from Scout."
+            if query_parameters.get('tdes', '') != '':
+                msg += f" Object {query_parameters['tdes']} is no longer on Scout."
+            # if request is not None:
+            #     messages.error(request, msg)
         return targets
 
     @classmethod
