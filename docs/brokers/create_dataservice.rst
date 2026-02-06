@@ -5,11 +5,19 @@ This guide is to walk you step by step through the process of creating a Data Se
 This assumes that you want a user interface for querying your data service via a form.
 Many of these steps can be skipped if your service is only intended to be accessed internally.
 
+Once fully implemented, a dataservice should automatically show up in the proper nav bar drop downs, and be able to 
+query a service via a form, displaying results to a custom table, then finally saving desired results to a TOM's DB.
+
 Setting up the Basic Data Service:
 **********************************
 
 First we will build the bare bones of our data service. This is the bare minimum to get the service to show up in the 
-TOM. We'll start with three peices of code:
+TOM. We'll start with three pieces of generic code:
+
+ - Our Query class (an extension of `tom_dataservices.dataservice.DataService`)
+ - Our Form Class (an extension of `tom_dataservices.forms.BaseQueryForm`)
+ - An integration point for our data service in `Apps.py`
+
 
 First the actual query class:
 +++++++++++++++++++++++++++++
@@ -19,10 +27,10 @@ First the actual query class:
     :caption: my_dataservice.py
     :linenos:
 
-    from tom_dataservices.dataservices import BaseDataService
+    from tom_dataservices.dataservices import DataService
     from my_dataservice.forms import MyServiceForm
 
-    class MyDataService(BaseDataService):
+    class MyDataService(DataService):
         """
         This is an Example Data Service with the minimum required 
         functionality.
@@ -88,18 +96,31 @@ Adding the integration point:
         """
         return [{'class': f'{self.name}.my_dataservice.MyDataService'}]
 
+Once all of these are done, you should be able to see your basic form in a test TOM:
+
+
+|image0|
 
 Customizing your Data Service:
 ******************************
 
-The next step is to update our code to have all specific features relevent for our data service. Here we will focus on
-extending several methods of `BaseDataService` to be relevent for your data service.
+The next step is to update our code to have all of the specific features relevant for our data service. Here we will focus on
+extending several methods of `DataService` to perform the specific tasks needed to interface with your data service.
+Ultimately there are many things that can be customized for your DataService, and many tools built into the base class
+to help you do this. This section will take you through the fundamentals to get you started, but you should review the
+:doc:`full class documentation <../api/tom_dataservices/data_services>` before you precede.
 
 
-`BaseDataService.build_query_parameters`
+Filling out our `MyServiceForm`
++++++++++++++++++++++++++++++++
+First, we will need actual fields in our Form. For more on this, see the `official Django
+docs <https://docs.djangoproject.com/en/stable/topics/forms/>`__.
+
+
+`DataService.build_query_parameters`
 ++++++++++++++++++++++++++++++++++++++++
 
-For starters, let's make our `build_query_parameters` function inside of `MyDataService` actually do something.
+Next, let's make our `build_query_parameters` function inside of `MyDataService` actually do something.
 This code is to convert all of the form fields into a data dictionary or set of query parameters that is understood by
 the data service (or more specifically our `query_service` method.)
 
@@ -123,10 +144,10 @@ In some cases, this can be very straightforward, while in others this can involv
 commands. Ultimately this is based on the API or client of your Data Service, and how you chose to name your form 
 fields.
 
-`BaseDataService.query_service`
+`DataService.query_service`
 +++++++++++++++++++++++++++++++
 
-Next we will need to fill out our `query_service` module. This is the function that actualy goes and calls the query
+Next we will need to fill out our `query_service` module. This is the function that actually goes and calls the query
 service using the parameters created by `build_query_parameters`. This function produces query results that can then be
 interpreted by `query_targets`, `query_photometry`, or other functions to produce specific kinds of results that can be 
 interpreted by your TOM.
@@ -149,41 +170,44 @@ interpreted by your TOM.
 
 Again, depending on the nature of your data service, the `query_service` function could take many different forms. 
 This may also require you to create a `build_headers` method, or make use of the `urls`, `get_configuration`, or 
-`get_credentials`methods. Saving the results to `self.query_results` could save time in other methods by not requireing 
+`get_credentials`methods. Saving the results to `self.query_results` could save time in other methods by not requiring 
 you to redo the query.
 
-`BaseDataService.query_target`
+`DataService.query_targets`
 ++++++++++++++++++++++++++++++
 
-We will just use `query_target` as an example. The same ideas apply to any of the individual query functions.
+We will just use `query_targets` as an example. The same ideas apply to any of the individual query functions.
 This is the function that pulls useful data from the query results in a way that the TOM understands. In this case, we 
-will be extracting Target data from the query results and creating a dictionary.
+will be extracting Target data from the query results and creating a list of dictionaries containing this target data.
 
 .. code-block:: python
     :caption: my_dataservice.MyDataService
     :linenos:
 
-    def query_target(self, data, **kwargs):
+    def query_targets(self, query_parameters, **kwargs):
             """
-            This code calls `query_dataservice` and returns a dictionary of results.
-            This call and the results should be tailroed towards describing targets.
+            This code calls `query_service` and returns a list of dictionaries containing target results.
+            This call and the results should be tailored towards describing targets.
             """
-            query_results = super().query_targets(data)
+            # I can update my query parameters to include target specific information here if necessary
+            query_results = self.query_service(query_parameters)
             targets = []
             for result in query_results:
                 result['name'] = f"MyService:{result['ra']},{result['dec']}"
                 targets.append(result)
-            return targets
+            return targets # This should always be a list of dictionaries.
 
 In this example, we create or modify the name of a query result so we will have something to enter into the TOM.
 Line 6 calls the super which will either retrieve `self.query_results` if it exists or run `query_service`. 
-The final output should be a dictionary of results.
+The final output should be a list of dictionaries containing target results.
 
-`BaseDataService.create_target_from_query`
+At this point you should be seeing a list of Targets showing up in your TOM after you perform a query.
+
+`DataService.create_target_from_query`
 ++++++++++++++++++++++++++++++++++++++++++
 
 Continuing with our `target` example, we need to be able to `create_target_from_query` in order to actually save the
-target object resulting from a succesful result for `query_target` above. This function expects a single instance with
+target object resulting from a sucessful result for `query_target` above. This function expects a single instance with
 the same format as the list of dictionaries created by `query_targets` and converts that dictionary into a Target Object
 returning that object.
 
@@ -218,5 +242,7 @@ Each of these different kinds of data will require functions in `MyDataService` 
 the data service and returning a list of dictionaries in `query_foo()`, and then translating an instance of that dictionary
 into a model object with `create_foo_from_query()`.
 
-Depending on the specifics of your data service, it may be reasonable to call the `query_foo()` methods indipendently, 
+Depending on the specifics of your data service, it may be reasonable to call the `query_foo()` methods independently, 
 and/or part of `query_targets`.
+
+.. |image0| image:: /_static/dataservices_doc/demo_Data_Service.png
