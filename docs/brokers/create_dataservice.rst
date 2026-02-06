@@ -12,7 +12,7 @@ Setting up the Basic Data Service:
 **********************************
 
 First we will build the bare bones of our data service. This is the bare minimum to get the service to show up in the 
-TOM. We'll start with three peices of generic code:
+TOM. We'll start with three pieces of generic code:
 
  - Our Query class (an extension of `tom_dataservices.dataservice.DataService`)
  - Our Form Class (an extension of `tom_dataservices.forms.BaseQueryForm`)
@@ -104,11 +104,11 @@ Once all of these are done, you should be able to see your basic form in a test 
 Customizing your Data Service:
 ******************************
 
-The next step is to update our code to have all specific features relevent for our data service. Here we will focus on
-extending several methods of `DataService` to be relevent for your data service.
+The next step is to update our code to have all of the specific features relevant for our data service. Here we will focus on
+extending several methods of `DataService` to perform the specific tasks needed to interface with your data service.
 Ultimately there are many things that can be customized for your DataService, and many tools built into the base class
 to help you do this. This section will take you through the fundamentals to get you started, but you should review the
-:doc:`full class documentation <../api/tom_dataservices/data_services>` before you procede.
+:doc:`full class documentation <../api/tom_dataservices/data_services>` before you precede.
 
 
 Filling out our `MyServiceForm`
@@ -147,7 +147,7 @@ fields.
 `DataService.query_service`
 +++++++++++++++++++++++++++++++
 
-Next we will need to fill out our `query_service` module. This is the function that actualy goes and calls the query
+Next we will need to fill out our `query_service` module. This is the function that actually goes and calls the query
 service using the parameters created by `build_query_parameters`. This function produces query results that can then be
 interpreted by `query_targets`, `query_photometry`, or other functions to produce specific kinds of results that can be 
 interpreted by your TOM.
@@ -170,7 +170,7 @@ interpreted by your TOM.
 
 Again, depending on the nature of your data service, the `query_service` function could take many different forms. 
 This may also require you to create a `build_headers` method, or make use of the `urls`, `get_configuration`, or 
-`get_credentials`methods. Saving the results to `self.query_results` could save time in other methods by not requireing 
+`get_credentials`methods. Saving the results to `self.query_results` could save time in other methods by not requiring 
 you to redo the query.
 
 `DataService.query_targets`
@@ -207,7 +207,7 @@ At this point you should be seeing a list of Targets showing up in your TOM afte
 ++++++++++++++++++++++++++++++++++++++++++
 
 Continuing with our `target` example, we need to be able to `create_target_from_query` in order to actually save the
-target object resulting from a succesful result for `query_target` above. This function expects a single instance with
+target object resulting from a sucessful result for `query_target` above. This function expects a single instance with
 the same format as the list of dictionaries created by `query_targets` and converts that dictionary into a Target Object
 returning that object.
 
@@ -242,7 +242,7 @@ Each of these different kinds of data will require functions in `MyDataService` 
 the data service and returning a list of dictionaries in `query_foo()`, and then translating an instance of that dictionary
 into a model object with `create_foo_from_query()`.
 
-Depending on the specifics of your data service, it may be reasonable to call the `query_foo()` methods indipendently, 
+Depending on the specifics of your data service, it may be reasonable to call the `query_foo()` methods independently, 
 and/or part of `query_targets`.
 
 .. |image0| image:: /_static/dataservices_doc/demo_Data_Service.png
