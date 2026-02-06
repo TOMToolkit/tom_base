@@ -239,7 +239,8 @@ class DataService(ABC):
         list of dictionaries describing the returned targets.
 
         :param query_parameters: This is the output from build_query_parameters()
-        :return: A list of dictionaries describing the resulting targets
+        :return: A list of dictionaries describing the resulting targets. Include 'reduced_datums' and/or 'aliases' as
+        keys in this dictionary to add associated data and alternate names without perfoming additional queries.
         :rtype: List[dict]
         """
         return [{}]
@@ -296,7 +297,7 @@ class DataService(ABC):
         else:
             target = self.create_target_from_query(target_result, **kwargs)
             extras = self.create_target_extras_from_query(target_result, **kwargs)
-            aliases = self.create_aliases_from_query(target_result, **kwargs)
+            aliases = self.create_aliases_from_query(target_result.get('aliases', [{}]), **kwargs)
             return target, extras, aliases
 
     def create_target_from_query(self, target_result, **kwargs):
@@ -314,11 +315,11 @@ class DataService(ABC):
         """
         return {}
 
-    def create_aliases_from_query(self, query_results, **kwargs):
+    def create_aliases_from_query(self, alias_results:List[dict], **kwargs)->List:
         """Create a new target from the query results
         This method should be over ridden with a method that creates a list of TargetName objects:
         `TargetName(name=alias)` that will be saved as part of the `Target.save(extras=extras, names=aliases)` call.
-        :param query_result: dictionary describing target details based on query result
+        :param query_result: list of dictionaries describing target details based on query result
         :returns: list of TargetName objects to be added to a new Target
         :rtype: `list`
         """
