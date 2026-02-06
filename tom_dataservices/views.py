@@ -24,7 +24,7 @@ from tom_dataservices.dataservices import MissingDataException, QueryServiceErro
 logger = logging.getLogger(__name__)
 
 
-class DataServiceQueryFilter(FilterSet):
+class DataServiceQueryFilterSet(FilterSet):
     """
     Defines the available fields for filtering the list of queries.
     """
@@ -44,7 +44,7 @@ class DataServiceQueryListView(FilterView):
     """
     model = DataServiceQuery
     template_name = 'tom_dataservices/query_list.html'
-    filterset_class = DataServiceQueryFilter
+    filterset_class = DataServiceQueryFilterSet
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -337,39 +337,42 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                 return redirect(reverse('dataservices:run_saved', kwargs={'pk': query_id}))
             else:
                 return redirect(reverse('dataservices:run'))
-        for result_id in results:
-            cached_result = cache.get(f'result_{result_id}')
-            if not cached_result:
-                messages.error(request, 'Could not create targets. Try re-running the query again.')
-                if query_id:
-                    return redirect(reverse('dataservices:run_saved', kwargs={'pk': query_id}))
-                else:
-                    return redirect(reverse('dataservices:run'))
-            target, extras, aliases = data_service_class.to_target(cached_result)
-            try:
-                target.save(extras=extras, names=aliases)
-                # Give the user access to the target they created
-                target.give_user_access(self.request.user)
-                for group in request.user.groups.all():
-                    assign_perm('tom_targets.view_target', group, target)
-                    assign_perm('tom_targets.change_target', group, target)
-                    assign_perm('tom_targets.delete_target', group, target)
-            except IntegrityError:
-                messages.warning(request, mark_safe(
-                                 f"""Unable to save {target.name}, target with that name already exists.
-                                 You can <a href="{reverse('targets:create') + '?' +
-                                                   urlencode(target.as_dict())}">create</a>
-                                  a new target anyway.
-                                 """)
-                                 )
-                errors.append(target.name)
-                target = None
-            # Do not attempt to store Reduced Datums if no Target Created.
-            if target:
+        try:
+            for result_id in results:
+                cached_result = cache.get(f'result_{result_id}')
+                if not cached_result:
+                    messages.error(request, 'Could not create targets. Try re-running the query again.')
+                    if query_id:
+                        return redirect(reverse('dataservices:run_saved', kwargs={'pk': query_id}))
+                    else:
+                        return redirect(reverse('dataservices:run'))
+                target, extras, aliases = data_service_class.to_target(cached_result)
                 try:
-                    data_service_class.to_reduced_datums(target, cached_result.get('reduced_datums'))
-                except MissingDataException:
-                    pass
+                    target.save(extras=extras, names=aliases)
+                    # Give the user access to the target they created
+                    target.give_user_access(self.request.user)
+                    for group in request.user.groups.all():
+                        assign_perm('tom_targets.view_target', group, target)
+                        assign_perm('tom_targets.change_target', group, target)
+                        assign_perm('tom_targets.delete_target', group, target)
+                except IntegrityError:
+                    messages.warning(request,
+                                     mark_safe(
+                                         f"""Unable to save {target.name}, target with that name already exists.
+                                         You can <a href="{reverse('targets:create') + '?' +
+                                                           urlencode(target.as_dict())}">create</a> a new target anyway.
+                                         """)
+                                     )
+                    errors.append(target.name)
+                    target = None
+                # Do not attempt to store Reduced Datums if no Target Created.
+                if target:
+                    try:
+                        data_service_class.to_reduced_datums(target, cached_result.get('reduced_datums'))
+                    except MissingDataException:
+                        pass
+        except NotImplementedError as e:
+            messages.error(request, e)
         if len(results) == len(errors):
             if query_id:
                 return redirect(reverse('dataservices:run_saved', kwargs={'pk': query_id}))
