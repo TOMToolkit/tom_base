@@ -6,6 +6,8 @@ from django.conf import settings
 from django.apps import apps
 from django.utils.module_loading import import_string
 
+from tom_targets.models import TargetName
+
 logger = logging.getLogger(__name__)
 
 
@@ -315,7 +317,7 @@ class DataService(ABC):
         """
         return {}
 
-    def create_aliases_from_query(self, alias_results:List, **kwargs)->List:
+    def create_aliases_from_query(self, alias_results: List, **kwargs) -> List:
         """Create a new target from the query results
         This method should be over ridden with a method that creates a list of TargetName objects:
         `TargetName(name=alias)` that will be saved as part of the `Target.save(extras=extras, names=aliases)` call.
@@ -323,4 +325,7 @@ class DataService(ABC):
         :returns: list of TargetName objects to be added to a new Target
         :rtype: `list`
         """
-        return []
+        aliases = []
+        for alias in alias_results:
+            aliases.append(TargetName(name=alias))
+        return aliases
