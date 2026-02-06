@@ -74,12 +74,13 @@ class ScoutDataService(BaseDataService):
         """Set up and run a specialized query for retrieving targets from a DataService."""
         results = super().query_targets(query_parameters, url=self.get_urls('search_url'))
         targets = []
-        for result in results:
-            query_parameters['tdes'] = result['objectName']
-            target_parameters = self.build_query_parameters(query_parameters)
-            print(target_parameters)
-            target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
-            targets.append(target_data)
+        if results is not None and 'error' not in results:
+            for result in results:
+                query_parameters['tdes'] = result['objectName']
+                target_parameters = self.build_query_parameters(query_parameters)
+                print(target_parameters)
+                target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
+                targets.append(target_data)
         return targets
 
     @classmethod
