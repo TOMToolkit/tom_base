@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 
 from django import forms
 
-from tom_dataservices.dataservices import BaseDataService as DataService
+from tom_dataservices.dataservices import DataService
 from tom_dataservices.forms import BaseQueryForm as QueryForm
 from tom_targets.models import Target, TargetName
 
@@ -98,7 +98,7 @@ class SimbadDataService(DataService):
             # if the returned target name (main_id) was not the search term, make the main_id the alias
             if query_parameters['search_term'] != target['main_id']:
                 target['name'] = query_parameters['search_term']  # and make the search term the name
-                target['alias'] = str(target['main_id']).replace(' ', '')  # remove whitespace
+                target['aliases'] = [str(target['main_id']).replace(' ', '')]  # remove whitespace
 
         return targets
 
@@ -117,7 +117,7 @@ class SimbadDataService(DataService):
              'mesdistance.dist': np.float64(3.4),
              'mesdistance.unit': 'kpc ',
              'name': 'Cas A',
-             'alias': 'aliase for CasA',
+             'alias': 'alias for CasA',
              'id': 0
              }
         ```
@@ -146,15 +146,16 @@ class SimbadDataService(DataService):
 
         return target  # not saved yet
 
-    def create_aliases_from_query(self, query_results, **kwargs) -> List[TargetName]:
+    def create_aliases_from_query(self, alias_results, **kwargs) -> List[TargetName]:
         """
         The query_result is a target dictionary created by query_targets()
         It has name and alias fields. Use the name to get the Target and give it
         the alias.
         """
         aliases = []
-        if alias := query_results.get('alias', None):
+        for alias in alias_results:
             aliases.append(TargetName(name=alias))
+        return aliases
 
         return aliases  # not saved yet
 
