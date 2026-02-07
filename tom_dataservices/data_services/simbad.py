@@ -155,7 +155,6 @@ class SimbadDataService(DataService):
         aliases = []
         for alias in alias_results:
             aliases.append(TargetName(name=alias))
-        return aliases
 
         return aliases  # not saved yet
 
