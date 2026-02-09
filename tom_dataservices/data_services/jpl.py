@@ -6,7 +6,7 @@ from django.contrib import messages
 import requests
 import pprint
 
-from tom_dataservices.dataservices import BaseDataService
+from tom_dataservices.dataservices import DataService
 from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import Target
 
@@ -16,11 +16,12 @@ class ScoutForm(BaseQueryForm):
     neo_score_min = forms.IntegerField(required=False, label='Minimum NEO digest score (0..100)')
 
 
-class ScoutDataService(BaseDataService):
+class ScoutDataService(DataService):
     """
     Docstring for ScoutDataService
     """
     name = 'Scout'
+    app_version = '0.0.2'
     info_url = 'https://cneos.jpl.nasa.gov/scout/intro.html'
     query_results_table = 'tom_dataservices/scout/partials/scout_query_results_table.html'
 
