@@ -19,7 +19,7 @@ DEFAULT_ALERT_CLASSES = [
     'tom_alerts.brokers.lasair.LasairBroker',
     'tom_alerts.brokers.scout.ScoutBroker',
     'tom_alerts.brokers.alerce.ALeRCEBroker',
-    'tom_alerts.brokers.antares.ANTARESBroker',
+    # 'tom_alerts.brokers.antares.ANTARESBroker',
     'tom_alerts.brokers.gaia.GaiaBroker',
     'tom_alerts.brokers.fink.FinkBroker',  # the stub for the plugin
     'tom_alerts.brokers.hermes.HermesBroker',  # the stub for the plugin
@@ -45,8 +45,8 @@ def get_service_classes():
         try:
             mod = import_module(mod_name)
             clazz = getattr(mod, class_name)
-        except (ImportError, AttributeError):
-            raise ImportError(f'Could not import {service}. Did you provide the correct path?')
+        except (ImportError, AttributeError) as e:
+            raise ImportError(f'Could not import {service}: {e}')
         service_choices[clazz.name] = clazz
     return service_choices
 
