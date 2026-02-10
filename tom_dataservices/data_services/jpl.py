@@ -5,7 +5,7 @@ from django import forms
 from django.contrib import messages
 import logging
 import requests
-import pprint
+# import pprint
 
 from tom_dataservices.dataservices import DataService
 from tom_dataservices.forms import BaseQueryForm
@@ -31,7 +31,7 @@ class ScoutDataService(DataService):
     Docstring for ScoutDataService
     """
     name = 'Scout'
-    app_version = '0.0.2'
+    app_version = '0.0.3'
     info_url = 'https://cneos.jpl.nasa.gov/scout/intro.html'
     query_results_table = 'tom_dataservices/scout/partials/scout_query_results_table.html'
     expected_signature = {'source': 'NASA/JPL Scout API', 'version': '1.3'}
@@ -75,7 +75,7 @@ class ScoutDataService(DataService):
         # query_targets with the tdes parameter set to a Scout name).
         if 'neo_score_min' in parameters:
             self.input_parameters = parameters
-            pprint.pprint(parameters, indent=2)
+            # pprint.pprint(parameters, indent=2)
 
         if parameters.get('tdes') is not None and parameters['tdes'] != '':
             data['tdes'] = parameters['tdes']
@@ -111,7 +111,9 @@ class ScoutDataService(DataService):
                     if self.total_results is None:
                         self.total_results = 1
             else:
-                logger.warning(f"Signature of response from Scout API does not match expected signature. Expected {self.expected_signature}, got {json_response['signature']}.")
+                msg = "Signature of response from Scout API does not match expected signature. "
+                msg += f"Expected {self.expected_signature}, got {json_response['signature']}."
+                logger.warning(msg)
         else:
             self.query_results = None
             msg = "Error retrieving data from Scout."
@@ -129,9 +131,16 @@ class ScoutDataService(DataService):
             neo_score_min = 0
             if self.input_parameters.get('neo_score_min', 0) is not None:
                 neo_score_min = self.input_parameters['neo_score_min']
+            pha_score_min = 0
+            if self.input_parameters.get('pha_score_min', 0) is not None:
+                pha_score_min = self.input_parameters['pha_score_min']
+            geo_score_max = 0
+            if self.input_parameters.get('geo_score_max', 0) is not None:
+                geo_score_max = self.input_parameters['geo_score_max']
             for result in results:
                 # print(result['objectName'], result['neoScore'], result['neoScore'] >= neo_score_min)
-                if result['neoScore'] >= neo_score_min:
+                if result['neoScore'] >= neo_score_min and result['phaScore'] >= pha_score_min and \
+                        result['geocentricScore'] < geo_score_max:
                     if 'orbits' in result:
                         # This was a query for a specific target so we already have the needed info
                         target_data = result
@@ -161,6 +170,8 @@ class ScoutDataService(DataService):
 
         context['total_results'] = self.total_results if self.total_results is not None else 0
         context['neo_score_min'] = self.input_parameters.get('neo_score_min', 0)
+        context['pha_score_min'] = self.input_parameters.get('pha_score_min', 0)
+        context['geo_score_max'] = self.input_parameters.get('geo_score_max', 5)
         return context
 
     def create_target_from_query(self, target_results, **kwargs):
