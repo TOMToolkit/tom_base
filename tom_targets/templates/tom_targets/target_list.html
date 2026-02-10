@@ -34,8 +34,13 @@
       </div>
     </div>
 
-    {# htmx wrapper allows the skymap to be updated when the filterset changes #}
-    {% include "tom_targets/partials/aladin_skymap_htmx.html" with is_htmx=False  object_list=skymap_objects %}
+    {# Aladin skymap -- initialized once on page load (Moon/Sun computed here). #}
+    {# On HTMX filter updates, only the target markers are updated via OOB swap #}
+    {# into the aladin-targets-data div below (see target_table_partial.html). #}
+    {% aladin_skymap skymap_objects %}
+
+    {# Placeholder for OOB target data updates from HTMX #}
+    <div id="aladin-targets-data"></div>
 
     <hr>
 
