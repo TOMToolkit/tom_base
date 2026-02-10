@@ -3,6 +3,7 @@ from math import sqrt, degrees
 from astropy.constants import GM_sun, au
 from django import forms
 from django.contrib import messages
+import logging
 import requests
 import pprint
 
@@ -10,6 +11,7 @@ from tom_dataservices.dataservices import DataService
 from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import Target
 
+logger = logging.getLogger(__name__)
 class ScoutForm(BaseQueryForm):
     tdes = forms.CharField(required=False,
                            label='NEOCP temporary designation')
@@ -24,6 +26,7 @@ class ScoutDataService(DataService):
     app_version = '0.0.2'
     info_url = 'https://cneos.jpl.nasa.gov/scout/intro.html'
     query_results_table = 'tom_dataservices/scout/partials/scout_query_results_table.html'
+    expected_signature = {'source': 'NASA/JPL Scout API', 'version': '1.3'}
 
     # Gaussian gravitational constant
     _k = degrees(sqrt(GM_sun.value) * au.value**-1.5 * 86400.0)
@@ -50,8 +53,13 @@ class ScoutDataService(DataService):
             json containing parameters for querying the Scout API.
         """
         data = {}
-        # import pprint
-        # pprint.pprint(parameters)
+
+        # Save a copy of the input form parameters for later use as there are some parameters that are used in the
+        # query_targets method that are not part of the query to the Scout API.
+        # But don't save and overwrite later versions which don't have the form parameters (eg. when running
+        # query_targets with the tdes parameter set to a Scout name).
+        if 'neo_score_min' in parameters:
+            self.input_parameters = parameters
         if parameters.get('tdes') is not None and parameters['tdes'] != '':
             data['tdes'] = parameters['tdes']
 
@@ -62,25 +70,39 @@ class ScoutDataService(DataService):
         return data
 
     def query_service(self, data, **kwargs):
-        response = requests.get(kwargs['url'], data)
+        """Make call to the JPL Scout service
+
+        :param data: Dictionary containing query parameters for the Scout API.
+        :type data: dict
+        :return: json containing response from Scout API.
+        :rtype: dict
+        """
+        response =  requests.get(self.get_urls(url_type='search_url'), data)
+
         response.raise_for_status()
         json_response = response.json()
-        if 'data' in json_response:
-            self.query_results = json_response['data']
+        if json_response['signature'] == self.expected_signature:
+            if 'data' in json_response:
+                self.query_results = json_response['data']
+                self.total_results = int(json_response.get('count', 0))
+            else:
+                # Per-object data has different structure
+                self.query_results = json_response
         else:
-            # Per-object data has different structure
-            self.query_results = json_response
+            logger.warning(f"Signature of response from Scout API does not match expected signature. Expected {self.expected_signature}, got {json_response['signature']}.")
         return self.query_results
 
     def query_targets(self, query_parameters, **kwargs):
         """Set up and run a specialized query for retrieving targets from a DataService."""
-        pprint.pprint(query_parameters)
-        results = super().query_targets(self.build_query_parameters(query_parameters), url=self.get_urls('search_url'))
+        results = self.query_service(self.build_query_parameters(query_parameters))
 
         targets = []
         if results is not None and 'error' not in results:
+            neo_score_min = 0
+            if self.input_parameters.get('neo_score_min', 0) is not None:
+                neo_score_min = self.input_parameters['neo_score_min']
             for result in results:
-                if result['neoScore'] >= self.input_parameters.get('neo_score_min', 0):
+                if result['neoScore'] >= neo_score_min:
                     query_parameters['tdes'] = result['objectName']
                     target_parameters = self.build_query_parameters(query_parameters)
                     target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
@@ -96,6 +118,14 @@ class ScoutDataService(DataService):
     @classmethod
     def get_form_class(cls):
         return ScoutForm
+
+    def get_additional_context_data(self, **kwargs):
+        """Add additional context data for rendering the query results template."""
+        context = {}
+        pprint.pprint(self.query_results, indent=2)
+        context['total_results'] = self.total_results if self.total_results is not None else 0
+        context['neo_score_min'] = self.input_parameters.get('neo_score_min', 0)
+        return context
 
     def create_target_from_query(self, target_results, **kwargs):
         """
