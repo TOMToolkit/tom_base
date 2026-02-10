@@ -12,10 +12,18 @@ from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
+
+
 class ScoutForm(BaseQueryForm):
     tdes = forms.CharField(required=False,
                            label='NEOCP temporary designation')
-    neo_score_min = forms.IntegerField(required=False, label='Minimum NEO digest score (0..100)')
+    neo_score_min = forms.IntegerField(required=False, label='Minimum NEO digest score (0..100)',
+                                       help_text='Minimum NEO digest score (0..100) permissible')
+    pha_score_min = forms.IntegerField(required=False, label='Minimum PHA digest score (0..100)',
+                                       help_text='Minimum PHA digest score (0..100) permissible')
+    geo_score_max = forms.IntegerField(required=False, initial=5,
+                                       label='Maximum GEO digest score (0..100)',
+                                       help_text='Maximum Geocentric digest score (0..100) permissible')
 
 
 class ScoutDataService(DataService):
@@ -41,12 +49,18 @@ class ScoutDataService(DataService):
         urls['search_url'] = urls['base_url']
         return urls
 
+    def get_simple_form_partial(self):
+        return 'tom_dataservices/scout/partials/scout_simple_form.html'
+
+    def get_advanced_form_partial(self):
+        return 'tom_dataservices/scout/partials/scout_advanced_form.html'
+
     def build_query_parameters(self, parameters, **kwargs):
         """
         Args:
             parameters: dictionary containing either:
 
-            - optional cutoff parameters 
+            - optional cutoff parameters
 
             - Scout name e.g. 'P10vY9r'
 
@@ -61,6 +75,7 @@ class ScoutDataService(DataService):
         # query_targets with the tdes parameter set to a Scout name).
         if 'neo_score_min' in parameters:
             self.input_parameters = parameters
+            pprint.pprint(parameters, indent=2)
 
         if parameters.get('tdes') is not None and parameters['tdes'] != '':
             data['tdes'] = parameters['tdes']
@@ -79,7 +94,7 @@ class ScoutDataService(DataService):
         :return: json containing response from Scout API.
         :rtype: dict
         """
-        response =  requests.get(self.get_urls(url_type='search_url'), data)
+        response = requests.get(self.get_urls(url_type='search_url'), data)
 
         response.raise_for_status()
         json_response = response.json()
@@ -157,7 +172,7 @@ class ScoutDataService(DataService):
         """
 
         # Construct dictionary from ['orbits']['fields'] and ['orbits']['data'][0]
-        elements =  dict(zip(target_results['orbits']['fields'], target_results['orbits']['data'][0]))
+        elements = dict(zip(target_results['orbits']['fields'], target_results['orbits']['data'][0]))
 
         target = Target(
             name=target_results['objectName'],
@@ -171,17 +186,17 @@ class ScoutDataService(DataService):
             epoch_of_perihelion=float(elements['tp'][2:]) - 0.5,
             perihdist=float(elements['qr']),
             abs_mag=float(elements['H']),
-            slope=elements.get('G', 0.15) # Never actually present ?
+            slope=elements.get('G', 0.15)  # Never actually present ?
         )
         try:
             target.semimajor_axis = target.perihdist / (1.0 - target.eccentricity)
             if target.semimajor_axis < 0 or target.semimajor_axis > 1000.0:
                 target.semimajor_axis = None
-        except ZeroDivisionError:
+        except (ZeroDivisionError, ValueError):
             target.semimajor_axis = None
         if target.semimajor_axis:
             target.mean_daily_motion = self._k / (target.semimajor_axis * sqrt(target.semimajor_axis))
-        if target.mean_daily_motion:
+        if target.mean_daily_motion and target.epoch_of_elements and target.epoch_of_perihelion:
             td = target.epoch_of_elements - target.epoch_of_perihelion
             mean_anomaly = td * target.mean_daily_motion
             # Normalize into 0...360 range
