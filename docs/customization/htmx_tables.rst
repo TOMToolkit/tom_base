@@ -2,7 +2,9 @@ Building Interactive HTMX Tables
 -----------------------------------
 
 TOM Toolkit provides base classes for building interactive data tables with
-filtering, sorting, and pagination that avoid full-page reloads using HTMX.
+filtering, sorting, and pagination that avoid full-page reloads using
+`HTMX <https://htmx.org/>`_.
+
 Three model-independent bases classes in ``tom_common.htmx_table`` handle
 common concerns so that creating a new HTMX-driven table for any model is largely
 a configuration task. [1]_. The provided classes are:
@@ -16,14 +18,14 @@ a configuration task. [1]_. The provided classes are:
  
  - ``HTMXTableViewMixin`` - This mix-in class must be added to your ListView subclasses
    that present their data in ``HTMXTable`` subclasses. It recognizes AJAX (HTMX) requests
-   and adds pagination data to you ListView's context.
+   and adds pagination data to your ListView's context.
 
 Creating a Table for Your Model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This section walks through the three pieces you need: a Table class, a
-FilterSet class, and a View. The Target list page is the reference
-implementation for each step.
+FilterSet class, and a View. The `Target list page <https://tom-demo.lco.global/targets/>`_
+provides an example implementation for each step.
 
 
 Step 1: Define the Table
@@ -40,8 +42,7 @@ to be displayed.
 .. code-block:: python
 
     # myapp/tables.py
-    import django_tables2 as tables
-    from tom_common.htmx_table import HTMXTable
+    from tom_common.htmx_table import HTMXTable  # HTMXTable is a django_tables2.Table subclass
     from myapp.models import Observation  # for example
 
     class ObservationTable(HTMXTable):
@@ -67,7 +68,7 @@ NOTES:
   attribute ensures that clicking the link triggers a normal page navigation
   (to the object's detail page) rather than being intercepted by HTMX. [3]_
 
-See the reference implementation in ``tom_targets/tables.py``.
+See the example in `tom_targets/tables.py <https://github.com/TOMToolkit/tom_base/tree/dev/tom_targets>`_.
 
 
 Step 2: Create the FilterSet
@@ -164,7 +165,8 @@ NOTES:
 - The ``query`` field goes in the primary row; extra
   filters go inside a collapsible "Advanced" section.
 
-See the reference implementation in ``tom_targets/filters.py``.
+
+See the example in `tom_targets/filters.py <https://github.com/TOMToolkit/tom_base/blob/dev/tom_targets/filters.py>`_.
 
 
 Step 3: Update the View
@@ -193,8 +195,7 @@ and template selection. It also adds ``record_count`` and
         paginate_by = 20
         ordering = ['-date']
 
-See the reference implementation in ``tom_targets/views.py``.
-
+See the example in `tom_targets/filters.py <https://github.com/TOMToolkit/tom_base/blob/dev/tom_targets/views.py>`_.
 
 Step 4: Set Up the Templates
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -246,6 +247,7 @@ table container.
     {% endblock content %}
 
 NOTES:
+
 - The ``id="filter-form"`` must match the ``"hx-include": "#filter-form"``
   in ``HTMXTable.Meta.attrs`` so that filter values are preserved during
   sorting and pagination. [6]_
@@ -399,7 +401,7 @@ General Search Examples
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Multi-field search** using Django's ``Q`` objects
-[docs](https://docs.djangoproject.com/en/5.2/topics/db/queries/#complex-lookups-with-q-objects):
+`(docs) <https://docs.djangoproject.com/en/5.2/topics/db/queries/#complex-lookups-with-q-objects>`_:
 
 .. code-block:: python
 
