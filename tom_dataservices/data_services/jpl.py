@@ -27,6 +27,7 @@ class ScoutDataService(DataService):
     info_url = 'https://cneos.jpl.nasa.gov/scout/intro.html'
     query_results_table = 'tom_dataservices/scout/partials/scout_query_results_table.html'
     expected_signature = {'source': 'NASA/JPL Scout API', 'version': '1.3'}
+    total_results = None
 
     # Gaussian gravitational constant
     _k = degrees(sqrt(GM_sun.value) * au.value**-1.5 * 86400.0)
@@ -60,6 +61,7 @@ class ScoutDataService(DataService):
         # query_targets with the tdes parameter set to a Scout name).
         if 'neo_score_min' in parameters:
             self.input_parameters = parameters
+
         if parameters.get('tdes') is not None and parameters['tdes'] != '':
             data['tdes'] = parameters['tdes']
 
@@ -81,15 +83,26 @@ class ScoutDataService(DataService):
 
         response.raise_for_status()
         json_response = response.json()
-        if json_response['signature'] == self.expected_signature:
-            if 'data' in json_response:
-                self.query_results = json_response['data']
-                self.total_results = int(json_response.get('count', 0))
+        if json_response is not None and 'error' not in json_response:
+            if json_response['signature'] == self.expected_signature:
+                if 'data' in json_response:
+                    self.query_results = json_response['data']
+                    self.total_results = int(json_response.get('count', 0))
+                else:
+                    # Per-object data has different structure, make it into a list of 1 target
+                    # so the the `for result in results` in `query_targets()` iterates (once..)
+                    # over the target(s) and not over the keys of a single target
+                    self.query_results = [json_response, ]
+                    if self.total_results is None:
+                        self.total_results = 1
             else:
-                # Per-object data has different structure
-                self.query_results = json_response
+                logger.warning(f"Signature of response from Scout API does not match expected signature. Expected {self.expected_signature}, got {json_response['signature']}.")
         else:
-            logger.warning(f"Signature of response from Scout API does not match expected signature. Expected {self.expected_signature}, got {json_response['signature']}.")
+            self.query_results = None
+            msg = "Error retrieving data from Scout."
+            if data.get('tdes', '') != '':
+                msg += f" Object {data['tdes']} is no longer on Scout."
+            logger.warning(msg)
         return self.query_results
 
     def query_targets(self, query_parameters, **kwargs):
@@ -102,10 +115,18 @@ class ScoutDataService(DataService):
             if self.input_parameters.get('neo_score_min', 0) is not None:
                 neo_score_min = self.input_parameters['neo_score_min']
             for result in results:
+                # print(result['objectName'], result['neoScore'], result['neoScore'] >= neo_score_min)
                 if result['neoScore'] >= neo_score_min:
-                    query_parameters['tdes'] = result['objectName']
-                    target_parameters = self.build_query_parameters(query_parameters)
-                    target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
+                    if 'orbits' in result:
+                        # This was a query for a specific target so we already have the needed info
+                        target_data = result
+                    else:
+                        # Fetch per-target data
+                        query_parameters['tdes'] = result['objectName']
+                        target_parameters = self.build_query_parameters(query_parameters)
+                        target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
+                        if target_data is not None:
+                            target_data = target_data[0]
                     targets.append(target_data)
         else:
             msg = "Error retrieving data from Scout."
@@ -122,7 +143,7 @@ class ScoutDataService(DataService):
     def get_additional_context_data(self, **kwargs):
         """Add additional context data for rendering the query results template."""
         context = {}
-        pprint.pprint(self.query_results, indent=2)
+
         context['total_results'] = self.total_results if self.total_results is not None else 0
         context['neo_score_min'] = self.input_parameters.get('neo_score_min', 0)
         return context
