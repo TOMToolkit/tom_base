@@ -8,6 +8,7 @@ filtering, sorting, and pagination that avoid full-page reloads using
 Three model-independent bases classes in ``tom_common.htmx_table`` handle
 common concerns so that creating a new HTMX-driven table for any model is largely
 a configuration task. [1]_. The provided classes are:
+
  - ``HTMXTable`` - This class extends ``django_tables2.Table``
    to add HTMX attributes to certain HTML elements, handles checkboxes, etc.
    Your subclass will define your table, specifying the Model supplying data to your
@@ -15,7 +16,7 @@ a configuration task. [1]_. The provided classes are:
 
  - ``HTMXTableFilterSet`` - Your subclass will define data filters and add HTMX
    elements to update your table as the filters change.
- 
+
  - ``HTMXTableViewMixin`` - This mix-in class must be added to your ListView subclasses
    that present their data in ``HTMXTable`` subclasses. It recognizes AJAX (HTMX) requests
    and adds pagination data to your ListView's context.
@@ -195,7 +196,7 @@ and template selection. It also adds ``record_count`` and
         paginate_by = 20
         ordering = ['-date']
 
-See the example in `tom_targets/filters.py <https://github.com/TOMToolkit/tom_base/blob/dev/tom_targets/views.py>`_.
+See the example in `tom_targets/views.py <https://github.com/TOMToolkit/tom_base/blob/dev/tom_targets/views.py>`_.
 
 Step 4: Set Up the Templates
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
