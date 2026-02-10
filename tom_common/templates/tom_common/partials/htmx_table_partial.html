@@ -1,0 +1,16 @@
+{# tom_common/partials/htmx_table_partial.html #}
+{# Default partial template for HTMX table responses. #}
+{# Override by setting partial_template_name on your HTMXTable subclass. #}
+{% load render_table from django_tables2 %}
+
+{% render_table table %}
+
+{% if not table.data %}
+    <div class="alert alert-info mt-3">
+        {% if empty_database %}
+            No records in the database.
+        {% else %}
+            No records match those filters.
+        {% endif %}
+    </div>
+{% endif %}

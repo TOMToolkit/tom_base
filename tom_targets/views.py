@@ -27,8 +27,6 @@ from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
 
-from django_tables2 import SingleTableMixin
-
 from rest_framework.views import APIView
 from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.response import Response
@@ -37,6 +35,7 @@ from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import get_groups_with_perms, assign_perm
 
 from tom_common.hints import add_hint
+from tom_common.htmx_table import HTMXTableViewMixin
 from tom_common.hooks import run_hook
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_observations.observation_template import ApplyObservationTemplateForm
@@ -69,48 +68,18 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class TargetListView(SingleTableMixin, FilterView):
+class TargetListView(HTMXTableViewMixin, FilterView):
     """
     View for listing targets in the TOM. Only shows targets that the user is authorized to view. Requires authorization.
     """
-    # template_name = 'tom_targets/target_list.html'  # using get_template_names() instead of class property
+    template_name = 'tom_targets/target_list.html'
     paginate_by = 20
     strict = False
     model = Target
-    filterset_class = TargetFilterSet  # this view is a FilterView subclass
-    table_class = TargetTable  # this view is also django_tables2.SingleTableMixin subclass
+    filterset_class = TargetFilterSet
+    table_class = TargetTable
 
-    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
     ordering = ['-created']
-
-    def get_template_names(self) -> list[str]:
-        """
-        Check to see if this is an HTMX request.
-        If so, user the partial template. Otherwise, use the full page template.
-
-        Initial requests to the TargetListView won't be HTMX requests, so the full page template will be used.
-
-        :param self: Description
-        :return: Description
-        :rtype: list[str]
-        """
-        templates_names_from_super: list[str] = super().get_template_names()
-        # logger.debug(f'templates_names_from_super: {templates_names_from_super}')
-
-        # Here, we're getting the appropriate template for this request
-        if self.request.htmx:
-            logger.debug(f'This is an HTMX request: {self.request}')
-            # we save the name of the partial for the table in the Table subclass so it can be overridden
-            new_template_names = [self.table_class(data=[]).get_partial_template_name()]
-        else:
-            # the whole page (not just the partial for the table)
-            new_template_names = ["tom_targets/target_list.html"]  # was template_name class property
-
-        # Here, we're putting the new template(s) at the front of the list
-        template_names = new_template_names + templates_names_from_super
-        # logger.debug(f'template_names: {template_names}')
-
-        return template_names
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -121,8 +90,7 @@ class TargetListView(SingleTableMixin, FilterView):
         :rtype: dict
         """
         context = super().get_context_data(*args, **kwargs)
-        context['target_count'] = context['paginator'].count
-        context['empty_database'] = not Target.objects.exists()
+        context['target_count'] = context['record_count']
         # hide target grouping list if user not logged in
         context['groupings'] = (TargetList.objects.all()
                                 if self.request.user.is_authenticated
@@ -131,12 +99,9 @@ class TargetListView(SingleTableMixin, FilterView):
 
         # Prepare list of targets for Aladin skymap (avoiding BoundRow wrappers)
         table = context['table']
-        # If the table is paginated, table.page.object_list contains BoundRow objects.
-        # We need the actual model instances (row.record) for the aladin_skymap tag.
         if hasattr(table, 'page') and table.page:
             context['skymap_objects'] = [row.record for row in table.page.object_list]
         else:
-            # Fallback if not paginated (e.g. export or no data)
             context['skymap_objects'] = context['object_list']
 
         return context
