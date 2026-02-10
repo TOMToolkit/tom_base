@@ -14,7 +14,7 @@ from tom_targets.models import Target, TargetList
 from tom_targets.utils import cone_search_filter
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 
 def filter_for_field(field):
