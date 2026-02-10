@@ -11,6 +11,7 @@ Customization
   testing_toms
   widgets
   encrypted_model_fields
+  htmx_tables
 
 
 Start here to learn how to customize the look and feel of your TOM or add new functionality.
@@ -21,7 +22,7 @@ change the look and feel of your TOM.
 :doc:`Adding new Pages to your TOM <adding_pages>` - Learn how to add entirely new pages to your TOM,
 displaying static html pages or dynamic database-driven content.
 
-:doc:`Customizing Template Tags <customize_template_tags>` - Learn how to write your own template tags to display 
+:doc:`Customizing Template Tags <customize_template_tags>` - Learn how to write your own template tags to display
 the data you need.
 
 :doc:`Testing TOMs <testing_toms>` - Learn how to test your TOM's functionality.
@@ -30,3 +31,6 @@ the data you need.
 
 :doc:`Encrypting Data in a Model Field <encrypted_model_fields>` - Learn how to encrypt sensitive data like
 passwords and API keys in your TOMToolkit app.
+
+:doc:`Building Interactive HTMX Tables <htmx_tables>` - Learn how to build interactive tables with
+filtering, sorting, and pagination using django-tables2 and HTMX.
