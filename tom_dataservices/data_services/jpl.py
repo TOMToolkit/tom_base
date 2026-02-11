@@ -2,7 +2,6 @@ from math import sqrt, degrees
 
 from astropy.constants import GM_sun, au
 from django import forms
-from django.contrib import messages
 import logging
 import requests
 # import pprint
@@ -168,20 +167,28 @@ class ScoutDataService(DataService):
                 except ValueError:
                     pos_unc = 0.0
                 try:
-                    ca_dist = float(result['ca_dist'])
+                    ca_dist = float(result['caDist'])
                 except TypeError:
                     ca_dist = None
                 # print("neoScore phaScore, geoScore, rating, caDist, posuncmin, posuncmax")
-                # print(result['neoScore'] >= neo_score_min, result['phaScore'] >= pha_score_min, \
-                #         result['geocentricScore'] < geo_score_max, ((result['rating'] is not None and \
-                #         impact_rating_min is not None and result['rating'] >= impact_rating_min) or \
-                #         impact_rating_min is None),  (ca_dist_min is None or (ca_dist_min is not None and result['caDist'] is not None and\
-                #         float(result['caDist']) <= ca_dist_min)),  pos_unc >= pos_unc_min , pos_unc <= pos_unc_max)
+                # print(result['neoScore'] >= neo_score_min, result['phaScore'] >= pha_score_min,
+                #       result['geocentricScore'] < geo_score_max,
+                #       ((result['rating'] is not None and
+                #           impact_rating_min is not None and
+                #           result['rating'] >= impact_rating_min) or
+                #        impact_rating_min is None),
+                #       (ca_dist_min is None or
+                #       (ca_dist_min is not None and ca_dist is not None and ca_dist <= ca_dist_min)),
+                #       pos_unc >= pos_unc_min, pos_unc <= pos_unc_max)
                 if result['neoScore'] >= neo_score_min and result['phaScore'] >= pha_score_min and \
-                        result['geocentricScore'] < geo_score_max and ((result['rating'] is not None and
-                        impact_rating_min is not None and result['rating'] >= impact_rating_min) or
-                        impact_rating_min is None) and (ca_dist_min is None or
-                        (ca_dist_min is not None and ca_dist is not None and ca_dist <= ca_dist_min)) and \
+                        result['geocentricScore'] < geo_score_max and \
+                        ((result['rating'] is not None and
+                          impact_rating_min is not None and
+                          result['rating'] >= impact_rating_min
+                          ) or
+                         impact_rating_min is None) and \
+                        (ca_dist_min is None or
+                         (ca_dist_min is not None and ca_dist is not None and ca_dist <= ca_dist_min)) and \
                         pos_unc >= pos_unc_min and pos_unc <= pos_unc_max:
                     if 'orbits' in result:
                         # This was a query for a specific target so we already have the needed info
