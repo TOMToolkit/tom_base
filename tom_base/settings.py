@@ -288,7 +288,7 @@ TOM_CADENCE_STRATEGIES = [
 ]
 
 DATA_SERVICES = {
-    'Scout' : {
+    'Scout': {
         'base_url': 'https://ssd-api.jpl.nasa.gov/scout.api',
     },
 }
