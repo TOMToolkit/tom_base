@@ -17,13 +17,27 @@ logger = logging.getLogger(__name__)
 class ScoutForm(BaseQueryForm):
     tdes = forms.CharField(required=False,
                            label='NEOCP temporary designation')
-    neo_score_min = forms.IntegerField(required=False, label='Minimum NEO digest score (0..100)',
+    neo_score_min = forms.IntegerField(required=False, min_value=0, max_value=100,
+                                       label='Minimum NEO digest score (0..100)',
                                        help_text='Minimum NEO digest score (0..100) permissible')
-    pha_score_min = forms.IntegerField(required=False, label='Minimum PHA digest score (0..100)',
+    pha_score_min = forms.IntegerField(required=False, min_value=0, max_value=100,
+                                       label='Minimum PHA digest score (0..100)',
                                        help_text='Minimum PHA digest score (0..100) permissible')
-    geo_score_max = forms.IntegerField(required=False, initial=5,
+    geo_score_max = forms.IntegerField(required=False, initial=5, min_value=0, max_value=100,
                                        label='Maximum GEO digest score (0..100)',
                                        help_text='Maximum Geocentric digest score (0..100) permissible')
+    help_text = 'Rating to character the chances of an Earth impact '
+    help_text += '(0=negligible, 1=small, 2=modest, 3=moderate, 4=elevated)'
+    impact_rating_min = forms.IntegerField(required=False, min_value=0, max_value=4,
+                                           label='Minimum impact rating (0..4)',
+                                           help_text=help_text)
+    ca_dist_min = forms.FloatField(required=False,
+                                   label='Minimum CA distance (LD)',
+                                   help_text='Minimum close approach distance (lunar distances)')
+    pos_unc_min = forms.FloatField(required=False,
+                                   label='Minimum positional uncertainty (arcmin)')
+    pos_unc_max = forms.FloatField(required=False,
+                                   label='Maximum positional uncertainty (arcmin)')
 
 
 class ScoutDataService(DataService):
@@ -134,13 +148,41 @@ class ScoutDataService(DataService):
             pha_score_min = 0
             if self.input_parameters.get('pha_score_min', 0) is not None:
                 pha_score_min = self.input_parameters['pha_score_min']
-            geo_score_max = 0
-            if self.input_parameters.get('geo_score_max', 0) is not None:
+            geo_score_max = 101
+            if self.input_parameters.get('geo_score_max', 101) is not None:
                 geo_score_max = self.input_parameters['geo_score_max']
+            # Might be None if we want all objects irrespective of impact chance
+            impact_rating_min = self.input_parameters['impact_rating_min']
+            ca_dist_min = self.input_parameters['ca_dist_min']
+            pos_unc_min = 0
+            if self.input_parameters.get('pos_unc_min', 0) is not None:
+                pos_unc_min = self.input_parameters['pos_unc_min']
+            pos_unc_max = 360 * 60   # 360 degrees (whole sky) as arcmin
+            if self.input_parameters.get('pos_unc_max', pos_unc_max) is not None:
+                pos_unc_max = self.input_parameters['pos_unc_max']
+
             for result in results:
-                # print(result['objectName'], result['neoScore'], result['neoScore'] >= neo_score_min)
+                # Filter on the many form
+                try:
+                    pos_unc = float(result['unc'])
+                except ValueError:
+                    pos_unc = 0.0
+                try:
+                    ca_dist = float(result['ca_dist'])
+                except TypeError:
+                    ca_dist = None
+                # print("neoScore phaScore, geoScore, rating, caDist, posuncmin, posuncmax")
+                # print(result['neoScore'] >= neo_score_min, result['phaScore'] >= pha_score_min, \
+                #         result['geocentricScore'] < geo_score_max, ((result['rating'] is not None and \
+                #         impact_rating_min is not None and result['rating'] >= impact_rating_min) or \
+                #         impact_rating_min is None),  (ca_dist_min is None or (ca_dist_min is not None and result['caDist'] is not None and\
+                #         float(result['caDist']) <= ca_dist_min)),  pos_unc >= pos_unc_min , pos_unc <= pos_unc_max)
                 if result['neoScore'] >= neo_score_min and result['phaScore'] >= pha_score_min and \
-                        result['geocentricScore'] < geo_score_max:
+                        result['geocentricScore'] < geo_score_max and ((result['rating'] is not None and
+                        impact_rating_min is not None and result['rating'] >= impact_rating_min) or
+                        impact_rating_min is None) and (ca_dist_min is None or
+                        (ca_dist_min is not None and ca_dist is not None and ca_dist <= ca_dist_min)) and \
+                        pos_unc >= pos_unc_min and pos_unc <= pos_unc_max:
                     if 'orbits' in result:
                         # This was a query for a specific target so we already have the needed info
                         target_data = result
