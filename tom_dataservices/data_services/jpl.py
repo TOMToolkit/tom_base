@@ -161,7 +161,7 @@ class ScoutDataService(DataService):
                 pos_unc_max = self.input_parameters['pos_unc_max']
 
             for result in results:
-                # Filter on the many form
+                # Filter on the many, many form parameters.
                 try:
                     pos_unc = float(result['unc'])
                 except ValueError:
