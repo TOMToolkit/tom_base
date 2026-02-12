@@ -4,7 +4,7 @@ from crispy_forms.layout import HTML, Column, Field, Layout, Row
 from django import forms
 from django.core.cache import cache
 
-from tom_dataservices.dataservices import BaseDataService, QueryServiceError
+from tom_dataservices.dataservices import DataService, QueryServiceError
 from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import get_target_model_class
 
@@ -93,12 +93,15 @@ class AlerceForm(BaseQueryForm):
         return cleaned_data
 
 
-class AlerceDataService(BaseDataService):
+class AlerceDataService(DataService):
     name = "Alerce"
 
     @classmethod
     def get_form_class(cls):
         return AlerceForm
+
+    def query_targets(self, query_parameters, **kwargs) -> list[dict]:
+        return self.query_service(query_parameters, **kwargs)
 
     def query_service(self, query_parameters, **kwargs) -> list[dict]:
         """
@@ -162,3 +165,20 @@ class AlerceDataService(BaseDataService):
             for k, v in query_results.items()
             if k not in ["oid", "meanra", "meandec"]
         }
+
+    def query_photometry(self, query_parameters, **kwargs):
+        return alerce.query_lightcurve(
+            oid=query_parameters.get("object_id"),
+            survey=query_parameters.get("survey", "").lower(),
+            format="json"
+        )
+
+    def query_spectroscopy(self, query_parameters, **kwargs):
+        return {}
+
+    def query_forced_photometry(self, query_parameters, **kwargs):
+        return alerce.query_forced_photometry(
+            oid=query_parameters.get("object_id"),
+            survey=query_parameters.get("survey", "").lower(),
+            format="json"
+        )
