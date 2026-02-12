@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta, datetime
 
 from django import forms
 from django.conf import settings
@@ -9,7 +10,7 @@ from crispy_forms.layout import Layout, Div, Row, Column, HTML
 
 import django_filters
 
-from tom_common.htmx_table import HTMXTableFilterSet
+from tom_common.htmx_table import HTMXTableFilterSet, htmx_attributes_delayed, htmx_attributes_instant 
 from tom_targets.models import Target, TargetList
 from tom_targets.utils import cone_search_filter
 
@@ -194,7 +195,7 @@ class TargetFilterSet(HTMXTableFilterSet):
     def filter_cone_search(self, queryset, name, value):
         """
         Perform a cone search filter on this filter's queryset,
-        using the cone search utlity method and either specified RA, DEC
+        using the cone search utility method and either specified RA, DEC
         or the RA/DEC from the named target.
 
         This method prepares the arguments for tom_targets.utils.cone_search_filter.
@@ -279,3 +280,122 @@ class TargetFilterSet(HTMXTableFilterSet):
     class Meta:
         model = Target
         fields = ['type', 'name', 'key', 'value', 'cone_search', 'targetlist__name']
+
+class TargetGroupFilterSet(HTMXTableFilterSet):
+    """
+    This is a bare bones FilterSet for TargetGroups
+    """
+    def get_recent(self, queryset, name, value):
+        """
+        Retrieve recently created Target Groups
+
+        :param queryset: The current filtered queryset. By filtering on this queryset,
+            we respect the filters that precede this method in the filter chain.
+        :param name: The name of the filter field calling this method (e.g. 'recent').
+        :param value: The user's input from the form field.
+
+        :Return queryset: Filtered queryset
+        """
+        if not value:
+            return queryset  # early return
+        
+        yesterday = datetime.now() - timedelta(days = 1)
+        return queryset.filter(created__gt=yesterday)
+
+    name2 =django_filters.CharFilter(
+        label='Name2',
+        lookup_expr='icontains',
+            widget=forms.TextInput(attrs={**htmx_attributes_delayed,
+                                          'placeholder': 'Group Name',
+                                          })
+        )
+    
+    recent2 = django_filters.BooleanFilter(
+        label='New Groups2',
+        method = 'get_recent',
+        help_text = 'Created within the last 24 hours',
+        widget=forms.CheckboxInput(attrs={**htmx_attributes_instant})
+        )
+
+    name =django_filters.CharFilter(
+        lookup_expr='icontains',
+            widget=forms.TextInput(attrs={**htmx_attributes_delayed,
+                                          'placeholder': 'Group Name',
+                                          })
+        )
+    
+    recent = django_filters.BooleanFilter(
+        label='New Groups',
+        method = 'get_recent',
+        help_text = 'Created within the last 24 hours',
+        widget=forms.CheckboxInput(attrs={**htmx_attributes_instant})
+        )
+    
+    name3 =django_filters.CharFilter(
+        label='Name3',
+        lookup_expr='icontains',
+            widget=forms.TextInput(attrs={**htmx_attributes_delayed,
+                                          'placeholder': 'Group Name',
+                                          })
+        )
+    
+    recent3 = django_filters.BooleanFilter(
+        label='New Groups3',
+        method = 'get_recent',
+        help_text = 'Created within the last 24 hours',
+        widget=forms.CheckboxInput(attrs={**htmx_attributes_instant})
+        )
+
+    name4 =django_filters.CharFilter(
+        label='Name4',
+        lookup_expr='icontains',
+            widget=forms.TextInput(attrs={**htmx_attributes_delayed,
+                                          'placeholder': 'Group Name',
+                                          })
+        )
+    
+    recent4 = django_filters.BooleanFilter(
+        label='New Groups4',
+        method = 'get_recent',
+        help_text = 'Created within the last 24 hours',
+        widget=forms.CheckboxInput(attrs={**htmx_attributes_instant})
+        )
+
+    @property
+    def form(self):
+        if not hasattr(self, '_form'):
+            self._form = super().form
+            # self._form.helper = FormHelper()
+            # self._form.helper.form_tag = False
+            # self._form.helper.disable_csrf = True
+            # self._form.helper.form_show_labels = False
+            self._form.helper.layout = Layout(
+                Row(
+                    Column('query', css_class='form-group col-md-3'),
+                ),
+                HTML("""
+                <div class="row">
+                    <div class="col-md-12 mb-2">
+                        <a class="btn btn-link p-0" data-toggle="collapse"
+                            href="#advancedFilters"
+                            role="button" aria-expanded="false"
+                            aria-controls="advancedFilters">Advanced &rsaquo;</a>
+                    </div>
+                </div>
+                """),
+                Div(
+                    Row(
+                        Column('name', css_class='form-group col-md-3'),
+                    ),
+                    Row(
+                        Column('recent', css_class='form-group col-md-3'),
+                    ),
+                    css_class='collapse',
+                    css_id='advancedFilters',
+                )
+            )
+        return self._form
+
+    class Meta:
+        model = TargetList
+        fields = ['name', 'recent', 'name2', 'recent2', 'name3', 'recent3', 'name4', 'recent4']

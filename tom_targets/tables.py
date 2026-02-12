@@ -3,10 +3,22 @@ import logging
 import django_tables2 as tables
 
 from tom_common.htmx_table import HTMXTable
-from tom_targets.models import Target
+from tom_targets.models import Target, TargetList
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+class TargetGroupTable(HTMXTable):
+    # linkify makes the entry in the "name" column a link to the model detail page.
+    name = tables.Column(
+        linkify=True,
+        attrs={"a": {"hx-boost": "false"}}
+    )
+    total_targets = tables.Column('total_targets')
+
+    class Meta(HTMXTable.Meta):
+        model = TargetList
+        fields = ['selection', 'name', 'created']
 
 
 class TargetTable(HTMXTable):

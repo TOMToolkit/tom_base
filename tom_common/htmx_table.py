@@ -3,12 +3,29 @@ import logging
 import django_filters
 import django_tables2 as tables
 from django import forms
+from django.db.models import Q
 from django.conf import settings
 from django.utils.module_loading import import_string
 from django_tables2 import SingleTableMixin
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Div, Row, Column, HTML
 
 
 logger = logging.getLogger(__name__)
+
+htmx_attributes = {'hx-get': "",
+                   'hx-trigger': "change",
+                   'hx-target': "div.table-container",
+                   'hx-swap': "innerHTML",
+                   'hx-indicator': ".progress",
+                   'hx-include': "closest form",
+                   }
+
+htmx_attributes_instant = {**htmx_attributes, 'hx-trigger':"change"}
+
+htmx_attributes_onenter = {**htmx_attributes, 'hx-trigger':"keyup[keyCode==13]"}
+
+htmx_attributes_delayed = {**htmx_attributes, 'hx-trigger':"input changed delay:200ms", 'hx-sync': 'this:replace'}
 
 
 class HTMXTable(tables.Table):
@@ -73,10 +90,62 @@ class HTMXTableFilterSet(django_filters.rest_framework.FilterSet):
     3. Override get_general_search_function() for full control
 
     Subclasses should:
-    1. Define their own general_search() or override get_general_search_function()
+    1. Add the Model and relevant fields to the Meta
+    2. Define their own general_search() or override get_general_search_function()
     2. Add model-specific filters with HTMX widget attrs
     3. Override the form property to configure crispy-forms layout
     """
+
+    @property
+    def form(self):
+        """Override form property to configure crispy forms helper. This is to remove
+        the Submit button which is not needed because HTMX is making AJAX requests.
+
+        Also, add the FormHelper.Layout definition
+        """
+        if not hasattr(self, '_form'):
+            self._form = super().form
+            # Configure crispy forms helper - no submit button, no form tag
+            self._form.helper = FormHelper()
+            self._form.helper.form_tag = False  # Don't render <form> tags (template handles it)
+            self._form.helper.disable_csrf = True  # Template handles CSRF if needed
+            self._form.helper.form_show_labels = True  # Explicitly clear any inputs/buttons
+
+            advanced_field_names = [f for f in self.Meta.fields]
+            advanced_columns = [Column(name, css_class='form-group col-md-3') for name in advanced_field_names]
+
+            # Define the structure using Bootstrap Grid (Row/Column)
+            self._form.helper.layout = Layout(
+                # Row 1: Primary Search parameters
+                Div(
+                    Column('query', css_class='form-group col-md-3'),
+                ),
+                # 2. The Toggle Button (HTML)
+                Div(
+                    HTML("""
+                    <div class="row">
+                        <div class="col-md-12 mb-2">
+                            <a class="btn btn-link p-0" data-toggle="collapse"
+                            href="#advancedFilters"
+                            role="button" aria-expanded="false" aria-controls="advancedFilters">Advanced &rsaquo;</a>
+                        </div>
+                    </div>
+                    """),
+                    # 3. The Collapsible Container (Hidden by default)
+                    Div(
+                        # Row 2: Filters
+                        Row(
+                            *advanced_columns,
+                        ),
+
+                        # Bootstrap classes for functionality
+                        css_class='collapse',
+                        css_id='advancedFilters'  # must match the href in the "Advanced" HTML button above
+                    )
+                ) if advanced_columns else HTML("")
+            ) 
+        return self._form
+
 
     query = django_filters.CharFilter(
         method='_dispatch_general_search',
@@ -125,9 +194,11 @@ class HTMXTableFilterSet(django_filters.rest_framework.FilterSet):
 
     def general_search(self, queryset, name, value):
         """
-        Default general search implementation (no-op).
+        Default general search implementation. This Searches all model fields for the value.
+        If ANY field shows the value, it will be displayed.
+        NOTE: This search is not limited to displayed fields and does not include non-field columns.
 
-        Concrete subclasses should either:
+        Concrete subclasses that don't wish to use this default function should either:
         - Override this method directly, or
         - Override get_general_search_function() to return a different callable
 
@@ -139,7 +210,13 @@ class HTMXTableFilterSet(django_filters.rest_framework.FilterSet):
         """
         if not value:
             return queryset
-        return queryset
+        logger.debug(f'**** general_search -- value: {value}')
+
+        query = Q()
+        for field in self.Meta.model._meta.get_fields():
+            if not (field.many_to_many or field.many_to_one): # We need to remove FK relationships
+                query |= Q(**{f'{field.name}__icontains': value})
+        return queryset.filter(query)
 
     class Meta:
         abstract = True
@@ -175,3 +252,4 @@ class HTMXTableViewMixin(SingleTableMixin):
         context['record_count'] = context['paginator'].count
         context['empty_database'] = not self.model.objects.exists()
         return context
+
