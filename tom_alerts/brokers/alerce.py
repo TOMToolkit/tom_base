@@ -575,7 +575,7 @@ class ALeRCEBroker(GenericBroker):
             mjd = Time(detection['mjd'], format='mjd', scale='utc')
             value = {
                 'filter': FILTERS[detection['fid']],
-                'magnitude': detection['diffmaglim'],
+                'magnitude': detection['magpsf'],
                 'error': detection['sigmapsf'],
                 'telescope': 'ZTF',
             }

@@ -312,12 +312,16 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
             try:
                 target.save(extras=extras, names=aliases)
                 # Give the user access to the target they created
+                # and all associated data products
                 target.give_user_access(self.request.user)
                 broker_class().process_reduced_data(target, cached_alert)
                 for group in request.user.groups.all():
                     assign_perm('tom_targets.view_target', group, target)
                     assign_perm('tom_targets.change_target', group, target)
                     assign_perm('tom_targets.delete_target', group, target)
+                    assign_perm('tom_dataproducts.view_reduceddatum', group, target.reduceddatum_set.all())
+                    assign_perm('tom_dataproducts.change_reduceddatum', group, target.reduceddatum_set.all())
+                    assign_perm('tom_dataproducts.delete_reduceddatum', group, target.reduceddatum_set.all())
             except IntegrityError:
                 messages.warning(request, f'Unable to save {target.name}, target with that name already exists.')
                 errors.append(target.name)
