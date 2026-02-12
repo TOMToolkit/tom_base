@@ -267,7 +267,7 @@ Now there should be a General Search Bar above your table:
 Customization Options
 ~~~~~~~~~~~~~~~~~~~~~
 
-We've got a basic sortable table with General Search Bar If this is all you need, great! You're done! But if you want
+We've got a basic sortable table with General Search Bar. If this is all you need, great! You're done! But if you want
 to take advantage of some of the more advanced features, these next sections will focus on how to make these tools
 more specific to your use case.
 
@@ -425,7 +425,7 @@ NOTES:
 
 - *line 31:* We can add help text to our fields as well.
 
-Formatting our Form
+Formatting Our Form
 ^^^^^^^^^^^^^^^^^^^
 
 So far we have relied on the default formatting with the general Search bar above our hidden advanced filters, and the
@@ -499,11 +499,201 @@ NOTES:
 
 - *lines 40 and 43:* Here we handle our fields, `name` and `status`.
 
-
-
 See the example in `tom_targets/filters.py <https://github.com/TOMToolkit/tom_base/blob/dev/tom_targets/filters.py>`_.
 
-**b) Partial template (optional)**
+
+Customizing General Search
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+The default General search is quite broad and might even include fields that you don't want included in the table. 
+There are several options for customizing this search functionality.
+
+The ``HTMXTableFilterSet`` base class provides three ways to customize
+the General Search behavior, in order of simplicity.
+
+Override ``general_search()``
+=============================
+
+The most direct approach. Override the method in your ``HTMXTableFilterSet`` subclass:
+
+.. code-block:: python
+    :caption: myapp/filters.py
+    :linenos:
+    :emphasize-lines: 8-17
+
+    from django.db.models import Q
+
+    from tom_common.htmx_table import HTMXTableFilterSet
+    from myapp.models import Observation
+
+    class ObservationFilterSet(HTMXTableFilterSet):
+
+        def general_search(self, queryset, name, value):
+        """This general_search method searches the ``name`` and ``observer.username``
+        Model fields for the text in the ``query`` CharField of the ``FilterSet``.
+        """
+            if not value:
+                return queryset
+            return queryset.filter(
+                Q(name__icontains=value) |
+                Q(observer__username__icontains=value)
+            )
+
+        class Meta:
+            model = Observation
+            fields = []
+
+
+Settings-Based Override (``GENERAL_SEARCH_FUNCTIONS``)
+=======================================================
+
+Register a standalone function in ``settings.py`` without subclassing
+anything. This is useful in a ``custom_code`` app where you want to
+change the search behavior for an existing TOM Toolkit model.
+
+.. code-block:: python
+    :caption: settings.py
+
+    GENERAL_SEARCH_FUNCTIONS = {
+        'tom_targets.Target': 'custom_code.search.my_target_search',
+    }
+
+.. code-block:: python
+    :caption: custom_code/search.py
+    :linenos:
+
+    from django.db.models import Q
+
+    def my_target_search(queryset, name, value):
+        """
+            Change the existing general search function on the Target List page to include aliases as well as 
+            target names.
+        """
+        if not value:
+            return queryset
+        return queryset.filter(
+            Q(name__icontains=value) |
+            Q(aliases__name__icontains=value)
+        ).distinct()
+
+The key to the `GENERAL_SEARCH_FUNCTIONS` dictionary is ``'app_label.ModelName'`` (e.g. ``'tom_targets.Target'``)
+and the value is a dotted path to a callable with the signature
+``(queryset, name, value) -> QuerySet``. If a matching entry exists in
+``GENERAL_SEARCH_FUNCTIONS``, it takes priority over the FilterSet's
+``general_search()`` method.
+
+
+Override ``get_general_search_function()``
+==========================================
+
+For full control, override ``get_general_search_function()`` in a
+FilterSet subclass. This lets you return any callable based on runtime
+conditions.
+
+.. code-block:: python
+    :caption: custom_code/filters.py
+    :linenos:
+
+    from tom_targets.filters import TargetFilterSet
+    from django.db.models import Q
+
+    class CustomTargetFilterSet(TargetFilterSet):
+        """Override the general search without changing the View."""
+
+        def get_general_search_function(self):
+            return self.my_custom_search
+
+        def my_custom_search(self, queryset, name, value):
+            """
+                Change the existing general search function on the Target List page to include aliases as well as 
+                target names.
+            """
+            if not value:
+                return queryset
+            return queryset.filter(
+                Q(name__icontains=value) |
+                Q(aliases__name__icontains=value)
+            ).distinct()
+
+Then point your view at the custom FilterSet:
+
+.. code-block:: python
+    :caption: custom_code/views.py
+    :linenos:
+
+    from tom_targets.views import TargetListView
+    from custom_code.filters import CustomTargetFilterSet
+
+    class CustomTargetListView(TargetListView):
+        filterset_class = CustomTargetFilterSet
+
+
+General Search Examples
+=======================
+Note: These examples are given in the context of modifying the general search functionality, but could just as easily
+be used on their own to define one of your Advanced Filters described above.
+
+**Multi-field search**
+++++++++++++++++++++++
+Using Django's ``Q`` objects
+`(docs) <https://docs.djangoproject.com/en/5.2/topics/db/queries/#complex-lookups-with-q-objects>`_:
+
+.. code-block:: python
+
+    def general_search(self, queryset, name, value):
+        if not value:
+            return queryset
+        return queryset.filter(
+            Q(name__icontains=value) |
+            Q(description__icontains=value) |
+            Q(observer__username__icontains=value)
+        )
+
+**Type-based search**
++++++++++++++++++++++
+Detect numeric input and search coordinate fields:
+
+.. code-block:: python
+
+    from decimal import Decimal, InvalidOperation
+
+    def general_search(self, queryset, name, value):
+        if not value:
+            return queryset
+
+        if value.replace(".", "", 1).replace("-", "", 1).isdigit():
+            try:
+                numeric_value = Decimal(value)
+                return queryset.filter(
+                    Q(ra__icontains=numeric_value) |
+                    Q(dec__icontains=numeric_value)
+                )
+            except (InvalidOperation, ValueError):
+                pass
+
+        return queryset.filter(Q(name__icontains=value))
+
+**Comma-separated search**
+++++++++++++++++++++++++++
+With OR logic:
+
+.. code-block:: python
+
+    def general_search(self, queryset, name, value):
+        if not value:
+            return queryset
+
+        # extract search terms from the input value
+        terms = [term.strip() for term in value.split(',')]
+        q_objects = Q()
+        for term in terms:
+            q_objects |= (
+                Q(name__icontains=term) |
+                Q(aliases__name__icontains=term)
+            )
+        return queryset.filter(q_objects).distinct()
+
+Overwriting the Table Partial
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The base class provides a default partial template at
 ``tom_common/partials/htmx_table_partial.html`` that renders the table
@@ -513,15 +703,26 @@ If you need a custom partial (e.g. model-specific empty-state messages),
 create one and set ``partial_template_name`` on your Table subclass:
 
 .. code-block:: python
+    :caption: myapp/tables.py
+    :linenos:
+    :emphasize-lines: 7
+
+    from tom_common.htmx_table import HTMXTable
+    from myapp.models import Observation
 
     class ObservationTable(HTMXTable):
-        # ...
+
         # specify the path to your custom partial for you table
-        partial_template_name = "myapp/partials/observation_table_partial.html"
+        partial_template_name = "myapp/partials/observation_table_partial.ht
+
+        class Meta(HTMXTable.Meta):
+            model = Observation
+            fields = ['selection', 'name', 'date', 'status']
 
 .. code-block:: html+django
+    :caption: myapp/templates/myapp/partials/observation_table_partial.html
+    :linenos:
 
-    {# myapp/templates/myapp/partials/observation_table_partial.html #}
     {% load render_table from django_tables2 %}
 
     {% render_table table %}
@@ -651,170 +852,6 @@ See the example in `tom_targets/filters.py <https://github.com/TOMToolkit/tom_ba
 - The ``id="filter-form"`` must match the ``"hx-include": "#filter-form"``
   in ``HTMXTable.Meta.attrs`` so that filter values are preserved during
   sorting and pagination. [6]_
-
-Customizing General Search
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The ``HTMXTableFilterSet`` base class provides three ways to customize
-the General Search behavior, in order of simplicity.
-
-Override ``general_search()``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The most direct approach. Override the method in your ``HTMXTableFilterSet``
-subclass:
-
-.. code-block:: python
-
-    class ObservationFilterSet(HTMXTableFilterSet):
-
-        def general_search(self, queryset, name, value):
-        """This general_search method searches the ``name`` and ``observer.username``
-        Model fields for the text in the ``query`` CharField of the ``FilterSet``.
-        """
-            if not value:
-                return queryset
-            return queryset.filter(
-                Q(name__icontains=value) |
-                Q(observer__username__icontains=value)
-            )
-
-        class Meta:
-            model = Observation
-            fields = ['status']
-
-
-Settings-Based Override (``GENERAL_SEARCH_FUNCTIONS``)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Register a standalone function in ``settings.py`` without subclassing
-anything. This is useful in a ``custom_code`` app where you want to
-change the search behavior for an existing TOM Toolkit model.
-
-.. code-block:: python
-
-    # settings.py
-    GENERAL_SEARCH_FUNCTIONS = {
-        'tom_targets.Target': 'custom_code.search.my_target_search',
-    }
-
-.. code-block:: python
-
-    # custom_code/search.py
-    from django.db.models import Q
-
-    def my_target_search(queryset, name, value):
-        if not value:
-            return queryset
-        return queryset.filter(
-            Q(name__icontains=value) |
-            Q(aliases__name__icontains=value)
-        ).distinct()
-
-The key is ``'app_label.ModelName'`` (e.g. ``'tom_targets.Target'``)
-and the value is a dotted path to a callable with the signature
-``(queryset, name, value) -> QuerySet``. If a matching entry exists in
-``GENERAL_SEARCH_FUNCTIONS``, it takes priority over the FilterSet's
-``general_search()`` method.
-
-
-Override ``get_general_search_function()``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For full control, override ``get_general_search_function()`` in a
-FilterSet subclass. This lets you return any callable based on runtime
-conditions.
-
-.. code-block:: python
-
-    # custom_code/filters.py
-    from tom_targets.filters import TargetFilterSet
-    from django.db.models import Q
-
-    class CustomTargetFilterSet(TargetFilterSet):
-        """Override the general search without changing the View."""
-
-        def get_general_search_function(self):
-            return self.my_custom_search
-
-        def my_custom_search(self, queryset, name, value):
-            if not value:
-                return queryset
-            return queryset.filter(
-                Q(name__icontains=value) |
-                Q(aliases__name__icontains=value)
-            ).distinct()
-
-Then point your view at the custom FilterSet:
-
-.. code-block:: python
-
-    # custom_code/views.py
-    from tom_targets.views import TargetListView
-    from custom_code.filters import CustomTargetFilterSet
-
-    class CustomTargetListView(TargetListView):
-        filterset_class = CustomTargetFilterSet
-
-
-General Search Examples
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-**Multi-field search** using Django's ``Q`` objects
-`(docs) <https://docs.djangoproject.com/en/5.2/topics/db/queries/#complex-lookups-with-q-objects>`_:
-
-.. code-block:: python
-
-    def general_search(self, queryset, name, value):
-        if not value:
-            return queryset
-        return queryset.filter(
-            Q(name__icontains=value) |
-            Q(description__icontains=value) |
-            Q(observer__username__icontains=value)
-        )
-
-**Type-based search** -- detect numeric input and search coordinate
-fields:
-
-.. code-block:: python
-
-    from decimal import Decimal, InvalidOperation
-
-    def general_search(self, queryset, name, value):
-        if not value:
-            return queryset
-
-        if value.replace(".", "", 1).replace("-", "", 1).isdigit():
-            try:
-                numeric_value = Decimal(value)
-                return queryset.filter(
-                    Q(ra__icontains=numeric_value) |
-                    Q(dec__icontains=numeric_value)
-                )
-            except (InvalidOperation, ValueError):
-                pass
-
-        return queryset.filter(Q(name__icontains=value))
-
-**Comma-separated search** with OR logic:
-
-.. code-block:: python
-
-    def general_search(self, queryset, name, value):
-        if not value:
-            return queryset
-
-        # extract search terms from the input value
-        terms = [term.strip() for term in value.split(',')]
-        q_objects = Q()
-        for term in terms:
-            q_objects |= (
-                Q(name__icontains=term) |
-                Q(aliases__name__icontains=term)
-            )
-        return queryset.filter(q_objects).distinct()
-
 
 Best Practices
 ^^^^^^^^^^^^^^^
