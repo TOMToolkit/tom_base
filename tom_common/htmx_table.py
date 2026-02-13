@@ -21,10 +21,15 @@ htmx_attributes = {'hx-get': "",
                    'hx-include': "closest form",
                    }
 
+#  For triggering instant changes. Here we want the table to update immediately upon selection.
 htmx_attributes_instant = {**htmx_attributes, 'hx-trigger': "change"}
 
+#  For triggering table changes when the user hits enter. This is best used for complicated fields where a search
+#  doesn’t make sense until all of the data is in.
 htmx_attributes_onenter = {**htmx_attributes, 'hx-trigger': "keyup[keyCode==13]"}
 
+#  For triggering changes after a short (200ms) delay. We use this for character fields where a partial input is
+#  still viable.
 htmx_attributes_delayed = {**htmx_attributes, 'hx-trigger': "input changed delay:200ms", 'hx-sync': 'this:replace'}
 
 
@@ -59,6 +64,23 @@ class HTMXTable(tables.Table):
     )
 
     def model_property_ordering(self, queryset, is_descending, model_property=None):
+        """
+        This is a general method for sorting on non-field columns. Specifically this will sort the table by the results
+        of a model property that might be calculated based on other parameters. Because all of the logic must be done in
+        python rather than in the DB, this is an expensive sort to do for large querysets.
+        Should be used in your `HTMXTable` class as the return of the `order_foo()` method related to the foo property
+        of you model:
+
+        def order_foo(self, queryset, is_descending):
+            return self.model_property_ordering(queryset, is_descending, model_property='foo')
+
+
+        :param queryset: The queryset to ultimately be sorted.
+        :param is_descending: Direction of sort.
+        :param model_property: The property to be sorted on.
+
+        :return (sorted_queryset, is_sorted):
+        """
         sorted_pks = [
             row.pk for row in sorted(
                 queryset,

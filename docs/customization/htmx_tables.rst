@@ -36,7 +36,7 @@ define your ``HTMXTable``.
 Subclass ``HTMXTable`` in ``tables.py``. The base class
 provides the Bootstrap/HTMX template, row-selection checkboxes, and
 all the ``Meta.attrs`` needed for sorting and pagination to work via
-HTMX. [1]_ Your subclass ``Meta.attrs`` must specify the Model and Fields
+HTMX. [1]_ Your subclass ``Meta.attrs`` must specify the ``model`` and ``fields``
 to be displayed.
 
 .. code-block:: python
@@ -65,7 +65,7 @@ NOTES:
 
 - *Line 8:* Use ``linkify=True`` on a column to turn cell values into links to the
   object's detail page. If your model does not have a detail page, or a ``get_absolute_url()`` defined, including this
-  will result in a `TypeError`.
+  will result in a ``TypeError``.
 
 - *Line 9:* The ``hx-boost="false"``
   attribute ensures that clicking the link triggers a normal page navigation
@@ -74,10 +74,10 @@ NOTES:
 See the example in `tom_targets/tables.py <https://github.com/TOMToolkit/tom_base/tree/dev/tom_targets>`_.
 
 
-Step 2: Update the View
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Step 2: Update the ``View``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Add ``HTMXTableViewMixin`` *before* your existing List (or Filter) view. The mixin extends
+Add ``HTMXTableViewMixin`` **before** your existing List (or Filter) view. The mixin extends
 ``django_tables2.SingleTableMixin`` and handles HTMX request detection
 and template selection. It also adds ``record_count`` and
 ``empty_database`` to the template context. [4]_
@@ -101,8 +101,8 @@ and template selection. It also adds ``record_count`` and
 
 NOTES: 
 
-If you are updating an existing List/FilterView then the `HTMXTableViewMixin`, line 11, defining `table_class` and the
-appropriate imports are the only changes you should need to make.
+If you are updating an existing ``List``/ ``FilterView`` then the ``HTMXTableViewMixin``, line 11, defining
+``table_class`` and the appropriate imports are the only changes you should need to make.
 
 See the example in `tom_targets/views.py <https://github.com/TOMToolkit/tom_base/blob/dev/tom_targets/views.py>`_.
 
@@ -119,7 +119,7 @@ Table page template
 The main table template includes a progress indicator and the
 table container.
 
-The Table container includes the default partial template for generating the table. We will discuss overriding 
+The ``Table`` container includes the default partial template for generating the table. We will discuss overriding 
 this a little later.
 
 .. code-block:: html+django
@@ -158,12 +158,12 @@ Add Search Bar
 Next we will add search functionality to our table. We will start with a simple search bar and add more features later.
 This requires 3 steps:
 
- - Creating the basic FilterSet
- - Adding the FilterSet to our View
- - Adding the Form to our Template
+ - Creating the basic ``FilterSet``
+ - Adding the ``FilterSet`` to our ``View``
+ - Adding the ``Form`` to our ``Template``
 
-Step 1: Create the FilterSet
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Step 1: Create the ``FilterSet``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Subclass ``HTMXTableFilterSet`` from ``tom_common.htmx_table``. The base
 class provides a General Search text field (``query``) with debounced
@@ -190,10 +190,10 @@ NOTES:
 - For now we are going to leave the fields empty. If you want to add more complex filtering options, we will add
   fields here later.
 
-Step 2: Add FilterSet to the View
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Next we need to add the FilterSet to the view.
-Since we are adding filters, we can no longer rely on a simple ListView, and must use a FilterView instead.
+Step 2: Add ``FilterSet`` to the ``View``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Next we need to add the ``FilterSet`` to the ``view``.
+Since we are adding filters, we can no longer rely on a simple ``ListView``, and must use a ``FilterView`` instead.
 Note the highlighted changes.
 
 .. code-block:: python
@@ -217,8 +217,8 @@ Note the highlighted changes.
         ordering = ['-date']
 
 
-Step 3: Add your form to the Template
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Step 3: Add your ``Form`` to the ``Template``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Finally, we will head back to our primary table page template and insert the form with the relevant HTMX.
 
@@ -282,7 +282,7 @@ Adding More Filters
 ^^^^^^^^^^^^^^^^^^^^^
 
 The default general filter is great, but maybe you want to search specific fields or other more complex parameters.
-To do this we will need to modify our custom FilterSet. 
+To do this we will need to modify our custom ``FilterSet``. 
 Let's start by adding a dropdown selection for "status" to our filter list:
 
 .. code-block:: python
@@ -312,15 +312,15 @@ NOTES:
 - *Line 4:* We want to import our standard HTMX attributes that link this filter to the table. The TOMToolkit provides
   3 default options:
 
-    - `htmx_attributes_instant` for triggering instant changes. Here we want the table to update immediately upon
+    - ``htmx_attributes_instant`` for triggering instant changes. Here we want the table to update immediately upon
       selection.
-    - `htmx_attributes_onenter` for triggering table changes when the user hits enter. This is best used for complicated
+    - ``htmx_attributes_onenter`` for triggering table changes when the user hits enter. This is best used for complicated
       fields where a search doesn't make sense until all of the data is in.
-    - `htmx_attributes_delayed` for triggering changes after a short (200ms) delay. We use this for character fields
+    - ``htmx_attributes_delayed``` for triggering changes after a short (200ms) delay. We use this for character fields
       where a partial input is still viable. [3]_
 
 - *Lines 9:* See the `django-filter documentation <https://django-filter.readthedocs.io/>`_ for more information. 
-  Be sure to update the widget type on *line 11* (`forms.Select`) to one that makes sense with your filter. See 
+  Be sure to update the widget type on *line 11* (``forms.Select``) to one that makes sense with your filter. See 
   `Django Widgets <https://docs.djangoproject.com/en/6.0/ref/forms/widgets/#built-in-widgets>`_ for options.
 
 - *Line 10:* This should be whatever choices are for the field. You can manually put a in a set of choices if you want:
@@ -374,7 +374,7 @@ NOTES:
   placeholder text that will show up in the field before an actual search value is provided.
 
 Now, both fields should show up in the advanced section and the resulting search will use BOTH filters, effectively 
-providing an `AND` between both of them and the general search, only returning results that match all filters.
+providing an ``AND`` between both of them and the general search, only returning results that match all filters.
 
 Advanced Filters
 ^^^^^^^^^^^^^^^^^^
@@ -441,7 +441,7 @@ Because the calculated properties are not present in the DB, and therefore are n
 Unsortable Properties
 =====================
 
-If you don't want to sort on a property, just have it displayed in the Table, then it is fairly simple. Here we include
+If you don't want to sort on a property, just have it displayed in the table, then it is fairly simple. Here we include
 ``observation.example_property`` in our table:
 
 .. code-block:: python
@@ -462,7 +462,7 @@ If you don't want to sort on a property, just have it displayed in the Table, th
 
 NOTES:
 
-- *Line 6:* We set `orderable = False` to prevent errors when trying to sort this as a DB field.
+- *Line 6:* We set ``orderable = False`` to prevent errors when trying to sort this as a DB field.
 
 Sortable Properties
 =====================
@@ -571,7 +571,7 @@ NOTES:
 
 - *Lines 28-37, 45-46:* This handles the collapsible window.
 
-- *lines 40 and 43:* Here we handle our fields, `name` and `status`.
+- *lines 40 and 43:* Here we handle our fields, ``name`` and ``status``.
 
 See the example in `tom_targets/filters.py <https://github.com/TOMToolkit/tom_base/blob/dev/tom_targets/filters.py>`_.
 
@@ -649,7 +649,7 @@ change the search behavior for an existing TOM Toolkit model.
             Q(aliases__name__icontains=value)
         ).distinct()
 
-The key to the `GENERAL_SEARCH_FUNCTIONS` dictionary is ``'app_label.ModelName'`` (e.g. ``'tom_targets.Target'``)
+The key to the ``GENERAL_SEARCH_FUNCTIONS`` dictionary is ``'app_label.ModelName'`` (e.g. ``'tom_targets.Target'``)
 and the value is a dotted path to a callable with the signature
 ``(queryset, name, value) -> QuerySet``. If a matching entry exists in
 ``GENERAL_SEARCH_FUNCTIONS``, it takes priority over the FilterSet's
@@ -660,7 +660,7 @@ Override ``get_general_search_function()``
 ==========================================
 
 For full control, override ``get_general_search_function()`` in a
-FilterSet subclass. This lets you return any callable based on runtime
+``FilterSet`` subclass. This lets you return any callable based on runtime
 conditions.
 
 .. code-block:: python
@@ -688,7 +688,7 @@ conditions.
                 Q(aliases__name__icontains=value)
             ).distinct()
 
-Then point your view at the custom FilterSet:
+Then point your view at the custom ``FilterSet``:
 
 .. code-block:: python
     :caption: custom_code/views.py
