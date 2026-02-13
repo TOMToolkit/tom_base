@@ -803,7 +803,7 @@ create one and set ``partial_template_name`` on your Table subclass:
 
         class Meta(HTMXTable.Meta):
             model = Observation
-            fields = ['selection', 'name', 'date', 'status']
+            fields = ['name', 'date', 'status']
 
 .. code-block:: html+django
     :caption: myapp/templates/myapp/partials/observation_table_partial.html
@@ -825,6 +825,9 @@ create one and set ``partial_template_name`` on your Table subclass:
 
 See the reference implementation in
 ``tom_targets/templates/tom_targets/partials/target_table_partial.html``.
+
+Note: ``tom_common/partials/htmx_table_partial.html`` contains the javascript necessary to make the check box selection
+work properly. If you intend to include checkboxes, you will want to copy this script into your partial as well.
 
 Best Practices
 ^^^^^^^^^^^^^^^

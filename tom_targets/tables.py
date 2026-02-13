@@ -2,6 +2,8 @@ import logging
 
 import django_tables2 as tables
 from django.db.models import Case, When
+from django.utils.html import format_html
+from django.urls import reverse
 
 from tom_common.htmx_table import HTMXTable
 from tom_targets.models import Target, TargetList
@@ -16,6 +18,7 @@ class TargetGroupTable(HTMXTable):
         attrs={"a": {"hx-boost": "false"}}
     )
     total_targets = tables.Column('total_targets', orderable=True)
+    id = tables.Column('id', orderable=False)
 
     def order_total_targets(self, queryset, is_descending):
         sorted_pks = [
@@ -35,9 +38,14 @@ class TargetGroupTable(HTMXTable):
         is_sorted = True
         return (sorted_queryset, is_sorted)
 
+    def render_id(self, value):
+        return format_html(f"""<td><a href="{reverse('targets:delete-group', kwargs={'pk': value})}" 
+                    title="Delete Group" class="btn btn-danger">Delete</a></td>"""
+                    )
+
     class Meta(HTMXTable.Meta):
         model = TargetList
-        fields = ['selection', 'name', 'total_targets', 'created']
+        fields = ['selection', 'name', 'total_targets', 'created', 'id']
 
 
 class TargetTable(HTMXTable):
