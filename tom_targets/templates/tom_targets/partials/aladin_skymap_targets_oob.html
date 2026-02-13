@@ -1,0 +1,14 @@
+{# Out-of-Band (OOB) script to update Aladin target markers without       #}
+{# rebuilding the viewer. Sent as part of HTMX partial responses to       #}
+{# side-load new target data into the existing Aladin viewer.             #}
+{#                                                                        #}
+{# NOTE: This pattern (OOB data-only update) can be generalized for any   #}
+{# HTMX table companion widget -- see the comment in aladin_skymap.html   #}
+{# for the general approach.                                              #}
+<div id="aladin-targets-data" hx-swap-oob="true">
+    <script>
+        if (window.updateAladinTargets) {
+            updateAladinTargets({{ targets_json|safe }});
+        }
+    </script>
+</div>

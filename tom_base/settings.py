@@ -297,6 +297,15 @@ TOM_CADENCE_STRATEGIES = [
 # ]
 EXTRA_FIELDS = []
 
+# Map model labels to dotted paths of custom general search functions for HTMX tables.
+# This allows overriding the default general search method without subclassing.
+# See https://tom-toolkit.readthedocs.io/en/stable/customization/htmx_tables.html.
+# Example:
+# GENERAL_SEARCH_FUNCTIONS = {
+#     'tom_targets.Target': 'custom_code.search.my_target_search',
+# }
+GENERAL_SEARCH_FUNCTIONS = {}
+
 # Define custom DataProcessor class
 # DATA_PROCESSOR_CLASS = 'mytom.custom_data_processor.CustomDataProcessor'
 

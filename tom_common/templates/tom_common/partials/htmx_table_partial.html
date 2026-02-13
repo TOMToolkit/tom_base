@@ -1,0 +1,32 @@
+{# tom_common/partials/htmx_table_partial.html #}
+{# Default partial template for HTMX table responses. #}
+{# Override by setting partial_template_name on your HTMXTable subclass. #}
+{% load render_table from django_tables2 %}
+
+{% render_table table %}
+
+{% if not table.data %}
+    <div class="alert alert-info mt-3">
+        {% if empty_database %}
+            No records in the database.
+        {% else %}
+            No records match those filters.
+        {% endif %}
+    </div>
+{% endif %}
+
+  <script>
+  document.body.addEventListener('change', function(e) {
+    // This eventListener toggles all the checkboxes when the header-checkbox is toggled.
+
+    // Check if the source of the change event is our header checkbox
+    if (e.target && e.target.classList.contains('header-checkbox')) {
+
+        // Find all checkboxes with the specific name used in the rows
+        const checkboxes = document.querySelectorAll('input[name="selected-row"]');
+
+        // Set their state to match the header checkbox
+        checkboxes.forEach(cb => cb.checked = e.target.checked);
+    }
+  });
+  </script>

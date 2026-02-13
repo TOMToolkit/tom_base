@@ -9,11 +9,12 @@ from crispy_forms.layout import Layout, Div, Row, Column, HTML
 
 import django_filters
 
+from tom_common.htmx_table import HTMXTableFilterSet
 from tom_targets.models import Target, TargetList
 from tom_targets.utils import cone_search_filter
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 
 def filter_for_field(field):
@@ -51,7 +52,7 @@ def filter_text(queryset, name, value):
     return queryset.filter(targetextra__key=name, targetextra__value__icontains=value)
 
 
-class TargetFilterSet(django_filters.rest_framework.FilterSet):
+class TargetFilterSet(HTMXTableFilterSet):
     """
     Filters are available for Target objects:
         - type: Filter by target type (e.g., 'SIDEREAL', 'NON_SIDEREAL').
@@ -193,7 +194,7 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
     def filter_cone_search(self, queryset, name, value):
         """
         Perform a cone search filter on this filter's queryset,
-        using the cone search utlity method and either specified RA, DEC
+        using the cone search utility method and either specified RA, DEC
         or the RA/DEC from the named target.
 
         This method prepares the arguments for tom_targets.utils.cone_search_filter.
@@ -259,49 +260,32 @@ class TargetFilterSet(django_filters.rest_framework.FilterSet):
         )
     )
 
-    # Set up a search box that filters the Targets
-    query = django_filters.CharFilter(
-        # TODO: make this customizable like TargetFilterSet.get_universal_search_callable
-        method='universal_search',
-        label="General search",
-        # override widget in order to add htmx attributes
-        widget=forms.TextInput(
-            attrs={
-                'hx-get': "",  # triggered GET goes to the source URL by default
-                'hx-trigger': "input changed delay:200ms",  # AJAX call when input changes (delayed to debounce)
-                'hx-sync': 'this:replace',
-                'hx-target': "div.table-container",
-                'hx-swap': "innerHTML",
-                'hx-indicator': ".progress",
-                'hx-include': "closest form",  # include the other filters in this FilterSet
-            }
-        ))
-
-    # TODO: this method should be customizable and it needs a lot of work atm.
-    def universal_search(self, queryset, name, value):
+    def general_search(self, queryset, name, value):
         """
+        Search targets by name.
 
-        :param queryset: this is the result of the previous filters. By returning
-            queryset.fitler(new_Q), we are respecting the filters that preceed this method
-            the filter chain.
-        :param name: the Filter calling here (the query CharFilter above, for example)
-        :param value: what the user has typed in the query CharField so far
+        :param queryset: The current filtered queryset. By filtering on this queryset,
+            we respect the filters that precede this method in the filter chain.
+        :param name: The name of the filter field calling this method (e.g. 'query').
+        :param value: The user's input from the General Search text field.
         """
-        logger.debug(f'**** universal_search -- value: {value}')
+        logger.debug(f'**** general_search -- value: {value}')
 
-        # TODO:  collect entire string from query CharFilter
         if not value:
             return queryset  # early return
-
-        # from decimal import Decimal
-        #  if a digit is being entered, query the RA, and DEC fields
-        # if value.replace(".", "", 1).isdigit():
-        #     value = Decimal(value)
-        #     logger.debug(f'**** universal_search --  decoded digit value: {value}')
-        #     return queryset.filter(Q(ra__icontains=value) | Q(dec__icontains=value))
 
         return queryset.filter(Q(name__icontains=value))
 
     class Meta:
         model = Target
         fields = ['type', 'name', 'key', 'value', 'cone_search', 'targetlist__name']
+
+
+class TargetGroupFilterSet(HTMXTableFilterSet):
+    """
+    This is a bare bones FilterSet for TargetGroups
+    """
+
+    class Meta:
+        model = TargetList
+        fields = []
