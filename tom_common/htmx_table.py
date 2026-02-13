@@ -48,9 +48,11 @@ class HTMXTable(tables.Table):
         accessor="pk",
         orderable=False,
         attrs={
-            "input": {"name": "selected-row"},
+            "input": {"name": "selected-row",
+                      "form": "grouping-form"},
             "th__input": {
                 "class": "header-checkbox",
+                "form": "grouping-form",
                 "onclick": "event.stopPropagation();"
             }
         }

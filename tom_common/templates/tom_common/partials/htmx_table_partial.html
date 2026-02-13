@@ -14,3 +14,19 @@
         {% endif %}
     </div>
 {% endif %}
+
+  <script>
+  document.body.addEventListener('change', function(e) {
+    // This eventListener toggles all the checkboxes when the header-checkbox is toggled.
+
+    // Check if the source of the change event is our header checkbox
+    if (e.target && e.target.classList.contains('header-checkbox')) {
+
+        // Find all checkboxes with the specific name used in the rows
+        const checkboxes = document.querySelectorAll('input[name="selected-row"]');
+
+        // Set their state to match the header checkbox
+        checkboxes.forEach(cb => cb.checked = e.target.checked);
+    }
+  });
+  </script>
