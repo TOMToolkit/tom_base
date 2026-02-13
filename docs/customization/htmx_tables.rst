@@ -36,7 +36,7 @@ define your ``HTMXTable``.
 Subclass ``HTMXTable`` in ``tables.py``. The base class
 provides the Bootstrap/HTMX template, row-selection checkboxes, and
 all the ``Meta.attrs`` needed for sorting and pagination to work via
-HTMX. [2]_ Your subclass ``Meta.attrs`` must specify the Model and Fields
+HTMX. [1]_ Your subclass ``Meta.attrs`` must specify the Model and Fields
 to be displayed.
 
 .. code-block:: python
@@ -61,7 +61,7 @@ to be displayed.
 NOTES:
 
 - *Line 14:* Include ``'selection'`` in ``fields`` to enable row-selection checkboxes. All of the other fields should
-  be model fields or methods for your chosen model.
+  be model fields for your chosen model.
 
 - *Line 8:* Use ``linkify=True`` on a column to turn cell values into links to the
   object's detail page. If your model does not have a detail page, or a ``get_absolute_url()`` defined, including this
@@ -69,7 +69,7 @@ NOTES:
 
 - *Line 9:* The ``hx-boost="false"``
   attribute ensures that clicking the link triggers a normal page navigation
-  (to the object's detail page) rather than being intercepted by HTMX. [3]_
+  (to the object's detail page) rather than being intercepted by HTMX. [2]_
 
 See the example in `tom_targets/tables.py <https://github.com/TOMToolkit/tom_base/tree/dev/tom_targets>`_.
 
@@ -80,7 +80,7 @@ Step 2: Update the View
 Add ``HTMXTableViewMixin`` *before* your existing List (or Filter) view. The mixin extends
 ``django_tables2.SingleTableMixin`` and handles HTMX request detection
 and template selection. It also adds ``record_count`` and
-``empty_database`` to the template context. [5]_
+``empty_database`` to the template context. [4]_
 
 .. code-block:: python
     :caption: myapp/views.py
@@ -260,6 +260,13 @@ Finally, we will head back to our primary table page template and insert the for
     </div>
     {% endblock content %}
 
+Notes:
+
+- *Line 13:* The ``id="filter-form"`` must match the ``"hx-include": "#filter-form"``
+  in ``HTMXTable.Meta.attrs`` so that filter values are preserved during
+  sorting and pagination. This is handled in the base ``HTMXTable`` but these values could be overwritten if multiple
+  tables were being used on the same page. [5]_
+
 Now there should be a General Search Bar above your table:
 
 |image0|
@@ -310,7 +317,7 @@ NOTES:
     - `htmx_attributes_onenter` for triggering table changes when the user hits enter. This is best used for complicated
       fields where a search doesn't make sense until all of the data is in.
     - `htmx_attributes_delayed` for triggering changes after a short (200ms) delay. We use this for character fields
-      where a partial input is still viable.
+      where a partial input is still viable. [3]_
 
 - *Lines 9:* See the `django-filter documentation <https://django-filter.readthedocs.io/>`_ for more information. 
   Be sure to update the widget type on *line 11* (`forms.Select`) to one that makes sense with your filter. See 
@@ -424,6 +431,85 @@ NOTES:
 - *Lines 11-26:* We need to provide a function that performs our arbitrary query.
 
 - *line 31:* We can add help text to our fields as well.
+
+Including Model Properties In the Table Columns
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To include a model property (a model method tagged with the ``@property`` tag) we need to be a little cautious. 
+Because the calculated properties are not present in the DB, and therefore are not as easy to sort on.
+
+Unsortable Properties
+=====================
+
+If you don't want to sort on a property, just have it displayed in the Table, then it is fairly simple:
+
+.. code-block:: python
+    :caption: myapp/tables.py
+    :linenos:
+    :emphasize-lines: 6, 10
+
+    from tom_common.htmx_table import HTMXTable  # HTMXTable is a django_tables2.Table subclass
+    from myapp.models import Observation  # for example
+
+    class ObservationTable(HTMXTable):
+
+        example_property = tables.Column('example_property', orderable=False)
+
+        class Meta(HTMXTable.Meta):
+            model = Observation
+            fields = ['selection', 'name', 'date', 'example_property', 'status']
+
+NOTES:
+
+- *Line 6:* We set `orderable = False` to prevent errors when trying to sort this as a DB field.
+
+Sortable Properties
+=====================
+
+Things get a bit more complex when we try to sort by properties. See the `django_tables2 docs 
+<https://django-tables2.readthedocs.io/en/latest/pages/ordering.html>`_ for more specifics, but basically we have to 
+build our own sorting method using python and store the primary keys in the proper order. This is very expensive for 
+large databases, and should only be done if your table won't ever hold too many objects.
+
+.. code-block:: python
+    :caption: myapp/tables.py
+    :linenos:
+    :emphasize-lines: 1, 8, 10-26
+
+    from django.db.models import Case, When
+
+    from tom_common.htmx_table import HTMXTable  # HTMXTable is a django_tables2.Table subclass
+    from myapp.models import Observation  # for example
+
+    class ObservationTable(HTMXTable):
+
+        example_property = tables.Column('example_property', orderable=True)
+
+        def order_example_property(self, queryset, is_descending):
+            sorted_pks = [
+                row.pk for row in sorted(
+                    queryset,
+                    key=lambda obj: obj.example_property or "" or 0,
+                    reverse=is_descending,
+                )
+            ]
+
+            # Use Case/When to preserve the Python-sorted order in the queryset
+            # map the sorted PKs to the position in the enumeration
+            preserved_order = Case(*[When(pk=pk, then=position) for position, pk in enumerate(sorted_pks)])
+
+            # re-order the queryset by the python-sorted (the .filter is just for validation)
+            sorted_queryset = queryset.filter(pk__in=sorted_pks).order_by(preserved_order)
+            is_sorted = True
+            return (sorted_queryset, is_sorted)
+
+        class Meta(HTMXTable.Meta):
+            model = Observation
+            fields = ['selection', 'name', 'date', 'example_property', 'status']
+
+NOTES:
+
+- *Line 10 and 14:* Update these line with your property.
 
 Formatting Our Form
 ^^^^^^^^^^^^^^^^^^^
@@ -740,119 +826,6 @@ create one and set ``partial_template_name`` on your Table subclass:
 See the reference implementation in
 ``tom_targets/templates/tom_targets/partials/target_table_partial.html``.
 
-
-Step 2: Create the FilterSet
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This section assumes some familiarity with the `django-filter <https://django-filter.readthedocs.io/en/stable/index.html>`_
-and `django-crispy-forms <https://django-crispy-forms.readthedocs.io/en/latest/index.html>`_ packages.
-
-Subclass ``HTMXTableFilterSet`` from ``tom_common.htmx_table``. The base
-class provides a General Search text field (``query``) with debounced
-HTMX attributes already configured. Override ``general_search()`` with
-your model-specific search logic, and add any additional filters your
-table needs.
-
-.. code-block:: python
-    :caption: myapp/filters.py
-    :linenos:
-
-    import django_filters
-    from django import forms
-    from django.db.models import Q
-
-    from crispy_forms.helper import FormHelper
-    from crispy_forms.layout import Layout, Row, Column, Div, HTML
-
-    from tom_common.htmx_table import HTMXTableFilterSet
-    from myapp.models import Observation
-
-    class ObservationFilterSet(HTMXTableFilterSet):
-
-        def general_search(self, queryset, name, value):
-            """Search observations by name."""
-            if not value:
-                return queryset
-            return queryset.filter(Q(name__icontains=value))
-
-        status = django_filters.ChoiceFilter(
-            choices=[('active', 'Active'), ('completed', 'Completed')],
-            widget=forms.Select(attrs={
-                'hx-get': "",
-                'hx-trigger': "change",
-                'hx-target': "div.table-container",
-                'hx-swap': "innerHTML",
-                'hx-indicator': ".progress",
-                'hx-include': "closest form",
-            })
-        )
-
-        @property
-        def form(self):
-            if not hasattr(self, '_form'):
-                self._form = super().form
-                self._form.helper = FormHelper()
-                self._form.helper.form_tag = False
-                self._form.helper.disable_csrf = True
-                self._form.helper.form_show_labels = True
-                self._form.helper.layout = Layout(
-                    Row(
-                        Column('query', css_class='form-group col-md-3'),
-                    ),
-                    HTML("""
-                    <div class="row">
-                        <div class="col-md-12 mb-2">
-                            <a class="btn btn-link p-0" data-toggle="collapse"
-                               href="#advancedFilters"
-                               role="button" aria-expanded="false"
-                               aria-controls="advancedFilters">Advanced &rsaquo;</a>
-                        </div>
-                    </div>
-                    """),
-                    Div(
-                        Row(
-                            Column('status', css_class='form-group col-md-3'),
-                        ),
-                        css_class='collapse',
-                        css_id='advancedFilters',
-                    )
-                )
-            return self._form
-
-        class Meta:
-            model = Observation
-            fields = ['status']
-
-NOTES:
-
-- The General Search text field fires after a short (debounced) pause in typing.
-
-- Dropdown filters use ``hx-trigger="change"`` for immediate
-  response on selection. [4]_
-
-- The ``form`` property override configures ``crispy-forms`` with
-  ``form_tag=False`` because the main page template provides the
-  ``<form>`` element.
-
-- The ``query`` field goes in the primary row; extra
-  filters go inside a collapsible "Advanced" section.
-
-
-See the example in `tom_targets/filters.py <https://github.com/TOMToolkit/tom_base/blob/dev/tom_targets/filters.py>`_.
-
-
-        {# Filter form -- id must match hx-include in the Table's Meta.attrs #}
-        <form id="filter-form" class="mb-3"
-              hx-get="{% url 'myapp:list' %}"
-              hx-target="div.table-container"
-              hx-swap="outerHTML"
-              hx-indicator=".progress">
-            {% crispy filter.form %}
-        </form>
-
-- The ``id="filter-form"`` must match the ``"hx-include": "#filter-form"``
-  in ``HTMXTable.Meta.attrs`` so that filter values are preserved during
-  sorting and pagination. [6]_
-
 Best Practices
 ^^^^^^^^^^^^^^^
 - ``FilterSet``s pass a queryset from Filter to Filter. So,
@@ -893,32 +866,31 @@ Where to Find More Information
 
 .. rubric:: Footnotes
 
-.. [2] ``HTMXTable`` inherits from ``django_tables2.Table`` and sets
+.. [1] ``HTMXTable`` inherits from ``django_tables2.Table`` and sets
    ``Meta.template_name`` to a shared Bootstrap/HTMX template that adds
    HTMX attributes to column headers (for sorting) and pagination
    controls. It also sets ``Meta.attrs`` with ``hx-include``,
    ``hx-target``, ``hx-swap``, and ``hx-boost``.
 
-.. [3] ``hx-boost="true"`` on the ``<table>`` element (set by
+.. [2] ``hx-boost="true"`` on the ``<table>`` element (set by
    ``HTMXTable.Meta.attrs``) intercepts the ``<a>`` tags that
    django-tables2 generates for sorting and pagination, converting them
    into HTMX AJAX requests. Links to detail pages use
    ``hx-boost="false"`` to opt out and trigger normal navigation.
 
-.. [4] The ``delay:200ms`` modifier on the General Search field acts as
+.. [3] The `htmx_attributes_delayed` dicitonary includes a ``delay:200ms`` modifier that acts as
    a debounce -- the request is only sent after the user stops typing for
    200ms. Combined with ``hx-sync="this:replace"``, any in-flight request
    is cancelled and replaced by the latest one, preventing race
    conditions.
 
-.. [5] ``HTMXTableViewMixin`` extends ``django_tables2.SingleTableMixin``
-   and checks ``self.request.htmx`` (provided by
+.. [4] ``HTMXTableViewMixin`` checks ``self.request.htmx`` (provided by
    ``django_htmx.middleware.HtmxMiddleware``). When an HTMX request
    arrives, only the partial template is returned; otherwise the full page
    template is used. The ``record_count`` context variable comes from
    ``context['paginator'].count``.
 
-.. [6] Without ``hx-include``, sorting and pagination requests would not
+.. [5] Without ``hx-include``, sorting and pagination requests would not
    carry the current filter parameters, causing the table to reset its
    filters on every sort or page change.
 

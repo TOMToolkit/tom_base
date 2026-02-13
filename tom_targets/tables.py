@@ -1,6 +1,7 @@
 import logging
 
 import django_tables2 as tables
+from django.db.models import Case, When
 
 from tom_common.htmx_table import HTMXTable
 from tom_targets.models import Target, TargetList
@@ -14,11 +15,29 @@ class TargetGroupTable(HTMXTable):
         linkify=True,
         attrs={"a": {"hx-boost": "false"}}
     )
-    total_targets = tables.Column('total_targets')
+    total_targets = tables.Column('total_targets', orderable=True)
+
+    def order_total_targets(self, queryset, is_descending):
+        sorted_pks = [
+            row.pk for row in sorted(
+                queryset,
+                key=lambda obj: obj.total_targets or "" or 0,
+                reverse=is_descending,
+            )
+        ]
+
+        # Use Case/When to preserve the Python-sorted order in the queryset
+        # map the sorted PKs to the position in the enumeration
+        preserved_order = Case(*[When(pk=pk, then=position) for position, pk in enumerate(sorted_pks)])
+
+        # re-order the queryset by the python-sorted (the .filter is just for validation)
+        sorted_queryset = queryset.filter(pk__in=sorted_pks).order_by(preserved_order)
+        is_sorted = True
+        return (sorted_queryset, is_sorted)
 
     class Meta(HTMXTable.Meta):
         model = TargetList
-        fields = ['selection', 'name', 'created']
+        fields = ['selection', 'name', 'total_targets', 'created']
 
 
 class TargetTable(HTMXTable):

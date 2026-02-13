@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'TOM Toolkit'
-copyright = '2021-4, Las Cumbres Observatory'
+copyright = '2021-6, Las Cumbres Observatory'
 author = 'Joey Chatelain, David Collom, Lindy Lindstrom, Austin Riba'
 
 # The full version, including alpha/beta/rc tags

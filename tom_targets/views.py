@@ -784,6 +784,7 @@ class TargetGroupingView(PermissionListMixin, HTMXTableViewMixin, FilterView):
         """
         context = super().get_context_data(*args, **kwargs)
         context['sharing'] = getattr(settings, "DATA_SHARING", None)
+        
         return context
 
 

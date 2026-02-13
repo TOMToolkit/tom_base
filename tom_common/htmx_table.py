@@ -74,6 +74,7 @@ class HTMXTable(tables.Table):
         return self.partial_template_name
 
 
+
 class HTMXTableFilterSet(django_filters.rest_framework.FilterSet):
     """
     Base FilterSet for HTMX-enabled tables with customizable General Search.
