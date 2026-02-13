@@ -11,6 +11,7 @@ from tom_targets.models import Target, TargetList
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+
 class TargetGroupTable(HTMXTable):
     # linkify makes the entry in the "name" column a link to the model detail page.
     name = tables.Column(
@@ -39,9 +40,9 @@ class TargetGroupTable(HTMXTable):
         return (sorted_queryset, is_sorted)
 
     def render_id(self, value):
-        return format_html(f"""<a href="{reverse('targets:delete-group', kwargs={'pk': value})}" 
-                    title="Delete Group" class="btn btn-danger">Delete</a>"""
-                    )
+        return format_html(f"""<a href="{reverse('targets:delete-group', kwargs={'pk': value})}"
+                           title="Delete Group" class="btn btn-danger">Delete</a>"""
+                           )
 
     class Meta(HTMXTable.Meta):
         model = TargetList

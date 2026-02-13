@@ -21,11 +21,11 @@ htmx_attributes = {'hx-get': "",
                    'hx-include': "closest form",
                    }
 
-htmx_attributes_instant = {**htmx_attributes, 'hx-trigger':"change"}
+htmx_attributes_instant = {**htmx_attributes, 'hx-trigger': "change"}
 
-htmx_attributes_onenter = {**htmx_attributes, 'hx-trigger':"keyup[keyCode==13]"}
+htmx_attributes_onenter = {**htmx_attributes, 'hx-trigger': "keyup[keyCode==13]"}
 
-htmx_attributes_delayed = {**htmx_attributes, 'hx-trigger':"input changed delay:200ms", 'hx-sync': 'this:replace'}
+htmx_attributes_delayed = {**htmx_attributes, 'hx-trigger': "input changed delay:200ms", 'hx-sync': 'this:replace'}
 
 
 class HTMXTable(tables.Table):
@@ -74,7 +74,6 @@ class HTMXTable(tables.Table):
     def get_partial_template_name(self) -> str:
         """Return path to the partial template for HTMX responses."""
         return self.partial_template_name
-
 
 
 class HTMXTableFilterSet(django_filters.rest_framework.FilterSet):
@@ -146,9 +145,8 @@ class HTMXTableFilterSet(django_filters.rest_framework.FilterSet):
                         css_id='advancedFilters'  # must match the href in the "Advanced" HTML button above
                     )
                 ) if advanced_columns else HTML("")
-            ) 
+            )
         return self._form
-
 
     query = django_filters.CharFilter(
         method='_dispatch_general_search',
@@ -217,7 +215,7 @@ class HTMXTableFilterSet(django_filters.rest_framework.FilterSet):
 
         query = Q()
         for field in self.Meta.model._meta.get_fields():
-            if not (field.many_to_many or field.many_to_one): # We need to remove FK relationships
+            if not (field.many_to_many or field.many_to_one):  # We need to remove FK relationships
                 query |= Q(**{f'{field.name}__icontains': value})
         return queryset.filter(query)
 
@@ -255,4 +253,3 @@ class HTMXTableViewMixin(SingleTableMixin):
         context['record_count'] = context['paginator'].count
         context['empty_database'] = not self.model.objects.exists()
         return context
-

@@ -24,7 +24,6 @@ from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.views.generic.detail import DetailView, SingleObjectMixin
-from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
 
 from rest_framework.views import APIView
@@ -784,7 +783,7 @@ class TargetGroupingView(PermissionListMixin, HTMXTableViewMixin, FilterView):
         """
         context = super().get_context_data(*args, **kwargs)
         context['sharing'] = getattr(settings, "DATA_SHARING", None)
-        
+
         return context
 
 

@@ -1,5 +1,4 @@
 import logging
-from datetime import timedelta, datetime
 
 from django import forms
 from django.conf import settings
@@ -10,7 +9,7 @@ from crispy_forms.layout import Layout, Div, Row, Column, HTML
 
 import django_filters
 
-from tom_common.htmx_table import HTMXTableFilterSet, htmx_attributes_delayed, htmx_attributes_instant 
+from tom_common.htmx_table import HTMXTableFilterSet
 from tom_targets.models import Target, TargetList
 from tom_targets.utils import cone_search_filter
 
@@ -280,6 +279,7 @@ class TargetFilterSet(HTMXTableFilterSet):
     class Meta:
         model = Target
         fields = ['type', 'name', 'key', 'value', 'cone_search', 'targetlist__name']
+
 
 class TargetGroupFilterSet(HTMXTableFilterSet):
     """
