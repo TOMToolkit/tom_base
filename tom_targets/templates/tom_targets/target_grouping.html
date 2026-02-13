@@ -3,6 +3,7 @@
 {% block title %}Target Groups{% endblock %}
 {% load crispy_forms_tags %}
 {% block content %}
+{% comment %}
 <h1>Target Groupings</h1>
 <div class="row">
     <div class="col-md-10">
@@ -45,6 +46,8 @@
     </tbody>
   </table>
 </form>
+
+{%endcomment%}
 
 {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
 

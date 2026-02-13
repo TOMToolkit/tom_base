@@ -441,7 +441,8 @@ Because the calculated properties are not present in the DB, and therefore are n
 Unsortable Properties
 =====================
 
-If you don't want to sort on a property, just have it displayed in the Table, then it is fairly simple:
+If you don't want to sort on a property, just have it displayed in the Table, then it is fairly simple. Here we include
+``observation.example_property`` in our table:
 
 .. code-block:: python
     :caption: myapp/tables.py
@@ -453,7 +454,7 @@ If you don't want to sort on a property, just have it displayed in the Table, th
 
     class ObservationTable(HTMXTable):
 
-        example_property = tables.Column('example_property', orderable=False)
+        example_property = tables.Column('Example Property Verbose Name', orderable=False)
 
         class Meta(HTMXTable.Meta):
             model = Observation
@@ -483,7 +484,7 @@ large databases, and should only be done if your table won't ever hold too many 
 
     class ObservationTable(HTMXTable):
 
-        example_property = tables.Column('example_property', orderable=True)
+        example_property = tables.Column('Example Property Verbose Name', orderable=True)
 
         def order_example_property(self, queryset, is_descending):
             sorted_pks = [

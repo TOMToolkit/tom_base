@@ -17,8 +17,8 @@ class TargetGroupTable(HTMXTable):
         linkify=True,
         attrs={"a": {"hx-boost": "false"}}
     )
-    total_targets = tables.Column('total_targets', orderable=True)
-    id = tables.Column('id', orderable=False)
+    total_targets = tables.Column('Total Targets', orderable=True)
+    id = tables.Column('Delete', orderable=False)
 
     def order_total_targets(self, queryset, is_descending):
         sorted_pks = [
@@ -39,13 +39,13 @@ class TargetGroupTable(HTMXTable):
         return (sorted_queryset, is_sorted)
 
     def render_id(self, value):
-        return format_html(f"""<td><a href="{reverse('targets:delete-group', kwargs={'pk': value})}" 
-                    title="Delete Group" class="btn btn-danger">Delete</a></td>"""
+        return format_html(f"""<a href="{reverse('targets:delete-group', kwargs={'pk': value})}" 
+                    title="Delete Group" class="btn btn-danger">Delete</a>"""
                     )
 
     class Meta(HTMXTable.Meta):
         model = TargetList
-        fields = ['selection', 'name', 'total_targets', 'created', 'id']
+        fields = ['selection', 'name', 'total_targets', 'created']
 
 
 class TargetTable(HTMXTable):
