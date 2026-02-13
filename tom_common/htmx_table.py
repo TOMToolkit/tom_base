@@ -3,12 +3,34 @@ import logging
 import django_filters
 import django_tables2 as tables
 from django import forms
+from django.db.models import Q, Case, When
 from django.conf import settings
 from django.utils.module_loading import import_string
 from django_tables2 import SingleTableMixin
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Div, Row, Column, HTML
 
 
 logger = logging.getLogger(__name__)
+
+htmx_attributes = {'hx-get': "",
+                   'hx-trigger': "change",
+                   'hx-target': "div.table-container",
+                   'hx-swap': "innerHTML",
+                   'hx-indicator': ".progress",
+                   'hx-include': "closest form",
+                   }
+
+#  For triggering instant changes. Here we want the table to update immediately upon selection.
+htmx_attributes_instant = {**htmx_attributes, 'hx-trigger': "change"}
+
+#  For triggering table changes when the user hits enter. This is best used for complicated fields where a search
+#  doesn’t make sense until all of the data is in.
+htmx_attributes_onenter = {**htmx_attributes, 'hx-trigger': "keyup[keyCode==13]"}
+
+#  For triggering changes after a short (200ms) delay. We use this for character fields where a partial input is
+#  still viable.
+htmx_attributes_delayed = {**htmx_attributes, 'hx-trigger': "input changed delay:200ms", 'hx-sync': 'this:replace'}
 
 
 class HTMXTable(tables.Table):
@@ -31,13 +53,51 @@ class HTMXTable(tables.Table):
         accessor="pk",
         orderable=False,
         attrs={
-            "input": {"name": "selected-row"},
+            "input": {"name": "selected-row",
+                      "form": "grouping-form"},
             "th__input": {
                 "class": "header-checkbox",
+                "form": "grouping-form",
                 "onclick": "event.stopPropagation();"
             }
         }
     )
+
+    def model_property_ordering(self, queryset, is_descending, model_property=None):
+        """
+        This is a general method for sorting on non-field columns. Specifically this will sort the table by the results
+        of a model property that might be calculated based on other parameters. Because all of the logic must be done in
+        python rather than in the DB, this is an expensive sort to do for large querysets.
+        Should be used in your `HTMXTable` class as the return of the `order_foo()` method related to the foo property
+        of you model:
+
+        def order_foo(self, queryset, is_descending):
+            return self.model_property_ordering(queryset, is_descending, model_property='foo')
+
+
+        :param queryset: The queryset to ultimately be sorted.
+        :param is_descending: Direction of sort.
+        :param model_property: The property to be sorted on.
+
+        :return (sorted_queryset, is_sorted):
+        """
+        sorted_pks = [
+            row.pk for row in sorted(
+                queryset,
+                key=lambda obj: obj.__getattribute__(model_property) or "" or 0,
+                reverse=is_descending,
+            )
+        ]
+
+        # Use Case/When to preserve the Python-sorted order in the queryset
+        # map the sorted PKs to the position in the enumeration
+        preserved_order = Case(*[When(pk=pk, then=position) for position, pk in enumerate(sorted_pks)])
+
+        # re-order the queryset by the python-sorted (the .filter is just for validation)
+        sorted_queryset = queryset.filter(pk__in=sorted_pks).order_by(preserved_order)
+        is_sorted = True
+
+        return (sorted_queryset, is_sorted)
 
     class Meta:
         template_name = 'tom_common/bootstrap_htmx.html'
@@ -73,10 +133,61 @@ class HTMXTableFilterSet(django_filters.rest_framework.FilterSet):
     3. Override get_general_search_function() for full control
 
     Subclasses should:
-    1. Define their own general_search() or override get_general_search_function()
+    1. Add the Model and relevant fields to the Meta
+    2. Define their own general_search() or override get_general_search_function()
     2. Add model-specific filters with HTMX widget attrs
     3. Override the form property to configure crispy-forms layout
     """
+
+    @property
+    def form(self):
+        """Override form property to configure crispy forms helper. This is to remove
+        the Submit button which is not needed because HTMX is making AJAX requests.
+
+        Also, add the FormHelper.Layout definition
+        """
+        if not hasattr(self, '_form'):
+            self._form = super().form
+            # Configure crispy forms helper - no submit button, no form tag
+            self._form.helper = FormHelper()
+            self._form.helper.form_tag = False  # Don't render <form> tags (template handles it)
+            self._form.helper.disable_csrf = True  # Template handles CSRF if needed
+            self._form.helper.form_show_labels = True  # Explicitly clear any inputs/buttons
+
+            advanced_field_names = [f for f in self.Meta.fields]
+            advanced_columns = [Column(name, css_class='form-group col-md-3') for name in advanced_field_names]
+
+            # Define the structure using Bootstrap Grid (Row/Column)
+            self._form.helper.layout = Layout(
+                # Row 1: Primary Search parameters
+                Div(
+                    Column('query', css_class='form-group col-md-3'),
+                ),
+                # 2. The Toggle Button (HTML)
+                Div(
+                    HTML("""
+                    <div class="row">
+                        <div class="col-md-12 mb-2">
+                            <a class="btn btn-link p-0" data-toggle="collapse"
+                            href="#advancedFilters"
+                            role="button" aria-expanded="false" aria-controls="advancedFilters">Advanced &rsaquo;</a>
+                        </div>
+                    </div>
+                    """),
+                    # 3. The Collapsible Container (Hidden by default)
+                    Div(
+                        # Row 2: Filters
+                        Row(
+                            *advanced_columns,
+                        ),
+
+                        # Bootstrap classes for functionality
+                        css_class='collapse',
+                        css_id='advancedFilters'  # must match the href in the "Advanced" HTML button above
+                    )
+                ) if advanced_columns else HTML("")
+            )
+        return self._form
 
     query = django_filters.CharFilter(
         method='_dispatch_general_search',
@@ -125,9 +236,11 @@ class HTMXTableFilterSet(django_filters.rest_framework.FilterSet):
 
     def general_search(self, queryset, name, value):
         """
-        Default general search implementation (no-op).
+        Default general search implementation. This Searches all model fields for the value.
+        If ANY field shows the value, it will be displayed.
+        NOTE: This search is not limited to displayed fields and does not include non-field columns.
 
-        Concrete subclasses should either:
+        Concrete subclasses that don't wish to use this default function should either:
         - Override this method directly, or
         - Override get_general_search_function() to return a different callable
 
@@ -139,7 +252,13 @@ class HTMXTableFilterSet(django_filters.rest_framework.FilterSet):
         """
         if not value:
             return queryset
-        return queryset
+        logger.debug(f'**** general_search -- value: {value}')
+
+        query = Q()
+        for field in self.Meta.model._meta.get_fields():
+            if not (field.many_to_many or field.many_to_one):  # We need to remove FK relationships
+                query |= Q(**{f'{field.name}__icontains': value})
+        return queryset.filter(query)
 
     class Meta:
         abstract = True

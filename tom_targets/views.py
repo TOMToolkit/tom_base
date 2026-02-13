@@ -24,7 +24,6 @@ from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.views.generic.detail import DetailView, SingleObjectMixin
-from django.views.generic.list import ListView
 from django.views.generic import RedirectView, TemplateView, View
 
 from rest_framework.views import APIView
@@ -40,7 +39,7 @@ from tom_common.hooks import run_hook
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_observations.observation_template import ApplyObservationTemplateForm
 from tom_observations.models import ObservationTemplate
-from tom_targets.filters import TargetFilterSet
+from tom_targets.filters import TargetFilterSet, TargetGroupFilterSet
 from tom_targets.forms import SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset
 from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListShareForm, TargetMergeForm, \
     UnknownTypeTargetCreateForm, TargetSelectionForm
@@ -61,7 +60,7 @@ from tom_targets.templatetags.targets_extras import target_merge_fields, persist
 from tom_targets.utils import import_targets, export_targets
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.seed import seed_messier_targets
-from tom_targets.tables import TargetTable
+from tom_targets.tables import TargetTable, TargetGroupTable
 from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
 
 logger = logging.getLogger(__name__)
@@ -765,14 +764,16 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
         return redirect(reverse('tom_targets:list') + '?' + query_string)
 
 
-class TargetGroupingView(PermissionListMixin, ListView):
+class TargetGroupingView(PermissionListMixin, HTMXTableViewMixin, FilterView):
     """
     View that handles the display of ``TargetList`` objects, also known as target groups. Requires authorization.
     """
     permission_required = 'tom_targets.view_targetlist'
     template_name = 'tom_targets/target_grouping.html'
     model = TargetList
-    paginate_by = 25
+    table_class = TargetGroupTable
+    filterset_class = TargetGroupFilterSet
+    paginate_by = 5
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -782,6 +783,7 @@ class TargetGroupingView(PermissionListMixin, ListView):
         """
         context = super().get_context_data(*args, **kwargs)
         context['sharing'] = getattr(settings, "DATA_SHARING", None)
+
         return context
 
 

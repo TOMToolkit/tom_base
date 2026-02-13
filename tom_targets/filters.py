@@ -194,7 +194,7 @@ class TargetFilterSet(HTMXTableFilterSet):
     def filter_cone_search(self, queryset, name, value):
         """
         Perform a cone search filter on this filter's queryset,
-        using the cone search utlity method and either specified RA, DEC
+        using the cone search utility method and either specified RA, DEC
         or the RA/DEC from the named target.
 
         This method prepares the arguments for tom_targets.utils.cone_search_filter.
@@ -279,3 +279,13 @@ class TargetFilterSet(HTMXTableFilterSet):
     class Meta:
         model = Target
         fields = ['type', 'name', 'key', 'value', 'cone_search', 'targetlist__name']
+
+
+class TargetGroupFilterSet(HTMXTableFilterSet):
+    """
+    This is a bare bones FilterSet for TargetGroups
+    """
+
+    class Meta:
+        model = TargetList
+        fields = []
