@@ -15,6 +15,37 @@ logger = logging.getLogger(__name__)
 
 
 class LCORedirectFacility(BaseRedirectObservationFacility):
+    """
+    The ``LCORedirectFacility`` is a little different from the other TOMToolkit Facilities. This facility temporarily
+    redirects users from the TOM to the LCO observing portal, providing them with full access to the observation request
+    options provided by that interface. Once the observation, or group of observations, are submitted, the user is
+    redirected back to the TOM. The user must have access to the LCO observing portal, but will log in with their own
+    credentials, rather than those stored by the TOM. In order to retrieve the observations, the TOM must have access
+    to an LCO API token with permission to access the relevant proposals.
+
+    For more information on submitting to LCO, Soar, or Blanco, see the
+    `LCO Documentation <https://lco.global/documentation/>`__ .
+    To use this facility you will need to add it to your `TOM_FACILITY_CLASSES` list in ``settings.py`` and have an
+    `api_key` in your `LCO` dictionary in `FACILITIES`:
+
+
+    .. code-block:: python
+        :caption: settings.py
+
+        TOM_FACILITY_CLASSES = [
+            ...
+            'tom_observations.facilities.LCORedirectFacility',
+            ...
+            ]
+
+        FACILITIES = {
+            'LCO': {
+                'portal_url': 'https://observe.lco.global',
+                'api_key': os.getenv('LCO_API_KEY'),
+            },
+        }
+
+    """
     name = "LCORedirect"
     observation_types = [("Default", "")]
     button_label = "LCO/SOAR/BLANCO"

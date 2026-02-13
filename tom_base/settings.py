@@ -213,6 +213,7 @@ FACILITIES = {
 
 
 TOM_FACILITY_CLASSES = [
+    'tom_observations.facilities.lco_redirect.LCORedirectFacility',
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
     'tom_observations.facilities.soar.SOARFacility',

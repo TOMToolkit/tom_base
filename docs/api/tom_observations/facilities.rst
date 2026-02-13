@@ -17,13 +17,19 @@ Gemini
     :members:
 
 
+************************
+LCO/SOAR/Blanco Redirect
+************************
+
+.. automodule:: tom_observations.facilities.lco_redirect
+    :members:
+
 ***********************
 Las Cumbres Observatory
 ***********************
 
 .. automodule:: tom_observations.facilities.lco
     :members:
-    
 
 ****
 SOAR
