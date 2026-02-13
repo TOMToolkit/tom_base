@@ -222,6 +222,8 @@ class BaseObservationFacility(ABC):
     name = 'BaseObservation'
     observation_forms = {}
     is_redirect = False
+    button_label = ""
+    button_tooltip = ""
 
     def __init__(self):
         self.user = None
@@ -489,6 +491,14 @@ class BaseObservationFacility(ABC):
 
     def get_date_obs_from_fits_header(self, header):
         return None
+
+    def get_button_label(self):
+        """ The label that will appear on observe button"""
+        return self.button_label or self.name
+
+    def get_button_tooltip(self):
+        """ The tooltip that will appear on observe button"""
+        return self.button_tooltip
 
 
 class BaseRoboticObservationFacility(BaseObservationFacility):
