@@ -58,11 +58,11 @@ class HTMXTable(tables.Table):
         }
     )
 
-    def model_property_ordering(self, queryset, is_descending, property=None):
+    def model_property_ordering(self, queryset, is_descending, model_property=None):
         sorted_pks = [
             row.pk for row in sorted(
                 queryset,
-                key=lambda obj: obj.__getattribute__(property) or "" or 0,
+                key=lambda obj: obj.__getattribute__(model_property) or "" or 0,
                 reverse=is_descending,
             )
         ]

@@ -489,7 +489,7 @@ table won't ever hold too many objects.
         example_property = tables.Column('Example Property Verbose Name', orderable=True)
 
         def order_example_property(self, queryset, is_descending):
-            return self.model_property_ordering(queryset, is_descending, property='example_property')
+            return self.model_property_ordering(queryset, is_descending, model_property='example_property')
 
         class Meta(HTMXTable.Meta):
             model = Observation

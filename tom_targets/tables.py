@@ -22,7 +22,7 @@ class TargetGroupTable(HTMXTable):
     id = tables.Column('Delete', orderable=False)
 
     def order_total_targets(self, queryset, is_descending):
-        return self.model_property_ordering(queryset, is_descending, property='total_targets')
+        return self.model_property_ordering(queryset, is_descending, model_property='total_targets')
 
     def render_id(self, value):
         return format_html(f"""<a href="{reverse('targets:delete-group', kwargs={'pk': value})}"
