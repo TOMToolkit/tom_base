@@ -58,7 +58,7 @@ class HTMXTable(tables.Table):
         }
     )
 
-    def model_property_ordering(self,queryset, is_descending, property=None):
+    def model_property_ordering(self, queryset, is_descending, property=None):
         sorted_pks = [
             row.pk for row in sorted(
                 queryset,
@@ -237,7 +237,6 @@ class HTMXTableFilterSet(django_filters.rest_framework.FilterSet):
             if not (field.many_to_many or field.many_to_one):  # We need to remove FK relationships
                 query |= Q(**{f'{field.name}__icontains': value})
         return queryset.filter(query)
-
 
     class Meta:
         abstract = True
