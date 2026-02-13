@@ -469,13 +469,15 @@ Sortable Properties
 
 Things get a bit more complex when we try to sort by properties. See the `django_tables2 docs 
 <https://django-tables2.readthedocs.io/en/latest/pages/ordering.html>`_ for more specifics, but basically we have to 
-build our own sorting method using python and store the primary keys in the proper order. This is very expensive for 
-large databases, and should only be done if your table won't ever hold too many objects.
+build our own sorting method using python and store the primary keys in the proper order. The TOMtoolkit offers a basic
+version of this via ``HTMXTable.model_property_ordering``. The usage of this method is demonstrated below, but caution
+should be used before implementing this. This is very expensive for large databases, and should only be done if your
+table won't ever hold too many objects.
 
 .. code-block:: python
     :caption: myapp/tables.py
     :linenos:
-    :emphasize-lines: 1, 8, 10-26
+    :emphasize-lines: 1, 8, 10-11
 
     from django.db.models import Case, When
 
@@ -487,22 +489,7 @@ large databases, and should only be done if your table won't ever hold too many 
         example_property = tables.Column('Example Property Verbose Name', orderable=True)
 
         def order_example_property(self, queryset, is_descending):
-            sorted_pks = [
-                row.pk for row in sorted(
-                    queryset,
-                    key=lambda obj: obj.example_property or "" or 0,
-                    reverse=is_descending,
-                )
-            ]
-
-            # Use Case/When to preserve the Python-sorted order in the queryset
-            # map the sorted PKs to the position in the enumeration
-            preserved_order = Case(*[When(pk=pk, then=position) for position, pk in enumerate(sorted_pks)])
-
-            # re-order the queryset by the python-sorted (the .filter is just for validation)
-            sorted_queryset = queryset.filter(pk__in=sorted_pks).order_by(preserved_order)
-            is_sorted = True
-            return (sorted_queryset, is_sorted)
+            return self.model_property_ordering(queryset, is_descending, property='example_property')
 
         class Meta(HTMXTable.Meta):
             model = Observation
@@ -510,7 +497,7 @@ large databases, and should only be done if your table won't ever hold too many 
 
 NOTES:
 
-- *Line 10 and 14:* Update these line with your property.
+- *Line 10 and 11:* Update these line with your property.
 
 Formatting Our Form
 ^^^^^^^^^^^^^^^^^^^

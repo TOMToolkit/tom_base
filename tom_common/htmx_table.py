@@ -3,7 +3,7 @@ import logging
 import django_filters
 import django_tables2 as tables
 from django import forms
-from django.db.models import Q
+from django.db.models import Q, Case, When
 from django.conf import settings
 from django.utils.module_loading import import_string
 from django_tables2 import SingleTableMixin
@@ -57,6 +57,25 @@ class HTMXTable(tables.Table):
             }
         }
     )
+
+    def model_property_ordering(self,queryset, is_descending, property=None):
+        sorted_pks = [
+            row.pk for row in sorted(
+                queryset,
+                key=lambda obj: obj.__getattribute__(property) or "" or 0,
+                reverse=is_descending,
+            )
+        ]
+
+        # Use Case/When to preserve the Python-sorted order in the queryset
+        # map the sorted PKs to the position in the enumeration
+        preserved_order = Case(*[When(pk=pk, then=position) for position, pk in enumerate(sorted_pks)])
+
+        # re-order the queryset by the python-sorted (the .filter is just for validation)
+        sorted_queryset = queryset.filter(pk__in=sorted_pks).order_by(preserved_order)
+        is_sorted = True
+
+        return (sorted_queryset, is_sorted)
 
     class Meta:
         template_name = 'tom_common/bootstrap_htmx.html'
@@ -218,6 +237,7 @@ class HTMXTableFilterSet(django_filters.rest_framework.FilterSet):
             if not (field.many_to_many or field.many_to_one):  # We need to remove FK relationships
                 query |= Q(**{f'{field.name}__icontains': value})
         return queryset.filter(query)
+
 
     class Meta:
         abstract = True

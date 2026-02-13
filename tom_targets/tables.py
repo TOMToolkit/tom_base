@@ -1,7 +1,7 @@
 import logging
 
 import django_tables2 as tables
-from django.db.models import Case, When
+
 from django.utils.html import format_html
 from django.urls import reverse
 
@@ -22,22 +22,7 @@ class TargetGroupTable(HTMXTable):
     id = tables.Column('Delete', orderable=False)
 
     def order_total_targets(self, queryset, is_descending):
-        sorted_pks = [
-            row.pk for row in sorted(
-                queryset,
-                key=lambda obj: obj.total_targets or "" or 0,
-                reverse=is_descending,
-            )
-        ]
-
-        # Use Case/When to preserve the Python-sorted order in the queryset
-        # map the sorted PKs to the position in the enumeration
-        preserved_order = Case(*[When(pk=pk, then=position) for position, pk in enumerate(sorted_pks)])
-
-        # re-order the queryset by the python-sorted (the .filter is just for validation)
-        sorted_queryset = queryset.filter(pk__in=sorted_pks).order_by(preserved_order)
-        is_sorted = True
-        return (sorted_queryset, is_sorted)
+        return self.model_property_ordering(queryset, is_descending, property='total_targets')
 
     def render_id(self, value):
         return format_html(f"""<a href="{reverse('targets:delete-group', kwargs={'pk': value})}"
