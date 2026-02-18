@@ -1,3 +1,4 @@
+import logging
 from alerce.core import Alerce
 from alerce.exceptions import ObjectNotFoundError
 from crispy_forms.layout import HTML, Column, Field, Layout, Row
@@ -7,6 +8,8 @@ from django.core.cache import cache
 from tom_dataservices.dataservices import DataService, QueryServiceError
 from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import get_target_model_class
+
+logger = logging.getLogger(__name__)
 
 alerce = Alerce()
 
@@ -101,7 +104,18 @@ class AlerceDataService(DataService):
         return AlerceForm
 
     def query_targets(self, query_parameters, **kwargs) -> list[dict]:
-        return self.query_service(query_parameters, **kwargs)
+        targets = self.query_service(query_parameters, **kwargs)
+        for target in targets:
+            object_id = target['oid']
+            photometry = self.query_photometry(query_parameters, object_id)
+            # Antares adds reduced datums to the target here, but this seems really inefficient
+            # because this will pull the lightcurve for every target regardless if the user wants
+            # to save it or not.
+            target['reduced_datums'] = {
+                'photometry': photometry
+            }
+
+        return targets
 
     def query_service(self, query_parameters, **kwargs) -> list[dict]:
         """
@@ -166,19 +180,27 @@ class AlerceDataService(DataService):
             if k not in ["oid", "meanra", "meandec"]
         }
 
-    def query_photometry(self, query_parameters, **kwargs):
-        return alerce.query_lightcurve(
-            oid=query_parameters.get("object_id"),
-            survey=query_parameters.get("survey", "").lower(),
-            format="json"
-        )
+    def query_photometry(self, query_parameters, object_id=None, **kwargs):
+        try:
+            return alerce.query_lightcurve(
+                oid=object_id,
+                survey=query_parameters.get("survey", "").lower(),
+                format="json"
+            )
+        except Exception:
+            logger.exception("Error querying ALeRCE photometry")
+            return []
 
     def query_spectroscopy(self, query_parameters, **kwargs):
         return {}
 
-    def query_forced_photometry(self, query_parameters, **kwargs):
-        return alerce.query_forced_photometry(
-            oid=query_parameters.get("object_id"),
-            survey=query_parameters.get("survey", "").lower(),
-            format="json"
-        )
+    def query_forced_photometry(self, query_parameters, object_id=None, **kwargs):
+        try:
+            return alerce.query_forced_photometry(
+                oid=object_id,
+                survey=query_parameters.get("survey", "").lower(),
+                format="json"
+            )
+        except Exception:
+            logger.exception("Error querying ALeRCE forced photometry")
+            return []
