@@ -19,6 +19,7 @@ from urllib.parse import urlencode
 from tom_dataservices.models import DataServiceQuery
 from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class, NotConfiguredError
 from tom_dataservices.dataservices import MissingDataException, QueryServiceError
+from tom_targets.models import Target
 
 
 logger = logging.getLogger(__name__)
@@ -356,15 +357,17 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                         assign_perm('tom_targets.change_target', group, target)
                         assign_perm('tom_targets.delete_target', group, target)
                 except IntegrityError:
+                    errors.append(target.name)
+                    target = Target.objects.get(name=target.name)
                     messages.warning(request,
                                      mark_safe(
-                                         f"""Unable to save {target.name}, target with that name already exists.
+                                         f"""The target, 
+                                         <a href="{reverse('targets:detail', kwargs={'pk': target.id})}"> 
+                                         {target.name} </a> already exists, any new data has been ingested.
                                          You can <a href="{reverse('targets:create') + '?' +
                                                            urlencode(target.as_dict())}">create</a> a new target anyway.
                                          """)
                                      )
-                    errors.append(target.name)
-                    target = None
                 # Do not attempt to store Reduced Datums if no Target Created.
                 if target:
                     try:
