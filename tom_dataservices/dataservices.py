@@ -279,8 +279,16 @@ class DataService(ABC):
             self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
         return
 
-    def create_reduced_datums_from_query(self, target, data=None, data_type=None, **kwargs):
-        """Create and save new reduced_datums of the appropriate data_type from the query results"""
+    def create_reduced_datums_from_query(self, target, data=None, data_type=None, **kwargs) -> List:
+        """
+        Create and save new reduced_datums of the appropriate data_type from the query results
+        Be sure to use `ReducedDatum.objects.get_or_create()` when creating new objects.
+
+        :param target: Target Object to be associated with the reduced data
+        :param data: List of data dictionaries of the appropriate `data_type`
+        :param data_type: An appropriate data type as listed in tom_dataproducts.models.DATA_TYPE_CHOICES
+        :return: List of Reduced datums (either retrieved or created)
+        """
         raise NotImplementedError
 
     def to_target(self, target_result=None, **kwargs) -> Tuple[dict, dict, dict]:
