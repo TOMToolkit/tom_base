@@ -1,9 +1,6 @@
 {# tom_targets/partials/target_table_partial.html #}
 {% load render_table from django_tables2 %}
 
-{# tom_targets/partials/target_table_partial.html #}
-{% load render_table from django_tables2 %}
-
 {# 1. Render the table (even if it's empty) #}
 {% render_table table %}
 
@@ -32,6 +29,7 @@
     </div>
 {% endif %}
 
-{# 3. Update the skymap #}
-{% include "tom_targets/partials/aladin_skymap_htmx.html" with is_htmx=True object_list=skymap_objects %}
+{# 3. Update the skymap targets (data only, no viewer rebuild) #}
+{% load targets_extras %}
+{% aladin_skymap_targets_oob skymap_objects %}
 

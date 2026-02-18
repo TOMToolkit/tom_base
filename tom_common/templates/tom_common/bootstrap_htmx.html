@@ -1,9 +1,6 @@
-{# tom_targets/templates/tom_targets/bootstrap_htmx.html #}
-{# 1. extend the default table headers for sorting #}
-{# 2. extend the pagination block for htmx #}
-
-{# Q: Why is the hx-target the div.table-container class? #}
-{# A: b/c bootstrap4.html wraps the table with a table-container class. #}
+{# tom_common/templates/tom_common/bootstrap_htmx.html #}
+{# Extends the default django-tables2 bootstrap4 template with HTMX attributes #}
+{# for sorting (column headers) and pagination (page links). #}
 
 {% extends "django_tables2/bootstrap4.html" %}
 

@@ -1128,8 +1128,10 @@ class LCOFacility(OCSFacility):
         'SPECTROSCOPIC_SEQUENCE': LCOSpectroscopicSequenceForm
     }
 
-    def __init__(self, facility_settings=LCOSettings('LCO')):
+    def __init__(self, facility_settings=LCOSettings('LCO'), name_override=None):
         super().__init__(facility_settings=facility_settings)
+        if name_override:
+            self.name = name_override
 
     # TODO: this should be called get_form_class
     def get_form(self, observation_type):

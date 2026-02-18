@@ -42,23 +42,36 @@
 
         aladin.setCooGrid({ color: 'grey', labelSize: 10 });
 
-        // extract the targets from the context
-        var targets = {{ targets|safe }}; //targets cannot be a queryset; here it is a list of dictionaries
+        // Create a single catalog for all targets (instead of one per target).
+        // Stored on window so that updateAladinTargets() can replace its
+        // contents without rebuilding the viewer.
+        window.aladinTargetCatalog = A.catalog({
+            name: 'Targets', color: 'blue', sourceSize: 16
+        });
+        aladin.addCatalog(window.aladinTargetCatalog);
 
-        // define catalog for the targets
-        var catalogOptions = {
-            name: 'Targets',
-            color: 'blue',
-            sourceSize: 16};
+        // Global function to update target markers on the existing viewer.
+        //
+        // NOTE: This pattern (Out-of-Band (OOB) data update instead of
+        // OOB DOM replacement) can be generalized for any HTMX table that
+        // needs to "side-load" updates to a companion widget.
+        // The key ingredients are:
+        //   1. A global JS update function registered on page load
+        //   2. An OOB <script> block in the partial that calls it with new data
+        window.updateAladinTargets = function(targets) {
+            if (!window.aladinTargetCatalog) return;
+            window.aladinTargetCatalog.removeAll();
+            for (var i = 0; i < targets.length; i++) {
+                var t = targets[i];
+                var popup = 'RA: ' + t.ra + '<br>Dec: ' + t.dec;
+                window.aladinTargetCatalog.addSources([
+                    A.marker(t.ra, t.dec, {popupTitle: t.name, popupDesc: popup})
+                ]);
+            }
+        };
 
-        // add targets to the catalog
-        for (var i = 0; i < targets.length; i++) {
-            var target = targets[i];
-            var targetCatalog = A.catalog({name: target.name , color: 'blue', sourceSize: 16});
-            aladin.addCatalog(targetCatalog);
-            popupInfo = ['RA: '.concat(target.ra, '<br>',  'Dec: ', target.dec)];
-            targetCatalog.addSources([A.marker(target.ra, target.dec, {popupTitle: target.name, popupDesc: popupInfo})]);
-        }
+        // Initial target load from server-rendered context
+        updateAladinTargets({{ targets|safe }});
 
         // extract Moon information from the context
         const moonRaDeg = {{ moon_ra|safe }};
