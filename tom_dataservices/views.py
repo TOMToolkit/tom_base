@@ -361,9 +361,9 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                     target = Target.objects.get(name=target.name)
                     messages.warning(request,
                                      mark_safe(
-                                         f"""The target, 
-                                         <a href="{reverse('targets:detail', kwargs={'pk': target.id})}"> 
-                                         {target.name} </a> already exists, any new data has been ingested.
+                                         f"""The target,
+                                         <a href="{reverse('targets:detail', kwargs={'pk': target.id})}">
+                                         {target.name}</a> already exists, any new data has been ingested.
                                          You can <a href="{reverse('targets:create') + '?' +
                                                            urlencode(target.as_dict())}">create</a> a new target anyway.
                                          """)
