@@ -3,7 +3,6 @@ from django.core.exceptions import ValidationError
 
 from tom_alerts.models import BrokerQuery
 from tom_alerts.alerts import get_service_class
-from time import sleep
 
 
 class Command(BaseCommand):
