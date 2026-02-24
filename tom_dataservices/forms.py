@@ -1,8 +1,11 @@
-from crispy_forms.layout import Layout
 from django import forms
+from django.urls import reverse
 from crispy_forms.helper import FormHelper
+from crispy_forms.layout import ButtonHolder, Column, Layout, Row, Submit
 
 from tom_dataservices.models import DataServiceQuery
+from tom_dataservices.dataservices import get_data_service_classes
+from tom_targets.models import Target
 
 
 class BaseQueryForm(forms.Form):
@@ -48,3 +51,32 @@ class BaseQueryForm(forms.Form):
         query.parameters = self.cleaned_data
         query.save()
         return query
+
+
+class UpdateDataFromDataServiceForm(forms.Form):
+    target = forms.ModelChoiceField(
+        Target.objects.all(),
+        widget=forms.HiddenInput(),
+        required=False
+    )
+    data_service = forms.ChoiceField(required=True, choices=[])
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['data_service'].choices = [(name, name) for name in get_data_service_classes().keys()]
+        self.helper = FormHelper()
+        self.helper.form_action = reverse('tom_dataservices:update-data')
+        self.helper.layout = Layout(
+            'target',
+            Row(
+                Column(
+                    'data_service'
+                    ),
+                Column(
+                    ButtonHolder(
+                        Submit('Update', 'Update Reduced Data')
+                        )
+                    ),
+                )
+        )
+

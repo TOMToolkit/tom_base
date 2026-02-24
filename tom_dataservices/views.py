@@ -19,6 +19,7 @@ from urllib.parse import urlencode
 from tom_dataservices.models import DataServiceQuery
 from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class, NotConfiguredError
 from tom_dataservices.dataservices import MissingDataException, QueryServiceError
+from tom_dataservices.forms import UpdateDataFromDataServiceForm
 from tom_targets.models import Target
 
 
@@ -384,3 +385,23 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
         if len(results) == 1 and target:
             return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
         return redirect(reverse('tom_targets:list'))
+
+
+def update_data_from_query(request):
+    print(request)
+    print("=================================")
+
+    if request.method == "POST":
+        print(request.POST)
+        print("===================================")
+        form = UpdateDataFromDataServiceForm(request.POST)
+        print(form)
+        if form.is_valid():
+            target = form.cleaned_data['target']
+            data_service_class = get_data_service_class(form.cleaned_data['data_service'])
+            print(data_service_class.query_reduced_data())
+            base_url = reverse('tom_targets:detail', kwargs={'pk': target.id})
+            page_filters = urlencode({'tab': 'photometry'})
+            print('Valid!')
+            return redirect(f'{base_url}?{page_filters}')
+    return redirect('/')

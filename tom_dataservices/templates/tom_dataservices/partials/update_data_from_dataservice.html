@@ -1,0 +1,7 @@
+{% load bootstrap4 crispy_forms_tags static %}
+
+<h4>Get Reduced Data from Data Service</h4>
+    {% csrf_token %}
+    {% crispy update_from_dataservice_form %}
+
+<hr>
