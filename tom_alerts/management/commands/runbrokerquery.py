@@ -29,7 +29,7 @@ class Command(BaseCommand):
                     target.save(extras=extras, names=aliases)
                     self.stdout.write('Created target: {}'.format(target))
                 except ValidationError as e:
-                    self.stdout.write(f'WARNING: {e}')
+                    self.stdout.write(f'WARNING for {target.name}: {e}')
                 except StopIteration:
                     self.stdout.write('Finished creating targets')
                 sleep(1)
