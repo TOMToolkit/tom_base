@@ -1,5 +1,4 @@
 from django.core.management.base import BaseCommand
-from django.core.exceptions import ValidationError
 
 from tom_alerts.models import BrokerQuery
 from tom_alerts.alerts import get_service_class
@@ -24,12 +23,9 @@ class Command(BaseCommand):
             while True:
                 try:
                     generic_alert = broker.to_generic_alert(next(alerts))
-                    target, extras, aliases = generic_alert.to_target()
-                    target.full_clean()
-                    target.save(extras=extras, names=aliases)
+                    target = generic_alert.to_target()
+                    target.save()
                     self.stdout.write('Created target: {}'.format(target))
-                except ValidationError as e:
-                    self.stdout.write(f'WARNING: {e}')
                 except StopIteration:
                     self.stdout.write('Finished creating targets')
                 sleep(1)
