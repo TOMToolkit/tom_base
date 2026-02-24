@@ -25,7 +25,7 @@ class Command(BaseCommand):
                 try:
                     generic_alert = broker.to_generic_alert(next(alerts))
                     target, extras, aliases = generic_alert.to_target()
-                    target.full_clean()
+                    target.full_clean()  # Top Priority is checking that target is unique.
                     target.save(extras=extras, names=aliases)
                     self.stdout.write('Created target: {}'.format(target))
                 except ValidationError as e:
