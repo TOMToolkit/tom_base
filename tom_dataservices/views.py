@@ -388,20 +388,22 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
 
 
 def update_data_from_query(request):
-    print(request)
-    print("=================================")
 
     if request.method == "POST":
-        print(request.POST)
-        print("===================================")
         form = UpdateDataFromDataServiceForm(request.POST)
-        print(form)
         if form.is_valid():
             target = form.cleaned_data['target']
-            data_service_class = get_data_service_class(form.cleaned_data['data_service'])
-            print(data_service_class.query_reduced_data())
+            data_service_class = get_data_service_class(form.cleaned_data['data_service'])()
+            data = data_service_class.query_reduced_data(target)
+            data_service_class.to_reduced_datums(target, data)
+
+            # redirect to data page
             base_url = reverse('tom_targets:detail', kwargs={'pk': target.id})
-            page_filters = urlencode({'tab': 'photometry'})
-            print('Valid!')
+            if 'photometry' in data.keys():
+                page_filters = urlencode({'tab': 'photometry'})
+            elif 'spectroscopy' in data.keys():
+                page_filters = urlencode({'tab': 'spectroscopy'})
+            else:
+                page_filters = urlencode({'tab': 'manage-data'})
             return redirect(f'{base_url}?{page_filters}')
     return redirect('/')

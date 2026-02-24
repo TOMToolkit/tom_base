@@ -119,6 +119,11 @@ class DataService(ABC):
         """Builds the query parameters from the form data"""
         raise NotImplementedError(f'build_query_parameters method has not been implemented for {self.name}')
 
+    def build_query_parameters_from_target(self, target, **kwargs):
+        raise NotImplementedError('build_query_parameters_from_target method has not been implemented' +
+                                  f'for {self.name}.'
+                                  )
+
     def build_headers(self, *args, **kwargs):
         """Builds the headers for the query"""
         return {}
@@ -203,21 +208,31 @@ class DataService(ABC):
 
     def query_forced_photometry(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s forced photometry service."""
-        return self.query_service(query_parameters, **kwargs)
+        raise NotImplementedError(f'query_forced_photometry method has not been implemented for {self.name}')
 
     def query_photometry(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s photometry service."""
-        return self.query_service(query_parameters, **kwargs)
+        raise NotImplementedError(f'query_photometry method has not been implemented for {self.name}')
 
     def query_spectroscopy(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s spectroscopy service."""
-        return self.query_service(query_parameters, **kwargs)
+        raise NotImplementedError(f'query_spectroscopy method has not been implemented for {self.name}')
 
-    def query_reduced_data(self, query_parameters, **kwargs):
+    def query_reduced_data(self, target, **kwargs):
         """Set up and run a specialized query to retrieve Reduced Datums from a Data Service"""
-        phot_results = self.query_photometry(query_parameters, **kwargs)
-        spec_results = self.query_spectroscopy(query_parameters, **kwargs)
-        forced_phot_results = self.query_forced_photometry(query_parameters, **kwargs)
+        query_parameters = self.build_query_parameters_from_target(target)
+        try:
+            phot_results = self.query_photometry(query_parameters, **kwargs)
+        except NotImplementedError:
+            phot_results = []
+        try:
+            spec_results = self.query_spectroscopy(query_parameters, **kwargs)
+        except NotImplementedError:
+            spec_results = []
+        try:
+            forced_phot_results = self.query_forced_photometry(query_parameters, **kwargs)
+        except NotImplementedError:
+            forced_phot_results = []
         return {'photometry': phot_results,
                 'spectroscopy': spec_results,
                 'forced_photometry': forced_phot_results}
@@ -276,6 +291,7 @@ class DataService(ABC):
         if not data_results:
             raise MissingDataException('No Reduced Data dictionary found.')
         for key in data_results.keys():
+            print(key)
             self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
         return
 
