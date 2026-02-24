@@ -31,6 +31,5 @@ class Command(BaseCommand):
                 except ValidationError as e:
                     self.stdout.write(f'WARNING for {target.name}: {e}')
             self.stdout.write('Finished creating targets')
-
         except KeyboardInterrupt:
             self.stdout.write('Exiting...')
