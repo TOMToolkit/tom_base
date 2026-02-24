@@ -82,7 +82,7 @@ class UpdateDataFromDataServiceForm(forms.Form):
                     ),
                 Column(
                     ButtonHolder(
-                        Submit('Update', 'Update Reduced Data')
+                        Submit('Update', 'Update Reduced Data'), css_class="bottom"
                         )
                     ),
                 )
