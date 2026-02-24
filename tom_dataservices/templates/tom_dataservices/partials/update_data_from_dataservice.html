@@ -2,6 +2,8 @@
 
 <h4>Get Reduced Data from Data Service</h4>
     {% csrf_token %}
+    {% if update_from_dataservice_form.fields.data_service.choices %}
     {% crispy update_from_dataservice_form %}
-
-<hr>
+    {% else %}
+    You don't have any Data Services installed capable of retrieving data for this target.
+    {% endif %}
