@@ -1878,8 +1878,8 @@ class TestTargetMerge(TestCase):
 
         # after we run merge --> TL1, TL2, and TL3 each should only contain st1
         target_merge(self.st1, self.st2)
-        self.assertQuerysetEqual(targetlist1.targets.all(), targetlist2.targets.all())
-        self.assertQuerysetEqual(targetlist1.targets.all(), targetlist3.targets.all())
+        self.assertQuerySetEqual(targetlist1.targets.all(), targetlist2.targets.all())
+        self.assertQuerySetEqual(targetlist1.targets.all(), targetlist3.targets.all())
         self.assertEqual(self.st1.targetlist_set.all().count(), 3)
 
     def test_merge_data_products(self):
@@ -1963,7 +1963,7 @@ class TestTargetMerge(TestCase):
         # write a test where the primary target extra queryset matches the expected queryset
         expected_queryset1 = st1_te + st2_te[1:]
         target_merge(self.st1, self.st2)
-        self.assertQuerysetEqual(list(self.st1.targetextra_set.all()), expected_queryset1, ordered=False)
+        self.assertQuerySetEqual(list(self.st1.targetextra_set.all()), expected_queryset1, ordered=False)
         self.assertEqual(self.st1.targetextra_set.count(), 5)
 
     def test_merge_observation_records(self):
