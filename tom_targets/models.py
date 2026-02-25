@@ -195,6 +195,13 @@ class TargetList(models.Model):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return f'/targets/?targetlist__name={self.id}'
+
+    @property
+    def total_targets(self):
+        return self.targets.count()
+
 
 class PersistentShare(models.Model):
     """
