@@ -300,9 +300,10 @@ class DataService(ABC):
         """
         if not data_results:
             raise MissingDataException('No Reduced Data dictionary found.')
+        reduced_datum_list = []
         for key in data_results.keys():
-            self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
-        return
+            reduced_datum_list += self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
+        return reduced_datum_list
 
     def create_reduced_datums_from_query(self, target, data=None, data_type=None, **kwargs) -> List:
         """

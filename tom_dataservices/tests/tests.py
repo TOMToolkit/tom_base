@@ -2,9 +2,11 @@ from django import forms
 from django.test import TestCase
 from typing import List
 
+from tom_targets.tests.factories import SiderealTargetFactory
 from tom_dataservices.dataservices import DataService, MissingDataException, NotConfiguredError
 from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import Target
+from tom_dataproducts.models import ReducedDatum
 
 
 test_query_results = {'ra': 24, 'dec': 77, 'name': 'faketarget', 'type': 'SIDEREAL'}
@@ -44,6 +46,25 @@ class TestDataService(DataService):
             'api_key': '1234567890',
         }
 
+    def build_query_parameters_from_target(self, target):
+        return(target.name)
+
+    def query_spectroscopy(self, query_parameters, **kwargs):
+        return [{'m': n} for n in range(100)]
+
+    def create_reduced_datums_from_query(self, target, data=None, data_type='photometry', **kwargs):
+        reduced_datums = []
+        for datum in data:
+            reduced_datum, __ = ReducedDatum.objects.get_or_create(
+                target=target,
+                data_type=data_type,
+                source_name='Antares',
+                value=datum
+            )
+            reduced_datums.append(reduced_datum)
+        return reduced_datums
+
+
 
 class EmptyTestDataService(DataService):
     name = 'TEST'
@@ -60,6 +81,9 @@ class TestDataServiceClass(TestCase):
     """
     Test the functionality of the DataService class via the TestDataService.
     """
+    def setUp(self):
+        self.target = SiderealTargetFactory.create()
+
     def test_query_service(self):
         new_test_query = TestDataService()
         self.assertEqual(new_test_query.query_results, {})
@@ -83,6 +107,22 @@ class TestDataServiceClass(TestCase):
         new_test_query_results['name'] = 'target2'
         target2, _extras, _aliases = new_test_query.to_target(new_test_query_results)
         self.assertEqual(target2.name, 'target2')
+
+    def test_query_reduced_data(self):
+        new_test_query = TestDataService()
+        # Make sure we are making the right kind of data (only have spectroscopy)
+        reduced_data = new_test_query.query_reduced_data(self.target)
+        self.assertFalse(reduced_data['photometry'])
+        self.assertTrue(reduced_data['spectroscopy'])
+        # Show Reduced datums are created in right amount
+        new_test_query.to_reduced_datums(self.target, reduced_data)
+        reduced_datums = ReducedDatum.objects.filter(target=self.target)
+        original_reduced_datum_count = reduced_datums.count()
+        self.assertEqual(original_reduced_datum_count, len(reduced_data['spectroscopy']))
+        self.assertEqual(reduced_datums[0].data_type, 'spectroscopy')
+        # Show no extra reduced datums are made when running again.
+        new_test_query.to_reduced_datums(self.target, reduced_data)
+        self.assertEqual(ReducedDatum.objects.filter(target=self.target).count(), original_reduced_datum_count)
 
 
 class TestUnimplementedDataServiceClass(TestCase):
