@@ -66,11 +66,8 @@ class UpdateDataFromDataServiceForm(forms.Form):
         data_service_list = get_data_service_classes()
         data_service_choices = []
         for name, data_service in data_service_list.items():
-            try:
-                data_service().build_query_parameters_from_target(Target.objects.first())
+            if hasattr(data_service, 'build_query_parameters_from_target' ):
                 data_service_choices.append((name, name))
-            except NotImplementedError:
-                pass
         self.fields['data_service'].choices = data_service_choices
         self.helper = FormHelper()
         self.helper.form_action = reverse('tom_dataservices:update-data')
