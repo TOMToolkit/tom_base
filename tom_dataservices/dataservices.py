@@ -120,6 +120,16 @@ class DataService(ABC):
         raise NotImplementedError(f'build_query_parameters method has not been implemented for {self.name}')
 
     def build_query_parameters_from_target(self, target, **kwargs):
+        """
+        This is a method that builds query parameters based on an existing target object that will be recognized by
+        `query_service()`.
+        This can be done by either by re-creating the form fields set by the Data Service Form and then calling
+        `self.build_query_parameters()` with the results, or we can reproduce a limited set of parameters uniquely for
+        a target query.
+
+        :param target: A target object to be queried
+        :return: query_parameters (usually a dict) that can be understood by `query_service()`
+        """
         raise NotImplementedError('build_query_parameters_from_target method has not been implemented' +
                                   f'for {self.name}.'
                                   )
@@ -291,7 +301,6 @@ class DataService(ABC):
         if not data_results:
             raise MissingDataException('No Reduced Data dictionary found.')
         for key in data_results.keys():
-            print(key)
             self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
         return
 
