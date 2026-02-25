@@ -87,4 +87,3 @@ class UpdateDataFromDataServiceForm(forms.Form):
                     ),
                 )
         )
-

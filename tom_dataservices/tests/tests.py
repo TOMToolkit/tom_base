@@ -47,7 +47,7 @@ class TestDataService(DataService):
         }
 
     def build_query_parameters_from_target(self, target):
-        return(target.name)
+        return target.name
 
     def query_spectroscopy(self, query_parameters, **kwargs):
         return [{'m': n} for n in range(100)]
@@ -63,7 +63,6 @@ class TestDataService(DataService):
             )
             reduced_datums.append(reduced_datum)
         return reduced_datums
-
 
 
 class EmptyTestDataService(DataService):
