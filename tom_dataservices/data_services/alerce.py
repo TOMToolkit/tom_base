@@ -1,17 +1,21 @@
+from tom_dataproducts.models import ReducedDatum
 import logging
 from alerce.core import Alerce
 from alerce.exceptions import ObjectNotFoundError
+from astropy.time import Time, TimezoneInfo
 from crispy_forms.layout import HTML, Column, Field, Layout, Row
 from django import forms
 from django.core.cache import cache
 
 from tom_dataservices.dataservices import DataService, QueryServiceError
 from tom_dataservices.forms import BaseQueryForm
-from tom_targets.models import get_target_model_class
+from tom_targets.models import get_target_model_class, TargetExtra
 
 logger = logging.getLogger(__name__)
 
 alerce = Alerce()
+
+ALERCE_FILTERS = {1: 'g', 2: 'r', 3: 'i'}
 
 
 class AlerceForm(BaseQueryForm):
@@ -105,15 +109,15 @@ class AlerceDataService(DataService):
 
     def query_targets(self, query_parameters, **kwargs) -> list[dict]:
         targets = self.query_service(query_parameters, **kwargs)
-        for target in targets:
-            object_id = target['oid']
-            photometry = self.query_photometry(query_parameters, object_id)
-            # Antares adds reduced datums to the target here, but this seems really inefficient
-            # because this will pull the lightcurve for every target regardless if the user wants
-            # to save it or not.
-            target['reduced_datums'] = {
-                'photometry': photometry
-            }
+        # for target in targets:
+        #     object_id = target['oid']
+        #     photometry = self.query_photometry(query_parameters, object_id)
+        #     # Antares adds reduced datums to the target here, but this seems really inefficient
+        #     # because this will pull the lightcurve for every target regardless if the user wants
+        #     # to save it or not.
+        #     target['reduced_datums'] = {
+        #         'photometry': photometry
+        #     }
 
         return targets
 
@@ -147,6 +151,8 @@ class AlerceDataService(DataService):
         except (ObjectNotFoundError, ValueError) as e:
             raise QueryServiceError(str(e))
 
+        for result in results:
+            result["survey"] = params["survey"]
         return results
 
     def build_query_parameters(self, parameters: dict, **kwargs):
@@ -155,6 +161,16 @@ class AlerceDataService(DataService):
             "classifiers": parameters.get("classifiers", []),
             "survey": parameters.get("survey"),
         }
+
+    def build_query_parameters_from_target(self, target, **kwargs):
+        try:
+            return {
+                "object_id": target.name,
+                "classifiers": [target.targetextra_set.get(key="classifier").value],
+                "survey": target.targetextra_set.get(key="survey").value,
+            }
+        except TargetExtra.DoesNotExist:
+            return {}
 
     def create_target_from_query(self, target_result: dict, **kwrags):
         Target = get_target_model_class()
@@ -167,7 +183,7 @@ class AlerceDataService(DataService):
                 "dec": target_result["meandec"],
             },
         )
-
+        TargetExtra.objects.create(target=target, key="survey", value=target_result["survey"])
         return target
 
     def create_target_extras_from_query(self, query_results, **kwrags):
@@ -183,7 +199,7 @@ class AlerceDataService(DataService):
     def query_photometry(self, query_parameters, object_id=None, **kwargs):
         try:
             return alerce.query_lightcurve(
-                oid=object_id,
+                oid=query_parameters.get("object_id"),
                 survey=query_parameters.get("survey", "").lower(),
                 format="json"
             )
@@ -204,3 +220,40 @@ class AlerceDataService(DataService):
         except Exception:
             logger.exception("Error querying ALeRCE forced photometry")
             return []
+
+    def create_reduced_datums_from_query(self, target, data=None, data_type='photometry', **kwargs):
+        params = self.build_query_parameters_from_target(target)
+        oid = params.get("object_id")
+        results = self.query_photometry(params)
+        for detection in results['detections']:
+            mjd = Time(detection['mjd'], format='mjd', scale='utc')
+            value = {
+                'filter': ALERCE_FILTERS[detection['fid']],
+                'magnitude': detection['magpsf'],
+                'error': detection['sigmapsf'],
+                'telescope': 'ZTF',
+            }
+            ReducedDatum.objects.get_or_create(
+                timestamp=mjd.to_datetime(TimezoneInfo()),
+                value=value,
+                source_name=self.name,
+                source_location=oid,
+                data_type='photometry',
+                target=target
+            )
+
+        for non_detection in results['non_detections']:
+            mjd = Time(non_detection['mjd'], format='mjd', scale='utc')
+            value = {
+                'filter': ALERCE_FILTERS[non_detection['fid']],
+                'limit': non_detection['diffmaglim'],
+                'telescope': 'ZTF',
+            }
+            ReducedDatum.objects.get_or_create(
+                timestamp=mjd.to_datetime(TimezoneInfo()),
+                value=value,
+                source_name=self.name,
+                source_location=oid,
+                data_type='photometry',
+                target=target
+            )
