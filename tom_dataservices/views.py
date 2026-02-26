@@ -391,11 +391,15 @@ def update_data_from_query(request):
 
     if request.method == "POST":
         form = UpdateDataFromDataServiceForm(request.POST)
+        data = {}
         if form.is_valid():
-            target = form.cleaned_data['target']
-            data_service_class = get_data_service_class(form.cleaned_data['data_service'])()
-            data = data_service_class.query_reduced_data(target)
-            data_service_class.to_reduced_datums(target, data)
+            try:
+                target = form.cleaned_data['target']
+                data_service_class = get_data_service_class(form.cleaned_data['data_service'])()
+                data = data_service_class.query_reduced_data(target)
+                data_service_class.to_reduced_datums(target, data)
+            except QueryServiceError as e:
+                messages.error(request, f'Error retrieving data from Data Service: {e}')
 
             # redirect to data page
             base_url = reverse('tom_targets:detail', kwargs={'pk': target.id})
