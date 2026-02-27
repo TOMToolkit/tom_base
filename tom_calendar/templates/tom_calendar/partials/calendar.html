@@ -23,6 +23,10 @@
     border-radius: 50%;
     margin-bottom: 0.15rem;
   }
+  .cal-event {
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
 </style>
 
 <div id="calendar-partial">
@@ -49,13 +53,31 @@
 
     {% for week in weeks %}
       {% for day in week %}
-        {% if day.month != month %}
+        {% if day.date.month != month %}
           <div class="cal-day other-month bg-light border-right border-bottom p-1">
-            <span class="day-num text-muted">{{ day.day }}</span>
+            <span class="day-num text-muted">{{ day.date.day }}</span>
+            {% for event in day.events %}
+              <div class="cal-event text-truncate text-muted">
+                {% if event.url %}
+                  <a href="{{ event.url }}" class="text-muted">{{ event.title }}</a>
+                {% else %}
+                  {{ event.title }}
+                {% endif %}
+              </div>
+            {% endfor %}
           </div>
         {% else %}
-          <div class="cal-day{% if day == today %} today{% endif %} border-right border-bottom p-1">
-            <span class="day-num {% if day == today %}text-white bg-primary font-weight-bold{% endif %}">{{ day.day }}</span>
+          <div class="cal-day{% if day.date == today %} today{% endif %} border-right border-bottom p-1">
+            <span class="day-num {% if day.date == today %}text-white bg-primary font-weight-bold{% endif %}">{{ day.date.day }}</span>
+            {% for event in day.events %}
+              <div class="cal-event text-truncate">
+                {% if event.url %}
+                  <a href="{{ event.url }}">{{ event.title }}</a>
+                {% else %}
+                  {{ event.title }}
+                {% endif %}
+              </div>
+            {% endfor %}
           </div>
         {% endif %}
       {% endfor %}

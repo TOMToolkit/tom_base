@@ -20,15 +20,12 @@ def render_calendar(request):
 
     # Sunday is 6 in python calendar for some reason
     calendar = cal_module.Calendar(firstweekday=6)
-    weeks = calendar.monthdatescalendar(year, month)
 
-    # Previous month/year
     if month == 1:
         prev_month, prev_year = 12, year - 1
     else:
         prev_month, prev_year = month - 1, year
 
-    # Next month/year
     if month == 12:
         next_month, next_year = 1, year + 1
     else:
@@ -36,23 +33,37 @@ def render_calendar(request):
 
     month_name = date(year, month, 1).strftime("%B %Y")
 
+    weeks = calendar.monthdatescalendar(year, month)
+
+    # Fetch all events for this month instead of querying for each day
     events = CalendarEvent.objects.filter(
         start_time__date__lte=weeks[-1][-1],
         end_time__date__gte=weeks[0][0],
     )
 
+    events = list(events)
+    weeks_with_events = [
+        [
+            {
+                "date": d,
+                "events": [e for e in events if e.start_time.date() <= d <= e.end_time.date()],
+            }
+            for d in week
+        ]
+        for week in weeks
+    ]
+
     context = {
         "month": month,
         "year": year,
         "month_name": month_name,
-        "weeks": weeks,
+        "weeks": weeks_with_events,
         "day_names": DAY_NAMES,
         "today": today,
         "prev_month": prev_month,
         "prev_year": prev_year,
         "next_month": next_month,
         "next_year": next_year,
-        "events": events,
     }
 
     if request.htmx:
