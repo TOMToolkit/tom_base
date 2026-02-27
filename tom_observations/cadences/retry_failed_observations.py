@@ -2,7 +2,7 @@ from datetime import timedelta
 from dateutil.parser import parse
 
 from tom_observations.cadence import BaseCadenceForm, CadenceStrategy
-from tom_observations.models import ObservationRecord
+from tom_observations.models import ObservationRecord, DynamicCadence
 from tom_observations.facility import get_service_class
 
 
@@ -23,6 +23,17 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
     form = RetryFailedObservationsForm
 
     def run(self):
+        last_obs = self.dynamic_cadence.observation_group.observation_records.order_by('-created').first()
+        facility = get_service_class(last_obs.facility)()
+        facility.update_observation_status(last_obs.observation_id)  # Updates the DB record
+        last_obs.refresh_from_db()
+
+        if last_obs.status == 'COMPLETED':
+            obs_group = last_obs.observationgroup_set.first()
+            dynamic_cadence = DynamicCadence.objects.get(observation_group=obs_group)
+            dynamic_cadence.active = False
+            dynamic_cadence.save()
+
         failed_observations = [obsr for obsr
                                in self.dynamic_cadence.observation_group.observation_records.all()
                                if obsr.failed]
