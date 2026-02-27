@@ -1,0 +1,50 @@
+Showing {{results|length}} result{{results|length|pluralize}} {% if results|length != total_results %}(filtered from {{total_results}} total result{{total_results|pluralize}}){% endif %}
+<table class="table table-striped">
+    <thead>
+      <tr>
+        <th colspan="10"></th>
+        <th colspan="4" class="text-center">Object Class Score</th>
+        <th></th>
+      </tr>
+      <tr>
+        <th><input type="checkbox" id="selectAll"/></th>
+        <th>Name</th>
+        <th>#obs</th>
+        <th>RA</th>
+        <th>Dec</th>
+        <th>V (mag)</th>
+        <th>Rate</th>
+        <th>POS Unc(')</th>
+        <th>H</th>
+        <th>Impact Rating</th>
+        <th>CA Distance (LD)</th>
+        <th>NEO</th>
+        <th>PHA</th>
+        <th>IEO</th>
+        <th>Geocentric</th>
+        <th>RMS</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for result in results %}
+      <tr>
+        <td><input type="checkbox" name="selected_results" value="{{ result.id }}"/></td>
+        <td>{{result.objectName}}</td>
+        <td>{{ result.nObs }}</td>
+        <td>{{ result.ra }}</td>
+        <td>{{ result.dec }}</td>
+        <td>{{ result.Vmag }}</td>
+        <td>{{ result.rate }}</td>
+        <td>{{ result.unc }}</td>
+        <td>{{ result.H }}</td>
+        <td>{{ result.rating }}</td>
+        <td>{{ result.caDist }}</td>
+        <td>{{ result.neoScore }}</td>
+        <td>{{ result.phaScore }}</td>
+        <td>{{ result.ieoScore }}</td>
+        <td>{{ result.geocentricScore }}</td>
+        <td>{{ result.rmsN }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+</table>

@@ -287,6 +287,11 @@ TOM_CADENCE_STRATEGIES = [
     'tom_observations.cadences.resume_cadence_after_failure.ResumeCadenceAfterFailureStrategy'
 ]
 
+DATA_SERVICES = {
+    'Scout': {
+        'base_url': 'https://ssd-api.jpl.nasa.gov/scout.api',
+    },
+}
 # Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"
 # See https://tomtoolkit.github.io/docs/target_fields for documentation on this feature
 # For example:
