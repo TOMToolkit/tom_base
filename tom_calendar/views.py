@@ -4,6 +4,8 @@ from datetime import date
 from django.utils import timezone
 from django.shortcuts import render
 
+from .models import CalendarEvent
+
 DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 
@@ -34,6 +36,11 @@ def render_calendar(request):
 
     month_name = date(year, month, 1).strftime("%B %Y")
 
+    events = CalendarEvent.objects.filter(
+        start_time__date__lte=weeks[-1][-1],
+        end_time__date__gte=weeks[0][0],
+    )
+
     context = {
         "month": month,
         "year": year,
@@ -45,6 +52,7 @@ def render_calendar(request):
         "prev_year": prev_year,
         "next_month": next_month,
         "next_year": next_year,
+        "events": events,
     }
 
     if request.htmx:
