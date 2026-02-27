@@ -428,7 +428,7 @@ class TestTargetCreate(TestCase):
             'epoch_of_elements': 100,
             'lng_asc_node': 100,
             'arg_of_perihelion': 100,
-            'eccentricity': 100,
+            'eccentricity': .1,
             'mean_anomaly': 100,
             'inclination': 100,
             'semimajor_axis': 100,
