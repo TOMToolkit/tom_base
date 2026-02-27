@@ -46,6 +46,7 @@ def render_calendar(request):
         [
             {
                 "date": d,
+                "in_current_month": d.month == month,
                 "events": [e for e in events if e.start_time.date() <= d <= e.end_time.date()],
             }
             for d in week

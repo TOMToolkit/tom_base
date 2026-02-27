@@ -53,35 +53,19 @@
 
     {% for week in weeks %}
       {% for day in week %}
-        {% if day.date.month != month %}
-          <div class="cal-day other-month bg-light border-right border-bottom p-1">
-            <span class="day-num text-muted">{{ day.date.day }}</span>
-            {% for event in day.events %}
-              <div class="cal-event text-truncate text-muted">
-                {% if event.url %}
-                  <a href="{{ event.url }}" class="text-muted">{{ event.title }}</a>
-                {% else %}
-                  {{ event.title }}
-                {% endif %}
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="cal-day{% if day.date == today %} today{% endif %} border-right border-bottom p-1">
-            <span class="day-num {% if day.date == today %}text-white bg-primary font-weight-bold{% endif %}">{{ day.date.day }}</span>
-            {% for event in day.events %}
-              <div class="cal-event text-truncate">
-                {% if event.url %}
-                  <a href="{{ event.url }}">{{ event.title }}</a>
-                {% else %}
-                  {{ event.title }}
-                {% endif %}
-              </div>
-            {% endfor %}
-          </div>
-        {% endif %}
+        <div class="cal-day{% if not day.in_current_month %} other-month bg-light{% endif %}{% if day.date == today %} today{% endif %} border-right border-bottom p-1">
+          <span class="day-num{% if not day.in_current_month %} text-muted{% elif day.date == today %} bg-primary text-white font-weight-bold{% endif %}">{{ day.date.day }}</span>
+          {% for event in day.events %}
+            <div class="cal-event text-truncate{% if not day.in_current_month %} text-muted{% endif %}">
+              {% if event.url %}
+                <a href="{{ event.url }}"{% if not day.in_current_month %} class="text-muted"{% endif %}>{{ event.title }}</a>
+              {% else %}
+                {{ event.title }}
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
       {% endfor %}
     {% endfor %}
-
   </div>
 </div>
