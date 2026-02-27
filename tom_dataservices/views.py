@@ -19,6 +19,8 @@ from urllib.parse import urlencode
 from tom_dataservices.models import DataServiceQuery
 from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class, NotConfiguredError
 from tom_dataservices.dataservices import MissingDataException, QueryServiceError
+from tom_dataservices.forms import UpdateDataFromDataServiceForm
+from tom_targets.models import Target
 
 
 logger = logging.getLogger(__name__)
@@ -356,15 +358,17 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                         assign_perm('tom_targets.change_target', group, target)
                         assign_perm('tom_targets.delete_target', group, target)
                 except IntegrityError:
+                    errors.append(target.name)
+                    target = Target.objects.get(name=target.name)
                     messages.warning(request,
                                      mark_safe(
-                                         f"""Unable to save {target.name}, target with that name already exists.
+                                         f"""The target,
+                                         <a href="{reverse('targets:detail', kwargs={'pk': target.id})}">
+                                         {target.name}</a> already exists, any new data has been ingested.
                                          You can <a href="{reverse('targets:create') + '?' +
                                                            urlencode(target.as_dict())}">create</a> a new target anyway.
                                          """)
                                      )
-                    errors.append(target.name)
-                    target = None
                 # Do not attempt to store Reduced Datums if no Target Created.
                 if target:
                     try:
@@ -381,3 +385,29 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
         if len(results) == 1 and target:
             return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
         return redirect(reverse('tom_targets:list'))
+
+
+def update_data_from_query(request):
+
+    if request.method == "POST":
+        form = UpdateDataFromDataServiceForm(request.POST)
+        data = {}
+        if form.is_valid():
+            try:
+                target = form.cleaned_data['target']
+                data_service_class = get_data_service_class(form.cleaned_data['data_service'])()
+                data = data_service_class.query_reduced_data(target)
+                data_service_class.to_reduced_datums(target, data)
+            except QueryServiceError as e:
+                messages.error(request, f'Error retrieving data from Data Service: {e}')
+
+            # redirect to data page
+            base_url = reverse('tom_targets:detail', kwargs={'pk': target.id})
+            if 'photometry' in data.keys():
+                page_filters = urlencode({'tab': 'photometry'})
+            elif 'spectroscopy' in data.keys():
+                page_filters = urlencode({'tab': 'spectroscopy'})
+            else:
+                page_filters = urlencode({'tab': 'manage-data'})
+            return redirect(f'{base_url}?{page_filters}')
+    return redirect('/')

@@ -1,5 +1,6 @@
 {% extends 'tom_common/base.html' %}
 {% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras static cache %}
+{% load dataservices_extras %}
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
@@ -101,6 +102,8 @@
         {% if user.is_authenticated %}
         <hr>
         {% query_single_target_data_service object %}
+        <hr>
+        {% update_data_from_dataservice %}
         <hr>
         {% endif %}
         {% dataproduct_list_for_target object %}
