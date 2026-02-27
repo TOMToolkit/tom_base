@@ -1,7 +1,9 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 %}
 {% block title %}Target Groups{% endblock %}
+{% load crispy_forms_tags %}
 {% block content %}
+
 <h1>Target Groupings</h1>
 <div class="row">
     <div class="col-md-10">
@@ -10,6 +12,7 @@
         </p>
     </div>
 </div>
+{% comment %}
 {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
 <form action="{% url 'targets:list' %}" method="GET">
   <table class="table table-striped">
@@ -45,4 +48,30 @@
   </table>
 </form>
 {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+{%endcomment%}
+
+<div class="row">
+      <div class="col-md-12">
+        <h2>{{ record_count }} Target Group{{ record_count|pluralize }}</h2>
+        <hr>
+
+        {# Filter form -- id must match hx-include in the Table's Meta.attrs #}
+        <form id="filter-form" class="mb-3"
+              hx-get="{{ request.get_full_path }}"
+              hx-target="div.table-container"
+              hx-swap="outerHTML"
+              hx-indicator=".progress">
+            {% crispy filter.form %}
+        </form>
+        {# Progress indicator (CSS provided by TOM Toolkit base template) #}
+        <div class="progress">
+            <div class="indeterminate"></div>
+        </div>
+
+        {# Table container -- this is the HTMX swap target #}
+        <div class="table-container">
+            {% include table.get_partial_template_name %}
+        </div>
+      </div>
+    </div>
 {% endblock %}

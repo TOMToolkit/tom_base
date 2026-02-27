@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock, patch
 
 from astropy.table import Table
 from django.test import tag, TestCase
@@ -8,6 +8,11 @@ from tom_catalogs.harvesters.simbad import SimbadHarvester
 
 class TestSimbadHarvester(TestCase):
     def setUp(self):
+        simbad_patcher = patch('tom_catalogs.harvesters.simbad.Simbad')
+        mock_simbad_class = simbad_patcher.start()
+        self.addCleanup(simbad_patcher.stop)
+        mock_simbad_class.return_value = MagicMock()
+
         self.broker = SimbadHarvester()
         table_data = {'main_id': ['M  31'],
                       'ra': [10.684708333333333],

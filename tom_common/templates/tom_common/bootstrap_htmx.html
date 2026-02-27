@@ -1,0 +1,70 @@
+{# tom_common/templates/tom_common/bootstrap_htmx.html #}
+{# Extends the default django-tables2 bootstrap4 template with HTMX attributes #}
+{# for sorting (column headers) and pagination (page links). #}
+
+{% extends "django_tables2/bootstrap4.html" %}
+
+{% load django_tables2 %}
+{% load i18n %}
+
+{% block table.thead %}
+  {% if table.show_header %}
+      <thead {{ table.attrs.thead.as_html }}>
+      <tr>
+          {% for column in table.columns %}
+              <th {{ column.attrs.th.as_html }}
+                  hx-get="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}"
+                  hx-trigger="click"
+                  hx-target="div.table-container"
+                  hx-swap="outerHTML"
+                  hx-indicator=".progress"
+                  style="cursor: pointer;">
+                  {{ column.header }}
+              </th>
+          {% endfor %}
+      </tr>
+      </thead>
+  {% endif %}
+{% endblock table.thead %}
+
+{# Pagination block overrides #}
+{% block pagination.previous %}
+    <li class="previous page-item">
+        <div hx-get="{% querystring table.prefixed_page_field=table.page.previous_page_number %}"
+             hx-trigger="click"
+             hx-target="div.table-container"
+             hx-swap="outerHTML"
+             hx-indicator=".progress"
+             class="page-link">
+            <span aria-hidden="true">&laquo;</span>
+            {% trans 'previous' %}
+        </div>
+    </li>
+{% endblock pagination.previous %}
+{% block pagination.range %}
+    {% for p in table.page|table_page_range:table.paginator %}
+        <li class="page-item{% if table.page.number == p %} active{% endif %}">
+            <div class="page-link"
+                 {% if p != '...' %}hx-get="{% querystring table.prefixed_page_field=p %}"{% endif %}
+                 hx-trigger="click"
+                 hx-target="div.table-container"
+                 hx-swap="outerHTML"
+                 hx-indicator=".progress">
+                {{ p }}
+            </div>
+        </li>
+    {% endfor %}
+{% endblock pagination.range %}
+{% block pagination.next %}
+    <li class="next page-item">
+        <div hx-get="{% querystring table.prefixed_page_field=table.page.next_page_number %}"
+             hx-trigger="click"
+             hx-target="div.table-container"
+             hx-swap="outerHTML"
+             hx-indicator=".progress"
+             class="page-link">
+            {% trans 'next' %}
+            <span aria-hidden="true">&raquo;</span>
+        </div>
+    </li>
+{% endblock pagination.next %}

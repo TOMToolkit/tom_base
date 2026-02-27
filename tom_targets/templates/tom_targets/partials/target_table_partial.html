@@ -1,0 +1,35 @@
+{# tom_targets/partials/target_table_partial.html #}
+{% load render_table from django_tables2 %}
+
+{# 1. Render the table (even if it's empty) #}
+{% render_table table %}
+
+{# 2. If table is empty, show the helpful context message below the empty headers #}
+{% if not table.data %}
+    <div class="alert alert-info mt-3">
+        {% if user.is_authenticated %}
+            {% if empty_database %}
+                {# Case A: The database is empty - suggest creating targets #}
+                There are no targets in the database.
+                You might want to <a href="{% url 'tom_targets:create' %}">create a target manually</a>,
+                <a href="{% url 'tom_alerts:list' %}">import one from an alert broker</a>
+                or
+                <form method="POST" action="{% url 'tom_targets:seed' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-primary btn-sm" type="submit">add the Messier catalog</button>
+                </form>
+            {% else %}
+                {# Case B: Database has targets, but filters hid them all #}
+                No targets match those filters.
+            {% endif %}
+        {% else %}
+            {# Case C: User is not logged in #}
+            Please <a href="{% url 'login' %}?next={% url 'targets:list' %}">login</a> to view or create targets.
+        {% endif %}
+    </div>
+{% endif %}
+
+{# 3. Update the skymap targets (data only, no viewer rebuild) #}
+{% load targets_extras %}
+{% aladin_skymap_targets_oob skymap_objects %}
+

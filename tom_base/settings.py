@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'django_filters',
+    'django_tables2',
     'django_gravatar',
     'django_htmx',
     'tom_targets',
@@ -212,6 +213,7 @@ FACILITIES = {
 
 
 TOM_FACILITY_CLASSES = [
+    'tom_observations.facilities.lco_redirect.LCORedirectFacility',
     'tom_observations.facilities.lco.LCOFacility',
     'tom_observations.facilities.gemini.GEMFacility',
     'tom_observations.facilities.soar.SOARFacility',
@@ -295,6 +297,15 @@ TOM_CADENCE_STRATEGIES = [
 #     {'name': 'discovery_date', 'type': 'datetime'}
 # ]
 EXTRA_FIELDS = []
+
+# Map model labels to dotted paths of custom general search functions for HTMX tables.
+# This allows overriding the default general search method without subclassing.
+# See https://tom-toolkit.readthedocs.io/en/stable/customization/htmx_tables.html.
+# Example:
+# GENERAL_SEARCH_FUNCTIONS = {
+#     'tom_targets.Target': 'custom_code.search.my_target_search',
+# }
+GENERAL_SEARCH_FUNCTIONS = {}
 
 # Define custom DataProcessor class
 # DATA_PROCESSOR_CLASS = 'mytom.custom_data_processor.CustomDataProcessor'

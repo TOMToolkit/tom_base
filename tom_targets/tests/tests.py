@@ -389,6 +389,36 @@ class TestTargetCreate(TestCase):
         self.assertEqual(te.typed_value('number'), 1984.0)
         self.assertIsNone(te.typed_value('datetime'))
 
+    def test_non_sidereal_validate_mjd(self):
+        base_data = {
+            'name': 'nonsidereal_target',
+            'identifier': 'nonsidereal_identifier',
+            'type': Target.NON_SIDEREAL,
+            'scheme': 'JPL_MAJOR_PLANET',
+            'permissions': 'PUBLIC',
+            'epoch_of_elements': 1_000_000,
+            'lng_asc_node': 100,
+            'arg_of_perihelion': 100,
+            'eccentricity': 100,
+            'mean_anomaly': 100,
+            'inclination': 100,
+            'semimajor_axis': 100,
+            'targetextra_set-TOTAL_FORMS': 1,
+            'targetextra_set-INITIAL_FORMS': 0,
+            'targetextra_set-MIN_NUM_FORMS': 0,
+            'targetextra_set-MAX_NUM_FORMS': 1000,
+            'targetextra_set-0-key': '',
+            'targetextra_set-0-value': '',
+            'aliases-TOTAL_FORMS': 1,
+            'aliases-INITIAL_FORMS': 0,
+            'aliases-MIN_NUM_FORMS': 0,
+            'aliases-MAX_NUM_FORMS': 1000,
+        }
+        create_url = reverse('targets:create') + '?type=NON_SIDEREAL'
+        response = self.client.post(create_url, data=base_data, follow=True)
+        errors = response.context['form'].errors['epoch_of_elements']
+        self.assertIn('Value must be in MJD', errors[0])
+
     def test_non_sidereal_required_fields(self):
         base_data = {
             'name': 'nonsidereal_target',
@@ -1848,8 +1878,8 @@ class TestTargetMerge(TestCase):
 
         # after we run merge --> TL1, TL2, and TL3 each should only contain st1
         target_merge(self.st1, self.st2)
-        self.assertQuerysetEqual(targetlist1.targets.all(), targetlist2.targets.all())
-        self.assertQuerysetEqual(targetlist1.targets.all(), targetlist3.targets.all())
+        self.assertQuerySetEqual(targetlist1.targets.all(), targetlist2.targets.all())
+        self.assertQuerySetEqual(targetlist1.targets.all(), targetlist3.targets.all())
         self.assertEqual(self.st1.targetlist_set.all().count(), 3)
 
     def test_merge_data_products(self):
@@ -1933,7 +1963,7 @@ class TestTargetMerge(TestCase):
         # write a test where the primary target extra queryset matches the expected queryset
         expected_queryset1 = st1_te + st2_te[1:]
         target_merge(self.st1, self.st2)
-        self.assertQuerysetEqual(list(self.st1.targetextra_set.all()), expected_queryset1, ordered=False)
+        self.assertQuerySetEqual(list(self.st1.targetextra_set.all()), expected_queryset1, ordered=False)
         self.assertEqual(self.st1.targetextra_set.count(), 5)
 
     def test_merge_observation_records(self):

@@ -1,9 +1,12 @@
 from abc import ABC, abstractmethod
 import logging
+from typing import List, Tuple
 
 from django.conf import settings
 from django.apps import apps
 from django.utils.module_loading import import_string
+
+from tom_targets.models import TargetName
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +17,7 @@ def get_data_service_classes():
 
     Each dataservice class should be contained in a list of dictionaries in an app's apps.py `dataservices` method.
     Each dataservice dictionary should contain a 'class' key with the dot separated path to the dataservice class
-    (typically an extension of BaseDataService).
+    (typically an extension of DataService).
 
     FOR EXAMPLE:
     [{'class': 'path.to.dataservice.class'}]
@@ -31,7 +34,7 @@ def get_data_service_classes():
                     clazz = import_string(data_service['class'])
                 except ImportError as e:
                     logger.warning(f'WARNING: Could not import data service class for {app.name} from '
-                                   f'{data_services["class"]}.\n'
+                                   f'{data_service["class"]}.\n'
                                    f'{e}')
                     continue
                 data_service_choices[clazz.name] = clazz
@@ -64,7 +67,14 @@ class NotConfiguredError(Exception):
     pass
 
 
-class BaseDataService(ABC):
+class QueryServiceError(Exception):
+    """
+    Represents a higher level error when an underlying service or client library fails.
+    """
+    pass
+
+
+class DataService(ABC):
     """
     Base class for all Data Services. Data Services are classes that are responsible for querying external services
     and returning data.
@@ -81,9 +91,17 @@ class BaseDataService(ABC):
     service_notes = None
     # The path to a specialized table partial for displaying query results
     query_results_table = None
+    # App Version
+    app_version = None
+    # Link to app github repo
+    app_link = None
 
     def __init__(self, query_parameters=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Instance variable that can store target query results if necessary
+        self.target_results = {}
+        # Instance variable that can store photometry query results if necessary
+        self.photometry_results = {}
         # Instance variable that can store query results if necessary
         self.query_results = {}
         # Instance variable that can store query parameters if necessary
@@ -95,11 +113,11 @@ class BaseDataService(ABC):
 
     def pre_query_validation(self, query_parameters):
         """Same thing as query_service, but a dry run"""
-        raise NotImplementedError
+        raise NotImplementedError(f'pre_query_validation method has not been implemented for {self.name}')
 
     def build_query_parameters(self, parameters, **kwargs):
         """Builds the query parameters from the form data"""
-        raise NotImplementedError
+        raise NotImplementedError(f'build_query_parameters method has not been implemented for {self.name}')
 
     def build_headers(self, *args, **kwargs):
         """Builds the headers for the query"""
@@ -108,7 +126,7 @@ class BaseDataService(ABC):
     @classmethod
     def get_form_class(cls):
         """Returns the full form class for querying this service"""
-        raise NotImplementedError
+        raise NotImplementedError(f"No Form Class for {cls.name} Data Service")
 
     @classmethod
     def configuration(cls) -> dict:
@@ -128,12 +146,12 @@ class BaseDataService(ABC):
     @classmethod
     def get_configuration(cls, config_type=None, value=None, **kwargs):
         """
-        Syntax: get_configuration([config_type], [value])
-        Parameters:
-            config_type: The type of configuration to return. If None, returns all configurations.
-            value: The default value to return if configuration not found.
-        Returns:
-            A list of available configurations, or a requested configuration, or if not found the default value.
+        Get all of the configuration or specific configuration values associated with this dataservice.
+
+        :Syntax: get_configuration([config_type], [value])
+        :param config_type: The type of configuration to return. If None, returns all configurations.
+        :param value: The default value to return if configuration not found.
+        :return: A list of available configurations, or a requested configuration, or if not found, the default value.
         """
         data_service_config = cls.configuration()
         if config_type:
@@ -153,12 +171,12 @@ class BaseDataService(ABC):
     @classmethod
     def get_urls(cls, url_type=None, value=None, **kwargs):
         """
-        Syntax: get_urls([url_type], [value])
-        Parameters:
-            url_type: The type of URL to return. If None, returns all available url types.
-            value: The default value to return if the requested url is not found.
-        Returns:
-            A list of available uls, or a requested url, or if not found, the default value.
+        Get all urls or a specific url associated with the dataservice.
+
+        :Syntax: get_urls([url_type], [value])
+        :param url_type: The type of URL to return. If None, returns all available url types.
+        :param value: The default value to return if the requested url is not found.
+        :return: A list of available uls, or a requested url, or if not found, the default value.
         """
         urls = cls.urls()
         if url_type:
@@ -183,25 +201,51 @@ class BaseDataService(ABC):
         """Returns a path to a full or advanced partial form that can be used to access the DataService."""
         return None
 
-    def query_forced_photometry(self, query_parameters):
+    def query_forced_photometry(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s forced photometry service."""
-        return self.query_service(query_parameters)
+        return self.query_service(query_parameters, **kwargs)
 
-    def query_photometry(self, query_parameters):
+    def query_photometry(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s photometry service."""
-        return self.query_service(query_parameters)
+        return self.query_service(query_parameters, **kwargs)
 
-    def query_spectroscopy(self, query_parameters):
+    def query_spectroscopy(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s spectroscopy service."""
-        return self.query_service(query_parameters)
+        return self.query_service(query_parameters, **kwargs)
 
-    def query_aliases(self, query_parameters):
-        """Set up and run a specialized query for retrieving alternate names from a DataService."""
-        return self.query_service(query_parameters)
+    def query_reduced_data(self, query_parameters, **kwargs):
+        """Set up and run a specialized query to retrieve Reduced Datums from a Data Service"""
+        phot_results = self.query_photometry(query_parameters, **kwargs)
+        spec_results = self.query_spectroscopy(query_parameters, **kwargs)
+        forced_phot_results = self.query_forced_photometry(query_parameters, **kwargs)
+        return {'photometry': phot_results,
+                'spectroscopy': spec_results,
+                'forced_photometry': forced_phot_results}
 
-    def query_targets(self, query_parameters):
-        """Set up and run a specialized query for retrieving targets from a DataService."""
-        return self.query_service(query_parameters)
+    def query_aliases(self, query_parameters, **kwargs) -> List:
+        """
+        Set up and run a specialized query for retrieving target names from a DataService.
+        This method will usually call `query_service()` and translate the results from the dataservice into a
+        list of target names.
+
+        :param query_parameters: This is the output from build_query_parameters()
+        :return: A list of target names
+        :rtype: List
+        """
+        return []
+
+    def query_targets(self, query_parameters, **kwargs) -> List[dict]:
+        """
+        Set up and run a specialized query for retrieving targets from a DataService.
+        This method will usually call `query_service()` and translate the results from the dataservice into a
+        list of dictionaries describing the returned targets.
+
+        :param query_parameters: This is the output from build_query_parameters()
+        :return: A list of dictionaries describing the resulting targets. Include 'reduced_datums' and/or 'aliases' as
+        keys in this dictionary to add associated data and alternate names without perfoming additional queries.
+        :rtype: List[dict]
+        """
+        return [{}]
 
     def to_data_product(self, query_results=None, **kwargs):
         """
@@ -218,48 +262,53 @@ class BaseDataService(ABC):
 
     def create_data_product_from_query(self, query_results=None, **kwargs):
         """Create a new DataProduct from the query results"""
-        raise NotImplementedError
+        raise NotImplementedError(f'create_data_product_from_query method has not been implemented for {self.name}')
 
-    def to_reduced_datums(self, target, query_results=None, **kwargs):
+    def to_reduced_datums(self, target, data_results=None, **kwargs):
         """
         Upper level function to create a new ReducedDatum from the query results
-        Can take either new query results, or use stored results form a recent `query_service()`
+        This method is not intended to be extended. This method passes the output
+        of query_reduced_data() to create_reduced_datums_from_query()
         :param target: Target object to associate with the ReducedDatum
-        :param query_results: Query results from the DataService
-        :returns: ReducedDatum object
+        :param data_results: Query results from the DataService storing observation data. This should be a dictionary
+            with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
         """
-        query_results = query_results or self.query_results
-        if not query_results:
-            raise MissingDataException('No query results. Did you call query_service()?')
-        else:
-            return self.create_reduced_datums_from_query(target, query_results, **kwargs)
+        if not data_results:
+            raise MissingDataException('No Reduced Data dictionary found.')
+        for key in data_results.keys():
+            self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
+        return
 
-    def create_reduced_datums_from_query(self, target, query_results=None, **kwargs):
-        """Create a new reduced_datum of the appropriate type from the query results"""
+    def create_reduced_datums_from_query(self, target, data=None, data_type=None, **kwargs):
+        """Create and save new reduced_datums of the appropriate data_type from the query results"""
         raise NotImplementedError
 
-    def to_target(self, query_results=None, **kwargs):
+    def to_target(self, target_result=None, **kwargs) -> Tuple[dict, dict, dict]:
         """
         Upper level function to create a new target from the query results
-        Can take either new query results, or use stored results form a recent `query_service()`
-        :param query_results: Query results from the DataService
+        This method is not intended to be extended. This method passes a single instance of the output
+        of query_targets() to create_target_from_query(), create_target_extras_from_query() and
+        create_aliases_from_query().
+        Intended usage: Call to_target on each element of the target_data list of dictionaries from query_target.
+        (see views.py::CreateTargetFromQueryView)
+        :param target_results: Dictionary containing target information.
         :returns: Target object, dictionary of target_extras, and list of aliases
         """
-        target_parameters = query_results or self.query_results
-        if not target_parameters:
+        if not target_result:
             raise MissingDataException('No query results. Did you call query_service()?')
         else:
-            target = self.create_target_from_query(target_parameters, **kwargs)
-            extras = self.create_target_extras_from_query(target_parameters, **kwargs)
-            aliases = self.create_aliases_from_query(target_parameters, **kwargs)
+            target = self.create_target_from_query(target_result, **kwargs)
+            extras = self.create_target_extras_from_query(target_result, **kwargs)
+            aliases = self.create_aliases_from_query(target_result.get('aliases', []), **kwargs)
             return target, extras, aliases
 
-    def create_target_from_query(self, query_results, **kwargs):
-        """Create a new target from the query results
+    def create_target_from_query(self, target_result, **kwargs):
+        """Create a new target from a single instance of the target results.
+        :param target_result: dictionary describing target details based on query result
         :returns: target object
         :rtype: `Target`
         """
-        raise NotImplementedError
+        raise NotImplementedError(f'create_target_from_query method has not been implemented for {self.name}')
 
     def create_target_extras_from_query(self, query_results, **kwargs):
         """Create a new target from the query results
@@ -268,9 +317,15 @@ class BaseDataService(ABC):
         """
         return {}
 
-    def create_aliases_from_query(self, query_results, **kwargs):
+    def create_aliases_from_query(self, alias_results: List, **kwargs) -> List:
         """Create a new target from the query results
-        :returns: list of aliases to be added to a new Target
+        This method should be over ridden with a method that creates a list of TargetName objects:
+        `TargetName(name=alias)` that will be saved as part of the `Target.save(extras=extras, names=aliases)` call.
+        :param query_result: list of dictionaries describing target details based on query result
+        :returns: list of TargetName objects to be added to a new Target
         :rtype: `list`
         """
-        return []
+        aliases = []
+        for alias in alias_results:
+            aliases.append(TargetName(name=alias))
+        return aliases

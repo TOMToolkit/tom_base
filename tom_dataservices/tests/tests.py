@@ -1,7 +1,8 @@
 from django import forms
 from django.test import TestCase
+from typing import List
 
-from tom_dataservices.dataservices import BaseDataService, MissingDataException, NotConfiguredError
+from tom_dataservices.dataservices import DataService, MissingDataException, NotConfiguredError
 from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import Target
 
@@ -16,7 +17,7 @@ class TestDataServiceForm(BaseQueryForm):
     name = forms.CharField(required=True)
 
 
-class TestDataService(BaseDataService):
+class TestDataService(DataService):
     name = 'TEST'
     service_notes = "This is a test DataService."
 
@@ -24,7 +25,11 @@ class TestDataService(BaseDataService):
         if term == 'notfound':
             raise MissingDataException
         self.query_results = test_query_results
-        return
+        return self.query_results
+
+    def query_targets(self, term, **kwargs) -> List[dict]:
+        self.query_results = self.query_service(term)
+        return [self.query_results]
 
     @classmethod
     def get_form_class(cls):
@@ -40,7 +45,7 @@ class TestDataService(BaseDataService):
         }
 
 
-class EmptyTestDataService(BaseDataService):
+class EmptyTestDataService(DataService):
     name = 'TEST'
     service_notes = "This is a test DataService."
 
@@ -70,8 +75,8 @@ class TestDataServiceClass(TestCase):
         with self.assertRaises(MissingDataException):
             new_test_query.to_target()
         # Show to_target() works with the default query_results
-        new_test_query.query_targets('mytarget')
-        target, _extras, _aliases = new_test_query.to_target()
+        target_results = new_test_query.query_targets('mytarget')
+        target, _extras, _aliases = new_test_query.to_target(target_result=target_results[0])
         self.assertEqual(target.name, test_query_results['name'])
         # Show to_target() works independently of the query.
         new_test_query_results = test_query_results.copy()

@@ -290,6 +290,29 @@ class TestAddExistingObservationView(TestCase):
         self.assertEqual(ObservationRecord.objects.filter(observation_id=obsr.observation_id).count(), 2)
 
 
+@override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
+                   TARGET_PERMISSIONS_ONLY=False)
+class TestCallbackView(TestCase):
+    def setUp(self):
+        self.target = SiderealTargetFactory.create(permissions='PUBLIC')
+        self.user = User.objects.create_user(username='vincent_adultman', password='important')
+        self.client.force_login(self.user)
+
+    def test_callback(self):
+        """
+        The callback url is constructed by the OCS and the user is redirected to it after
+        the observation record is created. This tests that a corresponding ObvservationRecord is created
+        on the TOM side, just as if one was created using the built-in OCS form.
+        The view should redirect the user to the detail view of the observation record.
+        """
+        callback_params = f"?target_id={self.target.id}&facility=FakeRoboticFacility&observation_id=1234"
+        url = reverse('tom_observations:callback') + callback_params
+        response = self.client.get(url)
+        observation = ObservationRecord.objects.get(target=self.target, facility='FakeRoboticFacility')
+        group = observation.observationgroup_set.first()
+        self.assertRedirects(response, reverse('tom_observations:list') + f"?observationgroup={group.id}")
+
+
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
 class TestFacilityStatusView(TestCase):
     def setUp(self):
@@ -460,7 +483,8 @@ class TestGetVisibility(TestCase):
         mock_facility.return_value = {'Fake Robotic Facility': FakeRoboticFacility}
         end = self.start + timedelta(minutes=60)
         airmass = get_sidereal_visibility(self.target, self.start, end, self.interval, self.airmass_limit)
-        airmass_data = airmass['(Fake Robotic Facility) Siding Spring'][1]
+
+        airmass_data = airmass['(FakeRoboticFacility) Siding Spring'][1]
         expected_airmass = [
             1.2619096566629477, 1.2648181328558852, 1.2703522349950636, 1.2785703053923894,
             1.2895601364316183, 1.3034413026227516, 1.3203684217446099

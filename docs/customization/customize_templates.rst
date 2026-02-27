@@ -8,9 +8,8 @@ like this:
 This is fine for starting out, but since you’re running a TOM for a
 specific project, the homepage ought to reflect that.
 
-If you haven’t already, please read through the `Getting
-Started </introduction/getting_started>`__ docs and return here when you
-have a project layout that looks something like this:
+If you haven’t already, please read through the :doc:`Getting Started </introduction/getting_started>` 
+docs and return here when you have a project layout that looks something like this:
 
 ::
 
@@ -272,7 +271,7 @@ Further Reading
 
 Any template included in the TOM Toolkit (or any other Django app) can
 be customized. Please see the `official Django
-docs <https://docs.djangoproject.com/en/2.1/howto/overriding-templates/>`__
+docs <https://docs.djangoproject.com/en/stable/howto/overriding-templates/>`__
 for more details.
 
 .. |image0| image:: /_static/customize_templates_doc/tomhomepagenew.png

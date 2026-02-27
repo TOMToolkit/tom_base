@@ -1,6 +1,11 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 targets_extras dataproduct_extras dataservices_extras %}
+{% load render_table from django_tables2 %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
 {% block title %}Targets{% endblock %}
+
 {% block content %}
 <div class="row">
   <div class="col-md-10">
@@ -16,18 +21,29 @@
           <a class="dropdown-item" href="{% url 'targets:import' %}" title="Import Targets">Import Targets</a>
           <a class="dropdown-item" href="{% url 'tom_catalogs:query' %}" title="Catalog Search">Catalog Search</a>
         </div>
-          {% catalog_query_menu %}
+        {% catalog_query_menu %}
+
         {% update_broker_data_button %}
-        <button onclick="document.getElementById('invisible-export-button').click()" class="btn btn-primary">Export Filtered Targets</button>
-         <!-- use an invisible button, because the key "Enter" event will triggered the first submit button and we want the default action to be applying filter -->
+
+        <!-- Export Filtered Targets button (gets current filter form values for export list)-->
+        <button type="button" class="btn btn-primary" title="Export Filtered Targets"
+                onclick="const queryString = new URLSearchParams(new FormData(document.querySelector('form.mb-3'))).toString(); window.location.href = '{% url 'targets:export' %}?' + queryString;">
+          Export Filtered Targets
+        </button>
       </span>
       </div>
     </div>
-    {% select_target_js %}
-    {% aladin_skymap object_list %}
-    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
-    <label id="displaySelected"></label>
-    <button id="optionSelectAll" type="button" class="btn btn-link" onClick="select_all({{ target_count }})"></button>
+
+    {# Aladin skymap -- initialized once on page load (Moon/Sun computed here). #}
+    {# On HTMX filter updates, only the target markers are updated via OOB swap #}
+    {# into the aladin-targets-data div below (see target_table_partial.html). #}
+    {% aladin_skymap skymap_objects %}
+
+    {# Placeholder for OOB target data updates from HTMX #}
+    <div id="aladin-targets-data"></div>
+
+    <hr>
+
     <form id="grouping-form" action="{% url 'targets:add-remove-grouping' %}" method="POST">
       {% csrf_token %}
       <div class="d-flex flex-row align-items-baseline">
@@ -48,21 +64,46 @@
         <button type="submit" class="btn btn-outline-danger ml-1" name="remove">Remove</button>
       </div>
     </form>
-    {% target_table object_list %}
-    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
-  </div>
-  {{ filter.fields }}
-  <div class="col-md-2">
-    <form action="" method="get" class="form">
-      {% bootstrap_form filter.form %}
-      {% buttons %}
-        <button type="submit" class="btn btn-primary">
-          Filter
-        </button>
-        <a href="{% url 'targets:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
-        <button type="submit" formaction="{% url 'targets:export' %}" id="invisible-export-button" style="display:none"></button>
-      {% endbuttons %}
+
+    {% block target_table_content %}
+    <hr>
+    {# Search form (we refer to this id="filter-form" in the TargetTable.Meta.attrs) #}
+    <form id="filter-form" class="mb-3"
+      hx-get="{% url 'tom_targets:list' %}"
+      hx-target="div.table-container"
+      hx-swap="outerHTML"
+      hx-indicator=".progress">
+        {% crispy filter.form %}
     </form>
+
+    {# Progress indicator #}
+    <div class="progress">
+        <div class="indeterminate"></div>
+    </div>
+
+    {# The actual table #}
+    <div class="table-container">
+        {% include "tom_targets/partials/target_table_partial.html" %}
+    </div>
+
+    <hr>
+      {% endblock target_table_content %}
   </div>
-</div>
-{% endblock %}
+  </div>
+
+  <script>
+  document.body.addEventListener('change', function(e) {
+    // This eventListener toggles all the checkboxes when the header-checkbox is toggled.
+
+    // Check if the source of the change event is our header checkbox
+    if (e.target && e.target.classList.contains('header-checkbox')) {
+
+        // Find all checkboxes with the specific name used in the rows
+        const checkboxes = document.querySelectorAll('input[name="selected-target"]');
+
+        // Set their state to match the header checkbox
+        checkboxes.forEach(cb => cb.checked = e.target.checked);
+    }
+  });
+  </script>
+{% endblock content %}

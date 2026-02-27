@@ -18,11 +18,13 @@ from urllib.parse import urlencode
 
 from tom_dataservices.models import DataServiceQuery
 from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class, NotConfiguredError
+from tom_dataservices.dataservices import MissingDataException, QueryServiceError
+
 
 logger = logging.getLogger(__name__)
 
 
-class DataServiceQueryFilter(FilterSet):
+class DataServiceQueryFilterSet(FilterSet):
     """
     Defines the available fields for filtering the list of queries.
     """
@@ -42,7 +44,7 @@ class DataServiceQueryListView(FilterView):
     """
     model = DataServiceQuery
     template_name = 'tom_dataservices/query_list.html'
-    filterset_class = DataServiceQueryFilter
+    filterset_class = DataServiceQueryFilterSet
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -85,7 +87,7 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         if not data_service_name:
             raise ValueError('Must provide a data service name')
 
-        return get_data_service_class(data_service_name).get_form_class(self)
+        return get_data_service_class(data_service_name).get_form_class()
 
     def get_form(self, form_class=None):
         """
@@ -135,6 +137,9 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         advanced_form = get_data_service_class(data_service_name).get_advanced_form_partial(self)
         context['simple_form'] = simple_form
         context['advanced_form'] = advanced_form
+        context['app_link'] = get_data_service_class(data_service_name).app_link
+        context['app_version'] = get_data_service_class(data_service_name).app_version
+
         return context
 
 
@@ -156,6 +161,7 @@ class RunQueryView(TemplateView):
         query = None
         query_feedback = ""
         data_service_class = None
+        cached_results = {}
 
         # Do query and get query results
         try:
@@ -170,24 +176,39 @@ class RunQueryView(TemplateView):
                 input_parameters = self.request.session.get('query_parameters', {})
                 data_service_class = get_data_service_class(input_parameters['data_service'])()
                 query_parameters = data_service_class.build_query_parameters(input_parameters)
-
-            results = data_service_class.query_targets(query_parameters)
+            # Check cached query is the same and pull cache if needed.
+            if query_parameters == cache.get('query_params'):
+                cached_results = cache.get_many([f'result_{result_id}' for result_id in range(0, 99)])
+            else:
+                cache.clear()
+            if cached_results:
+                results = [cached_results[key] for key in cached_results]
+            else:
+                results = data_service_class.query_targets(query_parameters)
         except HTTPError as e:
             results = iter(())
             query_feedback += f"Issue fetching query results, please try again.</br>{e}</br>"
         except NotConfiguredError as e:
             results = iter(())
             query_feedback += f"Configuration Error. Please contact your TOM Administrator: </br>{e}</br>"
+        except QueryServiceError as e:
+            results = iter(())
+            query_feedback += f"There was an error with the underlying query service: </br>{e}</br>"
 
         # create context for template
         context['query'] = query
         context['query_feedback'] = query_feedback
         context['too_many_results'] = False
         context['data_service'] = data_service_class.name
-        context['query_results_table'] = data_service_class.query_results_table or 'tom_dataservices/partials/' \
-                                                                                   'query_results_table.html'
+        if data_service_class.query_results_table:
+            context['query_results_table'] = data_service_class.query_results_table
+        else:
+            context['query_results_table'] = 'tom_dataservices/partials/query_results_table.html'
 
         context['results'] = []
+
+        # Set Cache and context
+        cache.set('query_params', query_parameters, 3600)
         try:
             for (i, result) in enumerate(results):
                 if i > 99:
@@ -238,7 +259,7 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         module for which the query is being updated.
         """
         self.object = self.get_object()
-        return get_data_service_class(self.object.data_service).get_form_class(self)
+        return get_data_service_class(self.object.data_service).get_form_class()
 
     def get_form(self, form_class=None):
         """
@@ -312,36 +333,51 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
         target = None
         if not results:
             messages.warning(request, 'Please select at least one result from which to create a target.')
-            return redirect(reverse('dataservices:run', kwargs={'pk': query_id}))
-        for result_id in results:
-            cached_result = cache.get(f'result_{result_id}')
-            if not cached_result:
-                messages.error(request, 'Could not create targets. Try re-running the query again.')
-                return redirect(reverse('dataservices:run', kwargs={'pk': query_id}))
-            target, extras, aliases = data_service_class.to_target(cached_result)
-            try:
-                target.save(extras=extras, names=aliases)
-                # Give the user access to the target they created
-                target.give_user_access(self.request.user)
+            if query_id:
+                return redirect(reverse('dataservices:run_saved', kwargs={'pk': query_id}))
+            else:
+                return redirect(reverse('dataservices:run'))
+        try:
+            for result_id in results:
+                cached_result = cache.get(f'result_{result_id}')
+                if not cached_result:
+                    messages.error(request, 'Could not create targets. Try re-running the query again.')
+                    if query_id:
+                        return redirect(reverse('dataservices:run_saved', kwargs={'pk': query_id}))
+                    else:
+                        return redirect(reverse('dataservices:run'))
+                target, extras, aliases = data_service_class.to_target(cached_result)
                 try:
-                    data_service_class.to_reduced_datums(target, cached_result)
-                except NotImplementedError:
-                    pass
-                for group in request.user.groups.all():
-                    assign_perm('tom_targets.view_target', group, target)
-                    assign_perm('tom_targets.change_target', group, target)
-                    assign_perm('tom_targets.delete_target', group, target)
-            except IntegrityError:
-                messages.warning(request, mark_safe(
-                                 f"""Unable to save {target.name}, target with that name already exists.
-                                 You can <a href="{reverse('targets:create') + '?' +
-                                                   urlencode(target.as_dict())}">create</a>
-                                  a new target anyway.
-                                 """)
-                                 )
-                errors.append(target.name)
+                    target.save(extras=extras, names=aliases)
+                    # Give the user access to the target they created
+                    target.give_user_access(self.request.user)
+                    for group in request.user.groups.all():
+                        assign_perm('tom_targets.view_target', group, target)
+                        assign_perm('tom_targets.change_target', group, target)
+                        assign_perm('tom_targets.delete_target', group, target)
+                except IntegrityError:
+                    messages.warning(request,
+                                     mark_safe(
+                                         f"""Unable to save {target.name}, target with that name already exists.
+                                         You can <a href="{reverse('targets:create') + '?' +
+                                                           urlencode(target.as_dict())}">create</a> a new target anyway.
+                                         """)
+                                     )
+                    errors.append(target.name)
+                    target = None
+                # Do not attempt to store Reduced Datums if no Target Created.
+                if target:
+                    try:
+                        data_service_class.to_reduced_datums(target, cached_result.get('reduced_datums'))
+                    except MissingDataException:
+                        pass
+        except NotImplementedError as e:
+            messages.error(request, e)
         if len(results) == len(errors):
-            return redirect(reverse('dataservices:run'))
+            if query_id:
+                return redirect(reverse('dataservices:run_saved', kwargs={'pk': query_id}))
+            else:
+                return redirect(reverse('dataservices:run'))
         if len(results) == 1 and target:
             return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
         return redirect(reverse('tom_targets:list'))

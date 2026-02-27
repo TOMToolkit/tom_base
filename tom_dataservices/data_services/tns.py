@@ -5,7 +5,7 @@ from django import forms
 from crispy_forms.layout import Div, Fieldset, HTML, Layout
 from datetime import datetime, timedelta
 
-from tom_dataservices.dataservices import BaseDataService
+from tom_dataservices.dataservices import DataService
 from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import Target
 
@@ -75,7 +75,7 @@ class TNSForm(BaseQueryForm):
         )
 
 
-class TNSDataService(BaseDataService):
+class TNSDataService(DataService):
     """
         The ``TNSDataService`` is the interface to the Transient Name Server. For information regarding the TNS,
         please see https://www.wis-tns.org/
@@ -178,37 +178,32 @@ class TNSDataService(BaseDataService):
 
     def query_targets(self, query_parameters):
         """Set up and run a specialized query for retrieving targets from a DataService."""
-        targets = []
         results = self.query_service(query_parameters, url=self.get_urls('search_url'))
+        targets = []
+        # results = self.query_service(query_parameters, url=self.get_urls('search_url'))
         for result in results:
             target_parameters = self.build_query_parameters(result)
             target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
             targets.append(target_data)
+        self.target_results = targets
         return targets
 
     @classmethod
     def get_form_class(cls):
         return TNSForm
 
-    def create_target_from_query(self, query_results, **kwargs):
+    def create_target_from_query(self, target_results, **kwargs):
         """
-            Returns a Target instance for an object defined by a query result, as well as
-            any TargetExtra or additional TargetNames.
+            Returns a Target instance for an object defined by a query result,
 
             :returns: target object
             :rtype: `Target`
-
-            :returns: dict of extras to be added to the new Target
-            :rtype: `dict`
-
-            :returns: list of aliases to be added to the new Target
-            :rtype: `list`
         """
 
         target = Target(
-            name=query_results['name_prefix'] + query_results['objname'],
+            name=target_results['name_prefix'] + target_results['objname'],
             type='SIDEREAL',
-            ra=query_results['radeg'],
-            dec=query_results['decdeg']
+            ra=target_results['radeg'],
+            dec=target_results['decdeg']
         )
         return target

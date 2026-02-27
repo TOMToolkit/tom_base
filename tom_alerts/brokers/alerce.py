@@ -24,8 +24,8 @@ SORT_CHOICES = [(None, 'None'),
                 ('ndet', 'Number of Detections'),
                 ('firstmjd', 'First Detection'),
                 ('lastmjd', 'Last Detection'),
-                ('meanra', 'Mean Right Ascension'),
-                ('meandec', 'Mean Declination')]
+                ('deltamjd', 'Delta MJD (days)')
+                ]
 
 SORT_ORDER = [(None, 'None'),
               ('ASC', 'Ascending'),
@@ -51,12 +51,48 @@ class ALeRCEQueryForm(GenericQueryForm):
     )
     lc_classifier = forms.ChoiceField(
         required=False,
-        label='Light Curve Class',
+        label='Light Curve Classifier Class',
         choices=[],  # Choices are populated dynamically in the constructor
     )
     p_lc_classifier = forms.FloatField(
         required=False,
         label='Light Curve Classifier Probability'
+    )
+    lc_classifier_top = forms.ChoiceField(
+        required=False,
+        label='Light Curve Classifier Top Class',
+        choices=[],  # Choices are populated dynamically in the constructor
+    )
+    p_lc_classifier_top = forms.FloatField(
+        required=False,
+        label='Light Curve Classifier Top Probability'
+    )
+    lc_classifier_bhrf = forms.ChoiceField(
+        required=False,
+        label='Light Curve Classifier BHRF Forced Phot Class',
+        choices=[],  # Choices are populated dynamically in the constructor
+    )
+    p_lc_classifier_bhrf = forms.FloatField(
+        required=False,
+        label='Light Curve Classifier BHRF Forced Phot Probability'
+    )
+    lc_classifier_bhrf_top = forms.ChoiceField(
+        required=False,
+        label='Light Curve Classifier BHRF Forced Phot Top Class',
+        choices=[],  # Choices are populated dynamically in the constructor
+    )
+    p_lc_classifier_bhrf_top = forms.FloatField(
+        required=False,
+        label='Light Curve Classifier BHRF Forced Phot Top Probability'
+    )
+    lc_classifier_atat = forms.ChoiceField(
+        required=False,
+        label='Light Curve Classifier ATAT Forced Phot Beta Class',
+        choices=[],  # Choices are populated dynamically in the constructor
+    )
+    p_lc_classifier_atat = forms.FloatField(
+        required=False,
+        label='Light Curve Classifier ATAT Forced Phot Beta Probability'
     )
     stamp_classifier = forms.ChoiceField(
         required=False,
@@ -66,6 +102,15 @@ class ALeRCEQueryForm(GenericQueryForm):
     p_stamp_classifier = forms.FloatField(
         required=False,
         label='Stamp Classifier Probability'
+    )
+    stamp_classifier_beta = forms.ChoiceField(
+        required=False,
+        label='Stamp Classifier 2025 Beta Class',
+        choices=[],  # Choices are populated dynamically in the constructor
+    )
+    p_stamp_classifier_beta = forms.FloatField(
+        required=False,
+        label='Stamp Classifier 2025 Beta Probability'
     )
     ra = forms.FloatField(
         required=False,
@@ -127,7 +172,12 @@ class ALeRCEQueryForm(GenericQueryForm):
         super().__init__(*args, **kwargs)
 
         self.fields['lc_classifier'].choices = self._get_light_curve_classifier_choices()
+        self.fields['lc_classifier_top'].choices = self._get_light_curve_classifier_top_choices()
+        self.fields['lc_classifier_bhrf'].choices = self._get_light_curve_classifier_bhrf_choices()
+        self.fields['lc_classifier_bhrf_top'].choices = self._get_light_curve_classifier_bhrf_top_choices()
+        self.fields['lc_classifier_atat'].choices = self._get_light_curve_classifier_atat_choices()
         self.fields['stamp_classifier'].choices = self._get_stamp_classifier_choices()
+        self.fields['stamp_classifier_beta'].choices = self._get_stamp_classifier_beta_choices()
 
         self.helper.layout = Layout(
             HTML('''
@@ -144,8 +194,28 @@ class ALeRCEQueryForm(GenericQueryForm):
                     Column('p_lc_classifier')
                 ),
                 Row(
+                    Column('lc_classifier_top'),
+                    Column('p_lc_classifier_top')
+                ),
+                Row(
+                    Column('lc_classifier_bhrf'),
+                    Column('p_lc_classifier_bhrf')
+                ),
+                Row(
+                    Column('lc_classifier_bhrf_top'),
+                    Column('p_lc_classifier_bhrf_top')
+                ),
+                Row(
+                    Column('lc_classifier_atat'),
+                    Column('p_lc_classifier_atat')
+                ),
+                Row(
                     Column('stamp_classifier'),
                     Column('p_stamp_classifier')
+                ),
+                Row(
+                    Column('stamp_classifier_beta'),
+                    Column('p_stamp_classifier_beta')
                 )
             ),
             Fieldset(
@@ -200,22 +270,129 @@ class ALeRCEQueryForm(GenericQueryForm):
     @staticmethod
     def _get_light_curve_classifier_choices():
         light_curve_classifiers = []
+        version = '1.0.0'
+        current_version = version
+
+        # Grab all classifiers available in ALeRCE
+        all_classifiers = ALeRCEQueryForm._get_classifiers()
+
+        for classifier in all_classifiers:
+            if classifier['classifier_name'] == 'lc_classifier':
+                new_version = classifier['classifier_version'].split('_')[-1]
+                if new_version > version:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
+                    current_version = new_version
+
+        if current_version == version:
+            for classifier in all_classifiers:
+                split_class = classifier['classifier_name'].split('_')
+                if len(split_class) == 3 and split_class[0] == 'lc' and split_class[2] != 'top':
+                    subclass = split_class[2].capitalize()
+                    light_curve_classifiers += [(c, f'{subclass} - {c}') for c in classifier['classes']]
+
+        return [(None, '')] + light_curve_classifiers
+
+    @staticmethod
+    def _get_light_curve_classifier_top_choices():
+        light_curve_classifiers = []
+        version = '1.0.0'
+
+        # Grab all classifiers available in ALeRCE
+        all_classifiers = ALeRCEQueryForm._get_classifiers()
+
+        for classifier in all_classifiers:
+            if classifier['classifier_name'] == 'lc_classifier_top':
+                new_version = classifier['classifier_version'].split('_')[-1]
+                if new_version > version:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
+                else:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
+
+        return [(None, '')] + light_curve_classifiers
+
+    @staticmethod
+    def _get_light_curve_classifier_bhrf_choices():
+        light_curve_classifiers = []
+        version = '2.1.0'
+        current_version = version
+
+        # Grab all classifiers available in ALeRCE
+        all_classifiers = ALeRCEQueryForm._get_classifiers()
+
+        for classifier in all_classifiers:
+            if classifier['classifier_name'] == 'lc_classifier_BHRF_forced_phot':
+                new_version = classifier['classifier_version'].split('_')[-1]
+                if new_version > version:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
+                    current_version = new_version
+
+        if current_version == version:
+            for classifier in all_classifiers:
+                split_class = classifier['classifier_name'].split('_')
+                if len(split_class) == 3 and split_class[0] == 'lc' and split_class[2] != 'top':
+                    subclass = split_class[2].capitalize()
+                    light_curve_classifiers += [(c, f'{subclass} - {c}') for c in classifier['classes']]
+
+            return [(None, '')] + light_curve_classifiers
+
+    @staticmethod
+    def _get_light_curve_classifier_bhrf_top_choices():
+        light_curve_classifiers = []
+        version = '1.0.0'
+
+        # Grab all classifiers available in ALeRCE
+        all_classifiers = ALeRCEQueryForm._get_classifiers()
+
+        for classifier in all_classifiers:
+            if classifier['classifier_name'] == 'lc_classifier_BHRF_forced_phot_top':
+                new_version = classifier['classifier_version'].split('_')[-1]
+                if new_version > version:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
+                else:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
+
+        return [(None, '')] + light_curve_classifiers
+
+    @staticmethod
+    def _get_light_curve_classifier_atat_choices():
+        version = 'beta'
+        light_curve_classifiers = []
         for classifier in ALeRCEQueryForm._get_classifiers():
-            if (any(x in classifier['classifier_name'] for x in ['transient', 'stochastic', 'periodic'])):
-                classifier_name = classifier['classifier_name'].split('_')[-1]
-                light_curve_classifiers += [(c, f'{c} - {classifier_name}') for c in classifier['classes']]
+            if classifier['classifier_name'] == 'LC_classifier_ATAT_forced_phot(beta)':
+                new_version = classifier['classifier_version'].split('_')[-1]
+                if new_version > version:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
+                else:
+                    light_curve_classifiers = [(c, c) for c in classifier['classes']]
 
         return [(None, '')] + light_curve_classifiers
 
     @staticmethod
     def _get_stamp_classifier_choices():
-        version = '0.0.0'
+        version = '1.0.4'
         stamp_classifiers = []
 
         for classifier in ALeRCEQueryForm._get_classifiers():
             if classifier['classifier_name'] == 'stamp_classifier':
                 new_version = classifier['classifier_version'].split('_')[-1]
                 if new_version > version:
+                    stamp_classifiers = [(c, c) for c in classifier['classes']]
+                else:
+                    stamp_classifiers = [(c, c) for c in classifier['classes']]
+
+        return [(None, '')] + stamp_classifiers
+
+    @staticmethod
+    def _get_stamp_classifier_beta_choices():
+        version = 'beta'
+        stamp_classifiers = []
+
+        for classifier in ALeRCEQueryForm._get_classifiers():
+            if classifier['classifier_name'] == 'stamp_classifier_2025_beta':
+                new_version = classifier['classifier_version'].split('_')[-1]
+                if new_version > version:
+                    stamp_classifiers = [(c, c) for c in classifier['classes']]
+                else:
                     stamp_classifiers = [(c, c) for c in classifier['classes']]
 
         return [(None, '')] + stamp_classifiers
@@ -265,12 +442,38 @@ class ALeRCEBroker(GenericBroker):
     form = ALeRCEQueryForm
 
     def _clean_classifier_parameters(self, parameters):
+        """
+        This method returns a parameter list for a given classifier with a
+        cleaned up version of the ALeRCE classifier names.
+        The function finds the ALeRCE classifier name (predefined here) and
+        matches it to the TOM Toolkit ALeRCE broker classifier name. Then it
+        appends the classifier_parameter list with the parameters specified in
+        the TOM Toolkit ALeRCE broker query definition.
+
+        List of available classifiers can be seen here: https://api.alerce.online/ztf/v1/classifiers/
+
+        :param parameters:
+        :return: classifier parameters tuple that holds strings with cleaned up versions of
+        available classifiers.
+        """
+
         classifier_parameters = []
         class_type = ''
+
         if parameters['stamp_classifier']:
             class_type = 'stamp_classifier'
+        elif parameters.get('stamp_classifier_beta'):
+            class_type = 'stamp_classifier_2025_beta'
         elif parameters['lc_classifier']:
             class_type = 'lc_classifier'
+        elif parameters.get('lc_classifier_top'):
+            class_type = 'lc_classifier_top'
+        elif parameters.get('lc_classifier_bhrf'):
+            class_type = 'lc_classifier_BHRF_forced_phot'
+        elif parameters.get('lc_classifier_bhrf_top'):
+            class_type = 'lc_classifier_BHRF_forced_phot_top'
+        elif parameters.get('lc_classifier_atat'):
+            class_type = 'LC_classifier_ATAT_forced_phot(beta)'
 
         if class_type:
             classifier_parameters.append(('classifier', class_type))
@@ -372,7 +575,7 @@ class ALeRCEBroker(GenericBroker):
             mjd = Time(detection['mjd'], format='mjd', scale='utc')
             value = {
                 'filter': FILTERS[detection['fid']],
-                'magnitude': detection['diffmaglim'],
+                'magnitude': detection['magpsf'],
                 'error': detection['sigmapsf'],
                 'telescope': 'ZTF',
             }

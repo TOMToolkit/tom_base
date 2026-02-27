@@ -3,7 +3,9 @@
       <tr>
         <th><input type="checkbox" id="selectAll"/></th>
         {% for column in results.0.keys %}
-          <th>{{ column|capfirst }}</th>
+          {% if column != 'reduced_datums' %}
+            <th>{{ column|capfirst }}</th>
+          {% endif %}
         {% endfor %}
         <th></th>
       </tr>
@@ -12,8 +14,10 @@
       {% for result in results %}
       <tr>
         <td><input type="checkbox" name="selected_results" value="{{ result.id }}"/></td>
-        {% for value in result.values %}
-          <td>{{ value }}</td>
+        {% for key, value in result.items %}
+          {% if key != 'reduced_datums' %}
+            <td>{{ value }}</td>
+          {% endif %}
         {% endfor %}
       </tr>
       {% endfor %}

@@ -1102,8 +1102,21 @@ class LCOSpectroscopicSequenceForm(LCOOldStyleObservationForm):
 class LCOFacility(OCSFacility):
     """
     The ``LCOFacility`` is the interface to the Las Cumbres Observatory Observation Portal. For information regarding
-    LCO observing and the available parameters, please see the Getting Started Guide at
-    https://lco.global/documents/2505/GettingStartedontheLCONetwork.latest.pdf.
+    LCO observing and the available parameters, please see the
+    `LCO Documentation <https://lco.global/documentation/>`__ .
+    To use this facility you will need to update the `FACILITIES` in your ``settings.py`` with a `portal_url` and an
+    `api_key`.
+
+    .. code-block:: python
+        :caption: settings.py
+
+        FACILITIES = {
+            'LCO': {
+                'portal_url': 'https://observe.lco.global',
+                'api_key': os.getenv('LCO_API_KEY'),
+            },
+        }
+
     """
     name = 'LCO'
     link = 'https://lco.global/documents/2505/GettingStartedontheLCONetwork.latest.pdf'
@@ -1115,8 +1128,10 @@ class LCOFacility(OCSFacility):
         'SPECTROSCOPIC_SEQUENCE': LCOSpectroscopicSequenceForm
     }
 
-    def __init__(self, facility_settings=LCOSettings('LCO')):
+    def __init__(self, facility_settings=LCOSettings('LCO'), name_override=None):
         super().__init__(facility_settings=facility_settings)
+        if name_override:
+            self.name = name_override
 
     # TODO: this should be called get_form_class
     def get_form(self, observation_type):
