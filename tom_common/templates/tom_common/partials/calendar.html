@@ -1,0 +1,65 @@
+<style>
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+  .cal-day {
+    min-height: 110px;
+  }
+  .cal-day:hover {
+    background-color: rgba(0, 0, 0, .04);
+  }
+  .cal-day.other-month:hover {
+    background-color: rgba(0, 0, 0, .06);
+  }
+  .day-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    font-size: 0.80rem;
+    font-weight: 500;
+    border-radius: 50%;
+    margin-bottom: 0.15rem;
+  }
+</style>
+
+<div id="calendar-partial">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <button class="btn btn-outline-secondary btn-sm"
+            hx-get="{% url 'calendar:calendar' %}?month={{ prev_month }}&year={{ prev_year }}"
+            hx-target="#calendar-partial"
+            hx-swap="outerHTML">
+      &laquo; Prev
+    </button>
+    <h4 class="mb-0">{{ month_name }}</h4>
+    <button class="btn btn-outline-secondary btn-sm"
+            hx-get="{% url 'calendar:calendar' %}?month={{ next_month }}&year={{ next_year }}"
+            hx-target="#calendar-partial"
+            hx-swap="outerHTML">
+      Next &raquo;
+    </button>
+  </div>
+
+  <div class="cal-grid border-top border-left">
+    {% for name in day_names %}
+      <div class="cal-day-header text-center bg-light font-weight-bold text-secondary border-right border-bottom p-2">{{ name }}</div>
+    {% endfor %}
+
+    {% for week in weeks %}
+      {% for day in week %}
+        {% if day.month != month %}
+          <div class="cal-day other-month bg-light border-right border-bottom p-1">
+            <span class="day-num text-muted">{{ day.day }}</span>
+          </div>
+        {% else %}
+          <div class="cal-day{% if day == today %} today{% endif %} border-right border-bottom p-1">
+            <span class="day-num {% if day == today %}text-white bg-primary font-weight-bold{% endif %}">{{ day.day }}</span>
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+
+  </div>
+</div>
