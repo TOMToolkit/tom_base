@@ -1,7 +1,6 @@
 import calendar as cal_module
 from datetime import date
 
-from django.urls import path
 from django.utils import timezone
 from django.shortcuts import render
 
@@ -49,13 +48,8 @@ def render_calendar(request):
     }
 
     if request.htmx:
-        template = "tom_common/partials/calendar.html"
+        template = "tom_calendar/partials/calendar.html"
     else:
-        template = "tom_common/calendar_page.html"
+        template = "tom_calendar/calendar_page.html"
 
     return render(request, template, context)
-
-
-urlpatterns = [
-    path("", render_calendar, name="calendar"),
-]
