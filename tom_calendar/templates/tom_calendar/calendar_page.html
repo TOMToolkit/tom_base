@@ -1,6 +1,8 @@
 {% extends 'tom_common/base.html' %}
+{% load tz %}
 {% block title %}Calendar{% endblock %}
 {% block content %}
-  <h2>Calendar</h2>
   {% include 'tom_calendar/partials/calendar.html' %}
+  {% get_current_timezone as TIME_ZONE %}
+  <p>The current time zone is {{ TIME_ZONE }}</p>
 {% endblock %}
