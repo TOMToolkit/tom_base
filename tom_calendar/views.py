@@ -132,7 +132,7 @@ def create_event(request):
         if form.is_valid():
             form.save()
             response = render_calendar(request)
-            return trigger_client_event(response, "eventCreated")
+            return trigger_client_event(response, "calModified")
         else:
             response = render(request, "tom_calendar/partials/event_form.html", {"form": form, "action": "create"})
             response["HX-Retarget"] = "#cal-modal-body"
@@ -162,7 +162,7 @@ def update_event(request, event_id):
         if form.is_valid():
             form.save()
             response = render_calendar(request)
-            return trigger_client_event(response, "eventCreated")
+            return trigger_client_event(response, "calModified")
         else:
             response = render(
                 request,
