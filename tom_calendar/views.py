@@ -1,15 +1,48 @@
-from django_htmx.http import trigger_client_event
+from typing import Self
+from dataclasses import dataclass
 import calendar as cal_module
-from datetime import date, datetime
+import math
+from datetime import date, datetime, time
+
+from astropy.time import Time
+from astropy.coordinates import get_body, get_sun
+import astropy.units as u
 
 from django.utils import timezone
 from django.shortcuts import render
 from django import forms
+from django_htmx.http import trigger_client_event
 
 from .models import CalendarEvent
 
 DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+MOON_EMOJIS = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
 DATETIME_INPUT = forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M')
+
+
+@dataclass
+class MoonPhase:
+    illumination: float
+    emoji: str
+
+    @classmethod
+    def from_date(cls, date: date) -> Self:
+        d = datetime.combine(date, time(12, 0))
+        t = Time(d)
+        moon = get_body("moon", t)
+        sun = get_sun(t)
+        moon_lon = moon.geocentricmeanecliptic.lon
+        sun_lon = sun.geocentricmeanecliptic.lon
+        phase_angle = (moon_lon - sun_lon).wrap_at(360 * u.deg).deg
+
+        # Illumination fraction from elongation
+        # 0 (new) -> 0.0, 90 (quarter) -> 0.5, 180 (full) -> 1.0
+        illumination = (1 - math.cos(math.radians(phase_angle))) / 2
+
+        # 8 45deg slices map to the phase emoji
+        emoji = MOON_EMOJIS[int(phase_angle / 45) % 8]
+
+        return cls(illumination, emoji)
 
 
 def render_calendar(request):
@@ -46,6 +79,7 @@ def render_calendar(request):
         [
             {
                 "date": d,
+                "moon": MoonPhase.from_date(d),
                 "events": [e for e in events if e.start_time.date() <= d <= e.end_time.date()],
             }
             for d in week
