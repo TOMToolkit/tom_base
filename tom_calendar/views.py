@@ -134,7 +134,7 @@ def create_event(request):
             response = render_calendar(request)
             return trigger_client_event(response, "eventCreated")
         else:
-            response = render(request, "tom_calendar/partials/create_event.html", {"form": form, "action": "create"})
+            response = render(request, "tom_calendar/partials/event_form.html", {"form": form, "action": "create"})
             response["HX-Retarget"] = "#cal-modal-body"
             response["HX-Reswap"] = "innerHTML"
             return response
@@ -151,7 +151,7 @@ def create_event(request):
         except ValueError:
             form = EventForm()
 
-    return render(request, "tom_calendar/partials/create_event.html", {"form": form, "action": "create"})
+    return render(request, "tom_calendar/partials/event_form.html", {"form": form, "action": "create"})
 
 
 def update_event(request, event_id):
@@ -166,7 +166,7 @@ def update_event(request, event_id):
         else:
             response = render(
                 request,
-                "tom_calendar/partials/create_event.html",
+                "tom_calendar/partials/event_form.html",
                 {"form": form, "event": event, "action": "update"}
             )
             response["HX-Retarget"] = "#cal-modal-body"
@@ -177,6 +177,6 @@ def update_event(request, event_id):
         form = EventForm(instance=event)
         return render(
             request,
-            "tom_calendar/partials/create_event.html",
+            "tom_calendar/partials/event_form.html",
             {"form": form, "event": event, "action": "update"}
         )
