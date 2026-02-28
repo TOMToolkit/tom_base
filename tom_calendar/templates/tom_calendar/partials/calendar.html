@@ -67,7 +67,11 @@
 
     {% for week in weeks %}
       {% for day in week %}
-        <div class="cal-day{% if day.date.month == month %} is-current-month{% endif %}{% if day.date == today %} today{% endif %} border-right border-bottom p-1">
+        <div class="cal-day{% if day.date.month == month %} is-current-month{% endif %}{% if day.date == today %} today{% endif %} border-right border-bottom p-1"
+             hx-get="{% url 'calendar:create-event' %}?date={{ day.date }}"
+             hx-target="#cal-modal-body"
+             hx-on::after-request="$('#cal-modal').modal('show');"
+        >
           <span class="day-num">{{ day.date.day }}</span>
           {% for event in day.events %}
             <div class="cal-event text-truncate">

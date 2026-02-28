@@ -1,22 +1,23 @@
+from django_htmx.http import trigger_client_event
 import calendar as cal_module
-from datetime import date
+from datetime import date, datetime
 
 from django.utils import timezone
 from django.shortcuts import render
+from django import forms
 
 from .models import CalendarEvent
 
 DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+DATETIME_INPUT = forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M')
 
 
 def render_calendar(request):
     now = timezone.now()
     today = now.date()
-
     month = int(request.GET.get("month", now.month))
-    year = int(request.GET.get("year", now.year))
-
     month = max(1, min(12, month))
+    year = int(request.GET.get("year", now.year))
 
     # Sunday is 6 in python calendar for some reason
     calendar = cal_module.Calendar(firstweekday=6)
@@ -32,7 +33,6 @@ def render_calendar(request):
         next_month, next_year = month + 1, year
 
     month_name = date(year, month, 1).strftime("%B %Y")
-
     weeks = calendar.monthdatescalendar(year, month)
 
     # Fetch all events for this month instead of querying for each day
@@ -72,3 +72,41 @@ def render_calendar(request):
         template = "tom_calendar/calendar_page.html"
 
     return render(request, template, context)
+
+
+class EventForm(forms.ModelForm):
+    class Meta:
+        model = CalendarEvent
+        fields = ['title', 'start_time', 'end_time', 'description', 'url']
+        widgets = {
+            'start_time': DATETIME_INPUT,
+            'end_time': DATETIME_INPUT,
+        }
+
+
+def create_event(request):
+    if request.method == "POST":
+        form = EventForm(request.POST)
+        if form.is_valid():
+            form.save()
+            response = render_calendar(request)
+            return trigger_client_event(response, "eventCreated")
+        else:
+            response = render(request, "tom_calendar/partials/create_event.html", {"form": form})
+            response["HX-Retarget"] = "#cal-modal-body"
+            response["HX-Reswap"] = "innerHTML"
+            return response
+
+    else:
+        try:
+            date_str = request.GET["date"]
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+            initial_data = {
+                "start_time": datetime.combine(date_obj, datetime.min.time()),
+                "end_time": datetime.combine(date_obj, datetime.max.time()),
+            }
+            form = EventForm(initial=initial_data)
+        except ValueError:
+            form = EventForm()
+
+    return render(request, "tom_calendar/partials/create_event.html", {"form": form})
