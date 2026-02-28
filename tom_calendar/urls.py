@@ -1,10 +1,11 @@
 from django.urls import path
 
-from .views import render_calendar, create_event
+from .views import render_calendar, create_event, update_event
 
 app_name = 'tom_calendar'
 
 urlpatterns = [
     path("", render_calendar, name="calendar"),
-    path("create/", create_event, name="create-event")
+    path("create/", create_event, name="create-event"),
+    path("update/<int:event_id>/", update_event, name="update-event"),
 ]

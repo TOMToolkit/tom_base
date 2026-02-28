@@ -1,5 +1,10 @@
 {% load bootstrap4 %}
-<form hx-post="{% url 'calendar:create-event' %}" hx-target="#calendar-partial" id="create-event-form">
+<form {% if action == "create" %}
+        hx-post="{% url 'calendar:create-event' %}"
+      {% else %}
+        hx-post="{% url 'calendar:update-event' event.id %}"
+      {% endif %}
+        hx-target="#calendar-partial">
     {% csrf_token %}
     {% bootstrap_form form %}
     {% buttons %}
