@@ -47,6 +47,28 @@
   .cal-event a {
     color: inherit;
   }
+  .cal-event-timed {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .cal-event-timed .cal-event-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cal-event-timed .cal-event-bullet {
+    flex-shrink: 0;
+    opacity: 0.5;
+  }
+  .cal-event-timed .cal-event-time {
+    flex-shrink: 0;
+    white-space: nowrap;
+    opacity: 0.55;
+    font-size: 0.68rem;
+  }
   .cal-event-all-day {
     display: block;
     border-radius: 3px;
@@ -102,19 +124,23 @@
           {% for event in day.all_day_events %}
             <div class="cal-event cal-event-all-day" style="background-color: {{ event.color }};">
               {% if event.url %}
-                <a href="{{ event.url }}">{{ event.title }}</a>
+                <a href="{{ event.url }}">{{ event.title|truncatechars:22 }}</a>
               {% else %}
-                {{ event.title }}
+                {{ event.title|truncatechars:22 }}
               {% endif %}
             </div>
           {% endfor %}
           {% for event in day.events %}
-            <div class="cal-event text-truncate">
-              {% if event.url %}
-                <a href="{{ event.url }}">{{ event.title }}</a>
-              {% else %}
-                {{ event.title }}
-              {% endif %}
+            <div class="cal-event cal-event-timed">
+              <span class="cal-event-bullet">•</span>
+              <span class="cal-event-title">
+                {% if event.url %}
+                  <a href="{{ event.url }}">{{ event.title|truncatechars:20 }}</a>
+                {% else %}
+                  {{ event.title|truncatechars:20 }}
+                {% endif %}
+              </span>
+              <span class="cal-event-time">{{ event.start_time|time:"H:i" }}</span>
             </div>
           {% endfor %}
         </div>
