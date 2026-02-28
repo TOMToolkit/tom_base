@@ -121,38 +121,36 @@
         >
           <span class="day-num">{{ day.date.day }}</span>
           <span class="moon-phase" title="{% widthratio day.moon.illumination 1 100 %}% illuminated">{{ day.moon.emoji }}</span>
-          {% for event in day.all_day_events %}
-            <div class="cal-event cal-event-all-day" style="background-color: {{ event.color }};"
-                 hx-get="{% url 'calendar:update-event' event.id %}"
-                 hx-target="#cal-modal-body"
-                 hx-on::after-request="$('#cal-modal').modal('show');"
-                 hx-on:click="event.stopPropagation()"
-            >
-              {% if event.url %}
-                <a href="{{ event.url }}">{{ event.title|truncatechars:22 }}</a>
-              {% else %}
-                {{ event.title|truncatechars:22 }}
-              {% endif %}
-            </div>
-          {% endfor %}
-          {% for event in day.events %}
-            <div class="cal-event cal-event-timed"
-                 hx-get="{% url 'calendar:update-event' event.id %}"
-                 hx-target="#cal-modal-body"
-                 hx-on::after-request="$('#cal-modal').modal('show');"
-                 hx-on:click="event.stopPropagation()"
-            >
-              <span class="cal-event-bullet">•</span>
-              <span class="cal-event-title">
+          <div hx-target="#cal-modal-body"
+               hx-on::after-request="$('#cal-modal').modal('show');"
+               hx-on:click="event.stopPropagation()">
+            {% for event in day.all_day_events %}
+              <div class="cal-event cal-event-all-day" style="background-color: {{ event.color }};"
+                   hx-get="{% url 'calendar:update-event' event.id %}"
+              >
                 {% if event.url %}
-                  <a href="{{ event.url }}">{{ event.title|truncatechars:20 }}</a>
+                  <a href="{{ event.url }}">{{ event.title|truncatechars:22 }}</a>
                 {% else %}
-                  {{ event.title|truncatechars:20 }}
+                  {{ event.title|truncatechars:22 }}
                 {% endif %}
-              </span>
-              <span class="cal-event-time">{{ event.start_time|time:"H:i" }}</span>
-            </div>
-          {% endfor %}
+              </div>
+            {% endfor %}
+            {% for event in day.events %}
+              <div class="cal-event cal-event-timed"
+                   hx-get="{% url 'calendar:update-event' event.id %}"
+              >
+                <span class="cal-event-bullet">•</span>
+                <span class="cal-event-title">
+                  {% if event.url %}
+                    <a href="{{ event.url }}">{{ event.title|truncatechars:20 }}</a>
+                  {% else %}
+                    {{ event.title|truncatechars:20 }}
+                  {% endif %}
+                </span>
+                <span class="cal-event-time">{{ event.start_time|time:"H:i" }}</span>
+              </div>
+            {% endfor %}
+          </div>
         </div>
       {% endfor %}
     {% endfor %}
