@@ -80,7 +80,15 @@ def render_calendar(request):
             {
                 "date": d,
                 "moon": MoonPhase.from_date(d),
-                "events": [e for e in events if e.start_time.date() <= d <= e.end_time.date()],
+                "all_day_events": [
+                    e for e in events
+                    if e.start_time.date() <= d <= e.end_time.date()
+                    and e.start_time.date() != e.end_time.date()
+                ],
+                "events": [
+                    e for e in events
+                    if e.start_time.date() == e.end_time.date() == d
+                ],
             }
             for d in week
         ]

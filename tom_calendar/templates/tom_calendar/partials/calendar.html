@@ -42,9 +42,29 @@
   .cal-event {
     font-size: 0.75rem;
     line-height: 1.3;
+    cursor: pointer;
   }
   .cal-event a {
     color: inherit;
+  }
+  .cal-event-all-day {
+    display: block;
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-bottom: 2px;
+    color: #fff !important;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .cal-event-all-day a {
+    color: #fff !important;
+    text-decoration: none;
+  }
+  .cal-event-all-day a:hover {
+    text-decoration: underline;
   }
 </style>
 
@@ -79,6 +99,15 @@
         >
           <span class="day-num">{{ day.date.day }}</span>
           <span class="moon-phase" title="{% widthratio day.moon.illumination 1 100 %}% illuminated">{{ day.moon.emoji }}</span>
+          {% for event in day.all_day_events %}
+            <div class="cal-event cal-event-all-day" style="background-color: {{ event.color }};">
+              {% if event.url %}
+                <a href="{{ event.url }}">{{ event.title }}</a>
+              {% else %}
+                {{ event.title }}
+              {% endif %}
+            </div>
+          {% endfor %}
           {% for event in day.events %}
             <div class="cal-event text-truncate">
               {% if event.url %}
