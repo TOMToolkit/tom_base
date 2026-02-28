@@ -105,6 +105,12 @@
               hx-swap="outerHTML">
         Next &raquo;
       </button>
+      <button class="btn btn-outline-secondary btn-sm"
+              hx-get="{% url 'calendar:calendar' %}?month={% now "n" %}&year={% now "Y" %}"
+              hx-target="#calendar-partial"
+              hx-swap="outerHTML">
+        Today
+      </button>
     </div>
     <h4 class="mb-0">{{ month_name }}</h4>
     <button class="btn btn-outline-secondary btn-sm"
