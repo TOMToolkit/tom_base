@@ -148,7 +148,7 @@ def create_event(request):
                 "end_time": datetime.combine(date_obj, datetime.max.time()),
             }
             form = EventForm(initial=initial_data)
-        except ValueError:
+        except KeyError:
             form = EventForm()
 
     return render(request, "tom_calendar/partials/event_form.html", {"form": form, "action": "create"})

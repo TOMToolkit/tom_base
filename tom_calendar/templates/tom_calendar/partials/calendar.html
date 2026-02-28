@@ -92,18 +92,27 @@
 
 <div id="calendar-partial">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <button class="btn btn-outline-secondary btn-sm"
-            hx-get="{% url 'calendar:calendar' %}?month={{ prev_month }}&year={{ prev_year }}"
-            hx-target="#calendar-partial"
-            hx-swap="outerHTML">
-      &laquo; Prev
-    </button>
+    <div>
+      <button class="btn btn-outline-secondary btn-sm"
+              hx-get="{% url 'calendar:calendar' %}?month={{ prev_month }}&year={{ prev_year }}"
+              hx-target="#calendar-partial"
+              hx-swap="outerHTML">
+        &laquo; Prev
+      </button>
+      <button class="btn btn-outline-secondary btn-sm"
+              hx-get="{% url 'calendar:calendar' %}?month={{ next_month }}&year={{ next_year }}"
+              hx-target="#calendar-partial"
+              hx-swap="outerHTML">
+        Next &raquo;
+      </button>
+    </div>
     <h4 class="mb-0">{{ month_name }}</h4>
     <button class="btn btn-outline-secondary btn-sm"
-            hx-get="{% url 'calendar:calendar' %}?month={{ next_month }}&year={{ next_year }}"
-            hx-target="#calendar-partial"
-            hx-swap="outerHTML">
-      Next &raquo;
+            hx-get="{% url 'calendar:create-event' %}"
+            hx-target="#cal-modal-body"
+            hx-on::after-request="$('#cal-modal').modal('show');"
+    >
+      + New Event
     </button>
   </div>
 
