@@ -1,4 +1,3 @@
-from typing import Self
 from dataclasses import dataclass
 import calendar as cal_module
 import math
@@ -26,7 +25,7 @@ class MoonPhase:
     emoji: str
 
     @classmethod
-    def from_date(cls, date: date) -> Self:
+    def from_date(cls, date: date) -> "MoonPhase":
         d = datetime.combine(date, time(12, 0))
         t = Time(d)
         moon = get_body("moon", t)
