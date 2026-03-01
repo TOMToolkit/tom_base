@@ -180,3 +180,10 @@ def update_event(request, event_id):
             "tom_calendar/partials/event_form.html",
             {"form": form, "event": event, "action": "update"}
         )
+
+
+def delete_event(request, event_id):
+    event = get_object_or_404(CalendarEvent, pk=event_id)
+    event.delete()
+    response = render_calendar(request)
+    return trigger_client_event(response, "calModified")
