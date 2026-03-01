@@ -1,15 +1,14 @@
-from dataclasses import dataclass
 import calendar as cal_module
 import math
+from dataclasses import dataclass
 from datetime import date, datetime, time
 
-from astropy.time import Time
-from astropy.coordinates import get_body, get_sun
 import astropy.units as u
-
-from django.utils import timezone
-from django.shortcuts import render, get_object_or_404
+from astropy.coordinates import get_body, get_sun
+from astropy.time import Time
 from django import forms
+from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
 from django_htmx.http import trigger_client_event
 
 from .models import CalendarEvent
