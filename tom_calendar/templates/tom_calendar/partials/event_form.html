@@ -1,0 +1,20 @@
+{% load bootstrap4 %}
+<form {% if action == "create" %}
+        hx-post="{% url 'calendar:create-event' %}"
+      {% else %}
+        hx-post="{% url 'calendar:update-event' event.id %}"
+      {% endif %}
+        hx-target="#calendar-partial">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% buttons %}
+    <button type="submit" class="btn btn-primary">Save</button>
+    {% if event %}
+    <button type="button"
+            hx-post="{% url 'calendar:delete-event' event.id %}"
+            hx-target="#calendar-partial"
+            hx-confirm="Are you sure you want to delete this event?"
+            class="btn btn-danger">Delete</button>
+    {% endif %}
+    {% endbuttons %}
+</form>
