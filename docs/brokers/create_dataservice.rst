@@ -378,11 +378,11 @@ This consists of adding the ``get_simple_form_partial()`` method to MyDataServic
 
     def get_simple_form_partial(self):
         """Returns a path to a simplified bare-minimum partial form that can be used to access the DataService."""
-        return 'my_dataservice/partials/myservice_simple_form'
+        return 'my_dataservice/partials/myservice_simple_form.html'
 
 
 .. code-block:: html
-    :caption: my_dataservice/partials/myservice_simple_form.html
+    :caption: templates/my_dataservice/partials/myservice_simple_form.html
     :linenos:
 
     {% load bootstrap4 %}
@@ -415,7 +415,10 @@ This can be handled in basically the same way as the simple form:
 
 NOTES:
 
-- Here we are rendering all the form fields except the one in the simple form and the 2 default fields that get displayed below.
+ - Here we are rendering all the form fields except the one in the simple form and the two default fields that get
+   displayed below the main form.
+ - Note that we are using ``bootstrap_form`` instead of ``bootstrap_field`` which we used in the simple form.
+
 
 Alternatively, if a simple form is included, the entirety of the form will be displayed by default in the advanced
 section using whatever layout was provided. So you can easily use
