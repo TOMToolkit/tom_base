@@ -2,7 +2,7 @@ from datetime import timedelta
 from dateutil.parser import parse
 
 from tom_observations.cadence import BaseCadenceForm, CadenceStrategy
-from tom_observations.models import ObservationRecord, DynamicCadence
+from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
 
 
@@ -50,7 +50,7 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
         observation_payload = self.advance_window(
             observation_payload, start_keyword=start_keyword, end_keyword=end_keyword
         )
-        
+
         obs_type = observation_payload.get('observation_type')
         form = facility.get_form(obs_type)(observation_payload)
         
@@ -59,7 +59,7 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
 
         observation_ids = facility.submit_observation(form.observation_payload())
         new_observations = []
-    
+
         for observation_id in observation_ids:
             record = ObservationRecord.objects.create(
                 target=last_obs.target,
