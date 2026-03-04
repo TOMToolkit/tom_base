@@ -135,78 +135,102 @@ class ScoutDataService(DataService):
             logger.warning(msg)
         return self.query_results
 
+    def _get_filter_thresholds(self):
+        """Extract and normalize filter thresholds from input parameters."""
+        p = self.input_parameters
+
+        neo_score_min = p.get('neo_score_min', 0) or 0
+        pha_score_min = p.get('pha_score_min', 0) or 0
+        geo_score_max = p.get('geo_score_max', 101) or 101
+
+        default_pos_unc_max = 360 * 60  # 360 degrees (whole sky) as arcmin
+        pos_unc_min = p.get('pos_unc_min', 0) or 0
+        pos_unc_max = p.get('pos_unc_max', default_pos_unc_max) or default_pos_unc_max
+
+        thresholds = {
+            'neo_score_min': neo_score_min,
+            'pha_score_min': pha_score_min,
+            'geo_score_max': geo_score_max,
+            'impact_rating_min': p['impact_rating_min'],  # May be None intentionally
+            'ca_dist_min': p['ca_dist_min'],
+            'pos_unc_min': pos_unc_min,
+            'pos_unc_max': pos_unc_max,
+        }
+        return thresholds
+
+    def _parse_result_values(self, result):
+        """Parse and coerce numeric fields from a raw Scout result."""
+        try:
+            pos_unc = float(result['unc'])
+        except (ValueError, TypeError):
+            pos_unc = 0.0
+
+        try:
+            ca_dist = float(result['caDist'])
+        except (ValueError, TypeError):
+            ca_dist = None
+
+        return pos_unc, ca_dist
+
+    def _passes_filters(self, result, pos_unc, ca_dist, thresholds):
+        """Return True if the result passes all filter thresholds."""
+        impact_rating_min = thresholds['impact_rating_min']
+
+        impact_ok = (
+            impact_rating_min is None or
+            (result['rating'] is not None and result['rating'] >= impact_rating_min)
+        )
+
+        ca_dist_min = thresholds['ca_dist_min']
+        ca_dist_ok = (
+            ca_dist_min is None or
+            (ca_dist is not None and ca_dist <= ca_dist_min)
+        )
+
+        return (
+            result['neoScore'] >= thresholds['neo_score_min'] and
+            result['phaScore'] >= thresholds['pha_score_min'] and
+            result['geocentricScore'] < thresholds['geo_score_max'] and
+            thresholds['pos_unc_min'] <= pos_unc <= thresholds['pos_unc_max'] and
+            impact_ok and
+            ca_dist_ok
+        )
+
+    def _fetch_target_data(self, result, query_parameters):
+        """Return full target data for a result, fetching per-object data if needed."""
+        if 'orbits' in result:
+            # Already a per-object query response
+            return result
+
+        query_parameters['tdes'] = result['objectName']
+        target_parameters = self.build_query_parameters(query_parameters)
+        target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
+
+        return target_data[0] if target_data is not None else None
+
     def query_targets(self, query_parameters, **kwargs):
         """Set up and run a specialized query for retrieving targets from a DataService."""
         results = self.query_service(self.build_query_parameters(query_parameters))
 
-        targets = []
-        if results is not None and 'error' not in results:
-            neo_score_min = 0
-            if self.input_parameters.get('neo_score_min', 0) is not None:
-                neo_score_min = self.input_parameters['neo_score_min']
-            pha_score_min = 0
-            if self.input_parameters.get('pha_score_min', 0) is not None:
-                pha_score_min = self.input_parameters['pha_score_min']
-            geo_score_max = 101
-            if self.input_parameters.get('geo_score_max', 101) is not None:
-                geo_score_max = self.input_parameters['geo_score_max']
-            # Might be None if we want all objects irrespective of impact chance
-            impact_rating_min = self.input_parameters['impact_rating_min']
-            ca_dist_min = self.input_parameters['ca_dist_min']
-            pos_unc_min = 0
-            if self.input_parameters.get('pos_unc_min', 0) is not None:
-                pos_unc_min = self.input_parameters['pos_unc_min']
-            pos_unc_max = 360 * 60   # 360 degrees (whole sky) as arcmin
-            if self.input_parameters.get('pos_unc_max', pos_unc_max) is not None:
-                pos_unc_max = self.input_parameters['pos_unc_max']
-
-            for result in results:
-                # Filter on the many, many form parameters.
-                try:
-                    pos_unc = float(result['unc'])
-                except ValueError:
-                    pos_unc = 0.0
-                try:
-                    ca_dist = float(result['caDist'])
-                except TypeError:
-                    ca_dist = None
-                # print("neoScore phaScore, geoScore, rating, caDist, posuncmin, posuncmax")
-                # print(result['neoScore'] >= neo_score_min, result['phaScore'] >= pha_score_min,
-                #       result['geocentricScore'] < geo_score_max,
-                #       ((result['rating'] is not None and
-                #           impact_rating_min is not None and
-                #           result['rating'] >= impact_rating_min) or
-                #        impact_rating_min is None),
-                #       (ca_dist_min is None or
-                #       (ca_dist_min is not None and ca_dist is not None and ca_dist <= ca_dist_min)),
-                #       pos_unc >= pos_unc_min, pos_unc <= pos_unc_max)
-                if result['neoScore'] >= neo_score_min and result['phaScore'] >= pha_score_min and \
-                        result['geocentricScore'] < geo_score_max and \
-                        ((result['rating'] is not None and
-                          impact_rating_min is not None and
-                          result['rating'] >= impact_rating_min
-                          ) or
-                         impact_rating_min is None) and \
-                        (ca_dist_min is None or
-                         (ca_dist_min is not None and ca_dist is not None and ca_dist <= ca_dist_min)) and \
-                        pos_unc >= pos_unc_min and pos_unc <= pos_unc_max:
-                    if 'orbits' in result:
-                        # This was a query for a specific target so we already have the needed info
-                        target_data = result
-                    else:
-                        # Fetch per-target data
-                        query_parameters['tdes'] = result['objectName']
-                        target_parameters = self.build_query_parameters(query_parameters)
-                        target_data = self.query_service(target_parameters, url=self.get_urls('object_url'))
-                        if target_data is not None:
-                            target_data = target_data[0]
-                    targets.append(target_data)
-        else:
+        if results is None or 'error' in results:
             msg = "Error retrieving data from Scout."
             if query_parameters.get('tdes', '') != '':
                 msg += f" Object {query_parameters['tdes']} is no longer on Scout."
-            # if request is not None:
-            #     messages.error(request, msg)
+            return []
+
+        thresholds = self._get_filter_thresholds()
+        targets = []
+
+        for result in results:
+            pos_unc, ca_dist = self._parse_result_values(result)
+
+            if not self._passes_filters(result, pos_unc, ca_dist, thresholds):
+                continue
+
+            target_data = self._fetch_target_data(result, query_parameters)
+            if target_data is not None:
+                targets.append(target_data)
+
         return targets
 
     @classmethod
