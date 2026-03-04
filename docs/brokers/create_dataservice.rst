@@ -250,7 +250,7 @@ Querying Reduced Datums:
 Data from a dataservice that needs to be stored as a ``ReducedDatum`` should be handled a little differently.
 The specifics of converting the query results into a list of dictionaries is handled by the ``query_foo()`` method for that
 specific data type (i.e ``query_photometry()``). However, there are a few additional functions you will want to extend
-when dealing with ``ReducedDatum``s. To do this generally, you may want to override or extend ``query_reduced_data()`` but
+when dealing with ``ReducedDatums``. To do this generally, you may want to override or extend ``query_reduced_data()`` but
 you can also do this for specific types of reduced data. In this section we will walk you through including photometry
 data as an example.
 
