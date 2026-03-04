@@ -471,8 +471,7 @@ class BaseTarget(models.Model):
             name.full_clean()
             name.save()
 
-        if not created:
-            run_hook('target_post_save', target=self, created=created)
+        run_hook('target_post_save', target=self, created=created)
 
     def validate_unique(self, *args, **kwargs):
         """

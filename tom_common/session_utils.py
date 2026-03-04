@@ -242,7 +242,7 @@ def reencrypt_data(user) -> None:
     logger.debug("Re-encrypting sensitive data...")
 
     #  Get the current Session from the UserSession
-    user_session = UserSession.objects.filter(user=user).first()  # see comment above
+    user_session = UserSession.objects.filter(user=user.id).first()  # see comment above
 
     if not user_session:
         logger.warning(f"User {user.username} is not logged in. Cannot re-encrypt sensitive data. "

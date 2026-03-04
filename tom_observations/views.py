@@ -34,6 +34,7 @@ from tom_observations.facility import BaseManualObservationFacility
 from tom_observations.forms import AddExistingObservationForm, facility_choices
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
 from tom_targets.models import Target
+from tom_targets.permissions import targets_for_user
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +94,7 @@ class ObservationListView(FilterView):
         """
         if settings.TARGET_PERMISSIONS_ONLY:
             return ObservationRecord.objects.filter(
-                target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')
+                target__in=targets_for_user(self.request.user, Target.objects.all(), 'view_target')
             )
         else:
             return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')
@@ -493,31 +494,59 @@ class ObservationCallbackView(LoginRequiredMixin, View):
     to the observation detail page.
     """
     def get(self, request):
-        facility = request.GET.get('facility')
+        facility_name = request.GET.get('facility')
         target_id = request.GET.get('target_id')
         observation_id = request.GET.get('observation_id')
+        parameters = request.GET
         user = request.user
+
         if not target_id:
             messages.error(self.request, 'Missing required parameter: target_id')
             return redirect(reverse('tom_observations:list'))
-        elif not all([facility, observation_id]):
+        elif not all([facility_name, observation_id]):
             messages.error(self.request, 'Missing required parameters: facility, observation_id')
             return redirect(reverse('targets:detail', kwargs={'pk': target_id}))
-        target = get_object_or_404(Target, id=target_id)
-        observation, created = ObservationRecord.objects.get_or_create(
-            user=user,
-            facility=facility,
-            target=target,
-            observation_id=observation_id,
-            parameters=request.GET
-        )
-        assign_perm('tom_observations.view_observationrecord', user, observation)
-        assign_perm('tom_observations.change_observationrecord', user, observation)
-        assign_perm('tom_observations.delete_observationrecord', user, observation)
-        if not created:
-            messages.warning(self.request, "Observation record for this target and facility already exists.")
 
-        return redirect(reverse('tom_observations:detail', kwargs={'pk': observation.pk}))
+        target = get_object_or_404(Target, id=target_id)
+
+        try:
+            facility_class = get_service_class(facility_name)
+            facility = facility_class()
+        except ImportError:
+            messages.error(self.request, "Invalid facility specified in callback URL")
+            return redirect(reverse('targets:detail', kwargs={'pk': target_id}))
+
+        try:
+            if hasattr(facility, 'request_id_to_group'):
+                # Check if the facility implements request_id_to_group
+                obs_group = facility.request_id_to_group(observation_id, user, target, parameters)
+            else:
+                # Create an observation group with a single record if not
+                observation = ObservationRecord.objects.create(
+                    user=user,
+                    facility=facility_name,
+                    target=target,
+                    observation_id=observation_id,
+                    parameters=parameters
+                )
+                obs_group = ObservationGroup.objects.create(
+                    name=f"{facility_name} obs #{observation_id}"
+                )
+                obs_group.observation_records.add(observation)
+        except Exception as e:
+            messages.error(self.request, f"Error createing observation records: {e}")
+            return redirect(reverse('targets:detail', kwargs={'pk': target_id}))
+
+        for observation in obs_group.observation_records.all():
+            assign_perm('tom_observations.view_observationrecord', user, observation)
+            assign_perm('tom_observations.change_observationrecord', user, observation)
+            assign_perm('tom_observations.delete_observationrecord', user, observation)
+            for group in request.user.groups.all():
+                assign_perm('tom_observations.view_observationrecord', group, observation)
+                assign_perm('tom_observations.change_observationrecord', group, observation)
+                assign_perm('tom_observations.delete_observationrecord', group, observation)
+
+        return redirect(reverse('tom_observations:list') + f'?observationgroup={obs_group.id}')
 
 
 class AddExistingObservationView(LoginRequiredMixin, FormView):
@@ -613,7 +642,7 @@ class ObservationRecordDetailView(DetailView):
         """
         if settings.TARGET_PERMISSIONS_ONLY:
             return ObservationRecord.objects.filter(
-                target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')
+                target__in=targets_for_user(self.request.user, Target.objects.all(), 'view_target')
             )
         else:
             return get_objects_for_user(self.request.user, 'tom_observations.view_observationrecord')

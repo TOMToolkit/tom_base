@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import json
 import logging
 from typing import Any
 
@@ -322,6 +323,26 @@ def aladin_skymap(targets):
         'sun_dec': sun_pos.dec.deg,
     }
     return context
+
+
+@register.inclusion_tag('tom_targets/partials/aladin_skymap_targets_oob.html')
+def aladin_skymap_targets_oob(targets):
+    """
+    Lightweight template tag for HTMX responses -- sends only the updated
+    target list as JSON to the existing Aladin viewer via an OOB swap.
+
+    Unlike ``aladin_skymap``, this does not recompute Moon/Sun positions or
+    reinitialize the viewer, making it suitable for repeated HTMX calls.
+    """
+    target_list = []
+    for target in targets:
+        if target.type == Target.SIDEREAL:
+            target_list.append({
+                'name': target.name,
+                'ra': target.ra,
+                'dec': target.dec,
+            })
+    return {'targets_json': json.dumps(target_list)}
 
 
 @register.inclusion_tag('tom_targets/partials/target_merge_fields.html')

@@ -309,7 +309,8 @@ class TestCallbackView(TestCase):
         url = reverse('tom_observations:callback') + callback_params
         response = self.client.get(url)
         observation = ObservationRecord.objects.get(target=self.target, facility='FakeRoboticFacility')
-        self.assertRedirects(response, reverse('tom_observations:detail', kwargs={'pk': observation.pk}))
+        group = observation.observationgroup_set.first()
+        self.assertRedirects(response, reverse('tom_observations:list') + f"?observationgroup={group.id}")
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
