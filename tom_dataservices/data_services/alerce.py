@@ -109,16 +109,6 @@ class AlerceDataService(DataService):
 
     def query_targets(self, query_parameters, **kwargs) -> list[dict]:
         targets = self.query_service(query_parameters, **kwargs)
-        # for target in targets:
-        #     object_id = target['oid']
-        #     photometry = self.query_photometry(query_parameters, object_id)
-        #     # Antares adds reduced datums to the target here, but this seems really inefficient
-        #     # because this will pull the lightcurve for every target regardless if the user wants
-        #     # to save it or not.
-        #     target['reduced_datums'] = {
-        #         'photometry': photometry
-        #     }
-
         return targets
 
     def query_service(self, query_parameters, **kwargs) -> list[dict]:
@@ -257,3 +247,9 @@ class AlerceDataService(DataService):
                 data_type='photometry',
                 target=target
             )
+
+    def get_simple_form_partial(self):
+        return "tom_dataservices/alerce/partials/alerce_simple_form.html"
+
+    def get_advanced_form_partial(self):
+        return "tom_dataservices/alerce/partials/alerce_advanced_form.html"
