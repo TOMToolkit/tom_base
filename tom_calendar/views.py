@@ -43,10 +43,11 @@ class MoonPhase:
         return cls(illumination, emoji)
 
 
-def render_calendar(request):
+def render_calendar(request, month: int | None = None):
     now = timezone.now()
     today = now.date()
-    month = int(request.GET.get("month", now.month))
+    if month is None:
+        month = int(request.GET.get("month", now.month))
     month = max(1, min(12, month))
     year = int(request.GET.get("year", now.year))
 
@@ -128,8 +129,8 @@ def create_event(request):
     if request.method == "POST":
         form = EventForm(request.POST)
         if form.is_valid():
-            form.save()
-            response = render_calendar(request)
+            event = form.save()
+            response = render_calendar(request, month=event.start_time.month)
             return trigger_client_event(response, "calModified")
         else:
             response = render(request, "tom_calendar/partials/event_form.html", {"form": form, "action": "create"})
@@ -149,7 +150,7 @@ def create_event(request):
         except KeyError:
             form = EventForm()
 
-    return render(request, "tom_calendar/partials/event_form.html", {"form": form, "action": "create"})
+        return render(request, "tom_calendar/partials/event_form.html", {"form": form, "action": "create"})
 
 
 def update_event(request, event_id):
