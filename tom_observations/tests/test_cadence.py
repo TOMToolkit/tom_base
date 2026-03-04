@@ -59,7 +59,9 @@ class TestReactiveCadencing(TestCase):
             cadence_strategy='Test Strategy', cadence_parameters={'cadence_frequency': 72}, active=True,
             observation_group=self.group)
 
-    def test_retry_when_failed_cadence(self, patch1, patch2, patch3, patch4):
+    @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'CANCELED',
+           'scheduled_start': None, 'scheduled_end': None})
+    def test_retry_when_failed_cadence(self, patch1, patch2, patch3, patch4, mock_get_obs_status):
         num_records = self.group.observation_records.count()
         observing_record = self.group.observation_records.first()
         observing_record.status = 'CANCELED'
