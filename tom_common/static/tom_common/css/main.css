@@ -141,6 +141,11 @@ td, th {
     float: left;
 }
 
+.bottom {
+  position: absolute;
+  bottom: 20%;
+}
+
 /* Create copy button class */
 .copy-button {
     opacity: 0.75; /* Make it slightly transparent */
