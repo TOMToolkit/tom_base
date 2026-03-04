@@ -53,7 +53,7 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
 
         obs_type = observation_payload.get('observation_type')
         form = facility.get_form(obs_type)(observation_payload)
-        
+
         if not form.is_valid():
             return
 
