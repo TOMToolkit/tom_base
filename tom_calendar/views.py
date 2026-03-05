@@ -161,8 +161,8 @@ def update_event(request, event_id):
     if request.method == "POST":
         form = EventForm(request.POST, instance=event)
         if form.is_valid():
-            form.save()
-            response = render_calendar(request)
+            event = form.save()
+            response = render_calendar(request, month=event.start_time.month)
             return trigger_client_event(response, "calModified")
         else:
             response = render(
