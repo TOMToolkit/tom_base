@@ -1,10 +1,7 @@
 {% extends 'tom_common/base.html' %}
-{% load tz %}
 {% block title %}Calendar{% endblock %}
 {% block content %}
   {% include 'tom_calendar/partials/calendar.html' %}
-  {% get_current_timezone as TIME_ZONE %}
-  <p>The current time zone is {{ TIME_ZONE }}</p>
   <!-- Modal -->
   <div class="modal fade" id="cal-modal" tabindex="-1" aria-labelledby="calModalLabel" aria-hidden="true">
     <div class="modal-dialog">
