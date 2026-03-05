@@ -2,15 +2,43 @@ from math import sqrt, degrees
 
 from astropy.constants import GM_sun, au
 from django import forms
+from django.db import models
 import logging
 import requests
 # import pprint
 
 from tom_dataservices.dataservices import DataService
 from tom_dataservices.forms import BaseQueryForm
-from tom_targets.models import Target
+from tom_targets.models import BaseTarget, Target
 
 logger = logging.getLogger(__name__)
+
+
+class ScoutDetail(models.Model):
+    class ScoutImpactRating(models.IntegerChoices):
+        NEGLIGIBLE = 0, 'Negligible'
+        SMALL = 1, 'Small'
+        MODEST = 2, 'Modest'
+        MODERATE = 3, 'Moderate'
+        ELEVATED = 4, 'Elevated'
+    target = models.OneToOneField(BaseTarget, on_delete=models.CASCADE, related_name='scout_detail')
+    num_obs = models.IntegerField(null=True, blank=True, help_text='Number of observations')
+    neo_score = models.IntegerField(null=True, blank=True, help_text='NEO digest score (0..100)')
+    neo1km_score = models.IntegerField(null=True, blank=True, help_text='NEO >1km digest score (0..100)')
+    pha_score = models.IntegerField(null=True, blank=True, help_text='PHA digest score (0..100)')
+    ieo_score = models.IntegerField(null=True, blank=True, help_text='IEO digest score (0..100)')
+    geocentric_score = models.IntegerField(null=True, blank=True, help_text='Geocentric digest score (0..100)')
+    impact_rating = models.IntegerField(null=True, blank=True, choices=ScoutImpactRating.choices,
+                                        help_text='Impact rating (0=negligible, 1=small, 2=modest, 3=moderate, '
+                                        '4=elevated)')
+    ca_dist = models.FloatField(null=True, blank=True, help_text='Close approach distance (lunar distances)')
+    arc = models.FloatField(null=True, blank=True, help_text='Arc length (days)')
+    rms = models.FloatField(null=True, blank=True, help_text='RMS of the residuals to the orbit fit (arcsec)')
+    uncertainty = models.FloatField(null=True, blank=True,
+                                    help_text='1-sigma plane-of-sky positional uncertainty (arcmin)')
+    uncertainty_p1 = models.FloatField(null=True, blank=True,
+                                       help_text='1-sigma plane-of-sky positional uncertainty at +1 day (arcmin)')
+    last_run = models.DateTimeField(null=True, blank=True, help_text='Last time the data was updated from Scout')
 
 
 class ScoutForm(BaseQueryForm):
@@ -229,6 +257,8 @@ class ScoutDataService(DataService):
 
             target_data = self._fetch_target_data(result, query_parameters)
             if target_data is not None:
+                reduced_datums = self._parse_detail_data(target_data)
+                target_data['reduced_datums']['scout_detail'] = reduced_datums
                 targets.append(target_data)
 
         return targets
@@ -289,3 +319,33 @@ class ScoutDataService(DataService):
                 mean_anomaly += 360.0
             target.mean_anomaly = mean_anomaly
         return target
+
+    def _parse_detail_data(self, query_results, **kwargs):
+        """Parse and coerce relevant fields from a per-object query result to create a dictionary of reduced datums.
+        (These aren't really "reduced datums" in the sense of being derived from the raw data, but a
+        temporary hacky workaround as these are the only things supported post-Target saving)
+        """
+
+        reduced_datums = {
+            'num_obs': query_results.get('nObs'),
+            'neo_score': query_results.get('neoScore'),
+            'neo1km_score': query_results.get('neo1kmScore'),
+            'pha_score': query_results.get('phaScore'),
+            'ieo_score': query_results.get('ieoScore'),
+            'geocentric_score': query_results.get('geocentricScore'),
+            'impact_rating': query_results.get('rating'),
+            'ca_dist': float(query_results.get('caDist')) if query_results.get('caDist') is not None else None,
+            'arc': float(query_results.get('arc')) if query_results.get('arc') is not None else None,
+            'rms': float(query_results.get('rmsN')) if query_results.get('rmsN') is not None else None,
+            'uncertainty': float(query_results.get('unc')) if query_results.get('unc') is not None else None,
+            'uncertainty_p1': float(query_results.get('uncP1')) if query_results.get('uncP1') is not None else None,
+            'last_run': query_results.get('lastRun')
+        }
+        return reduced_datums
+
+    def create_reduced_datums_from_query(self, target, data=None, data_type=None, **kwargs):
+        if data is not None and data_type == 'scout_detail':
+            scout_detail, created = ScoutDetail.objects.get_or_create(target=target, **data)
+        else:
+            scout_detail, created = None
+        return scout_detail, created
