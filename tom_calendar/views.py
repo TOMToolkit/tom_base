@@ -1,3 +1,4 @@
+from tom_targets.models import TargetList
 import calendar as cal_module
 import math
 from dataclasses import dataclass
@@ -105,6 +106,7 @@ def render_calendar(request, month: int | None = None):
         "prev_year": prev_year,
         "next_month": next_month,
         "next_year": next_year,
+        "target_lists": TargetList.objects.all(),
     }
 
     if request.htmx:
@@ -118,7 +120,7 @@ def render_calendar(request, month: int | None = None):
 class EventForm(forms.ModelForm):
     class Meta:
         model = CalendarEvent
-        fields = ['title', 'start_time', 'end_time', 'description', 'url']
+        fields = ['title', 'start_time', 'end_time', 'description', 'url', 'target_list']
         widgets = {
             'start_time': DATETIME_INPUT,
             'end_time': DATETIME_INPUT,

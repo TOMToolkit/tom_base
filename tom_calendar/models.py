@@ -1,16 +1,8 @@
 from django.db import models
 
-ALL_DAY_COLORS = [
-    'var(--blue)',
-    'var(--indigo)',
-    'var(--purple)',
-    'var(--pink)',
-    'var(--red)',
-    'var(--orange)',
-    'var(--green)',
-    'var(--teal)',
-    'var(--cyan)',
-]
+from tom_targets.models import TargetList
+
+from .utils import BOOTSTRAP_COLORS
 
 
 class CalendarEvent(models.Model):
@@ -26,6 +18,7 @@ class CalendarEvent(models.Model):
     end_time = models.DateTimeField()
     url = models.URLField(blank=True, default="")
     """The URL a user can visit for more information or associated object."""
+    target_list = models.ForeignKey(TargetList, on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
@@ -34,4 +27,4 @@ class CalendarEvent(models.Model):
 
     @property
     def color(self) -> str:
-        return ALL_DAY_COLORS[self.pk % len(ALL_DAY_COLORS)]
+        return BOOTSTRAP_COLORS[self.pk % len(BOOTSTRAP_COLORS)]

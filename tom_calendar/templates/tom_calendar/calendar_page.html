@@ -3,6 +3,10 @@
 {% block title %}Calendar{% endblock %}
 {% block content %}
   {% include 'tom_calendar/partials/calendar.html' %}
+  {% for target_list in target_lists %}
+    {% include 'tom_calendar/partials/target_list_block.html' with target_list=target_list %}
+    <a href="{% url 'targets:list' %}?targetlist__name={{ target_list.id }}">{{ target_list.name }}</a>
+  {% endfor %}
   {% get_current_timezone as TIME_ZONE %}
   <p>The current time zone is {{ TIME_ZONE }}</p>
   <!-- Modal -->
