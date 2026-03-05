@@ -119,10 +119,14 @@ def render_calendar(request, month: int | None = None):
 class EventForm(forms.ModelForm):
     class Meta:
         model = CalendarEvent
-        fields = ['title', 'start_time', 'end_time', 'description', 'url', 'target_list']
+        fields = [
+            'title', 'start_time', 'end_time', 'description', 'url',
+            'target_list', 'user', 'proposal', 'telescope'
+        ]
         widgets = {
             'start_time': DATETIME_INPUT,
             'end_time': DATETIME_INPUT,
+            'description': forms.Textarea(attrs={'rows': 5}),
         }
 
     def clean(self):

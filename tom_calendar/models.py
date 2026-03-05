@@ -19,6 +19,9 @@ class CalendarEvent(models.Model):
     url = models.URLField(blank=True, default="")
     """The URL a user can visit for more information or associated object."""
     target_list = models.ForeignKey(TargetList, on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.CharField(max_length=200, blank=True, default="")
+    proposal = models.CharField(max_length=200, blank=True, default="")
+    telescope = models.CharField(max_length=200, blank=True, default="")
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 

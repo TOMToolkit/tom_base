@@ -6,7 +6,43 @@
       {% endif %}
         hx-target="#calendar-partial">
     {% csrf_token %}
-    {% bootstrap_form form %}
+    <div class="form-row">
+      <div class="col">
+        {% bootstrap_field form.title %}
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="col" style="min-width: 0;">
+        {% bootstrap_field form.start_time %}
+      </div>
+      <div class="col" style="min-width: 0;">
+        {% bootstrap_field form.end_time %}
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="col">
+        {% bootstrap_field form.description %}
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="col">
+        {% bootstrap_field form.url %}
+      </div>
+      <div class="col">
+        {% bootstrap_field form.target_list %}
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="col">
+        {% bootstrap_field form.user %}
+      </div>
+      <div class="col">
+        {% bootstrap_field form.proposal %}
+      </div>
+      <div class="col">
+        {% bootstrap_field form.telescope %}
+      </div>
+    </div>
     {% buttons %}
     <button type="submit" class="btn btn-primary">Save</button>
     {% if event %}
