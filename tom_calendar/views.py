@@ -4,7 +4,6 @@ import math
 from dataclasses import dataclass
 from datetime import date, datetime, time
 
-import astropy.units as u
 from astropy.coordinates import get_body, get_sun
 from astropy.time import Time
 from django import forms
@@ -32,7 +31,7 @@ class MoonPhase:
         sun = get_sun(t)
         moon_lon = moon.geocentricmeanecliptic.lon
         sun_lon = sun.geocentricmeanecliptic.lon
-        phase_angle = (moon_lon - sun_lon).wrap_at(360 * u.deg).deg
+        phase_angle = (moon_lon - sun_lon).wrap_at('360d').deg
 
         # Illumination fraction from elongation
         # 0 (new) -> 0.0, 90 (quarter) -> 0.5, 180 (full) -> 1.0
