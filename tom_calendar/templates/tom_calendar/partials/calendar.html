@@ -96,6 +96,11 @@
   .cal-event-all-day a:hover {
     text-decoration: underline;
   }
+
+  .link-secondary {
+    font-size: 0.75rem;
+    color: var(--secondary);
+  }
 </style>
 
 <div id="calendar-partial">
@@ -181,4 +186,8 @@
       {% endfor %}
     {% endfor %}
   </div>
+  {% for target_list in target_lists %}
+    {% include 'tom_calendar/partials/target_list_block.html' with target_list=target_list %}
+    <a class="link-secondary mr-2" href="{% url 'targets:list' %}?targetlist__name={{ target_list.id }}">{{ target_list.name }}</a>
+  {% endfor %}
 </div>

@@ -106,7 +106,7 @@ def render_calendar(request, month: int | None = None):
         "prev_year": prev_year,
         "next_month": next_month,
         "next_year": next_year,
-        "target_lists": TargetList.objects.all(),
+        "target_lists": TargetList.objects.filter(calendarevent__in=events).distinct(),
     }
 
     if request.htmx:
