@@ -125,6 +125,14 @@ class EventForm(forms.ModelForm):
             'end_time': DATETIME_INPUT,
         }
 
+    def clean(self):
+        cleaned_data = super().clean() or {}
+        start = cleaned_data.get('start_time')
+        end = cleaned_data.get('end_time')
+        if start and end and end < start:
+            raise forms.ValidationError('End time must be after start time.')
+        return cleaned_data
+
 
 def create_event(request):
     if request.method == "POST":
