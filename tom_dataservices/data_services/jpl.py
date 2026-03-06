@@ -42,6 +42,12 @@ class ScoutDetail(models.Model):
                                        help_text='1-sigma plane-of-sky positional uncertainty at +1 day (arcmin)')
     last_run = models.DateTimeField(null=True, blank=True, help_text='Last time the data was updated from Scout')
 
+    class Meta:
+        verbose_name = 'Scout Detail'
+
+    def __str__(self):
+        return self.target.name + f' (Impact rating: {self.impact_rating})'
+
 
 class ScoutForm(BaseQueryForm):
     tdes = forms.CharField(required=False,
