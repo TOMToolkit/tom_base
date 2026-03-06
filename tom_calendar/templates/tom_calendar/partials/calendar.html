@@ -156,9 +156,12 @@
                 {% include 'tom_calendar/partials/target_list_block.html' with target_list=event.target_list %}
                 <div class="cal-event-all-day" style="background-color: {{ event.color }};">
                   {% if event.url %}
-                    <a href="{{ event.url }}">{{ event.title|truncatechars:22 }}</a>
+                    <a href="{{ event.url }}">{{ event.title|truncatechars:18 }}</a>
                   {% else %}
-                    {{ event.title|truncatechars:22 }}
+                    {{ event.title|truncatechars:18 }}
+                  {% endif %}
+                  {% if event.active_todos.count %}
+                  ({{ event.active_todos.count }})
                   {% endif %}
                 </div>
               </div>
@@ -170,9 +173,12 @@
                 {% include 'tom_calendar/partials/target_list_block.html' with target_list=event.target_list %}
                 <span class="cal-event-title">
                   {% if event.url %}
-                    <a href="{{ event.url }}">{{ event.title|truncatechars:20 }}</a>
+                    <a href="{{ event.url }}">{{ event.title|truncatechars:16 }}</a>
                   {% else %}
-                    {{ event.title|truncatechars:20 }}
+                    {{ event.title|truncatechars:16 }}
+                  {% endif %}
+                  {% if event.active_todos.count %}
+                  ({{ event.active_todos.count }})
                   {% endif %}
                 </span>
                 <span class="cal-event-time">{{ event.start_time|time:"H:i" }}</span>
