@@ -1,4 +1,6 @@
 from math import sqrt, degrees
+from dateutil.parser import parse
+from dateutil.tz import tzutc
 
 from astropy.constants import GM_sun, au
 from django import forms
@@ -258,7 +260,8 @@ class ScoutDataService(DataService):
             target_data = self._fetch_target_data(result, query_parameters)
             if target_data is not None:
                 reduced_datums = self._parse_detail_data(target_data)
-                target_data['reduced_datums']['scout_detail'] = reduced_datums
+                if reduced_datums is not None:
+                    target_data['reduced_datums'] = {'scout_detail': reduced_datums}
                 targets.append(target_data)
 
         return targets
@@ -339,7 +342,8 @@ class ScoutDataService(DataService):
             'rms': float(query_results.get('rmsN')) if query_results.get('rmsN') is not None else None,
             'uncertainty': float(query_results.get('unc')) if query_results.get('unc') is not None else None,
             'uncertainty_p1': float(query_results.get('uncP1')) if query_results.get('uncP1') is not None else None,
-            'last_run': query_results.get('lastRun')
+            'last_run': parse(query_results.get('lastRun')).replace(tzinfo=tzutc()) if query_results.get('lastRun')
+            else None
         }
         return reduced_datums
 
@@ -347,5 +351,5 @@ class ScoutDataService(DataService):
         if data is not None and data_type == 'scout_detail':
             scout_detail, created = ScoutDetail.objects.get_or_create(target=target, **data)
         else:
-            scout_detail, created = None
+            scout_detail, created = None, None
         return scout_detail, created

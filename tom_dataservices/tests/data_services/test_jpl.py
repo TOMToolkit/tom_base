@@ -1,3 +1,6 @@
+from datetime import datetime
+from dateutil.tz import tzutc
+
 from django.test import tag, SimpleTestCase, TestCase
 from unittest import mock
 
@@ -11,11 +14,18 @@ def make_result(overrides=None):
     base = {
         'objectName': 'ZTF10BL',
         'neoScore': 100,
+        'neo1kmScore': 0,
         'phaScore': 0,
+        'ieoScore': 0,
         'geocentricScore': 1,
         'rating': 2,
         'unc': '1400',
+        'uncP1': '1500',
         'caDist': '0.98',
+        'arc': '0.35',
+        'nObs': 4,
+        'rmsN': '0.12',
+        'lastRun': '2026-02-11 22:45',
     }
     if overrides:
         base.update(overrides)
@@ -325,6 +335,73 @@ class TestQueryTargetsFiltering(TestCase):
         targets = self.ds.query_targets(self.base_input_parameters)
         self.assertEqual(len(targets), 1)
         self.assertEqual(targets[0]['objectName'], 'ZTF10BL')
+
+
+class TestParseDetailData(SimpleTestCase):
+    """Tests for ScoutDataService._parse_detail_data()"""
+
+    def setUp(self):
+        self.ds = ScoutDataService()
+
+    def test_returns_reduced_datums_dict_with_expected_keys(self):
+        detail_data = make_result_with_orbits()
+        reduced_datums = self.ds._parse_detail_data(detail_data)
+
+        self.assertIsInstance(reduced_datums, dict)
+
+        expected_keys = ['num_obs', 'neo_score', 'neo1km_score', 'pha_score', 'ieo_score', 'geocentric_score',
+                         'impact_rating', 'ca_dist', 'arc', 'rms', 'uncertainty', 'uncertainty_p1', 'last_run']
+
+        for datum in reduced_datums:
+            self.assertTrue(datum in expected_keys)
+            # Check that values are not still strings (e.g. '1400') but have been converted to appropriate
+            # types (e.g. float 1400.0)
+            self.assertNotEqual(str, type(reduced_datums[datum]))
+
+    def test_convert_values(self):
+        detail_data = make_result_with_orbits()
+
+        reduced_datums = self.ds._parse_detail_data(detail_data)
+
+        expected_datums = {'num_obs': 4,
+                           'neo_score': 100,
+                           'neo1km_score': 0,
+                           'pha_score': 0,
+                           'ieo_score': 0,
+                           'geocentric_score': 1,
+                           'impact_rating': 2,
+                           'ca_dist': 0.98,
+                           'arc': 0.35,
+                           'rms': 0.12,
+                           'uncertainty': 1400.0,
+                           'uncertainty_p1': 1500.0,
+                           'last_run': datetime(2026, 2, 11, 22, 45, tzinfo=tzutc())
+                           }
+
+        self.assertDictEqual(reduced_datums, expected_datums)
+
+    def test_convert_values_more_nones(self):
+        detail_data = make_result_with_orbits({'rmsN': None, 'unc': None, 'uncP1': None, 'caDist': None,
+                                               'lastRun': None, 'arc': None})
+
+        reduced_datums = self.ds._parse_detail_data(detail_data)
+
+        expected_datums = {'num_obs': 4,
+                           'neo_score': 100,
+                           'neo1km_score': 0,
+                           'pha_score': 0,
+                           'ieo_score': 0,
+                           'geocentric_score': 1,
+                           'impact_rating': 2,
+                           'ca_dist': None,
+                           'arc': None,
+                           'rms': None,
+                           'uncertainty': None,
+                           'uncertainty_p1': None,
+                           'last_run': None
+                           }
+
+        self.assertDictEqual(reduced_datums, expected_datums)
 
 
 class TestScoutDataService(TestCase):
