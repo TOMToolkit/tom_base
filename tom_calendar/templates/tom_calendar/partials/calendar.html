@@ -100,7 +100,8 @@
 
 {% load tz %}
 
-<div id="calendar-partial">
+<div id="calendar-partial"
+     data-url="{% url 'calendar:calendar' %}?month={{ month }}&year={{ year }}">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
       <button class="btn btn-outline-secondary btn-sm"

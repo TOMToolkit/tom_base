@@ -19,8 +19,12 @@
 {% endblock %}
 {% block extra_javascript %}
 <script>
-  document.body.addEventListener("calModified", function () {
+  document.body.addEventListener("calClose", function () {
     $("#cal-modal").modal("hide");
+  });
+  document.body.addEventListener("calRefresh", function () {
+    const cal = document.getElementById("calendar-partial");
+    htmx.ajax("GET", cal.dataset.url, {target: "#calendar-partial", swap: "outerHTML"});
   });
 </script>
 {% endblock %}

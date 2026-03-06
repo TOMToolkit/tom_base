@@ -144,7 +144,7 @@ def create_event(request):
         if form.is_valid():
             event = form.save()
             response = render_calendar(request, month=event.start_time.month)
-            return trigger_client_event(response, "calModified")
+            return trigger_client_event(response, "calClose")
         else:
             response = render(request, "tom_calendar/partials/event_form.html", {"form": form, "action": "create"})
             response["HX-Retarget"] = "#cal-modal-body"
@@ -174,7 +174,7 @@ def update_event(request, event_id):
         if form.is_valid():
             event = form.save()
             response = render_calendar(request, month=event.start_time.month)
-            return trigger_client_event(response, "calModified")
+            return trigger_client_event(response, "calClose")
         else:
             response = render(
                 request,
@@ -198,7 +198,7 @@ def delete_event(request, event_id):
     event = get_object_or_404(CalendarEvent, pk=event_id)
     event.delete()
     response = render_calendar(request)
-    return trigger_client_event(response, "calModified")
+    return trigger_client_event(response, "calClose")
 
 
 def create_todo(request, event_id):
@@ -206,7 +206,8 @@ def create_todo(request, event_id):
     description = request.POST.get("description", "").strip()
     if description:
         event.todos.create(description=description)
-        return render(request, "tom_calendar/partials/todos.html", {"event": event})
+        response = render(request, "tom_calendar/partials/todos.html", {"event": event})
+        return trigger_client_event(response, "calRefresh")
 
 
 def update_todo(request, todo_id):
@@ -216,4 +217,5 @@ def update_todo(request, todo_id):
     todo.is_completed = is_completed
     todo.description = description
     todo.save()
-    return render(request, "tom_calendar/partials/todos.html", {"event": todo.event})
+    response = render(request, "tom_calendar/partials/todos.html", {"event": todo.event})
+    return trigger_client_event(response, "calRefresh")
