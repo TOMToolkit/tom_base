@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django_htmx.http import trigger_client_event
 
-from .models import CalendarEvent
+from .models import CalendarEvent, EventTodo
 
 DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 MOON_EMOJIS = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
@@ -199,3 +199,21 @@ def delete_event(request, event_id):
     event.delete()
     response = render_calendar(request)
     return trigger_client_event(response, "calModified")
+
+
+def create_todo(request, event_id):
+    event = get_object_or_404(CalendarEvent, pk=event_id)
+    description = request.POST.get("description", "").strip()
+    if description:
+        event.todos.create(description=description)
+        return render(request, "tom_calendar/partials/todos.html", {"event": event})
+
+
+def update_todo(request, todo_id):
+    todo = get_object_or_404(EventTodo, pk=todo_id)
+    is_completed = request.POST.get("is_completed") == "true"
+    description = request.POST.get("description", "").strip()
+    todo.is_completed = is_completed
+    todo.description = description
+    todo.save()
+    return render(request, "tom_calendar/partials/todos.html", {"event": todo.event})

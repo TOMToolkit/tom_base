@@ -54,3 +54,9 @@
     {% endif %}
     {% endbuttons %}
 </form>
+{% if action == "update" %}
+  <hr>
+  <div id="cal-todos">
+    {% include 'tom_calendar/partials/todos.html' with event=event %}
+  </div>
+{% endif %}

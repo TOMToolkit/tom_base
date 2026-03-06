@@ -31,3 +31,14 @@ class CalendarEvent(models.Model):
     @property
     def color(self) -> str:
         return BOOTSTRAP_COLORS[self.pk % len(BOOTSTRAP_COLORS)]
+
+
+class EventTodo(models.Model):
+    event = models.ForeignKey(CalendarEvent, on_delete=models.CASCADE, related_name='todos')
+    description = models.CharField(max_length=200)
+    is_completed = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'Todo for {self.event.title}: {self.description}'

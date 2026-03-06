@@ -1,0 +1,35 @@
+<h6 class="mb-2">Todo list</h6>
+
+{% for todo in event.todos.all %}
+  <form hx-post="{% url 'calendar:update-todo' todo.id %}"
+        hx-trigger="change"
+        hx-target="#cal-todos"
+        hx-swap="innerHTML"
+        class="mb-1">
+    {% csrf_token %}
+    <input type="hidden" name="description" value="{{ todo.description }}">
+    <div class="form-group form-check mb-0">
+      <input type="checkbox" class="form-check-input" name="is_completed" value="true"
+             id="todo-{{ todo.id }}" {% if todo.is_completed %}checked{% endif %}>
+      <label class="form-check-label" for="todo-{{ todo.id }}"
+             {% if todo.is_completed %}style="text-decoration: line-through; opacity: 0.6;"{% endif %}>
+        {{ todo.description }}
+      </label>
+    </div>
+  </form>
+{% empty %}
+  <p class="text-muted small">No todos yet.</p>
+{% endfor %}
+
+<form hx-post="{% url 'calendar:create-todo' event.id %}"
+      hx-target="#cal-todos"
+      hx-swap="innerHTML"
+      class="form-inline mt-2">
+  {% csrf_token %}
+  <div class="form-group mr-2">
+    <label for="new-todo-description" class="sr-only">New todo</label>
+    <input type="text" name="description" class="form-control form-control-sm"
+           id="new-todo-description" placeholder="Add a todo..." required>
+  </div>
+  <button type="submit" class="btn btn-sm btn-outline-primary">Add</button>
+</form>
