@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
-from typing import List, Tuple
+from typing import List
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -317,7 +317,7 @@ class DataService(ABC):
         """
         raise NotImplementedError
 
-    def to_target(self, target_result=None, **kwargs) :
+    def to_target(self, target_result=None, **kwargs):
         """
         Upper level function to create a new target from the query results
         This method is not intended to be extended. This method passes a single instance of the output
@@ -349,14 +349,14 @@ class DataService(ABC):
                 # errors.append(target.name)
                 target = Target.objects.get(name=target.name)
                 messages.warning(request,
-                                    mark_safe(
-                                        f"""The target,
-                                        <a href="{reverse('targets:detail', kwargs={'pk': target.id})}">
-                                        {target.name}</a> already exists, any new data has been ingested.
-                                        You can <a href="{reverse('targets:create') + '?' +
-                                                        urlencode(target.as_dict())}">create</a> a new target anyway.
-                                        """)
-                                    )
+                                 mark_safe(
+                                    f"""The target,
+                                    <a href="{reverse('targets:detail', kwargs={'pk': target.id})}">
+                                    {target.name}</a> already exists, any new data has been ingested.
+                                    You can <a href="{reverse('targets:create') + '?' +
+                                                    urlencode(target.as_dict())}">create</a> a new target anyway.
+                                    """)
+                                 )
             return target
 
     def create_target_from_query(self, target_result, **kwargs):

@@ -312,7 +312,6 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         """
         context = super().get_context_data()
 
-        data_service_name = self.object.data_service
         simple_form = context['form'].get_simple_form_partial()
         advanced_form = context['form'].get_advanced_form_partial()
         context['simple_form'] = simple_form
