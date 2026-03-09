@@ -5,13 +5,12 @@ from django_filters.views import FilterView
 from django_filters import FilterSet, ChoiceFilter, CharFilter
 from django.views.generic.edit import DeleteView, FormView
 from django.views.generic.base import TemplateView, View
-from django.db import IntegrityError
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
-from guardian.shortcuts import assign_perm
+
 from django.utils import timezone
-from django.utils.safestring import mark_safe
+
 from django.core.cache import cache
 from django.contrib import messages
 from urllib.parse import urlencode
@@ -20,7 +19,6 @@ from tom_dataservices.models import DataServiceQuery
 from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class, NotConfiguredError
 from tom_dataservices.dataservices import MissingDataException, QueryServiceError
 from tom_dataservices.forms import UpdateDataFromDataServiceForm
-from tom_targets.models import Target
 
 
 logger = logging.getLogger(__name__)
@@ -315,8 +313,8 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         context = super().get_context_data()
 
         data_service_name = self.object.data_service
-        simple_form = get_data_service_class(data_service_name).get_simple_form_partial(self)
-        advanced_form = get_data_service_class(data_service_name).get_advanced_form_partial(self)
+        simple_form = context['form'].get_simple_form_partial()
+        advanced_form = context['form'].get_advanced_form_partial()
         context['simple_form'] = simple_form
         context['advanced_form'] = advanced_form
         context['object'] = self.object
@@ -355,28 +353,9 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                         return redirect(reverse('dataservices:run_saved', kwargs={'pk': query_id}))
                     else:
                         return redirect(reverse('dataservices:run'))
-                target, extras, aliases = data_service_class.to_target(cached_result)
-                try:
-                    target.save(extras=extras, names=aliases)
-                    # Give the user access to the target they created
-                    target.give_user_access(self.request.user)
-                    for group in request.user.groups.all():
-                        assign_perm('tom_targets.view_target', group, target)
-                        assign_perm('tom_targets.change_target', group, target)
-                        assign_perm('tom_targets.delete_target', group, target)
-                except IntegrityError:
-                    errors.append(target.name)
-                    target = Target.objects.get(name=target.name)
-                    messages.warning(request,
-                                     mark_safe(
-                                         f"""The target,
-                                         <a href="{reverse('targets:detail', kwargs={'pk': target.id})}">
-                                         {target.name}</a> already exists, any new data has been ingested.
-                                         You can <a href="{reverse('targets:create') + '?' +
-                                                           urlencode(target.as_dict())}">create</a> a new target anyway.
-                                         """)
-                                     )
-                # Do not attempt to store Reduced Datums if no Target Created.
+                target = data_service_class.to_target(cached_result, request=request)
+
+                # Do not attempt to store Reduced Datums if no Target.
                 if target:
                     try:
                         data_service_class.to_reduced_datums(target, cached_result.get('reduced_datums'))
