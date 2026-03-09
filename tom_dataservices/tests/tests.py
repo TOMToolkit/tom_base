@@ -52,7 +52,7 @@ class TestDataService(DataService):
     def query_spectroscopy(self, query_parameters, **kwargs):
         return [{'m': n} for n in range(100)]
 
-    def create_reduced_datums_from_query(self, target, data=[], data_type='photometry', **kwargs):
+    def create_reduced_datums_from_query(self, target, data, data_type='photometry', **kwargs):
         reduced_datums = []
         for datum in data:
             reduced_datum, __ = ReducedDatum.objects.get_or_create(

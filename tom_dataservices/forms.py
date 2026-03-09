@@ -36,8 +36,8 @@ class BaseQueryForm(forms.Form):
         """Return List of fields to be included in the simple form."""
         return []
 
-    def get_layout(self, excluded_fields=[]):
-        exclude = ["query_save", "query_name"] + excluded_fields + self.simple_fields()
+    def get_layout(self):
+        exclude = ["query_save", "query_name"] + self.simple_fields()
         field_keys = [f for f in self.fields.keys() if f not in exclude]
         return Layout(*field_keys)
 
