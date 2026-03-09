@@ -33,12 +33,21 @@ class BaseQueryForm(forms.Form):
         self.helper.layout = self.get_layout()
 
     def simple_fields(self) -> List[str]:
+        """Return List of fields to be included in the simple form."""
         return []
 
     def get_layout(self, excluded_fields=[]):
         exclude = ["query_save", "query_name"] + excluded_fields + self.simple_fields()
         field_keys = [f for f in self.fields.keys() if f not in exclude]
         return Layout(*field_keys)
+
+    def get_simple_form_partial(self):
+        """Returns a path to a simplified bare-minimum partial form that can be used to access the DataService."""
+        return None
+
+    def get_advanced_form_partial(self):
+        """Returns a path to a full or advanced partial form that can be used to access the DataService."""
+        return None
 
     def save(self, query_id=None):
         """

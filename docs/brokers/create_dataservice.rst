@@ -370,10 +370,40 @@ Simple Forms:
 
 Simple forms are often a single field that will find expected results. Such as a Target name or ID field.
 
-This consists of adding the ``get_simple_form_partial()`` method to MyDataService and then creating the partial.
+The easiest way to add a simple form is to add the ``simple_fields`` method in your form.
 
 .. code-block:: python
-    :caption: my_dataservice.MyDataService
+    :caption: forms.py
+    :linenos:
+
+    from django import forms
+    from tom_dataservices.forms import BaseQueryForm
+
+    class MyServiceForm(BaseQueryForm):
+        first_field = forms.CharField(required=False,
+                                      label='An Example Field',
+                                      help_text='Put important info here.')
+        ra = forms.FloatField(required=False, min_value=0., max_value=360.,
+                            label='R.A.',
+                            help_text='Right ascension in degrees')
+        dec = forms.FloatField(required=False, min_value=-90., max_value=90.,
+                            label='Dec.',
+                            help_text='Declination in degrees')
+        radius = forms.FloatField(required=False, min_value=0.,
+                            label='Cone Radius')
+
+        def simple_fields(self):
+            """Return List of fields to be included in the simple form."""
+            return ['first_field']
+
+This will automatically pull out any fields returned in the list to be displayed in the default form, and all other
+fields will be hidden by default under the advanced tab.
+
+Alternatively, for more complex forms and styling, you can write your own form partial.
+This consists of adding the ``get_simple_form_partial()`` method to ``MyServiceForm`` and then creating the partial.
+
+.. code-block:: python
+    :caption: forms.MyServiceForm
     :linenos:
 
     def get_simple_form_partial(self):
@@ -395,15 +425,16 @@ Advanced Forms:
 ===============
 
 This is where we include all of the complex functionality that advanced users would need access to.
-This can be handled in basically the same way as the simple form:
+By default this will include all the fields NOT returned with ``MyServiceForm.simple_fields()``. However, for more
+more complex forms and styling, we can create a partial just like we did for the simple form above.
 
 .. code-block:: python
-    :caption: my_dataservice.MyDataService
+    :caption: forms.MyServiceForm
     :linenos:
 
     def get_advanced_form_partial(self):
         """Returns a path to a simplified bare-minimum partial form that can be used to access the DataService."""
-        return 'my_dataservice/partials/myservice_advanced_form'
+        return 'my_dataservice/partials/myservice_advanced_form.hmtl'
 
 
 .. code-block:: html

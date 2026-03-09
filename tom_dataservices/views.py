@@ -134,10 +134,11 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         """
         context = super().get_context_data()
 
-        data_service_name = self.get_data_service_name()
-        simple_form = get_data_service_class(data_service_name).get_simple_form_partial(self)
-        advanced_form = get_data_service_class(data_service_name).get_advanced_form_partial(self)
         form = context['form']
+        data_service_name = self.get_data_service_name()
+        simple_form = form.get_simple_form_partial()
+        advanced_form = form.get_advanced_form_partial()
+
         context['simple_fields'] = []
         if not simple_form and form.simple_fields():
             for field in form.simple_fields():
