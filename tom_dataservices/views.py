@@ -137,6 +137,12 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         data_service_name = self.get_data_service_name()
         simple_form = get_data_service_class(data_service_name).get_simple_form_partial(self)
         advanced_form = get_data_service_class(data_service_name).get_advanced_form_partial(self)
+        form = context['form']
+        context['simple_fields'] = []
+        if not simple_form and form.simple_fields():
+            for field in form.simple_fields():
+                context['simple_fields'].append(form[field])
+            simple_form = 'tom_dataservices/partials/basic_simple_form.html'
         context['simple_form'] = simple_form
         context['advanced_form'] = advanced_form
         context['app_link'] = get_data_service_class(data_service_name).app_link

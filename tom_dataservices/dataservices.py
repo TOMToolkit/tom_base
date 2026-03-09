@@ -306,7 +306,7 @@ class DataService(ABC):
             reduced_datum_list += self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
         return reduced_datum_list
 
-    def create_reduced_datums_from_query(self, target, data=None, data_type=None, **kwargs) -> List:
+    def create_reduced_datums_from_query(self, target, data=[], data_type=None, **kwargs) -> List:
         """
         Create and save new reduced_datums of the appropriate data_type from the query results
         Be sure to use `ReducedDatum.objects.get_or_create()` when creating new objects.

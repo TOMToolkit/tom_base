@@ -282,7 +282,7 @@ re-creating existing objects.
     :caption: my_dataservice.MyDataService
     :linenos:
 
-    def create_reduced_datums_from_query(self, target, data=None, data_type='photometry', **kwargs):
+    def create_reduced_datums_from_query(self, target, data=[], data_type='photometry', **kwargs):
         """
         Create and save new reduced_datums of the appropriate data_type from the query results
         Be sure to use `ReducedDatum.objects.get_or_create()` when creating new objects.
