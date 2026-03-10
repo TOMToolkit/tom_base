@@ -1,3 +1,5 @@
+from typing import List
+
 from django import forms
 from django.urls import reverse
 from crispy_forms.helper import FormHelper
@@ -30,10 +32,22 @@ class BaseQueryForm(forms.Form):
         self.helper.form_tag = False
         self.helper.layout = self.get_layout()
 
+    def simple_fields(self) -> List[str]:
+        """Return List of fields to be included in the simple form."""
+        return []
+
     def get_layout(self):
-        exclude = ["query_save", "query_name"]
+        exclude = ["query_save", "query_name"] + self.simple_fields()
         field_keys = [f for f in self.fields.keys() if f not in exclude]
         return Layout(*field_keys)
+
+    def get_simple_form_partial(self):
+        """Returns a path to a simplified bare-minimum partial form that can be used to access the DataService."""
+        return None
+
+    def get_advanced_form_partial(self):
+        """Returns a path to a full or advanced partial form that can be used to access the DataService."""
+        return None
 
     def save(self, query_id=None):
         """

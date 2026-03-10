@@ -161,7 +161,14 @@ class NonSiderealTargetCreateForm(TargetForm):
         """
         cleaned_data = super().clean()
         scheme = cleaned_data['scheme']  # scheme is a required field, so this should be safe
+        eccentricity = cleaned_data.get('eccentricity')
         required_fields = REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME[scheme]
+
+        # Check that eccentiricty isn't too high for a non-comet orbital scheme.
+        if eccentricity and eccentricity > 0.9 and scheme != 'MPC_COMET':
+            raise ValidationError(
+                    "High eccentricity objects should use the MPC_COMET scheme to ensure proper orbital calculations."
+                )
 
         for field in required_fields:
             if not cleaned_data.get(field):

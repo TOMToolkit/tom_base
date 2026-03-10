@@ -1,12 +1,19 @@
 from abc import ABC, abstractmethod
 import logging
-from typing import List, Tuple
+from typing import List
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.apps import apps
 from django.utils.module_loading import import_string
+from django.db import IntegrityError
+from django.utils.safestring import mark_safe
+from django.contrib import messages
+from django.urls import reverse
 
-from tom_targets.models import TargetName
+from guardian.shortcuts import assign_perm
+
+from tom_targets.models import TargetName, Target
 
 logger = logging.getLogger(__name__)
 
@@ -209,14 +216,6 @@ class DataService(ABC):
         """Returns a success message to display in the UI after making the query."""
         return "Query completed successfully."
 
-    def get_simple_form_partial(self):
-        """Returns a path to a simplified bare-minimum partial form that can be used to access the DataService."""
-        return None
-
-    def get_advanced_form_partial(self):
-        """Returns a path to a full or advanced partial form that can be used to access the DataService."""
-        return None
-
     def query_forced_photometry(self, query_parameters, **kwargs):
         """Set up and run a specialized query for a DataService’s forced photometry service."""
         raise NotImplementedError(f'query_forced_photometry method has not been implemented for {self.name}')
@@ -306,7 +305,7 @@ class DataService(ABC):
             reduced_datum_list += self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
         return reduced_datum_list
 
-    def create_reduced_datums_from_query(self, target, data=None, data_type=None, **kwargs) -> List:
+    def create_reduced_datums_from_query(self, target, data: List, data_type=None, **kwargs) -> List:
         """
         Create and save new reduced_datums of the appropriate data_type from the query results
         Be sure to use `ReducedDatum.objects.get_or_create()` when creating new objects.
@@ -318,7 +317,7 @@ class DataService(ABC):
         """
         raise NotImplementedError
 
-    def to_target(self, target_result=None, **kwargs) -> Tuple[dict, dict, dict]:
+    def to_target(self, target_result=None, **kwargs):
         """
         Upper level function to create a new target from the query results
         This method is not intended to be extended. This method passes a single instance of the output
@@ -327,7 +326,7 @@ class DataService(ABC):
         Intended usage: Call to_target on each element of the target_data list of dictionaries from query_target.
         (see views.py::CreateTargetFromQueryView)
         :param target_results: Dictionary containing target information.
-        :returns: Target object, dictionary of target_extras, and list of aliases
+        :returns: Target object
         """
         if not target_result:
             raise MissingDataException('No query results. Did you call query_service()?')
@@ -335,7 +334,30 @@ class DataService(ABC):
             target = self.create_target_from_query(target_result, **kwargs)
             extras = self.create_target_extras_from_query(target_result, **kwargs)
             aliases = self.create_aliases_from_query(target_result.get('aliases', []), **kwargs)
-            return target, extras, aliases
+
+            request = kwargs.get('request')
+            try:
+                target.save(extras=extras, names=aliases)
+                # Give the user access to the target they created
+                if request:
+                    target.give_user_access(request.user)
+                    for group in request.user.groups.all():
+                        assign_perm('tom_targets.view_target', group, target)
+                        assign_perm('tom_targets.change_target', group, target)
+                        assign_perm('tom_targets.delete_target', group, target)
+            except IntegrityError:
+                # errors.append(target.name)
+                target = Target.objects.get(name=target.name)
+                messages.warning(request,
+                                 mark_safe(
+                                    f"""The target,
+                                    <a href="{reverse('targets:detail', kwargs={'pk': target.id})}">
+                                    {target.name}</a> already exists, any new data has been ingested.
+                                    You can <a href="{reverse('targets:create') + '?' +
+                                                      urlencode(target.as_dict())}">create</a> a new target anyway.
+                                    """)
+                                 )
+            return target
 
     def create_target_from_query(self, target_result, **kwargs):
         """Create a new target from a single instance of the target results.

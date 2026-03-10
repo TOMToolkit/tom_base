@@ -52,7 +52,7 @@ class TestDataService(DataService):
     def query_spectroscopy(self, query_parameters, **kwargs):
         return [{'m': n} for n in range(100)]
 
-    def create_reduced_datums_from_query(self, target, data=None, data_type='photometry', **kwargs):
+    def create_reduced_datums_from_query(self, target, data, data_type='photometry', **kwargs):
         reduced_datums = []
         for datum in data:
             reduced_datum, __ = ReducedDatum.objects.get_or_create(
@@ -99,12 +99,12 @@ class TestDataServiceClass(TestCase):
             new_test_query.to_target()
         # Show to_target() works with the default query_results
         target_results = new_test_query.query_targets('mytarget')
-        target, _extras, _aliases = new_test_query.to_target(target_result=target_results[0])
+        target = new_test_query.to_target(target_result=target_results[0])
         self.assertEqual(target.name, test_query_results['name'])
         # Show to_target() works independently of the query.
         new_test_query_results = test_query_results.copy()
         new_test_query_results['name'] = 'target2'
-        target2, _extras, _aliases = new_test_query.to_target(new_test_query_results)
+        target2 = new_test_query.to_target(new_test_query_results)
         self.assertEqual(target2.name, 'target2')
 
     def test_query_reduced_data(self):
