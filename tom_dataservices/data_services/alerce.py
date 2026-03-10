@@ -201,7 +201,7 @@ class AlerceDataService(DataService):
             )
         except Exception:
             logger.exception("Error querying ALeRCE photometry")
-            return []
+            return {}
 
     def query_spectroscopy(self, query_parameters, **kwargs):
         return {}
@@ -215,13 +215,11 @@ class AlerceDataService(DataService):
             )
         except Exception:
             logger.exception("Error querying ALeRCE forced photometry")
-            return []
+            return {}
 
     def create_reduced_datums_from_query(self, target, data=None, data_type='photometry', **kwargs):
-        params = self.build_query_parameters_from_target(target)
-        oid = params.get("object_id")
-        results = self.query_photometry(params)
-        for detection in results['detections']:
+        reduced_datums = []
+        for detection in data.get('detections', []):
             mjd = Time(detection['mjd'], format='mjd', scale='utc')
             value = {
                 'filter': ALERCE_FILTERS[detection['fid']],
@@ -229,27 +227,30 @@ class AlerceDataService(DataService):
                 'error': detection['sigmapsf'],
                 'telescope': 'ZTF',
             }
-            ReducedDatum.objects.get_or_create(
+            reduced_datum, __ = ReducedDatum.objects.get_or_create(
                 timestamp=mjd.to_datetime(TimezoneInfo()),
                 value=value,
                 source_name=self.name,
-                source_location=oid,
+                # source_location=oid,
                 data_type='photometry',
                 target=target
             )
+            reduced_datums.append(reduced_datum)
 
-        for non_detection in results['non_detections']:
+        for non_detection in data.get('non_detections', []):
             mjd = Time(non_detection['mjd'], format='mjd', scale='utc')
             value = {
                 'filter': ALERCE_FILTERS[non_detection['fid']],
                 'limit': non_detection['diffmaglim'],
                 'telescope': 'ZTF',
             }
-            ReducedDatum.objects.get_or_create(
+            reduced_datum, __ = ReducedDatum.objects.get_or_create(
                 timestamp=mjd.to_datetime(TimezoneInfo()),
                 value=value,
                 source_name=self.name,
-                source_location=oid,
+                # source_location=oid,
                 data_type='photometry',
                 target=target
             )
+            reduced_datums.append(reduced_datum)
+        return reduced_datums
