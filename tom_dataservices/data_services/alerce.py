@@ -99,6 +99,12 @@ class AlerceForm(BaseQueryForm):
 
         return cleaned_data
 
+    def get_simple_form_partial(self):
+        return "tom_dataservices/alerce/partials/alerce_simple_form.html"
+
+    def get_advanced_form_partial(self):
+        return "tom_dataservices/alerce/partials/alerce_advanced_form.html"
+
 
 class AlerceDataService(DataService):
     name = "Alerce"
@@ -247,9 +253,3 @@ class AlerceDataService(DataService):
                 data_type='photometry',
                 target=target
             )
-
-    def get_simple_form_partial(self):
-        return "tom_dataservices/alerce/partials/alerce_simple_form.html"
-
-    def get_advanced_form_partial(self):
-        return "tom_dataservices/alerce/partials/alerce_advanced_form.html"
