@@ -35,11 +35,13 @@ class AuthStrategyMiddleware:
         self.open_urls = [reverse('login')] + getattr(settings, 'OPEN_URLS', [])
 
     def __call__(self, request):
-        if settings.AUTH_STRATEGY == 'LOCKED':
-            if not request.user.is_authenticated and request.path_info not in self.open_urls:
-                return HttpResponseForbidden()
-
-        return self.get_response(request)
+        if settings.AUTH_STRATEGY == 'LOCKED' and not request.user.is_authenticated:
+            for url in self.open_urls:
+                if request.path_info.startswith(url):
+                    return self.get_response(request)
+            return HttpResponseForbidden()
+        else:
+            return self.get_response(request)
 
 
 class Raise403Middleware:
