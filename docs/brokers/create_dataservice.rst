@@ -530,7 +530,7 @@ table partial for displaying query results for this data service. To implement t
 
 
 .. code-block:: html
-    :caption: my_dataservice/partials/myservice_simple_form.html
+    :caption: my_dataservice/partials/myservice_query_results_table.html
     :linenos:
 
     <table class="table table-striped">

@@ -1,0 +1,20 @@
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th><input type="checkbox" id="selectAll"/></th>
+        <th>Name</th>
+        <th>RA</th>
+        <th>Dec</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for result in results %}
+    <tr>
+        <td><input type="checkbox" name="selected_results" value="{{ result.id }}"/></td>
+        <td>{{ result.name}}</td>
+        <td>{{ result.ra }}</td>
+        <td>{{ result.dec }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
