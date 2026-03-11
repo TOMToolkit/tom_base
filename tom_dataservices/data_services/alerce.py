@@ -159,14 +159,16 @@ class AlerceDataService(DataService):
         }
 
     def build_query_parameters_from_target(self, target, **kwargs):
+        query_parameters = {"object_id": target.name}
         try:
-            return {
-                "object_id": target.name,
-                "classifiers": [target.targetextra_set.get(key="classifier").value],
-                "survey": target.targetextra_set.get(key="survey").value,
-            }
+            query_parameters["classifiers"] = [target.targetextra_set.get(key="classifier").value]
+            query_parameters["survey"] = target.targetextra_set.get(key="survey").value
         except TargetExtra.DoesNotExist:
-            return {}
+            if target.name.startswith('ZTF'):
+                query_parameters["survey"] = 'ZTF'
+            else:
+                query_parameters["survey"] = 'LSST'
+        return query_parameters
 
     def create_target_from_query(self, target_result: dict, **kwrags):
         Target = get_target_model_class()
@@ -192,24 +194,24 @@ class AlerceDataService(DataService):
             if k not in ["oid", "meanra", "meandec"]
         }
 
-    def query_photometry(self, query_parameters, object_id=None, **kwargs):
+    def query_photometry(self, query_parameters, **kwargs):
         try:
             return alerce.query_lightcurve(
                 oid=query_parameters.get("object_id"),
                 survey=query_parameters.get("survey", "").lower(),
                 format="json"
             )
-        except Exception:
-            logger.exception("Error querying ALeRCE photometry")
+        except Exception as e:
+            logger.exception(f"Error querying ALeRCE photometry: {e}")
             return {}
 
     def query_spectroscopy(self, query_parameters, **kwargs):
         return {}
 
-    def query_forced_photometry(self, query_parameters, object_id=None, **kwargs):
+    def query_forced_photometry(self, query_parameters, **kwargs):
         try:
             return alerce.query_forced_photometry(
-                oid=object_id,
+                oid=query_parameters.get("object_id"),
                 survey=query_parameters.get("survey", "").lower(),
                 format="json"
             )
@@ -219,38 +221,39 @@ class AlerceDataService(DataService):
 
     def create_reduced_datums_from_query(self, target, data=None, data_type='photometry', **kwargs):
         reduced_datums = []
-        for detection in data.get('detections', []):
-            mjd = Time(detection['mjd'], format='mjd', scale='utc')
-            value = {
-                'filter': ALERCE_FILTERS[detection['fid']],
-                'magnitude': detection['magpsf'],
-                'error': detection['sigmapsf'],
-                'telescope': 'ZTF',
-            }
-            reduced_datum, __ = ReducedDatum.objects.get_or_create(
-                timestamp=mjd.to_datetime(TimezoneInfo()),
-                value=value,
-                source_name=self.name,
-                # source_location=oid,
-                data_type='photometry',
-                target=target
-            )
-            reduced_datums.append(reduced_datum)
+        if data:
+            for detection in data.get('detections', []):
+                mjd = Time(detection['mjd'], format='mjd', scale='utc')
+                value = {
+                    'filter': ALERCE_FILTERS[detection['fid']],
+                    'magnitude': detection['magpsf'],
+                    'error': detection['sigmapsf'],
+                    'telescope': 'ZTF',
+                }
+                reduced_datum, __ = ReducedDatum.objects.get_or_create(
+                    timestamp=mjd.to_datetime(TimezoneInfo()),
+                    value=value,
+                    source_name=self.name,
+                    # source_location=oid,
+                    data_type='photometry',
+                    target=target
+                )
+                reduced_datums.append(reduced_datum)
 
-        for non_detection in data.get('non_detections', []):
-            mjd = Time(non_detection['mjd'], format='mjd', scale='utc')
-            value = {
-                'filter': ALERCE_FILTERS[non_detection['fid']],
-                'limit': non_detection['diffmaglim'],
-                'telescope': 'ZTF',
-            }
-            reduced_datum, __ = ReducedDatum.objects.get_or_create(
-                timestamp=mjd.to_datetime(TimezoneInfo()),
-                value=value,
-                source_name=self.name,
-                # source_location=oid,
-                data_type='photometry',
-                target=target
-            )
-            reduced_datums.append(reduced_datum)
+            for non_detection in data.get('non_detections', []):
+                mjd = Time(non_detection['mjd'], format='mjd', scale='utc')
+                value = {
+                    'filter': ALERCE_FILTERS[non_detection['fid']],
+                    'limit': non_detection['diffmaglim'],
+                    'telescope': 'ZTF',
+                }
+                reduced_datum, __ = ReducedDatum.objects.get_or_create(
+                    timestamp=mjd.to_datetime(TimezoneInfo()),
+                    value=value,
+                    source_name=self.name,
+                    # source_location=oid,
+                    data_type='photometry',
+                    target=target
+                )
+                reduced_datums.append(reduced_datum)
         return reduced_datums
