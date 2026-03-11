@@ -9,7 +9,7 @@ from django.core.cache import cache
 
 from tom_dataservices.dataservices import DataService, QueryServiceError
 from tom_dataservices.forms import BaseQueryForm
-from tom_targets.models import get_target_model_class, TargetExtra
+from tom_targets.models import Target, TargetExtra
 
 logger = logging.getLogger(__name__)
 
@@ -171,17 +171,12 @@ class AlerceDataService(DataService):
         return query_parameters
 
     def create_target_from_query(self, target_result: dict, **kwrags):
-        Target = get_target_model_class()
-
-        target, _ = Target.objects.get_or_create(
+        target = Target(
             name=target_result["oid"],
-            defaults={
-                "type": "SIDEREAL",
-                "ra": target_result["meanra"],
-                "dec": target_result["meandec"],
-            },
+            type="SIDEREAL",
+            ra=target_result["meanra"],
+            dec=target_result["meandec"],
         )
-        TargetExtra.objects.create(target=target, key="survey", value=target_result["survey"])
         return target
 
     def create_target_extras_from_query(self, query_results, **kwrags):
@@ -217,7 +212,7 @@ class AlerceDataService(DataService):
             )
         except Exception:
             logger.exception("Error querying ALeRCE forced photometry")
-            return {}
+            return []
 
     def create_reduced_datums_from_query(self, target, data=None, data_type='photometry', **kwargs):
         reduced_datums = []
@@ -234,7 +229,6 @@ class AlerceDataService(DataService):
                     timestamp=mjd.to_datetime(TimezoneInfo()),
                     value=value,
                     source_name=self.name,
-                    # source_location=oid,
                     data_type='photometry',
                     target=target
                 )
@@ -251,7 +245,6 @@ class AlerceDataService(DataService):
                     timestamp=mjd.to_datetime(TimezoneInfo()),
                     value=value,
                     source_name=self.name,
-                    # source_location=oid,
                     data_type='photometry',
                     target=target
                 )

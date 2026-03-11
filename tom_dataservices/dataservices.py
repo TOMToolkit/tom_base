@@ -239,13 +239,15 @@ class DataService(ABC):
             spec_results = self.query_spectroscopy(query_parameters, **kwargs)
         except NotImplementedError:
             spec_results = []
-        try:
-            forced_phot_results = self.query_forced_photometry(query_parameters, **kwargs)
-        except NotImplementedError:
-            forced_phot_results = []
+        # Disable Forced Photometry from here. It's a more expensive process and should be handled differently.
+        # try:
+        #     forced_phot_results = self.query_forced_photometry(query_parameters, **kwargs)
+        # except NotImplementedError:
+        #     forced_phot_results = []
         return {'photometry': phot_results,
                 'spectroscopy': spec_results,
-                'forced_photometry': forced_phot_results}
+                # 'forced_photometry': forced_phot_results
+                }
 
     def query_aliases(self, query_parameters, **kwargs) -> List:
         """
