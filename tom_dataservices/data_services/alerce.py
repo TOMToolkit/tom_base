@@ -3,7 +3,6 @@ import logging
 from alerce.core import Alerce
 from alerce.exceptions import ObjectNotFoundError
 from astropy.time import Time, TimezoneInfo
-from crispy_forms.layout import HTML, Column, Field, Layout, Row
 from django import forms
 from django.core.cache import cache
 
@@ -26,23 +25,10 @@ class AlerceForm(BaseQueryForm):
     )
     object_id = forms.CharField(required=False, label="Object ID")
 
-    def get_layout(self, *args, **kwargs) -> Layout:
-        # Get a list of the classifier and probability fields
-        classifier_fields = self.add_classifiers_fields()
-        # Static fields layout
-        layout_fields = [Field("survey"), Field("object_id")]
-        # Construct the layout - fields are already added to the form
-        for field, prob_field in classifier_fields:
-            layout_fields.append(Row(Column(Field(field)), Column(Field(prob_field))))
-
-        return Layout(
-            HTML("""
-                <p>
-                Please see the <a href="http://alerce.science/" target="_blank">ALeRCE homepage</a> for information
-                about the ALeRCE filters.
-            """),
-            *layout_fields,
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Dynamically add the classifier fields to the form
+        self.add_classifiers_fields()
 
     def get_classifiers(self) -> list[dict]:
         classifiers = cache.get("ds_alerce_classifiers")
@@ -82,7 +68,7 @@ class AlerceForm(BaseQueryForm):
         return field_names
 
     def clean(self):
-        cleaned_data = super().clean()
+        cleaned_data = super().clean() or {}
         classifiers: list[dict] = []
 
         # Find the classifiers, if any
