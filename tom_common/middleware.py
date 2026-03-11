@@ -1,3 +1,4 @@
+import fnmatch
 from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponseForbidden
@@ -37,7 +38,7 @@ class AuthStrategyMiddleware:
     def __call__(self, request):
         if settings.AUTH_STRATEGY == 'LOCKED' and not request.user.is_authenticated:
             for url in self.open_urls:
-                if request.path_info.startswith(url):
+                if fnmatch.fnmatch(request.path_info, url):
                     return self.get_response(request)
             return HttpResponseForbidden()
         else:
