@@ -24,6 +24,9 @@ class AlerceForm(BaseQueryForm):
         label="Survey", choices=[("ZTF", "ZTF"), ("LSST", "LSST")]
     )
     object_id = forms.CharField(required=False, label="Object ID")
+    ra = forms.FloatField(required=False, label="RA (deg)")
+    dec = forms.FloatField(required=False, label="Dec (deg)")
+    radius = forms.FloatField(required=False, label="Search Radius (arcsec)")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -113,6 +116,13 @@ class AlerceDataService(DataService):
             "format": "json",
             "survey": query_parameters.get("survey", "").lower(),
         }
+        if all([
+                ra := query_parameters.get("ra"),
+                dec := query_parameters.get("dec"),
+                radius := query_parameters.get("radius")]):
+            params["ra"] = ra
+            params["dec"] = dec
+            params["radius"] = radius
         results = []
         try:
             if query_parameters.get("object_id"):
@@ -122,14 +132,21 @@ class AlerceDataService(DataService):
                 if object_result:
                     results.append(object_result)
 
-            for classifier in query_parameters.get("classifiers", []):
-                classifier_results = alerce.query_objects(
-                    classifier=classifier["classifier"],
-                    class_name=classifier["class"],
-                    probability=classifier["probability"],
-                    **params,
-                ).get("items", [])
-                results.extend(classifier_results)
+                    return results
+
+            classifier_params = query_parameters.get("classifiers", [])
+            if len(classifier_params) == 0:
+                general_results = alerce.query_objects(**params).get("items", [])
+                results.extend(general_results)
+            else:
+                for classifier in query_parameters.get("classifiers", []):
+                    classifier_results = alerce.query_objects(
+                        classifier=classifier["classifier"],
+                        class_name=classifier["class"],
+                        probability=classifier["probability"],
+                        **params,
+                    ).get("items", [])
+                    results.extend(classifier_results)
         except (ObjectNotFoundError, ValueError) as e:
             raise QueryServiceError(str(e))
 
@@ -138,11 +155,8 @@ class AlerceDataService(DataService):
         return results
 
     def build_query_parameters(self, parameters: dict, **kwargs):
-        return {
-            "object_id": parameters.get("object_id"),
-            "classifiers": parameters.get("classifiers", []),
-            "survey": parameters.get("survey"),
-        }
+        include_fields = ["object_id", "classifiers", "survey", "ra", "dec", "radius"]
+        return {k: v for k, v in parameters.items() if k in include_fields}
 
     def build_query_parameters_from_target(self, target, **kwargs):
         query_parameters = {"object_id": target.name}

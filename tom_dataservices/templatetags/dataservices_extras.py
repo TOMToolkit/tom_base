@@ -23,6 +23,11 @@ def catalog_query_menu(context):
     return context
 
 
+@register.filter
+def is_cfield(field):
+    return "cfield" in field.name
+
+
 @register.inclusion_tag('tom_dataservices/partials/update_data_from_dataservice.html', takes_context=True)
 def update_data_from_dataservice(context):
     initial = {'target': context['target']}
