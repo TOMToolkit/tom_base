@@ -360,10 +360,11 @@ In this section we will walk you through several important steps to customize th
 Simple vs Advanced Forms:
 +++++++++++++++++++++++++
 
-For clarity it can be extremely useful to separate the base level functionality for a data service from the much more
-complex features and search functionality that is possible with many catalogs, brokers, etc. Towards this end, the
-TOMToolkit offers both simple and advanced forms for a dataservice. By default, an advanced Form will be collapsed
-when a user first loads the form.
+By default, your entire form will be displayed on the query page. This can be confusing or less convenient for users
+looking to make a quick query. For clarity it can be extremely useful to separate the base level functionality for a
+data service from the much more complex features and search functionality that is possible with many catalogs, brokers,
+etc. Towards this end, the TOMToolkit offers both simple and advanced forms for a dataservice. By default, an advanced
+Form will be collapsed when a user first loads the form.
 
 Simple Forms:
 =============
@@ -399,6 +400,8 @@ The easiest way to add a simple form is to add the ``simple_fields`` method in y
 This will automatically pull out any fields returned in the list to be displayed in the default form, and all other
 fields will be hidden by default under the advanced tab.
 
+|image1|
+
 Alternatively, for more complex forms and styling, you can write your own form partial.
 This consists of adding the ``get_simple_form_partial()`` method to ``MyServiceForm`` and then creating the partial.
 
@@ -420,13 +423,16 @@ This consists of adding the ``get_simple_form_partial()`` method to ``MyServiceF
 
 NOTES:
  - Here we are just rendering a single field from our form.
+ - See the docs for `Django Form Templates <https://docs.djangoproject.com/en/stable/topics/forms/#working-with-form-templates>`__ 
+  and `bootstrap4 <https://getbootstrap.com/docs/4.0/components/forms/>`__ for help building your partials.
 
 Advanced Forms:
 ===============
 
 This is where we include all of the complex functionality that advanced users would need access to.
 By default this will include all the fields NOT returned with ``MyServiceForm.simple_fields()``. However, for more
-more complex forms and styling, we can create a partial just like we did for the simple form above.
+more complex forms and styling, we can create a partial just like we did for the simple form above. If we do, though,
+we will want to be explicit about NOT including the fields that we included in the simple form.
 
 .. code-block:: python
     :caption: forms.MyServiceForm
@@ -450,6 +456,7 @@ NOTES:
    displayed below the main form.
  - Note that we are using ``bootstrap_form`` instead of ``bootstrap_field`` which we used in the simple form.
 
+|image2|
 
 Alternatively, if a simple form is included, the entirety of the form will be displayed by default in the advanced
 section using whatever layout was provided. So you can easily use
@@ -530,7 +537,7 @@ table partial for displaying query results for this data service. To implement t
 
 
 .. code-block:: html
-    :caption: my_dataservice/partials/myservice_simple_form.html
+    :caption: my_dataservice/partials/myservice_query_results_table.html
     :linenos:
 
     <table class="table table-striped">
@@ -558,3 +565,5 @@ table partial for displaying query results for this data service. To implement t
 
 
 .. |image0| image:: /_static/dataservices_doc/demo_Data_Service.png
+.. |image1| image:: /_static/dataservices_doc/query_form_collapsed.png
+.. |image2| image:: /_static/dataservices_doc/advanced_form.png

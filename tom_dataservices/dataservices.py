@@ -267,7 +267,7 @@ class DataService(ABC):
 
         :param query_parameters: This is the output from build_query_parameters()
         :return: A list of dictionaries describing the resulting targets. Include 'reduced_datums' and/or 'aliases' as
-        keys in this dictionary to add associated data and alternate names without perfoming additional queries.
+          keys in this dictionary to add associated data and alternate names without performing additional queries.
         :rtype: List[dict]
         """
         return [{}]
@@ -296,7 +296,7 @@ class DataService(ABC):
         of query_reduced_data() to create_reduced_datums_from_query()
         :param target: Target object to associate with the ReducedDatum
         :param data_results: Query results from the DataService storing observation data. This should be a dictionary
-            with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
+        with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
         """
         if not data_results:
             raise MissingDataException('No Reduced Data dictionary found.')

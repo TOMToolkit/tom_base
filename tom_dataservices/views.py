@@ -119,6 +119,8 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         if form.cleaned_data['query_save']:
             form.save()
 
+        # Store final form data in the session so it can be retrieved in the run_query view.
+        # This is how we pass the form data for unsaved queries without passing the entire form data as kwargs
         self.request.session['query_parameters'] = form.cleaned_data
 
         return redirect(self.success_url)
@@ -300,6 +302,7 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         """
         if form.cleaned_data['query_save']:
             form.save(query_id=self.object.id)
+        # Update session with form data so that we can run unsaved queries.
         self.request.session['query_parameters'] = form.cleaned_data
         return redirect(self.success_url)
 
