@@ -310,7 +310,7 @@ GENERAL_SEARCH_FUNCTIONS = {}
 # Define custom DataProcessor class
 # DATA_PROCESSOR_CLASS = 'mytom.custom_data_processor.CustomDataProcessor'
 
-# Authentication strategy can either be LOCKED (required login for all views)
+# Authentication strategy can either be LOCKED (required login for all views, bypassed with OPEN_URLS)
 # or READ_ONLY (read only access to views)
 AUTH_STRATEGY = 'READ_ONLY'
 
@@ -330,8 +330,8 @@ TARGET_LIST_COLUMNS = [
     "name", "type", "observations", "saved_data"
 ]
 
-# URLs that should be allowed access even with AUTH_STRATEGY = LOCKED
-# for example: OPEN_URLS = ['/', '/about']
+# URLs that should be allowed access even with AUTH_STRATEGY = LOCKED. Can use wildcards.
+# for example: OPEN_URLS = ['/', '/about', '/accounts/reset/*/']
 OPEN_URLS = []
 
 HOOKS = {

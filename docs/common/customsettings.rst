@@ -165,8 +165,8 @@ details and available hooks.
 Default: []
 
 With an `AUTH_STRATEGY <#auth-strategy>`__ value of **LOCKED**, urls in
-this list will remain visible to unauthenticated users. You might add
-the homepage (‘/’), for example.
+this list will remain visible to unauthenticated users. You can also use wild cards to open an entire path.
+You might add the homepage (‘/’), for example, or anything with a path that looks like '/accounts/reset/*/'.
 
 `TARGET_PERMISSIONS_ONLY <#target-permissions-only>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

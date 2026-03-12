@@ -247,6 +247,49 @@ class TestAuthScheme(TestCase):
         self.assertContains(response, 'Create Targets')
 
 
+class TestAuthStrategyMiddleware(TestCase):
+    login_url = '/accounts/login/'
+
+    @override_settings(AUTH_STRATEGY='LOCKED', OPEN_URLS=[])
+    def test_locked_unauthenticated_request_redirects_to_login(self):
+        # Raise403Middleware converts the 403 from AuthStrategyMiddleware to a redirect
+        response = self.client.get(reverse('tom_targets:list'))
+        self.assertRedirects(
+            response, self.login_url + '?next=' + reverse('tom_targets:list'), status_code=302
+        )
+
+    @override_settings(AUTH_STRATEGY='LOCKED', OPEN_URLS=['/accounts/reset/*/'])
+    def test_locked_password_reset_wildcard_matches_uid_token(self):
+        # /accounts/reset/abc123xyz/ should match the wildcard
+        response = self.client.get('/accounts/reset/abc123xyz/foobarfoo/')
+        self.assertNotEqual(response.status_code, 302)
+
+    @override_settings(AUTH_STRATEGY='LOCKED', OPEN_URLS=['/accounts/reset/*/'])
+    def test_locked_password_reset_wildcard_does_not_match_unrelated_path(self):
+        # /accounts/profile/ should not match /accounts/reset/*/
+        response = self.client.get('/accounts/profile/')
+        self.assertRedirects(
+            response, self.login_url + '?next=/accounts/profile/', status_code=302
+        )
+
+    @override_settings(AUTH_STRATEGY='LOCKED', OPEN_URLS=[])
+    def test_locked_login_url_always_open(self):
+        response = self.client.get(reverse('login'))
+        self.assertNotEqual(response.status_code, 302)
+
+    @override_settings(AUTH_STRATEGY='LOCKED', OPEN_URLS=[])
+    def test_locked_authenticated_user_allowed(self):
+        user = User.objects.create_user(username='testuser', password='password')
+        self.client.force_login(user)
+        response = self.client.get(reverse('tom_targets:list'))
+        self.assertEqual(response.status_code, 200)
+
+    @override_settings(AUTH_STRATEGY='READ_ONLY', OPEN_URLS=[])
+    def test_read_only_unauthenticated_allowed(self):
+        response = self.client.get(reverse('tom_targets:list'))
+        self.assertEqual(response.status_code, 200)
+
+
 class CommentDeleteViewTest(TestCase):
     def setUp(self):
         self.site = Site.objects.get_current()
