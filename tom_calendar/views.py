@@ -113,6 +113,7 @@ def render_calendar(request, month: int | None = None):
         "next_year": next_year,
         "target_lists": TargetList.objects.filter(calendarevent__in=events).distinct(),
         "utc_offset": utc_offset,
+        "utc_offset_choices": range(-12, 13),
     }
 
     if request.htmx:

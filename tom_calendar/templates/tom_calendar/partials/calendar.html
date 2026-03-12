@@ -191,16 +191,15 @@
         </a>
       {% endfor %}
     </div>
-    <div class="d-flex align-items-center">
-      <small class="text-muted mr-2">UTC offset: <span id="utc-offset-label">{{ utc_offset }}</span></small>
-      <input type="range" min="-12" max="12" value="{{ utc_offset }}"
-             hx-get="{% url 'calendar:calendar' %}"
-             hx-trigger="input changed delay:400ms"
-             hx-target="#calendar-partial"
-             hx-swap="outerHTML"
-             hx-vals='{"month": "{{ month }}", "year": "{{ year }}"}'
-             name="utc_offset"
-             oninput="document.getElementById('utc-offset-label').textContent = this.value">
-    </div>
+    <select name="utc_offset"
+            hx-get="{% url 'calendar:calendar' %}"
+            hx-trigger="change"
+            hx-target="#calendar-partial"
+            hx-swap="outerHTML"
+            hx-vals='{"month": "{{ month }}", "year": "{{ year }}"}'>
+      {% for i in utc_offset_choices %}
+      <option value="{{ i }}" {% if i == utc_offset %}selected{% endif %}>UTC{% if i >= 0 %}+{% endif %}{{ i }}</option>
+      {% endfor %}
+    </select>
   </div>
 </div>
