@@ -230,7 +230,11 @@ class DataService(ABC):
 
     def query_reduced_data(self, target, **kwargs):
         """Set up and run a specialized query to retrieve Reduced Datums from a Data Service"""
-        query_parameters = self.build_query_parameters_from_target(target)
+        build_query_parameters_from_target_method = getattr(self, 'build_query_parameters_from_target')
+        if build_query_parameters_from_target_method:
+            query_parameters = build_query_parameters_from_target_method(target)
+        else:
+            raise NotImplementedError(f'build_query_parameters_from_target() has not been implemented for {self.name}')
         try:
             phot_results = self.query_photometry(query_parameters, **kwargs)
         except NotImplementedError:
