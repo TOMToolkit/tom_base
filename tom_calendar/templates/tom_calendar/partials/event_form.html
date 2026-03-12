@@ -64,7 +64,9 @@
     </div>
     {% buttons %}
     <button type="submit" class="btn btn-primary">Save</button>
-    {% if event %}
+    {% if action == "create" %}
+    <button type="submit" name="save_and_edit" value="1" class="btn btn-primary">Save and edit</button>
+    {% else %}
     <button type="button"
             hx-post="{% url 'calendar:delete-event' event.id %}"
             hx-target="#calendar-partial"
@@ -73,9 +75,12 @@
     {% endif %}
     {% endbuttons %}
 </form>
+<h6 class="mb-2">Todo list</h6>
+<hr>
+<div id="cal-todos">
 {% if action == "update" %}
-  <hr>
-  <div id="cal-todos">
-    {% include 'tom_calendar/partials/todos.html' with event=event %}
-  </div>
+  {% include 'tom_calendar/partials/todos.html' with event=event %}
+{% else %}
+  <p>Save the event to add TODOs</p>
 {% endif %}
+</div>

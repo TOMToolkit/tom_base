@@ -143,6 +143,16 @@ def create_event(request):
         form = EventForm(request.POST)
         if form.is_valid():
             event = form.save()
+            if "save_and_edit" in request.POST:
+                form = EventForm(instance=event)
+                response = render(
+                    request,
+                    "tom_calendar/partials/event_form.html",
+                    {"form": form, "event": event, "action": "update"}
+                )
+                response["HX-Retarget"] = "#cal-modal-body"
+                response["HX-Reswap"] = "innerHTML"
+                return trigger_client_event(response, "calRefresh")
             response = render_calendar(request, month=event.start_time.month)
             return trigger_client_event(response, "calClose")
         else:

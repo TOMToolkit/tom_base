@@ -1,5 +1,3 @@
-<h6 class="mb-2">Todo list</h6>
-
 {% for todo in event.todos.all %}
   <form hx-post="{% url 'calendar:update-todo' todo.id %}"
         hx-trigger="change"
