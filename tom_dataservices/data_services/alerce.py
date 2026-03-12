@@ -28,6 +28,11 @@ class AlerceForm(BaseQueryForm):
     ra = forms.FloatField(required=False, label="RA (deg)")
     dec = forms.FloatField(required=False, label="Dec (deg)")
     radius = forms.FloatField(required=False, label="Search Radius (arcsec)")
+    firstmjd_gt = forms.FloatField(required=False, label="Min MJD of first detection")
+    firstmjd_lt = forms.FloatField(required=False, label="Max MJD of first detection")
+    lastmjd_gt = forms.FloatField(required=False, label="Min MJD of last detection")
+    lastmjd_lt = forms.FloatField(required=False, label="Max MJD of last detection")
+    ndet = forms.IntegerField(required=False, label="Min. Number of Detections")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -118,6 +123,16 @@ class AlerceDataService(DataService):
             "format": "json",
             "survey": query_parameters.get("survey", "").lower(),
         }
+        if (firstmjd_gt := query_parameters.get("firstmjd_gt")) and (
+            firstmjd_lt := query_parameters.get("firstmjd_lt")
+        ):
+            params["firstmjd"] = [firstmjd_gt, firstmjd_lt]
+        if (lastmjd_gt := query_parameters.get("lastmjd_gt")) and (
+            lastmjd_lt := query_parameters.get("lastmjd_lt")
+        ):
+            params["lastmjd"] = [lastmjd_gt, lastmjd_lt]
+        if ndet := query_parameters.get("ndet"):
+            params["ndet"] = ndet
         if all(
             [
                 ra := query_parameters.get("ra"),
@@ -157,10 +172,23 @@ class AlerceDataService(DataService):
 
         for result in results:
             result["survey"] = params["survey"]
+
         return results
 
     def build_query_parameters(self, parameters: dict, **kwargs):
-        include_fields = ["object_id", "classifiers", "survey", "ra", "dec", "radius"]
+        include_fields = [
+            "object_id",
+            "classifiers",
+            "survey",
+            "ra",
+            "dec",
+            "radius",
+            "firstmjd_gt",
+            "firstmjd_lt",
+            "lastmjd_gt",
+            "lastmjd_lt",
+            "ndet",
+        ]
         return {k: v for k, v in parameters.items() if k in include_fields}
 
     def build_query_parameters_from_target(self, target, **kwargs):
