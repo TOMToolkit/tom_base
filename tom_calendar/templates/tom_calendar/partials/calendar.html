@@ -98,7 +98,7 @@
   }
 </style>
 
-{% load tz %}
+{% load tz calendar_tags %}
 
 <div id="calendar-partial"
      data-url="{% url 'calendar:calendar' %}?month={{ month }}&year={{ year }}">
@@ -174,7 +174,7 @@
                   ({{ event.active_todos.count }})
                   {% endif %}
                 </span>
-                <span class="cal-event-time">{{ event.start_time|time:"H:i" }}</span>
+                <span class="cal-event-time">{{ event.start_time|offset_time:utc_offset|time:"H:i" }}</span>
               </div>
             {% endfor %}
           </div>
@@ -191,7 +191,16 @@
         </a>
       {% endfor %}
     </div>
-    {% get_current_timezone as TIME_ZONE %}
-    <small class="text-muted">Current timezone: {{ TIME_ZONE }}</small>
+    <div class="d-flex align-items-center">
+      <small class="text-muted mr-2">UTC offset: <span id="utc-offset-label">{{ utc_offset }}</span></small>
+      <input type="range" min="-12" max="12" value="{{ utc_offset }}"
+             hx-get="{% url 'calendar:calendar' %}"
+             hx-trigger="input changed delay:400ms"
+             hx-target="#calendar-partial"
+             hx-swap="outerHTML"
+             hx-vals='{"month": "{{ month }}", "year": "{{ year }}"}'
+             name="utc_offset"
+             oninput="document.getElementById('utc-offset-label').textContent = this.value">
+    </div>
   </div>
 </div>

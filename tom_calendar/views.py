@@ -2,7 +2,7 @@ from tom_targets.models import TargetList
 import calendar as cal_module
 import math
 from dataclasses import dataclass
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 
 from astropy.coordinates import get_body, get_sun
 from astropy.time import Time
@@ -44,12 +44,15 @@ class MoonPhase:
 
 
 def render_calendar(request, month: int | None = None):
+    utc_offset = int(request.GET.get("utc_offset", 0))
+    offset = timedelta(hours=utc_offset)
     now = timezone.now()
-    today = now.date()
+    now_offset = now + offset
+    today = now_offset.date()
     if month is None:
-        month = int(request.GET.get("month", now.month))
+        month = int(request.GET.get("month", now_offset.month))
     month = max(1, min(12, month))
-    year = int(request.GET.get("year", now.year))
+    year = int(request.GET.get("year", now_offset.year))
 
     # Sunday is 6 in python calendar for some reason
     calendar = cal_module.Calendar(firstweekday=6)
@@ -73,6 +76,9 @@ def render_calendar(request, month: int | None = None):
         end_time__date__gte=weeks[0][0],
     )
 
+    def offset_date(dt):
+        return (dt + offset).date()
+
     events = list(events)
     weeks_with_events = [
         [
@@ -81,12 +87,12 @@ def render_calendar(request, month: int | None = None):
                 "moon": MoonPhase.from_date(d),
                 "all_day_events": [
                     e for e in events
-                    if e.start_time.date() <= d <= e.end_time.date()
-                    and e.start_time.date() != e.end_time.date()
+                    if offset_date(e.start_time) <= d <= offset_date(e.end_time)
+                    and offset_date(e.start_time) != offset_date(e.end_time)
                 ],
                 "events": [
                     e for e in events
-                    if e.start_time.date() == e.end_time.date() == d
+                    if offset_date(e.start_time) == offset_date(e.end_time) == d
                 ],
             }
             for d in week
@@ -106,6 +112,7 @@ def render_calendar(request, month: int | None = None):
         "next_month": next_month,
         "next_year": next_year,
         "target_lists": TargetList.objects.filter(calendarevent__in=events).distinct(),
+        "utc_offset": utc_offset,
     }
 
     if request.htmx:
