@@ -26,7 +26,13 @@
     </div>
     <div class="form-row">
       <div class="col">
-        {% bootstrap_field form.url %}
+        <label for="{{ form.url.id_for_label }}">
+          URL
+          {% if form.url.value %}
+            <a href="{{ form.url.value }}" target="_blank">View  ↗</a>
+          {% endif %}
+        </label>
+        {% bootstrap_field form.url show_label=False %}
       </div>
       <div class="col">
         {% bootstrap_field form.target_list %}
