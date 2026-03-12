@@ -29,13 +29,23 @@
         <label for="{{ form.url.id_for_label }}">
           URL
           {% if form.url.value %}
-            <a href="{{ form.url.value }}" target="_blank">View  ↗</a>
+            <small>
+              <a href="{{ form.url.value }}" target="_blank">View  ↗</a>
+            </small>
           {% endif %}
         </label>
         {% bootstrap_field form.url show_label=False %}
       </div>
       <div class="col">
-        {% bootstrap_field form.target_list %}
+        <label for="{{ form.target_list.id_for_label }}">
+          Target list
+          {% if form.target_list.value %}
+          <small>
+            <a href="{% url 'targets:list' %}?targetlist__name={{ form.target_list.value }}" target="_blank">View  ↗</a>
+          </small>
+          {% endif %}
+        </label>
+        {% bootstrap_field form.target_list show_label=False%}
       </div>
     </div>
     <div class="form-row">
