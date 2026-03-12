@@ -33,6 +33,7 @@ class CalendarEvent(models.Model):
     user = models.CharField(max_length=200, blank=True, default="")
     proposal = models.CharField(max_length=200, blank=True, default="")
     telescope = models.CharField(max_length=200, blank=True, default="")
+    instrument = models.CharField(max_length=200, blank=True, default="")
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 

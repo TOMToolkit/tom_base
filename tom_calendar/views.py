@@ -121,7 +121,7 @@ class EventForm(forms.ModelForm):
         model = CalendarEvent
         fields = [
             'title', 'start_time', 'end_time', 'description', 'url',
-            'target_list', 'user', 'proposal', 'telescope'
+            'target_list', 'user', 'proposal', 'telescope', 'instrument'
         ]
         widgets = {
             'start_time': DATETIME_INPUT,
