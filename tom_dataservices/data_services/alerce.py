@@ -1,11 +1,12 @@
-from tom_dataproducts.models import ReducedDatum
 import logging
+
 from alerce.core import Alerce
 from alerce.exceptions import ObjectNotFoundError
 from astropy.time import Time, TimezoneInfo
 from django import forms
 from django.core.cache import cache
 
+from tom_dataproducts.models import ReducedDatum
 from tom_dataservices.dataservices import DataService, QueryServiceError
 from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import Target, TargetExtra
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 alerce = Alerce()
 
-ALERCE_FILTERS = {1: 'g', 2: 'r', 3: 'i'}
+ALERCE_FILTERS = {1: "g", 2: "r", 3: "i"}
 
 
 class AlerceForm(BaseQueryForm):
@@ -97,7 +98,7 @@ class AlerceForm(BaseQueryForm):
 
 class AlerceDataService(DataService):
     name = "Alerce"
-    query_results_table = 'tom_dataservices/alerce/partials/alerce_results_table.html'
+    query_results_table = "tom_dataservices/alerce/partials/alerce_results_table.html"
 
     @classmethod
     def get_form_class(cls):
@@ -117,10 +118,13 @@ class AlerceDataService(DataService):
             "format": "json",
             "survey": query_parameters.get("survey", "").lower(),
         }
-        if all([
+        if all(
+            [
                 ra := query_parameters.get("ra"),
                 dec := query_parameters.get("dec"),
-                radius := query_parameters.get("radius")]):
+                radius := query_parameters.get("radius"),
+            ]
+        ):
             params["ra"] = ra
             params["dec"] = dec
             params["radius"] = radius
@@ -162,13 +166,15 @@ class AlerceDataService(DataService):
     def build_query_parameters_from_target(self, target, **kwargs):
         query_parameters = {"object_id": target.name}
         try:
-            query_parameters["classifiers"] = [target.targetextra_set.get(key="classifier").value]
+            query_parameters["classifiers"] = [
+                target.targetextra_set.get(key="classifier").value
+            ]
             query_parameters["survey"] = target.targetextra_set.get(key="survey").value
         except TargetExtra.DoesNotExist:
-            if target.name.startswith('ZTF'):
-                query_parameters["survey"] = 'ZTF'
+            if target.name.startswith("ZTF"):
+                query_parameters["survey"] = "ZTF"
             else:
-                query_parameters["survey"] = 'LSST'
+                query_parameters["survey"] = "LSST"
         return query_parameters
 
     def create_target_from_query(self, target_result: dict, **kwrags):
@@ -195,7 +201,7 @@ class AlerceDataService(DataService):
             return alerce.query_lightcurve(
                 oid=query_parameters.get("object_id"),
                 survey=query_parameters.get("survey", "").lower(),
-                format="json"
+                format="json",
             )
         except Exception as e:
             logger.exception(f"Error querying ALeRCE photometry: {e}")
@@ -209,45 +215,47 @@ class AlerceDataService(DataService):
             return alerce.query_forced_photometry(
                 oid=query_parameters.get("object_id"),
                 survey=query_parameters.get("survey", "").lower(),
-                format="json"
+                format="json",
             )
         except Exception:
             logger.exception("Error querying ALeRCE forced photometry")
             return []
 
-    def create_reduced_datums_from_query(self, target, data=None, data_type='photometry', **kwargs):
+    def create_reduced_datums_from_query(
+        self, target, data=None, data_type="photometry", **kwargs
+    ):
         reduced_datums = []
         if data:
-            for detection in data.get('detections', []):
-                mjd = Time(detection['mjd'], format='mjd', scale='utc')
+            for detection in data.get("detections", []):
+                mjd = Time(detection["mjd"], format="mjd", scale="utc")
                 value = {
-                    'filter': ALERCE_FILTERS[detection['fid']],
-                    'magnitude': detection['magpsf'],
-                    'error': detection['sigmapsf'],
-                    'telescope': 'ZTF',
+                    "filter": ALERCE_FILTERS[detection["fid"]],
+                    "magnitude": detection["magpsf"],
+                    "error": detection["sigmapsf"],
+                    "telescope": "ZTF",
                 }
                 reduced_datum, __ = ReducedDatum.objects.get_or_create(
                     timestamp=mjd.to_datetime(TimezoneInfo()),
                     value=value,
                     source_name=self.name,
-                    data_type='photometry',
-                    target=target
+                    data_type="photometry",
+                    target=target,
                 )
                 reduced_datums.append(reduced_datum)
 
-            for non_detection in data.get('non_detections', []):
-                mjd = Time(non_detection['mjd'], format='mjd', scale='utc')
+            for non_detection in data.get("non_detections", []):
+                mjd = Time(non_detection["mjd"], format="mjd", scale="utc")
                 value = {
-                    'filter': ALERCE_FILTERS[non_detection['fid']],
-                    'limit': non_detection['diffmaglim'],
-                    'telescope': 'ZTF',
+                    "filter": ALERCE_FILTERS[non_detection["fid"]],
+                    "limit": non_detection["diffmaglim"],
+                    "telescope": "ZTF",
                 }
                 reduced_datum, __ = ReducedDatum.objects.get_or_create(
                     timestamp=mjd.to_datetime(TimezoneInfo()),
                     value=value,
                     source_name=self.name,
-                    data_type='photometry',
-                    target=target
+                    data_type="photometry",
+                    target=target,
                 )
                 reduced_datums.append(reduced_datum)
         return reduced_datums
