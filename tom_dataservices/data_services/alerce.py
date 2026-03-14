@@ -62,7 +62,7 @@ class AlerceForm(BaseQueryForm):
                 label=f"{c['classifier_name']}",
                 choices=[(None, "")] + [(k, k) for k in c["classes"]],
                 required=False,
-                help_text=c["classifier_version"],
+                help_text=f'Classifier Version: {c["classifier_version"]}',
             )
             prob_field_name = (
                 f"prob_{self.CLASSIFIER_FIELD_PREFIX}{c['classifier_name']}"
@@ -249,9 +249,7 @@ class AlerceDataService(DataService):
             logger.exception("Error querying ALeRCE forced photometry")
             return []
 
-    def create_reduced_datums_from_query(
-        self, target, data=None, data_type="photometry", **kwargs
-    ):
+    def create_reduced_datums_from_query(self, target, data=None, data_type="photometry", **kwargs):
         reduced_datums = []
         if data:
             for detection in data.get("detections", []):

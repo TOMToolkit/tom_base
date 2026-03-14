@@ -382,8 +382,8 @@ def update_data_from_query(request):
         form = UpdateDataFromDataServiceForm(request.POST)
         data = {}
         if form.is_valid():
+            target = form.cleaned_data['target']
             try:
-                target = form.cleaned_data['target']
                 data_service_class = get_data_service_class(form.cleaned_data['data_service'])()
                 data = data_service_class.query_reduced_data(target)
                 data_service_class.to_reduced_datums(target, data)
