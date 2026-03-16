@@ -438,10 +438,10 @@ class ReducedDatum(models.Model):
                                                               timestamp=self.timestamp,
                                                               value=self.value)
             if existing_reduced_datum and existing_reduced_datum.id != self.id:  # not the same object
+                existing_source = existing_reduced_datum.__dict__.get('source_name', 'Unknown Source')
                 # found ReducedDatum with the same values. Don't save this duplicate ReducedDatum.
                 raise ValidationError(f'ReducedDatum already exists: Identical {self.data_type} data '
-                                      f'found for {self.target} from '
-                                      f'{existing_reduced_datum.__dict__.get('source_name', 'Unknown Source')}.')
+                                      f'found for {self.target} from {existing_source}.')
         except ReducedDatum.DoesNotExist:
             # this means that our check for uniqueness passed: so do not raise ValidationError
             pass
