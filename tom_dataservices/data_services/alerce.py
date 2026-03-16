@@ -266,9 +266,9 @@ class AlerceDataService(DataService):
                 reduced_datum, __ = ReducedDatum.objects.get_or_create(
                     timestamp=mjd.to_datetime(TimezoneInfo()),
                     value=value,
-                    source_name=self.name,
                     data_type="photometry",
                     target=target,
+                    defaults={'source_name': self.name,}
                 )
                 reduced_datums.append(reduced_datum)
 
@@ -282,9 +282,9 @@ class AlerceDataService(DataService):
                 reduced_datum, __ = ReducedDatum.objects.get_or_create(
                     timestamp=mjd.to_datetime(TimezoneInfo()),
                     value=value,
-                    source_name=self.name,
                     data_type="photometry",
                     target=target,
+                    defaults={'source_name': self.name,}
                 )
                 reduced_datums.append(reduced_datum)
         return reduced_datums
