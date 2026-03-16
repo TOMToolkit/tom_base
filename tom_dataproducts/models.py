@@ -310,6 +310,7 @@ class DataProduct(models.Model):
                 logger.warning(f'Unable to create thumbnail for {self}: {e}')
         return
 
+
 class ReducedDatumQuerySet(models.query.QuerySet):
     """
     This is a custom queryset that allows us to extend the get_or_create to coincide with our custom validate_unique
