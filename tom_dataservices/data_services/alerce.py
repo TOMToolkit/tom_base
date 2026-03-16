@@ -70,6 +70,9 @@ class AlerceForm(BaseQueryForm):
             self.fields[prob_field_name] = forms.FloatField(
                 label=f"{c['classifier_name']} Probability",
                 required=False,
+                max_value=1,
+                min_value=0,
+                help_text="Value between 0 and 1"
             )
             field_names.append((field_name, prob_field_name))
 
