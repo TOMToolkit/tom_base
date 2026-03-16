@@ -105,7 +105,7 @@ class AlerceForm(BaseQueryForm):
 
 
 class AlerceDataService(DataService):
-    name = "Alerce"
+    name = "ALeRCE"
     query_results_table = "tom_dataservices/alerce/partials/alerce_results_table.html"
 
     @classmethod
