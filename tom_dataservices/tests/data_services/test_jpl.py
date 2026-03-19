@@ -616,7 +616,7 @@ class TestScoutDataServiceCanary(TestCase):
 
         self.assertIsNotNone(results)
         self.assertIsInstance(results, list)
-        for key in results[0].keys(): # type: ignore
+        for key in results[0].keys():  # type: ignore
             self.assertIn(key, self.expected_result_keys)
 
     def test_query_targets_single(self):
