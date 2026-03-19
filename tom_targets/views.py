@@ -528,8 +528,6 @@ class TargetDetailView(DetailView):
 
 @login_required
 def render_observation_table(request, pk):
-    if not request.user.is_authenticated:
-        return redirect(reverse('login'))
     out = StringIO()
     call_command('updatestatus', target_id=pk, stdout=out)
     messages.info(request, out.getvalue())
