@@ -534,7 +534,7 @@ def render_observation_table(request, pk):
         return redirect(reverse('login'))
     out = StringIO()
     call_command('updatestatus', target_id=pk, stdout=out)
-    # todo display command output
+    messages.info(request, out.getvalue())
     return render(request, 'tom_targets/partials/observation_table.html', context={'object': Target.objects.get(id=pk)})
 
 
