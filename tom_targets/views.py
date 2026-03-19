@@ -498,6 +498,7 @@ class TargetDetailView(DetailView):
         :type request: HTTPRequest
         """
         update_status = request.GET.get('update_status', False)
+        print("Updating target", update_status)
         if update_status:
             if not request.user.is_authenticated:
                 return redirect(reverse('login'))
@@ -523,6 +524,16 @@ class TargetDetailView(DetailView):
                         args=(obs_template.facility,)) + f'?target_id={self.get_object().id}&' + params)
 
         return super().get(request, *args, **kwargs)
+
+
+def render_observation_table(request, pk):
+    # target_id = request.GET.get('target_id')
+    if not request.user.is_authenticated:
+        return redirect(reverse('login'))
+    out = StringIO()
+    call_command('updatestatus', target_id=pk, stdout=out)
+    # todo display command output
+    return render(request, 'tom_targets/partials/observation_table.html', context={'object': Target.objects.get(id=pk)})
 
 
 class TargetHermesPreloadView(SingleObjectMixin, View):
