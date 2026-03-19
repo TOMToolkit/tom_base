@@ -1,4 +1,5 @@
 from math import sqrt, degrees
+from typing import List
 from dateutil.parser import parse
 from dateutil.tz import tzutc
 
@@ -74,13 +75,16 @@ class ScoutForm(BaseQueryForm):
     pos_unc_max = forms.FloatField(required=False,
                                    label='Maximum positional uncertainty (arcmin)')
 
+    def simple_fields(self) -> List[str]:
+        return ['tdes', 'neo_score_min']
+
 
 class ScoutDataService(DataService):
     """
     Docstring for ScoutDataService
     """
     name = 'Scout'
-    app_version = '0.0.3'
+    app_version = '0.0.4'
     info_url = 'https://cneos.jpl.nasa.gov/scout/intro.html'
     query_results_table = 'tom_dataservices/scout/partials/scout_query_results_table.html'
     expected_signature = {'source': 'NASA/JPL Scout API', 'version': '1.3'}
