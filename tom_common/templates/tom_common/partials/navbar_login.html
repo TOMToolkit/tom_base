@@ -9,10 +9,13 @@
     {% endif %}
 </li>
 <li>
-    <a class="btn btn-outline-success" title="logout" href="{% url 'logout' %}">Logout</a>
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button class="btn btn-outline-success" type="submit">Logout</button>
+    </form>
 </li>
 {% else %}
 <li class="nav-item">
-    <a class="btn btn-outline-success" title="logout" href="{% url 'login' %}">Login</a>
+    <a class="btn btn-outline-success" title="login" href="{% url 'login' %}">Login</a>
 </li>
 {% endif %}
