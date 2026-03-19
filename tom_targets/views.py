@@ -499,7 +499,6 @@ class TargetDetailView(DetailView):
         :type request: HTTPRequest
         """
         update_status = request.GET.get('update_status', False)
-        print("Updating target", update_status)
         if update_status:
             if not request.user.is_authenticated:
                 return redirect(reverse('login'))
@@ -529,7 +528,6 @@ class TargetDetailView(DetailView):
 
 @login_required
 def render_observation_table(request, pk):
-    # target_id = request.GET.get('target_id')
     if not request.user.is_authenticated:
         return redirect(reverse('login'))
     out = StringIO()
