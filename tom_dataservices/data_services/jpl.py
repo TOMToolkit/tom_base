@@ -102,12 +102,6 @@ class ScoutDataService(DataService):
         urls['search_url'] = urls['base_url']
         return urls
 
-    def get_simple_form_partial(self):
-        return 'tom_dataservices/scout/partials/scout_simple_form.html'
-
-    def get_advanced_form_partial(self):
-        return 'tom_dataservices/scout/partials/scout_advanced_form.html'
-
     def build_query_parameters(self, parameters, **kwargs):
         """
         Args:
