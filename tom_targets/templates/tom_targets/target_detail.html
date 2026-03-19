@@ -92,8 +92,12 @@
         {% existing_observation_form object %}
         <h4>Observations</h4>
         <!-- htmx loading -->
-        <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations Status</a>
-        <a hx-get="{% url 'targets:render-observation-table' pk=target.id %}" hx-target="#observation-table" class="btn btn-secondary">Refresh Observation List</a>
+        <button hx-get="{% url 'targets:render-observation-table' pk=target.id %}"
+                hx-target="#observation-table"
+                hx-indicator=".progress"
+                hx-disabled-elt="this"
+                class="btn btn-secondary mb-3">Refresh Observation List
+        </button>
         <div id="observation-table">
         {% include 'tom_targets/partials/observation_table.html' %}
         </div>

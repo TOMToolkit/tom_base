@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 import logging
 
 from datetime import datetime, timedelta
@@ -526,6 +527,7 @@ class TargetDetailView(DetailView):
         return super().get(request, *args, **kwargs)
 
 
+@login_required
 def render_observation_table(request, pk):
     # target_id = request.GET.get('target_id')
     if not request.user.is_authenticated:
