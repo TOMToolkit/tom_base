@@ -175,7 +175,8 @@ class ScoutDataService(DataService):
 
         neo_score_min = p.get('neo_score_min', 0) or 0
         pha_score_min = p.get('pha_score_min', 0) or 0
-        geo_score_max = p.get('geo_score_max', 101) or 101
+        # Needs to be different as code like above will treat 0 as "no value provided" and use the default, but 0 is a valid value for this parameter and should be used if provided.
+        geo_score_max = p['geo_score_max'] if p.get('geo_score_max') is not None else 101
 
         default_pos_unc_max = 360 * 60  # 360 degrees (whole sky) as arcmin
         pos_unc_min = p.get('pos_unc_min', 0) or 0
@@ -224,7 +225,7 @@ class ScoutDataService(DataService):
         return (
             result['neoScore'] >= thresholds['neo_score_min'] and
             result['phaScore'] >= thresholds['pha_score_min'] and
-            result['geocentricScore'] < thresholds['geo_score_max'] and
+            result['geocentricScore'] <= thresholds['geo_score_max'] and
             thresholds['pos_unc_min'] <= pos_unc <= thresholds['pos_unc_max'] and
             impact_ok and
             ca_dist_ok

@@ -181,12 +181,16 @@ class TestPassesFilters(SimpleTestCase):
         result = make_result({'phaScore': 0})
         self.assertFalse(self.ds._passes_filters(result, 0.0, None, self._thresholds({'pha_score_min': 5})))
 
-    def test_fails_geocentric_score_at_or_above_maximum(self):
-        result = make_result({'geocentricScore': 5})
+    def test_fails_geocentric_score_above_maximum(self):
+        result = make_result({'geocentricScore': 6})
         self.assertFalse(self.ds._passes_filters(result, 0.0, None, self._thresholds({'geo_score_max': 5})))
 
     def test_passes_geocentric_score_strictly_below_maximum(self):
         result = make_result({'geocentricScore': 4})
+        self.assertTrue(self.ds._passes_filters(result, 0.0, None, self._thresholds({'geo_score_max': 5})))
+
+    def test_passes_geocentric_score_of_zero(self):
+        result = make_result({'geocentricScore': 0})
         self.assertTrue(self.ds._passes_filters(result, 0.0, None, self._thresholds({'geo_score_max': 5})))
 
     def test_fails_pos_unc_below_minimum(self):
@@ -308,8 +312,8 @@ class TestQueryTargetsFiltering(TestCase):
 
     @mock.patch('tom_dataservices.data_services.jpl.ScoutDataService.query_service')
     def test_result_excluded_by_geocentric_score_filter(self, mock_qs):
-        """A result with geocentricScore >= geo_score_max should be excluded."""
-        result = make_result_with_orbits({'geocentricScore': 5})  # fails geo_score_max=5
+        """A result with geocentricScore > geo_score_max should be excluded."""
+        result = make_result_with_orbits({'geocentricScore': 6})  # fails geo_score_max=5
         mock_qs.return_value = [result]
 
         targets = self.ds.query_targets(self.base_input_parameters)
@@ -329,7 +333,7 @@ class TestQueryTargetsFiltering(TestCase):
     def test_multiple_results_partial_filter(self, mock_qs):
         """Only results passing all filters should be returned from a multi-result response."""
         passing = make_result_with_orbits({'objectName': 'ZTF10BL', 'geocentricScore': 1})
-        failing = make_result_with_orbits({'objectName': 'ZTF99XX', 'geocentricScore': 5})
+        failing = make_result_with_orbits({'objectName': 'ZTF99XX', 'geocentricScore': 6})
         mock_qs.return_value = [passing, failing]
 
         targets = self.ds.query_targets(self.base_input_parameters)
@@ -540,6 +544,33 @@ class TestScoutDataService(TestCase):
                 else:
                     self.assertEqual(target[key], expected_target_results[key])
 
+    @mock.patch('tom_dataservices.data_services.jpl.ScoutDataService.query_service')
+    def test_query_targets_filter_on_geo0(self, mock_client):
+        first_result = self.scout_results[0].copy()
+        first_result['geocentricScore'] = 0  # passes geo_score_max=0 cut
+        second_result = self.scout_results[0].copy()
+        second_result['objectName'] = 'ZTF99XX'
+        mock_client.side_effect = [[first_result, second_result], ]
+        self.input_parameters['geo_score_max'] = 0
+
+        targets = self.jpl_ds.query_targets(self.input_parameters)
+        self.assertEqual(len(targets), 1)
+        expected_target_results = {'objectName': first_result['objectName'],
+                                   'neoScore': first_result['neoScore'],
+                                   'phaScore': first_result['phaScore'],
+                                   'geocentricScore': first_result['geocentricScore'],
+                                   'rating': first_result['rating'],
+                                   'unc': first_result['unc'],
+                                   'orbits': first_result['orbits'],
+                                   }
+        for target in targets:
+            for key in expected_target_results.keys():
+                if key == 'orbits':
+                    self.assertEqual(type(target[key]), type(expected_target_results[key]))
+                    self.assertEqual(type(target[key]['data']), type(expected_target_results[key]['data']))
+                else:
+                    self.assertEqual(target[key], expected_target_results[key])
+
     def test_create_target_from_query(self):
         expected_target = self.test_target
 
@@ -585,7 +616,7 @@ class TestScoutDataServiceCanary(TestCase):
 
         self.assertIsNotNone(results)
         self.assertIsInstance(results, list)
-        for key in results[0].keys():
+        for key in results[0].keys(): # type: ignore
             self.assertIn(key, self.expected_result_keys)
 
     def test_query_targets_single(self):
