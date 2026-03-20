@@ -8,8 +8,7 @@
   <div
     hx-get="{% url 'tom_observations:render-facility-status-list'%}?hx_trigger=load" hx-target="#facility-status-list"
     hx-indicator=".progress"
-    hx-trigger="load"
-    hx-disabled-elt="this">
+    hx-trigger="load">
     <button
       class="btn btn-secondary mb-3"
       hx-get="{% url 'tom_observations:render-facility-status-list' %}"
