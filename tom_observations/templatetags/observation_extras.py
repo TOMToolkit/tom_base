@@ -267,34 +267,6 @@ def observation_distribution(observations):
     return {'figure': figure}
 
 
-@register.inclusion_tag('tom_observations/partials/facility_status.html', takes_context=True)
-def facility_status(context):
-    """
-    Collect the facility status from the registered facilities and pass them
-    to the facility_status.html partial template.
-    See lco.py Facility implementation for example.
-    :return:
-    """
-
-    facility_statuses = []
-    for facility_class in get_service_classes().values():
-        facility = facility_class()
-        facility.set_user(context['request'].user)
-        weather_urls = facility.get_facility_weather_urls()
-        status = facility.get_facility_status()
-
-        # add the weather_url to the site dictionary
-        for site in status.get('sites', []):
-            url = next((site_url['weather_url'] for site_url in weather_urls.get('sites', [])
-                        if site_url['code'] == site['code']), None)
-            if url is not None:
-                site['weather_url'] = url
-
-        facility_statuses.append(status)
-
-    return {'facilities': facility_statuses}
-
-
 @register.inclusion_tag('tom_observations/partials/facility_map.html', takes_context=True)
 def facility_map(context):
     facility_locations = []
