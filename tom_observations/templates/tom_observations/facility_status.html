@@ -5,32 +5,22 @@
 <h3>Facility Status</h3>
 {% facility_map %}
 <div>
-  <button
-    class="btn btn-secondary mb-3"
-    hx-get="{% url 'tom_observations:render-facility-status-list' %}" hx-target="#facility-status-list"
+  <div
+    hx-get="{% url 'tom_observations:render-facility-status-list'%}?hx_trigger=load" hx-target="#facility-status-list"
     hx-indicator=".progress"
-    hx-trigger="load, click"
+    hx-trigger="load"
     hx-disabled-elt="this">
-      Refresh Facility Status
-  </button>
-    <div class="progress"><div class="indeterminate"></div></div>
-    <div id="facility-status-list">
-      <table class="table">
-          <thead>
-    <tr>
-      <th>Facility</th>
-      <th>Site</th>
-      <th>Telescope</th>
-      <th>Status</th>
-      <th>Weather URL</th>
-    </tr>
-  </thead>
-        <tbody>
-          <tr>
-            <td colspan="5">Facility statuses loading...</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <button
+      class="btn btn-secondary mb-3"
+      hx-get="{% url 'tom_observations:render-facility-status-list' %}"
+      hx-trigger="click"
+      hx-disabled-elt="this">
+        Refresh Facility Status
+    </button>
+  </div>
+  <div class="progress"><div class="indeterminate"></div></div>
+  <div id="facility-status-list" class="table-responsive-lg">
+  {% include 'tom_observations/partials/facility_status_table.html' with loading=True facilities=None %}
+  </div>
 </div>
 {% endblock %}

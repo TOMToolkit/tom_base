@@ -1,55 +1,40 @@
-import logging
 from io import StringIO
-from typing import Any, List
 from urllib.parse import urlencode
+import logging
+from typing import Any, List
 
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import HTML, Layout, Submit
 from django import forms
+from django.core.exceptions import BadRequest
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import BadRequest
 from django.core.management import call_command
+from django_filters import CharFilter, ChoiceFilter, DateTimeFromToRangeFilter, ModelMultipleChoiceFilter
+from django_filters import OrderingFilter, MultipleChoiceFilter, rest_framework
+from django_filters.views import FilterView
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
-from django.views.generic import TemplateView, View
+from django.views.generic import View, TemplateView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, FormView, UpdateView
 from django.views.generic.list import ListView
-from django_filters import (
-    CharFilter,
-    ChoiceFilter,
-    DateTimeFromToRangeFilter,
-    ModelMultipleChoiceFilter,
-    MultipleChoiceFilter,
-    OrderingFilter,
-    rest_framework,
-)
-from django_filters.views import FilterView
+from guardian.shortcuts import get_objects_for_user, assign_perm
 from guardian.mixins import PermissionListMixin
-from guardian.shortcuts import assign_perm, get_objects_for_user
+
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm
 from tom_dataproducts.models import is_fits_image_file
+from tom_observations.cadence import CadenceForm, get_cadence_strategy
+from tom_observations.facility import get_service_class, get_service_classes
+from tom_observations.facility import BaseManualObservationFacility
+from tom_observations.forms import AddExistingObservationForm, facility_choices
+from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate, DynamicCadence
 from tom_targets.models import Target
 from tom_targets.permissions import targets_for_user
-
-from tom_observations.cadence import CadenceForm, get_cadence_strategy
-from tom_observations.facility import (
-    BaseManualObservationFacility,
-    get_service_class,
-    get_service_classes,
-)
-from tom_observations.forms import AddExistingObservationForm, facility_choices
-from tom_observations.models import (
-    DynamicCadence,
-    ObservationGroup,
-    ObservationRecord,
-    ObservationTemplate,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -861,7 +846,7 @@ class FacilityStatusView(TemplateView):
 
 def render_facility_status_list(request, *args, **kwargs):
     """
-    View function for rendering the facility status partial. This is called by the HTMX trigger in the facility_status_placeholder partial when the page loads. It gathers the status of each facility and returns it as context for rendering the facility_status partial.
+    View function for rendering the facility status partial.
     """
     facility_statuses = []
     for facility_class in get_service_classes().values():
@@ -878,4 +863,9 @@ def render_facility_status_list(request, *args, **kwargs):
                 site['weather_url'] = url
 
         facility_statuses.append(status)
-    return render(request, 'tom_observations/partials/facility_status_table.html', context={'facilities': facility_statuses})
+
+    hx_trigger = request.GET.get('hx_trigger')
+    if hx_trigger != 'load':
+        messages.info(request, "Facility statuses updated.")
+
+    return render(request, 'tom_observations/partials/facility_status_table.html', context={'facilities': facility_statuses, 'loading': False})
