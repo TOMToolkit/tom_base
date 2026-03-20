@@ -857,8 +857,9 @@ def render_facility_status_list(request, *args, **kwargs):
 
         # add the weather_url to the site dictionary
         for site in status.get('sites', []):
-            url = next((site_url['weather_url'] for site_url in weather_urls.get('sites', [])
-                        if site_url['code'] == site['code']), None)
+            url = next((
+                site_url['weather_url'] for site_url in weather_urls.get('sites', [])
+                if site_url['code'] == site['code']), None)
             if url is not None:
                 site['weather_url'] = url
 
@@ -868,4 +869,6 @@ def render_facility_status_list(request, *args, **kwargs):
     if hx_trigger != 'load':
         messages.info(request, "Facility statuses updated.")
 
-    return render(request, 'tom_observations/partials/facility_status_table.html', context={'facilities': facility_statuses, 'loading': False})
+    return render(
+        request, 'tom_observations/partials/facility_status_table.html',
+        context={'facilities': facility_statuses, 'loading': False})
