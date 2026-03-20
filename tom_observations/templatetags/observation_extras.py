@@ -1,20 +1,19 @@
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
+import plotly.graph_objs as go
 from django import forms, template
 from django.conf import settings
 from django.urls import reverse
 from guardian.shortcuts import get_objects_for_user
 from plotly import offline
-import plotly.graph_objs as go
-
-from tom_observations.forms import AddExistingObservationForm, UpdateObservationId
-from tom_observations.models import ObservationRecord
-from tom_observations.facility import get_service_class, get_service_classes
-from tom_observations.observation_template import ApplyObservationTemplateForm
-from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target
 
+from tom_observations.facility import get_service_class, get_service_classes
+from tom_observations.forms import AddExistingObservationForm, UpdateObservationId
+from tom_observations.models import ObservationRecord
+from tom_observations.observation_template import ApplyObservationTemplateForm
+from tom_observations.utils import get_sidereal_visibility
 
 register = template.Library()
 
@@ -265,34 +264,6 @@ def observation_distribution(observations):
     }
     figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
     return {'figure': figure}
-
-
-@register.inclusion_tag('tom_observations/partials/facility_status.html', takes_context=True)
-def facility_status(context):
-    """
-    Collect the facility status from the registered facilities and pass them
-    to the facility_status.html partial template.
-    See lco.py Facility implementation for example.
-    :return:
-    """
-
-    facility_statuses = []
-    for facility_class in get_service_classes().values():
-        facility = facility_class()
-        facility.set_user(context['request'].user)
-        weather_urls = facility.get_facility_weather_urls()
-        status = facility.get_facility_status()
-
-        # add the weather_url to the site dictionary
-        for site in status.get('sites', []):
-            url = next((site_url['weather_url'] for site_url in weather_urls.get('sites', [])
-                        if site_url['code'] == site['code']), None)
-            if url is not None:
-                site['weather_url'] = url
-
-        facility_statuses.append(status)
-
-    return {'facilities': facility_statuses}
 
 
 @register.inclusion_tag('tom_observations/partials/facility_map.html', takes_context=True)

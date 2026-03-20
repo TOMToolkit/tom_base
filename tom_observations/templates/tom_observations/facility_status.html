@@ -5,6 +5,32 @@
 <h3>Facility Status</h3>
 {% facility_map %}
 <div>
-    {% facility_status %}
+  <button
+    class="btn btn-secondary mb-3"
+    hx-get="{% url 'tom_observations:render-facility-status-list' %}" hx-target="#facility-status-list"
+    hx-indicator=".progress"
+    hx-trigger="load, click"
+    hx-disabled-elt="this">
+      Refresh Facility Status
+  </button>
+    <div class="progress"><div class="indeterminate"></div></div>
+    <div id="facility-status-list">
+      <table class="table">
+          <thead>
+    <tr>
+      <th>Facility</th>
+      <th>Site</th>
+      <th>Telescope</th>
+      <th>Status</th>
+      <th>Weather URL</th>
+    </tr>
+  </thead>
+        <tbody>
+          <tr>
+            <td colspan="5">Facility statuses loading...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 </div>
 {% endblock %}
