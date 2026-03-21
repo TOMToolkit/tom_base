@@ -74,6 +74,10 @@ class TNSForm(BaseQueryForm):
             ),
         )
 
+    def get_simple_form_partial(self):
+        """Returns a path to a simplified bare-minimum partial form that can be used to access the DataService."""
+        return 'tom_dataservices/tns/partials/tns_simple_form.html'
+
 
 class TNSDataService(DataService):
     """
@@ -97,14 +101,6 @@ class TNSDataService(DataService):
     name = 'TNS'
     info_url = 'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html#module-tom_alerts.brokers.tns'
     query_results_table = 'tom_dataservices/tns/partials/tns_query_results_table.html'
-
-    def get_simple_form_partial(self):
-        """Returns a path to a simplified bare-minimum partial form that can be used to access the DataService."""
-        return 'tom_dataservices/tns/partials/tns_simple_form.html'
-
-    # def get_advanced_form_partial(self):
-    #     """Returns a path to a full or advanced partial form that can be used to access the DataService."""
-    #     return 'tom_dataservices/tns/partials/tns_advanced_form.html'
 
     @classmethod
     def urls(cls, **kwargs) -> dict:
