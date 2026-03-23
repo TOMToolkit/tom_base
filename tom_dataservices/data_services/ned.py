@@ -77,7 +77,8 @@ class NEDDataService(DataService):
         )
         return target
 
+
 class NEDForm(BaseQueryForm):
     object_id = forms.CharField(required=False,
-                                  label='Object ID',
-                                  help_text='Extragalactic Source Name (i.e. "NGC 224" or "M31")')
+                                label='Object ID',
+                                help_text='Extragalactic Source Name (i.e. "NGC 224" or "M31")')
