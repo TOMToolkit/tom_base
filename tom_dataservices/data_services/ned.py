@@ -55,19 +55,25 @@ class NEDDataService(DataService):
         query_results = self.query_service(query_parameters)
         # Convert astropy table to list of dictionaries
         targets = [dict(zip(query_results.colnames, row)) for row in query_results]
+        # Make primary name searched term. Add NED name as alias.
+        if query_parameters.get('object_id'):
+            for target_result in targets:
+                if target_result['Object Name'] != query_parameters['object_id']:
+                    target_result['aliases'] = [target_result['Object Name']]
+                    target_result['Object Name'] = query_parameters['object_id']
         return targets
 
-def create_target_from_query(self, target_result, **kwargs):
+    def create_target_from_query(self, target_result, **kwargs):
         """Create a new target from the query results
         :returns: target object
         :rtype: `Target`
         """
 
         target = Target(
-            name=target_result['name'],
+            name=target_result['Object Name'],
             type='SIDEREAL',
-            ra=target_result['ra'],
-            dec=target_result['dec']
+            ra=target_result['RA'],
+            dec=target_result['DEC'],
         )
         return target
 
