@@ -52,11 +52,9 @@ class NEDDataService(DataService):
         This code calls `query_service` and returns a list of dicts containing target results.
         This call and the results should be tailored towards describing targets.
         """
-        print(1)
         query_results = self.query_service(query_parameters)
         # Convert astropy table to list of dictionaries
         targets = [dict(zip(query_results.colnames, row)) for row in query_results]
-        print(targets)
         return targets
 
 def create_target_from_query(self, target_result, **kwargs):
@@ -65,7 +63,6 @@ def create_target_from_query(self, target_result, **kwargs):
         :rtype: `Target`
         """
 
-        print(target_result)
         target = Target(
             name=target_result['name'],
             type='SIDEREAL',
