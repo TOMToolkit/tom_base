@@ -51,7 +51,7 @@ First the actual query class:
             """
             return self.query_parameters
         
-        def query_service(self, data, **kwargs):
+        def query_service(self, query_parameters, **kwargs):
             """
             This is where you actually make the call to the Data Service. 
             Return the results.
@@ -209,11 +209,15 @@ At this point you should be seeing a list of Targets showing up in your TOM afte
 Continuing with our `target` example, we need to be able to `create_target_from_query` in order to actually save the
 target object resulting from a sucessful result for `query_target` above. This function expects a single instance with
 the same format as the list of dictionaries created by `query_targets` and converts that dictionary into a Target Object
-returning that object.
+returning that unsaved object.
 
 .. code-block:: python
     :caption: my_dataservice.MyDataService
     :linenos:
+
+    from tom_targets.models import Target
+
+    ...
 
     def create_target_from_query(self, target_result, **kwargs):
             """Create a new target from the query results
