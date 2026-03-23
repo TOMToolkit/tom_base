@@ -28,7 +28,7 @@
             {% crispy form %}
         {% endif %}
     {% endif %}
-
+    <hr>
     <div class="row align-items-center" x-data="{save: {{ form.query_save.value|lower }}}" >
         <div class="col-1">
             <div class="form-group">
@@ -56,6 +56,7 @@
     </div>
 </form>
 {% if app_version %}
+    <hr>
     <p><em>TOM Toolkit Module (<a href={{ app_link }} target="_blank">{{form.data_service.value}}</a>) version {{ app_version }}</em></p>
 {% endif %}
 {% endblock %}
