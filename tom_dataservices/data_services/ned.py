@@ -11,10 +11,11 @@ from tom_targets.models import Target
 
 class NEDDataService(DataService):
     """
-    This is an Example Data Service with the minimum required
-    functionality.
+    This the NED dataservice responsible for querying NED for an object ID.
+    Uses astroquery.ned.
     """
     name = 'NED'
+    info_url = 'https://ned.ipac.caltech.edu/'
 
     @classmethod
     def get_form_class(cls):
