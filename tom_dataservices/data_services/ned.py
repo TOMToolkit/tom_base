@@ -15,6 +15,7 @@ class NEDDataService(DataService):
     Uses astroquery.ned.
     """
     name = 'NED'
+    verbose_name = 'NASA/IPAC Extragalactic Database'
     info_url = 'https://ned.ipac.caltech.edu/'
 
     @classmethod

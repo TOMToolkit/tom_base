@@ -1,5 +1,6 @@
 import logging
 from requests import HTTPError
+from requests.exceptions import ReadTimeout
 
 from django_filters.views import FilterView
 from django_filters import FilterSet, ChoiceFilter, CharFilter
@@ -148,6 +149,8 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         context['advanced_form'] = advanced_form
         context['app_link'] = get_data_service_class(data_service_name).app_link
         context['app_version'] = get_data_service_class(data_service_name).app_version
+        context['verbose_name'] = get_data_service_class(data_service_name).verbose_name
+        context['info_url'] = get_data_service_class(data_service_name).info_url
 
         return context
 
@@ -203,6 +206,9 @@ class RunQueryView(TemplateView):
         except QueryServiceError as e:
             results = iter(())
             query_feedback += f"There was an error with the underlying query service: </br>{e}</br>"
+        except ReadTimeout as e:
+            results = iter(())
+            query_feedback += f"The query service connection timed out: </br>{e}</br>"
 
         # create context for template
         context['query'] = query
