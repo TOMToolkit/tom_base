@@ -398,7 +398,6 @@ class DataService(ABC):
                 pass
         return new_aliases
 
-
     def create_aliases_from_query(self, alias_results: List, **kwargs) -> List:
         """Create a new target from the query results
         This method should be over ridden with a method that creates a list of TargetName objects:
