@@ -1,11 +1,11 @@
+from typing import List, Dict
+
 from django import forms
 from astroquery.ned import Ned
 from astroquery.exceptions import RemoteServiceError
 
-
 from tom_dataservices.dataservices import DataService
 from tom_dataservices.forms import BaseQueryForm
-
 from tom_targets.models import Target
 
 
@@ -24,7 +24,7 @@ class NEDDataService(DataService):
         """
         return NEDForm
 
-    def build_query_parameters(self, parameters, **kwargs):
+    def build_query_parameters(self, parameters: Dict, **kwargs) -> Dict:
         """
         Use this function to convert the form results into the query parameters understood
         by the Data Service.
@@ -36,7 +36,7 @@ class NEDDataService(DataService):
         self.query_parameters = query_parameters
         return query_parameters
 
-    def query_service(self, query_parameters, **kwargs):
+    def query_service(self, query_parameters: Dict, **kwargs):
         """
         This is where you actually make the call to the Data Service.
         Return the results.
@@ -48,7 +48,7 @@ class NEDDataService(DataService):
         self.query_results = query_results
         return self.query_results
 
-    def query_targets(self, query_parameters, **kwargs):
+    def query_targets(self, query_parameters: Dict, **kwargs) -> List[Dict]:
         """
         This code calls `query_service` and returns a list of dicts containing target results.
         This call and the results should be tailored towards describing targets.
@@ -64,7 +64,7 @@ class NEDDataService(DataService):
                     target_result['Object Name'] = query_parameters['object_id']
         return targets
 
-    def create_target_from_query(self, target_result, **kwargs):
+    def create_target_from_query(self, target_result: Dict, **kwargs):
         """Create a new target from the query results
         :returns: target object
         :rtype: `Target`
