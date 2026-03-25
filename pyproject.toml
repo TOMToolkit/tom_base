@@ -107,7 +107,6 @@ coveralls = ">=3,<5"
 [tool.poetry.group.lint.dependencies]
 flake8 = ">=6.0,<7.2"
 
-
 [tool.poetry.requires-plugins]
 poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
 
