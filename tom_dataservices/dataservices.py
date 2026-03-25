@@ -7,6 +7,7 @@ from django.conf import settings
 from django.apps import apps
 from django.utils.module_loading import import_string
 from django.db import IntegrityError
+from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from django.contrib import messages
 from django.urls import reverse
@@ -230,7 +231,11 @@ class DataService(ABC):
 
     def query_reduced_data(self, target, **kwargs):
         """Set up and run a specialized query to retrieve Reduced Datums from a Data Service"""
-        query_parameters = self.build_query_parameters_from_target(target)
+        build_query_parameters_from_target_method = getattr(self, 'build_query_parameters_from_target')
+        if build_query_parameters_from_target_method:
+            query_parameters = build_query_parameters_from_target_method(target)
+        else:
+            raise NotImplementedError(f'build_query_parameters_from_target() has not been implemented for {self.name}')
         try:
             phot_results = self.query_photometry(query_parameters, **kwargs)
         except NotImplementedError:
@@ -249,7 +254,7 @@ class DataService(ABC):
                 # 'forced_photometry': forced_phot_results
                 }
 
-    def query_aliases(self, query_parameters, **kwargs) -> List:
+    def query_aliases(self, query_parameters=None, target=None, **kwargs) -> List:
         """
         Set up and run a specialized query for retrieving target names from a DataService.
         This method will usually call `query_service()` and translate the results from the dataservice into a
@@ -269,7 +274,7 @@ class DataService(ABC):
 
         :param query_parameters: This is the output from build_query_parameters()
         :return: A list of dictionaries describing the resulting targets. Include 'reduced_datums' and/or 'aliases' as
-        keys in this dictionary to add associated data and alternate names without perfoming additional queries.
+          keys in this dictionary to add associated data and alternate names without performing additional queries.
         :rtype: List[dict]
         """
         return [{}]
@@ -298,7 +303,7 @@ class DataService(ABC):
         of query_reduced_data() to create_reduced_datums_from_query()
         :param target: Target object to associate with the ReducedDatum
         :param data_results: Query results from the DataService storing observation data. This should be a dictionary
-            with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
+        with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
         """
         if not data_results:
             raise MissingDataException('No Reduced Data dictionary found.')
@@ -335,11 +340,10 @@ class DataService(ABC):
         else:
             target = self.create_target_from_query(target_result, **kwargs)
             extras = self.create_target_extras_from_query(target_result, **kwargs)
-            aliases = self.create_aliases_from_query(target_result.get('aliases', []), **kwargs)
 
             request = kwargs.get('request')
             try:
-                target.save(extras=extras, names=aliases)
+                target.save(extras=extras)
                 # Give the user access to the target they created
                 if request:
                     target.give_user_access(request.user)
@@ -348,7 +352,6 @@ class DataService(ABC):
                         assign_perm('tom_targets.change_target', group, target)
                         assign_perm('tom_targets.delete_target', group, target)
             except IntegrityError:
-                # errors.append(target.name)
                 target = Target.objects.get(name=target.name)
                 messages.warning(request,
                                  mark_safe(
@@ -359,6 +362,8 @@ class DataService(ABC):
                                                       urlencode(target.as_dict())}">create</a> a new target anyway.
                                     """)
                                  )
+            # Save Aliases
+            self.to_aliases(target, target_result.get('aliases', []))
             return target
 
     def create_target_from_query(self, target_result, **kwargs):
@@ -375,6 +380,25 @@ class DataService(ABC):
         :rtype: `dict`
         """
         return {}
+
+    def to_aliases(self, target, alias_results: List, **kwargs) -> List:
+        """
+        Upper level function to create a new ReducedDatum from the query results
+        This method is not intended to be extended. This method passes the output
+        of query_reduced_data() to create_reduced_datums_from_query()
+        :param target: Target object to associate with the ReducedDatum
+        :param data_results: Query results from the DataService storing observation data. This should be a dictionary
+        with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
+        """
+        new_aliases = self.create_aliases_from_query(alias_results, **kwargs)
+        for alias in new_aliases:
+            alias.target = target
+            try:
+                alias.full_clean()
+                alias.save()
+            except ValidationError:
+                pass
+        return new_aliases
 
     def create_aliases_from_query(self, alias_results: List, **kwargs) -> List:
         """Create a new target from the query results

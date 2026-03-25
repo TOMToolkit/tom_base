@@ -51,7 +51,7 @@ First the actual query class:
             """
             return self.query_parameters
         
-        def query_service(self, data, **kwargs):
+        def query_service(self, query_parameters, **kwargs):
             """
             This is where you actually make the call to the Data Service. 
             Return the results.
@@ -109,6 +109,21 @@ extending several methods of ``DataService`` to perform the specific tasks neede
 Ultimately there are many things that can be customized for your DataService, and many tools built into the base class
 to help you do this. This section will take you through the fundamentals to get you started, but you should review the
 :doc:`full class documentation <../api/tom_dataservices/data_services>` before you precede.
+
+
+Using built in Errors and Exceptions
+++++++++++++++++++++++++++++++++++++
+The TOM Toolkit includes a catch-all error method that will be useful to raise if you want to pass the information back
+to the view when something doesn't go as expected:
+
+``QueryServiceError``
+=====================
+Raising this error is useful for handling problems with query parameters or query feedback that
+might cause issues further down the stack.
+
+.. code-block:: python
+
+    raise QueryServiceError(f"Target '{target.name}' is not configured for {self.name}.")
 
 
 Filling out our ``MyServiceForm``
@@ -209,11 +224,15 @@ At this point you should be seeing a list of Targets showing up in your TOM afte
 Continuing with our ``target`` example, we need to be able to ``create_target_from_query`` in order to actually save the
 target object resulting from a successful result for ``query_target`` above. This function expects a single instance with
 the same format as the list of dictionaries created by ``query_targets`` and converts that dictionary into a Target Object
-returning that object.
+returning that unsaved object.
 
 .. code-block:: python
     :caption: my_dataservice.MyDataService
     :linenos:
+
+    from tom_targets.models import Target
+
+    ...
 
     def create_target_from_query(self, target_result, **kwargs):
             """Create a new target from the query results
@@ -360,10 +379,11 @@ In this section we will walk you through several important steps to customize th
 Simple vs Advanced Forms:
 +++++++++++++++++++++++++
 
-For clarity it can be extremely useful to separate the base level functionality for a data service from the much more
-complex features and search functionality that is possible with many catalogs, brokers, etc. Towards this end, the
-TOMToolkit offers both simple and advanced forms for a dataservice. By default, an advanced Form will be collapsed
-when a user first loads the form.
+By default, your entire form will be displayed on the query page. This can be confusing or less convenient for users
+looking to make a quick query. For clarity it can be extremely useful to separate the base level functionality for a
+data service from the much more complex features and search functionality that is possible with many catalogs, brokers,
+etc. Towards this end, the TOMToolkit offers both simple and advanced forms for a dataservice. By default, an advanced
+Form will be collapsed when a user first loads the form.
 
 Simple Forms:
 =============
@@ -399,6 +419,8 @@ The easiest way to add a simple form is to add the ``simple_fields`` method in y
 This will automatically pull out any fields returned in the list to be displayed in the default form, and all other
 fields will be hidden by default under the advanced tab.
 
+|image1|
+
 Alternatively, for more complex forms and styling, you can write your own form partial.
 This consists of adding the ``get_simple_form_partial()`` method to ``MyServiceForm`` and then creating the partial.
 
@@ -419,14 +441,17 @@ This consists of adding the ``get_simple_form_partial()`` method to ``MyServiceF
     {% bootstrap_field form.first_field %}
 
 NOTES:
- - Here we are just rendering a single field from our form.
+ * Here we are just rendering a single field from our form.
+ * See the docs for `Django Form Templates <https://docs.djangoproject.com/en/stable/topics/forms/#working-with-form-templates>`__ 
+   and `bootstrap4 <https://getbootstrap.com/docs/4.0/components/forms/>`__ for help building your partials.
 
 Advanced Forms:
 ===============
 
 This is where we include all of the complex functionality that advanced users would need access to.
 By default this will include all the fields NOT returned with ``MyServiceForm.simple_fields()``. However, for more
-more complex forms and styling, we can create a partial just like we did for the simple form above.
+more complex forms and styling, we can create a partial just like we did for the simple form above. If we do, though,
+we will want to be explicit about NOT including the fields that we included in the simple form.
 
 .. code-block:: python
     :caption: forms.MyServiceForm
@@ -450,6 +475,7 @@ NOTES:
    displayed below the main form.
  - Note that we are using ``bootstrap_form`` instead of ``bootstrap_field`` which we used in the simple form.
 
+|image2|
 
 Alternatively, if a simple form is included, the entirety of the form will be displayed by default in the advanced
 section using whatever layout was provided. So you can easily use
@@ -564,3 +590,5 @@ table partial for displaying query results for this data service. To implement t
 
 
 .. |image0| image:: /_static/dataservices_doc/demo_Data_Service.png
+.. |image1| image:: /_static/dataservices_doc/query_form_collapsed.png
+.. |image2| image:: /_static/dataservices_doc/advanced_form.png

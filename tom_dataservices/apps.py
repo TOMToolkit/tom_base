@@ -35,4 +35,5 @@ class TomDataservicesConfig(AppConfig):
             {'class': f'{self.name}.data_services.simbad.SimbadDataService'},
             {'class': f'{self.name}.data_services.tns.TNSDataService'},
             {'class': f'{self.name}.data_services.alerce.AlerceDataService'},
+            {'class': f'{self.name}.data_services.ned.NEDDataService'},
         ]

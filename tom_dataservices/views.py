@@ -1,5 +1,6 @@
 import logging
 from requests import HTTPError
+from requests.exceptions import ReadTimeout
 
 from django_filters.views import FilterView
 from django_filters import FilterSet, ChoiceFilter, CharFilter
@@ -119,6 +120,8 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         if form.cleaned_data['query_save']:
             form.save()
 
+        # Store final form data in the session so it can be retrieved in the run_query view.
+        # This is how we pass the form data for unsaved queries without passing the entire form data as kwargs
         self.request.session['query_parameters'] = form.cleaned_data
 
         return redirect(self.success_url)
@@ -146,6 +149,8 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         context['advanced_form'] = advanced_form
         context['app_link'] = get_data_service_class(data_service_name).app_link
         context['app_version'] = get_data_service_class(data_service_name).app_version
+        context['verbose_name'] = get_data_service_class(data_service_name).verbose_name
+        context['info_url'] = get_data_service_class(data_service_name).info_url
 
         return context
 
@@ -201,6 +206,9 @@ class RunQueryView(TemplateView):
         except QueryServiceError as e:
             results = iter(())
             query_feedback += f"There was an error with the underlying query service: </br>{e}</br>"
+        except ReadTimeout as e:
+            results = iter(())
+            query_feedback += f"The query service connection timed out: </br>{e}</br>"
 
         # create context for template
         context['query'] = query
@@ -300,6 +308,7 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         """
         if form.cleaned_data['query_save']:
             form.save(query_id=self.object.id)
+        # Update session with form data so that we can run unsaved queries.
         self.request.session['query_parameters'] = form.cleaned_data
         return redirect(self.success_url)
 
@@ -387,6 +396,8 @@ def update_data_from_query(request):
                 data_service_class = get_data_service_class(form.cleaned_data['data_service'])()
                 data = data_service_class.query_reduced_data(target)
                 data_service_class.to_reduced_datums(target, data)
+                alias_data = data_service_class.query_aliases(target=target)
+                data_service_class.to_aliases(target, alias_data)
             except QueryServiceError as e:
                 messages.error(request, f'Error retrieving data from Data Service: {e}')
 
