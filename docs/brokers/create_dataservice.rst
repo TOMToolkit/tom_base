@@ -111,6 +111,21 @@ to help you do this. This section will take you through the fundamentals to get 
 :doc:`full class documentation <../api/tom_dataservices/data_services>` before you precede.
 
 
+Using built in Errors and Exceptions
+++++++++++++++++++++++++++++++++++++
+The TOM Toolkit includes a catch-all error method that will be useful to raise if you want to pass the information back
+to the view when something doesn't go as expected:
+
+``QueryServiceError``
+=====================
+Raising this error is useful for handling problems with query parameters or query feedback that
+might cause issues further down the stack.
+
+.. code-block:: python
+
+    raise QueryServiceError(f"Target '{target.name}' is not configured for {self.name}.")
+
+
 Filling out our ``MyServiceForm``
 +++++++++++++++++++++++++++++++++
 First, we will need actual fields in our Form. For more on this, see the `official Django
@@ -426,9 +441,9 @@ This consists of adding the ``get_simple_form_partial()`` method to ``MyServiceF
     {% bootstrap_field form.first_field %}
 
 NOTES:
- - Here we are just rendering a single field from our form.
- - See the docs for `Django Form Templates <https://docs.djangoproject.com/en/stable/topics/forms/#working-with-form-templates>`__ 
-  and `bootstrap4 <https://getbootstrap.com/docs/4.0/components/forms/>`__ for help building your partials.
+ * Here we are just rendering a single field from our form.
+ * See the docs for `Django Form Templates <https://docs.djangoproject.com/en/stable/topics/forms/#working-with-form-templates>`__ 
+   and `bootstrap4 <https://getbootstrap.com/docs/4.0/components/forms/>`__ for help building your partials.
 
 Advanced Forms:
 ===============
