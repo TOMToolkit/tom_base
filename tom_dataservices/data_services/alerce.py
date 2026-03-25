@@ -1,7 +1,7 @@
 import logging
 
 from alerce.core import Alerce
-from alerce.exceptions import ObjectNotFoundError
+from alerce.exceptions import ObjectNotFoundError, APIError
 from astropy.time import Time, TimezoneInfo
 from django import forms
 from django.core.cache import cache
@@ -22,7 +22,7 @@ class AlerceForm(BaseQueryForm):
     CLASSIFIER_FIELD_PREFIX = "cfield_"
 
     survey = forms.ChoiceField(
-        label="Survey", choices=[("ZTF", "ZTF"), ("LSST", "LSST")]
+        label="Survey", choices=[("ZTF", "ZTF"), ("LSST", "LSST")], initial="ZTF"
     )
     object_id = forms.CharField(required=False, label="Object ID")
     ra = forms.FloatField(required=False, label="RA (deg)")
@@ -38,6 +38,8 @@ class AlerceForm(BaseQueryForm):
         super().__init__(*args, **kwargs)
         # Dynamically add the classifier fields to the form
         self.add_classifiers_fields()
+        # Make the survey field hidden for now until the LSST API is more featured
+        self.fields['survey'].widget = forms.HiddenInput()
 
     def get_classifiers(self) -> list[dict]:
         classifiers = cache.get("ds_alerce_classifiers")
@@ -148,10 +150,18 @@ class AlerceDataService(DataService):
             params["radius"] = radius
         results = []
         try:
-            if query_parameters.get("object_id"):
-                object_result = alerce.query_object(
-                    oid=query_parameters.get("object_id"), **params
-                )
+            if object_id := query_parameters.get("object_id"):
+                # If the object id doesn't start with ZTF, assume LSST.
+                # This should be revisited once the survey support in alerce is improved
+                if not object_id.upper().startswith("ZTF"):
+                    params["survey"] = "lsst"
+                    object_result = alerce.query_object(
+                        oid=object_id, **params
+                    )
+                else:
+                    object_result = alerce.query_object(
+                        oid=object_id, **params
+                    )
                 if object_result:
                     results.append(object_result)
 
@@ -170,7 +180,7 @@ class AlerceDataService(DataService):
                         **params,
                     ).get("items", [])
                     results.extend(classifier_results)
-        except (ObjectNotFoundError, ValueError) as e:
+        except (ObjectNotFoundError, ValueError, APIError) as e:
             raise QueryServiceError(str(e))
 
         for result in results:
@@ -268,7 +278,7 @@ class AlerceDataService(DataService):
                     value=value,
                     data_type="photometry",
                     target=target,
-                    defaults={'source_name': self.name,}
+                    defaults={'source_name': self.name}
                 )
                 reduced_datums.append(reduced_datum)
 
@@ -284,7 +294,7 @@ class AlerceDataService(DataService):
                     value=value,
                     data_type="photometry",
                     target=target,
-                    defaults={'source_name': self.name,}
+                    defaults={'source_name': self.name}
                 )
                 reduced_datums.append(reduced_datum)
         return reduced_datums
