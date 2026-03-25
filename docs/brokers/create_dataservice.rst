@@ -480,13 +480,14 @@ NOTES:
 Alternatively, if a simple form is included, the entirety of the form will be displayed by default in the advanced
 section using whatever layout was provided. So you can easily use
 `django_crispy_forms <https://django-crispy-forms.readthedocs.io/en/latest/index.html>`_ to set a layout instead of
-creating a partial.
+creating a partial. If you wish, you can use the built in `get_layout()` method to customize your crispy forms layout:
 
 .. code-block:: python
     :caption: forms.py
     :linenos:
 
     from django import forms
+    from crispy_forms.layout import HTML, Fieldset, Layout
     from tom_dataservices.forms import BaseQueryForm
 
     class MyServiceForm(BaseQueryForm):
@@ -502,9 +503,13 @@ creating a partial.
         radius = forms.FloatField(required=False, min_value=0.,
                             label='Cone Radius')
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.helper.layout = Layout(
+
+        def get_layout():
+            """Return the layout to be used with the Advanced Query form.
+                You can add HTML or Fields before or after the default form by using 
+                `Layout(<<something>>, super().get_layout(), <<something>>)`
+            """
+            layout = Layout(
                 HTML('''
                     <p>
                     My Data Service can also do a cone Search!
@@ -526,6 +531,7 @@ creating a partial.
                         css_class="form-row",
                     )
                 ),
+            return layout
 
 
 Target Results Table:
