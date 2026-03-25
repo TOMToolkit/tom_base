@@ -2,7 +2,14 @@
 {% load bootstrap4 crispy_forms_tags %}
 {% block title %}Query a Data Service{% endblock %}
 {% block content %}
+{% if info_url %}
+<h2><a href="{{info_url}}" target="_blank">{{ form.data_service.value }}</a> Query Form</h2>
+{% else %}
 <h2>{{ form.data_service.value }} Query Form</h2>
+{% endif %}
+{% if verbose_name != form.data_service.value%}
+    <h4>{{ verbose_name }}</h4>
+{% endif %}
 <form method="post" class="form">
     {% csrf_token %}
     {% bootstrap_field form.data_service %}
