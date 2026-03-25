@@ -151,17 +151,11 @@ class AlerceDataService(DataService):
         results = []
         try:
             if object_id := query_parameters.get("object_id"):
-                # If the object id doesn't start with ZTF, assume LSST.
-                # This should be revisited once the survey support in alerce is improved
-                if not object_id.upper().startswith("ZTF"):
-                    params["survey"] = "lsst"
-                    object_result = alerce.query_object(
-                        oid=object_id, **params
-                    )
-                else:
-                    object_result = alerce.query_object(
-                        oid=object_id, **params
-                    )
+                # We might want to specify the survey based on the object id prefix
+                # once the LSST support in the alerce client is improved
+                object_result = alerce.query_object(
+                    oid=object_id, **params
+                )
                 if object_result:
                     results.append(object_result)
 
