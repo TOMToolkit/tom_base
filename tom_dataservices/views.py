@@ -386,6 +386,8 @@ def update_data_from_query(request):
                 data_service_class = get_data_service_class(form.cleaned_data['data_service'])()
                 data = data_service_class.query_reduced_data(target)
                 data_service_class.to_reduced_datums(target, data)
+                alias_data = data_service_class.query_aliases(target=target)
+                data_service_class.to_aliases(target, alias_data)
             except QueryServiceError as e:
                 messages.error(request, f'Error retrieving data from Data Service: {e}')
 
