@@ -1,0 +1,38 @@
+{% load tom_common_extras %}
+<table class="table">
+  <thead>
+    <tr>
+      <th style="width: 20%;">Facility</th>
+      <th style="width: 10%;">Site</th>
+      <th style="width: 20%;">Telescope</th>
+      <th style="width: 35%;">Status</th>
+      <th style="width: 15%;">Weather URL</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% if loading %}
+      <tr>
+        <td colspan="5"  class="text-center">Fetching facility status...</td>
+      </tr>
+    {% else %}
+      {% for facility in facilities %}
+        {% for site in facility.sites %}
+          {% for telescope in site.telescopes %}
+            <tr>
+              <td>{{ facility.code }}</td>
+              <td>{{ site.code }}</td>
+              <td>{{ telescope.code }}</td>
+              <td>{{ telescope.status }}</td>
+              <td><a href="{{ site.weather_url }}" target="_blank">link</a></td>
+            </tr>
+          {% endfor %}
+        {% endfor %}
+      {% empty %}
+        <tr>
+          <td colspan="5" class="text-center">Facility status unknown.</td>
+        </tr>
+      {% endfor %}
+    {% endif %}
+  </tbody>
+</table>
+{% include 'tom_common/partials/messages.html' %}

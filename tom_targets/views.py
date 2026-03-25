@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 import logging
 
 from datetime import datetime, timedelta
@@ -523,6 +524,14 @@ class TargetDetailView(DetailView):
                         args=(obs_template.facility,)) + f'?target_id={self.get_object().id}&' + params)
 
         return super().get(request, *args, **kwargs)
+
+
+@login_required
+def render_observation_table(request, pk):
+    out = StringIO()
+    call_command('updatestatus', target_id=pk, stdout=out)
+    messages.info(request, out.getvalue())
+    return render(request, 'tom_targets/partials/observation_table.html', context={'object': Target.objects.get(id=pk)})
 
 
 class TargetHermesPreloadView(SingleObjectMixin, View):

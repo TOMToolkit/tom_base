@@ -319,7 +319,8 @@ class TestFacilityStatusView(TestCase):
         pass
 
     def test_facility_status(self):
-        response = self.client.get(reverse('tom_observations:facility-status'))
+        response = self.client.get(
+            reverse('tom_observations:render-facility-status-list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'coj.domb.1m0a', status_code=HTTPStatus.OK)
 
