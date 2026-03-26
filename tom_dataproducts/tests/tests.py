@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 import datetime
 from http import HTTPStatus
 import os
@@ -571,7 +572,7 @@ class TestReducedDatumModel(TestCase):
             target=self.target,
             data_type='photometry',
             source_name='test_source',
-            timestamp=self.timestamp,
+            timestamp=self.timestamp + datetime.timedelta(seconds=1),  # unique timestamp
             value=second_reduced_datum_value)
 
         self.assertEqual(2, ReducedDatum.objects.count())
@@ -601,19 +602,34 @@ class TestReducedDatumModel(TestCase):
         except ValidationError:
             self.fail("ValidationError raised when it should not have been (timestamps differ)")
 
-        # by NOT raising ValidationError, this shows that
-        # ReducedDatum.objects.bulk_create() bypasses the ReducedDatum.save()
-        # method which validated uniqueness!!
-        # (this is a duplicate ReducedDatum that we are trying to add here
+        # in this case bulk creation still hits the unique constraint
         unsaved_reduced_datum = ReducedDatum(
             target=self.target,
             data_type=self.data_type,
             source_name=self.source_name,
             timestamp=self.timestamp,
             value=self.existing_reduced_datum_value)
-        # does bulk_create bypass the ReducedDatum.save() method which validated uniqueness?
-        # (this is a duplicate ReducedDatum that we are trying to add here
-        ReducedDatum.objects.bulk_create([unsaved_reduced_datum])
+        with self.assertRaises(IntegrityError):
+            ReducedDatum.objects.bulk_create([unsaved_reduced_datum])
+
+    def test_create_reduced_datum_with_supplied_key(self):
+        """Test that we can add a second ReducedDatum that only differs in the supplied key"""
+        # exactly the same as the existing ReducedDatum
+        reduced_datum = ReducedDatum(
+            target=self.target,
+            data_type=self.data_type,
+            source_name=self.source_name,
+            timestamp=self.timestamp,
+            value=self.existing_reduced_datum_value
+        )
+        # Fails without the unique_key set (it is Null)
+        with self.assertRaises(ValidationError):
+            reduced_datum.save()
+
+        # Set a unique key
+        reduced_datum.unique_key = "foo"
+        reduced_datum.save()
+        self.assertEqual(2, ReducedDatum.objects.count())
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],

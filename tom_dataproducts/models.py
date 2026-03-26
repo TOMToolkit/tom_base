@@ -1,20 +1,20 @@
 import logging
 import os
 import tempfile
+from importlib import import_module
 
 from astropy.io import fits
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
-from django.utils import timezone, text
-from django.core.exceptions import ValidationError
+from django.utils import text, timezone
 from fits2image.conversions import fits_to_jpg
 from PIL import Image
-from importlib import import_module
 
-from tom_targets.base_models import BaseTarget
 from tom_alerts.models import AlertStreamMessage
 from tom_observations.models import ObservationRecord
+from tom_targets.base_models import BaseTarget
 
 logger = logging.getLogger(__name__)
 
@@ -377,9 +377,22 @@ class ReducedDatum(models.Model):
     timestamp = models.DateTimeField(null=False, blank=False, default=timezone.now, db_index=True)
     value = models.JSONField(null=False, blank=False)
     message = models.ManyToManyField(AlertStreamMessage, blank=True)
+    unique_key = models.CharField(max_length=255, null=True, blank=True, db_index=True)
 
     class Meta:
-        get_latest_by = ('timestamp',)
+        get_latest_by = ("timestamp",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=["target", "timestamp", "unique_key"],
+                condition=models.Q(unique_key__isnull=False),
+                name="unique_reduced_datum_with_key",
+            ),
+            models.UniqueConstraint(
+                fields=["target", "timestamp"],
+                condition=models.Q(unique_key__isnull=True),
+                name="unique_reduced_datum_no_key",
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         # Validate data_type based on options in settings.py or default types: (type, display)
@@ -389,32 +402,8 @@ class ReducedDatum(models.Model):
         else:
             raise ValidationError('Not a valid DataProduct type.')
 
-        # because we have a custom way of validating the uniqueness of the ReducedDatum,
-        #  we need to call full_clean() here to invoke our validate_unique() method.
+        # Call clean_fields(), clean(), validate_unique(), and
+        # validate_constraints() on the model. Raise a ValidationError for any
+        # errors that occur.
         self.full_clean()
         return super().save()
-
-    def validate_unique(self, *args, **kwargs):
-        """
-        Validates that the ReducedDatum is unique. Because the `value` field is a JSONField, it is not possible to rely
-        on standard validation.
-
-        Do nothing if the uniqueness test passes. Otherwise, raise a ValidationError.
-
-        see https://docs.djangoproject.com/en/5.0/ref/models/instances/#validating-objects
-        """
-        super().validate_unique(*args, **kwargs)
-
-        # Check if the Reduced Datum exists in the database
-        try:
-            existing_reduced_datum = ReducedDatum.objects.get(target=self.target,
-                                                              data_type=self.data_type,
-                                                              timestamp=self.timestamp,
-                                                              value=self.value)
-            if existing_reduced_datum and existing_reduced_datum.id != self.id:  # not the same object
-                # found ReducedDatum with the same values. Don't save this duplicate ReducedDatum.
-                raise ValidationError(f'ReducedDatum already exists: {self.data_type} data with value of {self.value} '
-                                      f'found for {self.target} at {self.timestamp}')
-        except ReducedDatum.DoesNotExist:
-            # this means that our check for uniqueness passed: so do not raise ValidationError
-            pass

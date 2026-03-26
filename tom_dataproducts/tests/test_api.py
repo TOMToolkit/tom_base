@@ -132,12 +132,12 @@ class TestReducedDatumViewset(APITestCase):
 
     def test_upload_same_reduced_datum_twice(self):
         """
-        Test that identical data raises a validation error while similar but different JSON will make it through.
+        Test that identical data raises a validation error while similar but different unique_key will make it through.
         """
         self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
         with self.assertRaises(ValidationError):
             self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
-        self.rd_data['value'] = {'magnitude': 15.582, 'filter': 'B', 'error': 0.005}
+        self.rd_data['unique_key'] = 'red-200'
         self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
         rd_queryset = ReducedDatum.objects.all()
         self.assertEqual(rd_queryset.count(), 2)
