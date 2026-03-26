@@ -232,6 +232,66 @@ class TestUserProfile(TestCase):
         self.assertEqual(user.profile.affiliation, 'Test University')
 
 
+class TestRegenerateAPIToken(TestCase):
+    """Tests for the RegenerateAPITokenView."""
+
+    def setUp(self):
+        self.admin = User.objects.create_superuser(username='admin', password='admin', email='admin@example.com')
+        self.user = User.objects.create_user(username='testuser', password='testpass', email='user@example.com')
+        # Tokens are auto-created by the post_save signal in tom_common.signals
+
+    def test_regenerate_own_token(self):
+        """A logged-in user can regenerate their own API token."""
+        self.client.force_login(self.user)
+        old_token_key = self.user.auth_token.key
+
+        # token regeneration happens here
+        response = self.client.post(reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+
+        self.user.refresh_from_db()
+        new_token_key = self.user.auth_token.key
+
+        self.assertNotEqual(old_token_key, new_token_key)
+        self.assertRedirects(response, reverse('user-update', kwargs={'pk': self.user.pk}))
+
+    def test_non_superuser_cannot_regenerate_other_user_token(self):
+        """A non-superuser cannot regenerate another user's token."""
+        self.client.force_login(self.user)
+        old_token_key = self.admin.auth_token.key
+
+        response = self.client.post(reverse('regenerate-api-token', kwargs={'pk': self.admin.pk}))
+
+        # Should redirect to the requesting user's own update page
+        self.assertRedirects(response, reverse('user-update', kwargs={'pk': self.user.pk}))
+        # Admin's token should be unchanged
+        self.admin.refresh_from_db()
+        self.assertEqual(old_token_key, self.admin.auth_token.key)
+
+    def test_superuser_can_regenerate_other_user_token(self):
+        """A superuser can regenerate another user's token."""
+        self.client.force_login(self.admin)
+        old_token_key = self.user.auth_token.key
+
+        response = self.client.post(reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+
+        self.user.refresh_from_db()
+        new_token_key = self.user.auth_token.key
+        self.assertNotEqual(old_token_key, new_token_key)
+        self.assertRedirects(response, reverse('user-update', kwargs={'pk': self.user.pk}))
+
+    def test_get_request_returns_405(self):
+        """GET requests should return 405 Method Not Allowed."""
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+        self.assertEqual(response.status_code, HTTPStatus.METHOD_NOT_ALLOWED)
+
+    def test_unauthenticated_redirects_to_login(self):
+        """Unauthenticated requests should redirect to login."""
+        response = self.client.post(reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+        self.assertRedirects(response, reverse('login') + '?next=' +
+                             reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+
+
 class TestAuthScheme(TestCase):
     @override_settings(AUTH_STRATEGY='LOCKED')
     def test_user_cannot_access_view(self):
