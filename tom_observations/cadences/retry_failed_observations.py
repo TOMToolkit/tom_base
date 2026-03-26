@@ -23,33 +23,57 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
     form = RetryFailedObservationsForm
 
     def run(self):
-        failed_observations = [obsr for obsr
-                               in self.dynamic_cadence.observation_group.observation_records.all()
-                               if obsr.failed]
-        new_observations = []
-        for obs in failed_observations:
-            observation_payload = obs.parameters
-            facility = get_service_class(obs.facility)()
-            start_keyword, end_keyword = facility.get_start_end_keywords()
-            observation_payload = self.advance_window(
-                observation_payload, start_keyword=start_keyword, end_keyword=end_keyword
-            )
-            obs_type = obs.parameters.get('observation_type', None)
-            form = facility.get_form(obs_type)(data=observation_payload)
-            form.is_valid()
-            observation_ids = facility.submit_observation(form.observation_payload())
+        records = self.dynamic_cadence.observation_group.observation_records.all().order_by('-created')
+        last_obs = records.first()
 
-            for observation_id in observation_ids:
-                # Create Observation record
-                record = ObservationRecord.objects.create(
-                    target=obs.target,
-                    facility=facility.name,
-                    parameters=observation_payload,
-                    observation_id=observation_id
-                )
-                self.dynamic_cadence.observation_group.observation_records.add(record)
-                self.dynamic_cadence.observation_group.save()
-                new_observations.append(record)
+        if not last_obs:
+            return
+
+        facility_class = get_service_class(last_obs.facility)
+        facility = facility_class()
+        facility.update_observation_status(last_obs.observation_id)
+        last_obs.refresh_from_db()
+
+        if not last_obs.terminal:
+            return
+        elif last_obs.status == 'COMPLETED':
+            self.dynamic_cadence.active = False
+            self.dynamic_cadence.save()
+            return
+
+        if not last_obs.failed:
+            return
+
+        observation_payload = last_obs.parameters.copy()
+
+        start_keyword, end_keyword = facility.get_start_end_keywords()
+        observation_payload = self.advance_window(
+            observation_payload, start_keyword=start_keyword, end_keyword=end_keyword
+        )
+
+        obs_type = observation_payload.get('observation_type')
+        form = facility.get_form(obs_type)(observation_payload)
+
+        if not form.is_valid():
+            return
+
+        observation_ids = facility.submit_observation(form.observation_payload())
+        new_observations = []
+
+        for observation_id in observation_ids:
+            record = ObservationRecord.objects.create(
+                target=last_obs.target,
+                facility=facility.name,
+                parameters=observation_payload,
+                observation_id=observation_id
+            )
+            self.dynamic_cadence.observation_group.observation_records.add(record)
+            new_observations.append(record)
+
+        self.dynamic_cadence.observation_group.save()
+
+        for obsr in new_observations:
+            facility.update_observation_status(obsr.observation_id)
 
         return new_observations
 
