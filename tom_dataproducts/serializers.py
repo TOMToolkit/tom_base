@@ -29,7 +29,8 @@ class ReducedDatumSerializer(serializers.ModelSerializer):
             'source_location',
             'timestamp',
             'value',
-            'target'
+            'target',
+            'unique_key'
         )
 
     def create(self, validated_data):
