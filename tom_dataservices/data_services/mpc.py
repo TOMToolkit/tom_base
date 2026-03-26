@@ -76,6 +76,7 @@ class MPCExplorerDataService(DataService):
         """
 
         try:
+            query_results = {}
             response = requests.get("https://data.minorplanetcenter.net/api/get-orb", json=query_parameters)
             if response.ok:
                 response_data = response.json()
