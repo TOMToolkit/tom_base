@@ -5,11 +5,18 @@ from django.db import migrations, models
 
 def populate_unique_keys(apps, schema_editor):
     """Assign a UUID to all existing rows so they don't conflict with the null-key constraint."""
+    # Iterates over existing ReducedDatums without loading the entire set into memory.
+    # Taken from example here: https://docs.djangoproject.com/en/6.0/ref/models/querysets/#bulk-update
+    from itertools import islice
     ReducedDatum = apps.get_model('tom_dataproducts', 'ReducedDatum')
-    datums = list(ReducedDatum.objects.filter(unique_key__isnull=True))
-    for datum in datums:
-        datum.unique_key = str(uuid.uuid4())
-    ReducedDatum.objects.bulk_update(datums, ['unique_key'], batch_size=1000)
+
+    batch_size = 1000
+    ids_iter = ReducedDatum.objects.filter(unique_key__isnull=True).values_list('pk', flat=True).iterator()
+    while ids := list(islice(ids_iter, batch_size)):
+        batch = ReducedDatum.objects.filter(pk__in=ids)
+        for datum in batch:
+            datum.unique_key = str(uuid.uuid4())
+        ReducedDatum.objects.bulk_update(batch, ['unique_key'], batch_size=batch_size)
 
 class Migration(migrations.Migration):
 
