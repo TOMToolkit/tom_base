@@ -51,7 +51,7 @@ First the actual query class:
             """
             return self.query_parameters
         
-        def query_service(self, data, **kwargs):
+        def query_service(self, query_parameters, **kwargs):
             """
             This is where you actually make the call to the Data Service. 
             Return the results.
@@ -109,6 +109,21 @@ extending several methods of ``DataService`` to perform the specific tasks neede
 Ultimately there are many things that can be customized for your DataService, and many tools built into the base class
 to help you do this. This section will take you through the fundamentals to get you started, but you should review the
 :doc:`full class documentation <../api/tom_dataservices/data_services>` before you precede.
+
+
+Using built in Errors and Exceptions
+++++++++++++++++++++++++++++++++++++
+The TOM Toolkit includes a catch-all error method that will be useful to raise if you want to pass the information back
+to the view when something doesn't go as expected:
+
+``QueryServiceError``
+=====================
+Raising this error is useful for handling problems with query parameters or query feedback that
+might cause issues further down the stack.
+
+.. code-block:: python
+
+    raise QueryServiceError(f"Target '{target.name}' is not configured for {self.name}.")
 
 
 Filling out our ``MyServiceForm``
@@ -209,11 +224,15 @@ At this point you should be seeing a list of Targets showing up in your TOM afte
 Continuing with our ``target`` example, we need to be able to ``create_target_from_query`` in order to actually save the
 target object resulting from a successful result for ``query_target`` above. This function expects a single instance with
 the same format as the list of dictionaries created by ``query_targets`` and converts that dictionary into a Target Object
-returning that object.
+returning that unsaved object.
 
 .. code-block:: python
     :caption: my_dataservice.MyDataService
     :linenos:
+
+    from tom_targets.models import Target
+
+    ...
 
     def create_target_from_query(self, target_result, **kwargs):
             """Create a new target from the query results
@@ -422,9 +441,9 @@ This consists of adding the ``get_simple_form_partial()`` method to ``MyServiceF
     {% bootstrap_field form.first_field %}
 
 NOTES:
- - Here we are just rendering a single field from our form.
- - See the docs for `Django Form Templates <https://docs.djangoproject.com/en/stable/topics/forms/#working-with-form-templates>`__ 
-  and `bootstrap4 <https://getbootstrap.com/docs/4.0/components/forms/>`__ for help building your partials.
+ * Here we are just rendering a single field from our form.
+ * See the docs for `Django Form Templates <https://docs.djangoproject.com/en/stable/topics/forms/#working-with-form-templates>`__ 
+   and `bootstrap4 <https://getbootstrap.com/docs/4.0/components/forms/>`__ for help building your partials.
 
 Advanced Forms:
 ===============
@@ -461,13 +480,14 @@ NOTES:
 Alternatively, if a simple form is included, the entirety of the form will be displayed by default in the advanced
 section using whatever layout was provided. So you can easily use
 `django_crispy_forms <https://django-crispy-forms.readthedocs.io/en/latest/index.html>`_ to set a layout instead of
-creating a partial.
+creating a partial. If you wish, you can use the built in `get_layout()` method to customize your crispy forms layout:
 
 .. code-block:: python
     :caption: forms.py
     :linenos:
 
     from django import forms
+    from crispy_forms.layout import HTML, Fieldset, Layout
     from tom_dataservices.forms import BaseQueryForm
 
     class MyServiceForm(BaseQueryForm):
@@ -483,9 +503,13 @@ creating a partial.
         radius = forms.FloatField(required=False, min_value=0.,
                             label='Cone Radius')
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.helper.layout = Layout(
+
+        def get_layout():
+            """Return the layout to be used with the Advanced Query form.
+                You can add HTML or Fields before or after the default form by using 
+                `Layout(<<something>>, super().get_layout(), <<something>>)`
+            """
+            layout = Layout(
                 HTML('''
                     <p>
                     My Data Service can also do a cone Search!
@@ -507,6 +531,7 @@ creating a partial.
                         css_class="form-row",
                     )
                 ),
+            return layout
 
 
 Target Results Table:

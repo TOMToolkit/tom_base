@@ -1,0 +1,28 @@
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th><input type="checkbox" id="selectAll"/></th>
+        <th>Object ID</th>
+        <th>Number of Detections</th>
+        <th>RA (deg)</th>
+        <th>Dec (deg)</th>
+        <th>Class [Probability]</th>
+        <th>First Detection (MJD)</th>
+        <th>Last Detection (MJD)</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for result in results %}
+    <tr>
+        <td><input type="checkbox" name="selected_results" value="{{ result.id }}"/></td>
+        <td>{{ result.oid}}</td>
+        <td>{{ result.ndet}}</td>
+        <td>{{ result.meanra }}</td>
+        <td>{{ result.meandec }}</td>
+        <td>{{ result.class }} [{{ result.probability }}]</td>
+        <td>{{ result.firstmjd }}</td>
+        <td>{{ result.lastmjd }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>

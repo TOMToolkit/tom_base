@@ -314,3 +314,13 @@ td, th {
         right: -8%;
     }
 }
+
+#messages.htmx-added {
+    opacity: 0;
+}
+
+#messages {
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
+}
+
