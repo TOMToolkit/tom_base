@@ -174,6 +174,7 @@ class RunQueryView(TemplateView):
         query_feedback = ""
         data_service_class = None
         cached_results = {}
+        query_parameters = {}
 
         # Do query and get query results
         try:
