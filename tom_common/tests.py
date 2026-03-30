@@ -1,25 +1,19 @@
-import datetime
 from http import HTTPStatus
 import tempfile
 import logging
-from unittest.mock import MagicMock, patch
 
 from cryptography.fernet import Fernet
 
 from django.contrib.auth.models import User
-from django.contrib.sessions.models import Session
 from django.contrib.sites.models import Site
 from django.urls import reverse
 from django_comments.models import Comment
 from django.core.paginator import Paginator
-from django.db.models import QuerySet
 from django.test import TestCase, override_settings
 from django.test.runner import DiscoverRunner
 
-from tom_common.models import UserSession
-from tom_common import session_utils  # noqa Import the whole module for patching
-from tom_common.session_utils import (get_key_from_session_store, get_key_from_session_model,
-                                      SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY)
+from tom_common.models import Profile
+from tom_common import session_utils
 from tom_targets.tests.factories import SiderealTargetFactory
 from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
 from tom_common.templatetags.bootstrap4_overrides import bootstrap_pagination
@@ -380,284 +374,149 @@ class TestRobotsDotTxt(TestCase):
             assert response.content.startswith(b"User-Agent: *\n")  # known a priori from default robots.txt
 
 
-class TestUserSession(TestCase):
-    """Test that a UserSession instance is created when a user logs in.
+class TestEncryptionKeyManagement(TestCase):
+    """Tests for the envelope encryption architecture.
+
+    Verifies that:
+    - Users get an encrypted DEK on creation (via signal)
+    - The DEK can be decrypted and used to encrypt/decrypt data
+    - Password changes do not affect the encryption key
+    - The master key (TOMTOOLKIT_FIELD_ENCRYPTION_KEY) is required for decryption
     """
     def setUp(self):
-        # Create a user and log them in.
-        username = 'testuser'
-        password = 'testpassword'  # noqa
-        self.user = User.objects.create_user(username=username, password=password)
-        # don't user client.force_login() here, because it matters how the user logs in
-        self.client.login(username=username, password=password)
+        self.user = User.objects.create_user(
+            username='testuser', password='testpassword', email='test@example.com'
+        )
+        self.plaintext = 'this is a secret observatory API key'
 
-    def test_user_session_created(self):
-        """The UserSession links the User to the User's SessionStore instance.
+    def test_profile_has_encrypted_dek_after_user_creation(self):
+        """When a user is created, the post_save signal should generate an
+        encrypted DEK and store it on their Profile."""
+        profile = Profile.objects.get(user=self.user)
+        self.assertIsNotNone(profile.encrypted_dek)
+        # The encrypted DEK should be non-empty bytes
+        self.assertGreater(len(profile.encrypted_dek), 0)
 
-        Here we just test that the UserSession instance is created when the user logs in.
-        The UserSession instance is created in the `user_logged_in` signal receiver,
-        `tom_common.signals.create_user_session_on_login`
-        """
-        # Check that a UserSession instance is created for the logged-in user.
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 1)  # make sure there's only one
-
-        user_session = user_sessions.first()
-        self.assertIsInstance(user_session, UserSession)  # check that it's a UserSession instance
-        self.assertEqual(user_session.user, self.user)    # that links to the correct User
-
-    def test_user_session_deleted(self):
-        # Check that the UserSession instance is deleted when the user logs out.
-        self.client.logout()
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 0)  # there should be none left
-
-    def test_user_session_properties(self):
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 1)  # make sure there's only one
-
-        user_session: UserSession = user_sessions.first()
-
-        session: Session = user_session.session
-        self.assertIsInstance(session, Session)  # make sure it's a Session instance
-
-
-class TestEncryptionKeyManagement(TestCase):
-    def setUp(self):
-        # Create a user and log in.
-        username = 'testuser'
-        password = 'testpassword'
-        self.user = User.objects.create_user(username=username, password=password)
-        self.plaintext = f'this is a plaintext test message on {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
-
-        # Don't use client.login() here, because we need the request to go through the middleware
-        # in order to create a SessionStore instance. So, this doesn't work:
-        # self.client.login(username=username, password=password)  # NOPE
-
-        # Instead, we use the client.post() method to log in, which will create a SessionStore instance
-        # as the User is logged in. (it returns an HTTPResponse object, but we don't need it)
-        _ = self.client.post("/accounts/login/", {"username": username, "password": password})
-
-    def test_encryption_key_extraction(self):
-        """The UserSession.session field is a ForeignKey to the the Session model.
-        So, `user_session.session` should be an instance of the Session model. This is the
-        dictionary-like object saved in the SessionStore. We use it to hold the User's
-        encryption key.
-
-        This test checks that after setUp, where we create a user and log them in:
-        1. the UserSession instance is created and that there's only one
-        2. the encryption key can be extracted from the session store.
-        3. the encryption key is a bytes object that can be used to create a Fernet cipher
-        4. the Fernet cipher can be used to encrypt and decrypt a plaintext message.
-        """
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 1)  # make sure there's only one
-
-        user_session: UserSession = user_sessions.first()
-        session: Session = user_session.session
-
-        # extract the encryption key from the session store
-        encryption_key: bytes = get_key_from_session_model(session)
-        self.assertIsInstance(encryption_key, bytes)  # check that it's a bytes object
-        cipher = Fernet(encryption_key)  # and we can use it to create a Fernet cipher
-
-        # make sure the cipher works (i.e. the key is not weird).
+    def test_decrypted_dek_is_valid_fernet_key(self):
+        """The decrypted DEK should be a valid Fernet key that can
+        encrypt and decrypt data."""
+        profile = Profile.objects.get(user=self.user)
+        dek = session_utils._decrypt_dek(profile.encrypted_dek)
+        # Should not raise — a valid Fernet key
+        cipher = Fernet(dek)
         ciphertext = cipher.encrypt(self.plaintext.encode())
-        decoded_ciphertext = cipher.decrypt(ciphertext).decode()
-        self.assertEqual(self.plaintext, decoded_ciphertext)
+        decrypted = cipher.decrypt(ciphertext).decode()
+        self.assertEqual(self.plaintext, decrypted)
 
-    def test_encryption_key_extraction_from_session_store(self):
-        """Test that get_key_from_session_store() and get_key_from_session_model()
-        return the same key.
+    def test_each_user_gets_unique_dek(self):
+        """Two different users should have different DEKs."""
+        other_user = User.objects.create_user(
+            username='otheruser', password='otherpassword', email='other@example.com'
+        )
+        profile_1 = Profile.objects.get(user=self.user)
+        profile_2 = Profile.objects.get(user=other_user)
 
-        Use get_key_from_session_store() when you have a SessionStore instance,
-        probably from a decorated HTTPRequest. Use get_key_from_session_model()
-        only have a UserSession instance.
-        """
-        # Get the UserSession instance for the logged-in user.
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 1)  # make sure there's only one in the QuerySet
-        user_session: UserSession = user_sessions.first()
-        session: Session = user_session.session
-        self.assertIsInstance(session, Session)  # make sure it's a Session instance
+        dek_1 = session_utils._decrypt_dek(profile_1.encrypted_dek)
+        dek_2 = session_utils._decrypt_dek(profile_2.encrypted_dek)
+        self.assertNotEqual(dek_1, dek_2)
 
-        # To demonstrate the difference between Session and SessionStore:
-        # Get the key from the Session model instance
-        key_from_session: bytes = get_key_from_session_model(session)
-        self.assertIsInstance(key_from_session, bytes)
+    def test_password_change_does_not_affect_dek(self):
+        """Changing a user's password should not change their DEK.
+        This is a key improvement over the old password-derived scheme."""
+        profile = Profile.objects.get(user=self.user)
+        dek_before = session_utils._decrypt_dek(profile.encrypted_dek)
 
-        # Create a SessionStore...
-        from django.contrib.sessions.backends.db import SessionStore
-        # (the session has a session_key we can use to create a SessionStore instance)
-        session_store = SessionStore(session_key=session.session_key)
-        # ...and get the key from it
-        key_from_session_store: bytes = get_key_from_session_store(session_store)
-        self.assertEqual(key_from_session, key_from_session_store)  # check that they are the same
+        # Change password
+        self.user.set_password('newpassword')
+        self.user.save()
 
-    def test_encryption_key_update_upon_password_change(self):
-        """Test that the encryption key is updated when the user changes their password.
+        profile.refresh_from_db()
+        dek_after = session_utils._decrypt_dek(profile.encrypted_dek)
+        self.assertEqual(dek_before, dek_after)
 
-        The basic structure of this test is to:
-        1. log in and make sure the UserSession, SessionStore, encryption_key, etc is working.
-        2. change the user's password
-        3. log out and back in again with the new password
-        4. check that the encryption key in the new session store has changed
+    def test_admin_password_reset_does_not_affect_dek(self):
+        """When an admin resets another user's password, the user's DEK
+        should remain intact. In the old scheme, this would destroy all
+        encrypted data."""
+        admin = User.objects.create_superuser(
+            username='admin', password='admin', email='admin@example.com'
+        )
+        self.client.force_login(admin)
 
-        Along the way, we check that the encryption keys (old and new) work and
-        a cipher created with them can be used to encrypt and decrypt a plaintext
-        message.
+        profile = Profile.objects.get(user=self.user)
+        dek_before = session_utils._decrypt_dek(profile.encrypted_dek)
 
-        This test does not test the re-encryption of the model fields up on
-        a password change.
-        """
-        # Get the UserSession instance for the logged-in user.
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 1)
-        user_session: UserSession = user_sessions.first()
-        session: Session = user_session.session
-        self.assertIsInstance(session, Session)  # make sure it's a Session instance
+        # Admin changes the user's password via the admin view
+        change_url = reverse('admin-user-change-password', kwargs={'pk': self.user.id})
+        self.client.post(change_url, {
+            'password': 'admin_reset_password',
+            'change_password_form': '1',
+        })
 
-        # Get the key from the Session model instance
-        encryption_key: bytes = get_key_from_session_model(session)
-        self.assertIsInstance(encryption_key, bytes)
+        profile.refresh_from_db()
+        dek_after = session_utils._decrypt_dek(profile.encrypted_dek)
+        self.assertEqual(dek_before, dek_after)
 
-        cipher = Fernet(encryption_key)
-
-        # Encrypt the plaintext message with the current key.
+    def test_get_cipher_for_user(self):
+        """The internal _get_cipher_for_user should return a working Fernet cipher."""
+        cipher = session_utils._get_cipher_for_user(self.user)
+        self.assertIsInstance(cipher, Fernet)
         ciphertext = cipher.encrypt(self.plaintext.encode())
-        decoded_ciphertext = cipher.decrypt(ciphertext).decode()
-        self.assertEqual(self.plaintext, decoded_ciphertext)  # check that the key works
+        decrypted = cipher.decrypt(ciphertext).decode()
+        self.assertEqual(self.plaintext, decrypted)
 
-        # Change the user's password.
-        new_password = 'newpassword'  # noqa
-        self.user.set_password(new_password)
-        self.user.save()  # triggers pre_save signal on User model
+    def test_create_encrypted_dek_produces_valid_encrypted_key(self):
+        """create_encrypted_dek() should produce bytes that
+        can be decrypted to a valid Fernet key."""
+        encrypted = session_utils.create_encrypted_dek()
+        self.assertIsInstance(encrypted, bytes)
+        dek = session_utils._decrypt_dek(encrypted)
+        # Should be usable as a Fernet key
+        Fernet(dek)
 
-        # check that the password was changed
-        self.assertFalse(self.user.check_password('testpassword'))
-        self.assertTrue(self.user.check_password(new_password))
+    def test_master_key_required_for_decryption(self):
+        """Decrypting with a different master key should fail, proving
+        that the encrypted DEK is bound to TOMTOOLKIT_FIELD_ENCRYPTION_KEY."""
+        profile = Profile.objects.get(user=self.user)
+        wrong_key = Fernet.generate_key()
+        wrong_cipher = Fernet(wrong_key)
+        with self.assertRaises(Exception):
+            wrong_cipher.decrypt(profile.encrypted_dek)
 
-        # Log out and back in again to create a new session
-        self.client.post("/accounts/logout/")
-        response = self.client.post("/accounts/login/",
-                                    {"username": self.user.username, "password": new_password})
-        logger.debug(f'login response: {response}')
+    def test_preexisting_profile_gets_dek_on_next_save(self):
+        """A Profile that was created before the encryption system (no DEK)
+        should get a DEK on the next user save."""
+        # Simulate a pre-existing profile with no DEK
+        profile = Profile.objects.get(user=self.user)
+        profile.encrypted_dek = None
+        profile.save()
 
-        # Get the new UserSession instance for the logged-in user.
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 1)
-        user_session: UserSession = user_sessions.first()
-        session: Session = user_session.session
+        # Trigger the post_save signal by saving the user
+        self.user.save()
 
-        # Extract the new encryption key from the session store.
-        new_encryption_key: bytes = get_key_from_session_model(session)
-        self.assertIsInstance(new_encryption_key, bytes)
-
-        # The new encryption key should be different from the old one.
-        self.assertNotEqual(new_encryption_key, encryption_key)
-
-        # Encrypt the plaintext message with the new key.
-        cipher = Fernet(new_encryption_key)
-        ciphertext = cipher.encrypt(self.plaintext.encode())
-        decoded_ciphertext = cipher.decrypt(ciphertext).decode()
-
-        # Check that the new key works.
-        self.assertEqual(self.plaintext, decoded_ciphertext)
+        profile.refresh_from_db()
+        self.assertIsNotNone(profile.encrypted_dek)
+        # Verify it's a valid encrypted DEK
+        dek = session_utils._decrypt_dek(profile.encrypted_dek)
+        Fernet(dek)
 
 
 class TestSignalHandlers(TestCase):
+    """Tests for signal handlers in signals.py."""
     def setUp(self):
         self.username = 'signaltestuser'
         self.password = 'signaltestpass'
-        self.user = User.objects.create_user(username=self.username, password=self.password, email='signal@example.com')
+        self.user = User.objects.create_user(
+            username=self.username, password=self.password, email='signal@example.com'
+        )
 
-    def test_create_user_session_on_user_logged_in(self):
-        # Initially, no UserSession for this user
-        self.assertFalse(UserSession.objects.filter(user=self.user).exists())
-        # Log in the user
-        self.client.login(username=self.username, password=self.password)
-        # Check UserSession is created
-        self.assertTrue(UserSession.objects.filter(user=self.user).exists())
-        user_session = UserSession.objects.get(user=self.user)
-        self.assertIsNotNone(user_session.session)
+    def test_profile_created_with_dek_on_user_creation(self):
+        """The post_save signal should create a Profile with an encrypted DEK
+        when a new user is created."""
+        profile = Profile.objects.get(user=self.user)
+        self.assertIsNotNone(profile.encrypted_dek)
 
-    def test_delete_user_session_on_user_logged_out(self):
-        # Log in the user to create a session
-        self.client.login(username=self.username, password=self.password)
-        self.assertTrue(UserSession.objects.filter(user=self.user).exists())
-        session_key = self.client.session.session_key
-        self.assertTrue(Session.objects.filter(session_key=session_key).exists())
-
-        # Log out the user
-        self.client.logout()
-
-        # Check UserSession is deleted
-        self.assertFalse(UserSession.objects.filter(user=self.user).exists())
-        # Check the associated Session is also deleted
-        self.assertFalse(Session.objects.filter(session_key=session_key).exists())
-
-    def test_set_cipher_on_user_logged_in(self):
-        # Log in the user using client.post to simulate form submission with password
-        self.client.post(reverse('login'), {'username': self.username, 'password': self.password})
-
-        # Check that the encryption key is in the session
-        self.assertIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, self.client.session)
-        key_from_session_store = self.client.session[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY]
-        self.assertIsInstance(key_from_session_store, str)
-        self.assertIsNotNone(key_from_session_store)
-
-        # Verify the key can be used
-        try:
-            retrieved_fernet_key = get_key_from_session_store(self.client.session)
-
-            # retrieved_fernet_key should now be the original Fernet key and usable by Fernet.
-            Fernet(retrieved_fernet_key)  # This should not raise an error if the key is valid
-        except Exception as e:
-            self.fail(f"Encryption key from session is not a valid Fernet key: {e}")
-
-    def test_set_cipher_on_user_logged_in_no_password_in_request(self):
-        # Simulate a login scenario where request.POST does not contain 'password'
-        # This can happen with force_login or other custom auth backends
-        # We expect an error to be logged, but the login should still proceed.
-        # The key won't be set in the session by this specific signal handler.
-
-        # Use force_login which doesn't populate request.POST['password']
-        self.client.force_login(self.user)
-
-        # Check that the encryption key is NOT in the session from this signal
-        # (it might be set by other mechanisms, but not by set_cipher_on_user_logged_in)
-        # We can't directly assert it's not there if other parts of the login process add it.
-        # Instead, we check that our logger.error was called.
-        with self.assertLogs('tom_common.signals', level='ERROR') as cm:
-            # Manually trigger the signal with a mock request that has no POST data
-            from django.contrib.auth.signals import user_logged_in
-            mock_request = MagicMock()
-            mock_request.POST = {}  # No password
-            mock_request.session = self.client.session  # Use the actual session object
-            user_logged_in.send(sender=self.user.__class__, request=mock_request, user=self.user)
-        self.assertIn(f'User {self.username} logged in without a password. Cannot create encryption key.', cm.output[0])
-        # Key should not be in session from *this* signal call
-        self.assertNotIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, mock_request.session)
-
-    def test_clear_encryption_key_on_user_logged_out(self):
-        # Log in and ensure key is set
-        self.client.post(reverse('login'), {'username': self.username, 'password': self.password})
-        self.assertIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, self.client.session)
-
-        # Log out
-        self.client.logout()
-
-        # Check that the encryption key is removed from the session
-        self.assertNotIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, self.client.session)
-
-    @patch('tom_common.signals.session_utils.reencrypt_data')
-    def test_user_updated_on_user_pre_save_password_changed(self, mock_reencrypt):
-        self.user.set_password('newpassword123')
-        self.user.save()  # Triggers pre_save signal
-        mock_reencrypt.assert_called_once_with(self.user)
-
-    @patch('tom_common.signals.session_utils.reencrypt_data')
-    def test_user_updated_on_user_pre_save_password_not_changed(self, mock_reencrypt):
-        self.user.first_name = 'Signal'
-        self.user.save()  # Triggers pre_save signal
-        mock_reencrypt.assert_not_called()
+    def test_drf_token_created_on_user_creation(self):
+        """The post_save signal should create a DRF auth token for new users."""
+        from rest_framework.authtoken.models import Token
+        self.assertTrue(Token.objects.filter(user=self.user).exists())

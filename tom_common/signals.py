@@ -20,15 +20,15 @@ logger.setLevel(logging.INFO)
 # while get_user_model() is valid after INSTALLED_APPS are loaded.
 
 
-# Signal: Create a Profile (with a wrapped DEK) for the User when the User instance is created
+# Signal: Create a Profile (with an encrypted DEK) for the User when the User instance is created
 @receiver(post_save, sender=User)
 def save_profile_on_user_post_save(sender, instance, created, **kwargs) -> None:
-    """When a user is saved, ensure their Profile exists and has a wrapped DEK.
+    """When a user is saved, ensure their Profile exists and has an encrypted DEK.
 
-    On first save (user creation), creates a new Profile and generates a
-    wrapped Data Encryption Key (DEK) for the user. The DEK is a random
+    On first save (user creation), creates a new Profile and generates an
+    encrypted Data Encryption Key (DEK) for the user. The DEK is a random
     Fernet key encrypted by the server-side master key — see
-    ``session_utils.create_encrypted_data_encryption_key()`` for details.
+    ``session_utils.create_encrypted_dek()`` for details.
 
     On subsequent saves, just saves the existing Profile (e.g., to propagate
     any changes from inline formsets).

@@ -6,13 +6,12 @@ encryption scheme. The full architecture is documented in
 of how the pieces fit together:
 
 **Master key** (``TOMTOOLKIT_FIELD_ENCRYPTION_KEY`` in settings / environment):
-    A Fernet key that never touches the database. It wraps (encrypts) each
-    user's Data Encryption Key so that database access alone cannot reveal
-    user data.
+    A Fernet key that never touches the database. It encrypts each user's
+    Data Encryption Key so that database access alone cannot reveal user data.
 
-**Per-user DEK** (``Profile.wrapped_dek``):
+**Per-user DEK** (``Profile.encrypted_dek``):
     A random Fernet key generated when the user is created. Stored in the
-    database encrypted by the master key. To use it, we unwrap it with the
+    database encrypted by the master key. To use it, we decrypt it with the
     master key, build a Fernet cipher, and attach it briefly to the model
     instance that holds the encrypted field.
 
@@ -55,7 +54,7 @@ def _get_master_cipher() -> Fernet:
     """Return a Fernet cipher built from the server-side master key.
 
     The master key (``TOMTOOLKIT_FIELD_ENCRYPTION_KEY``) lives in the server
-    environment, not in the database. It is used only to wrap and unwrap
+    environment, not in the database. It is used only to encrypt and decrypt
     per-user DEKs — never to encrypt user data directly.
 
     Raises:
@@ -76,10 +75,10 @@ def _get_master_cipher() -> Fernet:
 
 
 def create_encrypted_dek() -> bytes:
-    """Generate a new random DEK and return it wrapped (encrypted) by the master key.
+    """Generate a new random DEK and return it encrypted by the master key.
 
     This is called once per user, at user-creation time (see ``signals.py``).
-    The returned bytes are stored in ``Profile.wrapped_dek``.
+    The returned bytes are stored in ``Profile.encrypted_dek``.
 
     We use ``Fernet.generate_key()`` rather than ``os.urandom()`` because
     Fernet keys have a specific format (URL-safe base64-encoded 32 bytes)
@@ -90,38 +89,38 @@ def create_encrypted_dek() -> bytes:
     """
     # Generate a fresh random Fernet key for this user
     dek: bytes = Fernet.generate_key()
-    # Wrap (encrypt) the DEK with the master key so it can be stored safely
-    # in the database. The master key is the only thing that can unwrap it.
+    # Encrypt the DEK with the master key so it can be stored safely
+    # in the database. The master key is the only thing that can decrypt it.
     master_cipher = _get_master_cipher()
-    wrapped_dek: bytes = master_cipher.encrypt(dek)
-    return wrapped_dek
+    encrypted_dek: bytes = master_cipher.encrypt(dek)
+    return encrypted_dek
 
 
-def _unwrap_dek(wrapped_dek: bytes) -> bytes:
-    """Unwrap (decrypt) a user's DEK using the master key.
+def _decrypt_dek(encrypted_dek: bytes) -> bytes:
+    """Decrypt a user's DEK using the master key.
 
     Args:
-        wrapped_dek: The encrypted DEK from ``Profile.wrapped_dek``.
+        encrypted_dek: The encrypted DEK from ``Profile.encrypted_dek``.
 
     Returns:
         The plaintext DEK (a valid Fernet key as bytes).
     """
     # Handle memoryview from PostgreSQL BinaryField
-    if isinstance(wrapped_dek, memoryview):
-        wrapped_dek = wrapped_dek.tobytes()
+    if isinstance(encrypted_dek, memoryview):
+        encrypted_dek = encrypted_dek.tobytes()
 
     master_cipher = _get_master_cipher()
-    return master_cipher.decrypt(wrapped_dek)
+    return master_cipher.decrypt(encrypted_dek)
 
 
 def _get_cipher_for_user(user) -> Fernet:
-    """Build a Fernet cipher from a user's unwrapped DEK.
+    """Build a Fernet cipher from a user's decrypted DEK.
 
-    This fetches the user's ``Profile.wrapped_dek``, unwraps it with the master
-    key, and returns a Fernet cipher ready to encrypt or decrypt the user's
-    data fields.
+    This fetches the user's ``Profile.encrypted_dek``, decrypts it with the
+    master key, and returns a Fernet cipher ready to encrypt or decrypt the
+    user's data fields.
 
-    The unwrapped DEK exists only in memory for the duration of this call and
+    The decrypted DEK exists only in memory for the duration of this call and
     the subsequent encrypt/decrypt operation. It is never persisted in
     plaintext.
 
@@ -133,14 +132,14 @@ def _get_cipher_for_user(user) -> Fernet:
 
     Raises:
         Profile.DoesNotExist: If the user has no Profile.
-        ValueError: If the user's Profile has no wrapped DEK.
+        ValueError: If the user's Profile has no encrypted DEK.
     """
     profile = Profile.objects.get(user=user)
     if not profile.encrypted_dek:
-        raise ValueError(f"User {user.username} has no encryption key (wrapped_dek is empty). "
+        raise ValueError(f"User {user.username} has no encryption key (encrypted_dek is empty). "
                          f"This may indicate the user was created before encryption was configured.")
 
-    dek: bytes = _unwrap_dek(profile.encrypted_dek)
+    dek: bytes = _decrypt_dek(profile.encrypted_dek)
     return Fernet(dek)
 
 
@@ -149,7 +148,7 @@ def get_encrypted_field(user,
                         field_name: str) -> Optional[str]:
     """Safely get the decrypted value of an EncryptedProperty.
 
-    Fetches the user's DEK from their Profile, unwraps it with the master key,
+    Fetches the user's DEK from their Profile, decrypts it with the master key,
     creates a Fernet cipher, and uses the ``EncryptedProperty`` descriptor to
     decrypt the field value.
 
