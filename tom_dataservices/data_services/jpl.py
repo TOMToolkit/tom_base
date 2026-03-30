@@ -8,7 +8,6 @@ from django import forms
 from django.db import models
 import logging
 import requests
-# import pprint
 
 from tom_dataservices.dataservices import DataService
 from tom_dataservices.forms import BaseQueryForm
@@ -265,9 +264,9 @@ class ScoutDataService(DataService):
 
             target_data = self._fetch_target_data(result, query_parameters)
             if target_data is not None:
-                reduced_datums = self._parse_detail_data(target_data)
-                if reduced_datums is not None:
-                    target_data['reduced_datums'] = {'scout_detail': reduced_datums}
+                scout_detail = self._parse_detail_data(target_data)
+                if scout_detail is not None:
+                    target_data['scout_detail'] = scout_detail
                 targets.append(target_data)
 
         return targets
@@ -335,7 +334,7 @@ class ScoutDataService(DataService):
         temporary hacky workaround as these are the only things supported post-Target saving)
         """
 
-        reduced_datums = {
+        scout_detail = {
             'num_obs': query_results.get('nObs'),
             'neo_score': query_results.get('neoScore'),
             'neo1km_score': query_results.get('neo1kmScore'),
@@ -351,11 +350,12 @@ class ScoutDataService(DataService):
             'last_run': parse(query_results.get('lastRun')).replace(tzinfo=tzutc()) if query_results.get('lastRun')
             else None
         }
-        return reduced_datums
+        return scout_detail
 
-    def create_reduced_datums_from_query(self, target, data=None, data_type=None, **kwargs):
-        if data is not None and data_type == 'scout_detail':
-            scout_detail, created = ScoutDetail.objects.get_or_create(target=target, **data)
-        else:
-            scout_detail, created = None, None
-        return scout_detail, created
+    def to_target(self, target_result=None, **kwargs):
+        target = super().to_target(target_result, **kwargs)
+        if target and target_result:
+            scout_detail, created = ScoutDetail.objects.get_or_create(target=target, **target_result['scout_detail'])
+            print(scout_detail)
+
+        return target
