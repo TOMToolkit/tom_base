@@ -501,6 +501,143 @@ class TestEncryptionKeyManagement(TestCase):
         Fernet(dek)
 
 
+class TestMasterKeyRotation(TestCase):
+    """Tests for ``session_utils.rotate_master_key()``.
+
+    Verifies that master key rotation re-encrypts all per-user DEKs correctly,
+    preserves the plaintext DEK (so existing encrypted data remains readable),
+    and handles edge cases like invalid keys, missing DEKs, and corrupted DEKs.
+    """
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='rotateuser', password='rotatepass', email='rotate@example.com'
+        )
+        self.new_key: str = Fernet.generate_key().decode()
+        # Count profiles with DEKs at the start — other apps (e.g., guardian)
+        # may have created users with profiles during test setup.
+        self.baseline_dek_count = Profile.objects.exclude(encrypted_dek=None).count()
+
+    def test_rotation_re_encrypts_deks(self):
+        """After rotation, the DEK on disk should be different (re-encrypted
+        with the new key) but the plaintext DEK should be the same."""
+        profile = Profile.objects.get(user=self.user)
+        old_encrypted_dek = bytes(profile.encrypted_dek)
+        dek_before = session_utils._decrypt_dek(profile.encrypted_dek)
+
+        result = session_utils.rotate_master_key(self.new_key)
+
+        self.assertEqual(result.success_count, self.baseline_dek_count)
+        self.assertEqual(result.error_count, 0)
+
+        profile.refresh_from_db()
+        # The encrypted representation should have changed
+        self.assertNotEqual(bytes(profile.encrypted_dek), old_encrypted_dek)
+        # But decrypting with the NEW key should yield the same plaintext DEK
+        new_master_cipher = Fernet(self.new_key)
+        dek_after = new_master_cipher.decrypt(profile.encrypted_dek)
+        self.assertEqual(dek_before, dek_after)
+
+    def test_encrypted_data_survives_rotation(self):
+        """Data encrypted with a user's DEK before rotation should still be
+        decryptable after rotation, since the plaintext DEK is unchanged."""
+        # Encrypt some data with the user's DEK
+        cipher_before = session_utils._get_cipher_for_user(self.user)
+        secret = b'my observatory API key'
+        ciphertext = cipher_before.encrypt(secret)
+
+        # Rotate the master key
+        session_utils.rotate_master_key(self.new_key)
+
+        # Decrypt the DEK with the new master key and verify the data
+        profile = Profile.objects.get(user=self.user)
+        new_master_cipher = Fernet(self.new_key)
+        dek = new_master_cipher.decrypt(profile.encrypted_dek)
+        cipher_after = Fernet(dek)
+        self.assertEqual(cipher_after.decrypt(ciphertext), secret)
+
+    def test_rotation_handles_multiple_users(self):
+        """Rotation should re-encrypt DEKs for all users."""
+        User.objects.create_user(username='user2', password='pass2', email='u2@example.com')
+        User.objects.create_user(username='user3', password='pass3', email='u3@example.com')
+
+        result = session_utils.rotate_master_key(self.new_key)
+
+        self.assertEqual(result.success_count, self.baseline_dek_count + 2)
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(result.total, self.baseline_dek_count + 2)
+
+    def test_rotation_with_no_profiles(self):
+        """Rotation with no DEKs should return a zero-count result, not an error."""
+        # Clear all DEKs
+        Profile.objects.update(encrypted_dek=None)
+
+        result = session_utils.rotate_master_key(self.new_key)
+
+        self.assertEqual(result.success_count, 0)
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(result.total, 0)
+
+    def test_rotation_rejects_invalid_new_key(self):
+        """An invalid Fernet key should raise ValueError before any data is touched."""
+        profile = Profile.objects.get(user=self.user)
+        encrypted_dek_before = bytes(profile.encrypted_dek)
+
+        with self.assertRaises(ValueError):
+            session_utils.rotate_master_key('not-a-valid-fernet-key')
+
+        # Verify nothing was modified
+        profile.refresh_from_db()
+        self.assertEqual(bytes(profile.encrypted_dek), encrypted_dek_before)
+
+    def test_rotation_skips_profiles_without_dek(self):
+        """Profiles with encrypted_dek=None should be excluded from rotation."""
+        # Create a second user and clear their DEK to simulate a pre-encryption user
+        user_no_dek = User.objects.create_user(
+            username='nodekuser', password='nodekpass', email='nodek@example.com'
+        )
+        profile_no_dek = Profile.objects.get(user=user_no_dek)
+        profile_no_dek.encrypted_dek = None
+        profile_no_dek.save()
+
+        result = session_utils.rotate_master_key(self.new_key)
+
+        # The no-DEK profile should be excluded from rotation
+        self.assertEqual(result.success_count, self.baseline_dek_count)
+        self.assertEqual(result.error_count, 0)
+
+        # The no-DEK profile should still be None
+        profile_no_dek.refresh_from_db()
+        self.assertIsNone(profile_no_dek.encrypted_dek)
+
+    def test_rotation_partial_failure(self):
+        """If one profile's DEK can't be decrypted, rotation should still
+        succeed for the other profiles and report the failure."""
+        # Create a second user with a valid DEK
+        user2 = User.objects.create_user(
+            username='user2', password='pass2', email='u2@example.com'
+        )
+
+        # Corrupt the first user's DEK by encrypting it with a different key
+        wrong_key_cipher = Fernet(Fernet.generate_key())
+        profile = Profile.objects.get(user=self.user)
+        profile.encrypted_dek = wrong_key_cipher.encrypt(b'garbage')
+        profile.save()
+
+        result = session_utils.rotate_master_key(self.new_key)
+
+        # All profiles except the corrupted one should succeed
+        self.assertEqual(result.success_count, self.baseline_dek_count)
+        self.assertEqual(result.error_count, 1)
+        self.assertEqual(result.errors[0].username, 'rotateuser')
+        self.assertIn('current master key', result.errors[0].error)
+
+        # Verify user2's DEK was actually rotated
+        profile2 = Profile.objects.get(user=user2)
+        new_master_cipher = Fernet(self.new_key)
+        dek = new_master_cipher.decrypt(profile2.encrypted_dek)
+        Fernet(dek)  # Should not raise
+
+
 class TestSignalHandlers(TestCase):
     """Tests for signal handlers in signals.py."""
     def setUp(self):
