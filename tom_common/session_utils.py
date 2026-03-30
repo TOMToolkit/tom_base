@@ -32,9 +32,10 @@ Typical call from a view or API endpoint::
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass, field
 from typing import Optional, TypeVar
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 from django.conf import settings
 from django.db import models
@@ -222,3 +223,103 @@ def set_encrypted_field(user,
     finally:
         if hasattr(model_instance, '_cipher'):
             del model_instance._cipher  # type: ignore[attr-defined]
+
+
+# ---------------------------------------------------------------------------
+# Master key rotation
+# ---------------------------------------------------------------------------
+
+@dataclass
+class RotationError:
+    """Details about a single Profile that failed during key rotation."""
+    profile_pk: int
+    username: str
+    error: str
+
+
+@dataclass
+class RotationResult:
+    """Result of a master key rotation operation.
+
+    Attributes:
+        success_count: Number of Profiles whose DEKs were successfully re-encrypted.
+        errors: Per-profile details for any that failed.
+    """
+    success_count: int = 0
+    errors: list[RotationError] = field(default_factory=list)
+
+    @property
+    def error_count(self) -> int:
+        return len(self.errors)
+
+    @property
+    def total(self) -> int:
+        return self.success_count + self.error_count
+
+
+def rotate_master_key(new_key: str) -> RotationResult:
+    """Re-encrypt all per-user DEKs with a new master key.
+
+    Each Profile's ``encrypted_dek`` is decrypted with the current master key
+    (from ``TOMTOOLKIT_FIELD_ENCRYPTION_KEY``) and re-encrypted with
+    ``new_key``. The user Profile's plaintext DEK is unchanged — only its
+    encryption layer (i.e. `encrypted_dek`) is replaced. The actual encrypted
+    data is not touched.
+
+    After this function completes successfully, the server's
+    ``TOMTOOLKIT_FIELD_ENCRYPTION_KEY`` must be updated to ``new_key`` and the
+    server restarted. Until that happens, the re-encrypted DEKs cannot be
+    decrypted.
+
+    Args:
+        new_key: The new Fernet master key as a string (URL-safe base64, 44 chars).
+
+    Returns:
+        A ``RotationResult`` with per-profile success/error details.
+
+    Raises:
+        ValueError: If ``new_key`` is not a valid Fernet key.
+        django.core.exceptions.ImproperlyConfigured: If the current master key
+            is missing or empty.
+    """
+    # Validate the new key before touching any data.
+    try:
+        new_master_cipher = Fernet(new_key.encode())
+    except Exception as e:
+        raise ValueError(f"Invalid new key: {e}") from e
+
+    # Build the old master cipher from current settings.
+    # Raises ImproperlyConfigured if missing — intentionally not caught here.
+    old_master_cipher = _get_master_cipher()
+
+    profiles = Profile.objects.exclude(encrypted_dek=None)
+    result = RotationResult()
+
+    for profile in profiles.iterator():
+        try:
+            encrypted_dek = profile.encrypted_dek
+            # Handle memoryview from PostgreSQL
+            if isinstance(encrypted_dek, memoryview):
+                encrypted_dek = encrypted_dek.tobytes()
+
+            # Decrypt with old key, re-encrypt with new key
+            plaintext_dek: bytes = old_master_cipher.decrypt(encrypted_dek)
+            new_encrypted_dek: bytes = new_master_cipher.encrypt(plaintext_dek)
+
+            profile.encrypted_dek = new_encrypted_dek
+            profile.save(update_fields=['encrypted_dek'])
+            result.success_count += 1
+        except InvalidToken:
+            result.errors.append(RotationError(
+                profile_pk=profile.pk,
+                username=profile.user.username,
+                error="could not decrypt with current master key",
+            ))
+        except Exception as e:
+            result.errors.append(RotationError(
+                profile_pk=profile.pk,
+                username=profile.user.username,
+                error=str(e),
+            ))
+
+    return result
