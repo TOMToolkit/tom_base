@@ -23,17 +23,32 @@ logger.setLevel(logging.INFO)
 # while get_user_model() is valid after INSTALLED_APPS are loaded.
 
 
-# Signal: Create a Profile for the User when the User instance is created
+# Signal: Create a Profile (with a wrapped DEK) for the User when the User instance is created
 @receiver(post_save, sender=User)
-def save_profile_on_user_post_save(sender, instance, **kwargs):
-    """When a user is saved, save their profile."""
-    # Take advantage of the fact that logging in updates a user's last_login field
-    # to create a profile for users that don't have one.
+def save_profile_on_user_post_save(sender, instance, created, **kwargs) -> None:
+    """When a user is saved, ensure their Profile exists and has a wrapped DEK.
+
+    On first save (user creation), creates a new Profile and generates a
+    wrapped Data Encryption Key (DEK) for the user. The DEK is a random
+    Fernet key encrypted by the server-side master key — see
+    ``session_utils.create_encrypted_data_encryption_key()`` for details.
+
+    On subsequent saves, just saves the existing Profile (e.g., to propagate
+    any changes from inline formsets).
+    """
     try:
-        instance.profile.save()
-    except User.profile.RelatedObjectDoesNotExist:  # type: ignore
-        logger.info(f'No Profile found for {instance}. Creating Profile.')
-        Profile.objects.create(user=instance)
+        profile = instance.profile
+        # If the Profile exists but has no DEK (e.g., it was created before
+        # the encryption system was added), generate one now.
+        if not profile.encrypted_dek:
+            profile.encrypted_dek = session_utils.create_encrypted_dek()
+        profile.save()
+    except User.profile.RelatedObjectDoesNotExist:  # type: ignore[attr-defined]
+        logger.info(f'No Profile found for {instance}. Creating Profile with encryption key.')
+        Profile.objects.create(
+            user=instance,
+            encrypted_dek=session_utils.create_encrypted_dek(),
+        )
 
 
 # Signal: Create a DRF token for the User when the User instance is created

@@ -1,3 +1,32 @@
+"""Models for TOM Toolkit's user profiles and encrypted field storage.
+
+Encryption Architecture
+-----------------------
+TOM Toolkit uses envelope encryption to protect sensitive user data (API keys,
+observatory credentials) at rest in the database. The scheme has two layers:
+
+1. A server-side **master key** (``TOMTOOLKIT_FIELD_ENCRYPTION_KEY``) is stored in the
+   environment, never in the database. It is a Fernet key used to wrap
+   (encrypt) per-user keys.
+
+2. Each user has a random **Data Encryption Key (DEK)** that encrypts their
+   actual data. The DEK is stored on the user's ``Profile`` as ``wrapped_dek``
+   — encrypted by the master key. To use it, we unwrap (decrypt) it with the
+   master key, create a Fernet cipher, and use that cipher to encrypt or
+   decrypt individual fields.
+
+This means database access alone cannot decrypt user data — an attacker also
+needs the master key from the server environment. See
+``docs/design/encryption_architecture_redesign.md`` for the full design.
+
+Plugin developers use ``EncryptedProperty`` descriptors and
+``EncryptableModelMixin`` to add encrypted fields to their models, and the
+helper functions in ``session_utils`` to read/write those fields. The
+encryption plumbing is handled transparently.
+"""
+
+from __future__ import annotations
+
 import logging
 from django.conf import settings
 from django.db import models
@@ -10,13 +39,20 @@ logger = logging.getLogger(__name__)
 
 
 class Profile(models.Model):
-    """Profile model for a TOMToolkit User"""
+    """Profile model for a TOMToolkit User.
+    """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     affiliation = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return f'{self.user.username} Profile'
 
+    # The user's Data Encryption Key (DEK), wrapped (encrypted) by the master key.
+    # This is a Fernet-encrypted blob of the user's random DEK. It can only be
+    # unwrapped using TOMTOOLKIT_FIELD_ENCRYPTION_KEY from the server environment.
+    # Null means no DEK has been generated yet (e.g., pre-existing users before
+    # this feature was added).
+    encrypted_dek = models.BinaryField(null=True, blank=True)
 
 class UserSession(models.Model):
     """Mapping model to associate the User and their Sessions
