@@ -25,6 +25,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '{{ SECRET_KEY }}'
 
+# Encryption key for protecting sensitive user data (API keys, credentials) at rest.
+# This is a Fernet key — a 44-character URL-safe base64 string encoding 32 random bytes.
+# Treat this like SECRET_KEY. See the TOM Toolkit encryption documentation.
+TOMTOOLKIT_FIELD_ENCRYPTION_KEY = os.getenv(
+    'TOMTOOLKIT_FIELD_ENCRYPTION_KEY',
+    '{{ TOMTOOLKIT_FIELD_ENCRYPTION_KEY }}')  # 44-char URL-safe base64 string
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
