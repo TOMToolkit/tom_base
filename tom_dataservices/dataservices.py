@@ -115,12 +115,6 @@ class DataService(ABC):
         # Instance variable that can store query parameters if necessary
         self.query_parameters = query_parameters or {}
 
-    @property
-    def get_verbose_name(self):
-        if self.verbose_name is not None:
-            return self.verbose_name
-        return self.name
-
     @abstractmethod
     def query_service(self, query_parameters, **kwargs):
         """Takes in the serialized data from the query form and actually submits the query to the service"""
