@@ -7,8 +7,8 @@
 {% else %}
 <h2>{{ form.data_service.value }} Query Form</h2>
 {% endif %}
-{% if verbose_name != form.data_service.value%}
-    <h4>{{ verbose_name }}</h4>
+{% if get_verbose_name != form.data_service.value %}
+    <h4>{{ get_verbose_name }}</h4>
 {% endif %}
 <form method="post" class="form">
     {% csrf_token %}

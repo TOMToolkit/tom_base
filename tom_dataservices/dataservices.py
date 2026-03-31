@@ -90,7 +90,7 @@ class DataService(ABC):
     # Recognizable name for the DataService (Gaia, TNS, etc)
     name = 'BaseDataService'
     # Full name for the DataService (Hermes Messaging Service, Pan-STARRS1 DR2 Query Service, etc.)
-    verbose_name = name
+    verbose_name = None
     # Url for more info about the DataService
     info_url = None
     # Base url for the DataService
@@ -114,6 +114,12 @@ class DataService(ABC):
         self.query_results = {}
         # Instance variable that can store query parameters if necessary
         self.query_parameters = query_parameters or {}
+
+    @property
+    def get_verbose_name(self):
+        if self.verbose_name is not None:
+            return self.verbose_name
+        return self.name
 
     @abstractmethod
     def query_service(self, query_parameters, **kwargs):
