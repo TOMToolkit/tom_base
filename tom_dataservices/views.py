@@ -375,7 +375,7 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                         except QueryServiceError as e:
                             messages.error(request, f'Error retrieving data from Data Service: {e}')
         except NotImplementedError as e:
-            messages.error(request, e)
+            messages.error(request, str(e))
         if len(results) == len(errors):
             if query_id:
                 return redirect(reverse('dataservices:run_saved', kwargs={'pk': query_id}))
