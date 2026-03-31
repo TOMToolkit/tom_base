@@ -90,7 +90,7 @@ class DataService(ABC):
     # Recognizable name for the DataService (Gaia, TNS, etc)
     name = 'BaseDataService'
     # Full name for the DataService (Hermes Messaging Service, Pan-STARRS1 DR2 Query Service, etc.)
-    verbose_name = name
+    verbose_name = None
     # Url for more info about the DataService
     info_url = None
     # Base url for the DataService
@@ -177,10 +177,15 @@ class DataService(ABC):
         :param value: The default value to return if configuration not found.
         :return: A list of available configurations, or a requested configuration, or if not found, the default value.
         """
-        data_service_config = cls.configuration()
-        if config_type:
-            return data_service_config.get(config_type, value)
-        return [*data_service_config]
+        try:
+            data_service_config = cls.configuration()
+            if config_type:
+                return data_service_config.get(config_type, value)
+            return [*data_service_config]
+        except NotConfiguredError as e:
+            if value:
+                return value
+            raise NotConfiguredError(e)
 
     @classmethod
     def get_credentials(cls, **kwargs):
@@ -231,11 +236,11 @@ class DataService(ABC):
 
     def query_reduced_data(self, target, **kwargs):
         """Set up and run a specialized query to retrieve Reduced Datums from a Data Service"""
-        build_query_parameters_from_target_method = getattr(self, 'build_query_parameters_from_target')
+        build_query_parameters_from_target_method = getattr(self, 'build_query_parameters_from_target', None)
         if build_query_parameters_from_target_method:
             query_parameters = build_query_parameters_from_target_method(target)
         else:
-            raise NotImplementedError(f'build_query_parameters_from_target() has not been implemented for {self.name}')
+            query_parameters = {}
         try:
             phot_results = self.query_photometry(query_parameters, **kwargs)
         except NotImplementedError:
@@ -309,7 +314,9 @@ class DataService(ABC):
             raise MissingDataException('No Reduced Data dictionary found.')
         reduced_datum_list = []
         for key in data_results.keys():
-            reduced_datum_list += self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
+            # If data exists for a given data_type, create ReducedDatums.
+            if data_results[key]:
+                reduced_datum_list += self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
         return reduced_datum_list
 
     def create_reduced_datums_from_query(self, target, data: List, data_type=None, **kwargs) -> List:
@@ -322,7 +329,7 @@ class DataService(ABC):
         :param data_type: An appropriate data type as listed in tom_dataproducts.models.DATA_TYPE_CHOICES
         :return: List of Reduced datums (either retrieved or created)
         """
-        raise NotImplementedError
+        raise NotImplementedError(f'create_reduced_datums_from_query method has not been implemented for {self.name}')
 
     def to_target(self, target_result=None, **kwargs):
         """

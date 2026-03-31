@@ -7,9 +7,10 @@
 {% else %}
 <h2>{{ form.data_service.value }} Query Form</h2>
 {% endif %}
-{% if verbose_name != form.data_service.value%}
+{% if verbose_name and verbose_name != form.data_service.value %}
     <h4>{{ verbose_name }}</h4>
 {% endif %}
+<hr>
 <form method="post" class="form">
     {% csrf_token %}
     {% bootstrap_field form.data_service %}

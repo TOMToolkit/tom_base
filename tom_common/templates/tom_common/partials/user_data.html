@@ -24,6 +24,10 @@
                 <dd class="col-sm-6">{{ value }}</dd>
             {% endif %}
         {% endfor %}
+        {% if drf_api_token %}
+            <dt class="col-sm-6" >API Token</dt>
+            <dd class="col-sm-6">{{ drf_api_token }}</dd>
+        {% endif %}
     </dl>
   </div>
 </div>
