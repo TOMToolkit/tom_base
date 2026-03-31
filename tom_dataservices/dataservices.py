@@ -314,6 +314,7 @@ class DataService(ABC):
             raise MissingDataException('No Reduced Data dictionary found.')
         reduced_datum_list = []
         for key in data_results.keys():
+            # If data exists for a given data_type, create ReducedDatums.
             if data_results[key]:
                 reduced_datum_list += self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
         return reduced_datum_list
