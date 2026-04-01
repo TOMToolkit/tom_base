@@ -82,7 +82,7 @@ class MPCExplorerDataService(DataService):
                 response_data = response.json()
                 if len(response_data) >= 2 and response_data[0] is not None and 'mpc_orb' in response_data[0]:
                     # Format currently seems to be a 2-length list with 0th element containing
-                    # MPC_ORB.JSON format date and a status code in the 1th element. I suspect
+                    # MPC_ORB.JSON format data and a status code in element 1. I suspect
                     # there may be extra entries for e.g. comets, but these are not present in MPC Explorer yet
                     # Store everything other than the status code for now and for later parsing.
                     query_results = response.json()[0:-1][0]['mpc_orb']
@@ -101,11 +101,42 @@ class MPCExplorerDataService(DataService):
         targets = []
         for target in query_results:
             # The MPC Explorer API currently returns a single target per query, but we return a list
-            target['name'] = query_parameters.get('designation')
             target['mpc_orb'] = query_results[0] if query_results else []
+            target['name'] , target['aliases'] = self.get_additional_mpc_names(target['mpc_orb'])
             targets.append(target)
 
         return targets
+
+    def get_additional_mpc_names(self, query_result):
+        """
+        We want to sort out the different names that are returned from the MPC and select the best one as
+        the primary designation stored in target.name
+        """
+        aliases = []
+        unpacked_primary_desig = query_result['designation_data']['unpacked_primary_provisional_designation']
+        orbfit_name = query_result['designation_data']['orbfit_name']
+        # If the unpacked primary designation (minus any spaces in the middle) is the same as the orbfit_name,
+        # then we have a provisional-only and no permanent designation. In this case, set the target's name
+        # to the unpacked primary designation (with the space). Otherwise we have a permanent designation,
+        # and it's safe (hopefully) to use the orbfit_name without having to unpack into year & half-month plus
+        # running designation
+        target_name = None
+        if unpacked_primary_desig.replace(' ', '') == orbfit_name:
+            target_name = unpacked_primary_desig
+        else:
+            target_name = orbfit_name
+        primary_name = target_name
+        if query_result['designation_data'].get('name', "") != "":
+            aliases.append(query_result['designation_data']['name'])
+        aliases.append(unpacked_primary_desig)
+        aliases += query_result['designation_data']['unpacked_secondary_provisional_designations']
+        # Make sure we don't include the primary designation twice
+        try:
+            aliases.remove(primary_name)
+        except ValueError:
+            pass
+
+        return primary_name, aliases
 
     def create_target_from_query(self, target_result: Dict, **kwargs):
         """Create a new target from the query results
@@ -118,33 +149,9 @@ class MPCExplorerDataService(DataService):
             result = result[0]
 
         target = Target()
+        target.name = target_result['name']
         target.type = Target.NON_SIDEREAL
         target.scheme = 'MPC_COMET'
-
-        unpacked_primary_desig = result['designation_data']['unpacked_primary_provisional_designation']
-        orbfit_name = result['designation_data']['orbfit_name']
-        # If the unpacked primary designation (minus any spaces in the middle) is the same as the orbfit_name,
-        # then we have a provisional-only and no permanent designation. In this case, set the target's name
-        # to the unpacked primary designation (with the space). Otherwise we have a permanent desigination,
-        # and it's safe (hopefully) to use the orbfit_name without having to unpack into year & half-month plus
-        # running designation
-        target_name = None
-        if unpacked_primary_desig.replace(' ', '') == orbfit_name:
-            target_name = unpacked_primary_desig
-        else:
-            target_name = orbfit_name
-        target.name = target_name
-        extra_desigs = []
-        if result['designation_data'].get('name', "") != "":
-            extra_desigs.append(result['designation_data']['name'])
-        extra_desigs.append(unpacked_primary_desig)
-        extra_desigs += result['designation_data']['unpacked_secondary_provisional_designations']
-        # Make sure we don't include the primary designation twice
-        try:
-            extra_desigs.remove(target.name)
-        except ValueError:
-            pass
-        target.extra_names = extra_desigs
 
         # Get magnitude data
         target.abs_mag = result['magnitude_data']['H']
