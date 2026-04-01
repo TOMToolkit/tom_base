@@ -22,12 +22,12 @@
         <td>{{ result.designation_data.orbfit_name }}</td>
         <td>{{ result.orbit_fit_statistics.nobs_total}}</td>
         <td>{{ result.orbit_fit_statistics.nobs_total_sel}}</td>
-        <td>{{ result.COM.coefficient_values.0 }}</td>
-        <td>{{ result.COM.coefficient_values.1 }}</td>
-        <td>{{ result.COM.coefficient_values.2 }}</td>
-        <td>{{ result.COM.coefficient_values.3 }}</td>
-        <td>{{ result.COM.coefficient_values.4 }}</td>
-        <td>{{ result.COM.coefficient_values.5 }}</td>
+        <td title="{{result.COM.coefficient_values.0}}">{{ result.COM.coefficient_values.0|floatformat:3 }}...</td>
+        <td title="{{result.COM.coefficient_values.1}}">{{ result.COM.coefficient_values.1|floatformat:3 }}...</td>
+        <td title="{{result.COM.coefficient_values.2}}">{{ result.COM.coefficient_values.2|floatformat:3 }}...</td>
+        <td title="{{result.COM.coefficient_values.3}}">{{ result.COM.coefficient_values.3|floatformat:3 }}...</td>
+        <td title="{{result.COM.coefficient_values.4}}">{{ result.COM.coefficient_values.4|floatformat:3 }}...</td>
+        <td title="{{result.COM.coefficient_values.5}}">{{ result.COM.coefficient_values.5|floatformat:3 }}...</td>
         <td>{{ result.magnitude_data.H }}</td>
         <td>{{ result.magnitude_data.G }}</td>
     </tr>
