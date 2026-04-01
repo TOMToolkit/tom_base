@@ -390,12 +390,12 @@ class DataService(ABC):
 
     def to_aliases(self, target, alias_results: List, **kwargs) -> List:
         """
-        Upper level function to create a new ReducedDatum from the query results
-        This method is not intended to be extended. This method passes the output
-        of query_reduced_data() to create_reduced_datums_from_query()
-        :param target: Target object to associate with the ReducedDatum
-        :param data_results: Query results from the DataService storing observation data. This should be a dictionary
-        with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
+        Upper level function to create a new aliases from the query results
+        This method is not intended to be extended. This method passes a list of aliases
+        (either the output of query_aliases() or from target_result['aliases] in to_targets
+        to create_aliases_from_query().
+        :param target: Target object to associate with the alias
+        :param alias_results: list of aliases from the DataService. This should be a list of names.
         """
         new_aliases = self.create_aliases_from_query(alias_results, **kwargs)
         for alias in new_aliases:
@@ -408,7 +408,7 @@ class DataService(ABC):
         return new_aliases
 
     def create_aliases_from_query(self, alias_results: List, **kwargs) -> List:
-        """Create a new target from the query results
+        """Create a new target name from the query results
         This method should be over ridden with a method that creates a list of TargetName objects:
         `TargetName(name=alias)` that will be saved as part of the `Target.save(extras=extras, names=aliases)` call.
         :param query_result: list of dictionaries describing target details based on query result
