@@ -17,7 +17,6 @@ from django.contrib.auth import update_session_auth_hash
 
 from rest_framework.authtoken.models import Token
 
-from tom_common.models import UserSession
 from tom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm, GroupForm
 from tom_common.mixins import SuperuserRequiredMixin
 
