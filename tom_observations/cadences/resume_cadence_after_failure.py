@@ -47,8 +47,16 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         last_obs.refresh_from_db()  # Gets the record updates
 
         # Boilerplate to get necessary properties for future calls
-        start_keyword, end_keyword = facility.get_start_end_keywords()
         observation_payload = last_obs.parameters
+
+        scheduled_start = last_obs.scheduled_start
+        scheduled_end = last_obs.scheduled_end
+
+        # Add the scheduled start and end
+        observation_payload['scheduled_start'] = scheduled_start
+        observation_payload['scheduled_end'] = scheduled_end
+        start_keyword = 'scheduled_start'
+        end_keyword = 'scheduled_end'
 
         # Cadence logic
         # If the observation hasn't finished, do nothing
@@ -95,6 +103,7 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         for obsr in new_observations:
             facility = get_service_class(obsr.facility)()
             facility.update_observation_status(obsr.observation_id)
+            obsr.refresh_from_db() # commit the updated observation status
 
         return new_observations
 
