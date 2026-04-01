@@ -49,12 +49,9 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         # Boilerplate to get necessary properties for future calls
         observation_payload = last_obs.parameters
 
-        scheduled_start = last_obs.scheduled_start
-        scheduled_end = last_obs.scheduled_end
-
         # Add the scheduled start and end
-        observation_payload['scheduled_start'] = scheduled_start
-        observation_payload['scheduled_end'] = scheduled_end
+        observation_payload['scheduled_start'] = last_obs.scheduled_start
+        observation_payload['scheduled_end'] = last_obs.scheduled_end
         start_keyword = 'scheduled_start'
         end_keyword = 'scheduled_end'
 
