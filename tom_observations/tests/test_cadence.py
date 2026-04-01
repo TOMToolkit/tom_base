@@ -61,7 +61,8 @@ class TestReactiveCadencing(TestCase):
 
     @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'CANCELED',
            'scheduled_start': None, 'scheduled_end': None})
-    def test_retry_when_failed_cadence(self, patch1, patch2, patch3, patch4, mock_get_obs_status):
+    def test_retry_when_failed_cadence_failed_obs(self, patch1, patch2, patch3, patch4, mock_get_obs_status, mock_validate_obs):
+        mock_validate_obs.return_value = {}
         num_records = self.group.observation_records.count()
         observing_record = self.group.observation_records.first()
         observing_record.status = 'CANCELED'
@@ -78,6 +79,23 @@ class TestReactiveCadencing(TestCase):
             parse(observing_record.parameters['start']),
             parse(new_records[0].parameters['start']) - timedelta(days=3)
         )
+    
+    @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'CANCELED',
+           'scheduled_start': None, 'scheduled_end': None})
+    def test_retry_when_failed_cadence_successful_obs(self, patch1, patch2, patch3, patch4, mock_get_obs_status, mock_validate_obs):
+        mock_validate_obs.return_value = {}
+        observing_record = self.group.observation_records.first()
+        observing_record.status = 'COMPLETE'
+        observing_record.save()
+
+        strategy = RetryFailedObservationsStrategy(self.dynamic_cadence)
+        new_records = strategy.run()
+        self.group.refresh_from_db()
+        # Make sure the candence returned 'COMPLETED'
+        self.assertEqual(new_records, 'COMPLETED')
+        # Make sure the dynamic cadence was turned off
+        self.assertEqual(self.dynamic_cadence.active, False)
+
 
     @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'CANCELED',
            'scheduled_start': None, 'scheduled_end': None})
