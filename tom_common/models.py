@@ -44,11 +44,11 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     affiliation = models.CharField(max_length=100, null=True, blank=True)
 
-    # The user's Data Encryption Key (DEK), encrypted by the master key.
-    # This is a Fernet-encrypted blob of the user's random DEK. It can only be
-    # decrypted using TOMTOOLKIT_FIELD_ENCRYPTION_KEY from the server environment.
-    # Null means no DEK has been generated yet (e.g., pre-existing users before
-    # this feature was added).
+    # The user's Data Encryption Key (DEK), encrypted by the master key
+    # (TOMTOOLKIT_DEK_ENCRYPTION_KEY). Generated on first user save; null for
+    # users created before this feature who haven't logged in yet.
+    # BinaryField is excluded by model_to_dict(), so this intentionally does
+    # not appear on the user Profile card.
     encrypted_dek = models.BinaryField(null=True, blank=True)
 
     def __str__(self) -> str:
