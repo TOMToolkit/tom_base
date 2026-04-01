@@ -43,17 +43,15 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
 
         # Make a call to the facility to get the current status of the observation
         facility = get_service_class(last_obs.facility)()
+        start_keyword, end_keyword = facility.get_start_end_keywords()
         facility.update_observation_status(last_obs.observation_id)  # Updates the DB record
         last_obs.refresh_from_db()  # Gets the record updates
 
         # Boilerplate to get necessary properties for future calls
         observation_payload = last_obs.parameters
 
-        # Add the scheduled start and end
-        observation_payload['scheduled_start'] = last_obs.scheduled_start
+        # Only needs the scheduled end from the observatory
         observation_payload['scheduled_end'] = last_obs.scheduled_end
-        start_keyword = 'scheduled_start'
-        end_keyword = 'scheduled_end'
 
         # Cadence logic
         # If the observation hasn't finished, do nothing
@@ -61,7 +59,11 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
             return
         elif last_obs.failed:  # If the observation failed
             # Submit next observation to be taken as soon as possible with the same window length
-            window_length = parse(observation_payload[end_keyword]) - parse(observation_payload[start_keyword])
+            # Make the window length the cadence frequency or 24 hours, whichever is shorter.
+            cadence_frequency = self.dynamic_cadence.cadence_parameters.get('cadence_frequency')
+            if not cadence_frequency:
+                raise Exception(f'The {self.name} strategy requires a cadence_frequency cadence_parameter.')
+            window_length = 24 if cadence_frequency > 24 else cadence_frequency
             observation_payload[start_keyword] = datetime.now().isoformat()
             observation_payload[end_keyword] = (parse(observation_payload[start_keyword]) + window_length).isoformat()
         else:  # If the observation succeeded
@@ -109,9 +111,13 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         if not cadence_frequency:
             raise Exception(f'The {self.name} strategy requires a cadence_frequency cadence_parameter.')
         advance_window_hours = cadence_frequency
-        window_length = parse(observation_payload[end_keyword]) - parse(observation_payload[start_keyword])
 
-        new_start = parse(observation_payload[start_keyword]) + timedelta(hours=advance_window_hours)
+        # Window length for the observation should be every 24 hours unless the frequency is less than 24
+        # then just the cadence frequency
+        window_length = 24 if cadence_frequency > 24 else cadence_frequency
+
+        # Define new start to be at the end of the previous observation + cadence in hours
+        new_start = parse(observation_payload['scheduled_end']) + timedelta(hours=advance_window_hours)
         if new_start < datetime.now():  # Ensure that the new window isn't in the past
             new_start = datetime.now()
         new_end = new_start + window_length
