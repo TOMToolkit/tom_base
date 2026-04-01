@@ -1,5 +1,6 @@
 from datetime import timedelta
 from dateutil.parser import parse
+from django.conf import settings
 
 from tom_observations.cadence import BaseCadenceForm, CadenceStrategy
 from tom_observations.models import ObservationRecord
@@ -57,9 +58,13 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
         cadence_frequency = self.dynamic_cadence.cadence_parameters.get('cadence_frequency')
         if not cadence_frequency:
             raise Exception(f'The {self.name} strategy requires a cadence_frequency cadence_parameter.')
-        advance_window_hours = cadence_frequency
-        new_start = parse(observation_payload[start_keyword]) + timedelta(hours=advance_window_hours)
-        new_end = parse(observation_payload[end_keyword]) + timedelta(hours=advance_window_hours)
+        if settings.OBS_WINDOW_MINIMUM:
+            min_window = settings.OBS_WINDOW_MINIMUM
+        else:
+            min_window = 24
+        window_length = min_window if cadence_frequency > min_window else cadence_frequency
+        new_start = parse(observation_payload[start_keyword]) + timedelta(hours=window_length)
+        new_end = parse(observation_payload[end_keyword]) + timedelta(hours=window_length)
         observation_payload[start_keyword] = new_start.isoformat()
         observation_payload[end_keyword] = new_end.isoformat()
 

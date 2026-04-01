@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from dateutil.parser import parse
+from django.conf import settings
 import logging
 
 from tom_observations.cadence import BaseCadenceForm, CadenceStrategy
@@ -113,8 +114,12 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         advance_window_hours = cadence_frequency
 
         # Window length for the observation should be every 24 hours unless the frequency is less than 24
-        # then just the cadence frequency
-        window_length = 24 if cadence_frequency > 24 else cadence_frequency
+        # then just the cadence frequency (24 hour window defined in the settings)
+        if settings.OBS_WINDOW_MINIMUM:
+            min_window = settings.OBS_WINDOW_MINIMUM
+        else:
+            min_window = 24
+        window_length = min_window if cadence_frequency > min_window else cadence_frequency
 
         # Define new start to be at the end of the previous observation + cadence in hours
         new_start = parse(observation_payload['scheduled_end']) + timedelta(hours=advance_window_hours)
