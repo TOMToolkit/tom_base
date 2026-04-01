@@ -102,7 +102,7 @@ class MPCExplorerDataService(DataService):
         for target in query_results:
             # The MPC Explorer API currently returns a single target per query, but we return a list
             target['mpc_orb'] = query_results[0] if query_results else []
-            target['name'] , target['aliases'] = self.get_additional_mpc_names(target['mpc_orb'])
+            target['name'], target['aliases'] = self.get_additional_mpc_names(target['mpc_orb'])
             targets.append(target)
 
         return targets
