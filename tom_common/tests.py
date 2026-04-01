@@ -232,6 +232,66 @@ class TestUserProfile(TestCase):
         self.assertEqual(user.profile.affiliation, 'Test University')
 
 
+class TestRegenerateAPIToken(TestCase):
+    """Tests for the RegenerateAPITokenView."""
+
+    def setUp(self):
+        self.admin = User.objects.create_superuser(username='admin', password='admin', email='admin@example.com')
+        self.user = User.objects.create_user(username='testuser', password='testpass', email='user@example.com')
+        # Tokens are auto-created by the post_save signal in tom_common.signals
+
+    def test_regenerate_own_token(self):
+        """A logged-in user can regenerate their own API token."""
+        self.client.force_login(self.user)
+        old_token_key = self.user.auth_token.key
+
+        # token regeneration happens here
+        response = self.client.post(reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+
+        self.user.refresh_from_db()
+        new_token_key = self.user.auth_token.key
+
+        self.assertNotEqual(old_token_key, new_token_key)
+        self.assertRedirects(response, reverse('user-update', kwargs={'pk': self.user.pk}))
+
+    def test_non_superuser_cannot_regenerate_other_user_token(self):
+        """A non-superuser cannot regenerate another user's token."""
+        self.client.force_login(self.user)
+        old_token_key = self.admin.auth_token.key
+
+        response = self.client.post(reverse('regenerate-api-token', kwargs={'pk': self.admin.pk}))
+
+        # Should redirect to the requesting user's own update page
+        self.assertRedirects(response, reverse('user-update', kwargs={'pk': self.user.pk}))
+        # Admin's token should be unchanged
+        self.admin.refresh_from_db()
+        self.assertEqual(old_token_key, self.admin.auth_token.key)
+
+    def test_superuser_can_regenerate_other_user_token(self):
+        """A superuser can regenerate another user's token."""
+        self.client.force_login(self.admin)
+        old_token_key = self.user.auth_token.key
+
+        response = self.client.post(reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+
+        self.user.refresh_from_db()
+        new_token_key = self.user.auth_token.key
+        self.assertNotEqual(old_token_key, new_token_key)
+        self.assertRedirects(response, reverse('user-update', kwargs={'pk': self.user.pk}))
+
+    def test_get_request_returns_405(self):
+        """GET requests should return 405 Method Not Allowed."""
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+        self.assertEqual(response.status_code, HTTPStatus.METHOD_NOT_ALLOWED)
+
+    def test_unauthenticated_redirects_to_login(self):
+        """Unauthenticated requests should redirect to login."""
+        response = self.client.post(reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+        self.assertRedirects(response, reverse('login') + '?next=' +
+                             reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+
+
 class TestAuthScheme(TestCase):
     @override_settings(AUTH_STRATEGY='LOCKED')
     def test_user_cannot_access_view(self):
@@ -245,6 +305,49 @@ class TestAuthScheme(TestCase):
         response = self.client.get(reverse('tom_targets:list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Create Targets')
+
+
+class TestAuthStrategyMiddleware(TestCase):
+    login_url = '/accounts/login/'
+
+    @override_settings(AUTH_STRATEGY='LOCKED', OPEN_URLS=[])
+    def test_locked_unauthenticated_request_redirects_to_login(self):
+        # Raise403Middleware converts the 403 from AuthStrategyMiddleware to a redirect
+        response = self.client.get(reverse('tom_targets:list'))
+        self.assertRedirects(
+            response, self.login_url + '?next=' + reverse('tom_targets:list'), status_code=302
+        )
+
+    @override_settings(AUTH_STRATEGY='LOCKED', OPEN_URLS=['/accounts/reset/*/'])
+    def test_locked_password_reset_wildcard_matches_uid_token(self):
+        # /accounts/reset/abc123xyz/ should match the wildcard
+        response = self.client.get('/accounts/reset/abc123xyz/foobarfoo/')
+        self.assertNotEqual(response.status_code, 302)
+
+    @override_settings(AUTH_STRATEGY='LOCKED', OPEN_URLS=['/accounts/reset/*/'])
+    def test_locked_password_reset_wildcard_does_not_match_unrelated_path(self):
+        # /accounts/profile/ should not match /accounts/reset/*/
+        response = self.client.get('/accounts/profile/')
+        self.assertRedirects(
+            response, self.login_url + '?next=/accounts/profile/', status_code=302
+        )
+
+    @override_settings(AUTH_STRATEGY='LOCKED', OPEN_URLS=[])
+    def test_locked_login_url_always_open(self):
+        response = self.client.get(reverse('login'))
+        self.assertNotEqual(response.status_code, 302)
+
+    @override_settings(AUTH_STRATEGY='LOCKED', OPEN_URLS=[])
+    def test_locked_authenticated_user_allowed(self):
+        user = User.objects.create_user(username='testuser', password='password')
+        self.client.force_login(user)
+        response = self.client.get(reverse('tom_targets:list'))
+        self.assertEqual(response.status_code, 200)
+
+    @override_settings(AUTH_STRATEGY='READ_ONLY', OPEN_URLS=[])
+    def test_read_only_unauthenticated_allowed(self):
+        response = self.client.get(reverse('tom_targets:list'))
+        self.assertEqual(response.status_code, 200)
 
 
 class CommentDeleteViewTest(TestCase):

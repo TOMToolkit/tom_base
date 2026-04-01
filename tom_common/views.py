@@ -1,4 +1,5 @@
 import logging
+from django.views import View
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView, DeleteView
 from django.views.generic.edit import UpdateView, CreateView
@@ -10,8 +11,11 @@ from django.views.decorators.http import require_GET
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
+from django.template.loader import render_to_string
 from django.contrib.auth import update_session_auth_hash
+
+from rest_framework.authtoken.models import Token
 
 from tom_common.models import UserSession
 from tom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm, GroupForm
@@ -81,6 +85,54 @@ class UserDeleteView(LoginRequiredMixin, DeleteView):
             return redirect('user-delete', self.request.user.id)
         else:
             return super().dispatch(*args, **kwargs)
+
+
+class RegenerateAPITokenView(LoginRequiredMixin, View):
+    """View that handles regeneration of a User's DRF API token. Requires login.
+
+    Deletes the existing token (if any) and creates a new one. For HTMX requests,
+    returns the api_token partial with the new token. For non-HTMX requests,
+    redirects to the user update page with a success message.
+    """
+    # this is the partial template to render the API token
+    partial_template_name = 'tom_common/partials/api_token.html'
+
+    def dispatch(self, *args, **kwargs):
+        """Ensure non-superusers can only regenerate their own token.
+
+        Checks authentication first (via LoginRequiredMixin), then checks
+        that non-superusers are only operating on their own token.
+        """
+        # the User must be authenticated
+        if not self.request.user.is_authenticated:
+            return self.handle_no_permission()
+
+        # don't let a non-super-user regenerate someone else's API Token,
+        # instead, redirect them to their own user-update view.
+        if not self.request.user.is_superuser and self.request.user.id != int(self.kwargs['pk']):
+            return redirect('user-update', pk=self.request.user.id)
+        return super().dispatch(*args, **kwargs)
+
+    def post(self, request, pk: int) -> HttpResponse:
+        target_user = get_object_or_404(User, pk=pk)
+
+        # Delete existing token (safe even if none exists) and create a new one
+        Token.objects.filter(user=target_user).delete()
+        new_token = Token.objects.create(user=target_user)
+
+        # handle HTMX requests here
+        if request.htmx:
+            # Return just the partial for in-place replacement (avoid full page reload)
+            html = render_to_string(
+                self.partial_template_name,
+                {'drf_api_token': new_token, 'user_pk': target_user.pk},
+                request=request,
+            )
+            return HttpResponse(html)
+
+        # Non-HTMX fallback: redirect with a success message
+        messages.success(request, 'API token regenerated.')
+        return redirect('user-update', pk=target_user.pk)
 
 
 class UserProfileView(LoginRequiredMixin, TemplateView):
@@ -194,9 +246,19 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
             return reverse_lazy('user-update', kwargs={'pk': self.request.user.id})
 
     def get_context_data(self, **kwargs):
-        """Add current user to the context for all templates."""
+        """Add current user and API token to the context for all templates."""
         context = super().get_context_data(**kwargs)
+
+        # this is the User doing the updating. (could be super-user)
         context['current_user'] = self.request.user
+
+        # this is the User being updated (usually the same as the requesting User,
+        # but not if a super-user is updating a different User).
+        user_being_updated = self.object
+
+        # add context required to Regenerate the user's DRF API token
+        context['drf_api_token'] = getattr(user_being_updated, 'auth_token', None)
+        context['user_pk'] = user_being_updated.pk
         return context
 
     def get_form(self, form_class=None):

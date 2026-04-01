@@ -24,4 +24,7 @@
   </button>
 {% endbuttons %}
 </form>
+{% if object %}
+  {% include 'tom_common/partials/api_token.html' %}
+{% endif %}
 {% endblock %}
