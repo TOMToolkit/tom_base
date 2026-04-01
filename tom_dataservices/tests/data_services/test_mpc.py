@@ -14,7 +14,7 @@ class TestMPCExplorerDataService(TestCase):
         test_json = json.loads(test_json_fp.read_text())
         self.ds.query_results = [{'mpc_orb': test_json},]
         self.target_result = self.ds.query_results[0]
-        self.target_result['name'] =  '65803'
+        self.target_result['name'] = '65803'
 
     @patch('requests.get')
     def test_query_failure_no_object(self, mock_get):
