@@ -124,38 +124,25 @@ class EncryptedProperty:
 
 
 class EncryptableModelMixin(models.Model):
-    """A mixin for models that use ``EncryptedProperty`` to handle sensitive data.
+    """Base mixin for models that store encrypted data via ``EncryptedProperty``.
 
-    Any model that stores encrypted fields should inherit from this mixin.
-    It provides:
+    Plugin models that hold sensitive per-user data (API keys, observatory
+    credentials) should inherit from this mixin alongside ``models.Model``.
+    It provides a standardized ``user`` ForeignKey that ties the encrypted
+    data to its owner. The helper functions ``get_encrypted_field()`` and
+    ``set_encrypted_field()`` in ``session_utils`` use this user reference
+    to look up the user's DEK (via their ``Profile.encrypted_dek``) and
+    build the Fernet cipher needed by the ``EncryptedProperty`` descriptors.
 
-    - A standardized ``user`` OneToOneField so that utility functions can
-      always find the user associated with an encryptable model instance.
-    - A ``clear_encrypted_fields()`` method to null out all encrypted fields
-      (used when a user's DEK must be regenerated).
+    Usage::
+
+        class MyAppModel(EncryptableModelMixin, models.Model):
+            _api_key_encrypted = models.BinaryField(null=True)
+            api_key = EncryptedProperty('_api_key_encrypted')
 
     Subclasses should not redefine the ``user`` field.
     """
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-
-    def clear_encrypted_fields(self) -> None:
-        """Clear all fields managed by an ``EncryptedProperty`` descriptor.
-
-        Sets each encrypted BinaryField to None and saves the model. This is a
-        destructive operation — the encrypted data is permanently lost.
-        """
-        model_save_needed = False
-        for attr_name in dir(self.__class__):
-            attr = getattr(self.__class__, attr_name)
-            if isinstance(attr, EncryptedProperty):
-                # Set the underlying BinaryField directly to None, bypassing
-                # the descriptor (which would require a cipher).
-                setattr(self, attr.db_field_name, None)
-                model_save_needed = True
-                logger.info(f"Cleared encrypted property '{attr_name}' for {self.__class__.__name__} "
-                            f"instance {getattr(self, 'pk', 'UnknownPK')}.")
-        if model_save_needed:
-            self.save()
 
     class Meta:
         abstract = True
