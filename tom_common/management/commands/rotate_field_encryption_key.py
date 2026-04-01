@@ -1,4 +1,4 @@
-"""Management command to rotate the TOMTOOLKIT_FIELD_ENCRYPTION_KEY.
+"""Management command to rotate the TOMTOOLKIT_DEK_ENCRYPTION_KEY.
 
 This is a thin CLI wrapper around ``session_utils.rotate_master_key()``.
 See that function for the actual rotation logic.
@@ -21,7 +21,7 @@ from tom_common.session_utils import rotate_master_key
 class Command(BaseCommand):
     help = (
         'Re-encrypts all per-user Data Encryption Keys (DEKs) with a new master key. '
-        'Run this when rotating TOMTOOLKIT_FIELD_ENCRYPTION_KEY.'
+        'Run this when rotating TOMTOOLKIT_DEK_ENCRYPTION_KEY.'
     )
 
     def add_arguments(self, parser) -> None:
@@ -68,6 +68,6 @@ class Command(BaseCommand):
 
         self.stdout.write("")
         self.stdout.write(self.style.WARNING(
-            "IMPORTANT: Update TOMTOOLKIT_FIELD_ENCRYPTION_KEY in your environment / "
+            "IMPORTANT: Update TOMTOOLKIT_DEK_ENCRYPTION_KEY in your environment / "
             "settings.py with the new key, then restart the server."
         ))

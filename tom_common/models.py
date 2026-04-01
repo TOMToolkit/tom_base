@@ -5,7 +5,7 @@ Encryption Architecture
 TOM Toolkit uses envelope encryption to protect sensitive user data (API keys,
 observatory credentials) at rest in the database. The scheme has two layers:
 
-1. A server-side **master key** (``TOMTOOLKIT_FIELD_ENCRYPTION_KEY``) is stored in the
+1. A server-side **master key** (``TOMTOOLKIT_DEK_ENCRYPTION_KEY``) is stored in the
    environment, never in the database. It is a Fernet key used to encrypt
    per-user keys.
 

@@ -34,8 +34,8 @@ DEBUG = True
 # Encryption key for protecting sensitive user data (API keys, credentials) at rest.
 # This is a Fernet key — a 44-character URL-safe base64 string encoding 32 random bytes.
 # Treat this like SECRET_KEY. See the TOM Toolkit encryption documentation.
-TOMTOOLKIT_FIELD_ENCRYPTION_KEY = os.getenv(
-    'TOMTOOLKIT_FIELD_ENCRYPTION_KEY',
+TOMTOOLKIT_DEK_ENCRYPTION_KEY = os.getenv(
+    'TOMTOOLKIT_DEK_ENCRYPTION_KEY',
     'UlUYyKsGzQVwjpTbvhtgCihKaj07H1voc-V4pmb7NN4=')  # 44-char URL-safe base64 string
 
 ALLOWED_HOSTS = ['']

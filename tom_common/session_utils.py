@@ -5,7 +5,7 @@ encryption scheme. The full architecture is documented in
 ``docs/design/encryption_architecture_redesign.md``; here is a brief summary
 of how the pieces fit together:
 
-**Master key** (``TOMTOOLKIT_FIELD_ENCRYPTION_KEY`` in settings / environment):
+**Master key** (``TOMTOOLKIT_DEK_ENCRYPTION_KEY`` in settings / environment):
     A Fernet key that never touches the database. It encrypts each user's
     Data Encryption Key so that database access alone cannot reveal user data.
 
@@ -54,7 +54,7 @@ ModelType = TypeVar('ModelType', bound=models.Model)
 def _get_master_cipher() -> Fernet:
     """Return a Fernet cipher built from the server-side master key.
 
-    The master key (``TOMTOOLKIT_FIELD_ENCRYPTION_KEY``) lives in the server
+    The master key (``TOMTOOLKIT_DEK_ENCRYPTION_KEY``) lives in the server
     environment, not in the database. It is used only to encrypt and decrypt
     per-user DEKs — never to encrypt user data directly.
 
@@ -62,11 +62,11 @@ def _get_master_cipher() -> Fernet:
         django.core.exceptions.ImproperlyConfigured: If the setting is missing
             or empty.
     """
-    key = getattr(settings, 'TOMTOOLKIT_FIELD_ENCRYPTION_KEY', '')
+    key = getattr(settings, 'TOMTOOLKIT_DEK_ENCRYPTION_KEY', '')
     if not key:
         from django.core.exceptions import ImproperlyConfigured
         raise ImproperlyConfigured(
-            "TOMTOOLKIT_FIELD_ENCRYPTION_KEY is not set. This setting is required for "
+            "TOMTOOLKIT_DEK_ENCRYPTION_KEY is not set. This setting is required for "
             "encrypting sensitive user data at rest. Generate one with:\n"
             "  python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\"\n"
             "Then add it to your environment or settings.py."
@@ -261,13 +261,13 @@ def rotate_master_key(new_key: str) -> RotationResult:
     """Re-encrypt all per-user DEKs with a new master key.
 
     Each Profile's ``encrypted_dek`` is decrypted with the current master key
-    (from ``TOMTOOLKIT_FIELD_ENCRYPTION_KEY``) and re-encrypted with
+    (from ``TOMTOOLKIT_DEK_ENCRYPTION_KEY``) and re-encrypted with
     ``new_key``. The user Profile's plaintext DEK is unchanged — only its
     encryption layer (i.e. `encrypted_dek`) is replaced. The actual encrypted
     data is not touched.
 
     After this function completes successfully, the server's
-    ``TOMTOOLKIT_FIELD_ENCRYPTION_KEY`` must be updated to ``new_key`` and the
+    ``TOMTOOLKIT_DEK_ENCRYPTION_KEY`` must be updated to ``new_key`` and the
     server restarted. Until that happens, the re-encrypted DEKs cannot be
     decrypted.
 

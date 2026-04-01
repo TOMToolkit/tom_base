@@ -216,7 +216,7 @@ class Command(BaseCommand):
 
     def generate_field_encryption_key(self):
         self.status('Generating field encryption key... ')
-        self.context['TOMTOOLKIT_FIELD_ENCRYPTION_KEY'] = Fernet.generate_key().decode()
+        self.context['TOMTOOLKIT_DEK_ENCRYPTION_KEY'] = Fernet.generate_key().decode()
         self.ok()
 
     def generate_config(self):

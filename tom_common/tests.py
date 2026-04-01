@@ -381,7 +381,7 @@ class TestEncryptionKeyManagement(TestCase):
     - Users get an encrypted DEK on creation (via signal)
     - The DEK can be decrypted and used to encrypt/decrypt data
     - Password changes do not affect the encryption key
-    - The master key (TOMTOOLKIT_FIELD_ENCRYPTION_KEY) is required for decryption
+    - The master key (TOMTOOLKIT_DEK_ENCRYPTION_KEY) is required for decryption
     """
     def setUp(self):
         self.user = User.objects.create_user(
@@ -476,7 +476,7 @@ class TestEncryptionKeyManagement(TestCase):
 
     def test_master_key_required_for_decryption(self):
         """Decrypting with a different master key should fail, proving
-        that the encrypted DEK is bound to TOMTOOLKIT_FIELD_ENCRYPTION_KEY."""
+        that the encrypted DEK is bound to TOMTOOLKIT_DEK_ENCRYPTION_KEY."""
         profile = Profile.objects.get(user=self.user)
         wrong_key = Fernet.generate_key()
         wrong_cipher = Fernet(wrong_key)
