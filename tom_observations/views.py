@@ -14,7 +14,7 @@ from django.core.management import call_command
 from django_filters import CharFilter, ChoiceFilter, DateTimeFromToRangeFilter, ModelMultipleChoiceFilter
 from django_filters import OrderingFilter, MultipleChoiceFilter, rest_framework
 from django_filters.views import FilterView
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic import View, TemplateView
@@ -842,3 +842,33 @@ class ObservationTemplateDeleteView(LoginRequiredMixin, DeleteView):
 
 class FacilityStatusView(TemplateView):
     template_name = 'tom_observations/facility_status.html'
+
+
+def render_facility_status_list(request, *args, **kwargs):
+    """
+    View function for rendering the facility status partial.
+    """
+    facility_statuses = []
+    for facility_class in get_service_classes().values():
+        facility = facility_class()
+        facility.set_user(request.user)
+        weather_urls = facility.get_facility_weather_urls()
+        status = facility.get_facility_status()
+
+        # add the weather_url to the site dictionary
+        for site in status.get('sites', []):
+            url = next((
+                site_url['weather_url'] for site_url in weather_urls.get('sites', [])
+                if site_url['code'] == site['code']), None)
+            if url is not None:
+                site['weather_url'] = url
+
+        facility_statuses.append(status)
+
+    hx_trigger = request.GET.get('hx_trigger')
+    if hx_trigger != 'load':
+        messages.info(request, "Facility statuses updated.")
+
+    return render(
+        request, 'tom_observations/partials/facility_status_table.html',
+        context={'facilities': facility_statuses, 'loading': False})
