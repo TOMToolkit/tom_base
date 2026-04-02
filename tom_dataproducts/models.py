@@ -1,20 +1,20 @@
 import logging
 import os
 import tempfile
+from importlib import import_module
 
 from astropy.io import fits
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
-from django.utils import timezone, text
-from django.core.exceptions import ValidationError
+from django.utils import text, timezone
 from fits2image.conversions import fits_to_jpg
 from PIL import Image
-from importlib import import_module
 
-from tom_targets.base_models import BaseTarget
 from tom_alerts.models import AlertStreamMessage
 from tom_observations.models import ObservationRecord
+from tom_targets.base_models import BaseTarget
 
 logger = logging.getLogger(__name__)
 
@@ -311,55 +311,36 @@ class DataProduct(models.Model):
         return
 
 
-class ReducedDatum(models.Model):
+class ReducedDatumCommon(models.Model):
     """
-    Class representing a datum in a TOM.
+    Abstract base class for all reduced datum models.
 
     A ``ReducedDatum`` generally refers to a single piece of data--e.g., a spectrum, or a photometry point. It is
     associated with a target, and optionally with the data product it came from. An example of a ``ReducedDatum``
-    without an associated data product would be photometry ingested from a broker.
+    without an associated data product would be photometry ingested from a broker. There are
+    concrete implementations of Photometry, Spectroscopy and Astronmetry ReducedDatum models.
 
     :param target: The ``Target`` with which this object is associated.
 
     :param data_product: The ``DataProduct`` with which this object is optionally associated.
 
-    :param data_type: The type of data this datum represents. Default choices are the default values found in
-        DATA_PRODUCT_TYPES in settings.py.
-    :type data_type: str
-
-    :param source_name: The original source of this datum. The current major use of this field is to track the broker a
-                        datum came from, but can be used for other sources.
-    :type source_name: str
-
-    :param source_location: A reference to the location that this datum was originally sourced from. The current major
-                            use of this field is the URL path to the alert that this datum came from.
-    :type source_name: str
-
     :param timestamp: The timestamp of this datum.
     :type timestamp: datetime
 
-    :param value: The value of the datum. This is a dict, intended to store data with a variety of
-                  scopes. As an example, a photometry value might contain the following:
+    :param value: Freeform data. This is a dict, intended to store extra data with a variety of
+                scopes. As an example, one might want to store the originating survey:
 
-                  ::
-
-                    {
-                      'magnitude': 18.5,
-                      'error': .5
-                    }
-
-                  but could also contain a filter, a telescope, an instrument, and/or a unit:
-
-                  ::
+                ::
 
                     {
-                      'magnitude': 18.5,
-                      'error': .5,
-                      'filter': 'r',
-                      'telescope': 'ELP.domeA.1m0a',
-                      'instrument': 'fa07',
+                    'survey': 'lsst',
                     }
+
     :type value: dict
+
+    :param source_name: The original source of this datum. The current major use of this field is to track the broker a
+                    datum came from, but can be used for other sources.
+    :type source_name: str
 
     :param message: Set of ``AlertStreamMessage`` objects this object is associated with.
     :type message: ManyRelatedManager object
@@ -367,19 +348,42 @@ class ReducedDatum(models.Model):
     """
 
     target = models.ForeignKey(BaseTarget, null=False, on_delete=models.CASCADE)
-    data_product = models.ForeignKey(DataProduct, null=True, blank=True, on_delete=models.CASCADE)
-    data_type = models.CharField(
-        max_length=100,
-        default=''
+    data_product = models.ForeignKey(
+        DataProduct, null=True, blank=True, on_delete=models.CASCADE
     )
-    source_name = models.CharField(max_length=100, default='', blank=True)
-    source_location = models.CharField(max_length=200, default='', blank=True)
-    timestamp = models.DateTimeField(null=False, blank=False, default=timezone.now, db_index=True)
-    value = models.JSONField(null=False, blank=False)
+    timestamp = models.DateTimeField(
+        null=False, blank=False, default=timezone.now, db_index=True
+    )
+    value = models.JSONField(
+        null=False, blank=False, default=dict, verbose_name="extra data"
+    )
+    telescope = models.CharField(max_length=255, blank=True, default="")
+    instrument = models.CharField(max_length=255, blank=True, default="")
+    source_name = models.CharField(max_length=100, default="", blank=True)
     message = models.ManyToManyField(AlertStreamMessage, blank=True)
 
     class Meta:
-        get_latest_by = ('timestamp',)
+        abstract = True
+
+
+class ReducedDatum(ReducedDatumCommon):
+    """
+    Class representing a generic datum in a TOM that isn't represented by any of the existing data types.
+
+    :param data_type: The type of data this datum represents. Default choices are the default values found in
+        DATA_PRODUCT_TYPES in settings.py.
+    :type data_type: str
+
+    :param source_location: A reference to the location that this datum was originally sourced from. The current major
+                            use of this field is the URL path to the alert that this datum came from.
+    :type source_location: str
+    """
+
+    data_type = models.CharField(max_length=100, default="")
+    source_location = models.CharField(max_length=200, default="", blank=True)
+
+    class Meta:
+        get_latest_by = ("timestamp",)
 
     def save(self, *args, **kwargs):
         # Validate data_type based on options in settings.py or default types: (type, display)
@@ -387,34 +391,59 @@ class ReducedDatum(models.Model):
             if self.data_type and self.data_type == dp_type:
                 break
         else:
-            raise ValidationError('Not a valid DataProduct type.')
+            raise ValidationError("Not a valid DataProduct type.")
 
         # because we have a custom way of validating the uniqueness of the ReducedDatum,
         #  we need to call full_clean() here to invoke our validate_unique() method.
         self.full_clean()
         return super().save()
 
-    def validate_unique(self, *args, **kwargs):
-        """
-        Validates that the ReducedDatum is unique. Because the `value` field is a JSONField, it is not possible to rely
-        on standard validation.
 
-        Do nothing if the uniqueness test passes. Otherwise, raise a ValidationError.
+class PhotometryReducedDatum(ReducedDatumCommon):
+    discovery = models.BooleanField(default=False)
+    brightness = models.FloatField()
+    brightness_error = models.FloatField()
+    unit = models.CharField(max_length=32, blank=True, default="")
+    bandpass = models.CharField(max_length=32)
+    exposure_time = models.FloatField()
 
-        see https://docs.djangoproject.com/en/5.0/ref/models/instances/#validating-objects
-        """
-        super().validate_unique(*args, **kwargs)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["target", "bandpass", "timestamp"], name="unique_photometry"
+            )
+        ]
 
-        # Check if the Reduced Datum exists in the database
-        try:
-            existing_reduced_datum = ReducedDatum.objects.get(target=self.target,
-                                                              data_type=self.data_type,
-                                                              timestamp=self.timestamp,
-                                                              value=self.value)
-            if existing_reduced_datum and existing_reduced_datum.id != self.id:  # not the same object
-                # found ReducedDatum with the same values. Don't save this duplicate ReducedDatum.
-                raise ValidationError(f'ReducedDatum already exists: {self.data_type} data with value of {self.value} '
-                                      f'found for {self.target} at {self.timestamp}')
-        except ReducedDatum.DoesNotExist:
-            # this means that our check for uniqueness passed: so do not raise ValidationError
-            pass
+
+class SpectroscopyReducedDatum(ReducedDatumCommon):
+    setup = models.CharField(max_length=2000, blank=True, default="")
+    exposure_time = models.FloatField()
+    flux = models.TextField(blank=True, default="")
+    flux_unit = models.TextField(blank=True, default="")
+    error = models.TextField(blank=True, default="")
+    wavelength = models.TextField(blank=True, default="")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["target", "timestamp", "telescope", "instrument"],
+                name="unique_spectroscopy",
+            )
+        ]
+
+
+class AstrometryReducedDatum(ReducedDatumCommon):
+    ra = models.FloatField()
+    dec = models.FloatField()
+    ra_error = models.FloatField(null=True, blank=True, default=None)
+    dec_error = models.FloatField(null=True, blank=True, default=None)
+    ra_error_units = models.CharField(max_length=32, blank=True, default="")
+    dec_error_units = models.CharField(max_length=32, blank=True, default="")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["target", "timestamp", "telescope", "instrument"],
+                name="unique_astrometry",
+            )
+        ]
