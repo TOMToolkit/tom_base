@@ -59,10 +59,11 @@ class RetryFailedObservationsStrategy(CadenceStrategy):
         if not cadence_frequency:
             raise Exception(f'The {self.name} strategy requires a cadence_frequency cadence_parameter.')
         if settings.OBS_WINDOW_MINIMUM:
-            min_window = settings.OBS_WINDOW_MINIMUM
+            window_length = settings.OBS_WINDOW_MINIMUM
+            if window_length > cadence_frequency:
+                window_length = cadence_frequency
         else:
-            min_window = 24
-        window_length = min_window if cadence_frequency > min_window else cadence_frequency
+            window_length = cadence_frequency
         new_start = parse(observation_payload[start_keyword]) + timedelta(hours=window_length)
         new_end = parse(observation_payload[end_keyword]) + timedelta(hours=window_length)
         observation_payload[start_keyword] = new_start.isoformat()
