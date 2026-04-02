@@ -883,11 +883,13 @@ class LCOPhotometricSequenceForm(LCOOldStyleObservationForm):
         """
         cleaned_data = super().clean()
         start = cleaned_data.get('start')
+        cadence_frequency = cleaned_data['cadence_frequency']
         if settings.OBS_WINDOW_MINIMUM:
-            min_window = settings.OBS_WINDOW_MINIMUM
+            window_length = settings.OBS_WINDOW_MINIMUM
+            if window_length > cadence_frequency:
+                window_length = cadence_frequency
         else:
-            min_window = 24
-        window_length = min_window if cleaned_data['cadence_frequency'] > min_window else cleaned_data['cadence_frequency']
+            window_length = cadence_frequency
 
         cleaned_data['end'] = datetime.strftime(parse(start) + timedelta(hours=window_length),
                                                 '%Y-%m-%dT%H:%M:%S')
