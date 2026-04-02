@@ -14,7 +14,7 @@ class TomCommonConfig(AppConfig):
         # https://docs.djangoproject.com/en/5.1/topics/signals/#connecting-receiver-functions
         import tom_common.signals  # noqa
 
-        self._check_field_encryption_key()
+        self._check_dek_encryption_key()
 
         # Set default plotly theme on startup
         valid_themes = ['plotly', 'plotly_white', 'plotly_dark', 'ggplot2', 'seaborn', 'simple_white', 'none']
@@ -26,8 +26,8 @@ class TomCommonConfig(AppConfig):
 
         pio.templates.default = plotly_theme
 
-    def _check_field_encryption_key(self) -> None:
-        """Verify that the field encryption master key is configured.
+    def _check_dek_encryption_key(self) -> None:
+        """Verify that the DEK encryption master key is configured.
 
         This key is required for encrypting sensitive user data (API keys,
         observatory credentials) at rest in the database. Without it, the

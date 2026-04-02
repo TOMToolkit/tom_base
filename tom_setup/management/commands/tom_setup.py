@@ -214,8 +214,8 @@ class Command(BaseCommand):
         self.context['SECRET_KEY'] = get_random_secret_key()
         self.ok()
 
-    def generate_field_encryption_key(self):
-        self.status('Generating field encryption key... ')
+    def generate_dek_encryption_key(self):
+        self.status('Generating DEK encryption key... ')
         self.context['TOMTOOLKIT_DEK_ENCRYPTION_KEY'] = Fernet.generate_key().decode()
         self.ok()
 
@@ -292,7 +292,7 @@ class Command(BaseCommand):
         self.create_custom_code_app()
         self.create_project_dirs()
         self.generate_secret_key()
-        self.generate_field_encryption_key()
+        self.generate_dek_encryption_key()
         self.get_target_type()
         self.get_hint_preference()
         self.generate_config()

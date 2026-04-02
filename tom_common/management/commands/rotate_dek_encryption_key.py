@@ -7,7 +7,7 @@ Usage:
     1. Generate a new Fernet key:
          python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     2. Run the rotation:
-         python manage.py rotate_field_encryption_key --new-key <new_key>
+         python manage.py rotate_dek_encryption_key --new-key <new_key>
     3. Update your environment / settings.py with the new key.
     4. Restart the server.
 """
