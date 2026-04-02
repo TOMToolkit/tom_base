@@ -1,34 +1,43 @@
-import datetime
-from http import HTTPStatus
 import os
 import tempfile
-import responses
+from datetime import date, time
+from http import HTTPStatus
+from unittest.mock import patch
 
+import numpy as np
+import responses
 from astropy import units
 from astropy.io import fits
 from astropy.table import Table
-from datetime import date, time
-from django.test import TestCase, override_settings
 from django.conf import settings
 from django.contrib.auth.models import Group, User
-from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import IntegrityError
+from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.utils import timezone, text
+from django.utils import text, timezone
 from guardian.shortcuts import assign_perm
-import numpy as np
 from specutils import Spectrum1D
-from unittest.mock import patch
 
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import DataProductUploadForm
-from tom_dataproducts.models import DataProduct, is_fits_image_file, ReducedDatum, data_product_path
+from tom_dataproducts.models import (
+    DataProduct,
+    PhotometryReducedDatum,
+    ReducedDatum,
+    SpectroscopyReducedDatum,
+    data_product_path,
+    is_fits_image_file,
+)
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_dataproducts.processors.photometry_processor import PhotometryProcessor
 from tom_dataproducts.processors.spectroscopy_processor import SpectroscopyProcessor
 from tom_dataproducts.utils import create_image_dataproduct
+from tom_observations.tests.factories import (
+    ObservingRecordFactory,
+    SiderealTargetFactory,
+)
 from tom_observations.tests.utils import FakeRoboticFacility
-from tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory
 
 
 def mock_fits2image(file1, file2, width, height):
@@ -538,6 +547,46 @@ class TestDataProductModel(TestCase):
             self.assertIn(expected, logs.output)
 
 
+class TestCustomFields(TestCase):
+    def test_create_spectra_with_flux_data(self):
+        flux = [
+            (7.427265572723272e-16, 3399.697753906248),
+            (7.796862575906174e-16, 3401.383788108824),
+        ]
+        rd = SpectroscopyReducedDatum.objects.create(
+            target=SiderealTargetFactory.create(),
+            timestamp=timezone.now(),
+            exposure_time=1000.0,
+            flux=flux,
+            flux_unit="Å",
+        )
+        rd.refresh_from_db()  # ensure we round trip to the database
+        self.assertEqual(flux, rd.flux)
+
+    def test_create_spectra_with_error_data(self):
+        error = [0.0001, 0.0002]
+        rd = SpectroscopyReducedDatum.objects.create(
+            target=SiderealTargetFactory.create(),
+            timestamp=timezone.now(),
+            exposure_time=1000.0,
+            flux=[(1.0, 2.0), (3.0, 4.0)],
+            error=error,
+            flux_unit="Å",
+        )
+        rd.refresh_from_db()
+        self.assertEqual(error, rd.error)
+
+    def test_create_spectra_bad_flux(self):
+        with self.assertRaises(TypeError):
+            SpectroscopyReducedDatum.objects.create(
+                target=SiderealTargetFactory.create(),
+                timestamp=timezone.now(),
+                exposure_time=1000.0,
+                flux=[1.0, 2.0, 3.0, 4.0],  # oops, not tuples.
+                flux_unit="Å",
+            )
+
+
 class TestReducedDatumModel(TestCase):
     def setUp(self):
         # set up a ReducedDatum instance to test against
@@ -577,43 +626,22 @@ class TestReducedDatumModel(TestCase):
         self.assertEqual(2, ReducedDatum.objects.count())
 
     def test_create_reduced_datum_duplicate(self):
-        """Test that we cannot add a second ReducedDatum with the same target, data_type,
-        timestamp, and value dict"""
-        # in this case ALL fields are the same as the self.existing_reduced_datum
-        with self.assertRaises(ValidationError):
-            ReducedDatum.objects.create(
-                target=self.target,
-                data_type=self.data_type,
-                source_name=self.source_name,
-                timestamp=self.timestamp,
-                value=self.existing_reduced_datum_value)
-
-        # in this case only the target, data_type and value fields
-        # are the same as the self.existing_reduced_datum
-        # so an exception should NOT be raised
-        try:
-            ReducedDatum.objects.create(
-                target=self.target,
-                data_type=self.data_type,
-                source_name='new_source_name',
-                timestamp=(self.timestamp - datetime.timedelta(days=1)),  # different timestamp
-                value=self.existing_reduced_datum_value)
-        except ValidationError:
-            self.fail("ValidationError raised when it should not have been (timestamps differ)")
-
-        # by NOT raising ValidationError, this shows that
-        # ReducedDatum.objects.bulk_create() bypasses the ReducedDatum.save()
-        # method which validated uniqueness!!
-        # (this is a duplicate ReducedDatum that we are trying to add here
-        unsaved_reduced_datum = ReducedDatum(
+        """Test that we cannot add a second PhotometryReducedDatum with the same target,
+        timestamp, and bandpass"""
+        PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type=self.data_type,
-            source_name=self.source_name,
             timestamp=self.timestamp,
-            value=self.existing_reduced_datum_value)
-        # does bulk_create bypass the ReducedDatum.save() method which validated uniqueness?
-        # (this is a duplicate ReducedDatum that we are trying to add here
-        ReducedDatum.objects.bulk_create([unsaved_reduced_datum])
+            brightness=1.0,
+            bandpass="r"
+        )
+
+        with self.assertRaises(IntegrityError):
+            PhotometryReducedDatum.objects.create(
+                target=self.target,
+                timestamp=self.timestamp,
+                brightness=2.0,
+                bandpass="r"
+            )
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],

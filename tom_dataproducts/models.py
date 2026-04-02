@@ -16,6 +16,8 @@ from tom_alerts.models import AlertStreamMessage
 from tom_observations.models import ObservationRecord
 from tom_targets.base_models import BaseTarget
 
+from .fields import FluxField, FloatArrayField
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -400,12 +402,11 @@ class ReducedDatum(ReducedDatumCommon):
 
 
 class PhotometryReducedDatum(ReducedDatumCommon):
-    discovery = models.BooleanField(default=False)
-    brightness = models.FloatField()
-    brightness_error = models.FloatField()
+    brightness = models.FloatField(blank=True, null=True)
+    brightness_error = models.FloatField(blank=True, null=True)
     unit = models.CharField(max_length=32, blank=True, default="")
     bandpass = models.CharField(max_length=32)
-    exposure_time = models.FloatField()
+    exposure_time = models.FloatField(blank=True, null=True)
 
     class Meta:
         constraints = [
@@ -418,10 +419,9 @@ class PhotometryReducedDatum(ReducedDatumCommon):
 class SpectroscopyReducedDatum(ReducedDatumCommon):
     setup = models.CharField(max_length=2000, blank=True, default="")
     exposure_time = models.FloatField()
-    flux = models.TextField(blank=True, default="")
+    flux = FluxField(blank=True, default=list)
+    error = FloatArrayField(blank=True, default=list)
     flux_unit = models.TextField(blank=True, default="")
-    error = models.TextField(blank=True, default="")
-    wavelength = models.TextField(blank=True, default="")
 
     class Meta:
         constraints = [
