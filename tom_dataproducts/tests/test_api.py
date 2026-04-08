@@ -1,12 +1,18 @@
 from django.contrib.auth.models import Group, User
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
-from django.core.exceptions import ValidationError
 from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from tom_dataproducts.models import DataProduct, ReducedDatum
+from tom_dataproducts.models import (
+    AstrometryReducedDatum,
+    DataProduct,
+    PhotometryReducedDatum,
+    ReducedDatum,
+    SpectroscopyReducedDatum,
+)
 from tom_observations.tests.factories import ObservingRecordFactory
 from tom_targets.tests.factories import SiderealTargetFactory
 
@@ -139,7 +145,7 @@ class TestReducedDatumViewset(APITestCase):
             self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
         self.rd_data['value'] = {'magnitude': 15.582, 'filter': 'B', 'error': 0.005}
         self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
-        rd_queryset = ReducedDatum.objects.all()
+        rd_queryset = PhotometryReducedDatum.objects.all()
         self.assertEqual(rd_queryset.count(), 2)
 
     def test_upload_reduced_datum_no_sharing_location(self):
@@ -195,3 +201,72 @@ class TestReducedDatumViewset(APITestCase):
         response3 = self.client.get(reverse('api:reduceddatums-list'), QUERY_STRING='source_name=thin_air')
         self.assertEqual(response3.data['count'], 0)
         self.assertEqual(response3.data['results'], [])
+
+    def test_upload_reduced_photometry_datum(self):
+        payload = {
+            "data_product": "",
+            "data_type": "photometry",
+            "value": {"magnitude": 15.582, "filter": "r", "error": 0.005},
+            "target": self.st.id,
+            "timestamp": "2012-02-12T01:40:47Z",
+        }
+        response = self.client.post(
+            reverse("api:reduceddatums-list"), payload, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(PhotometryReducedDatum.objects.count(), 1)
+        rd = PhotometryReducedDatum.objects.first()
+        self.assertEqual(rd.brightness, payload["value"]["magnitude"])
+        self.assertEqual(rd.target.id, payload["target"])
+
+    def test_upload_spectroscopy_datum(self):
+        payload = {
+            "data_product": "",
+            "data_type": "spectroscopy",
+            "value": {"flux": "[(123.4, 4.321)]", "error": "[0.005]", "flux_unit": "s"},
+            "target": self.st.id,
+            "timestamp": "2012-02-12T01:40:47Z",
+        }
+        response = self.client.post(
+            reverse("api:reduceddatums-list"), payload, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(SpectroscopyReducedDatum.objects.count(), 1)
+        rd = SpectroscopyReducedDatum.objects.first()
+        self.assertEqual(rd.flux, [(123.4, 4.321)])
+        self.assertEqual(rd.target.id, payload["target"])
+
+    def test_upload_astrometry_reduced_datum(self):
+        payload = {
+            "data_product": "",
+            "data_type": "astrometry",
+            "value": {"ra": 11.2, "dec": 30.0, "error": 0.005},
+            "target": self.st.id,
+            "timestamp": "2012-02-12T01:40:47Z",
+        }
+        response = self.client.post(
+            reverse("api:reduceddatums-list"), payload, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(AstrometryReducedDatum.objects.count(), 1)
+        rd = AstrometryReducedDatum.objects.first()
+        self.assertEqual(rd.ra, 11.2)
+        self.assertEqual(rd.target.id, payload["target"])
+
+    def test_upload_generic_reduced_datum(self):
+        payload = {
+            "data_product": "",
+            "data_type": "image_file",  # can be any custom data type
+            "value": {"ra": 11.2, "dec": 30.0, "foobar": 0.005},
+            "target": self.st.id,
+            "timestamp": "2012-02-12T01:40:47Z",
+        }
+        response = self.client.post(
+            reverse("api:reduceddatums-list"), payload, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(ReducedDatum.objects.count(), 1)
+        rd = ReducedDatum.objects.first()
+        self.assertEqual(rd.value["ra"], 11.2)
+        self.assertEqual(rd.value["foobar"], 0.005)
+        self.assertEqual(rd.target.id, payload["target"])

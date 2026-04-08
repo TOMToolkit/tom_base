@@ -16,7 +16,7 @@ from tom_alerts.models import AlertStreamMessage
 from tom_observations.models import ObservationRecord
 from tom_targets.base_models import BaseTarget
 
-from .fields import FluxField, FloatArrayField
+from .fields import FloatArrayField, FluxField
 
 logger = logging.getLogger(__name__)
 
@@ -447,3 +447,139 @@ class AstrometryReducedDatum(ReducedDatumCommon):
                 name="unique_astrometry",
             )
         ]
+
+
+def _pop_find_field(possible_fields: set, value: dict):
+    """
+    Helper function to find a field in a dict given a set of possible field names.
+    Pops the value of the first found field, or returns None if no field is found.
+    """
+    for field in possible_fields:
+        if field in value:
+            return value.pop(field)
+
+    return None
+
+
+def _extract_extra_fields(data: dict, model: type[models.Model]) -> dict:
+    """
+    Helper function to extract fields from the value dict that are not part of the model.
+    Pops the extra fields from the value dict and returns them as a new dict to be saved
+    in the models `value` field.
+    """
+    model_fields = set(f.name for f in model._meta.get_fields())
+    extra_fields = {}
+    for field in list(data.keys()):
+        if field not in model_fields:
+            extra_fields[field] = data.pop(field)
+
+    return extra_fields
+
+
+def _build_photometry_reduced_datum(data: dict) -> PhotometryReducedDatum:
+    BRIGHTNESS_FIELDS = {"brightness", "magnitude", "mag"}
+    BRIGHTNESS_ERROR_FIELDS = {
+        "error",
+        "brightness_error",
+        "magnitude_error",
+        "mag_err",
+    }
+    BANDPASS_FIELDS = {"bandpass", "filter", "band", "f"}
+
+    brightness = _pop_find_field(BRIGHTNESS_FIELDS, data)
+    brightness_error = _pop_find_field(BRIGHTNESS_ERROR_FIELDS, data)
+    bandpass = _pop_find_field(BANDPASS_FIELDS, data) or ""
+
+    extra_fields = _extract_extra_fields(data, PhotometryReducedDatum)
+
+    return PhotometryReducedDatum(
+        brightness=brightness,
+        brightness_error=brightness_error,
+        bandpass=bandpass,
+        value=extra_fields,
+        **data,
+    )
+
+
+def _build_spectroscopy_reduced_datum(data: dict) -> SpectroscopyReducedDatum:
+    FLUX_FIELDS = {"flux", "f"}
+    ERROR_FIELDS = {"error", "err", "flux_error", "f_error"}
+    FLUX_UNIT_FIELDS = {"flux_unit", "f_unit", "flux_units", "f_units"}
+
+    flux = _pop_find_field(FLUX_FIELDS, data)
+    error = _pop_find_field(ERROR_FIELDS, data)
+    flux_unit = _pop_find_field(FLUX_UNIT_FIELDS, data) or ""
+
+    extra_fields = _extract_extra_fields(data, SpectroscopyReducedDatum)
+
+    return SpectroscopyReducedDatum(
+        flux=flux,
+        error=error,
+        flux_unit=flux_unit,
+        value=extra_fields,
+        **data,
+    )
+
+
+def _build_astrometry_reduced_datum(data: dict) -> AstrometryReducedDatum:
+    RA_FIELDS = {"ra", "right_ascension", "ra_deg"}
+    DEC_FIELDS = {"dec", "declination", "dec_deg"}
+    RA_ERROR_FIELDS = {"ra_error", "right_ascension_error", "ra_err"}
+    DEC_ERROR_FIELDS = {"dec_error", "declination_error", "dec_err"}
+    RA_ERROR_UNIT_FIELDS = {"ra_error_units", "ra_err_units"}
+    DEC_ERROR_UNIT_FIELDS = {"dec_error_units", "dec_err_units"}
+
+    ra = _pop_find_field(RA_FIELDS, data)
+    dec = _pop_find_field(DEC_FIELDS, data)
+    ra_error = _pop_find_field(RA_ERROR_FIELDS, data)
+    dec_error = _pop_find_field(DEC_ERROR_FIELDS, data)
+    ra_error_units = _pop_find_field(RA_ERROR_UNIT_FIELDS, data) or ""
+    dec_error_units = _pop_find_field(DEC_ERROR_UNIT_FIELDS, data) or ""
+
+    extra_fields = _extract_extra_fields(data, AstrometryReducedDatum)
+
+    return AstrometryReducedDatum(
+        ra=ra,
+        dec=dec,
+        ra_error=ra_error,
+        dec_error=dec_error,
+        ra_error_units=ra_error_units,
+        dec_error_units=dec_error_units,
+        value=extra_fields,
+        **data,
+    )
+
+
+def _build_generic_reduced_datum(data: dict, data_type: str) -> ReducedDatum:
+    extra_fields = _extract_extra_fields(data, ReducedDatum)
+
+    return ReducedDatum(value=extra_fields, data_type=data_type, **data)
+
+
+def try_parse_reduced_datum(
+    data: dict,
+) -> (
+    ReducedDatum
+    | PhotometryReducedDatum
+    | SpectroscopyReducedDatum
+    | AstrometryReducedDatum
+):
+    """
+    Accepts unstructured data and attempts to create the correct ReducedDatum sublcass.
+    If the heuristics fail, returns a generic ReducedDatum.
+    """
+    if data.get("value") and isinstance(data["value"], dict):
+        # `value` is the existing free-form field. Pull those values to the top of the dict
+        # so we can use them to determine which reduced datum type to create
+        value = data.pop("value")
+        data = {**data, **value}
+
+    match data_type := data.pop("data_type", "").lower():
+        case "photometry":
+            return _build_photometry_reduced_datum(data)
+        case "spectroscopy":
+            return _build_spectroscopy_reduced_datum(data)
+        case "astrometry":
+            return _build_astrometry_reduced_datum(data)
+        case _:
+            return _build_generic_reduced_datum(data, data_type)

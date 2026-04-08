@@ -4,7 +4,7 @@ from guardian.shortcuts import assign_perm, get_groups_with_perms
 from rest_framework import serializers
 
 from tom_common.serializers import GroupSerializer
-from tom_dataproducts.models import DataProductGroup, DataProduct, ReducedDatum
+from tom_dataproducts.models import DataProductGroup, DataProduct, ReducedDatum, try_parse_reduced_datum
 from tom_observations.models import ObservationRecord
 from tom_observations.serializers import ObservationRecordFilteredPrimaryKeyRelatedField
 from tom_targets.models import Target
@@ -38,7 +38,7 @@ class ReducedDatumSerializer(serializers.ModelSerializer):
         """
         groups = validated_data.pop('groups', [])
 
-        rd = ReducedDatum(**validated_data)
+        rd = try_parse_reduced_datum(validated_data)
         rd.full_clean()
         rd.save()
 
