@@ -357,7 +357,7 @@ class ReducedDatumCommon(models.Model):
         null=False, blank=False, default=timezone.now, db_index=True
     )
     value = models.JSONField(
-        null=False, blank=False, default=dict, verbose_name="extra data"
+        null=False, blank=True, default=dict, verbose_name="extra data"
     )
     telescope = models.CharField(max_length=255, blank=True, default="")
     instrument = models.CharField(max_length=255, blank=True, default="")
@@ -418,7 +418,7 @@ class PhotometryReducedDatum(ReducedDatumCommon):
 
 class SpectroscopyReducedDatum(ReducedDatumCommon):
     setup = models.CharField(max_length=2000, blank=True, default="")
-    exposure_time = models.FloatField()
+    exposure_time = models.FloatField(blank=True, null=True)
     flux = FluxField(blank=True, default=list)
     error = FloatArrayField(blank=True, default=list)
     flux_unit = models.TextField(blank=True, default="")
