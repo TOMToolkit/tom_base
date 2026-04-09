@@ -45,7 +45,7 @@ class TestDataProductViewset(APITestCase):
             response = self.client.post(reverse('api:dataproducts-list'), self.dp_data, format='multipart')
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             self.assertEqual(DataProduct.objects.count(), 1)
-            self.assertEqual(ReducedDatum.objects.count(), 3)
+            self.assertEqual(PhotometryReducedDatum.objects.count(), 3)
             dp = DataProduct.objects.get(pk=response.data['id'])
             self.assertEqual(dp.target_id, self.st.id)
 
@@ -62,7 +62,7 @@ class TestDataProductViewset(APITestCase):
 
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             self.assertEqual(DataProduct.objects.count(), 1)
-            self.assertEqual(ReducedDatum.objects.count(), 3)
+            self.assertEqual(PhotometryReducedDatum.objects.count(), 3)
             dp = DataProduct.objects.get(pk=response.data['id'])
             self.assertEqual(dp.target_id, self.st.id)
             self.assertEqual(dp.observation_record_id, self.obsr.id)

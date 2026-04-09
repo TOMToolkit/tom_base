@@ -449,6 +449,14 @@ class AstrometryReducedDatum(ReducedDatumCommon):
         ]
 
 
+REDUCED_DATUM_MODELS = (
+    ReducedDatum,
+    PhotometryReducedDatum,
+    SpectroscopyReducedDatum,
+    AstrometryReducedDatum,
+)
+
+
 def _pop_find_field(possible_fields: set, value: dict):
     """
     Helper function to find a field in a dict given a set of possible field names.
