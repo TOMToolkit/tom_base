@@ -94,11 +94,11 @@ psycopg2-binary = "*" # for testing postgres
 
 [tool.poetry.group.docs.dependencies]
 docutils = "!=0.21.post1"
-recommonmark = "~0.7"
-sphinx = ">=5,<8"
+sphinx = ">=8"
 sphinx-design = ">=0.6,<0.7"
-sphinx-rtd-theme = ">=1.0,<3.1"
+sphinx-breeze-theme = "0.13.2"
 sphinx-copybutton = "~0.5"
+myst-parser = "==4.0.1"
 
 [tool.poetry.group.coverage.dependencies]
 coverage = ">=6,<8" # coveralls needs ~6 even though 7.3.2 is latest
@@ -106,7 +106,6 @@ coveralls = ">=3,<5"
 
 [tool.poetry.group.lint.dependencies]
 flake8 = ">=6.0,<7.2"
-
 
 [tool.poetry.requires-plugins]
 poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }

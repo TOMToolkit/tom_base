@@ -8,7 +8,7 @@ Welcome to the TOM Toolkit's documentation!
 
 .. toctree::
   :maxdepth: 3
-  :hidden:
+  :titlesonly:
 
   introduction/credits
   introduction/index
