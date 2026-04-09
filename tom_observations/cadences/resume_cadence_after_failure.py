@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from dateutil.parser import parse
+from django.conf import settings
 import logging
 
 from tom_observations.cadence import BaseCadenceForm, CadenceStrategy
@@ -43,12 +44,15 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
 
         # Make a call to the facility to get the current status of the observation
         facility = get_service_class(last_obs.facility)()
+        start_keyword, end_keyword = facility.get_start_end_keywords()
         facility.update_observation_status(last_obs.observation_id)  # Updates the DB record
         last_obs.refresh_from_db()  # Gets the record updates
 
         # Boilerplate to get necessary properties for future calls
-        start_keyword, end_keyword = facility.get_start_end_keywords()
         observation_payload = last_obs.parameters
+
+        # Only needs the scheduled end from the observatory
+        observation_payload['scheduled_end'] = last_obs.scheduled_end
 
         # Cadence logic
         # If the observation hasn't finished, do nothing
@@ -56,7 +60,16 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
             return
         elif last_obs.failed:  # If the observation failed
             # Submit next observation to be taken as soon as possible with the same window length
-            window_length = parse(observation_payload[end_keyword]) - parse(observation_payload[start_keyword])
+            # Make the window length the cadence frequency or 24 hours, whichever is shorter.
+            cadence_frequency = self.dynamic_cadence.cadence_parameters.get('cadence_frequency')
+            if not cadence_frequency:
+                raise Exception(f'The {self.name} strategy requires a cadence_frequency cadence_parameter.')
+            if settings.OBS_WINDOW_MINIMUM:
+                window_length = settings.OBS_WINDOW_MINIMUM
+                if window_length > cadence_frequency:
+                    window_length = cadence_frequency
+            else:
+                window_length = cadence_frequency
             observation_payload[start_keyword] = datetime.now().isoformat()
             observation_payload[end_keyword] = (parse(observation_payload[start_keyword]) + window_length).isoformat()
         else:  # If the observation succeeded
@@ -95,6 +108,7 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         for obsr in new_observations:
             facility = get_service_class(obsr.facility)()
             facility.update_observation_status(obsr.observation_id)
+            obsr.refresh_from_db() # commit the updated observation status
 
         return new_observations
 
@@ -103,9 +117,18 @@ class ResumeCadenceAfterFailureStrategy(CadenceStrategy):
         if not cadence_frequency:
             raise Exception(f'The {self.name} strategy requires a cadence_frequency cadence_parameter.')
         advance_window_hours = cadence_frequency
-        window_length = parse(observation_payload[end_keyword]) - parse(observation_payload[start_keyword])
 
-        new_start = parse(observation_payload[start_keyword]) + timedelta(hours=advance_window_hours)
+        # Window length for the observation should be every 24 hours unless the frequency is less than 24
+        # then just the cadence frequency (24 hour window defined in the settings)
+        if settings.OBS_WINDOW_MINIMUM:
+            window_length = settings.OBS_WINDOW_MINIMUM
+            if window_length > cadence_frequency:
+                window_length = cadence_frequency
+        else:
+            window_length = cadence_frequency
+
+        # Define new start to be at the end of the previous observation + cadence in hours
+        new_start = parse(observation_payload['scheduled_end']) + timedelta(hours=advance_window_hours)
         if new_start < datetime.now():  # Ensure that the new window isn't in the past
             new_start = datetime.now()
         new_end = new_start + window_length
