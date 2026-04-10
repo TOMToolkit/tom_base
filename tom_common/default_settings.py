@@ -1,6 +1,6 @@
 """
 Default settings for TOM Toolkits.
-This sets all of the mandatory apps and middleware as defaults 
+This sets all of the mandatory apps and middleware as defaults
 
 For more information on this file, see
 https://docs.djangoproject.com/en/4.2/topics/settings/
