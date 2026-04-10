@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 import sys
 import os
+import django
 from django.conf import settings
 from django.template.loader import get_template
 from django.core.management import call_command
@@ -280,6 +281,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.context['CREATE_DATE'] = timezone.now()
         self.context['PROJECT_NAME'] = os.path.basename(BASE_DIR)
+        self.context['DJANGO_VERSION'] = django.get_version()
         self.welcome_banner()
         self.check_python()
         self.create_custom_code_app()
