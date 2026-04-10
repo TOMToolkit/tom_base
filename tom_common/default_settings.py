@@ -1,5 +1,4 @@
-"""
-Default settings for TOM Toolkits.
+"""Default settings for TOM Toolkits.
 
 This sets all of the mandatory apps and middleware as defaults
 

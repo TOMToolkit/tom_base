@@ -71,8 +71,7 @@ class Command(BaseCommand):
         self.ok()
 
     def create_project_dirs(self):
-        """
-        Create the project directory structure.
+        """Create the project directory structure.
         Final directory structure should look like this:
            mytom
            ├── manage.py
