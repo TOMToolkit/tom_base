@@ -1,25 +1,49 @@
-import base64
+"""Utilities for encrypting and decrypting sensitive user data at rest.
+
+This module implements the "read/write time" portion of TOM Toolkit's envelope
+encryption scheme. The full architecture is documented in
+``docs/design/encryption_architecture_redesign.md``; here is a brief summary
+of how the pieces fit together:
+
+**Master key** (``TOMTOOLKIT_DEK_ENCRYPTION_KEY`` in settings / environment):
+    A Fernet key that never touches the database. It encrypts each user's
+    Data Encryption Key so that database access alone cannot reveal user data.
+
+**Per-user DEK** (``Profile.encrypted_dek``):
+    A random Fernet key generated when the user is created. Stored in the
+    database encrypted by the master key. To use it, we decrypt it with the
+    master key, build a Fernet cipher, and attach it briefly to the model
+    instance that holds the encrypted field.
+
+**EncryptedProperty / EncryptableModelMixin** (in ``models.py``):
+    The descriptor and mixin that plugin models use to declare encrypted
+    fields. They expect a ``_cipher`` attribute on the model instance —
+    this module's helper functions manage that lifecycle.
+
+Typical call from a view or API endpoint::
+
+    from tom_common.session_utils import get_encrypted_field, set_encrypted_field
+
+    api_key = get_encrypted_field(user, eso_profile, 'api_key')
+    set_encrypted_field(user, eso_profile, 'api_key', new_value)
+    eso_profile.save()
+"""
+
+from __future__ import annotations
+
 import logging
+from dataclasses import dataclass, field
 from typing import Optional, TypeVar
 
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.backends import default_backend
+from cryptography.fernet import Fernet, InvalidToken
 
-from django.apps import AppConfig, apps
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
-from django.contrib.sessions.models import Session
-from django.contrib.sessions.backends.db import SessionStore
 
-from tom_common.models import EncryptableModelMixin, UserSession
+from tom_common.models import Profile
+
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-# Constant for storing the cipher encryption key in the session
-SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY = 'key'
 
 # A generic TypeVar for a Django models.Model subclass instance.
 # The `bound=models.Model` constraint ensures that any
@@ -27,113 +51,107 @@ SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY = 'key'
 ModelType = TypeVar('ModelType', bound=models.Model)
 
 
-def create_cipher_encryption_key(user: User, password: str) -> bytes:
-    """Creates a Fernet cipher encryption key derived from the user's password.
+def _get_master_cipher() -> Fernet:
+    """Return a Fernet cipher built from the server-side master key.
 
-    This key is intended to be stored (e.g., in the session) and used to
-    instantiate Fernet ciphers for encrypting and decrypting sensitive data
-    associated with the user, such as API keys or external service credentials.
+    The master key (``TOMTOOLKIT_DEK_ENCRYPTION_KEY``) lives in the server
+    environment, not in the database. It is used only to encrypt and decrypt
+    per-user DEKs — never to encrypt user data directly.
 
-    The key derivation process uses PBKDF2HMAC with a salt generated from
-    the user's username, making the key unique per user and password.
+    Raises:
+        django.core.exceptions.ImproperlyConfigured: If the setting is missing
+            or empty.
+    """
+    key = getattr(settings, 'TOMTOOLKIT_DEK_ENCRYPTION_KEY', '')
+    if not key:
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured(
+            "TOMTOOLKIT_DEK_ENCRYPTION_KEY is not set. This setting is required for "
+            "encrypting sensitive user data at rest. Generate one with:\n"
+            "  python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\"\n"
+            "Then add it to your environment or settings.py."
+        )
+    # The key may be a string (from os.getenv) or bytes; Fernet accepts both.
+    return Fernet(key)
 
-    Args:
-        user: The Django User object.
-        password: The user's plaintext password.
+
+def create_encrypted_dek() -> bytes:
+    """Generate a new random DEK and return it encrypted by the master key.
+
+    This is called once per user, at user-creation time (see ``signals.py``).
+    The returned bytes are stored in ``Profile.encrypted_dek``.
+
+    We use ``Fernet.generate_key()`` rather than ``os.urandom()`` because
+    Fernet keys have a specific format (URL-safe base64-encoded 32 bytes)
+    and ``generate_key()`` guarantees that format.
 
     Returns:
-        A URL-safe base64-encoded Fernet encryption key as bytes.
-
-    See Also:
-        https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet
+        The DEK encrypted by the master key, as bytes suitable for a BinaryField.
     """
-
-    # Generate a salt from hash and username
-    salt = hashes.Hash(hashes.SHA256(), backend=default_backend())
-    salt.update(user.username.encode())
-
-    # Derive encryption_key using PBKDF2-HMAC and the newly generated salt
-    kdf = PBKDF2HMAC(  # key derivation function
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=salt.finalize()[:16],  # only finalize once; returns bytes; use 16 bytes
-        iterations=1_000_000,  # Django recommendation of jan-2025
-        backend=default_backend(),
-    )
-    encryption_key: bytes = base64.urlsafe_b64encode(kdf.derive(password.encode()))
-    return encryption_key
+    # Generate a fresh random Fernet key for this user
+    dek: bytes = Fernet.generate_key()
+    # Encrypt the DEK with the master key so it can be stored safely
+    # in the database. The master key is the only thing that can decrypt it.
+    master_cipher = _get_master_cipher()
+    encrypted_dek: bytes = master_cipher.encrypt(dek)
+    return encrypted_dek
 
 
-def save_key_to_session_store(key: bytes, session_store: SessionStore) -> None:
-    """Saves the provided encryption key to the given Django session store.
-
-    The key is first base64 encoded and converted to a string before being
-    stored in the session under a predefined session key.
+def _decrypt_dek(encrypted_dek: bytes) -> bytes:
+    """Decrypt a user's DEK using the master key.
 
     Args:
-        key: The encryption key (bytes) to be saved.
-        session_store: The Django SessionStore instance where the key will be saved.
-    """
-    try:
-        assert isinstance(session_store, SessionStore), \
-            f"session_store is not a SessionStore; it's a {type(session_store)}"
-    except AssertionError as e:
-        logger.error(str(e))
-
-    # The key is bytes, but session values must be JSON-serializable.
-    # A Fernet key is already base64-encoded, so we just decode it to a string for storage.
-    session_store[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY] = key.decode('utf-8')
-    session_store.save()  # we might be accessing the session before it's saved (in the middleware?)
-
-
-def get_key_from_session_model(session: Session) -> bytes:
-    """Extracts and decodes the encryption key from a Django Session object.
-
-    Retrieves the base64 encoded key string from the session, decodes it
-    from base64, and returns the raw bytes of the encryption key.
-
-    Args:
-        session: The Django Session object from which to extract the key.
+        encrypted_dek: The encrypted DEK from ``Profile.encrypted_dek``.
 
     Returns:
-        The encryption key as bytes.
+        The plaintext DEK (a valid Fernet key as bytes).
     """
+    # Handle memoryview from PostgreSQL BinaryField
+    if isinstance(encrypted_dek, memoryview):
+        encrypted_dek = encrypted_dek.tobytes()
 
-    logger.debug(f"Extracting key from Session model: {type(session)} = {session} - {session.get_decoded()}")
-    key_as_str: str = session.get_decoded()[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY]  # type: ignore
-    # The key was stored as a string, so we encode it back to bytes.
-    return key_as_str.encode('utf-8')
+    master_cipher = _get_master_cipher()
+    return master_cipher.decrypt(encrypted_dek)
 
 
-def get_key_from_session_store(session_store: SessionStore) -> bytes:
-    """Extracts the encryption key from a Django SessionStore instance.
+def _get_cipher_for_user(user) -> Fernet:
+    """Build a Fernet cipher from a user's decrypted DEK.
 
-    Use the dictionary-like API that the SessionStore provides to retreive
-    the encryption key.
+    This fetches the user's ``Profile.encrypted_dek``, decrypts it with the
+    master key, and returns a Fernet cipher ready to encrypt or decrypt the
+    user's data fields.
+
+    The decrypted DEK exists only in memory for the duration of this call and
+    the subsequent encrypt/decrypt operation. It is never persisted in
+    plaintext.
 
     Args:
-        session_store: The Django SessionStore instance.
+        user: A Django User instance.
 
     Returns:
-        The encryption key as bytes.
+        A Fernet cipher built from the user's DEK.
+
+    Raises:
+        Profile.DoesNotExist: If the user has no Profile.
+        ValueError: If the user's Profile has no encrypted DEK.
     """
-    if not isinstance(session_store, SessionStore):
-        # manual type checking
-        raise TypeError(f"Expected a SessionStore object, but got {type(session_store)}")
+    profile = Profile.objects.get(user=user)
+    if not profile.encrypted_dek:
+        raise ValueError(f"User {user.username} has no encryption key (encrypted_dek is empty). "
+                         f"This may indicate the user was created before encryption was configured.")
 
-    key_as_str: str = session_store[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY]
-    return key_as_str.encode('utf-8')
+    dek: bytes = _decrypt_dek(profile.encrypted_dek)
+    return Fernet(dek)
 
 
-def get_encrypted_field(user: User,
-                        model_instance: ModelType,  # type: ignore
+def get_encrypted_field(user,
+                        model_instance: ModelType,
                         field_name: str) -> Optional[str]:
-    """
-    Helper function to safely get the decrypted value of an EncryptedProperty.
+    """Safely get the decrypted value of an EncryptedProperty.
 
-    This function encapsulates the logic of fetching the user's session key,
-    creating a cipher, attaching it to the model instance, reading the
-    decrypted value, and cleaning up.
+    Fetches the user's DEK from their Profile, decrypts it with the master key,
+    creates a Fernet cipher, and uses the ``EncryptedProperty`` descriptor to
+    decrypt the field value.
 
     Args:
         user: The User object associated with the encrypted data.
@@ -142,26 +160,18 @@ def get_encrypted_field(user: User,
 
     Returns:
         The decrypted string value, or None if decryption fails for any reason
-        (e.g., no active session, key not found).
+        (e.g., no Profile, no DEK, corrupted data).
     """
     try:
-        #  Get the current Session from the UserSession
-        # A user can be logged in from multiple browsers, resulting in multiple
-        # UserSession objects. Since the encryption key is derived from the
-        # password and is the same for all sessions, we can safely take the first one.
-        user_session = UserSession.objects.filter(user=user).first()
-        if not user_session:
-            raise UserSession.DoesNotExist(f"No active session found for user {user.username}")
-
-        session: Session = user_session.session
-        cipher_key: bytes = get_key_from_session_model(session)
-        cipher: Fernet = Fernet(cipher_key)
-
-        # Attach the cipher, get the value, and then clean up
-        model_instance._cipher = cipher  # type: ignore
+        cipher = _get_cipher_for_user(user)
+        # Attach the cipher so the EncryptedProperty descriptor can use it,
+        # read the decrypted value, then clean up. The cipher is attached to
+        # the model instance (not the user) because the descriptor's __get__
+        # method receives the instance it's defined on.
+        model_instance._cipher = cipher  # type: ignore[attr-defined]
         decrypted_value = getattr(model_instance, field_name)
         return decrypted_value
-    except (UserSession.DoesNotExist, KeyError) as e:
+    except (Profile.DoesNotExist, ValueError) as e:
         logger.warning(f"Could not get encryption key for user {user.username} to access "
                        f"'{field_name}': {e}")
         return None
@@ -170,24 +180,23 @@ def get_encrypted_field(user: User,
                      f"for user {user.username}: {e}")
         return None
     finally:
-        # Ensure the temporary cipher is always removed from the instance
+        # Always remove the temporary cipher from the instance to avoid
+        # accidental reuse or leaking the key in memory longer than needed.
         if hasattr(model_instance, '_cipher'):
-            del model_instance._cipher  # type: ignore
+            del model_instance._cipher  # type: ignore[attr-defined]
 
 
-def set_encrypted_field(user: User,
-                        model_instance: ModelType,  # type: ignore
+def set_encrypted_field(user,
+                        model_instance: ModelType,
                         field_name: str,
                         value: str) -> bool:
-    """
-    Helper function to safely set the value of an EncryptedProperty.
+    """Safely set the value of an EncryptedProperty.
 
-    This function encapsulates the logic of fetching the user's session key,
-    creating a cipher, attaching it to the model instance, setting the new
-    encrypted value, and cleaning up.
+    Fetches the user's DEK, creates a cipher, and uses the
+    ``EncryptedProperty`` descriptor to encrypt and store the value.
 
     Note: This function does NOT save the instance. The caller is responsible
-    for calling `instance.save()` after the field has been set.
+    for calling ``instance.save()`` after the field has been set.
 
     Args:
         user: The User object associated with the encrypted data.
@@ -199,20 +208,11 @@ def set_encrypted_field(user: User,
         True if the field was set successfully, False otherwise.
     """
     try:
-        #  Get the current Session from the UserSession
-        user_session = UserSession.objects.filter(user=user).first()  # see comment above
-        if not user_session:
-            raise UserSession.DoesNotExist(f"No active session found for user {user.username}")
-
-        session: Session = user_session.session
-        cipher_key: bytes = get_key_from_session_model(session)
-        cipher = Fernet(cipher_key)
-
-        # Attach the cipher, set the value, and then clean up
-        model_instance._cipher = cipher  # type: ignore
+        cipher = _get_cipher_for_user(user)
+        model_instance._cipher = cipher  # type: ignore[attr-defined]
         setattr(model_instance, field_name, value)
         return True
-    except (UserSession.DoesNotExist, KeyError) as e:
+    except (Profile.DoesNotExist, ValueError) as e:
         logger.error(f"Could not get encryption key for user {user.username} to set "
                      f"'{field_name}': {e}")
         return False
@@ -221,131 +221,105 @@ def set_encrypted_field(user: User,
                      f"for user {user.username}: {e}")
         return False
     finally:
-        # Ensure the temporary cipher is always removed from the instance
         if hasattr(model_instance, '_cipher'):
-            del model_instance._cipher  # type: ignore
+            del model_instance._cipher  # type: ignore[attr-defined]
 
 
-def reencrypt_data(user) -> None:
-    """Re-encrypts sensitive data for a user after a password change.
+# ---------------------------------------------------------------------------
+# Master key rotation
+# ---------------------------------------------------------------------------
 
-    If an Administrator is changing another user's password, and
-    the `user: User` is not logged-in, then they have no SessionStore,
-    and, thus, no encryption key is available. In that case, the User's
-    encrypted fields are cleared out because they are stale, having
-    been ecrypted with an encryption key derived from a password that
-    is no longer in use.
+@dataclass
+class RotationError:
+    """Details about a single Profile that failed during key rotation."""
+    profile_pk: int
+    username: str
+    error: str
+
+
+@dataclass
+class RotationResult:
+    """Result of a master key rotation operation.
+
+    Attributes:
+        success_count: Number of Profiles whose DEKs were successfully re-encrypted.
+        errors: Per-profile details for any that failed.
+    """
+    success_count: int = 0
+    errors: list[RotationError] = field(default_factory=list)
+
+    @property
+    def error_count(self) -> int:
+        return len(self.errors)
+
+    @property
+    def total(self) -> int:
+        return self.success_count + self.error_count
+
+
+def rotate_master_key(new_key: str) -> RotationResult:
+    """Re-encrypt all per-user DEKs with a new master key.
+
+    Each Profile's ``encrypted_dek`` is decrypted with the current master key
+    (from ``TOMTOOLKIT_DEK_ENCRYPTION_KEY``) and re-encrypted with
+    ``new_key``. The user Profile's plaintext DEK is unchanged — only its
+    encryption layer (i.e. `encrypted_dek`) is replaced. The actual encrypted
+    data is not touched.
+
+    After this function completes successfully, the server's
+    ``TOMTOOLKIT_DEK_ENCRYPTION_KEY`` must be updated to ``new_key`` and the
+    server restarted. Until that happens, the re-encrypted DEKs cannot be
+    decrypted.
 
     Args:
-        user: The Django User object whose password has changed.
+        new_key: The new Fernet master key as a string (URL-safe base64, 44 chars).
+
+    Returns:
+        A ``RotationResult`` with per-profile success/error details.
+
+    Raises:
+        ValueError: If ``new_key`` is not a valid Fernet key.
+        django.core.exceptions.ImproperlyConfigured: If the current master key
+            is missing or empty.
     """
-    logger.debug("Re-encrypting sensitive data...")
+    # Validate the new key before touching any data.
+    try:
+        new_master_cipher = Fernet(new_key.encode())
+    except Exception as e:
+        raise ValueError(f"Invalid new key: {e}") from e
 
-    #  Get the current Session from the UserSession
-    user_session = UserSession.objects.filter(user=user.id).first()  # see comment above
+    # Build the old master cipher from current settings.
+    # Raises ImproperlyConfigured if missing — intentionally not caught here.
+    old_master_cipher = _get_master_cipher()
 
-    if not user_session:
-        logger.warning(f"User {user.username} is not logged in. Cannot re-encrypt sensitive data. "
-                       f"Clearing all encrypted fields instead.")
-        # Loop through all the installed apps and ask them to clear their encrypted profile fields
-        for app_config in apps.get_app_configs():
-            clear_encrypted_fields_for_user(app_config, user)  # type: ignore
-        return
+    profiles = Profile.objects.exclude(encrypted_dek=None)
+    result = RotationResult()
 
-    session: Session = user_session.session
-    #  Get the current encryption_key from the Session
-    current_encryption_key: bytes = get_key_from_session_model(session)
-    #  Generate a decoding Fernet cipher with the current encryption key
-    decoding_cipher = Fernet(current_encryption_key)
-
-    #  Get the new raw password from the User instance
-    new_raw_password = user._password  # CAUTION: this is implemenation dependent (using _<property>)
-    #  Generate a new encryption_key with the new raw password
-    new_encryption_key: bytes = create_cipher_encryption_key(user, new_raw_password)
-    #  Generate a new encoding Fernet cipher with the new encryption key
-    encoding_cipher = Fernet(new_encryption_key)
-
-    #  Save the new encryption key in the User's Session
-    session_store: SessionStore = SessionStore(session_key=session.session_key)
-    save_key_to_session_store(new_encryption_key, session_store)
-    # also, attach the new encryption key to the User instance so it can be inserted
-    # into the Session before we call update_session_auth_hash in
-    # tom_common.views.UserUpdateView.form_valid()
-    user._temp_new_fernet_key = new_encryption_key
-
-    # Loop through all the installed apps and ask them to reencrypt their encrypted profile fields
-    for app_config in apps.get_app_configs():
+    for profile in profiles.iterator():
         try:
-            reencrypt_encypted_fields_for_user(app_config, user, decoding_cipher, encoding_cipher)  # type: ignore
-        except AttributeError:
-            logger.debug(f'App: {app_config.name} does not have a reencrypt_app_fields method.')
-            continue
+            encrypted_dek = profile.encrypted_dek
+            # Handle memoryview from PostgreSQL
+            if isinstance(encrypted_dek, memoryview):
+                encrypted_dek = encrypted_dek.tobytes()
 
+            # Decrypt with old key, re-encrypt with new key
+            plaintext_dek: bytes = old_master_cipher.decrypt(encrypted_dek)
+            new_encrypted_dek: bytes = new_master_cipher.encrypt(plaintext_dek)
 
-def reencrypt_encypted_fields_for_user(app_config: AppConfig, user: 'User',
-                                       decoding_cipher: Fernet, encoding_cipher: Fernet):
-    """
-    Automatically finds models in the app_config that inherit from EncryptableModelMixin
-    and attempts to re-encrypt their fields for the given user.
+            profile.encrypted_dek = new_encrypted_dek
+            profile.save(update_fields=['encrypted_dek'])
+            result.success_count += 1
+        except InvalidToken:
+            result.errors.append(RotationError(
+                profile_pk=profile.pk,
+                username=profile.user.username,
+                error="could not decrypt with current master key",
+            ))
+        except Exception as e:
+            result.errors.append(RotationError(
+                profile_pk=profile.pk,
+                username=profile.user.username,
+                error=str(e),
+            ))
 
-    :param app_config: The AppConfig instance of the plugin app.
-    :param user: The User whose data needs re-encryption.
-    :param decoding_cipher: Fernet cipher to decrypt existing data.
-    :param encoding_cipher: Fernet cipher to encrypt new data.
-    """
-    for model_class in app_config.get_models():
-        if issubclass(model_class, EncryptableModelMixin):
-            logger.debug(f"Found EncryptableModelMixin subclass: {model_class.__name__} in app {app_config.name}")
-            # The EncryptableModelMixin guarantees a 'user' field, which is a OneToOneField.
-            try:
-                encryptable_model_instance = model_class.objects.get(user=user)
-                # instance of the Model which is a subclass of EncryptableModelMixin
-                encryptable_model_instance.reencrypt_model_fields(decoding_cipher, encoding_cipher)  # re-entrpt here
-            except model_class.DoesNotExist:
-                logger.info(f"No {model_class.__name__} instance found for user {user.username}.")
-            except model_class.MultipleObjectsReturned:
-                # This should not be reached if the mixin correctly enforces a OneToOneField.
-                # It's kept here as a safeguard against unexpected configurations.
-                logger.error(f"Multiple {model_class.__name__} instances found for user {user.username}. "
-                             f"This is unexpected for an EncryptableModelMixin. Re-encrypting all found.")
-                instances = model_class.objects.filter(user=user)
-                for encryptable_model_instance in instances:
-                    encryptable_model_instance.reencrypt_model_fields(decoding_cipher, encoding_cipher)
-            except Exception as e:
-                logger.error(f"Error processing model {model_class.__name__} for re-encryption for "
-                             f"user {user.username}: {e}")
-
-
-def clear_encrypted_fields_for_user(app_config: AppConfig, user: 'User',) -> None:
-    """
-    Finds models in an app that are Encryptable and clears their encrypted fields for the given user.
-
-    This is a destructive operation used when a user's password is reset without
-    them being logged in, making the old decryption key unavailable. This happens,
-    for example, when an adminitrator resets their password.
-
-    :param app_config: The AppConfig instance of the plugin app.
-    :param user: The User whose data needs to be cleared.
-    """
-    for model_class in app_config.get_models():
-        if issubclass(model_class, EncryptableModelMixin):
-            logger.debug(f"Found EncryptableModelMixin subclass: {model_class.__name__} in "
-                         f"app {app_config.name} for clearing.")
-            # The EncryptableModelMixin now guarantees a 'user' field, which is a OneToOneField.
-            try:
-                encryptable_model_instance = model_class.objects.get(user=user)
-                # instance of the Model which is a subclass of EncryptableModelMixin
-                encryptable_model_instance.clear_encrypted_fields()  # do the clearing of the fields here
-            except model_class.DoesNotExist:
-                logger.info(f"No {model_class.__name__} instance found for user {user.username} to clear.")
-            except model_class.MultipleObjectsReturned:
-                # This should not be reached if the mixin correctly enforces a OneToOneField.
-                # It's kept here as a safeguard against unexpected configurations.
-                logger.error(f"Multiple {model_class.__name__} instances found for user {user.username}. "
-                             f"This is unexpected for an EncryptableModelMixin. Clearing all found.")
-                instances = model_class.objects.filter(user=user)
-                for encryptable_model_instance in instances:
-                    encryptable_model_instance.clear_encrypted_fields()
-            except Exception as e:
-                logger.error(f"Error clearing encrypted fields for model {model_class.__name__} for "
-                             f"user {user.username}: {e}")
+    return result
