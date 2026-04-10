@@ -122,3 +122,6 @@ class LCORedirectFacility(BaseRedirectObservationFacility):
             observation_group.observation_records.add(obs_record)
 
         return observation_group
+
+    def get_facility_status(self):
+        return self.lco_facility.get_facility_status()
