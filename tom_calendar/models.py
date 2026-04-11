@@ -17,12 +17,12 @@ class EventTodo(models.Model):
 
 
 class CalendarEvent(models.Model):
-    """
-    Class representing an event in the calendar.
+
+    """Class representing an event in the calendar.
 
     Other applications can create calendar events by creating instances of this class.
-
     """
+
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True, default="")
     start_time = models.DateTimeField()
