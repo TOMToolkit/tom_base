@@ -181,7 +181,7 @@ Editing this file will allow you to overwrite any of the css used at the base le
 styling established by TOMToolkit themes such as "Dark Mode".
 
 The TOMToolkit has several built in variables that allow you to establish a theme for your TOM. You can see these in
-`root` dictionay in yoyr ``custom.css``. Altering these will change the appearance of large portions of the website.
+`root` dictionary in your ``custom.css``. Altering these will change the appearance of large portions of the website.
 
 As an example, let's change the background color from white (#ffffff) to an off-white (#efead6).
 Add the following in your ``custom.css`` after the comments:

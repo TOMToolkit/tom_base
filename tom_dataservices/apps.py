@@ -31,8 +31,10 @@ class TomDataservicesConfig(AppConfig):
         This method should return a list of dictionaries containing dot separated DataService classes
         """
         # TODO: explain in the doc string how this dict and its items are used
-        data_services = [
+        return [
             {'class': f'{self.name}.data_services.simbad.SimbadDataService'},
             {'class': f'{self.name}.data_services.tns.TNSDataService'},
+            {'class': f'{self.name}.data_services.alerce.AlerceDataService'},
+            {'class': f'{self.name}.data_services.ned.NEDDataService'},
+            {'class': f'{self.name}.data_services.mpc.MPCExplorerDataService'},
         ]
-        return data_services
