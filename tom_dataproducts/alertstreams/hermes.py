@@ -9,7 +9,7 @@ from django.utils.module_loading import import_string
 
 from tom_alerts.models import AlertStreamMessage
 from tom_targets.models import Target, TargetList
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import PhotometryReducedDatum
 
 import requests
 
@@ -330,15 +330,23 @@ def hermes_alert_handler(alert, metadata):
             except ValueError:
                 continue
 
-            datum = {
-                'target': target,
-                'data_type': 'photometry',
-                'source_name': alert_as_dict['topic'],
-                'source_location': 'Hermes via HOP',  # TODO Add message URL here once message ID's exist
-                'timestamp': obs_date,
-                'value': get_hermes_phot_value(row)
-            }
-            new_rd, created = ReducedDatum.objects.get_or_create(**datum)
+            value = get_hermes_phot_value(row)
+            new_rd, created = PhotometryReducedDatum.objects.get_or_create(
+                target=target,
+                timestamp=obs_date,
+                bandpass=value.get('filter', ''),
+                defaults={
+                    'brightness': value.get('magnitude', None),
+                    'brightness_error': value.get('error', None),
+                    'unit': value.get('unit', None),
+                    'limit': value.get('limit', None),
+                    'source_name': alert_as_dict['topic'],
+                    'source_location': 'Hermes via HOP',  # TODO Add message URL here once message ID's exist
+                    'timestamp': obs_date,
+                    'telescope': value.get('telescope', ''),
+                    'instrument': value.get('instrument', ''),
+                }
+            )
             if created:
                 hermes_alert.save()
                 new_rd.message.add(hermes_alert)
