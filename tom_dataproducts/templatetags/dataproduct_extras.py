@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from urllib.parse import urlencode
 
 from django import template
@@ -241,28 +242,20 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
         'i': 'black'
     }
 
-    try:
-        photometry_data_type = settings.DATA_PRODUCT_TYPES['photometry'][0]
-    except (AttributeError, KeyError):
-        photometry_data_type = 'photometry'
-    photometry_data = {}
+    photometry_data = defaultdict(lambda: {'time': [], 'magnitude': [], 'error': [], 'limit': []})
     if settings.TARGET_PERMISSIONS_ONLY:
-        datums = ReducedDatum.objects.filter(target=target, data_type=photometry_data_type)
+        datums = PhotometryReducedDatum.objects.filter(target=target)
     else:
         datums = get_objects_for_user(context['request'].user,
-                                      'tom_dataproducts.view_reduceddatum',
-                                      klass=ReducedDatum.objects.filter(
-                                        target=target,
-                                        data_type=photometry_data_type))
+                                      'tom_dataproducts.view_photometryreduceddatum',
+                                      klass=PhotometryReducedDatum.objects.filter(target=target))
 
     for datum in datums:
-        if (isinstance(datum.value.get('magnitude', 0), float) and isinstance(datum.value.get('error', 0), float)) \
-                or isinstance(datum.value.get('limit', 0), float):
-            photometry_data.setdefault(datum.value['filter'], {})
-            photometry_data[datum.value['filter']].setdefault('time', []).append(datum.timestamp)
-            photometry_data[datum.value['filter']].setdefault('magnitude', []).append(datum.value.get('magnitude'))
-            photometry_data[datum.value['filter']].setdefault('error', []).append(datum.value.get('error'))
-            photometry_data[datum.value['filter']].setdefault('limit', []).append(datum.value.get('limit'))
+        if datum.brightness is not None or datum.limit is not None:
+            photometry_data[datum.bandpass]['time'].append(datum.timestamp)
+            photometry_data[datum.bandpass]['magnitude'].append(datum.brightness)
+            photometry_data[datum.bandpass]['error'].append(datum.brightness_error)
+            photometry_data[datum.bandpass]['limit'].append(datum.limit)
 
     plot_data = []
     all_ydata = []
