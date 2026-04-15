@@ -18,7 +18,7 @@ import base64
 import numpy as np
 
 from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
-from tom_dataproducts.models import DataProduct, ReducedDatum
+from tom_dataproducts.models import DataProduct, PhotometryReducedDatum, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_dataproducts.single_target_data_service.single_target_data_service import get_service_classes, \
     get_service_class
@@ -164,38 +164,31 @@ def get_photometry_data(context, target, target_share=False):
     """
     Displays a table of the all photometric points for a target.
     """
-    photometry = ReducedDatum.objects.filter(data_type='photometry', target=target).order_by('-timestamp')
+    photometry = PhotometryReducedDatum.objects.filter(target=target).order_by('-timestamp')
     if not settings.TARGET_PERMISSIONS_ONLY:
         photometry = get_objects_for_user(
             context["request"].user,
-            "tom_dataproducts.view_reduceddatum",
+            "tom_dataproducts.view_photometryreduceddatum",
             klass=photometry,
         )
 
-    # Possibilities for reduced_datums from ZTF/MARS:
-    # reduced_datum.value: {'error': 0.0929680392146111, 'filter': 'r', 'magnitude': 18.2364940643311}
-    # reduced_datum.value: {'limit': 20.1023998260498, 'filter': 'g'}
-
-    # for limit magnitudes, set the value of the limit key to True and
-    # the value of the magnitude key to the limit so the template and
-    # treat magnitudes as such and prepend a '>' to the limit magnitudes
-    # see recent_photometry.html
+    # Non detections have limit set and brightness null, detections are the reverse.
     data = []
     for reduced_datum in photometry:
         rd_data = {'id': reduced_datum.pk,
                    'timestamp': reduced_datum.timestamp,
                    'source': reduced_datum.source_name,
-                   'filter': reduced_datum.value.get('filter', ''),
-                   'telescope': reduced_datum.value.get('telescope', ''),
-                   'error': reduced_datum.value.get('error', reduced_datum.value.get('magnitude_error', ''))
+                   'filter': reduced_datum.bandpass,
+                   'telescope': reduced_datum.telescope,
                    }
-
-        if 'limit' in reduced_datum.value.keys():
-            rd_data['magnitude'] = reduced_datum.value['limit']
+        if reduced_datum.limit is not None:
+            rd_data['magnitude'] = reduced_datum.limit
             rd_data['limit'] = True
+            rd_data['error'] = ''
         else:
-            rd_data['magnitude'] = reduced_datum.value['magnitude']
+            rd_data['magnitude'] = reduced_datum.brightness
             rd_data['limit'] = False
+            rd_data['error'] = reduced_datum.brightness_error or ''
         data.append(rd_data)
 
     initial = {'submitter': context['request'].user,
