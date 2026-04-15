@@ -13,12 +13,10 @@ class EventTodo(models.Model):
     modified = models.DateTimeField(auto_now=True)
 
     class Meta:
-        app_label = 'tom_calendar' 
+        app_label = 'tom_calendar'
 
     def __str__(self):
         return f'Todo for {self.event.title}: {self.description}'
-
-
 
 
 class CalendarEvent(models.Model):
@@ -45,7 +43,7 @@ class CalendarEvent(models.Model):
     todos: models.Manager[EventTodo]
 
     class Meta:
-        app_label = 'tom_calendar' 
+        app_label = 'tom_calendar'
 
     def __str__(self):
         return self.title
