@@ -63,7 +63,6 @@ INSTALLED_APPS = [
     'django_htmx',
     'tom_targets',
     'tom_alerts',
-    'tom_catalogs',
     'tom_observations',
     'tom_dataservices',
     'tom_dataproducts',
@@ -288,18 +287,6 @@ BROKERS = {
     },
     'LASAIR': {
         'api_key': '',
-    }
-}
-
-# Include or exclude specific dot separated harvester classes. If not set, all harvesters will be included based on
-# app configurations. If INCLUDE_HARVESTER_CLASSES is set, only those harvesters will be included. If
-# EXCLUDE_HARVESTER_CLASSES is set, all harvesters except those will be included.
-# INCLUDE_HARVESTER_CLASSES = ['app.example.harvesters.ExampleHarvester']
-# EXCLUDE_HARVESTER_CLASSES = ['app.example.harvesters.ExampleHarvester']
-
-HARVESTERS = {
-    'TNS': {
-        'api_key': ''
     }
 }
 
