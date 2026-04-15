@@ -362,6 +362,7 @@ class ReducedDatumCommon(models.Model):
     telescope = models.CharField(max_length=255, blank=True, default="")
     instrument = models.CharField(max_length=255, blank=True, default="")
     source_name = models.CharField(max_length=100, default="", blank=True)
+    source_location = models.CharField(max_length=200, default="", blank=True)
     message = models.ManyToManyField(AlertStreamMessage, blank=True)
 
     class Meta:
@@ -382,7 +383,6 @@ class ReducedDatum(ReducedDatumCommon):
     """
 
     data_type = models.CharField(max_length=100, default="")
-    source_location = models.CharField(max_length=200, default="", blank=True)
 
     class Meta:
         get_latest_by = ("timestamp",)
@@ -404,6 +404,7 @@ class ReducedDatum(ReducedDatumCommon):
 class PhotometryReducedDatum(ReducedDatumCommon):
     brightness = models.FloatField(blank=True, null=True)
     brightness_error = models.FloatField(blank=True, null=True)
+    limit = models.FloatField(blank=True, null=True)
     unit = models.CharField(max_length=32, blank=True, default="")
     bandpass = models.CharField(max_length=32)
     exposure_time = models.FloatField(blank=True, null=True)
