@@ -7,7 +7,7 @@ from django.test import tag, TestCase
 from faker import Faker
 
 from tom_alerts.brokers.alerce import ALeRCEBroker, ALeRCEQueryForm
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import PhotometryReducedDatum
 from tom_targets.models import Target
 from tom_targets.tests.factories import SiderealTargetFactory
 
@@ -401,7 +401,7 @@ class TestALeRCEBrokerClass(TestCase):
         mock_fetch_lightcurve.return_value = test_data
         target = SiderealTargetFactory()
         ALeRCEBroker().process_reduced_data(target)
-        self.assertEqual(ReducedDatum.objects.count(), 2)
+        self.assertEqual(PhotometryReducedDatum.objects.count(), 2)
 
     def test_to_generic_alert(self):
         """Test to_generic_alert broker method."""
