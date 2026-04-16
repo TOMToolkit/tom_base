@@ -1,78 +1,44 @@
-import ast
-
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
-class FloatArrayField(models.Field):
+class FloatArrayField(models.JSONField):
     """
-    Stores a list of floats as a TextField.
-
-    Python: [1.23, 4.567, 3.423e-19]
-    Database: "[1.23, 4.567, 3.423e-19]"
+    Stores a list of floats as a JSON array.
+    All values are coerced to float on assignment and validated.
     """
 
-    def get_internal_type(self):
-        return 'TextField'
+    @staticmethod
+    def _coerce_to_floats(value):
+        if not isinstance(value, list):
+            raise ValidationError("FloatArrayField value must be a list.")
+        result = []
+        for i, item in enumerate(value):
+            try:
+                result.append(float(item))
+            except (TypeError, ValueError):
+                raise ValidationError(
+                    f"Element at index {i} cannot be converted to float: {item!r}"
+                )
+        return result
 
     def from_db_value(self, value, expression, connection):
+        value = super().from_db_value(value, expression, connection)
         if value is None:
             return value
-        return self._parse(value)
+        return [float(x) for x in value]
 
     def to_python(self, value):
-        if value is None or isinstance(value, list):
+        value = super().to_python(value)
+        if value is None or value == []:
             return value
-        return self._parse(value)
+        return self._coerce_to_floats(value)
 
     def get_prep_value(self, value):
         if value is None:
-            return value
-        if isinstance(value, str):
-            return value
-        return repr([float(x) for x in value])
+            return super().get_prep_value(value)
+        return super().get_prep_value(self._coerce_to_floats(value))
 
-    def value_to_string(self, obj):
-        return self.get_prep_value(self.value_from_object(obj))
-
-    @staticmethod
-    def _parse(value):
-        if not value:
-            return []
-        return [float(x) for x in ast.literal_eval(value)]
-
-
-class FluxField(models.Field):
-    """
-    Stores a list of (x, y) float 2-tuples as a TextField.
-    Useful for storing spectral data with wavelength/flux pairs.
-    """
-
-    def get_internal_type(self):
-        return 'TextField'
-
-    def from_db_value(self, value, expression, connection):
-        if value is None:
-            return value
-        return self._parse(value)
-
-    def to_python(self, value):
-        if value is None or isinstance(value, list):
-            return value
-        return self._parse(value)
-
-    def get_prep_value(self, value):
-        if value is None:
-            return value
-        if isinstance(value, str):
-            return value
-        return repr([(float(x), float(y)) for x, y in value])
-
-    def value_to_string(self, obj):
-        return self.get_prep_value(self.value_from_object(obj))
-
-    @staticmethod
-    def _parse(value):
-        if not value:
-            return []
-        parsed = ast.literal_eval(value)
-        return [(float(x), float(y)) for x, y in parsed]
+    def validate(self, value, model_instance):
+        super().validate(value, model_instance)
+        self._coerce_to_floats(value)

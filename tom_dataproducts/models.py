@@ -16,7 +16,7 @@ from tom_alerts.models import AlertStreamMessage
 from tom_observations.models import ObservationRecord
 from tom_targets.base_models import BaseTarget
 
-from .fields import FloatArrayField, FluxField
+from .fields import FloatArrayField
 
 logger = logging.getLogger(__name__)
 
@@ -420,7 +420,8 @@ class PhotometryReducedDatum(ReducedDatumCommon):
 class SpectroscopyReducedDatum(ReducedDatumCommon):
     setup = models.CharField(max_length=2000, blank=True, default="")
     exposure_time = models.FloatField(blank=True, null=True)
-    flux = FluxField(blank=True, default=list)
+    wavelength = FloatArrayField(blank=True, default=list)
+    flux = FloatArrayField(blank=True, default=list)
     error = FloatArrayField(blank=True, default=list)
     flux_unit = models.TextField(blank=True, default="")
 
@@ -512,16 +513,19 @@ def _build_photometry_reduced_datum(data: dict) -> PhotometryReducedDatum:
 
 def _build_spectroscopy_reduced_datum(data: dict) -> SpectroscopyReducedDatum:
     FLUX_FIELDS = {"flux", "f"}
+    WAVELENGTH_FIELDS = {"wavelength", "wave", "wl"}
     ERROR_FIELDS = {"error", "err", "flux_error", "f_error"}
     FLUX_UNIT_FIELDS = {"flux_unit", "f_unit", "flux_units", "f_units"}
 
-    flux = _pop_find_field(FLUX_FIELDS, data)
-    error = _pop_find_field(ERROR_FIELDS, data)
+    flux = _pop_find_field(FLUX_FIELDS, data) or []
+    wavelength = _pop_find_field(WAVELENGTH_FIELDS, data) or []
+    error = _pop_find_field(ERROR_FIELDS, data) or []
     flux_unit = _pop_find_field(FLUX_UNIT_FIELDS, data) or ""
 
     extra_fields = _extract_extra_fields(data, SpectroscopyReducedDatum)
 
     return SpectroscopyReducedDatum(
+        wavelength=wavelength,
         flux=flux,
         error=error,
         flux_unit=flux_unit,

@@ -223,7 +223,7 @@ class TestReducedDatumViewset(APITestCase):
         payload = {
             "data_product": "",
             "data_type": "spectroscopy",
-            "value": {"flux": "[(123.4, 4.321)]", "error": "[0.005]", "flux_unit": "s"},
+            "value": {"flux": [123.4, 4.321], "wavelength": [150, 151], "error": [0.005], "flux_unit": "s"},
             "target": self.st.id,
             "timestamp": "2012-02-12T01:40:47Z",
         }
@@ -233,7 +233,7 @@ class TestReducedDatumViewset(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(SpectroscopyReducedDatum.objects.count(), 1)
         rd = SpectroscopyReducedDatum.objects.first()
-        self.assertEqual(rd.flux, [(123.4, 4.321)])
+        self.assertEqual(rd.flux, [123.4, 4.321])
         self.assertEqual(rd.target.id, payload["target"])
 
     def test_upload_astrometry_reduced_datum(self):

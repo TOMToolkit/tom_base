@@ -12,6 +12,7 @@ from astropy.table import Table
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -549,27 +550,27 @@ class TestDataProductModel(TestCase):
 
 class TestCustomFields(TestCase):
     def test_create_spectra_with_flux_data(self):
-        flux = [
-            (7.427265572723272e-16, 3399.697753906248),
-            (7.796862575906174e-16, 3401.383788108824),
-        ]
+        flux = [7.427265572723272, 3399.697753906248]
+        wavelength = [3399.697753906248, 3401.383788108824]
         rd = SpectroscopyReducedDatum.objects.create(
             target=SiderealTargetFactory.create(),
             timestamp=timezone.now(),
             exposure_time=1000.0,
             flux=flux,
+            wavelength=wavelength,
             flux_unit="Å",
         )
         rd.refresh_from_db()  # ensure we round trip to the database
         self.assertEqual(flux, rd.flux)
 
     def test_create_spectra_with_error_data(self):
-        error = [0.0001, 0.0002]
+        error = [0.0001, 0.0002, 0.0003, 0.0004]
         rd = SpectroscopyReducedDatum.objects.create(
             target=SiderealTargetFactory.create(),
             timestamp=timezone.now(),
             exposure_time=1000.0,
-            flux=[(1.0, 2.0), (3.0, 4.0)],
+            flux=[1.0, 2.0, 3.0, 4.0],
+            wavelength=[1, 2, 3, 4],
             error=error,
             flux_unit="Å",
         )
@@ -577,13 +578,14 @@ class TestCustomFields(TestCase):
         self.assertEqual(error, rd.error)
 
     def test_create_spectra_bad_flux(self):
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValidationError):
             SpectroscopyReducedDatum.objects.create(
                 target=SiderealTargetFactory.create(),
                 timestamp=timezone.now(),
                 exposure_time=1000.0,
-                flux=[1.0, 2.0, 3.0, 4.0],  # oops, not tuples.
-                flux_unit="Å",
+                flux=[1.0, 2.0, 3.0, "asd"],
+                wavelength=[1, 2, 3, 4],
+                flux_unit="cm^2",
             )
 
 
