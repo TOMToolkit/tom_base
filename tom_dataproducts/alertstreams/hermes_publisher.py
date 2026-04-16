@@ -8,8 +8,6 @@ from django.utils.module_loading import import_string
 from tom_alerts.models import AlertStreamMessage
 from tom_targets.models import Target
 
-
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -292,5 +290,3 @@ def get_hermes_topics(**kwargs):
         except (KeyError, requests.exceptions.JSONDecodeError):
             pass
     return topics
-
-

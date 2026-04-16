@@ -78,7 +78,8 @@ def hermes_alert_handler(alert, metadata):
     def resolve_target(target_name):
         if target_name not in target_cache:
             # We first attempt to match to an existing target in the TOM by target_name or any specified aliases
-            target_entry = next((t for t in target_table if t.get('name', '') == target_name), {}) if target_table else {}
+            target_entry = next((t for t in target_table if t.get('name', '')
+                                == target_name), {}) if target_table else {}
             aliases = target_entry.get('aliases', [])
             query = Target.matches.match_name(target_name)
             if not query:
@@ -195,7 +196,8 @@ def _ingest_hermes_spectroscopy_file(url, spectroscopy_row, target, hermes_alert
     spectroscopy_keys = ['date_obs', 'flux_units', 'wavelength_units', 'telescope', 'instrument', 'reducer',
                          'observer', 'spec_type', 'flux_type', 'classification', 'comments', 'exposure_time',
                          'setup', 'proprietary_period', 'proprietary_period_units']
-    spectroscopy_data = {key: spectroscopy_row[key] for key in spectroscopy_keys if key in spectroscopy_row and spectroscopy_row[key]}
+    spectroscopy_data = {key: spectroscopy_row[key]
+                         for key in spectroscopy_keys if key in spectroscopy_row and spectroscopy_row[key]}
     # Inject these two extra fields since they should be associated with the ReducedDatums somehow
     spectroscopy_data['source_name'] = hermes_alert.topic
     spectroscopy_data['source_location'] = alert_url
@@ -203,7 +205,8 @@ def _ingest_hermes_spectroscopy_file(url, spectroscopy_row, target, hermes_alert
     try:
         dp, created = DataProduct.objects.get_or_create(
             product_id=url,
-            defaults={'target': target, 'data_product_type': 'spectroscopy', 'extra_data': json.dumps(spectroscopy_data)},
+            defaults={'target': target, 'data_product_type': 'spectroscopy',
+                      'extra_data': json.dumps(spectroscopy_data)},
         )
         if created:
             _, ext = os.path.splitext(filename)

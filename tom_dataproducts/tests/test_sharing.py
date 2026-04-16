@@ -1,6 +1,7 @@
 from django.test import TestCase, override_settings
 
-from tom_dataproducts.alertstreams.hermes_publisher import create_hermes_alert, BuildHermesMessage, HermesMessageException
+from tom_dataproducts.alertstreams.hermes_publisher import (create_hermes_alert, BuildHermesMessage,
+                                                            HermesMessageException)
 from tom_dataproducts.models import ReducedDatum
 from tom_observations.tests.utils import FakeRoboticFacility
 from tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory

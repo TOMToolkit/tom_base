@@ -390,7 +390,8 @@ def spectroscopy_for_target(context, target, dataproduct=None):
     else:
         datums = get_objects_for_user(context['request'].user,
                                       'tom_dataproducts.view_reduceddatum',
-                                      klass=ReducedDatum.objects.filter(target=target, data_type=spectroscopy_data_type))
+                                      klass=ReducedDatum.objects.filter(target=target,
+                                                                        data_type=spectroscopy_data_type))
 
     # If a dataproduct is specified, filter on that specific dataproduct
     if dataproduct:
