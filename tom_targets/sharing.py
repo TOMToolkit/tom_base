@@ -8,7 +8,7 @@ from tom_targets.models import PersistentShare
 from tom_dataproducts.sharing import (check_for_share_safe_datums, share_data_with_tom,
                                       get_destination_target, sharing_feedback_converter)
 from tom_dataproducts.models import ReducedDatum
-from tom_dataproducts.alertstreams.hermes import publish_to_hermes, BuildHermesMessage
+from tom_dataproducts.alertstreams.hermes_publisher import publish_to_hermes, BuildHermesMessage
 
 
 def share_target_and_all_data(share_destination, target):

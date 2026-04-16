@@ -1,17 +1,14 @@
 import logging
-from dateutil.parser import parse
+import requests
 
 from django.conf import settings
 from django.core.cache import cache
 from django.utils.module_loading import import_string
 
-# from hop.io import Metadata
-
 from tom_alerts.models import AlertStreamMessage
-from tom_targets.models import Target, TargetList
-from tom_dataproducts.models import ReducedDatum
+from tom_targets.models import Target
 
-import requests
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -23,7 +20,7 @@ class HermesMessageException(Exception):
 
 def get_hermes_data_converter_class():
     return import_string(settings.DATA_SHARING['hermes'].get(
-        'DATA_CONVERTER_CLASS', 'tom_dataproducts.alertstreams.hermes.HermesDataConverter'))
+        'DATA_CONVERTER_CLASS', 'tom_dataproducts.alertstreams.hermes_publisher.HermesDataConverter'))
 
 
 class HermesDataConverter():
@@ -86,7 +83,7 @@ class HermesDataConverter():
         else:
             phot_table_row['limiting_brightness'] = datum.value.get('limit', None)
         error_value = datum.value.get('error', datum.value.get('magnitude_error', None))
-        if error_value is not None:
+        if error_value is not None and isinstance(error_value, (int, float)):
             phot_table_row['brightness_error'] = error_value
         return phot_table_row
 
@@ -297,117 +294,3 @@ def get_hermes_topics(**kwargs):
     return topics
 
 
-def hermes_alert_handler(alert, metadata):
-    """Example Alert Handler to record data streamed through Hermes as a new ReducedDatum.
-    -- Only Reads Photometry Data
-    -- Only ingests Data if exact match for Target Name
-    -- Does not Ingest Data if exact match already exists
-    -- Requires 'tom_alertstreams' in settings.INSTALLED_APPS
-    -- Requires ALERT_STREAMS['topic_handlers'] in settings
-    """
-    alert_as_dict = alert.content
-    photometry_table = alert_as_dict['data'].get('photometry', None)
-    # target_table = alert_as_dict['data'].get('targets', None)
-    if photometry_table:
-        hermes_alert = AlertStreamMessage(topic=alert_as_dict['topic'],
-                                          exchange_status='ingested',
-                                          message_id=alert_as_dict.get("uuid", None))
-        target_name = ''
-        query = []
-        for row in photometry_table:
-            if row['target_name'] != target_name:
-                target_name = row['target_name']
-                query = Target.matches.match_name(target_name)
-            if query:
-                target = query[0]
-            else:
-                # add conditional statements for whether to ingest a target here.
-                # target = create_new_hermes_target(target_table, target_name, target_list_name="new_hermes_object")
-                continue
-
-            try:
-                obs_date = parse(row['date_obs'])
-            except ValueError:
-                continue
-
-            datum = {
-                'target': target,
-                'data_type': 'photometry',
-                'source_name': alert_as_dict['topic'],
-                'source_location': 'Hermes via HOP',  # TODO Add message URL here once message ID's exist
-                'timestamp': obs_date,
-                'value': get_hermes_phot_value(row)
-            }
-            new_rd, created = ReducedDatum.objects.get_or_create(**datum)
-            if created:
-                hermes_alert.save()
-                new_rd.message.add(hermes_alert)
-                new_rd.save()
-
-
-def get_hermes_phot_value(phot_data):
-    """
-    Convert Hermes Message format for a row of Photometry table into parameters accepted by the Reduced Datum model
-    :param phot_data: Dictionary containing Hermes Photometry table.
-    :return: Dictionary containing properly formatted parameters for Reduced_Datum
-    """
-    data_dictionary = {
-        'error': phot_data.get('brightness_error', ''),
-        'filter': phot_data['bandpass'],
-        'telescope': phot_data.get('telescope', ''),
-        'instrument': phot_data.get('instrument', ''),
-        'unit': phot_data['brightness_unit'],
-    }
-
-    if phot_data.get('brightness', None):
-        data_dictionary['magnitude'] = phot_data['brightness']
-    elif phot_data.get('limiting_brightness', None):
-        data_dictionary['limit'] = phot_data['limiting_brightness']
-
-    return data_dictionary
-
-
-def create_new_hermes_target(target_table, target_name=None, target_list_name=None):
-    """
-    Ingest a target into your TOM from Hermes.
-    Takes a target_table and a target_name. If no target name is given, every target on the target table will be
-    ingested.
-    :param target_table: Hermes Target table from a Hermes Message
-    :param target_name: Name for individual target to ingest from target table.
-    :param target_list_name: Name of TargetList within which new target should be placed.
-    :return:
-    """
-    target = None
-    for hermes_target in target_table:
-        if target_name == hermes_target['name'] or target_name is None:
-
-            new_target = {"name": hermes_target.pop('name')}
-            if "ra" in hermes_target and "dec" in hermes_target:
-                new_target['type'] = 'SIDEREAL'
-                new_target['ra'] = hermes_target.pop('ra')
-                new_target['dec'] = hermes_target.pop('dec')
-                new_target['pm_ra'] = hermes_target.pop('pm_ra', None)
-                new_target['pm_dec'] = hermes_target.pop('pm_dec', None)
-                new_target['epoch'] = hermes_target.pop('epoch', None)
-            elif "orbital_elements" in hermes_target:
-                orbital_elements = hermes_target.pop('orbital_elements')
-                new_target['type'] = 'NON_SIDEREAL'
-                new_target['epoch_of_elements'] = orbital_elements.pop('epoch_of_elements', None)
-                new_target['mean_anomaly'] = orbital_elements.pop('mean_anomaly', None)
-                new_target['arg_of_perihelion'] = orbital_elements.pop('argument_of_the_perihelion', None)
-                new_target['eccentricity'] = orbital_elements.pop('eccentricity', None)
-                new_target['lng_asc_node'] = orbital_elements.pop('longitude_of_the_ascending_node', None)
-                new_target['inclination'] = orbital_elements.pop('orbital_inclination', None)
-                new_target['semimajor_axis'] = orbital_elements.pop('semimajor_axis', None)
-                new_target['epoch_of_perihelion'] = orbital_elements.pop('epoch_of_perihelion', None)
-                new_target['perihdist'] = orbital_elements.pop('perihelion_distance', None)
-            aliases = hermes_target.pop('aliases', [])
-            target = Target(**new_target)
-            target.full_clean()
-            target.save(names=aliases, extras=hermes_target)
-            if target_list_name:
-                target_list, created = TargetList.objects.get_or_create(name=target_list_name)
-                if created:
-                    logger.debug(f'New target_list created: {target_list_name}')
-                target_list.targets.add(target)
-    return target

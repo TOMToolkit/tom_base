@@ -383,18 +383,19 @@ def spectroscopy_for_target(context, target, dataproduct=None):
         spectroscopy_data_type = settings.DATA_PRODUCT_TYPES['spectroscopy'][0]
     except (AttributeError, KeyError):
         spectroscopy_data_type = 'spectroscopy'
-    spectral_dataproducts = DataProduct.objects.filter(target=target,
-                                                       data_product_type=spectroscopy_data_type)
-    if dataproduct:
-        spectral_dataproducts = DataProduct.objects.get(data_product=dataproduct)
 
     plot_data = []
     if settings.TARGET_PERMISSIONS_ONLY:
-        datums = ReducedDatum.objects.filter(data_product__in=spectral_dataproducts)
+        datums = ReducedDatum.objects.filter(target=target, data_type=spectroscopy_data_type)
     else:
         datums = get_objects_for_user(context['request'].user,
                                       'tom_dataproducts.view_reduceddatum',
-                                      klass=ReducedDatum.objects.filter(data_product__in=spectral_dataproducts))
+                                      klass=ReducedDatum.objects.filter(target=target, data_type=spectroscopy_data_type))
+
+    # If a dataproduct is specified, filter on that specific dataproduct
+    if dataproduct:
+        datums.filter(data_product=dataproduct)
+
     for datum in datums:
         deserialized = SpectrumSerializer().deserialize(datum.value)
         plot_data.append(go.Scatter(
