@@ -15,7 +15,7 @@ from tom_targets.models import Target
 
 from tom_dataproducts.models import DataProduct, PhotometryReducedDatum
 from tom_dataproducts.alertstreams.hermes import publish_to_hermes, BuildHermesMessage, get_hermes_topics
-from tom_dataproducts.serializers import DataProductSerializer, PhotometryReducedDatumSerializer
+from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
 
 
 def share_target_list_with_hermes(share_destination, form_data, selected_targets=None, include_all_data=False):
@@ -177,7 +177,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             return {'message': 'ERROR: No valid data to share.'}
         for datum in reduced_datums:
             if target_dict[datum.target.name]:
-                serialized_data = PhotometryReducedDatumSerializer(datum).data
+                serialized_data = ReducedDatumSerializer(datum).data
                 serialized_data['target'] = target_dict[datum.target.name]
                 if not serialized_data['source_name']:
                     serialized_data['source_name'] = settings.TOM_NAME

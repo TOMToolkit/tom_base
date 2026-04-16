@@ -176,26 +176,28 @@ class TestReducedDatumViewset(APITestCase):
         self.assertContains(response, rd.data_type, status_code=status.HTTP_200_OK)
 
     def test_reduced_datum_filter(self):
-        rd1 = ReducedDatum.objects.create(
+        rd1 = PhotometryReducedDatum.objects.create(
             target=self.st,
-            data_type='photometry',
             source_name='TOM Toolkit',
-            value={'magnitude': 15.582, 'filter': 'r', 'error': 0.005},
+            brightness=15.582,
+            brightness_error=0.005,
+            bandpass='r',
         )
-        rd2 = ReducedDatum.objects.create(
+        rd2 = SpectroscopyReducedDatum.objects.create(
             target=self.st,
-            data_type='spectroscopy',
             source_name='TOM Toolkit',
-            value={'wavelength': 150, 'flux': 12, 'error': 0.005},
+            wavelength=[150.0],
+            flux=[12.0],
+            error=[0.005]
         )
 
         # test filter for one object
         response = self.client.get(reverse('api:reduceddatums-list'), QUERY_STRING='data_type=photometry')
-        self.assertContains(response, rd1.data_type, status_code=status.HTTP_200_OK, count=1)
+        self.assertContains(response, rd1.brightness, status_code=status.HTTP_200_OK, count=1)
 
         # test filter for both objects
         response2 = self.client.get(reverse('api:reduceddatums-list'), QUERY_STRING=f'target_name={self.st.name}')
-        self.assertContains(response2, rd2.data_type, status_code=status.HTTP_200_OK, count=2)
+        self.assertContains(response2, rd2.flux, status_code=status.HTTP_200_OK, count=2)
 
         # test filter for no objects
         response3 = self.client.get(reverse('api:reduceddatums-list'), QUERY_STRING='source_name=thin_air')
@@ -270,3 +272,86 @@ class TestReducedDatumViewset(APITestCase):
         self.assertEqual(rd.value["ra"], 11.2)
         self.assertEqual(rd.value["foobar"], 0.005)
         self.assertEqual(rd.target.id, payload["target"])
+
+    def test_list_includes_all_typed_models(self):
+        """GET /api/reduceddatums/ returns rows from all concrete model tables."""
+        PhotometryReducedDatum.objects.create(target=self.st, brightness=15.0, bandpass='r')
+        SpectroscopyReducedDatum.objects.create(target=self.st, flux=[1.0], wavelength=[6000.0])
+        AstrometryReducedDatum.objects.create(target=self.st, ra=10.0, dec=20.0)
+
+        response = self.client.get(reverse('api:reduceddatums-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 3)
+
+    def test_photometry_representation(self):
+        """PhotometryReducedDatum is serialized to the legacy wire format."""
+        PhotometryReducedDatum.objects.create(
+            target=self.st, brightness=15.582, brightness_error=0.005,
+            bandpass='r', unit='AB', telescope='tst'
+        )
+
+        result = self.client.get(reverse('api:reduceddatums-list')).data['results'][0]
+        self.assertEqual(result['data_type'], 'photometry')
+        self.assertIsNone(result['data_product'])
+        self.assertEqual(result['value']['brightness'], 15.582)
+        self.assertEqual(result['value']['brightness_error'], 0.005)
+        self.assertEqual(result['value']['bandpass'], 'r')
+        self.assertEqual(result['value']['telescope'], 'tst')
+
+    def test_spectroscopy_representation(self):
+        """SpectroscopyReducedDatum is serialized to the legacy wire format."""
+        SpectroscopyReducedDatum.objects.create(
+            target=self.st, flux=[1.0, 2.0], wavelength=[6000.0, 6001.0],
+            error=[0.1, 0.1], flux_unit='erg/cm2/s/A'
+        )
+
+        result = self.client.get(reverse('api:reduceddatums-list')).data['results'][0]
+        self.assertEqual(result['data_type'], 'spectroscopy')
+        self.assertIsNone(result['data_product'])
+        self.assertEqual(result['value']['flux'], [1.0, 2.0])
+        self.assertEqual(result['value']['wavelength'], [6000.0, 6001.0])
+        self.assertEqual(result['value']['error'], [0.1, 0.1])
+        self.assertEqual(result['value']['flux_unit'], 'erg/cm2/s/A')
+
+    def test_astrometry_representation(self):
+        """AstrometryReducedDatum is serialized to the legacy wire format."""
+        AstrometryReducedDatum.objects.create(
+            target=self.st, ra=10.5, dec=20.3, ra_error=0.001, dec_error=0.002
+        )
+
+        result = self.client.get(reverse('api:reduceddatums-list')).data['results'][0]
+        self.assertEqual(result['data_type'], 'astrometry')
+        self.assertIsNone(result['data_product'])
+        self.assertEqual(result['value']['ra'], 10.5)
+        self.assertEqual(result['value']['dec'], 20.3)
+        self.assertEqual(result['value']['ra_error'], 0.001)
+        self.assertEqual(result['value']['dec_error'], 0.002)
+
+    def test_data_type_filter_routes_to_correct_model(self):
+        """?data_type= returns only rows from the matching concrete model table."""
+        PhotometryReducedDatum.objects.create(target=self.st, brightness=15.0, bandpass='r')
+        SpectroscopyReducedDatum.objects.create(target=self.st, flux=[1.0], wavelength=[6000.0])
+
+        response = self.client.get(reverse('api:reduceddatums-list'), QUERY_STRING='data_type=photometry')
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['results'][0]['data_type'], 'photometry')
+
+        response = self.client.get(reverse('api:reduceddatums-list'), QUERY_STRING='data_type=spectroscopy')
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['results'][0]['data_type'], 'spectroscopy')
+
+    def test_round_trip_post_then_get(self):
+        """Data POSTed in legacy wire format is stored as a typed model and returned in the same format."""
+        payload = {
+            'data_type': 'photometry',
+            'value': {'magnitude': 15.582, 'filter': 'r', 'error': 0.005},
+            'target': self.st.id,
+            'timestamp': '2012-02-12T01:40:47Z',
+        }
+        self.client.post(reverse('api:reduceddatums-list'), payload, format='json')
+        self.assertEqual(PhotometryReducedDatum.objects.count(), 1)
+
+        result = self.client.get(reverse('api:reduceddatums-list')).data['results'][0]
+        self.assertEqual(result['data_type'], 'photometry')
+        self.assertEqual(result['value']['brightness'], 15.582)
+        self.assertEqual(result['value']['bandpass'], 'r')
