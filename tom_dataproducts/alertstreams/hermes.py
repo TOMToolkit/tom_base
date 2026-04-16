@@ -9,7 +9,7 @@ from django.utils.module_loading import import_string
 
 from tom_alerts.models import AlertStreamMessage
 from tom_targets.models import Target, TargetList
-from tom_dataproducts.models import PhotometryReducedDatum
+from tom_dataproducts.models import PhotometryReducedDatum, SpectroscopyReducedDatum
 
 import requests
 
@@ -74,56 +74,34 @@ class HermesDataConverter():
         phot_table_row = {
             'target_name': datum.target.name,
             'date_obs': datum.timestamp.isoformat(),
-            'telescope': datum.value.get('telescope'),
-            'instrument': datum.value.get('instrument'),
-            'bandpass': datum.value.get('filter', ''),
+            'telescope': datum.telescope,
+            'instrument': datum.instrument,
+            'bandpass': datum.bandpass,
         }
-        brightness_unit = convert_astropy_brightness_to_hermes(datum.value.get('unit'))
+        brightness_unit = convert_astropy_brightness_to_hermes(datum.unit)
         if brightness_unit:
             phot_table_row['brightness_unit'] = brightness_unit
-        if datum.value.get('magnitude', None):
-            phot_table_row['brightness'] = datum.value['magnitude']
+        if datum.brightness is not None:
+            phot_table_row['brightness'] = datum.brightness
         else:
-            phot_table_row['limiting_brightness'] = datum.value.get('limit', None)
-        error_value = datum.value.get('error', datum.value.get('magnitude_error', None))
-        if error_value is not None:
-            phot_table_row['brightness_error'] = error_value
+            phot_table_row['limiting_brightness'] = datum.limit
+        if datum.brightness_error is not None:
+            phot_table_row['brightness_error'] = datum.brightness_error
         return phot_table_row
 
     def get_hermes_spectroscopy(self, datum):
-        """Build a row for a Hermes Spectroscopy Table using a TOM Spectroscopy datum
-           The datum is assumed to have is json value be of the form {1: {flux: 1, wavelength:200}, 2: {},...}
-           Or the form {'flux': [1,2,3,...], 'wavelength': [1,2,3,...]}
-        """
-        flux_list = []
-        flux_error_list = []
-        wavelength_list = []
-        if 'flux' in datum.value and 'wavelength' in datum.value:
-            flux_list = datum.value['flux']
-            wavelength_list = datum.value['wavelength']
-            flux_error_list = datum.value.get('flux_error', datum.value.get('error', []))
-        else:
-            for entry in datum.value.values():
-                if 'flux' in entry:
-                    flux_list.append(entry['flux'])
-                if 'wavelength' in entry:
-                    wavelength_list.append(entry['wavelength'])
-                if 'error' in entry:
-                    flux_error_list.append(entry['error'])
-                if 'flux_error' in entry:
-                    flux_error_list.append(entry['flux_error'])
+        """Build a row for a Hermes Spectroscopy Table using a SpectroscopyReducedDatum."""
 
         if self.validate:
-            if len(flux_list) != len(wavelength_list):
+            if len(datum.flux) != len(datum.wavelength):
                 msg = f"Spectroscopy Datum {datum.id} has mismatched flux and wavelength values"
                 logger.error(msg)
                 raise HermesMessageException(msg)
-            elif len(flux_list) == 0 or len(wavelength_list) == 0:
-                msg = f"Spectroscopy Datum {datum.id} has spectrum data in unknown format."
-                msg += "Please implement a custom HermesDatumConverter to support your data format."
+            elif len(datum.flux) == 0 or len(datum.wavelength) == 0:
+                msg = f"Spectroscopy Datum {datum.id} has no spectral data."
                 logger.error(msg)
                 raise HermesMessageException(msg)
-            if flux_error_list and len(flux_error_list) != len(flux_list):
+            if datum.error and len(datum.error) != len(datum.flux):
                 msg = f"Spectroscopy Datum {datum.id} must have the same number of flux and flux error datapoints"
                 logger.error(msg)
                 raise HermesMessageException(msg)
@@ -131,17 +109,15 @@ class HermesDataConverter():
         spectroscopy_table_row = {
             'target_name': datum.target.name,
             'date_obs': datum.timestamp.isoformat(),
-            'telescope': datum.value.get('telescope'),
-            'instrument': datum.value.get('instrument'),
-            'reducer': datum.value.get('reducer'),
-            'observer': datum.value.get('observer'),
-            'flux': flux_list,
-            'wavelength': wavelength_list,
-            'flux_units': datum.value.get('flux_units'),
+            'telescope': datum.telescope,
+            'instrument': datum.instrument,
+            'flux': datum.flux,
+            'wavelength': datum.wavelength,
+            'flux_units': datum.flux_unit,
             'wavelength_units': convert_astropy_wavelength_to_hermes(datum.value.get('wavelength_units')),
         }
-        if flux_error_list:
-            spectroscopy_table_row['flux_error'] = flux_error_list
+        if datum.error:
+            spectroscopy_table_row['flux_error'] = datum.error
 
         return spectroscopy_table_row
 
@@ -249,9 +225,9 @@ def create_hermes_alert(message_info, datums, targets=Target.objects.none(), **k
     for datum in datums:
         if datum.target.name not in hermes_target_dict:
             hermes_target_dict[datum.target.name] = hermes_data_converter.get_hermes_target(datum.target)
-        if datum.data_type == 'photometry':
+        if isinstance(datum, PhotometryReducedDatum):
             hermes_photometry_data.append(hermes_data_converter.get_hermes_photometry(datum))
-        elif datum.data_type == 'spectroscopy':
+        elif isinstance(datum, SpectroscopyReducedDatum):
             hermes_spectroscopy_data.append(hermes_data_converter.get_hermes_spectroscopy(datum))
 
     # Now go through the targets queryset and ensure we have all of them in the table

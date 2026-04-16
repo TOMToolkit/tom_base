@@ -4,11 +4,40 @@ from guardian.shortcuts import assign_perm, get_groups_with_perms
 from rest_framework import serializers
 
 from tom_common.serializers import GroupSerializer
-from tom_dataproducts.models import DataProductGroup, DataProduct, ReducedDatum, try_parse_reduced_datum
+from tom_dataproducts.models import DataProductGroup, DataProduct, ReducedDatum
+from tom_dataproducts.models import PhotometryReducedDatum, try_parse_reduced_datum
 from tom_observations.models import ObservationRecord
 from tom_observations.serializers import ObservationRecordFilteredPrimaryKeyRelatedField
 from tom_targets.models import Target
 from tom_targets.fields import TargetFilteredPrimaryKeyRelatedField
+
+
+class PhotometryReducedDatumSerializer(serializers.ModelSerializer):
+    """Serializes a PhotometryReducedDatum into the legacy ReducedDatum wire format
+    """
+    data_type = serializers.SerializerMethodField()
+    value = serializers.SerializerMethodField()
+    data_product = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PhotometryReducedDatum
+        fields = ('data_product', 'data_type', 'source_name', 'source_location', 'timestamp', 'value', 'target')
+
+    def get_data_type(self, obj):
+        return 'photometry'
+
+    def get_value(self, obj):
+        return {
+            'brightness': obj.brightness,
+            'brightness_error': obj.brightness_error,
+            'bandpass': obj.bandpass,
+            'unit': obj.unit,
+            'telescope': obj.telescope,
+            'instrument': obj.instrument,
+        }
+
+    def get_data_product(self, obj):
+        return None
 
 
 class DataProductGroupSerializer(serializers.ModelSerializer):

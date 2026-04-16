@@ -13,9 +13,9 @@ from django.utils.text import slugify
 
 from tom_targets.models import Target
 
-from tom_dataproducts.models import DataProduct, ReducedDatum
+from tom_dataproducts.models import DataProduct, PhotometryReducedDatum
 from tom_dataproducts.alertstreams.hermes import publish_to_hermes, BuildHermesMessage, get_hermes_topics
-from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
+from tom_dataproducts.serializers import DataProductSerializer, PhotometryReducedDatumSerializer
 
 
 def share_target_list_with_hermes(share_destination, form_data, selected_targets=None, include_all_data=False):
@@ -33,9 +33,9 @@ def share_target_list_with_hermes(share_destination, form_data, selected_targets
     title_name = f"{target_list.name} target list"
     targets = Target.objects.filter(id__in=selected_targets)
     if include_all_data:
-        reduced_datums = ReducedDatum.objects.filter(target__id__in=selected_targets, data_type='photometry')
+        reduced_datums = PhotometryReducedDatum.objects.filter(target__id__in=selected_targets)
     else:
-        reduced_datums = ReducedDatum.objects.none()
+        reduced_datums = PhotometryReducedDatum.objects.none()
     return _share_with_hermes(share_destination, form_data, title_name, reduced_datums, targets)
 
 
@@ -50,29 +50,27 @@ def share_data_with_hermes(share_destination, form_data, product_id=None, target
     :return: json response for the sharing
     """
     # Query relevant Reduced Datums Queryset
-    accepted_data_types = ['photometry', 'spectroscopy']
     if product_id:
         product = DataProduct.objects.get(pk=product_id)
         target = product.target
-        reduced_datums = ReducedDatum.objects.filter(data_product=product)
+        reduced_datums = PhotometryReducedDatum.objects.filter(data_product=product)
     elif selected_data:
-        reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
+        reduced_datums = PhotometryReducedDatum.objects.filter(pk__in=selected_data)
         target = reduced_datums[0].target
     elif target_id:
         target = Target.objects.get(pk=target_id)
-        reduced_datums = ReducedDatum.objects.none()
+        reduced_datums = PhotometryReducedDatum.objects.none()
     else:
-        reduced_datums = ReducedDatum.objects.none()
+        reduced_datums = PhotometryReducedDatum.objects.none()
         target = Target.objects.none()
     title_name = target.name if target else ''
-    reduced_datums.filter(data_type__in=accepted_data_types)
     return _share_with_hermes(
         share_destination, form_data, title_name, reduced_datums, targets=Target.objects.filter(pk=target.pk)
     )
 
 
 def _share_with_hermes(share_destination, form_data, title_name,
-                       reduced_datums=ReducedDatum.objects.none(),
+                       reduced_datums=PhotometryReducedDatum.objects.none(),
                        targets=Target.objects.none()):
     """
     Helper method to serialize and share data with hermes
@@ -127,7 +125,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
     dataproducts_url = destination_tom_base_url + 'api/dataproducts/'
     targets_url = destination_tom_base_url + 'api/targets/'
     reduced_datums_url = destination_tom_base_url + 'api/reduceddatums/'
-    reduced_datums = ReducedDatum.objects.none()
+    reduced_datums = PhotometryReducedDatum.objects.none()
 
     # If a DataProduct is provided, share that DataProduct
     if product_id:
@@ -151,7 +149,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
     elif selected_data or target_id:
         # If ReducedDatums are provided, share those ReducedDatums
         if selected_data:
-            reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
+            reduced_datums = PhotometryReducedDatum.objects.filter(pk__in=selected_data)
             targets = set(reduced_datum.target for reduced_datum in reduced_datums)
             target_dict = {}
             for target in targets:
@@ -166,7 +164,7 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             # If Target is provided, share all ReducedDatums for that Target
             # (Will not create New Target in Destination TOM)
             target = Target.objects.get(pk=target_id)
-            reduced_datums = ReducedDatum.objects.filter(target=target)
+            reduced_datums = PhotometryReducedDatum.objects.filter(target=target)
             destination_target_id, _ = get_destination_target(target, targets_url, headers, auth)
             if destination_target_id is None:
                 return {'message': 'ERROR: No matching target found.'}
@@ -179,9 +177,8 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             return {'message': 'ERROR: No valid data to share.'}
         for datum in reduced_datums:
             if target_dict[datum.target.name]:
-                serialized_data = ReducedDatumSerializer(datum).data
+                serialized_data = PhotometryReducedDatumSerializer(datum).data
                 serialized_data['target'] = target_dict[datum.target.name]
-                serialized_data['data_product'] = ''
                 if not serialized_data['source_name']:
                     serialized_data['source_name'] = settings.TOM_NAME
                     serialized_data['source_location'] = f"ReducedDatum shared from " \
@@ -313,35 +310,25 @@ def sharing_feedback_handler(response, request):
     return
 
 
-def process_spectro_data_for_download(serialized_datum):
-    """ Turns a serialized spectrograph datum into a list of serialized datums with the
-        spectrograph info expanded one piece per line
+def process_spectro_data_for_download(datum):
+    """ Turns a SpectroscopyReducedDatum into a list of row dicts with the spectrum
+        expanded to one row per wavelength/flux point.
     """
     download_datums = []
-    spectra_data = serialized_datum.pop('value')
-    if ('flux' in spectra_data and isinstance(spectra_data['flux'], list)
-        and 'wavelength' in spectra_data and isinstance(spectra_data['wavelength'], list)
-            and len(spectra_data['flux']) == len(spectra_data['wavelength'])):
-        datum_to_copy = serialized_datum.copy()
-        # If its a data dict with certain array or dict fields, then first copy the scalar fields over
-        for key, value in spectra_data.items():
-            if not isinstance(value, (list, dict)) and key not in datum_to_copy:
-                datum_to_copy[key] = value
-        # And then iterate over the expected array fields to build output rows
-        for i, flux in enumerate(spectra_data['flux']):
-            expanded_datum = datum_to_copy.copy()
-            expanded_datum['flux'] = flux
-            expanded_datum['wavelength'] = spectra_data['wavelength'][i]
-            if 'flux_error' in spectra_data and isinstance(spectra_data['flux_error'], list):
-                expanded_datum['flux_error'] = spectra_data['flux_error'][i]
-            download_datums.append(expanded_datum)
-    else:
-        for entry in spectra_data.values():
-            if isinstance(entry, dict):
-                expanded_datum = serialized_datum.copy()
-                # If its an "array" of dicts, just expand each dict into the output
-                expanded_datum.update(entry)
-                download_datums.append(expanded_datum)
+    if datum.flux and datum.wavelength and len(datum.flux) == len(datum.wavelength):
+        scalar_fields = {
+            'timestamp': datum.timestamp,
+            'telescope': datum.telescope,
+            'instrument': datum.instrument,
+            'setup': datum.setup,
+            'flux_unit': datum.flux_unit,
+            'source_name': datum.source_name,
+        }
+        for i, (wavelength, flux) in enumerate(zip(datum.wavelength, datum.flux)):
+            row = {**scalar_fields, 'wavelength': wavelength, 'flux': flux}
+            if datum.error and i < len(datum.error):
+                row['flux_error'] = datum.error[i]
+            download_datums.append(row)
     return download_datums
 
 
@@ -354,18 +341,24 @@ def download_data(form_data, selected_data):
     :param selected_data: ReducucedDatums selected via the checkboxes in the DataShareForm
     :return: CSV photometry or spectroscopy table as a StreamingHttpResponse
     """
-    reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data)
-    serialized_data = [ReducedDatumSerializer(rd).data for rd in reduced_datums]
+    # TODO: selected_data can only contain photometry PKs as of now. the share-box checkboxes are
+    # only rendered in photometry_datalist_for_target.html.
+    # There is no spectroscopy share UI.
+    phot_datums = PhotometryReducedDatum.objects.filter(pk__in=selected_data)
     data_to_save = []
     sort_fields = ['timestamp']
-    for datum in serialized_data:
-        if datum.get('data_type') == 'photometry':
-            datum.update(datum.pop('value'))
-            data_to_save.append(datum)
-        elif datum.get('data_type') == 'spectroscopy':
-            sort_fields = ['timestamp', 'wavelength']
-            # Attempt to expand the photometry table stored in the .value into multiple entries in serialized data
-            data_to_save.extend(process_spectro_data_for_download(datum))
+    for datum in phot_datums:
+        data_to_save.append({
+            'timestamp': datum.timestamp,
+            'telescope': datum.telescope,
+            'instrument': datum.instrument,
+            'bandpass': datum.bandpass,
+            'brightness': datum.brightness,
+            'brightness_error': datum.brightness_error,
+            'limit': datum.limit,
+            'unit': datum.unit,
+            'source_name': datum.source_name,
+        })
     table = Table(data_to_save)
     if form_data.get('share_message'):
         table.meta['comments'] = [form_data['share_message']]

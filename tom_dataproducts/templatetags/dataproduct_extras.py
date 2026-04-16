@@ -19,8 +19,7 @@ import base64
 import numpy as np
 
 from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
-from tom_dataproducts.models import DataProduct, PhotometryReducedDatum, ReducedDatum
-from tom_dataproducts.processors.data_serializers import SpectrumSerializer
+from tom_dataproducts.models import DataProduct, PhotometryReducedDatum, SpectroscopyReducedDatum
 from tom_dataproducts.single_target_data_service.single_target_data_service import get_service_classes, \
     get_service_class
 from tom_observations.models import ObservationRecord
@@ -376,16 +375,16 @@ def spectroscopy_for_target(context, target, dataproduct=None):
 
     plot_data = []
     if settings.TARGET_PERMISSIONS_ONLY:
-        datums = ReducedDatum.objects.filter(data_product__in=spectral_dataproducts)
+        datums = SpectroscopyReducedDatum.objects.filter(data_product__in=spectral_dataproducts)
     else:
         datums = get_objects_for_user(context['request'].user,
-                                      'tom_dataproducts.view_reduceddatum',
-                                      klass=ReducedDatum.objects.filter(data_product__in=spectral_dataproducts))
+                                      'tom_dataproducts.view_spectroscopyreduceddatum',
+                                      klass=SpectroscopyReducedDatum.objects.filter(
+                                          data_product__in=spectral_dataproducts))
     for datum in datums:
-        deserialized = SpectrumSerializer().deserialize(datum.value)
         plot_data.append(go.Scatter(
-            x=deserialized.wavelength.value,
-            y=deserialized.flux.value,
+            x=datum.wavelength,
+            y=datum.flux,
             name=datetime.strftime(datum.timestamp, '%Y%m%d-%H:%M:%s')
         ))
 

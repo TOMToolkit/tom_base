@@ -669,20 +669,23 @@ class TestShareDataProducts(TestCase):
         assign_perm('tom_targets.view_target', self.user, self.target)
         self.client.force_login(self.user)
 
-        self.rd1 = ReducedDatum.objects.create(
+        self.rd1 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 18.5, 'error': .5, 'filter': 'V'}
+            brightness=18.5,
+            brightness_error=0.5,
+            bandpass='V',
         )
-        self.rd2 = ReducedDatum.objects.create(
+        self.rd2 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 19.5, 'error': .5, 'filter': 'B'}
+            brightness=19.5,
+            brightness_error=0.5,
+            bandpass='B',
         )
-        self.rd3 = ReducedDatum.objects.create(
+        self.rd3 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 17.5, 'error': .5, 'filter': 'R'}
+            brightness=17.5,
+            brightness_error=0.5,
+            bandpass='R',
         )
 
     @responses.activate
@@ -779,7 +782,7 @@ class TestShareDataProducts(TestCase):
                 'share_destination': [share_destination],
                 'share_title': ['Updated data for thingy.'],
                 'share_message': ['test_message'],
-                'share-box': [1, 2]
+                'share-box': [self.rd1.pk, self.rd2.pk]
             },
             follow=True
         )
@@ -897,7 +900,7 @@ class TestShareDataProducts(TestCase):
                 'share_destination': [share_destination],
                 'share_title': ['Updated data for thingy.'],
                 'share_message': ['test_message'],
-                'share-box': [1, 2]
+                'share-box': [self.rd1.pk, self.rd2.pk]
             },
             follow=True
         )
@@ -929,7 +932,7 @@ class TestShareDataProducts(TestCase):
             'share_destination': [share_destination],
             'share_title': ['Updated data for thingy.'],
             'share_message': ['test_message'],
-            'share-box': [1, 2]
+            'share-box': [self.rd1.pk, self.rd2.pk]
         }
         # Check 500 error
         responses.add(

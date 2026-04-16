@@ -21,7 +21,7 @@ from tom_targets.merge import target_merge
 from tom_targets.base_models import BaseTarget
 from tom_targets.templatetags.targets_extras import target_table_headers, target_table_row
 from tom_targets.permissions import targets_for_user
-from tom_dataproducts.models import ReducedDatum, DataProduct
+from tom_dataproducts.models import PhotometryReducedDatum, ReducedDatum, DataProduct
 from tom_observations.models import ObservationRecord
 from guardian.shortcuts import assign_perm, get_perms
 
@@ -1466,20 +1466,23 @@ class TestShareTargets(TestCase):
         self.user = User.objects.create_user(username='test', email='test@example.com')
         assign_perm('tom_targets.view_target', self.user, self.target)
         self.client.force_login(self.user)
-        self.rd1 = ReducedDatum.objects.create(
+        self.rd1 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 18.5, 'error': .5, 'filter': 'V'}
+            brightness=18.5,
+            brightness_error=0.5,
+            bandpass='V',
         )
-        self.rd2 = ReducedDatum.objects.create(
+        self.rd2 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 19.5, 'error': .5, 'filter': 'B'}
+            brightness=19.5,
+            brightness_error=0.5,
+            bandpass='B',
         )
-        self.rd3 = ReducedDatum.objects.create(
+        self.rd3 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 17.5, 'error': .5, 'filter': 'R'}
+            brightness=17.5,
+            brightness_error=0.5,
+            bandpass='R',
         )
 
     @responses.activate
@@ -1616,7 +1619,7 @@ class TestShareTargets(TestCase):
                 'submitter': ['test_submitter'],
                 'target': self.target.id,
                 'share_destination': [share_destination],
-                'share-box': [1, 2]
+                'share-box': [self.rd1.pk, self.rd2.pk]
             },
             follow=True
         )
@@ -1646,25 +1649,29 @@ class TestShareTargetList(TestCase):
         self.user = User.objects.create_user(username='test', email='test@example.com')
         assign_perm('tom_targets.view_target', self.user, self.target)
         self.client.force_login(self.user)
-        self.rd1 = ReducedDatum.objects.create(
+        self.rd1 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 18.5, 'error': .5, 'filter': 'V'}
+            brightness=18.5,
+            brightness_error=0.5,
+            bandpass='V',
         )
-        self.rd2 = ReducedDatum.objects.create(
+        self.rd2 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 19.5, 'error': .5, 'filter': 'B'}
+            brightness=19.5,
+            brightness_error=0.5,
+            bandpass='B',
         )
-        self.rd3 = ReducedDatum.objects.create(
+        self.rd3 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 17.5, 'error': .5, 'filter': 'R'}
+            brightness=17.5,
+            brightness_error=0.5,
+            bandpass='R',
         )
-        self.rd4 = ReducedDatum.objects.create(
+        self.rd4 = PhotometryReducedDatum.objects.create(
             target=self.target2,
-            data_type='photometry',
-            value={'magnitude': 17.5, 'error': .5, 'filter': 'R'}
+            brightness=17.5,
+            brightness_error=0.5,
+            bandpass='R',
         )
 
     @responses.activate
