@@ -20,7 +20,8 @@ logger.setLevel(logging.DEBUG)
 
 
 def get_or_create_uuid_from_metadata(metadata) -> uuid.UUID:
-    """Extract the UUID from the message metadata, or generate a UUID if none present in metadata.
+    """
+    Extract the UUID from the message metadata, or generate a UUID if none present in metadata.
 
     The headers property of the metadata is a list of tuples of the form [('key', value), ...].
     """
@@ -40,7 +41,9 @@ HERMES_SPECTROSCOPY_FILE_EXTENSIONS = ('.fits.fz', '.fits', '.csv', '.txt', '.as
 
 
 def hermes_alert_handler(alert, metadata):
-    """Example Alert Handler to record data streamed through Hermes as a new ReducedDatum.
+    """
+    Example Alert Handler to record data streamed through Hermes as a new ReducedDatum.
+
     -- Reads Photometry and Spectroscopy Data (both inline and file-based)
     -- Creates a new Target if no match is found for Target Name or aliases
     -- Does not Ingest Data if exact match already exists
@@ -161,8 +164,10 @@ def hermes_alert_handler(alert, metadata):
 
 
 def _get_spectroscopy_file_url(file_info_list):
-    """Return the URL of the first entry in a file_info list whose filename matches a supported
-    spectroscopy file extension, or None if no match is found."""
+    """
+    Return the URL of the first entry in a file_info list whose filename matches a supported
+    spectroscopy file extension, or None if no match is found.
+    """
     for entry in file_info_list:
         url = entry.get('url', '')
         filename = os.path.basename(urlparse(url).path)
