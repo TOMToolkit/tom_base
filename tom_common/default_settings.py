@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-CORE_INSTALLED_APPS = [
+TOMTOOKIT_INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,7 +40,7 @@ CORE_INSTALLED_APPS = [
     'tom_dataproducts',
 ]
 
-CORE_MIDDLEWARE = [
+TOMTOOKIT_MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
