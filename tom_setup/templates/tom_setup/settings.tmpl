@@ -41,13 +41,13 @@ TOM_NAME = '{{ PROJECT_NAME }}'
 # Use built-in css theme to change the look of your TOM. (Valid themes = [Dark,])
 # CSS_THEME = 'Dark'
 
-INSTALLED_APPS += [
+INSTALLED_APPS = CORE_INSTALLED_APPS + [
     '{{ CUSTOM_CODE_APP_NAME }}',
 ]
 
 SITE_ID = 1
 
-MIDDLEWARE += [
+MIDDLEWARE = CORE_MIDDLEWARE + [
 ]
 
 ROOT_URLCONF = '{{ PROJECT_NAME }}.urls'
