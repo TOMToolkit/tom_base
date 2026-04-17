@@ -1041,14 +1041,14 @@ typing-extensions = "*"
 
 [[package]]
 name = "django-tables2"
-version = "2.9.0"
+version = "3.0.0"
 description = "Table/data-grid framework for Django"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "django_tables2-2.9.0-py3-none-any.whl", hash = "sha256:54112f6cedcc56361184d7ac350255d1f2ded6ff630ca6faf394d088908a05af"},
-    {file = "django_tables2-2.9.0.tar.gz", hash = "sha256:687d99646165da7ba77240d5298ded76b55012733c3ee3123fdb32028af8d24e"},
+    {file = "django_tables2-3.0.0-py3-none-any.whl", hash = "sha256:2a5b5447f10d7a8cfb7a2e8f0b139d969c7eb2e675079a4b8ba0107956345bfa"},
+    {file = "django_tables2-3.0.0.tar.gz", hash = "sha256:3c5343f72663b0d6684e8e6cbcb16caae10d7621a51c1cf3c581f57ce605f8ee"},
 ]
 
 [package.dependencies]
@@ -2781,4 +2781,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10.0,<3.14"
-content-hash = "0a353d373ba73ea5a74569e5058cb8f4b81a2fec4c704ecfe926c7a1a14429ee"
+content-hash = "d20f1afe99aee56b9fec3bb1a36e8ac2db563df7a4315426388a81ab8191e9d1"
