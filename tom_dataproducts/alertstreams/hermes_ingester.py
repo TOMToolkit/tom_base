@@ -110,12 +110,14 @@ def hermes_alert_handler(alert, metadata):
         datum = {
             'target': target,
             'data_type': 'photometry',
-            'source_name': metadata.topic,
-            'source_location': hermes_message_url,
             'timestamp': obs_date,
             'value': get_hermes_phot_value(row)
         }
-        new_rd, created = ReducedDatum.objects.get_or_create(**datum)
+        datum_defaults = {
+            'source_name': metadata.topic,
+            'source_location': hermes_message_url,
+        }
+        new_rd, created = ReducedDatum.objects.get_or_create(**datum, defaults=datum_defaults)
         if created:
             new_rd.message.add(hermes_alert)
             new_rd.save()
@@ -153,12 +155,14 @@ def hermes_alert_handler(alert, metadata):
             datum = {
                 'target': target,
                 'data_type': 'spectroscopy',
-                'source_name': metadata.topic,
-                'source_location': hermes_message_url,
                 'timestamp': obs_date,
                 'value': value,
             }
-            new_rd, created = ReducedDatum.objects.get_or_create(**datum)
+            datum_defaults = {
+                'source_name': metadata.topic,
+                'source_location': hermes_message_url,
+            }
+            new_rd, created = ReducedDatum.objects.get_or_create(**datum, defaults=datum_defaults)
             if created:
                 new_rd.message.add(hermes_alert)
                 new_rd.save()
@@ -204,9 +208,8 @@ def _ingest_hermes_spectroscopy_file(url, spectroscopy_row, target, hermes_alert
 
     try:
         dp, created = DataProduct.objects.get_or_create(
-            product_id=url,
-            defaults={'target': target, 'data_product_type': 'spectroscopy',
-                      'extra_data': json.dumps(spectroscopy_data)},
+            product_id=url, target=target, data_product_type='spectroscopy',
+            defaults={'extra_data': json.dumps(spectroscopy_data)},
         )
         if created:
             _, ext = os.path.splitext(filename)
@@ -218,10 +221,10 @@ def _ingest_hermes_spectroscopy_file(url, spectroscopy_row, target, hermes_alert
                     dp.data.save(filename, File(f), save=True)
             finally:
                 os.unlink(tmpfile_path)
-
-        reduced_datums = run_data_processor(dp)
-        for rd in reduced_datums:
-            rd.message.add(hermes_alert)
+            # only re-ingest the file if its a new dataproduct for us
+            reduced_datums = run_data_processor(dp)
+            for rd in reduced_datums:
+                rd.message.add(hermes_alert)
     except Exception as ex:
         logger.error(f'Failed to ingest spectroscopy file from {url}: {repr(ex)}')
 

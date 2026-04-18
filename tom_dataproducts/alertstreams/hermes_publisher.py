@@ -1,4 +1,5 @@
 import logging
+import json
 import requests
 
 from django.conf import settings
@@ -73,7 +74,7 @@ class HermesDataConverter():
             'instrument': datum.value.get('instrument'),
             'bandpass': datum.value.get('filter', ''),
         }
-        brightness_unit = convert_astropy_brightness_to_hermes(datum.value.get('unit'))
+        brightness_unit = convert_astropy_brightness_unit_to_hermes(datum.value.get('unit'))
         if brightness_unit:
             phot_table_row['brightness_unit'] = brightness_unit
         if datum.value.get('magnitude', None):
@@ -123,17 +124,27 @@ class HermesDataConverter():
                 logger.error(msg)
                 raise HermesMessageException(msg)
 
+        # Make sure we have either telescope or instrument set. If not, attempt to pull them from the data product itself
+        try:
+            dp_extras = json.loads(datum.data_product.extra_data)
+        except (json.JSONDecodeError, ValueError):
+            dp_extras = {}
+        telescope = datum.value.get('telescope') or dp_extras.get('telescope')
+        instrument = datum.value.get('instrument') or dp_extras.get('instrument')
+        reducer = datum.value.get('reducer') or dp_extras.get('reducer')
+        observer =  datum.value.get('observer') or dp_extras.get('observer')
+
         spectroscopy_table_row = {
             'target_name': datum.target.name,
             'date_obs': datum.timestamp.isoformat(),
-            'telescope': datum.value.get('telescope'),
-            'instrument': datum.value.get('instrument'),
-            'reducer': datum.value.get('reducer'),
-            'observer': datum.value.get('observer'),
+            'telescope': telescope,
+            'instrument': instrument,
+            'reducer': reducer,
+            'observer': observer,
             'flux': flux_list,
             'wavelength': wavelength_list,
-            'flux_units': datum.value.get('flux_units'),
-            'wavelength_units': convert_astropy_wavelength_to_hermes(datum.value.get('wavelength_units')),
+            'flux_units': convert_astropy_flux_unit_to_hermes(datum.value.get('flux_units')),
+            'wavelength_units': convert_astropy_wavelength_unit_to_hermes(datum.value.get('wavelength_units')),
         }
         if flux_error_list:
             spectroscopy_table_row['flux_error'] = flux_error_list
@@ -141,7 +152,7 @@ class HermesDataConverter():
         return spectroscopy_table_row
 
 
-def convert_astropy_brightness_to_hermes(brightness_unit):
+def convert_astropy_brightness_unit_to_hermes(brightness_unit):
     if not brightness_unit:
         return brightness_unit
     elif brightness_unit.upper() == 'AB' or brightness_unit.upper() == 'ABFLUX':
@@ -150,12 +161,21 @@ def convert_astropy_brightness_to_hermes(brightness_unit):
         return brightness_unit
 
 
-def convert_astropy_wavelength_to_hermes(wavelength_unit):
+def convert_astropy_flux_unit_to_hermes(flux_unit):
+    if not flux_unit:
+        return flux_unit
+    elif flux_unit == 'erg / (Angstrom s cm2)':
+        return 'erg / s / cm² / Å'
+    else:
+        return flux_unit
+
+
+def convert_astropy_wavelength_unit_to_hermes(wavelength_unit):
     if not wavelength_unit:
         return wavelength_unit
     elif wavelength_unit.lower() == 'angstrom' or wavelength_unit == 'AA':
         return 'Å'
-    elif wavelength_unit.lower() == 'micron':
+    elif wavelength_unit.lower() in ['micron', 'micrometer', 'um']:
         return 'µm'
     elif wavelength_unit.lower() == 'hertz':
         return 'Hz'
