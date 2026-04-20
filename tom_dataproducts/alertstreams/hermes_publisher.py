@@ -127,7 +127,7 @@ class HermesDataConverter():
         # Make sure we have either telescope or instrument set. If not, attempt to pull them from the dataproduct
         try:
             dp_extras = json.loads(datum.data_product.extra_data)
-        except (json.JSONDecodeError, ValueError):
+        except (json.JSONDecodeError, ValueError, AttributeError):
             dp_extras = {}
         telescope = datum.value.get('telescope') or dp_extras.get('telescope')
         instrument = datum.value.get('instrument') or dp_extras.get('instrument')
