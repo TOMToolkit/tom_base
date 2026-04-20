@@ -124,7 +124,7 @@ class HermesDataConverter():
                 logger.error(msg)
                 raise HermesMessageException(msg)
 
-        # Make sure we have either telescope or instrument set. If not, attempt to pull them from the data product itself
+        # Make sure we have either telescope or instrument set. If not, attempt to pull them from the dataproduct
         try:
             dp_extras = json.loads(datum.data_product.extra_data)
         except (json.JSONDecodeError, ValueError):
@@ -132,7 +132,7 @@ class HermesDataConverter():
         telescope = datum.value.get('telescope') or dp_extras.get('telescope')
         instrument = datum.value.get('instrument') or dp_extras.get('instrument')
         reducer = datum.value.get('reducer') or dp_extras.get('reducer')
-        observer =  datum.value.get('observer') or dp_extras.get('observer')
+        observer = datum.value.get('observer') or dp_extras.get('observer')
 
         spectroscopy_table_row = {
             'target_name': datum.target.name,
