@@ -6,6 +6,7 @@ from django.test import tag, TestCase
 
 from tom_catalogs.harvesters.simbad import SimbadHarvester
 
+
 @unittest.skip("Disable Harvester Tests")
 class TestSimbadHarvester(TestCase):
     def setUp(self):
@@ -47,6 +48,7 @@ class TestSimbadHarvester(TestCase):
         self.assertEqual(target.pm_dec, None)
         self.assertEqual(target.distance, self.broker.catalog_data['mesdistance.dist'] * 1000)
         self.assertEqual(target.name, 'M31')
+
 
 @unittest.skip("Disable Harvester Tests")
 @tag('canary')

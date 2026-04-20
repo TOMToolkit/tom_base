@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 
 from tom_catalogs.harvesters.mpc import MPCHarvester, MPCExplorerHarvester
 
+
 @unittest.skip("Disable Harvester Tests")
 class TestMPCHarvester(TestCase):
     def setUp(self):
