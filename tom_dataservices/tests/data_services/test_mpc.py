@@ -10,7 +10,7 @@ from tom_dataservices.data_services.mpc import MPCExplorerDataService
 class TestMPCExplorerDataService(TestCase):
     def setUp(self):
         self.ds = MPCExplorerDataService()
-        test_json_fp = files('tom_dataservices.tests.data_services.test_data').joinpath('test_65803_mpc_orb.json')
+        test_json_fp = files('tom_dataservices.tests.test_data').joinpath('test_65803_mpc_orb.json')
         test_json = json.loads(test_json_fp.read_text())
         self.ds.query_results = [{'mpc_orb': test_json},]
         self.target_result = self.ds.query_results[0]
