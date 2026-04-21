@@ -62,7 +62,7 @@ from tom_targets.utils import import_targets, export_targets
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.seed import seed_messier_targets
 from tom_targets.tables import TargetTable, TargetGroupTable
-from tom_dataproducts.alertstreams.hermes import BuildHermesMessage, preload_to_hermes
+from tom_dataproducts.alertstreams.hermes_publisher import BuildHermesMessage, preload_to_hermes
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

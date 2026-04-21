@@ -1,6 +1,6 @@
 from astropy.units import photon, Quantity, spectral_density
 from django.db import migrations
-from specutils import Spectrum1D
+from specutils import Spectrum
 
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 
@@ -11,9 +11,9 @@ def photon_spectrum_to_energy_spectrum(apps, schema_editor):
     of this code.
 
     def photon_spectrum_to_energy_spectrum(wavelength, photon_counts):
-        photon_spectrum = specutils.Spectrum1D(flux=photon_counts, spectral_axis=wavelength)
+        photon_spectrum = specutils.Spectrum(flux=photon_counts, spectral_axis=wavelength)
         energy_spectrum = photon_spectrum.flux * (photon_spectrum.energy / u.photon)
-        return specutils.Spectrum1D(spectral_axis=wavelength,
+        return specutils.Spectrum(spectral_axis=wavelength,
                                     flux=energy_spectrum.to('erg / (s cm2 AA)', u.spectral_density(wavelength)))
     """
     reduced_datum = apps.get_model('tom_dataproducts', 'ReducedDatum')
@@ -24,9 +24,9 @@ def photon_spectrum_to_energy_spectrum(apps, schema_editor):
         if all(k in row.value.keys() for k in ['photon_flux', 'photon_flux_units', 'wavelength', 'wavelength_units']):
             photon_counts = Quantity(value=row.value['photon_flux'], unit=row.value['photon_flux_units'])
             wavelength = Quantity(value=row.value['wavelength'], unit=row.value['wavelength_units'])
-            photon_spectrum = Spectrum1D(flux=photon_counts, spectral_axis=wavelength)
+            photon_spectrum = Spectrum(flux=photon_counts, spectral_axis=wavelength)
             energy_spectrum = photon_spectrum.flux * (photon_spectrum.energy / photon)
-            energy_spectrum_object = Spectrum1D(
+            energy_spectrum_object = Spectrum(
                                         spectral_axis=wavelength,
                                         flux=energy_spectrum.to('erg / (s cm2 AA)', spectral_density(wavelength)))
             row.value = spectrum_serializer.serialize(energy_spectrum_object)

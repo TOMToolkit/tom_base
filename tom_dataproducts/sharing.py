@@ -14,7 +14,7 @@ from django.utils.text import slugify
 from tom_targets.models import Target
 
 from tom_dataproducts.models import DataProduct, ReducedDatum
-from tom_dataproducts.alertstreams.hermes import publish_to_hermes, BuildHermesMessage, get_hermes_topics
+from tom_dataproducts.alertstreams.hermes_publisher import publish_to_hermes, BuildHermesMessage, get_hermes_topics
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
 
 
