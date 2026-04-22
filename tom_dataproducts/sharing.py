@@ -13,7 +13,7 @@ from django.utils.text import slugify
 
 from tom_targets.models import Target
 
-from tom_dataproducts.models import DataProduct, PhotometryReducedDatum
+from tom_dataproducts.models import DataProduct, PhotometryReducedDatum, REDUCED_DATUM_MODELS
 from tom_dataproducts.alertstreams.hermes import publish_to_hermes, BuildHermesMessage, get_hermes_topics
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
 
@@ -164,7 +164,9 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
             # If Target is provided, share all ReducedDatums for that Target
             # (Will not create New Target in Destination TOM)
             target = Target.objects.get(pk=target_id)
-            reduced_datums = PhotometryReducedDatum.objects.filter(target=target)
+            reduced_datums = []
+            for model in REDUCED_DATUM_MODELS:
+                reduced_datums.extend(model.objects.filter(target=target))
             destination_target_id, _ = get_destination_target(target, targets_url, headers, auth)
             if destination_target_id is None:
                 return {'message': 'ERROR: No matching target found.'}
