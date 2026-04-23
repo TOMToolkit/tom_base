@@ -135,11 +135,6 @@ def recent_photometry(target, limit=1):
     Displays a table of the most recent photometric points for a target.
     """
     photometry = PhotometryReducedDatum.objects.filter(target=target).order_by('-timestamp')[:limit]
-
-    # Possibilities for reduced_datums from ZTF/MARS:
-    # reduced_datum.value: {'error': 0.0929680392146111, 'filter': 'r', 'magnitude': 18.2364940643311}
-    # reduced_datum.value: {'limit': 20.1023998260498, 'filter': 'g'}
-
     # for limit magnitudes, set the value of the limit key to True and
     # the value of the magnitude key to the limit so the template and
     # treat magnitudes as such and prepend a '>' to the limit magnitudes
@@ -215,9 +210,6 @@ def get_photometry_data(context, target, target_share=False):
 def photometry_for_target(context, target, width=700, height=600, background=None, label_color=None, grid=True):
     """
     Renders a photometric plot for a target.
-
-    This templatetag requires all ``ReducedDatum`` objects with a data_type of ``photometry`` to be structured with the
-    following keys in the JSON representation: magnitude, error, filter
 
     :param width: Width of generated plot
     :type width: int
@@ -456,29 +448,29 @@ def reduceddatum_sparkline(target, height, spacing=5, color_map=None, limit_y=Tr
             'i': (0, 0, 0)
         }
 
-    vals = target.reduceddatum_set.filter(
+    vals = target.photometryreduceddatum_set.filter(
         timestamp__gte=datetime.utcnow() - timedelta(days=days)
-    ).values('value', 'timestamp')
+    ).values('brightness', 'limit', 'bandpass', 'timestamp')
 
     if len(vals) < 1:
         return {'sparkline': None}
 
-    vals = [v for v in vals if v['value']]
+    vals = [v for v in vals if v['brightness'] is not None or v['limit'] is not None]
 
-    min_mag = min([val['value']['magnitude'] for val in vals if val['value'].get('magnitude')])
-    max_mag = max([val['value']['magnitude'] for val in vals if val['value'].get('magnitude')])
+    min_mag = min([val['brightness'] for val in vals if val.get('brightness')])
+    max_mag = max([val['brightness'] for val in vals if val.get('brightness')])
 
     if not limit_y:
         # The following values are used if we want the graph's y range to extend to the values of non-detections
-        min_mag = min([min_mag, *[val['value']['limit'] for val in vals if val['value'].get('limit')]])
-        max_mag = max([max_mag, *[val['value']['limit'] for val in vals if val['value'].get('limit')]])
+        min_mag = min([min_mag, *[val['limit'] for val in vals if val.get('limit')]])
+        max_mag = max([max_mag, *[val['limit'] for val in vals if val.get('limit')]])
 
-    distinct_filters = set([val['value']['filter'] for val in vals])
+    distinct_filters = set([val['bandpass'] for val in vals])
     by_filter = {f: [(None, None)] * days for f in distinct_filters}
 
     for val in vals:
         day_index = (val['timestamp'].replace(tzinfo=timezone.utc) - timezone.now()).days
-        by_filter[val['value']['filter']][day_index] = (val['value'].get('magnitude'), val['value'].get('limit'))
+        by_filter[val['bandpass']][day_index] = (val.get('brightness'), val.get('limit'))
 
     val_range = max_mag - min_mag
     image_width = (spacing + 1) * (days - 1)
