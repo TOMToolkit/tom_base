@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import logging.config
 import os
 import tempfile
-from tom_common.default_settings import *
+from tom_common.default_settings import * # noqa: F403
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
