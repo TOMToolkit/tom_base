@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.http import Http404
 from django_filters import rest_framework as drf_filters
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import assign_perm, get_objects_for_user
@@ -98,6 +99,17 @@ class ReducedDatumViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, G
     filterset_class = ReducedDatumFilter
     permission_required = 'tom_dataproducts.view_reduceddatum'
     parser_classes = [FormParser, JSONParser]
+
+    def get_object(self):
+        pk = self.kwargs.get(self.lookup_field)
+        for model in REDUCED_DATUM_MODELS:
+            try:
+                obj = model.objects.get(pk=pk)
+                self.check_object_permissions(self.request, obj)
+                return obj
+            except model.DoesNotExist:
+                pass
+        raise Http404
 
     def _base_queryset_for_model(self, model):
         qs = model.objects.all()
