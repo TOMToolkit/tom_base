@@ -51,7 +51,6 @@ urlpatterns += [
     path('targets/', include('tom_targets.urls', namespace='targets')),
     path('alerts/', include('tom_alerts.urls', namespace='alerts')),
     path('comments/', include('django_comments.urls')),
-    path('catalogs/', include('tom_catalogs.urls')),
     path('observations/', include('tom_observations.urls', namespace='observations')),
     path('dataproducts/', include('tom_dataproducts.urls', namespace='dataproducts')),
     path('users/', UserListView.as_view(), name='user-list'),

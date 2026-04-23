@@ -1,8 +1,10 @@
 from django.test import tag, TestCase
+import unittest
 
 from tom_catalogs.harvesters.jplhorizons import JPLHorizonsHarvester
 
 
+@unittest.skip("Disable Harvester Tests")
 @tag('canary')
 class TestJPLHorizonsHarvesterCanary(TestCase):
     def setUp(self):

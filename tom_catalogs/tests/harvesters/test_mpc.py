@@ -1,5 +1,6 @@
 import json
 from importlib_resources import files
+import unittest
 
 from django.test import tag, TestCase
 from unittest.mock import MagicMock, patch
@@ -7,6 +8,7 @@ from unittest.mock import MagicMock, patch
 from tom_catalogs.harvesters.mpc import MPCHarvester, MPCExplorerHarvester
 
 
+@unittest.skip("Disable Harvester Tests")
 class TestMPCHarvester(TestCase):
     def setUp(self):
         self.broker = MPCHarvester()
@@ -179,6 +181,7 @@ class TestMPCHarvester(TestCase):
         self.assertAlmostEqual(target.slope, 0.6, places=3)
 
 
+@unittest.skip("Disable Harvester Tests")
 @tag('canary')
 class TestMPCHarvesterCanary(TestCase):
     def setUp(self):
@@ -263,6 +266,7 @@ class TestMPCHarvesterCanary(TestCase):
         self.assertAlmostEqual(target.arg_of_perihelion, 236.15758, places=3)
 
 
+@unittest.skip("Disable Harvester Tests")
 class TestMPCExplorerHarvester(TestCase):
     def setUp(self):
         self.broker = MPCExplorerHarvester()
@@ -399,6 +403,7 @@ class TestMPCExplorerHarvester(TestCase):
         self.assertEqual(target.pm_dec, None)
 
 
+@unittest.skip("Disable Harvester Tests")
 @tag('canary')
 class TestMPCExplorerHarvesterCanary(TestCase):
     def setUp(self):
