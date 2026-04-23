@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import logging.config
 import os
 import tempfile
-from tom_common.default_settings import * # noqa: F403
+from tom_common.default_settings import *  # noqa: F403
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -34,12 +34,12 @@ ALLOWED_HOSTS = ['']
 
 TOM_NAME = 'TOM Toolkit'
 
-INSTALLED_APPS = TOMTOOKIT_INSTALLED_APPS + [
+INSTALLED_APPS = TOMTOOKIT_INSTALLED_APPS + [  # noqa: F405
 ]
 
 SITE_ID = 1
 
-MIDDLEWARE = TOMTOOKIT_MIDDLEWARE + [
+MIDDLEWARE = TOMTOOKIT_MIDDLEWARE + [  # noqa: F405
 ]
 
 ROOT_URLCONF = 'tom_common.urls'
