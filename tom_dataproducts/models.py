@@ -313,6 +313,30 @@ class DataProduct(models.Model):
         return
 
 
+class ReducedDatumQuerySet(models.query.QuerySet):
+    """
+    This is a custom queryset that allows us to extend the get_or_create to coincide with our custom validate_unique
+    for ReducedDatum objects so that getting a ReducedDatum with get_or_create will return identical datums from
+    different sources.
+    """
+    def get_or_create(self, defaults=None, **kwargs):
+        try:
+            return super().get_or_create(defaults, **kwargs)
+        except ValidationError as e:
+            logger.warning(f'{e}')
+            defaults = {}
+            default_fields = ['source_name', 'source_location', 'message']
+            for field in default_fields:
+                if kwargs.get(field):
+                    defaults.update({'field': kwargs.pop(field)})
+            return super().get_or_create(defaults, **kwargs)
+
+
+class ReducedDatumManager(models.Manager):
+    def get_queryset(self):
+        return ReducedDatumQuerySet(self.model)
+
+
 class ReducedDatumCommon(models.Model):
     """
     Abstract base class for all reduced datum models.
@@ -364,6 +388,8 @@ class ReducedDatumCommon(models.Model):
     source_name = models.CharField(max_length=100, default="", blank=True)
     source_location = models.CharField(max_length=200, default="", blank=True)
     message = models.ManyToManyField(AlertStreamMessage, blank=True)
+
+    objects = ReducedDatumManager()
 
     class Meta:
         abstract = True
