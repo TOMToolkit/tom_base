@@ -3,15 +3,13 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-API Documentation
-=================
+API Module Documentation
+========================
 
 .. toctree::
   :maxdepth: 1
   :includehidden:
 
-  tom_alerts/index
-  tom_catalogs/index
   tom_common/index
   tom_dataproducts/index
   tom_dataservices/index

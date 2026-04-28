@@ -1,5 +1,5 @@
-Data Services
-=============
+Data Services API Documentation
+===============================
 
 .. toctree::
   :maxdepth: 2

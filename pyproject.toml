@@ -75,7 +75,6 @@ dependencies = [
 
 [tool.poetry]
 packages = [ # tell poetry build that the repo is named tom_base (which != name, above)
-    { include="tom_alerts"},
     { include="tom_base"},
     { include="tom_common"},
     { include="tom_dataproducts"},

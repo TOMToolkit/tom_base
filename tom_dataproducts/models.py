@@ -13,7 +13,6 @@ from PIL import Image
 from importlib import import_module
 
 from tom_targets.base_models import BaseTarget
-from tom_alerts.models import AlertStreamMessage
 from tom_observations.models import ObservationRecord
 
 logger = logging.getLogger(__name__)
