@@ -235,26 +235,6 @@ TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.gemini.GEMFacility',
 ]
 
-TOM_ALERT_CLASSES = [
-    'tom_alerts.brokers.alerce.ALeRCEBroker',
-    #  'tom_alerts.brokers.antares.ANTARESBroker',
-    'tom_alerts.brokers.gaia.GaiaBroker',
-    'tom_alerts.brokers.lasair.LasairBroker',
-    'tom_alerts.brokers.tns.TNSBroker',
-    #  'tom_alerts.brokers.fink.FinkBroker',
-]
-
-BROKERS = {
-    'TNS': {
-        'api_key': '',
-        'bot_id': '',
-        'bot_name': '',
-    },
-    'LASAIR': {
-        'api_key': '',
-    }
-}
-
 # You can add science-specific parameters to targets in your TOM.  The best way to do this is
 # to extend the Target model, or you can define extra target fields here.
 # Field types can be any of "number", "string", "boolean" or "datetime"

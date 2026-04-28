@@ -400,7 +400,6 @@ class ReducedDatum(models.Model):
     source_location = models.CharField(max_length=200, default='', blank=True)
     timestamp = models.DateTimeField(null=False, blank=False, default=timezone.now, db_index=True)
     value = models.JSONField(null=False, blank=False)
-    message = models.ManyToManyField(AlertStreamMessage, blank=True)
 
     objects = ReducedDatumManager()
 

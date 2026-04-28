@@ -70,11 +70,6 @@ For development information targeted at the maintainers of the project, please s
 
 ## Plugins
 
-### tom_alerts_dash
-
-The [tom_alerts_dash](https://github.com/TOMToolkit/tom_alerts_dash) plugin adds responsive ReactJS views to the
-`tom_alerts` module for supported brokers.
-
 ### Antares
 
 The [tom-antares](https://github.com/TOMToolkit/tom_antares) plugin adds support
