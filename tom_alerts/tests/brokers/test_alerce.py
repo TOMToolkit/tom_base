@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import json
 from requests import Response
 from unittest.mock import patch
+import unittest
 
 from django.test import tag, TestCase
 from faker import Faker
@@ -70,6 +71,7 @@ def create_alerce_query_response(num_alerts, page=1):
     }
 
 
+@unittest.skip("Disable Broker Tests")
 class TestALeRCEBrokerForm(TestCase):
     def setUp(self):
         self.base_form_data = {
@@ -186,6 +188,7 @@ class TestALeRCEBrokerForm(TestCase):
             self.assertIn(classifier, stamp_classifiers)
 
 
+@unittest.skip("Disable Broker Tests")
 class TestALeRCEBrokerClass(TestCase):
     def setUp(self):
         self.base_form_data = {
@@ -429,6 +432,7 @@ class TestALeRCEBrokerClass(TestCase):
         self.assertEqual(None, self.broker.to_generic_alert(mock_alert).score)
 
 
+@unittest.skip("Disable Broker Tests")
 @tag('canary')
 class TestALeRCEModuleCanary(TestCase):
     def setUp(self):

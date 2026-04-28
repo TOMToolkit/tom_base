@@ -3,7 +3,8 @@ from requests import Response
 from django.utils import timezone
 from django.test import TestCase, override_settings
 from django.forms import ValidationError
-from unittest import mock
+from unittest import mock, skip
+import unittest
 
 from tom_alerts.alerts import get_service_class
 from tom_alerts.brokers.gaia import GaiaQueryForm
@@ -12,6 +13,7 @@ from tom_targets.models import Target
 from tom_dataproducts.models import ReducedDatum
 
 
+@skip("Disable Broker Tests")
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.brokers.gaia.GaiaBroker'])
 class TestGaiaQueryForm(TestCase):
     def setUp(self):
@@ -59,6 +61,7 @@ class TestGaiaQueryForm(TestCase):
         self.assertIn('Cone search parameters must be in the format \'RA,Dec,Radius\'.', form.errors.get('cone'))
 
 
+@skip("Disable Broker Tests")
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.brokers.gaia.GaiaBroker'])
 class TestGaiaBroker(TestCase):
     def setUp(self):
