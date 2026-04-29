@@ -368,6 +368,10 @@ class ReducedDatumCommon(models.Model):
                     datum came from, but can be used for other sources.
     :type source_name: str
 
+    :param source_location: A reference to the location that this datum was originally sourced from. The current major
+                            use of this field is the URL path to the alert that this datum came from.
+    :type source_location: str
+
     :param message: Set of ``AlertStreamMessage`` objects this object is associated with.
     :type message: ManyRelatedManager object
 
@@ -402,10 +406,6 @@ class ReducedDatum(ReducedDatumCommon):
     :param data_type: The type of data this datum represents. Default choices are the default values found in
         DATA_PRODUCT_TYPES in settings.py.
     :type data_type: str
-
-    :param source_location: A reference to the location that this datum was originally sourced from. The current major
-                            use of this field is the URL path to the alert that this datum came from.
-    :type source_location: str
     """
 
     data_type = models.CharField(max_length=100, default="")
