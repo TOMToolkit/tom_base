@@ -413,19 +413,6 @@ class ReducedDatum(ReducedDatumCommon):
     class Meta:
         get_latest_by = ("timestamp",)
 
-    def save(self, *args, **kwargs):
-        # Validate data_type based on options in settings.py or default types: (type, display)
-        for dp_type, _ in DATA_TYPE_CHOICES:
-            if self.data_type and self.data_type == dp_type:
-                break
-        else:
-            raise ValidationError("Not a valid DataProduct type.")
-
-        # because we have a custom way of validating the uniqueness of the ReducedDatum,
-        #  we need to call full_clean() here to invoke our validate_unique() method.
-        self.full_clean()
-        return super().save()
-
 
 class PhotometryReducedDatum(ReducedDatumCommon):
     brightness = models.FloatField(blank=True, null=True)
