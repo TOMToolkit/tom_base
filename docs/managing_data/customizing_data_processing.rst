@@ -21,12 +21,12 @@ tom_dataproducts app in the TOM Toolkit:
 
 Let’s start with a quick overview of ``models.py``. The file contains
 the Django models for the dataproducts app–in our case, ``DataProduct``
-and ``ReducedDatum``. The ``DataProduct`` contains information about
+, ``ReducedDatum`` and the three specialized reduced data product classes:
+``PhotometryReducedDatum``, ``SpectroscopyReducedDatum`` and ``AstrometryReducedDatum``.
+The ``DataProduct`` contains information about
 uploaded or saved ``DataProducts``, such as the file name, file path,
-and what kind of file it is. The ``ReducedDatum`` contains individual
+and what kind of file it is. The ``*ReducedDatum`` classes contain individual
 science data points that are taken from the ``DataProduct`` files.
-Examples of ``ReducedDatum`` points would be individual photometry
-points or individual spectra.
 
 Each ``DataProduct`` also has a ``data_product_type``. The
 ``data_product_type`` is simply a description of what the file is, more
