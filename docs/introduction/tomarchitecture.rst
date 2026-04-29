@@ -52,7 +52,7 @@ they are left with a functioning but generic TOM. It is then up to the developer
 to implement the specific features that their science case requires. The toolkit
 tries to facilitate this as efficiently as possible and provides
 :doc:`documentation <index>` in areas of customization from :doc:`changing the HTML layout of a page </customization/customize_templates>`
-to :doc:`customizing an OCS facility and forms </observing/customize_ocs_facility>` and even 
+to :doc:`customizing an OCS facility and forms </observing/customize_ocs_facility>` and even
 :doc:`creating a new alert broker </brokers/create_broker>`.
 
 Django, and by extension the toolkit, rely heavily on object oriented
@@ -95,7 +95,7 @@ each other. This means a TOM developer can easily change the layout and style of
 any page without modifying the underlying framework's code directly. Entire pages
 may be replaced, or only "blocks" within a template.
 
-Compare these screenshots of the `standard target detail page <../../../_static/architecture/snex2layout.png>`_ and the 
+Compare these screenshots of the `standard target detail page <../../../_static/architecture/snex2layout.png>`_ and the
 `Global Supernova Project's target detail page <../../../_static/architecture/snex2layout.png>`_, the
 latter taking heavy advantage of template inheritance.
 
@@ -266,15 +266,41 @@ ReducedDatum
 ------------
 
 A ``ReducedDatum`` is a single point of data associated with a ``Target`` and optionally a
-``DataProduct``. The single data point is typically a single point of photometry or an individual
-spectrum. The ``ReducedDatum`` model has the following fields, in addition to its aforementioned
+``DataProduct``.
+There are three classes of ReducedDatum for the common data types:
+``PhotometryReducedDatum``, ``SpectroscopyReducedDatum``, and ``AstrometryReducedDatum``.
+The ``ReducedDatum`` is a general model meant to be flexible enough to allow for other data types as well.
+
+The ``ReducedDatum`` model has the following fields, in addition to its aforementioned
 foreign key relationships:
 
 - ``data_type`` is maintained on both the ``ReducedDatum`` and ``DataProduct`` for the case when data is brought in from another source, such as a broker
 - The ``source_name`` optionally refers to the original source of the data. The intent of this field was to track data ingested from brokers, but could potentially be used for other purposes.
 - ``source_location`` optionally gives a hard location to the source--for a broker, it would be a link to the original alert.
 - The ``timestamp`` time at which the datum was produced.
-- ``value`` is a ``TextField`` that can take any series of data. As implemented, photometry is stored as JSON with keys for magnitude and error, but the ``TextField`` provides flexibility for additional photometry values on the datum. Spectroscopy is also stored as JSON, with keys for ``magnitude`` and ``flux``.
+- ``value`` is a ``JSONField`` that can take any series of data.
+- ``telescope`` and ``instrument`` are optional fields that can be used to track additional metadata.
+
+
+The ``PhotometryReducedDatum`` model has the following Photometry specific fields:
+
+- ``brightness`` and ``brightness_error`` are float fields that track the magnitude and error, respectively.
+- ``bandpass`` is a char field that tracks the bandpass/filter of the photometry.
+- ``limit`` optional float field that tracks the limiting magnitude of the photometry
+- ``unit`` optional char field that tracks the unit of the photometry
+- ``exposure_time`` optional float field that tracks the exposure time of the photometry
+
+The ``SpectroscopyReducedDatum`` model has the following Spectroscopy specific fields:
+
+- ``wavelength``, ``flux`` and ``error`` are all FloatArrayFields that track the wavelength, flux, and error of the spectroscopy, respectively
+- ``unit`` optional char field that tracks the unit of the spectroscopy
+- ``setup`` optional text field for arbitrary metadata about the spectroscopic setup
+- ``exposure_time`` optional float field that tracks the exposure time of the spectroscopy
+
+The ``AstrometryReducedDatum`` model has the following Astrometry specific fields:
+
+- ``ra``, ``dec``, ``ra_error`` and ``dec_error``  are all float fields for tracking coordinates and error. Errors are optional.
+- ``ra_error_units`` and ``dec_error_units`` optional char fields that track the units of the errors
 
 Feedback and bug reporting
 ==========================
@@ -283,11 +309,3 @@ We hope the TOM Toolkit is helpful to you and your project. If you have any
 concerns about implementation details, or questions about your own needs, please
 don't hesitate to `reach out <mailto:dcollom@lco.global>`_. Issues and pull requests
 are also welcome on the project's `GitHub page <https://github.com/TOMToolkit/>`_.
-
-
-
-
-
-
-
-
