@@ -103,11 +103,12 @@ def _build_astrometry(rd):
 
 
 class Command(BaseCommand):
-    help = (
-        'Migrates generic ReducedDatum rows into their concrete typed models '
-        '(PhotometryReducedDatum, SpectroscopyReducedDatum, AstrometryReducedDatum) '
-        'and deletes the originals. Run this once after deploying the reduceddatum refactor.'
-    )
+    help = """
+        Migrates generic ReducedDatum rows into their concrete typed models
+        (PhotometryReducedDatum, SpectroscopyReducedDatum, AstrometryReducedDatum)
+        and deletes the originals. Run this once after deploying the reduceddatum refactor.
+        Only necessary for TOMs that existed prior to v3.
+        """
 
     def add_arguments(self, parser):
         parser.add_argument(
