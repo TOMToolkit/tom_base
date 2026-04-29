@@ -74,8 +74,8 @@ Plugin Architecture
 
 Some areas of the TOM implement a plugin based architecture to support multiple
 implementations of a similar functionality. An example would be the
-`tom_observations`` module in which every supported observatory is implemented
-as its own plugin. The ``tom_catalogs`` and ``tom_alerts`` work in the same way: the
+``tom_observations`` module in which every supported observatory is implemented
+as its own plugin. The ``tom_dataservices`` module works in the same way: the
 module defines the interface and generic functionality and each implementation
 fills in its own logic.
 
@@ -184,7 +184,7 @@ or in the cloud) as well as displaying certain kinds of data. It also provides
 code hooks where TOM developers can run their own functions on the data in case
 specialized data processing, analytics or pipelining is required.
 
-TOM Alerts
+TOM Data Services
 ----------
 
 The `tom_alerts <https://github.com/TOMToolkit/tom_base/tree/main/tom_alerts>`_
