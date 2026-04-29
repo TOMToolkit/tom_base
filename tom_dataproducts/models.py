@@ -413,6 +413,38 @@ class ReducedDatum(ReducedDatumCommon):
     class Meta:
         get_latest_by = ("timestamp",)
 
+    def validate_unique(self, *args, **kwargs):
+        """
+        Validates that the ReducedDatum is unique. Because the `value` field is a JSONField, it is not possible to rely
+        on standard validation. Also, We do not want to repeat identical data from two different sources.
+
+        Do nothing if the uniqueness test passes. Otherwise, raise a ValidationError.
+        see https://docs.djangoproject.com/en/5.0/ref/models/instances/#validating-objects
+        """
+        super().validate_unique(*args, **kwargs)
+        # Check if the Reduced Datum exists in the database
+        try:
+            existing_reduced_datum = ReducedDatum.objects.get(
+                target=self.target,
+                data_type=self.data_type,
+                timestamp=self.timestamp,
+                value=self.value,
+            )
+            if (
+                existing_reduced_datum and existing_reduced_datum.id != self.id
+            ):  # not the same object
+                existing_source = existing_reduced_datum.__dict__.get(
+                    "source_name", "Unknown Source"
+                )
+                # found ReducedDatum with the same values. Don't save this duplicate ReducedDatum.
+                raise ValidationError(
+                    f"ReducedDatum already exists: Identical {self.data_type} data "
+                    f"found for {self.target} from {existing_source}."
+                )
+        except ReducedDatum.DoesNotExist:
+            # this means that our check for uniqueness passed: so do not raise ValidationError
+            pass
+
 
 class PhotometryReducedDatum(ReducedDatumCommon):
     brightness = models.FloatField(blank=True, null=True)
