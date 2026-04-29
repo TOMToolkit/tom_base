@@ -154,8 +154,8 @@ approach here:
 
 You can see that we’ll eventually be returning a dictionary, but first
 we need to add our logic. We’ll need to use the ``Target`` passed in to
-get all ``ReducedDatum`` objects for that ``Target`` with a
-``data_type`` of ``photometry``. Then we’ll need to order by
+get all ``PhotometryReducedDatum`` objects for that ``Target``
+Then we’ll need to order by
 ``timestamp`` descending, and slice just the first few. Make sure to
 take note of the imports in this step!
 
@@ -165,7 +165,7 @@ take note of the imports in this step!
 
    from django import template
 
-   from tom_dataproducts.models import ReducedDatum
+   from tom_dataproducts.models import PhotometryReducedDatum
 
 
    register = template.Library()
@@ -173,8 +173,8 @@ take note of the imports in this step!
 
    @register.inclusion_tag('custom_code/partials/recent_photometry.html')
    def recent_photometry(target, num_points=1):
-       photometry = ReducedDatum.objects.filter(data_type='photometry').order_by('-timestamp')[:num_points]
-       return {'recent_photometry': [(datum.timestamp, json.loads(datum.value)['magnitude']) for datum in photometry]}
+       photometry = PhotometryReducedDatum.objects.order_by('-timestamp')[:num_points]
+       return {'recent_photometry': [(datum.timestamp, datum.brightness) for datum in photometry]}
 
 It’s only a couple of lines, but there’s a lot going on here. The first
 line does the aforemention database query and slices the first point of
