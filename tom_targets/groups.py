@@ -27,10 +27,11 @@ def add_all_to_grouping(filter_data, grouping_object, request):
                                 .format(grouping_object.name))
         return
     for target_object in target_queryset:
+        print(target_object)
         try:
             if not request.user.has_perm('tom_targets.change_target', target_object):
                 failure_targets.append((target_object.name, 'Permission denied.',))
-            elif target_object in grouping_object.targets.filter(pk=target_object.pk).exists():
+            elif grouping_object.targets.filter(pk=target_object.pk).exists():
                 warning_targets.append(target_object.name)
             else:
                 grouping_object.targets.add(target_object)
