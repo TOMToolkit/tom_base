@@ -27,7 +27,6 @@ def add_all_to_grouping(filter_data, grouping_object, request):
                                 .format(grouping_object.name))
         return
     for target_object in target_queryset:
-        print(target_object)
         try:
             if not request.user.has_perm('tom_targets.change_target', target_object):
                 failure_targets.append((target_object.name, 'Permission denied.',))
@@ -70,7 +69,7 @@ def add_selected_to_grouping(targets_ids, grouping_object, request):
             target_object = Target.objects.get(pk=target_id)
             if not request.user.has_perm('tom_targets.change_target', target_object):
                 failure_targets.append((target_object.name, 'Permission denied.',))
-            elif not grouping_object.targets.filter(pk=target_object.pk).exists():
+            elif grouping_object.targets.filter(pk=target_object.pk).exists():
                 warning_targets.append(target_object.name)
             else:
                 grouping_object.targets.add(target_object)
@@ -201,7 +200,7 @@ def move_all_to_grouping(filter_data, grouping_object, request):
         try:
             if not request.user.has_perm('tom_targets.change_target', target_object):
                 failure_targets.append((target_object.name, 'Permission denied.',))
-            elif not grouping_object.targets.filter(pk=target_object.pk).exists():
+            elif grouping_object.targets.filter(pk=target_object.pk).exists():
                 warning_targets.append(target_object.name)
             else:
                 target_object.targetlist_set.clear()
