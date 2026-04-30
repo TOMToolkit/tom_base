@@ -185,18 +185,23 @@ code hooks where TOM developers can run their own functions on the data in case
 specialized data processing, analytics or pipelining is required.
 
 TOM Data Services
-----------
+-----------------
 
-The `tom_alerts <https://github.com/TOMToolkit/tom_base/tree/main/tom_alerts>`_
+The `tom_dataservices <https://github.com/TOMToolkit/tom_base/tree/main/tom_dataservices>`_
 app contains modules related to the functionality of ingesting targets from
-various external services. These services, usually called brokers, provide
-rapidly changing target lists that are of interest to time domain astronomers.
+various external services. These services, usually brokers or catalogs, provide
+lists of targets and/or data that can be queried via an API.
+
+Several data services are built into the default TOMToolkit, including `ALeRCE <https://science.alerce.online/>`_,
+`MPC <https://data.minorplanetcenter.net/explorer/>`_, `Simbad <https://simbad.u-strasbg.fr/simbad/>`_, and `NED <https://ned.ipac.caltech.edu/>`_. These
+external services can be used by any TOM to search for and import new targets.
+
 The
-`alerts.py <https://github.com/TOMToolkit/tom_base/blob/main/tom_alerts/alerts.py>`_
+`dataservices.py <https://github.com/TOMToolkit/tom_base/blob/main/tom_dataservices/dataservices.py>`_
 module provides a generic interface that other modules can implement, giving
-them the ability to integrate these brokers with the toolkit. Currently, there are
+them the ability to integrate new dataservices with the toolkit. Currently, there are
 modules available for `Lasair <https://lasair.roe.ac.uk>`_,
-`MARS <https://mars.lco.global>`_, `SCOUT <https://cneos.jpl.nasa.gov/scout/intro.html>`_, and others,
+`ANTARES <https://antares.noirlab.edu/loci>`_, `SCOUT <https://cneos.jpl.nasa.gov/scout/intro.html>`_, and others,
 with more planned for the future.
 
 TOM Setup and TOM Common
