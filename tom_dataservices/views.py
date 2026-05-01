@@ -100,6 +100,15 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         form.helper.form_action = reverse('tom_dataservices:create')
         return form
 
+    def get_form_kwargs(self):
+        """Add ``user`` to the form kwargs so DataService-specific forms can populate
+        choices that depend on per-user credentials (e.g. authenticated topic lookups).
+        BaseQueryForm swallows the kwarg when the concrete form does not use it.
+        """
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def get_initial(self):
         """
         Returns the initial data to use for forms on this view.
@@ -168,19 +177,29 @@ class RunQueryView(TemplateView):
             # get the DataService class. Pull saved query if PK available, otherwise use session data.
             if self.kwargs.get('pk', None) is not None:
                 query = get_object_or_404(DataServiceQuery, pk=self.kwargs['pk'])
-                data_service_class = get_data_service_class(query.data_service)()
+                data_service_class = get_data_service_class(query.data_service)(user=self.request.user)
                 query_parameters = data_service_class.build_query_parameters(query.parameters)
                 query.last_run = timezone.now()
                 query.save()
             else:
                 input_parameters = self.request.session.get('query_parameters', {})
-                data_service_class = get_data_service_class(input_parameters['data_service'])()
+                data_service_class = get_data_service_class(input_parameters['data_service'])(user=self.request.user)
                 query_parameters = data_service_class.build_query_parameters(input_parameters)
-            # Check cached query is the same and pull cache if needed.
+            # Re-use cached rows when the same query parameters were just
+            # run. ``CreateTargetFromQueryView`` reads the row dicts back
+            # via ``cache.get(f'result_{i}')`` to dispatch ``to_target``,
+            # so we keep both sides of the cache in sync.
+            #
+            # On a cache miss (different parameters), drop just our own
+            # keys rather than ``cache.clear()`` — the latter would wipe
+            # every other app's cached entries (e.g. HERMES topic lists,
+            # template-fragment caches, rate-limit counters).
             if query_parameters == cache.get('query_params'):
-                cached_results = cache.get_many([f'result_{result_id}' for result_id in range(0, 99)])
+                cached_results = cache.get_many(
+                    [f'result_{result_id}' for result_id in range(0, 99)])
             else:
-                cache.clear()
+                cache.delete('query_params')
+                cache.delete_many([f'result_{result_id}' for result_id in range(0, 99)])
             if cached_results:
                 results = [cached_results[key] for key in cached_results]
             else:
@@ -274,6 +293,15 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         )
         return form
 
+    def get_form_kwargs(self):
+        """Same ``user`` injection as DataServiceQueryCreateView. See that method
+        for the rationale (DataService forms may need per-user credentials to
+        populate choices).
+        """
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def get_initial(self):
         """
         Returns the initial data to use for forms on this view. Initial data for this form consists of the name of
@@ -327,7 +355,7 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
         """
         query_id = self.request.POST['query_id']
         data_service_name = self.request.POST['data_service']
-        data_service_class = get_data_service_class(data_service_name)()
+        data_service_class = get_data_service_class(data_service_name)(user=self.request.user)
         results = self.request.POST.getlist('selected_results')
         errors = []
         target = None
@@ -347,6 +375,17 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                     else:
                         return redirect(reverse('dataservices:run'))
                 target, extras, aliases = data_service_class.to_target(cached_result)
+                # ``to_target`` may legitimately return ``(None, {}, [])`` when
+                # the selected row cannot be materialized into a Target — for
+                # instance when a DataService has to follow up with a
+                # second-stage fetch (HermesDataService does this for the
+                # archive-query → full-message-body step) and that fetch fails.
+                # Skip this row, record an error for the summary message
+                # below, and keep going so the other selected rows still
+                # get a chance to create.
+                if target is None:
+                    errors.append(f'(result {result_id})')
+                    continue
                 try:
                     target.save(extras=extras, names=aliases)
                     # Give the user access to the target they created

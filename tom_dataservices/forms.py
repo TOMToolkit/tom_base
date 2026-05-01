@@ -22,6 +22,12 @@ class BaseQueryForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        # The DataServiceQueryCreateView / DataServiceQueryUpdateView pass the
+        # logged-in user via ``get_form_kwargs`` so a DataService subclass can
+        # use per-user credentials when fetching choices (e.g. HermesForm uses
+        # it to authenticate the /topics/ lookup). Pop here so forms that do
+        # not care still work — ``self.user`` is ``None`` in that case.
+        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False

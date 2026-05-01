@@ -96,7 +96,7 @@ class DataService(ABC):
     # Link to app github repo
     app_link = None
 
-    def __init__(self, query_parameters=None, *args, **kwargs):
+    def __init__(self, query_parameters=None, user=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Instance variable that can store target query results if necessary
         self.target_results = {}
@@ -106,6 +106,11 @@ class DataService(ABC):
         self.query_results = {}
         # Instance variable that can store query parameters if necessary
         self.query_parameters = query_parameters or {}
+        # The logged-in User who triggered the query, or None for background /
+        # anonymous callers. Subclasses that authenticate to a per-user external
+        # service (e.g. HermesDataService) use this to resolve credentials.
+        # RunQueryView / CreateTargetFromQueryView pass request.user here.
+        self.user = user
 
     @abstractmethod
     def query_service(self, query_parameters, **kwargs):
