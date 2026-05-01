@@ -32,3 +32,18 @@ class TomCommonConfig(AppConfig):
         """
         return [{'partial': 'tom_common/partials/user_data.html',
                  'context': 'tom_common.templatetags.user_extras.user_data'}]
+
+    def sharing_backends(self):
+        """
+        Integration point for registering data-sharing backends.
+
+        Called by ``tom_common.sharing.get_sharing_backends()`` when it iterates installed AppConfigs to build the
+        registry of SharingBackend classes. Each returned dict has a ``class`` key pointing to the dot-separated path
+        of a SharingBackend subclass.
+
+        TOM Toolkit includes ``TomToolkitSharingBackend`` (for sharing with another TOM Toolkit-based TOM). Other apps
+        (e.g., ``tom_hermes``) register their own SharingBackends by adding this method to their AppConfig.
+
+        Additional configuration is required in ``settings.DATA_SHARING``.
+        """
+        return [{'class': 'tom_common.sharing.TomToolkitSharingBackend'}]
