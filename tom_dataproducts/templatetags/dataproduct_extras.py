@@ -45,7 +45,9 @@ def dataproduct_list_for_target(context, target):
     initial = {'submitter': context['request'].user,
                'target': target,
                'share_title': f"Updated data for {target.name}."}
-    form = DataShareForm(initial=initial)
+    # Pass user so the DataShareForm's share-destination choices can include
+    # per-user SharingBackend entries (e.g. HERMES topics the user can publish to).
+    form = DataShareForm(initial=initial, user=context['request'].user)
 
     return {
         'products': target_products_for_user,
@@ -203,7 +205,9 @@ def get_photometry_data(context, target, target_share=False):
                'data_type': 'photometry',
                'share_title': f"Updated data for {target.name} from {getattr(settings, 'TOM_NAME', 'TOM Toolkit')}.",
                }
-    form = DataShareForm(initial=initial)
+    # Pass user so the DataShareForm's share-destination choices can include
+    # per-user SharingBackend entries (e.g. HERMES topics the user can publish to).
+    form = DataShareForm(initial=initial, user=context['request'].user)
     form.fields['data_type'].widget = forms.HiddenInput()
 
     sharing = getattr(settings, "DATA_SHARING", None)

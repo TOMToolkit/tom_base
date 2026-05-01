@@ -30,8 +30,8 @@ from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
-from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
-                                      download_data)
+from tom_common.sharing import get_sharing_backend
+from tom_dataproducts.sharing import download_data, sharing_feedback_handler
 import tom_dataproducts.single_target_data_service.single_target_data_service as stds
 from tom_targets.models import Target
 
@@ -404,29 +404,53 @@ class DataShareView(FormView):
         return redirect(form.cleaned_data.get('referrer', '/'))
 
     def post(self, request, *args, **kwargs):
+        """Handle POST requests for sharing data.
+
+        Shares Data Products, ReducedDatums, and whole-target data to whichever
+        destination the user picked in the share form. Dispatch is via the
+        SharingBackend registry: ``share_destination`` has the form
+        ``'<backend_name>:<sub-destination>'`` (e.g. ``'hermes:hermes.test'`` or
+        ``'tom:tom_b'``). The registry lookup finds the backend class; we call
+        its ``share()`` method with the querysets assembled from the URL/POST
+        arguments.
+
+        The ``'download'`` destination is special-cased because it is not a
+        SharingBackend — it emits a CSV file to the browser instead of
+        publishing anywhere.
         """
-        Method that handles the POST requests for sharing data.
-        Handles Data Products and All the data of a type for a target as well as individual Reduced Datums.
-        Submit to Hermes, or Share with TOM (soon).
-        """
-        data_share_form = DataShareForm(request.POST, request.FILES)
+        data_share_form = DataShareForm(request.POST, request.FILES, user=request.user)
 
         if data_share_form.is_valid():
             form_data = data_share_form.cleaned_data
             share_destination = form_data['share_destination']
+
+            # Selected ReducedDatum primary keys from the share-box checkboxes.
+            selected_data = request.POST.getlist('share-box')
+
+            # The 'download' destination is handled specially: it writes a CSV
+            # directly to the response rather than going through a SharingBackend.
+            if share_destination == 'download':
+                return download_data(form_data, selected_data=selected_data)
+
+            # Turn the URL-provided ids into querysets for the backend.
             product_id = kwargs.get('dp_pk', None)
             target_id = kwargs.get('tg_pk', None)
+            data_products = DataProduct.objects.filter(pk=product_id) if product_id else None
+            targets = Target.objects.filter(pk=target_id) if target_id else None
+            reduced_datums = ReducedDatum.objects.filter(pk__in=selected_data) if selected_data else None
 
-            # Check if data points have been selected.
-            selected_data = request.POST.getlist("share-box")
-
-            # Check Destination
-            if 'HERMES' in share_destination.upper():
-                response = share_data_with_hermes(share_destination, form_data, product_id, target_id, selected_data)
-            elif share_destination == 'download':
-                return download_data(form_data, selected_data=selected_data)
-            else:
-                response = share_data_with_tom(share_destination, form_data, product_id, target_id, selected_data)
+            # Dispatch via the SharingBackend registry. The backend name is
+            # the prefix before the ':' in share_destination. A missing ':'
+            # (legacy TOM-to-TOM 'mytom' form) is treated as backend 'tom'.
+            backend_name = share_destination.partition(':')[0] or 'tom'
+            backend = get_sharing_backend(backend_name)()
+            response = backend.share(
+                form_data,
+                data_products=data_products,
+                reduced_datums=reduced_datums,
+                targets=targets,
+                user=request.user,
+            )
             sharing_feedback_handler(response, self.request)
         return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
 

@@ -62,5 +62,9 @@ class DataShareForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        # The view passes ``user`` so that per-user SharingBackend choices
+        # (e.g. HERMES topics the logged-in user can publish to) can be
+        # looked up from that user's profile / session credentials.
+        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        self.fields['share_destination'].choices = get_sharing_destination_options()
+        self.fields['share_destination'].choices = get_sharing_destination_options(user=self.user)
