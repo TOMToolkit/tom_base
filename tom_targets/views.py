@@ -46,8 +46,8 @@ from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListSha
     UnknownTypeTargetCreateForm, TargetSelectionForm
 from tom_targets.sharing import share_target_with_tom
 from tom_targets.merge import target_merge
-from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
-                                      share_target_list_with_hermes)
+from tom_common.sharing import get_sharing_backend
+from tom_dataproducts.sharing import sharing_feedback_handler
 from tom_dataproducts.models import ReducedDatum
 from tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
@@ -62,7 +62,7 @@ from tom_targets.utils import import_targets, export_targets
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.seed import seed_messier_targets
 from tom_targets.tables import TargetTable, TargetGroupTable
-from tom_dataproducts.alertstreams.hermes_publisher import BuildHermesMessage, preload_to_hermes
+from tom_hermes.sharing import BuildHermesMessage, preload_to_hermes
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -432,23 +432,48 @@ class TargetShareView(FormView):
         return redirect(self.get_success_url())
 
     def form_valid(self, form):
-        """
-        Shares the target with the selected destination(s) and redirects to the target detail page.
+        """Share the target with the selected destination(s) and redirect to the target detail page.
+
+        Dispatch is via the SharingBackend registry:
+          - ``hermes:<topic>`` → HermesSharingBackend.share with the selected
+            ReducedDatums and the current Target.
+          - ``tom:<tom_name>`` (or the legacy bare ``<tom_name>``) → first
+            register the Target on the destination TOM via
+            ``share_target_with_tom``, then, if the user picked specific
+            ReducedDatums, push them through TomToolkitSharingBackend.share.
         """
         form_data = form.cleaned_data
         share_destination = form_data['share_destination']
         target_id = self.kwargs.get('pk', None)
-        selected_data = self.request.POST.getlist("share-box")
-        if 'HERMES' in share_destination.upper():
-            response = share_data_with_hermes(share_destination, form_data, None, target_id, selected_data)
+        selected_data = self.request.POST.getlist('share-box')
+        backend_name = share_destination.partition(':')[0] or 'tom'
+
+        targets_qs = Target.objects.filter(pk=target_id) if target_id else None
+        reduced_datums_qs = (
+            ReducedDatum.objects.filter(pk__in=selected_data) if selected_data else None
+        )
+
+        if backend_name == 'hermes':
+            backend = get_sharing_backend('hermes')()
+            response = backend.share(
+                form_data,
+                reduced_datums=reduced_datums_qs,
+                targets=targets_qs,
+                user=self.request.user,
+            )
             sharing_feedback_handler(response, self.request)
         else:
-            # Share Target with Destination TOM
+            # Step 1: ensure the Target exists on the destination TOM.
             response = share_target_with_tom(share_destination, form_data)
             sharing_feedback_handler(response, self.request)
+            # Step 2: optionally push the selected ReducedDatums.
             if selected_data:
-                # Share Data with Destination TOM
-                response = share_data_with_tom(share_destination, form_data, selected_data=selected_data)
+                backend = get_sharing_backend(backend_name)()
+                response = backend.share(
+                    form_data,
+                    reduced_datums=reduced_datums_qs,
+                    user=self.request.user,
+                )
                 sharing_feedback_handler(response, self.request)
         return redirect(self.get_success_url())
 
@@ -877,23 +902,56 @@ class TargetGroupingShareView(FormView):
         return redirect(self.get_success_url())
 
     def form_valid(self, form):
+        """Share the selected targets (and optionally their photometry) to the chosen destination.
+
+        Dispatch is via the SharingBackend registry:
+          - ``hermes:<topic>`` → one HermesSharingBackend.share call that
+            publishes all selected targets together (and, if dataSwitch is
+            on, their photometry ReducedDatums) under the TargetList's
+            title (see HermesSharingBackend._resolve_inputs).
+          - ``tom:<tom_name>`` (or legacy bare ``<tom_name>``) → loop each
+            selected target: register it on the destination TOM, then
+            optionally push all its data via TomToolkitSharingBackend.share.
+        """
         form_data = form.cleaned_data
         share_destination = form_data['share_destination']
         selected_targets = self.request.POST.getlist('selected-target')
         data_switch = self.request.POST.get('dataSwitch', False)
-        if 'hermes' in share_destination.lower():
-            response = share_target_list_with_hermes(
-                share_destination, form_data, selected_targets, include_all_data=data_switch)
+        backend_name = share_destination.partition(':')[0] or 'tom'
+
+        if backend_name == 'hermes':
+            # HERMES: push everything in one call. form_data['target_list']
+            # is already populated by the form's clean(); the backend reads
+            # it to set the message title.
+            targets_qs = Target.objects.filter(id__in=selected_targets)
+            reduced_datums_qs = None
+            if data_switch:
+                reduced_datums_qs = ReducedDatum.objects.filter(
+                    target__id__in=selected_targets, data_type='photometry',
+                )
+            backend = get_sharing_backend('hermes')()
+            response = backend.share(
+                form_data,
+                targets=targets_qs,
+                reduced_datums=reduced_datums_qs,
+                user=self.request.user,
+            )
             sharing_feedback_handler(response, self.request)
         else:
+            # TOM-to-TOM: per-target registration + optional data push.
+            tom_backend = get_sharing_backend(backend_name)()
             for target in selected_targets:
-                # Share each target individually
                 form_data['target'] = Target.objects.get(id=target)
-                response = share_target_with_tom(share_destination, form_data, target_lists=[form_data['target_list']])
+                response = share_target_with_tom(
+                    share_destination, form_data, target_lists=[form_data['target_list']],
+                )
                 sharing_feedback_handler(response, self.request)
                 if data_switch:
-                    # If Data sharing request, share all data associated with the target
-                    response = share_data_with_tom(share_destination, form_data, target_id=target)
+                    response = tom_backend.share(
+                        form_data,
+                        targets=Target.objects.filter(pk=target),
+                        user=self.request.user,
+                    )
                     sharing_feedback_handler(response, self.request)
             if not selected_targets:
                 messages.error(self.request, f'No targets shared. {form.errors.as_json()}')
