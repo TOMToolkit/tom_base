@@ -340,7 +340,7 @@ class ReducedDatum(models.Model):
 
     A ``ReducedDatum`` generally refers to a single piece of data--e.g., a spectrum, or a photometry point. It is
     associated with a target, and optionally with the data product it came from. An example of a ``ReducedDatum``
-    without an associated data product would be photometry ingested from a broker.
+    without an associated data product would be photometry ingested from a data service.
 
     :param target: The ``Target`` with which this object is associated.
 

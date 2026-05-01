@@ -31,9 +31,9 @@ Many of the TOM modules leverage a plugin architecture that enables you
 to write your own implementation, and the cadence strategy plugin is no
 different. If you’re familiar with the other modules, you’ve already
 seen examples of this in the
-`Writing an alert broker <../customization/create_broker>`__,
+`Writing a data service <../data_services/create_dataservice>`__,
 `Writing an observation module <observation_module>`__, and
-`Customizing data processing <../customization/customizing_data_processing>`__
+`Customizing data processing <../managing_data/customizing_data_processing>`__
 tutorials.
 
 Create a cadence strategy file

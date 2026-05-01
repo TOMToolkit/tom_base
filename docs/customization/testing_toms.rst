@@ -147,8 +147,6 @@ option requires two short files in addition:
         'rest_framework',
         'rest_framework.authtoken',
         'tom_targets',
-        'tom_alerts',
-        'tom_catalogs',
         'tom_observations',
         'tom_dataproducts',
         'mytom',

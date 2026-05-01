@@ -7,14 +7,6 @@ Additional functionality can be added to the TOM Toolkit in the form of plugins.
 These may range from adding the ability to interface with additional
 observatories, to providing additional plotting or data analytics functionality.
 
-### tom-alerts-dash
-
-This module supplements the tom_alerts module with Plotly Dash support for more responsive broker views.
-
-[Github](https://github.com/TOMToolkit/tom_alerts_dash)
-
-[Installation Instructions](https://github.com/TOMToolkit/tom_alerts_dash#installation)
-
 ### tom-antares
 This module provides the ability to query and/or listen to Antares alert streams
 from within a TOM.

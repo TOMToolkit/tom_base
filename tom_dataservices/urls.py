@@ -15,5 +15,4 @@ urlpatterns = [
     path('query/<int:pk>/delete/', DataServiceQueryDeleteView.as_view(), name='delete'),
     path('query/create_targets/', CreateTargetFromQueryView.as_view(), name='create-target'),
     path('query/update_data/', update_data_from_query, name='update-data'),
-    # path('<str:broker>/submit/', SubmitAlertUpstreamView.as_view(), name='submit-alert')
 ]

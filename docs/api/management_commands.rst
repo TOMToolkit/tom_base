@@ -1,12 +1,6 @@
 Commands
 ========
 
-**********
-tom_alerts
-**********
-
-runbrokerquery.py - Runs saved alert queries and saves the results as Targets.
-
 ****************
 tom_dataproducts
 ****************
