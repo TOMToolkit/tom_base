@@ -77,6 +77,7 @@ dependencies = [
 packages = [ # tell poetry build that the repo is named tom_base (which != name, above)
     { include="tom_alerts"},
     { include="tom_base"},
+    { include="tom_calendar"},
     { include="tom_common"},
     { include="tom_dataproducts"},
     { include="tom_dataservices"},
@@ -88,7 +89,7 @@ packages = [ # tell poetry build that the repo is named tom_base (which != name,
 version = "0.0.0" # version supplied by poetry-dynamic-versioning
 
 [tool.poetry.group.test.dependencies]
-responses = ">=0.23,<0.26"
+responses = ">=0.26.0,<0.27"
 factory_boy = ">3.2.1,<3.4"
 psycopg2-binary = "*" # for testing postgres
 
@@ -97,7 +98,7 @@ docutils = "!=0.21.post1"
 recommonmark = "~0.7"
 sphinx = ">=5,<8"
 sphinx-design = ">=0.6,<0.7"
-sphinx-rtd-theme = ">=1.0,<3.1"
+sphinx-rtd-theme = ">=3.1.0,<3.2"
 sphinx-copybutton = "~0.5"
 
 [tool.poetry.group.coverage.dependencies]
@@ -105,7 +106,7 @@ coverage = ">=6,<8" # coveralls needs ~6 even though 7.3.2 is latest
 coveralls = ">=3,<5"
 
 [tool.poetry.group.lint.dependencies]
-flake8 = ">=6.0,<7.2"
+flake8 = ">=7.3.0,<7.4"
 
 
 [tool.poetry.requires-plugins]

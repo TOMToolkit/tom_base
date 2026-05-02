@@ -131,14 +131,23 @@ td, th {
 }
 
 /* add up and down sorting arrows to column headers  */
-.table-container th.asc::after {
-    content: '\0000a0\0025bc';
+.table-container th:not(.asc):not(.desc):not(:has(input))::after,
+.table-container th.asc:not(:has(input))::after,
+.table-container th.desc:not(:has(input))::after {
     float: left;
+    padding-right: 4px;
 }
 
-.table-container th.desc::after {
-    content: '\0000a0\0025b2';
-    float: left;
+.table-container th:not(.asc):not(.desc):not(:has(input))::after {
+    content: '\0021C5';
+}
+
+.table-container th.asc:not(:has(input))::after {
+    content: '\0025B2';
+}
+
+.table-container th.desc:not(:has(input))::after {
+    content: '\0025BC';
 }
 
 .bottom {
@@ -323,4 +332,3 @@ td, th {
     opacity: 1;
     transition: opacity 0.5s ease-out;
 }
-
