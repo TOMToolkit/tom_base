@@ -80,12 +80,13 @@ As such, the model *should not define a* ``user`` *property of its own*.
 Some Explanations
 -----------------
 
-EncryptableModelMixin (`source <https://github.com/TOMToolkit/tom_base/blob/069024f954e5540c1441c5186378de538f7d606f/tom_common/models.py#L100>`__)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The User's data is encrypted using (among other things) their password (i.e the
-password they use to login to your TOM). When the User changes their password,
-their encrypted data re-encrypted accordingly. The ``EncryptableModelMixin`` adds
-method for this to your otherwise normal Django model.
+EncryptableModelMixin
+~~~~~~~~~~~~~~~~~~~~~
+An abstract Django model mixin that provides a standardized ``user`` OneToOneField.
+Any model that stores encrypted data via ``EncryptedProperty`` should inherit from
+this mixin. The ``user`` field ties encrypted data to its owner, allowing the
+helper functions in ``session_utils`` to look up the user's Data Encryption Key
+(DEK) and build the cipher needed for encryption and decryption.
 
 EncryptedProperty (`source <https://github.com/TOMToolkit/tom_base/blob/069024f954e5540c1441c5186378de538f7d606f/tom_common/models.py#L39>`__)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
