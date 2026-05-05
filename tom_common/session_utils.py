@@ -260,6 +260,9 @@ def reencrypt_data(user) -> None:
 
     #  Get the new raw password from the User instance
     new_raw_password = user._password  # CAUTION: this is implemenation dependent (using _<property>)
+    if not new_raw_password:
+        logger.error(f"User {user.username} does not have a raw password available. Cannot re-encrypt sensitive data.")
+        return
     #  Generate a new encryption_key with the new raw password
     new_encryption_key: bytes = create_cipher_encryption_key(user, new_raw_password)
     #  Generate a new encoding Fernet cipher with the new encryption key
