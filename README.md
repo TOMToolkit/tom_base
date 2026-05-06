@@ -69,37 +69,12 @@ Please review our [code of conduct](CODE_OF_CONDUCT.md) for information about wh
 For development information targeted at the maintainers of the project, please see [README-dev.md](README-dev.md).
 
 ## Plugins
-
-### tom_alerts_dash
-
-The [tom_alerts_dash](https://github.com/TOMToolkit/tom_alerts_dash) plugin adds responsive ReactJS views to the
-`tom_alerts` module for supported brokers.
-
-### Antares
-
-The [tom-antares](https://github.com/TOMToolkit/tom_antares) plugin adds support
-for querying the Antares broker for targets of interest.
-
-### tom_nonsidereal_airmass
-
-The [tom_nonsidereal_airmass](https://github.com/TOMToolkit/tom_nonsidereal_airmass) plugin provides a templatetag
-that supports plotting for non-sidereal objects. The plugin is fully supported by the TOM Toolkit team; however,
-non-sidereal visibility calculations require the PyEphem library, which is minimally supported while its successor
-is in development. The library used for the TOM Toolkit sidereal visibility, astroplan, does not yet support
-non-sidereal visibility calculations.
-
-### tom-lt
-
-This module provides the ability to submit observations to the Liverpool Telescope Phase 2 system. It is in a very alpha
-state, with little error handling and minimal instrument options, but can successfully submit well-formed observation
-requests.
-
-[Github](https://github.com/TOMToolkit/tom_lt)
-
-### tom_registration
-
-The [tom_registration](https://github.com/TOMToolkit/tom_registration) plugin introduces support for two TOM registration
-flows--an open registration, and a registration that requires administrator approval.
+Our philosophy is to keep the TOM as lightweight and adaptable as possible.  
+Different TOM systems have different science goals and sometimes need 
+different functions. Rather than require users to support all 
+dependencies from all possible functions, we support a range of optional 
+plugin modules for the Toolkit.  Have a look at our [list of plugins](https://tom-toolkit.readthedocs.io/en/stable/api/plugins.html) 
+see which would benefit your science goals. 
 
 ## About the TOM Toolkit
 
