@@ -32,7 +32,8 @@ class AlerceForm(BaseQueryForm):
     firstmjd_lt = forms.FloatField(required=False, label="Max MJD of first detection")
     lastmjd_gt = forms.FloatField(required=False, label="Min MJD of last detection")
     lastmjd_lt = forms.FloatField(required=False, label="Max MJD of last detection")
-    ndet = forms.IntegerField(required=False, label="Min. Number of Detections")
+    ndet_min = forms.IntegerField(required=False, label="Min. Number of Detections")
+    ndet_max = forms.IntegerField(required=False, label="Max Number of Detections")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -136,8 +137,13 @@ class AlerceDataService(DataService):
             lastmjd_lt := query_parameters.get("lastmjd_lt")
         ):
             params["lastmjd"] = [lastmjd_gt, lastmjd_lt]
-        if ndet := query_parameters.get("ndet"):
-            params["ndet"] = ndet
+        ndet_min = query_parameters.get("ndet_min")
+        if ndet_max := query_parameters.get("ndet_max"):
+            if not ndet_min:
+                ndet_min = 0
+            params["ndet"] = [ndet_min, ndet_max]
+        elif ndet_min:
+            params["ndet"] = [ndet_min,]
         if all(
             [
                 ra := query_parameters.get("ra"),
@@ -149,6 +155,7 @@ class AlerceDataService(DataService):
             params["dec"] = dec
             params["radius"] = radius
         results = []
+        print(params)
         try:
             if object_id := query_parameters.get("object_id"):
                 # We might want to specify the survey based on the object id prefix
@@ -194,7 +201,8 @@ class AlerceDataService(DataService):
             "firstmjd_lt",
             "lastmjd_gt",
             "lastmjd_lt",
-            "ndet",
+            "ndet_min",
+            "ndet_max"
         ]
         return {k: v for k, v in parameters.items() if k in include_fields}
 
