@@ -19,3 +19,8 @@ div.partners {
 a.hs {
   padding-right: 10%;
 }
+
+.toctree-l1 > a[href*="getting_started"] {
+    color: #017792 !important;
+    font-weight: bold;
+}
