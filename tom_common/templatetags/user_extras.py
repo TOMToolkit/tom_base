@@ -75,12 +75,20 @@ def user_data(user):
     exclude_fields = ['password', 'last_login', 'id', 'is_active', 'user']
     user_dict = model_to_dict(user, exclude=exclude_fields)
     profile_dict = model_to_dict(user.profile, exclude=exclude_fields)
-    return {
+
+    # Get the auth_token from the Python descriptor attached (at runtime)
+    # to the User model by Django as a reverse relation (the related_name)
+    # to the rest_framework.authtoken.models.Token
+    drf_api_token = getattr(user, 'auth_token', None)
+
+    user_data = {
         'user': user,
         'profile': user.profile,
         'user_data': user_dict,
         'profile_data': profile_dict,
+        'drf_api_token': drf_api_token,
     }
+    return user_data
 
 
 @register.inclusion_tag('tom_common/partials/app_profiles.html', takes_context=True)
