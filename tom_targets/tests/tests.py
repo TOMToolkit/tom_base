@@ -18,7 +18,7 @@ from tom_observations.tests.factories import ObservingRecordFactory
 from tom_targets.models import Target, TargetExtra, TargetList, TargetName
 from tom_targets.utils import import_targets
 from tom_targets.merge import target_merge
-from tom_targets.base_models import BaseTarget
+from tom_targets.base_models import BaseTarget, get_target_model_app_label
 from tom_targets.templatetags.targets_extras import target_table_headers, target_table_row
 from tom_targets.permissions import targets_for_user
 from tom_dataproducts.models import ReducedDatum, DataProduct
@@ -34,9 +34,10 @@ class TestTargetListUserPermissions(TestCase):
         self.st2 = SiderealTargetFactory.create(permissions="PRIVATE")
         self.st3 = SiderealTargetFactory.create(permissions="PUBLIC")
 
-        assign_perm('tom_targets.view_target', self.user, self.st1)
-        assign_perm('tom_targets.view_target', self.user, self.st2)
-        assign_perm('tom_targets.view_target', self.user2, self.st2)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.st1)
+        assign_perm(f'{target_app_label}.view_target', self.user, self.st2)
+        assign_perm(f'{target_app_label}.view_target', self.user2, self.st2)
 
     def test_list_targets(self):
         self.client.force_login(self.user)
@@ -66,8 +67,9 @@ class TestTargetListGroupPermissions(TestCase):
         self.group2.user_set.add(self.user)
         self.group2.user_set.add(self.user2)
 
-        assign_perm('tom_targets.view_target', self.group1, self.st1)
-        assign_perm('tom_targets.view_target', self.group2, self.st2)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.group1, self.st1)
+        assign_perm(f'{target_app_label}.view_target', self.group2, self.st2)
 
     def test_list_targets(self):
         self.client.force_login(self.user)
@@ -95,8 +97,9 @@ class TestTargetDetail(TestCase):
         self.client.force_login(user)
         self.st = SiderealTargetFactory.create(ra=123.456, dec=-32.1, permissions="PRIVATE")
         self.nst = NonSiderealTargetFactory.create(permissions="PRIVATE")
-        assign_perm('tom_targets.view_target', user, self.st)
-        assign_perm('tom_targets.view_target', user, self.nst)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', user, self.st)
+        assign_perm(f'{target_app_label}.view_target', user, self.nst)
 
     def test_sidereal_target_detail(self):
         response = self.client.get(reverse('targets:detail', kwargs={'pk': self.st.id}))
@@ -133,10 +136,11 @@ class TestTargetNameSearch(TestCase):
         self.st2 = SiderealTargetFactory.create(name='testtarget2', permissions="PRIVATE")
         self.st3 = SiderealTargetFactory.create(name='testtarget3', permissions="PRIVATE")
 
-        assign_perm('tom_targets.view_target', self.user, self.st1)
-        assign_perm('tom_targets.view_target', self.user2, self.st1)
-        assign_perm('tom_targets.view_target', self.user, self.st2)
-        assign_perm('tom_targets.view_target', self.user, self.st3)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.st1)
+        assign_perm(f'{target_app_label}.view_target', self.user2, self.st1)
+        assign_perm(f'{target_app_label}.view_target', self.user, self.st2)
+        assign_perm(f'{target_app_label}.view_target', self.user, self.st3)
 
     def test_search_one_result(self):
         """Test that a search with one result returns the target detail page."""
@@ -171,7 +175,8 @@ class TestTargetNameSearch(TestCase):
     def test_search_multiple_results_unauthorized(self):
         """Test that a search with multiple results returns the target list page, but without the targets that
            the user is not allowed to view."""
-        assign_perm('tom_targets.view_target', self.user2, self.st2)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user2, self.st2)
         self.client.force_login(self.user2)
         response = self.client.get(reverse('targets:name-search', kwargs={'name': 'testtarget'}), follow=True)
         self.assertRedirects(response, reverse('targets:list') + '?name=testtarget')
@@ -744,7 +749,8 @@ class TestTargetUpdate(TestCase):
         }
         user = User.objects.create(username='testuser')
         self.target = Target.objects.create(**self.form_data)
-        assign_perm('tom_targets.change_target', user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.change_target', user, self.target)
         self.client.force_login(user)
 
     def test_valid_update(self):
@@ -961,7 +967,8 @@ class TestTargetMatchManager(TestCase):
         }
         user = User.objects.create(username='testuser')
         self.target = Target.objects.create(**self.form_data)
-        assign_perm('tom_targets.change_target', user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.change_target', user, self.target)
         self.client.force_login(user)
 
     def test_strict_matching(self):
@@ -1084,8 +1091,9 @@ class TestTargetExport(TestCase):
 
         self.user = User.objects.create(username='testuser')
         self.client.force_login(self.user)
-        assign_perm('tom_targets.view_target',  self.user, self.st)
-        assign_perm('tom_targets.view_target',  self.user, self.st2)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target',  self.user, self.st)
+        assign_perm(f'{target_app_label}.view_target',  self.user, self.st2)
 
     def test_export_all_targets_no_aliases(self):
         response = self.client.get(reverse('targets:export'))
@@ -1126,7 +1134,8 @@ class TestTargetSearch(TestCase):
 
         self.user = User.objects.create(username='testuser')
         self.client.force_login(self.user)
-        assign_perm('tom_targets.view_target', self.user, self.st)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.st)
 
     def test_search_name_no_results(self):
         response = self.client.get(reverse('targets:list') + '?name=noresults')
@@ -1189,7 +1198,8 @@ class TestTargetGrouping(TestCase):
 
         # give this user the permission to view it
         user = User.objects.get(username='testuser')
-        assign_perm('tom_targets.view_targetlist', user, group)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_targetlist', user, group)
 
         response = self.client.get(reverse('targets:targetgrouping'), follow=True)
         self.assertContains(response, group.name)
@@ -1227,11 +1237,13 @@ class TestTargetAddRemoveGrouping(TestCase):
         for _ in range(3):
             ft = SiderealTargetFactory.create()
             self.fake_targets.append(ft)
-            assign_perm('tom_targets.view_target', user, ft)
-            assign_perm('tom_targets.change_target', user, ft)
+            target_app_label = get_target_model_app_label()
+            assign_perm(f'{target_app_label}.view_target', user, ft)
+            assign_perm(f'{target_app_label}.change_target', user, ft)
         # create grouping
         self.fake_grouping = TargetGroupingFactory.create()
-        assign_perm('tom_targets.view_targetlist', user, self.fake_grouping)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_targetlist', user, self.fake_grouping)
         # add target[0] to grouping
         self.fake_grouping.targets.add(self.fake_targets[0])
 
@@ -1464,7 +1476,8 @@ class TestShareTargets(TestCase):
             parameters={}
         )
         self.user = User.objects.create_user(username='test', email='test@example.com')
-        assign_perm('tom_targets.view_target', self.user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.target)
         self.client.force_login(self.user)
         self.rd1 = ReducedDatum.objects.create(
             target=self.target,
@@ -1644,7 +1657,8 @@ class TestShareTargetList(TestCase):
         )
         self.target_list.targets.set(Target.objects.all())
         self.user = User.objects.create_user(username='test', email='test@example.com')
-        assign_perm('tom_targets.view_target', self.user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.target)
         self.client.force_login(self.user)
         self.rd1 = ReducedDatum.objects.create(
             target=self.target,
@@ -2032,7 +2046,8 @@ class TestTargetPermissionFiltering(TestCase):
 
     def test_private_group_permission(self):
         self.group.user_set.add(self.user)
-        assign_perm('tom_targets.view_target', self.group, self.private_group_target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.group, self.private_group_target)
         result = targets_for_user(self.user, Target.objects.all(), 'view_target')
         self.assertIn(self.open_target, result)
         self.assertIn(self.public_target, result)
@@ -2040,7 +2055,8 @@ class TestTargetPermissionFiltering(TestCase):
         self.assertNotIn(self.private_user_target, result)
 
     def test_private_user_permission(self):
-        assign_perm('tom_targets.view_target', self.user, self.private_user_target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.private_user_target)
         result = targets_for_user(self.user, Target.objects.all(), 'view_target')
         self.assertIn(self.open_target, result)
         self.assertIn(self.public_target, result)
@@ -2048,7 +2064,8 @@ class TestTargetPermissionFiltering(TestCase):
         self.assertIn(self.private_user_target, result)
 
     def test_private_user_permission_wrong_action(self):
-        assign_perm('tom_targets.view_target', self.user, self.private_user_target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.private_user_target)
         result = targets_for_user(self.user, Target.objects.all(), 'delete_target')
         self.assertIn(self.open_target, result)
         self.assertIn(self.public_target, result)

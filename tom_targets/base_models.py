@@ -200,6 +200,19 @@ def get_default_target_permission():
         return BaseTarget.Permissions.PRIVATE
 
 
+def get_target_model_app_label():
+    """Function to retrieve the app label of the target model class from settings.py.
+    If not found, returns the default 'tom_targets'."""
+    try:
+        TARGET_MODEL_CLASS = settings.TARGET_MODEL_CLASS
+        clazz = import_string(TARGET_MODEL_CLASS)
+        return clazz._meta.app_label
+    except AttributeError:
+        return 'tom_targets'
+    except ImportError:
+        return 'tom_targets'
+
+
 class BaseTarget(models.Model):
     """
     Class representing a target in a TOM
@@ -603,6 +616,7 @@ class BaseTarget(models.Model):
         :param user:
         :return:
         """
-        assign_perm('tom_targets.view_target', user, self)
-        assign_perm('tom_targets.change_target', user, self)
-        assign_perm('tom_targets.delete_target', user, self)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', user, self)
+        assign_perm(f'{target_app_label}.change_target', user, self)
+        assign_perm(f'{target_app_label}.delete_target', user, self)

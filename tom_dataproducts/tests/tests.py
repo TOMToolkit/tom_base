@@ -1,3 +1,4 @@
+from tom_targets.base_models import get_target_model_app_label
 import datetime
 from http import HTTPStatus
 import os
@@ -65,7 +66,8 @@ class Views(TestCase):
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
         user = User.objects.create_user(username='test', email='test@example.com')
-        assign_perm('tom_targets.view_target', user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', user, self.target)
         self.client.force_login(user)
 
     def test_dataproduct_list_on_target(self, dp_mock):
@@ -207,8 +209,9 @@ class TestViewsWithPermissions(TestCase):
         )
         self.user = User.objects.create_user(username='aaronrodgers', email='aaron.rodgers@packers.com')
         self.user2 = User.objects.create_user(username='timboyle', email='tim.boyle@packers.com')
-        assign_perm('tom_targets.view_target', self.user, self.target)
-        assign_perm('tom_targets.view_target', self.user2, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.target)
+        assign_perm(f'{target_app_label}.view_target', self.user2, self.target)
         assign_perm('tom_targets.view_dataproduct', self.user, self.data_product)
         self.client.force_login(self.user)
 
@@ -265,7 +268,8 @@ class TestDataProductListView(TestCase):
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
         user = User.objects.create_user(username='test', email='test@example.com')
-        assign_perm('tom_targets.view_target', user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', user, self.target)
         self.client.force_login(user)
 
     @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
@@ -300,7 +304,8 @@ class TestUploadDataProducts(TestCase):
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
         self.user = User.objects.create_user(username='test', email='test@example.com')
-        assign_perm('tom_targets.view_target', self.user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.target)
         self.client.force_login(self.user)
 
     def test_upload_data_for_target(self, run_data_processor_mock):
@@ -350,8 +355,9 @@ class TestDeleteDataProducts(TestCase):
         )
         self.user = User.objects.create_user(username='aaronrodgers', email='aaron.rodgers@packers.com')
         self.user2 = User.objects.create_user(username='timboyle', email='tim.boyle@packers.com')
-        assign_perm('tom_targets.view_target', self.user, self.target)
-        assign_perm('tom_targets.view_target', self.user2, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.target)
+        assign_perm(f'{target_app_label}.view_target', self.user2, self.target)
         assign_perm('tom_targets.view_dataproduct', self.user, self.data_product)
         assign_perm('tom_targets.view_dataproduct', self.user2, self.data_product)
         assign_perm('tom_targets.delete_dataproduct', self.user, self.data_product)
@@ -636,7 +642,8 @@ class TestShareDataProducts(TestCase):
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
         self.user = User.objects.create_user(username='test', email='test@example.com')
-        assign_perm('tom_targets.view_target', self.user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.target)
         self.client.force_login(self.user)
 
         self.rd1 = ReducedDatum.objects.create(

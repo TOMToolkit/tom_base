@@ -1,3 +1,4 @@
+from tom_targets.base_models import get_target_model_app_label
 from datetime import datetime, timedelta
 from http import HTTPStatus
 from unittest import mock
@@ -35,7 +36,8 @@ class TestObservationViews(TestCase):
         )
         self.user = User.objects.create_user(username='vincent_adultman', password='important')
         self.user2 = User.objects.create_user(username='peon', password='plebian')
-        assign_perm('tom_targets.view_target', self.user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.target)
         self.client.force_login(self.user)
 
     def test_observation_list(self):
@@ -136,7 +138,8 @@ class TestObservationCreateView(TestCase):
         )
         self.user = User.objects.create_user(username='vincent_adultman', password='important')
         self.user2 = User.objects.create_user(username='peon', password='plebian')
-        assign_perm('tom_targets.view_target', self.user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.target)
         self.client.force_login(self.user)
 
     def test_submit_observation_robotic(self):
@@ -338,8 +341,9 @@ class TestObservationViewsRowLevelPermissions(TestCase):
         )
         user = User.objects.create_user(username='vincent_adultman', password='important')
         self.user2 = User.objects.create_user(username='peon', password='plebian')
-        assign_perm('tom_targets.view_target', user, self.target)
-        assign_perm('tom_targets.view_target', self.user2, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', user, self.target)
+        assign_perm(f'{target_app_label}.view_target', self.user2, self.target)
         assign_perm('tom_observations.view_observationrecord', user, self.observation_record)
         self.client.force_login(user)
 

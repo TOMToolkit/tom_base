@@ -1,3 +1,4 @@
+from tom_targets.base_models import get_target_model_app_label
 import copy
 
 from django.contrib.auth.models import User, Group
@@ -18,16 +19,17 @@ class TestTargetViewset(APITestCase):
         self.st = SiderealTargetFactory.create(name='test target', targetextra_set=None, aliases=None)
         self.st2 = SiderealTargetFactory.create()
         self.nst = NonSiderealTargetFactory.create()
-        assign_perm('tom_targets.view_target', self.user, self.st)
-        assign_perm('tom_targets.view_target', self.user, self.nst)
-        assign_perm('tom_targets.add_target', self.user)
-        assign_perm('tom_targets.change_target', self.user, self.st)
-        assign_perm('tom_targets.change_target', self.user, self.nst)
-        assign_perm('tom_targets.delete_target', self.user, self.st)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.st)
+        assign_perm(f'{target_app_label}.view_target', self.user, self.nst)
+        assign_perm(f'{target_app_label}.add_target', self.user)
+        assign_perm(f'{target_app_label}.change_target', self.user, self.st)
+        assign_perm(f'{target_app_label}.change_target', self.user, self.nst)
+        assign_perm(f'{target_app_label}.delete_target', self.user, self.st)
 
         # Create test user with subset of permissions
         self.user2 = User.objects.create(username='testuser2')
-        assign_perm('tom_targets.view_target', self.user2, self.st)
+        assign_perm(f'{target_app_label}.view_target', self.user2, self.st)
 
         # Login with privileged user
         self.client.force_login(self.user)
@@ -85,7 +87,8 @@ class TestTargetViewset(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.json()['name'], target_data['name'])
         self.assertEqual(response.json()['aliases'][0]['name'], target_data['aliases'][0]['name'])
-        self.assertEqual(get_objects_for_user(collaborator, 'tom_targets.view_target').first().name,
+        target_app_label = get_target_model_app_label()
+        self.assertEqual(get_objects_for_user(collaborator, f'{target_app_label}.view_target').first().name,
                          target_data['name'])  # Test that group permissions are respected
         target_list2 = TargetList.objects.get(name='newer_tlist')
         self.assertEqual(target_list.targets.all().count(), 1)
@@ -160,7 +163,8 @@ class TestTargetViewset(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.st.refresh_from_db()
         self.assertEqual(self.st.ra, updates['ra'])
-        self.assertEqual(get_objects_for_user(collaborator, 'tom_targets.view_target').first().name,
+        target_app_label = get_target_model_app_label()
+        self.assertEqual(get_objects_for_user(collaborator, f'{target_app_label}.view_target').first().name,
                          self.st.name)  # Test that group permissions are respected
 
         self.client.force_login(self.user2)
@@ -254,8 +258,9 @@ class TestTargetNameViewset(APITestCase):
         user = User.objects.create(username='testuser')
         self.st = SiderealTargetFactory.create()
         self.alias = TargetNameFactory.create(target=self.st)
-        assign_perm('tom_targets.view_target', user, self.st)
-        assign_perm('tom_targets.delete_target', user, self.st)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', user, self.st)
+        assign_perm(f'{target_app_label}.delete_target', user, self.st)
 
         self.user2 = User.objects.create(username='testuser2')
 
@@ -281,8 +286,9 @@ class TestTargetExtraViewset(APITestCase):
         user = User.objects.create(username='testuser')
         self.st = SiderealTargetFactory.create()
         self.extra = TargetExtraFactory.create(target=self.st)
-        assign_perm('tom_targets.view_target', user, self.st)
-        assign_perm('tom_targets.delete_target', user, self.st)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', user, self.st)
+        assign_perm(f'{target_app_label}.delete_target', user, self.st)
 
         self.user2 = User.objects.create(username='testuser2')
 

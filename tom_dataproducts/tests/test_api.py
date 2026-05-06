@@ -1,3 +1,4 @@
+from tom_targets.base_models import get_target_model_app_label
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
@@ -22,11 +23,11 @@ class TestDataProductViewset(APITestCase):
             'target': self.st.id,
             'data_product_type': 'photometry'
         }
-
+        target_app_label = get_target_model_app_label()
         assign_perm('tom_dataproducts.add_dataproduct', self.user)
-        assign_perm('tom_targets.add_target', self.user, self.st)
-        assign_perm('tom_targets.view_target', self.user, self.st)
-        assign_perm('tom_targets.change_target', self.user, self.st)
+        assign_perm(f'{target_app_label}.add_target', self.user, self.st)
+        assign_perm(f'{target_app_label}.view_target', self.user, self.st)
+        assign_perm(f'{target_app_label}.change_target', self.user, self.st)
 
     def test_data_product_upload_for_target(self):
         collaborator = User.objects.create(username='test collaborator')
@@ -120,11 +121,11 @@ class TestReducedDatumViewset(APITestCase):
             'target': self.st.id,
             'timestamp': '2012-02-12T01:40:47Z'
         }
-
+        target_app_label = get_target_model_app_label()
         assign_perm('tom_dataproducts.add_reduceddatum', self.user)
-        assign_perm('tom_targets.add_target', self.user, self.st)
-        assign_perm('tom_targets.view_target', self.user, self.st)
-        assign_perm('tom_targets.change_target', self.user, self.st)
+        assign_perm(f'{target_app_label}.add_target', self.user, self.st)
+        assign_perm(f'{target_app_label}.view_target', self.user, self.st)
+        assign_perm(f'{target_app_label}.change_target', self.user, self.st)
 
     def test_upload_reduced_datum(self):
         response = self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
