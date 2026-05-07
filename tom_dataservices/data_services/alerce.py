@@ -32,7 +32,8 @@ class AlerceForm(BaseQueryForm):
     firstmjd_lt = forms.FloatField(required=False, label="Max MJD of first detection")
     lastmjd_gt = forms.FloatField(required=False, label="Min MJD of last detection")
     lastmjd_lt = forms.FloatField(required=False, label="Max MJD of last detection")
-    ndet = forms.IntegerField(required=False, label="Min. Number of Detections")
+    ndet_min = forms.IntegerField(required=False, label="Min. Number of Detections")
+    ndet_max = forms.IntegerField(required=False, label="Max Number of Detections")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -120,83 +121,87 @@ class AlerceDataService(DataService):
 
     def query_service(self, query_parameters, **kwargs) -> list[dict]:
         """
-        Uses the object ID and list of classifiers to query the Alerce API.
+        Uses the object ID and list of classifiers to query the ALeRCE API.
         Will query the api once for each classifier specified as well as object ID
         if provided.
         """
-        params = {
-            "format": "json",
-            "survey": query_parameters.get("survey", "").lower(),
-        }
-        if (firstmjd_gt := query_parameters.get("firstmjd_gt")) and (
-            firstmjd_lt := query_parameters.get("firstmjd_lt")
-        ):
-            params["firstmjd"] = [firstmjd_gt, firstmjd_lt]
-        if (lastmjd_gt := query_parameters.get("lastmjd_gt")) and (
-            lastmjd_lt := query_parameters.get("lastmjd_lt")
-        ):
-            params["lastmjd"] = [lastmjd_gt, lastmjd_lt]
-        if ndet := query_parameters.get("ndet"):
-            params["ndet"] = ndet
-        if all(
-            [
-                ra := query_parameters.get("ra"),
-                dec := query_parameters.get("dec"),
-                radius := query_parameters.get("radius"),
-            ]
-        ):
-            params["ra"] = ra
-            params["dec"] = dec
-            params["radius"] = radius
         results = []
         try:
-            if object_id := query_parameters.get("object_id"):
+            if query_parameters.get("oid"):
                 # We might want to specify the survey based on the object id prefix
                 # once the LSST support in the alerce client is improved
-                object_result = alerce.query_object(
-                    oid=object_id, **params
-                )
+                object_result = alerce.query_object(**query_parameters)
                 if object_result:
                     results.append(object_result)
 
                     return results
 
-            classifier_params = query_parameters.get("classifiers", [])
+            classifier_params = query_parameters.pop("classifiers")
             if len(classifier_params) == 0:
-                general_results = alerce.query_objects(**params).get("items", [])
+                general_results = alerce.query_objects(**query_parameters).get("items", [])
                 results.extend(general_results)
             else:
-                for classifier in query_parameters.get("classifiers", []):
+                for classifier in classifier_params:
                     classifier_results = alerce.query_objects(
                         classifier=classifier["classifier"],
                         class_name=classifier["class"],
                         probability=classifier["probability"],
-                        **params,
+                        **query_parameters,
                     ).get("items", [])
                     results.extend(classifier_results)
         except (ObjectNotFoundError, ValueError, APIError) as e:
             raise QueryServiceError(str(e))
 
         for result in results:
-            result["survey"] = params["survey"]
+            result["survey"] = query_parameters["survey"]
 
         return results
 
     def build_query_parameters(self, parameters: dict, **kwargs):
-        include_fields = [
-            "object_id",
-            "classifiers",
-            "survey",
-            "ra",
-            "dec",
-            "radius",
-            "firstmjd_gt",
-            "firstmjd_lt",
-            "lastmjd_gt",
-            "lastmjd_lt",
-            "ndet",
-        ]
-        return {k: v for k, v in parameters.items() if k in include_fields}
+        """
+        Creates a list of query parameters that can be understood by the ALeRCE client in query_service
+        based on the input from the form.
+        See https://alerce.readthedocs.io/en/stable/ for details.
+        """
+        form_parameters = parameters
+        query_params = {
+            "format": "json",
+            "survey": form_parameters.get("survey", "").lower(),
+        }
+        if (firstmjd_gt := form_parameters.get("firstmjd_gt")) and (
+            firstmjd_lt := form_parameters.get("firstmjd_lt")
+        ):
+            query_params["firstmjd"] = [firstmjd_gt, firstmjd_lt]
+        if (lastmjd_gt := form_parameters.get("lastmjd_gt")) and (
+            lastmjd_lt := form_parameters.get("lastmjd_lt")
+        ):
+            query_params["lastmjd"] = [lastmjd_gt, lastmjd_lt]
+
+        # Build ndet list:
+        # gives range of number of detections based on min/max set in form.
+        ndet_min = form_parameters.get("ndet_min")
+        if ndet_max := form_parameters.get("ndet_max"):
+            if not ndet_min:
+                ndet_min = 0
+            query_params["ndet"] = [ndet_min, ndet_max]
+        elif ndet_min:
+            query_params["ndet"] = [ndet_min,]
+
+        if all(
+            [
+                ra := form_parameters.get("ra"),
+                dec := form_parameters.get("dec"),
+                radius := form_parameters.get("radius"),
+            ]
+        ):
+            query_params["ra"] = ra
+            query_params["dec"] = dec
+            query_params["radius"] = radius
+
+        if form_parameters.get("object_id"):
+            query_params["oid"] = form_parameters.get("object_id")
+        query_params["classifiers"] = form_parameters.get("classifiers", [])
+        return query_params
 
     def build_query_parameters_from_target(self, target, **kwargs):
         query_parameters = {"object_id": target.name}
