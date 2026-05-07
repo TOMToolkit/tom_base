@@ -36,13 +36,13 @@ The Toolkit also has a number of optional plugin modules providing interfaces to
 
 For more information about the plugin modules, see :doc:`Plugins </code/plugins>`.
 
-Facilities
-----------
+Facilities Table
+----------------
 
 The TOM's ``tom_observations`` module also has a database table (model) for telescope facilities where users can store
-general information about telescopes, including the location of the telescope site(s) or orbits, wavelength range, etc.
-This information is used by the TOM when calculating target visibility, even if the telescope doesn't accept programmatic
-submission of observations.
+general information about telescopes, including the location of the telescope site(s) or orbits, wavelength range, etc,
+regardless of whether they can accept the programmatic submission of observations.
+This enables the TOM to include these facilties, for example when calculating target visibility.
 
 A TOM administrator can add facilities to this table using the TOM's admin interface.
 
@@ -60,22 +60,71 @@ that allows the programmatic submission of observations.
 We encourage users with custom telescope module to submit a pull request through Github to the TOM Toolkit, to share
 the capability with other users.
 
-Observing Programs
-------------------
+Making Observations Interactively
+---------------------------------
 
-`Programmatically Submitting Observations <../common/scripts.html#creating-observations-programmatically>`__
+Requests for observations on multiple telescopes for can be submitted interactively from the detail page of an individual ``Target``.
+This can be done by clicking on the button for the desired observatory under the ``observe`` tab:
 
-:doc:`Cadence and Observing Strategies <strategies>` - Learn how to build cadence strategies that submit observations based on 
-the result of prior observations, as well as how to leverage observing templates to submit observations with fewer clicks.
+.. figure:: /_static/observation_module/target_detail_observe_buttons.png
+   :alt: Section of a target detail page showing the buttons to submit observations
+   :width: 100%
+   :align: center
+
+   Observatory buttons under the `observe` tab of a target detail page.
+
+Each button takes the user to the observation request form for the corresponding telescope's instrumentation.
+
+Automating your observations
+----------------------------
+
+It's also possible to request observations programmatically, through a script.  This can be a very powerful
+way to orchestrate an observing program, and allows users to automate their observations.  An example of
+this approach can be found under
+:doc:`Programmatically Submitting Observations </common/scripts>`.
+
+Observing Strategies and Templates
+----------------------------------
+
+A further step in automating your observing program is to tell the TOM what your strategy is for future observations
+of a given target.  For example, this allows it to automatically re-submit a previously-defined observation request in
+the event that those observations were not executed for whatever reason.
+
+:doc:`Cadence and Observing Strategies <strategies>` describes how to build cadence strategies that submit observations
+based on the result of prior observations, as well as how to leverage observing templates to submit observations
+with fewer clicks.
 
 
 Finding visible targets
 -----------------------
 
-:doc:`Selecting Targets <selecting_targets_for_facility>` - Display a selection of targets for a specific observing facility.
+Identifying which targets are visible from a given observatory is a routine task in any observing program.  The TOM's
+target detail page includes a tool that computes the target's visibility from a range of different sites.
 
+.. grid:: 2
+   :gutter: 3
+
+   .. grid-item::
+      .. figure:: /_static/observation_module/target_visibility_tool.png
+         :width: 100%
+
+         Target visibility calculator
+
+   .. grid-item::
+      .. figure:: /_static/observation_module/target_moon_separation_plot.png
+         :width: 100%
+
+         Plot of target separation from the Moon
+
+Conversely, the TOM also has a tool to figure out which of your targets will be visible from a given telescopes.
+This is described under :doc:`Selecting Targets <selecting_targets_for_facility>`.
 
 Observation Records
 -------------------
 
-:doc:`Observation Models <../api/tom_observations/models>` - Learn about the models used to store observation data.
+The TOM keeps an ``Observation_Record`` of all observations submitted through it, either interactively or programmatically.
+These records include the parameters of the observation request and its status of execution.
+For observatories that offer APIs to allow users to query observation status, the TOM includes tools to update
+this parameter programmatically.
+
+For more details about observation-related models in the TOM see :doc:`Observation Models </api/tom_observations/models>`.

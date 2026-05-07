@@ -17,7 +17,8 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
     "sphinx_breeze_theme",
-    'myst_parser',
+    "myst_parser",
+    "sphinx_design",
 ]
 templates_path = ["_templates"]
 source_suffix = {
