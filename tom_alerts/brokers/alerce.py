@@ -430,7 +430,7 @@ class ALeRCEBroker(GenericBroker):
     .. code-block:: python
 
         TOM_ALERT_CLASSES = [
-            'tom_alerts.brokers.alerce.ALeRCEBroker',
+            'tom_alerts.dataservices.alerce.ALeRCEBroker',
             ...
         ]
 

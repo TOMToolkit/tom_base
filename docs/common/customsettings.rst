@@ -222,7 +222,7 @@ A list of tom alert classes to make available to your TOM. If you have
 written or downloaded additional alert classes you would make them
 available here. If you’d like to write your own alert module please see
 the documentation on :doc:`Creating an Alert Module for the TOM
-Toolkit <../brokers/create_broker>`.
+Toolkit </dataservices/create_broker>`.
 
 `TOM_ALERT_DASH_CLASSES <#tom-alert-dash-classes>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -239,7 +239,7 @@ Default:
 A list of tom alert dash classes to make available to your TOM. If you have
 written or downloaded additional alert classes you would make them
 available here. If you’d like to write your own dash alert module, please see
-the documentation on :doc:`Plotly Dash Broker Modules in the TOM Toolkit <../brokers/create_dash_broker>`.
+the documentation on :doc:`Plotly Dash Broker Modules in the TOM Toolkit </dataservices/create_dash_broker>`.
 
 `TOM_FACILITY_CLASSES <#tom-facility-classes>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

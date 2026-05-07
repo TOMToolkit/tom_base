@@ -67,7 +67,7 @@ class GaiaBroker(GenericBroker):
     .. code-block:: python
 
         TOM_ALERT_CLASSES = [
-            'tom_alerts.brokers.gaia.GaiaBroker',
+            'tom_alerts.dataservices.gaia.GaiaBroker',
             ...
         ]
 

@@ -164,7 +164,7 @@ class BrokerQueryListView(LoginRequiredMixin, FilterView):
 
     def get_context_data(self, *args, **kwargs):
         """
-        Adds the brokers available to the TOM to the context dictionary.
+        Adds the dataservices available to the TOM to the context dictionary.
 
         :returns: context
         :rtype: dict
@@ -227,7 +227,7 @@ class RunQueryView(LoginRequiredMixin, TemplateView):
         broker_class = get_service_class(query.broker)()
 
         # Do query and get query results (fetch_alerts)
-        # TODO: Should the deepcopy be in the brokers?
+        # TODO: Should the deepcopy be in the dataservices?
         try:
             alert_query_results = broker_class.fetch_alerts(deepcopy(query.parameters))
 
