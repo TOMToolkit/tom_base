@@ -6,7 +6,7 @@ TOM Toolkit
   :hidden:
 
   Getting started <introduction/getting_started>
-  Configuration <common/customsettings>
+  Configuration <common/index>
   Targets <targets/index>
   Dataservices <brokers/index>
   Observing <observing/index>
