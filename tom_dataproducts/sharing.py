@@ -23,7 +23,6 @@ from io import StringIO
 from astropy.io import ascii
 from astropy.table import Table
 from django.contrib import messages
-from django.db.models import Q
 from django.http import StreamingHttpResponse
 from django.utils.text import slugify
 
@@ -72,22 +71,34 @@ def get_sharing_destination_options(include_download=True, user=None):
 # ---------------------------------------------------------------------------
 
 def check_for_share_safe_datums(destination, reduced_datums, **kwargs):
-    """Drop ReducedDatums that have already been published to the given destination+topic.
+    """Drop ReducedDatums whose origin is the destination topic (round-trip guard).
 
     Generic hook — subclassable / replaceable by a TOM operator for a
     different selection experience. Today has one built-in rule: for
-    HERMES, exclude datums already linked to an ``AlertStreamMessage``
-    with ``exchange_status='published'`` on the same topic. For other
-    destinations, it is a no-op.
+    HERMES, exclude datums whose ``source_name`` already names this
+    HERMES topic — i.e. datums that came *from* the topic we're about
+    to publish *to*. For other destinations, no-op.
 
-    Called by ``HermesSharingBackend.share`` (lazy import) and by
-    ``TomToolkitSharingBackend.share`` (lazy import).
+    Earlier versions of this filter joined on ``ReducedDatum.message``
+    (a M2M to ``AlertStreamMessage``) keyed by
+    ``(exchange_status='published', topic=...)``; that model and field
+    have been removed in the larger refactor. The new rule reads
+    ``source_name`` directly: ingestion in
+    ``tom_hermes.alertstreams.ingester.ingest_hermes_alert`` writes
+    ``source_name = f'Hermes:{topic}'`` on every ReducedDatum it
+    creates, so a round-trip is detectable from that field alone.
+
+    **Semantic narrowing.** The previous implementation also caught the
+    "this datum was previously published to this topic" case, even if
+    the datum hadn't originated there. That tracking ability is gone
+    along with the AlertStreamMessage model — TOMs that need it should
+    re-introduce a per-datum publication log of their own.
+
+    Called by ``HermesSharingBackend.share`` (lazy import).
     """
     if 'hermes' in destination:
         message_topic = kwargs.get('topic', None)
-        filtered_datums = reduced_datums.exclude(
-            Q(message__exchange_status='published') & Q(message__topic=message_topic),
-        )
+        filtered_datums = reduced_datums.exclude(source_name=f'Hermes:{message_topic}')
     else:
         filtered_datums = reduced_datums
     return filtered_datums
