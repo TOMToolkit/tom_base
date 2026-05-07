@@ -271,7 +271,7 @@ class DataService(ABC):
         of query_reduced_data() to create_reduced_datums_from_query()
         :param target: Target object to associate with the ReducedDatum
         :param data_results: Query results from the DataService storing observation data. This should be a dictionary
-            with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
+        with each key being a data_type (i.e. Photometry, Spectroscopy, etc.)
         """
         if not data_results:
             raise MissingDataException('No Reduced Data dictionary found.')
