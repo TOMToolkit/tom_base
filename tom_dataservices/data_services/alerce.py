@@ -121,7 +121,7 @@ class AlerceDataService(DataService):
 
     def query_service(self, query_parameters, **kwargs) -> list[dict]:
         """
-        Uses the object ID and list of classifiers to query the Alerce API.
+        Uses the object ID and list of classifiers to query the ALeRCE API.
         Will query the api once for each classifier specified as well as object ID
         if provided.
         """
@@ -157,7 +157,13 @@ class AlerceDataService(DataService):
 
         return results
 
-    def build_query_parameters(self, form_parameters: dict, **kwargs):
+    def build_query_parameters(self, parameters: dict, **kwargs):
+        """
+        Creates a list of query parameters that can be understood by the ALeRCE client in query_service
+        based on the input from the form.
+        See https://alerce.readthedocs.io/en/stable/ for details.
+        """
+        form_parameters = parameters
         query_params = {
             "format": "json",
             "survey": form_parameters.get("survey", "").lower(),
@@ -170,6 +176,9 @@ class AlerceDataService(DataService):
             lastmjd_lt := form_parameters.get("lastmjd_lt")
         ):
             query_params["lastmjd"] = [lastmjd_gt, lastmjd_lt]
+
+        # Build ndet list:
+        # gives range of number of detections based on min/max set in form.
         ndet_min = form_parameters.get("ndet_min")
         if ndet_max := form_parameters.get("ndet_max"):
             if not ndet_min:
@@ -177,6 +186,7 @@ class AlerceDataService(DataService):
             query_params["ndet"] = [ndet_min, ndet_max]
         elif ndet_min:
             query_params["ndet"] = [ndet_min,]
+
         if all(
             [
                 ra := form_parameters.get("ra"),
@@ -187,6 +197,7 @@ class AlerceDataService(DataService):
             query_params["ra"] = ra
             query_params["dec"] = dec
             query_params["radius"] = radius
+
         if form_parameters.get("object_id"):
             query_params["oid"] = form_parameters.get("object_id")
         query_params["classifiers"] = form_parameters.get("classifiers", [])
