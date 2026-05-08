@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 
 from django import template
 from django import forms
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
@@ -210,8 +211,15 @@ def get_photometry_data(context, target, target_share=False):
     form = DataShareForm(initial=initial, user=context['request'].user)
     form.fields['data_type'].widget = forms.HiddenInput()
 
+    # ``hermes_sharing`` gates the "Open in Hermes" button in the share dialog.
+    # The button's formaction resolves a URL that lives in tom_hermes, so the
+    # button must be hidden when tom_hermes is not installed (otherwise
+    # ``{% url 'tom_hermes:target-preload' %}`` raises NoReverseMatch).
     sharing = getattr(settings, "DATA_SHARING", None)
-    hermes_sharing = sharing and sharing.get('hermes', {}).get('HERMES_API_KEY')
+    hermes_sharing = (
+        apps.is_installed('tom_hermes')
+        and sharing and sharing.get('hermes', {}).get('HERMES_API_KEY')
+    )
 
     context = {'data': data,
                'target': target,

@@ -6,6 +6,7 @@ from io import StringIO
 from urllib.parse import urlencode
 import numpy as np
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -407,12 +408,15 @@ class TargetShareView(FormView):
         form = TargetShareForm(initial=initial)
         context['form'] = form
 
-        # Add into the context whether hermes-sharing is setup or not
+        # Add into the context whether hermes-sharing is setup or not.
+        # Both halves matter: the "Open in Hermes" button needs (a) a HERMES
+        # API key configured AND (b) tom_hermes installed, since the button's
+        # formaction resolves a URL name owned by tom_hermes.
         sharing = getattr(settings, "DATA_SHARING", None)
-        if sharing and sharing.get('hermes', {}).get('HERMES_API_KEY'):
-            context['hermes_sharing'] = True
-        else:
-            context['hermes_sharing'] = False
+        context['hermes_sharing'] = bool(
+            apps.is_installed('tom_hermes')
+            and sharing and sharing.get('hermes', {}).get('HERMES_API_KEY')
+        )
 
         return context
 
@@ -849,12 +853,12 @@ class TargetGroupingShareView(FormView):
         form = TargetListShareForm(initial=initial)
         context['form'] = form
 
-        # Add into the context whether hermes-sharing is setup or not
+        # See TargetShareView.get_context_data for why both halves are required.
         sharing = getattr(settings, "DATA_SHARING", None)
-        if sharing and sharing.get('hermes', {}).get('HERMES_API_KEY'):
-            context['hermes_sharing'] = True
-        else:
-            context['hermes_sharing'] = False
+        context['hermes_sharing'] = bool(
+            apps.is_installed('tom_hermes')
+            and sharing and sharing.get('hermes', {}).get('HERMES_API_KEY')
+        )
 
         return context
 
