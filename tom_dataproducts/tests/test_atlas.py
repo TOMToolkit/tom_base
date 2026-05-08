@@ -1,5 +1,6 @@
-from unittest.mock import patch
 import logging
+import os
+from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase  # , override_settings
@@ -12,6 +13,12 @@ from tom_observations.tests.factories import SiderealTargetFactory
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+# Directory holding fixture CSVs for these tests. Anchored on ``__file__``
+# so the tests work regardless of CWD — running them from the tom_base
+# repo root, from a parent directory, or from an integration TOM all
+# resolve the test_data path correctly.
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 
 
 class TestAtlasProcessor(TestCase):
@@ -41,7 +48,7 @@ class TestAtlasProcessor(TestCase):
         shown in the csv file.
         """
         # read the test data in as a data_product's data
-        with open('tom_dataproducts/tests/test_data/test_atlas_fp.csv') as atlas_fp_file:
+        with open(os.path.join(TEST_DATA_DIR, 'test_atlas_fp.csv')) as atlas_fp_file:
             self.data_product.data.save('test_data.csv', atlas_fp_file)
 
         # this is the call under test

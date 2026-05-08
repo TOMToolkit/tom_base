@@ -1,3 +1,5 @@
+import os
+
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
@@ -9,6 +11,13 @@ from rest_framework.test import APITestCase
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_observations.tests.factories import ObservingRecordFactory
 from tom_targets.tests.factories import SiderealTargetFactory
+
+
+# Directory holding fixture CSVs / FITS files for these tests. Anchored on
+# ``__file__`` so the tests work regardless of CWD — running them from the
+# tom_base repo root, from a parent directory, or from an integration TOM
+# all resolve the test_data path correctly.
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 
 
 class TestDataProductViewset(APITestCase):
@@ -34,7 +43,7 @@ class TestDataProductViewset(APITestCase):
         group.user_set.add(self.user)
         group.user_set.add(collaborator)
 
-        with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
+        with open(os.path.join(TEST_DATA_DIR, 'test_lightcurve.csv'), 'rb') as lightcurve_file:
             self.dp_data['file'] = lightcurve_file
             response = self.client.post(reverse('api:dataproducts-list'), self.dp_data, format='multipart')
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -50,7 +59,7 @@ class TestDataProductViewset(APITestCase):
     def test_data_product_upload_for_observation(self):
         self.dp_data['observation_record'] = self.obsr.id
 
-        with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
+        with open(os.path.join(TEST_DATA_DIR, 'test_lightcurve.csv'), 'rb') as lightcurve_file:
             self.dp_data['file'] = lightcurve_file
             response = self.client.post(reverse('api:dataproducts-list'), self.dp_data, format='multipart')
 
@@ -64,7 +73,7 @@ class TestDataProductViewset(APITestCase):
     def test_data_product_upload_invalid_type(self):
         self.dp_data['data_product_type'] = 'invalid'
 
-        with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
+        with open(os.path.join(TEST_DATA_DIR, 'test_lightcurve.csv'), 'rb') as lightcurve_file:
             self.dp_data['file'] = lightcurve_file
             response = self.client.post(reverse('api:dataproducts-list'), self.dp_data, format='multipart')
 
@@ -73,7 +82,7 @@ class TestDataProductViewset(APITestCase):
     def test_data_product_upload_failed_processing(self):
         self.dp_data['data_product_type'] = 'spectroscopy'
 
-        with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
+        with open(os.path.join(TEST_DATA_DIR, 'test_lightcurve.csv'), 'rb') as lightcurve_file:
             self.dp_data['file'] = lightcurve_file
             response = self.client.post(reverse('api:dataproducts-list'), self.dp_data, format='multipart')
 
