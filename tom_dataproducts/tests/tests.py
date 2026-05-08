@@ -1,34 +1,44 @@
-import datetime
-from http import HTTPStatus
 import os
 import tempfile
-import responses
+from datetime import date, time
+from http import HTTPStatus
+from unittest.mock import patch
 
+import numpy as np
+import responses
 from astropy import units
 from astropy.io import fits
 from astropy.table import Table
-from datetime import date, time
-from django.test import TestCase, override_settings
 from django.conf import settings
 from django.contrib.auth.models import Group, User
-from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.utils import timezone, text
+from django.utils import text, timezone
 from guardian.shortcuts import assign_perm
-import numpy as np
 from specutils import Spectrum
-from unittest.mock import patch
 
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import DataProductUploadForm
-from tom_dataproducts.models import DataProduct, is_fits_image_file, ReducedDatum, data_product_path
+from tom_dataproducts.models import (
+    DataProduct,
+    PhotometryReducedDatum,
+    ReducedDatum,
+    SpectroscopyReducedDatum,
+    data_product_path,
+    is_fits_image_file,
+)
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_dataproducts.processors.photometry_processor import PhotometryProcessor
 from tom_dataproducts.processors.spectroscopy_processor import SpectroscopyProcessor
 from tom_dataproducts.utils import create_image_dataproduct
+from tom_observations.tests.factories import (
+    ObservingRecordFactory,
+    SiderealTargetFactory,
+)
 from tom_observations.tests.utils import FakeRoboticFacility
-from tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory
 
 
 def mock_fits2image(file1, file2, width, height):
@@ -538,6 +548,47 @@ class TestDataProductModel(TestCase):
             self.assertIn(expected, logs.output)
 
 
+class TestCustomFields(TestCase):
+    def test_create_spectra_with_flux_data(self):
+        flux = [7.427265572723272, 3399.697753906248]
+        wavelength = [3399.697753906248, 3401.383788108824]
+        rd = SpectroscopyReducedDatum.objects.create(
+            target=SiderealTargetFactory.create(),
+            timestamp=timezone.now(),
+            exposure_time=1000.0,
+            flux=flux,
+            wavelength=wavelength,
+            flux_unit="Å",
+        )
+        rd.refresh_from_db()  # ensure we round trip to the database
+        self.assertEqual(flux, rd.flux)
+
+    def test_create_spectra_with_error_data(self):
+        error = [0.0001, 0.0002, 0.0003, 0.0004]
+        rd = SpectroscopyReducedDatum.objects.create(
+            target=SiderealTargetFactory.create(),
+            timestamp=timezone.now(),
+            exposure_time=1000.0,
+            flux=[1.0, 2.0, 3.0, 4.0],
+            wavelength=[1, 2, 3, 4],
+            error=error,
+            flux_unit="Å",
+        )
+        rd.refresh_from_db()
+        self.assertEqual(error, rd.error)
+
+    def test_create_spectra_bad_flux(self):
+        with self.assertRaises(ValidationError):
+            SpectroscopyReducedDatum.objects.create(
+                target=SiderealTargetFactory.create(),
+                timestamp=timezone.now(),
+                exposure_time=1000.0,
+                flux=[1.0, 2.0, 3.0, "asd"],
+                wavelength=[1, 2, 3, 4],
+                flux_unit="cm^2",
+            )
+
+
 class TestReducedDatumModel(TestCase):
     def setUp(self):
         # set up a ReducedDatum instance to test against
@@ -577,43 +628,22 @@ class TestReducedDatumModel(TestCase):
         self.assertEqual(2, ReducedDatum.objects.count())
 
     def test_create_reduced_datum_duplicate(self):
-        """Test that we cannot add a second ReducedDatum with the same target, data_type,
-        timestamp, and value dict"""
-        # in this case ALL fields are the same as the self.existing_reduced_datum
-        with self.assertRaises(ValidationError):
-            ReducedDatum.objects.create(
-                target=self.target,
-                data_type=self.data_type,
-                source_name=self.source_name,
-                timestamp=self.timestamp,
-                value=self.existing_reduced_datum_value)
-
-        # in this case only the target, data_type and value fields
-        # are the same as the self.existing_reduced_datum
-        # so an exception should NOT be raised
-        try:
-            ReducedDatum.objects.create(
-                target=self.target,
-                data_type=self.data_type,
-                source_name='new_source_name',
-                timestamp=(self.timestamp - datetime.timedelta(days=1)),  # different timestamp
-                value=self.existing_reduced_datum_value)
-        except ValidationError:
-            self.fail("ValidationError raised when it should not have been (timestamps differ)")
-
-        # by NOT raising ValidationError, this shows that
-        # ReducedDatum.objects.bulk_create() bypasses the ReducedDatum.save()
-        # method which validated uniqueness!!
-        # (this is a duplicate ReducedDatum that we are trying to add here
-        unsaved_reduced_datum = ReducedDatum(
+        """Test that we cannot add a second PhotometryReducedDatum with the same target,
+        timestamp, and bandpass"""
+        PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type=self.data_type,
-            source_name=self.source_name,
             timestamp=self.timestamp,
-            value=self.existing_reduced_datum_value)
-        # does bulk_create bypass the ReducedDatum.save() method which validated uniqueness?
-        # (this is a duplicate ReducedDatum that we are trying to add here
-        ReducedDatum.objects.bulk_create([unsaved_reduced_datum])
+            brightness=1.0,
+            bandpass="r"
+        )
+
+        with self.assertRaises(IntegrityError):
+            PhotometryReducedDatum.objects.create(
+                target=self.target,
+                timestamp=self.timestamp,
+                brightness=2.0,
+                bandpass="r"
+            )
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
@@ -639,20 +669,23 @@ class TestShareDataProducts(TestCase):
         assign_perm('tom_targets.view_target', self.user, self.target)
         self.client.force_login(self.user)
 
-        self.rd1 = ReducedDatum.objects.create(
+        self.rd1 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 18.5, 'error': .5, 'filter': 'V'}
+            brightness=18.5,
+            brightness_error=0.5,
+            bandpass='V',
         )
-        self.rd2 = ReducedDatum.objects.create(
+        self.rd2 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 19.5, 'error': .5, 'filter': 'B'}
+            brightness=19.5,
+            brightness_error=0.5,
+            bandpass='B',
         )
-        self.rd3 = ReducedDatum.objects.create(
+        self.rd3 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 17.5, 'error': .5, 'filter': 'R'}
+            brightness=17.5,
+            brightness_error=0.5,
+            bandpass='R',
         )
 
     @responses.activate
@@ -749,7 +782,7 @@ class TestShareDataProducts(TestCase):
                 'share_destination': [share_destination],
                 'share_title': ['Updated data for thingy.'],
                 'share_message': ['test_message'],
-                'share-box': [1, 2]
+                'share-box': [self.rd1.pk, self.rd2.pk]
             },
             follow=True
         )
@@ -867,7 +900,7 @@ class TestShareDataProducts(TestCase):
                 'share_destination': [share_destination],
                 'share_title': ['Updated data for thingy.'],
                 'share_message': ['test_message'],
-                'share-box': [1, 2]
+                'share-box': [self.rd1.pk, self.rd2.pk]
             },
             follow=True
         )
@@ -899,7 +932,7 @@ class TestShareDataProducts(TestCase):
             'share_destination': [share_destination],
             'share_title': ['Updated data for thingy.'],
             'share_message': ['test_message'],
-            'share-box': [1, 2]
+            'share-box': [self.rd1.pk, self.rd2.pk]
         }
         # Check 500 error
         responses.add(

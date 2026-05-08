@@ -12,7 +12,7 @@ from crispy_forms.layout import Fieldset, HTML, Layout
 from django import forms
 
 from tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import PhotometryReducedDatum
 
 BASE_BROKER_URL = 'http://gsaweb.ast.cam.ac.uk'
 
@@ -181,17 +181,16 @@ class GaiaBroker(GenericBroker):
                     jd = Time(float(phot_data[1]), format='jd', scale='utc')
                     jd.to_datetime(timezone=TimezoneInfo())
 
-                    value = {
-                        'magnitude': float(phot_data[2]),
-                        'filter': 'G'
-                    }
-
-                    rd, _ = ReducedDatum.objects.get_or_create(
+                    rd, _ = PhotometryReducedDatum.objects.get_or_create(
+                        target=target,
+                        bandpass='G',
                         timestamp=jd.to_datetime(timezone=TimezoneInfo()),
-                        value=value,
-                        source_name=self.name,
-                        source_location=alert_url,
-                        data_type='photometry',
-                        target=target)
+                        defaults={
+                            'brightness': float(phot_data[2]),
+                            'source_name': self.name,
+                            'source_location': alert_url,
+
+                        }
+                    )
 
         return

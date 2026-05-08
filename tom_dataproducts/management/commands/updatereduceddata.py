@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from tom_alerts import alerts
 from tom_targets.models import Target
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import REDUCED_DATUM_MODELS
 
 
 class Command(BaseCommand):
@@ -21,18 +21,28 @@ class Command(BaseCommand):
         for broker in brokers:
             broker_classes[broker] = alerts.get_service_class(broker)()
 
-        target = None
-        sources = [s.source_name for s in ReducedDatum.objects.filter(source_name__in=broker_classes.keys()).distinct()]
+        all_source_names = set()
+        for model in REDUCED_DATUM_MODELS:
+            all_source_names.update(
+                model.objects.filter(source_name__in=broker_classes.keys())
+                             .values_list('source_name', flat=True).distinct()
+            )
+        sources = list(all_source_names)
+
+        all_target_ids = set()
+        for model in REDUCED_DATUM_MODELS:
+            all_target_ids.update(
+                model.objects.filter(source_name__in=sources)
+                             .values_list('target', flat=True).distinct()
+            )
+
         if options['target_id']:
             try:
                 targets = [Target.objects.get(pk=options['target_id'])]
             except ObjectDoesNotExist:
                 raise Exception('Invalid target id provided')
         else:
-            targets = Target.objects.filter(
-                id__in=ReducedDatum.objects.filter(
-                    source_name__in=sources
-                ).values_list('target').distinct())
+            targets = Target.objects.filter(id__in=all_target_ids)
 
         failed_records = {}
         for target in targets:

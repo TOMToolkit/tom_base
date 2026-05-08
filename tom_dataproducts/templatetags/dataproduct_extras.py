@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from urllib.parse import urlencode
 
 from django import template
@@ -18,8 +19,7 @@ import base64
 import numpy as np
 
 from tom_dataproducts.forms import DataProductUploadForm, DataShareForm
-from tom_dataproducts.models import DataProduct, ReducedDatum
-from tom_dataproducts.processors.data_serializers import SpectrumSerializer
+from tom_dataproducts.models import DataProduct, PhotometryReducedDatum, SpectroscopyReducedDatum
 from tom_dataproducts.single_target_data_service.single_target_data_service import get_service_classes, \
     get_service_class
 from tom_observations.models import ObservationRecord
@@ -134,12 +134,7 @@ def recent_photometry(target, limit=1):
     """
     Displays a table of the most recent photometric points for a target.
     """
-    photometry = ReducedDatum.objects.filter(data_type='photometry', target=target).order_by('-timestamp')[:limit]
-
-    # Possibilities for reduced_datums from ZTF/MARS:
-    # reduced_datum.value: {'error': 0.0929680392146111, 'filter': 'r', 'magnitude': 18.2364940643311}
-    # reduced_datum.value: {'limit': 20.1023998260498, 'filter': 'g'}
-
+    photometry = PhotometryReducedDatum.objects.filter(target=target).order_by('-timestamp')[:limit]
     # for limit magnitudes, set the value of the limit key to True and
     # the value of the magnitude key to the limit so the template and
     # treat magnitudes as such and prepend a '>' to the limit magnitudes
@@ -147,11 +142,11 @@ def recent_photometry(target, limit=1):
     data = []
     for reduced_datum in photometry:
         rd_data = {'timestamp': reduced_datum.timestamp}
-        if 'limit' in reduced_datum.value.keys():
-            rd_data['magnitude'] = reduced_datum.value['limit']
+        if reduced_datum.limit is not None:
+            rd_data['magnitude'] = reduced_datum.limit
             rd_data['limit'] = True
         else:
-            rd_data['magnitude'] = reduced_datum.value['magnitude']
+            rd_data['magnitude'] = reduced_datum.brightness
             rd_data['limit'] = False
         data.append(rd_data)
 
@@ -164,38 +159,31 @@ def get_photometry_data(context, target, target_share=False):
     """
     Displays a table of the all photometric points for a target.
     """
-    photometry = ReducedDatum.objects.filter(data_type='photometry', target=target).order_by('-timestamp')
+    photometry = PhotometryReducedDatum.objects.filter(target=target).order_by('-timestamp')
     if not settings.TARGET_PERMISSIONS_ONLY:
         photometry = get_objects_for_user(
             context["request"].user,
-            "tom_dataproducts.view_reduceddatum",
+            "tom_dataproducts.view_photometryreduceddatum",
             klass=photometry,
         )
 
-    # Possibilities for reduced_datums from ZTF/MARS:
-    # reduced_datum.value: {'error': 0.0929680392146111, 'filter': 'r', 'magnitude': 18.2364940643311}
-    # reduced_datum.value: {'limit': 20.1023998260498, 'filter': 'g'}
-
-    # for limit magnitudes, set the value of the limit key to True and
-    # the value of the magnitude key to the limit so the template and
-    # treat magnitudes as such and prepend a '>' to the limit magnitudes
-    # see recent_photometry.html
+    # Non detections have limit set and brightness null, detections are the reverse.
     data = []
     for reduced_datum in photometry:
         rd_data = {'id': reduced_datum.pk,
                    'timestamp': reduced_datum.timestamp,
                    'source': reduced_datum.source_name,
-                   'filter': reduced_datum.value.get('filter', ''),
-                   'telescope': reduced_datum.value.get('telescope', ''),
-                   'error': reduced_datum.value.get('error', reduced_datum.value.get('magnitude_error', ''))
+                   'filter': reduced_datum.bandpass,
+                   'telescope': reduced_datum.telescope,
                    }
-
-        if 'limit' in reduced_datum.value.keys():
-            rd_data['magnitude'] = reduced_datum.value['limit']
+        if reduced_datum.limit is not None:
+            rd_data['magnitude'] = reduced_datum.limit
             rd_data['limit'] = True
+            rd_data['error'] = ''
         else:
-            rd_data['magnitude'] = reduced_datum.value['magnitude']
+            rd_data['magnitude'] = reduced_datum.brightness
             rd_data['limit'] = False
+            rd_data['error'] = reduced_datum.brightness_error or ''
         data.append(rd_data)
 
     initial = {'submitter': context['request'].user,
@@ -223,9 +211,6 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
     """
     Renders a photometric plot for a target.
 
-    This templatetag requires all ``ReducedDatum`` objects with a data_type of ``photometry`` to be structured with the
-    following keys in the JSON representation: magnitude, error, filter
-
     :param width: Width of generated plot
     :type width: int
 
@@ -248,28 +233,20 @@ def photometry_for_target(context, target, width=700, height=600, background=Non
         'i': 'black'
     }
 
-    try:
-        photometry_data_type = settings.DATA_PRODUCT_TYPES['photometry'][0]
-    except (AttributeError, KeyError):
-        photometry_data_type = 'photometry'
-    photometry_data = {}
+    photometry_data = defaultdict(lambda: {'time': [], 'magnitude': [], 'error': [], 'limit': []})
     if settings.TARGET_PERMISSIONS_ONLY:
-        datums = ReducedDatum.objects.filter(target=target, data_type=photometry_data_type)
+        datums = PhotometryReducedDatum.objects.filter(target=target)
     else:
         datums = get_objects_for_user(context['request'].user,
-                                      'tom_dataproducts.view_reduceddatum',
-                                      klass=ReducedDatum.objects.filter(
-                                        target=target,
-                                        data_type=photometry_data_type))
+                                      'tom_dataproducts.view_photometryreduceddatum',
+                                      klass=PhotometryReducedDatum.objects.filter(target=target))
 
     for datum in datums:
-        if (isinstance(datum.value.get('magnitude', 0), float) and isinstance(datum.value.get('error', 0), float)) \
-                or isinstance(datum.value.get('limit', 0), float):
-            photometry_data.setdefault(datum.value['filter'], {})
-            photometry_data[datum.value['filter']].setdefault('time', []).append(datum.timestamp)
-            photometry_data[datum.value['filter']].setdefault('magnitude', []).append(datum.value.get('magnitude'))
-            photometry_data[datum.value['filter']].setdefault('error', []).append(datum.value.get('error'))
-            photometry_data[datum.value['filter']].setdefault('limit', []).append(datum.value.get('limit'))
+        if datum.brightness is not None or datum.limit is not None:
+            photometry_data[datum.bandpass]['time'].append(datum.timestamp)
+            photometry_data[datum.bandpass]['magnitude'].append(datum.brightness)
+            photometry_data[datum.bandpass]['error'].append(datum.brightness_error)
+            photometry_data[datum.bandpass]['limit'].append(datum.limit)
 
     plot_data = []
     all_ydata = []
@@ -390,16 +367,16 @@ def spectroscopy_for_target(context, target, dataproduct=None):
 
     plot_data = []
     if settings.TARGET_PERMISSIONS_ONLY:
-        datums = ReducedDatum.objects.filter(data_product__in=spectral_dataproducts)
+        datums = SpectroscopyReducedDatum.objects.filter(data_product__in=spectral_dataproducts)
     else:
         datums = get_objects_for_user(context['request'].user,
-                                      'tom_dataproducts.view_reduceddatum',
-                                      klass=ReducedDatum.objects.filter(data_product__in=spectral_dataproducts))
+                                      'tom_dataproducts.view_spectroscopyreduceddatum',
+                                      klass=SpectroscopyReducedDatum.objects.filter(
+                                          data_product__in=spectral_dataproducts))
     for datum in datums:
-        deserialized = SpectrumSerializer().deserialize(datum.value)
         plot_data.append(go.Scatter(
-            x=deserialized.wavelength.value,
-            y=deserialized.flux.value,
+            x=datum.wavelength,
+            y=datum.flux,
             name=datetime.strftime(datum.timestamp, '%Y%m%d-%H:%M:%s')
         ))
 
@@ -471,29 +448,29 @@ def reduceddatum_sparkline(target, height, spacing=5, color_map=None, limit_y=Tr
             'i': (0, 0, 0)
         }
 
-    vals = target.reduceddatum_set.filter(
+    vals = target.photometryreduceddatum_set.filter(
         timestamp__gte=datetime.utcnow() - timedelta(days=days)
-    ).values('value', 'timestamp')
+    ).values('brightness', 'limit', 'bandpass', 'timestamp')
 
     if len(vals) < 1:
         return {'sparkline': None}
 
-    vals = [v for v in vals if v['value']]
+    vals = [v for v in vals if v['brightness'] is not None or v['limit'] is not None]
 
-    min_mag = min([val['value']['magnitude'] for val in vals if val['value'].get('magnitude')])
-    max_mag = max([val['value']['magnitude'] for val in vals if val['value'].get('magnitude')])
+    min_mag = min([val['brightness'] for val in vals if val.get('brightness')])
+    max_mag = max([val['brightness'] for val in vals if val.get('brightness')])
 
     if not limit_y:
         # The following values are used if we want the graph's y range to extend to the values of non-detections
-        min_mag = min([min_mag, *[val['value']['limit'] for val in vals if val['value'].get('limit')]])
-        max_mag = max([max_mag, *[val['value']['limit'] for val in vals if val['value'].get('limit')]])
+        min_mag = min([min_mag, *[val['limit'] for val in vals if val.get('limit')]])
+        max_mag = max([max_mag, *[val['limit'] for val in vals if val.get('limit')]])
 
-    distinct_filters = set([val['value']['filter'] for val in vals])
+    distinct_filters = set([val['bandpass'] for val in vals])
     by_filter = {f: [(None, None)] * days for f in distinct_filters}
 
     for val in vals:
         day_index = (val['timestamp'].replace(tzinfo=timezone.utc) - timezone.now()).days
-        by_filter[val['value']['filter']][day_index] = (val['value'].get('magnitude'), val['value'].get('limit'))
+        by_filter[val['bandpass']][day_index] = (val.get('brightness'), val.get('limit'))
 
     val_range = max_mag - min_mag
     image_width = (spacing + 1) * (days - 1)

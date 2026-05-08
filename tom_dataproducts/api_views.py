@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.http import Http404
 from django_filters import rest_framework as drf_filters
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import assign_perm, get_objects_for_user
@@ -11,9 +12,19 @@ from rest_framework.viewsets import GenericViewSet
 from tom_common.hooks import run_hook
 from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.filters import DataProductFilter, ReducedDatumFilter
-from tom_dataproducts.models import DataProduct, ReducedDatum
+from tom_dataproducts.models import (DataProduct, ReducedDatum, PhotometryReducedDatum,
+                                     SpectroscopyReducedDatum, AstrometryReducedDatum,
+                                     REDUCED_DATUM_MODELS)
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
 from tom_targets.models import Target
+
+
+# Maps the data_type query param to the concrete model that holds those rows.
+_DATA_TYPE_MODEL_MAP = {
+    'photometry': PhotometryReducedDatum,
+    'spectroscopy': SpectroscopyReducedDatum,
+    'astrometry': AstrometryReducedDatum,
+}
 
 
 class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, GenericViewSet, PermissionListMixin):
@@ -50,7 +61,8 @@ class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, Ge
                         assign_perm('tom_dataproducts.delete_dataproduct', group, dp)
                         assign_perm('tom_dataproducts.view_reduceddatum', group, reduced_data)
             except Exception:
-                ReducedDatum.objects.filter(data_product=dp).delete()
+                for model in REDUCED_DATUM_MODELS:
+                    model.objects.filter(data_product=dp).delete()
                 dp.delete()
                 return Response({'Data processing error': '''There was an error in processing your DataProduct into \
                                                              individual ReducedDatum objects.'''},
@@ -77,6 +89,9 @@ class ReducedDatumViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, G
     Viewset for ReducedDatum objects. Supports list, create, and delete.
 
     To view supported query parameters, please use the OPTIONS endpoint, which can be accessed through the web UI.
+
+    The list endpoint queries all concrete ReducedDatum and returns them in the legacy json format.
+    TODO: Deprecate the legacy format and have seperate enpoints for each type?
     """
     queryset = ReducedDatum.objects.all()
     serializer_class = ReducedDatumSerializer
@@ -84,6 +99,58 @@ class ReducedDatumViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, G
     filterset_class = ReducedDatumFilter
     permission_required = 'tom_dataproducts.view_reduceddatum'
     parser_classes = [FormParser, JSONParser]
+
+    def get_object(self):
+        pk = self.kwargs.get(self.lookup_field)
+        for model in REDUCED_DATUM_MODELS:
+            try:
+                obj = model.objects.get(pk=pk)
+                self.check_object_permissions(self.request, obj)
+                return obj
+            except model.DoesNotExist:
+                pass
+        raise Http404
+
+    def _base_queryset_for_model(self, model):
+        qs = model.objects.all()
+        if settings.TARGET_PERMISSIONS_ONLY:
+            qs = qs.filter(
+                target__in=get_objects_for_user(self.request.user, f'{Target._meta.app_label}.view_target')
+            )
+        return qs
+
+    def list(self, request, *args, **kwargs):
+        params = request.query_params
+        requested_data_type = params.get('data_type', '').lower()
+
+        # Determine which models to query
+        if requested_data_type in _DATA_TYPE_MODEL_MAP:
+            # A typed data_type
+            models_to_query = [_DATA_TYPE_MODEL_MAP[requested_data_type]]
+        elif requested_data_type:
+            # An unmapped data_type is a generic ReducedDatum
+            models_to_query = [ReducedDatum]
+        else:
+            models_to_query = REDUCED_DATUM_MODELS
+
+        # Strip data_type before passing to ReducedDatumFilter it doesn't exist on concrete types
+        filter_params = {k: v for k, v in params.items() if k != 'data_type'}
+
+        all_instances = []
+        for model in models_to_query:
+            qs = self._base_queryset_for_model(model)
+            if model is ReducedDatum and requested_data_type:
+                qs = qs.filter(data_type=requested_data_type)
+            qs = ReducedDatumFilter(data=filter_params, queryset=qs).qs
+            all_instances.extend(list(qs))
+
+        all_instances.sort(key=lambda x: x.timestamp, reverse=True)
+
+        page = self.paginate_queryset(all_instances)
+        if page is not None:
+            return self.get_paginated_response(self.get_serializer(page, many=True).data)
+
+        return Response(self.get_serializer(all_instances, many=True).data)
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)

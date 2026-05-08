@@ -9,7 +9,7 @@ from tom_alerts.alerts import get_service_class
 from tom_alerts.brokers.gaia import GaiaQueryForm
 from tom_alerts.brokers.gaia import GaiaBroker
 from tom_targets.models import Target
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import PhotometryReducedDatum
 
 
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.brokers.gaia.GaiaBroker'])
@@ -102,13 +102,12 @@ class TestGaiaBroker(TestCase):
                                 "rvs": 'false'}
                         ]
         self.test_target = Target.objects.create(name=self.alert_list[0]['name'])
-        ReducedDatum.objects.create(
+        PhotometryReducedDatum.objects.create(
             source_name='Gaia',
             source_location=111111,
             target=self.test_target,
-            data_type='photometry',
             timestamp=timezone.now(),
-            value=12345.6789
+            brightness=12345.6789
         )
 
     @mock.patch('tom_alerts.brokers.gaia.requests.get')
@@ -141,7 +140,7 @@ class TestGaiaBroker(TestCase):
 
         GaiaBroker().process_reduced_data(self.test_target, alert=self.alert_list[0])
 
-        reduced_data = ReducedDatum.objects.filter(target=self.test_target, source_name='Gaia')
+        reduced_data = PhotometryReducedDatum.objects.filter(target=self.test_target, source_name='Gaia')
         self.assertGreater(reduced_data.count(), 1)
         self.assertEqual(reduced_data.count(), 3)  # one from setUp and two from this test
 
@@ -158,7 +157,7 @@ class TestGaiaBroker(TestCase):
 
         GaiaBroker().process_reduced_data(self.test_target)
 
-        reduced_data = ReducedDatum.objects.filter(target=self.test_target, source_name='Gaia')
+        reduced_data = PhotometryReducedDatum.objects.filter(target=self.test_target, source_name='Gaia')
         self.assertGreater(reduced_data.count(), 1)
         self.assertEqual(reduced_data.count(), 3)  # one from setUp and two from this test
 
@@ -183,6 +182,6 @@ class TestGaiaBroker(TestCase):
             except ValidationError as e:
                 self.fail(f'This test should have created two UNIQUE ReducedDatum objects, but {e}')
 
-        reduced_data = ReducedDatum.objects.filter(target=self.test_target, source_name='Gaia')
+        reduced_data = PhotometryReducedDatum.objects.filter(target=self.test_target, source_name='Gaia')
         self.assertGreater(reduced_data.count(), 1)
         self.assertEqual(reduced_data.count(), 3)  # one from setUp and two from this test

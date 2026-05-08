@@ -48,7 +48,7 @@ from tom_targets.sharing import share_target_with_tom
 from tom_targets.merge import target_merge
 from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
                                       share_target_list_with_hermes)
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import PhotometryReducedDatum
 from tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
     move_all_to_grouping, move_selected_to_grouping
@@ -554,7 +554,7 @@ class TargetHermesPreloadView(SingleObjectMixin, View):
                 message=request.POST.get('share_message', ''),
                 authors=sharing['hermes'].get('DEFAULT_AUTHORS')
             )
-            reduced_datums = ReducedDatum.objects.filter(pk__in=request.POST.getlist('share-box', []))
+            reduced_datums = PhotometryReducedDatum.objects.filter(pk__in=request.POST.getlist('share-box', []))
             preload_key = preload_to_hermes(hermes_message, reduced_datums, [target])
             load_url = sharing['hermes']['BASE_URL'] + f'submit-message?id={preload_key}'
             return HttpResponseRedirect(load_url)
@@ -923,9 +923,9 @@ class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
             )
             targets = Target.objects.filter(pk__in=request.POST.getlist('selected-target', []))
             if request.POST.get('dataSwitch', '') == 'on':
-                reduced_datums = ReducedDatum.objects.filter(target__in=targets, data_type='photometry')
+                reduced_datums = PhotometryReducedDatum.objects.filter(target__in=targets)
             else:
-                reduced_datums = ReducedDatum.objects.none()
+                reduced_datums = PhotometryReducedDatum.objects.none()
             preload_key = preload_to_hermes(hermes_message, reduced_datums, targets)
             load_url = sharing['hermes']['BASE_URL'] + f'submit-message?id={preload_key}'
             return HttpResponseRedirect(load_url)

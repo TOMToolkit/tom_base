@@ -139,3 +139,15 @@ The above code will allow all users in the groups that the example user belongs 
 ``ReducedDatum``:
 
 * ``tom_dataproducts.view_reduceddatum``
+
+``PhotometryReducedDatum``:
+
+* ``tom_dataproducts.view_photometryreduceddatum``
+
+``SpectroscopyReducedDatum``:
+
+* ``tom_dataproducts.view_spectroscopyreduceddatum``
+
+``AstrometryReducedDatum``:
+
+* ``tom_dataproducts.view_astrometryreduceddatum``

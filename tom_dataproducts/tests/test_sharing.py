@@ -1,7 +1,7 @@
 from django.test import TestCase, override_settings
 
 from tom_dataproducts.alertstreams.hermes import create_hermes_alert, BuildHermesMessage, HermesMessageException
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import PhotometryReducedDatum, SpectroscopyReducedDatum
 from tom_observations.tests.utils import FakeRoboticFacility
 from tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory
 from django.contrib.auth.models import User
@@ -28,47 +28,43 @@ class TestHermesSharing(TestCase):
             parameters={}
         )
         self.user = User.objects.create_user(username='test', email='test@example.com')
-        self.rd1 = ReducedDatum.objects.create(
+        self.rd1 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 18.5, 'error': .5, 'filter': 'V', 'telescope': 'tst'}
+            brightness=18.5,
+            brightness_error=0.5,
+            bandpass='V',
+            telescope='tst',
         )
-        self.rd2 = ReducedDatum.objects.create(
+        self.rd2 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 19.5, 'error': .5, 'filter': 'B', 'telescope': 'tst'}
+            brightness=19.5,
+            brightness_error=0.5,
+            bandpass='B',
+            telescope='tst',
         )
-        self.rd3 = ReducedDatum.objects.create(
+        self.rd3 = PhotometryReducedDatum.objects.create(
             target=self.target,
-            data_type='photometry',
-            value={'magnitude': 17.5, 'error': .5, 'filter': 'R', 'telescope': 'tst'}
+            brightness=17.5,
+            brightness_error=0.5,
+            bandpass='R',
+            telescope='tst',
         )
-        self.rd4 = ReducedDatum.objects.create(
+        self.rd4 = SpectroscopyReducedDatum.objects.create(
             target=self.target,
-            data_type='spectroscopy',
-            value={
-                'flux': [1, 2, 3],
-                'wavelength': [6000, 5999, 5998],
-                'error': [0.11, 0.22, 0.33],
-                'telescope': 'SpectraTelescope'
-            }
+            flux=[1, 2, 3],
+            wavelength=[6000, 5999, 5998],
+            error=[0.11, 0.22, 0.33],
+            telescope='SpectraTelescope',
         )
-        self.rd5 = ReducedDatum.objects.create(
+        self.rd5 = SpectroscopyReducedDatum.objects.create(
             target=self.target,
-            data_type='spectroscopy',
-            value={
-                '1': {'flux': 20, 'wavelength': 3000},
-                '2': {'flux': 21, 'wavelength': 3001},
-                '3': {'flux': 22, 'wavelength': 3002},
-            }
+            flux=[20, 21, 22],
+            wavelength=[3000, 3001, 3002],
         )
-        self.bad_rd = ReducedDatum.objects.create(
+        self.bad_rd = SpectroscopyReducedDatum.objects.create(
             target=self.target,
-            data_type='spectroscopy',
-            value={
-                'myflux': [1, 2, 3],
-                'wavelength_function': 'lambda_xyz'
-            }
+            flux=[1, 2, 3],
+            wavelength=[6000, 5999],  # mismatched length — triggers HermesMessageException
         )
         self.message_info = BuildHermesMessage(
             title='Test Title',
@@ -100,38 +96,30 @@ class TestHermesSharing(TestCase):
             photometry_count = 0
             spectroscopy_count = 0
             self.assertEqual(photometry_datums + spectroscopy_datums, len(datums))
-            # These should line up
             for datum in datums:
-                if datum.data_type == 'photometry':
+                if isinstance(datum, PhotometryReducedDatum):
                     hermes_datum = alert['data']['photometry'][photometry_count]
                     self.assertEqual(hermes_datum['target_name'], datum.target.name)
                     self.assertEqual(hermes_datum['date_obs'], datum.timestamp.isoformat())
-                    self.assertEqual(hermes_datum['telescope'], datum.value.get('telescope'))
-                    self.assertEqual(hermes_datum['brightness'], datum.value.get('magnitude'))
-                    self.assertEqual(hermes_datum['brightness_error'], datum.value.get('error'))
-                    self.assertEqual(hermes_datum['bandpass'], datum.value.get('filter'))
+                    self.assertEqual(hermes_datum['telescope'], datum.telescope)
+                    self.assertEqual(hermes_datum['brightness'], datum.brightness)
+                    self.assertEqual(hermes_datum['brightness_error'], datum.brightness_error)
+                    self.assertEqual(hermes_datum['bandpass'], datum.bandpass)
                     photometry_count += 1
-                elif datum.data_type == 'spectroscopy':
+                elif isinstance(datum, SpectroscopyReducedDatum):
                     hermes_datum = alert['data']['spectroscopy'][spectroscopy_count]
                     self.assertEqual(hermes_datum['target_name'], datum.target.name)
                     self.assertEqual(hermes_datum['date_obs'], datum.timestamp.isoformat())
-                    if 'flux' in datum.value and 'wavelength' in datum.value:
-                        self.assertEqual(hermes_datum['flux'], datum.value.get('flux'))
-                        self.assertEqual(hermes_datum['wavelength'], datum.value.get('wavelength'))
-                        if 'error' in datum.value:
-                            self.assertEqual(hermes_datum['flux_error'], datum.value.get('error'))
-                    else:
-                        for i, entry in enumerate(datum.value.values()):
-                            if 'flux' in entry:
-                                self.assertEqual(hermes_datum['flux'][i], entry['flux'])
-                                self.assertEqual(hermes_datum['wavelength'][i], entry['wavelength'])
+                    self.assertEqual(hermes_datum['flux'], datum.flux)
+                    self.assertEqual(hermes_datum['wavelength'], datum.wavelength)
+                    if datum.error:
+                        self.assertEqual(hermes_datum['flux_error'], datum.error)
                     spectroscopy_count += 1
 
     def test_convert_to_hermes_format(self):
         datums = [self.rd1, self.rd2, self.rd3]
         targets = [self.target]
         alert = create_hermes_alert(self.message_info, datums, targets)
-        # Now check the alerts formatting is correct
         self._check_alert(alert, self.message_info, datums, targets)
 
     def test_convert_to_hermes_format_extra_target(self):
@@ -139,32 +127,27 @@ class TestHermesSharing(TestCase):
         datums = [self.rd1, self.rd2, self.rd3]
         targets = [target2, self.target]
         alert = create_hermes_alert(self.message_info, datums, targets)
-        # Now check the alerts formatting is correct
         self._check_alert(alert, self.message_info, datums, targets)
 
     def test_convert_to_hermes_format_only_targets(self):
         target2 = SiderealTargetFactory.create()
         targets = [target2, self.target]
         alert = create_hermes_alert(self.message_info, [], targets)
-        # Now check the alerts formatting is correct
         self._check_alert(alert, self.message_info, [], targets)
 
     def test_convert_to_hermes_format_only_datums(self):
         datums = [self.rd1, self.rd2, self.rd3]
         alert = create_hermes_alert(self.message_info, datums, [])
-        # Now check the alerts formatting is correct
         self._check_alert(alert, self.message_info, datums, [self.target])
 
     def test_convert_to_hermes_format_spectro_datums(self):
         datums = [self.rd4, self.rd5]
         alert = create_hermes_alert(self.message_info, datums, [])
-        # Now check the alerts formatting is correct
         self._check_alert(alert, self.message_info, datums, [self.target])
 
     def test_convert_to_hermes_format_mixed_datums(self):
         datums = [self.rd1, self.rd2, self.rd3, self.rd4, self.rd5]
         alert = create_hermes_alert(self.message_info, datums, [])
-        # Now check the alerts formatting is correct
         self._check_alert(alert, self.message_info, datums, [self.target])
 
     def test_convert_to_hermes_format_bad_spectro_datum_fails(self):

@@ -1,20 +1,22 @@
 import logging
 import os
 import tempfile
+from importlib import import_module
 
 from astropy.io import fits
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
-from django.utils import timezone, text
-from django.core.exceptions import ValidationError
+from django.utils import text, timezone
 from fits2image.conversions import fits_to_jpg
 from PIL import Image
-from importlib import import_module
 
-from tom_targets.base_models import BaseTarget
 from tom_alerts.models import AlertStreamMessage
 from tom_observations.models import ObservationRecord
+from tom_targets.base_models import BaseTarget
+
+from .fields import FloatArrayField
 
 logger = logging.getLogger(__name__)
 
@@ -335,55 +337,40 @@ class ReducedDatumManager(models.Manager):
         return ReducedDatumQuerySet(self.model)
 
 
-class ReducedDatum(models.Model):
+class ReducedDatumCommon(models.Model):
     """
-    Class representing a datum in a TOM.
+    Abstract base class for all reduced datum models.
 
     A ``ReducedDatum`` generally refers to a single piece of data--e.g., a spectrum, or a photometry point. It is
     associated with a target, and optionally with the data product it came from. An example of a ``ReducedDatum``
-    without an associated data product would be photometry ingested from a broker.
+    without an associated data product would be photometry ingested from a broker. There are
+    concrete implementations of Photometry, Spectroscopy and Astronmetry ReducedDatum models.
 
     :param target: The ``Target`` with which this object is associated.
 
     :param data_product: The ``DataProduct`` with which this object is optionally associated.
 
-    :param data_type: The type of data this datum represents. Default choices are the default values found in
-        DATA_PRODUCT_TYPES in settings.py.
-    :type data_type: str
+    :param timestamp: The timestamp of this datum.
+    :type timestamp: datetime
+
+    :param value: Freeform data. This is a dict, intended to store extra data with a variety of
+                scopes. As an example, one might want to store the originating survey:
+
+                ::
+
+                    {
+                    'survey': 'lsst',
+                    }
+
+    :type value: dict
 
     :param source_name: The original source of this datum. The current major use of this field is to track the broker a
-                        datum came from, but can be used for other sources.
+                    datum came from, but can be used for other sources.
     :type source_name: str
 
     :param source_location: A reference to the location that this datum was originally sourced from. The current major
                             use of this field is the URL path to the alert that this datum came from.
-    :type source_name: str
-
-    :param timestamp: The timestamp of this datum.
-    :type timestamp: datetime
-
-    :param value: The value of the datum. This is a dict, intended to store data with a variety of
-                  scopes. As an example, a photometry value might contain the following:
-
-                  ::
-
-                    {
-                      'magnitude': 18.5,
-                      'error': .5
-                    }
-
-                  but could also contain a filter, a telescope, an instrument, and/or a unit:
-
-                  ::
-
-                    {
-                      'magnitude': 18.5,
-                      'error': .5,
-                      'filter': 'r',
-                      'telescope': 'ELP.domeA.1m0a',
-                      'instrument': 'fa07',
-                    }
-    :type value: dict
+    :type source_location: str
 
     :param message: Set of ``AlertStreamMessage`` objects this object is associated with.
     :type message: ManyRelatedManager object
@@ -391,34 +378,40 @@ class ReducedDatum(models.Model):
     """
 
     target = models.ForeignKey(BaseTarget, null=False, on_delete=models.CASCADE)
-    data_product = models.ForeignKey(DataProduct, null=True, blank=True, on_delete=models.CASCADE)
-    data_type = models.CharField(
-        max_length=100,
-        default=''
+    data_product = models.ForeignKey(
+        DataProduct, null=True, blank=True, on_delete=models.CASCADE
     )
-    source_name = models.CharField(max_length=100, default='', blank=True)
-    source_location = models.CharField(max_length=200, default='', blank=True)
-    timestamp = models.DateTimeField(null=False, blank=False, default=timezone.now, db_index=True)
-    value = models.JSONField(null=False, blank=False)
+    timestamp = models.DateTimeField(
+        null=False, blank=False, default=timezone.now, db_index=True
+    )
+    value = models.JSONField(
+        null=False, blank=True, default=dict, verbose_name="extra data"
+    )
+    telescope = models.CharField(max_length=255, blank=True, default="")
+    instrument = models.CharField(max_length=255, blank=True, default="")
+    source_name = models.CharField(max_length=100, default="", blank=True)
+    source_location = models.CharField(max_length=200, default="", blank=True)
     message = models.ManyToManyField(AlertStreamMessage, blank=True)
 
     objects = ReducedDatumManager()
 
     class Meta:
-        get_latest_by = ('timestamp',)
+        abstract = True
 
-    def save(self, *args, **kwargs):
-        # Validate data_type based on options in settings.py or default types: (type, display)
-        for dp_type, _ in DATA_TYPE_CHOICES:
-            if self.data_type and self.data_type == dp_type:
-                break
-        else:
-            raise ValidationError('Not a valid DataProduct type.')
 
-        # because we have a custom way of validating the uniqueness of the ReducedDatum,
-        #  we need to call full_clean() here to invoke our validate_unique() method.
-        self.full_clean()
-        return super().save()
+class ReducedDatum(ReducedDatumCommon):
+    """
+    Class representing a generic datum in a TOM that isn't represented by any of the existing data types.
+
+    :param data_type: The type of data this datum represents. Default choices are the default values found in
+        DATA_PRODUCT_TYPES in settings.py.
+    :type data_type: str
+    """
+
+    data_type = models.CharField(max_length=100, default="")
+
+    class Meta:
+        get_latest_by = ("timestamp",)
 
     def validate_unique(self, *args, **kwargs):
         """
@@ -426,22 +419,225 @@ class ReducedDatum(models.Model):
         on standard validation. Also, We do not want to repeat identical data from two different sources.
 
         Do nothing if the uniqueness test passes. Otherwise, raise a ValidationError.
-
         see https://docs.djangoproject.com/en/5.0/ref/models/instances/#validating-objects
         """
         super().validate_unique(*args, **kwargs)
-
         # Check if the Reduced Datum exists in the database
         try:
-            existing_reduced_datum = ReducedDatum.objects.get(target=self.target,
-                                                              data_type=self.data_type,
-                                                              timestamp=self.timestamp,
-                                                              value=self.value)
-            if existing_reduced_datum and existing_reduced_datum.id != self.id:  # not the same object
-                existing_source = existing_reduced_datum.__dict__.get('source_name', 'Unknown Source')
+            existing_reduced_datum = ReducedDatum.objects.get(
+                target=self.target,
+                data_type=self.data_type,
+                timestamp=self.timestamp,
+                value=self.value,
+            )
+            if (
+                existing_reduced_datum and existing_reduced_datum.id != self.id
+            ):  # not the same object
+                existing_source = existing_reduced_datum.__dict__.get(
+                    "source_name", "Unknown Source"
+                )
                 # found ReducedDatum with the same values. Don't save this duplicate ReducedDatum.
-                raise ValidationError(f'ReducedDatum already exists: Identical {self.data_type} data '
-                                      f'found for {self.target} from {existing_source}.')
+                raise ValidationError(
+                    f"ReducedDatum already exists: Identical {self.data_type} data "
+                    f"found for {self.target} from {existing_source}."
+                )
         except ReducedDatum.DoesNotExist:
             # this means that our check for uniqueness passed: so do not raise ValidationError
             pass
+
+
+class PhotometryReducedDatum(ReducedDatumCommon):
+    brightness = models.FloatField(blank=True, null=True)
+    brightness_error = models.FloatField(blank=True, null=True)
+    limit = models.FloatField(blank=True, null=True)
+    unit = models.CharField(max_length=32, blank=True, default="")
+    bandpass = models.CharField(max_length=32)
+    exposure_time = models.FloatField(blank=True, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["target", "bandpass", "timestamp"], name="unique_photometry"
+            )
+        ]
+
+
+class SpectroscopyReducedDatum(ReducedDatumCommon):
+    setup = models.CharField(max_length=2000, blank=True, default="")
+    exposure_time = models.FloatField(blank=True, null=True)
+    wavelength = FloatArrayField(blank=True, default=list)
+    flux = FloatArrayField(blank=True, default=list)
+    error = FloatArrayField(blank=True, default=list)
+    flux_unit = models.TextField(blank=True, default="")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["target", "timestamp", "telescope", "instrument"],
+                name="unique_spectroscopy",
+            )
+        ]
+
+
+class AstrometryReducedDatum(ReducedDatumCommon):
+    ra = models.FloatField()
+    dec = models.FloatField()
+    ra_error = models.FloatField(null=True, blank=True, default=None)
+    dec_error = models.FloatField(null=True, blank=True, default=None)
+    ra_error_units = models.CharField(max_length=32, blank=True, default="")
+    dec_error_units = models.CharField(max_length=32, blank=True, default="")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["target", "timestamp", "telescope", "instrument"],
+                name="unique_astrometry",
+            )
+        ]
+
+
+REDUCED_DATUM_MODELS = (
+    ReducedDatum,
+    PhotometryReducedDatum,
+    SpectroscopyReducedDatum,
+    AstrometryReducedDatum,
+)
+
+
+def _pop_find_field(possible_fields: set, value: dict):
+    """
+    Helper function to find a field in a dict given a set of possible field names.
+    Pops the value of the first found field, or returns None if no field is found.
+    """
+    for field in possible_fields:
+        if field in value:
+            return value.pop(field)
+
+    return None
+
+
+def _extract_extra_fields(data: dict, model: type[models.Model]) -> dict:
+    """
+    Helper function to extract fields from the value dict that are not part of the model.
+    Pops the extra fields from the value dict and returns them as a new dict to be saved
+    in the models `value` field.
+    """
+    model_fields = set(f.name for f in model._meta.get_fields())
+    extra_fields = {}
+    for field in list(data.keys()):
+        if field not in model_fields:
+            extra_fields[field] = data.pop(field)
+
+    return extra_fields
+
+
+def _build_photometry_reduced_datum(data: dict) -> PhotometryReducedDatum:
+    BRIGHTNESS_FIELDS = {"brightness", "magnitude", "mag"}
+    BRIGHTNESS_ERROR_FIELDS = {
+        "error",
+        "brightness_error",
+        "magnitude_error",
+        "mag_err",
+    }
+    BANDPASS_FIELDS = {"bandpass", "filter", "band", "f"}
+
+    brightness = _pop_find_field(BRIGHTNESS_FIELDS, data)
+    brightness_error = _pop_find_field(BRIGHTNESS_ERROR_FIELDS, data)
+    bandpass = _pop_find_field(BANDPASS_FIELDS, data) or ""
+
+    extra_fields = _extract_extra_fields(data, PhotometryReducedDatum)
+
+    return PhotometryReducedDatum(
+        brightness=brightness,
+        brightness_error=brightness_error,
+        bandpass=bandpass,
+        value=extra_fields,
+        **data,
+    )
+
+
+def _build_spectroscopy_reduced_datum(data: dict) -> SpectroscopyReducedDatum:
+    FLUX_FIELDS = {"flux", "f"}
+    WAVELENGTH_FIELDS = {"wavelength", "wave", "wl"}
+    ERROR_FIELDS = {"error", "err", "flux_error", "f_error"}
+    FLUX_UNIT_FIELDS = {"flux_unit", "f_unit", "flux_units", "f_units"}
+
+    flux = _pop_find_field(FLUX_FIELDS, data) or []
+    wavelength = _pop_find_field(WAVELENGTH_FIELDS, data) or []
+    error = _pop_find_field(ERROR_FIELDS, data) or []
+    flux_unit = _pop_find_field(FLUX_UNIT_FIELDS, data) or ""
+
+    extra_fields = _extract_extra_fields(data, SpectroscopyReducedDatum)
+
+    return SpectroscopyReducedDatum(
+        wavelength=wavelength,
+        flux=flux,
+        error=error,
+        flux_unit=flux_unit,
+        value=extra_fields,
+        **data,
+    )
+
+
+def _build_astrometry_reduced_datum(data: dict) -> AstrometryReducedDatum:
+    RA_FIELDS = {"ra", "right_ascension", "ra_deg"}
+    DEC_FIELDS = {"dec", "declination", "dec_deg"}
+    RA_ERROR_FIELDS = {"ra_error", "right_ascension_error", "ra_err"}
+    DEC_ERROR_FIELDS = {"dec_error", "declination_error", "dec_err"}
+    RA_ERROR_UNIT_FIELDS = {"ra_error_units", "ra_err_units"}
+    DEC_ERROR_UNIT_FIELDS = {"dec_error_units", "dec_err_units"}
+
+    ra = _pop_find_field(RA_FIELDS, data)
+    dec = _pop_find_field(DEC_FIELDS, data)
+    ra_error = _pop_find_field(RA_ERROR_FIELDS, data)
+    dec_error = _pop_find_field(DEC_ERROR_FIELDS, data)
+    ra_error_units = _pop_find_field(RA_ERROR_UNIT_FIELDS, data) or ""
+    dec_error_units = _pop_find_field(DEC_ERROR_UNIT_FIELDS, data) or ""
+
+    extra_fields = _extract_extra_fields(data, AstrometryReducedDatum)
+
+    return AstrometryReducedDatum(
+        ra=ra,
+        dec=dec,
+        ra_error=ra_error,
+        dec_error=dec_error,
+        ra_error_units=ra_error_units,
+        dec_error_units=dec_error_units,
+        value=extra_fields,
+        **data,
+    )
+
+
+def _build_generic_reduced_datum(data: dict, data_type: str) -> ReducedDatum:
+    extra_fields = _extract_extra_fields(data, ReducedDatum)
+
+    return ReducedDatum(value=extra_fields, data_type=data_type, **data)
+
+
+def try_parse_reduced_datum(
+    data: dict,
+) -> (
+    ReducedDatum
+    | PhotometryReducedDatum
+    | SpectroscopyReducedDatum
+    | AstrometryReducedDatum
+):
+    """
+    Accepts unstructured data and attempts to create the correct ReducedDatum sublcass.
+    If the heuristics fail, returns a generic ReducedDatum.
+    """
+    if data.get("value") and isinstance(data["value"], dict):
+        # `value` is the existing free-form field. Pull those values to the top of the dict
+        # so we can use them to determine which reduced datum type to create
+        value = data.pop("value")
+        data = {**data, **value}
+
+    match data_type := data.pop("data_type", "").lower():
+        case "photometry":
+            return _build_photometry_reduced_datum(data)
+        case "spectroscopy":
+            return _build_spectroscopy_reduced_datum(data)
+        case "astrometry":
+            return _build_astrometry_reduced_datum(data)
+        case _:
+            return _build_generic_reduced_datum(data, data_type)

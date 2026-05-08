@@ -5,6 +5,8 @@ from rest_framework import serializers
 
 from tom_common.serializers import GroupSerializer
 from tom_dataproducts.models import DataProductGroup, DataProduct, ReducedDatum
+from tom_dataproducts.models import PhotometryReducedDatum, try_parse_reduced_datum
+from tom_dataproducts.models import SpectroscopyReducedDatum, AstrometryReducedDatum
 from tom_observations.models import ObservationRecord
 from tom_observations.serializers import ObservationRecordFilteredPrimaryKeyRelatedField
 from tom_targets.models import Target
@@ -32,13 +34,65 @@ class ReducedDatumSerializer(serializers.ModelSerializer):
             'target'
         )
 
+    def to_representation(self, instance):
+        if isinstance(instance, (PhotometryReducedDatum, SpectroscopyReducedDatum, AstrometryReducedDatum)):
+            return {
+                'data_product': None,
+                'data_type': self._get_data_type(instance),
+                'source_name': instance.source_name,
+                'source_location': instance.source_location,
+                'timestamp': self.fields['timestamp'].to_representation(instance.timestamp),
+                'value': self._get_typed_value(instance),
+                'target': instance.target_id,
+            }
+        return super().to_representation(instance)
+
+    def _get_data_type(self, instance):
+        if isinstance(instance, PhotometryReducedDatum):
+            return 'photometry'
+        if isinstance(instance, SpectroscopyReducedDatum):
+            return 'spectroscopy'
+        if isinstance(instance, AstrometryReducedDatum):
+            return 'astrometry'
+
+    def _get_typed_value(self, instance):
+        if isinstance(instance, PhotometryReducedDatum):
+            return {
+                'brightness': instance.brightness,
+                'brightness_error': instance.brightness_error,
+                'bandpass': instance.bandpass,
+                'unit': instance.unit,
+                'telescope': instance.telescope,
+                'instrument': instance.instrument,
+            }
+        if isinstance(instance, SpectroscopyReducedDatum):
+            return {
+                'flux': instance.flux,
+                'wavelength': instance.wavelength,
+                'error': instance.error,
+                'flux_unit': instance.flux_unit,
+                'telescope': instance.telescope,
+                'instrument': instance.instrument,
+            }
+        if isinstance(instance, AstrometryReducedDatum):
+            return {
+                'ra': instance.ra,
+                'dec': instance.dec,
+                'ra_error': instance.ra_error,
+                'dec_error': instance.dec_error,
+                'ra_error_units': instance.ra_error_units,
+                'dec_error_units': instance.dec_error_units,
+                'telescope': instance.telescope,
+                'instrument': instance.instrument,
+            }
+
     def create(self, validated_data):
         """DRF requires explicitly handling writeable nested serializers,
         here we pop the groups data and save it using its serializer.
         """
         groups = validated_data.pop('groups', [])
 
-        rd = ReducedDatum(**validated_data)
+        rd = try_parse_reduced_datum(validated_data)
         rd.full_clean()
         rd.save()
 

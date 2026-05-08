@@ -7,7 +7,7 @@ from tom_targets.serializers import TargetSerializer
 from tom_targets.models import PersistentShare
 from tom_dataproducts.sharing import (check_for_share_safe_datums, share_data_with_tom,
                                       get_destination_target, sharing_feedback_converter)
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import PhotometryReducedDatum
 from tom_dataproducts.alertstreams.hermes import publish_to_hermes, BuildHermesMessage
 
 
@@ -22,7 +22,7 @@ def share_target_and_all_data(share_destination, target):
         hermes_topic = share_destination.split(':')[1]
         destination = share_destination.split(':')[0]
         filtered_reduced_datums = check_for_share_safe_datums(
-            destination, ReducedDatum.objects.filter(target=target), topic=hermes_topic)
+            destination, PhotometryReducedDatum.objects.filter(target=target), topic=hermes_topic)
         sharing = getattr(settings, "DATA_SHARING", {})
         tom_name = f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}"
         message = BuildHermesMessage(title=f"Setting up continuous sharing for {target.name} from "
@@ -56,7 +56,7 @@ def continuous_share_data(target, reduced_datums):
             hermes_topic = share_destination.split(':')[1]
             destination = share_destination.split(':')[0]
             filtered_reduced_datums = check_for_share_safe_datums(
-                destination, ReducedDatum.objects.filter(pk__in=reduced_datum_pks), topic=hermes_topic)
+                destination, PhotometryReducedDatum.objects.filter(pk__in=reduced_datum_pks), topic=hermes_topic)
             sharing = getattr(settings, "DATA_SHARING", {})
             tom_name = f"{getattr(settings, 'TOM_NAME', 'TOM Toolkit')}"
             message = BuildHermesMessage(title=f"Updated data for {target.name} from "
