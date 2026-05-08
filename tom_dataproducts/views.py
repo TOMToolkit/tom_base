@@ -441,8 +441,11 @@ class DataShareView(FormView):
 
             # Dispatch via the SharingBackend registry. The backend name is
             # the prefix before the ':' in share_destination. A missing ':'
-            # (legacy TOM-to-TOM 'mytom' form) is treated as backend 'tom'.
-            backend_name = share_destination.partition(':')[0] or 'tom'
+            # (legacy TOM-to-TOM 'mytom' form, where the form value is the
+            # bare destination key) is treated as backend 'tom' — that
+            # backend's ``_split_destination`` tolerates the bare form.
+            prefix, sep, _sub = share_destination.partition(':')
+            backend_name = prefix if sep else 'tom'
             backend = get_sharing_backend(backend_name)()
             response = backend.share(
                 form_data,

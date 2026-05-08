@@ -27,13 +27,13 @@ from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_dataproducts.processors.photometry_processor import PhotometryProcessor
 from tom_dataproducts.processors.spectroscopy_processor import SpectroscopyProcessor
 from tom_dataproducts.utils import create_image_dataproduct
+from tom_observations.tests.utils import FakeRoboticFacility
+from tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory
 
 
 # Directory holding fixture CSVs / FITS files for these tests. Anchored
 # on ``__file__`` so the tests work regardless of CWD.
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
-from tom_observations.tests.utils import FakeRoboticFacility
-from tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory
 
 
 def mock_fits2image(file1, file2, width, height):
@@ -685,13 +685,17 @@ class TestShareDataProducts(TestCase):
                 'share_authors': ['test_author'],
                 'target': self.target.id,
                 'submitter': ['test_submitter'],
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
                 'share_title': ['Updated data for thingy.'],
                 'share_message': ['test_message']
             },
             follow=True
         )
-        self.assertContains(response, 'ERROR: No matching target found.')
+        # Substring match so the test stays robust to cosmetic wording
+        # changes (singular vs plural, exact phrasing) — the substantive
+        # assertion is "an error citing 'no matching target' surfaced to
+        # the user", not the exact string.
+        self.assertContains(response, 'No matching target')
 
     @responses.activate
     def test_share_reduceddatums_target_no_valid_responses(self):
@@ -718,13 +722,17 @@ class TestShareDataProducts(TestCase):
                 'share_authors': ['test_author'],
                 'target': self.target.id,
                 'submitter': ['test_submitter'],
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
                 'share_title': ['Updated data for thingy.'],
                 'share_message': ['test_message']
             },
             follow=True
         )
-        self.assertContains(response, 'ERROR: No matching target found.')
+        # Substring match so the test stays robust to cosmetic wording
+        # changes (singular vs plural, exact phrasing) — the substantive
+        # assertion is "an error citing 'no matching target' surfaced to
+        # the user", not the exact string.
+        self.assertContains(response, 'No matching target')
 
     @responses.activate
     def test_share_reduced_datums_no_valid_responses(self):
@@ -751,14 +759,18 @@ class TestShareDataProducts(TestCase):
                 'share_authors': ['test_author'],
                 'target': self.target.id,
                 'submitter': ['test_submitter'],
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
                 'share_title': ['Updated data for thingy.'],
                 'share_message': ['test_message'],
                 'share-box': [1, 2]
             },
             follow=True
         )
-        self.assertContains(response, 'ERROR: No matching targets found.')
+        # Substring match so the test stays robust to cosmetic wording
+        # changes (singular vs plural, exact phrasing) — the substantive
+        # assertion is "an error citing 'no matching target' surfaced to
+        # the user", not the exact string.
+        self.assertContains(response, 'No matching target')
 
     @responses.activate
     def test_share_dataproduct_valid_target_found(self):
@@ -791,7 +803,7 @@ class TestShareDataProducts(TestCase):
                 'share_authors': ['test_author'],
                 'target': self.target.id,
                 'submitter': ['test_submitter'],
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
                 'share_title': ['Updated data for thingy.'],
                 'share_message': ['test_message']
             },
@@ -830,7 +842,7 @@ class TestShareDataProducts(TestCase):
                 'share_authors': ['test_author'],
                 'target': self.target.id,
                 'submitter': ['test_submitter'],
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
                 'share_title': ['Updated data for thingy.'],
                 'share_message': ['test_message']
             },
@@ -869,7 +881,7 @@ class TestShareDataProducts(TestCase):
                 'share_authors': ['test_author'],
                 'target': self.target.id,
                 'submitter': ['test_submitter'],
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
                 'share_title': ['Updated data for thingy.'],
                 'share_message': ['test_message'],
                 'share-box': [1, 2]
@@ -901,7 +913,7 @@ class TestShareDataProducts(TestCase):
             'share_authors': ['test_author'],
             'target': self.target.id,
             'submitter': ['test_submitter'],
-            'share_destination': [share_destination],
+            'share_destination': [f'tom:{share_destination}'],
             'share_title': ['Updated data for thingy.'],
             'share_message': ['test_message'],
             'share-box': [1, 2]

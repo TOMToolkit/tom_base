@@ -1506,7 +1506,7 @@ class TestShareTargets(TestCase):
             {
                 'submitter': ['test_submitter'],
                 'target': self.target.id,
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
             },
             follow=True
         )
@@ -1541,7 +1541,7 @@ class TestShareTargets(TestCase):
             {
                 'submitter': ['test_submitter'],
                 'target': self.target.id,
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
             },
             follow=True
         )
@@ -1572,7 +1572,7 @@ class TestShareTargets(TestCase):
             {
                 'submitter': ['test_submitter'],
                 'target': self.target.id,
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
             },
             follow=True
         )
@@ -1615,7 +1615,7 @@ class TestShareTargets(TestCase):
             {
                 'submitter': ['test_submitter'],
                 'target': self.target.id,
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
                 'share-box': [1, 2]
             },
             follow=True
@@ -1691,7 +1691,7 @@ class TestShareTargetList(TestCase):
             {
                 'submitter': ['test_submitter'],
                 'target_list': self.target_list.id,
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
                 'selected-target': [self.target.id, self.target2.id]
             },
             follow=True
@@ -1727,7 +1727,7 @@ class TestShareTargetList(TestCase):
             {
                 'submitter': ['test_submitter'],
                 'target_list': self.target_list.id,
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
                 'selected-target': [self.target.id, self.target2.id]
             },
             follow=True
@@ -1771,7 +1771,7 @@ class TestShareTargetList(TestCase):
             {
                 'submitter': ['test_submitter'],
                 'target_list': self.target_list.id,
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
                 'dataSwitch': 'on',
                 'selected-target': [self.target.id, self.target2.id]
             },
@@ -1796,7 +1796,7 @@ class TestShareTargetList(TestCase):
             {
                 'submitter': ['test_submitter'],
                 'target_list': self.target_list.id,
-                'share_destination': [share_destination],
+                'share_destination': [f'tom:{share_destination}'],
                 'dataSwitch': 'on',
                 'selected-target': []
             },

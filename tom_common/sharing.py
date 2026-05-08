@@ -426,7 +426,7 @@ class TomToolkitSharingBackend(SharingBackend):
                 return {'message': 'ERROR: Multiple targets with matching name found in destination TOM.'}
             target_dict[target.name] = destination_target_id
         if all(value is None for value in target_dict.values()):
-            return {'message': 'ERROR: No matching targets found.'}
+            return {'message': 'ERROR: No matching target found.'}
 
         # Run datums through the existing sharing-protocol filter so a
         # datum already published to this destination is not re-sent.
