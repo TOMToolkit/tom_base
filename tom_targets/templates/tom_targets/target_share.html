@@ -40,7 +40,7 @@
             <b style="position:absolute; bottom:1.2rem; right:2rem;">or</b>
           </div>
           <div class="col-sm-2">
-            <button class="btn btn-info" type="submit" formaction="{% url 'targets:hermes-preload' pk=target.id %}"
+            <button class="btn btn-info" type="submit" formaction="{% url 'tom_hermes:target-preload' pk=target.id %}"
               onclick="setTarget('_blank')" style="position:absolute; bottom:1rem">Open in Hermes &#x1F5D7;</button>
           </div>
           {% endif %}

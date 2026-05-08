@@ -16,7 +16,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django_filters.views import FilterView
 from django.http import HttpResponse
-from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse
 from django.forms import HiddenInput
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
@@ -24,7 +24,7 @@ from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
-from django.views.generic.detail import DetailView, SingleObjectMixin
+from django.views.generic.detail import DetailView
 from django.views.generic import RedirectView, TemplateView, View
 
 from rest_framework.views import APIView
@@ -62,7 +62,6 @@ from tom_targets.utils import import_targets, export_targets
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.seed import seed_messier_targets
 from tom_targets.tables import TargetTable, TargetGroupTable
-from tom_hermes.sharing import BuildHermesMessage, preload_to_hermes
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -559,34 +558,6 @@ def render_observation_table(request, pk):
     return render(request, 'tom_targets/partials/observation_table.html', context={'object': Target.objects.get(id=pk)})
 
 
-class TargetHermesPreloadView(SingleObjectMixin, View):
-    model = Target
-    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.change_target'
-
-    def post(self, request, *args, **kwargs):
-        target = self.get_object()
-        sharing = getattr(settings, "DATA_SHARING", None)
-        if sharing and sharing.get('hermes', {}).get('HERMES_API_KEY'):
-            topic = request.POST.get('share_destination', '').split(':')[-1]
-            title = request.POST.get('share_title', '')
-            if not title:
-                title = f'Updated data for {target.name}'
-            hermes_message = BuildHermesMessage(
-                title=title,
-                topic=topic,
-                submitter=request.POST.get('submitter'),
-                message=request.POST.get('share_message', ''),
-                authors=sharing['hermes'].get('DEFAULT_AUTHORS')
-            )
-            reduced_datums = ReducedDatum.objects.filter(pk__in=request.POST.getlist('share-box', []))
-            preload_key = preload_to_hermes(hermes_message, reduced_datums, [target])
-            load_url = sharing['hermes']['BASE_URL'] + f'submit-message?id={preload_key}'
-            return HttpResponseRedirect(load_url)
-        else:
-            return HttpResponseBadRequest("Must have hermes section with HERMES_API_KEY set in DATA_SHARING settings")
-
-
 class TargetImportView(LoginRequiredMixin, TemplateView):
     """
     View that handles the import of targets from a CSV. Requires authentication.
@@ -957,38 +928,6 @@ class TargetGroupingShareView(FormView):
                 messages.error(self.request, f'No targets shared. {form.errors.as_json()}')
                 return redirect(self.get_success_url())
         return redirect(self.get_success_url())
-
-
-class TargetGroupingHermesPreloadView(SingleObjectMixin, View):
-    model = TargetList
-    # Set app_name for Django-Guardian Permissions in case of Custom Target Model
-    permission_required = f'{Target._meta.app_label}.change_target'
-
-    def post(self, request, *args, **kwargs):
-        targetlist = self.get_object()
-        sharing = getattr(settings, "DATA_SHARING", None)
-        if sharing and sharing.get('hermes', {}).get('HERMES_API_KEY'):
-            topic = request.POST.get('share_destination', '').split(':')[-1]
-            title = request.POST.get('share_title', '')
-            if not title:
-                title = f'Updated targets for group {targetlist.name}.'
-            hermes_message = BuildHermesMessage(
-                title=title,
-                topic=topic,
-                submitter=request.POST.get('submitter'),
-                message=request.POST.get('share_message', ''),
-                authors=sharing['hermes'].get('DEFAULT_AUTHORS')
-            )
-            targets = Target.objects.filter(pk__in=request.POST.getlist('selected-target', []))
-            if request.POST.get('dataSwitch', '') == 'on':
-                reduced_datums = ReducedDatum.objects.filter(target__in=targets, data_type='photometry')
-            else:
-                reduced_datums = ReducedDatum.objects.none()
-            preload_key = preload_to_hermes(hermes_message, reduced_datums, targets)
-            load_url = sharing['hermes']['BASE_URL'] + f'submit-message?id={preload_key}'
-            return HttpResponseRedirect(load_url)
-        else:
-            return HttpResponseBadRequest("Must have hermes section with HERMES_API_KEY set in DATA_SHARING settings")
 
 
 class TargetFacilitySelectionView(Raise403PermissionRequiredMixin, FormView):

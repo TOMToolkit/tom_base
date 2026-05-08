@@ -190,3 +190,12 @@ j
 * The ``share_data_with_hermes`` / ``share_target_list_with_hermes`` / ``share_data_with_tom``
   functions in ``tom_dataproducts.sharing`` are removed. Replace call sites with
   ``tom_common.sharing.get_sharing_backend(name)().share(...)``.
+* The HERMES "preload" views (the ``Open in Hermes 🗗`` button) have moved from
+  ``tom_targets`` to ``tom_hermes``. URL names change accordingly: any custom
+  template referencing ``{% url 'tom_targets:hermes-preload' %}`` /
+  ``{% url 'targets:hermes-preload' %}`` must use
+  ``{% url 'tom_hermes:target-preload' %}``, and ``targets:group-hermes-preload``
+  becomes ``tom_hermes:target-grouping-preload``. The URL paths themselves
+  also change (``/targets/<pk>/hermes-preload/`` → ``/hermes/targets/<pk>/preload/``),
+  but unless a TOM operator hardcoded those paths instead of using ``{% url %}``,
+  no further action is required.
