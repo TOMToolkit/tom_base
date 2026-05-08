@@ -27,6 +27,11 @@ from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_dataproducts.processors.photometry_processor import PhotometryProcessor
 from tom_dataproducts.processors.spectroscopy_processor import SpectroscopyProcessor
 from tom_dataproducts.utils import create_image_dataproduct
+
+
+# Directory holding fixture CSVs / FITS files for these tests. Anchored
+# on ``__file__`` so the tests work regardless of CWD.
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 from tom_observations.tests.utils import FakeRoboticFacility
 from tom_observations.tests.factories import SiderealTargetFactory, ObservingRecordFactory
 
@@ -481,7 +486,7 @@ class TestDataProcessor(TestCase):
             self.spectrum_data_processor.process_data(self.data_product)
 
     def test_process_spectrum_from_fits(self):
-        with open('tom_dataproducts/tests/test_data/test_spectrum.fits', 'rb') as spectrum_file:
+        with open(os.path.join(TEST_DATA_DIR, 'test_spectrum.fits'), 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.fits', spectrum_file)
             spectrum, _, _ = self.spectrum_data_processor._process_spectrum_from_fits(self.data_product)
             self.assertTrue(isinstance(spectrum, Spectrum))
@@ -489,7 +494,7 @@ class TestDataProcessor(TestCase):
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 6600.478789, places=5)
 
     def test_process_spectrum_from_plaintext(self):
-        with open('tom_dataproducts/tests/test_data/test_spectrum.csv', 'rb') as spectrum_file:
+        with open(os.path.join(TEST_DATA_DIR, 'test_spectrum.csv'), 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.csv', spectrum_file)
             spectrum, _, _ = self.spectrum_data_processor._process_spectrum_from_plaintext(self.data_product)
             self.assertTrue(isinstance(spectrum, Spectrum))
@@ -508,7 +513,7 @@ class TestDataProcessor(TestCase):
             self.photometry_data_processor.process_data(self.data_product)
 
     def test_process_photometry_from_plaintext(self):
-        with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as lightcurve_file:
+        with open(os.path.join(TEST_DATA_DIR, 'test_lightcurve.csv'), 'rb') as lightcurve_file:
             self.data_product.data.save('lightcurve.csv', lightcurve_file)
             lightcurve = self.photometry_data_processor._process_photometry_from_plaintext(self.data_product)
             self.assertTrue(isinstance(lightcurve, list))
