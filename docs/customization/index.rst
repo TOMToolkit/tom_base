@@ -5,6 +5,9 @@ The TOM Toolkit is deliberately designed as an adaptable framework to enable use
 all aspects of it.  This includes both "look and feel" aspects of the appearance of the user interface,
 to adding new functionality and automating aspects of your workflow.
 
+The :doc:`Programming Resources </introduction/programming_resources>` page provides some quick links to a number of useful reference sources
+relating to software used in the TOM Toolkit: HTML, CSS, Python, and Django
+
 User Interface Appearance and Layout
 ------------------------------------
 
@@ -18,7 +21,6 @@ Any or all of these templates can be overridden if you want to change the color 
 
 We provide a library of widgets to perform common functions, such as buttons.
 :doc:`TOM Widgets <widgets>` describes how to make use of these in your page.
-
 
 Adding Pages and Functionality
 ------------------------------

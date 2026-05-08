@@ -49,7 +49,7 @@ Python Scripts and Jupyter Notebooks
 You can also interact directly with your TOM from a Python script or Jupyter notebook, which provides a flexible way to
 analysis the data.  :doc:`Scripting your TOM with Jupyter Notebooks </common/scripts>` shows how.
 
-TOM Toolkit APIs
-----------------
+API Reference
+-------------
 
 Full details of all TOM Toolkit functions can be found in the :doc:`API Documentation </api/modules>`.

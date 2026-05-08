@@ -12,7 +12,7 @@ TOM Toolkit
   Observing <observing/index>
   Data <managing_data/index>
   Customization <customization/index>
-  APIs <code/index>
+  API <code/index>
   Deploy <deployment/index>
   Plugins <code/plugins>
   Support <introduction/support>
@@ -32,7 +32,7 @@ The TOM (Target and Observation Manager) Toolkit is designed to make it easy for
 and customize a TOM system for their science goals.  The package includes a full-featured TOM system
 out of the box, and this documentation describes how you can extend this system for your own needs.
 
-More information about the project can be found in :doc:`here<introduction/about>`.
+More information about TOM systems and the TOM Toolkit project can be found in :doc:`here<introduction/about>`.
 
 Installation & Configuration
 ----------------------------
@@ -42,8 +42,8 @@ Full instructions for installing the package and creating your own TOM system ca
 A range of common configuration options are covered in :doc:`custom settings<common/customsettings>`, including options
 to control user permissions.
 
-Examples
---------
+TOM Demo Example System
+-----------------------
 
 It's always helpful to have template projects as a reference, so we run a `TOM demo system <https://tom-demo.lco.global/>`__
 where you can explore the TOM's features.  If you want to see how this was done, you can explore the code on
