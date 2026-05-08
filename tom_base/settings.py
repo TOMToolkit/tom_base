@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import logging.config
 import os
 import tempfile
+from tom_common.default_settings import *  # noqa: F403
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -33,51 +34,12 @@ ALLOWED_HOSTS = ['']
 
 TOM_NAME = 'TOM Toolkit'
 
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.sites',
-    'django_extensions',
-    'django_tasks',
-    'django_tasks.backends.database',
-    'guardian',
-    'tom_common',
-    'django_comments',
-    'bootstrap4',
-    'crispy_bootstrap4',
-    'crispy_forms',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'django_filters',
-    'django_tables2',
-    'django_gravatar',
-    'django_htmx',
-    'tom_targets',
-    'tom_alerts',
-    'tom_catalogs',
-    'tom_observations',
-    'tom_dataproducts',
-    'tom_dataservices',
+INSTALLED_APPS = TOMTOOKIT_INSTALLED_APPS + [  # noqa: F405
 ]
 
 SITE_ID = 1
 
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django_htmx.middleware.HtmxMiddleware',
-    'tom_common.middleware.Raise403Middleware',
-    'tom_common.middleware.ExternalServiceMiddleware',
-    'tom_common.middleware.AuthStrategyMiddleware',
+MIDDLEWARE = TOMTOOKIT_MIDDLEWARE + [  # noqa: F405
 ]
 
 ROOT_URLCONF = 'tom_common.urls'

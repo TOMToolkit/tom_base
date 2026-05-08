@@ -199,19 +199,6 @@ modules available for `Lasair <https://lasair.roe.ac.uk>`_,
 `MARS <https://mars.lco.global>`_, `SCOUT <https://cneos.jpl.nasa.gov/scout/intro.html>`_, and others,
 with more planned for the future.
 
-TOM Catalogs
-------------
-
-The
-`tom_catalogs <https://github.com/TOMToolkit/tom_base/tree/main/tom_catalogs>`_
-app contains functionality related to querying astronomical catalogs. These
-"harvester" modules enable the querying and translation of targets found in
-databases such as Simbad and JPL Horizons directly into targets within the
-toolkit. The
-`harvester.py <https://github.com/TOMToolkit/tom_base/blob/main/tom_catalogs/harvester.py>`_
-module provides the basic interface, and there are several modules already
-written for Simbad, NED, the MPC, JPL Horizons and the Transient Name Server.
-
 TOM Setup and TOM Common
 ------------------------
 

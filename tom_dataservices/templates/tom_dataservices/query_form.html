@@ -2,7 +2,15 @@
 {% load bootstrap4 crispy_forms_tags %}
 {% block title %}Query a Data Service{% endblock %}
 {% block content %}
+{% if info_url %}
+<h2><a href="{{info_url}}" target="_blank">{{ form.data_service.value }}</a> Query Form</h2>
+{% else %}
 <h2>{{ form.data_service.value }} Query Form</h2>
+{% endif %}
+{% if verbose_name and verbose_name != form.data_service.value %}
+    <h4>{{ verbose_name }}</h4>
+{% endif %}
+<hr>
 <form method="post" class="form">
     {% csrf_token %}
     {% bootstrap_field form.data_service %}
@@ -28,7 +36,7 @@
             {% crispy form %}
         {% endif %}
     {% endif %}
-
+    <hr>
     <div class="row align-items-center" x-data="{save: {{ form.query_save.value|lower }}}" >
         <div class="col-1">
             <div class="form-group">
@@ -56,6 +64,7 @@
     </div>
 </form>
 {% if app_version %}
+    <hr>
     <p><em>TOM Toolkit Module (<a href={{ app_link }} target="_blank">{{form.data_service.value}}</a>) version {{ app_version }}</em></p>
 {% endif %}
 {% endblock %}

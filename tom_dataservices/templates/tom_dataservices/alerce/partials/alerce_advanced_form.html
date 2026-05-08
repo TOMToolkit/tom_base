@@ -1,0 +1,35 @@
+{% load bootstrap4 dataservices_extras %}
+<h2>Classification Filters</h2>
+For more information see the <a href="https://alerce.readthedocs.io/en/stable/">ALeRCE Client Docs</a>
+and the <a href="https://arxiv.org/abs/2008.03311">Light Curve Classifier Description</a>.
+<hr>
+<div class="row">
+{% for field in form %}
+  {% if field|is_cfield %}
+    <div class="col-md-6">{% bootstrap_field field %}</div>
+  {% endif %}
+{% endfor %}
+</div>
+<h2>Location Filters</h2>
+<hr>
+<div class="row">
+  <div class="col-md-4">{% bootstrap_field form.ra %}</div>
+  <div class="col-md-4">{% bootstrap_field form.dec %}</div>
+  <div class="col-md-4">{% bootstrap_field form.radius %}</div>
+</div>
+<h2>Time Filters</h2>
+<hr>
+<div class="row">
+  <div class="col-md-6">{% bootstrap_field form.firstmjd_gt %}</div>
+  <div class="col-md-6">{% bootstrap_field form.firstmjd_lt %}</div>
+</div>
+<div class="row">
+  <div class="col-md-6">{% bootstrap_field form.lastmjd_gt %}</div>
+  <div class="col-md-6">{% bootstrap_field form.lastmjd_lt %}</div>
+</div>
+<h2>Other Filters</h2>
+<hr>
+<div class="row">
+  <div class="col-md-6">{% bootstrap_field form.ndet_min %}</div>
+  <div class="col-md-6">{% bootstrap_field form.ndet_max %}</div>
+</div>

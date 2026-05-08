@@ -48,7 +48,7 @@ dependencies = [
     "astropy >=5.3.3,<8 ; python_version >= '3.10'",
     "astropy >=5.3.3,<6 ; python_version < '3.10'",
     "cryptography <=47",
-    "django <6",
+    "django >=5,<6",
     "djangorestframework >=3.15,<4",
     "django-bootstrap4 >3,<25",
     "beautifulsoup4 <5",
@@ -70,6 +70,7 @@ dependencies = [
     "specutils >=1.20.0,<3",
     "importlib-resources >=6.4.5,<6.5.0",
     "django-tasks (>=0.6.1,<0.7.0)",
+    "alerce >=2.0,<3.0",
 ]
 
 # Optional dependency groups, in the standard PEP 621 location so tooling
@@ -85,7 +86,7 @@ test = [
 packages = [ # tell poetry build that the repo is named tom_base (which != name, above)
     { include="tom_alerts"},
     { include="tom_base"},
-    { include="tom_catalogs"},
+    { include="tom_calendar"},
     { include="tom_common"},
     { include="tom_dataproducts"},
     { include="tom_dataservices"},
@@ -97,7 +98,7 @@ packages = [ # tell poetry build that the repo is named tom_base (which != name,
 version = "0.0.0" # version supplied by poetry-dynamic-versioning
 
 [tool.poetry.group.test.dependencies]
-responses = ">=0.23,<0.26"
+responses = ">=0.26.0,<0.27"
 factory_boy = ">3.2.1,<3.4"
 psycopg2-binary = "*" # for testing postgres
 
@@ -106,7 +107,7 @@ docutils = "!=0.21.post1"
 recommonmark = "~0.7"
 sphinx = ">=5,<8"
 sphinx-design = ">=0.6,<0.7"
-sphinx-rtd-theme = ">=1.0,<3.1"
+sphinx-rtd-theme = ">=3.1.0,<3.2"
 sphinx-copybutton = "~0.5"
 
 [tool.poetry.group.coverage.dependencies]
@@ -114,7 +115,7 @@ coverage = ">=6,<8" # coveralls needs ~6 even though 7.3.2 is latest
 coveralls = ">=3,<5"
 
 [tool.poetry.group.lint.dependencies]
-flake8 = ">=6.0,<7.2"
+flake8 = ">=7.3.0,<7.4"
 
 
 [tool.poetry.requires-plugins]

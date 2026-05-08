@@ -1,17 +1,17 @@
 import logging
 from requests import HTTPError
+from requests.exceptions import ReadTimeout
 
 from django_filters.views import FilterView
 from django_filters import FilterSet, ChoiceFilter, CharFilter
 from django.views.generic.edit import DeleteView, FormView
 from django.views.generic.base import TemplateView, View
-from django.db import IntegrityError
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
-from guardian.shortcuts import assign_perm
+
 from django.utils import timezone
-from django.utils.safestring import mark_safe
+
 from django.core.cache import cache
 from django.contrib import messages
 from urllib.parse import urlencode
@@ -19,6 +19,7 @@ from urllib.parse import urlencode
 from tom_dataservices.models import DataServiceQuery
 from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class, NotConfiguredError
 from tom_dataservices.dataservices import MissingDataException, QueryServiceError
+from tom_dataservices.forms import UpdateDataFromDataServiceForm
 
 
 logger = logging.getLogger(__name__)
@@ -128,6 +129,8 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         if form.cleaned_data['query_save']:
             form.save()
 
+        # Store final form data in the session so it can be retrieved in the run_query view.
+        # This is how we pass the form data for unsaved queries without passing the entire form data as kwargs
         self.request.session['query_parameters'] = form.cleaned_data
 
         return redirect(self.success_url)
@@ -141,13 +144,22 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         """
         context = super().get_context_data()
 
+        form = context['form']
         data_service_name = self.get_data_service_name()
-        simple_form = get_data_service_class(data_service_name).get_simple_form_partial(self)
-        advanced_form = get_data_service_class(data_service_name).get_advanced_form_partial(self)
+        simple_form = form.get_simple_form_partial()
+        advanced_form = form.get_advanced_form_partial()
+
+        context['simple_fields'] = []
+        if not simple_form and form.simple_fields():
+            for field in form.simple_fields():
+                context['simple_fields'].append(form[field])
+            simple_form = 'tom_dataservices/partials/basic_simple_form.html'
         context['simple_form'] = simple_form
         context['advanced_form'] = advanced_form
         context['app_link'] = get_data_service_class(data_service_name).app_link
         context['app_version'] = get_data_service_class(data_service_name).app_version
+        context['verbose_name'] = get_data_service_class(data_service_name).verbose_name
+        context['info_url'] = get_data_service_class(data_service_name).info_url
 
         return context
 
@@ -171,6 +183,7 @@ class RunQueryView(TemplateView):
         query_feedback = ""
         data_service_class = None
         cached_results = {}
+        query_parameters = {}
 
         # Do query and get query results
         try:
@@ -213,6 +226,9 @@ class RunQueryView(TemplateView):
         except QueryServiceError as e:
             results = iter(())
             query_feedback += f"There was an error with the underlying query service: </br>{e}</br>"
+        except ReadTimeout as e:
+            results = iter(())
+            query_feedback += f"The query service connection timed out: </br>{e}</br>"
 
         # create context for template
         context['query'] = query
@@ -321,6 +337,7 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         """
         if form.cleaned_data['query_save']:
             form.save(query_id=self.object.id)
+        # Update session with form data so that we can run unsaved queries.
         self.request.session['query_parameters'] = form.cleaned_data
         return redirect(self.success_url)
 
@@ -333,9 +350,8 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         """
         context = super().get_context_data()
 
-        data_service_name = self.object.data_service
-        simple_form = get_data_service_class(data_service_name).get_simple_form_partial(self)
-        advanced_form = get_data_service_class(data_service_name).get_advanced_form_partial(self)
+        simple_form = context['form'].get_simple_form_partial()
+        advanced_form = context['form'].get_advanced_form_partial()
         context['simple_form'] = simple_form
         context['advanced_form'] = advanced_form
         context['object'] = self.object
@@ -374,44 +390,23 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                         return redirect(reverse('dataservices:run_saved', kwargs={'pk': query_id}))
                     else:
                         return redirect(reverse('dataservices:run'))
-                target, extras, aliases = data_service_class.to_target(cached_result)
-                # ``to_target`` may legitimately return ``(None, {}, [])`` when
-                # the selected row cannot be materialized into a Target — for
-                # instance when a DataService has to follow up with a
-                # second-stage fetch (HermesDataService does this for the
-                # archive-query → full-message-body step) and that fetch fails.
-                # Skip this row, record an error for the summary message
-                # below, and keep going so the other selected rows still
-                # get a chance to create.
+                target = data_service_class.to_target(cached_result, request=request)
                 if target is None:
                     errors.append(f'(result {result_id})')
                     continue
-                try:
-                    target.save(extras=extras, names=aliases)
-                    # Give the user access to the target they created
-                    target.give_user_access(self.request.user)
-                    for group in request.user.groups.all():
-                        assign_perm('tom_targets.view_target', group, target)
-                        assign_perm('tom_targets.change_target', group, target)
-                        assign_perm('tom_targets.delete_target', group, target)
-                except IntegrityError:
-                    messages.warning(request,
-                                     mark_safe(
-                                         f"""Unable to save {target.name}, target with that name already exists.
-                                         You can <a href="{reverse('targets:create') + '?' +
-                                                           urlencode(target.as_dict())}">create</a> a new target anyway.
-                                         """)
-                                     )
-                    errors.append(target.name)
-                    target = None
-                # Do not attempt to store Reduced Datums if no Target Created.
+
+                # Do not attempt to store Reduced Datums if no Target.
                 if target:
                     try:
                         data_service_class.to_reduced_datums(target, cached_result.get('reduced_datums'))
                     except MissingDataException:
-                        pass
+                        try:
+                            data = data_service_class.query_reduced_data(target)
+                            data_service_class.to_reduced_datums(target, data)
+                        except QueryServiceError as e:
+                            messages.error(request, f'Error retrieving data from Data Service: {e}')
         except NotImplementedError as e:
-            messages.error(request, e)
+            messages.error(request, str(e))
         if len(results) == len(errors):
             if query_id:
                 return redirect(reverse('dataservices:run_saved', kwargs={'pk': query_id}))
@@ -420,3 +415,31 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
         if len(results) == 1 and target:
             return redirect(reverse('tom_targets:detail', kwargs={'pk': target.id}))
         return redirect(reverse('tom_targets:list'))
+
+
+def update_data_from_query(request):
+
+    if request.method == "POST":
+        form = UpdateDataFromDataServiceForm(request.POST)
+        data = {}
+        if form.is_valid():
+            target = form.cleaned_data['target']
+            try:
+                data_service_class = get_data_service_class(form.cleaned_data['data_service'])()
+                data = data_service_class.query_reduced_data(target)
+                data_service_class.to_reduced_datums(target, data)
+                alias_data = data_service_class.query_aliases(target=target)
+                data_service_class.to_aliases(target, alias_data)
+            except QueryServiceError as e:
+                messages.error(request, f'Error retrieving data from Data Service: {e}')
+
+            # redirect to data page
+            base_url = reverse('tom_targets:detail', kwargs={'pk': target.id})
+            if 'photometry' in data.keys():
+                page_filters = urlencode({'tab': 'photometry'})
+            elif 'spectroscopy' in data.keys():
+                page_filters = urlencode({'tab': 'spectroscopy'})
+            else:
+                page_filters = urlencode({'tab': 'manage-data'})
+            return redirect(f'{base_url}?{page_filters}')
+    return redirect('/')
