@@ -48,8 +48,6 @@ from django.contrib.auth.models import User
 from django.db.models import QuerySet
 from django.utils.module_loading import import_string
 
-# Local (non-TOM) imports above; TOM Toolkit imports below follow the project
-# convention of grouping stdlib / third-party / Django / TOM Toolkit.
 from tom_dataproducts.models import ReducedDatum
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
 from tom_targets.models import Target
@@ -66,8 +64,8 @@ class SharingBackend(ABC):
     """
 
     # ``name`` is:
-    #   - the lookup key in the dict returned by ``get_sharing_backends()``;
-    #   - the prefix of the form's ``share_destination`` value, which is
+    #   - the key in the dict returned by ``get_sharing_backends()``;
+    #   - used as the prefix of the form's ``share_destination`` value, which is
     #     formatted as the string ``'<name>:<sub-destination>'``
     #     (e.g. ``'hermes:gw.lvk.public'``, or ``'tom:tom_b'``);
     #   - the value that ``DataShareView.post()`` parses out of
@@ -77,9 +75,7 @@ class SharingBackend(ABC):
     name: str = ''
 
     # ``verbose_name`` is the human-readable label shown as the heading above
-    # this backend's destinations in the share-destination dropdown. For a
-    # backend with multiple sub-destinations (e.g., several HERMES topics),
-    # the dropdown groups them under this heading.
+    # this backend's destinations in the share-destination dropdown.
     # Required: set in every subclass.
     verbose_name: str = ''
 
@@ -110,6 +106,7 @@ class SharingBackend(ABC):
 
         Called by ``DataShareView.post()`` (and by the shims in
         ``tom_dataproducts.sharing``) after a successful form submission.
+
         Returns a feedback dict with at least
         ``{'status': 'success'|'error', 'message': str}`` (older code
         returns just ``{'message': str}``; both are tolerated by the
@@ -177,8 +174,10 @@ def get_sharing_backend(name: str) -> type:
     ``tom_dataservices.dataservices.get_data_service_class`` so the
     behavior is consistent across integration points.
     """
+    # build the registry
     registry = get_sharing_backends()
     try:
+        # look up the given SharingBackend by name
         return registry[name]
     except KeyError:
         raise ImportError(
@@ -242,7 +241,8 @@ class TomToolkitSharingBackend(SharingBackend):
 
     @classmethod
     def get_destination_choices(cls, user: User | None = None) -> list:
-        """Enumerate ``settings.DATA_SHARING`` entries that look like TOM destinations.
+        """Enumerate ``settings.DATA_SHARING`` entries that look like TOM destinations and
+        return list of tuples to populate ChoiceField choices.
 
         A "TOM destination" entry is one whose value dict has a
         ``BASE_URL`` and does NOT have a ``HERMES_API_KEY``. Each such
@@ -258,21 +258,18 @@ class TomToolkitSharingBackend(SharingBackend):
             # Skip HERMES entries; they belong to HermesSharingBackend.
             if not isinstance(cfg, dict) or cfg.get('HERMES_API_KEY'):
                 continue
+            display_name = cfg.get('DISPLAY_NAME', key)
             if not cfg.get('BASE_URL'):
                 # Not enough info to publish — skip quietly rather than erroring
                 # at form-render time.
+                logger.warning(f'No BASE_URL found in DATA_SHARING config for {display_name}')
                 continue
-            display = cfg.get('DISPLAY_NAME', key)
-            choices.append((f'{cls.name}:{key}', display))
+            choices.append((f'{cls.name}:{key}', display_name))
         return choices
 
     @staticmethod
     def _split_destination(share_destination: str) -> str:
         """Return the ``<sub-destination>`` half of a ``'tom:<sub>'`` share-destination string.
-
-        Tolerant of the legacy format where the form field carries just the
-        bare settings-key (e.g. ``'tom_b'`` with no ``'tom:'`` prefix) so
-        that older callers still work during the deprecation window.
         """
         prefix, sep, sub = share_destination.partition(':')
         if sep:
@@ -308,14 +305,13 @@ class TomToolkitSharingBackend(SharingBackend):
               **kwargs) -> dict:
         """POST the share payload to the destination TOM's HTTP API.
 
-        Behavior preserved from ``tom_dataproducts.sharing.share_data_with_tom``
-        with one addition: authentication now prefers a DRF API token if
+        Authentication now prefers a DRF API token if
         ``settings.DATA_SHARING[<dest>]['API_KEY']`` is set, falling back to
         HTTP Basic if only ``USERNAME`` / ``PASSWORD`` are configured.
 
         The caller passes whichever of ``reduced_datums`` / ``targets`` /
         ``data_products`` is relevant to the share action; the three are
-        mutually-exclusive in practice (matches the existing behavior).
+        mutually-exclusive in practice.
         """
         # Parse the destination sub-key out of the form value (e.g. 'tom:tom_b' -> 'tom_b').
         share_destination = form_data.get('share_destination', '') if form_data else ''
@@ -336,7 +332,7 @@ class TomToolkitSharingBackend(SharingBackend):
             )}
 
         # Build the base headers and the appropriate auth. Auth is chosen
-        # per-destination: API_KEY wins; otherwise USERNAME/PASSWORD.
+        # per-destination: API_KEY take precedence over USERNAME/PASSWORD.
         base_headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
         auth_headers, auth = self._build_auth(cfg)
         headers = {**base_headers, **auth_headers}
@@ -346,10 +342,8 @@ class TomToolkitSharingBackend(SharingBackend):
         targets_url = destination_tom_base_url + 'api/targets/'
         reduced_datums_url = destination_tom_base_url + 'api/reduceddatums/'
 
-        # Dispatch on which of the three querysets was supplied. Mirrors the
-        # original ``share_data_with_tom`` shape; one and only one of
-        # ``data_products`` / ``reduced_datums`` / ``targets`` is typically
-        # populated per call.
+        # Dispatch on which of the three querysets was supplied:
+        # ``data_products`` / ``reduced_datums`` / ``targets``
         if data_products is not None and data_products.exists():
             return self._share_data_products(
                 data_products, targets_url, dataproducts_url, headers, auth,
@@ -361,8 +355,7 @@ class TomToolkitSharingBackend(SharingBackend):
         if targets is not None and targets.exists():
             # A Target-only share: push every ReducedDatum that belongs to
             # the target. We do NOT create the Target on the destination
-            # TOM — that target must already exist there. This mirrors the
-            # original behavior.
+            # TOM — that target must already exist there.
             target = targets.first()
             owned_datums = ReducedDatum.objects.filter(target=target)
             return self._share_reduced_datums(
@@ -379,9 +372,8 @@ class TomToolkitSharingBackend(SharingBackend):
         target names and aliases (``get_destination_target``), then POSTs
         the serialized DataProduct plus its file to ``api/dataproducts/``.
         """
-        # We currently support one DataProduct per call (matches the
-        # existing view contract). If there are multiple, only the first
-        # is processed; others are ignored. That is the existing behavior.
+        # We currently support one DataProduct per call.
+        # If there are multiple, only the first is processed; others are ignored.
         product = data_products.first()
         target = product.target
         serialized_data = DataProductSerializer(product).data
@@ -394,7 +386,7 @@ class TomToolkitSharingBackend(SharingBackend):
         serialized_data['target'] = destination_target_id
 
         # TODO: this path join should be replaced once tom_dataproducts uses
-        # django.core.files.storage (pre-existing TODO from the original code).
+        # django.core.files.storage
         dataproduct_filename = os.path.join(settings.MEDIA_ROOT, product.data.name)
         with open(dataproduct_filename, 'rb') as dataproduct_filep:
             files = {'file': (product.data.name, dataproduct_filep, 'text/csv')}
@@ -430,9 +422,6 @@ class TomToolkitSharingBackend(SharingBackend):
 
         # Run datums through the existing sharing-protocol filter so a
         # datum already published to this destination is not re-sent.
-        # ``check_for_share_safe_datums`` lives in tom_dataproducts.sharing
-        # for now; we import lazily to avoid a circular import at module load
-        # (tom_dataproducts.sharing depends on tom_common at other points).
         from tom_dataproducts.sharing import check_for_share_safe_datums
         reduced_datums = check_for_share_safe_datums(destination_key, reduced_datums)
         if not reduced_datums:

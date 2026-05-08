@@ -106,10 +106,9 @@ class DataService(ABC):
         self.query_results = {}
         # Instance variable that can store query parameters if necessary
         self.query_parameters = query_parameters or {}
-        # The logged-in User who triggered the query, or None for background /
-        # anonymous callers. Subclasses that authenticate to a per-user external
-        # service (e.g. HermesDataService) use this to resolve credentials.
-        # RunQueryView / CreateTargetFromQueryView pass request.user here.
+
+        # self.user is the logged-in User who triggered the query, or None for
+        # background / anonymous callers. Used this to resolve credentials.
         self.user = user
 
     @abstractmethod

@@ -13,10 +13,9 @@ from tom_observations.tests.factories import ObservingRecordFactory
 from tom_targets.tests.factories import SiderealTargetFactory
 
 
-# Directory holding fixture CSVs / FITS files for these tests. Anchored on
-# ``__file__`` so the tests work regardless of CWD — running them from the
-# tom_base repo root, from a parent directory, or from an integration TOM
-# all resolve the test_data path correctly.
+# TEST_DATA_DIR is the directory holding fixture CSVs/FITS files for these tests.
+# It is derieved from ``__file__`` so the tests work regardless of CWD and resolve
+# the test_data path correctly.
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 
 

@@ -14,10 +14,6 @@ from tom_observations.tests.factories import SiderealTargetFactory
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-# Directory holding fixture CSVs for these tests. Anchored on ``__file__``
-# so the tests work regardless of CWD — running them from the tom_base
-# repo root, from a parent directory, or from an integration TOM all
-# resolve the test_data path correctly.
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 
 

@@ -82,13 +82,13 @@ def check_for_share_safe_datums(destination, reduced_datums, **kwargs):
     Earlier versions of this filter joined on ``ReducedDatum.message``
     (a M2M to ``AlertStreamMessage``) keyed by
     ``(exchange_status='published', topic=...)``; that model and field
-    have been removed in the larger refactor. The new rule reads
+    have been removed. The new rule reads
     ``source_name`` directly: ingestion in
     ``tom_hermes.alertstreams.ingester.ingest_hermes_alert`` writes
     ``source_name = f'Hermes:{topic}'`` on every ReducedDatum it
     creates, so a round-trip is detectable from that field alone.
 
-    **Semantic narrowing.** The previous implementation also caught the
+    The previous implementation also caught the
     "this datum was previously published to this topic" case, even if
     the datum hadn't originated there. That tracking ability is gone
     along with the AlertStreamMessage model — TOMs that need it should
@@ -96,9 +96,11 @@ def check_for_share_safe_datums(destination, reduced_datums, **kwargs):
 
     Called by ``HermesSharingBackend.share`` (lazy import).
     """
+    # first filtering rule:
     if 'hermes' in destination:
         message_topic = kwargs.get('topic', None)
         filtered_datums = reduced_datums.exclude(source_name=f'Hermes:{message_topic}')
+    # add additional filtering rules as needed here:
     else:
         filtered_datums = reduced_datums
     return filtered_datums
