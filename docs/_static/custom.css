@@ -1,7 +1,26 @@
+/* TOM Toolkit Branding Colors */
+/* --primary: #017792;       /* TOM Toolkit logo colors */
+/* --color-primary: #017792; */
+/* --primary-light: #00a3c8; */
+
+[data-theme="light"] {
+    --color-primary: #017792;
+    --color-header-background: #00a3c8;
+}
+[data-theme="dark"] {
+    --color-primary: #017792;
+    --color-background: #00a3c8;
+}
+
 div.partners {
   text-align: center;
 }
 
 a.hs {
   padding-right: 10%;
+}
+
+.toctree-l1 > a[href*="getting_started"] {
+    color: #017792 !important;
+    font-weight: bold;
 }

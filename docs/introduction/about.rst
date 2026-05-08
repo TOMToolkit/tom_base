@@ -1,10 +1,10 @@
-About the TOM Toolkit
----------------------
+TOM systems and the TOM Toolkit Project
+=======================================
 
 What’s a TOM?
-~~~~~~~~~~~~~
+-------------
 
-It stands for Target and Observation Manager, and its a software package
+It stands for Target and Observation Manager (aka marshal), and its a software package
 designed to facilitate astronomical observing projects and
 collaborations.
 
@@ -31,7 +31,7 @@ TOM systems perform some or all of these functions:
 -  Facilitate the sharing of information and data.
 
 Motivation for a TOM Toolkit
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 
 Many projects, from several branches of astronomy, have found it
 necessary to develop TOM systems. Current examples include the PTF
@@ -60,8 +60,18 @@ What’s needed is a software package that lets astronomers easily build a
 TOM, customized to suit the needs of their project, without becoming an
 IT expert or software engineer.
 
+TOM Architecture and Workflow
+-----------------------------
+
+For a high-level overview of the architecture of the TOM Toolkit, see :doc:`Architecture <tomarchitecture>.
+
+The architecture was designed around a general workflow common to many different areas of astronomy,
+particularly time domain and multi-messenger astrophysics.  An overview of the workflow is described
+:doc:`here <workflow>`.
+
+
 Financial Support
-~~~~~~~~~~~~~~~~~
+-----------------
 
 The TOM Toolkit is managed by Las Cumbres Observatory, with generous
 financial support from the `National Science Foundation <https://www.nsf.gov/>`_ grant 2209852.

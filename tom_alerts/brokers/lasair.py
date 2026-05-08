@@ -87,7 +87,7 @@ class LasairBroker(GenericBroker):
     .. code-block:: python
 
         TOM_ALERT_CLASSES = [
-            'tom_alerts.brokers.lasair.LasairBroker',
+            'tom_alerts.dataservices.lasair.LasairBroker',
             ...
         ]
 

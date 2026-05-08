@@ -1,8 +1,8 @@
 TOM Workflow
-------------
+============
 
 Targets 
-~~~~~~~
+-------
 
 Targets are the central entity of the TOM Toolkit. Most functionality in
 the toolkit requires a target as they are the object of study. A target
@@ -11,7 +11,7 @@ usually represented using coordinates on the sky along with other meta
 data.
 
 Creating Targets 
-^^^^^^^^^^^^^^^^
+----------------
 
 The TOM Toolkit provides a variety of methods for importing astronomical
 targets into the TOM:
@@ -36,14 +36,14 @@ targets into the TOM:
    information that they know of.
 
 Observations 
-~~~~~~~~~~~~
+------------
 
 After creating targets, the scientist needs to collect data on these
 targets. The TOM Observing module provides an interface to several
 observatories for which observations can be requested.
 
 Requesting Observations 
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 Using the TOM Observation module, scientists can request observations of
 their targets to one or many different observatories. Since the
@@ -61,7 +61,7 @@ programs.
 .. image:: /_static/common_interface.png
 
 Observation Status 
-^^^^^^^^^^^^^^^^^^
+------------------
 
 Once an observation for a target is created it’s status is kept up to
 date within the TOM. When the status of an observation request at an
@@ -69,7 +69,7 @@ observatory changes (failed, completed, postponed, etc) the scientist
 may be notified by the TOM.
 
 Data 
-~~~~
+----
 
 The ultimate goal of the TOM toolkit is to collect and organize data.
 The TOM data module provides several methods for obtaining data, the
@@ -77,7 +77,7 @@ most obvious being from completed observations. Scientists can also
 upload any data they’d like to associate with their targets as well.
 
 Data Processing 
-^^^^^^^^^^^^^^^
+---------------
 
 The TOM toolkit provides a framework to write custom code to interact
 with the data the TOM obtains (among other things). These are called
@@ -88,7 +88,7 @@ images of microlensed stars for exoplanets, they may hook the code into
 the TOM toolkit directly to run whenever new data is acquired.
 
 Downloading Data 
-^^^^^^^^^^^^^^^^
+----------------
 
 Data is stored in the TOM toolkit by default, but many scientists may
 want to download the data somewhere else to do offline processing.

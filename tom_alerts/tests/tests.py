@@ -24,7 +24,7 @@ test_alerts = [
 
 
 class TestBrokerForm(GenericQueryForm):
-    """ All brokers must have a form which will be used to construct and save queries
+    """ All dataservices must have a form which will be used to construct and save queries
     to the broker. They should subclass `GenericQueryForm` which includes some required
     fields and contains logic for serializing and persisting the query parameters to the
     database. This test form will only have one field.
@@ -42,7 +42,7 @@ class TestUpstreamSubmissionForm(GenericUpstreamSubmissionForm):
 
 
 class TestBroker(GenericBroker):
-    """ The broker class encapsulates the logic for querying remote brokers and transforming
+    """ The broker class encapsulates the logic for querying remote dataservices and transforming
     the returned data into TOM Toolkit Targets so they can be used elsewhere in the system. The
     following methods and attributes are all required, but a broker can be as complex as needed.
     """
@@ -51,13 +51,13 @@ class TestBroker(GenericBroker):
     alert_submission_form = TestUpstreamSubmissionForm
 
     def fetch_alerts(self, parameters):
-        """ All brokers must implement this method. It must return a list of alerts and may include broker feedback.
+        """ All dataservices must implement this method. It must return a list of alerts and may include broker feedback.
         """
         # Here we simply return a list of `GenericAlert`s that match the name passed in via `parameters`.
         return iter([alert for alert in test_alerts if alert['name'] == parameters['name']]), "test message"
 
     def no_message_fetch_alerts(self, parameters):
-        """ Older brokers might implement this version of the fetch_alerts method. It returns a list of alerts.
+        """ Older dataservices might implement this version of the fetch_alerts method. It returns a list of alerts.
         """
         # Here we simply return a list of `GenericAlert`s that match the name passed in via `parameters`.
         return iter([alert for alert in test_alerts if alert['name'] == parameters['name']])

@@ -4,116 +4,47 @@
 # list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
 
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
 import os
 import sys
 import django
-import sphinx_rtd_theme
 
-from recommonmark.parser import CommonMarkParser
-
-from tom_base import __version__
-
-sys.path.insert(0, os.path.abspath('..'))
-
-
-# -- Project information -----------------------------------------------------
-
-project = 'TOM Toolkit'
-copyright = '2021-6, Las Cumbres Observatory'
-author = 'Joey Chatelain, David Collom, Lindy Lindstrom, Austin Riba'
-
-# The full version, including alpha/beta/rc tags
-# This has to mirror the setup.py version for PDF generation
-release = __version__
-
-# -- Django Configuration -------------------------------------------------
-
-# import os
-# import sys
-# import django
-# sys.path.insert(0, os.path.abspath('..'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'tom_base.settings'
 django.setup()
 
+sys.path.insert(0, os.path.abspath(".."))
 
-# -- General configuration ---------------------------------------------------
-
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosectionlabel',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx',
-    'sphinx_design',
-    'sphinx_copybutton',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.viewcode",
+    "sphinx_breeze_theme",
+    "myst_parser",
+    "sphinx_design",
 ]
-
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
-
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
-# source_parsers = {
-#     '.md': 'recommonmark.parser.CommonMarkParser',
-# }
-
-# source_suffix = ['.rst', '.md']
-
-# autodoc_mock_imports = ['rise-set']
-autodoc_inherit_docstrings = False
-autodoc_default_options = {
-    # 'members':         True,
-    'member-order':    'bysource',
-    # 'special-members': '__init__',
+templates_path = ["_templates"]
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".txt": "markdown",
+    ".md": "markdown",
 }
-autoclass_content = 'both'
+master_doc = "index"
+project = "TOM Toolkit"
+copyright = "2026, Las Cumbres Observatory"
+author = "Joey Chatelain, David Collom, Lindy Lindstrom, Austin Riba, Rachel Street"
 
-# -- Options for HTML output -------------------------------------------------
+language = "en"
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "requirements.txt"]
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = False
+today_fmt = "%Y-%m-%d %H:%M"
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-
-html_sidebars = {
-    '**': [
-        'about.html',
-        'navigation.html',
-        'relations.html',
-        'searchbox.html',
-        'donate.html',
-    ]
-}
-
+# -- Options for HTML output -------------------------------------------
+html_theme = "breeze"
+html_show_sphinx = True
 html_static_path = ['_static']
-html_theme = 'alabaster'
-# html_theme = 'sphinx_rtd_theme'
+html_css_files = ["custom.css"]
+html_favicon = "_static/logo-color.png"
 
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-html_theme_options = {
-    'logo': 'logo-color.png',
-    'logo_name': 'false',
-    'github_repo': 'tom_base',
-    'github_button': 'false',
-}
-
-pygments_style = 'sphinx'
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ['_static']
-
+github_doc_root = "https://github.com/TOMToolkit/tom_base/tree/dev/docs"
 
 def setup(app):
-    app.add_source_suffix('.md', 'markdown')
-    app.add_source_parser(CommonMarkParser)
+    pass

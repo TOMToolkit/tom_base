@@ -90,7 +90,7 @@ class TNSBroker(GenericBroker):
     .. code-block:: python
 
         TOM_ALERT_CLASSES = [
-            'tom_alerts.brokers.tns.TNSBroker',
+            'tom_alerts.dataservices.tns.TNSBroker',
             ...
         ]
 
