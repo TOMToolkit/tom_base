@@ -15,6 +15,7 @@ TOM Toolkit
   APIs <code/index>
   Deploy <deployment/index>
   Plugins <code/plugins>
+  Support <introduction/support>
 
 Introduction
 ------------

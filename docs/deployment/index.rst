@@ -10,6 +10,14 @@ deploying it to a Cloud-based service.
 Whichever option you choose, there are some essential decisions to make, including some security settings that it's
 important to get right.  :doc:`General Deployment Tips </deployment/deployment_tips>` covers these fundamentals.
 
+Dockerizing your TOM
+--------------------
+
+Docker is a software packaging system which creates a container that ensures the software has a well-defined
+environment in which to run -- including all necessary dependencies.  This has become widely used and is often
+a necessary first step to deploying your TOM.  An example repository of a dockerized TOM system can be found
+`here <https://github.com/TOMToolkit/dockertom>`_ for reference.
+
 Local Server
 ------------
 
