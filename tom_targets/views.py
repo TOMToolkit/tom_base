@@ -16,7 +16,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django_filters.views import FilterView
 from django.http import HttpResponse
-from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, QueryDict, StreamingHttpResponse
 from django.forms import HiddenInput
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
@@ -24,7 +24,7 @@ from django.urls import reverse_lazy, reverse
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
-from django.views.generic.detail import DetailView, SingleObjectMixin
+from django.views.generic.detail import DetailView
 from django.views.generic import RedirectView, TemplateView, View
 
 from rest_framework.views import APIView
@@ -47,7 +47,6 @@ from tom_targets.forms import TargetNamesFormset, TargetShareForm, TargetListSha
 from tom_targets.sharing import share_target_with_tom
 from tom_targets.merge import target_merge
 from tom_dataproducts.sharing import (share_data_with_tom, sharing_feedback_handler)
-from tom_dataproducts.models import ReducedDatum
 from tom_targets.groups import (
     add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping,
     move_all_to_grouping, move_selected_to_grouping
@@ -428,7 +427,6 @@ class TargetShareView(FormView):
         """
         form_data = form.cleaned_data
         share_destination = form_data['share_destination']
-        target_id = self.kwargs.get('pk', None)
         selected_data = self.request.POST.getlist("share-box")
         # Share Target with Destination TOM
         response = share_target_with_tom(share_destination, form_data)
