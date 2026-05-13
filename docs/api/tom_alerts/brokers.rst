@@ -45,14 +45,6 @@ Lasair
 
 .. automodule:: tom_alerts.brokers.lasair
     :members:
-
-******
-Hermes
-******
-
-.. automodule:: tom_alerts.brokers.hermes
-    :members:
-
 ..
     *****
     Scout

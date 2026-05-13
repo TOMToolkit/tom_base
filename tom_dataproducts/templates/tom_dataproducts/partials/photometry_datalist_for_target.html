@@ -73,14 +73,6 @@
                         <div class="col-sm-2 offset-sm-1">
                             <input type="submit" class="btn btn-primary" id="submit_selected_phot" value="Submit" name="share_targetdata_form" style="position:absolute; bottom:1rem" disabled onclick="setTargetOnPhotometryForm('')">
                         </div>
-                        {% if hermes_sharing %}
-                        <div class="col-sm-1">
-                            <b style="position:absolute; bottom:1.2rem">or</b>
-                        </div>
-                        <div class="col-sm-4">
-                            <button class="btn btn-info" type="submit" formaction="{% url 'tom_targets:hermes-preload' pk=target.id %}" onclick="setTargetOnPhotometryForm('_blank')" style="position:absolute; bottom:1rem">Open in Hermes &#x1F5D7;</button>
-                        </div>
-                        {% endif %}
                     </div>
                 {% else %}
                     <em style="padding-inline:1rem">Not Configured. See
