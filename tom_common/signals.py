@@ -8,7 +8,6 @@ from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 
 from tom_common.models import Profile
-from tom_common import session_utils
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -20,32 +19,35 @@ logger.setLevel(logging.INFO)
 # while get_user_model() is valid after INSTALLED_APPS are loaded.
 
 
-# Signal: Create a Profile (with an encrypted DEK) for the User when the User instance is created
+# Signal: Ensure every User has a Profile.
 @receiver(post_save, sender=User)
 def save_profile_on_user_post_save(sender, instance, created, **kwargs) -> None:
-    """When a user is saved, ensure their Profile exists and has an encrypted DEK.
+    """Guarantee the saved User has an associated :class:`Profile`.
 
-    On first save (user creation), creates a new Profile and generates an
-    encrypted Data Encryption Key (DEK) for the user. The DEK is a random
-    Fernet key encrypted by the server-side master key — see
-    ``session_utils.create_encrypted_dek()`` for details.
+    On creation, ``CustomUserCreationForm``'s inline Profile formset may
+    have pre-attached a pk=None Profile to ``instance.profile`` carrying
+    form-supplied data like ``affiliation``; we honour that by saving it
+    via the descriptor. Otherwise we create a bare Profile from scratch.
 
-    On subsequent saves, just saves the existing Profile (e.g., to propagate
-    any changes from inline formsets).
+    On subsequent saves we do not write back ``instance.profile`` — the
+    cached value can be stale (e.g. ``update_last_login`` fires this
+    signal on every login). Concurrent out-of-band Profile updates would
+    be clobbered by an unconditional save. So on non-creation saves we
+    only ensure a Profile *exists* (legacy users from before the Profile
+    model existed); we never write to one that's already there.
     """
-    try:
-        profile = instance.profile
-        # If the Profile exists but has no DEK (e.g., it was created before
-        # the encryption system was added), generate one now.
-        if not profile.encrypted_dek:
-            profile.encrypted_dek = session_utils.create_encrypted_dek()
-        profile.save()
-    except User.profile.RelatedObjectDoesNotExist:  # type: ignore[attr-defined]
-        logger.info(f'No Profile found for {instance}. Creating Profile with encryption key.')
-        Profile.objects.create(
-            user=instance,
-            encrypted_dek=session_utils.create_encrypted_dek(),
-        )
+    if created:
+        try:
+            instance.profile.save()
+        except User.profile.RelatedObjectDoesNotExist:  # type: ignore[attr-defined]
+            logger.info(f'No Profile found for {instance}. Creating Profile.')
+            Profile.objects.create(user=instance)
+        return
+
+    # Non-creation save: just backfill a Profile if (somehow) missing.
+    if not Profile.objects.filter(user=instance).exists():
+        logger.info(f'No Profile found for {instance}. Creating Profile.')
+        Profile.objects.create(user=instance)
 
 
 # Signal: Create a DRF token for the User when the User instance is created

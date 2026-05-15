@@ -28,15 +28,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY', 'testkey')
 
+# Old SECRET_KEY values to keep accepting during a graceful rotation. See
+# docs/deployment/encryption.rst.
+SECRET_KEY_FALLBACKS = []
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-# Encryption key for protecting sensitive user data (API keys, credentials) at rest.
-# This is a Fernet key — a 44-character URL-safe base64 string encoding 32 random bytes.
-# Treat this like SECRET_KEY. See the TOM Toolkit encryption documentation.
-TOMTOOLKIT_DEK_ENCRYPTION_KEY = os.getenv(
-    'TOMTOOLKIT_DEK_ENCRYPTION_KEY',
-    'UlUYyKsGzQVwjpTbvhtgCihKaj07H1voc-V4pmb7NN4=')  # 44-char URL-safe base64 string
 
 ALLOWED_HOSTS = ['']
 

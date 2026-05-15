@@ -1,36 +1,20 @@
 """Models for TOM Toolkit's user profiles and encrypted field storage.
 
-Encryption Architecture
------------------------
-TOM Toolkit uses envelope encryption to protect sensitive user data (API keys,
-observatory credentials) at rest in the database. The scheme has two layers:
-
-1. A server-side **master key** (``TOMTOOLKIT_DEK_ENCRYPTION_KEY``) is stored in the
-   environment, never in the database. It is a Fernet key used to encrypt
-   per-user keys.
-
-2. Each user has a random **Data Encryption Key (DEK)** that encrypts their
-   actual data. The DEK is stored on the user's ``Profile`` as ``encrypted_dek``
-   — encrypted by the master key. To use it, we decrypt it with the master
-   key, create a Fernet cipher, and use that cipher to encrypt or decrypt
-   individual fields.
-
-This means database access alone cannot decrypt user data — an attacker also
-needs the master key from the server environment. See
-``docs/design/encryption_architecture_redesign.md`` for the full design.
-
-Plugin developers use ``EncryptedProperty`` descriptors and
-``EncryptableModelMixin`` to add encrypted fields to their models, and the
-helper functions in ``session_utils`` to read/write those fields. The
-encryption plumbing is handled transparently.
+Encryption
+----------
+Plugin models that hold sensitive per-user data (API keys, observatory
+credentials) declare a ``BinaryField`` plus an :class:`EncryptedProperty`
+descriptor pointing at it. Reading the property decrypts; writing
+encrypts. The cipher is a single Fernet derived from
+``settings.SECRET_KEY`` in :mod:`tom_common.encryption`. See
+``docs/customization/encrypted_model_fields.rst`` for the plugin-developer
+walkthrough.
 """
 
 from __future__ import annotations
 
 import logging
 
-from cryptography.fernet import Fernet
-from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -44,37 +28,32 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     affiliation = models.CharField(max_length=100, null=True, blank=True)
 
-    # The user's Data Encryption Key (DEK), encrypted by the master key
-    # (TOMTOOLKIT_DEK_ENCRYPTION_KEY). Generated on first user save; null for
-    # users created before this feature who haven't logged in yet.
-    # BinaryField is excluded by model_to_dict(), so this intentionally does
-    # not appear on the user Profile card.
-    encrypted_dek = models.BinaryField(null=True, blank=True)
-
     def __str__(self) -> str:
         return f'{self.user.username} Profile'
 
 
 class EncryptedProperty:
-    """A Python descriptor that provides transparent encryption and decryption
-    for a model field.
+    """A Python descriptor providing transparent encrypt-on-write and
+    decrypt-on-read for a sibling :class:`BinaryField`.
 
-    This descriptor works with ``EncryptableModelMixin`` and the helper
-    functions in ``session_utils``. It expects a Fernet cipher to be
-    temporarily attached to the model instance as ``_cipher`` before the
-    property is read or written. The cipher is created from the user's
-    decrypted DEK by the helper functions and removed immediately after use.
+    Usage on a plugin model::
 
-    The ``_cipher`` attachment pattern exists because Python descriptors cannot
-    accept extra arguments — the cipher must be passed through the instance.
-    Direct access without a cipher raises ``AttributeError`` to prevent
-    accidental plaintext reads of encrypted data.
+        class MyModel(models.Model):
+            user = models.OneToOneField(settings.AUTH_USER_MODEL,
+                                        on_delete=models.CASCADE)
+            _api_key_encrypted = models.BinaryField(null=True, blank=True)
+            api_key = EncryptedProperty('_api_key_encrypted')
 
-    Usage::
+    Then ``instance.api_key`` and ``instance.api_key = '...'`` work the
+    way you'd expect; the underlying ``_api_key_encrypted`` BinaryField
+    holds the ciphertext bytes. By convention, the ciphertext field
+    starts with an underscore.
 
-        class MyModel(EncryptableModelMixin, models.Model):
-            _my_secret_encrypted = models.BinaryField(null=True)
-            my_secret = EncryptedProperty('_my_secret_encrypted')
+    The cipher comes from :func:`tom_common.encryption._get_cipher`
+    (imported lazily inside ``__get__``/``__set__`` to avoid a circular
+    import). Decryption transparently honours
+    ``settings.SECRET_KEY_FALLBACKS`` — see
+    :mod:`tom_common.encryption`.
     """
     def __init__(self, db_field_name: str):
         self.db_field_name = db_field_name
@@ -86,63 +65,21 @@ class EncryptedProperty:
     def __get__(self, instance: models.Model | None, owner: type) -> str | EncryptedProperty:
         if instance is None:
             return self
-
-        cipher = getattr(instance, '_cipher', None)
-        if not isinstance(cipher, Fernet):
-            raise AttributeError(
-                f"A Fernet cipher must be set on the '{owner.__name__}' instance "
-                f"as '_cipher' to access property '{self.property_name}'. "
-                f"Please use session_utils.get_encrypted_field() instead of direct access."
-            )
+        # Local import: tom_common.encryption is not safe to import at
+        # module load (the descriptor is referenced before encryption's
+        # settings access can succeed in some test paths).
+        from tom_common.encryption import decrypt
 
         encrypted_value = getattr(instance, self.db_field_name)
         if not encrypted_value:
             return ''
-
-        # Handle bytes (sqlite3) vs memoryview (postgresql).
-        # PostgreSQL/psycopg returns memoryview for BinaryFields;
-        # SQLite returns bytes. Fernet.decrypt() needs bytes.
-        if isinstance(encrypted_value, memoryview):
-            encrypted_value = encrypted_value.tobytes()
-
-        return cipher.decrypt(encrypted_value).decode()
+        return decrypt(encrypted_value)
 
     def __set__(self, instance: models.Model, value: str) -> None:
-        cipher = getattr(instance, '_cipher', None)
-        if not isinstance(cipher, Fernet):
-            raise AttributeError(
-                f"A Fernet cipher must be set on the '{instance.__class__.__name__}' instance "
-                f"as '_cipher' to set property '{self.property_name}'."
-            )
+        from tom_common.encryption import encrypt
 
         if not value:
             encrypted_value = None
         else:
-            encrypted_value = cipher.encrypt(str(value).encode())
-
+            encrypted_value = encrypt(str(value))
         setattr(instance, self.db_field_name, encrypted_value)
-
-
-class EncryptableModelMixin(models.Model):
-    """Base mixin for models that store encrypted data via ``EncryptedProperty``.
-
-    Plugin models that hold sensitive per-user data (API keys, observatory
-    credentials) should inherit from this mixin alongside ``models.Model``.
-    It provides a standardized ``user`` ForeignKey that ties the encrypted
-    data to its owner. The helper functions ``get_encrypted_field()`` and
-    ``set_encrypted_field()`` in ``session_utils`` use this user reference
-    to look up the user's DEK (via their ``Profile.encrypted_dek``) and
-    build the Fernet cipher needed by the ``EncryptedProperty`` descriptors.
-
-    Usage::
-
-        class MyAppModel(EncryptableModelMixin, models.Model):
-            _api_key_encrypted = models.BinaryField(null=True)
-            api_key = EncryptedProperty('_api_key_encrypted')
-
-    Subclasses should not redefine the ``user`` field.
-    """
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-
-    class Meta:
-        abstract = True
