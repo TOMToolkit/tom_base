@@ -1,3 +1,4 @@
+from tom_targets.base_models import get_target_model_app_label
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 
@@ -11,4 +12,5 @@ class TargetFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
         queryset = super().get_queryset()
         if not (request and queryset):
             return None
-        return get_objects_for_user(request.user, 'tom_targets.change_target')
+        target_app_label = get_target_model_app_label()
+        return get_objects_for_user(request.user, f'{target_app_label}.change_target')

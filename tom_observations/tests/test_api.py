@@ -1,3 +1,4 @@
+from tom_targets.base_models import get_target_model_app_label
 from copy import deepcopy
 from unittest.mock import patch
 
@@ -30,7 +31,8 @@ class TestObservationViewset(APITestCase):
         self.obsr2 = ObservingRecordFactory.create(target_id=self.st2.id)
         self.obsr3 = ObservingRecordFactory.create(target_id=self.st3.id)
 
-        assign_perm('tom_targets.view_target', self.user, self.st2)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.st2)
 
         self.client.force_login(self.user)
 

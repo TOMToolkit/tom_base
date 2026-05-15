@@ -1,3 +1,4 @@
+from tom_targets.base_models import get_target_model_app_label
 from copy import deepcopy
 import logging
 from requests import HTTPError
@@ -315,10 +316,11 @@ class CreateTargetFromAlertView(LoginRequiredMixin, View):
                 # and all associated data products
                 target.give_user_access(self.request.user)
                 broker_class().process_reduced_data(target, cached_alert)
+                target_app_label = get_target_model_app_label()
                 for group in request.user.groups.all():
-                    assign_perm('tom_targets.view_target', group, target)
-                    assign_perm('tom_targets.change_target', group, target)
-                    assign_perm('tom_targets.delete_target', group, target)
+                    assign_perm(f'{target_app_label}.view_target', group, target)
+                    assign_perm(f'{target_app_label}.change_target', group, target)
+                    assign_perm(f'{target_app_label}.delete_target', group, target)
                     assign_perm('tom_dataproducts.view_reduceddatum', group, target.reduceddatum_set.all())
                     assign_perm('tom_dataproducts.change_reduceddatum', group, target.reduceddatum_set.all())
                     assign_perm('tom_dataproducts.delete_reduceddatum', group, target.reduceddatum_set.all())
