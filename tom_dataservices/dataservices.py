@@ -360,15 +360,16 @@ class DataService(ABC):
                         assign_perm('tom_targets.delete_target', group, target)
             except IntegrityError:
                 target = Target.objects.get(name=target.name)
-                messages.warning(request,
-                                 mark_safe(
-                                    f"""The target,
-                                    <a href="{reverse('targets:detail', kwargs={'pk': target.id})}">
-                                    {target.name}</a> already exists, any new data has been ingested.
-                                    You can <a href="{reverse('targets:create') + '?' +
-                                                      urlencode(target.as_dict())}">create</a> a new target anyway.
-                                    """)
-                                 )
+                message = f"""The target,
+                                        <a href="{reverse('targets:detail', kwargs={'pk': target.id})}">
+                                        {target.name}</a> already exists, any new data has been ingested.
+                                        You can <a href="{reverse('targets:create') + '?' +
+                                                        urlencode(target.as_dict())}">create</a> a new target anyway.
+                                        """
+                if request:
+                    messages.warning(request, mark_safe(message))
+                else:
+                    logger.warning(f"The target, {target.name}, already exists. Any new data will be ingested.")
             # Save Aliases
             self.to_aliases(target, target_result.get('aliases', []))
             return target
