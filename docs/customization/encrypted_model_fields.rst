@@ -51,7 +51,9 @@ encryption on write and decryption on read.
 
 By convention, the ``BinaryField``'s name starts with an underscore —
 it is only referenced by the :class:`EncryptedProperty` descriptor; never
-read or write the ``BinaryField`` directly.
+read or write the ``BinaryField`` directly. When presenting an encrypted field
+to your users, you may wish to use ``tom_common``'s
+``revealable_password_input.html`` partial template.
 
 Reading and writing the field
 -----------------------------
