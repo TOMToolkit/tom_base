@@ -1,7 +1,11 @@
 {% extends 'tom_common/base.html' %}
-{% block title %}Query Result for {{ query }}{% endblock %}
+{% block title %}Query Result from {{ data_service }}{% endblock %}
 {% block content %}
-<h2>Query Result for {{ query }}</h2>
+<h2>Query Results from {{ data_service }}
+  {% if query %}
+    : {{ query }}
+  {% endif %}
+</h2>
 {% if too_many_results %}
   <div class="alert alert-danger" role="alert">
     Query returned too many results, only showing the first 100.
