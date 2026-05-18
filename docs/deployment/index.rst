@@ -19,4 +19,4 @@ accessible by you and your colleagues.
 
 :doc:`Using Amazon S3 to Store Data for a TOM <amazons3>` - Enable storing data on the cloud storage service Amazon S3 instead of your local disk.
 
-:doc:`Configuring the Master Encryption Key <encryption>` - How to set ``TOMTOOLKIT_DEK_ENCRYPTION_KEY`` across deploy environments and migrate off the public default.
+:doc:`Encryption and the SECRET_KEY <encryption>` - How Django's ``settings.SECRET_KEY`` relates to TOM Toolkit encryption.

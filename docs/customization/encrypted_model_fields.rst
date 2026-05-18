@@ -2,7 +2,8 @@ Encrypted Model Fields
 ======================
 
 If your ``custom_code`` or reusable app contains a model field storing
-user-specific sensitive data, you may want to encrypt that data at rest.
+user-specific sensitive data, TOM Toolkit provides a way to encrypt
+that data in in the database ("at rest").
 
 Examples of user-specific sensitive data include passwords or API keys
 for external services that your TOM uses on the user's behalf. TOM
@@ -16,18 +17,15 @@ How encryption works
 --------------------
 
 Encrypted fields are protected by a single Fernet cipher derived from
-``settings.SECRET_KEY`` using HKDF (RFC 5869) with a domain-separator
-label. There is no per-user key material and no additional environment
-variable to manage. For the operator-side concerns (rotating
+``settings.SECRET_KEY``. (For TOM administrator concerns (rotating
 ``SECRET_KEY`` without losing data, etc.) see
-:doc:`/deployment/encryption`.
+:doc:`/deployment/encryption`).
 
 .. note::
 
    Encryption protects data from passive database exposure. It does NOT
-   protect against a server administrator with access to ``SECRET_KEY``
-   — by design, since the same admin needs to be able to run the
-   ``rotate_encryption_key`` command. If you need user-level isolation
+   protect against a server administrator with access to the
+   ``settings.SECRET_KEY``. If you need user-level isolation
    from administrators, the toolkit's current scheme is not sufficient.
 
 Adding an encrypted field to a model
@@ -45,19 +43,21 @@ encryption on write and decryption on read.
 
 
     class MyAppProfile(models.Model):
-        user = models.OneToOneField(settings.AUTH_USER_MODEL,
-                                    on_delete=models.CASCADE)
+	# you probably have a user OneToOneField here
+
+	# this is the encryption part:
         _api_key_encrypted = models.BinaryField(null=True, blank=True)  # ciphertext (private)
         api_key = EncryptedProperty('_api_key_encrypted')               # descriptor (public)
 
 By convention, the ``BinaryField``'s name starts with an underscore —
-its only consumer is the :class:`EncryptedProperty` descriptor; plugin
-code should never read or write it directly.
+it is only referenced by the :class:`EncryptedProperty` descriptor; never
+read or write the ``BinaryField`` directly.
 
 Reading and writing the field
 -----------------------------
 
-Plain Python attribute access on the descriptor handles everything:
+Access the encrypted field just like a regular Python attribute.
+The ``EncryptedProperty`` descriptor handles everything:
 
 .. code-block:: python
 
@@ -67,23 +67,27 @@ Plain Python attribute access on the descriptor handles everything:
     # later, possibly in a different process / request:
     value = profile.api_key   # 'something-secret'
 
-On assignment, the descriptor calls
+    
+Some explanations
+-----------------
+
+That (above) is really all you need to know. However, here's what's
+going on "under the hood": On assignment, the descriptor calls
 :func:`tom_common.encryption.encrypt`, which builds a Fernet cipher
 from ``settings.SECRET_KEY`` and encrypts the value, then stores the
 ciphertext bytes in the underlying ``BinaryField``. On read, the
 descriptor calls :func:`tom_common.encryption.decrypt`, which
-transparently honours ``settings.SECRET_KEY_FALLBACKS`` (see
-:doc:`/deployment/encryption` for the rotation procedure).
+transparently honours ``settings.SECRET_KEY_FALLBACKS``. However,
+that's really just for admins to worry about (see
+:doc:`/deployment/encryption` for admin/deployment concerns).
 
 An empty string assignment clears the ciphertext (stores ``None`` in
 the ``BinaryField``). Reading an unset / empty field yields ``''``,
 not ``None`` — so consumers don't need to special-case the empty case.
 
-Some explanations
------------------
 
 :class:`EncryptedProperty` (`source <https://github.com/TOMToolkit/tom_base/blob/dev/tom_common/models.py>`__)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A *property descriptor* implementing the Python descriptor protocol
 (``__get__``, ``__set__``, ``__set_name__``). It handles the details of

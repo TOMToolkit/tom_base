@@ -1,18 +1,23 @@
-Encryption at Rest and the SECRET_KEY
+Encryption and the SECRET_KEY
 =====================================
 
-TOM Toolkit encrypts sensitive user data at rest (API keys, observatory
+This section is for TOM administrators and describes the relationship
+between the ``settings.SECRET_KEY`` and the way TOMToolkit encrypts
+sensitive user data. If you are a TOM developer looking for how to
+create an encrypted database field, your documentation is here:
+:doc:`/customization/encrypted_model_fields`
+
+------
+
+TOM Toolkit encrypts sensitive user data (API keys, observatory
 credentials, anything declared with :class:`EncryptedProperty`) using a
 single Fernet cipher derived from Django's ``settings.SECRET_KEY``.
-There is no additional environment variable to manage — your
-``SECRET_KEY`` is both your signing key (cookies, password-reset
-tokens, etc.) and the source of your encryption key.
-
-The derivation uses HKDF (RFC 5869) with a domain-separator label, so
-the encryption key is cryptographically independent of the way Django
-uses ``SECRET_KEY`` for HMAC signing. See
-:mod:`tom_common.encryption` for the implementation; for the plugin-
-developer-facing API see :doc:`/customization/encrypted_model_fields`.
+That means when an encrypted field is written to or read from the database,
+a cipher is created. The cipher can encrypt unencrypted plaintext (in) and decrypt
+encrypted ciphertext (out). Cipher creation requires an encryption key.
+TOMToolkit creates an encryption key that is based upon, but not identical
+to, Django's ``settings.SECRET_KEY``. That's how the ``SECRET_KEY`` is related
+to TOMToolkit's encryption. 
 
 Treat ``SECRET_KEY`` like an encryption key
 -------------------------------------------
@@ -20,7 +25,7 @@ Treat ``SECRET_KEY`` like an encryption key
 If you lose ``SECRET_KEY`` (and any active
 ``SECRET_KEY_FALLBACKS`` entries), every encrypted field becomes
 unrecoverable. Keep ``SECRET_KEY`` secret, never commit it, and back
-it up through whatever channel your other production secrets travel.
+it up through whatever channel your other production secrets use.
 
 The standard Django guidance applies — see the
 `Django deployment checklist
@@ -35,8 +40,15 @@ and the
    below will leave every previously-encrypted field unreadable. Follow
    the procedure exactly — don't just edit ``SECRET_KEY`` in your env.
 
+   Should 
+
 Graceful ``SECRET_KEY`` rotation
 --------------------------------
+
+Because TOMToolkit's encryption scheme depends on the value of ``settings.SECRET_KEY``,
+if you need to change your ``SECRET_KEY``, we must decrypt the encrypted data
+with a cipher derived from the old ``SECRET_KEY`` and re-encrypt it with a cipher derived
+from the new ``SECRET_KEY``. The following proceed explains the process in full.
 
 We use Django's built-in
 `SECRET_KEY_FALLBACKS <https://docs.djangoproject.com/en/stable/ref/settings/#secret-key-fallbacks>`_
@@ -111,6 +123,15 @@ If you lose ``SECRET_KEY`` and have no backup:
 
 Treat ``SECRET_KEY`` backup with the same seriousness as your database
 backup.
+
+Key Derivation Function Implementation Details
+----------------------------------------------
+The derivation uses `HKDF <https://en.wikipedia.org/wiki/HKDF>`_
+(RFC 5869) with a domain-separator label, so the encryption key is
+cryptographically independent of the way Django
+uses ``SECRET_KEY`` for HMAC signing. See
+:mod:`tom_common.encryption` for the implementation.
+
 
 See also
 --------
