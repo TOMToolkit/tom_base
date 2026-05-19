@@ -5,12 +5,10 @@ from requests.exceptions import ReadTimeout
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from astropy.table import Table
 
 from tom_dataservices.models import DataServiceQuery
 from tom_dataservices.dataservices import get_data_service_class, NotConfiguredError
 from tom_dataservices.dataservices import MissingDataException, QueryServiceError
-
 
 
 logger = logging.getLogger(__name__)
@@ -22,8 +20,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             'query_id',
-            help='ID of saved query to run. (i.e. 1 or 26). Run listqueries management command to see' \
-            'IDs for saved queries'
+            help='ID of saved query to run. (i.e. 1 or 26). Run `listqueries` management command to see' \
+                'IDs for saved queries'
         )
 
     def handle(self, *args, **options):

@@ -1,5 +1,4 @@
 import logging
-from urllib.parse import urlencode
 
 from django import template
 from django import forms

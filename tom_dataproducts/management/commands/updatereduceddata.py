@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = 'Gets and updates time-series data for a target with data extracted from data services. This will search' \
-    'existing data for sources that match installed data services and check those data services for new data.'
+        'existing data for sources that match installed data services and check those data services for new data.'
 
     def add_arguments(self, parser):
         parser.add_argument(
