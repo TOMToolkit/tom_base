@@ -20,8 +20,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             'query_id',
-            help='ID of saved query to run. (i.e. 1 or 26). Run `listqueries` management command to see' \
-                'IDs for saved queries'
+            help='ID of saved query to run. (i.e. 1 or 26). Run `listqueries` management command to see'
+            'IDs for saved queries'
         )
 
     def handle(self, *args, **options):
