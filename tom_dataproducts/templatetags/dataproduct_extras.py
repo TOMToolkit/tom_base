@@ -415,11 +415,6 @@ def spectroscopy_for_target(context, target, dataproduct=None):
     }
 
 
-@register.inclusion_tag('tom_dataproducts/partials/update_broker_data_button.html', takes_context=True)
-def update_broker_data_button(context):
-    return {'query_params': urlencode(context['request'].GET.dict())}
-
-
 def draw_point(draw, x, y, color):
     draw.ellipse((x, y, x + 6, y + 6), fill=color, outline=color)
 
