@@ -385,9 +385,6 @@ class ReducedDatum(models.Model):
                     }
     :type value: dict
 
-    :param message: Set of ``AlertStreamMessage`` objects this object is associated with.
-    :type message: ManyRelatedManager object
-
     """
 
     target = models.ForeignKey(BaseTarget, null=False, on_delete=models.CASCADE)
