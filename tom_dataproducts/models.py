@@ -350,8 +350,9 @@ class ReducedDatum(models.Model):
         DATA_PRODUCT_TYPES in settings.py.
     :type data_type: str
 
-    :param source_name: The original source of this datum. The current major use of this field is to track the broker a
-                        datum came from, but can be used for other sources.
+    :param source_name: The original source of this datum. The current major use of this field is to track the data
+                        service a datum came from, but can be used for other sources.
+
     :type source_name: str
 
     :param source_location: A reference to the location that this datum was originally sourced from. The current major

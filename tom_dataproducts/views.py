@@ -498,8 +498,8 @@ class DataProductGroupDataView(LoginRequiredMixin, FormView):
 
 class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
     """
-    View that handles the updating of reduced data tied to a ``DataProduct`` that was automatically ingested from a
-    broker. Requires authentication.
+    View that handles the updating of reduced data tied to a ``DataProduct`` that was ingested from a
+    dataservice. The ReducedDatum.source must match the DataService.name Requires authentication.
     """
     def get(self, request, *args, **kwargs):
         """

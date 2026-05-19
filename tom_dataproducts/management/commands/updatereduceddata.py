@@ -12,11 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Gets and updates time-series data for a target with data extracted from data services.'
+    help = 'Gets and updates time-series data for a target with data extracted from data services. This will search' \
+    'existing data for sources that match installed data services and check those data services for new data.'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--target_id',
+            help='ID of target for which you would like updated data. Leave blank to update all targets.'
         )
 
     def handle(self, *args, **options):
@@ -28,12 +30,16 @@ class Command(BaseCommand):
         if options['target_id']:
             try:
                 target = Target.objects.get(pk=options['target_id'])
-                sources = [s.source_name for s in ReducedDatum.objects.filter(target=target).filter(source_name__in=dataservice_classes.keys()).distinct()]
+                sources = [s.source_name for s in ReducedDatum.objects.filter(target=target).filter(
+                    source_name__in=dataservice_classes.keys()).distinct()
+                    ]
                 targets = [target]
             except ObjectDoesNotExist:
                 raise Exception('Invalid target id provided')
         else:
-            sources = [s.source_name for s in ReducedDatum.objects.filter(source_name__in=dataservice_classes.keys()).distinct()]
+            sources = [s.source_name for s in ReducedDatum.objects.filter(
+                source_name__in=dataservice_classes.keys()).distinct()
+                ]
             targets = Target.objects.filter(
                 id__in=ReducedDatum.objects.filter(
                     source_name__in=sources

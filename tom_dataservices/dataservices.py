@@ -323,6 +323,7 @@ class DataService(ABC):
         """
         Create and save new reduced_datums of the appropriate data_type from the query results
         Be sure to use `ReducedDatum.objects.get_or_create()` when creating new objects.
+        NOTE: Setting `ReducedDatum.source` to the the `DataService.name` will allow for automated data updates.
 
         :param target: Target Object to be associated with the reduced data
         :param data: List of data dictionaries of the appropriate `data_type`

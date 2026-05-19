@@ -275,8 +275,8 @@ A ``ReducedDatum`` is a single point of data associated with a ``Target`` and op
 spectrum. The ``ReducedDatum`` model has the following fields, in addition to its aforementioned
 foreign key relationships:
 
-- ``data_type`` is maintained on both the ``ReducedDatum`` and ``DataProduct`` for the case when data is brought in from another source, such as a broker
-- The ``source_name`` optionally refers to the original source of the data. The intent of this field was to track data ingested from brokers, but could potentially be used for other purposes.
+- ``data_type`` is maintained on both the ``ReducedDatum`` and ``DataProduct`` for the case when data is brought in from another source, such as an external data service.
+- The ``source_name`` optionally refers to the original source of the data. The intent of this field was to track data ingested from a dataservice, such as a broker, but could potentially be used for other purposes.
 - ``source_location`` optionally gives a hard location to the source--for a broker, it would be a link to the original alert.
 - The ``timestamp`` time at which the datum was produced.
 - ``value`` is a ``TextField`` that can take any series of data. As implemented, photometry is stored as JSON with keys for magnitude and error, but the ``TextField`` provides flexibility for additional photometry values on the datum. Spectroscopy is also stored as JSON, with keys for ``magnitude`` and ``flux``.
