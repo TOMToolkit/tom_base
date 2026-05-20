@@ -1244,6 +1244,7 @@ class TestTargetAddRemoveGrouping(TestCase):
         self.fake_grouping = TargetGroupingFactory.create()
         target_app_label = get_target_model_app_label()
         assign_perm(f'{target_app_label}.view_targetlist', user, self.fake_grouping)
+        assign_perm(f'{target_app_label}.change_targetlist', user, self.fake_grouping)
         # add target[0] to grouping
         self.fake_grouping.targets.add(self.fake_targets[0])
 

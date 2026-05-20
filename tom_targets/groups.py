@@ -1,6 +1,5 @@
 from .filters import TargetFilterSet
 from .models import Target
-from .base_models import get_target_model_app_label
 from django.contrib import messages
 
 
@@ -29,9 +28,8 @@ def add_all_to_grouping(filter_data, grouping_object, request):
         return
     for target_object in target_queryset:
         try:
-            target_app_label = get_target_model_app_label()
-            if not request.user.has_perm(f'{target_app_label}.change_target', target_object):
-                failure_targets.append((target_object.name, 'Permission denied.',))
+            if not request.user.has_perm('tom_targets.change_targetlist', grouping_object):
+                failure_targets.append((grouping_object.name, 'Permission denied.',))
             elif grouping_object.targets.filter(pk=target_object.pk).exists():
                 warning_targets.append(target_object.name)
             else:
@@ -69,9 +67,8 @@ def add_selected_to_grouping(targets_ids, grouping_object, request):
     for target_id in targets_ids:
         try:
             target_object = Target.objects.get(pk=target_id)
-            target_app_label = get_target_model_app_label()
-            if not request.user.has_perm(f'{target_app_label}.change_target', target_object):
-                failure_targets.append((target_object.name, 'Permission denied.',))
+            if not request.user.has_perm('tom_targets.change_targetlist', grouping_object):
+                failure_targets.append((grouping_object.name, 'Permission denied.',))
             elif grouping_object.targets.filter(pk=target_object.pk).exists():
                 warning_targets.append(target_object.name)
             else:
@@ -114,9 +111,8 @@ def remove_all_from_grouping(filter_data, grouping_object, request):
         return
     for target_object in target_queryset:
         try:
-            target_app_label = get_target_model_app_label()
-            if not request.user.has_perm(f'{target_app_label}.change_target', target_object):
-                failure_targets.append((target_object.name, 'Permission denied.',))
+            if not request.user.has_perm('tom_targets.change_targetlist', grouping_object):
+                failure_targets.append((grouping_object.name, 'Permission denied.',))
             elif not grouping_object.targets.filter(pk=target_object.pk).exists():
                 warning_targets.append(target_object.name)
             else:
@@ -154,10 +150,9 @@ def remove_selected_from_grouping(targets_ids, grouping_object, request):
     failure_targets = []
     for target_id in targets_ids:
         try:
-            target_app_label = get_target_model_app_label()
             target_object = Target.objects.get(pk=target_id)
-            if not request.user.has_perm(f'{target_app_label}.change_target', target_object):
-                failure_targets.append((target_object.name, 'Permission denied.',))
+            if not request.user.has_perm('tom_targets.change_targetlist', grouping_object):
+                failure_targets.append((grouping_object.name, 'Permission denied.',))
             elif not grouping_object.targets.filter(pk=target_object.pk).exists():
                 warning_targets.append(target_object.name)
             else:
@@ -203,9 +198,8 @@ def move_all_to_grouping(filter_data, grouping_object, request):
         return
     for target_object in target_queryset:
         try:
-            target_app_label = get_target_model_app_label()
-            if not request.user.has_perm(f'{target_app_label}.change_target', target_object):
-                failure_targets.append((target_object.name, 'Permission denied.',))
+            if not request.user.has_perm('tom_targets.change_targetlist', grouping_object):
+                failure_targets.append((grouping_object.name, 'Permission denied.',))
             elif grouping_object.targets.filter(pk=target_object.pk).exists():
                 warning_targets.append(target_object.name)
             else:
@@ -245,10 +239,9 @@ def move_selected_to_grouping(targets_ids, grouping_object, request):
     failure_targets = []
     for target_id in targets_ids:
         try:
-            target_app_label = get_target_model_app_label()
             target_object = Target.objects.get(pk=target_id)
-            if not request.user.has_perm(f'{target_app_label}.change_target', target_object):
-                failure_targets.append((target_object.name, 'Permission denied.',))
+            if not request.user.has_perm('tom_targets.change_targetlist', grouping_object):
+                failure_targets.append((grouping_object.name, 'Permission denied.',))
             elif grouping_object.targets.filter(pk=target_object.pk).exists():
                 warning_targets.append(target_object.name)
             else:
