@@ -3,10 +3,10 @@ Encrypted Model Fields
 
 If your ``custom_code`` or reusable app contains a model field storing
 user-specific sensitive data, TOM Toolkit provides a way to encrypt
-that data in in the database ("at rest").
+that data in the database.
 
 Examples of user-specific sensitive data include passwords or API keys
-for external services that your TOM uses on the user's behalf. TOM
+for external services that your TOM stores on the user's behalf. TOM
 Toolkit's Facility modules, for example, use the mechanism described
 here to store user-specific external-service credentials in a user
 profile model. Real examples live in
@@ -17,9 +17,9 @@ How encryption works
 --------------------
 
 Encrypted fields are protected by a single Fernet cipher derived from
-``settings.SECRET_KEY``. (For TOM administrator concerns (rotating
+``settings.SECRET_KEY``. For TOM administrator concerns (rotating
 ``SECRET_KEY`` without losing data, etc.) see
-:doc:`/deployment/encryption`).
+:doc:`/deployment/encryption`.
 
 .. note::
 
@@ -49,11 +49,24 @@ encryption on write and decryption on read.
         _api_key_encrypted = models.BinaryField(null=True, blank=True)  # ciphertext (private)
         api_key = EncryptedProperty('_api_key_encrypted')               # descriptor (public)
 
-By convention, the ``BinaryField``'s name starts with an underscore —
+By `convention <https://peps.python.org/pep-0008/#descriptive-naming-styles>`__, the ``BinaryField``'s name starts with an underscore —
 it is only referenced by the :class:`EncryptedProperty` descriptor; never
-read or write the ``BinaryField`` directly. When presenting an encrypted field
+read or write to the ``BinaryField`` directly.
+
+Displaying an encrypted field
+-----------------------------
+
+When presenting an encrypted field
 to your users, you may wish to use ``tom_common``'s
 ``revealable_password_input.html`` partial template.
+
+Add the following to your html partial or template where `password_value` is the value stored in the password field.
+.. code-block:: html
+
+    ...
+    {% include 'tom_common/partials/revealable_password_input.html' with value=password_value %}
+
+This will result in the password being displayed as a row of dots revealable on click.
 
 Reading and writing the field
 -----------------------------
