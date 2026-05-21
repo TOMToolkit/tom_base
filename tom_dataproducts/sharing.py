@@ -86,7 +86,6 @@ def share_data_with_tom(share_destination, form_data, product_id=None, target_id
                 return {'message': 'ERROR: Multiple targets with matching name found in destination TOM.'}
             target_dict = {target.name:  destination_target_id}
         response_codes = []
-        reduced_datums = check_for_share_safe_datums(share_destination, reduced_datums)
         if not reduced_datums:
             return {'message': 'ERROR: No valid data to share.'}
         for datum in reduced_datums:
@@ -135,21 +134,6 @@ def get_destination_target(target, targets_url, headers, auth):
             return None, target_response
     except KeyError:
         return None, target_response
-
-
-def check_for_share_safe_datums(destination, reduced_datums, **kwargs):
-    """
-    Custom sharing protocols used to determine when data is shared with a destination.
-    :param destination: sharing destination string
-    :param reduced_datums: selected input datums
-    :return: queryset of reduced datums to be shared
-    """
-    filtered_datums = reduced_datums
-    return filtered_datums
-
-
-def check_for_save_safe_datums():
-    return
 
 
 def get_sharing_destination_options(include_download=True):
