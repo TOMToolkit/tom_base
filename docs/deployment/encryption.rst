@@ -48,7 +48,7 @@ Graceful ``SECRET_KEY`` rotation
 Because TOMToolkit's encryption scheme depends on the value of ``settings.SECRET_KEY``,
 if you need to change your ``SECRET_KEY``, we must decrypt the encrypted data
 with a cipher derived from the old ``SECRET_KEY`` and re-encrypt it with a cipher derived
-from the new ``SECRET_KEY``. The following proceed explains the process in full.
+from the new ``SECRET_KEY``. The following procedure explains the process in full.
 
 We use Django's built-in
 `SECRET_KEY_FALLBACKS <https://docs.djangoproject.com/en/stable/ref/settings/#secret-key-fallbacks>`_
@@ -56,9 +56,9 @@ mechanism to rotate keys without an outage and without data loss. The
 encryption module's ``decrypt()`` tries the primary derived key first
 and then a derived key for each ``SECRET_KEY_FALLBACKS`` entry; the
 ``encrypt()`` path always uses the primary. So once a new
-``SECRET_KEY`` is in place with the old key in fallbacks, *reads of
-existing encrypted data continue to work*, and *new writes use the new
-key*.
+``SECRET_KEY`` is in place with the old key in fallbacks, **reads of
+existing encrypted data continue to work**, and **new writes use the new
+key**.
 
 Scaffolded TOMs already include ``SECRET_KEY_FALLBACKS = []`` in their
 ``settings.py`` (added by ``tom_setup``); if your TOM predates that
@@ -66,8 +66,8 @@ template change, just add the line yourself.
 
 The end-to-end procedure:
 
-1. **Stage the old key as a fallback** and install a new
-   ``SECRET_KEY``. In ``settings.py``, move the existing
+1. **Stage the old key as a fallback and install a new
+   ``SECRET_KEY``**. In ``settings.py``, move the existing
    ``SECRET_KEY`` value into ``SECRET_KEY_FALLBACKS`` and set
    ``SECRET_KEY`` to the new value::
 
@@ -75,6 +75,9 @@ The end-to-end procedure:
        SECRET_KEY_FALLBACKS = ['<previously-current key>']
 
    (Or via env vars, whatever pattern your deployment uses.)
+
+.. warning::
+   Remember to keep secret keys secret! The actual values should never be committed to github, or saved anywhere publicly accessible.
 
 2. **Restart the server.** All existing encrypted data is still
    readable (via the fallback). All new writes — including any
@@ -105,7 +108,7 @@ active. ``rotate_encryption_key`` is idempotent: running it again is
 always safe.
 
 If the command reports per-row failures, those rows were encrypted under
-a key that is no longer in ``SECRET_KEY`` ∪ ``SECRET_KEY_FALLBACKS``
+a key that is no longer in either ``SECRET_KEY`` or ``SECRET_KEY_FALLBACKS``
 (i.e., that key has been forgotten). Add it back if you can; otherwise
 the data on those rows is lost.
 
@@ -117,8 +120,8 @@ If you lose ``SECRET_KEY`` and have no backup:
 - Every :class:`EncryptedProperty` value (saved API keys, observatory
   credentials) becomes unrecoverable. The ciphertext is still in the
   database; the key needed to decrypt it is gone.
-- All Django signing-dependent state also breaks: outstanding password-
-  reset tokens, signed URLs, persistent session cookies. Users will
+- All Django signing-dependent states also break: outstanding password-reset
+  tokens, signed URLs, persistent session cookies. Users will
   need to log in again and possibly re-enter any saved secrets.
 
 Treat ``SECRET_KEY`` backup with the same seriousness as your database
