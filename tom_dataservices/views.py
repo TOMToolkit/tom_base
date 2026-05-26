@@ -1,3 +1,4 @@
+from tom_targets.base_models import get_target_model_app_label
 import logging
 from requests import HTTPError
 
@@ -351,10 +352,11 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                     target.save(extras=extras, names=aliases)
                     # Give the user access to the target they created
                     target.give_user_access(self.request.user)
+                    target_app_label = get_target_model_app_label()
                     for group in request.user.groups.all():
-                        assign_perm('tom_targets.view_target', group, target)
-                        assign_perm('tom_targets.change_target', group, target)
-                        assign_perm('tom_targets.delete_target', group, target)
+                        assign_perm(f'{target_app_label}.view_target', group, target)
+                        assign_perm(f'{target_app_label}.change_target', group, target)
+                        assign_perm(f'{target_app_label}.delete_target', group, target)
                 except IntegrityError:
                     messages.warning(request,
                                      mark_safe(
