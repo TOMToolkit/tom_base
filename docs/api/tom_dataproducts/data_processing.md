@@ -11,9 +11,9 @@ The ``DataProductUploadView`` calls ``run_data_processor`` upon saving the ``Dat
 instantiates the ``DATA_PROCESSOR_CLASS``, which can be specified in ``settings.py``. ``run_data_processor`` then
 processes the uploaded ``DataProduct`` based on the tag value, which can either be Photometry or Spectroscopy.
 
-In the case of spectra, the default behavior is that ``DataProduct`` is converted into a ``specutils.Spectrum1D`` from
+In the case of spectra, the default behavior is that ``DataProduct`` is converted into a ``specutils.Spectrum`` from
 either a CSV or a FITS file. The spectrum is multiplied by the flux constant of the facility it was taken at, or not
-multiplied. The ``Spectrum1D`` is then serialized into JSON for database via the ``SpectrumSerializer``.
+multiplied. The ``Spectrum`` is then serialized into JSON for database via the ``SpectrumSerializer``.
 
 For photometry, the default behavior is simply to read the CSV and convert it to JSON for database storage.
 

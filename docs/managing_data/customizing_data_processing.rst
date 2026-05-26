@@ -149,7 +149,7 @@ Just like the ``PhotometryProcessor``, this class inherits from
 ``DataProcessor`` and implements ``process_data()``. This is a
 requirement for a custom DataProcessor! This ``process_data()`` method
 handles two file types, unlike the previous example, each of which calls
-an internal method that returns a ``Spectrum1D`` object. Again, like the
+an internal method that returns a ``Spectrum`` object. Again, like the
 ``PhotometryProcessor``, a list of 2-tuples is created, with the first
 value being the timestamp, and the second being the JSON spectrum.
 

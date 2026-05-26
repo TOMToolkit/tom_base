@@ -1,3 +1,4 @@
+from tom_targets.base_models import get_target_model_app_label
 import datetime
 from http import HTTPStatus
 import os
@@ -17,7 +18,7 @@ from django.urls import reverse
 from django.utils import timezone, text
 from guardian.shortcuts import assign_perm
 import numpy as np
-from specutils import Spectrum1D
+from specutils import Spectrum
 from unittest.mock import patch
 
 from tom_dataproducts.exceptions import InvalidFileFormatException
@@ -65,7 +66,8 @@ class Views(TestCase):
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
         user = User.objects.create_user(username='test', email='test@example.com')
-        assign_perm('tom_targets.view_target', user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', user, self.target)
         self.client.force_login(user)
 
     def test_dataproduct_list_on_target(self, dp_mock):
@@ -207,8 +209,9 @@ class TestViewsWithPermissions(TestCase):
         )
         self.user = User.objects.create_user(username='aaronrodgers', email='aaron.rodgers@packers.com')
         self.user2 = User.objects.create_user(username='timboyle', email='tim.boyle@packers.com')
-        assign_perm('tom_targets.view_target', self.user, self.target)
-        assign_perm('tom_targets.view_target', self.user2, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.target)
+        assign_perm(f'{target_app_label}.view_target', self.user2, self.target)
         assign_perm('tom_targets.view_dataproduct', self.user, self.data_product)
         self.client.force_login(self.user)
 
@@ -265,7 +268,8 @@ class TestDataProductListView(TestCase):
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
         user = User.objects.create_user(username='test', email='test@example.com')
-        assign_perm('tom_targets.view_target', user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', user, self.target)
         self.client.force_login(user)
 
     @patch('tom_dataproducts.models.DataProduct.get_preview', return_value='/no-image.jpg')
@@ -300,7 +304,8 @@ class TestUploadDataProducts(TestCase):
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
         self.user = User.objects.create_user(username='test', email='test@example.com')
-        assign_perm('tom_targets.view_target', self.user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.target)
         self.client.force_login(self.user)
 
     def test_upload_data_for_target(self, run_data_processor_mock):
@@ -350,8 +355,9 @@ class TestDeleteDataProducts(TestCase):
         )
         self.user = User.objects.create_user(username='aaronrodgers', email='aaron.rodgers@packers.com')
         self.user2 = User.objects.create_user(username='timboyle', email='tim.boyle@packers.com')
-        assign_perm('tom_targets.view_target', self.user, self.target)
-        assign_perm('tom_targets.view_target', self.user2, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.target)
+        assign_perm(f'{target_app_label}.view_target', self.user2, self.target)
         assign_perm('tom_targets.view_dataproduct', self.user, self.data_product)
         assign_perm('tom_targets.view_dataproduct', self.user2, self.data_product)
         assign_perm('tom_targets.delete_dataproduct', self.user, self.data_product)
@@ -417,7 +423,7 @@ class TestDataSerializer(TestCase):
     def test_serialize_spectrum(self):
         flux = np.arange(1, 200) * units.Jy
         wavelength = np.arange(1, 200) * units.Angstrom
-        spectrum = Spectrum1D(spectral_axis=wavelength, flux=flux)
+        spectrum = Spectrum(spectral_axis=wavelength, flux=flux)
         serialized = self.serializer.serialize(spectrum)
 
         self.assertTrue(isinstance(serialized, dict))
@@ -439,7 +445,7 @@ class TestDataSerializer(TestCase):
         }
         deserialized = self.serializer.deserialize(serialized_spectrum)
 
-        self.assertTrue(isinstance(deserialized, Spectrum1D))
+        self.assertTrue(isinstance(deserialized, Spectrum))
         self.assertEqual(deserialized.flux.mean().value, 1.5)
         self.assertEqual(deserialized.wavelength.mean().value, 1.5)
 
@@ -484,7 +490,7 @@ class TestDataProcessor(TestCase):
         with open('tom_dataproducts/tests/test_data/test_spectrum.fits', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.fits', spectrum_file)
             spectrum, _, _ = self.spectrum_data_processor._process_spectrum_from_fits(self.data_product)
-            self.assertTrue(isinstance(spectrum, Spectrum1D))
+            self.assertTrue(isinstance(spectrum, Spectrum))
             self.assertAlmostEqual(spectrum.flux.mean().value, 2.295068e-14, places=19)
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 6600.478789, places=5)
 
@@ -492,7 +498,7 @@ class TestDataProcessor(TestCase):
         with open('tom_dataproducts/tests/test_data/test_spectrum.csv', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.csv', spectrum_file)
             spectrum, _, _ = self.spectrum_data_processor._process_spectrum_from_plaintext(self.data_product)
-            self.assertTrue(isinstance(spectrum, Spectrum1D))
+            self.assertTrue(isinstance(spectrum, Spectrum))
             self.assertAlmostEqual(spectrum.flux.mean().value, 1.166619e-14, places=19)
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 3250.744489, places=5)
 
@@ -636,7 +642,8 @@ class TestShareDataProducts(TestCase):
             data=SimpleUploadedFile('afile.fits', b'somedata')
         )
         self.user = User.objects.create_user(username='test', email='test@example.com')
-        assign_perm('tom_targets.view_target', self.user, self.target)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.target)
         self.client.force_login(self.user)
 
         self.rd1 = ReducedDatum.objects.create(
