@@ -7,7 +7,7 @@ from astropy import units
 from astropy.io import fits, ascii as astropy_ascii
 from astropy.time import Time
 from astropy.wcs import WCS
-from specutils import Spectrum1D
+from specutils import Spectrum
 
 from tom_dataproducts.data_processor import DataProcessor
 from tom_dataproducts.exceptions import InvalidFileFormatException
@@ -46,16 +46,16 @@ class SpectroscopyProcessor(DataProcessor):
 
     def _process_spectrum_from_fits(self, data_product):
         """
-        Processes the data from a spectrum from a fits file into a Spectrum1D object, which can then be serialized and
+        Processes the data from a spectrum from a fits file into a Spectrum object, which can then be serialized and
         stored as a ReducedDatum for further processing or display. File is read using specutils as specified in the
         below documentation.
         # https://specutils.readthedocs.io/en/doc-testing/specutils/read_fits.html
 
-        :param data_product: Spectroscopic DataProduct which will be processed into a Spectrum1D
+        :param data_product: Spectroscopic DataProduct which will be processed into a Spectrum
         :type data_product: tom_dataproducts.models.DataProduct
 
-        :returns: Spectrum1D object containing the data from the DataProduct
-        :rtype: specutils.Spectrum1D
+        :returns: Spectrum object containing the data from the DataProduct
+        :rtype: specutils.Spectrum
 
         :returns: Datetime of observation, if it is in the header and the file is from a supported facility, current
             datetime otherwise
@@ -86,13 +86,13 @@ class SpectroscopyProcessor(DataProcessor):
         header['CUNIT1'] = 'Angstrom'
         wcs = WCS(header=header, naxis=1)
 
-        spectrum = Spectrum1D(flux=flux, wcs=wcs)
+        spectrum = Spectrum(flux=flux, wcs=wcs)
 
         return spectrum, Time(date_obs).to_datetime(), facility_name
 
     def _process_spectrum_from_plaintext(self, data_product):
         """
-        Processes the data from a spectrum from a plaintext file into a Spectrum1D object, which can then be serialized
+        Processes the data from a spectrum from a plaintext file into a Spectrum object, which can then be serialized
         and stored as a ReducedDatum for further processing or display. File is read using astropy as specified in
         the below documentation. The file is expected to be a multi-column delimited file, with headers for wavelength
         and flux. The file also requires comments containing, at minimum, 'DATE-OBS: [value]', where value is an
@@ -102,11 +102,11 @@ class SpectroscopyProcessor(DataProcessor):
 
         Parameters
         ----------
-        :param data_product: Spectroscopic DataProduct which will be processed into a Spectrum1D
+        :param data_product: Spectroscopic DataProduct which will be processed into a Spectrum
         :type data_product: tom_dataproducts.models.DataProduct
 
-        :returns: Spectrum1D object containing the data from the DataProduct
-        :rtype: specutils.Spectrum1D
+        :returns: Spectrum object containing the data from the DataProduct
+        :rtype: specutils.Spectrum
 
         :returns: Datetime of observation, if it is in the comments and the file is from a supported facility, current
             datetime otherwise
@@ -132,6 +132,6 @@ class SpectroscopyProcessor(DataProcessor):
 
         spectral_axis = np.array(data['wavelength']) * wavelength_units
         flux = np.array(data['flux']) * flux_constant
-        spectrum = Spectrum1D(flux=flux, spectral_axis=spectral_axis)
+        spectrum = Spectrum(flux=flux, spectral_axis=spectral_axis)
 
         return spectrum, Time(date_obs).to_datetime(), facility_name
