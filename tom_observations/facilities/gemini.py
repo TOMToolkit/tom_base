@@ -43,7 +43,7 @@ PORTAL_URL = GEM_SETTINGS['portal_url']
 VALID_OBSERVING_STATES = ['TRIGGERED', 'ON_HOLD']
 TERMINAL_OBSERVING_STATES = ['TRIGGERED', 'ON_HOLD']
 
-# Units of flux and wavelength for converting to Specutils Spectrum1D objects
+# Units of flux and wavelength for converting to Specutils Spectrum objects
 FLUX_CONSTANT = (1 * u.erg) / (u.cm ** 2 * u.second * u.angstrom)
 WAVELENGTH_UNITS = u.angstrom
 

@@ -1,0 +1,7 @@
+{% load calendar_tags %}
+{% if target_list %}
+  {% target_list_color target_list as tl_color %}
+  <a href="{% url 'targets:list' %}?targetlist__name={{ target_list.id }}">
+    <span class="cal-event-bullet" style="color: {{ tl_color }};">▌</span>
+  </a>
+{% endif %}
