@@ -88,9 +88,10 @@ class TestReactiveCadencing(TestCase):
         new_records = strategy.run()
         self.group.refresh_from_db()
         self.assertEqual(num_records + 1, self.group.observation_records.count())
-        self.assertEqual(
-            datetime.now().replace(second=0, microsecond=0),
-            parse(new_records[0].parameters['start']).replace(second=0, microsecond=0)
+        self.assertAlmostEqual(
+            parse(new_records[0].parameters["start"]),
+            datetime.now(),
+            delta=timedelta(seconds=5),
         )
 
     @patch('tom_observations.facilities.lco.LCOFacility.get_observation_status', return_value={'state': 'COMPLETED',
