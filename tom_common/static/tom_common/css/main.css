@@ -150,6 +150,11 @@ td, th {
     content: '\0025BC';
 }
 
+.bottom {
+  position: absolute;
+  bottom: 20%;
+}
+
 /* Create copy button class */
 .copy-button {
     opacity: 0.75; /* Make it slightly transparent */

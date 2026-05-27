@@ -166,7 +166,7 @@ Default: []
 
 With an `AUTH_STRATEGY <#auth-strategy>`__ value of **LOCKED**, urls in
 this list will remain visible to unauthenticated users. You can also use wild cards to open an entire path.
-You might add the homepage (‘/’), for example, or anything with a path that looks like '/accounts/reset/*/'.
+You might add the homepage (‘/’), for example, or anything with a path that looks like ``'/accounts/reset/*/'``.
 
 `TARGET_PERMISSIONS_ONLY <#target-permissions-only>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -259,25 +259,6 @@ Default:
 A list of observation facility classes to make available to your TOM. If
 you have written or downloaded a custom observation facility you would
 add the class to this list to make your TOM load it.
-
-`TOM_HARVESTER_CLASSES <#tom-harvester-classes>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Default:
-
-.. code-block
-
-   [
-       'tom_catalogs.harvesters.simbad.SimbadHarvester',
-       'tom_catalogs.harvesters.ned.NEDHarvester',
-       'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
-       'tom_catalogs.harvesters.mpc.MPCHarvester',
-       'tom_catalogs.harvesters.tns.TNSHarvester',
-   ]
-
-A list of TOM harverster classes to make available to your TOM. If you
-have written or downloaded additional harvester classes you would make
-them available here.
 
 `TOM_LATEX_PROCESSORS <#tom-latex-processors>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -311,6 +311,30 @@ class DataProduct(models.Model):
         return
 
 
+class ReducedDatumQuerySet(models.query.QuerySet):
+    """
+    This is a custom queryset that allows us to extend the get_or_create to coincide with our custom validate_unique
+    for ReducedDatum objects so that getting a ReducedDatum with get_or_create will return identical datums from
+    different sources.
+    """
+    def get_or_create(self, defaults=None, **kwargs):
+        try:
+            return super().get_or_create(defaults, **kwargs)
+        except ValidationError as e:
+            logger.warning(f'{e}')
+            defaults = {}
+            default_fields = ['source_name', 'source_location', 'message']
+            for field in default_fields:
+                if kwargs.get(field):
+                    defaults.update({'field': kwargs.pop(field)})
+            return super().get_or_create(defaults, **kwargs)
+
+
+class ReducedDatumManager(models.Manager):
+    def get_queryset(self):
+        return ReducedDatumQuerySet(self.model)
+
+
 class ReducedDatum(models.Model):
     """
     Class representing a datum in a TOM.
@@ -378,6 +402,8 @@ class ReducedDatum(models.Model):
     value = models.JSONField(null=False, blank=False)
     message = models.ManyToManyField(AlertStreamMessage, blank=True)
 
+    objects = ReducedDatumManager()
+
     class Meta:
         get_latest_by = ('timestamp',)
 
@@ -397,7 +423,7 @@ class ReducedDatum(models.Model):
     def validate_unique(self, *args, **kwargs):
         """
         Validates that the ReducedDatum is unique. Because the `value` field is a JSONField, it is not possible to rely
-        on standard validation.
+        on standard validation. Also, We do not want to repeat identical data from two different sources.
 
         Do nothing if the uniqueness test passes. Otherwise, raise a ValidationError.
 
@@ -412,9 +438,10 @@ class ReducedDatum(models.Model):
                                                               timestamp=self.timestamp,
                                                               value=self.value)
             if existing_reduced_datum and existing_reduced_datum.id != self.id:  # not the same object
+                existing_source = existing_reduced_datum.__dict__.get('source_name', 'Unknown Source')
                 # found ReducedDatum with the same values. Don't save this duplicate ReducedDatum.
-                raise ValidationError(f'ReducedDatum already exists: {self.data_type} data with value of {self.value} '
-                                      f'found for {self.target} at {self.timestamp}')
+                raise ValidationError(f'ReducedDatum already exists: Identical {self.data_type} data '
+                                      f'found for {self.target} from {existing_source}.')
         except ReducedDatum.DoesNotExist:
             # this means that our check for uniqueness passed: so do not raise ValidationError
             pass
