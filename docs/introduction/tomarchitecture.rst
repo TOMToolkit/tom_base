@@ -202,7 +202,7 @@ module provides a generic interface that other modules can implement, giving
 them the ability to integrate new dataservices with the toolkit. Currently, there are
 modules available for `Lasair <https://lasair.roe.ac.uk>`_,
 `ANTARES <https://antares.noirlab.edu/loci>`_, `SCOUT <https://cneos.jpl.nasa.gov/scout/intro.html>`_, and others,
-with more planned for the future. See :doc:`TOM Plugins </api/plugins>` for a full list.
+with more planned for the future. See :doc:`TOM Plugins </code/plugins>` for a full list.
 
 TOM Setup and TOM Common
 ------------------------
