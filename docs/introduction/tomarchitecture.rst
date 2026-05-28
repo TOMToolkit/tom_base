@@ -133,7 +133,7 @@ Django Reusable Apps
 ====================
 
 As previously mentioned, one of the reasons for Django's popularity is its
-modularity. Django has the concept of `reusable apps <https://docs.djangoproject.com/en/2.2/intro/reusable-apps/>`_ which are just
+modularity. Django has the concept of `reusable apps <https://docs.djangoproject.com/en/stable/intro/reusable-apps/>`_ which are just
 python packages that are specifically meant to be used inside a Django project.
 The majority of the the toolkit's functionality is implemented in a series of
 Django apps. While most of the apps are required, some may be omitted entirely
@@ -202,7 +202,7 @@ module provides a generic interface that other modules can implement, giving
 them the ability to integrate new dataservices with the toolkit. Currently, there are
 modules available for `Lasair <https://lasair.roe.ac.uk>`_,
 `ANTARES <https://antares.noirlab.edu/loci>`_, `SCOUT <https://cneos.jpl.nasa.gov/scout/intro.html>`_, and others,
-with more planned for the future.
+with more planned for the future. See :doc:`TOM Plugins </api/plugins>` for a full list.
 
 TOM Setup and TOM Common
 ------------------------

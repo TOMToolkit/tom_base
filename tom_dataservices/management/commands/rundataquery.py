@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Runs saved dataservice queries and saves the results as Targets'
+    help = 'Runs saved dataservice queries and saves the results as Targets.'
 
     def add_arguments(self, parser):
         parser.add_argument(

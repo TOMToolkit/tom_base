@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Creates a table of save data service queries.'
+    help = 'Creates a table of saved DataService queries.'
 
     def handle(self, *args, **options):
         ids = []
