@@ -363,7 +363,6 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                     else:
                         return redirect(reverse('dataservices:run'))
                 target = data_service_class.to_target(cached_result, request=request)
-
                 # Do not attempt to store Reduced Datums if no Target.
                 if target:
                     try:

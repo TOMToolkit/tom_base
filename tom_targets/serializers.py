@@ -1,3 +1,4 @@
+from tom_targets.base_models import get_target_model_app_label
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_groups_with_perms
 from rest_framework import serializers
@@ -79,9 +80,10 @@ class TargetSerializer(serializers.ModelSerializer):
                     group_instance = Group.objects.get(pk=group['id'])
                 except KeyError:
                     group_instance, _ = Group.objects.get_or_create(name=group['name'])
-                assign_perm('tom_targets.view_target', group_instance, target)
-                assign_perm('tom_targets.change_target', group_instance, target)
-                assign_perm('tom_targets.delete_target', group_instance, target)
+                target_app_label = get_target_model_app_label()
+                assign_perm(f'{target_app_label}.view_target', group_instance, target)
+                assign_perm(f'{target_app_label}.change_target', group_instance, target)
+                assign_perm(f'{target_app_label}.delete_target', group_instance, target)
 
         tns = TargetNameSerializer(data=aliases, many=True)
         if tns.is_valid():
@@ -129,9 +131,10 @@ class TargetSerializer(serializers.ModelSerializer):
         if group_serializer.is_valid():
             for group in groups:
                 group_instance = Group.objects.get(pk=group['id'])
-                assign_perm('tom_targets.view_target', group_instance, instance)
-                assign_perm('tom_targets.change_target', group_instance, instance)
-                assign_perm('tom_targets.delete_target', group_instance, instance)  # TODO: add tests
+                target_app_label = get_target_model_app_label()
+                assign_perm(f'{target_app_label}.view_target', group_instance, instance)
+                assign_perm(f'{target_app_label}.change_target', group_instance, instance)
+                assign_perm(f'{target_app_label}.delete_target', group_instance, instance)  # TODO: add tests
 
         for alias_data in aliases:
             alias = dict(alias_data)

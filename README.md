@@ -69,6 +69,11 @@ Please review our [code of conduct](CODE_OF_CONDUCT.md) for information about wh
 For development information targeted at the maintainers of the project, please see [README-dev.md](README-dev.md).
 
 ## Plugins
+Different TOM systems have different science goals and sometimes need 
+different functions. Rather than require users to support all 
+dependencies from all possible functions, we support a range of optional 
+plugin modules for the Toolkit.  Have a look at our [list of plugins](https://tom-toolkit.readthedocs.io/en/stable/api/plugins.html) 
+see which would benefit your science goals. 
 
 ### Antares
 
@@ -95,6 +100,8 @@ requests.
 
 The [tom_registration](https://github.com/TOMToolkit/tom_registration) plugin introduces support for two TOM registration
 flows--an open registration, and a registration that requires administrator approval.
+Our philosophy is to keep the TOM as lightweight and adaptable as possible.  
+
 
 ## About the TOM Toolkit
 
