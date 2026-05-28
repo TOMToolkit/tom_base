@@ -8,7 +8,7 @@ TOM Toolkit
   Getting started <introduction/getting_started>
   Configuration <common/index>
   Targets <targets/index>
-  Dataservices <dataservices/index>
+  Dataservices <data_services/index>
   Observing <observing/index>
   Data <managing_data/index>
   Customization <customization/index>

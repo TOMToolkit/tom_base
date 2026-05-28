@@ -13,7 +13,6 @@ from PIL import Image
 from importlib import import_module
 
 from tom_targets.base_models import BaseTarget
-from tom_alerts.models import AlertStreamMessage
 from tom_observations.models import ObservationRecord
 
 logger = logging.getLogger(__name__)
@@ -341,7 +340,7 @@ class ReducedDatum(models.Model):
 
     A ``ReducedDatum`` generally refers to a single piece of data--e.g., a spectrum, or a photometry point. It is
     associated with a target, and optionally with the data product it came from. An example of a ``ReducedDatum``
-    without an associated data product would be photometry ingested from a broker.
+    without an associated data product would be photometry ingested from a data service.
 
     :param target: The ``Target`` with which this object is associated.
 
@@ -351,8 +350,9 @@ class ReducedDatum(models.Model):
         DATA_PRODUCT_TYPES in settings.py.
     :type data_type: str
 
-    :param source_name: The original source of this datum. The current major use of this field is to track the broker a
-                        datum came from, but can be used for other sources.
+    :param source_name: The original source of this datum. The current major use of this field is to track the data
+                        service a datum came from, but can be used for other sources.
+
     :type source_name: str
 
     :param source_location: A reference to the location that this datum was originally sourced from. The current major
@@ -385,9 +385,6 @@ class ReducedDatum(models.Model):
                     }
     :type value: dict
 
-    :param message: Set of ``AlertStreamMessage`` objects this object is associated with.
-    :type message: ManyRelatedManager object
-
     """
 
     target = models.ForeignKey(BaseTarget, null=False, on_delete=models.CASCADE)
@@ -400,7 +397,6 @@ class ReducedDatum(models.Model):
     source_location = models.CharField(max_length=200, default='', blank=True)
     timestamp = models.DateTimeField(null=False, blank=False, default=timezone.now, db_index=True)
     value = models.JSONField(null=False, blank=False)
-    message = models.ManyToManyField(AlertStreamMessage, blank=True)
 
     objects = ReducedDatumManager()
 

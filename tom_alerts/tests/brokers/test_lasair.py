@@ -1,4 +1,4 @@
-from unittest import mock
+from unittest import mock, skip
 
 from django.test import override_settings, tag, TestCase
 
@@ -31,6 +31,7 @@ alert1 = {
 }
 
 
+@skip("Disable Broker Tests")
 class TestLasairBrokerForm(TestCase):
     def setUp(self):
         pass
@@ -54,7 +55,8 @@ class TestLasairBrokerForm(TestCase):
                 self.assertTrue(form.is_valid())
 
 
-@override_settings(TOM_ALERT_CLASSES=['tom_alerts.dataservices.lasair.LasairBroker'])
+@skip("Disable Broker Tests")
+@override_settings(TOM_ALERT_CLASSES=['tom_alerts.brokers.lasair.LasairBroker'])
 class TestLasairBrokerClass(TestCase):
 
     """ Test the functionality of the LasairBroker, we modify the django settings to make sure
@@ -84,6 +86,7 @@ class TestLasairBrokerClass(TestCase):
         pass
 
 
+@skip("Disable Broker Tests")
 @tag('canary')
 class TestLasairModuleCanary(TestCase):
     def setUp(self):

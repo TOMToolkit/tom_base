@@ -324,6 +324,7 @@ class DataService(ABC):
         """
         Create and save new reduced_datums of the appropriate data_type from the query results
         Be sure to use `ReducedDatum.objects.get_or_create()` when creating new objects.
+        NOTE: Setting `ReducedDatum.source` to the the `DataService.name` will allow for automated data updates.
 
         :param target: Target Object to be associated with the reduced data
         :param data: List of data dictionaries of the appropriate `data_type`
@@ -362,15 +363,16 @@ class DataService(ABC):
                         assign_perm(f'{target_app_label}.delete_target', group, target)
             except IntegrityError:
                 target = Target.objects.get(name=target.name)
-                messages.warning(request,
-                                 mark_safe(
-                                    f"""The target,
-                                    <a href="{reverse('targets:detail', kwargs={'pk': target.id})}">
-                                    {target.name}</a> already exists, any new data has been ingested.
-                                    You can <a href="{reverse('targets:create') + '?' +
-                                                      urlencode(target.as_dict())}">create</a> a new target anyway.
-                                    """)
-                                 )
+                if request:
+                    message = f"""The target,
+                                        <a href="{reverse('targets:detail', kwargs={'pk': target.id})}">
+                                        {target.name}</a> already exists, any new data has been ingested.
+                                        You can <a href="{reverse('targets:create') + '?' +
+                                                          urlencode(target.as_dict())}">create</a> a new target anyway.
+                                        """
+                    messages.warning(request, mark_safe(message))
+                else:
+                    logger.warning(f"The target, {target.name}, already exists. Any new data will be ingested.")
             # Save Aliases
             self.to_aliases(target, target_result.get('aliases', []))
             return target

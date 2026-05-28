@@ -16,13 +16,12 @@ from tom_targets.models import Target
 
 
 DEFAULT_ALERT_CLASSES = [
-    'tom_alerts.dataservices.lasair.LasairBroker',
-    'tom_alerts.dataservices.scout.ScoutBroker',
-    'tom_alerts.dataservices.alerce.ALeRCEBroker',
-    # 'tom_alerts.dataservices.antares.ANTARESBroker',
-    'tom_alerts.dataservices.gaia.GaiaBroker',
-    'tom_alerts.dataservices.fink.FinkBroker',  # the stub for the plugin
-    'tom_alerts.dataservices.hermes.HermesBroker',  # the stub for the plugin
+    'tom_alerts.brokers.lasair.LasairBroker',
+    'tom_alerts.brokers.scout.ScoutBroker',
+    'tom_alerts.brokers.alerce.ALeRCEBroker',
+    # 'tom_alerts.brokers.antares.ANTARESBroker',
+    'tom_alerts.brokers.gaia.GaiaBroker',
+    'tom_alerts.brokers.fink.FinkBroker',  # the stub for the plugin
 ]
 
 

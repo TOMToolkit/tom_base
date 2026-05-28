@@ -31,6 +31,9 @@ class BrokerQuery(models.Model):
     modified = models.DateTimeField(auto_now=True)
     last_run = models.DateTimeField(blank=True, null=True, default=None)
 
+    class Meta:
+        app_label = 'tom_alerts'
+
     def __str__(self):
         return self.name
 
@@ -78,6 +81,9 @@ class AlertStreamMessage(models.Model):
         choices=EXCHANGE_STATUS_CHOICES,
         help_text='Whether this message was sent or received.'
     )
+
+    class Meta:
+        app_label = 'tom_alerts'
 
     def __str__(self):
         return f'Message {self.message_id} on {self.topic}.'
