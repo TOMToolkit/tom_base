@@ -47,4 +47,8 @@ class BaseQueryForm(forms.Form):
         query.data_service = self.cleaned_data['data_service']
         query.parameters = self.cleaned_data
         query.save()
+        if not query.name:
+            query.name = f"{query.data_service} - {query.id}"
+            query.save()
+
         return query
