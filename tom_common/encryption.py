@@ -56,31 +56,23 @@ def _derive_fernet_key(secret: str) -> bytes:
     other use of the same ``secret`` (notably Django's HMAC signing of
     cookies and tokens, which also reads ``SECRET_KEY``).
     """
-    # Step 1: HKDF operates on bytes, not str, so encode the secret as its
+    # HKDF operates on bytes, not str, so encode the secret as its
     # input keying material (IKM, in RFC 5869 terminology).
     input_keying_material_bytes = secret.encode()
 
-    # Step 2: Configure HKDF.
-    #   algorithm — SHA-256 is the hash underlying HKDF's HMAC extract/expand.
-    #   length    — 32 bytes, the raw key size Fernet needs before base64.
-    #   salt      — None lets HKDF use an all-zero salt of the hash's block
-    #               size; acceptable here because the input is already a
-    #               high-entropy Django SECRET_KEY.
-    #   info      — the domain-separator label that isolates this derivation
-    #               from any other HKDF use of the same SECRET_KEY.
-    fernet_raw_key_byte_length = 32
-    hkdf_derivation = HKDF(
+    # configure the key derivation function
+    fernet_raw_key_byte_length = 32  # length required by Fernet cipher generator
+    hkdf_key_derivation = HKDF(
         algorithm=hashes.SHA256(),
         length=fernet_raw_key_byte_length,
-        salt=None,
+        salt=None,  # SECRET_KEY is already high entropy
         info=_HKDF_INFO,
     )
 
-    # Step 3: Run HKDF's extract-then-expand stages to produce the raw key.
-    derived_raw_key_bytes = hkdf_derivation.derive(input_keying_material_bytes)
+    # apply the key derivation function to produce the raw key.
+    derived_raw_key_bytes = hkdf_key_derivation.derive(input_keying_material_bytes)
 
-    # Step 4: Fernet's constructor requires the key as URL-safe base64 of
-    # 32 bytes, so encode the raw bytes into that format before returning.
+    # encode the raw bytes
     fernet_formatted_key_bytes = urlsafe_b64encode(derived_raw_key_bytes)
     return fernet_formatted_key_bytes
 
@@ -92,7 +84,8 @@ def _get_cipher() -> Fernet:
     Django's ``override_settings`` works in tests without cache-busting.
     HKDF is cheap; Fernet construction dominates only marginally.
     """
-    return Fernet(_derive_fernet_key(settings.SECRET_KEY))
+    cipher = Fernet(_derive_fernet_key(settings.SECRET_KEY))
+    return cipher
 
 
 def _iter_ciphers() -> Iterable[Fernet]:
@@ -109,10 +102,12 @@ def encrypt(plaintext: str) -> bytes:
     ``BinaryField``. The primary cipher is derived from the current
     ``settings.SECRET_KEY``; fallback keys are never used for encryption.
     """
-    return _get_cipher().encrypt(plaintext.encode())
+    cipher = _get_cipher()
+    ciphertext = cipher.encrypt(plaintext.encode())
+    return ciphertext
 
 
-def decrypt(blob: bytes | memoryview) -> str:
+def decrypt(ciphertext: bytes | memoryview) -> str:
     """Decrypt ciphertext, trying the primary cipher then each fallback.
 
     Raises ``cryptography.fernet.InvalidToken`` if no key in
@@ -124,14 +119,15 @@ def decrypt(blob: bytes | memoryview) -> str:
     # database backend: SQLite returns ``bytes`` directly, while psycopg
     # (PostgreSQL) returns a ``memoryview``. Fernet's ``decrypt`` accepts
     # only ``bytes``/``str``, so normalise here.
-    if isinstance(blob, memoryview):
-        blob = blob.tobytes()
+    if isinstance(ciphertext, memoryview):
+        ciphertext = ciphertext.tobytes()
 
     # decrypt using the primary or fallback SECRET_KEY-created cipher
     last_err: Exception | None = None
     for cipher in _iter_ciphers():
         try:
-            return cipher.decrypt(blob).decode()
+            plaintext = cipher.decrypt(ciphertext).decode()
+            return plaintext
         except InvalidToken as e:
             last_err = e
     raise last_err if last_err is not None else InvalidToken()
