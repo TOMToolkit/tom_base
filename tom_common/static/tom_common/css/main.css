@@ -27,6 +27,11 @@ body {
   padding: 3rem 1.5rem;
 }
 
+.modal-content {
+  background-color: var(--theme_primary);
+  color: var(--theme_text_primary);
+}
+
 .card {
   background-color: var(--theme_accent1);
   color: var(--theme_text_primary);
@@ -86,6 +91,11 @@ body {
 textarea {
     overflow-y: auto;
     overflow-x: hidden;
+}
+
+button.close {
+  color: var(--theme_text_primary);
+  text-shadow: var(--theme_accent3);
 }
 
 /* Set link themes */
