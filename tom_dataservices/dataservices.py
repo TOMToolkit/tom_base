@@ -15,6 +15,7 @@ from django.urls import reverse
 from guardian.shortcuts import assign_perm
 
 from tom_targets.models import TargetName, Target
+from tom_targets.base_models import get_target_model_app_label
 
 logger = logging.getLogger(__name__)
 
@@ -323,6 +324,7 @@ class DataService(ABC):
         """
         Create and save new reduced_datums of the appropriate data_type from the query results
         Be sure to use `ReducedDatum.objects.get_or_create()` when creating new objects.
+        NOTE: Setting `ReducedDatum.source` to the the `DataService.name` will allow for automated data updates.
 
         :param target: Target Object to be associated with the reduced data
         :param data: List of data dictionaries of the appropriate `data_type`
@@ -354,21 +356,23 @@ class DataService(ABC):
                 # Give the user access to the target they created
                 if request:
                     target.give_user_access(request.user)
+                    target_app_label = get_target_model_app_label()
                     for group in request.user.groups.all():
-                        assign_perm('tom_targets.view_target', group, target)
-                        assign_perm('tom_targets.change_target', group, target)
-                        assign_perm('tom_targets.delete_target', group, target)
+                        assign_perm(f'{target_app_label}.view_target', group, target)
+                        assign_perm(f'{target_app_label}.change_target', group, target)
+                        assign_perm(f'{target_app_label}.delete_target', group, target)
             except IntegrityError:
                 target = Target.objects.get(name=target.name)
-                messages.warning(request,
-                                 mark_safe(
-                                    f"""The target,
-                                    <a href="{reverse('targets:detail', kwargs={'pk': target.id})}">
-                                    {target.name}</a> already exists, any new data has been ingested.
-                                    You can <a href="{reverse('targets:create') + '?' +
-                                                      urlencode(target.as_dict())}">create</a> a new target anyway.
-                                    """)
-                                 )
+                if request:
+                    message = f"""The target,
+                                        <a href="{reverse('targets:detail', kwargs={'pk': target.id})}">
+                                        {target.name}</a> already exists, any new data has been ingested.
+                                        You can <a href="{reverse('targets:create') + '?' +
+                                                          urlencode(target.as_dict())}">create</a> a new target anyway.
+                                        """
+                    messages.warning(request, mark_safe(message))
+                else:
+                    logger.warning(f"The target, {target.name}, already exists. Any new data will be ingested.")
             # Save Aliases
             self.to_aliases(target, target_result.get('aliases', []))
             return target

@@ -202,9 +202,6 @@ TOM_FACILITY_CLASSES = [
 # }
 MATCH_MANAGERS = {}
 
-#
-# tom_alerts configuration
-#
 
 #
 # tom_dataproducts configuration
@@ -228,15 +225,6 @@ DATA_PROCESSORS = {
 
 # Configuration for the TOM/Kafka Stream receiving data from this TOM
 # DATA_SHARING = {
-#     'hermes': {
-#         'DISPLAY_NAME': os.getenv('HERMES_DISPLAY_NAME', 'Hermes'),
-#         'BASE_URL': os.getenv('HERMES_BASE_URL', 'https://hermes.lco.global/'),
-#         'CREDENTIAL_USERNAME': os.getenv('SCIMMA_CREDENTIAL_USERNAME',
-#                                          'set SCIMMA_CREDENTIAL_USERNAME value in environment'),
-#         'CREDENTIAL_PASSWORD': os.getenv('SCIMMA_CREDENTIAL_PASSWORD',
-#                                          'set SCIMMA_CREDENTIAL_PASSWORD value in environment'),
-#         'USER_TOPICS': ['hermes.test', 'tomtoolkit.test']
-#     },
 #     'tom-demo-dev': {
 #         'DISPLAY_NAME': os.getenv('TOM_DEMO_DISPLAY_NAME', 'TOM Demo Dev'),
 #         'BASE_URL': os.getenv('TOM_DEMO_BASE_URL', 'http://tom-demo-dev.lco.gtn/'),

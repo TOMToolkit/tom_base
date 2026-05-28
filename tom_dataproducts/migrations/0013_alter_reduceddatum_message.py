@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tom_alerts', '0007_alter_alertstreammessage_message_id'),
+        # ('tom_alerts', '0007_alter_alertstreammessage_message_id'),
         ('tom_dataproducts', '0012_alter_reduceddatum_data_product_and_more'),
     ]
 

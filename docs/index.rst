@@ -48,7 +48,7 @@ Topics
   :hidden:
 
   targets/index
-  brokers/index
+  data_services/index
   observing/index
   managing_data/index
   customization/index
@@ -61,7 +61,7 @@ Topics
 
 :doc:`Targets <targets/index>` - Learn all about how to manage Targets in a TOM.
 
-:doc:`Brokers <brokers/index>` - Find out about querying brokers in the TOM, which are available, and writing your own.
+:doc:`Data Services <data_services/index>` - Find out about querying external data repositories in the TOM, which are available, and writing your own.
 
 :doc:`Observing <observing/index>` - Tutorials on submitting observations, customizing submission, and the available facilities.
 

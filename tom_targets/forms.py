@@ -14,6 +14,7 @@ from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from tom_observations.utils import get_facilities
 from tom_dataproducts.sharing import get_sharing_destination_options
 from .models import Target, TargetExtra, TargetName, TargetList, PersistentShare
+from .base_models import get_target_model_app_label
 from tom_targets.base_models import (SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
                                      REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME,
                                      IGNORE_FIELDS)
@@ -97,15 +98,16 @@ class TargetForm(forms.ModelForm):
                     )
                     updated_target_extra.save()
             # Save groups for this target
+            target_app_label = get_target_model_app_label()
             for group in self.cleaned_data['groups']:
-                assign_perm('tom_targets.view_target', group, instance)
-                assign_perm('tom_targets.change_target', group, instance)
-                assign_perm('tom_targets.delete_target', group, instance)
+                assign_perm(f'{target_app_label}.view_target', group, instance)
+                assign_perm(f'{target_app_label}.change_target', group, instance)
+                assign_perm(f'{target_app_label}.delete_target', group, instance)
             for group in get_groups_with_perms(instance):
                 if group not in self.cleaned_data['groups']:
-                    remove_perm('tom_targets.view_target', group, instance)
-                    remove_perm('tom_targets.change_target', group, instance)
-                    remove_perm('tom_targets.delete_target', group, instance)
+                    remove_perm(f'{target_app_label}.view_target', group, instance)
+                    remove_perm(f'{target_app_label}.change_target', group, instance)
+                    remove_perm(f'{target_app_label}.delete_target', group, instance)
 
         return instance
 

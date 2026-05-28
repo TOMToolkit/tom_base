@@ -99,7 +99,8 @@ class TNSDataService(DataService):
             }
     """
     name = 'TNS'
-    info_url = 'https://tom-toolkit.readthedocs.io/en/latest/api/tom_alerts/brokers.html#module-tom_alerts.brokers.tns'
+    info_url = 'https://tom-toolkit.readthedocs.io/en/latest/api/tom_dataservices/' + \
+               'data_services.html#module-tom_dataservices.data_services.tns'
     query_results_table = 'tom_dataservices/tns/partials/tns_query_results_table.html'
 
     @classmethod
