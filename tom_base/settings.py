@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import logging.config
 import os
 import tempfile
+from tom_common.default_settings import *  # noqa: F403
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -33,52 +34,12 @@ ALLOWED_HOSTS = ['']
 
 TOM_NAME = 'TOM Toolkit'
 
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.sites',
-    'django_extensions',
-    'django_tasks',
-    'django_tasks.backends.database',
-    'guardian',
-    'tom_common',
-    'django_comments',
-    'bootstrap4',
-    'crispy_bootstrap4',
-    'crispy_forms',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'django_filters',
-    'django_tables2',
-    'django_gravatar',
-    'django_htmx',
-    'tom_targets',
-    'tom_alerts',
-    'tom_catalogs',
-    'tom_observations',
-    'tom_dataproducts',
-    'tom_dataservices',
-    'tom_calendar',
+INSTALLED_APPS = TOMTOOKIT_INSTALLED_APPS + [  # noqa: F405
 ]
 
 SITE_ID = 1
 
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django_htmx.middleware.HtmxMiddleware',
-    'tom_common.middleware.Raise403Middleware',
-    'tom_common.middleware.ExternalServiceMiddleware',
-    'tom_common.middleware.AuthStrategyMiddleware',
+MIDDLEWARE = TOMTOOKIT_MIDDLEWARE + [  # noqa: F405
 ]
 
 ROOT_URLCONF = 'tom_common.urls'
@@ -233,9 +194,6 @@ TOM_FACILITY_CLASSES = [
 # }
 MATCH_MANAGERS = {}
 
-#
-# tom_alerts configuration
-#
 
 #
 # tom_dataproducts configuration
@@ -259,15 +217,6 @@ DATA_PROCESSORS = {
 
 # Configuration for the TOM/Kafka Stream receiving data from this TOM
 # DATA_SHARING = {
-#     'hermes': {
-#         'DISPLAY_NAME': os.getenv('HERMES_DISPLAY_NAME', 'Hermes'),
-#         'BASE_URL': os.getenv('HERMES_BASE_URL', 'https://hermes.lco.global/'),
-#         'CREDENTIAL_USERNAME': os.getenv('SCIMMA_CREDENTIAL_USERNAME',
-#                                          'set SCIMMA_CREDENTIAL_USERNAME value in environment'),
-#         'CREDENTIAL_PASSWORD': os.getenv('SCIMMA_CREDENTIAL_PASSWORD',
-#                                          'set SCIMMA_CREDENTIAL_PASSWORD value in environment'),
-#         'USER_TOPICS': ['hermes.test', 'tomtoolkit.test']
-#     },
 #     'tom-demo-dev': {
 #         'DISPLAY_NAME': os.getenv('TOM_DEMO_DISPLAY_NAME', 'TOM Demo Dev'),
 #         'BASE_URL': os.getenv('TOM_DEMO_BASE_URL', 'http://tom-demo-dev.lco.gtn/'),

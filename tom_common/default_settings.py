@@ -34,10 +34,9 @@ TOMTOOKIT_INSTALLED_APPS = [
     'django_gravatar',
     'django_htmx',
     'tom_targets',
-    'tom_alerts',
-    'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
+    'tom_dataservices',
     'tom_calendar',
 ]
 

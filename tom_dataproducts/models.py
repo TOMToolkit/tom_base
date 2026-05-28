@@ -13,7 +13,6 @@ from PIL import Image
 from importlib import import_module
 
 from tom_targets.base_models import BaseTarget
-from tom_alerts.models import AlertStreamMessage
 from tom_observations.models import ObservationRecord
 
 logger = logging.getLogger(__name__)
@@ -311,13 +310,37 @@ class DataProduct(models.Model):
         return
 
 
+class ReducedDatumQuerySet(models.query.QuerySet):
+    """
+    This is a custom queryset that allows us to extend the get_or_create to coincide with our custom validate_unique
+    for ReducedDatum objects so that getting a ReducedDatum with get_or_create will return identical datums from
+    different sources.
+    """
+    def get_or_create(self, defaults=None, **kwargs):
+        try:
+            return super().get_or_create(defaults, **kwargs)
+        except ValidationError as e:
+            logger.warning(f'{e}')
+            defaults = {}
+            default_fields = ['source_name', 'source_location', 'message']
+            for field in default_fields:
+                if kwargs.get(field):
+                    defaults.update({'field': kwargs.pop(field)})
+            return super().get_or_create(defaults, **kwargs)
+
+
+class ReducedDatumManager(models.Manager):
+    def get_queryset(self):
+        return ReducedDatumQuerySet(self.model)
+
+
 class ReducedDatum(models.Model):
     """
     Class representing a datum in a TOM.
 
     A ``ReducedDatum`` generally refers to a single piece of data--e.g., a spectrum, or a photometry point. It is
     associated with a target, and optionally with the data product it came from. An example of a ``ReducedDatum``
-    without an associated data product would be photometry ingested from a broker.
+    without an associated data product would be photometry ingested from a data service.
 
     :param target: The ``Target`` with which this object is associated.
 
@@ -327,8 +350,9 @@ class ReducedDatum(models.Model):
         DATA_PRODUCT_TYPES in settings.py.
     :type data_type: str
 
-    :param source_name: The original source of this datum. The current major use of this field is to track the broker a
-                        datum came from, but can be used for other sources.
+    :param source_name: The original source of this datum. The current major use of this field is to track the data
+                        service a datum came from, but can be used for other sources.
+
     :type source_name: str
 
     :param source_location: A reference to the location that this datum was originally sourced from. The current major
@@ -361,9 +385,6 @@ class ReducedDatum(models.Model):
                     }
     :type value: dict
 
-    :param message: Set of ``AlertStreamMessage`` objects this object is associated with.
-    :type message: ManyRelatedManager object
-
     """
 
     target = models.ForeignKey(BaseTarget, null=False, on_delete=models.CASCADE)
@@ -376,7 +397,8 @@ class ReducedDatum(models.Model):
     source_location = models.CharField(max_length=200, default='', blank=True)
     timestamp = models.DateTimeField(null=False, blank=False, default=timezone.now, db_index=True)
     value = models.JSONField(null=False, blank=False)
-    message = models.ManyToManyField(AlertStreamMessage, blank=True)
+
+    objects = ReducedDatumManager()
 
     class Meta:
         get_latest_by = ('timestamp',)
@@ -397,7 +419,7 @@ class ReducedDatum(models.Model):
     def validate_unique(self, *args, **kwargs):
         """
         Validates that the ReducedDatum is unique. Because the `value` field is a JSONField, it is not possible to rely
-        on standard validation.
+        on standard validation. Also, We do not want to repeat identical data from two different sources.
 
         Do nothing if the uniqueness test passes. Otherwise, raise a ValidationError.
 
@@ -412,9 +434,10 @@ class ReducedDatum(models.Model):
                                                               timestamp=self.timestamp,
                                                               value=self.value)
             if existing_reduced_datum and existing_reduced_datum.id != self.id:  # not the same object
+                existing_source = existing_reduced_datum.__dict__.get('source_name', 'Unknown Source')
                 # found ReducedDatum with the same values. Don't save this duplicate ReducedDatum.
-                raise ValidationError(f'ReducedDatum already exists: {self.data_type} data with value of {self.value} '
-                                      f'found for {self.target} at {self.timestamp}')
+                raise ValidationError(f'ReducedDatum already exists: Identical {self.data_type} data '
+                                      f'found for {self.target} from {existing_source}.')
         except ReducedDatum.DoesNotExist:
             # this means that our check for uniqueness passed: so do not raise ValidationError
             pass

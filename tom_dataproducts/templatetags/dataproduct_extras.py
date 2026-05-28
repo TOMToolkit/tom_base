@@ -1,5 +1,4 @@
 import logging
-from urllib.parse import urlencode
 
 from django import template
 from django import forms
@@ -206,14 +205,10 @@ def get_photometry_data(context, target, target_share=False):
     form = DataShareForm(initial=initial)
     form.fields['data_type'].widget = forms.HiddenInput()
 
-    sharing = getattr(settings, "DATA_SHARING", None)
-    hermes_sharing = sharing and sharing.get('hermes', {}).get('HERMES_API_KEY')
-
     context = {'data': data,
                'target': target,
                'target_data_share_form': form,
                'sharing_destinations': form.fields['share_destination'].choices,
-               'hermes_sharing': hermes_sharing,
                'target_share': target_share}
     return context
 
@@ -417,11 +412,6 @@ def spectroscopy_for_target(context, target, dataproduct=None):
         'target': target,
         'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
     }
-
-
-@register.inclusion_tag('tom_dataproducts/partials/update_broker_data_button.html', takes_context=True)
-def update_broker_data_button(context):
-    return {'query_params': urlencode(context['request'].GET.dict())}
 
 
 def draw_point(draw, x, y, color):

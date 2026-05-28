@@ -53,7 +53,7 @@ to implement the specific features that their science case requires. The toolkit
 tries to facilitate this as efficiently as possible and provides
 :doc:`documentation <index>` in areas of customization from :doc:`changing the HTML layout of a page </customization/customize_templates>`
 to :doc:`customizing an OCS facility and forms </observing/customize_ocs_facility>` and even 
-:doc:`creating a new alert broker </brokers/create_broker>`.
+:doc:`creating a new data service module </data_services/create_dataservice>`.
 
 Django, and by extension the toolkit, rely heavily on object oriented
 programming, especially inheritance. Most customization in the TOM toolkit comes
@@ -74,8 +74,8 @@ Plugin Architecture
 
 Some areas of the TOM implement a plugin based architecture to support multiple
 implementations of a similar functionality. An example would be the
-`tom_observations`` module in which every supported observatory is implemented
-as its own plugin. The ``tom_catalogs`` and ``tom_alerts`` work in the same way: the
+``tom_observations`` module in which every supported observatory is implemented
+as its own plugin. The ``tom_dataservices`` module works in the same way: the
 module defines the interface and generic functionality and each implementation
 fills in its own logic.
 
@@ -133,7 +133,7 @@ Django Reusable Apps
 ====================
 
 As previously mentioned, one of the reasons for Django's popularity is its
-modularity. Django has the concept of `reusable apps <https://docs.djangoproject.com/en/2.2/intro/reusable-apps/>`_ which are just
+modularity. Django has the concept of `reusable apps <https://docs.djangoproject.com/en/stable/intro/reusable-apps/>`_ which are just
 python packages that are specifically meant to be used inside a Django project.
 The majority of the the toolkit's functionality is implemented in a series of
 Django apps. While most of the apps are required, some may be omitted entirely
@@ -184,33 +184,25 @@ or in the cloud) as well as displaying certain kinds of data. It also provides
 code hooks where TOM developers can run their own functions on the data in case
 specialized data processing, analytics or pipelining is required.
 
-TOM Alerts
-----------
+TOM Data Services
+-----------------
 
-The `tom_alerts <https://github.com/TOMToolkit/tom_base/tree/main/tom_alerts>`_
+The `tom_dataservices <https://github.com/TOMToolkit/tom_base/tree/main/tom_dataservices>`_
 app contains modules related to the functionality of ingesting targets from
-various external services. These services, usually called brokers, provide
-rapidly changing target lists that are of interest to time domain astronomers.
+various external services. These services, usually brokers or catalogs, provide
+lists of targets and/or data that can be queried via an API.
+
+Several data services are built into the default TOMToolkit, including `ALeRCE <https://science.alerce.online/>`_,
+`MPC <https://data.minorplanetcenter.net/explorer/>`_, `Simbad <https://simbad.u-strasbg.fr/simbad/>`_, and `NED <https://ned.ipac.caltech.edu/>`_. These
+external services can be used by any TOM to search for and import new targets.
+
 The
-`alerts.py <https://github.com/TOMToolkit/tom_base/blob/main/tom_alerts/alerts.py>`_
+`dataservices.py <https://github.com/TOMToolkit/tom_base/blob/main/tom_dataservices/dataservices.py>`_
 module provides a generic interface that other modules can implement, giving
-them the ability to integrate these brokers with the toolkit. Currently, there are
+them the ability to integrate new dataservices with the toolkit. Currently, there are
 modules available for `Lasair <https://lasair.roe.ac.uk>`_,
-`MARS <https://mars.lco.global>`_, `SCOUT <https://cneos.jpl.nasa.gov/scout/intro.html>`_, and others,
-with more planned for the future.
-
-TOM Catalogs
-------------
-
-The
-`tom_catalogs <https://github.com/TOMToolkit/tom_base/tree/main/tom_catalogs>`_
-app contains functionality related to querying astronomical catalogs. These
-"harvester" modules enable the querying and translation of targets found in
-databases such as Simbad and JPL Horizons directly into targets within the
-toolkit. The
-`harvester.py <https://github.com/TOMToolkit/tom_base/blob/main/tom_catalogs/harvester.py>`_
-module provides the basic interface, and there are several modules already
-written for Simbad, NED, the MPC, JPL Horizons and the Transient Name Server.
+`ANTARES <https://antares.noirlab.edu/loci>`_, `SCOUT <https://cneos.jpl.nasa.gov/scout/intro.html>`_, and others,
+with more planned for the future. See :doc:`TOM Plugins </api/plugins>` for a full list.
 
 TOM Setup and TOM Common
 ------------------------
@@ -283,8 +275,8 @@ A ``ReducedDatum`` is a single point of data associated with a ``Target`` and op
 spectrum. The ``ReducedDatum`` model has the following fields, in addition to its aforementioned
 foreign key relationships:
 
-- ``data_type`` is maintained on both the ``ReducedDatum`` and ``DataProduct`` for the case when data is brought in from another source, such as a broker
-- The ``source_name`` optionally refers to the original source of the data. The intent of this field was to track data ingested from brokers, but could potentially be used for other purposes.
+- ``data_type`` is maintained on both the ``ReducedDatum`` and ``DataProduct`` for the case when data is brought in from another source, such as an external data service.
+- The ``source_name`` optionally refers to the original source of the data. The intent of this field was to track data ingested from a dataservice, such as a broker, but could potentially be used for other purposes.
 - ``source_location`` optionally gives a hard location to the source--for a broker, it would be a link to the original alert.
 - The ``timestamp`` time at which the datum was produced.
 - ``value`` is a ``TextField`` that can take any series of data. As implemented, photometry is stored as JSON with keys for magnitude and error, but the ``TextField`` provides flexibility for additional photometry values on the datum. Spectroscopy is also stored as JSON, with keys for ``magnitude`` and ``flux``.
