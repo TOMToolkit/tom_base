@@ -5,7 +5,7 @@ from .views import TargetDeleteView, TargetListView, TargetImportView, TargetExp
 from .views import (TargetGroupingView, TargetGroupingDeleteView, TargetGroupingCreateView,
                     TargetAddRemoveGroupingView, TargetMergeView, TargetPersistentShareManageFormView,
                     PersistentShareManageFormView, TargetPersistentShareManageTable, PersistentShareManageTable)
-from .views import TargetGroupingShareView, TargetHermesPreloadView, TargetGroupingHermesPreloadView
+from .views import TargetGroupingShareView
 from .views import TargetFacilitySelectionView
 from .views import TargetSeedView
 from .viewsets import PersistentShareViewSet
@@ -34,14 +34,11 @@ urlpatterns = [
     path('<int:pk>/update/', TargetUpdateView.as_view(), name='update'),
     path('<int:pk>/delete/', TargetDeleteView.as_view(), name='delete'),
     path('<int:pk>/share/', TargetShareView.as_view(), name='share'),
-    path('<int:pk>/hermes-preload/', TargetHermesPreloadView.as_view(), name='hermes-preload'),
     path('<int:pk>/', TargetDetailView.as_view(), name='detail'),
     path('<int:pk>/observation-list/', render_observation_table, name='render-observation-table'),
     path('targetgrouping/<int:pk>/delete/', TargetGroupingDeleteView.as_view(), name='delete-group'),
     path('targetgrouping/create/', TargetGroupingCreateView.as_view(), name='create-group'),
     path('targetgrouping/<int:pk>/share/', TargetGroupingShareView.as_view(), name='share-group'),
-    path('targetgrouping/<int:pk>/hermes-preload/', TargetGroupingHermesPreloadView.as_view(),
-         name='group-hermes-preload'),
     path('persistentshare/manage/', PersistentShareManageFormView.as_view(), name='persistent-share-manage-form'),
     path('<int:target_pk>/persistentshare/manage/', TargetPersistentShareManageFormView.as_view(),
          name='target-persistent-share-manage-form'),
