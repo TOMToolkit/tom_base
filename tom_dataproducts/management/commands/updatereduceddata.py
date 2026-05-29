@@ -35,7 +35,7 @@ class Command(BaseCommand):
                 for model in REDUCED_DATUM_MODELS:
                     target_source_names.update(
                         model.objects.filter(target=target).filter(source_name__in=dataservice_classes.keys())
-                                    .values_list('source_name', flat=True).distinct()
+                        .values_list('source_name', flat=True).distinct()
                     )
                 sources = list(target_source_names)
                 targets = [target]
@@ -47,7 +47,7 @@ class Command(BaseCommand):
             for model in REDUCED_DATUM_MODELS:
                 all_source_names.update(
                     model.objects.filter(source_name__in=dataservice_classes.keys())
-                                .values_list('source_name', flat=True).distinct()
+                    .values_list('source_name', flat=True).distinct()
                 )
             sources = list(all_source_names)
 

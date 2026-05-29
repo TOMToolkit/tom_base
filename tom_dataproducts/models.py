@@ -12,7 +12,6 @@ from django.utils import text, timezone
 from fits2image.conversions import fits_to_jpg
 from PIL import Image
 
-from tom_targets.base_models import BaseTarget
 from tom_observations.models import ObservationRecord
 from tom_targets.base_models import BaseTarget
 

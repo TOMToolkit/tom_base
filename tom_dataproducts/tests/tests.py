@@ -3,7 +3,6 @@ from http import HTTPStatus
 import os
 import tempfile
 from datetime import date, time
-from http import HTTPStatus
 from unittest.mock import patch
 
 import numpy as np
