@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
-from typing import List
+from typing import List, Dict, Optional
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -320,7 +320,7 @@ class DataService(ABC):
                 reduced_datum_list += self.create_reduced_datums_from_query(target, data_results[key], key, **kwargs)
         return reduced_datum_list
 
-    def create_reduced_datums_from_query(self, target, data: List, data_type=None, **kwargs) -> List:
+    def create_reduced_datums_from_query(self, target, data: Dict, data_type: Optional[str]=None, **kwargs) -> List:
         """
         Create and save new reduced_datums of the appropriate data_type from the query results
         Be sure to use `ReducedDatum.objects.get_or_create()` when creating new objects.
