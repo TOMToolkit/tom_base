@@ -1,12 +1,15 @@
 from http import HTTPStatus
 from io import StringIO
+from types import SimpleNamespace
 import tempfile
 import logging
 
 from cryptography.fernet import InvalidToken
 
+from django import forms
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.core.exceptions import FieldError, ValidationError
 from django.core.management import call_command
 from django.urls import reverse
 from django_comments.models import Comment
@@ -16,6 +19,7 @@ from django.test.runner import DiscoverRunner
 
 from tom_common.models import Profile
 from tom_common import encryption
+from tom_common.encryption import EncryptedFormField, EncryptedModelField, _KEEP_EXISTING
 from tom_targets.tests.factories import SiderealTargetFactory
 from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
 from tom_common.templatetags.bootstrap4_overrides import bootstrap_pagination
@@ -508,45 +512,198 @@ class TestDerivedCipher(TestCase):
         self.assertEqual(encryption.decrypt(blob), plaintext)
 
 
-class TestEncryptedPropertyRoundTrip(TestCase):
-    """Tests for the EncryptedProperty descriptor's read/write flow.
+class TestEncryptedModelFieldRoundTrip(TestCase):
+    """Unit tests for EncryptedModelField's per-method behavior.
 
-    Uses a plain in-test class rather than a Django model. The descriptor
-    only needs ``getattr(instance, db_field_name)`` and ``setattr(...)``
-    to work — both of which standard Python attribute access supplies.
-    Django ORM integration with BinaryField is well-tested by Django
-    itself.
+    Exercises the field's pure methods (``from_db_value``, ``to_python``,
+    ``get_prep_value``, ``value_from_object``, ``value_to_string``,
+    ``get_lookup``, ``formfield``) without a live database. Full
+    ModelForm + ORM integration — including the blank-submission
+    preservation mechanism — is exercised against a real model in the
+    demo app's test suite.
+
+    Field instances are built via ``set_attributes_from_name`` to
+    populate ``.name`` and ``.attname``, mirroring what Django does
+    during ``contribute_to_class`` on a real model declaration.
     """
 
-    def _build_target_class(self):
-        from tom_common.models import EncryptedProperty
+    def _build_field(self, name: str = 'secret') -> EncryptedModelField:
+        field = EncryptedModelField(null=True, blank=True)
+        field.set_attributes_from_name(name)
+        return field
 
-        class _Target:
-            _secret_encrypted = None  # stand-in for a BinaryField slot
-            secret = EncryptedProperty('_secret_encrypted')
-        return _Target
+    @override_settings(SECRET_KEY='emf-roundtrip')
+    def test_get_prep_value_then_from_db_value_yields_original_plaintext(self):
+        field = self._build_field()
+        ciphertext = field.get_prep_value('shh-secret-value')
+        self.assertIsInstance(ciphertext, bytes)
+        self.assertNotIn(b'shh-secret-value', ciphertext)
+        plaintext = field.from_db_value(ciphertext, None, None)
+        self.assertEqual(plaintext, 'shh-secret-value')
 
-    @override_settings(SECRET_KEY='ep-roundtrip-secret')
-    def test_write_then_read_yields_original_plaintext(self):
-        target = self._build_target_class()()
-        target.secret = 'shh-secret-value'
+    @override_settings(SECRET_KEY='emf-memoryview')
+    def test_from_db_value_normalises_memoryview_to_bytes(self):
+        # psycopg returns memoryview rather than bytes for binary columns;
+        # SQLite returns bytes. The field must handle both transparently.
+        field = self._build_field()
+        ciphertext = field.get_prep_value('postgres-style-secret')
+        plaintext = field.from_db_value(memoryview(ciphertext), None, None)
+        self.assertEqual(plaintext, 'postgres-style-secret')
 
-        # The underlying slot holds ciphertext bytes, not plaintext.
-        self.assertIsInstance(target._secret_encrypted, bytes)
-        self.assertNotIn(b'shh-secret-value', target._secret_encrypted)
-        # Reading the property decrypts.
-        self.assertEqual(target.secret, 'shh-secret-value')
+    def test_from_db_value_none_returns_none(self):
+        field = self._build_field()
+        self.assertIsNone(field.from_db_value(None, None, None))
 
-    @override_settings(SECRET_KEY='ep-empty-secret')
-    def test_empty_value_stores_none_and_reads_as_empty_string(self):
-        target = self._build_target_class()()
-        # Unset reads as empty string (not None).
-        self.assertEqual(target.secret, '')
-        # Setting empty stores None in the binary field.
-        target.secret = ''
-        self.assertIsNone(target._secret_encrypted)
-        # And reads as empty string again.
-        self.assertEqual(target.secret, '')
+    def test_get_prep_value_treats_none_and_empty_string_as_no_value(self):
+        # Both store as NULL — avoids producing an encrypted empty-string
+        # row when a caller writes ``instance.api_key = ''``.
+        field = self._build_field()
+        self.assertIsNone(field.get_prep_value(None))
+        self.assertIsNone(field.get_prep_value(''))
+
+    @override_settings(SECRET_KEY='emf-to-python-str')
+    def test_to_python_passes_plaintext_str_through(self):
+        field = self._build_field()
+        self.assertEqual(field.to_python('plaintext'), 'plaintext')
+        self.assertIsNone(field.to_python(None))
+
+    @override_settings(SECRET_KEY='emf-to-python-bytes')
+    def test_to_python_decrypts_bytes(self):
+        # Fixture deserialization can pass bytes to to_python.
+        field = self._build_field()
+        ciphertext = field.get_prep_value('decrypt-me')
+        self.assertEqual(field.to_python(ciphertext), 'decrypt-me')
+
+    def test_to_python_refuses_redacted_placeholder(self):
+        # dumpdata round-trip protection: loading the placeholder back
+        # would silently encrypt the literal placeholder string as the
+        # new "secret". Raise instead.
+        field = self._build_field()
+        with self.assertRaises(ValidationError):
+            field.to_python(field.REDACTED)
+
+    def test_get_lookup_raises_field_error_for_any_lookup(self):
+        # Fernet ciphertext cannot match a plaintext query under any
+        # lookup. Refuse early and explicitly.
+        field = self._build_field()
+        with self.assertRaises(FieldError):
+            field.get_lookup('exact')
+        with self.assertRaises(FieldError):
+            field.get_lookup('icontains')
+
+    def test_value_from_object_returns_redacted_placeholder_when_value_set(self):
+        # Redaction in serialization: DRF ModelSerializer and admin
+        # display introspection must not see the plaintext.
+        field = self._build_field()
+        obj = SimpleNamespace()
+        obj.__dict__[field.attname] = 'real-plaintext'
+        self.assertEqual(field.value_from_object(obj), field.REDACTED)
+
+    def test_value_from_object_returns_none_when_value_unset(self):
+        field = self._build_field()
+        obj = SimpleNamespace()
+        obj.__dict__[field.attname] = None
+        self.assertIsNone(field.value_from_object(obj))
+
+    def test_value_to_string_returns_redacted_placeholder_when_value_set(self):
+        # dumpdata output: emit the placeholder rather than leaking the
+        # plaintext into a fixture file.
+        field = self._build_field()
+        obj = SimpleNamespace()
+        obj.__dict__[field.attname] = 'real-plaintext'
+        self.assertEqual(field.value_to_string(obj), field.REDACTED)
+
+    def test_value_to_string_returns_empty_when_value_unset(self):
+        field = self._build_field()
+        obj = SimpleNamespace()
+        obj.__dict__[field.attname] = None
+        self.assertEqual(field.value_to_string(obj), '')
+
+    def test_formfield_returns_encrypted_form_field_instance(self):
+        field = self._build_field()
+        form_field = field.formfield()
+        self.assertIsInstance(form_field, EncryptedFormField)
+
+    def test_field_is_editable_by_default(self):
+        # Regression guard: BinaryField (the parent) defaults editable=False.
+        # If we inherit that default, modelform_factory drops the field
+        # silently — or, when explicitly named in Meta.fields, raises
+        # FieldError before formfield() is ever called. UpdateView /
+        # ModelForm consumers must see editable=True for the field to
+        # participate in forms.
+        self.assertTrue(self._build_field().editable)
+
+    def test_to_python_passes_keep_existing_sentinel_through(self):
+        # Regression guard for a bug found in live testing: ModelForm's
+        # _post_clean runs Model.full_clean, which runs Model.clean_fields,
+        # which calls setattr(instance, attname, field.clean(raw_value, instance))
+        # on every field. Field.clean calls to_python. If to_python coerces
+        # the sentinel to str(sentinel), that string then replaces the
+        # sentinel on the instance before pre_save ever runs — and the
+        # blank-submission preservation breaks silently. The fix: pass the
+        # sentinel through to_python untouched.
+        field = self._build_field()
+        self.assertIs(field.to_python(_KEEP_EXISTING), _KEEP_EXISTING)
+
+    def test_field_clean_preserves_keep_existing_sentinel(self):
+        # Integration-level guard for the same regression: exercise the
+        # full Field.clean() pipeline (to_python + validate + run_validators)
+        # that Model.clean_fields invokes during ModelForm._post_clean.
+        field = self._build_field()
+        # model_instance=None is acceptable: Field.validate doesn't dereference
+        # it for nullable/blankable fields with no choices.
+        self.assertIs(field.clean(_KEEP_EXISTING, model_instance=None), _KEEP_EXISTING)
+
+    def test_get_prep_value_treats_keep_existing_sentinel_as_no_value(self):
+        # Defensive guard for any path that bypasses pre_save and lands the
+        # sentinel in get_prep_value — better to write NULL than to
+        # encrypt str(sentinel) and persist garbage.
+        field = self._build_field()
+        self.assertIsNone(field.get_prep_value(_KEEP_EXISTING))
+
+
+class TestEncryptedFormField(TestCase):
+    """Tests for the form-side companion: blank-as-no-change and masked widget."""
+
+    def test_clean_blank_string_returns_keep_existing_sentinel(self):
+        # The footgun guard: a blank submission must signal "preserve
+        # existing", not "set to blank". The model field's pre_save
+        # recognises the sentinel.
+        form_field = EncryptedFormField()
+        self.assertIs(form_field.clean(''), _KEEP_EXISTING)
+
+    def test_clean_none_returns_keep_existing_sentinel(self):
+        form_field = EncryptedFormField()
+        self.assertIs(form_field.clean(None), _KEEP_EXISTING)
+
+    def test_clean_non_blank_value_passes_through(self):
+        form_field = EncryptedFormField()
+        self.assertEqual(form_field.clean('user-typed-value'), 'user-typed-value')
+
+    def test_has_changed_blank_submission_is_false_even_when_initial_set(self):
+        # Consistent with clean(): ModelForm.changed_data must not flag
+        # the field on a blank submission, otherwise downstream change
+        # tracking sees a spurious edit.
+        form_field = EncryptedFormField()
+        self.assertFalse(form_field.has_changed('existing-secret', ''))
+        self.assertFalse(form_field.has_changed('existing-secret', None))
+
+    def test_has_changed_real_edit_is_true(self):
+        form_field = EncryptedFormField()
+        self.assertTrue(form_field.has_changed('existing-secret', 'new-secret'))
+
+    def test_default_widget_is_password_input_without_render_value(self):
+        # render_value=False is what keeps the existing secret out of the
+        # rendered HTML when an admin opens the change form.
+        form_field = EncryptedFormField()
+        self.assertIsInstance(form_field.widget, forms.PasswordInput)
+        self.assertFalse(form_field.widget.render_value)
+
+    def test_required_defaults_to_false(self):
+        # The field's purpose is in-place rotation of an existing secret;
+        # required=True would interact badly with blank-as-no-change.
+        form_field = EncryptedFormField()
+        self.assertFalse(form_field.required)
 
 
 class TestSecretKeyFallbacks(TestCase):
@@ -590,13 +747,13 @@ class TestRotateEncryptionKeyCommand(TestCase):
     """Tests for the ``rotate_encryption_key`` management command.
 
     The command's load-bearing per-value operation is: read each
-    ``EncryptedProperty`` value through ``decrypt()`` (which tries the
-    primary key first, then each fallback) and write it back through
-    ``encrypt()`` (which always uses the primary). We exercise that
-    pattern directly — there is no Django model in ``tom_common`` that
-    uses ``EncryptedProperty``, so we can't run the full command against
-    real data in the test DB. The pattern itself is the same one the
-    command applies row-by-row.
+    ``EncryptedModelField`` value through ``decrypt()`` (which tries
+    the primary key first, then each fallback) and write it back
+    through ``encrypt()`` (which always uses the primary). We exercise
+    that pattern directly — there is no Django model in ``tom_common``
+    that uses ``EncryptedModelField``, so we can't run the full command
+    against real data in the test DB. The pattern itself is the same
+    one the command applies row-by-row.
     """
 
     def test_decrypt_then_encrypt_makes_data_independent_of_fallback(self):
@@ -619,8 +776,9 @@ class TestRotateEncryptionKeyCommand(TestCase):
 
     def test_command_runs_clean_when_no_encrypted_data_exists(self):
         """Smoke test: with no models in INSTALLED_APPS that use
-        EncryptedProperty (the situation for tom_base's own test suite),
-        the command should exit cleanly with a zero-count summary.
+        EncryptedModelField (the situation for tom_base's own test
+        suite), the command should exit cleanly with a zero-count
+        summary.
         """
         out = StringIO()
         call_command('rotate_encryption_key', stdout=out)
