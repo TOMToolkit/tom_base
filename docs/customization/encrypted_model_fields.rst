@@ -25,54 +25,37 @@ Encrypted fields are protected by a single Fernet cipher derived from
 
    Encryption protects data from passive database exposure. It does NOT
    protect against a server administrator with access to the
-   ``settings.SECRET_KEY``. If you need user-level isolation
-   from administrators, the toolkit's current scheme is not sufficient.
+   ``settings.SECRET_KEY``. If you need user-level isolation from
+   administrators, the toolkit's current scheme is not sufficient.
 
 Adding an encrypted field to a model
 ------------------------------------
 
-Two pieces are needed on the model: a ``BinaryField`` for the
-ciphertext, and an :class:`EncryptedProperty` descriptor that handles
-encryption on write and decryption on read.
+Declare an :class:`~tom_common.encryption.EncryptedModelField` alongside
+your other model fields:
 
 .. code-block:: python
 
-    from django.conf import settings
     from django.db import models
-    from tom_common.models import EncryptedProperty
+    from tom_common.encryption import EncryptedModelField
 
 
     class MyAppProfile(models.Model):
-	# you probably have a user OneToOneField here
+        # you probably have a user OneToOneField here
+        api_key = EncryptedModelField(null=True, blank=True)
 
-	# this is the encryption part:
-        _api_key_encrypted = models.BinaryField(null=True, blank=True)  # ciphertext (private)
-        api_key = EncryptedProperty('_api_key_encrypted')               # descriptor (public)
+That single declaration replaces the older
+``BinaryField + EncryptedProperty`` pair. The underlying database
+column is still binary (it holds the ciphertext bytes), but Django
+sees ``api_key`` as one normal named field — ``ModelForm``, the admin,
+DRF ``ModelSerializer``, and ``dumpdata`` all introspect it without
+any extra glue.
 
-By `convention <https://peps.python.org/pep-0008/#descriptive-naming-styles>`__, the ``BinaryField``'s name starts with an underscore —
-it is only referenced by the :class:`EncryptedProperty` descriptor; never
-read or write to the ``BinaryField`` directly.
+Reading and writing the value in code
+-------------------------------------
 
-Displaying an encrypted field
------------------------------
-
-When presenting an encrypted field
-to your users, you may wish to use ``tom_common``'s
-``revealable_password_input.html`` partial template.
-
-Add the following to your html partial or template where `password_value` is the value stored in the password field.
-.. code-block:: html
-
-    ...
-    {% include 'tom_common/partials/revealable_password_input.html' with value=password_value %}
-
-This will result in the password being displayed as a row of dots revealable on click.
-
-Reading and writing the field
------------------------------
-
-Access the encrypted field just like a regular Python attribute.
-The ``EncryptedProperty`` descriptor handles everything:
+Access the field like any other Python attribute. The field handles
+encryption on save and decryption on load:
 
 .. code-block:: python
 
@@ -82,40 +65,108 @@ The ``EncryptedProperty`` descriptor handles everything:
     # later, possibly in a different process / request:
     value = profile.api_key   # 'something-secret'
 
-    
-Some explanations
------------------
+Assigning ``None`` or the empty string ``''`` clears the stored value
+(column stored as ``NULL``). Reading an unset value yields ``None``.
 
-That (above) is really all you need to know. However, here's what's
-going on "under the hood": On assignment, the descriptor calls
-:func:`tom_common.encryption.encrypt`, which builds a Fernet cipher
-from ``settings.SECRET_KEY`` and encrypts the value, then stores the
-ciphertext bytes in the underlying ``BinaryField``. On read, the
-descriptor calls :func:`tom_common.encryption.decrypt`, which
-transparently honours ``settings.SECRET_KEY_FALLBACKS``. However,
-that's really just for admins to worry about (see
-:doc:`/deployment/encryption` for admin/deployment concerns).
+Editing the value through a ModelForm
+-------------------------------------
 
-An empty string assignment clears the ciphertext (stores ``None`` in
-the ``BinaryField``). Reading an unset / empty field yields ``''``,
-not ``None`` — so consumers don't need to special-case the empty case.
+A ``ModelForm`` with ``fields = [..., 'api_key']`` (or
+``fields = '__all__'``) renders ``api_key`` automatically using the
+:class:`~tom_common.encryption.EncryptedFormField` returned by
+:meth:`EncryptedModelField.formfield`. The default widget is a masked
+password input that does NOT render the existing value, so an admin
+opening a change form sees an empty input rather than the real secret
+displayed as dots.
 
+Blank-submission behavior
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:class:`EncryptedProperty` (`source <https://github.com/TOMToolkit/tom_base/blob/dev/tom_common/models.py>`__)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A blank submission preserves the existing stored value. The motivating
+scenario: an admin opens the change form to edit an unrelated field,
+leaves the masked secret input blank, and clicks Save. Without this
+behavior, the stored secret would be silently wiped because the
+default masked widget renders empty regardless of whether a value is
+stored.
 
-A *property descriptor* implementing the Python descriptor protocol
-(``__get__``, ``__set__``, ``__set_name__``). It handles the details of
-decrypting the ciphertext ``BinaryField`` on its way out of the
-database and encrypting it on the way in. It is invoked whenever the
-property is accessed (e.g. ``profile.api_key`` reads;
-``profile.api_key = 'x'`` writes).
+A consequence: *users cannot clear a secret by submitting a blank
+form.* Clearing requires an explicit code path:
 
-The descriptor reads the cipher from
-:func:`tom_common.encryption._get_cipher` on every access, so changes
-to ``settings.SECRET_KEY`` (via ``override_settings`` in tests, or a
-deployment-level rotation) take effect immediately on the next read.
+.. code-block:: python
 
-The rest of the details are in the source. If reading source isn't
-your thing, feel free to get in touch and we'll be happy to answer
-questions.
+    profile.api_key = None
+    profile.save()
+
+Displaying an encrypted field to the user
+-----------------------------------------
+
+For read-only display of a stored secret with a user-driven reveal
+control (the "click the eye icon to see the value" pattern), use
+``tom_common``'s ``revealable_password_input.html`` partial template.
+
+Add the following to your template where ``password_value`` is the
+plaintext value read from the model attribute (e.g.
+``profile.api_key``):
+
+.. code-block:: html+django
+
+    {% include 'tom_common/partials/revealable_password_input.html' with value=password_value %}
+
+The partial renders a masked input of fixed length; the real value is
+only injected into the DOM when the user clicks the reveal icon.
+
+What you cannot do with an EncryptedModelField
+----------------------------------------------
+
+**Filter on the value.** Fernet is non-deterministic — every
+``encrypt()`` produces a different ciphertext for the same plaintext,
+so database-level equality lookups can never match.
+:meth:`EncryptedModelField.get_lookup` raises ``FieldError`` rather
+than silently returning empty querysets:
+
+.. code-block:: python
+
+    MyAppProfile.objects.filter(api_key='foo')   # raises FieldError
+
+If you need equality search on the encrypted column, store a
+companion HMAC-derived hash column alongside it and query the hash.
+
+**Round-trip via dumpdata / loaddata.** Serialization paths emit a
+placeholder (``EncryptedModelField.REDACTED``, currently
+``'******** (encrypted, not shown)'``) rather than the plaintext.
+This keeps secrets out of fixture files, DRF API responses, and
+admin history by default. As a consequence, attempting to load a
+``dumpdata`` fixture back fails loudly when
+:meth:`~EncryptedModelField.to_python` encounters the placeholder.
+To migrate encrypted data between environments, copy the database
+row directly (the ciphertext survives) or write a one-off
+decrypt-and-re-encrypt script.
+
+Direct attribute access (``getattr(instance, field_name)``) bypasses
+the redaction and remains the only path to the plaintext — code that
+legitimately needs the secret reads the attribute directly.
+
+What happens on decryption failure
+----------------------------------
+
+If a stored ciphertext cannot be decrypted under any active key
+(``settings.SECRET_KEY`` plus any ``settings.SECRET_KEY_FALLBACKS``),
+:meth:`EncryptedModelField.from_db_value` raises
+``cryptography.fernet.InvalidToken`` at row-load time. The most
+common cause is a key removed from the rotation set before its data
+was re-encrypted under a new primary. See
+:doc:`/deployment/encryption` for the rotation procedure and the
+``rotate_encryption_key`` management command.
+
+API reference
+-------------
+
+:class:`~tom_common.encryption.EncryptedModelField` (`source <https://github.com/TOMToolkit/tom_base/blob/dev/tom_common/encryption.py>`__)
+    A ``models.BinaryField`` subclass that transparently encrypts on
+    save and decrypts on load. See the class docstring in
+    ``tom_common/encryption.py`` for the full method-level contract.
+
+:class:`~tom_common.encryption.EncryptedFormField` (`source <https://github.com/TOMToolkit/tom_base/blob/dev/tom_common/encryption.py>`__)
+    The form-side companion. Handles the masked-input UX and the
+    blank-submission-preserves-existing behavior. ``ModelForm`` picks
+    it up automatically via :meth:`EncryptedModelField.formfield`.
