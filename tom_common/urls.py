@@ -49,7 +49,6 @@ for app in apps.get_app_configs():
 urlpatterns += [
     path('robots.txt', robots_txt, name='robots_txt'),
     path('targets/', include('tom_targets.urls', namespace='targets')),
-    path('alerts/', include('tom_alerts.urls', namespace='alerts')),
     path('calendar/', include('tom_calendar.urls', namespace='calendar')),
     path('comments/', include('django_comments.urls')),
     path('observations/', include('tom_observations.urls', namespace='observations')),

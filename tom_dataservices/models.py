@@ -11,7 +11,7 @@ class DataServiceQuery(models.Model):
         parameters: Parameters for this ``DataServiceQuery``, stored as a JSON string.
         created: The time at which this ``DataServiceQuery`` was created in the TOM database.
         modified: The time at which this ``DataServiceQuery`` was changed in the TOM database.
-        last_run: The time at which this ``DataServiceQuery`` was last run against its corresponding broker.
+        last_run: The time at which this ``DataServiceQuery`` was last run against its corresponding query service.
     """
     name = models.CharField(max_length=500)
     data_service = models.CharField(max_length=50)

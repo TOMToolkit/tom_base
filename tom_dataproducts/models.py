@@ -12,7 +12,7 @@ from django.utils import text, timezone
 from fits2image.conversions import fits_to_jpg
 from PIL import Image
 
-from tom_alerts.models import AlertStreamMessage
+from tom_targets.base_models import BaseTarget
 from tom_observations.models import ObservationRecord
 from tom_targets.base_models import BaseTarget
 
@@ -343,8 +343,8 @@ class ReducedDatumCommon(models.Model):
 
     A ``ReducedDatum`` generally refers to a single piece of data--e.g., a spectrum, or a photometry point. It is
     associated with a target, and optionally with the data product it came from. An example of a ``ReducedDatum``
-    without an associated data product would be photometry ingested from a broker. There are
-    concrete implementations of Photometry, Spectroscopy and Astronmetry ReducedDatum models.
+    without an associated data product would be photometry ingested from a data service.There are
+    concrete implementations of Photometry, Spectroscopy and Astrometry ReducedDatum models.
 
     :param target: The ``Target`` with which this object is associated.
 
@@ -364,16 +364,14 @@ class ReducedDatumCommon(models.Model):
 
     :type value: dict
 
-    :param source_name: The original source of this datum. The current major use of this field is to track the broker a
-                    datum came from, but can be used for other sources.
+    :param source_name: The original source of this datum. The current major use of this field is to track the data
+                        service a datum came from, but can be used for other sources.
+
     :type source_name: str
 
     :param source_location: A reference to the location that this datum was originally sourced from. The current major
                             use of this field is the URL path to the alert that this datum came from.
     :type source_location: str
-
-    :param message: Set of ``AlertStreamMessage`` objects this object is associated with.
-    :type message: ManyRelatedManager object
 
     """
 
@@ -391,7 +389,6 @@ class ReducedDatumCommon(models.Model):
     instrument = models.CharField(max_length=255, blank=True, default="")
     source_name = models.CharField(max_length=100, default="", blank=True)
     source_location = models.CharField(max_length=200, default="", blank=True)
-    message = models.ManyToManyField(AlertStreamMessage, blank=True)
 
     objects = ReducedDatumManager()
 

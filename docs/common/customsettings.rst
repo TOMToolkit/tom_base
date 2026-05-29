@@ -17,31 +17,6 @@ TOM, but not to change anything. A value of **LOCKED** requires all
 users to login before viewing any page. Use the
 `OPEN_URLS <#open-urls>`__ setting for adding exemptions.
 
-`BROKERS <#brokers>`__
-~~~~~~~~~~~~~~~~~~~~~~
-
-Default:
-
-.. code-block::
-
-   {
-        'TNS': {
-           'api_key': ''
-        },
-        'SCIMMA': {
-            'url': 'http://skip.dev.hop.scimma.org',
-            'api_key': os.getenv('SKIP_API_KEY', ''),
-            'hopskotch_url': 'dev.hop.scimma.org',
-            'hopskotch_username': os.getenv('HOPSKOTCH_USERNAME', ''),
-            'hopskotch_password': os.getenv('HOPSKOTCH_PASSWORD', ''),
-            'default_hopskotch_topic': ''
-        }
-   }
-
-Credentials and settings for any brokers that require them. At the moment, the only
-built-in TOM Toolkit broker module that requires credentials is the TNS. SCIMMA and
-ANTARES, which are available as add-on modules, also use this setting.
-
 `DATA_PROCESSORS <#data-processors>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -108,21 +83,6 @@ one you’ll probably have to configure it here first. For example the LCO
 facility requires you to provide a value for the ``api_key``
 configuration value.
 
-`HARVESTERS <#harvesters>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Default:
-
-.. code-block::
-
-   {
-        'TNS': {
-           'api_key': ''
-        },
-   }
-
-Credentials and settings for any harvesters that require them. At the moment, the only
-built-in TOM Toolkit broker module that requires credentials is the TNS.
 
 `HINTS <#hints>`__
 ~~~~~~~~~~~~~~~~~~
@@ -201,45 +161,6 @@ Default:
 
 Display these columns in the target list table. Values can be attributes or properties on
 the Target model, tags or extra fields. See :doc:`Customizing the Target List Table <../targets/target_table>`.
-
-`TOM_ALERT_CLASSES <#tom-alert-classes>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Default:
-
-.. code-block::
-
-   [
-       'tom_alerts.brokers.mars.MARSBroker',
-       'tom_alerts.brokers.lasair.LasairBroker',
-       'tom_alerts.brokers.scout.ScoutBroker',
-       'tom_alerts.brokers.tns.TNSBroker',
-       'tom_alerts.brokers.antares.ANTARESBroker',
-       'tom_alerts.brokers.gaia.GaiaBroker'
-   ]
-
-A list of tom alert classes to make available to your TOM. If you have
-written or downloaded additional alert classes you would make them
-available here. If you’d like to write your own alert module please see
-the documentation on :doc:`Creating an Alert Module for the TOM
-Toolkit <../brokers/create_broker>`.
-
-`TOM_ALERT_DASH_CLASSES <#tom-alert-dash-classes>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Default:
-
-.. code-block:: python
-
-   [
-      'tom_alerts_dash.brokers.alerce.ALeRCEDashBroker',
-      'tom_alerts_dash.brokers.mars.MARSDashBroker',
-   ]
-
-A list of tom alert dash classes to make available to your TOM. If you have
-written or downloaded additional alert classes you would make them
-available here. If you’d like to write your own dash alert module, please see
-the documentation on :doc:`Plotly Dash Broker Modules in the TOM Toolkit <../brokers/create_dash_broker>`.
 
 `TOM_FACILITY_CLASSES <#tom-facility-classes>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
