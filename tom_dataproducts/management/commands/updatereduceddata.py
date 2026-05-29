@@ -56,7 +56,7 @@ class Command(BaseCommand):
             for model in REDUCED_DATUM_MODELS:
                 all_target_ids.update(
                     model.objects.filter(source_name__in=sources)
-                                .values_list('target', flat=True).distinct()
+                    .values_list('target', flat=True).distinct()
                 )
             targets = Target.objects.filter(id__in=all_target_ids)
 
