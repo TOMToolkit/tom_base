@@ -1,14 +1,24 @@
-"""Encryption helpers for protecting sensitive user data at rest.
+"""Encrypted-at-rest data: low-level helpers and Django integration classes.
 
 A single Fernet cipher is derived from ``settings.SECRET_KEY`` via HKDF
-with a domain-separator label. There is no per-user key material and no
-additional environment variable. See the TOMToolkit Deployment
-documentation for the ``SECRET_KEY`` rotation procedure.
+(see Glossary below for acryonym definitions) with a domain-separator
+label. See the TOMToolkit Deployment documentation for the ``SECRET_KEY``
+rotation procedure.
 
 Decryption transparently honours ``settings.SECRET_KEY_FALLBACKS`` (the
 same Django pattern used by ``signing`` for graceful HMAC-key rotation):
 the primary key is tried first, then each fallback in turn. Encryption
 always uses the primary key.
+
+Public surface for application code:
+
+- :func:`encrypt` / :func:`decrypt` — low-level helpers.
+- :class:`EncryptedModelField` — ``models.BinaryField`` subclass that
+  transparently encrypts strings on save and decrypts on load. The
+  preferred way to add an encrypted field to a model.
+- :class:`EncryptedFormField` — form-side companion to
+  :class:`EncryptedModelField`. Handles the masked-input UX and the
+  blank-submission-preserves-existing-value behavior.
 
 Glossary:
   Fernet — symmetric authenticated encryption recipe from the
@@ -33,13 +43,17 @@ Glossary:
 from __future__ import annotations
 
 from base64 import urlsafe_b64encode
-from typing import Iterable
+from typing import Any, Iterable
 
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
+from django import forms
 from django.conf import settings
+from django.core.exceptions import FieldError, ValidationError
+from django.db import models
+from django.utils.text import capfirst
 
 
 # Domain separator for the HKDF derivation. Bump the ``v1`` suffix only on
@@ -122,12 +136,293 @@ def decrypt(ciphertext: bytes | memoryview) -> str:
     if isinstance(ciphertext, memoryview):
         ciphertext = ciphertext.tobytes()
 
-    # decrypt using the primary or fallback SECRET_KEY-created cipher
+    # decrypt (the loop and exception handling is for the FALLBACK mechanism)
     last_err: Exception | None = None
     for cipher in _iter_ciphers():
         try:
-            plaintext = cipher.decrypt(ciphertext).decode()
+            plaintext = cipher.decrypt(ciphertext).decode()  # decryption happens here
             return plaintext
         except InvalidToken as e:
             last_err = e
     raise last_err if last_err is not None else InvalidToken()
+
+
+# Module-private sentinel (flag) produced by EncryptedFormField.clean()
+# when a blank value is submitted. The flag is detected by
+# EncryptedModelField.pre_save, which interprets it as "leave the
+# existing ciphertext alone" rather than overwriting with blank.
+# The reason we use an object() instance is that a magic string
+# could be confused with real data.
+_KEEP_EXISTING = object()
+
+
+class EncryptedFormField(forms.CharField):
+    """Form-side companion to :class:`EncryptedModelField`.
+
+    NOTE: This class does not perform encryption itself. The actual
+    encryption happens in :meth:`EncryptedModelField.get_prep_value`
+    at model-save time.
+
+    Default widget is a masked password input that does NOT render the
+    existing value (``render_value=False``). An admin opening a change
+    form for an instance that already has a secret therefore sees an
+    empty masked input rather than the real value displayed as dots.
+
+    Blank-submission behavior
+    -------------------------
+    A blank submission is treated as "leave the existing secret
+    unchanged," not "set the secret to empty." The motivating scenario:
+    with the default masked widget, the input renders empty whether or
+    not a secret is stored; a user editing an unrelated field on the
+    same ModelForm would otherwise silently wipe the stored secret on
+    Save.
+
+    The mechanism uses a module-private flag (``_KEEP_EXISTING``).
+    On a blank submission, :meth:`clean` returns the flag;
+    ``ModelForm.save()`` writes the flag onto the instance
+    attribute via ``construct_instance``;
+    :meth:`EncryptedModelField.pre_save` detects it, performs a one-row
+    SELECT to retrieve the existing plaintext (decrypted by
+    :meth:`from_db_value` in the normal way), restores the in-memory
+    attribute, and returns the plaintext for re-encryption under the
+    current primary cipher.
+
+    The trade-off: users cannot clear a secret via a blank form
+    submission. Clearing requires an explicit code path,
+    e.g. ``instance.api_key = None; instance.save()``.
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+
+        kwargs.setdefault(
+            'widget',
+            forms.PasswordInput(
+                render_value=False,
+                # placeholder distinguishes between no-value and not-shown-value
+                attrs={'placeholder': 'Leave blank to keep current value'},
+            ),
+        )
+        # Default to not required: the field's purpose is in-place rotation
+        # of an existing secret, and required=True interacts badly with the
+        # blank-as-no-change behavior.
+        kwargs.setdefault('required', False)
+        super().__init__(*args, **kwargs)
+
+    def clean(self, value: Any) -> Any:
+        """Return the no-change flag on blank submission; otherwise validate.
+
+        Bypasses ``CharField.clean`` on blank to skip max_length and
+        validator checks that don't apply to "no change."
+        """
+        if value in (None, ''):
+            return _KEEP_EXISTING
+        return super().clean(value)
+
+    def has_changed(self, initial: Any, data: Any) -> bool:
+        """Treat blank submissions as no-change, consistent with :meth:`clean`.
+
+        Without this override, ``ModelForm.changed_data`` would list the
+        field on every blank submission and trigger save-tracking that
+        doesn't reflect a real change.
+        """
+        if not data:
+            return False
+        return super().has_changed(initial, data)
+
+
+class EncryptedModelField(models.BinaryField):
+    """A string field whose value is encrypted with the project Fernet cipher.
+
+    Stores the ciphertext in a ``BinaryField`` column. The Python
+    interface is ``str``: assigning ``instance.api_key = '...'`` encrypts
+    on save; reading ``instance.api_key`` after a load returns the
+    decrypted plaintext.
+
+    Example::
+
+        class MyProfile(models.Model):
+            user = models.OneToOneField(...)
+            api_key = EncryptedModelField(null=True, blank=True)
+
+    Form integration
+    ----------------
+    :meth:`formfield` returns an :class:`EncryptedFormField` by default
+    — see that class for the masked-input UX and the
+    blank-submission-preserves-existing-value behavior.
+
+    Lookups
+    -------
+    Filtering on encrypted columns is not supported.
+    :meth:`get_lookup` raises ``FieldError`` rather than silently
+    returning empty querysets.
+
+    Decryption errors
+    -----------------
+    If a stored ciphertext cannot be decrypted under any active key
+    (``settings.SECRET_KEY`` ∪ ``settings.SECRET_KEY_FALLBACKS``),
+    :meth:`from_db_value` raises ``cryptography.fernet.InvalidToken``
+    at row-load time. The error surfaces when the queryset iterator
+    reaches the bad row.
+    """
+    description = 'Encrypted text'
+
+    # Placeholder emitted by the redaction methods below.
+    REDACTED: str = '******** (encrypted, not shown)'
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        # BinaryField defaults editable=False because why would raw
+        # binary data be in a form? However, we want the field to be editable
+        # by default. This plays nicely with ``modelform_factory`` to create
+        # the ModelForm correctly.
+        kwargs.setdefault('editable', True)  # edittable BinaryField for reasons
+        super().__init__(*args, **kwargs)
+
+    def from_db_value(
+        self,
+        value: bytes | memoryview | None,
+        expression: Any,
+        connection: Any,
+    ) -> str | None:
+        """Decrypt on load. Normalises psycopg's ``memoryview`` to ``bytes``."""
+        if value is None:
+            return None
+        if isinstance(value, memoryview):
+            value = value.tobytes()
+        return decrypt(value)
+
+    def to_python(self, value: Any) -> Any:
+        """Coerce to the canonical Python type (``str`` or ``None``).
+
+        Invoked by ``Field.clean()`` during model-level ``full_clean``
+        (which ``ModelForm._post_clean`` runs after ``construct_instance``)
+        and by fixture deserialization. Form-field cleaning does NOT
+        flow through this method; :class:`EncryptedFormField` has its
+        own ``clean()``.
+
+        The ``_KEEP_EXISTING`` sentinel must pass through untouched —
+        otherwise ``Field.clean`` would coerce it to ``str(sentinel)``
+        via the fall-through below, and that string would replace the
+        sentinel on the instance before :meth:`pre_save` ever ran,
+        breaking blank-submission preservation.
+        """
+        if value is None:
+            return None
+        if value is _KEEP_EXISTING:
+            return value
+        if isinstance(value, str):
+            if value == self.REDACTED:
+                # A fixture or other serialized blob is being loaded back.
+                # The actual plaintext is unrecoverable from the placeholder,
+                # so fail loudly rather than encrypting the placeholder as
+                # the new value.
+                raise ValidationError(
+                    f'Refusing to deserialize the redaction placeholder '
+                    f'{self.REDACTED!r}. EncryptedModelField does not '
+                    f'support dumpdata/loaddata round-trips: serialization '
+                    f'paths emit only the placeholder, not the secret.'
+                )
+            return value
+        if isinstance(value, (bytes, memoryview)):
+            raw = value if isinstance(value, bytes) else value.tobytes()
+            return decrypt(raw)
+        return str(value)
+
+    def get_prep_value(self, value: Any) -> bytes | None:
+        """Prepare a Python value for database storage — i.e. encrypt it.
+
+        ``get_prep_value`` is Django's standard Field override hook
+        (the name is fixed by the framework) for converting a Python
+        attribute value into the form the database expects. For an
+        EncryptedModelField, that conversion is encryption.
+
+        Treats ``None`` and ``''`` identically as "no value" (stored as
+        ``NULL``), so a caller writing ``instance.api_key = ''`` instead
+        of ``= None`` doesn't end up with an encrypted empty string.
+
+        Defensive guard: the ``_KEEP_EXISTING`` sentinel must never reach
+        ``encrypt()`` — that would persist the object's string repr.
+        Under normal flow, :meth:`pre_save` resolves the sentinel before
+        this method runs; this guard backstops any path that bypasses
+        ``pre_save``.
+        """
+        if value is None or value == '' or value is _KEEP_EXISTING:
+            return None
+        return encrypt(str(value))
+
+    def pre_save(self, model_instance: models.Model, add: bool) -> Any:
+        """Resolve the blank-preservation sentinel from EncryptedFormField.
+
+        When a ModelForm submits blank for an EncryptedFormField, the
+        sentinel ``_KEEP_EXISTING`` flows through ``cleaned_data`` and
+        is set on the instance attribute by ``construct_instance``. We
+        intercept it here, fetch the existing plaintext (one-row SELECT,
+        decrypted by :meth:`from_db_value` along the way), restore the
+        in-memory attribute, and return the plaintext for the normal
+        encryption pipeline. Net effect: the secret is preserved
+        (re-encrypted under the current primary cipher, which is fine
+        — the plaintext is unchanged).
+        """
+        value = getattr(model_instance, self.attname)
+        if value is _KEEP_EXISTING:
+            if add:
+                # New instance — there is no existing value to preserve.
+                value = None
+            else:
+                value = (
+                    type(model_instance)
+                    ._default_manager
+                    .filter(pk=model_instance.pk)
+                    .values_list(self.attname, flat=True)
+                    .first()
+                )
+            # Sync the in-memory state so post-save reads return the
+            # plaintext, not the sentinel.
+            setattr(model_instance, self.attname, value)
+        return value
+
+    def formfield(self, **kwargs: Any) -> forms.Field:
+        """Return an :class:`EncryptedFormField` for ``ModelForm`` integration.
+
+        Overrides ``BinaryField.formfield``, which returns ``None``
+        because raw binary data is not editable in a regular form.
+        """
+        defaults: dict[str, Any] = {
+            'form_class': EncryptedFormField,
+            'required': not self.blank,
+            'label': capfirst(self.verbose_name),
+            'help_text': self.help_text,
+        }
+        defaults.update(kwargs)
+        form_class = defaults.pop('form_class')
+        return form_class(**defaults)
+
+    def get_lookup(self, lookup_name: str) -> Any:
+        """Refuse all lookups — Fernet ciphertext cannot match a plaintext query.
+
+        Raised on any ``.filter()``, ``.exclude()``, ``.get()``, etc.
+        that targets this column.
+        """
+        raise FieldError(
+            f'{type(self).__name__} does not support the {lookup_name!r} '
+            f'lookup. Fernet encryption is non-deterministic, so the same '
+            f'plaintext encrypts to different ciphertext each time and '
+            f'database-level equality cannot match. If you need equality '
+            f'search on this value, store a companion HMAC-derived hash '
+            f'column alongside.'
+        )
+
+    def value_from_object(self, obj: models.Model) -> str | None:
+        """Return the :attr:`REDACTED` placeholder, never the plaintext.
+
+        Called by DRF's default ``ModelSerializer`` field-value
+        discovery and by admin display introspection. Direct attribute
+        access (``getattr(instance, field_name)``) bypasses this method
+        and returns plaintext — that is the intended escape hatch.
+        """
+        if obj.__dict__.get(self.attname):
+            return self.REDACTED
+        return None
+
+    def value_to_string(self, obj: models.Model) -> str:
+        """Return the :attr:`REDACTED` placeholder for ``dumpdata`` output."""
+        return self.REDACTED if obj.__dict__.get(self.attname) else ''
