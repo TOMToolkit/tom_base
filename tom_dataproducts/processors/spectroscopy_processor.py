@@ -1,5 +1,6 @@
 import mimetypes
 import numpy as np
+import logging
 
 from datetime import datetime
 
@@ -13,6 +14,8 @@ from tom_dataproducts.data_processor import DataProcessor
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_observations.facility import get_service_class, get_service_classes
+
+logger = logging.getLogger(__name__)
 
 
 class SpectroscopyProcessor(DataProcessor):
@@ -126,9 +129,20 @@ class SpectroscopyProcessor(DataProcessor):
             if 'facility' in comment.lower():
                 facility_name = comment.split(':')[1].strip()
 
-        facility = get_service_class(facility_name)() if facility_name else None
-        wavelength_units = facility.get_wavelength_units() if facility else self.DEFAULT_WAVELENGTH_UNITS
-        flux_constant = facility.get_flux_constant() if facility else self.DEFAULT_FLUX_CONSTANT
+        try:
+            facility = get_service_class(facility_name)() if facility_name else None
+        except ImportError:
+            logger.warning(f'WARNING: "{facility_name}" not found among imported facilities. Using default units for '
+                           f'spectroscopic processing of {data_product}.' )
+            facility = None
+        if facility is not None:
+            wavelength_units = (facility.get_wavelength_units()
+                                if facility.get_wavelength_units() is not None else self.DEFAULT_WAVELENGTH_UNITS)
+            flux_constant = (facility.get_flux_constant()
+                             if facility.get_flux_constant() is not None else self.DEFAULT_FLUX_CONSTANT)
+        else:
+            wavelength_units = self.DEFAULT_WAVELENGTH_UNITS
+            flux_constant = self.DEFAULT_FLUX_CONSTANT
 
         spectral_axis = np.array(data['wavelength']) * wavelength_units
         flux = np.array(data['flux']) * flux_constant

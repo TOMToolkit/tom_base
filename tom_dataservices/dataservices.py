@@ -323,8 +323,8 @@ class DataService(ABC):
     def create_reduced_datums_from_query(self, target, data: Dict, data_type: Optional[str] = None, **kwargs) -> List:
         """
         Create and save new reduced_datums of the appropriate data_type from the query results
-        Be sure to use `ReducedDatum.objects.get_or_create()` when creating new objects.
-        NOTE: Setting `ReducedDatum.source` to the the `DataService.name` will allow for automated data updates.
+        Be sure to use `XXXXXReducedDatum.objects.get_or_create()` when creating new objects.
+        NOTE: Setting `XXXXXReducedDatum.source` to the the `DataService.name` will allow for automated data updates.
 
         :param target: Target Object to be associated with the reduced data
         :param data: List of data dictionaries of the appropriate `data_type`

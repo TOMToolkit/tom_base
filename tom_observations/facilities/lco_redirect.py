@@ -4,6 +4,7 @@ import urllib.parse
 
 from django.conf import settings
 from django.shortcuts import get_object_or_404
+from astropy import units as u
 
 from tom_observations.facility import BaseRedirectObservationFacility
 from tom_observations.facilities.lco import LCOFacility
@@ -91,6 +92,12 @@ class LCORedirectFacility(BaseRedirectObservationFacility):
 
     def data_products(self, observation_id, product_id=None):
         return self.lco_facility.data_products(observation_id, product_id)
+
+    def get_flux_constant(self):
+        return self.lco_facility.get_flux_constant()
+
+    def get_wavelength_units(self):
+        return self.lco_facility.get_wavelength_units()
 
     def request_id_to_group(self, observation_id, user, target, parameters):
         """
