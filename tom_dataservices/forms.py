@@ -19,7 +19,7 @@ class BaseQueryForm(forms.Form):
         initial=False,
         label="Save Query")
     query_name = forms.CharField(
-        widget=forms.TextInput(attrs={"placeholder": "Leave blank for default"}),
+        widget=forms.TextInput(attrs={"placeholder": "Default: [service name] - [query number]"}),
         required=False)
     data_service = forms.CharField(
         required=True,
