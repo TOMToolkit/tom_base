@@ -1,6 +1,16 @@
 Observing Facilities and Observations
 =====================================
 
+.. toctree::
+  :maxdepth: 2
+  :caption: Table of Contents
+  :hidden:
+
+  Add an observatory module <observation_module>
+  Customize the OCS facility <customize_ocs_facility>
+  Select targets for facility <selecting_targets_for_facility>
+  Observing strategies <strategies>
+
 One of a TOM's most powerful features is to enable astronomers to directly request observations from telescope facilities.
 With this capability becoming more and more common among observatories, TOMs can be used to easily coordinate observations
 across a number of telescopes.  Observing programs can also scripted, so that the TOM can automatically observe
@@ -81,7 +91,7 @@ Automating your observations
 It's also possible to request observations programmatically, through a script.  This can be a very powerful
 way to orchestrate an observing program, and allows users to automate their observations.  An example of
 this approach can be found under
-:doc:`Programmatically Submitting Observations </common/scripts>`.
+:doc:`Programmatically Submitting Observations </code/scripts>`.
 
 Observing Strategies and Templates
 ----------------------------------

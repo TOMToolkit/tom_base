@@ -1,6 +1,14 @@
 Configuring a TOM
 =================
 
+.. toctree::
+  :maxdepth: 2
+  :caption: Table of Contents
+  :hidden:
+
+  Custom settings <customsettings>
+  Permissions <permissions>
+
 TOM Settings
 ------------
 

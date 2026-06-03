@@ -16,6 +16,7 @@ TOM Toolkit
   Deploy <deployment/index>
   Plugins <code/plugins>
   Support <introduction/support>
+  Credits <introduction/credits>
 
 Introduction
 ------------

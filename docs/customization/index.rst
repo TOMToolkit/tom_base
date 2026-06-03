@@ -1,6 +1,21 @@
 Customization
 =============
 
+.. toctree::
+  :maxdepth: 2
+  :caption: Table of Contents
+  :hidden:
+
+  Adding pages <adding_pages>
+  Custom templates <customize_templates>
+  Custom templatetags <customize_template_tags>
+  HTMX tables <htmx_tables>
+  Widgets <widgets>
+  Encrypted fields <encrypted_model_fields>
+  Generating latex <latex_generation>
+  Testing TOMs <testing_toms>
+  Contributing <../introduction/contributing>
+
 The TOM Toolkit is deliberately designed as an adaptable framework to enable users to customize
 all aspects of it.  This includes both "look and feel" aspects of the appearance of the user interface,
 to adding new functionality and automating aspects of your workflow.

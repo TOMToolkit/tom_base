@@ -1,6 +1,18 @@
 Managing Data
 =============
 
+.. toctree::
+  :maxdepth: 2
+  :caption: Table of Contents
+  :hidden:
+
+  Custom data processing <customizing_data_processing>
+  TOM-TOM data sharing <tom_direct_sharing>
+  Continuous data sharing <continuous_sharing>
+  Streaming data <stream_pub_sub>
+  Single-target data service <single_target_data_service>
+  Visualizing data <plotting_data>
+
 The TOM's Data Models
 ---------------------
 

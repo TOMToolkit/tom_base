@@ -63,7 +63,7 @@ IT expert or software engineer.
 TOM Architecture and Workflow
 -----------------------------
 
-For a high-level overview of the architecture of the TOM Toolkit, see :doc:`Architecture <tomarchitecture>.
+For a high-level overview of the architecture of the TOM Toolkit, see :doc:`Architecture <tomarchitecture>`.
 
 The architecture was designed around a general workflow common to many different areas of astronomy,
 particularly time domain and multi-messenger astrophysics.  An overview of the workflow is described

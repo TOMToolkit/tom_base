@@ -1,6 +1,19 @@
 Interacting with your TOM through code
 ======================================
 
+.. toctree::
+  :maxdepth: 2
+  :caption: Table of Contents
+  :hidden:
+
+  Custom code <custom_code>
+  Automation <automation>
+  Scripts <scripts>
+  Background tasks <backgroundtasks>
+  Plugins <plugins>
+  Querying the TOM <querying>
+  API Reference </api/modules>
+
 TOM systems provide a platform for automating some, if not all, of the day-to-day workflow of an
 astronomical program.  To that end, the Toolkit offers Application Programmable Interfaces (API) for
 a number of key functions, and there are a number of options for automating workflows.
@@ -47,7 +60,7 @@ Python Scripts and Jupyter Notebooks
 ------------------------------------
 
 You can also interact directly with your TOM from a Python script or Jupyter notebook, which provides a flexible way to
-analysis the data.  :doc:`Scripting your TOM with Jupyter Notebooks </common/scripts>` shows how.
+analysis the data.  :doc:`Scripting your TOM with Jupyter Notebooks </code/scripts>` shows how.
 
 API Reference
 -------------

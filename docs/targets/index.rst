@@ -1,11 +1,21 @@
 Targets
 =======
 
+.. toctree::
+  :maxdepth: 2
+  :caption: Table of Contents
+  :hidden:
+
+  Custom Target fields <target_fields>
+  Target matching <target_matcher>
+  Target table <target_table>
+  Select targets for facility <../observing/selecting_targets_for_facility>
+
 The ``Target``, along with the associated ``TargetList``, ``TargetExtra``, and ``TargetName``, are the core models of the
 TOM Toolkit. The ``Target`` defines the concept of an astronomical target through a number of parameters. The ``Target``
 object is then used throughout the TOM to reference all the
 information a user or app needs to know about a target.  As astrophysical objects are often identified in multiple catalogs,
-each ``Target`` is associated with one or more ``TargetName``s.
+each ``Target`` is associated with one or more ``TargetName``.
 
 More information on Targets can be found using the following pages:
 

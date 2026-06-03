@@ -6,7 +6,7 @@ Inclusion Tags
 **************
 
 .. automodule:: tom_targets.templatetags.targets_extras
-    :members: recent_targets, target_feature, target_data, target_groups, target_plan, target_distribution, select_target_js, aladin
+    :members: recent_targets, target_feature, target_data, target_groups, target_plan, target_distribution, select_target_js, aladin_skymap, aladin_finderchart, aladin_skymap_targets_oob
 
 *******
 Filters

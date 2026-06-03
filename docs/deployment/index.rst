@@ -1,6 +1,15 @@
 Deploying your TOM Online
 =========================
 
+.. toctree::
+  :maxdepth: 2
+  :caption: Table of Contents
+  :hidden:
+
+  Deployment tips <deployment_tips>
+  Deploy on Heroku <deployment_heroku>
+  Deploy on AWS <amazons3>
+
 Once you’ve got a TOM up and running on your machine (aka ``localhost``), it's advantageous to deploy to a
 webhosting service so that it is accessible by you and your colleagues worldwide.
 

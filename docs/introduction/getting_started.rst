@@ -1,6 +1,22 @@
 Getting Started
 ===============
 
+.. toctree::
+  :maxdepth: 2
+  :caption: Table of Contents
+  :hidden:
+
+  Installation <manual_installation>
+  TOM architecture <tomarchitecture>
+  Workflow <workflow>
+  Support <support>
+  FAQ <faqs>
+  Programming resources <programming_resources>
+  Troubleshooting <troubleshooting>
+  Acknowledgements <acknowledging_tom_toolkit>
+  About TOM Toolkit <about>
+  Example TOM systems <../examples>
+
 The TOM Toolkit is a `Django <https://www.djangoproject.com/>`__
 project. This means you’ll be running an application based on the Django
 framework when you run a TOM. If you decide to customize your TOM,
