@@ -133,7 +133,7 @@ class SpectroscopyProcessor(DataProcessor):
             facility = get_service_class(facility_name)() if facility_name else None
         except ImportError:
             logger.warning(f'WARNING: "{facility_name}" not found among imported facilities. Using default units for '
-                           f'spectroscopic processing of {data_product}.' )
+                           f'spectroscopic processing of {data_product}.')
             facility = None
         if facility is not None:
             wavelength_units = (facility.get_wavelength_units()

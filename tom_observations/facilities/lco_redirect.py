@@ -4,7 +4,6 @@ import urllib.parse
 
 from django.conf import settings
 from django.shortcuts import get_object_or_404
-from astropy import units as u
 
 from tom_observations.facility import BaseRedirectObservationFacility
 from tom_observations.facilities.lco import LCOFacility

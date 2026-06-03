@@ -351,18 +351,14 @@ def spectroscopy_for_target(context, target, dataproduct=None):
     Renders a spectroscopic plot for a ``Target``. If a ``DataProduct`` is specified, it will only render a plot with
     that spectrum.
     """
-    try:
-        spectroscopy_data_type = settings.DATA_PRODUCT_TYPES['spectroscopy'][0]
-    except (AttributeError, KeyError):
-        spectroscopy_data_type = 'spectroscopy'
 
     plot_data = []
     if settings.TARGET_PERMISSIONS_ONLY:
         datums = SpectroscopyReducedDatum.objects.filter(target=target)
     else:
         datums = get_objects_for_user(context['request'].user,
-                                        'tom_dataproducts.view_spectroscopyreduceddatum',
-                                        klass=SpectroscopyReducedDatum.objects.filter(target=target))
+                                      'tom_dataproducts.view_spectroscopyreduceddatum',
+                                      klass=SpectroscopyReducedDatum.objects.filter(target=target))
     if dataproduct:
         datums = datums.filter(data_product=dataproduct)
 
