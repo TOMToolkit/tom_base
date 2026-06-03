@@ -113,7 +113,7 @@ class TestGaiaBroker(TestCase):
             value=12345.6789
         )
 
-    @mock.patch('tom_alerts.dataservices.gaia.requests.get')
+    @mock.patch('tom_alerts.brokers.gaia.requests.get')
     def test_fetch_alerts(self, mock_requests_get):
         mock_response = Response()
         mock_response._content = self.test_html
@@ -132,7 +132,7 @@ class TestGaiaBroker(TestCase):
         alert = GaiaBroker().to_generic_alert(self.alert_list[0])
         self.assertEqual(alert.name, self.alert_list[0]['name'])
 
-    @mock.patch('tom_alerts.dataservices.gaia.requests.get')
+    @mock.patch('tom_alerts.brokers.gaia.requests.get')
     def test_process_reduced_data_with_alert(self, mock_requests_get):
 
         mock_photometry_response = Response()
@@ -147,8 +147,8 @@ class TestGaiaBroker(TestCase):
         self.assertGreater(reduced_data.count(), 1)
         self.assertEqual(reduced_data.count(), 3)  # one from setUp and two from this test
 
-    @mock.patch('tom_alerts.dataservices.gaia.requests.get')
-    @mock.patch('tom_alerts.dataservices.gaia.GaiaBroker.fetch_alerts')
+    @mock.patch('tom_alerts.brokers.gaia.requests.get')
+    @mock.patch('tom_alerts.brokers.gaia.GaiaBroker.fetch_alerts')
     def test_process_reduced_data_without_alert(self, mock_fetch_alerts, mock_requests_get):
         mock_fetch_alerts.return_value = iter([self.alert_list[1]])
 
@@ -173,7 +173,7 @@ class TestGaiaBroker(TestCase):
 
         There are TWO ReducedDatums in the _content mocked below.
         """
-        with mock.patch('tom_alerts.dataservices.gaia.requests.get') as mock_requests_get:
+        with mock.patch('tom_alerts.brokers.gaia.requests.get') as mock_requests_get:
             mock_photometry_response = Response()
             mock_photometry_response._content = str.encode('''Gaia20bph\n#Date,JD,averagemag.\n
                                     2014-08-01 00:05:24,2456870.504,19.48\n2014-08-01 06:05:38,2456870.754,19.48\n\n''')

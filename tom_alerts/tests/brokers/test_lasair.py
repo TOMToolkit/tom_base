@@ -69,7 +69,7 @@ class TestLasairBrokerClass(TestCase):
     def test_get_broker_class(self):
         self.assertEqual(LasairBroker, get_service_class('Lasair'))
 
-    @mock.patch('tom_alerts.dataservices.lasair.requests.get')
+    @mock.patch('tom_alerts.brokers.lasair.requests.get')
     def test_fetch_alerts(self, mock_requests_get):
         pass
 
