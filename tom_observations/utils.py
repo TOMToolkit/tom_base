@@ -18,7 +18,7 @@ def get_sidereal_visibility(
         interval,
         airmass_limit,
         facility_name=None
-    ):
+):
     """
     Uses astroplan to calculate the airmass for a sidereal target for
     each given interval between the start and end times.
