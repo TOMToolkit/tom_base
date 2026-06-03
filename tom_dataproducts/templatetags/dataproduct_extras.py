@@ -357,15 +357,14 @@ def spectroscopy_for_target(context, target, dataproduct=None):
         spectroscopy_data_type = 'spectroscopy'
 
     plot_data = []
-    datums = SpectroscopyReducedDatum.objects.filter(target=target)
-    if dataproduct:
-        if settings.TARGET_PERMISSIONS_ONLY:
-            datums = datums.filter(data_product=dataproduct)
-        else:
-            datums = get_objects_for_user(context['request'].user,
+    if settings.TARGET_PERMISSIONS_ONLY:
+        datums = SpectroscopyReducedDatum.objects.filter(target=target)
+    else:
+        datums = get_objects_for_user(context['request'].user,
                                         'tom_dataproducts.view_spectroscopyreduceddatum',
-                                        klass=SpectroscopyReducedDatum.objects.filter(target=target).filter(
-                                            data_product=dataproduct))
+                                        klass=SpectroscopyReducedDatum.objects.filter(target=target))
+    if dataproduct:
+        datums = datums.filter(data_product=dataproduct)
 
     for datum in datums:
         plot_data.append(go.Scatter(
