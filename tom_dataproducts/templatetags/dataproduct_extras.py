@@ -178,7 +178,7 @@ def get_photometry_data(context, target, target_share=False):
         if reduced_datum.limit is not None:
             rd_data['magnitude'] = reduced_datum.limit
             rd_data['limit'] = True
-            rd_data['error'] = ''
+            rd_data['error'] = reduced_datum.brightness_error or ''
         else:
             rd_data['magnitude'] = reduced_datum.brightness
             rd_data['limit'] = False
@@ -355,19 +355,18 @@ def spectroscopy_for_target(context, target, dataproduct=None):
         spectroscopy_data_type = settings.DATA_PRODUCT_TYPES['spectroscopy'][0]
     except (AttributeError, KeyError):
         spectroscopy_data_type = 'spectroscopy'
-    spectral_dataproducts = DataProduct.objects.filter(target=target,
-                                                       data_product_type=spectroscopy_data_type)
-    if dataproduct:
-        spectral_dataproducts = DataProduct.objects.get(data_product=dataproduct)
 
     plot_data = []
-    if settings.TARGET_PERMISSIONS_ONLY:
-        datums = SpectroscopyReducedDatum.objects.filter(data_product__in=spectral_dataproducts)
-    else:
-        datums = get_objects_for_user(context['request'].user,
-                                      'tom_dataproducts.view_spectroscopyreduceddatum',
-                                      klass=SpectroscopyReducedDatum.objects.filter(
-                                          data_product__in=spectral_dataproducts))
+    datums = SpectroscopyReducedDatum.objects.filter(target=target)
+    if dataproduct:
+        if settings.TARGET_PERMISSIONS_ONLY:
+            datums = datums.filter(data_product=dataproduct)
+        else:
+            datums = get_objects_for_user(context['request'].user,
+                                        'tom_dataproducts.view_spectroscopyreduceddatum',
+                                        klass=SpectroscopyReducedDatum.objects.filter(target=target).filter(
+                                            data_product=dataproduct))
+
     for datum in datums:
         plot_data.append(go.Scatter(
             x=datum.wavelength,
