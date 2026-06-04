@@ -407,13 +407,13 @@ class EncryptedModelField(models.BinaryField):
         super().__init__(*args, **kwargs)
 
     def from_db_value(self, value: bytes | memoryview | None,
-        expression: Any, connection: Any,) -> str | None:
+                      expression: Any, connection: Any,) -> str | None:
         """Decrypt on load. Normalises psycopg's ``memoryview`` to ``bytes``.
         """
         if value is None:
             return None
 
-        # sqlite3 and psycopg store BinaryFields differently: 
+        # sqlite3 and psycopg store BinaryFields differently:
         if isinstance(value, memoryview):
             # this is a psycopg memoryview and must be converted to bytes
             value = value.tobytes()
@@ -454,7 +454,7 @@ class EncryptedModelField(models.BinaryField):
                 )
             return value
 
-        # this is more psycopg vs sqlite logic        
+        # this is more psycopg vs sqlite logic
         if isinstance(value, (bytes, memoryview)):
             raw = value if isinstance(value, bytes) else value.tobytes()
             return decrypt(raw)
