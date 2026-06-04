@@ -63,7 +63,7 @@ _HKDF_INFO = b'tom-toolkit-encryption-v1'
 
 
 def _derive_fernet_key(secret: str) -> bytes:
-    """Derive a Fernet-shaped key (URL-safe base64 of 32 bytes) from ``secret``.
+    """Derive a Fernet key (URL-safe base64 of 32 bytes) from ``secret``.
 
     HKDF (RFC 5869) with SHA-256, no salt, and a fixed domain-separator
     label keeps this derivation cryptographically independent from any
@@ -71,7 +71,7 @@ def _derive_fernet_key(secret: str) -> bytes:
     cookies and tokens, which also reads ``SECRET_KEY``).
     """
     # HKDF operates on bytes, not str, so encode the secret as its
-    # input keying material (IKM, in RFC 5869 terminology).
+    # "input keying material" (IKM, in RFC 5869 terminology).
     input_keying_material_bytes = secret.encode()
 
     # configure the key derivation function
@@ -147,13 +147,131 @@ def decrypt(ciphertext: bytes | memoryview) -> str:
     raise last_err if last_err is not None else InvalidToken()
 
 
-# Module-private sentinel (flag) produced by EncryptedFormField.clean()
+# These flags are private to this module and implement the
+# wierd (but standard) logic surrounding editting encrypted values.
+# They are object() instances and not magic strings so there
+# is no confusion (i.e. that the string is real data).
+
+# This flag is  produced by EncryptedFormField.clean()
 # when a blank value is submitted. The flag is detected by
 # EncryptedModelField.pre_save, which interprets it as "leave the
-# existing ciphertext alone" rather than overwriting with blank.
-# The reason we use an object() instance is that a magic string
-# could be confused with real data.
-_KEEP_EXISTING = object()
+# existing ciphertext alone" (rather than overwriting with blank).
+_KEEP_EXISTING_VALUE = object()
+
+# This flag is produced by ClearableEncryptedInput when the
+# user checks the "Clear stored value" box and submits an empty input.
+# EncryptedFormField.clean translates this into None, which routes
+# through get_prep_value as NULL storage.
+_CLEAR_EXISTING_VALUE = object()
+
+
+class ClearableEncryptedInput(forms.PasswordInput):
+    """Password input rendered alongside a "Clear stored value" checkbox.
+
+    Mirrors Django's :class:`ClearableFileInput` pattern. The form's
+    POST data contains two keys: the password value and the checkbox
+    state. :meth:`value_from_datadict` composes them into a single
+    submitted value:
+
+    - typed password, checkbox state ignored → the typed value
+      (an explicit new value wins over a contradictory clear request)
+    - empty password, checkbox checked → the :data:`_CLEAR_EXISTING_VALUE` flag
+    - empty password, checkbox unchecked → empty string
+      (:class:`EncryptedFormField` translates this into
+      :data:`_KEEP_EXISTING_VALUE`)
+    """
+
+    template_name = 'tom_common/partials/clearable_encrypted_input.html'
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Extends :meth:`forms.PasswordInput.__init__` with our default
+        render-value and class attribute; everything else is forwarded.
+
+        The placeholder is chosen at render time in :meth:`get_context`
+        because it depends on whether a value is currently stored —
+        which the widget only knows when ``get_context`` is called.
+        """
+        # don't render the value
+        kwargs.setdefault('render_value', False)
+
+        # add the form-control class so that all the controls
+        # (field, clear-checkbox, etc) render together
+        kwargs.setdefault('attrs', {'class': 'form-control'})
+        super().__init__(*args, **kwargs)
+
+    def clear_checkbox_name(self, name: str) -> str:
+        """New helper (not a super-class override).
+
+        Naming convention mirrors Django's
+        :meth:`ClearableFileInput.clear_checkbox_name` — the companion
+        checkbox key in POST data is the field name suffixed with
+        ``-clear``.
+        """
+        return f'{name}-clear'
+
+    def clear_checkbox_id(self, name: str) -> str:
+        """New helper (not a super-class override).
+
+        Naming convention mirrors Django's
+        :meth:`ClearableFileInput.clear_checkbox_id` — the companion
+        checkbox HTML ``id`` derives from the field name.
+        """
+        return f'id_{name}-clear'
+
+    def get_context(self, name: str, value: Any, attrs: Any) -> dict:
+        """Extends :meth:`forms.Widget.get_context` to
+        1. inject the checkbox name and id into the widget template context,
+        and 2. set a value-aware placeholder on the input.
+
+        The placeholder reflects whether the bound model instance has a
+        stored value. The rendered form communicates the field's
+        state without ever putting the stored value into the HTML:
+
+        - truthy ``value`` (stored plaintext from
+          ``EncryptedModelField.from_db_value``) → "A stored value is hidden) —
+          type to replace"
+        - ``None`` / empty / flag-on-re-render → "(not set) —
+          type to add"
+
+        A developer-supplied ``placeholder`` in ``attrs`` wins over the
+        default.
+        """
+        # get any context from the parent Widget
+        context = super().get_context(name, value, attrs)
+
+        # set a placeholder according to whether a value is stored
+        if 'placeholder' not in context['widget']['attrs']:
+            if value:
+                # A stored value is hidden
+                context['widget']['attrs']['placeholder'] = (
+                    '(A stored value is hidden) — type to replace'
+                )
+            else:
+                # there is no stored value at the moment
+                context['widget']['attrs']['placeholder'] = (
+                    '(not set) — type to add'
+                )
+
+        # inject the checkbox that allows the user to clear the value (if any)
+        context['widget']['checkbox_name'] = self.clear_checkbox_name(name)
+        context['widget']['checkbox_id'] = self.clear_checkbox_id(name)
+        return context
+
+    def value_from_datadict(self, data: Any, files: Any, name: str) -> Any:
+        """Overrides :meth:`forms.Widget.value_from_datadict` to compose
+        the password input and the companion clear-checkbox into a single
+        submitted value. See the class docstring for the precedence rules.
+        """
+        typed_value = super().value_from_datadict(data, files, name)
+        if typed_value:
+            # Explicit new value wins over a contradictory clear request.
+            return typed_value
+        clear_checked = forms.CheckboxInput().value_from_datadict(
+            data, files, self.clear_checkbox_name(name)
+        )
+        if clear_checked:
+            return _CLEAR_EXISTING_VALUE
+        return typed_value
 
 
 class EncryptedFormField(forms.CharField):
@@ -177,7 +295,7 @@ class EncryptedFormField(forms.CharField):
     same ModelForm would otherwise silently wipe the stored secret on
     Save.
 
-    The mechanism uses a module-private flag (``_KEEP_EXISTING``).
+    The mechanism uses a module-private flag (``_KEEP_EXISTING_VALUE``).
     On a blank submission, :meth:`clean` returns the flag;
     ``ModelForm.save()`` writes the flag onto the instance
     attribute via ``construct_instance``;
@@ -193,15 +311,13 @@ class EncryptedFormField(forms.CharField):
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-
-        kwargs.setdefault(
-            'widget',
-            forms.PasswordInput(
-                render_value=False,
-                # placeholder distinguishes between no-value and not-shown-value
-                attrs={'placeholder': 'Leave blank to keep current value'},
-            ),
-        )
+        """Extends :meth:`forms.CharField.__init__` with our default widget
+        and ``required=False``; everything else is forwarded.
+        """
+        # The composite widget renders the masked input plus a
+        # "Clear stored value" checkbox so the user has a way to set
+        # the stored value to None through the form.
+        kwargs.setdefault('widget', ClearableEncryptedInput())
         # Default to not required: the field's purpose is in-place rotation
         # of an existing secret, and required=True interacts badly with the
         # blank-as-no-change behavior.
@@ -209,22 +325,35 @@ class EncryptedFormField(forms.CharField):
         super().__init__(*args, **kwargs)
 
     def clean(self, value: Any) -> Any:
-        """Return the no-change flag on blank submission; otherwise validate.
+        """Overrides :meth:`forms.CharField.clean` to translate the two
+        widget-produced flags into the values ``EncryptedModelField``
+        understands.
 
-        Bypasses ``CharField.clean`` on blank to skip max_length and
-        validator checks that don't apply to "no change."
+        - ``_CLEAR_EXISTING_VALUE`` (clear checkbox checked) → ``None``, which
+          ``EncryptedModelField.get_prep_value`` stores as ``NULL``.
+        - empty input (None or '') → ``_KEEP_EXISTING_VALUE``, which
+          ``EncryptedModelField.pre_save`` resolves to the existing
+          stored value (preserves it).
+        - anything else → forwarded to ``CharField.clean`` for normal
+          validation.
         """
+        if value is _CLEAR_EXISTING_VALUE:
+            return None
         if value in (None, ''):
-            return _KEEP_EXISTING
+            return _KEEP_EXISTING_VALUE
         return super().clean(value)
 
     def has_changed(self, initial: Any, data: Any) -> bool:
-        """Treat blank submissions as no-change, consistent with :meth:`clean`.
+        """Overrides :meth:`forms.Field.has_changed` to keep
+        ``ModelForm.changed_data`` consistent with our :meth:`clean`
+        semantics:
 
-        Without this override, ``ModelForm.changed_data`` would list the
-        field on every blank submission and trigger save-tracking that
-        doesn't reflect a real change.
+        - clear request → counts as a change.
+        - blank-as-no-change → not a change.
+        - real value → defer to ``CharField.has_changed``.
         """
+        if data is _CLEAR_EXISTING_VALUE:
+            return True
         if not data:
             return False
         return super().has_changed(initial, data)
@@ -266,29 +395,31 @@ class EncryptedModelField(models.BinaryField):
     """
     description = 'Encrypted text'
 
-    # Placeholder emitted by the redaction methods below.
+    # This text is shown until the user click the eye-to-reveal icon
     REDACTED: str = '******** (encrypted, not shown)'
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         # BinaryField defaults editable=False because why would raw
         # binary data be in a form? However, we want the field to be editable
-        # by default. This plays nicely with ``modelform_factory`` to create
+        # by default. Required for ``modelform_factory`` to create
         # the ModelForm correctly.
-        kwargs.setdefault('editable', True)  # edittable BinaryField for reasons
+        kwargs.setdefault('editable', True)  # edittable BinaryField for reasons above
         super().__init__(*args, **kwargs)
 
-    def from_db_value(
-        self,
-        value: bytes | memoryview | None,
-        expression: Any,
-        connection: Any,
-    ) -> str | None:
-        """Decrypt on load. Normalises psycopg's ``memoryview`` to ``bytes``."""
+    def from_db_value(self, value: bytes | memoryview | None,
+        expression: Any, connection: Any,) -> str | None:
+        """Decrypt on load. Normalises psycopg's ``memoryview`` to ``bytes``.
+        """
         if value is None:
             return None
+
+        # sqlite3 and psycopg store BinaryFields differently: 
         if isinstance(value, memoryview):
+            # this is a psycopg memoryview and must be converted to bytes
             value = value.tobytes()
-        return decrypt(value)
+
+        plaintext: str = decrypt(value)  # an sqlite BinaryField value is already bytes
+        return plaintext
 
     def to_python(self, value: Any) -> Any:
         """Coerce to the canonical Python type (``str`` or ``None``).
@@ -299,20 +430,20 @@ class EncryptedModelField(models.BinaryField):
         flow through this method; :class:`EncryptedFormField` has its
         own ``clean()``.
 
-        The ``_KEEP_EXISTING`` sentinel must pass through untouched —
-        otherwise ``Field.clean`` would coerce it to ``str(sentinel)``
+        The ``_KEEP_EXISTING_VALUE`` flag must pass through untouched —
+        otherwise ``Field.clean`` would coerce it to ``str(flag)``
         via the fall-through below, and that string would replace the
-        sentinel on the instance before :meth:`pre_save` ever ran,
+        flag on the instance before :meth:`pre_save` ever ran,
         breaking blank-submission preservation.
         """
         if value is None:
             return None
-        if value is _KEEP_EXISTING:
+        if value is _KEEP_EXISTING_VALUE:
             return value
         if isinstance(value, str):
+            # we're expecting an actual value, not the **** placeholder text
             if value == self.REDACTED:
-                # A fixture or other serialized blob is being loaded back.
-                # The actual plaintext is unrecoverable from the placeholder,
+                # oh no! we somehow got the **** placeholder text!
                 # so fail loudly rather than encrypting the placeholder as
                 # the new value.
                 raise ValidationError(
@@ -322,15 +453,19 @@ class EncryptedModelField(models.BinaryField):
                     f'paths emit only the placeholder, not the secret.'
                 )
             return value
+
+        # this is more psycopg vs sqlite logic        
         if isinstance(value, (bytes, memoryview)):
             raw = value if isinstance(value, bytes) else value.tobytes()
             return decrypt(raw)
+
         return str(value)
 
     def get_prep_value(self, value: Any) -> bytes | None:
         """Prepare a Python value for database storage — i.e. encrypt it.
 
-        ``get_prep_value`` is Django's standard Field override hook
+        Q: Why the wierd method name?
+        A: ``get_prep_value`` is Django's standard Field override hook
         (the name is fixed by the framework) for converting a Python
         attribute value into the form the database expects. For an
         EncryptedModelField, that conversion is encryption.
@@ -339,21 +474,21 @@ class EncryptedModelField(models.BinaryField):
         ``NULL``), so a caller writing ``instance.api_key = ''`` instead
         of ``= None`` doesn't end up with an encrypted empty string.
 
-        Defensive guard: the ``_KEEP_EXISTING`` sentinel must never reach
+        Defensive guard: the ``_KEEP_EXISTING_VALUE`` flag must never reach
         ``encrypt()`` — that would persist the object's string repr.
-        Under normal flow, :meth:`pre_save` resolves the sentinel before
+        Under normal flow, :meth:`pre_save` resolves the flag before
         this method runs; this guard backstops any path that bypasses
         ``pre_save``.
         """
-        if value is None or value == '' or value is _KEEP_EXISTING:
+        if value is None or value == '' or value is _KEEP_EXISTING_VALUE:
             return None
         return encrypt(str(value))
 
     def pre_save(self, model_instance: models.Model, add: bool) -> Any:
-        """Resolve the blank-preservation sentinel from EncryptedFormField.
+        """Resolve the blank-preservation flag from EncryptedFormField.
 
         When a ModelForm submits blank for an EncryptedFormField, the
-        sentinel ``_KEEP_EXISTING`` flows through ``cleaned_data`` and
+        flag ``_KEEP_EXISTING_VALUE`` flows through ``cleaned_data`` and
         is set on the instance attribute by ``construct_instance``. We
         intercept it here, fetch the existing plaintext (one-row SELECT,
         decrypted by :meth:`from_db_value` along the way), restore the
@@ -363,7 +498,7 @@ class EncryptedModelField(models.BinaryField):
         — the plaintext is unchanged).
         """
         value = getattr(model_instance, self.attname)
-        if value is _KEEP_EXISTING:
+        if value is _KEEP_EXISTING_VALUE:
             if add:
                 # New instance — there is no existing value to preserve.
                 value = None
@@ -376,7 +511,7 @@ class EncryptedModelField(models.BinaryField):
                     .first()
                 )
             # Sync the in-memory state so post-save reads return the
-            # plaintext, not the sentinel.
+            # plaintext, not the flag.
             setattr(model_instance, self.attname, value)
         return value
 
@@ -384,7 +519,7 @@ class EncryptedModelField(models.BinaryField):
         """Return an :class:`EncryptedFormField` for ``ModelForm`` integration.
 
         Overrides ``BinaryField.formfield``, which returns ``None``
-        because raw binary data is not editable in a regular form.
+        because (normally) raw binary data is not editable in a regular form.
         """
         defaults: dict[str, Any] = {
             'form_class': EncryptedFormField,
