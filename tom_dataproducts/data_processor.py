@@ -1,11 +1,10 @@
-import json
 import logging
 import mimetypes
 
 from django.conf import settings
 from importlib import import_module
 
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import try_parse_reduced_datum
 from tom_targets.sharing import continuous_share_data
 
 logger = logging.getLogger(__name__)
@@ -26,8 +25,8 @@ def run_data_processor(dp, dp_type_override=None):
     type from the `dp` object is used.
     :type dp_type_override: str, optional
 
-    :returns: QuerySet of `ReducedDatum` objects created by the `run_data_processor` call
-    :rtype: `QuerySet` of `ReducedDatum`
+    :returns: List of typed ReducedDatum objects created by the `run_data_processor` call
+    :rtype: list
     """
     data_type = dp_type_override or dp.data_product_type
     try:
@@ -43,39 +42,35 @@ def run_data_processor(dp, dp_type_override=None):
         raise ImportError('Could not import {}. Did you provide the correct path?'.format(processor_class))
 
     data_processor = clazz()
-    # data returned by process_data is a list of 3-tuples: (timestamp, datum, source)
+    # 1. data returned by process_data is a list of 3-tuples: (timestamp, datum, source)
     data = data_processor.process_data(dp)
     data_type = data_processor.data_type_override() or data_type
 
-    # Add only the new (non-duplicate) ReducedDatum objects to the database
-
-    # 1. For quick O(1) lookup, create a hash table of existing ReducedDatum objects
-
-    # Extract exising ReducedDatums for this target, and create a hash table (dict)
-    # (We make the reduced_dataum.value JSONField dict hashable by converting it to a json string).
-    # This is so we can do O(1) lookups below as we check for duplicate data.
-    existing_reduced_datum_values = {json.dumps(rd.value, sort_keys=True, skipkeys=True): 1
-                                     for rd in ReducedDatum.objects.filter(target=dp.target)}
-
-    # 2. Create the list of new ReducedDatum objects (ready for bulk_create)
+    # 2. Build typed ReducedDatum instances from the raw data.
+    # try_parse_reduced_datum inspects the data_type and field names to determine the
+    # correct concrete subclass (photometry, spectroscopy, astrometry, or generic).
     new_reduced_datums = []
-    skipped_data = []
     for datum in data:
-        # Check if the value is already in the ReducedDatum table
-        # (via lookup in the hash table created above for this purpose)
-        if json.dumps(datum[1], sort_keys=True, skipkeys=True) in existing_reduced_datum_values:
-            skipped_data.append(datum)
-        else:
-            new_reduced_datums.append(
-                ReducedDatum(target=dp.target, data_product=dp, data_type=data_type,
-                             timestamp=datum[0], value=datum[1], source_name=datum[2]))
+        instance = try_parse_reduced_datum({
+            'target': dp.target,
+            'data_product': dp,
+            'timestamp': datum[0],
+            'source_name': datum[2],
+            'data_type': data_type,
+            **datum[1],
+        })
+        new_reduced_datums.append(instance)
 
-    # prior to checking for duplicates, we created the (yet-to-be-inserted) ReducedDatum list like this:
-    # reduced_datums = [ReducedDatum(target=dp.target, data_product=dp, data_type=data_type,
-    #                                timestamp=datum[0], value=datum[1], source_name=datum[2]) for datum in data]
+    # 3. bulk_create requires a uniform model type, so group instances by their concrete class.
+    # Then create them
+    by_type: dict[type, list] = {}
+    for instance in new_reduced_datums:
+        by_type.setdefault(type(instance), []).append(instance)
 
-    # 3. Finally, insert the new ReducedDatum objects into the database
-    reduced_datums = ReducedDatum.objects.bulk_create(new_reduced_datums)
+    reduced_datums = []
+    for model_class, instances in by_type.items():
+        # ignore_conflicts uses DB level cosntraints for deduplication
+        reduced_datums.extend(model_class.objects.bulk_create(instances, ignore_conflicts=True))
 
     # 4. Trigger any sharing you may have set to occur when new data comes in
     # Encapsulate this in a try/catch so sharing failure doesn't prevent dataproduct ingestion
@@ -85,12 +80,9 @@ def run_data_processor(dp, dp_type_override=None):
         logger.warning(f"Failed to share new dataproduct {dp.product_id}: {repr(e)}")
 
     # log what happened
-    if skipped_data:
-        logger.warning(f'{len(skipped_data)} of {len(data)} skipped as duplicates')
-    logger.info(f'{len(new_reduced_datums)} of {len(data)} new ReducedDatums '
-                f'added for DataProduct: {dp.product_id}')
+    logger.info(f'{len(reduced_datums)} of {len(data)} new ReducedDatums added for DataProduct: {dp.product_id}')
 
-    return ReducedDatum.objects.filter(data_product=dp)
+    return reduced_datums
 
 
 class DataProcessor():
