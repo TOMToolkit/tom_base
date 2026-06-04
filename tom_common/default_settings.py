@@ -53,3 +53,5 @@ TOMTOOKIT_MIDDLEWARE = [
     'tom_common.middleware.ExternalServiceMiddleware',
     'tom_common.middleware.AuthStrategyMiddleware',
 ]
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
