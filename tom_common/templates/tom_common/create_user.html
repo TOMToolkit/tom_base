@@ -14,15 +14,11 @@
   <p class="text-danger">WARNING: Changing the password for user <b>{{ object.username }}</b> will clear out all of
     their saved external service API keys and passwords (if any).</p>
   {% endif %}
-{% buttons %}
-  <button type="submit" class="btn btn-primary">
-    {% if object %}
-    Update
-    {% else %}
-    Create User
-    {% endif %}
-  </button>
-{% endbuttons %}
+{% if object %}
+  {% bootstrap_button "Update" button_type="submit" button_class="btn btn-primary" %}
+{% else %}
+  {% bootstrap_button "Create User" button_type="submit" button_class="btn btn-primary" %}
+{% endif %}
 </form>
 {% if object %}
   {% include 'tom_common/partials/api_token.html' %}

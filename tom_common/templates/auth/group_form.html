@@ -10,7 +10,7 @@
     {% endif %}
       {% csrf_token %}
       {% bootstrap_form form %}
-      {% buttons submit="Submit" %}{% endbuttons %}
+      {% bootstrap_button "Submit" button_type="submit" %}
     </form>
   </div>
 </div>

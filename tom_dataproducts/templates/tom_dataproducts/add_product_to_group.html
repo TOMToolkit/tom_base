@@ -5,8 +5,6 @@
 <form method="POST">
   {% csrf_token %}
   {% bootstrap_form form %}
-  {% buttons %}
-  <input type="submit" class="btn btn-primary" value="Add">
-  {% endbuttons %}
+  {% bootstrap_button "Add" button_type="submit" button_class="btn btn-primary" value="Add" %}
 </form>
 {% endblock %}

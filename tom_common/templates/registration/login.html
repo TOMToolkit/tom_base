@@ -7,9 +7,7 @@
     <form action="{% url 'login' %}?next={{next}}" method="POST" class="form">
       {% csrf_token %}
       {% bootstrap_form form %}
-      {% buttons %}
-        <button type="submit" class="btn btn-primary">Login</button>
-      {% endbuttons %}
+      {% bootstrap_button "Login" button_type="submit" button_class="btn btn-primary" %}
     </form>
   </div>
 </div>
