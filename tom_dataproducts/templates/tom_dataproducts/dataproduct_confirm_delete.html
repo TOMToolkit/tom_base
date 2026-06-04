@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load django_bootstrap5 %}
 {% block title %}Confirm delete{% endblock %}
 {% block content %}
 <form method="post" action="{% url 'tom_dataproducts:delete' object.id %}?next={{ next }}">

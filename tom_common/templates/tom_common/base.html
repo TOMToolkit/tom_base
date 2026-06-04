@@ -1,4 +1,4 @@
-{% load static bootstrap4 tom_common_extras %}
+{% load static django_bootstrap5 tom_common_extras %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -19,7 +19,7 @@
     {% endblock %}
     <link rel="icon" type="image/x-icon" href="{% static 'tom_common/img/favicon-32.ico' %}" sizes="32x32" />
 
-    {% bootstrap_javascript jquery='True' %}
+    {% bootstrap_javascript %}
     <!-- htmx.min.js was downloaded manually and added to the project. see https://htmx.org/docs/#download-a-copy -->
     <script src="{% static 'tom_common/js/htmx.min.js' %}" defer></script>
     <!-- Loading AlpineJS from a CDN For now, todo solution for 3rd party static assets. -->

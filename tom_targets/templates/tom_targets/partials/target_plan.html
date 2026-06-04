@@ -1,4 +1,4 @@
-{% load bootstrap4 %}
+{% load django_bootstrap5 %}
 <div id="plan-panel">
   <form action="{% url 'targets:detail' target.id %}" method="GET" class="form">
     {% csrf_token %}

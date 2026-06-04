@@ -437,13 +437,13 @@ This consists of adding the ``get_simple_form_partial()`` method to ``MyServiceF
     :caption: templates/my_dataservice/partials/myservice_simple_form.html
     :linenos:
 
-    {% load bootstrap4 %}
+    {% load django_bootstrap5 %}
     {% bootstrap_field form.first_field %}
 
 NOTES:
  * Here we are just rendering a single field from our form.
  * See the docs for `Django Form Templates <https://docs.djangoproject.com/en/stable/topics/forms/#working-with-form-templates>`__ 
-   and `bootstrap4 <https://getbootstrap.com/docs/4.0/components/forms/>`__ for help building your partials.
+   and `bootstrap5 <https://getbootstrap.com/docs/5.0/components/forms/>`__ for help building your partials.
 
 Advanced Forms:
 ===============
@@ -466,7 +466,7 @@ we will want to be explicit about NOT including the fields that we included in t
     :caption: my_dataservice/partials/myservice_advanced_form.html
     :linenos:
 
-    {% load bootstrap4 %}
+    {% load django_bootstrap5 %}
     {% bootstrap_form form exclude='query_name,query_save,first_field' %}
 
 NOTES:
