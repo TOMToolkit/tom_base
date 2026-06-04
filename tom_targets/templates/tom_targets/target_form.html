@@ -18,7 +18,7 @@
 <form method="post" class="form">
 {% csrf_token %}
 {% bootstrap_field form.type %}
-<div class="form-row">
+<div class="row">
     <div class="col">
         {% bootstrap_field form.name size="lg" show_help=False %}
     </div>

@@ -23,7 +23,7 @@
   <div class="tab-pane active" id="share">
     <div class="col-md-12">
       <form method="post" class="form" id='target-share-form'>
-        <div class="form-row" style="padding-inline:1rem">
+        <div class="row" style="padding-inline:1rem">
           <div class="col-sm-3">
             {% bootstrap_field form.share_destination %}
           </div>
@@ -36,7 +36,7 @@
               onclick="setTarget('')">
           </div>
         </div>
-        <div class="form-row" style="padding-inline:1rem">
+        <div class="row" style="padding-inline:1rem">
           <div class="col-sm-12">
             {% bootstrap_field form.share_message %}
           </div>
@@ -45,7 +45,8 @@
         {% with target_share=True %}
         {% get_photometry_data target target_share %}
         {% endwith %}
-        {% bootstrap_button "Back" button_type="submit" button_class="btn btn-primary" href="{% url 'targets:detail' pk=target.id %}" title="Back" %}
+        {% url 'targets:detail' pk=target.id as back_link %}
+        {% bootstrap_button "Back" button_type="link" button_class="btn btn-primary" href=back_link title="Back" %}
       </form>
     </div>
   </div>

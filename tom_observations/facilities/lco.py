@@ -183,7 +183,7 @@ class ImagingConfigurationLayout(LCOConfigurationLayout):
         return super()._get_basic_config_layout(instance) + (
             Div(
                     f'c_{instance}_guide_mode',
-                    css_class='form-row'
+                    css_class='row'
                 ),
         )
 
@@ -194,7 +194,7 @@ class MuscatConfigurationLayout(LCOConfigurationLayout):
             return (
                 Div(
                     f'c_{instance}_guide_mode',
-                    css_class='form-row'
+                    css_class='row'
                 )
             )
         else:
@@ -208,7 +208,7 @@ class MuscatConfigurationLayout(LCOConfigurationLayout):
                         f'c_{instance}_target_override',
                         css_class='col'
                     ),
-                    css_class='form-row'
+                    css_class='row'
                 )
             )
 
@@ -219,7 +219,7 @@ class SpectralConfigurationLayout(LCOConfigurationLayout):
             return (
                 Div(
                     f'c_{instance}_acquisition_mode',
-                    css_class='form-row'
+                    css_class='row'
                 )
             )
         else:
@@ -233,7 +233,7 @@ class SpectralConfigurationLayout(LCOConfigurationLayout):
                         f'c_{instance}_target_override',
                         css_class='col'
                     ),
-                    css_class='form-row'
+                    css_class='row'
                 )
             )
 
@@ -250,14 +250,14 @@ class MuscatInstrumentConfigLayout(OCSInstrumentConfigLayout):
                     f'c_{config_instance}_ic_{instance}_exposure_count',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
                     f'c_{config_instance}_ic_{instance}_readout_mode',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Fieldset("Exposure Times",
                      HTML('''<p>Select the exposure time for each channel.</p>'''),
@@ -270,7 +270,7 @@ class MuscatInstrumentConfigLayout(OCSInstrumentConfigLayout):
                              f'c_{config_instance}_ic_{instance}_exposure_time_i',
                              css_class='col'
                          ),
-                         css_class='form-row'
+                         css_class='row'
                      ),
                      Div(
                          Div(
@@ -281,7 +281,7 @@ class MuscatInstrumentConfigLayout(OCSInstrumentConfigLayout):
                              f'c_{config_instance}_ic_{instance}_exposure_time_z',
                              css_class='col'
                          ),
-                         css_class='form-row'
+                         css_class='row'
                      )
                      ),
             *self._get_oe_groups_layout(config_instance, instance, oe_groups)
@@ -300,7 +300,7 @@ class SpectralInstrumentConfigLayout(OCSInstrumentConfigLayout):
                     f'c_{config_instance}_ic_{instance}_exposure_count',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -311,7 +311,7 @@ class SpectralInstrumentConfigLayout(OCSInstrumentConfigLayout):
                     f'c_{config_instance}_ic_{instance}_rotator_angle',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             *self._get_oe_groups_layout(config_instance, instance, oe_groups)
         )
@@ -360,7 +360,7 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
                     'proposal',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -371,7 +371,7 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
                     'ipp_value',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -382,7 +382,7 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
                     'configuration_repeats',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -393,7 +393,7 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
                     'end',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -404,7 +404,7 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
                     'exposure_time',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -415,7 +415,7 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
                     'max_airmass',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -426,7 +426,7 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
                     'max_lunar_phase',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             )
         )
 
@@ -986,7 +986,7 @@ class LCOSpectroscopicSequenceForm(LCOOldStyleObservationForm):
                 Column('name'),
                 Column('cadence_strategy'),
                 Column(AppendedText('cadence_frequency', 'Hours')),
-                css_class='form-row'
+                css_class='row'
             ),
             Layout('facility', 'target_id', 'observation_type'),
             self.layout(),

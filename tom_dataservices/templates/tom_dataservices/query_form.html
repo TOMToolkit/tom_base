@@ -39,7 +39,7 @@
     <hr>
     <div class="row align-items-center" x-data="{save: {{ form.query_save.value|lower }}}" >
         <div class="col-1">
-            <div class="form-group">
+            <div class="mb-3">
                 <div>
                     {% if object %}
                         <input type="submit" formaction="{% url 'tom_dataservices:update' object.id %}" name="submit" value="Run" id="submit-id-update" class="btn btn-primary">

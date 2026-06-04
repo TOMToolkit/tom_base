@@ -12,7 +12,7 @@
     {% for hidden in form.hidden_fields %}
       {{ hidden }}
     {% endfor %}
-    <div class="form-row" style="padding-inline:1rem">
+    <div class="row" style="padding-inline:1rem">
         <div class="col-sm-3">
             {% bootstrap_field form.share_destination %}
         </div>
@@ -23,7 +23,7 @@
             <input type="submit" class="btn btn-primary" formaction="{% url 'targets:share-group' pk=target_list.id %}" id="submit_targetlist" value="Submit" name="share_targetlist_form" style="position:absolute; bottom:1rem" onclick="setTarget('')">
         </div>
     </div>
-    <div class="form-row" style="padding-inline:1rem">
+    <div class="row" style="padding-inline:1rem">
         <div class="col-sm-12">
             {% bootstrap_field form.share_message %}
         </div>

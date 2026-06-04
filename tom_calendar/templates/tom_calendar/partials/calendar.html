@@ -186,7 +186,7 @@
     <div>
       {% for target_list in target_lists %}
         {% include 'tom_calendar/partials/target_list_block.html' with target_list=target_list %}
-        <a class="text-secondary mr-2" href="{% url 'targets:list' %}?targetlist__name={{ target_list.id }}">
+        <a class="text-secondary me-2" href="{% url 'targets:list' %}?targetlist__name={{ target_list.id }}">
             <small>{{ target_list.name }}</small>
         </a>
       {% endfor %}

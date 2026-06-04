@@ -39,7 +39,7 @@
     <h4>Saved Data Products</h4>
     <form method="POST" action="{% url 'tom_dataproducts:group-data' %}">
       {% csrf_token %}
-      <div class="form-row">
+      <div class="row">
         <div class="col-sm-4">
           {% bootstrap_field form.group layout='inline' %}
           {% for product in data_products.saved %}

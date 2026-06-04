@@ -6,12 +6,12 @@
       {% endif %}
         hx-target="#calendar-partial">
     {% csrf_token %}
-    <div class="form-row">
+    <div class="row">
       <div class="col">
         {% bootstrap_field form.title %}
       </div>
     </div>
-    <div class="form-row">
+    <div class="row">
       <div class="col" style="min-width: 0;">
         {% bootstrap_field form.start_time %}
       </div>
@@ -19,12 +19,12 @@
         {% bootstrap_field form.end_time %}
       </div>
     </div>
-    <div class="form-row">
+    <div class="row">
       <div class="col">
         {% bootstrap_field form.description %}
       </div>
     </div>
-    <div class="form-row">
+    <div class="row">
       <div class="col">
         <label for="{{ form.url.id_for_label }}">
           URL
@@ -48,7 +48,7 @@
         {% bootstrap_field form.target_list show_label=False%}
       </div>
     </div>
-    <div class="form-row">
+    <div class="row">
       <div class="col">
         {% bootstrap_field form.user %}
       </div>

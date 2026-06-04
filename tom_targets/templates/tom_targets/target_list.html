@@ -45,20 +45,20 @@
       {% csrf_token %}
       <div class="d-flex flex-row align-items-baseline">
         <label>Merge duplicate targets</label>
-        <button type="submit" class="btn btn-outline-success ml-1" name="merge">Merge</button>
+        <button type="submit" class="btn btn-outline-success ms-1" name="merge">Merge</button>
       </div>
       <div class="form-group d-flex flex-row align-items-baseline">
         <label>Add/Remove from grouping</label>
-        <select name="grouping" class="form-control w-25 ml-1">
+        <select name="grouping" class="form-control w-25 ms-1">
           {% for grouping in groupings %}
           <option value="{{ grouping.id }}">{{ grouping.name }}</option>
           {% endfor %}
         </select>
         <input type="hidden" value="{{ query_string }}" name="query_string">
         <input type="hidden" value="False" id="isSelectAll" name="isSelectAll">
-        <button type="submit" class="btn btn-outline-primary ml-1" name="add">Add</button>
-        <button type="submit" class="btn btn-outline-primary ml-1" name="move">Move</button>
-        <button type="submit" class="btn btn-outline-danger ml-1" name="remove">Remove</button>
+        <button type="submit" class="btn btn-outline-primary ms-1" name="add">Add</button>
+        <button type="submit" class="btn btn-outline-primary ms-1" name="move">Move</button>
+        <button type="submit" class="btn btn-outline-danger ms-1" name="remove">Remove</button>
       </div>
     </form>
 

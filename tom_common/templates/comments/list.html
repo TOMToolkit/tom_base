@@ -1,8 +1,8 @@
 {% load gravatar %}
 <ul class="list-unstyled">
   {% for comment in comment_list %}
-  <li class="media ml-2 mt-1">
-    <img class="mr-3 rounded-circle img-fluid avatar" src="{% gravatar_url comment.user.email 50 %}" alt="{{ comment.user.email }}">
+  <li class="media ms-2 mt-1">
+    <img class="me-3 rounded-circle img-fluid avatar" src="{% gravatar_url comment.user.email 50 %}" alt="{{ comment.user.email }}">
     <div class="media-body">
       <small class="mt-0 mb-1">
         {{ comment.user.first_name }} {{ comment.user.last_name }}
@@ -14,7 +14,7 @@
           <a href="{% url 'comment-delete' comment.id %}" class="btn btn-sm btn-danger float-right">✖</a>
         {% endif %}
       </small>
-      <p class="mr-1">{{ comment.comment|truncatewords:30 }}</p>
+      <p class="me-1">{{ comment.comment|truncatewords:30 }}</p>
     </div>
   </li>
   {% empty %}
