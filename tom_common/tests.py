@@ -19,7 +19,13 @@ from django.test.runner import DiscoverRunner
 
 from tom_common.models import Profile
 from tom_common import encryption
-from tom_common.encryption import EncryptedFormField, EncryptedModelField, _KEEP_EXISTING
+from tom_common.encryption import (
+    ClearableEncryptedInput,
+    EncryptedFormField,
+    EncryptedModelField,
+    _CLEAR_EXISTING_VALUE,
+    _KEEP_EXISTING_VALUE,
+)
 from tom_targets.tests.factories import SiderealTargetFactory
 from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
 from tom_common.templatetags.bootstrap4_overrides import bootstrap_pagination
@@ -643,7 +649,7 @@ class TestEncryptedModelFieldRoundTrip(TestCase):
         # blank-submission preservation breaks silently. The fix: pass the
         # sentinel through to_python untouched.
         field = self._build_field()
-        self.assertIs(field.to_python(_KEEP_EXISTING), _KEEP_EXISTING)
+        self.assertIs(field.to_python(_KEEP_EXISTING_VALUE), _KEEP_EXISTING_VALUE)
 
     def test_field_clean_preserves_keep_existing_sentinel(self):
         # Integration-level guard for the same regression: exercise the
@@ -652,14 +658,14 @@ class TestEncryptedModelFieldRoundTrip(TestCase):
         field = self._build_field()
         # model_instance=None is acceptable: Field.validate doesn't dereference
         # it for nullable/blankable fields with no choices.
-        self.assertIs(field.clean(_KEEP_EXISTING, model_instance=None), _KEEP_EXISTING)
+        self.assertIs(field.clean(_KEEP_EXISTING_VALUE, model_instance=None), _KEEP_EXISTING_VALUE)
 
     def test_get_prep_value_treats_keep_existing_sentinel_as_no_value(self):
         # Defensive guard for any path that bypasses pre_save and lands the
         # sentinel in get_prep_value — better to write NULL than to
         # encrypt str(sentinel) and persist garbage.
         field = self._build_field()
-        self.assertIsNone(field.get_prep_value(_KEEP_EXISTING))
+        self.assertIsNone(field.get_prep_value(_KEEP_EXISTING_VALUE))
 
 
 class TestEncryptedFormField(TestCase):
@@ -670,11 +676,11 @@ class TestEncryptedFormField(TestCase):
         # existing", not "set to blank". The model field's pre_save
         # recognises the sentinel.
         form_field = EncryptedFormField()
-        self.assertIs(form_field.clean(''), _KEEP_EXISTING)
+        self.assertIs(form_field.clean(''), _KEEP_EXISTING_VALUE)
 
     def test_clean_none_returns_keep_existing_sentinel(self):
         form_field = EncryptedFormField()
-        self.assertIs(form_field.clean(None), _KEEP_EXISTING)
+        self.assertIs(form_field.clean(None), _KEEP_EXISTING_VALUE)
 
     def test_clean_non_blank_value_passes_through(self):
         form_field = EncryptedFormField()
@@ -692,10 +698,15 @@ class TestEncryptedFormField(TestCase):
         form_field = EncryptedFormField()
         self.assertTrue(form_field.has_changed('existing-secret', 'new-secret'))
 
-    def test_default_widget_is_password_input_without_render_value(self):
-        # render_value=False is what keeps the existing secret out of the
-        # rendered HTML when an admin opens the change form.
+    def test_default_widget_is_clearable_encrypted_input_without_render_value(self):
+        # The composite widget renders the masked input, an eye-toggle
+        # button, and the "Clear" checkbox. render_value=False keeps the
+        # stored secret out of the rendered HTML; this stays true even
+        # though the widget is no longer just a plain PasswordInput.
         form_field = EncryptedFormField()
+        self.assertIsInstance(form_field.widget, ClearableEncryptedInput)
+        # The subclass relationship is load-bearing — Django form-rendering
+        # paths that special-case PasswordInput continue to work.
         self.assertIsInstance(form_field.widget, forms.PasswordInput)
         self.assertFalse(form_field.widget.render_value)
 
@@ -704,6 +715,114 @@ class TestEncryptedFormField(TestCase):
         # required=True would interact badly with blank-as-no-change.
         form_field = EncryptedFormField()
         self.assertFalse(form_field.required)
+
+    def test_clean_clear_sentinel_returns_none(self):
+        # The clear path: when the widget signals "user checked Clear",
+        # clean returns None so EncryptedModelField.get_prep_value stores
+        # NULL and the row's value is wiped.
+        form_field = EncryptedFormField()
+        self.assertIsNone(form_field.clean(_CLEAR_EXISTING_VALUE))
+
+    def test_has_changed_clear_submission_is_true(self):
+        # Clearing a stored value IS a change. Returning False here would
+        # cause ModelForm.changed_data to omit the field and skip save,
+        # silently dropping the user's clear request.
+        form_field = EncryptedFormField()
+        self.assertTrue(form_field.has_changed('existing-secret', _CLEAR_EXISTING_VALUE))
+        # Even when there's no initial value, a clear request signals
+        # the user's intent and should be propagated through save().
+        self.assertTrue(form_field.has_changed(None, _CLEAR_EXISTING_VALUE))
+
+
+class TestClearableEncryptedInput(TestCase):
+    """Tests for the composite widget's value_from_datadict precedence rules
+    and the get_context plumbing that the template depends on.
+    """
+
+    def test_value_from_datadict_returns_typed_value_when_typed_and_checkbox_unchecked(self):
+        # The normal "set or rotate" path: user typed a value, no clear.
+        widget = ClearableEncryptedInput()
+        result = widget.value_from_datadict(
+            data={'secret': 'user-typed-value'},
+            files={},
+            name='secret',
+        )
+        self.assertEqual(result, 'user-typed-value')
+
+    def test_value_from_datadict_returns_clear_sentinel_when_empty_and_checkbox_checked(self):
+        # The "clear stored value" path. The companion checkbox key is
+        # the field name suffixed with -clear (mirrors ClearableFileInput).
+        widget = ClearableEncryptedInput()
+        result = widget.value_from_datadict(
+            data={'secret': '', 'secret-clear': 'on'},
+            files={},
+            name='secret',
+        )
+        self.assertIs(result, _CLEAR_EXISTING_VALUE)
+
+    def test_value_from_datadict_typed_value_wins_over_clear_checkbox(self):
+        # Contradictory submission (typed value AND clear checked): resolve
+        # to the typed value. The conservative principle is "don't destroy
+        # data the user just entered" — they may have intended to type and
+        # forgotten to uncheck the box.
+        widget = ClearableEncryptedInput()
+        result = widget.value_from_datadict(
+            data={'secret': 'new-value', 'secret-clear': 'on'},
+            files={},
+            name='secret',
+        )
+        self.assertEqual(result, 'new-value')
+
+    def test_value_from_datadict_returns_empty_string_when_neither_typed_nor_checked(self):
+        # The "preserve existing" path: no typed value, no clear. The form
+        # field then translates this into _KEEP_EXISTING_VALUE in clean.
+        widget = ClearableEncryptedInput()
+        result = widget.value_from_datadict(
+            data={'secret': ''},
+            files={},
+            name='secret',
+        )
+        self.assertEqual(result, '')
+
+    def test_get_context_includes_checkbox_name_and_id(self):
+        # The widget template renders the companion checkbox using these
+        # context keys; missing them would silently break the rendered
+        # markup (no input element submitted under the -clear name).
+        widget = ClearableEncryptedInput()
+        context = widget.get_context(name='secret', value=None, attrs={})
+        self.assertEqual(context['widget']['checkbox_name'], 'secret-clear')
+        self.assertEqual(context['widget']['checkbox_id'], 'id_secret-clear')
+
+    def test_get_context_sets_stored_placeholder_when_value_present(self):
+        # The widget receives the decrypted plaintext as `value` when
+        # rendering a bound form. The placeholder tells the user that a
+        # value is stored WITHOUT revealing it (the stored value never
+        # enters the rendered input's value attribute — render_value=False).
+        widget = ClearableEncryptedInput()
+        context = widget.get_context(name='secret', value='some-plaintext', attrs={})
+        self.assertEqual(
+            context['widget']['attrs']['placeholder'],
+            'Stored (hidden) — type to replace',
+        )
+
+    def test_get_context_sets_not_set_placeholder_when_value_absent(self):
+        # For instances with no stored value (or unbound forms), the
+        # placeholder tells the user the field is empty so they know
+        # there is nothing to preserve on blank submit.
+        widget = ClearableEncryptedInput()
+        context = widget.get_context(name='secret', value=None, attrs={})
+        self.assertEqual(
+            context['widget']['attrs']['placeholder'],
+            '(not set) — type to add',
+        )
+
+    def test_get_context_respects_developer_supplied_placeholder(self):
+        # A developer wiring the widget into a non-standard form may want
+        # a custom placeholder (e.g. localised text). The widget's
+        # state-aware default must NOT clobber an explicit attrs override.
+        widget = ClearableEncryptedInput(attrs={'placeholder': 'custom hint'})
+        context = widget.get_context(name='secret', value='some-plaintext', attrs={})
+        self.assertEqual(context['widget']['attrs']['placeholder'], 'custom hint')
 
 
 class TestSecretKeyFallbacks(TestCase):
