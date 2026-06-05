@@ -802,7 +802,7 @@ class TestClearableEncryptedInput(TestCase):
         context = widget.get_context(name='secret', value='some-plaintext', attrs={})
         self.assertEqual(
             context['widget']['attrs']['placeholder'],
-            'Stored (hidden) — type to replace',
+            '(A stored value is hidden) — type to replace',
         )
 
     def test_get_context_sets_not_set_placeholder_when_value_absent(self):
