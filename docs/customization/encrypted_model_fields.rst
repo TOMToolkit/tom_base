@@ -159,9 +159,9 @@ is never rendered into the form's HTML to begin with.
 
 To bridge the resulting information gap (the form input is masked
 whether or not a value is stored), the input's placeholder is
-state-aware: it reads ``Stored (hidden) — type to replace`` when a
-value is stored, and ``(not set) — type to add`` when nothing is
-stored. A hover tooltip on the control reinforces the same idea.
+state-aware: it reads ``(A stored value is hidden) — type to replace``
+when a value is stored, and ``(not set) — type to add`` when nothing
+is stored. A hover tooltip on the control reinforces the same idea.
 The actual stored value is not communicated through either channel;
 to view it, follow the read-only display pattern above.
 
