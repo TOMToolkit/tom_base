@@ -47,10 +47,9 @@
           {% endfor %}
         </div>
         <div class="col-sm-8">
-          {% buttons %}
-          <input type="submit" value="Add to group" class="btn btn-primary">
-          <a href="{% url 'dataproducts:group-list' %}">Manage groups</a>
-          {% endbuttons %}
+          {% bootstrap_button "Add to group" button_type="submit" button_class="btn btn-primary" value="Add to group" %}
+          {% url 'dataproducts:group-list' as group_link %}
+          {% bootstrap_button "Manage Groups" button_type="link" button_class="btn btn-secondary" href=group_link %}
         </div>
       </div>
       {% dataproduct_list_for_observation_saved data_products request %}
