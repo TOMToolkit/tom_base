@@ -40,7 +40,6 @@ and the
    below will leave every previously-encrypted field unreadable. Follow
    the procedure exactly — don't just edit ``SECRET_KEY`` in your env.
 
-   Should 
 
 Graceful ``SECRET_KEY`` rotation
 --------------------------------
