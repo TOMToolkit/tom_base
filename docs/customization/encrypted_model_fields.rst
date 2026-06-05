@@ -1,12 +1,12 @@
 Encrypted Model Fields
 ======================
 
-If your ``custom_code`` or reusable app needs to store sensitive data
+If your ``custom_code`` or reusable app needs to store sensitive data,
 TOM Toolkit provides a way to encrypt that data in the database.
 
 Examples of this type of sensitive data include passwords or API keys
 for external services that your TOM stores on the user's behalf. TOM
-Toolkit's Facility modules, for example, use the mechanism described
+Toolkit's Facility modules, use the mechanism described
 here to store user-specific external-service credentials in a user
 profile model. Examples live in
 `tom_demoapp <https://github.com/TOMToolkit/tom_demoapp>`__ ,
@@ -16,24 +16,23 @@ profile model. Examples live in
 Quick start
 -----------
 
-Here are the steps you'll need to take to add an encrypted field
-to a model, display it (from a View subclass) and edit it's value
-in a Form and UpdateView subclass:
+Here is a brief overview of the steps you'll need to create, display, and update and encrypted field.
+Each step is covered in its own section below.
 
 1. Add an ``EncryptedModelField`` to your model.
 2. List the field in your ``UpdateView``'s ``fields``.
 3. Pass the plaintext (from the model) to your profile-card template and
    include the ``revealable_password_input.html`` partial.
 
-Each step is covered in its own section below.
 
 Adding an encrypted field to a model
-------------------------------------
+++++++++++++++++++++++++++++++++++++
 
 Declare an :class:`~tom_common.encryption.EncryptedModelField` alongside
 your other model fields:
 
 .. code-block:: python
+    :caption: models.py
 
     from django.db import models
     from tom_common.encryption import EncryptedModelField
@@ -49,7 +48,7 @@ named field. ``ModelForm``, the Django admin, DRF ``ModelSerializer``, etc
 all introspect it appropriately.
 
 Reading and writing the value in code
--------------------------------------
++++++++++++++++++++++++++++++++++++++
 
 Access the field like any other ``models.Field`` subclass:
 
@@ -69,7 +68,7 @@ Assigning ``None`` or the empty string ``''`` clears the stored value
 For implementation details, see ``tom_common/encryption.py``. 
 
 Displaying the current value to your TOM users (read-only)
-----------------------------------------------------------
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 To display an encrypted field value with a user-driven "reveal
 control" (i.e. the  "click the eye icon to see the value" pattern),
@@ -88,19 +87,24 @@ field has to be excluded from any auto-iteration over the model and
 passed in explicitly:
 
 .. code-block:: python
+    :caption: [function returning context to template]
 
+    ...
     # exclude the encrypted field from the auto-iteration: model_to_dict
     # would only return the REDACTED placeholder for it
     excluded_fields = ['user', 'id', 'api_key']
     profile_data = model_to_dict(profile, exclude=excluded_fields)
-    return {
+
+    context = {
         'profile_data': profile_data,  # dictionary without the excluded_fields
         'api_key': profile.api_key,   # direct attribute access -> plaintext
     }
+    return context
 
 Then in the template, render the encrypted field through the partial:
 
 .. code-block:: html+django
+    :caption: my_template.html
 
     {% if api_key %}
         {% include 'tom_common/partials/revealable_password_input.html' with value=api_key %}
@@ -116,7 +120,7 @@ A worked example of this pattern lives in
 ``demo_extras.py`` and ``profile_demo.html``.
 
 Editing the value in an UpdateView
-----------------------------------
+++++++++++++++++++++++++++++++++++
 
 Include the ``EncryptedModelField`` in the ``fields`` list of your
 ``ProfileUpdateView`` (or any other ``ModelForm``-based view) and the
