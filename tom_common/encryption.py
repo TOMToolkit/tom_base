@@ -184,19 +184,30 @@ class ClearableEncryptedInput(forms.PasswordInput):
     template_name = 'tom_common/partials/clearable_encrypted_input.html'
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Extends :meth:`forms.PasswordInput.__init__` with our default
-        render-value and class attribute; everything else is forwarded.
+        """Extends :meth:`forms.PasswordInput.__init__` to set widget
+        attributes for our dot-eye-reveal-keep-on-empty behavior.
 
-        The placeholder is chosen at render time in :meth:`get_context`
-        because it depends on whether a value is currently stored —
-        which the widget only knows when ``get_context`` is called.
+        The placeholder text is chosen at render time in :meth:`get_context`
+        because it depends on whether a value is currently stored.
+        (The widget only knows that when ``get_context`` is called).
         """
         # don't render the value
         kwargs.setdefault('render_value', False)
 
-        # add the form-control class so that all the controls
-        # (field, clear-checkbox, etc) render together
-        kwargs.setdefault('attrs', {'class': 'form-control'})
+        default_attrs = {
+            # form-control opts the input into Bootstrap's input-group
+            # styling so the field, eye button, and Clear checkbox
+            # render as one visually-attached control.
+            'class': 'form-control',
+            # Suppress browser / password-manager interception (heuristic)
+            'autocomplete': 'off',
+            'data-1p-ignore': True,     # 1Password
+            'data-lpignore': 'true',    # LastPass
+            'data-bwignore': True,      # Bitwarden
+            'data-form-type': 'other',  # generic "not a credential form" hint
+        }
+        user_attrs = kwargs.get('attrs') or {}
+        kwargs['attrs'] = {**default_attrs, **user_attrs}
         super().__init__(*args, **kwargs)
 
     def clear_checkbox_name(self, name: str) -> str:
