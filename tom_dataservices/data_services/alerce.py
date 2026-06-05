@@ -6,7 +6,7 @@ from astropy.time import Time, TimezoneInfo
 from django import forms
 from django.core.cache import cache
 
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import PhotometryReducedDatum
 from tom_dataservices.dataservices import DataService, QueryServiceError
 from tom_dataservices.forms import BaseQueryForm
 from tom_targets.models import Target, TargetExtra
@@ -266,33 +266,25 @@ class AlerceDataService(DataService):
         if data:
             for detection in data.get("detections", []):
                 mjd = Time(detection["mjd"], format="mjd", scale="utc")
-                value = {
-                    "filter": ALERCE_FILTERS[detection["fid"]],
-                    "magnitude": detection["magpsf"],
-                    "error": detection["sigmapsf"],
-                    "telescope": "ZTF",
-                }
-                reduced_datum, __ = ReducedDatum.objects.get_or_create(
+                reduced_datum, __ = PhotometryReducedDatum.objects.get_or_create(
                     timestamp=mjd.to_datetime(TimezoneInfo()),
-                    value=value,
-                    data_type="photometry",
                     target=target,
+                    brightness=detection["magpsf"],
+                    brightness_error=detection["sigmapsf"],
+                    unit='mag',
+                    bandpass=ALERCE_FILTERS[detection["fid"]],
                     defaults={'source_name': self.name}
                 )
                 reduced_datums.append(reduced_datum)
 
             for non_detection in data.get("non_detections", []):
                 mjd = Time(non_detection["mjd"], format="mjd", scale="utc")
-                value = {
-                    "filter": ALERCE_FILTERS[non_detection["fid"]],
-                    "limit": non_detection["diffmaglim"],
-                    "telescope": "ZTF",
-                }
-                reduced_datum, __ = ReducedDatum.objects.get_or_create(
+                reduced_datum, __ = PhotometryReducedDatum.objects.get_or_create(
                     timestamp=mjd.to_datetime(TimezoneInfo()),
-                    value=value,
-                    data_type="photometry",
                     target=target,
+                    limit=non_detection["diffmaglim"],
+                    unit='mag',
+                    bandpass=ALERCE_FILTERS[non_detection["fid"]],
                     defaults={'source_name': self.name}
                 )
                 reduced_datums.append(reduced_datum)

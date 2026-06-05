@@ -23,7 +23,7 @@ from guardian.shortcuts import assign_perm, get_objects_for_user
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
-from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
+from tom_dataproducts.models import DataProduct, DataProductGroup, REDUCED_DATUM_MODELS
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm, DataShareForm
 from tom_dataproducts.filters import DataProductFilter
@@ -37,6 +37,11 @@ from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+
+def _delete_reduced_datums_for_product(dp):
+    for model in REDUCED_DATUM_MODELS:
+        model.objects.filter(data_product=dp).delete()
 
 
 class DataProductSaveView(LoginRequiredMixin, View):
@@ -213,17 +218,19 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
                     for group in form.cleaned_data['groups']:
                         assign_perm('tom_dataproducts.view_dataproduct', group, dp)
                         assign_perm('tom_dataproducts.delete_dataproduct', group, dp)
-                        assign_perm('tom_dataproducts.view_reduceddatum', group, reduced_data)
+                        for datum in reduced_data:
+                            perm = f'tom_dataproducts.view_{type(datum).__name__.lower()}'
+                            assign_perm(perm, group, datum)
                 successful_uploads.append(str(dp))
             except InvalidFileFormatException as iffe:
-                ReducedDatum.objects.filter(data_product=dp).delete()
+                _delete_reduced_datums_for_product(dp)
                 dp.delete()
                 messages.error(
                     self.request,
                     f'File format invalid for file {str(dp)} -- error was {iffe}'
                 )
             except Exception as e:
-                ReducedDatum.objects.filter(data_product=dp).delete()
+                _delete_reduced_datums_for_product(dp)
                 dp.delete()
                 messages.error(self.request, f'There was a problem processing your file: {str(dp)} -- Error: {e}')
         if successful_uploads:
@@ -288,7 +295,7 @@ class DataProductDeleteView(Raise403PermissionRequiredMixin, DeleteView):
         data_product = self.get_object()
 
         # Delete associated ReducedDatum objects
-        ReducedDatum.objects.filter(data_product=data_product).delete()
+        _delete_reduced_datums_for_product(data_product)
 
         # Delete the file reference.
         data_product.data.delete()

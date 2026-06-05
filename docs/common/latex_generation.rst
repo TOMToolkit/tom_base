@@ -100,7 +100,7 @@ to access the object for which we’re generating data.
 
    from django import forms
 
-   from tom_dataproducts.models import ReducedDatum
+   from tom_dataproducts.models import PhotometryReducedDatum, SpectroscopyReducedDatum
    from tom_publications.latex import GenericLatexProcessor, GenericLatexForm
    from tom_targets.models import Target
 
@@ -110,18 +110,17 @@ to access the object for which we’re generating data.
      form_class = TargetDataLatexForm
 
      def create_latex_table_data(self, cleaned_data):
-       target = Target.objects.get(pk=cleaned_data.get('model_pk'))
-       data = ReducedDatum.objects.filter(target=target, data_type=cleaned_data.get('data_type'))
+        target = Target.objects.get(pk=cleaned_data.get('model_pk'))
+        table_data = {}
+        if cleaned_data.get('data_type') == 'photometry':
+            data = PhotometryReducedDatum.objects.filter(target=target)
+            for brightness, bandpass in data.values_list('brightness', 'bandpass'):
+                table_data.setdefault('brightness', []).append(brightness)
+                table_data.setdefault('bandpass', []).append(bandpass)
+        elif cleaned_data.get('data_type') == 'spectroscopy':
+            ...
 
-       table_data = {}
-       if cleaned_data.get('data_type') == 'photometry':
-         for datum in data:
-           for key, value in json.loads(datum.value).items():
-             table_data.setdefault(key, []).append(value)
-       elif cleaned_data.get('data_type') == 'spectroscopy':
-         ...
-
-       return table_data
+        return table_data
 
 The above example only shows the photometric table generation, but
 spectroscopic can be left as an exercise to the reader.
@@ -184,7 +183,7 @@ TOM. Here’s our final ``target_data_latex_processor.py``:
 
    from django import forms
 
-   from tom_dataproducts.models import ReducedDatum
+   from tom_dataproducts.models import PhotometryReducedDatum, SpectroscopyReducedDatum
    from tom_publications.latex import GenericLatexProcessor, GenericLatexForm
    from tom_targets.models import Target
 
@@ -202,13 +201,12 @@ TOM. Here’s our final ``target_data_latex_processor.py``:
 
        def create_latex_table_data(self, cleaned_data):
            target = Target.objects.get(pk=cleaned_data.get('model_pk'))
-           data = ReducedDatum.objects.filter(target=target, data_type=cleaned_data.get('data_type'))
-
            table_data = {}
            if cleaned_data.get('data_type') == 'photometry':
-               for datum in data:
-                   for key, value in json.loads(datum.value).items():
-                       table_data.setdefault(key, []).append(value)
+               data = PhotometryReducedDatum.objects.filter(target=target)
+               for brightness, bandpass in data.values_list('brightness', 'bandpass'):
+                   table_data.setdefault('brightness', []).append(brightness)
+                   table_data.setdefault('bandpass', []).append(bandpass)
            elif cleaned_data.get('data_type') == 'spectroscopy':
                ...
 

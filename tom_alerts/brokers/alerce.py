@@ -10,7 +10,7 @@ from django.core.cache import cache
 
 from tom_alerts.alerts import GenericAlert, GenericBroker, GenericQueryForm
 from tom_targets.models import Target
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import PhotometryReducedDatum
 
 logger = logging.getLogger(__name__)
 
@@ -573,35 +573,31 @@ class ALeRCEBroker(GenericBroker):
 
         for detection in lightcurve['detections']:
             mjd = Time(detection['mjd'], format='mjd', scale='utc')
-            value = {
-                'filter': FILTERS[detection['fid']],
-                'magnitude': detection['magpsf'],
-                'error': detection['sigmapsf'],
-                'telescope': 'ZTF',
-            }
-            ReducedDatum.objects.get_or_create(
+            PhotometryReducedDatum.objects.get_or_create(
+                target=target,
+                bandpass=FILTERS[detection['fid']],
                 timestamp=mjd.to_datetime(TimezoneInfo()),
-                value=value,
-                source_name=self.name,
-                source_location=oid,
-                data_type='photometry',
-                target=target
+                defaults={
+                    'brightness': detection['magpsf'],
+                    'brightness_error': detection['sigmapsf'],
+                    'telescope': 'ZTF',
+                    'source_name': self.name,
+                    'source_location': oid,
+                }
             )
 
         for non_detection in lightcurve['non_detections']:
             mjd = Time(non_detection['mjd'], format='mjd', scale='utc')
-            value = {
-                'filter': FILTERS[non_detection['fid']],
-                'limit': non_detection['diffmaglim'],
-                'telescope': 'ZTF',
-            }
-            ReducedDatum.objects.get_or_create(
+            PhotometryReducedDatum.objects.get_or_create(
+                target=target,
+                bandpass=FILTERS[non_detection['fid']],
                 timestamp=mjd.to_datetime(TimezoneInfo()),
-                value=value,
-                source_name=self.name,
-                source_location=oid,
-                data_type='photometry',
-                target=target
+                defaults={
+                    'limit': non_detection['diffmaglim'],
+                    'telescope': 'ZTF',
+                    'source_name': self.name,
+                    'source_location': oid,
+                }
             )
 
     def to_target(self, alert):
