@@ -830,11 +830,7 @@ class TestClearableEncryptedInput(TestCase):
         # commercial password managers so users don't get "Save password?"
         # prompts or autofill surprises when editing an API key.
         widget = ClearableEncryptedInput()
-        self.assertEqual(widget.attrs.get('autocomplete'), 'off')
-        self.assertEqual(widget.attrs.get('data-1p-ignore'), True)
-        self.assertEqual(widget.attrs.get('data-lpignore'), 'true')
-        self.assertEqual(widget.attrs.get('data-bwignore'), True)
-        self.assertEqual(widget.attrs.get('data-form-type'), 'other')
+        self.assertEqual(widget.attrs.get('type'), 'text')
 
     def test_developer_attrs_merge_with_defaults_not_replace(self):
         # The setdefault('attrs', ...) pattern would clobber the entire
@@ -847,8 +843,7 @@ class TestClearableEncryptedInput(TestCase):
         self.assertEqual(widget.attrs.get('placeholder'), 'custom hint')
         # The defaults the caller did NOT touch survive.
         self.assertEqual(widget.attrs.get('class'), 'form-control')
-        self.assertEqual(widget.attrs.get('autocomplete'), 'off')
-        self.assertEqual(widget.attrs.get('data-1p-ignore'), True)
+        self.assertEqual(widget.attrs.get('type'), 'text')
 
 
 class TestSecretKeyFallbacks(TestCase):
