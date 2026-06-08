@@ -48,7 +48,6 @@ body {
 /* Set Navbar themes */
 .navbar {
   background-color: var(--theme_accent1);
-  color: var(--theme_text_primary);
 }
 
 .navbar-brand > img {
@@ -66,16 +65,6 @@ body {
 .dropdown-item {
   color: var(--theme_text_primary);
   background-color: var(--theme_accent3);
-}
-
-.nav-link {
-  color: var(--theme_text_primary);
-}
-
-.nav-link:active, .nav-item:active {
-  color: var(--theme_text_primary);
-  font-weight: 700;
-  text-decoration: underline;
 }
 
 .input-group-text {
