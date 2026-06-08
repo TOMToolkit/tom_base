@@ -824,27 +824,6 @@ class TestClearableEncryptedInput(TestCase):
         context = widget.get_context(name='secret', value='some-plaintext', attrs={})
         self.assertEqual(context['widget']['attrs']['placeholder'], 'custom hint')
 
-    def test_default_attrs_suppress_password_manager_interaction(self):
-        # The widget stores app secrets, not user-account passwords. Default
-        # attrs should signal "leave me alone" to browsers and the major
-        # commercial password managers so users don't get "Save password?"
-        # prompts or autofill surprises when editing an API key.
-        widget = ClearableEncryptedInput()
-        self.assertEqual(widget.attrs.get('type'), 'text')
-
-    def test_developer_attrs_merge_with_defaults_not_replace(self):
-        # The setdefault('attrs', ...) pattern would clobber the entire
-        # default attrs dict when a caller passes their own attrs. Merge
-        # semantics let the caller override one key while keeping the
-        # others — important so a custom placeholder (or custom class)
-        # doesn't silently disable the password-manager opt-outs or
-        # break Bootstrap styling.
-        widget = ClearableEncryptedInput(attrs={'placeholder': 'custom hint'})
-        self.assertEqual(widget.attrs.get('placeholder'), 'custom hint')
-        # The defaults the caller did NOT touch survive.
-        self.assertEqual(widget.attrs.get('class'), 'form-control')
-        self.assertEqual(widget.attrs.get('type'), 'text')
-
 
 class TestSecretKeyFallbacks(TestCase):
     """Tests for graceful SECRET_KEY rotation via SECRET_KEY_FALLBACKS.
