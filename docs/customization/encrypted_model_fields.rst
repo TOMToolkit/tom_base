@@ -13,8 +13,8 @@ profile model. Examples live in
 `tom_eso <https://github.com/TOMToolkit/tom_eso>`__ and
 `tom_swift <https://github.com/TOMToolkit/tom_swift>`__.
 
-Quick start
------------
+Getting Started
+---------------
 
 Here is a brief overview of the steps you'll need to create, display, and update and encrypted field.
 Each step is covered in its own section below.
@@ -124,13 +124,8 @@ Editing the value in an UpdateView
 
 Include the ``EncryptedModelField`` in the ``fields`` list of your
 ``ProfileUpdateView`` (or any other ``ModelForm``-based view) and the
-form renders the field automatically as a composite control with:
-
-- a masked password input joined to
-- an eye-icon reveal button and
-- a "Clear" checkbox
-
-in a single input-group.
+form renders the field automatically as a composite control with a masked
+password input joined to a "Clear" checkbox in a single input-group.
 
 .. code-block:: python
 
@@ -151,9 +146,7 @@ How the control behaves on submit:
   conservative choice, since "don't lose what the user just typed" is
   safer than the alternative.
 
-The eye-icon button toggles the visibility of what the user has
-typed in the field — useful for verifying a freshly entered value
-before clicking Update. The stored value is never revealed by this
+The stored value is never revealed by this
 toggle (or by anything else in the form), because the stored value
 is never rendered into the form's HTML to begin with.
 
