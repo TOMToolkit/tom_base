@@ -184,8 +184,7 @@ class ClearableEncryptedInput(forms.PasswordInput):
     template_name = 'tom_common/partials/clearable_encrypted_input.html'
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Extends :meth:`forms.PasswordInput.__init__` to set widget
-        attributes for our dot-eye-reveal-keep-on-empty behavior.
+        """Extends :meth:`forms.PasswordInput.__init__` to add a clear button for the hidden secret.
 
         The placeholder text is chosen at render time in :meth:`get_context`
         because it depends on whether a value is currently stored.
@@ -196,15 +195,11 @@ class ClearableEncryptedInput(forms.PasswordInput):
 
         default_attrs = {
             # form-control opts the input into Bootstrap's input-group
-            # styling so the field, eye button, and Clear checkbox
+            # styling so the field and Clear checkbox
             # render as one visually-attached control.
             'class': 'form-control',
-            # Suppress browser / password-manager interception (heuristic)
-            'autocomplete': 'off',
-            'data-1p-ignore': True,     # 1Password
-            'data-lpignore': 'true',    # LastPass
-            'data-bwignore': True,      # Bitwarden
-            'data-form-type': 'other',  # generic "not a credential form" hint
+            # Suppress browser autocomplete by setting the field type to text.
+            'type': 'text',
         }
         user_attrs = kwargs.get('attrs') or {}
         kwargs['attrs'] = {**default_attrs, **user_attrs}
@@ -406,7 +401,6 @@ class EncryptedModelField(models.BinaryField):
     """
     description = 'Encrypted text'
 
-    # This text is shown until the user click the eye-to-reveal icon
     REDACTED: str = '******** (encrypted, not shown)'
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:

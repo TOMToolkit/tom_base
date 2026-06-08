@@ -1,24 +1,14 @@
 {# Composite widget for tom_common.encryption.ClearableEncryptedInput.    #}
-{# Bootstrap's input-group attaches the masked password input, an eye    #}
-{# button that toggles visibility of what the user has typed, and the    #}
+{# Bootstrap's input-group attaches the masked password input, and the    #}
 {# "Clear stored value" checkbox so they read as a single unit. The      #}
 {# widget's value_from_datadict reads both POST keys (the password field #}
 {# and the companion checkbox) to decide what value the form field       #}
-{# receives. The eye toggle only flips the input's type between          #}
-{# password and text — the stored value is never rendered to the HTML,   #}
-{# so there is nothing else to reveal.                                   #}
-<div class="input-group"
+{# receives. #}
+<div class="input-group col-6"
      title="The stored value (if any) is hidden. Type to replace it, or check Clear to remove it.">
 
     {% include "django/forms/widgets/password.html" %}
     <div class="input-group-append">
-        <button type="button"
-                class="btn btn-outline-secondary"
-                title="Show or hide what you've typed"
-                aria-label="Show or hide what you've typed"
-                onclick="var i=document.getElementById('{{ widget.attrs.id }}');i.type=i.type==='password'?'text':'password';">
-            <i class="fa fa-eye"></i>
-        </button>
         <span class="input-group-text">
             <input type="checkbox"
                    name="{{ widget.checkbox_name }}"
