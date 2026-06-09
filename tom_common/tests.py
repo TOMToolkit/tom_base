@@ -1,25 +1,31 @@
-import datetime
 from http import HTTPStatus
+from io import StringIO
+from types import SimpleNamespace
 import tempfile
 import logging
-from unittest.mock import MagicMock, patch
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import InvalidToken
 
+from django import forms
 from django.contrib.auth.models import User
-from django.contrib.sessions.models import Session
 from django.contrib.sites.models import Site
+from django.core.exceptions import FieldError, ValidationError
+from django.core.management import call_command
 from django.urls import reverse
 from django_comments.models import Comment
 from django.core.paginator import Paginator
-from django.db.models import QuerySet
 from django.test import TestCase, override_settings
 from django.test.runner import DiscoverRunner
 
-from tom_common.models import UserSession
-from tom_common import session_utils  # noqa Import the whole module for patching
-from tom_common.session_utils import (get_key_from_session_store, get_key_from_session_model,
-                                      SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY)
+from tom_common.models import Profile
+from tom_common import encryption
+from tom_common.encryption import (
+    ClearableEncryptedInput,
+    EncryptedFormField,
+    EncryptedModelField,
+    _CLEAR_EXISTING_VALUE,
+    _KEEP_EXISTING_VALUE,
+)
 from tom_targets.tests.factories import SiderealTargetFactory
 from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
 from tom_common.templatetags.bootstrap5_overrides import bootstrap_pagination
@@ -440,284 +446,461 @@ class TestRobotsDotTxt(TestCase):
             assert response.content.startswith(b"User-Agent: *\n")  # known a priori from default robots.txt
 
 
-class TestUserSession(TestCase):
-    """Test that a UserSession instance is created when a user logs in.
-    """
-    def setUp(self):
-        # Create a user and log them in.
-        username = 'testuser'
-        password = 'testpassword'  # noqa
-        self.user = User.objects.create_user(username=username, password=password)
-        # don't user client.force_login() here, because it matters how the user logs in
-        self.client.login(username=username, password=password)
-
-    def test_user_session_created(self):
-        """The UserSession links the User to the User's SessionStore instance.
-
-        Here we just test that the UserSession instance is created when the user logs in.
-        The UserSession instance is created in the `user_logged_in` signal receiver,
-        `tom_common.signals.create_user_session_on_login`
-        """
-        # Check that a UserSession instance is created for the logged-in user.
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 1)  # make sure there's only one
-
-        user_session = user_sessions.first()
-        self.assertIsInstance(user_session, UserSession)  # check that it's a UserSession instance
-        self.assertEqual(user_session.user, self.user)    # that links to the correct User
-
-    def test_user_session_deleted(self):
-        # Check that the UserSession instance is deleted when the user logs out.
-        self.client.logout()
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 0)  # there should be none left
-
-    def test_user_session_properties(self):
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 1)  # make sure there's only one
-
-        user_session: UserSession = user_sessions.first()
-
-        session: Session = user_session.session
-        self.assertIsInstance(session, Session)  # make sure it's a Session instance
-
-
-class TestEncryptionKeyManagement(TestCase):
-    def setUp(self):
-        # Create a user and log in.
-        username = 'testuser'
-        password = 'testpassword'
-        self.user = User.objects.create_user(username=username, password=password)
-        self.plaintext = f'this is a plaintext test message on {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
-
-        # Don't use client.login() here, because we need the request to go through the middleware
-        # in order to create a SessionStore instance. So, this doesn't work:
-        # self.client.login(username=username, password=password)  # NOPE
-
-        # Instead, we use the client.post() method to log in, which will create a SessionStore instance
-        # as the User is logged in. (it returns an HTTPResponse object, but we don't need it)
-        _ = self.client.post("/accounts/login/", {"username": username, "password": password})
-
-    def test_encryption_key_extraction(self):
-        """The UserSession.session field is a ForeignKey to the the Session model.
-        So, `user_session.session` should be an instance of the Session model. This is the
-        dictionary-like object saved in the SessionStore. We use it to hold the User's
-        encryption key.
-
-        This test checks that after setUp, where we create a user and log them in:
-        1. the UserSession instance is created and that there's only one
-        2. the encryption key can be extracted from the session store.
-        3. the encryption key is a bytes object that can be used to create a Fernet cipher
-        4. the Fernet cipher can be used to encrypt and decrypt a plaintext message.
-        """
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 1)  # make sure there's only one
-
-        user_session: UserSession = user_sessions.first()
-        session: Session = user_session.session
-
-        # extract the encryption key from the session store
-        encryption_key: bytes = get_key_from_session_model(session)
-        self.assertIsInstance(encryption_key, bytes)  # check that it's a bytes object
-        cipher = Fernet(encryption_key)  # and we can use it to create a Fernet cipher
-
-        # make sure the cipher works (i.e. the key is not weird).
-        ciphertext = cipher.encrypt(self.plaintext.encode())
-        decoded_ciphertext = cipher.decrypt(ciphertext).decode()
-        self.assertEqual(self.plaintext, decoded_ciphertext)
-
-    def test_encryption_key_extraction_from_session_store(self):
-        """Test that get_key_from_session_store() and get_key_from_session_model()
-        return the same key.
-
-        Use get_key_from_session_store() when you have a SessionStore instance,
-        probably from a decorated HTTPRequest. Use get_key_from_session_model()
-        only have a UserSession instance.
-        """
-        # Get the UserSession instance for the logged-in user.
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 1)  # make sure there's only one in the QuerySet
-        user_session: UserSession = user_sessions.first()
-        session: Session = user_session.session
-        self.assertIsInstance(session, Session)  # make sure it's a Session instance
-
-        # To demonstrate the difference between Session and SessionStore:
-        # Get the key from the Session model instance
-        key_from_session: bytes = get_key_from_session_model(session)
-        self.assertIsInstance(key_from_session, bytes)
-
-        # Create a SessionStore...
-        from django.contrib.sessions.backends.db import SessionStore
-        # (the session has a session_key we can use to create a SessionStore instance)
-        session_store = SessionStore(session_key=session.session_key)
-        # ...and get the key from it
-        key_from_session_store: bytes = get_key_from_session_store(session_store)
-        self.assertEqual(key_from_session, key_from_session_store)  # check that they are the same
-
-    def test_encryption_key_update_upon_password_change(self):
-        """Test that the encryption key is updated when the user changes their password.
-
-        The basic structure of this test is to:
-        1. log in and make sure the UserSession, SessionStore, encryption_key, etc is working.
-        2. change the user's password
-        3. log out and back in again with the new password
-        4. check that the encryption key in the new session store has changed
-
-        Along the way, we check that the encryption keys (old and new) work and
-        a cipher created with them can be used to encrypt and decrypt a plaintext
-        message.
-
-        This test does not test the re-encryption of the model fields up on
-        a password change.
-        """
-        # Get the UserSession instance for the logged-in user.
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 1)
-        user_session: UserSession = user_sessions.first()
-        session: Session = user_session.session
-        self.assertIsInstance(session, Session)  # make sure it's a Session instance
-
-        # Get the key from the Session model instance
-        encryption_key: bytes = get_key_from_session_model(session)
-        self.assertIsInstance(encryption_key, bytes)
-
-        cipher = Fernet(encryption_key)
-
-        # Encrypt the plaintext message with the current key.
-        ciphertext = cipher.encrypt(self.plaintext.encode())
-        decoded_ciphertext = cipher.decrypt(ciphertext).decode()
-        self.assertEqual(self.plaintext, decoded_ciphertext)  # check that the key works
-
-        # Change the user's password.
-        new_password = 'newpassword'  # noqa
-        self.user.set_password(new_password)
-        self.user.save()  # triggers pre_save signal on User model
-
-        # check that the password was changed
-        self.assertFalse(self.user.check_password('testpassword'))
-        self.assertTrue(self.user.check_password(new_password))
-
-        # Log out and back in again to create a new session
-        self.client.post("/accounts/logout/")
-        response = self.client.post("/accounts/login/",
-                                    {"username": self.user.username, "password": new_password})
-        logger.debug(f'login response: {response}')
-
-        # Get the new UserSession instance for the logged-in user.
-        user_sessions: QuerySet = UserSession.objects.filter(user=self.user)
-        self.assertEqual(user_sessions.count(), 1)
-        user_session: UserSession = user_sessions.first()
-        session: Session = user_session.session
-
-        # Extract the new encryption key from the session store.
-        new_encryption_key: bytes = get_key_from_session_model(session)
-        self.assertIsInstance(new_encryption_key, bytes)
-
-        # The new encryption key should be different from the old one.
-        self.assertNotEqual(new_encryption_key, encryption_key)
-
-        # Encrypt the plaintext message with the new key.
-        cipher = Fernet(new_encryption_key)
-        ciphertext = cipher.encrypt(self.plaintext.encode())
-        decoded_ciphertext = cipher.decrypt(ciphertext).decode()
-
-        # Check that the new key works.
-        self.assertEqual(self.plaintext, decoded_ciphertext)
-
-
 class TestSignalHandlers(TestCase):
+    """Tests for signal handlers in signals.py."""
+
     def setUp(self):
-        self.username = 'signaltestuser'
-        self.password = 'signaltestpass'
-        self.user = User.objects.create_user(username=self.username, password=self.password, email='signal@example.com')
+        self.user = User.objects.create_user(
+            username='signaltestuser', password='signaltestpass',
+            email='signal@example.com',
+        )
 
-    def test_create_user_session_on_user_logged_in(self):
-        # Initially, no UserSession for this user
-        self.assertFalse(UserSession.objects.filter(user=self.user).exists())
-        # Log in the user
-        self.client.login(username=self.username, password=self.password)
-        # Check UserSession is created
-        self.assertTrue(UserSession.objects.filter(user=self.user).exists())
-        user_session = UserSession.objects.get(user=self.user)
-        self.assertIsNotNone(user_session.session)
+    def test_profile_created_on_user_creation(self):
+        """The post_save signal should create a Profile when a User is created."""
+        self.assertTrue(Profile.objects.filter(user=self.user).exists())
 
-    def test_delete_user_session_on_user_logged_out(self):
-        # Log in the user to create a session
-        self.client.login(username=self.username, password=self.password)
-        self.assertTrue(UserSession.objects.filter(user=self.user).exists())
-        session_key = self.client.session.session_key
-        self.assertTrue(Session.objects.filter(session_key=session_key).exists())
+    def test_drf_token_created_on_user_creation(self):
+        """The post_save signal should create a DRF auth token for new users."""
+        from rest_framework.authtoken.models import Token
+        self.assertTrue(Token.objects.filter(user=self.user).exists())
 
-        # Log out the user
-        self.client.logout()
+    def test_user_save_does_not_clobber_concurrent_profile_changes(self):
+        """Regression guard: saving a User must NOT write back a stale cached
+        Profile, clobbering out-of-band updates.
 
-        # Check UserSession is deleted
-        self.assertFalse(UserSession.objects.filter(user=self.user).exists())
-        # Check the associated Session is also deleted
-        self.assertFalse(Session.objects.filter(session_key=session_key).exists())
+        The risk: ``update_last_login`` fires the post_save signal on every
+        login. If the signal unconditionally re-saved ``instance.profile``,
+        the cached Profile (a snapshot from earlier in this Python process)
+        would overwrite any concurrent updates made via a separate queryset.
+        """
+        # Modify the Profile out-of-band (no in-memory link to self.user).
+        Profile.objects.filter(user=self.user).update(affiliation='LCO')
 
-    def test_set_cipher_on_user_logged_in(self):
-        # Log in the user using client.post to simulate form submission with password
-        self.client.post(reverse('login'), {'username': self.username, 'password': self.password})
+        # Force a User save that triggers the signal (mimics what
+        # ``update_last_login`` does on every login).
+        self.user.save(update_fields=['last_login'])
 
-        # Check that the encryption key is in the session
-        self.assertIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, self.client.session)
-        key_from_session_store = self.client.session[SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY]
-        self.assertIsInstance(key_from_session_store, str)
-        self.assertIsNotNone(key_from_session_store)
+        # The out-of-band change must survive the signal's pass.
+        self.assertEqual(Profile.objects.get(user=self.user).affiliation, 'LCO')
 
-        # Verify the key can be used
-        try:
-            retrieved_fernet_key = get_key_from_session_store(self.client.session)
 
-            # retrieved_fernet_key should now be the original Fernet key and usable by Fernet.
-            Fernet(retrieved_fernet_key)  # This should not raise an error if the key is valid
-        except Exception as e:
-            self.fail(f"Encryption key from session is not a valid Fernet key: {e}")
+# ---------------------------------------------------------------------------
+# Encryption: HKDF derivation, descriptor round-trip, fallback decryption,
+# and the rotate_encryption_key management command.
+# ---------------------------------------------------------------------------
 
-    def test_set_cipher_on_user_logged_in_no_password_in_request(self):
-        # Simulate a login scenario where request.POST does not contain 'password'
-        # This can happen with force_login or other custom auth backends
-        # We expect an error to be logged, but the login should still proceed.
-        # The key won't be set in the session by this specific signal handler.
+class TestDerivedCipher(TestCase):
+    """Tests for the HKDF derivation of the Fernet cipher from SECRET_KEY.
 
-        # Use force_login which doesn't populate request.POST['password']
-        self.client.force_login(self.user)
+    These verify the load-bearing invariants of the simplified encryption
+    scheme: derivation is deterministic for a given SECRET_KEY, distinct
+    SECRET_KEYs produce distinct ciphers, and encrypt+decrypt round-trips.
+    """
 
-        # Check that the encryption key is NOT in the session from this signal
-        # (it might be set by other mechanisms, but not by set_cipher_on_user_logged_in)
-        # We can't directly assert it's not there if other parts of the login process add it.
-        # Instead, we check that our logger.error was called.
-        with self.assertLogs('tom_common.signals', level='ERROR') as cm:
-            # Manually trigger the signal with a mock request that has no POST data
-            from django.contrib.auth.signals import user_logged_in
-            mock_request = MagicMock()
-            mock_request.POST = {}  # No password
-            mock_request.session = self.client.session  # Use the actual session object
-            user_logged_in.send(sender=self.user.__class__, request=mock_request, user=self.user)
-        self.assertIn(f'User {self.username} logged in without a password. Cannot create encryption key.', cm.output[0])
-        # Key should not be in session from *this* signal call
-        self.assertNotIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, mock_request.session)
+    def test_derivation_is_deterministic(self):
+        self.assertEqual(
+            encryption._derive_fernet_key('alpha'),
+            encryption._derive_fernet_key('alpha'),
+        )
 
-    def test_clear_encryption_key_on_user_logged_out(self):
-        # Log in and ensure key is set
-        self.client.post(reverse('login'), {'username': self.username, 'password': self.password})
-        self.assertIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, self.client.session)
+    def test_derivation_changes_with_secret_key(self):
+        self.assertNotEqual(
+            encryption._derive_fernet_key('alpha'),
+            encryption._derive_fernet_key('beta'),
+        )
 
-        # Log out
-        self.client.logout()
+    @override_settings(SECRET_KEY='roundtrip-secret-key-value')
+    def test_encrypt_decrypt_roundtrip(self):
+        plaintext = 'a perfectly innocent observatory password'
+        blob = encryption.encrypt(plaintext)
+        self.assertIsInstance(blob, bytes)
+        self.assertNotIn(plaintext.encode(), blob)  # bytes really are ciphertext
+        self.assertEqual(encryption.decrypt(blob), plaintext)
 
-        # Check that the encryption key is removed from the session
-        self.assertNotIn(SESSION_KEY_FOR_CIPHER_ENCRYPTION_KEY, self.client.session)
 
-    @patch('tom_common.signals.session_utils.reencrypt_data')
-    def test_user_updated_on_user_pre_save_password_changed(self, mock_reencrypt):
-        self.user.set_password('newpassword123')
-        self.user.save()  # Triggers pre_save signal
-        mock_reencrypt.assert_called_once_with(self.user)
+class TestEncryptedModelFieldRoundTrip(TestCase):
+    """Unit tests for EncryptedModelField's per-method behavior.
 
-    @patch('tom_common.signals.session_utils.reencrypt_data')
-    def test_user_updated_on_user_pre_save_password_not_changed(self, mock_reencrypt):
-        self.user.first_name = 'Signal'
-        self.user.save()  # Triggers pre_save signal
-        mock_reencrypt.assert_not_called()
+    Exercises the field's pure methods (``from_db_value``, ``to_python``,
+    ``get_prep_value``, ``value_from_object``, ``value_to_string``,
+    ``get_lookup``, ``formfield``) without a live database. Full
+    ModelForm + ORM integration — including the blank-submission
+    preservation mechanism — is exercised against a real model in the
+    demo app's test suite.
+
+    Field instances are built via ``set_attributes_from_name`` to
+    populate ``.name`` and ``.attname``, mirroring what Django does
+    during ``contribute_to_class`` on a real model declaration.
+    """
+
+    def _build_field(self, name: str = 'secret') -> EncryptedModelField:
+        field = EncryptedModelField(null=True, blank=True)
+        field.set_attributes_from_name(name)
+        return field
+
+    @override_settings(SECRET_KEY='emf-roundtrip')
+    def test_get_prep_value_then_from_db_value_yields_original_plaintext(self):
+        field = self._build_field()
+        ciphertext = field.get_prep_value('shh-secret-value')
+        self.assertIsInstance(ciphertext, bytes)
+        self.assertNotIn(b'shh-secret-value', ciphertext)
+        plaintext = field.from_db_value(ciphertext, None, None)
+        self.assertEqual(plaintext, 'shh-secret-value')
+
+    @override_settings(SECRET_KEY='emf-memoryview')
+    def test_from_db_value_normalises_memoryview_to_bytes(self):
+        # psycopg returns memoryview rather than bytes for binary columns;
+        # SQLite returns bytes. The field must handle both transparently.
+        field = self._build_field()
+        ciphertext = field.get_prep_value('postgres-style-secret')
+        plaintext = field.from_db_value(memoryview(ciphertext), None, None)
+        self.assertEqual(plaintext, 'postgres-style-secret')
+
+    def test_from_db_value_none_returns_none(self):
+        field = self._build_field()
+        self.assertIsNone(field.from_db_value(None, None, None))
+
+    def test_get_prep_value_treats_none_and_empty_string_as_no_value(self):
+        # Both store as NULL — avoids producing an encrypted empty-string
+        # row when a caller writes ``instance.api_key = ''``.
+        field = self._build_field()
+        self.assertIsNone(field.get_prep_value(None))
+        self.assertIsNone(field.get_prep_value(''))
+
+    @override_settings(SECRET_KEY='emf-to-python-str')
+    def test_to_python_passes_plaintext_str_through(self):
+        field = self._build_field()
+        self.assertEqual(field.to_python('plaintext'), 'plaintext')
+        self.assertIsNone(field.to_python(None))
+
+    @override_settings(SECRET_KEY='emf-to-python-bytes')
+    def test_to_python_decrypts_bytes(self):
+        # Fixture deserialization can pass bytes to to_python.
+        field = self._build_field()
+        ciphertext = field.get_prep_value('decrypt-me')
+        self.assertEqual(field.to_python(ciphertext), 'decrypt-me')
+
+    def test_to_python_refuses_redacted_placeholder(self):
+        # dumpdata round-trip protection: loading the placeholder back
+        # would silently encrypt the literal placeholder string as the
+        # new "secret". Raise instead.
+        field = self._build_field()
+        with self.assertRaises(ValidationError):
+            field.to_python(field.REDACTED)
+
+    def test_get_lookup_raises_field_error_for_any_lookup(self):
+        # Fernet ciphertext cannot match a plaintext query under any
+        # lookup. Refuse early and explicitly.
+        field = self._build_field()
+        with self.assertRaises(FieldError):
+            field.get_lookup('exact')
+        with self.assertRaises(FieldError):
+            field.get_lookup('icontains')
+
+    def test_value_from_object_returns_redacted_placeholder_when_value_set(self):
+        # Redaction in serialization: DRF ModelSerializer and admin
+        # display introspection must not see the plaintext.
+        field = self._build_field()
+        obj = SimpleNamespace()
+        obj.__dict__[field.attname] = 'real-plaintext'
+        self.assertEqual(field.value_from_object(obj), field.REDACTED)
+
+    def test_value_from_object_returns_none_when_value_unset(self):
+        field = self._build_field()
+        obj = SimpleNamespace()
+        obj.__dict__[field.attname] = None
+        self.assertIsNone(field.value_from_object(obj))
+
+    def test_value_to_string_returns_redacted_placeholder_when_value_set(self):
+        # dumpdata output: emit the placeholder rather than leaking the
+        # plaintext into a fixture file.
+        field = self._build_field()
+        obj = SimpleNamespace()
+        obj.__dict__[field.attname] = 'real-plaintext'
+        self.assertEqual(field.value_to_string(obj), field.REDACTED)
+
+    def test_value_to_string_returns_empty_when_value_unset(self):
+        field = self._build_field()
+        obj = SimpleNamespace()
+        obj.__dict__[field.attname] = None
+        self.assertEqual(field.value_to_string(obj), '')
+
+    def test_formfield_returns_encrypted_form_field_instance(self):
+        field = self._build_field()
+        form_field = field.formfield()
+        self.assertIsInstance(form_field, EncryptedFormField)
+
+    def test_field_is_editable_by_default(self):
+        # Regression guard: BinaryField (the parent) defaults editable=False.
+        # If we inherit that default, modelform_factory drops the field
+        # silently — or, when explicitly named in Meta.fields, raises
+        # FieldError before formfield() is ever called. UpdateView /
+        # ModelForm consumers must see editable=True for the field to
+        # participate in forms.
+        self.assertTrue(self._build_field().editable)
+
+    def test_to_python_passes_keep_existing_sentinel_through(self):
+        # Regression guard for a bug found in live testing: ModelForm's
+        # _post_clean runs Model.full_clean, which runs Model.clean_fields,
+        # which calls setattr(instance, attname, field.clean(raw_value, instance))
+        # on every field. Field.clean calls to_python. If to_python coerces
+        # the sentinel to str(sentinel), that string then replaces the
+        # sentinel on the instance before pre_save ever runs — and the
+        # blank-submission preservation breaks silently. The fix: pass the
+        # sentinel through to_python untouched.
+        field = self._build_field()
+        self.assertIs(field.to_python(_KEEP_EXISTING_VALUE), _KEEP_EXISTING_VALUE)
+
+    def test_field_clean_preserves_keep_existing_sentinel(self):
+        # Integration-level guard for the same regression: exercise the
+        # full Field.clean() pipeline (to_python + validate + run_validators)
+        # that Model.clean_fields invokes during ModelForm._post_clean.
+        field = self._build_field()
+        # model_instance=None is acceptable: Field.validate doesn't dereference
+        # it for nullable/blankable fields with no choices.
+        self.assertIs(field.clean(_KEEP_EXISTING_VALUE, model_instance=None), _KEEP_EXISTING_VALUE)
+
+    def test_get_prep_value_treats_keep_existing_sentinel_as_no_value(self):
+        # Defensive guard for any path that bypasses pre_save and lands the
+        # sentinel in get_prep_value — better to write NULL than to
+        # encrypt str(sentinel) and persist garbage.
+        field = self._build_field()
+        self.assertIsNone(field.get_prep_value(_KEEP_EXISTING_VALUE))
+
+
+class TestEncryptedFormField(TestCase):
+    """Tests for the form-side companion: blank-as-no-change and masked widget."""
+
+    def test_clean_blank_string_returns_keep_existing_sentinel(self):
+        # The footgun guard: a blank submission must signal "preserve
+        # existing", not "set to blank". The model field's pre_save
+        # recognises the sentinel.
+        form_field = EncryptedFormField()
+        self.assertIs(form_field.clean(''), _KEEP_EXISTING_VALUE)
+
+    def test_clean_none_returns_keep_existing_sentinel(self):
+        form_field = EncryptedFormField()
+        self.assertIs(form_field.clean(None), _KEEP_EXISTING_VALUE)
+
+    def test_clean_non_blank_value_passes_through(self):
+        form_field = EncryptedFormField()
+        self.assertEqual(form_field.clean('user-typed-value'), 'user-typed-value')
+
+    def test_has_changed_blank_submission_is_false_even_when_initial_set(self):
+        # Consistent with clean(): ModelForm.changed_data must not flag
+        # the field on a blank submission, otherwise downstream change
+        # tracking sees a spurious edit.
+        form_field = EncryptedFormField()
+        self.assertFalse(form_field.has_changed('existing-secret', ''))
+        self.assertFalse(form_field.has_changed('existing-secret', None))
+
+    def test_has_changed_real_edit_is_true(self):
+        form_field = EncryptedFormField()
+        self.assertTrue(form_field.has_changed('existing-secret', 'new-secret'))
+
+    def test_default_widget_is_clearable_encrypted_input_without_render_value(self):
+        # The composite widget renders the masked input, an eye-toggle
+        # button, and the "Clear" checkbox. render_value=False keeps the
+        # stored secret out of the rendered HTML; this stays true even
+        # though the widget is no longer just a plain PasswordInput.
+        form_field = EncryptedFormField()
+        self.assertIsInstance(form_field.widget, ClearableEncryptedInput)
+        # The subclass relationship is load-bearing — Django form-rendering
+        # paths that special-case PasswordInput continue to work.
+        self.assertIsInstance(form_field.widget, forms.PasswordInput)
+        self.assertFalse(form_field.widget.render_value)
+
+    def test_required_defaults_to_false(self):
+        # The field's purpose is in-place rotation of an existing secret;
+        # required=True would interact badly with blank-as-no-change.
+        form_field = EncryptedFormField()
+        self.assertFalse(form_field.required)
+
+    def test_clean_clear_sentinel_returns_none(self):
+        # The clear path: when the widget signals "user checked Clear",
+        # clean returns None so EncryptedModelField.get_prep_value stores
+        # NULL and the row's value is wiped.
+        form_field = EncryptedFormField()
+        self.assertIsNone(form_field.clean(_CLEAR_EXISTING_VALUE))
+
+    def test_has_changed_clear_submission_is_true(self):
+        # Clearing a stored value IS a change. Returning False here would
+        # cause ModelForm.changed_data to omit the field and skip save,
+        # silently dropping the user's clear request.
+        form_field = EncryptedFormField()
+        self.assertTrue(form_field.has_changed('existing-secret', _CLEAR_EXISTING_VALUE))
+        # Even when there's no initial value, a clear request signals
+        # the user's intent and should be propagated through save().
+        self.assertTrue(form_field.has_changed(None, _CLEAR_EXISTING_VALUE))
+
+
+class TestClearableEncryptedInput(TestCase):
+    """Tests for the composite widget's value_from_datadict precedence rules
+    and the get_context plumbing that the template depends on.
+    """
+
+    def test_value_from_datadict_returns_typed_value_when_typed_and_checkbox_unchecked(self):
+        # The normal "set or rotate" path: user typed a value, no clear.
+        widget = ClearableEncryptedInput()
+        result = widget.value_from_datadict(
+            data={'secret': 'user-typed-value'},
+            files={},
+            name='secret',
+        )
+        self.assertEqual(result, 'user-typed-value')
+
+    def test_value_from_datadict_returns_clear_sentinel_when_empty_and_checkbox_checked(self):
+        # The "clear stored value" path. The companion checkbox key is
+        # the field name suffixed with -clear (mirrors ClearableFileInput).
+        widget = ClearableEncryptedInput()
+        result = widget.value_from_datadict(
+            data={'secret': '', 'secret-clear': 'on'},
+            files={},
+            name='secret',
+        )
+        self.assertIs(result, _CLEAR_EXISTING_VALUE)
+
+    def test_value_from_datadict_typed_value_wins_over_clear_checkbox(self):
+        # Contradictory submission (typed value AND clear checked): resolve
+        # to the typed value. The conservative principle is "don't destroy
+        # data the user just entered" — they may have intended to type and
+        # forgotten to uncheck the box.
+        widget = ClearableEncryptedInput()
+        result = widget.value_from_datadict(
+            data={'secret': 'new-value', 'secret-clear': 'on'},
+            files={},
+            name='secret',
+        )
+        self.assertEqual(result, 'new-value')
+
+    def test_value_from_datadict_returns_empty_string_when_neither_typed_nor_checked(self):
+        # The "preserve existing" path: no typed value, no clear. The form
+        # field then translates this into _KEEP_EXISTING_VALUE in clean.
+        widget = ClearableEncryptedInput()
+        result = widget.value_from_datadict(
+            data={'secret': ''},
+            files={},
+            name='secret',
+        )
+        self.assertEqual(result, '')
+
+    def test_get_context_includes_checkbox_name_and_id(self):
+        # The widget template renders the companion checkbox using these
+        # context keys; missing them would silently break the rendered
+        # markup (no input element submitted under the -clear name).
+        widget = ClearableEncryptedInput()
+        context = widget.get_context(name='secret', value=None, attrs={})
+        self.assertEqual(context['widget']['checkbox_name'], 'secret-clear')
+        self.assertEqual(context['widget']['checkbox_id'], 'id_secret-clear')
+
+    def test_get_context_sets_stored_placeholder_when_value_present(self):
+        # The widget receives the decrypted plaintext as `value` when
+        # rendering a bound form. The placeholder tells the user that a
+        # value is stored WITHOUT revealing it (the stored value never
+        # enters the rendered input's value attribute — render_value=False).
+        widget = ClearableEncryptedInput()
+        context = widget.get_context(name='secret', value='some-plaintext', attrs={})
+        self.assertEqual(
+            context['widget']['attrs']['placeholder'],
+            '(A stored value is hidden) — type to replace',
+        )
+
+    def test_get_context_sets_not_set_placeholder_when_value_absent(self):
+        # For instances with no stored value (or unbound forms), the
+        # placeholder tells the user the field is empty so they know
+        # there is nothing to preserve on blank submit.
+        widget = ClearableEncryptedInput()
+        context = widget.get_context(name='secret', value=None, attrs={})
+        self.assertEqual(
+            context['widget']['attrs']['placeholder'],
+            '(not set) — type to add',
+        )
+
+    def test_get_context_respects_developer_supplied_placeholder(self):
+        # A developer wiring the widget into a non-standard form may want
+        # a custom placeholder (e.g. localised text). The widget's
+        # state-aware default must NOT clobber an explicit attrs override.
+        widget = ClearableEncryptedInput(attrs={'placeholder': 'custom hint'})
+        context = widget.get_context(name='secret', value='some-plaintext', attrs={})
+        self.assertEqual(context['widget']['attrs']['placeholder'], 'custom hint')
+
+
+class TestSecretKeyFallbacks(TestCase):
+    """Tests for graceful SECRET_KEY rotation via SECRET_KEY_FALLBACKS.
+
+    The encryption module's ``decrypt()`` honours SECRET_KEY_FALLBACKS by
+    trying the primary derived key first and then each fallback. This
+    matches Django's own pattern for HMAC signing keys.
+    """
+
+    def test_decrypt_uses_fallback_when_primary_does_not_match(self):
+        # Encrypt under SECRET_KEY=A.
+        with override_settings(SECRET_KEY='A-original'):
+            blob = encryption.encrypt('rotate-me')
+        # Decrypt with new primary B and A in fallbacks → success.
+        with override_settings(SECRET_KEY='B-new', SECRET_KEY_FALLBACKS=['A-original']):
+            self.assertEqual(encryption.decrypt(blob), 'rotate-me')
+
+    def test_decrypt_fails_when_no_key_matches(self):
+        # Encrypt under SECRET_KEY=A.
+        with override_settings(SECRET_KEY='A-only'):
+            blob = encryption.encrypt('will-fail')
+        # Unrelated primary, no fallback → InvalidToken.
+        with override_settings(SECRET_KEY='B-only', SECRET_KEY_FALLBACKS=[]):
+            with self.assertRaises(InvalidToken):
+                encryption.decrypt(blob)
+
+    def test_encrypt_always_uses_primary_not_fallbacks(self):
+        # Encrypt with primary B and A in fallbacks.
+        with override_settings(SECRET_KEY='B-primary', SECRET_KEY_FALLBACKS=['A-fallback']):
+            blob = encryption.encrypt('written-with-primary')
+        # That blob must decrypt under SECRET_KEY=B alone, NOT under A alone.
+        with override_settings(SECRET_KEY='B-primary', SECRET_KEY_FALLBACKS=[]):
+            self.assertEqual(encryption.decrypt(blob), 'written-with-primary')
+        with override_settings(SECRET_KEY='A-fallback', SECRET_KEY_FALLBACKS=[]):
+            with self.assertRaises(InvalidToken):
+                encryption.decrypt(blob)
+
+
+class TestRotateEncryptionKeyCommand(TestCase):
+    """Tests for the ``rotate_encryption_key`` management command.
+
+    The command's load-bearing per-value operation is: read each
+    ``EncryptedModelField`` value through ``decrypt()`` (which tries
+    the primary key first, then each fallback) and write it back
+    through ``encrypt()`` (which always uses the primary). We exercise
+    that pattern directly — there is no Django model in ``tom_common``
+    that uses ``EncryptedModelField``, so we can't run the full command
+    against real data in the test DB. The pattern itself is the same
+    one the command applies row-by-row.
+    """
+
+    def test_decrypt_then_encrypt_makes_data_independent_of_fallback(self):
+        # Encrypt under SECRET_KEY=A (the "old" key).
+        with override_settings(SECRET_KEY='A-old-secret-key'):
+            blob = encryption.encrypt('migrate-me-forward')
+
+        # Post-rotation state: primary is B, A is in fallbacks. The
+        # command's per-value action is decrypt-then-encrypt.
+        with override_settings(SECRET_KEY='B-new-secret-key',
+                               SECRET_KEY_FALLBACKS=['A-old-secret-key']):
+            plaintext = encryption.decrypt(blob)
+            re_encrypted = encryption.encrypt(plaintext)
+
+        # The re-encrypted blob must decrypt under SECRET_KEY=B alone —
+        # i.e. the data is no longer fallback-dependent.
+        with override_settings(SECRET_KEY='B-new-secret-key',
+                               SECRET_KEY_FALLBACKS=[]):
+            self.assertEqual(encryption.decrypt(re_encrypted), 'migrate-me-forward')
+
+    def test_command_runs_clean_when_no_encrypted_data_exists(self):
+        """Smoke test: with no models in INSTALLED_APPS that use
+        EncryptedModelField (the situation for tom_base's own test
+        suite), the command should exit cleanly with a zero-count
+        summary.
+        """
+        out = StringIO()
+        call_command('rotate_encryption_key', stdout=out)
+        output = out.getvalue()
+        self.assertIn('Re-encrypted 0 value(s) under the primary cipher.', output)
+        self.assertIn('SECRET_KEY_FALLBACKS', output)
