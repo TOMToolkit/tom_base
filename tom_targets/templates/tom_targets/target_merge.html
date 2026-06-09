@@ -15,9 +15,8 @@
         <!-- display the target fields table -->
         {% target_merge_fields target1 target2 %}
 
-
-        <button type="submit" class="btn btn-outline-danger float-right btn-lg" name="submit"><a href="{% url 'targets:list' %}" style="color: rgb(167, 11, 11)">Cancel</a></button>
-        <button type="submit" class="btn btn-outline-primary float-right btn-lg" name="confirm">Confirm</button>
+        <a class="btn btn-outline-danger float-end btn-lg" name="cancel" href="{% url 'targets:list' %}">Cancel</a>
+        <button type="submit" class="btn btn-outline-primary float-end btn-lg" name="confirm">Confirm</button>
 
     </form>
 </div>
