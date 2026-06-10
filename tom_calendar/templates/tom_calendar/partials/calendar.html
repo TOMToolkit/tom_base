@@ -127,7 +127,7 @@
     <button class="btn btn-outline-secondary btn-sm"
             hx-get="{% url 'calendar:create-event' %}"
             hx-target="#cal-modal-body"
-            hx-on::after-request="$('#cal-modal').modal('show');"
+            hx-on::after-request="showModal()"
     >
       + New Event
     </button>
@@ -143,12 +143,12 @@
         <div class="cal-day{% if day.date.month == month %} is-current-month{% endif %}{% if day.date == today %} today{% endif %} border-end border-bottom p-1"
              hx-get="{% url 'calendar:create-event' %}?date={{ day.date|date:'Y-m-d' }}"
              hx-target="#cal-modal-body"
-             hx-on::after-request="$('#cal-modal').modal('show');"
+             hx-on::after-request="showModal()"
         >
           <span class="day-num">{{ day.date.day }}</span>
           <span class="moon-phase" title="{% widthratio day.moon.illumination 1 100 %}% illuminated">{{ day.moon.emoji }}</span>
           <div hx-target="#cal-modal-body"
-               hx-on::after-request="$('#cal-modal').modal('show');"
+               hx-on::after-request="showModal()"
                hx-on:click="event.stopPropagation()">
             {% for event in day.all_day_events %}
               <div class="cal-event cal-event-all-day-row"
@@ -203,3 +203,11 @@
     </select>
   </div>
 </div>
+{% block extra_javascript %}
+<script>
+function showModal() {
+  const el = document.getElementById('cal-modal');
+  bootstrap.Modal.getOrCreateInstance(el).show();
+}
+</script>
+{% endblock %}
