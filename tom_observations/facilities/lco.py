@@ -883,7 +883,15 @@ class LCOPhotometricSequenceForm(LCOOldStyleObservationForm):
         """
         cleaned_data = super().clean()
         start = cleaned_data.get('start')
-        cleaned_data['end'] = datetime.strftime(parse(start) + timedelta(hours=cleaned_data['cadence_frequency']),
+        cadence_frequency = cleaned_data['cadence_frequency']
+        if settings.OBS_WINDOW_MINIMUM:
+            window_length = settings.OBS_WINDOW_MINIMUM
+            if window_length > cadence_frequency:
+                window_length = cadence_frequency
+        else:
+            window_length = cadence_frequency
+
+        cleaned_data['end'] = datetime.strftime(parse(start) + timedelta(hours=window_length),
                                                 '%Y-%m-%dT%H:%M:%S')
 
         return cleaned_data
@@ -1058,8 +1066,15 @@ class LCOSpectroscopicSequenceForm(LCOOldStyleObservationForm):
         """
         cleaned_data = super().clean()
         cleaned_data['instrument_type'] = '2M0-FLOYDS-SCICAM'  # SNEx only submits spectra to FLOYDS
+
         start = cleaned_data.get('start')
-        cleaned_data['end'] = datetime.strftime(parse(start) + timedelta(hours=cleaned_data['cadence_frequency']),
+        if settings.OBS_WINDOW_MINIMUM:
+            min_window = settings.OBS_WINDOW_MINIMUM
+        else:
+            min_window = 24
+        window_length = min_window if cleaned_data['cadence_frequency'] > min_window else cleaned_data['cadence_frequency']
+
+        cleaned_data['end'] = datetime.strftime(parse(start) + timedelta(hours=window_length),
                                                 '%Y-%m-%dT%H:%M:%S')
 
         return cleaned_data
