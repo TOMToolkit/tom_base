@@ -30,7 +30,7 @@ Customizing the BaseTarget
 --------------------------
 
 Although almost all astrophysical targets share some descriptive parameters - such as RA, Dec or orbital parameters -
-the Toolkit recognises that each science case has a specific set of relevant parameters.  For example, for some science
+the Toolkit recognizes that each science case has a specific set of relevant parameters.  For example, for some science
 goals, a ``Target`` may have a measured period, while this may not be appropriate for an aperiodic object.
 
 For this reason, the Toolkit provides a ``BaseTarget`` class which supports both sidereal and non-sidereal celestial objects.

@@ -1,18 +1,6 @@
 Getting Support
 ===============
 
-.. toctree::
-  :maxdepth: 2
-  :caption: Table of Contents
-  :hidden:
-
-  Installation <manual_installation>
-  TOM architecture <tomarchitecture>
-  Workflow <workflow>
-  FAQ <faqs>
-  Programming resources <programming_resources>
-  Troubleshooting <troubleshooting>
-
 This page will go over the process for reporting issues, requesting features, and getting
 support for the TOM Toolkit.
 

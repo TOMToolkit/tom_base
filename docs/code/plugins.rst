@@ -1,17 +1,6 @@
 TOM Toolkit Plugins
 ===================
 
-.. toctree::
-  :maxdepth: 2
-  :caption: Table of Contents
-  :hidden:
-
-  Custom code <custom_code>
-  Automation <automation>
-  Background tasks <backgroundtasks>
-  Querying the TOM <querying>
-  API Reference </api/modules>
-
 We aim to keep the TOM as lightweight and flexible as possible, and we 
 recognize that every team has their own science goals and often need 
 different functions.  These often come with added dependencies.  
