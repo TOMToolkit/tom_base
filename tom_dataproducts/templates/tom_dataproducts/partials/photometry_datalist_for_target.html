@@ -96,11 +96,10 @@
   };
   function select_all_phot()  {
   var share_all = document.getElementById("share-all-phot");
-     if(share_all.checked == true){
-        $('input[name=share-box][class=phot-row]').prop('checked', true);
-     } else {
-        $('input[name=share-box][class=phot-row]').prop('checked', false);
-     }
+     const shareRows = document.querySelectorAll('input[name="share-box"].phot-row');
+     shareRows.forEach((row) => {
+        row.checked = share_all.checked;
+     });
      check_selected_phot()
   }
   function check_selected_phot()  {
