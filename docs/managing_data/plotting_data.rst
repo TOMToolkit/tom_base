@@ -128,7 +128,7 @@ Next, add the function body:
        # x axis: target names. y axis: datum count
        data = [go.Bar(
            x=[target.name for target in targets],
-           y=[target.reduceddatum_set.count() for target in targets]
+           y=[target.photometryreduceddatum_set.count() for target in targets]
        )]
        # Create the plot
        figure = offline.plot(go.Figure(data=data), output_type='div', show_link=False)

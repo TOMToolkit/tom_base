@@ -9,6 +9,7 @@ Deploying your TOM Online
   Deployment tips <deployment_tips>
   Deploy on Heroku <deployment_heroku>
   Deploy on AWS <amazons3>
+  Handling Encryption <encryption>
 
 Once you’ve got a TOM up and running on your machine (aka ``localhost``), it's advantageous to deploy to a
 webhosting service so that it is accessible by you and your colleagues worldwide.
@@ -50,3 +51,7 @@ Data storage
 Cloud providers also offer general-purpose data storage, which is often value for TOM-related data products.
 :doc:`Using Amazon S3 to Store Data for a TOM </deployment/amazons3>` demonstrates how to enable storing data on the cloud storage
 service Amazon S3 instead of your local disk.
+
+Encryption
+----------
+:doc:`Encryption and the SECRET_KEY <encryption>` - How Django's ``settings.SECRET_KEY`` relates to TOM Toolkit encryption.

@@ -19,6 +19,7 @@ class BaseQueryForm(forms.Form):
         initial=False,
         label="Save Query")
     query_name = forms.CharField(
+        widget=forms.TextInput(attrs={"placeholder": "Default: [service name] - [query number]"}),
         required=False)
     data_service = forms.CharField(
         required=True,
@@ -64,6 +65,10 @@ class BaseQueryForm(forms.Form):
         query.data_service = self.cleaned_data['data_service']
         query.parameters = self.cleaned_data
         query.save()
+        if not query.name:
+            query.name = f"{query.data_service} - {query.id}"
+            query.save()
+
         return query
 
 

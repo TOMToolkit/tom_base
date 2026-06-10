@@ -6,7 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from tom_dataservices.dataservices import get_data_service_classes, get_data_service_class
 from tom_targets.models import Target
-from tom_dataproducts.models import ReducedDatum
+from tom_dataproducts.models import REDUCED_DATUM_MODELS
 
 logger = logging.getLogger(__name__)
 
@@ -28,22 +28,37 @@ class Command(BaseCommand):
             dataservice_classes[dataservice] = get_data_service_class(dataservice)()
 
         if options['target_id']:
+            # Get sources only associated with chosen target
             try:
                 target = Target.objects.get(pk=options['target_id'])
-                sources = [s.source_name for s in ReducedDatum.objects.filter(target=target).filter(
-                    source_name__in=dataservice_classes.keys()).distinct()
-                    ]
+                target_source_names = set()
+                for model in REDUCED_DATUM_MODELS:
+                    target_source_names.update(
+                        model.objects.filter(target=target).filter(source_name__in=dataservice_classes.keys())
+                        .values_list('source_name', flat=True).distinct()
+                    )
+                sources = list(target_source_names)
                 targets = [target]
             except ObjectDoesNotExist:
                 raise Exception('Invalid target id provided')
         else:
-            sources = [s.source_name for s in ReducedDatum.objects.filter(
-                source_name__in=dataservice_classes.keys()).distinct()
-                ]
-            targets = Target.objects.filter(
-                id__in=ReducedDatum.objects.filter(
-                    source_name__in=sources
-                ).values_list('target').distinct())
+            # Get all sources
+            all_source_names = set()
+            for model in REDUCED_DATUM_MODELS:
+                all_source_names.update(
+                    model.objects.filter(source_name__in=dataservice_classes.keys())
+                    .values_list('source_name', flat=True).distinct()
+                )
+            sources = list(all_source_names)
+
+            # Get all targets with data from sources
+            all_target_ids = set()
+            for model in REDUCED_DATUM_MODELS:
+                all_target_ids.update(
+                    model.objects.filter(source_name__in=sources)
+                    .values_list('target', flat=True).distinct()
+                )
+            targets = Target.objects.filter(id__in=all_target_ids)
 
         failed_records = {}
         for target in targets:
