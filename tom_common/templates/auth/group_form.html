@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load django_bootstrap5 %}
 {% block content %}
 <div class="row">
   <div class="col">
@@ -10,7 +10,7 @@
     {% endif %}
       {% csrf_token %}
       {% bootstrap_form form %}
-      {% buttons submit="Submit" %}{% endbuttons %}
+      {% bootstrap_button "Submit" button_type="submit" %}
     </form>
   </div>
 </div>

@@ -13,9 +13,9 @@ CSS
 
 `W3 Schools CSS <https://www.w3schools.com/css/default.asp>`_ - Just like HTML, walks through a number of the common styling options and includes a comprehensive reference.
 
-`Bootstrap <https://getbootstrap.com/docs/4.0/getting-started/introduction/>`_ - CSS framework used in much of the TOM Toolkit via a specific PyPi package. The site contains a tutorial on the built-in CSS styles available for use.
+`Bootstrap <https://getbootstrap.com/docs/5.0/getting-started/introduction/>`_ - CSS framework used in much of the TOM Toolkit via a specific PyPi package. The site contains a tutorial on the built-in CSS styles available for use.
 
-`django-bootstrap4 <https://django-bootstrap4.readthedocs.io/en/latest/index.html>`_ - Reference guide for the PyPi package that provides Bootstrap4 elements in Django.
+`django-bootstrap5 <https://django-bootstrap5.readthedocs.io/en/latest/index.html>`_ - Reference guide for the PyPi package that provides Bootstrap4 elements in Django.
 
 
 Django

@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load django_bootstrap5 %}
 {% block title %}Create user{% endblock %}
 {% block content %}
 {% if object %}
@@ -10,15 +10,11 @@
 {% csrf_token %}
 {% bootstrap_form form %}
 {% bootstrap_formset form.user_profile_formset %}
-{% buttons %}
-  <button type="submit" class="btn btn-primary">
-    {% if object %}
-    Update
-    {% else %}
-    Create User
-    {% endif %}
-  </button>
-{% endbuttons %}
+{% if object %}
+  {% bootstrap_button "Update" button_type="submit" button_class="btn btn-primary" %}
+{% else %}
+  {% bootstrap_button "Create User" button_type="submit" button_class="btn btn-primary" %}
+{% endif %}
 </form>
 {% if object %}
   {% include 'tom_common/partials/api_token.html' %}

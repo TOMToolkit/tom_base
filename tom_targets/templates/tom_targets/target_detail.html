@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras static cache %}
+{% load comments django_bootstrap5 tom_common_extras targets_extras observation_extras dataproduct_extras static cache %}
 {% load dataservices_extras %}
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
@@ -55,22 +55,22 @@
   <div class="col-md-8">
     <ul class="nav nav-tabs" role="tablist" id="tabs">
       <li class="nav-item">
-        <a class="nav-link active" id="observe-tab" href="#observe" role="tab" data-toggle="tab">Observe</a>
+        <a class="nav-link active" id="observe-tab" href="#observe" role="tab" data-bs-toggle="tab">Observe</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" id="observations-tab" href="#observations" role="tab" data-toggle="tab">Observations</a>
+        <a class="nav-link" id="observations-tab" href="#observations" role="tab" data-bs-toggle="tab">Observations</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" id="manage-data-tab" href="#manage-data" role="tab" data-toggle="tab">Manage Data</a>
+        <a class="nav-link" id="manage-data-tab" href="#manage-data" role="tab" data-bs-toggle="tab">Manage Data</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" id="manage-groups-tab" href="#manage-groups" role="tab" data-toggle="tab">Manage Groups</a>
+        <a class="nav-link" id="manage-groups-tab" href="#manage-groups" role="tab" data-bs-toggle="tab">Manage Groups</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" id="photometry-tab" href="#photometry" role="tab" data-toggle="tab">Photometry</a>
+        <a class="nav-link" id="photometry-tab" href="#photometry" role="tab" data-bs-toggle="tab">Photometry</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" id="spectroscopy-tab" href="#spectroscopy" role="tab" data-toggle="tab">Spectroscopy</a>
+        <a class="nav-link" id="spectroscopy-tab" href="#spectroscopy" role="tab" data-bs-toggle="tab">Spectroscopy</a>
       </li>
       {% include_app_tabs %}
     </ul>

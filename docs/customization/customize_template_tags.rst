@@ -301,7 +301,7 @@ loaded in. Add ``custom_extras`` to that list:
 .. code:: html
 
    {% extends 'tom_common/base.html' %}
-   {% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras publication_extras custom_extras static cache %}
+   {% load comments django_bootstrap5 tom_common_extras targets_extras observation_extras dataproduct_extras publication_extras custom_extras static cache %}
    ...
 
 Then, put your templatetag in the HTML somewhere, passing in ``object``

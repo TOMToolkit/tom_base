@@ -285,7 +285,7 @@ class GEMObservationForm(BaseRoboticObservationForm):
                     'notetitle',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -300,7 +300,7 @@ class GEMObservationForm(BaseRoboticObservationForm):
                     'note', 'brightness_system', 'elmax', 'window_duration',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             HTML('<big>Optional Guide Star Parameters</big>'),
             HTML('<p>If any one of Name/RA/Dec is given, then all must be.</p>'),
@@ -317,7 +317,7 @@ class GEMObservationForm(BaseRoboticObservationForm):
                     'gsdec', 'gsbrightness_system',
                     css_class='col'
                 ),
-                css_class='form-row',
+                css_class='row',
             )
         )
 

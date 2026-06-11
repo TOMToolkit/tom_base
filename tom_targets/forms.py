@@ -84,7 +84,7 @@ class TargetForm(forms.ModelForm):
         for field_name in [f for f in self.fields if f not in crispy_exclude]:
             layout_fields.append(Div(field_name, css_class="col-md-6"))
 
-        self.helper.layout = Layout(Div(*layout_fields, css_class="form-row"))
+        self.helper.layout = Layout(Div(*layout_fields, css_class="row"))
 
     def save(self, commit=True):
         instance = super().save(commit=commit)
