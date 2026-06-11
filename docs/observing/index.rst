@@ -17,7 +17,7 @@ Observing Facilities and Observations
 
 :doc:`Customizing an OCS Facility and its Forms <customize_ocs_facility>` - Learn how to customize an
 `Observatory Control System <https://observatorycontrolsystem.github.io/>`_ facility and its observation forms
-to add new fields and behaviour.
+to add new fields and behavior.
 
 `Programmatically Submitting Observations <../common/scripts.html#creating-observations-programmatically>`__
 
