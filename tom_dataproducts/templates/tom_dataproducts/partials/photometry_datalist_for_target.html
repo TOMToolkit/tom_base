@@ -1,4 +1,4 @@
-{% load bootstrap4 %}
+{% load django_bootstrap5 %}
 {% load tom_common_extras %}
 
 <form method="POST" action="{% url 'tom_dataproducts:share_all' tg_pk=target.id %}" enctype="multipart/form-data" id="photometry-data-share-form">
@@ -56,17 +56,17 @@
                     Share Selected Data
                 </div>
                 {% if sharing_destinations %}
-                    <div class="form-row" style="padding-inline:1rem">
+                    <div class="row" style="padding-inline:1rem">
                         <div class="col-sm-12">
                             {% bootstrap_field target_data_share_form.share_title %}
                         </div>
                     </div>
-                    <div class="form-row" style="padding-inline:1rem">
+                    <div class="row" style="padding-inline:1rem">
                         <div class="col-sm-12">
                             {% bootstrap_field target_data_share_form.share_message %}
                         </div>
                     </div>
-                    <div class="form-row" style="padding-inline:1rem">
+                    <div class="row" style="padding-inline:1rem">
                         <div class="col-sm-4">
                             {% bootstrap_field target_data_share_form.share_destination %}
                         </div>
@@ -96,11 +96,10 @@
   };
   function select_all_phot()  {
   var share_all = document.getElementById("share-all-phot");
-     if(share_all.checked == true){
-        $('input[name=share-box][class=phot-row]').prop('checked', true);
-     } else {
-        $('input[name=share-box][class=phot-row]').prop('checked', false);
-     }
+     const shareRows = document.querySelectorAll('input[name="share-box"].phot-row');
+     shareRows.forEach((row) => {
+        row.checked = share_all.checked;
+     });
      check_selected_phot()
   }
   function check_selected_phot()  {

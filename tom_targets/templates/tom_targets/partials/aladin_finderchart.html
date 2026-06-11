@@ -1,6 +1,5 @@
 <!-- include Aladin Lite CSS file in the head section of your page -->
 <link rel="stylesheet" href="//aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.css" />
-<!-- insert this snippet where you want Aladin Lite viewer to appear and after the loading of jQuery -->
 <h3>Survey View</h3>
 <div id="aladin-lite-div" style="width:300px;height:300px;"></div>
 <div id="chart-form-div" style="width:300px;">
@@ -41,10 +40,12 @@
     </div>
   </form>
 </div>
-<script type="text/javascript" src="//aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.js" charset="utf-8"></script>
+<script type="text/javascript" src="//aladin.u-strasbg.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
 <script type="text/javascript">
 
-    let aladin = A.aladin('#aladin-lite-div', {
+  let aladin;
+  A.init.then(() => {
+    aladin = A.aladin('#aladin-lite-div', {
       survey: "P/DSS2/color",
       fov: getFovAsDegreesFromForm(),
       showReticle: false,
@@ -60,21 +61,26 @@
     aladin.on('zoomChanged', function() {
       annotateChart({{ target.ra }}, {{ target.dec }});
     });
+  });
 
     function getScaleBarFromForm() {
-      let size = Number($('#scale-bar-size').val());
+      const scaleBarSizeInput = document.getElementById('scale-bar-size');
+      const scaleBarUnitsSelect = document.getElementById('scale-bar-units-select');
+      let size = Number(scaleBarSizeInput.value);
       if (size < 0) {
         size = 0;
       }
-      const units = $('#scale-bar-units-select option:selected').val();
+      const units = scaleBarUnitsSelect.value;
       const label = String(size) + ' ' + units;
       const sizeAsDegrees = toDegrees(size, units);
       return {size: size, units: units, label: label, sizeAsDegrees: sizeAsDegrees};
     }
 
     function getFovAsDegreesFromForm() {
-      const fov = Number($('#fov').val());
-      const units = $('#fov-units-select option:selected').val();
+      const fovInput = document.getElementById('fov');
+      const fovUnitsSelect = document.getElementById('fov-units-select');
+      const fov = Number(fovInput.value);
+      const units = fovUnitsSelect.value;
       let fovAsDegrees;
       if (fov >= 0) {
         fovAsDegrees = toDegrees(fov, units);
@@ -130,7 +136,7 @@
 
     function downloadImage() {
       // Update the data that the link that was clicked will download
-      $('#download-chart').attr('href', aladin.getViewDataURL());
+      document.getElementById('download-chart').setAttribute('href', aladin.getViewDataURL());
       return true;
     }
 

@@ -1,4 +1,4 @@
-{% load bootstrap4 static %}
+{% load django_bootstrap5 static %}
 <h4>Upload a data product</h4>
 <p>
   For example CSVs, see the <a href="{% static 'tom_dataproducts/photometry_sample.csv' %}">photometry</a> and <a href="{% static 'tom_dataproducts/spectrum_sample.csv' %}">spectroscopy</a> sample files. FITS is supported for spectra.
@@ -6,7 +6,5 @@
 <form method="POST" action="{% url 'tom_dataproducts:upload' %}" enctype="multipart/form-data">
   {% csrf_token %}
   {% bootstrap_form data_product_form %}
-  {% buttons %}
-  <input type="submit" class="btn btn-primary" value="Upload" name="upload_dataproduct_form">
-  {% endbuttons %}
+  {% bootstrap_button "Upload" button_type="submit" button_class="btn btn-primary" value="Upload" name="upload_dataproduct_form" %}
 </form>

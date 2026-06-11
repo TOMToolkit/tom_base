@@ -1,8 +1,8 @@
-{% load bootstrap4 targets_extras static %}
+{% load django_bootstrap5 targets_extras static %}
 {% if form %}
 <form method="post" class="form" id='target-persistent-share-create-form'>
   {% csrf_token %}
-  <div class="form-row" style="padding-inline:1rem">
+  <div class="row" style="padding-inline:1rem">
       <div class="col-sm-4">
           {% bootstrap_field form.destination %}
       </div>
@@ -22,7 +22,7 @@
         {% endif %}
       </div>
   </div>
-  <div class="form-row">
+  <div class="row">
     <div class="alert alert-danger" role="alert" id="create_persistent_share_error" style="display:none">
       <div class="row">
         <div class="col-sm-11">
@@ -36,8 +36,6 @@
       </div>
     </div>
   </div>
-  {% buttons %}
-  {% endbuttons %}
 </form>
 {% else %}
 <div>

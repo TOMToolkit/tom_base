@@ -26,11 +26,11 @@ class PanstarrsSingleTargetDataServiceQueryForm(stds.BaseSingleTargetDataService
 
     min_date_mjd = forms.FloatField(
         label='Min date (MJD):', required=False,
-        widget=forms.NumberInput(attrs={'class': 'ml-2'})
+        widget=forms.NumberInput(attrs={'class': 'ms-2'})
     )
     max_date_mjd = forms.FloatField(
         label='Max date (MJD):', required=False,
-        widget=forms.NumberInput(attrs={'class': 'ml-2'})
+        widget=forms.NumberInput(attrs={'class': 'ms-2'})
     )
 
     min_detections = forms.IntegerField(

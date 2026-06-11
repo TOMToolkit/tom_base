@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 static observation_extras dataproduct_extras %}
+{% load django_bootstrap5 static observation_extras dataproduct_extras %}
 {% block title %} Observation record: {{ object.id }} {% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_observations/css/main.css' %}">
@@ -39,7 +39,7 @@
     <h4>Saved Data Products</h4>
     <form method="POST" action="{% url 'tom_dataproducts:group-data' %}">
       {% csrf_token %}
-      <div class="form-row">
+      <div class="row">
         <div class="col-sm-4">
           {% bootstrap_field form.group layout='inline' %}
           {% for product in data_products.saved %}
@@ -47,10 +47,9 @@
           {% endfor %}
         </div>
         <div class="col-sm-8">
-          {% buttons %}
-          <input type="submit" value="Add to group" class="btn btn-primary">
-          <a href="{% url 'dataproducts:group-list' %}">Manage groups</a>
-          {% endbuttons %}
+          {% bootstrap_button "Add to group" button_type="submit" button_class="btn btn-primary" value="Add to group" %}
+          {% url 'dataproducts:group-list' as group_link %}
+          {% bootstrap_button "Manage Groups" button_type="link" button_class="btn btn-secondary" href=group_link %}
         </div>
       </div>
       {% dataproduct_list_for_observation_saved data_products request %}
@@ -60,7 +59,7 @@
       {% csrf_token %}
       <input type="hidden" value="{{ object.facility }}" name="facility">
       <input type="hidden" value="ALL" name="products">
-      <input type="submit" value="Save All" class="btn btn-primary float-right">
+      <input type="submit" value="Save All" class="btn btn-primary float-end">
     </form>
     <form method="POST" action="{% url 'tom_dataproducts:save' object.id %}">
       {% csrf_token %}

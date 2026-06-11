@@ -321,7 +321,7 @@ class OCSTemplateBaseForm(GenericTemplateForm, OCSBaseForm):
                     'exposure_count', 'exposure_time', 'max_airmass',
                     css_class='col'
                 ),
-                css_class='form-row',
+                css_class='row',
             )
         )
 
@@ -349,7 +349,7 @@ class OCSAdvancedExpansionsLayout(Layout):
                             'jitter',
                             css_class='col'
                         ),
-                        css_class='form-row'
+                        css_class='row'
                     )
                 )
 
@@ -368,7 +368,7 @@ class OCSAdvancedExpansionsLayout(Layout):
                             'dither_num_points',
                             css_class='col'
                         ),
-                        css_class='form-row'
+                        css_class='row'
                     ),
                     Div(
                         Div(
@@ -379,7 +379,7 @@ class OCSAdvancedExpansionsLayout(Layout):
                             'dither_line_spacing',
                             css_class='col'
                         ),
-                        css_class='form-row'
+                        css_class='row'
                     ),
                     Div(
                         Div(
@@ -390,7 +390,7 @@ class OCSAdvancedExpansionsLayout(Layout):
                             'dither_num_columns',
                             css_class='col'
                         ),
-                        css_class='form-row'
+                        css_class='row'
                     ),
                     Div(
                         Div(
@@ -401,7 +401,7 @@ class OCSAdvancedExpansionsLayout(Layout):
                             'dither_center',
                             css_class='col'
                         ),
-                        css_class='form-row'
+                        css_class='row'
                     )
                 )
 
@@ -420,7 +420,7 @@ class OCSAdvancedExpansionsLayout(Layout):
                             'mosaic_num_points',
                             css_class='col'
                         ),
-                        css_class='form-row'
+                        css_class='row'
                     ),
                     Div(
                         Div(
@@ -431,7 +431,7 @@ class OCSAdvancedExpansionsLayout(Layout):
                             'mosaic_line_overlap',
                             css_class='col'
                         ),
-                        css_class='form-row'
+                        css_class='row'
                     ),
                     Div(
                         Div(
@@ -442,7 +442,7 @@ class OCSAdvancedExpansionsLayout(Layout):
                             'mosaic_num_columns',
                             css_class='col'
                         ),
-                        css_class='form-row'
+                        css_class='row'
                     ),
                     Div(
                         Div(
@@ -453,7 +453,7 @@ class OCSAdvancedExpansionsLayout(Layout):
                             'mosaic_center',
                             css_class='col'
                         ),
-                        css_class='form-row'
+                        css_class='row'
                     )
                 )
 
@@ -535,7 +535,7 @@ class OCSConfigurationLayout(Layout):
                                        f'c_{instance}_max_airmass',
                                        css_class='col'
                                    ),
-                                   css_class='form-row'
+                                   css_class='row'
                                ),
                                Div(
                                    Div(
@@ -546,7 +546,7 @@ class OCSConfigurationLayout(Layout):
                                        f'c_{instance}_max_lunar_phase',
                                        css_class='col'
                                    ),
-                                   css_class='form-row'
+                                   css_class='row'
                                ),
                                ),
                 *self.get_final_accordion_items(instance)
@@ -580,14 +580,14 @@ class OCSConfigurationLayout(Layout):
                     f'c_{instance}_configuration_type',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
                     f'c_{instance}_repeat_duration',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
         )
 
@@ -598,7 +598,7 @@ class OCSConfigurationLayout(Layout):
             return (
                 Div(
                     f'c_{instance}_target_override',
-                    css_class='form-row'
+                    css_class='row'
                 )
             )
 
@@ -637,7 +637,7 @@ class OCSInstrumentConfigLayout(Layout):
                         f'c_{config_instance}_ic_{instance}_{oe_group2}',
                         css_class='col'
                     ),
-                    css_class='form-row'
+                    css_class='row'
                 )
             )
         if len(oe_groups) % 2 == 1:
@@ -648,7 +648,7 @@ class OCSInstrumentConfigLayout(Layout):
                         f'c_{config_instance}_ic_{instance}_{oe_groups[-1]}',
                         css_class='col'
                     ),
-                    css_class='form-row'
+                    css_class='row'
                 )
             )
         return oe_groups_layout
@@ -671,7 +671,7 @@ class OCSInstrumentConfigLayout(Layout):
                     f'c_{config_instance}_ic_{instance}_readout_mode',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -682,7 +682,7 @@ class OCSInstrumentConfigLayout(Layout):
                     f'c_{config_instance}_ic_{instance}_exposure_count',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             *self._get_oe_groups_layout(config_instance, instance, oe_groups),
             *self.get_final_ic_items(config_instance, instance)
@@ -1104,7 +1104,7 @@ class OCSFullObservationForm(OCSBaseObservationForm):
                     'proposal',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -1115,7 +1115,7 @@ class OCSFullObservationForm(OCSBaseObservationForm):
                     'ipp_value',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -1126,7 +1126,7 @@ class OCSFullObservationForm(OCSBaseObservationForm):
                     'configuration_repeats',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -1137,7 +1137,7 @@ class OCSFullObservationForm(OCSBaseObservationForm):
                     'end',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             self.configuration_layout_class()(
                 self.form_name(), self.facility_settings, self.instrument_config_layout_class(),

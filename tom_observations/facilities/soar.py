@@ -190,7 +190,7 @@ class SOARSimpleConfigurationLayout(SpectralConfigurationLayout):
                     f'c_{instance}_configuration_type',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
         )
 
@@ -203,7 +203,7 @@ class SoarSpectralInstrumentConfigLayout(SpectralInstrumentConfigLayout):
                     f'c_{config_instance}_ic_{instance}_readout_mode',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -214,7 +214,7 @@ class SoarSpectralInstrumentConfigLayout(SpectralInstrumentConfigLayout):
                     f'c_{config_instance}_ic_{instance}_exposure_count',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -225,7 +225,7 @@ class SoarSpectralInstrumentConfigLayout(SpectralInstrumentConfigLayout):
                     f'c_{config_instance}_ic_{instance}_rotator_angle',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             *self._get_oe_groups_layout(config_instance, instance, oe_groups)
         )

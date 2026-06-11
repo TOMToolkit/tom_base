@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 targets_extras dataproduct_extras static %}
+{% load django_bootstrap5 targets_extras dataproduct_extras static %}
 {% block title %}Share Target {{ target.name }}{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
@@ -11,10 +11,10 @@
 <div class="col-md-8">
   <ul class="nav nav-tabs" role="tablist" id="share-tabs">
     <li class="nav-item">
-      <a class="nav-link active" id="share-tab" href="#share" role="tab" data-toggle="tab">Share {{ target.name }}</a>
+      <a class="nav-link active" id="share-tab" href="#share" role="tab" data-bs-toggle="tab">Share {{ target.name }}</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" id="persistentshare-tab" href="#persistentshare" role="tab" data-toggle="tab">Persistent
+      <a class="nav-link" id="persistentshare-tab" href="#persistentshare" role="tab" data-bs-toggle="tab">Persistent
         Sharing</a>
     </li>
   </ul>
@@ -23,7 +23,7 @@
   <div class="tab-pane active" id="share">
     <div class="col-md-12">
       <form method="post" class="form" id='target-share-form'>
-        <div class="form-row" style="padding-inline:1rem">
+        <div class="row" style="padding-inline:1rem">
           <div class="col-sm-3">
             {% bootstrap_field form.share_destination %}
           </div>
@@ -36,7 +36,7 @@
               onclick="setTarget('')">
           </div>
         </div>
-        <div class="form-row" style="padding-inline:1rem">
+        <div class="row" style="padding-inline:1rem">
           <div class="col-sm-12">
             {% bootstrap_field form.share_message %}
           </div>
@@ -45,9 +45,8 @@
         {% with target_share=True %}
         {% get_photometry_data target target_share %}
         {% endwith %}
-        {% buttons %}
-        <a href="{% url 'targets:detail' pk=target.id %}" class="btn btn-primary" title="Back">Back</a>
-        {% endbuttons %}
+        {% url 'targets:detail' pk=target.id as back_link %}
+        {% bootstrap_button "Back" button_type="link" button_class="btn btn-primary" href=back_link title="Back" %}
       </form>
     </div>
   </div>

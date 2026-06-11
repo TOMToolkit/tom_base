@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 crispy_forms_tags %}
+{% load django_bootstrap5 crispy_forms_tags %}
 {% block title %}Query a Data Service{% endblock %}
 {% block content %}
 {% if info_url %}
@@ -39,7 +39,7 @@
     <hr>
     <div class="row align-items-center" x-data="{save: {{ form.query_save.value|lower }}}" >
         <div class="col-1">
-            <div class="form-group">
+            <div class="mb-3">
                 <div>
                     {% if object %}
                         <input type="submit" formaction="{% url 'tom_dataservices:update' object.id %}" name="submit" value="Run" id="submit-id-update" class="btn btn-primary">

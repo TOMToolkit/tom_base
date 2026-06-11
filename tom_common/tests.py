@@ -28,7 +28,7 @@ from tom_common.encryption import (
 )
 from tom_targets.tests.factories import SiderealTargetFactory
 from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
-from tom_common.templatetags.bootstrap4_overrides import bootstrap_pagination
+from tom_common.templatetags.bootstrap5_overrides import bootstrap_pagination
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

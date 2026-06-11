@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 targets_extras crispy_forms_tags %}
+{% load django_bootstrap5 targets_extras crispy_forms_tags %}
 {% block title %}New Target{% endblock %}
 {% block content %}
 {% if not object %}
@@ -18,9 +18,9 @@
 <form method="post" class="form">
 {% csrf_token %}
 {% bootstrap_field form.type %}
-<div class="form-row">
+<div class="row">
     <div class="col">
-        {% bootstrap_field form.name size="large" show_help=False %}
+        {% bootstrap_field form.name size="lg" show_help=False %}
     </div>
 </div>
 <div class="row" x-data="{open: false}">

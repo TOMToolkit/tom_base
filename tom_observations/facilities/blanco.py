@@ -80,7 +80,7 @@ class BLANCOConfigurationLayout(OCSConfigurationLayout):
                     f'c_{instance}_dither_sequence',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -91,7 +91,7 @@ class BLANCOConfigurationLayout(OCSConfigurationLayout):
                     f'c_{instance}_dither_sequence_random_offset',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
         )
 
@@ -108,7 +108,7 @@ class BLANCOInstrumentConfigLayout(OCSInstrumentConfigLayout):
                     f'c_{config_instance}_ic_{instance}_sequence_repeats',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             )
         )
 
