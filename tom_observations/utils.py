@@ -20,8 +20,8 @@ def get_sidereal_visibility(
         facility_name=None
 ):
     """
-    Uses astroplan to calculate the airmass for a sidereal target
-    for each given interval between the start and end times.
+    Uses astroplan to calculate the airmass for a sidereal target for
+    each given interval between the start and end times.
 
     The resulting data omits any airmass above the provided limit (or
     default, if one is not provided), as well as any airmass calculated
@@ -43,15 +43,15 @@ def get_sidereal_visibility(
     :type airmass_limit: int
 
     :param facility_name: name string of a declared observing facility class OR general facility,
-                            for which to calculate the airmass.
-                        None indicates all available facilities.
+        for which to calculate the airmass.
+        None indicates all available facilities.
     :type facility_name: string
 
     :returns: A dictionary containing the airmass data for each site. The dict keys consist of the site name prepended
         with the observing facility. The values are the airmass data, structured as an array containing two arrays. The
         first array contains the set of datetimes used in the airmass calculations. The second array contains the
         corresponding set of airmasses calculated.
-    :rtype: dict
+    :type: dict
     """
 
     if target.type != 'SIDEREAL':

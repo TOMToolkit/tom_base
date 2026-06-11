@@ -4,11 +4,13 @@ Exceptions
 ********************
 MissingDataException
 ********************
-.. automodule:: tom_dataservices.dataservices.MissingDataException
+.. autoexception:: tom_dataservices.dataservices.MissingDataException
     :members:
+    :no-index:
 
 ******************
 NotConfiguredError
 ******************
-.. automodule:: tom_dataservices.dataservices.NotConfiguredError
+.. autoexception:: tom_dataservices.dataservices.NotConfiguredError
     :members:
+    :no-index:

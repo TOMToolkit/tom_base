@@ -1,5 +1,5 @@
 TOM Specific Settings
----------------------
+=====================
 
 The following is a list of TOM Specific settings to be added/edited in
 your project’s ``settings.py``. For explanations of Django specific

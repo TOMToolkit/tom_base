@@ -97,6 +97,10 @@ class LCOSettings(OCSSettings):
         return 'LCOGT'
 
     def get_sites(self):
+        """
+        Method to return the latitude, longitude and elevation for all sites in the Las Cumbres
+        Observatory network.
+        """
         return {
             'Siding Spring': {
                 'sitecode': 'coj',
@@ -137,6 +141,9 @@ class LCOSettings(OCSSettings):
         }
 
     def get_weather_urls(self):
+        """
+        Method to provide the URL for weather information for sites in the Las Cumbres Observatory network.
+        """
         return {
             'code': self.facility_name,
             'sites': [

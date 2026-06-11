@@ -2,10 +2,6 @@
 Programming Resources
 *********************
 
-.. toctree::
-  :maxdepth: 1
-  :hidden:
-
 HTML
 ----
 

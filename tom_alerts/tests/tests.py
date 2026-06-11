@@ -55,7 +55,8 @@ class TestBroker(GenericBroker):
     alert_submission_form = TestUpstreamSubmissionForm
 
     def fetch_alerts(self, parameters):
-        """ All brokers must implement this method. It must return a list of alerts and may include broker feedback.
+        """ All brokers must implement this method. It must return a list of alerts
+        and may include broker feedback.
         """
         # Here we simply return a list of `GenericAlert`s that match the name passed in via `parameters`.
         return iter([alert for alert in test_alerts if alert['name'] == parameters['name']]), "test message"

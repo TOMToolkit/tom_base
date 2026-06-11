@@ -1,7 +1,5 @@
-:orphan:
-
 Manually Installing the TOM Toolkit and Django
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+==============================================
 
 .. warning::
 

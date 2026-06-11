@@ -7,8 +7,7 @@ tom_dataproducts
 
  - `downloaddata.py` - Downloads available data for all completed observations.
 
- - `updatereduceddata.py` - Gets and updates time-series data for a target with data extracted from data services. This will search existing data for sources that match installed data
-services and check those data services for new data.
+ - `updatereduceddata.py` - Gets and updates time-series data for a target with data extracted from data services. This will search existing data for sources that match installed data services and check those data services for new data.
 
 
 ****************

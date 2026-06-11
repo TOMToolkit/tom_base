@@ -20,7 +20,7 @@ launch the notebook server:
 Under the new notebook menu, choose “Django Shell-Plus”. This will
 create a new notebook in the correct TOM context.
 
-There is also a :doc:`tutorial </common/scripts>` on interacting with
+There is also a :doc:`tutorial </code/scripts>` on interacting with
 your TOM using Jupyter notebooks.
 
 What are tags on the Target form?

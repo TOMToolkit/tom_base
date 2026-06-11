@@ -6,8 +6,7 @@ The base TOM Toolkit comes with `ATLAS <https://fallingstar-data.com/forcedphot/
 and (coming soon) ZTF query services. These services query a specific catalog to return data for an
 individual target and are optional, requiring additional configuration in order to integrate into your TOM.
 
-Additional services can be added by extending the ``BaseSingleTargetDataService`` implementation
-(:ref:`see below<Adding a new Single-Target Data Service>`).
+Additional services can be added by extending the ``BaseSingleTargetDataService`` implementation.
 
 
 Integrating existing Single-Target Data Services

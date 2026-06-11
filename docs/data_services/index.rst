@@ -3,12 +3,12 @@ Data Services
 
 .. toctree::
   :maxdepth: 2
+  :caption: Table of Contents
   :hidden:
 
-  create_dataservice
-  ../api/tom_dataservices/data_services
-  ../api/tom_dataservices/views
-
+  Add a data service <create_dataservice>
+  Available data services <../api/tom_dataservices/data_services>
+  Data service views <../api/tom_dataservices/views>
 
 What is a Data Service Module?
 -------------------------------
