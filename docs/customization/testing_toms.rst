@@ -139,7 +139,7 @@ option requires two short files in addition:
         'guardian',
         'tom_common',
         'django_comments',
-        'bootstrap5',
+        'django_bootstrap5',
         'crispy_bootstrap5',
         'crispy_forms',
         'django_filters',
