@@ -19,7 +19,7 @@ targets into the TOM:
 .. image:: /_static/target_sources.png
 
 -  The Alert Module provides the functionality to create targets from
-   alert brokers such as ``MARS <https://mars.lco.global>``\ \_\_ and
+   alert brokers such as ``Alerce <https://alerce.online/>``\ \_\_ and
    ``ANTARES <https://antares.noirlab.edu/>``\ \__. These brokers generally
    provide alerts from transient phenomena as soon as they happen, and a
    scientist who is interested in studying these phenomena can import
