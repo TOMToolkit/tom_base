@@ -4,8 +4,8 @@ Sharing Data with Other TOMs
 TOM Toolkit supports direct data sharing between TOMs.
 
 
-Permissions:
-************
+Permissions
+***********
 To save data to a destination TOM your TOM will need to have access to a user account on that TOM with the correct
 permissions. This is handled by your TOM's administrator as described below.
 

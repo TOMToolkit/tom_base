@@ -38,7 +38,7 @@ Django framework. This provides several advantages:
 
 We **highly recommend** that developers interested in utilizing the TOM Toolkit
 familiarize themselves with the basics of Django, especially if they want to
-customize the toolkit in any significant fashion. The majority of the :doc:`guides found in the TOM toolkit documentation </introduction/index>` are simply Django concepts rewritten in a TOM context.
+customize the toolkit in any significant fashion.
 
 Extending and Customizing the TOM Toolkit
 =========================================
@@ -47,11 +47,11 @@ As mentioned before, Django is well known for its extensibility and modularity.
 The toolkit takes advantage of these strengths heavily. In many ways, the TOM
 Toolkit is a framework within a framework.
 
-After a TOM developer follows the :doc:`getting started guide <getting_started>`
+After a TOM developer follows the :doc:`getting started guide </introduction/getting_started>`
 they are left with a functioning but generic TOM. It is then up to the developer
 to implement the specific features that their science case requires. The toolkit
 tries to facilitate this as efficiently as possible and provides
-:doc:`documentation <index>` in areas of customization from :doc:`changing the HTML layout of a page </customization/customize_templates>`
+:doc:`documentation </customization/index>` in areas of customization from :doc:`changing the HTML layout of a page </customization/customize_templates>`
 to :doc:`customizing an OCS facility and forms </observing/customize_ocs_facility>` and even 
 :doc:`creating a new data service module </data_services/create_dataservice>`.
 
@@ -202,7 +202,7 @@ module provides a generic interface that other modules can implement, giving
 them the ability to integrate new dataservices with the toolkit. Currently, there are
 modules available for `Lasair <https://lasair.roe.ac.uk>`_,
 `ANTARES <https://antares.noirlab.edu/loci>`_, `SCOUT <https://cneos.jpl.nasa.gov/scout/intro.html>`_, and others,
-with more planned for the future. See :doc:`TOM Plugins </api/plugins>` for a full list.
+with more planned for the future. See :doc:`TOM Plugins </code/plugins>` for a full list.
 
 TOM Setup and TOM Common
 ------------------------

@@ -165,7 +165,7 @@ class BrokerQueryListView(LoginRequiredMixin, FilterView):
 
     def get_context_data(self, *args, **kwargs):
         """
-        Adds the brokers available to the TOM to the context dictionary.
+        Adds the broker available to the TOM to the context dictionary.
 
         :returns: context
         :rtype: dict

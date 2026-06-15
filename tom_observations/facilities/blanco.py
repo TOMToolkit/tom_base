@@ -3,8 +3,8 @@ import requests
 from django import forms
 from crispy_forms.layout import Div, HTML
 
-from tom_observations.facilities.ocs import (OCSInstrumentConfigLayout, OCSConfigurationLayout,
-                                             OCSFullObservationForm, OCSAdvancedExpansionsLayout)
+from tom_observations.facilities.ocs import OCSInstrumentConfigLayout, OCSConfigurationLayout
+from tom_observations.facilities.ocs import OCSFullObservationForm, OCSAdvancedExpansionsLayout
 from tom_observations.facilities.lco import LCOFacility, LCOSettings
 from tom_common.exceptions import ImproperCredentialsException
 
@@ -26,6 +26,9 @@ class BLANCOSettings(LCOSettings):
         """
 
     def get_sites(self):
+        """
+        Returns location information for observing sites.
+        """
         return {
             'Cerro Tololo': {
                 'sitecode': 'bco',
@@ -36,15 +39,19 @@ class BLANCOSettings(LCOSettings):
         }
 
     def get_weather_urls(self):
+        """
+        Returns weather URLs for the BLANCO facility.
+        """
         return {
             'code': 'BLANCO',
             'sites': [
                 {
                     'code': site['sitecode'],
-                    'weather_url': 'https://noirlab.edu/science/observing-noirlab/weather-webcams/'
-                                   'cerro-tololo/environmental-conditions'
+                    'weather_url': """'https://noirlab.edu/science/observing-noirlab/weather-webcams/
+                    cerro-tololo/environmental-conditions'"""
                 }
-                for site in self.get_sites().values()]
+                for site in self.get_sites().values()
+            ]
         }
 
     def __init__(self, facility_name='BLANCO'):

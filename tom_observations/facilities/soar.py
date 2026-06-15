@@ -29,6 +29,9 @@ class SOARSettings(LCOSettings):
         """
 
     def get_sites(self):
+        """
+        Returns location informatino for the SOAR observatory
+        """
         return {
             'Cerro Pachón': {
                 'sitecode': 'sor',
@@ -39,13 +42,16 @@ class SOARSettings(LCOSettings):
         }
 
     def get_weather_urls(self):
+        """
+        Returns the URL providing weather information from the SOAR observatory site
+        """
         return {
             'code': 'SOAR',
             'sites': [
                 {
                     'code': site['sitecode'],
-                    'weather_url': 'https://noirlab.edu/science/observing-noirlab/weather-webcams/'
-                                   'cerro-pachon/environmental-conditions'
+                    'weather_url': """'https://noirlab.edu/science/observing-noirlab/weather-webcams/
+                    cerro-pachon/environmental-conditions'"""
                 }
                 for site in self.get_sites().values()]
         }
