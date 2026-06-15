@@ -18,7 +18,6 @@ targets selected according to pre-defined criteria and with observations determi
 
 Built-in Observing Facilities
 -----------------------------
-
 The TOM includes built-in modules that provide interfaces to a number of telescopes including:
 
 * `Las Cumbres Observatory 0.4m, 1m and 2m telescope networks <https://lco.global>`_
@@ -34,6 +33,9 @@ Detailed information on these modules can be found here:
 
 :doc:`Observation Views <../api/tom_observations/views>` - Familiarize yourself with the available Observation Views.
 
+:doc:`Customizing an OCS Facility and its Forms <customize_ocs_facility>` - Learn how to customize an
+`Observatory Control System <https://observatorycontrolsystem.github.io/>`_ facility and its observation forms
+to add new fields and behavior.
 
 Additional Telescope Facilities
 -------------------------------
