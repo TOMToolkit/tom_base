@@ -267,6 +267,8 @@ A ``DataProduct`` type is file format-agnostic and refers to the data contained 
 rather than the format itself. The type is necessary for making decisions on which operations
 can be executed using the data in a file.
 
+.. _ReducedDatum_label:
+
 ReducedDatum
 ------------
 
