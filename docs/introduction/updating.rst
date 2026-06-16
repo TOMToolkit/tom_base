@@ -17,6 +17,9 @@ Please follow the next steps in order to avoid complications.
 This step depends on your dependency manager, but first you will need to update your TOM to depend on `tomtoolkit >=3.0.0`.
 Most affiliated TOMToolkit apps will also need to be updated to their newest version.
 
+If you use `poetry` or `uv` you will need to update your ``pyproject.toml``, otherwise check your ``requirements.txt``
+or wherever else you keep your list of dependencies.
+
 2.) Migrate your DB
 ~~~~~~~~~~~~~~~~~~~
 
@@ -43,7 +46,7 @@ We want to update all of your existing data to this new scheme where possible. T
 
 4.) Update ``settings.py``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Tomtoolkit now includes default setting stored in `tom_common.default_settings.py 
+Tomtoolkit now includes default settings stored in `tom_common.default_settings.py 
 <https://github.com/TOMToolkit/tom_base/blob/dev/tom_common/default_settings.py>`_ .
 This prevents users from having to update their TOMs with mandatory settings allowing for more backward compatibility
 with future changes. If you wish to use these settings, please make the following changes to your ``settings.py``:
@@ -102,8 +105,10 @@ Pay special attention to the following areas:
 Remove references to `tom_alerts` and `tom_catalogs`
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-These apps were deprecated and will eventually be removed from the toolkit.
-Instead of these apps, use :doc:`tom_dataservices <../data_services/index>`.
+These apps were deprecated and will be removed from the toolkit within the next 6 months.
+If you need to maintain these references until then, you just need to make sure they are included in your 
+`INSTALLED_APPS` as they are not included in the `default_settings`.
+Instead of these apps, use :doc:`tom_dataservices <../data_services/index>` for querying external sources.
 
 Update references to `tom_dataproducts`
 +++++++++++++++++++++++++++++++++++++++
@@ -130,7 +135,7 @@ We cannot go through a full list of the required changes here, but you can explo
 - `Bootsratp5 migration docs <https://getbootstrap.com/docs/5.0/migration/>`_
 - `django-bootstrap5 migration docs <https://github.com/zostera/django-bootstrap5/blob/main/MIGRATE.md>`_
 - `crispy-bootstrap5 updates <https://github.com/django-crispy-forms/crispy-bootstrap5>`_
-- `TOmToolkit Bootstrap5 update PR <https://github.com/TOMToolkit/tom_base/pull/1571>`_
+- `TOMToolkit Bootstrap5 update PR <https://github.com/TOMToolkit/tom_base/pull/1571>`_
 
 
 6.) Final Migration

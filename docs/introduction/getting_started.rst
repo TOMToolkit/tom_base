@@ -7,7 +7,7 @@ Getting Started
   :hidden:
 
   Installation <manual_installation>
-  Updates <updating>
+  Updating Toolkit Versions <updating>
   TOM architecture <tomarchitecture>
   Workflow <workflow>
   Support <support>
