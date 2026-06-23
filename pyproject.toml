@@ -47,8 +47,8 @@ dependencies = [
     "astroplan >=0.8,<0.11",
     "astropy >=5.3.3,<8 ; python_version >= '3.10'",
     "astropy >=5.3.3,<6 ; python_version < '3.10'",
-    "cryptography <=47",
     "django >=5,<6",
+    "cryptography <=48.0.1",
     "djangorestframework >=3.15,<4",
     "django-bootstrap5 <27",
     "beautifulsoup4 <5",
@@ -104,7 +104,7 @@ sphinx-copybutton = "~0.5"
 myst-parser = "==4.0.1"
 
 [tool.poetry.group.coverage.dependencies]
-coverage = ">=7.14.1,<8" # coveralls needs ~6 even though 7.3.2 is latest
+coverage = ">=7.14.3,<8" # coveralls needs ~6 even though 7.3.2 is latest
 coveralls = ">=3,<5"
 
 [tool.poetry.group.lint.dependencies]
