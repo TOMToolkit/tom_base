@@ -8,7 +8,7 @@ PyPI using `pip`. How exactly you do this will change based on how you handle de
 Upgrade from v2 to v3
 ---------------------
 
-The upgrade from v2 to v3 involve several breaking changes that need to be handled by any TOM trying update to version 3.
+The upgrade from v2 to v3 involves several breaking changes that need to be handled by any TOM trying update to version 3.
 Please follow the next steps in order to avoid complications.
 
 1.) Update your `tomtoolkit` and `tom_app` dependencies
@@ -18,14 +18,58 @@ This step depends on your dependency manager, but first you will need to update 
 Most affiliated TOMToolkit apps will also need to be updated to their newest version.
 
 If you use `poetry` or `uv` you will need to update your ``pyproject.toml``, otherwise check your ``requirements.txt``
-or wherever else you keep your list of dependencies.
+or wherever else you keep your list of dependencies. 
+
+Poetry
+++++++
+
+For example, using poetry, this should be as simple as bumping the version number to 
+
+::
+
+    "tomtoolkit>=3.0.0a11,<4"
+
+in your ``pyproject.toml`` and running 
+
+::
+
+    poetry lock
+
+to update the lock file. Aft this, you should be ready to install the updates with 
+
+::
+
+    poetry install
+
+Requirements.txt
+++++++++++++++++
+
+If, instead, you have a ``requirements.txt`` file, edit the file and update you tomtoolkit dependency to
+
+::
+
+    tomtoolkit >= 3.0.0a11; < 4.0.0
+
+Activate your virtual environment and install the updates using
+
+::
+
+    pip install -r requirements.txt
+
 
 2.) Migrate your DB
 ~~~~~~~~~~~~~~~~~~~
 
+.. Note::
+    If you have already begun using the `default_settings` functionality described below, or you have previously updated to
+    an alpha version of v3 (<3.0.0a11) then this migration may result in an error message. If you receive an error message
+    stating that "app 'tom_alerts' isn't installed." Please add `tom_alerts` back into your installed apps before proceeding
+    with this migration.
+
 ::
 
    ./manage.py migrate
+
 
 3.) Migrate existing ReducedDatums
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
