@@ -321,6 +321,7 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         :rtype: dict
         """
         context = super().get_context_data()
+        data_service_name = self.object.data_service
 
         form = context['form']
         simple_form = form.get_simple_form_partial()
@@ -334,6 +335,10 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         context['simple_form'] = simple_form
         context['advanced_form'] = advanced_form
         context['object'] = self.object
+        context['app_link'] = get_data_service_class(data_service_name).app_link
+        context['app_version'] = get_data_service_class(data_service_name).app_version
+        context['verbose_name'] = get_data_service_class(data_service_name).verbose_name
+        context['info_url'] = get_data_service_class(data_service_name).info_url
         return context
 
 
