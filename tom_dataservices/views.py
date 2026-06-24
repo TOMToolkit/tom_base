@@ -322,8 +322,15 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         """
         context = super().get_context_data()
 
-        simple_form = context['form'].get_simple_form_partial()
-        advanced_form = context['form'].get_advanced_form_partial()
+        form = context['form']
+        simple_form = form.get_simple_form_partial()
+        advanced_form = form.get_advanced_form_partial()
+
+        context['simple_fields'] = []
+        if not simple_form and form.simple_fields():
+            for field in form.simple_fields():
+                context['simple_fields'].append(form[field])
+            simple_form = 'tom_dataservices/partials/basic_simple_form.html'
         context['simple_form'] = simple_form
         context['advanced_form'] = advanced_form
         context['object'] = self.object
