@@ -1,10 +1,11 @@
+from tom_targets.base_models import get_target_model_app_label, BaseTarget
 import requests
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 from tom_targets.serializers import TargetSerializer
-from tom_targets.models import PersistentShare
+from tom_targets.models import PersistentShare, get_target_model_class
 from tom_dataproducts.sharing import (share_data_with_tom,
                                       get_destination_target, sharing_feedback_converter)
 
@@ -35,6 +36,20 @@ def continuous_share_data(target, reduced_datums):
         share_destination = persistentshare.destination
         reduced_datum_pks = [rd.pk for rd in reduced_datums]
         share_data_with_tom(share_destination, None, None, None, selected_data=reduced_datum_pks)
+
+
+def custom_target_to_extras(target_id) -> list[dict]:
+    target_app_label = get_target_model_app_label()
+    extra_fields = []
+    if target_app_label != 'tom_targets':
+        target = get_target_model_class().objects.get(pk=target_id)
+        for field in target._meta.get_fields():
+            if field not in BaseTarget._meta.get_fields() and field.name not in ['id', 'basetarget_ptr']:
+                value = getattr(target, field.name, None)
+                if value is not None:
+                    extra_fields.append({'key': field.name, 'value': value})
+
+    return extra_fields
 
 
 def share_target_with_tom(share_destination, form_data, target_lists=()):
@@ -76,6 +91,11 @@ def share_target_with_tom(share_destination, form_data, target_lists=()):
     if destination_target_id is None:
         # If target is not in Destination, serialize and create new target.
         serialized_target = TargetSerializer(form_data['target']).data
+        # If the shared target is a custom model custom fields should still be shared.
+        # Because the destination TOM might not have the same fields, we convert them to
+        # target extras.
+        extra_extras = custom_target_to_extras(serialized_target['id'])
+        serialized_target['targetextra_set'].extend(extra_extras)
         # Remove local User Groups
         serialized_target['groups'] = []
         # Add target lists
