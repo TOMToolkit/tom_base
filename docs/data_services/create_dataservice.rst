@@ -293,9 +293,10 @@ We will start by creating our query:
 ``DataService.create_reduced_datums_from_query``
 ================================================
 
-To create the ``ReducedDatum``s we will need a ``create_reduced_datums_from_query()`` method. This should take all of the data
-types and convert them into ``ReducedDatum`` objects. Be sure to use ``ReducedDatum.objects.get_or_create()`` to prevent
-re-creating existing objects.
+To create the ``ReducedDatum`` we will need a ``create_reduced_datums_from_query()`` method. This should take all of the data
+types and convert them into ``ReducedDatum`` objects. Be sure to use ``XXXXXReducedDatum.objects.get_or_create()`` to prevent
+re-creating existing objects where "XXXXX" represents the specific model you wish to use (such as Photometry, Spectroscopy, or Astrometry.)
+Details for the different types of data models can be found in the :doc:`API documentation <../api/tom_dataproducts/models>`.
 
 .. code-block:: python
     :caption: my_dataservice.MyDataService
@@ -318,19 +319,16 @@ re-creating existing objects.
                 # We might have some specific things we want to include based on type.
                 # For Photometry, for example, we need a magnitude, error, and filter to be displayed in the
                 # photometry plot on the target detail page.
-                datum_details['magnitude'] = datum['my_mag']
-                datum_details['error'] = datum['my_magerr']
-                datum_details['limit'] = datum['my_maglim']
-                datum_details['filter'] = datum['my_passband']
-
-            reduced_datum, __ = ReducedDatum.objects.get_or_create(
-                target=target,
-                timestamp=Time(datum['time'], format='iso', scale='utc').datetime,
-                data_type=data_type,
-                source_name=self.name,
-                value=datum_details
-            )
-            reduced_datums.append(reduced_datum)
+                reduced_datum, __ = PhotometryReducedDatum.objects.get_or_create(
+                    target=target,
+                    timestamp=Time(datum['time'], format='iso', scale='utc').datetime,
+                    source_name=self.name,
+                    brightness=datum['my_mag'],
+                    brightness_error=datum['my_magerr'],
+                    limit=datum['my_maglim'],
+                    bandpass=datum['my_passband']
+                )
+                reduced_datums.append(reduced_datum)
         return reduced_datums
 
 
