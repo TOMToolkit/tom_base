@@ -264,6 +264,22 @@ into a model object with ``create_foo_from_query()``.
 Depending on the specifics of your data service, it may be reasonable to call the ``query_foo()`` methods independently,
 and/or part of ``query_targets``.
 
+Including Aliases:
+++++++++++++++++++
+Often when ingesting a new target from a dataservice, there will be multiple names or references for the target that you
+will want to include to avoid confusion and help with disambiguation within a TOM. This can be done in one of two ways:
+
+1. ``target_result``: Including an ``aliases`` key in any target results output by ``query_targets`` with a value that is
+a list of strings will automatically ingest those aliases as ``TargetNames``.
+
+2. ``query_aliases``: Sometimes, getting aliases can be more complex, possibly even requiring its own separate DB query. For
+These instances, you will need to include a ``query_aliases`` method that returns a list of strings, each string being a
+name for the target that is different from the primary name stored in ``Target.name``. See the
+:doc:`dataservices documentation <../api/tom_dataservices/data_services>` for more information.
+
+Note: By default a TOM's Match Filters apply to alias creation, so if an alias matches any existing name or alias already in the DB
+it will not be created.
+
 Querying Reduced Datums:
 ++++++++++++++++++++++++
 Data from a dataservice that needs to be stored as a ``ReducedDatum`` should be handled a little differently.

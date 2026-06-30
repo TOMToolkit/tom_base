@@ -374,7 +374,10 @@ class DataService(ABC):
                 else:
                     logger.warning(f"The target, {target.name}, already exists. Any new data will be ingested.")
             # Save Aliases
-            self.to_aliases(target, target_result.get('aliases', []))
+            alias_list = target_result.get('aliases', []) or self.query_aliases(self.query_parameters,
+                                                                                target,
+                                                                                **kwargs)
+            self.to_aliases(target, alias_list)
             return target
 
     def create_target_from_query(self, target_result, **kwargs):
