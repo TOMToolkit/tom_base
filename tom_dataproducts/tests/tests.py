@@ -564,7 +564,8 @@ class TestCustomFields(TestCase):
             exposure_time=1000.0,
             flux=flux,
             wavelength=wavelength,
-            flux_unit="Å",
+            flux_unit="mJy",
+            wavelength_unit="µm",
         )
         rd.refresh_from_db()  # ensure we round trip to the database
         self.assertEqual(flux, rd.flux)
@@ -578,7 +579,8 @@ class TestCustomFields(TestCase):
             flux=[1.0, 2.0, 3.0, 4.0],
             wavelength=[1, 2, 3, 4],
             error=error,
-            flux_unit="Å",
+            flux_unit="erg / s / cm2 / Å",
+            wavelength_unit="Å",
         )
         rd.refresh_from_db()
         self.assertEqual(error, rd.error)
@@ -591,7 +593,8 @@ class TestCustomFields(TestCase):
                 exposure_time=1000.0,
                 flux=[1.0, 2.0, 3.0, "asd"],
                 wavelength=[1, 2, 3, 4],
-                flux_unit="cm^2",
+                flux_unit="erg / s / cm2 / Å",
+                wavelength_unit="µm",
             )
 
 
