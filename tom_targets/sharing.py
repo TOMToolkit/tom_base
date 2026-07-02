@@ -47,7 +47,7 @@ def custom_target_to_extras(target_id) -> list[dict]:
             if field not in BaseTarget._meta.get_fields() and field.name not in ['id', 'basetarget_ptr']:
                 value = getattr(target, field.name, None)
                 if value is not None:
-                    extra_fields.append({'key': field.name, 'value': value})
+                    extra_fields.append({'key': field.name, 'value': str(value)})
 
     return extra_fields
 
