@@ -19,7 +19,11 @@ class PersistentShareSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         shared_existing_data = validated_data.pop('share_existing_data', None)
         if shared_existing_data:
-            sharing_feedback = share_target_and_all_data(validated_data['destination'], validated_data['target'])
+            sharing_feedback = share_target_and_all_data(
+                validated_data['destination'],
+                validated_data['target'],
+                validated_data['user'],
+            )
             if 'ERROR' in sharing_feedback.upper():
                 raise serializers.ValidationError(
                     f"Failed to share existing data of target {validated_data['target'].name}: {sharing_feedback}"

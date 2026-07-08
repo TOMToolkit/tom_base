@@ -10,14 +10,14 @@ from tom_dataproducts.sharing import (share_data_with_tom,
                                       get_destination_target, sharing_feedback_converter)
 
 
-def share_target_and_all_data(share_destination, target):
+def share_target_and_all_data(share_destination, target, user):
     """
     Given a sharing destination, shares the target and all its current dataproducts
     with that destination. Will raise an Exception is any portion of sharing fails.
     :param share_destination: String sharing destination from the DATA_SHARING setting
     :param target: Target instance that should be shared with all its data
     """
-    response = share_target_with_tom(share_destination, {'target': target})
+    response = share_target_with_tom(share_destination, {'target': target}, user=user)
     response_feedback = sharing_feedback_converter(response)
     if 'ERROR' in response_feedback.upper():
         return response_feedback
@@ -52,7 +52,7 @@ def custom_target_to_extras(target_id) -> list[dict]:
     return extra_fields
 
 
-def share_target_with_tom(share_destination, form_data, target_lists=()):
+def share_target_with_tom(share_destination, form_data, target_lists=(), user=None):
     """
     Share a target with a remote TOM.
     :param share_destination: The name of the destination TOM as defined in settings.DATA_SHARING
@@ -96,6 +96,8 @@ def share_target_with_tom(share_destination, form_data, target_lists=()):
         # target extras.
         extra_extras = custom_target_to_extras(serialized_target['id'])
         serialized_target['targetextra_set'].extend(extra_extras)
+        if user is not None:
+            serialized_target['targetextra_set'].append({'key': 'shared_by', 'value': user.username})
         # Remove local User Groups
         serialized_target['groups'] = []
         # Add target lists
