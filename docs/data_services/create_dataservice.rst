@@ -188,6 +188,25 @@ This may also require you to create a ``build_headers`` method, or make use of t
 ``get_credentials`` methods. Saving the results to ``self.query_results`` could save time in other methods by not requiring
 you to redo the query.
 
+Configuration and Credentials
+=============================
+
+If your dataservice requires a configuration and/or credentials of any kind, retrieving these is built into the base
+DataService class. If possible, and using TOM-wide credentials, you should consider having TOM admins include the needed
+credentials as a nested dictionary inside the `DATA_SERVICES` attribute of ``settings.py`` named after the dataservice.
+These will be automatically retrieved by ``get_configuration``. If an API token is required, storing a key/value pair in
+the credentials named 'api_key' will allow ``get_credentials`` to automatically retrieve the token.
+
+.. code-block:: python
+    :caption: settings.py default credentials example
+
+    DATA_SERVICES = {
+        'MyService': {'user': 'Me', 'api_key': os.getenv('MyService_API_KEY', None)}
+    }
+
+In cases where more complex configurations or credentials are needed, consider overwriting or extending the
+``configuration``, ``get_configuration``, and/or ``get_credentials`` methods.
+
 ``DataService.query_targets``
 ++++++++++++++++++++++++++++++
 

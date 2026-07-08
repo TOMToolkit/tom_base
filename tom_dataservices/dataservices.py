@@ -155,7 +155,10 @@ class DataService(ABC):
 
     @classmethod
     def configuration(cls) -> dict:
-        """Returns the configuration dictionary for this service"""
+        """Returns the configuration dictionary for this service
+
+           By default, returns `settings.DATA_SERVICES[cls.name]`
+        """
         try:
             return settings.DATA_SERVICES[cls.name]
         except AttributeError as e:
@@ -164,7 +167,7 @@ class DataService(ABC):
             raise NotConfiguredError(
                 f"""The {e} DataService is not configured.
                     </br>
-                    Please see the <a href="{cls.info_url}" target="_blank">documentation</a> for more information.
+                    Please see the <a href="{cls.app_link}" target="_blank">documentation</a> for more information.
                 """
             )
 
