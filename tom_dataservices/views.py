@@ -175,19 +175,20 @@ class RunQueryView(TemplateView):
         data_service_class = None
         cached_results = {}
         query_parameters = {}
+        user = self.request.user
 
         # Do query and get query results
         try:
             # get the DataService class. Pull saved query if PK available, otherwise use session data.
             if self.kwargs.get('pk', None) is not None:
                 query = get_object_or_404(DataServiceQuery, pk=self.kwargs['pk'])
-                data_service_class = get_data_service_class(query.data_service)()
+                data_service_class = get_data_service_class(query.data_service)(user=user)
                 query_parameters = data_service_class.build_query_parameters(query.parameters)
                 query.last_run = timezone.now()
                 query.save()
             else:
                 input_parameters = self.request.session.get('query_parameters', {})
-                data_service_class = get_data_service_class(input_parameters['data_service'])()
+                data_service_class = get_data_service_class(input_parameters['data_service'])(user=user)
                 query_parameters = data_service_class.build_query_parameters(input_parameters)
             # Check cached query is the same and pull cache if needed.
             if query_parameters == cache.get('query_params'):

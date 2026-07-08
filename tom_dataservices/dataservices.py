@@ -105,7 +105,7 @@ class DataService(ABC):
     # Link to app github repo
     app_link = None
 
-    def __init__(self, query_parameters=None, *args, **kwargs):
+    def __init__(self, query_parameters=None, user=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Instance variable that can store target query results if necessary
         self.target_results = {}
@@ -115,6 +115,8 @@ class DataService(ABC):
         self.query_results = {}
         # Instance variable that can store query parameters if necessary
         self.query_parameters = query_parameters or {}
+        # User from the view or test, if available
+        self.user = user
 
     @abstractmethod
     def query_service(self, query_parameters, **kwargs):
