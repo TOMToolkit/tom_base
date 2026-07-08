@@ -140,7 +140,7 @@ class DataServiceQueryCreateView(LoginRequiredMixin, FormView):
         simple_form = form.get_simple_form_partial()
         advanced_form = form.get_advanced_form_partial()
 
-        # Build the simple form: This will either use user supplied form or 
+        # Build the simple form: This will either use user supplied form or
         # the basic_simple_form with the simple_fields
         context['simple_fields'] = []
         if not simple_form and form.simple_fields():
@@ -331,7 +331,7 @@ class DataServiceQueryUpdateView(LoginRequiredMixin, FormView):
         advanced_form = form.get_advanced_form_partial()
 
         context['simple_fields'] = []
-        # Build the simple form: This will either use user supplied form or 
+        # Build the simple form: This will either use user supplied form or
         # the basic_simple_form with the simple_fields
         if not simple_form and form.simple_fields():
             for field in form.simple_fields():
