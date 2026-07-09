@@ -174,7 +174,7 @@ class RunQueryView(TemplateView):
         context = super().get_context_data()
         query = None
         query_feedback = ""
-        data_service_class = None
+        data_service_instance = None
         cached_results = {}
         query_parameters = {}
         user = self.request.user
@@ -184,14 +184,14 @@ class RunQueryView(TemplateView):
             # get the DataService class. Pull saved query if PK available, otherwise use session data.
             if self.kwargs.get('pk', None) is not None:
                 query = get_object_or_404(DataServiceQuery, pk=self.kwargs['pk'])
-                data_service_class = get_data_service_class(query.data_service)(user=user)
-                query_parameters = data_service_class.build_query_parameters(query.parameters)
+                data_service_instance = get_data_service_class(query.data_service)(user=user)
+                query_parameters = data_service_instance.build_query_parameters(query.parameters)
                 query.last_run = timezone.now()
                 query.save()
             else:
                 input_parameters = self.request.session.get('query_parameters', {})
-                data_service_class = get_data_service_class(input_parameters['data_service'])(user=user)
-                query_parameters = data_service_class.build_query_parameters(input_parameters)
+                data_service_instance = get_data_service_class(input_parameters['data_service'])(user=user)
+                query_parameters = data_service_instance.build_query_parameters(input_parameters)
             # Check cached query is the same and pull cache if needed.
             if query_parameters == cache.get('query_params'):
                 cached_results = cache.get_many([f'result_{result_id}' for result_id in range(0, 99)])
@@ -200,7 +200,7 @@ class RunQueryView(TemplateView):
             if cached_results:
                 results = [cached_results[key] for key in cached_results]
             else:
-                results = data_service_class.query_targets(query_parameters)
+                results = data_service_instance.query_targets(query_parameters)
         except HTTPError as e:
             results = iter(())
             query_feedback += f"Issue fetching query results, please try again.</br>{e}</br>"
@@ -218,9 +218,9 @@ class RunQueryView(TemplateView):
         context['query'] = query
         context['query_feedback'] = query_feedback
         context['too_many_results'] = False
-        context['data_service'] = data_service_class.name
-        if data_service_class.query_results_table:
-            context['query_results_table'] = data_service_class.query_results_table
+        context['data_service'] = data_service_instance.name
+        if data_service_instance.query_results_table:
+            context['query_results_table'] = data_service_instance.query_results_table
         else:
             context['query_results_table'] = 'tom_dataservices/partials/query_results_table.html'
 
@@ -241,7 +241,7 @@ class RunQueryView(TemplateView):
             pass
 
         # allow the Data Service to add to the context (besides the query_results)
-        data_service_context_additions = data_service_class.get_additional_context_data()
+        data_service_context_additions = data_service_instance.get_additional_context_data()
         context |= data_service_context_additions
 
         return context
@@ -360,7 +360,7 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
         """
         query_id = self.request.POST['query_id']
         data_service_name = self.request.POST['data_service']
-        data_service_class = get_data_service_class(data_service_name)()
+        data_service_instance = get_data_service_class(data_service_name)(user=self.request.user)
         results = self.request.POST.getlist('selected_results')
         errors = []
         target = None
@@ -379,15 +379,15 @@ class CreateTargetFromQueryView(LoginRequiredMixin, View):
                         return redirect(reverse('dataservices:run_saved', kwargs={'pk': query_id}))
                     else:
                         return redirect(reverse('dataservices:run'))
-                target = data_service_class.to_target(cached_result, request=request)
+                target = data_service_instance.to_target(cached_result, request=request)
                 # Do not attempt to store Reduced Datums if no Target.
                 if target:
                     try:
-                        data_service_class.to_reduced_datums(target, cached_result.get('reduced_datums'))
+                        data_service_instance.to_reduced_datums(target, cached_result.get('reduced_datums'))
                     except MissingDataException:
                         try:
-                            data = data_service_class.query_reduced_data(target)
-                            data_service_class.to_reduced_datums(target, data)
+                            data = data_service_instance.query_reduced_data(target)
+                            data_service_instance.to_reduced_datums(target, data)
                         except QueryServiceError as e:
                             messages.error(request, f'Error retrieving data from Data Service: {e}')
         except NotImplementedError as e:
@@ -410,11 +410,11 @@ def update_data_from_query(request):
         if form.is_valid():
             target = form.cleaned_data['target']
             try:
-                data_service_class = get_data_service_class(form.cleaned_data['data_service'])()
-                data = data_service_class.query_reduced_data(target)
-                data_service_class.to_reduced_datums(target, data)
-                alias_data = data_service_class.query_aliases(target=target)
-                data_service_class.to_aliases(target, alias_data)
+                data_service_instance = get_data_service_class(form.cleaned_data['data_service'])(user=request.user)
+                data = data_service_instance.query_reduced_data(target)
+                data_service_instance.to_reduced_datums(target, data)
+                alias_data = data_service_instance.query_aliases(target=target)
+                data_service_instance.to_aliases(target, alias_data)
             except QueryServiceError as e:
                 messages.error(request, f'Error retrieving data from Data Service: {e}')
 

@@ -390,6 +390,7 @@ exists, in several places where we want to update an existing target based on da
         :param target: A target object to be queried
         :return: query_parameters (usually a dict) that can be understood by `query_service()`
         """
+        # 2 examples for conditionally building query parameters
         if 'first' in target.name:
             form_fields = {'first_field': target.name}
             query_parameters = self.build_query_parameters(form_fields)
