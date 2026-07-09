@@ -98,6 +98,7 @@ def share_target_with_tom(share_destination, form_data, target_lists=(), user=No
         serialized_target['targetextra_set'].extend(extra_extras)
         if user is not None:
             serialized_target['targetextra_set'].append({'key': 'shared_by', 'value': user.username})
+        serialized_target['targetextra_set'].append({'key': 'shared_from', 'value': settings.TOM_NAME})
         # Remove local User Groups
         serialized_target['groups'] = []
         # Add target lists
