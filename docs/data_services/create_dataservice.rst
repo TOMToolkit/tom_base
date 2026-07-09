@@ -188,6 +188,25 @@ This may also require you to create a ``build_headers`` method, or make use of t
 ``get_credentials`` methods. Saving the results to ``self.query_results`` could save time in other methods by not requiring
 you to redo the query.
 
+Configuration and Credentials
+=============================
+
+If your dataservice requires a configuration and/or credentials of any kind, retrieving these is built into the base
+DataService class. If possible, and using TOM-wide credentials, you should consider having TOM admins include the needed
+credentials as a nested dictionary inside the `DATA_SERVICES` attribute of ``settings.py`` named after the dataservice.
+These will be automatically retrieved by ``get_configuration``. If an API token is required, storing a key/value pair in
+the credentials named 'api_key' will allow ``get_credentials`` to automatically retrieve the token.
+
+.. code-block:: python
+    :caption: settings.py default credentials example
+
+    DATA_SERVICES = {
+        'MyService': {'user': 'Me', 'api_key': os.getenv('MyService_API_KEY', None)}
+    }
+
+In cases where more complex configurations or credentials are needed, consider overwriting or extending the
+``configuration``, ``get_configuration``, and/or ``get_credentials`` methods.
+
 ``DataService.query_targets``
 ++++++++++++++++++++++++++++++
 
@@ -264,6 +283,22 @@ into a model object with ``create_foo_from_query()``.
 Depending on the specifics of your data service, it may be reasonable to call the ``query_foo()`` methods independently,
 and/or part of ``query_targets``.
 
+Including Aliases:
+++++++++++++++++++
+Often when ingesting a new target from a dataservice, there will be multiple names or references for the target that you
+will want to include to avoid confusion and help with disambiguation within a TOM. This can be done in one of two ways:
+
+1. ``target_result``: Including an ``aliases`` key in any target results output by ``query_targets`` with a value that is
+a list of strings will automatically ingest those aliases as ``TargetNames``.
+
+2. ``query_aliases``: Sometimes, getting aliases can be more complex, possibly even requiring its own separate DB query. For
+These instances, you will need to include a ``query_aliases`` method that returns a list of strings, each string being a
+name for the target that is different from the primary name stored in ``Target.name``. See the
+:doc:`dataservices documentation <../api/tom_dataservices/data_services>` for more information.
+
+Note: By default a TOM's Match Filters apply to alias creation, so if an alias matches any existing name or alias already in the DB
+it will not be created.
+
 Querying Reduced Datums:
 ++++++++++++++++++++++++
 Data from a dataservice that needs to be stored as a ``ReducedDatum`` should be handled a little differently.
@@ -293,9 +328,10 @@ We will start by creating our query:
 ``DataService.create_reduced_datums_from_query``
 ================================================
 
-To create the ``ReducedDatum``s we will need a ``create_reduced_datums_from_query()`` method. This should take all of the data
-types and convert them into ``ReducedDatum`` objects. Be sure to use ``ReducedDatum.objects.get_or_create()`` to prevent
-re-creating existing objects.
+To create the ``ReducedDatum`` we will need a ``create_reduced_datums_from_query()`` method. This should take all of the data
+types and convert them into ``ReducedDatum`` objects. Be sure to use ``XXXXXReducedDatum.objects.get_or_create()`` to prevent
+re-creating existing objects where "XXXXX" represents the specific model you wish to use (such as Photometry, Spectroscopy, or Astrometry.)
+Details for the different types of data models can be found in the :doc:`API documentation <../api/tom_dataproducts/models>`.
 
 .. code-block:: python
     :caption: my_dataservice.MyDataService
@@ -318,19 +354,16 @@ re-creating existing objects.
                 # We might have some specific things we want to include based on type.
                 # For Photometry, for example, we need a magnitude, error, and filter to be displayed in the
                 # photometry plot on the target detail page.
-                datum_details['magnitude'] = datum['my_mag']
-                datum_details['error'] = datum['my_magerr']
-                datum_details['limit'] = datum['my_maglim']
-                datum_details['filter'] = datum['my_passband']
-
-            reduced_datum, __ = ReducedDatum.objects.get_or_create(
-                target=target,
-                timestamp=Time(datum['time'], format='iso', scale='utc').datetime,
-                data_type=data_type,
-                source_name=self.name,
-                value=datum_details
-            )
-            reduced_datums.append(reduced_datum)
+                reduced_datum, __ = PhotometryReducedDatum.objects.get_or_create(
+                    target=target,
+                    timestamp=Time(datum['time'], format='iso', scale='utc').datetime,
+                    source_name=self.name,
+                    brightness=datum['my_mag'],
+                    brightness_error=datum['my_magerr'],
+                    limit=datum['my_maglim'],
+                    bandpass=datum['my_passband']
+                )
+                reduced_datums.append(reduced_datum)
         return reduced_datums
 
 
@@ -357,16 +390,17 @@ exists, in several places where we want to update an existing target based on da
         :param target: A target object to be queried
         :return: query_parameters (usually a dict) that can be understood by `query_service()`
         """
-            if 'first' in target.name:
-                form_fields = {'first_field': target.name}
-                query_parameters = self.build_query_parameters(form_fields)
-            else:
-                query_parameters= {
-                    'ra_field': target.ra,
-                    'dec_field': target.dec,
-                    'radius': 0.5
-                    }
-            return query_parameters
+        # 2 examples for conditionally building query parameters
+        if 'first' in target.name:
+            form_fields = {'first_field': target.name}
+            query_parameters = self.build_query_parameters(form_fields)
+        else:
+            query_parameters= {
+                'ra_field': target.ra,
+                'dec_field': target.dec,
+                'radius': 0.5
+                }
+        return query_parameters
 
 
 Polishing Your Data Service:

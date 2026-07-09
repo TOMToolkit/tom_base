@@ -105,7 +105,7 @@ class DataService(ABC):
     # Link to app github repo
     app_link = None
 
-    def __init__(self, query_parameters=None, *args, **kwargs):
+    def __init__(self, query_parameters=None, user=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Instance variable that can store target query results if necessary
         self.target_results = {}
@@ -115,6 +115,8 @@ class DataService(ABC):
         self.query_results = {}
         # Instance variable that can store query parameters if necessary
         self.query_parameters = query_parameters or {}
+        # User from the view or test, if available
+        self.user = user
 
     @abstractmethod
     def query_service(self, query_parameters, **kwargs):
@@ -155,7 +157,10 @@ class DataService(ABC):
 
     @classmethod
     def configuration(cls) -> dict:
-        """Returns the configuration dictionary for this service"""
+        """Returns the configuration dictionary for this service
+
+           By default, returns `settings.DATA_SERVICES[cls.name]`
+        """
         try:
             return settings.DATA_SERVICES[cls.name]
         except AttributeError as e:
@@ -164,7 +169,7 @@ class DataService(ABC):
             raise NotConfiguredError(
                 f"""The {e} DataService is not configured.
                     </br>
-                    Please see the <a href="{cls.info_url}" target="_blank">documentation</a> for more information.
+                    Please see the <a href="{cls.app_link}" target="_blank">documentation</a> for more information.
                 """
             )
 
@@ -374,7 +379,10 @@ class DataService(ABC):
                 else:
                     logger.warning(f"The target, {target.name}, already exists. Any new data will be ingested.")
             # Save Aliases
-            self.to_aliases(target, target_result.get('aliases', []))
+            alias_list = target_result.get('aliases', []) or self.query_aliases(self.query_parameters,
+                                                                                target,
+                                                                                **kwargs)
+            self.to_aliases(target, alias_list)
             return target
 
     def create_target_from_query(self, target_result, **kwargs):
