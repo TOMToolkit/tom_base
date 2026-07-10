@@ -310,6 +310,11 @@ HINTS_ENABLED = {{ HINTS_ENABLED }}
 HINT_LEVEL = 20
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',  # for API token authentication
+        'rest_framework.authentication.SessionAuthentication',  # for logged-in browsers (cookie + CSRF protection)
+        'rest_framework.authentication.BasicAuthentication',  # for username/password
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
     ],
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
