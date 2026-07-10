@@ -1,5 +1,5 @@
 {% load targets_extras %}
-<div class="btn-group" role="group" aria-label="Target detail buttons">
+<div role="group" aria-label="Target detail buttons">
     <a href="{% url 'tom_targets:update' pk=target.id %}" title="Update target" class="btn  btn-primary">Update</a>
     {% if sharing %}
     <a href="{% url 'tom_targets:share' pk=target.id %}" title="Share target" class="btn  btn-info">Share</a>
