@@ -11,6 +11,7 @@ Managing Data
   Continuous data sharing <continuous_sharing>
   Streaming data <stream_pub_sub>
   Single-target data service <single_target_data_service>
+  Accessing data through the REST API <accessing_data_through_REST_API>
   Visualizing data <plotting_data>
 
 The TOM's Data Models
