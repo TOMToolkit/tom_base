@@ -1,10 +1,12 @@
 from tom_targets.base_models import get_target_model_app_label
+import base64
 import copy
 
 from django.contrib.auth.models import User, Group
 from django.urls import reverse
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from tom_targets.tests.factories import SiderealTargetFactory, NonSiderealTargetFactory
@@ -307,3 +309,55 @@ class TestTargetExtraViewset(APITestCase):
         response = self.client.delete(reverse('api:targetextra-detail', args=(self.extra.id,)))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(TargetExtra.objects.filter(pk=self.extra.id).exists())
+
+
+class TestTargetAPIAuthentication(APITestCase):
+    """Exercise the three authentication schemes enabled on the DRF API by
+    ``REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES']``: Token, Basic, and
+    Session. Each should authenticate the request and limit returned targets to the
+    targets the user has ``view_target`` permission on.
+    """
+
+    def setUp(self):
+        # Basic and Session auth need real credentials, so create the user with a
+        # known password that we can pass in the authroization header.
+        self.password = 'sup3r-s3cret-p4ss'
+        self.user = User.objects.create_user(username='api_user', password=self.password)
+
+        # One visible and one hidden target, so a successful auth is proven by the
+        # user seeing exactly the single target they have permission on.
+        self.visible_target = SiderealTargetFactory.create(name='visible', targetextra_set=None, aliases=None)
+        SiderealTargetFactory.create(name='hidden', targetextra_set=None, aliases=None)
+        target_app_label = get_target_model_app_label()
+        assign_perm(f'{target_app_label}.view_target', self.user, self.visible_target)
+
+        self.list_url = reverse('api:targets-list')
+
+    def assertOnlyVisibleTarget(self, response):
+        """Assert the response is a 200 listing exactly the user's one visible target."""
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.json()['results']
+        self.assertEqual([target['name'] for target in results], ['visible'])
+
+    def test_token_authentication(self):
+        """A valid API token authenticates the request (the scheme scripts and cron jobs use)."""
+        token, _ = Token.objects.get_or_create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
+        self.assertOnlyVisibleTarget(self.client.get(self.list_url))
+
+    def test_invalid_token_is_rejected(self):
+        """An unrecognised token is rejected with 401, proving token auth is actually enforced."""
+        self.client.credentials(HTTP_AUTHORIZATION='Token not-a-real-token')
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_basic_authentication(self):
+        """HTTP Basic credentials authenticate the request (the scheme ``curl -u`` uses)."""
+        encoded = base64.b64encode(f'{self.user.username}:{self.password}'.encode()).decode()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Basic {encoded}')
+        self.assertOnlyVisibleTarget(self.client.get(self.list_url))
+
+    def test_session_authentication(self):
+        """A logged-in session authenticates the request (the scheme the browsable API uses)."""
+        self.client.login(username=self.user.username, password=self.password)
+        self.assertOnlyVisibleTarget(self.client.get(self.list_url))
