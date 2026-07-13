@@ -76,28 +76,42 @@ use ``tom_common``'s ``revealable_password_input.html`` partial template.
 
 The partial needs the **plaintext** as its ``value`` argument, and
 plaintext is available via direct attribute access on the model
-instance — e.g. ``profile.api_key``. Django introspection paths
-(``model_to_dict``, ``ModelSerializer``, ``dumpdata``, admin display)
-all go through ``EncryptedModelField.value_from_object``, which
-returns the ``REDACTED`` placeholder by design.
+instance — e.g. ``profile.api_key``. The model-introspection paths
+return the ``REDACTED`` placeholder instead: ``model_to_dict`` and DRF
+``ModelSerializer`` go through ``EncryptedModelField.value_from_object``,
+and ``dumpdata`` goes through the companion ``value_to_string``. Both
+methods return the placeholder by design, so secrets don't leak into
+serialized output.
 
-In practice, when a profile card uses an inclusion tag (or a view's
-``get_context_data``) to provide fields to a template, the encrypted
-field has to be excluded from any auto-iteration over the model and
-passed in explicitly:
+The only requirement, then, is that the value reaching the partial comes
+from **direct attribute access** (``profile.api_key``), not from one of
+those introspection helpers. The simplest approach is to build the
+template context by hand:
+
+.. code-block:: python
+    :caption: [inclusion tag or get_context_data returning context]
+
+    context = {
+        'api_key': profile.api_key,   # direct attribute access -> plaintext
+    }
+    return context
+
+If your profile card instead auto-iterates the model's fields with
+``model_to_dict`` (convenient for a card with many non-secret fields),
+exclude the encrypted field from that iteration and add the plaintext
+back explicitly:
 
 .. code-block:: python
     :caption: [function returning context to template]
 
-    ...
-    # exclude the encrypted field from the auto-iteration: model_to_dict
-    # would only return the REDACTED placeholder for it
+    # model_to_dict would only return the REDACTED placeholder for the
+    # encrypted field, so exclude it and pass the plaintext in separately.
     excluded_fields = ['user', 'id', 'api_key']
     profile_data = model_to_dict(profile, exclude=excluded_fields)
 
     context = {
         'profile_data': profile_data,  # dictionary without the excluded_fields
-        'api_key': profile.api_key,   # direct attribute access -> plaintext
+        'api_key': profile.api_key,    # direct attribute access -> plaintext
     }
     return context
 
@@ -112,8 +126,13 @@ Then in the template, render the encrypted field through the partial:
         (not set)
     {% endif %}
 
-The partial renders a masked input of fixed length; the real value is
-only injected into the DOM when the user clicks the reveal icon.
+The partial renders a masked input of fixed length. Be aware that the
+plaintext is embedded in the rendered HTML from the start: the partial
+stores it in a ``data-`` attribute on the element, and clicking the
+reveal icon only toggles its *visibility* — it does not fetch the value
+on demand. Only use this partial where the viewer is authorized to see
+the plaintext (for example, a user viewing their own credential on their
+own profile page).
 
 A worked example of this pattern lives in
 `tom_demoapp <https://github.com/TOMToolkit/tom_demoapp>`__'s
