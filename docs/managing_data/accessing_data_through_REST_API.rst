@@ -54,7 +54,7 @@ Token Authentication
 
 Every user has a personal API token, shown as **API Token** on their
 **User Profile** page. A token suits scripts and cron jobs because it
-needs no interactive prompt. Treat it like a password.
+needs no interactive prompt. Secure your API token as you would a password.
 
 Rather than pass in a username and be prompted for a password, we'll authenticate
 by sending the token in an ``Authorization`` header:
