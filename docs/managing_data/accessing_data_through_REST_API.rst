@@ -94,7 +94,8 @@ Pass your username and password as the ``auth`` tuple:
 Token Authentication
 *************************************************
 
-Send your API token in an ``Authorization`` header instead. No password needed:
+Send your API token in an ``Authorization`` header instead. The API token
+substitutes for the `BasicAuthentication` username and  password.
 
 .. code:: python
 
