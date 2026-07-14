@@ -226,7 +226,8 @@ class TestReducedDatumViewset(APITestCase):
         payload = {
             "data_product": "",
             "data_type": "spectroscopy",
-            "value": {"flux": [123.4, 4.321], "wavelength": [150, 151], "error": [0.005], "flux_unit": "s"},
+            "value": {"flux": [123.4, 4.321], "wavelength": [150, 151], "error": [0.005], "flux_unit": "s",
+                      "wavelength_unit": "Angstrom"},
             "target": self.st.id,
             "timestamp": "2012-02-12T01:40:47Z",
         }
@@ -303,7 +304,7 @@ class TestReducedDatumViewset(APITestCase):
         """SpectroscopyReducedDatum is serialized to the legacy wire format."""
         SpectroscopyReducedDatum.objects.create(
             target=self.st, flux=[1.0, 2.0], wavelength=[6000.0, 6001.0],
-            error=[0.1, 0.1], flux_unit='erg/cm2/s/A'
+            error=[0.1, 0.1], flux_unit='erg/cm2/s/A', wavelength_unit="um",
         )
 
         result = self.client.get(reverse('api:reduceddatums-list')).data['results'][0]
@@ -313,6 +314,7 @@ class TestReducedDatumViewset(APITestCase):
         self.assertEqual(result['value']['wavelength'], [6000.0, 6001.0])
         self.assertEqual(result['value']['error'], [0.1, 0.1])
         self.assertEqual(result['value']['flux_unit'], 'erg/cm2/s/A')
+        self.assertEqual(result['value']['wavelength_unit'], 'um')
 
     def test_astrometry_representation(self):
         """AstrometryReducedDatum is serialized to the legacy wire format."""

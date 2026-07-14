@@ -205,6 +205,7 @@ def process_spectro_data_for_download(datum):
             'instrument': datum.instrument,
             'setup': datum.setup,
             'flux_unit': datum.flux_unit,
+            'wavelength_unit': datum.wavelength_unit,
             'source_name': datum.source_name,
         }
         for i, (wavelength, flux) in enumerate(zip(datum.wavelength, datum.flux)):
