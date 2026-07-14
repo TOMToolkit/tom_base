@@ -103,10 +103,59 @@ substitutes for the `BasicAuthentication` username and  password.
 
     headers = {'Authorization': 'Token API-token-copied-from-User-Profile'}
     response = requests.get('http://127.0.0.1:8888/api/targets/', headers=headers)
-    targets = response.json()
+    print('status:', response.status_code)
+    print('targets:  ', response.json())
 
 Don't hard-code real credentials: read the password or token from an environment
 variable (e.g. ``os.environ['TOM_API_TOKEN']``) as in the ``curl`` example above.
 
+Obtaining your API Token programmatically
+#########################################
+
+Above, we've seen how to access your TOM's data using ``curl`` and ``Python``,
+via ``BasicAuthentication`` (username, password) and ``TokenAuthentication`` (API Token).
+
+Your API Token is available from the User Info card of your User Profile. (You may rotate
+your API Token from the User Profile update page (available from the pencil (edit) icon of
+the User Info card). Rotating your API token is analogous to, but separate from, changing
+your password).
+
+Here we show how to obtain your API Token programmatically. Django REST Framework
+provides the mechanism for this and it is available at a the ``api/token-auth`` endpoint.
+
+Using curl
+******************************************
+
+Using the same assumptions as above with respect to ``host``, ``port``, ``username``,
+and ``password``:
+
+.. code:: bash
+
+    curl --request POST http://127.0.0.1:8888/api/token-auth/ \
+         --header "Content-Type: application/json" \
+         --data '{"username": "tom_user_1", "password": "your-password"}'
+
+Things to note here:
+ - This is a ``POST`` request.
+ - The ``Content-Type`` specified in the request header lets DRF know to expect a JSON payload.
+ - The ``BasicAuthentication`` credentials are passed as the JSON payload of the request.
+
+The ouput you see will be JSON to stdout of the form ``{"token":"3bc76a8b6400182d617e9a1ce75dfa92d87412a0"}``.
+
+Using Python
+******************************************
+Here is the equivalent request made from Python code:
+
+.. code:: python
+
+    import requests
+
+    response = requests.post(
+        'http://127.0.0.1:8888/api/token-auth/',
+        json={'username': 'tom_user_1', 'password': 'your-password'},
+    )
+    print('status:', response.status_code)
+    print('json:  ', response.json())  # {"token":"3bc76a8b6400182d617e9a1ce75dfa92d87412a0"}
 
 
+Further details can be found in the `DRF Authentication API Guide <https://www.django-rest-framework.org/api-guide/authentication/>`_.
