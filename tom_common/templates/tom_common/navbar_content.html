@@ -1,4 +1,4 @@
-{% load bootstrap4 tom_common_extras %}
+{% load django_bootstrap5 tom_common_extras %}
 {% comment %}
 The following nav-item list elements (li) are included in the tom_common/base.html navbar-nav (ul).
 For customization instructions, see tom_common/base.html
@@ -8,26 +8,26 @@ For customization instructions, see tom_common/base.html
     <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
 </li>
 <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle {% if request.resolver_match.namespace == 'targets' %}active{% endif %}" data-toggle="dropdown">Targets</a>
-    <div class="dropdown-menu">
-        <a class="dropdown-item" href="{% url 'targets:list' %}">Targets</a>
-        <a class="dropdown-item" href="{% url 'targets:targetgrouping' %}">Target Grouping</a>
-        <a class="dropdown-item" href="{% url 'targets:target-selection' %}">Target Selection</a>
-    </div>
+    <a class="nav-link dropdown-toggle {% if request.resolver_match.namespace == 'targets' %}active{% endif %}" data-bs-toggle="dropdown">Targets</a>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'targets:list' %}">Targets</a></li>
+        <li><a class="dropdown-item" href="{% url 'targets:targetgrouping' %}">Target Grouping</a></li>
+        <li><a class="dropdown-item" href="{% url 'targets:target-selection' %}">Target Selection</a></li>
+    </ul>
 </li>
 <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" data-toggle="dropdown">Observations</a>
+    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Observations</a>
     <ul class="dropdown-menu">
-        <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
+        <li {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
             <a class="dropdown-item" href="{% url 'tom_observations:list' %}" >Observations</a>
         </li>
-        <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
+        <li {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
             <a class="dropdown-item" href="{% url 'tom_observations:group-list' %}" >Observation Groups</a>
         </li>
-        <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
+        <li {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
             <a class="dropdown-item" href="{% url 'tom_observations:template-list' %}" >Observation Templates</a>
         </li>
-        <li class="nav-item {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
+        <li {% if request.resolver_match.namespace == 'observations' %}active{% endif %}">
             <a class="dropdown-item" href="{% url 'tom_observations:facility-status' %}" >Facility Status</a>
         </li>
     </ul>

@@ -1,5 +1,5 @@
 <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" data-toggle="dropdown">Data Services</a>
+    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Data Services</a>
     <ul class="dropdown-menu">
         {% for data_service in data_services %}
             <li class="nav-item {% if request.resolver_match.namespace == 'dataservices' %}active{% endif %}">

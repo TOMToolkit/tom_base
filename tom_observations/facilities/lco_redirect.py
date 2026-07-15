@@ -92,6 +92,12 @@ class LCORedirectFacility(BaseRedirectObservationFacility):
     def data_products(self, observation_id, product_id=None):
         return self.lco_facility.data_products(observation_id, product_id)
 
+    def get_flux_constant(self):
+        return self.lco_facility.get_flux_constant()
+
+    def get_wavelength_units(self):
+        return self.lco_facility.get_wavelength_units()
+
     def request_id_to_group(self, observation_id, user, target, parameters):
         """
         The OCS groups individual requests into a single RequestGroup, which is the ID it passes

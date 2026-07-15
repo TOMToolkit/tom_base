@@ -1,8 +1,6 @@
 Models
 ======
 
-.. autosummary::
-
 .. automodule:: tom_targets.base_models
     :members:
     :special-members:

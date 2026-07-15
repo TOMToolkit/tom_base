@@ -1,12 +1,10 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 static %}
+{% load django_bootstrap5 static %}
 {% block title %}Import target{% endblock %}
 {% block content %}
 <form method="POST" action="{% url 'tom_dataproducts:upload-reduced-data' %}" enctype="multipart/form-data">
   {% csrf_token %}
   <input type="file" name="target_csv">
-  {% buttons %}
-  <input type="submit" value="Upload" class="btn btn-primary">
-  {% endbuttons %}
+  {% bootstrap_button "Upload" button_type="submit" button_class="btn btn-primary" value="Upload" %}
 </form>
 {% endblock %}

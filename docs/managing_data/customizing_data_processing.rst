@@ -1,10 +1,13 @@
 Customizing Data Processing
----------------------------
+===========================
 
 One of the many goals of the TOM Toolkit is to enable the simplification
 of the flow of your data from observations. To that end, there’s some
 built-in functionality that can be overridden to allow your TOM to work
 for your use case.
+
+Directory Structure
+*******************
 
 To begin, here’s a brief look at part of the structure of the
 tom_dataproducts app in the TOM Toolkit:
@@ -21,12 +24,12 @@ tom_dataproducts app in the TOM Toolkit:
 
 Let’s start with a quick overview of ``models.py``. The file contains
 the Django models for the dataproducts app–in our case, ``DataProduct``
-and ``ReducedDatum``. The ``DataProduct`` contains information about
+, ``ReducedDatum`` and the three specialized reduced data product classes:
+``PhotometryReducedDatum``, ``SpectroscopyReducedDatum`` and ``AstrometryReducedDatum``.
+The ``DataProduct`` contains information about
 uploaded or saved ``DataProducts``, such as the file name, file path,
-and what kind of file it is. The ``ReducedDatum`` contains individual
+and what kind of file it is. The ``*ReducedDatum`` classes contain individual
 science data points that are taken from the ``DataProduct`` files.
-Examples of ``ReducedDatum`` points would be individual photometry
-points or individual spectra.
 
 Each ``DataProduct`` also has a ``data_product_type``. The
 ``data_product_type`` is simply a description of what the file is, more
@@ -44,6 +47,8 @@ or less, and is customizable. The list of supported
        'image_file': ('image_file', 'Image File')
    }
 
+Adding New Types of Data Product
+********************************
 In order to add new data product types, simply add a new key/value pair,
 with the value being a 2-tuple. The first tuple item is the database
 value, and the second is the display value.
@@ -61,6 +66,9 @@ you wanted to set the `data_product_path` to ``{target}/{facility}/{observation_
                f'{data_product.observation_record.facility}/' \
                f'{data_product.observation_record.observation_id}/' \
                f'{filename}'
+
+Data Processors
+***************
 
 All data products are automatically “processed” on upload, as well. Of
 course, that can mean different things to different TOMs! The TOM has
@@ -98,6 +106,8 @@ base ``DataProcessor`` class:
        def process_data(self, data_product):
            pass
 
+Built-in Data Processors
+************************
 Now let’s look at the built-in data processors. First, let’s check out
 the ``PhotometryProcessor``, which inherits from ``DataProcessor``:
 
@@ -155,7 +165,7 @@ value being the timestamp, and the second being the JSON spectrum.
 
 You may be wondering why these two methods return lists of 2-tuples,
 especially when the ``SpectroscopyProcessor`` only returns a list of
-length one. The rationale is to ensure that you, the TOM user, shouldn’t
+length one. The rationale is to ensure that you, the TOM user, shouldn't
 have to worry about the database insertion, so the internal logic
 handles that aspect, and it can do so whether you return one data point
 or many data points.

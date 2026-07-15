@@ -64,7 +64,7 @@ class TNSForm(GenericQueryForm):
                         'units',
                         css_class='col',
                     ),
-                    css_class="form-row",
+                    css_class="row",
                 )
             ),
             Fieldset(
@@ -72,7 +72,7 @@ class TNSForm(GenericQueryForm):
                 Div(
                     Div('days_ago', css_class='col'),
                     Div('min_date', css_class='col'),
-                    css_class='form-row'
+                    css_class='row'
                 ),
                 'days_from_nondet'
             )

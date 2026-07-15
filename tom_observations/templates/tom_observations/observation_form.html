@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 static crispy_forms_tags observation_extras targets_extras %}
+{% load django_bootstrap5 static crispy_forms_tags observation_extras targets_extras %}
 {% block title %}Submit Observation{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
@@ -33,7 +33,7 @@
         <ul class="nav nav-tabs" id="tabs">
         {% for observation_type, observation_form in observation_type_choices %}
             <li class="nav-item">
-                <span class="nav-link {% if observation_type == active or not active and forloop.first %}active{% endif %}" data-target="#{{ observation_type }}" data-toggle="tab">
+                <span class="nav-link {% if observation_type == active or not active and forloop.first %}active{% endif %}" data-bs-target="#{{ observation_type }}" data-bs-toggle="tab">
                     {{ observation_type|display_obs_type }}
                 </span>
             </li>

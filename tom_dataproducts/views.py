@@ -23,20 +23,25 @@ from guardian.shortcuts import assign_perm, get_objects_for_user
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
 from tom_common.mixins import Raise403PermissionRequiredMixin
-from tom_dataproducts.models import DataProduct, DataProductGroup, ReducedDatum
+from tom_dataproducts.models import DataProduct, DataProductGroup, REDUCED_DATUM_MODELS
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.forms import AddProductToGroupForm, DataProductUploadForm, DataShareForm
 from tom_dataproducts.filters import DataProductFilter
 from tom_dataproducts.data_processor import run_data_processor
 from tom_observations.models import ObservationRecord
 from tom_observations.facility import get_service_class
-from tom_dataproducts.sharing import (share_data_with_hermes, share_data_with_tom, sharing_feedback_handler,
+from tom_dataproducts.sharing import (share_data_with_tom, sharing_feedback_handler,
                                       download_data)
 import tom_dataproducts.single_target_data_service.single_target_data_service as stds
 from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+
+def _delete_reduced_datums_for_product(dp):
+    for model in REDUCED_DATUM_MODELS:
+        model.objects.filter(data_product=dp).delete()
 
 
 class DataProductSaveView(LoginRequiredMixin, View):
@@ -213,17 +218,19 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
                     for group in form.cleaned_data['groups']:
                         assign_perm('tom_dataproducts.view_dataproduct', group, dp)
                         assign_perm('tom_dataproducts.delete_dataproduct', group, dp)
-                        assign_perm('tom_dataproducts.view_reduceddatum', group, reduced_data)
+                        for datum in reduced_data:
+                            perm = f'tom_dataproducts.view_{type(datum).__name__.lower()}'
+                            assign_perm(perm, group, datum)
                 successful_uploads.append(str(dp))
             except InvalidFileFormatException as iffe:
-                ReducedDatum.objects.filter(data_product=dp).delete()
+                _delete_reduced_datums_for_product(dp)
                 dp.delete()
                 messages.error(
                     self.request,
                     f'File format invalid for file {str(dp)} -- error was {iffe}'
                 )
             except Exception as e:
-                ReducedDatum.objects.filter(data_product=dp).delete()
+                _delete_reduced_datums_for_product(dp)
                 dp.delete()
                 messages.error(self.request, f'There was a problem processing your file: {str(dp)} -- Error: {e}')
         if successful_uploads:
@@ -288,7 +295,7 @@ class DataProductDeleteView(Raise403PermissionRequiredMixin, DeleteView):
         data_product = self.get_object()
 
         # Delete associated ReducedDatum objects
-        ReducedDatum.objects.filter(data_product=data_product).delete()
+        _delete_reduced_datums_for_product(data_product)
 
         # Delete the file reference.
         data_product.data.delete()
@@ -385,7 +392,7 @@ class DataProductFeatureView(View):
 
 class DataShareView(FormView):
     """
-    View that handles the sharing of data either through HERMES or with another TOM.
+    View that handles the sharing of data with another TOM.
     """
 
     form_class = DataShareForm
@@ -407,7 +414,7 @@ class DataShareView(FormView):
         """
         Method that handles the POST requests for sharing data.
         Handles Data Products and All the data of a type for a target as well as individual Reduced Datums.
-        Submit to Hermes, or Share with TOM (soon).
+        Share with TOM.
         """
         data_share_form = DataShareForm(request.POST, request.FILES)
 
@@ -421,9 +428,7 @@ class DataShareView(FormView):
             selected_data = request.POST.getlist("share-box")
 
             # Check Destination
-            if 'HERMES' in share_destination.upper():
-                response = share_data_with_hermes(share_destination, form_data, product_id, target_id, selected_data)
-            elif share_destination == 'download':
+            if share_destination == 'download':
                 return download_data(form_data, selected_data=selected_data)
             else:
                 response = share_data_with_tom(share_destination, form_data, product_id, target_id, selected_data)
@@ -500,8 +505,8 @@ class DataProductGroupDataView(LoginRequiredMixin, FormView):
 
 class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
     """
-    View that handles the updating of reduced data tied to a ``DataProduct`` that was automatically ingested from a
-    broker. Requires authentication.
+    View that handles the updating of reduced data tied to a ``DataProduct`` that was ingested from a
+    dataservice. The ReducedDatum.source must match the DataService.name Requires authentication.
     """
     def get(self, request, *args, **kwargs):
         """

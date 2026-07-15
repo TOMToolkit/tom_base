@@ -174,14 +174,14 @@ The default static files can be found in the following structure:
 Customize default CSS:
 ######################
 
-The default styling is mostly based on Bootstrap v4.6.2 (`https://getbootstrap.com/ <https://getbootstrap.com/>`__).
+The default styling is mostly based on Bootstrap v5.3.8 (`https://getbootstrap.com/ <https://getbootstrap.com/>`__).
 If you ran the tom_setup script, you should have a directory ``static`` at the top level of your project.
 Within this folder, find the ``tom_common/css`` directory. In this folder, is a file named ``custom.css``.
 Editing this file will allow you to overwrite any of the css used at the base level in the TOM Toolkit, including the
 styling established by TOMToolkit themes such as "Dark Mode".
 
 The TOMToolkit has several built in variables that allow you to establish a theme for your TOM. You can see these in
-`root` dictionay in yoyr ``custom.css``. Altering these will change the appearance of large portions of the website.
+`root` dictionary in your ``custom.css``. Altering these will change the appearance of large portions of the website.
 
 As an example, let's change the background color from white (#ffffff) to an off-white (#efead6).
 Add the following in your ``custom.css`` after the comments:

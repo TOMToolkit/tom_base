@@ -22,7 +22,6 @@ DEFAULT_ALERT_CLASSES = [
     # 'tom_alerts.brokers.antares.ANTARESBroker',
     'tom_alerts.brokers.gaia.GaiaBroker',
     'tom_alerts.brokers.fink.FinkBroker',  # the stub for the plugin
-    'tom_alerts.brokers.hermes.HermesBroker',  # the stub for the plugin
 ]
 
 
@@ -151,7 +150,7 @@ class GenericUpstreamSubmissionForm(forms.Form):
         broker_name = kwargs.pop('broker')  # NOTE: parent constructor is not expecting broker and will fail
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_class = 'form-inline'
+        self.helper.form_class = 'd-flex flex-row align-items-center flex-wrap'
         self.helper.form_action = reverse('tom_alerts:submit-alert', kwargs={'broker': broker_name})
         self.helper.layout = Layout(
             'target',
@@ -178,7 +177,8 @@ class GenericBroker(ABC):
     https://github.com/TOMToolkit/tom_base/blob/main/tom_alerts/brokers/mars.py
     """
     alert_submission_form = GenericUpstreamSubmissionForm
-    score_description = "The meaning of this field changes between brokers, please consult this broker's documentation."
+    score_description = """The meaning of this field changes between brokers,
+        please consult this broker's documentation."""
 
     @abstractmethod
     def fetch_alerts(self, parameters: dict):

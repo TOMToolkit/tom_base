@@ -1,4 +1,4 @@
-{% load comments i18n bootstrap4 %}
+{% load comments i18n django_bootstrap5 %}
 <form action="{% comment_form_target %}" method="post" class="form">{% csrf_token %}
   {% if next %}
     <div><input type="hidden" name="next" value="{{ next }}"/></div>

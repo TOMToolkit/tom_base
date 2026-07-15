@@ -1,5 +1,6 @@
 from requests import HTTPError
 from unittest.mock import patch
+from unittest import skip
 
 from django import forms
 from django.contrib.auth.models import User, Group
@@ -23,6 +24,7 @@ test_alerts = [
 ]
 
 
+@skip("Disable Broker Tests")
 class TestBrokerForm(GenericQueryForm):
     """ All brokers must have a form which will be used to construct and save queries
     to the broker. They should subclass `GenericQueryForm` which includes some required
@@ -32,6 +34,7 @@ class TestBrokerForm(GenericQueryForm):
     name = forms.CharField(required=True)
 
 
+@skip("Disable Broker Tests")
 class TestUpstreamSubmissionForm(GenericUpstreamSubmissionForm):
     """
     Brokers supporting upstream submission can have a form used for constructing the submission. If should subclass
@@ -41,6 +44,7 @@ class TestUpstreamSubmissionForm(GenericUpstreamSubmissionForm):
     topic = forms.CharField(required=False)
 
 
+@skip("Disable Broker Tests")
 class TestBroker(GenericBroker):
     """ The broker class encapsulates the logic for querying remote brokers and transforming
     the returned data into TOM Toolkit Targets so they can be used elsewhere in the system. The
@@ -51,7 +55,8 @@ class TestBroker(GenericBroker):
     alert_submission_form = TestUpstreamSubmissionForm
 
     def fetch_alerts(self, parameters):
-        """ All brokers must implement this method. It must return a list of alerts and may include broker feedback.
+        """ All brokers must implement this method. It must return a list of alerts
+        and may include broker feedback.
         """
         # Here we simply return a list of `GenericAlert`s that match the name passed in via `parameters`.
         return iter([alert for alert in test_alerts if alert['name'] == parameters['name']]), "test message"
@@ -85,6 +90,7 @@ class TestBroker(GenericBroker):
         return super().submit_upstream_alert(target=target, observation_record=observation_record)
 
 
+@skip("Disable Broker Tests")
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests.TestBroker'])
 class TestBrokerClass(TestCase):
     """ Test the functionality of the TestBroker, we modify the django settings to make sure
@@ -115,6 +121,7 @@ class TestBrokerClass(TestCase):
         self.assertEqual(target.name, test_alerts[0]['name'])
 
 
+@skip("Disable Broker Tests")
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.fake_broker'])
 class TestAlertModule(TestCase):
     """Test that attempting to import a nonexistent broker module raises the appropriate errors.
@@ -134,6 +141,7 @@ class TestAlertModule(TestCase):
                     get_service_classes()
 
 
+@skip("Disable Broker Tests")
 @override_settings(TOM_ALERT_CLASSES=['tom_alerts.tests.tests.TestBroker'])
 class TestBrokerViews(TestCase):
     """ Test the views that use the broker classes

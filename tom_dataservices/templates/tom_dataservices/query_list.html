@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load django_bootstrap5 %}
 {% block title %}Query List{% endblock %}
 {% block content %}
 <h3>Query a Data Service</h3>
@@ -37,12 +37,9 @@
     <h4>Filter Saved Queries</h4>
     <form action="" method="get" class="form">
       {% bootstrap_form filter.form %}
-      {% buttons %}
-        <button type="submit" class="btn btn-primary">
-          Filter
-        </button>
-        <a href="{% url 'dataservices:query_list' %}" class="btn btn-secondary" title="Reset">Reset</a>
-      {% endbuttons %}
+      {% bootstrap_button "Filter" button_type="submit" button_class="btn btn-primary" %}
+      {% url 'dataservices:query_list' as reset_link %}
+      {% bootstrap_button "Reset" button_type="link" button_class="btn btn-secondary" href=reset_link title="Reset" %}
     </form>
   </div>
 </div>

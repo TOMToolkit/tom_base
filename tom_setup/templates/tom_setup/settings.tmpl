@@ -28,6 +28,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '{{ SECRET_KEY }}'
 
+# Old SECRET_KEY values to keep accepting during a graceful rotation. When
+# you rotate SECRET_KEY, move the previous value into this list, restart,
+# then run `python manage.py rotate_encryption_key` to re-encrypt stored
+# data under the new key — after which you can remove the entry from this
+# list. Leave it as [] until you rotate. See https://tom-toolkit.readthedocs.io/en/stable/deployment/encryption.html.
+SECRET_KEY_FALLBACKS = []
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -68,7 +75,7 @@ TEMPLATES = [
     },
 ]
 
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
+CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
 WSGI_APPLICATION = '{{ PROJECT_NAME }}.wsgi.application'
 
@@ -235,38 +242,6 @@ TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.gemini.GEMFacility',
 ]
 
-TOM_ALERT_CLASSES = [
-    'tom_alerts.brokers.alerce.ALeRCEBroker',
-    #  'tom_alerts.brokers.antares.ANTARESBroker',
-    'tom_alerts.brokers.gaia.GaiaBroker',
-    'tom_alerts.brokers.lasair.LasairBroker',
-    'tom_alerts.brokers.tns.TNSBroker',
-    #  'tom_alerts.brokers.fink.FinkBroker',
-]
-
-BROKERS = {
-    'TNS': {
-        'api_key': '',
-        'bot_id': '',
-        'bot_name': '',
-    },
-    'LASAIR': {
-        'api_key': '',
-    }
-}
-
-# Include or exclude specific dot separated harvester classes. If not set, all harvesters will be included based on
-# app configurations. If INCLUDE_HARVESTER_CLASSES is set, only those harvesters will be included. If
-# EXCLUDE_HARVESTER_CLASSES is set, all harvesters except those will be included.
-# INCLUDE_HARVESTER_CLASSES = ['app.example.harvesters.ExampleHarvester']
-# EXCLUDE_HARVESTER_CLASSES = ['app.example.harvesters.ExampleHarvester']
-
-HARVESTERS = {
-    'TNS': {
-        'api_key': ''
-    }
-}
-
 # You can add science-specific parameters to targets in your TOM.  The best way to do this is
 # to extend the Target model, or you can define extra target fields here.
 # Field types can be any of "number", "string", "boolean" or "datetime"
@@ -335,6 +310,11 @@ HINTS_ENABLED = {{ HINTS_ENABLED }}
 HINT_LEVEL = 20
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',  # for API token authentication
+        'rest_framework.authentication.SessionAuthentication',  # for logged-in browsers (cookie + CSRF protection)
+        'rest_framework.authentication.BasicAuthentication',  # for username/password
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
     ],
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',

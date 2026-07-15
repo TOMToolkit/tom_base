@@ -1,0 +1,20 @@
+{# Composite widget for tom_common.encryption.ClearableEncryptedInput.    #}
+{# Bootstrap's input-group attaches the masked password input, and the    #}
+{# "Clear stored value" checkbox so they read as a single unit. The      #}
+{# widget's value_from_datadict reads both POST keys (the password field #}
+{# and the companion checkbox) to decide what value the form field       #}
+{# receives. #}
+<div class="input-group col-6"
+     title="The stored value (if any) is hidden. Type to replace it, or check Clear to remove it.">
+
+    {% include "django/forms/widgets/password.html" %}
+    <div class="input-group-append">
+        <span class="input-group-text">
+            <input type="checkbox"
+                   name="{{ widget.checkbox_name }}"
+                   id="{{ widget.checkbox_id }}"
+                   class="mr-1">
+            <label for="{{ widget.checkbox_id }}" class="mb-0">Clear</label>
+        </span>
+    </div>
+</div>

@@ -37,7 +37,7 @@ class LasairBrokerForm(GenericQueryForm):
                     Column('cone_ra', css_class='form-group col-md-4 mb-0'),
                     Column('cone_dec', css_class='form-group col-md-4 mb-0'),
                     Column('cone_radius', css_class='form-group col-md-4 mb-0'),
-                    css_class='form-row'
+                    css_class='row'
                 ),
                 HTML("""<br>
                     <h4>SQL Query Search</h4>

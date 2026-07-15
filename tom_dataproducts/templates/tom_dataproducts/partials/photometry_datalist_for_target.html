@@ -1,4 +1,4 @@
-{% load bootstrap4 %}
+{% load django_bootstrap5 %}
 {% load tom_common_extras %}
 
 <form method="POST" action="{% url 'tom_dataproducts:share_all' tg_pk=target.id %}" enctype="multipart/form-data" id="photometry-data-share-form">
@@ -56,31 +56,23 @@
                     Share Selected Data
                 </div>
                 {% if sharing_destinations %}
-                    <div class="form-row" style="padding-inline:1rem">
+                    <div class="row" style="padding-inline:1rem">
                         <div class="col-sm-12">
                             {% bootstrap_field target_data_share_form.share_title %}
                         </div>
                     </div>
-                    <div class="form-row" style="padding-inline:1rem">
+                    <div class="row" style="padding-inline:1rem">
                         <div class="col-sm-12">
                             {% bootstrap_field target_data_share_form.share_message %}
                         </div>
                     </div>
-                    <div class="form-row" style="padding-inline:1rem">
+                    <div class="row" style="padding-inline:1rem">
                         <div class="col-sm-4">
                             {% bootstrap_field target_data_share_form.share_destination %}
                         </div>
                         <div class="col-sm-2 offset-sm-1">
                             <input type="submit" class="btn btn-primary" id="submit_selected_phot" value="Submit" name="share_targetdata_form" style="position:absolute; bottom:1rem" disabled onclick="setTargetOnPhotometryForm('')">
                         </div>
-                        {% if hermes_sharing %}
-                        <div class="col-sm-1">
-                            <b style="position:absolute; bottom:1.2rem">or</b>
-                        </div>
-                        <div class="col-sm-4">
-                            <button class="btn btn-info" type="submit" formaction="{% url 'tom_targets:hermes-preload' pk=target.id %}" onclick="setTargetOnPhotometryForm('_blank')" style="position:absolute; bottom:1rem">Open in Hermes &#x1F5D7;</button>
-                        </div>
-                        {% endif %}
                     </div>
                 {% else %}
                     <em style="padding-inline:1rem">Not Configured. See
@@ -104,11 +96,10 @@
   };
   function select_all_phot()  {
   var share_all = document.getElementById("share-all-phot");
-     if(share_all.checked == true){
-        $('input[name=share-box][class=phot-row]').prop('checked', true);
-     } else {
-        $('input[name=share-box][class=phot-row]').prop('checked', false);
-     }
+     const shareRows = document.querySelectorAll('input[name="share-box"].phot-row');
+     shareRows.forEach((row) => {
+        row.checked = share_all.checked;
+     });
      check_selected_phot()
   }
   function check_selected_phot()  {

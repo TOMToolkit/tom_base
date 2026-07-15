@@ -24,8 +24,8 @@ TOMTOOKIT_INSTALLED_APPS = [
     'guardian',
     'tom_common',
     'django_comments',
-    'bootstrap4',
-    'crispy_bootstrap4',
+    'django_bootstrap5',
+    'crispy_bootstrap5',
     'crispy_forms',
     'rest_framework',
     'rest_framework.authtoken',
@@ -34,10 +34,9 @@ TOMTOOKIT_INSTALLED_APPS = [
     'django_gravatar',
     'django_htmx',
     'tom_targets',
-    'tom_alerts',
-    'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
+    'tom_dataservices',
     'tom_calendar',
 ]
 
@@ -54,3 +53,5 @@ TOMTOOKIT_MIDDLEWARE = [
     'tom_common.middleware.ExternalServiceMiddleware',
     'tom_common.middleware.AuthStrategyMiddleware',
 ]
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"

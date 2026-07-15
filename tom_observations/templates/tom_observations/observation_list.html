@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 observation_extras %}
+{% load django_bootstrap5 observation_extras %}
 {% block title %}Observations{% endblock %}
 {% block content %}
 <div class="row">
@@ -9,7 +9,7 @@
         {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
       </div>
       <div class="col-md-6">
-        <span class="float-right">
+        <span class="float-end">
           {% update_status_button %}
         </span>
       </div>
@@ -77,12 +77,9 @@
   <div class="col-md-2">
     <form action="" method="get" class="form">
       {% bootstrap_form filter.form %}
-      {% buttons %}
-        <button type="submit" class="btn btn-primary">
-          Filter
-        </button>
-        <a href="{% url 'tom_observations:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
-      {% endbuttons %}
+      {% bootstrap_button "Filter" button_type="submit" button_class="btn btn-primary" %}
+      {% url 'tom_observations:list' as reset_link %}
+      {% bootstrap_button "Reset" button_type="link" button_class="btn btn-secondary" title="Reset" href=reset_link %}
     </form>
   </div>
 </div>

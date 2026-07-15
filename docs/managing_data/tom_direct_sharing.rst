@@ -4,8 +4,8 @@ Sharing Data with Other TOMs
 TOM Toolkit supports direct data sharing between TOMs.
 
 
-Permissions:
-************
+Permissions
+***********
 To save data to a destination TOM your TOM will need to have access to a user account on that TOM with the correct
 permissions. This is handled by your TOM's administrator as described below.
 
@@ -46,7 +46,7 @@ Receiving Shared Data:
 Reduced Datums:
 ---------------
 When your TOM receives a new ``ReducedDatum`` from another TOM it will be saved to your TOM's database with its source
-set to the name of the TOM that submitted it. Currently, only Photometry data can be directly shared between
+set to the name of the TOM that submitted it. Currently, only ``PhotometryReducedDatum`` can be directly shared between
 TOMS and a ``Target`` with a matching name or alias must exist in both TOMS for sharing to take place.
 
 Data Products:
@@ -66,9 +66,3 @@ Target Lists:
 When your TOM receives a new ``TargetList`` from another TOM it will be saved to your TOM's database. If the targets in
 the ``TargetList`` are also shared, but already exist in the destination TOM, they will be added to the new
 ``TargetList``.
-
-
-
-
-
-

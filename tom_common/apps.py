@@ -7,7 +7,9 @@ class TomCommonConfig(AppConfig):
     name = 'tom_common'
 
     def ready(self):
-        # Import signals for automatically saving profiles when updating User objects
+        # Import signals so their @receiver decorators are executed, which
+        # registers the signal handlers. Without this import, signal handlers
+        # in signals.py would never fire.
         # https://docs.djangoproject.com/en/5.1/topics/signals/#connecting-receiver-functions
         import tom_common.signals  # noqa
 

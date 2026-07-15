@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 targets_extras static %}
+{% load django_bootstrap5 targets_extras static %}
 {% block title %}Persistent Share Form{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
@@ -15,6 +15,4 @@
 <div id='target-persistent-share-table'>
   {% persistent_share_table target %}
 </div>
-{% buttons %}
-{% endbuttons %}
 {% endblock %}

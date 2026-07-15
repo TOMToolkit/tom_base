@@ -7,9 +7,7 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="cal-modal-body">
         </div>
@@ -20,7 +18,8 @@
 {% block extra_javascript %}
 <script>
   document.body.addEventListener("calClose", function () {
-    $("#cal-modal").modal("hide");
+    const el = document.getElementById('cal-modal');
+    bootstrap.Modal.getOrCreateInstance(el).hide();
   });
   document.body.addEventListener("calRefresh", function () {
     const cal = document.getElementById("calendar-partial");

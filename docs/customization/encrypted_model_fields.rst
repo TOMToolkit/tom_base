@@ -1,107 +1,138 @@
 Encrypted Model Fields
 ======================
 
-If your ``custom_code`` or reusable app contains a Model field storing user-specific
-sensitive data, then you may want to encrypt that data.
+If your ``custom_code`` or reusable app needs to store a secret (e.g. an API key
+or password for an external service) — TOM Toolkit provides
+:class:`~tom_common.encryption.EncryptedModelField`, a model field that
+encrypts its value as it is stored in the database.
 
-Examples of user-specific sensitive
-data include a password or API key for an external service that your TOM uses.
-For example, TOMToolkit Facility modules can use the mechanism described here to store,
-encrypted, user-specific credentials in a user profile model. Examples include the
-`tom_eso <https://github.com/TOMToolkit/tom_eso>`__ and the
-`tom_swift <https://github.com/TOMToolkit/tom_swift>`__ facility modules.
+.. note::
 
-As we explain below, TOMToolkit provides a *mix-in* class, a *property descriptor*, and
-utility functions to help encrypt user-specific sensitive data and access it when it's needed.
+   Encryption protects the secret from passive database exposure. It does
+   **not** protect it from anyone who can read your TOM's ``settings.SECRET_KEY``
+   (such as a server administrator). See :doc:`/deployment/encryption` for the
+   encryption documentation relevant to TOM administrators.
 
-.. note:: For sensitive data that is used by the TOM itself and is not user-specific,
-    we suggest that this data be stored outside the TOM and accessed through
-    environment variables.
+This page describes how to add an encrypted field to a user-profile model,
+how to display it, and how to edit it. Working examples live in
+`tom_hermes <https://github.com/TOMToolkit/tom_hermes>`__,
+`tom_eso <https://github.com/TOMToolkit/tom_eso>`__, and
+`tom_demoapp <https://github.com/TOMToolkit/tom_demoapp>`__.
 
-Creating and accessing an encrypted Model field
------------------------------------------------
+Adding an EncryptedModelField
+-------------------------------
 
-Creating an encrypted Model field
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Declare an :class:`~tom_common.encryption.EncryptedModelField` on your model:
 
-If your Model has a field that should be encrypted, follow these steps:
+.. code-block:: python
+    :caption: models.py
 
-1. Import the mix-in class and property descriptor in your ``models.py``:
+    from django.conf import settings
+    from django.db import models
+
+    from tom_common.encryption import EncryptedModelField
+
+
+    class MyAppProfile(models.Model):
+        user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+        api_key = EncryptedModelField(null=True, blank=True)
+
+Read and write it like any other field; the value is encrypted on save and
+decrypted on load:
 
 .. code-block:: python
 
-    from tom_common.models import EncryptableModelMixin, EncryptedProperty
+    profile.api_key = 'something-secret'   # encrypted on save
+    profile.save()
 
-2. Make your Model subclass a subclass of ``EcryptableModelMixin``. For example:
+    profile.api_key                        # -> 'something-secret' (decrypted on load)
+
+Assigning ``None`` or ``''`` clears the stored value (the column becomes
+``NULL``); reading an unset value returns ``None``.
+
+Displaying the value of an encrypted field
+-------------------------------------------
+
+To show the value with a click-to-reveal control, use ``tom_common``'s
+``revealable_password_input.html`` partial. Pass it the **plaintext**, which
+comes from direct attribute access (``profile.api_key``):
+
+.. code-block:: python
+    :caption: e.g. an inclusion tag or a view's get_context_data
+
+    context = {'api_key': profile.api_key}  # plaintext becomes part of the template context
+
+.. code-block:: html+django
+    :caption: my_template.html
+
+    {% if api_key %}
+        {% include 'tom_common/partials/revealable_password_input.html' with value=api_key %}
+    {% else %}
+        (not set)
+    {% endif %}
+
+.. note::
+
+   Pass the plaintext only to templates the current user is allowed to see: the
+   partial embeds the plaintext value in the page HTML. Revealing it merely toggles
+   its visibility. Do **not** source the value from ``model_to_dict``, a DRF
+   serializer, or ``dumpdata`` — those return a ``REDACTED`` placeholder for
+   encrypted fields, never the secret. (If a profile card auto-iterates fields
+   with ``model_to_dict``, exclude the encrypted one and add ``profile.api_key``
+   back explicitly.)
+
+Editing the value in an UpdateView
+-----------------------------------
+
+List the field on a ``ModelForm``-based view. It renders as a masked input
+paired with a **Clear** checkbox:
 
 .. code-block:: python
 
-    class MyAppModel(EncryptableModelMixin, models.Model):
-        ...
+    class MyProfileUpdateView(UpdateView):
+        model = MyAppProfile
+        fields = ['api_key']
 
-This gives your model access to a set of methods that will manage the encryption and
-decryption of your data into and out of the ``BinaryField`` that stores the encrypted data.
+On submitting the update form, an ``EncryptedModelField`` has the following behavior:
 
-3. Add the ``BinaryField`` that will store the encrypted data and the property descriptor
-through which the ``BinaryField`` will be accessed.
+- a new, typed-in value replaces the stored one;
+- a **blank** input keeps the stored value — so editing other fields on the
+  same form never wipes the secret;
+- Checking the **Clear** checkbox with a blank input removes the current value (column becomes ``NULL``);
+- a typed-in value together with **Clear** keeps the typed value (Clear is ignored).
 
-.. code-block:: python
+The form never renders the stored value, so it can't leak through the edit
+page. The placeholder text displayed in the input box signals the current state
+— ``(A stored value is hidden) — type to replace`` versus ``(not set) — type to add``.
 
-    _ciphertext_api_key = BinaryField(null=True, blank=True)  # encrypted data field (private)
-    api_key = EncryptedProperty('_ciphertext_api_key')  # descriptor that provides access (public)
+How it works (implementation details)
+-------------------------------------
 
-By convention name of the ``BinaryField`` field should begin with and underscore
-(``_ciphertext_api_key`` in our example) because is it private to the Model class.
+Each value is encrypted with a Fernet cipher derived from
+``settings.SECRET_KEY`` (via a key derivation function, :ref:`HKDF <kdf-implementation-details>`).
+Decryption also tries any ``settings.SECRET_KEY_FALLBACKS``, facilitating key rotation —
+see :doc:`/deployment/encryption` for the procedure and the ``rotate_encryption_key`` command.
 
-Accessing encrypted data
-~~~~~~~~~~~~~~~~~~~~~~~~
-The following example shows how to get and set an encrypted field using the utility
-methods provided in ``tom_common.session_utils.py``:
+If a stored value cannot be decrypted under any active key, reading it raises
+``cryptography.fernet.InvalidToken`` — usually because a key was dropped from
+the rotation set before its data was re-encrypted.
 
-.. code-block:: python
+Limitations
+-----------
 
-    from tom_common.session_utils import get_encrypted_field, set_encrypted_field
-    from tom_app_example.models import MyAppModel
-    
-    profile: MyAppModel = user.myappmodel  # Model instance containing an encrypted field
-    
-    # getter example
-    decrypted_api_key: str = get_encrypted_field(user, profile, 'api_key')
-    
-    # setter example
-    new_api_key: str = 'something_secret'
-    set_encrypted_field(user, profile, 'api_key', new_api_key)
+- **No filtering.** Fernet ciphertext is non-deterministic, so equality lookups
+  can never match; ``MyAppProfile.objects.filter(api_key=...)`` raises
+  ``FieldError``. For a searchable secret, store a companion HMAC hash column
+  and query that.
 
-Note here that the User instance (``user``) is used to access the ``EncryptableModelMixin``
-subclass and its encrypted data. The ``user`` property of the Model subclass containing the
-encrypted field (``MyAppModel`` in our example) is provided by the ``EncryptableModelMixin``.
-As such, the model *should not define a* ``user`` *property of its own*.
+API reference
+-------------
 
-Some Explanations
------------------
+:class:`~tom_common.encryption.EncryptedModelField` (`source <https://github.com/TOMToolkit/tom_base/blob/dev/tom_common/encryption.py>`__)
+    A ``models.BinaryField`` subclass that encrypts on save and decrypts on
+    load. See the class docstring for the full method-level contract.
 
-EncryptableModelMixin (`source <https://github.com/TOMToolkit/tom_base/blob/069024f954e5540c1441c5186378de538f7d606f/tom_common/models.py#L100>`__)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The User's data is encrypted using (among other things) their password (i.e the
-password they use to login to your TOM). When the User changes their password,
-their encrypted data re-encrypted accordingly. The ``EncryptableModelMixin`` adds
-method for this to your otherwise normal Django model.
-
-EncryptedProperty (`source <https://github.com/TOMToolkit/tom_base/blob/069024f954e5540c1441c5186378de538f7d606f/tom_common/models.py#L39>`__)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-A *property descriptor* implements the Python descriptor protocol (``__get__``,
-``__set__``, etc). The ``EncryptedProperty`` property descriptor handles the details
-of decrypting the encrypted ``BinaryField`` on its way out of the database and
-encrypting it on the way in. It is invoked when the property is accessed
-(e.g. ``model_instance.api_key``).
-
-Session Utils (`example <https://github.com/TOMToolkit/tom_eso/blob/b74fe3b951ead6f6f332594724731d036944da47/tom_eso/eso.py#L209>`__)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The ``get_encrypted_field`` and ``set_encrypted_field`` functions implement
-boilerplate code for creating and destroying the cipher used to encrypt and
-decrypt the ``BinaryField``. *These methods must always be used to access any
-encrypted field*.
-
-
-The rest of the details are in the source code. If reading source code isn't your thing,
-please do feel free to get in touch and we'll be happy to answer any questions you may have.
+:class:`~tom_common.encryption.EncryptedFormField` (`source <https://github.com/TOMToolkit/tom_base/blob/dev/tom_common/encryption.py>`__)
+    The form-side companion (masked input plus the blank-preserves-existing
+    behavior). ``ModelForm`` picks it up automatically via
+    :meth:`EncryptedModelField.formfield`.

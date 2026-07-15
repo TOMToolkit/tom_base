@@ -12,7 +12,7 @@
                 {# Case A: The database is empty - suggest creating targets #}
                 There are no targets in the database.
                 You might want to <a href="{% url 'tom_targets:create' %}">create a target manually</a>,
-                <a href="{% url 'tom_alerts:list' %}">import one from an alert broker</a>
+                 <a href="{% url 'tom_dataservices:query_list' %}">import one from a dataservice.</a>
                 or
                 <form method="POST" action="{% url 'tom_targets:seed' %}" class="d-inline">
                     {% csrf_token %}

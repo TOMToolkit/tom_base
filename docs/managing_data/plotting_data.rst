@@ -1,5 +1,5 @@
 Plotting Data
--------------
+=============
 
 The TOM Toolkit provides a few basic plots, such as photometry,
 spectroscopy and target distribution. Sometimes it would be useful to
@@ -26,6 +26,8 @@ templates </customization/customize_templates>`__ you should read it
 first. You’ll need to edit a template in order to view your new plot
 somewhere.
 
+Creating a new plotting app
+***************************
 First, start a new app in our project to house the new plot (and perhaps
 other additions!):
 
@@ -65,6 +67,8 @@ Now install the new app into your project’s settings.py file:
        'myplots',
    ]
 
+Directory structure
+*******************
 Now that the ``myplots`` app is installed, create the directories
 necessary to contain your new plot:
 
@@ -101,6 +105,8 @@ will allow for registering the template tag. Finally, the TOM Toolkit
 ``Target`` class will allow access to the ``Target`` model (for
 querying).
 
+Adding templatetags
+*******************
 Next, add the boiler plate code for a template tag:
 
 .. code:: python
@@ -128,7 +134,7 @@ Next, add the function body:
        # x axis: target names. y axis: datum count
        data = [go.Bar(
            x=[target.name for target in targets],
-           y=[target.reduceddatum_set.count() for target in targets]
+           y=[target.photometryreduceddatum_set.count() for target in targets]
        )]
        # Create the plot
        figure = offline.plot(go.Figure(data=data), output_type='div', show_link=False)
@@ -143,6 +149,8 @@ for more information about the options available to you. As an exercise,
 try changing the values in the y axis. Or you could use a different
 chart type.
 
+Adding templates
+****************
 Finally, the code adds the plot.ly plot to the template rendering
 context. Next we will create this template where this context will be
 rendered.

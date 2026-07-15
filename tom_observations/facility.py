@@ -206,7 +206,7 @@ class BaseManualObservationForm(BaseObservationForm):
             Div(
                 Div('start', css_class='col'),
                 Div('end', css_class='col'),
-                css_class='form-row'
+                css_class='row'
             ),
             Div('observation_params')
         )

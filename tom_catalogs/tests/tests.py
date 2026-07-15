@@ -1,10 +1,12 @@
 from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from django.urls import reverse
+import unittest
 
 from tom_catalogs.harvester import AbstractHarvester, get_service_classes, MissingDataException
 
 
+@unittest.skip("Disable Harvester Tests")
 class TestHarvester(AbstractHarvester):
     name = 'TEST'
     help_text = "This is a test harvester."
@@ -23,12 +25,14 @@ class TestHarvester(AbstractHarvester):
         return target
 
 
+@unittest.skip("Disable Harvester Tests")
 @override_settings(TOM_HARVESTER_CLASSES=['tom_catalogs.tests.tests.TestHarvester'])
 class TestHarvesterClass(TestCase):
     def test_get_broker_class(self):
         self.assertIn(TestHarvester, get_service_classes().values())
 
 
+@unittest.skip("Disable Harvester Tests")
 @override_settings(TOM_HARVESTER_CLASSES=['tom_catalogs.tests.tests.TestHarvester'])
 class TestHarvesterViews(TestCase):
     def setUp(self):

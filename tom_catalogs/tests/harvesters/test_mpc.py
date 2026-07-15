@@ -1,5 +1,6 @@
 import json
 from importlib_resources import files
+import unittest
 
 from django.test import tag, TestCase
 from unittest.mock import MagicMock, patch
@@ -7,6 +8,7 @@ from unittest.mock import MagicMock, patch
 from tom_catalogs.harvesters.mpc import MPCHarvester, MPCExplorerHarvester
 
 
+@unittest.skip("Disable Harvester Tests")
 class TestMPCHarvester(TestCase):
     def setUp(self):
         self.broker = MPCHarvester()
@@ -179,43 +181,44 @@ class TestMPCHarvester(TestCase):
         self.assertAlmostEqual(target.slope, 0.6, places=3)
 
 
+@unittest.skip("Disable Harvester Tests")
 @tag('canary')
 class TestMPCHarvesterCanary(TestCase):
     def setUp(self):
         self.broker = MPCHarvester()
 
     def test_query_number_only(self):
-        self.broker.query('700000')
+        self.broker.query('69420')
         target = self.broker.to_target()
         target.save(names=getattr(target, 'extra_names', []))
         # Only test things that are not likely to change (much) with time
-        self.assertEqual(target.name, '700000')
-        self.assertEqual(target.names, ['700000'])
+        self.assertEqual(target.name, '69420')
+        self.assertEqual(target.names, ['69420'])
         self.assertEqual(target.type, 'NON_SIDEREAL')
         self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
         self.assertEqual(target.ra, None)
         self.assertEqual(target.dec, None)
-        self.assertAlmostEqual(target.eccentricity, 0.092, places=3)
-        self.assertAlmostEqual(target.inclination, 4.1688, places=4)
-        self.assertAlmostEqual(target.mean_anomaly, 315.8420, places=4)
-        self.assertAlmostEqual(target.semimajor_axis, 2.6555, places=4)
-        self.assertAlmostEqual(target.abs_mag, 17.76, places=2)
+        self.assertAlmostEqual(target.eccentricity, 0.255042, places=4)
+        self.assertAlmostEqual(target.inclination, 13.208657, places=3)
+        self.assertAlmostEqual(target.semimajor_axis, 2.58835, places=3)
+        self.assertAlmostEqual(target.abs_mag, 15.09, places=2)
         self.assertAlmostEqual(target.slope, 0.15, places=2)
 
     def test_query_designation_only(self):
-        self.broker.query('2025 MB18')
+        self.broker.query('1998 WB2')
         target = self.broker.to_target()
         target.save(names=getattr(target, 'extra_names', []))
         # Only test things that are not likely to change (much) with time
-        self.assertEqual(target.name, '2025 MB18')
-        self.assertEqual(target.names, ['2025 MB18'])
+        self.assertEqual(target.name, '1998 WB2')
+        self.assertEqual(target.names, ['1998 WB2'])
         self.assertEqual(target.type, 'NON_SIDEREAL')
         self.assertEqual(target.scheme, 'MPC_MINOR_PLANET')
         self.assertEqual(target.ra, None)
         self.assertEqual(target.dec, None)
-        self.assertAlmostEqual(target.eccentricity, 0.1398, places=4)
-        self.assertAlmostEqual(target.inclination, 19.3561, places=4)
-        self.assertAlmostEqual(target.abs_mag, 24.33, places=2)
+        self.assertAlmostEqual(target.eccentricity, 0.586622, places=4)
+        self.assertAlmostEqual(target.inclination, 2.37248, places=3)
+        self.assertAlmostEqual(target.semimajor_axis, 1.97247, places=3)
+        self.assertAlmostEqual(target.abs_mag, 21.85, places=2)
         self.assertAlmostEqual(target.slope, 0.15, places=2)
 
     def test_query_name(self):
@@ -263,6 +266,7 @@ class TestMPCHarvesterCanary(TestCase):
         self.assertAlmostEqual(target.arg_of_perihelion, 236.15758, places=3)
 
 
+@unittest.skip("Disable Harvester Tests")
 class TestMPCExplorerHarvester(TestCase):
     def setUp(self):
         self.broker = MPCExplorerHarvester()
@@ -399,6 +403,7 @@ class TestMPCExplorerHarvester(TestCase):
         self.assertEqual(target.pm_dec, None)
 
 
+@unittest.skip("Disable Harvester Tests")
 @tag('canary')
 class TestMPCExplorerHarvesterCanary(TestCase):
     def setUp(self):

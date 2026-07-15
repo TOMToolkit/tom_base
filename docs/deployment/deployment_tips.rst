@@ -1,8 +1,10 @@
 General Deployment Tips
 -----------------------
 
-When it comes to deploying your tom for general use, there are a few
-things you might want to consider.
+Your TOM is a Django project. First and foremost, you should be following
+`Django's deployment checklist <https://docs.djangoproject.com/en/stable/howto/deployment/checklist/#deployment-checklist>`__.
+Subsequently, when it comes to deploying your TOM for general use, there are a
+few things you might want to consider.
 
 Choosing a database
 ~~~~~~~~~~~~~~~~~~~

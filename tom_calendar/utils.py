@@ -1,15 +1,15 @@
 from tom_targets.models import TargetList
 
 BOOTSTRAP_COLORS = [
-    'var(--red)',
-    'var(--teal)',
-    'var(--orange)',
-    'var(--indigo)',
-    'var(--pink)',
-    'var(--green)',
-    'var(--cyan)',
-    'var(--purple)',
-    'var(--blue)',
+    'var(--bs-red)',
+    'var(--bs-teal)',
+    'var(--bs-orange)',
+    'var(--bs-indigo)',
+    'var(--bs-pink)',
+    'var(--bs-green)',
+    'var(--bs-cyan)',
+    'var(--bs-purple)',
+    'var(--bs-blue)',
 ]
 
 

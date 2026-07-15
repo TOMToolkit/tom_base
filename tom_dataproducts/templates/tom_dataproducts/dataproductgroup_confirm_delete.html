@@ -1,11 +1,9 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 %}
+{% load django_bootstrap5 %}
 {% block title %}Confirm delete{% endblock %}
 {% block content %}
 <form method="post">{% csrf_token %}
     <p>Are you sure you want to delete "{{ object }}"?</p>
-    {% buttons %}
-    <button type="submit" class="btn btn-danger">Confirm</button>
-    {% endbuttons %}
+    {% bootstrap_button "Confirm" button_type="submit" button_class="btn btn-danger" %}
 </form>
 {% endblock %}

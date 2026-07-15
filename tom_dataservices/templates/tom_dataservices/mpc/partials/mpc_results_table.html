@@ -1,0 +1,36 @@
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th><input type="checkbox" id="selectAll"/></th>
+        <th>Designation</th>
+        <th>No. of Observations</th>
+        <th>No. of Observations Used</th>
+        <th>Perihelion Distance (q)</th>
+        <th>Eccentricity (e)</th>
+        <th>Inclination (i)</th>
+        <th>Longitude of Ascending Node (Ω)</th>
+        <th>Argument of Perihelion (ω)</th>
+        <th>Epoch of Perihelion (t_p)</th>
+        <th>Absolute Magnitude (H)</th>
+        <th>Slope Parameter (G)</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for result in results %}
+    <tr>
+        <td><input type="checkbox" name="selected_results" value="{{ result.id }}"/></td>
+        <td>{{ result.designation_data.orbfit_name }}</td>
+        <td>{{ result.orbit_fit_statistics.nobs_total}}</td>
+        <td>{{ result.orbit_fit_statistics.nobs_total_sel}}</td>
+        <td title="{{result.COM.coefficient_values.0}}">{{ result.COM.coefficient_values.0|floatformat:3 }}...</td>
+        <td title="{{result.COM.coefficient_values.1}}">{{ result.COM.coefficient_values.1|floatformat:3 }}...</td>
+        <td title="{{result.COM.coefficient_values.2}}">{{ result.COM.coefficient_values.2|floatformat:3 }}...</td>
+        <td title="{{result.COM.coefficient_values.3}}">{{ result.COM.coefficient_values.3|floatformat:3 }}...</td>
+        <td title="{{result.COM.coefficient_values.4}}">{{ result.COM.coefficient_values.4|floatformat:3 }}...</td>
+        <td title="{{result.COM.coefficient_values.5}}">{{ result.COM.coefficient_values.5|floatformat:3 }}...</td>
+        <td>{{ result.magnitude_data.H }}</td>
+        <td>{{ result.magnitude_data.G }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>

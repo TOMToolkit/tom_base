@@ -29,6 +29,9 @@ class SOARSettings(LCOSettings):
         """
 
     def get_sites(self):
+        """
+        Returns location informatino for the SOAR observatory
+        """
         return {
             'Cerro Pachón': {
                 'sitecode': 'sor',
@@ -39,13 +42,16 @@ class SOARSettings(LCOSettings):
         }
 
     def get_weather_urls(self):
+        """
+        Returns the URL providing weather information from the SOAR observatory site
+        """
         return {
             'code': 'SOAR',
             'sites': [
                 {
                     'code': site['sitecode'],
-                    'weather_url': 'https://noirlab.edu/science/observing-noirlab/weather-webcams/'
-                                   'cerro-pachon/environmental-conditions'
+                    'weather_url': """'https://noirlab.edu/science/observing-noirlab/weather-webcams/
+                    cerro-pachon/environmental-conditions'"""
                 }
                 for site in self.get_sites().values()]
         }
@@ -190,7 +196,7 @@ class SOARSimpleConfigurationLayout(SpectralConfigurationLayout):
                     f'c_{instance}_configuration_type',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
         )
 
@@ -203,7 +209,7 @@ class SoarSpectralInstrumentConfigLayout(SpectralInstrumentConfigLayout):
                     f'c_{config_instance}_ic_{instance}_readout_mode',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -214,7 +220,7 @@ class SoarSpectralInstrumentConfigLayout(SpectralInstrumentConfigLayout):
                     f'c_{config_instance}_ic_{instance}_exposure_count',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             Div(
                 Div(
@@ -225,7 +231,7 @@ class SoarSpectralInstrumentConfigLayout(SpectralInstrumentConfigLayout):
                     f'c_{config_instance}_ic_{instance}_rotator_angle',
                     css_class='col'
                 ),
-                css_class='form-row'
+                css_class='row'
             ),
             *self._get_oe_groups_layout(config_instance, instance, oe_groups)
         )

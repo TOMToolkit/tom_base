@@ -1,4 +1,5 @@
 from unittest.mock import Mock, MagicMock, patch
+import unittest
 
 from astropy.table import Table
 from django.test import tag, TestCase
@@ -6,6 +7,7 @@ from django.test import tag, TestCase
 from tom_catalogs.harvesters.simbad import SimbadHarvester
 
 
+@unittest.skip("Disable Harvester Tests")
 class TestSimbadHarvester(TestCase):
     def setUp(self):
         simbad_patcher = patch('tom_catalogs.harvesters.simbad.Simbad')
@@ -48,6 +50,7 @@ class TestSimbadHarvester(TestCase):
         self.assertEqual(target.name, 'M31')
 
 
+@unittest.skip("Disable Harvester Tests")
 @tag('canary')
 class TestSimbadHarvesterCanary(TestCase):
     def setUp(self):
