@@ -1,27 +1,27 @@
 Encrypted Model Fields
 ======================
 
-If your ``custom_code`` or reusable app needs to store a secret — an API key
-or password for an external service, say — ``tom_common`` provides
+If your ``custom_code`` or reusable app needs to store a secret (e.g. an API key
+or password for an external service) — TOM Toolkit provides
 :class:`~tom_common.encryption.EncryptedModelField`, a model field that
-encrypts its value at rest in the database.
+encrypts its value as it is stored in the database.
 
 .. note::
 
    Encryption protects the secret from passive database exposure. It does
-   **not** protect it from anyone who can read your ``settings.SECRET_KEY``
+   **not** protect it from anyone who can read your TOM's ``settings.SECRET_KEY``
    (such as a server administrator). See :doc:`/deployment/encryption` for the
-   key-rotation procedure.
+   encryption documentation relevant to TOM administrators.
 
-This page adds an encrypted field to a user-profile model, then displays and
-edits it. Working examples live in
+This page describes how to add an encrypted field to a user-profile model,
+how to display it, and how to edit it. Working examples live in
 `tom_hermes <https://github.com/TOMToolkit/tom_hermes>`__,
 `tom_eso <https://github.com/TOMToolkit/tom_eso>`__,
 `tom_swift <https://github.com/TOMToolkit/tom_swift>`__, and
 `tom_demoapp <https://github.com/TOMToolkit/tom_demoapp>`__.
 
-Add the field
--------------
+Adding an EncryptedModelField
+-------------------------------
 
 Declare an :class:`~tom_common.encryption.EncryptedModelField` on your model:
 
@@ -51,17 +51,17 @@ decrypted on load:
 Assigning ``None`` or ``''`` clears the stored value (the column becomes
 ``NULL``); reading an unset value returns ``None``.
 
-Display it (read-only)
-----------------------
+Displaying the value of an encrypted field
+-------------------------------------------
 
-Show the value with a click-to-reveal control using ``tom_common``'s
+To show the value with a click-to-reveal control, use ``tom_common``'s
 ``revealable_password_input.html`` partial. Pass it the **plaintext**, which
 comes from direct attribute access (``profile.api_key``):
 
 .. code-block:: python
     :caption: e.g. an inclusion tag or a view's get_context_data
 
-    context = {'api_key': profile.api_key}
+    context = {'api_key': profile.api_key}  # plaintext becomes part of the template context
 
 .. code-block:: html+django
     :caption: my_template.html
@@ -75,15 +75,15 @@ comes from direct attribute access (``profile.api_key``):
 .. note::
 
    Pass the plaintext only to templates the current user is allowed to see: the
-   partial embeds the value in the page HTML, and revealing merely toggles its
-   visibility. Do **not** source the value from ``model_to_dict``, a DRF
+   partial embeds the plaintext value in the page HTML. Revealing it merely toggles
+   its visibility. Do **not** source the value from ``model_to_dict``, a DRF
    serializer, or ``dumpdata`` — those return a ``REDACTED`` placeholder for
    encrypted fields, never the secret. (If a profile card auto-iterates fields
    with ``model_to_dict``, exclude the encrypted one and add ``profile.api_key``
    back explicitly.)
 
-Edit it (UpdateView)
---------------------
+Editing the value in an UpdateView
+-----------------------------------
 
 List the field on a ``ModelForm``-based view. It renders as a masked input
 paired with a **Clear** checkbox:
@@ -94,26 +94,25 @@ paired with a **Clear** checkbox:
         model = MyAppProfile
         fields = ['api_key']
 
-On submit:
+On submitting the update form, an EncryptedModelField has the following behavior:
 
-- a typed value replaces the stored one;
+- a new, typed-in value replaces the stored one;
 - a **blank** input keeps the stored value — so editing other fields on the
   same form never wipes the secret;
-- **Clear** with a blank input removes it (column becomes ``NULL``);
-- a typed value together with **Clear** keeps the typed value (Clear is ignored).
+- Checking the **Clear** checkbox with a blank input removes the current value (column becomes ``NULL``);
+- a typed-in value together with **Clear** keeps the typed value (Clear is ignored).
 
 The form never renders the stored value, so it can't leak through the edit
-page. The input's placeholder signals the current state — ``(A stored value is
-hidden) — type to replace`` versus ``(not set) — type to add``.
+page. The placeholder text displayed in the input box signals the current state
+— ``(A stored value is hidden) — type to replace`` versus ``(not set) — type to add``.
 
-How it works
-------------
+How it works (implementation details)
+-------------------------------------
 
 Each value is encrypted with a Fernet cipher derived from
-``settings.SECRET_KEY`` (via HKDF). Decryption also tries any
-``settings.SECRET_KEY_FALLBACKS``, which is what makes key rotation possible —
-see :doc:`/deployment/encryption` for the procedure and the
-``rotate_encryption_key`` command.
+``settings.SECRET_KEY`` (via a key derivation function, :ref:`HKDF <kdf-implementation-details>`).
+Decryption also tries any ``settings.SECRET_KEY_FALLBACKS``, facilitating key rotation —
+see :doc:`/deployment/encryption` for the procedure and the ``rotate_encryption_key`` command.
 
 If a stored value cannot be decrypted under any active key, reading it raises
 ``cryptography.fernet.InvalidToken`` — usually because a key was dropped from
@@ -126,11 +125,6 @@ Limitations
   can never match; ``MyAppProfile.objects.filter(api_key=...)`` raises
   ``FieldError``. For a searchable secret, store a companion HMAC hash column
   and query that.
-- **No fixture round-trip.** ``dumpdata`` emits the ``REDACTED`` placeholder
-  (``'******** (encrypted, not shown)'``) rather than the secret, and
-  ``loaddata`` refuses to import that placeholder. To move encrypted data
-  between environments, copy the database row directly (the ciphertext travels)
-  or re-encrypt with a one-off script.
 
 API reference
 -------------

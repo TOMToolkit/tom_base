@@ -10,7 +10,7 @@ create an encrypted database field, your documentation is here:
 ------
 
 TOM Toolkit encrypts sensitive user data (API keys, observatory
-credentials, anything declared with :class:`EncryptedProperty`) using a
+credentials, anything declared with :class:`EncryptedModelField`) using a
 single Fernet cipher derived from Django's ``settings.SECRET_KEY``.
 That means when an encrypted field is written to or read from the database,
 a cipher is created. The cipher can encrypt unencrypted plaintext (in) and decrypt
@@ -89,7 +89,7 @@ The end-to-end procedure:
 
        python manage.py rotate_encryption_key
 
-   The command walks every :class:`EncryptedProperty` field across
+   The command walks every :class:`EncryptedModelField` field across
    ``INSTALLED_APPS``, decrypts each value (transparently using either
    the primary or a fallback), and re-encrypts under the primary. After
    this, no value in the database requires the fallback to decrypt.
@@ -116,7 +116,7 @@ What if ``SECRET_KEY`` is lost?
 
 If you lose ``SECRET_KEY`` and have no backup:
 
-- Every :class:`EncryptedProperty` value (saved API keys, observatory
+- Every :class:`EncryptedModelField` value (saved API keys, observatory
   credentials) becomes unrecoverable. The ciphertext is still in the
   database; the key needed to decrypt it is gone.
 - All Django signing-dependent states also break: outstanding password-reset
@@ -125,6 +125,34 @@ If you lose ``SECRET_KEY`` and have no backup:
 
 Treat ``SECRET_KEY`` backup with the same seriousness as your database
 backup.
+
+Backing up and moving encrypted data
+------------------------------------
+
+Because every encrypted value is tied to the ``SECRET_KEY`` that produced it,
+backing up and moving that data takes a little more care than ordinary rows.
+
+**Django fixtures do not carry encrypted values.** Django's ``dumpdata`` /
+``loaddata`` (its built-in way to export database rows to a file and load them
+back) cannot round-trip an encrypted field. By design, ``dumpdata`` writes the
+placeholder ``'******** (encrypted, not shown)'`` in place of each encrypted
+value — so secrets never end up in fixture files or version control — and
+``loaddata`` refuses to import that placeholder rather than store it as if it
+were the secret. (Plugin authors writing tests should likewise set encrypted
+values in code, not load them from a fixture.)
+
+To move encrypted data to another environment, use one of:
+
+- **A database-level copy** (e.g. ``pg_dump``). The stored ciphertext copies
+  over verbatim, but it only decrypts if the destination TOM uses the **same**
+  ``SECRET_KEY`` — or carries the source key in its ``SECRET_KEY_FALLBACKS`` —
+  since the Fernet key is derived from ``SECRET_KEY``.
+- **An application-level re-encrypt.** Run a one-off script that reads each
+  plaintext in the source (ordinary attribute access) and re-saves it in the
+  destination, which re-encrypts it under the destination's ``SECRET_KEY``. Use
+  this when the two environments have different keys.
+
+.. _kdf-implementation-details:
 
 Key Derivation Function Implementation Details
 ----------------------------------------------
