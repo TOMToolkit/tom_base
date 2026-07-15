@@ -16,8 +16,7 @@ encrypts its value as it is stored in the database.
 This page describes how to add an encrypted field to a user-profile model,
 how to display it, and how to edit it. Working examples live in
 `tom_hermes <https://github.com/TOMToolkit/tom_hermes>`__,
-`tom_eso <https://github.com/TOMToolkit/tom_eso>`__,
-`tom_swift <https://github.com/TOMToolkit/tom_swift>`__, and
+`tom_eso <https://github.com/TOMToolkit/tom_eso>`__, and
 `tom_demoapp <https://github.com/TOMToolkit/tom_demoapp>`__.
 
 Adding an EncryptedModelField
@@ -94,7 +93,7 @@ paired with a **Clear** checkbox:
         model = MyAppProfile
         fields = ['api_key']
 
-On submitting the update form, an EncryptedModelField has the following behavior:
+On submitting the update form, an ``EncryptedModelField`` has the following behavior:
 
 - a new, typed-in value replaces the stored one;
 - a **blank** input keeps the stored value — so editing other fields on the
