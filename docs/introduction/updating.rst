@@ -80,7 +80,7 @@ See the :ref:`Architecture Docs <ReducedDatum_label>` for a description, or
 
 We want to update all of your existing data to this new scheme where possible. This could take some time for large databases.
 Towards this end, we provide a `management command 
-<https://github.com/TOMToolkit/tom_base/blob/version-3-0-alpha/tom_dataproducts/management/commands/migrateReducedDatums.py>`_
+<https://github.com/TOMToolkit/tom_base/blob/dev/tom_dataproducts/management/commands/migrate_reduced_datums.py>`_
 that will make "reasonable" assumptions about data values stored in ``ReducedDatum.value``. This command will search for
 commonly used brightness fields, filter fields, spectroscopy data, etc. and translate them into the new ``ReducedDatum``
 infrastructure. Anything unrecognized will remain in the catch-all ``value`` field. If you have highly customized fields
@@ -92,7 +92,7 @@ stored for your datums, you should consider copying and editing the management c
 
 ::
 
-   ./manage.py migrateReducedDatums
+   ./manage.py migrate_reduced_datums
 
 .. Note::
     Data validation during this migration is partially dependent on your database infrastructure. 
@@ -100,7 +100,7 @@ stored for your datums, you should consider copying and editing the management c
 
     ::
 
-        ./manage.py migrateReducedDatums --dry-run
+        ./manage.py migrate_reduced_datums --dry-run
 
 
 4.) Update ``settings.py``
