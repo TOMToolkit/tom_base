@@ -96,9 +96,10 @@ def share_target_with_tom(share_destination, form_data, target_lists=(), user=No
         # target extras.
         extra_extras = custom_target_to_extras(serialized_target['id'])
         serialized_target['targetextra_set'].extend(extra_extras)
+        # Basic provenance
         if user is not None:
-            serialized_target['targetextra_set'].append({'key': 'shared_by', 'value': user.username})
-        serialized_target['targetextra_set'].append({'key': 'shared_from', 'value': settings.TOM_NAME})
+            serialized_target['shared_by'] = user.username
+        serialized_target['shared_from'] = settings.TOM_NAME
         # Remove local User Groups
         serialized_target['groups'] = []
         # Add target lists
