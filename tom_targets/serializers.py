@@ -95,6 +95,7 @@ class TargetSerializer(serializers.ModelSerializer):
                         f'Alias \'{alias_value}\' conflicts with Target name \'{target.name}\'.')
             tns.save(target=target)
 
+        targetextras = [e for e in targetextras if e['key'] not in [field.name for field in target._meta.fields]]
         tes = TargetExtraSerializer(data=targetextras, many=True)
         if tes.is_valid():
             tes.save(target=target)
