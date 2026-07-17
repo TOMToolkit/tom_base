@@ -21,7 +21,7 @@ from django.utils.module_loading import import_string
 
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.base_models import BaseTarget
-from tom_targets.models import Target, TargetExtra, TargetList
+from tom_targets.models import Target, TargetExtra, TargetList, PersistentShare
 from tom_targets.forms import TargetVisibilityForm, PersistentShareForm
 from tom_targets.permissions import targets_for_user
 
@@ -473,10 +473,10 @@ def persistent_share_table(context, target):
     Returns a partial for a table of persistent shares, used in persistent share management forms
     """
     request = context['request']
-    persistentshares = get_objects_for_user(request.user, f'{Target._meta.app_label}.view_persistentshare')
+    persistentshares = get_objects_for_user(request.user, f'{PersistentShare._meta.app_label}.view_persistentshare')
     if target:
         persistentshares = persistentshares.filter(target__pk=target.pk)
-    can_delete = request.user.has_perm(f'{Target._meta.app_label}.delete_persistentshare')
+    can_delete = request.user.has_perm(f'{PersistentShare._meta.app_label}.delete_persistentshare')
     return {'persistentshares': persistentshares, 'target': target, 'can_delete': can_delete}
 
 
@@ -486,7 +486,7 @@ def create_persistent_share(context, target):
     Returns a partial for a creation form for creating persistent shares
     """
     request = context['request']
-    if request.user.has_perm(f'{Target._meta.app_label}.add_persistentshare'):
+    if request.user.has_perm(f'{PersistentShare._meta.app_label}.add_persistentshare'):
         if target:
             form = PersistentShareForm(target_id=target.pk)
         else:
