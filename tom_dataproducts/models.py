@@ -450,13 +450,6 @@ class PhotometryReducedDatum(ReducedDatumCommon):
     bandpass = models.CharField(max_length=32)
     exposure_time = models.FloatField(blank=True, null=True)
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["target", "bandpass", "timestamp"], name="unique_photometry"
-            )
-        ]
-
 
 class SpectroscopyReducedDatum(ReducedDatumCommon):
     setup = models.CharField(max_length=2000, blank=True, default="")
@@ -467,14 +460,6 @@ class SpectroscopyReducedDatum(ReducedDatumCommon):
     flux_unit = models.TextField(blank=True, default="")
     wavelength_unit = models.TextField(blank=True, default="")
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["target", "timestamp", "telescope", "instrument"],
-                name="unique_spectroscopy",
-            )
-        ]
-
 
 class AstrometryReducedDatum(ReducedDatumCommon):
     ra = models.FloatField()
@@ -483,14 +468,6 @@ class AstrometryReducedDatum(ReducedDatumCommon):
     dec_error = models.FloatField(null=True, blank=True, default=None)
     ra_error_units = models.CharField(max_length=32, blank=True, default="")
     dec_error_units = models.CharField(max_length=32, blank=True, default="")
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["target", "timestamp", "telescope", "instrument"],
-                name="unique_astrometry",
-            )
-        ]
 
 
 REDUCED_DATUM_MODELS = (
