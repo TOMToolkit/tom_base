@@ -1,0 +1,15 @@
+{# "Facilities" navbar dropdown: one menu item per facility contributed via the #}
+{# observation_facilities() AppConfig integration point. Context comes from     #}
+{# observation_extras.observation_facilities_list.                              #}
+{% if observation_facilities %}
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Facilities</a>
+    <ul class="dropdown-menu">
+        {% for facility in observation_facilities %}
+            <li class="nav-item">
+                <a class="nav-link" href="{{ facility.url }}" style="color:black" title="{{ facility.name }}">{{ facility.name }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+</li>
+{% endif %}
