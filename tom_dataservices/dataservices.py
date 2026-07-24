@@ -24,7 +24,7 @@ def get_data_service_classes():
     """
     Imports the Dataservice class from relevant apps and generates a list of data service names.
 
-    Each dataservice class should be contained in a list of dictionaries in an app's apps.py `dataservices` method.
+    Each dataservice class should be contained in a list of dictionaries in an app's apps.py `data_services` method.
     Each dataservice dictionary should contain a 'class' key with the dot separated path to the dataservice class
     (typically an extension of DataService).
 
