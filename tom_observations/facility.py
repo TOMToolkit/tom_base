@@ -7,6 +7,7 @@ import requests
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit, Div, HTML
 from django import forms
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ImproperlyConfigured
@@ -48,7 +49,32 @@ except AttributeError:
     AUTO_THUMBNAILS = False
 
 
-def get_service_classes():
+def get_service_classes() -> dict:
+    """Return a dictionary mapping facility name to facility class for all known facilities.
+
+    Facilities come from two sources, combined here:
+      1. ``settings.TOM_FACILITY_CLASSES`` (falling back to ``DEFAULT_FACILITY_CLASSES``), the
+         traditional explicit configuration mechanism.
+      2. The ``observation_facilities()`` AppConfig integration point: any INSTALLED_APP whose
+         AppConfig defines an ``observation_facilities()`` method contributes its facilities
+         automatically, with no settings changes required. (This is analogous to the
+         ``data_services()`` integration point consumed by
+         ``tom_dataservices.dataservices.get_data_service_classes()``.)
+
+    ``observation_facilities()`` should return a list of dictionaries, each with a ``class`` key
+    whose value is the dot-separated path to the facility class. Entries may carry additional
+    keys for other consumers of the integration point — e.g. an optional ``url`` key naming the
+    facility's landing page for the navbar "Facilities" menu (see
+    ``tom_observations.templatetags.observation_extras.observation_facilities_list``) — but only
+    ``class`` is consumed here.
+
+    FOR EXAMPLE:
+    [{'class': 'tom_keck.keck.KeckFacility'}]
+
+    Returns:
+        dict: mapping of ``Facility.name`` to facility class. A facility appearing in both
+        sources (same ``name``) is only included once; the app-supplied class wins.
+    """
     try:
         TOM_FACILITY_CLASSES = settings.TOM_FACILITY_CLASSES
     except AttributeError:
@@ -61,6 +87,24 @@ def get_service_classes():
         except (ImportError, AttributeError) as e:
             raise ImportError(f'Could not import {service}: {e}')
         service_choices[clazz.name] = clazz
+
+    # Combine the settings-declared facilities with those contributed by installed apps
+    # via the observation_facilities() AppConfig integration point.
+    for app in apps.get_app_configs():
+        try:
+            observation_facilities = app.observation_facilities()
+        except AttributeError:
+            continue  # this app doesn't implement the integration point
+        for facility in observation_facilities:
+            try:
+                clazz = import_string(facility['class'])
+            except ImportError as e:
+                logger.warning(f'WARNING: Could not import facility class for {app.name} from '
+                               f'{facility["class"]}.\n'
+                               f'{e}')
+                continue
+            service_choices[clazz.name] = clazz
+
     return service_choices
 
 

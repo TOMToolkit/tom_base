@@ -6,6 +6,7 @@ from unittest import mock
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from django.forms import ValidationError
+from django.template.loader import render_to_string
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -15,8 +16,10 @@ from astropy.coordinates import get_sun, SkyCoord
 from astropy.time import Time
 
 from .factories import ObservingRecordFactory, ObservationTemplateFactory, SiderealTargetFactory, TargetNameFactory
+from tom_observations.facility import get_service_classes
+from tom_observations.templatetags.observation_extras import observation_facilities_list
 from tom_observations.utils import get_astroplan_sun_and_time, get_sidereal_visibility
-from tom_observations.tests.utils import FakeRoboticFacility
+from tom_observations.tests.utils import FakeManualFacility, FakeRoboticFacility
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate
 from tom_targets.models import Target
 from guardian.shortcuts import assign_perm
@@ -497,3 +500,110 @@ class TestGetVisibility(TestCase):
         self.assertEqual(len(airmass_data), len(expected_airmass))
         for i, expected_airmass_value in enumerate(expected_airmass):
             self.assertAlmostEqual(airmass_data[i], expected_airmass_value, places=3)
+
+
+class TestGetServiceClasses(TestCase):
+    """
+    Tests for the observation_facilities() AppConfig integration point as consumed by
+    tom_observations.facility.get_service_classes().
+    """
+
+    def _fake_app_config(self, facilities: list) -> mock.Mock:
+        """Return a mock AppConfig whose observation_facilities() returns the given list."""
+        app_config = mock.Mock()
+        app_config.name = 'fake_facility_app'
+        app_config.observation_facilities.return_value = facilities
+        return app_config
+
+    @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
+    def test_app_contributed_facilities_merged_with_settings(self):
+        fake_app_config = self._fake_app_config([{'class': 'tom_observations.tests.utils.FakeManualFacility'}])
+        with mock.patch('tom_observations.facility.apps.get_app_configs', return_value=[fake_app_config]):
+            service_classes = get_service_classes()
+        self.assertEqual(service_classes,
+                         {'FakeRoboticFacility': FakeRoboticFacility, 'FakeManualFacility': FakeManualFacility})
+
+    @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
+    def test_apps_without_integration_point_are_skipped(self):
+        # mock.Mock(spec=[]) raises AttributeError for observation_facilities(), behaving
+        # like a regular AppConfig that doesn't implement the integration point
+        with mock.patch('tom_observations.facility.apps.get_app_configs', return_value=[mock.Mock(spec=[])]):
+            service_classes = get_service_classes()
+        self.assertEqual(service_classes, {'FakeRoboticFacility': FakeRoboticFacility})
+
+    @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
+    def test_facility_in_both_sources_is_deduplicated(self):
+        fake_app_config = self._fake_app_config([{'class': 'tom_observations.tests.utils.FakeRoboticFacility'}])
+        with mock.patch('tom_observations.facility.apps.get_app_configs', return_value=[fake_app_config]):
+            service_classes = get_service_classes()
+        self.assertEqual(service_classes, {'FakeRoboticFacility': FakeRoboticFacility})
+
+    @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
+    def test_unimportable_app_facility_is_skipped_with_warning(self):
+        fake_app_config = self._fake_app_config([{'class': 'no.such.module.NoSuchFacility'}])
+        with mock.patch('tom_observations.facility.apps.get_app_configs', return_value=[fake_app_config]), \
+                self.assertLogs('tom_observations.facility', level='WARNING'):
+            service_classes = get_service_classes()
+        self.assertEqual(service_classes, {'FakeRoboticFacility': FakeRoboticFacility})
+
+
+class TestObservationFacilitiesNavbar(TestCase):
+    """
+    Tests for the "Facilities" navbar dropdown: the observation_facilities_list templatetag
+    and its navbar_facilities_list.html partial.
+    """
+
+    def _fake_app_config(self, facilities: list) -> mock.Mock:
+        """Return a mock AppConfig whose observation_facilities() returns the given list."""
+        app_config = mock.Mock()
+        app_config.name = 'fake_facility_app'
+        app_config.observation_facilities.return_value = facilities
+        return app_config
+
+    def test_responding_app_facility_is_listed(self):
+        # 'home' is a URL name that always resolves, standing in for a facility landing page
+        fake_app_config = self._fake_app_config(
+            [{'class': 'tom_observations.tests.utils.FakeRoboticFacility', 'url': 'home'}])
+        with mock.patch('tom_observations.templatetags.observation_extras.apps.get_app_configs',
+                        return_value=[fake_app_config]):
+            context = observation_facilities_list({})
+        self.assertEqual(context['observation_facilities'],
+                         [{'name': 'FakeRoboticFacility', 'url': reverse('home')}])
+
+    def test_no_responding_apps_yields_empty_context(self):
+        with mock.patch('tom_observations.templatetags.observation_extras.apps.get_app_configs',
+                        return_value=[mock.Mock(spec=[])]):
+            context = observation_facilities_list({})
+        self.assertEqual(context['observation_facilities'], [])
+
+    def test_dropdown_hidden_when_no_facilities(self):
+        html = render_to_string('tom_observations/partials/navbar_facilities_list.html',
+                                {'observation_facilities': []})
+        self.assertNotIn('Facilities', html)
+
+    def test_facility_with_unresolvable_url_is_skipped_with_warning(self):
+        fake_app_config = self._fake_app_config(
+            [{'class': 'tom_observations.tests.utils.FakeRoboticFacility', 'url': 'no-such-url-name'}])
+        with mock.patch('tom_observations.templatetags.observation_extras.apps.get_app_configs',
+                        return_value=[fake_app_config]), \
+                self.assertLogs('tom_observations.templatetags.observation_extras', level='WARNING'):
+            context = observation_facilities_list({})
+        self.assertEqual(context['observation_facilities'], [])
+
+    def test_facility_without_url_gets_no_navbar_item_and_no_warning(self):
+        # omitting 'url' declares a facility with no landing page (e.g. tom_lt): it is
+        # registered by get_service_classes() but deliberately absent from the navbar,
+        # and that absence is not a misconfiguration worth warning about
+        fake_app_config = self._fake_app_config([{'class': 'tom_observations.tests.utils.FakeRoboticFacility'}])
+        with mock.patch('tom_observations.templatetags.observation_extras.apps.get_app_configs',
+                        return_value=[fake_app_config]), \
+                mock.patch('tom_observations.templatetags.observation_extras.logger') as mock_logger:
+            context = observation_facilities_list({})
+        self.assertEqual(context['observation_facilities'], [])
+        mock_logger.warning.assert_not_called()
+
+    def test_index_page_has_no_facilities_dropdown(self):
+        # tom_base's own test project has no app implementing observation_facilities(),
+        # so the rendered navbar should not contain the Facilities dropdown at all
+        response = self.client.get(reverse('home'))
+        self.assertNotContains(response, '>Facilities<')
