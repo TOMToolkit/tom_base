@@ -71,6 +71,7 @@ class ReducedDatumSerializer(serializers.ModelSerializer):
                 'wavelength': instance.wavelength,
                 'error': instance.error,
                 'flux_unit': instance.flux_unit,
+                'wavelength_unit': instance.wavelength_unit,
                 'telescope': instance.telescope,
                 'instrument': instance.instrument,
             }
