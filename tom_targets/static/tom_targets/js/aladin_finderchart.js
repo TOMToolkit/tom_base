@@ -168,6 +168,10 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bootstrapFinderchart);
   } else {
+    const spinner = document.getElementById('aladin-spinner');
+    if (spinner) {
+      spinner.style.display = 'none';
+    }
     bootstrapFinderchart();
   }
 })();

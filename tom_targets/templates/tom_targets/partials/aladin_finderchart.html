@@ -1,6 +1,12 @@
 <h3>Survey View</h3>
 <div class="js-aladin-finderchart" data-target-ra="{{ target.ra }}" data-target-dec="{{ target.dec }}">
-  <div id="aladin-lite-div" style="width:300px;height:300px;"></div>
+  <div id="aladin-lite-div" style="width:300px;height:300px;">
+    <div class="d-flex justify-content-center" id="aladin-spinner">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  </div>
   <div id="chart-form-div" style="width:300px;">
     <form id="chart-form">
       <div class="form-group mt-1 mb-1">
