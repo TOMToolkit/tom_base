@@ -14,14 +14,17 @@
       <div class="col-sm-4 offset-sm-1" style="align-content:end;">
         {% bootstrap_field form.share_existing_data %}
       </div>
-      <div class="col-sm-1">
+  <div class="row">
+    <div class="col-sm-1">
         {% if target %}
-        <input type="button" class="btn btn-primary" value="Create" onclick="createPersistentShare('{% url 'targets:persistent-share' %}', '{% url 'targets:target-persistent-share-manage-table' target.pk %}')" style="position:absolute; bottom:1rem"/>
+        <input type="button" class="btn btn-primary mb-3" value="Create" onclick="createPersistentShare('{% url 'targets:persistent-share' %}', '{% url 'targets:target-persistent-share-manage-table' target.pk %}')" />
         {% else %}
-        <input type="button" class="btn btn-primary" value="Create" onclick="createPersistentShare('{% url 'targets:persistent-share' %}', '{% url 'targets:persistent-share-manage-table' %}')" style="position:absolute; bottom:1rem"/>
+        <input type="button" class="btn btn-primary mb-3" value="Create" onclick="createPersistentShare('{% url 'targets:persistent-share' %}', '{% url 'targets:persistent-share-manage-table' %}')"/>
         {% endif %}
-      </div>
+    </div>
   </div>
+  </div>
+  <hr>
   <div class="row">
     <div class="alert alert-danger" role="alert" id="create_persistent_share_error" style="display:none">
       <div class="row">
