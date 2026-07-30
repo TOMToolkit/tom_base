@@ -23,7 +23,7 @@
   <div class="tab-pane active" id="share">
     <div class="col-md-12">
       <form method="post" class="form" id='target-share-form'>
-        <div class="row" style="padding-inline:1rem">
+        <div class="row align-items-end" style="padding-inline:1rem">
           <div class="col-sm-3">
             {% bootstrap_field form.share_destination %}
           </div>
@@ -31,8 +31,8 @@
             {% bootstrap_field form.share_title %}
           </div>
           <div class="col-sm-1">
-            <input type="submit" class="btn btn-primary" formaction="{% url 'targets:share' pk=target.id %}"
-              id="submit_target" value="Submit" name="share_target_form" style="position:absolute; bottom:1rem"
+            <input type="submit" class="btn btn-primary mb-3" formaction="{% url 'targets:share' pk=target.id %}"
+              id="submit_target" value="Submit" name="share_target_form"
               onclick="setTarget('')">
           </div>
         </div>
