@@ -122,12 +122,12 @@ with future changes. If you wish to use these settings, please make the followin
     ...
 
     # Replace your existing INSTALLED_APPS with the following:
-    INSTALLED_APPS = TOMTOOKIT_INSTALLED_APPS + [ 
+    INSTALLED_APPS = TOMTOOLKIT_INSTALLED_APPS + [ 
         'custom_code',  # Include any apps you have installed for your TOM that are not in default_settings
     ]
 
     # Replace your existing MIDDLEWARE with the following:
-    MIDDLEWARE = TOMTOOKIT_MIDDLEWARE + [
+    MIDDLEWARE = TOMTOOLKIT_MIDDLEWARE + [
         {{ custom_middleware }}  # Include any middleware you have installed for your TOM that are not in default_settings
     ]
 
