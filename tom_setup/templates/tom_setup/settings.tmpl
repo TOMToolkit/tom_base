@@ -237,9 +237,8 @@ DATA_PROCESSORS = {
     'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
 }
 
-# Facilities listed here are available to your TOM. In addition, any app in INSTALLED_APPS
-# that implements the observation_facilities() AppConfig integration point (e.g. tom_keck,
-# tom_cfht) contributes its facilities automatically and does not need to be listed here.
+# Facilities listed appear on your TOM's TargetDetail page. INSTALLED_APPS that implement the
+# observation_facilities() AppConfig integration point do not need to be listed here.
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco_redirect.LCORedirectFacility',
     'tom_observations.facilities.gemini.GEMFacility',
