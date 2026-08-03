@@ -105,6 +105,25 @@ like this:
 This means our new observation facility module has been successfully
 loaded.
 
+Adding a facility from an app
+-----------------------------
+
+A reusable app can contribute its facilities without the TOM editing ``settings.py``.
+Implement ``observation_facilities()`` on the app's ``AppConfig``:
+
+.. code:: python
+
+   class MyAppConfig(AppConfig):
+       name = 'myapp'
+
+       def observation_facilities(self):
+           return [{'class': f'{self.name}.myfacility.MyObservationFacility'}]
+
+Facilities from both routes are merged by
+``tom_observations.facility.get_service_classes()``, so adding the app to
+``INSTALLED_APPS`` is all that is required of the TOM. See ``tom_demoapp`` for a
+worked example.
+
 BaseRoboticObservationFacility and BaseRoboticObservationForm
 -------------------------------------------------------------
 
@@ -125,6 +144,27 @@ programmatically, but it is also nice to have a GUI for our users to
 use. The ``BaseRoboticObservationForm`` class, just like the previous
 super class, contains logic and layout that all observation facility
 form classes should contain.
+
+Linking to a facility index page
+--------------------------------
+
+A facility may set ``index_url_name`` to the namespaced Django URL name of a page
+describing the facility. Facilities that set it appear in the navbar **Facilities**
+dropdown, linked to that page:
+
+.. code:: python
+
+   class MyObservationFacility(BaseRoboticObservationFacility):
+       name = 'MyFacility'
+       index_url_name = 'myapp:facility-index'
+
+``index_url_name`` is optional and is omitted from the minimal example above. A facility
+that leaves it unset is still fully registered -- it has an observe button and observation
+forms -- but gets no menu item. If no facility sets it, the dropdown is not displayed.
+
+The namespace is the one the facility's URLs are deployed under. For an app, that is the
+``namespace`` argument its ``include_url_paths()`` passes to ``include()``, which is not
+necessarily the app's name: ``tom_demoapp`` is deployed under ``demoapp``.
 
 Implementing observation submission
 -----------------------------------
