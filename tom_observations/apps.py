@@ -10,8 +10,7 @@ class TomObservationsConfig(AppConfig):
         This method should return a list of partial templates to be included in the navbar.
 
         Here, the "Facilities" dropdown menu, listing the facilities contributed by installed
-        apps via the observation_facilities() integration point (see
-        tom_observations.facility.get_service_classes()).
+        apps via the observation_facilities() integration point (see ``tom_demoapp`` for example).
         """
         return [{'partial': 'tom_observations/partials/navbar_facilities_list.html',
                  'context': 'tom_observations.templatetags.observation_extras.observation_facilities_list'}]
