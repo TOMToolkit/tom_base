@@ -96,9 +96,11 @@ class UpdateDataFromDataServiceForm(forms.Form):
                 Column(
                     'data_service'
                     ),
+                ),
+            Row(
                 Column(
                     ButtonHolder(
-                        Submit('Update', 'Update Reduced Data'), css_class="bottom"
+                        Submit('Update', 'Update Reduced Data')
                         )
                     ),
                 )

@@ -1,6 +1,6 @@
 from tom_targets.base_models import get_target_model_app_label
 from django.contrib.auth.models import Group, User
-from django.core.exceptions import ValidationError
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from guardian.shortcuts import assign_perm
@@ -77,6 +77,25 @@ class TestDataProductViewset(APITestCase):
 
             self.assertContains(response, 'Not a valid data_product_type.', status_code=status.HTTP_400_BAD_REQUEST)
 
+    def test_data_product_upload_duplicate_product_id_is_skipped(self):
+        with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as first_lightcurve_file:
+            self.dp_data['file'] = first_lightcurve_file
+            first_response = self.client.post(reverse('api:dataproducts-list'), self.dp_data, format='multipart')
+
+        self.assertEqual(first_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(DataProduct.objects.count(), 1)
+        self.assertEqual(PhotometryReducedDatum.objects.count(), 3)
+
+        with open('tom_dataproducts/tests/test_data/test_lightcurve.csv', 'rb') as second_lightcurve_file:
+            self.dp_data['file'] = second_lightcurve_file
+            second_response = self.client.post(reverse('api:dataproducts-list'), self.dp_data, format='multipart')
+
+        self.assertEqual(second_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(DataProduct.objects.count(), 1)
+        self.assertEqual(PhotometryReducedDatum.objects.count(), 3)
+        self.assertEqual(second_response.data['id'], first_response.data['id'])
+        self.assertTrue(second_response.data['already_exists'])
+
     def test_data_product_upload_failed_processing(self):
         self.dp_data['data_product_type'] = 'spectroscopy'
 
@@ -139,13 +158,19 @@ class TestReducedDatumViewset(APITestCase):
 
     def test_upload_same_reduced_datum_twice(self):
         """
-        Test that identical data raises a validation error while similar but different JSON will make it through.
+        Test that identical data is skipped while similar but different JSON will make it through.
         """
-        self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
-        with self.assertRaises(ValidationError):
-            self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
+        first_response = self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
+        self.assertEqual(first_response.status_code, status.HTTP_201_CREATED)
+
+        second_response = self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
+        self.assertEqual(second_response.status_code, status.HTTP_200_OK)
+        self.assertTrue(second_response.data['already_exists'])
+
         self.rd_data['value'] = {'magnitude': 15.582, 'filter': 'B', 'error': 0.005}
-        self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
+        third_response = self.client.post(reverse('api:reduceddatums-list'), self.rd_data, format='json')
+        self.assertEqual(third_response.status_code, status.HTTP_201_CREATED)
+
         rd_queryset = PhotometryReducedDatum.objects.all()
         self.assertEqual(rd_queryset.count(), 2)
 
