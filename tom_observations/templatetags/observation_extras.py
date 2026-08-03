@@ -3,10 +3,8 @@ import logging
 from urllib.parse import urlencode
 
 from django import forms, template
-from django.apps import apps
 from django.conf import settings
 from django.urls import NoReverseMatch, reverse
-from django.utils.module_loading import import_string
 from guardian.shortcuts import get_objects_for_user
 from plotly import offline
 import plotly.graph_objs as go
@@ -27,47 +25,31 @@ register = template.Library()
 @register.inclusion_tag('tom_observations/partials/navbar_facilities_list.html', takes_context=True)
 def observation_facilities_list(context: dict) -> dict:
     """
-    Returns the list of app-contributed observation facilities used to generate the
-    "Facilities" navbar dropdown links.
+    Returns the facilities linked from the "Facilities" navbar dropdown.
 
-    Facilities are gathered from installed apps implementing the observation_facilities()
-    AppConfig integration point (see tom_observations.facility.get_service_classes()).
-    In addition to the 'class' key consumed by get_service_classes(), each facility
-    dictionary may include an optional 'url' key: the namespaced URL name of that
-    facility's landing page, to which its navbar menu item will link. A facility without
-    a 'url' is registration-only: it gets no navbar menu item (and if no facility
-    supplies a 'url', the "Facilities" dropdown is not displayed at all).
+    A facility from ``get_service_classes()`` is listed when its class sets ``index_url_name``.
     """
-    facilities = []
-    for app in apps.get_app_configs():
-        try:
-            observation_facilities = app.observation_facilities()
-        except AttributeError:
-            continue  # this app doesn't implement the integration point
-        for facility in observation_facilities:
-            # a facility without a 'url' key declares no landing page; it is registered by
-            # get_service_classes() but deliberately gets no navbar menu item
-            url_name = facility.get('url')
-            if url_name is None:
-                continue
-            # resolve the facility class for its display name, and the landing page URL
-            # for the link target; skip (with a warning) anything that doesn't resolve,
-            # so one bad entry doesn't take out the whole navbar
-            try:
-                clazz = import_string(facility['class'])
-            except ImportError as e:
-                logger.warning(f'WARNING: Could not import facility class for {app.name} from '
-                               f'{facility["class"]}: {e}')
-                continue
-            try:
-                url = reverse(url_name)
-            except NoReverseMatch as e:
-                logger.warning(f'WARNING: Could not resolve landing page URL for facility {clazz.name} '
-                               f'of {app.name}: {e}')
-                continue
-            facilities.append({'name': clazz.name, 'url': url})
+    navbar_facilities = []
+    for facility_class in get_service_classes().values():
+        index_url_name = getattr(facility_class, 'index_url_name', None)
+        if not index_url_name:
+            continue  # registration-only facility: no index page, so no menu item
 
-    context['observation_facilities'] = facilities
+        # make sure we can reverse the URL
+        try:
+            url = reverse(index_url_name)
+        except NoReverseMatch as e:
+            logger.warning(f'WARNING: Could not resolve index page URL for facility '
+                           f'{facility_class.name}: {e}')
+            continue
+        navbar_facilities.append(
+            {
+                "name": facility_class.name,
+                "url": url,
+            }
+        )
+
+    context['observation_facilities'] = navbar_facilities
     return context
 
 

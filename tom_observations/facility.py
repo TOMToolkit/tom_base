@@ -53,27 +53,11 @@ def get_service_classes() -> dict:
     """Return a dictionary mapping facility name to facility class for all known facilities.
 
     Facilities come from two sources, combined here:
-      1. ``settings.TOM_FACILITY_CLASSES`` (falling back to ``DEFAULT_FACILITY_CLASSES``), the
-         traditional explicit configuration mechanism.
-      2. The ``observation_facilities()`` AppConfig integration point: any INSTALLED_APP whose
-         AppConfig defines an ``observation_facilities()`` method contributes its facilities
-         automatically, with no settings changes required. (This is analogous to the
-         ``data_services()`` integration point consumed by
-         ``tom_dataservices.dataservices.get_data_service_classes()``.)
-
-    ``observation_facilities()`` should return a list of dictionaries, each with a ``class`` key
-    whose value is the dot-separated path to the facility class. Entries may carry additional
-    keys for other consumers of the integration point — e.g. an optional ``url`` key naming the
-    facility's landing page for the navbar "Facilities" menu (see
-    ``tom_observations.templatetags.observation_extras.observation_facilities_list``) — but only
-    ``class`` is consumed here.
-
-    FOR EXAMPLE:
-    [{'class': 'tom_keck.keck.KeckFacility'}]
+      1. ``settings.TOM_FACILITY_CLASSES``
+      2. ``observation_facilities()`` AppConfig integration point (see ``tom_demoapp`` for example).
 
     Returns:
-        dict: mapping of ``Facility.name`` to facility class. A facility appearing in both
-        sources (same ``name``) is only included once; the app-supplied class wins.
+        dict: {facility_name: FacilityClass}
     """
     try:
         TOM_FACILITY_CLASSES = settings.TOM_FACILITY_CLASSES
@@ -268,6 +252,9 @@ class BaseObservationFacility(ABC):
     is_redirect = False
     button_label = ""
     button_tooltip = ""
+    #: Namespaced URL name of this facility's index page.
+    #: None means no index page and no Facilities nav-bar menu item.
+    index_url_name: str | None = None
 
     def __init__(self):
         self.user = None
