@@ -454,7 +454,7 @@ class PhotometryReducedDatum(ReducedDatumCommon):
         constraints = [
             models.UniqueConstraint(
                 fields=["target", "bandpass", "timestamp", "limit", "brightness", "instrument"],
-                  name="unique_photometry"
+                name="unique_photometry"
             )
         ]
 
