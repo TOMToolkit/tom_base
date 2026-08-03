@@ -16,7 +16,7 @@
     } else {
         // Fetch and cache the script
         console.log("Fetching aladin.js ...");
-        const response = await fetch("https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js");
+        const response = await fetch("https://aladin.cds.unistra.fr/AladinLite/api/v3/3.8.2/aladin.js");
         const scriptText = await response.text();
         sessionStorage.setItem(scriptKey, scriptText);
 
