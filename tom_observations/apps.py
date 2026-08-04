@@ -5,8 +5,8 @@ class TomObservationsConfig(AppConfig):
     name = 'tom_observations'
 
     def nav_items(self):
-        """
-        Integration point for adding items to the navbar.
+        """Integration point for adding items to the navbar.
+
         This method should return a list of partial templates to be included in the navbar.
 
         Here, the "Facilities" dropdown menu, listing the facilities contributed by installed
