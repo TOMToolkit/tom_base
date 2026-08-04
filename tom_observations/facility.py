@@ -252,9 +252,9 @@ class BaseObservationFacility(ABC):
     is_redirect = False
     button_label = ""
     button_tooltip = ""
-    #: Namespaced URL name of this facility's index page.
-    #: None means no index page and no Facilities nav-bar menu item.
-    index_url_name: str | None = None
+    #: Namespaced URL name of this facility's detail page.
+    #: None means no detail page and no Facilities nav-bar menu item.
+    detail_url_name: str | None = None
 
     def __init__(self):
         self.user = None

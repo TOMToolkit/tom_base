@@ -145,10 +145,10 @@ use. The ``BaseRoboticObservationForm`` class, just like the previous
 super class, contains logic and layout that all observation facility
 form classes should contain.
 
-Linking to a facility index page
---------------------------------
+Linking to a facility detail page
+---------------------------------
 
-A facility may set ``index_url_name`` to the namespaced Django URL name of a page
+A facility may set ``detail_url_name`` to the namespaced Django URL name of a page
 describing the facility. Facilities that set it appear in the navbar **Facilities**
 dropdown, linked to that page:
 

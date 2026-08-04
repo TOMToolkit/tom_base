@@ -27,19 +27,19 @@ def observation_facilities_list(context: dict) -> dict:
     """
     Returns the facilities linked from the "Facilities" navbar dropdown.
 
-    A facility from ``get_service_classes()`` is listed when its class sets ``index_url_name``.
+    A facility from ``get_service_classes()`` is listed when its class sets ``detail_url_name``.
     """
     navbar_facilities = []
     for facility_class in get_service_classes().values():
-        index_url_name = getattr(facility_class, 'index_url_name', None)
-        if not index_url_name:
-            continue  # registration-only facility: no index page, so no menu item
+        detail_url_name = getattr(facility_class, 'detail_url_name', None)
+        if not detail_url_name:
+            continue  # registration-only facility: no detail page, so no menu item
 
         # make sure we can reverse the URL
         try:
-            url = reverse(index_url_name)
+            url = reverse(detail_url_name)
         except NoReverseMatch as e:
-            logger.warning(f'WARNING: Could not resolve index page URL for facility '
+            logger.warning(f'WARNING: Could not resolve detail page URL for facility '
                            f'{facility_class.name}: {e}')
             continue
         navbar_facilities.append(
