@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-TOMTOOKIT_INSTALLED_APPS = [
+TOMTOOLKIT_INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,7 +40,7 @@ TOMTOOKIT_INSTALLED_APPS = [
     'tom_calendar',
 ]
 
-TOMTOOKIT_MIDDLEWARE = [
+TOMTOOLKIT_MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -55,3 +55,7 @@ TOMTOOKIT_MIDDLEWARE = [
 ]
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+
+# Backwards typo compatibility
+TOMTOOKIT_INSTALLED_APPS = TOMTOOLKIT_INSTALLED_APPS
+TOMTOOKIT_MIDDLEWARE = TOMTOOLKIT_MIDDLEWARE
