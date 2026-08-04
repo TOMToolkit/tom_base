@@ -20,8 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class CredentialStatus(Enum):
-    """
-    Enum representing the status of facility credentials.
+    """Enum representing the status of facility credentials.
 
     This enum is used to track the state of credentials throughout the facility lifecycle,
     providing clear information about whether credentials are available, where they came from,
@@ -101,8 +100,8 @@ def get_service_class(name):
 
 
 class BaseObservationForm(forms.Form):
-    """
-    This is the class that is responsible for displaying the observation request form.
+    """Class that is responsible for displaying the observation request form.
+
     This form is meant to be subclassed by more specific BaseForm classes that represent a
     form for a particular type of facility. For implementing your own form, please look to
     the other BaseObservationForms.
@@ -142,6 +141,7 @@ class BaseObservationForm(forms.Form):
 
     def layout(self) -> Layout:
         """Define (and return) a crispy_forms.Layout for the fields of your subclass.
+
         It will be inserted after the common_layout and before the button_layout, as
         defined above in __init__(), where self.helper.layout is assigned.
 
@@ -159,8 +159,8 @@ class BaseObservationForm(forms.Form):
         )
 
     def get_validation_message(self):
-        """ Override this or self.validation_message to return a validation message that is shown when
-            the Validate button is clicked and the form is valid
+        """Override this or self.validation_message to return a validation message that is shown when
+        the Validate button is clicked and the form is valid
         """
         return self.validation_message
 
@@ -310,8 +310,7 @@ class BaseObservationFacility(ABC):
         return credentials
 
     def _raise_no_profile_error(self, user, facility_name):
-        """
-        Raise ImproperlyConfigured for missing user profile.
+        """Raise ImproperlyConfigured for missing user profile.
 
         Args:
             user: Django User instance
@@ -326,8 +325,7 @@ class BaseObservationFacility(ABC):
         )
 
     def _raise_no_defaults_error(self, user, facility_name):
-        """
-        Raise ImproperlyConfigured when default credentials are needed but missing.
+        """Raise ImproperlyConfigured when default credentials are needed but missing.
 
         Args:
             user: Django User instance
@@ -369,16 +367,14 @@ class BaseObservationFacility(ABC):
 
     @abstractmethod
     def get_form(self, observation_type):
-        """
-        This method takes in an observation type and returns the form type that matches it.
+        """This method takes in an observation type and returns the form type that matches it.
 
         Note: This method returns form classes, not instances, to support composite form creation
         in ObservationCreateView. Use create_form_instance() for direct form instantiation.
         """
 
     def create_form_instance(self, observation_type, **kwargs):
-        """
-        Create a form instance with facility context injected.
+        """Create a form instance with facility context injected.
 
         The ObservationCreateView handles setting the user context on the facility instance
         via set_user() in its dispatch() method. Forms receive the facility instance and
@@ -394,8 +390,7 @@ class BaseObservationFacility(ABC):
         return form_class(**kwargs)
 
     def get_form_classes_for_display(self, **kwargs):
-        """
-        This method returns a dictionary of the format:
+        """This method returns a dictionary of the format:
 
             {'OBSERVATION_TYPE': FacilityFormClass}
 
@@ -430,14 +425,10 @@ class BaseObservationFacility(ABC):
         """
 
     def get_flux_constant(self):
-        """
-        Returns the astropy quantity that a facility uses for its spectral flux conversion.
-        """
+        """Returns the astropy quantity that a facility uses for its spectral flux conversion."""
 
     def get_wavelength_units(self):
-        """
-        Returns the astropy units that a facility uses for its spectral wavelengths
-        """
+        """Returns the astropy units that a facility uses for its spectral wavelengths."""
 
     def is_fits_facility(self, header):
         """
@@ -455,10 +446,7 @@ class BaseObservationFacility(ABC):
 
     @abstractmethod
     def get_terminal_observing_states(self):
-        """
-        Returns the states for which an observation is not expected
-        to change.
-        """
+        """Returns the states for which an observation is not expected to change."""
 
     @abstractmethod
     def get_observing_sites(self):
@@ -524,11 +512,11 @@ class BaseObservationFacility(ABC):
         return None
 
     def get_button_label(self):
-        """ The label that will appear on observe button"""
+        """.The label that will appear on observe button."""
         return self.button_label or self.name
 
     def get_button_tooltip(self):
-        """ The tooltip that will appear on observe button"""
+        """The tooltip that will appear on observe button."""
         return self.button_tooltip
 
 
