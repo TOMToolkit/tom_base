@@ -524,14 +524,6 @@ class TestGetServiceClasses(TestCase):
                          {'FakeRoboticFacility': FakeRoboticFacility, 'FakeManualFacility': FakeManualFacility})
 
     @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
-    def test_apps_without_integration_point_are_skipped(self):
-        # mock.Mock(spec=[]) raises AttributeError for observation_facilities(), behaving
-        # like a regular AppConfig that doesn't implement the integration point
-        with mock.patch('tom_observations.facility.apps.get_app_configs', return_value=[mock.Mock(spec=[])]):
-            service_classes = get_service_classes()
-        self.assertEqual(service_classes, {'FakeRoboticFacility': FakeRoboticFacility})
-
-    @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
     def test_facility_in_both_sources_is_deduplicated(self):
         fake_app_config = self._fake_app_config([{'class': 'tom_observations.tests.utils.FakeRoboticFacility'}])
         with mock.patch('tom_observations.facility.apps.get_app_configs', return_value=[fake_app_config]):
@@ -553,57 +545,88 @@ class TestObservationFacilitiesNavbar(TestCase):
     and its navbar_facilities_list.html partial.
     """
 
-    def _fake_app_config(self, facilities: list) -> mock.Mock:
-        """Return a mock AppConfig whose observation_facilities() returns the given list."""
-        app_config = mock.Mock()
-        app_config.name = 'fake_facility_app'
-        app_config.observation_facilities.return_value = facilities
-        return app_config
+    def _patch_service_classes(self, *facility_classes):
+        """Patch get_service_classes() to return exactly the given facility classes."""
+        return mock.patch(
+            'tom_observations.templatetags.observation_extras.get_service_classes',
+            return_value={clazz.name: clazz for clazz in facility_classes})
 
-    def test_responding_app_facility_is_listed(self):
-        # 'home' is a URL name that always resolves, standing in for a facility landing page
-        fake_app_config = self._fake_app_config(
-            [{'class': 'tom_observations.tests.utils.FakeRoboticFacility', 'url': 'home'}])
-        with mock.patch('tom_observations.templatetags.observation_extras.apps.get_app_configs',
-                        return_value=[fake_app_config]):
-            context = observation_facilities_list({})
+    def test_facility_with_index_url_name_is_listed(self):
+        """Does the inclusiontag return a context with the correct Facility name and URL?
+        """
+        # 'home' is a URL name that always resolves, standing in for a facility index page
+        with mock.patch.object(FakeRoboticFacility, 'index_url_name', 'home'), \
+                self._patch_service_classes(FakeRoboticFacility):
+            context = observation_facilities_list({})  # function under test
         self.assertEqual(context['observation_facilities'],
                          [{'name': 'FakeRoboticFacility', 'url': reverse('home')}])
 
-    def test_no_responding_apps_yields_empty_context(self):
-        with mock.patch('tom_observations.templatetags.observation_extras.apps.get_app_configs',
-                        return_value=[mock.Mock(spec=[])]):
-            context = observation_facilities_list({})
-        self.assertEqual(context['observation_facilities'], [])
-
-    def test_dropdown_hidden_when_no_facilities(self):
-        html = render_to_string('tom_observations/partials/navbar_facilities_list.html',
-                                {'observation_facilities': []})
-        self.assertNotIn('Facilities', html)
-
-    def test_facility_with_unresolvable_url_is_skipped_with_warning(self):
-        fake_app_config = self._fake_app_config(
-            [{'class': 'tom_observations.tests.utils.FakeRoboticFacility', 'url': 'no-such-url-name'}])
-        with mock.patch('tom_observations.templatetags.observation_extras.apps.get_app_configs',
-                        return_value=[fake_app_config]), \
-                self.assertLogs('tom_observations.templatetags.observation_extras', level='WARNING'):
-            context = observation_facilities_list({})
-        self.assertEqual(context['observation_facilities'], [])
-
-    def test_facility_without_url_gets_no_navbar_item_and_no_warning(self):
-        # omitting 'url' declares a facility with no landing page (e.g. tom_lt): it is
-        # registered by get_service_classes() but deliberately absent from the navbar,
-        # and that absence is not a misconfiguration worth warning about
-        fake_app_config = self._fake_app_config([{'class': 'tom_observations.tests.utils.FakeRoboticFacility'}])
-        with mock.patch('tom_observations.templatetags.observation_extras.apps.get_app_configs',
-                        return_value=[fake_app_config]), \
+    def test_facility_without_index_url_name_gets_no_navbar_item_and_no_warning(self):
+        """A facility that leaves index_url_name as None is omitted from the navbar without logging a warning."""
+        # registration-only facilities (e.g. tom_lt) have no index page; their absence from
+        # the navbar is deliberate, not a misconfiguration worth warning about
+        with self._patch_service_classes(FakeRoboticFacility), \
                 mock.patch('tom_observations.templatetags.observation_extras.logger') as mock_logger:
-            context = observation_facilities_list({})
+            context = observation_facilities_list({})  # function under test
         self.assertEqual(context['observation_facilities'], [])
         mock_logger.warning.assert_not_called()
 
+    def test_facility_with_unresolvable_url_is_skipped_with_warning(self):
+        """A facility whose index_url_name does not reverse() is skipped with a warning, not an exception."""
+        with mock.patch.object(FakeRoboticFacility, 'index_url_name', 'no-such-url-name'), \
+                self._patch_service_classes(FakeRoboticFacility), \
+                self.assertLogs('tom_observations.templatetags.observation_extras', level='WARNING'):
+            context = observation_facilities_list({})  # function under test
+        self.assertEqual(context['observation_facilities'], [])
+
+    def test_facility_class_without_the_attribute_is_skipped(self):
+        """A facility class with no index_url_name attribute at all is skipped rather than raising AttributeError."""
+        # pins the getattr() in the tag: a facility class that doesn't inherit from
+        # BaseObservationFacility must not 500 every page that renders the navbar
+        class RogueFacility:
+            name = 'RogueFacility'
+            # no index_url_name attribute
+
+        with self._patch_service_classes(RogueFacility):
+            context = observation_facilities_list({})  # function under test
+        self.assertEqual(context['observation_facilities'], [])
+
+    def test_no_facilities_yields_empty_context(self):
+        """With no facilities registered, the tag still supplies the (empty) observation_facilities context key."""
+        # the partial's {% if observation_facilities %} guard relies on the key always being present
+        with self._patch_service_classes():
+            context = observation_facilities_list({})
+        self.assertEqual(context['observation_facilities'], [])
+
+    def test_settings_declared_facility_can_appear_in_navbar(self):
+        """A facility from TOM_FACILITY_CLASSES gets a navbar entry too, since the navbar is built
+        from get_service_classes(), which merges settings- and app-declared facilities."""
+        with mock.patch.object(FakeRoboticFacility, 'index_url_name', 'home'), \
+                self.settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility']):
+            context = observation_facilities_list({})  # function under test
+        self.assertEqual(context['observation_facilities'],
+                         [{'name': 'FakeRoboticFacility', 'url': reverse('home')}])
+
+    def test_dropdown_rendered_with_facility_links(self):
+        """The partial renders a Facilities dropdown with one link per facility, pointing at its URL."""
+        html = render_to_string(
+            template_name='tom_observations/partials/navbar_facilities_list.html',  # template under test
+            context={'observation_facilities': [{'name': 'FakeRoboticFacility', 'url': '/fake/'}]})
+
+        self.assertIn('Facilities', html)
+        self.assertIn('href="/fake/"', html)
+        self.assertIn('FakeRoboticFacility', html)
+
+    def test_dropdown_hidden_when_no_facilities(self):
+        """The partial renders no Facilities dropdown at all when there are no facilities to list."""
+        html = render_to_string(
+            template_name='tom_observations/partials/navbar_facilities_list.html',  # template under test
+            context={'observation_facilities': []})
+        self.assertNotIn('Facilities', html)
+
     def test_index_page_has_no_facilities_dropdown(self):
-        # tom_base's own test project has no app implementing observation_facilities(),
-        # so the rendered navbar should not contain the Facilities dropdown at all
+        """End to end: with no facility setting index_url_name, the home page renders without the dropdown."""
+        # nothing in tom_base's own test project sets index_url_name (the built-in
+        # LCO/Gemini/SOAR/Blanco facilities have no index pages)
         response = self.client.get(reverse('home'))
         self.assertNotContains(response, '>Facilities<')
