@@ -156,15 +156,13 @@ dropdown, linked to that page:
 
    class MyObservationFacility(BaseRoboticObservationFacility):
        name = 'MyFacility'
-       index_url_name = 'myapp:facility-index'
+       detail_url_name = 'myapp:facility-detail'
 
-``index_url_name`` is optional and is omitted from the minimal example above. A facility
+``detail_url_name`` is optional and is omitted from the minimal example above. A facility
 that leaves it unset is still fully registered -- it has an observe button and observation
 forms -- but gets no menu item. If no facility sets it, the dropdown is not displayed.
-
-The namespace is the one the facility's URLs are deployed under. For an app, that is the
-``namespace`` argument its ``include_url_paths()`` passes to ``include()``, which is not
-necessarily the app's name: ``tom_demoapp`` is deployed under ``demoapp``.
+See ``tom_demoapp`` for a worked example, including composing the namespace from the
+AppConfig's ``url_namespace`` attribute.
 
 Implementing observation submission
 -----------------------------------
