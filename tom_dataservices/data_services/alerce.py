@@ -7,6 +7,10 @@ from django import forms
 from django.core.cache import cache
 from django.db.utils import IntegrityError
 
+import pprint
+
+import pyvo
+
 from tom_dataproducts.models import PhotometryReducedDatum
 from tom_dataservices.dataservices import DataService, QueryServiceError
 from tom_dataservices.forms import BaseQueryForm
@@ -15,7 +19,8 @@ from tom_targets.models import Target, TargetExtra
 logger = logging.getLogger(__name__)
 
 alerce = Alerce()
-
+TAP_URL = 'https://tap.alerce.online/tap'
+tap_service = pyvo.dal.TAPService(TAP_URL)
 ALERCE_FILTERS = {1: "g", 2: "r", 3: "i"}
 
 
@@ -41,7 +46,7 @@ class AlerceForm(BaseQueryForm):
         # Dynamically add the classifier fields to the form
         self.add_classifiers_fields()
         # Make the survey field hidden for now until the LSST API is more featured
-        self.fields['survey'].widget = forms.HiddenInput()
+        # self.fields['survey'].widget = forms.HiddenInput()
 
     def get_classifiers(self) -> list[dict]:
         classifiers = cache.get("ds_alerce_classifiers")
@@ -131,9 +136,17 @@ class AlerceDataService(DataService):
             if query_parameters.get("oid"):
                 # We might want to specify the survey based on the object id prefix
                 # once the LSST support in the alerce client is improved
-                object_result = alerce.query_object(**query_parameters)
+                pprint.pprint(query_parameters, indent=2)
+                # object_result = alerce.query_object(**query_parameters)
+                sid = 2
+
+                query = '''
+                    SELECT * FROM alerce_tap.object
+                    WHERE oid = %d AND sid = %d
+                    ''' % (int(query_parameters.get("oid")), sid)
+                object_result = tap_service.search(query)
                 if object_result:
-                    results.append(object_result)
+                    results.append(dict(object_result[0]))
 
                     return results
 
