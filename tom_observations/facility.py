@@ -208,8 +208,8 @@ GenericObservationForm = BaseRoboticObservationForm
 
 
 class BaseManualObservationForm(BaseObservationForm):
-    """
-    This is the class that is responsible for displaying the observation request form.
+    """Base class for observation request forms.
+
     Facility classes that provide a form should subclass this form. It provides
     some base shared functionality. Extra fields are provided below.
     The layout is handled by Django crispy forms which allows customizability of the
@@ -241,12 +241,7 @@ class BaseManualObservationForm(BaseObservationForm):
 
 
 class BaseObservationFacility(ABC):
-    """
-    This is the class that is responsible for defining the base facility class.
-    This form is meant to be subclassed by more specific BaseFacility classes that represent a
-    form for a particular type of facility. For implementing your own form, please look to
-    the other BaseObservationFacilities.
-    """
+    """Base class for observation facilities."""
     name = 'BaseObservation'
     observation_forms = {}
     is_redirect = False
@@ -410,17 +405,16 @@ class BaseObservationFacility(ABC):
     # TODO: consider making submit_observation create ObservationRecords as well
     @abstractmethod
     def submit_observation(self, observation_payload):
-        """
-        This method takes in the serialized data from the form and actually
+        """This method takes in the serialized data from the form and actually
         submits the observation to the remote api
         """
 
     @abstractmethod
     def validate_observation(self, observation_payload):
-        """
-        Same thing as submit_observation, but a dry run. You can
-        skip this in different modules by just using "pass"
+        """Validate an observation request through the facility's API,
+        but don't submit the request (i.e. a "dry-run").
 
+        You can skip this in different modules by just using "pass"
         Typically called by the ObservationForm.is_valid() method.
         """
 
@@ -431,16 +425,16 @@ class BaseObservationFacility(ABC):
         """Returns the astropy units that a facility uses for its spectral wavelengths."""
 
     def is_fits_facility(self, header):
-        """
-        Returns True if the FITS header is from this facility based on valid keywords and associated
-        values, False otherwise.
+        """Returns True if the FITS header is from this facility.
+
+        Return value is based on valid keywords and associated values.
         """
         return False
 
     def get_start_end_keywords(self):
-        """
-        Returns the keywords representing the start and end of an observation window for a facility. Defaults to
-        ``start`` and ``end``.
+        """Returns the keywords representing the start and end of an observation window for a facility.
+
+        Defaults to ``start`` and ``end``.
         """
         return 'start', 'end'
 
@@ -450,19 +444,19 @@ class BaseObservationFacility(ABC):
 
     @abstractmethod
     def get_observing_sites(self):
-        """
-        Return an iterable of dictionaries that contain the information
-        necessary to be used in the planning (visibility) tool. The
-        iterable should contain dictionaries each that contain sitecode,
+        """Return an iterable of dictionaries that contain the information
+        necessary to be used in the planning (visibility) tool.
+
+        The returned iterable should contain dictionaries each that contain sitecode,
         latitude, longitude and elevation. This is the static information
         about a site.
         """
 
     def get_facility_weather_urls(self):
-        """
-        Returns a dictionary containing a URL for weather information
-        for each site in the Facility SITES. This is intended to be useful
-        in observation planning.
+        """Returns a dictionary containing a URL for weather information
+        for each site in the Facility SITES.
+
+        This is intended to be useful in observation planning.
 
         `facility_weather = {'code': 'XYZ', 'sites': [ site_dict, ... ]}`
         where
@@ -472,9 +466,9 @@ class BaseObservationFacility(ABC):
         return {}
 
     def get_facility_status(self):
-        """
-        Returns a dictionary describing the current availability of the Facility
-        telescopes. This is intended to be useful in observation planning.
+        """Returns a dictionary describing the current availability of the Facility telescopes.
+
+        This is intended to be useful in observation planning.
         The top-level (Facility) dictionary has a list of sites. Each site
         is represented by a site dictionary which has a list of telescopes.
         Each telescope has an identifier (code) and an status string.
@@ -492,8 +486,8 @@ class BaseObservationFacility(ABC):
         return {}
 
     def cancel_observation(self, observation_id):
-        """
-        Takes an observation id and submits a request to the observatory that the observation be cancelled.
+        """Takes an observation id and submits a request to the observation facility
+        that the observation be cancelled.
 
         If the cancellation was successful, return True. Otherwise, return False.
         """
@@ -501,10 +495,10 @@ class BaseObservationFacility(ABC):
 
     @abstractmethod
     def get_observation_url(self, observation_id):
-        """
-        Takes an observation id and return the url for which a user
-        can view the observation at an external location. In this case,
-        we return a URL to the LCO observation portal's observation
+        """Takes an observation id and returns the url with which a user can view the observation
+        at the observation facility.
+
+        For example, we return a URL to the LCO observation portal's observation
         record page.
         """
 
@@ -512,7 +506,7 @@ class BaseObservationFacility(ABC):
         return None
 
     def get_button_label(self):
-        """.The label that will appear on observe button."""
+        """The label that will appear on observe button."""
         return self.button_label or self.name
 
     def get_button_tooltip(self):

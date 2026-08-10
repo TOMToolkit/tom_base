@@ -306,9 +306,8 @@ class TestCallbackView(TestCase):
 
     def test_callback(self):
         """
-
         The callback url is constructed by the OCS and the user is redirected to it after
-        the observation record is created. This tests that a corresponding ObvservationRecord is created
+        the observation record is created. This tests that a corresponding ObservationRecord is created
         on the TOM side, just as if one was created using the built-in OCS form.
         The view should redirect the user to the detail view of the observation record.
         """
