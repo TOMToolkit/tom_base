@@ -64,6 +64,7 @@ def get_service_classes() -> dict:
         TOM_FACILITY_CLASSES = DEFAULT_FACILITY_CLASSES
 
     service_choices = {}
+    # 1 get the facilities from settings.py
     for service in TOM_FACILITY_CLASSES:
         try:
             clazz = import_string(service)
@@ -71,17 +72,21 @@ def get_service_classes() -> dict:
             raise ImportError(f'Could not import {service}: {e}')
         service_choices[clazz.name] = clazz
 
-    # Combine the settings-declared facilities with those contributed by installed apps
-    # via the observation_facilities() AppConfig integration point.
+    # 2 add the faciliites from apps implementing the integration point
     for app in apps.get_app_configs():
-        try:
-            observation_facilities = app.observation_facilities()
-        except AttributeError:
+        observation_facilities_hook = getattr(app, 'observation_facilities', None)
+        if observation_facilities_hook is None:
             continue  # this app doesn't implement the integration point
-        for facility in observation_facilities:
+        for facility in observation_facilities_hook() or []:  # `or []` tolerates a hook returning None
             try:
                 clazz = import_string(facility['class'])
+            except KeyError:
+                # the integration point returned a mal-formed conifguration dict
+                logger.warning(f'WARNING: observation_facilities() entry from {app.name} is missing '
+                               f'the required "class" key: {facility!r}. Facility skipped.')
+                continue
             except ImportError as e:
+                # the class couldn't be imported
                 logger.warning(f'WARNING: Could not import facility class for {app.name} from '
                                f'{facility["class"]}.\n'
                                f'{e}')
@@ -92,11 +97,16 @@ def get_service_classes() -> dict:
 
 
 def get_service_class(name):
+    """Return the single, named facility class.
+
+    Note: Implementation gets all the facilities and returns the named one.
+    """
     available_classes = get_service_classes()
     try:
         return available_classes[name]
     except KeyError:
-        raise ImportError('Could not a find a facility with that name. Did you add it to TOM_FACILITY_CLASSES?')
+        raise ImportError(f'Could not find a facility named {name}. Add it to settings.TOM_FACILITY_CLASSES or '
+                          f'implement the  observation_facilities() integration point in the AppConfig subclass.')
 
 
 class BaseObservationForm(forms.Form):
