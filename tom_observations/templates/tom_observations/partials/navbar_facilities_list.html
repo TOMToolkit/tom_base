@@ -6,8 +6,8 @@
     <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Facilities</a>
     <ul class="dropdown-menu">
         {% for facility in observation_facilities %}
-            <li class="nav-item">
-                <a class="nav-link" href="{{ facility.url }}" style="color:black" title="{{ facility.name }}">{{ facility.name }}</a>
+            <li>
+                <a class="dropdown-item" href="{{ facility.url }}" title="{{ facility.name }}">{{ facility.name }}</a>
             </li>
         {% endfor %}
     </ul>
