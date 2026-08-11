@@ -108,8 +108,10 @@ loaded.
 Adding a facility from an app
 -----------------------------
 
-A reusable app can contribute its facilities without the TOM editing ``settings.py``.
-Implement ``observation_facilities()`` on the app's ``AppConfig``:
+A facility implemented as a Django reusable app can advertise itself
+to a TOM without the editing ``settings.py``, which simplifies it's installation.
+To do this, implement the ``observation_facilities()`` integration point
+on the app's ``AppConfig`` subclass:
 
 .. code:: python
 
@@ -119,10 +121,11 @@ Implement ``observation_facilities()`` on the app's ``AppConfig``:
        def observation_facilities(self):
            return [{'class': f'{self.name}.myfacility.MyObservationFacility'}]
 
-Facilities from both routes are merged by
-``tom_observations.facility.get_service_classes()``, so adding the app to
-``INSTALLED_APPS`` is all that is required of the TOM. See ``tom_demoapp`` for a
-worked example.
+Facilities from both ``settings.TOM_FACILITY_CLASSES`` and the apps implementing
+the integration point are merged by ``tom_observations.facility.get_service_classes()``.
+So, if your facility implements the ``observation_facilities()`` integration point,
+adding the app to ``INSTALLED_APPS`` is all that is required for installation.
+See ``tom_demoapp`` for a worked example.
 
 BaseRoboticObservationFacility and BaseRoboticObservationForm
 -------------------------------------------------------------
@@ -163,6 +166,28 @@ that leaves it unset is still fully registered -- it has an observe button and o
 forms -- but gets no menu item. If no facility sets it, the dropdown is not displayed.
 See ``tom_demoapp`` for a worked example, including composing the namespace from the
 AppConfig's ``url_namespace`` attribute.
+
+For ``detail_url_name`` to resolve, the app's URLs must be mounted in the TOM under that
+namespace. A reusable app mounts its own ``urls.py`` through the ``include_url_paths()``
+AppConfig integration point -- ``tom_common`` collects these paths from every installed
+app, so no TOM ``urls.py`` edits are required:
+
+.. code:: python
+
+   class MyAppConfig(AppConfig):
+       name = 'myapp'
+       url_prefix = 'myapp'     # URL path prefix for this app's pages: HOST/myapp/...
+       url_namespace = 'myapp'  # the namespace half of detail_url_name
+
+       def include_url_paths(self):
+           return [
+               path(f'{self.url_prefix}/', include(f'{self.name}.urls', namespace=self.url_namespace)),
+           ]
+
+(``url_prefix`` and ``url_namespace`` are TOM plugin conventions, not Django AppConfig
+attributes.) The included ``urls.py`` must set ``app_name`` -- Django requires it when
+``include()`` is called with ``namespace=`` -- and must contain a ``path()`` whose
+``name=`` is the second half of ``detail_url_name``.
 
 Implementing observation submission
 -----------------------------------
