@@ -1,3 +1,8 @@
 {% load django_bootstrap5 %}
-{% bootstrap_field form.survey %}
-{% bootstrap_field form.object_id %}
+<div x-data="{ survey: '{{ form.survey.value|default_if_none:"ZTF" }}' }">
+  {% bootstrap_field form.survey %}
+  <div x-show="survey === 'LSST'">
+    {% bootstrap_field form.lsst_object_type %}
+  </div>
+  {% bootstrap_field form.object_id %}
+</div>

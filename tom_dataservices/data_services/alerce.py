@@ -7,8 +7,7 @@ from django import forms
 from django.core.cache import cache
 from django.db.utils import IntegrityError
 
-import pprint
-
+import numpy as np
 import pyvo
 
 from tom_dataproducts.models import PhotometryReducedDatum
@@ -24,11 +23,28 @@ tap_service = pyvo.dal.TAPService(TAP_URL)
 ALERCE_FILTERS = {1: "g", 2: "r", 3: "i"}
 
 
+def _to_native_types(record: dict) -> dict:
+    """
+    TAP query results (astropy Table rows) come back with numpy scalar types
+    (np.float64, np.int64, etc.) which aren't accepted by Django model fields
+    or JSON-serializable. Convert them to their native Python equivalents.
+    """
+    return {k: (v.item() if isinstance(v, np.generic) else v) for k, v in record.items()}
+
+
 class AlerceForm(BaseQueryForm):
     CLASSIFIER_FIELD_PREFIX = "cfield_"
 
     survey = forms.ChoiceField(
-        label="Survey", choices=[("ZTF", "ZTF"), ("LSST", "LSST")], initial="ZTF"
+        label="Survey", choices=[("ZTF", "ZTF"), ("LSST", "LSST")], initial="ZTF",
+        widget=forms.Select(attrs={"x-model": "survey"}),
+    )
+    lsst_object_type = forms.ChoiceField(
+        required=False,
+        label="LSST Object Type",
+        choices=[("diaObject", "diaObject"), ("ssObject", "ssObject")],
+        initial="diaObject",
+        help_text="Only used when Survey is LSST.",
     )
     object_id = forms.CharField(required=False, label="Object ID")
     ra = forms.FloatField(required=False, label="RA (deg)")
@@ -134,22 +150,30 @@ class AlerceDataService(DataService):
         results = []
         try:
             if query_parameters.get("oid"):
-                # We might want to specify the survey based on the object id prefix
-                # once the LSST support in the alerce client is improved
-                pprint.pprint(query_parameters, indent=2)
-                # object_result = alerce.query_object(**query_parameters)
-                sid = 2
-
-                query = '''
-                    SELECT * FROM alerce_tap.object
-                    WHERE oid = %d AND sid = %d
-                    ''' % (int(query_parameters.get("oid")), sid)
-                object_result = tap_service.search(query)
+                # Get the sid from the query parameters, defaulting to 0 (ZTF) if not provided
+                sid = query_parameters.get("sid", 0)
+                if sid == 0:
+                    query_parameters.pop("sid", None)
+                    object_result = alerce.query_objects(**query_parameters)
+                else:
+                    query = '''
+                        SELECT * FROM alerce_tap.object
+                        WHERE oid = %s AND sid = %d
+                        ''' % (query_parameters.get("oid"), sid)
+                    object_result = tap_service.search(query)
+                    object_result = _to_native_types(dict(object_result[0]))
+                    # The TAP `object` table names this column "n_det"; the results table/target
+                    # extras use the ALeRCE REST API's "ndet" naming, so normalize it here.
+                    if "n_det" in object_result:
+                        object_result["ndet"] = object_result.pop("n_det")
                 if object_result:
-                    results.append(dict(object_result[0]))
+                    results.append(object_result)
 
                     return results
 
+            # "sid" is only used for the TAP-based object ID lookup above; the ALeRCE
+            # REST client used below doesn't accept it.
+            query_parameters.pop("sid", None)
             classifier_params = query_parameters.pop("classifiers")
             if len(classifier_params) == 0:
                 general_results = alerce.query_objects(**query_parameters).get("items", [])
@@ -178,10 +202,16 @@ class AlerceDataService(DataService):
         See https://alerce.readthedocs.io/en/stable/ for details.
         """
         form_parameters = parameters
+        survey = form_parameters.get("survey", "ZTF")
         query_params = {
             "format": "json",
-            "survey": form_parameters.get("survey", "").lower(),
+            "survey": survey.lower(),
         }
+        if survey == "LSST":
+            lsst_object_type = form_parameters.get("lsst_object_type") or "diaObject"
+            query_params["sid"] = 2 if lsst_object_type == "ssObject" else 1
+        else:
+            query_params["sid"] = 0
         if (firstmjd_gt := form_parameters.get("firstmjd_gt")) and (
             firstmjd_lt := form_parameters.get("firstmjd_lt")
         ):
