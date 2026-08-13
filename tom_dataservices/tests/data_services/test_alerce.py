@@ -7,7 +7,12 @@ from django.test import TestCase
 
 import numpy as np
 
-from tom_dataservices.data_services.alerce import AlerceDataService, AlerceForm, _build_tap_object_query
+from tom_dataservices.data_services.alerce import (
+    AlerceDataService,
+    AlerceForm,
+    _build_tap_object_query,
+    _group_tap_classifier_rows,
+)
 from tom_dataservices.dataservices import QueryServiceError
 from tom_targets.models import Target
 
@@ -24,14 +29,36 @@ MOCK_CLASSIFIERS = [
     },
 ]
 
+# alerce_tap.classifier JOIN alerce_tap.taxonomy rows (tid=0, ZTF) that group into MOCK_CLASSIFIERS
+MOCK_ZTF_TAP_CLASSIFIER_ROWS = [
+    {"classifier_name": "lc_classifier", "classifier_version": "hierarchical_random_forest_1.0.0",
+     "class_name": "SNIa"},
+    {"classifier_name": "lc_classifier", "classifier_version": "hierarchical_random_forest_1.0.0",
+     "class_name": "SNII"},
+    {"classifier_name": "lc_classifier", "classifier_version": "hierarchical_random_forest_1.0.0",
+     "class_name": "AGN"},
+    {"classifier_name": "stamp_classifier", "classifier_version": "stamp_classifier_1.0.1", "class_name": "AGN"},
+    {"classifier_name": "stamp_classifier", "classifier_version": "stamp_classifier_1.0.1", "class_name": "SN"},
+    {"classifier_name": "stamp_classifier", "classifier_version": "stamp_classifier_1.0.1", "class_name": "bogus"},
+]
+
+# tid=1 (LSST) rows, exercising the LSST-only stamp classifier
+MOCK_LSST_TAP_CLASSIFIER_ROWS = [
+    {"classifier_name": "stamp_classifier_rubin_beta", "classifier_version": "1.0.0", "class_name": "SN"},
+    {"classifier_name": "stamp_classifier_rubin_beta", "classifier_version": "1.0.0", "class_name": "bogus"},
+]
+
 
 class TestAlerceForm(TestCase):
     def setUp(self):
         cache.clear()
-        patcher = patch("tom_dataservices.data_services.alerce.alerce")
-        self.mock_alerce = patcher.start()
-        self.addCleanup(patcher.stop)
-        self.mock_alerce.query_classifiers.return_value = MOCK_CLASSIFIERS
+        alerce_patcher = patch("tom_dataservices.data_services.alerce.alerce")
+        self.mock_alerce = alerce_patcher.start()
+        self.addCleanup(alerce_patcher.stop)
+        tap_patcher = patch("tom_dataservices.data_services.alerce.tap_service")
+        self.mock_tap_service = tap_patcher.start()
+        self.addCleanup(tap_patcher.stop)
+        self.mock_tap_service.search.return_value = MOCK_ZTF_TAP_CLASSIFIER_ROWS
 
     def test_classifier_fields_added_dynamically(self):
         form = AlerceForm(data={"data_service": "ALeRCE"})
@@ -46,7 +73,39 @@ class TestAlerceForm(TestCase):
     def test_classifiers_cached_after_first_query(self):
         AlerceForm(data={"data_service": "ALeRCE"})
         AlerceForm(data={"data_service": "ALeRCE"})
-        self.mock_alerce.query_classifiers.assert_called_once()
+        self.mock_tap_service.search.assert_called_once()
+
+    def test_get_classifiers_query_uses_tid_for_survey(self):
+        AlerceForm(data={"data_service": "ALeRCE", "survey": "LSST"})
+        adql = self.mock_tap_service.search.call_args.args[0]
+        self.assertIn("c.tid = 1", adql)
+
+        cache.clear()
+        AlerceForm(data={"data_service": "ALeRCE", "survey": "ZTF"})
+        adql = self.mock_tap_service.search.call_args.args[0]
+        self.assertIn("c.tid = 0", adql)
+
+    def test_per_survey_cache_keys_query_tap_independently(self):
+        AlerceForm(data={"data_service": "ALeRCE", "survey": "ZTF"})
+        AlerceForm(data={"data_service": "ALeRCE", "survey": "LSST"})
+        self.assertEqual(self.mock_tap_service.search.call_count, 2)
+        # Re-instantiating either survey's form now hits the per-survey cache.
+        AlerceForm(data={"data_service": "ALeRCE", "survey": "ZTF"})
+        AlerceForm(data={"data_service": "ALeRCE", "survey": "LSST"})
+        self.assertEqual(self.mock_tap_service.search.call_count, 2)
+
+    def test_lsst_form_gets_lsst_classifier_entries(self):
+        self.mock_tap_service.search.return_value = MOCK_LSST_TAP_CLASSIFIER_ROWS
+        form = AlerceForm(data={"data_service": "ALeRCE", "survey": "LSST"})
+        self.assertIn("cfield_stamp_classifier_rubin_beta", form.fields)
+        self.assertEqual(
+            form.fields["cfield_stamp_classifier_rubin_beta"].choices,
+            [(None, "")] + [(k, k) for k in ["SN", "bogus"]],
+        )
+
+    def test_no_rest_query_classifiers_call(self):
+        AlerceForm(data={"data_service": "ALeRCE"})
+        self.mock_alerce.query_classifiers.assert_not_called()
 
     def test_clean_bundles_selected_classifiers(self):
         form = AlerceForm(
@@ -62,6 +121,15 @@ class TestAlerceForm(TestCase):
             form.cleaned_data["classifiers"],
             [{"classifier": "lc_classifier", "class": "SNIa", "probability": 0.8}],
         )
+
+
+class TestGroupTapClassifierRows(TestCase):
+    def test_groups_by_classifier_name_and_version_preserving_taxonomy_order(self):
+        grouped = _group_tap_classifier_rows(MOCK_ZTF_TAP_CLASSIFIER_ROWS)
+        self.assertEqual(grouped, MOCK_CLASSIFIERS)
+
+    def test_empty_rows_returns_empty_list(self):
+        self.assertEqual(_group_tap_classifier_rows([]), [])
 
 
 class TestBuildQueryParameters(TestCase):

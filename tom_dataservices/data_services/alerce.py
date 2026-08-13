@@ -89,6 +89,31 @@ def _build_tap_object_query(query_parameters: dict, page_size: int = 20) -> str:
     return query
 
 
+SURVEY_TID = {"ZTF": 0, "LSST": 1}
+
+
+def _group_tap_classifier_rows(rows) -> list[dict]:
+    """
+    Groups `alerce_tap.classifier` JOIN `alerce_tap.taxonomy` rows into the shape
+    the (deprecated) REST `query_classifiers()` used to return:
+    [{classifier_name, classifier_version, classes: [...]}, ...]
+    """
+    grouped = {}
+    for row in rows:
+        row = dict(row)
+        key = (row["classifier_name"], row["classifier_version"])
+        grouped.setdefault(
+            key,
+            {
+                "classifier_name": row["classifier_name"],
+                "classifier_version": row["classifier_version"],
+                "classes": [],
+            },
+        )
+        grouped[key]["classes"].append(row["class_name"])
+    return list(grouped.values())
+
+
 class AlerceForm(BaseQueryForm):
     CLASSIFIER_FIELD_PREFIX = "cfield_"
 
@@ -122,12 +147,28 @@ class AlerceForm(BaseQueryForm):
         # self.fields['survey'].widget = forms.HiddenInput()
 
     def get_classifiers(self) -> list[dict]:
-        classifiers = cache.get("ds_alerce_classifiers")
+        tid = SURVEY_TID.get(self._current_survey(), SURVEY_TID["ZTF"])
+        cache_key = f"ds_alerce_classifiers_{tid}"
+        classifiers = cache.get(cache_key)
         if not classifiers:
-            classifiers = alerce.query_classifiers()
-            cache.set("ds_alerce_classifiers", classifiers, 3600 * 24)  # One day
+            query = '''
+                SELECT c.classifier_name, c.classifier_version, t.class_name
+                FROM alerce_tap.classifier c
+                JOIN alerce_tap.taxonomy t ON t.classifier_id = c.classifier_id
+                WHERE c.tid = %d ORDER BY c.classifier_name, t.taxonomy_order
+                ''' % tid
+            classifiers = _group_tap_classifier_rows(tap_service.search(query))
+            cache.set(cache_key, classifiers, 3600 * 24)  # One day
 
         return classifiers
+
+    def _current_survey(self) -> str:
+        """
+        The survey selected on this form instance, bound or not, used to pick the TAP
+        `tid` for get_classifiers(). Falls back to the field's initial value (ZTF).
+        """
+        survey = self.data.get("survey") if self.is_bound else self.initial.get("survey")
+        return survey or self.fields["survey"].initial
 
     def add_classifiers_fields(self) -> list[tuple[str, str]]:
         """
