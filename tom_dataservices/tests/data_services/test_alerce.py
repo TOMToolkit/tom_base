@@ -7,7 +7,7 @@ from django.test import TestCase
 
 import numpy as np
 
-from tom_dataservices.data_services.alerce import AlerceDataService, AlerceForm
+from tom_dataservices.data_services.alerce import AlerceDataService, AlerceForm, _build_tap_object_query
 from tom_dataservices.dataservices import QueryServiceError
 from tom_targets.models import Target
 
@@ -127,6 +127,43 @@ class TestBuildQueryParameters(TestCase):
         self.assertEqual(params["classifiers"], [])
 
 
+class TestBuildTapObjectQuery(TestCase):
+    def test_top_and_sid(self):
+        query = _build_tap_object_query({"sid": 1})
+        self.assertIn("SELECT TOP 20 * FROM alerce_tap.object", query)
+        self.assertIn("WHERE sid = 1", query)
+
+    def test_page_size_override(self):
+        query = _build_tap_object_query({"sid": 2}, page_size=50)
+        self.assertIn("SELECT TOP 50", query)
+
+    def test_cone_search_converts_radius_arcsec_to_degrees(self):
+        query = _build_tap_object_query({"sid": 1, "ra": 305.58, "dec": -18.79, "radius": 3600.0})
+        self.assertIn(
+            "CONTAINS(POINT('ICRS', meanra, meandec), CIRCLE('ICRS', 305.58, -18.79, 1.0))",
+            query,
+        )
+
+    def test_cone_search_absent_when_any_param_missing(self):
+        query = _build_tap_object_query({"sid": 1, "ra": 305.58, "dec": -18.79})
+        self.assertNotIn("CONTAINS", query)
+
+    def test_mjd_ranges(self):
+        query = _build_tap_object_query({"sid": 1, "firstmjd": [59000.0, 59500.0], "lastmjd": [59100.0, 59600.0]})
+        self.assertIn("AND firstmjd >= 59000.0 AND firstmjd <= 59500.0", query)
+        self.assertIn("AND lastmjd >= 59100.0 AND lastmjd <= 59600.0", query)
+
+    def test_ndet_two_sided(self):
+        query = _build_tap_object_query({"sid": 1, "ndet": [3, 10]})
+        self.assertIn("AND n_det >= 3", query)
+        self.assertIn("AND n_det <= 10", query)
+
+    def test_ndet_one_sided(self):
+        query = _build_tap_object_query({"sid": 1, "ndet": [3]})
+        self.assertIn("AND n_det >= 3", query)
+        self.assertNotIn("n_det <=", query)
+
+
 class TestQueryService(TestCase):
     def setUp(self):
         self.ds = AlerceDataService()
@@ -203,18 +240,37 @@ class TestQueryService(TestCase):
         with self.assertRaises(QueryServiceError):
             self.ds.query_service({"sid": 0, "survey": "ztf", "classifiers": []})
 
-    @unittest.expectedFailure
     def test_lsst_general_query_returns_annotated_results(self):
         """
-        LSST general (non-oid) queries currently reuse the ZTF REST code path,
-        which calls .get("items", []) on the result -- but the multisurvey
-        REST client's query_objects(survey='lsst') returns a bare list, not a
-        dict, so this raises AttributeError. Step 2 routes LSST general
-        queries through TAP instead and flips this to a real (passing) test.
+        LSST general (non-oid) queries now go through TAP against alerce_tap.object
+        instead of the REST client (whose query_objects(survey='lsst') returns a
+        bare list, breaking the ZTF-shaped `.get("items", [])` unwrap).
         """
-        self.mock_alerce.query_objects.return_value = [{"oid": 12345}]
+        rows = [
+            {"oid": 12345, "meanra": np.float64(10.0), "n_det": np.int64(5)},
+            {"oid": 67890, "meanra": np.float64(20.0), "n_det": np.int64(9)},
+        ]
+        self.mock_tap_service.search.return_value = rows
         result = self.ds.query_service({"sid": 1, "survey": "lsst", "classifiers": []})
+        self.mock_tap_service.search.assert_called_once()
+        self.assertEqual(len(result), 2)
         self.assertTrue(all(r["survey"] == "lsst" for r in result))
+        self.assertEqual(result[0]["ndet"], 5)
+        self.assertNotIn("n_det", result[0])
+
+    def test_lsst_classifier_general_query_raises_query_service_error(self):
+        classifiers = [{"classifier": "lc_classifier", "class": "SNIa", "probability": 0.5}]
+        with self.assertRaises(QueryServiceError):
+            self.ds.query_service({"sid": 1, "survey": "lsst", "classifiers": classifiers})
+        self.mock_tap_service.search.assert_not_called()
+
+    def test_ztf_general_query_normalizes_deltajd_to_deltamjd(self):
+        self.mock_alerce.query_objects.return_value = {
+            "items": [{"oid": "ZTF18aaaaaa", "deltajd": 12.5}]
+        }
+        result = self.ds.query_service({"sid": 0, "survey": "ztf", "classifiers": []})
+        self.assertEqual(result[0]["deltamjd"], 12.5)
+        self.assertNotIn("deltajd", result[0])
 
 
 class TestTargetAndDatumCreation(TestCase):

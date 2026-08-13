@@ -32,6 +32,63 @@ def _to_native_types(record: dict) -> dict:
     return {k: (v.item() if isinstance(v, np.generic) else v) for k, v in record.items()}
 
 
+def _normalize_tap_record(record: dict) -> dict:
+    """
+    Converts numpy scalars to native types and renames the TAP `object` table's
+    `n_det` column to `ndet`, matching the ALeRCE REST API naming used downstream
+    (results table, target extras).
+    """
+    record = _to_native_types(record)
+    if "n_det" in record:
+        record["ndet"] = record.pop("n_det")
+    return record
+
+
+def _normalize_ztf_record(record: dict) -> dict:
+    """
+    Renames the ZTF REST client's `deltajd` field to `deltamjd`, matching the TAP
+    `object` table naming (and the `firstmjd`/`lastmjd` naming already used elsewhere)
+    so downstream code sees one consistent field name regardless of survey.
+    """
+    if "deltajd" in record:
+        record["deltamjd"] = record.pop("deltajd")
+    return record
+
+
+def _build_tap_object_query(query_parameters: dict, page_size: int = 20) -> str:
+    """
+    Builds an ADQL query against `alerce_tap.object` for LSST (sid != 0) general
+    (non-oid) queries, consuming the same query_parameters shape produced by
+    `AlerceDataService.build_query_parameters`. Only numeric parameters (already
+    cleaned by the form) are interpolated, so there is no string-injection surface;
+    `oid` lookups are handled separately and are not built here.
+    """
+    sid = query_parameters.get("sid", 0)
+    query = f"SELECT TOP {page_size} * FROM alerce_tap.object WHERE sid = {sid}"
+
+    if all(query_parameters.get(k) is not None for k in ("ra", "dec", "radius")):
+        ra = query_parameters["ra"]
+        dec = query_parameters["dec"]
+        radius_deg = query_parameters["radius"] / 3600.0
+        query += (
+            f" AND 1 = CONTAINS(POINT('ICRS', meanra, meandec), "
+            f"CIRCLE('ICRS', {ra}, {dec}, {radius_deg}))"
+        )
+
+    if firstmjd := query_parameters.get("firstmjd"):
+        query += f" AND firstmjd >= {firstmjd[0]} AND firstmjd <= {firstmjd[1]}"
+
+    if lastmjd := query_parameters.get("lastmjd"):
+        query += f" AND lastmjd >= {lastmjd[0]} AND lastmjd <= {lastmjd[1]}"
+
+    if ndet := query_parameters.get("ndet"):
+        query += f" AND n_det >= {ndet[0]}"
+        if len(ndet) == 2:
+            query += f" AND n_det <= {ndet[1]}"
+
+    return query
+
+
 class AlerceForm(BaseQueryForm):
     CLASSIFIER_FIELD_PREFIX = "cfield_"
 
@@ -148,45 +205,52 @@ class AlerceDataService(DataService):
         if provided.
         """
         results = []
+        # Get the sid from the query parameters, defaulting to 0 (ZTF) if not provided
+        sid = query_parameters.get("sid", 0)
         try:
             if query_parameters.get("oid"):
-                # Get the sid from the query parameters, defaulting to 0 (ZTF) if not provided
-                sid = query_parameters.get("sid", 0)
                 if sid == 0:
                     query_parameters.pop("sid", None)
                     object_result = alerce.query_objects(**query_parameters)
+                    object_result = _normalize_ztf_record(object_result)
                 else:
                     query = '''
                         SELECT * FROM alerce_tap.object
                         WHERE oid = %s AND sid = %d
                         ''' % (query_parameters.get("oid"), sid)
                     object_result = tap_service.search(query)
-                    object_result = _to_native_types(dict(object_result[0]))
-                    # The TAP `object` table names this column "n_det"; the results table/target
-                    # extras use the ALeRCE REST API's "ndet" naming, so normalize it here.
-                    if "n_det" in object_result:
-                        object_result["ndet"] = object_result.pop("n_det")
+                    object_result = _normalize_tap_record(dict(object_result[0]))
                 if object_result:
                     results.append(object_result)
 
                     return results
 
-            # "sid" is only used for the TAP-based object ID lookup above; the ALeRCE
-            # REST client used below doesn't accept it.
-            query_parameters.pop("sid", None)
-            classifier_params = query_parameters.pop("classifiers")
-            if len(classifier_params) == 0:
-                general_results = alerce.query_objects(**query_parameters).get("items", [])
-                results.extend(general_results)
+            elif sid != 0:
+                # LSST (diaObject/ssObject) general queries go through TAP; classifier
+                # queries against LSST objects are not yet supported.
+                if query_parameters.get("classifiers"):
+                    raise QueryServiceError("LSST classifier queries not yet supported")
+                tap_query = _build_tap_object_query(query_parameters)
+                results = [_normalize_tap_record(dict(row)) for row in tap_service.search(tap_query)]
+
             else:
-                for classifier in classifier_params:
-                    classifier_results = alerce.query_objects(
-                        classifier=classifier["classifier"],
-                        class_name=classifier["class"],
-                        probability=classifier["probability"],
-                        **query_parameters,
-                    ).get("items", [])
-                    results.extend(classifier_results)
+                # "sid" is only used for the TAP-based object ID lookup above; the ALeRCE
+                # REST client used below doesn't accept it.
+                query_parameters.pop("sid", None)
+                classifier_params = query_parameters.pop("classifiers")
+                if len(classifier_params) == 0:
+                    general_results = alerce.query_objects(**query_parameters).get("items", [])
+                    results.extend(general_results)
+                else:
+                    for classifier in classifier_params:
+                        classifier_results = alerce.query_objects(
+                            classifier=classifier["classifier"],
+                            class_name=classifier["class"],
+                            probability=classifier["probability"],
+                            **query_parameters,
+                        ).get("items", [])
+                        results.extend(classifier_results)
+                results = [_normalize_ztf_record(result) for result in results]
         except (ObjectNotFoundError, ValueError, APIError) as e:
             raise QueryServiceError(str(e))
 
