@@ -164,8 +164,8 @@ dropdown, linked to that page:
 ``detail_url_name`` is optional and is omitted from the minimal example above. A facility
 that leaves it unset is still fully registered -- it has an observe button and observation
 forms -- but gets no menu item. If no facility sets it, the dropdown is not displayed.
-See ``tom_demoapp`` for a worked example, including composing the namespace from the
-AppConfig's ``url_namespace`` attribute.
+See ``tom_demoapp`` for a worked example, including deriving the namespace from the
+AppConfig's ``name``.
 
 For ``detail_url_name`` to resolve, the app's URLs must be mounted in the TOM under that
 namespace. A reusable app mounts its own ``urls.py`` through the ``include_url_paths()``
@@ -176,18 +176,20 @@ app, so no TOM ``urls.py`` edits are required:
 
    class MyAppConfig(AppConfig):
        name = 'myapp'
-       url_prefix = 'myapp'     # URL path prefix for this app's pages: HOST/myapp/...
-       url_namespace = 'myapp'  # the namespace half of detail_url_name
+       route_prefix = 'myapp'  # prefixes every route in myapp's urls.py: HOST/myapp/...
 
        def include_url_paths(self):
            return [
-               path(f'{self.url_prefix}/', include(f'{self.name}.urls', namespace=self.url_namespace)),
+               path(f'{self.route_prefix}/', include(f'{self.name}.urls')),
            ]
 
-(``url_prefix`` and ``url_namespace`` are TOM plugin conventions, not Django AppConfig
-attributes.) The included ``urls.py`` must set ``app_name`` -- Django requires it when
-``include()`` is called with ``namespace=`` -- and must contain a ``path()`` whose
-``name=`` is the second half of ``detail_url_name``.
+(``route_prefix`` is a TOM plugin convention, not a Django AppConfig attribute.) The
+included ``urls.py`` supplies the namespace by declaring ``app_name`` -- by convention
+derived from the AppConfig (``app_name = MyAppConfig.name``) so the namespace and the
+package name can never disagree -- and must contain a ``path()`` whose ``name=`` is the
+second half of ``detail_url_name``. If ``app_name`` is missing, the app's URL names are
+un-namespaced and ``detail_url_name`` will not reverse; the menu item is skipped with a
+logged warning.
 
 Implementing observation submission
 -----------------------------------

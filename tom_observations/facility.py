@@ -72,7 +72,7 @@ def get_service_classes() -> dict:
             raise ImportError(f'Could not import {service}: {e}')
         service_choices[clazz.name] = clazz
 
-    # 2 add the faciliites from apps implementing the integration point
+    # 2 add the facilities from apps implementing the integration point
     for app in apps.get_app_configs():
         observation_facilities_hook = getattr(app, 'observation_facilities', None)
         if observation_facilities_hook is None:
@@ -81,7 +81,7 @@ def get_service_classes() -> dict:
             try:
                 clazz = import_string(facility['class'])
             except KeyError:
-                # the integration point returned a mal-formed conifguration dict
+                # the integration point returned a malformed configuration dict
                 logger.warning(f'WARNING: observation_facilities() entry from {app.name} is missing '
                                f'the required "class" key: {facility!r}. Facility skipped.')
                 continue
@@ -106,7 +106,7 @@ def get_service_class(name):
         return available_classes[name]
     except KeyError:
         raise ImportError(f'Could not find a facility named {name}. Add it to settings.TOM_FACILITY_CLASSES or '
-                          f'implement the  observation_facilities() integration point in the AppConfig subclass.')
+                          f'implement the observation_facilities() integration point in the AppConfig subclass.')
 
 
 class BaseObservationForm(forms.Form):
