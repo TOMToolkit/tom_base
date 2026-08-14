@@ -638,7 +638,7 @@ class TestReducedDatumModel(TestCase):
 
     def test_create_reduced_datum_duplicate(self):
         """Test that we cannot add a second PhotometryReducedDatum with the same target,
-        timestamp, and bandpass"""
+        timestamp, brightness, and bandpass"""
         PhotometryReducedDatum.objects.create(
             target=self.target,
             timestamp=self.timestamp,
@@ -646,11 +646,11 @@ class TestReducedDatumModel(TestCase):
             bandpass="r"
         )
 
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             PhotometryReducedDatum.objects.create(
                 target=self.target,
                 timestamp=self.timestamp,
-                brightness=2.0,
+                brightness=1.0,
                 bandpass="r"
             )
 

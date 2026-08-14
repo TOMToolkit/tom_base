@@ -454,9 +454,14 @@ class PhotometryReducedDatum(ReducedDatumCommon):
         constraints = [
             models.UniqueConstraint(
                 fields=["target", "bandpass", "timestamp", "limit", "brightness", "instrument"],
-                name="unique_photometry"
+                name="unique_photometry",
+                nulls_distinct=False
             )
         ]
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class SpectroscopyReducedDatum(ReducedDatumCommon):
@@ -473,8 +478,13 @@ class SpectroscopyReducedDatum(ReducedDatumCommon):
             models.UniqueConstraint(
                 fields=["target", "timestamp", "telescope", "instrument", "flux"],
                 name="unique_spectroscopy",
+                nulls_distinct=False
             )
         ]
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class AstrometryReducedDatum(ReducedDatumCommon):
@@ -490,8 +500,13 @@ class AstrometryReducedDatum(ReducedDatumCommon):
             models.UniqueConstraint(
                 fields=["target", "timestamp", "telescope", "instrument", "ra", "dec"],
                 name="unique_astrometry",
+                nulls_distinct=False
             )
         ]
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 REDUCED_DATUM_MODELS = (
