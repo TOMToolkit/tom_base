@@ -119,7 +119,7 @@ class AlerceForm(BaseQueryForm):
 
     survey = forms.ChoiceField(
         label="Survey", choices=[("ZTF", "ZTF"), ("LSST", "LSST")], initial="ZTF",
-        widget=forms.Select(attrs={"x-model": "survey"}),
+        widget=forms.Select(attrs={"x-model": "$store.alerce.survey"}),
     )
     lsst_object_type = forms.ChoiceField(
         required=False,
@@ -146,8 +146,8 @@ class AlerceForm(BaseQueryForm):
         # Make the survey field hidden for now until the LSST API is more featured
         # self.fields['survey'].widget = forms.HiddenInput()
 
-    def get_classifiers(self) -> list[dict]:
-        tid = SURVEY_TID.get(self._current_survey(), SURVEY_TID["ZTF"])
+    def get_classifiers(self, survey: str) -> list[dict]:
+        tid = SURVEY_TID.get(survey, SURVEY_TID["ZTF"])
         cache_key = f"ds_alerce_classifiers_{tid}"
         classifiers = cache.get(cache_key)
         if not classifiers:
@@ -162,56 +162,59 @@ class AlerceForm(BaseQueryForm):
 
         return classifiers
 
-    def _current_survey(self) -> str:
-        """
-        The survey selected on this form instance, bound or not, used to pick the TAP
-        `tid` for get_classifiers(). Falls back to the field's initial value (ZTF).
-        """
-        survey = self.data.get("survey") if self.is_bound else self.initial.get("survey")
-        return survey or self.fields["survey"].initial
-
     def add_classifiers_fields(self) -> list[tuple[str, str]]:
         """
-        Adds the fields dynamically to the form.
+        Adds classifier fields for *every* survey (not just whichever one happens to be
+        selected/initial), so the advanced form can show/hide the right classifier set
+        purely client-side (via Alpine, keyed off the `survey` field) when the user
+        switches surveys, without a full form re-render. Field names embed the owning
+        survey (`cfield_{survey}__{classifier_name}`) so `clean()` can tell which group a
+        submitted value belongs to and ignore stale values left in a hidden,
+        non-selected survey's fields.
         Returns a list of classifier, probability fields name pairs to be used
         by the crispy layout.
         """
-        classifiers = self.get_classifiers()
         field_names = []
-        for c in classifiers:
-            field_name = f"{self.CLASSIFIER_FIELD_PREFIX}{c['classifier_name']}"
-            # Add the field to the Django form
-            self.fields[field_name] = forms.ChoiceField(
-                label=f"{c['classifier_name']}",
-                choices=[(None, "")] + [(k, k) for k in c["classes"]],
-                required=False,
-                help_text=f'Classifier Version: {c["classifier_version"]}',
-            )
-            prob_field_name = (
-                f"prob_{self.CLASSIFIER_FIELD_PREFIX}{c['classifier_name']}"
-            )
-            self.fields[prob_field_name] = forms.FloatField(
-                label=f"{c['classifier_name']} Probability",
-                required=False,
-                max_value=1,
-                min_value=0,
-                help_text="Value between 0 and 1"
-            )
-            field_names.append((field_name, prob_field_name))
+        for survey in SURVEY_TID:
+            for c in self.get_classifiers(survey):
+                field_name = f"{self.CLASSIFIER_FIELD_PREFIX}{survey}__{c['classifier_name']}"
+                # Add the field to the Django form
+                self.fields[field_name] = forms.ChoiceField(
+                    label=f"{c['classifier_name']}",
+                    choices=[(None, "")] + [(k, k) for k in c["classes"]],
+                    required=False,
+                    help_text=f'Classifier Version: {c["classifier_version"]}',
+                )
+                prob_field_name = f"prob_{field_name}"
+                self.fields[prob_field_name] = forms.FloatField(
+                    label=f"{c['classifier_name']} Probability",
+                    required=False,
+                    max_value=1,
+                    min_value=0,
+                    help_text="Value between 0 and 1"
+                )
+                field_names.append((field_name, prob_field_name))
 
         # Returns field names, not the actual field objects
         return field_names
 
     def clean(self):
         cleaned_data = super().clean() or {}
+        selected_survey = cleaned_data.get("survey")
         classifiers: list[dict] = []
 
-        # Find the classifiers, if any
+        # Find the classifiers, if any, belonging to the currently selected survey.
+        # (Non-selected surveys' classifier fields are present in the form -- so they
+        # can be toggled client-side -- but merely hidden, not disabled, so a stale
+        # value left over from switching surveys must be ignored here.)
         for k, v in cleaned_data.items():
             if k.startswith(self.CLASSIFIER_FIELD_PREFIX) and v:
+                survey, classifier_name = k[len(self.CLASSIFIER_FIELD_PREFIX):].split("__", 1)
+                if survey != selected_survey:
+                    continue
                 classifiers.append(
                     {
-                        "classifier": k.split(self.CLASSIFIER_FIELD_PREFIX)[1],
+                        "classifier": classifier_name,
                         "class": v,
                         "probability": cleaned_data.get(f"prob_{k}", None),
                     }

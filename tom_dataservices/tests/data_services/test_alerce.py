@@ -49,6 +49,23 @@ MOCK_LSST_TAP_CLASSIFIER_ROWS = [
 ]
 
 
+def _tap_classifier_side_effect(ztf_rows=None, lsst_rows=None):
+    """
+    add_classifiers_fields() now queries TAP once per survey (so every survey's
+    classifier fields are always on the form -- see its docstring). Route each
+    tap_service.search() call's mocked response by the `tid` filter in the ADQL query,
+    rather than a single fixed return_value, so ZTF (tid=0) and LSST (tid=1) get their
+    own rows regardless of call order.
+    """
+    ztf_rows = MOCK_ZTF_TAP_CLASSIFIER_ROWS if ztf_rows is None else ztf_rows
+    lsst_rows = MOCK_LSST_TAP_CLASSIFIER_ROWS if lsst_rows is None else lsst_rows
+
+    def _search(query, *args, **kwargs):
+        return lsst_rows if "tid = 1" in query else ztf_rows
+
+    return _search
+
+
 class TestAlerceForm(TestCase):
     def setUp(self):
         cache.clear()
@@ -58,62 +75,65 @@ class TestAlerceForm(TestCase):
         tap_patcher = patch("tom_dataservices.data_services.alerce.tap_service")
         self.mock_tap_service = tap_patcher.start()
         self.addCleanup(tap_patcher.stop)
-        self.mock_tap_service.search.return_value = MOCK_ZTF_TAP_CLASSIFIER_ROWS
+        self.mock_tap_service.search.side_effect = _tap_classifier_side_effect()
 
-    def test_classifier_fields_added_dynamically(self):
+    def test_ztf_classifier_fields_added_dynamically(self):
         form = AlerceForm(data={"data_service": "ALeRCE"})
-        self.assertIn("cfield_lc_classifier", form.fields)
-        self.assertIn("prob_cfield_lc_classifier", form.fields)
+        self.assertIn("cfield_ZTF__lc_classifier", form.fields)
+        self.assertIn("prob_cfield_ZTF__lc_classifier", form.fields)
         self.assertEqual(
-            form.fields["cfield_lc_classifier"].choices,
+            form.fields["cfield_ZTF__lc_classifier"].choices,
             [(None, "")] + [(k, k) for k in ["SNIa", "SNII", "AGN"]],
         )
-        self.assertIn("cfield_stamp_classifier", form.fields)
+        self.assertIn("cfield_ZTF__stamp_classifier", form.fields)
+
+    def test_lsst_classifier_fields_added_dynamically(self):
+        form = AlerceForm(data={"data_service": "ALeRCE"})
+        self.assertIn("cfield_LSST__stamp_classifier_rubin_beta", form.fields)
+        self.assertEqual(
+            form.fields["cfield_LSST__stamp_classifier_rubin_beta"].choices,
+            [(None, "")] + [(k, k) for k in ["SN", "bogus"]],
+        )
+
+    def test_both_surveys_classifier_fields_present_regardless_of_selection(self):
+        """
+        Every survey's classifier fields must be on the form regardless of which
+        survey is currently selected, so the advanced form partial can show/hide the
+        right set purely client-side (via Alpine, keyed off $store.alerce.survey) when
+        the user switches surveys -- with no full form re-render.
+        """
+        form = AlerceForm(data={"data_service": "ALeRCE", "survey": "ZTF"})
+        self.assertIn("cfield_ZTF__lc_classifier", form.fields)
+        self.assertIn("cfield_LSST__stamp_classifier_rubin_beta", form.fields)
 
     def test_classifiers_cached_after_first_query(self):
         AlerceForm(data={"data_service": "ALeRCE"})
+        self.assertEqual(self.mock_tap_service.search.call_count, 2)  # one per survey
         AlerceForm(data={"data_service": "ALeRCE"})
-        self.mock_tap_service.search.assert_called_once()
+        self.assertEqual(self.mock_tap_service.search.call_count, 2)  # served from cache
 
-    def test_get_classifiers_query_uses_tid_for_survey(self):
-        AlerceForm(data={"data_service": "ALeRCE", "survey": "LSST"})
-        adql = self.mock_tap_service.search.call_args.args[0]
-        self.assertIn("c.tid = 1", adql)
+    def test_get_classifiers_queries_use_tid_per_survey(self):
+        AlerceForm(data={"data_service": "ALeRCE"})
+        queries = [call.args[0] for call in self.mock_tap_service.search.call_args_list]
+        self.assertTrue(any("c.tid = 0" in q for q in queries))
+        self.assertTrue(any("c.tid = 1" in q for q in queries))
 
-        cache.clear()
-        AlerceForm(data={"data_service": "ALeRCE", "survey": "ZTF"})
-        adql = self.mock_tap_service.search.call_args.args[0]
-        self.assertIn("c.tid = 0", adql)
-
-    def test_per_survey_cache_keys_query_tap_independently(self):
-        AlerceForm(data={"data_service": "ALeRCE", "survey": "ZTF"})
-        AlerceForm(data={"data_service": "ALeRCE", "survey": "LSST"})
-        self.assertEqual(self.mock_tap_service.search.call_count, 2)
-        # Re-instantiating either survey's form now hits the per-survey cache.
-        AlerceForm(data={"data_service": "ALeRCE", "survey": "ZTF"})
-        AlerceForm(data={"data_service": "ALeRCE", "survey": "LSST"})
-        self.assertEqual(self.mock_tap_service.search.call_count, 2)
-
-    def test_lsst_form_gets_lsst_classifier_entries(self):
-        self.mock_tap_service.search.return_value = MOCK_LSST_TAP_CLASSIFIER_ROWS
-        form = AlerceForm(data={"data_service": "ALeRCE", "survey": "LSST"})
-        self.assertIn("cfield_stamp_classifier_rubin_beta", form.fields)
-        self.assertEqual(
-            form.fields["cfield_stamp_classifier_rubin_beta"].choices,
-            [(None, "")] + [(k, k) for k in ["SN", "bogus"]],
-        )
+    def test_per_survey_cache_keys_are_independent(self):
+        AlerceForm(data={"data_service": "ALeRCE"})
+        self.assertIsNotNone(cache.get("ds_alerce_classifiers_0"))
+        self.assertIsNotNone(cache.get("ds_alerce_classifiers_1"))
 
     def test_no_rest_query_classifiers_call(self):
         AlerceForm(data={"data_service": "ALeRCE"})
         self.mock_alerce.query_classifiers.assert_not_called()
 
-    def test_clean_bundles_selected_classifiers(self):
+    def test_clean_bundles_selected_classifiers_for_selected_survey(self):
         form = AlerceForm(
             data={
                 "data_service": "ALeRCE",
                 "survey": "ZTF",
-                "cfield_lc_classifier": "SNIa",
-                "prob_cfield_lc_classifier": 0.8,
+                "cfield_ZTF__lc_classifier": "SNIa",
+                "prob_cfield_ZTF__lc_classifier": 0.8,
             }
         )
         self.assertTrue(form.is_valid(), form.errors)
@@ -121,6 +141,25 @@ class TestAlerceForm(TestCase):
             form.cleaned_data["classifiers"],
             [{"classifier": "lc_classifier", "class": "SNIa", "probability": 0.8}],
         )
+
+    def test_clean_ignores_stale_hidden_survey_classifier_value(self):
+        """
+        Regression test for what the client-side-only survey toggle makes possible: a
+        user picks a ZTF classifier, then switches the Survey dropdown to LSST (no page
+        reload, so the ZTF field's value is untouched) and submits. The ZTF field is
+        hidden but still present (and still POSTed); clean() must not bundle it since it
+        doesn't belong to the now-selected survey.
+        """
+        form = AlerceForm(
+            data={
+                "data_service": "ALeRCE",
+                "survey": "LSST",
+                "cfield_ZTF__lc_classifier": "SNIa",
+                "prob_cfield_ZTF__lc_classifier": 0.8,
+            }
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["classifiers"], [])
 
 
 class TestGroupTapClassifierRows(TestCase):

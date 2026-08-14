@@ -1,7 +1,16 @@
 {% load django_bootstrap5 %}
-<div x-data="{ survey: '{{ form.survey.value|default_if_none:"ZTF" }}' }">
+<script>
+  {# Registered in a global store (rather than a local x-data) so the survey field's #}
+  {# advanced-form partial (a separate x-data root) can react to it too -- see #}
+  {# alerce_advanced_form.html. Must run before Alpine's own deferred script fires #}
+  {# 'alpine:init', which this listener guarantees since it's not itself deferred. #}
+  document.addEventListener('alpine:init', () => {
+    Alpine.store('alerce', { survey: '{{ form.survey.value|default_if_none:"ZTF" }}' });
+  });
+</script>
+<div x-data>
   {% bootstrap_field form.survey %}
-  <div x-show="survey === 'LSST'">
+  <div x-show="$store.alerce.survey === 'LSST'">
     {% bootstrap_field form.lsst_object_type %}
   </div>
   {% bootstrap_field form.object_id %}
