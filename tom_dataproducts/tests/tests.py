@@ -14,7 +14,6 @@ from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import text, timezone
