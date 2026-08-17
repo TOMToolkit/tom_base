@@ -109,7 +109,8 @@ Adding a facility from an app
 -----------------------------
 
 A facility implemented as a Django reusable app can advertise itself
-to a TOM without the editing ``settings.py``, which simplifies it's installation.
+to a TOM without requiring an admin to include it in ``settings.TOM_FACILITY_CLASSES``,
+which simplifies its installation.
 To do this, implement the ``observation_facilities()`` integration point
 on the app's ``AppConfig`` subclass:
 
@@ -121,11 +122,14 @@ on the app's ``AppConfig`` subclass:
        def observation_facilities(self):
            return [{'class': f'{self.name}.myfacility.MyObservationFacility'}]
 
+More details can be found on the ``tom_demoapp`` repository `wiki <https://github.com/TOMToolkit/tom_demoapp/wiki/Integration-Points#observation-facilities>`_.
+
 Facilities from both ``settings.TOM_FACILITY_CLASSES`` and the apps implementing
-the integration point are merged by ``tom_observations.facility.get_service_classes()``.
+the integration point have the same behavior with respect to target detail page buttons
+and Facilties navbar menu items.
 So, if your facility implements the ``observation_facilities()`` integration point,
 adding the app to ``INSTALLED_APPS`` is all that is required for installation.
-See ``tom_demoapp`` for a worked example.
+See ``tom_demoapp`` for a demonstration of the basics  and ``tom_cfht`` for a fully worked example.
 
 BaseRoboticObservationFacility and BaseRoboticObservationForm
 -------------------------------------------------------------
@@ -150,10 +154,18 @@ form classes should contain.
 
 Linking to a facility detail page
 ---------------------------------
+TOMToolkit typically interacts with observation facilities to submit requests to observe
+a specific target. Observation request forms are typically accessed via buttons on the Observe
+tab of the target detail page for the target being observed. When a TOM needs to interact with
+an observation facility for reasons that are not target specific, a "facility detail" page can
+be specified. For example, the Canada France Hawaii telescope (CFHT) facility detail page allows
+a TOM to sync target data with the CFHT P2 tool. This precludes having to visit every target's
+detail page to sync its data. The faciliity class attribute ``detail_url_name``
+supplies the URL of its facility detail page.
 
 A facility may set ``detail_url_name`` to the namespaced Django URL name of a page
-describing the facility. Facilities that set it appear in the navbar **Facilities**
-dropdown, linked to that page:
+that presents general, non-target-specific funcionality. Facilities that set it
+appear in the navbar **Facilities** dropdown, linked to that page:
 
 .. code:: python
 
@@ -163,9 +175,10 @@ dropdown, linked to that page:
 
 ``detail_url_name`` is optional and is omitted from the minimal example above. A facility
 that leaves it unset is still fully registered -- it has an observe button and observation
-forms -- but gets no menu item. If no facility sets it, the dropdown is not displayed.
-See ``tom_demoapp`` for a worked example, including deriving the namespace from the
-AppConfig's ``name``.
+forms -- but gets no menu item in the Facilities navbar dropdown. If no facility sets it,
+the dropdown is not displayed.
+See ``tom_demoapp`` for a demonstration of the basics, including deriving the namespace from the
+AppConfig's ``name`` and ``tom_cfht`` for a fully worked example.
 
 For ``detail_url_name`` to resolve, the app's URLs must be mounted in the TOM under that
 namespace. A reusable app mounts its own ``urls.py`` through the ``include_url_paths()``
