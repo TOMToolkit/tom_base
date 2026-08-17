@@ -55,6 +55,10 @@ def get_service_classes() -> dict:
       1. ``settings.TOM_FACILITY_CLASSES``
       2. ``observation_facilities()`` AppConfig integration point (see ``tom_demoapp`` for example).
 
+    A facility name present in both sources resolves to the settings-declared class: A TOM
+    can customize an app's facility by listing its own subclass (with the same ``name``) in
+    ``TOM_FACILITY_CLASSES`` while still using the app's templates, URLs and utilities.
+
     Returns:
         dict: {facility_name: FacilityClass}
     """
@@ -83,7 +87,7 @@ def get_service_classes() -> dict:
             except KeyError:
                 # the integration point returned a malformed configuration dict
                 logger.warning(f'WARNING: observation_facilities() entry from {app.name} is missing '
-                               f'the required "class" key: {facility!r}. Facility skipped.')
+                               f'the required "class" key: {facility}. Facility skipped.')
                 continue
             except ImportError as e:
                 # the class couldn't be imported
@@ -91,7 +95,14 @@ def get_service_classes() -> dict:
                                f'{facility["class"]}.\n'
                                f'{e}')
                 continue
-            service_choices[clazz.name] = clazz
+
+            # TOM_FACILITY_CLASSES names take precedence over integration point names
+            if clazz.name not in service_choices:
+                service_choices[clazz.name] = clazz
+            else:
+                # annouce that the integration point name has been overridden
+                logger.info(f'Facility {clazz.name} from {app.name} overridden by settings.TOM_FACILITY_CLASSES '
+                            f'entry {service_choices[clazz.name]}')
 
     return service_choices
 

@@ -19,7 +19,7 @@ from .factories import ObservingRecordFactory, ObservationTemplateFactory, Sider
 from tom_observations.facility import get_service_classes
 from tom_observations.templatetags.observation_extras import observation_facilities_list
 from tom_observations.utils import get_astroplan_sun_and_time, get_sidereal_visibility
-from tom_observations.tests.utils import FakeManualFacility, FakeRoboticFacility
+from tom_observations.tests.utils import CustomizedFakeRoboticFacility, FakeManualFacility, FakeRoboticFacility
 from tom_observations.models import ObservationRecord, ObservationGroup, ObservationTemplate
 from tom_targets.models import Target
 from guardian.shortcuts import assign_perm
@@ -529,6 +529,18 @@ class TestGetServiceClasses(TestCase):
         with mock.patch('tom_observations.facility.apps.get_app_configs', return_value=[fake_app_config]):
             service_classes = get_service_classes()
         self.assertEqual(service_classes, {'FakeRoboticFacility': FakeRoboticFacility})
+
+    @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.CustomizedFakeRoboticFacility'])
+    def test_settings_declared_facility_wins_name_collision(self):
+        """When both sources supply the same facility name, the TOM_FACILITY_CLASSES class is used.
+
+        This is the customization path: a TOM subclasses an app's facility (keeping its name) and
+        lists the subclass in settings; the app's default must not clobber it.
+        """
+        fake_app_config = self._fake_app_config([{'class': 'tom_observations.tests.utils.FakeRoboticFacility'}])
+        with mock.patch('tom_observations.facility.apps.get_app_configs', return_value=[fake_app_config]):
+            service_classes = get_service_classes()
+        self.assertIs(service_classes['FakeRoboticFacility'], CustomizedFakeRoboticFacility)
 
     @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'])
     def test_unimportable_app_facility_is_skipped_with_warning(self):
