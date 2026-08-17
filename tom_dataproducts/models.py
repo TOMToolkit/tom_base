@@ -372,7 +372,7 @@ class ReducedDatumCommon(models.Model):
     :type source_location: str
 
     :param reduction_version: A short reference to the process, level, parameters, or version of the reduction used to
-                              create the reduced datum. Used to determine uniqueness of the datum. Additional details 
+                              create the reduced datum. Used to determine uniqueness of the datum. Additional details
                               (reducer, full list of parameters, etc.) should be stored as needed in the ``value`` dict.
     :type reduction_version: str
 
