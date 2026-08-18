@@ -121,13 +121,9 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = False
-
 USE_TZ = True
 
-DATETIME_FORMAT = 'Y-m-d H:i:s'
-DATE_FORMAT = 'Y-m-d'
-
+FORMAT_MODULE_PATH = 'tom_base.formats'
 
 # Caching
 # https://docs.djangoproject.com/en/dev/topics/cache/#filesystem-caching
