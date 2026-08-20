@@ -7,6 +7,7 @@ import requests
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit, Div, HTML
 from django import forms
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ImproperlyConfigured
@@ -19,8 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class CredentialStatus(Enum):
-    """
-    Enum representing the status of facility credentials.
+    """Enum representing the status of facility credentials.
 
     This enum is used to track the state of credentials throughout the facility lifecycle,
     providing clear information about whether credentials are available, where they came from,
@@ -48,33 +48,81 @@ except AttributeError:
     AUTO_THUMBNAILS = False
 
 
-def get_service_classes():
+def get_service_classes() -> dict:
+    """Return a dictionary mapping facility name to facility class for all known facilities.
+
+    Facilities come from two sources, combined here:
+      1. ``settings.TOM_FACILITY_CLASSES``
+      2. ``observation_facilities()`` AppConfig integration point (see ``tom_demoapp`` for example).
+
+    A facility name present in both sources resolves to the settings-declared class: A TOM
+    can customize an app's facility by listing its own subclass (with the same ``name``) in
+    ``TOM_FACILITY_CLASSES`` while still using the app's templates, URLs and utilities.
+
+    Returns:
+        dict: {facility_name: FacilityClass}
+    """
     try:
         TOM_FACILITY_CLASSES = settings.TOM_FACILITY_CLASSES
     except AttributeError:
         TOM_FACILITY_CLASSES = DEFAULT_FACILITY_CLASSES
 
     service_choices = {}
+    # 1 get the facilities from settings.py
     for service in TOM_FACILITY_CLASSES:
         try:
             clazz = import_string(service)
         except (ImportError, AttributeError) as e:
             raise ImportError(f'Could not import {service}: {e}')
         service_choices[clazz.name] = clazz
+
+    # 2 add the facilities from apps implementing the integration point
+    for app in apps.get_app_configs():
+        observation_facilities_hook = getattr(app, 'observation_facilities', None)
+        if observation_facilities_hook is None:
+            continue  # this app doesn't implement the integration point
+        for facility in observation_facilities_hook() or []:  # `or []` tolerates a hook returning None
+            try:
+                clazz = import_string(facility['class'])
+            except KeyError:
+                # the integration point returned a malformed configuration dict
+                logger.warning(f'WARNING: observation_facilities() entry from {app.name} is missing '
+                               f'the required "class" key: {facility}. Facility skipped.')
+                continue
+            except ImportError as e:
+                # the class couldn't be imported
+                logger.warning(f'WARNING: Could not import facility class for {app.name} from '
+                               f'{facility["class"]}.\n'
+                               f'{e}')
+                continue
+
+            # TOM_FACILITY_CLASSES names take precedence over integration point names
+            if clazz.name not in service_choices:
+                service_choices[clazz.name] = clazz
+            else:
+                # annouce that the integration point name has been overridden
+                logger.info(f'Facility {clazz.name} from {app.name} overridden by settings.TOM_FACILITY_CLASSES '
+                            f'entry {service_choices[clazz.name]}')
+
     return service_choices
 
 
 def get_service_class(name):
+    """Return the single, named facility class.
+
+    Note: Implementation gets all the facilities and returns the named one.
+    """
     available_classes = get_service_classes()
     try:
         return available_classes[name]
     except KeyError:
-        raise ImportError('Could not a find a facility with that name. Did you add it to TOM_FACILITY_CLASSES?')
+        raise ImportError(f'Could not find a facility named {name}. Add it to settings.TOM_FACILITY_CLASSES or '
+                          f'implement the observation_facilities() integration point in the AppConfig subclass.')
 
 
 class BaseObservationForm(forms.Form):
-    """
-    This is the class that is responsible for displaying the observation request form.
+    """Class that is responsible for displaying the observation request form.
+
     This form is meant to be subclassed by more specific BaseForm classes that represent a
     form for a particular type of facility. For implementing your own form, please look to
     the other BaseObservationForms.
@@ -114,6 +162,7 @@ class BaseObservationForm(forms.Form):
 
     def layout(self) -> Layout:
         """Define (and return) a crispy_forms.Layout for the fields of your subclass.
+
         It will be inserted after the common_layout and before the button_layout, as
         defined above in __init__(), where self.helper.layout is assigned.
 
@@ -131,8 +180,8 @@ class BaseObservationForm(forms.Form):
         )
 
     def get_validation_message(self):
-        """ Override this or self.validation_message to return a validation message that is shown when
-            the Validate button is clicked and the form is valid
+        """Override this or self.validation_message to return a validation message that is shown when
+        the Validate button is clicked and the form is valid
         """
         return self.validation_message
 
@@ -180,8 +229,8 @@ GenericObservationForm = BaseRoboticObservationForm
 
 
 class BaseManualObservationForm(BaseObservationForm):
-    """
-    This is the class that is responsible for displaying the observation request form.
+    """Base class for observation request forms.
+
     Facility classes that provide a form should subclass this form. It provides
     some base shared functionality. Extra fields are provided below.
     The layout is handled by Django crispy forms which allows customizability of the
@@ -213,17 +262,15 @@ class BaseManualObservationForm(BaseObservationForm):
 
 
 class BaseObservationFacility(ABC):
-    """
-    This is the class that is responsible for defining the base facility class.
-    This form is meant to be subclassed by more specific BaseFacility classes that represent a
-    form for a particular type of facility. For implementing your own form, please look to
-    the other BaseObservationFacilities.
-    """
+    """Base class for observation facilities."""
     name = 'BaseObservation'
     observation_forms = {}
     is_redirect = False
     button_label = ""
     button_tooltip = ""
+    #: Namespaced URL name of this facility's detail page.
+    #: None means no detail page and no Facilities nav-bar menu item.
+    detail_url_name: str | None = None
 
     def __init__(self):
         self.user = None
@@ -279,8 +326,7 @@ class BaseObservationFacility(ABC):
         return credentials
 
     def _raise_no_profile_error(self, user, facility_name):
-        """
-        Raise ImproperlyConfigured for missing user profile.
+        """Raise ImproperlyConfigured for missing user profile.
 
         Args:
             user: Django User instance
@@ -295,8 +341,7 @@ class BaseObservationFacility(ABC):
         )
 
     def _raise_no_defaults_error(self, user, facility_name):
-        """
-        Raise ImproperlyConfigured when default credentials are needed but missing.
+        """Raise ImproperlyConfigured when default credentials are needed but missing.
 
         Args:
             user: Django User instance
@@ -338,16 +383,14 @@ class BaseObservationFacility(ABC):
 
     @abstractmethod
     def get_form(self, observation_type):
-        """
-        This method takes in an observation type and returns the form type that matches it.
+        """This method takes in an observation type and returns the form type that matches it.
 
         Note: This method returns form classes, not instances, to support composite form creation
         in ObservationCreateView. Use create_form_instance() for direct form instantiation.
         """
 
     def create_form_instance(self, observation_type, **kwargs):
-        """
-        Create a form instance with facility context injected.
+        """Create a form instance with facility context injected.
 
         The ObservationCreateView handles setting the user context on the facility instance
         via set_user() in its dispatch() method. Forms receive the facility instance and
@@ -363,8 +406,7 @@ class BaseObservationFacility(ABC):
         return form_class(**kwargs)
 
     def get_form_classes_for_display(self, **kwargs):
-        """
-        This method returns a dictionary of the format:
+        """This method returns a dictionary of the format:
 
             {'OBSERVATION_TYPE': FacilityFormClass}
 
@@ -384,66 +426,58 @@ class BaseObservationFacility(ABC):
     # TODO: consider making submit_observation create ObservationRecords as well
     @abstractmethod
     def submit_observation(self, observation_payload):
-        """
-        This method takes in the serialized data from the form and actually
+        """This method takes in the serialized data from the form and actually
         submits the observation to the remote api
         """
 
     @abstractmethod
     def validate_observation(self, observation_payload):
-        """
-        Same thing as submit_observation, but a dry run. You can
-        skip this in different modules by just using "pass"
+        """Validate an observation request through the facility's API,
+        but don't submit the request (i.e. a "dry-run").
 
+        You can skip this in different modules by just using "pass"
         Typically called by the ObservationForm.is_valid() method.
         """
 
     def get_flux_constant(self):
-        """
-        Returns the astropy quantity that a facility uses for its spectral flux conversion.
-        """
+        """Returns the astropy quantity that a facility uses for its spectral flux conversion."""
 
     def get_wavelength_units(self):
-        """
-        Returns the astropy units that a facility uses for its spectral wavelengths
-        """
+        """Returns the astropy units that a facility uses for its spectral wavelengths."""
 
     def is_fits_facility(self, header):
-        """
-        Returns True if the FITS header is from this facility based on valid keywords and associated
-        values, False otherwise.
+        """Returns True if the FITS header is from this facility.
+
+        Return value is based on valid keywords and associated values.
         """
         return False
 
     def get_start_end_keywords(self):
-        """
-        Returns the keywords representing the start and end of an observation window for a facility. Defaults to
-        ``start`` and ``end``.
+        """Returns the keywords representing the start and end of an observation window for a facility.
+
+        Defaults to ``start`` and ``end``.
         """
         return 'start', 'end'
 
     @abstractmethod
     def get_terminal_observing_states(self):
-        """
-        Returns the states for which an observation is not expected
-        to change.
-        """
+        """Returns the states for which an observation is not expected to change."""
 
     @abstractmethod
     def get_observing_sites(self):
-        """
-        Return an iterable of dictionaries that contain the information
-        necessary to be used in the planning (visibility) tool. The
-        iterable should contain dictionaries each that contain sitecode,
+        """Return an iterable of dictionaries that contain the information
+        necessary to be used in the planning (visibility) tool.
+
+        The returned iterable should contain dictionaries each that contain sitecode,
         latitude, longitude and elevation. This is the static information
         about a site.
         """
 
     def get_facility_weather_urls(self):
-        """
-        Returns a dictionary containing a URL for weather information
-        for each site in the Facility SITES. This is intended to be useful
-        in observation planning.
+        """Returns a dictionary containing a URL for weather information
+        for each site in the Facility SITES.
+
+        This is intended to be useful in observation planning.
 
         `facility_weather = {'code': 'XYZ', 'sites': [ site_dict, ... ]}`
         where
@@ -453,9 +487,9 @@ class BaseObservationFacility(ABC):
         return {}
 
     def get_facility_status(self):
-        """
-        Returns a dictionary describing the current availability of the Facility
-        telescopes. This is intended to be useful in observation planning.
+        """Returns a dictionary describing the current availability of the Facility telescopes.
+
+        This is intended to be useful in observation planning.
         The top-level (Facility) dictionary has a list of sites. Each site
         is represented by a site dictionary which has a list of telescopes.
         Each telescope has an identifier (code) and an status string.
@@ -473,8 +507,8 @@ class BaseObservationFacility(ABC):
         return {}
 
     def cancel_observation(self, observation_id):
-        """
-        Takes an observation id and submits a request to the observatory that the observation be cancelled.
+        """Takes an observation id and submits a request to the observation facility
+        that the observation be cancelled.
 
         If the cancellation was successful, return True. Otherwise, return False.
         """
@@ -482,10 +516,10 @@ class BaseObservationFacility(ABC):
 
     @abstractmethod
     def get_observation_url(self, observation_id):
-        """
-        Takes an observation id and return the url for which a user
-        can view the observation at an external location. In this case,
-        we return a URL to the LCO observation portal's observation
+        """Takes an observation id and returns the url with which a user can view the observation
+        at the observation facility.
+
+        For example, we return a URL to the LCO observation portal's observation
         record page.
         """
 
@@ -493,11 +527,11 @@ class BaseObservationFacility(ABC):
         return None
 
     def get_button_label(self):
-        """ The label that will appear on observe button"""
+        """The label that will appear on observe button."""
         return self.button_label or self.name
 
     def get_button_tooltip(self):
-        """ The tooltip that will appear on observe button"""
+        """The tooltip that will appear on observe button."""
         return self.button_tooltip
 
 

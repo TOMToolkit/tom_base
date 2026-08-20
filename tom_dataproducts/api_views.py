@@ -1,9 +1,15 @@
+import logging
+from copy import deepcopy
+
 from django.conf import settings
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
 from django_filters import rest_framework as drf_filters
+from django.db import IntegrityError
 from guardian.mixins import PermissionListMixin
 from guardian.shortcuts import assign_perm, get_objects_for_user
 from rest_framework import status
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, ListModelMixin
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
@@ -14,10 +20,12 @@ from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.filters import DataProductFilter, ReducedDatumFilter
 from tom_dataproducts.models import (DataProduct, ReducedDatum, PhotometryReducedDatum,
                                      SpectroscopyReducedDatum, AstrometryReducedDatum,
-                                     REDUCED_DATUM_MODELS)
+                                     REDUCED_DATUM_MODELS, try_parse_reduced_datum)
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
 from tom_targets.models import Target
 
+
+logger = logging.getLogger(__name__)
 
 # Maps the data_type query param to the concrete model that holds those rows.
 _DATA_TYPE_MODEL_MAP = {
@@ -47,27 +55,55 @@ class DataProductViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, Ge
 
     def create(self, request, *args, **kwargs):
         request.data['data'] = request.FILES['file']
-        response = super().create(request, *args, **kwargs)
+        product_id = request.data.get('product_id')
 
-        if response.status_code == status.HTTP_201_CREATED:
-            response.data['message'] = 'Data product successfully uploaded.'
-            dp = DataProduct.objects.get(pk=response.data['id'])
-            try:
-                run_hook('data_product_post_upload', dp)
-                reduced_data = run_data_processor(dp)
-                if not settings.TARGET_PERMISSIONS_ONLY:
-                    for group in response.data['group']:
-                        assign_perm('tom_dataproducts.view_dataproduct', group, dp)
-                        assign_perm('tom_dataproducts.delete_dataproduct', group, dp)
-                        assign_perm('tom_dataproducts.view_reduceddatum', group, reduced_data)
-            except Exception:
-                for model in REDUCED_DATUM_MODELS:
-                    model.objects.filter(data_product=dp).delete()
-                dp.delete()
-                return Response({'Data processing error': '''There was an error in processing your DataProduct into \
-                                                             individual ReducedDatum objects.'''},
-                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        return response
+        existing_dp = DataProduct.objects.filter(product_id=product_id).first() if product_id else None
+        if existing_dp:
+            logger.info('Skipping duplicate DataProduct upload for product_id=%s', product_id)
+            payload = self.get_serializer(existing_dp).data
+            payload['message'] = 'Data product already exists. Skipping upload.'
+            payload['already_exists'] = True
+            return Response(payload, status=status.HTTP_200_OK)
+
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except DRFValidationError as exc:
+            product_id_errors = exc.detail.get('product_id', []) if hasattr(exc, 'detail') else []
+            has_duplicate_product_id_error = any('already exists' in str(err).lower() for err in product_id_errors)
+            if product_id and has_duplicate_product_id_error:
+                existing_dp = DataProduct.objects.filter(product_id=product_id).first()
+                if existing_dp:
+                    logger.info('Skipping duplicate DataProduct upload during validation for product_id=%s', product_id)
+                    payload = self.get_serializer(existing_dp).data
+                    payload['message'] = 'Data product already exists. Skipping upload.'
+                    payload['already_exists'] = True
+                    return Response(payload, status=status.HTTP_200_OK)
+            raise
+
+        self.perform_create(serializer)
+        payload = serializer.data
+        payload['message'] = 'Data product successfully uploaded.'
+        headers = self.get_success_headers(payload)
+        dp = DataProduct.objects.get(pk=payload['id'])
+
+        try:
+            run_hook('data_product_post_upload', dp)
+            reduced_data = run_data_processor(dp)
+            if not settings.TARGET_PERMISSIONS_ONLY:
+                for group in payload['group']:
+                    assign_perm('tom_dataproducts.view_dataproduct', group, dp)
+                    assign_perm('tom_dataproducts.delete_dataproduct', group, dp)
+                    assign_perm('tom_dataproducts.view_reduceddatum', group, reduced_data)
+        except Exception:
+            for model in REDUCED_DATUM_MODELS:
+                model.objects.filter(data_product=dp).delete()
+            dp.delete()
+            return Response({'Data processing error': '''There was an error in processing your DataProduct into \
+                                                         individual ReducedDatum objects.'''},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(payload, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_queryset(self):
         """
@@ -152,10 +188,60 @@ class ReducedDatumViewSet(CreateModelMixin, DestroyModelMixin, ListModelMixin, G
 
         return Response(self.get_serializer(all_instances, many=True).data)
 
+    def _find_existing_reduced_datum(self, validated_data):
+        """Return an existing duplicate ReducedDatum instance if one can be identified."""
+        candidate = try_parse_reduced_datum(deepcopy(validated_data))
+
+        if isinstance(candidate, PhotometryReducedDatum):
+            return PhotometryReducedDatum.objects.filter(
+                target=candidate.target,
+                bandpass=candidate.bandpass,
+                timestamp=candidate.timestamp,
+            ).first()
+        if isinstance(candidate, SpectroscopyReducedDatum):
+            return SpectroscopyReducedDatum.objects.filter(
+                target=candidate.target,
+                timestamp=candidate.timestamp,
+                telescope=candidate.telescope,
+                instrument=candidate.instrument,
+            ).first()
+        if isinstance(candidate, AstrometryReducedDatum):
+            return AstrometryReducedDatum.objects.filter(
+                target=candidate.target,
+                timestamp=candidate.timestamp,
+                telescope=candidate.telescope,
+                instrument=candidate.instrument,
+            ).first()
+
+        return ReducedDatum.objects.filter(
+            target=candidate.target,
+            data_type=candidate.data_type,
+            timestamp=candidate.timestamp,
+            value=candidate.value,
+        ).first()
+
     def create(self, request, *args, **kwargs):
-        response = super().create(request, *args, **kwargs)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if response.status_code == status.HTTP_201_CREATED:
-            response.data['message'] = 'Data successfully uploaded.'
+        try:
+            self.perform_create(serializer)
+            payload = serializer.data
+            payload['message'] = 'Data successfully uploaded.'
+            headers = self.get_success_headers(payload)
+            return Response(payload, status=status.HTTP_201_CREATED, headers=headers)
+        except (DjangoValidationError, IntegrityError):
+            existing = self._find_existing_reduced_datum(serializer.validated_data)
+            if existing is None:
+                raise
 
-        return response
+            logger.info(
+                'Skipping duplicate ReducedDatum upload for target_id=%s timestamp=%s source_name=%s',
+                getattr(existing, 'target_id', None),
+                getattr(existing, 'timestamp', None),
+                getattr(existing, 'source_name', ''),
+            )
+            payload = self.get_serializer(existing).data
+            payload['message'] = 'Data already exists. Skipping upload.'
+            payload['already_exists'] = True
+            return Response(payload, status=status.HTTP_200_OK)

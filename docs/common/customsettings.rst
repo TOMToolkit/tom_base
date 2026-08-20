@@ -245,6 +245,9 @@ A list of observation facility classes to make available to your TOM. If
 you have written or downloaded a custom observation facility you would
 add the class to this list to make your TOM load it.
 
+INSTALLED_APPS that implement the ``observation_facilities()`` AppConfig integration
+point do not need to be listed here.
+
 `TOM_LATEX_PROCESSORS <#tom-latex-processors>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

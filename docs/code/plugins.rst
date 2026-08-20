@@ -10,6 +10,15 @@ functions, we support a range of optional plugin modules for the Toolkit.
 These range from adding the ability to interface with additional
 observatories and catalogs, to providing additional plotting or data analytics functionality.
 
+tom_across
+----------
+
+`tom_across <https://github.com/TOMToolkit/tom_across>`_
+
+This plugin integrates the Astrophysics Cross-Observatory Science Support (`ACROSS <https://science.data.nasa.gov/data-sites/across>_`)
+tools into the TOM Toolkit. Users can view observation records and target visibility directly from the target page using ACROSS's
+aggregated NASA mission observation and observatory status information.
+
 tom_hermes
 ----------
 
