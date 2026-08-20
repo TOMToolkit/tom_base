@@ -77,7 +77,9 @@ def _append_tap_filters(query: str, query_parameters: dict, column_prefix: str =
         query += f" AND {p}firstmjd >= {firstmjd[0]} AND {p}firstmjd <= {firstmjd[1]}"
 
     if lastmjd := query_parameters.get("lastmjd"):
-        query += f" AND {p}lastmjd >= {lastmjd[0]} AND {p}lastmjd <= {lastmjd[1]}"
+        query += f" AND {p}lastmjd >= {lastmjd[0]}"
+        if len(lastmjd) == 2:
+            query += f" AND {p}lastmjd <= {lastmjd[1]}"
 
     if ndet := query_parameters.get("ndet"):
         query += f" AND {p}n_det >= {ndet[0]}"
@@ -413,10 +415,12 @@ class AlerceDataService(DataService):
             firstmjd_lt := form_parameters.get("firstmjd_lt")
         ):
             query_params["firstmjd"] = [firstmjd_gt, firstmjd_lt]
-        if (lastmjd_gt := form_parameters.get("lastmjd_gt")) and (
-            lastmjd_lt := form_parameters.get("lastmjd_lt")
-        ):
-            query_params["lastmjd"] = [lastmjd_gt, lastmjd_lt]
+        # lastmjd supports an open-ended lower bound (e.g. "last detected after X",
+        # a common recency filter -- see ALeRCE's own LSST TAP queries notebook),
+        # unlike firstmjd above which only makes sense as a closed range.
+        if lastmjd_gt := form_parameters.get("lastmjd_gt"):
+            lastmjd_lt = form_parameters.get("lastmjd_lt")
+            query_params["lastmjd"] = [lastmjd_gt, lastmjd_lt] if lastmjd_lt else [lastmjd_gt]
 
         # Build ndet list:
         # gives range of number of detections based on min/max set in form.

@@ -208,6 +208,25 @@ class TestBuildQueryParameters(TestCase):
         params = self.ds.build_query_parameters({"survey": "ZTF", "firstmjd_gt": 59000.0})
         self.assertNotIn("firstmjd", params)
 
+    def test_lastmjd_gt_only_yields_open_ended_lower_bound(self):
+        """
+        Unlike firstmjd, lastmjd supports an open-ended lower bound (e.g. "last
+        detected after X") -- a common recency filter, per ALeRCE's own LSST TAP
+        queries notebook, which only bounds lastmjd from below.
+        """
+        params = self.ds.build_query_parameters({"survey": "ZTF", "lastmjd_gt": 59000.0})
+        self.assertEqual(params["lastmjd"], [59000.0])
+
+    def test_lastmjd_gt_and_lt_yields_closed_range(self):
+        params = self.ds.build_query_parameters(
+            {"survey": "ZTF", "lastmjd_gt": 59000.0, "lastmjd_lt": 59500.0}
+        )
+        self.assertEqual(params["lastmjd"], [59000.0, 59500.0])
+
+    def test_lastmjd_absent_when_gt_not_given(self):
+        params = self.ds.build_query_parameters({"survey": "ZTF", "lastmjd_lt": 59500.0})
+        self.assertNotIn("lastmjd", params)
+
     def test_ndet_min_and_max(self):
         params = self.ds.build_query_parameters({"survey": "ZTF", "ndet_min": 3, "ndet_max": 10})
         self.assertEqual(params["ndet"], [3, 10])
@@ -269,6 +288,11 @@ class TestBuildTapObjectQuery(TestCase):
         query = _build_tap_object_query({"sid": 1, "firstmjd": [59000.0, 59500.0], "lastmjd": [59100.0, 59600.0]})
         self.assertIn("AND firstmjd >= 59000.0 AND firstmjd <= 59500.0", query)
         self.assertIn("AND lastmjd >= 59100.0 AND lastmjd <= 59600.0", query)
+
+    def test_lastmjd_one_sided(self):
+        query = _build_tap_object_query({"sid": 1, "lastmjd": [59100.0]})
+        self.assertIn("AND lastmjd >= 59100.0", query)
+        self.assertNotIn("lastmjd <=", query)
 
     def test_ndet_two_sided(self):
         query = _build_tap_object_query({"sid": 1, "ndet": [3, 10]})
