@@ -8,6 +8,7 @@ Configuring a TOM
 
   Custom settings <customsettings>
   Permissions <permissions>
+  Accounts and authentication <authentication>
 
 TOM Settings
 ------------
@@ -33,3 +34,10 @@ Permissions
 TOM systems can have hundreds or thousands of users and we recognize that sometimes it is desirable to control
 who can access what data or functions.  The Toolkit provides fine-grained control over user permissions, as documented
 :doc:`here</common/permissions>`.
+
+Accounts and authentication
+---------------------------
+
+TOM Toolkit uses `django-allauth <https://docs.allauth.org/en/latest/>`_ to provide login, optional
+two-factor authentication, self-registration, password rules, terms of service, profile fields and API
+tokens as described :doc:`here</common/authentication>`.

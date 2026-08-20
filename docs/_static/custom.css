@@ -24,3 +24,11 @@ a.hs {
     color: #017792 !important;
     font-weight: bold;
 }
+
+/* Sphinx's basic.css makes inline-literal tokens (span.pre) no-wrap; a long dotted path in a
+   table cell then widens its column past the table's declared :widths:. Let literals wrap
+   inside tables so column hints hold ("anywhere" shrinks min-content width, "break-word" won't). */
+table.docutils span.pre {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
