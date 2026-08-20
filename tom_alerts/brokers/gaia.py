@@ -181,7 +181,7 @@ class GaiaBroker(GenericBroker):
                     jd = Time(float(phot_data[1]), format='jd', scale='utc')
                     jd.to_datetime(timezone=TimezoneInfo())
 
-                    rd, _ = PhotometryReducedDatum.objects.get_or_create(
+                    PhotometryReducedDatum.objects.get_or_create(
                         target=target,
                         bandpass='G',
                         timestamp=jd.to_datetime(timezone=TimezoneInfo()),

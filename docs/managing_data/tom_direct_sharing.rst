@@ -61,6 +61,9 @@ When your TOM receives a new ``Target`` from another TOM it will be saved to you
 or alias doesn't match that of a target that already exists in the database, a new target will be created and added to a
 new ``TargetList`` called "Imported from <TOM Name>".
 
+Targets shared from a TOM with a custom ``Target`` model that has unique model fields will fill out any identically
+named fields in your ``Target`` model and the remaining fields will be ingested as ``TargetExtras``.
+
 Target Lists:
 -------------
 When your TOM receives a new ``TargetList`` from another TOM it will be saved to your TOM's database. If the targets in

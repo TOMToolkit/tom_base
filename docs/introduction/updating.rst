@@ -79,13 +79,28 @@ See the :ref:`Architecture Docs <ReducedDatum_label>` for a description, or
 :doc:`DataProducts API <../api/tom_dataproducts/models>` for a full code breakdown.
 
 We want to update all of your existing data to this new scheme where possible. This could take some time for large databases.
+Towards this end, we provide a `management command 
+<https://github.com/TOMToolkit/tom_base/blob/dev/tom_dataproducts/management/commands/migrate_reduced_datums.py>`_
+that will make "reasonable" assumptions about data values stored in ``ReducedDatum.value``. This command will search for
+commonly used brightness fields, filter fields, spectroscopy data, etc. and translate them into the new ``ReducedDatum``
+infrastructure. Anything unrecognized will remain in the catch-all ``value`` field. If you have highly customized fields
+stored for your datums, you should consider copying and editing the management command to suit your needs.
+
 
 .. Warning::
     This is a substantial DB change. Consider backing up your database before running this management command.
 
 ::
 
-   ./manage.py migrateReducedDatums
+   ./manage.py migrate_reduced_datums
+
+.. Note::
+    Data validation during this migration is partially dependent on your database infrastructure. 
+    You can test this migration by performing a dry run:
+
+    ::
+
+        ./manage.py migrate_reduced_datums --dry-run
 
 
 4.) Update ``settings.py``
@@ -107,12 +122,12 @@ with future changes. If you wish to use these settings, please make the followin
     ...
 
     # Replace your existing INSTALLED_APPS with the following:
-    INSTALLED_APPS = TOMTOOKIT_INSTALLED_APPS + [ 
+    INSTALLED_APPS = TOMTOOLKIT_INSTALLED_APPS + [ 
         'custom_code',  # Include any apps you have installed for your TOM that are not in default_settings
     ]
 
     # Replace your existing MIDDLEWARE with the following:
-    MIDDLEWARE = TOMTOOKIT_MIDDLEWARE + [
+    MIDDLEWARE = TOMTOOLKIT_MIDDLEWARE + [
         {{ custom_middleware }}  # Include any middleware you have installed for your TOM that are not in default_settings
     ]
 

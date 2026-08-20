@@ -24,7 +24,7 @@ def get_data_service_classes():
     """
     Imports the Dataservice class from relevant apps and generates a list of data service names.
 
-    Each dataservice class should be contained in a list of dictionaries in an app's apps.py `dataservices` method.
+    Each dataservice class should be contained in a list of dictionaries in an app's apps.py `data_services` method.
     Each dataservice dictionary should contain a 'class' key with the dot separated path to the dataservice class
     (typically an extension of DataService).
 
@@ -84,8 +84,9 @@ class QueryServiceError(Exception):
 
 
 class DataService(ABC):
-    """
-    Base class for all Data Services. Data Services are classes that are responsible for querying external services
+    """Base class for all Data Services.
+
+    Data Services are classes that are responsible for querying external services
     and returning data.
     """
     # Recognizable name for the DataService (Gaia, TNS, etc)
@@ -105,7 +106,7 @@ class DataService(ABC):
     # Link to app github repo
     app_link = None
 
-    def __init__(self, query_parameters=None, *args, **kwargs):
+    def __init__(self, query_parameters=None, user=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Instance variable that can store target query results if necessary
         self.target_results = {}
@@ -115,17 +116,19 @@ class DataService(ABC):
         self.query_results = {}
         # Instance variable that can store query parameters if necessary
         self.query_parameters = query_parameters or {}
+        # User from the view or test, if available
+        self.user = user
 
     @abstractmethod
     def query_service(self, query_parameters, **kwargs):
         """Takes in the serialized data from the query form and actually submits the query to the service"""
 
     def pre_query_validation(self, query_parameters):
-        """Same thing as query_service, but a dry run"""
+        """Same thing as query_service, but a dry run."""
         raise NotImplementedError(f'pre_query_validation method has not been implemented for {self.name}')
 
     def build_query_parameters(self, parameters, **kwargs):
-        """Builds the query parameters from the form data"""
+        """Builds the query parameters from the form data."""
         raise NotImplementedError(f'build_query_parameters method has not been implemented for {self.name}')
 
     # Include this method if you wish for the TOM to be able to query data for an individual Target.
@@ -155,7 +158,10 @@ class DataService(ABC):
 
     @classmethod
     def configuration(cls) -> dict:
-        """Returns the configuration dictionary for this service"""
+        """Returns the configuration dictionary for this service
+
+           By default, returns `settings.DATA_SERVICES[cls.name]`
+        """
         try:
             return settings.DATA_SERVICES[cls.name]
         except AttributeError as e:
@@ -164,7 +170,7 @@ class DataService(ABC):
             raise NotConfiguredError(
                 f"""The {e} DataService is not configured.
                     </br>
-                    Please see the <a href="{cls.info_url}" target="_blank">documentation</a> for more information.
+                    Please see the <a href="{cls.app_link}" target="_blank">documentation</a> for more information.
                 """
             )
 
@@ -195,7 +201,7 @@ class DataService(ABC):
 
     @classmethod
     def urls(cls, **kwargs) -> dict:
-        """Dictionary of URLS for the DataService"""
+        """Dictionary of URLS for the DataService."""
         return {'base_url': cls.base_url, 'info_url': cls.info_url}
 
     @classmethod
@@ -374,11 +380,15 @@ class DataService(ABC):
                 else:
                     logger.warning(f"The target, {target.name}, already exists. Any new data will be ingested.")
             # Save Aliases
-            self.to_aliases(target, target_result.get('aliases', []))
+            alias_list = target_result.get('aliases', []) or self.query_aliases(self.query_parameters,
+                                                                                target,
+                                                                                **kwargs)
+            self.to_aliases(target, alias_list)
             return target
 
     def create_target_from_query(self, target_result, **kwargs):
         """Create a new target from a single instance of the target results.
+
         :param target_result: dictionary describing target details based on query result
         :returns: target object
         :rtype: `Target`
@@ -412,7 +422,8 @@ class DataService(ABC):
         return new_aliases
 
     def create_aliases_from_query(self, alias_results: List, **kwargs) -> List:
-        """Create a new target name from the query results
+        """Create a new target name from the query results.
+
         This method should be over ridden with a method that creates a list of TargetName objects:
         `TargetName(name=alias)` that will be saved as part of the `Target.save(extras=extras, names=aliases)` call.
         :param query_result: list of dictionaries describing target details based on query result

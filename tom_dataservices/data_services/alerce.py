@@ -5,6 +5,7 @@ from alerce.exceptions import ObjectNotFoundError, APIError
 from astropy.time import Time, TimezoneInfo
 from django import forms
 from django.core.cache import cache
+from django.db.utils import IntegrityError
 
 from tom_dataproducts.models import PhotometryReducedDatum
 from tom_dataservices.dataservices import DataService, QueryServiceError
@@ -266,16 +267,19 @@ class AlerceDataService(DataService):
         if data:
             for detection in data.get("detections", []):
                 mjd = Time(detection["mjd"], format="mjd", scale="utc")
-                reduced_datum, __ = PhotometryReducedDatum.objects.get_or_create(
-                    timestamp=mjd.to_datetime(TimezoneInfo()),
-                    target=target,
-                    brightness=detection["magpsf"],
-                    brightness_error=detection["sigmapsf"],
-                    unit='mag',
-                    bandpass=ALERCE_FILTERS[detection["fid"]],
-                    defaults={'source_name': self.name}
-                )
-                reduced_datums.append(reduced_datum)
+                try:
+                    reduced_datum, __ = PhotometryReducedDatum.objects.get_or_create(
+                        timestamp=mjd.to_datetime(TimezoneInfo()),
+                        target=target,
+                        brightness=detection["magpsf"],
+                        brightness_error=detection["sigmapsf"],
+                        unit='mag',
+                        bandpass=ALERCE_FILTERS[detection["fid"]],
+                        defaults={'source_name': self.name}
+                    )
+                    reduced_datums.append(reduced_datum)
+                except IntegrityError as e:
+                    raise QueryServiceError(f"Error importing ReducedDatum (target:{target} data:{detection}) -- {e}")
 
             for non_detection in data.get("non_detections", []):
                 mjd = Time(non_detection["mjd"], format="mjd", scale="utc")

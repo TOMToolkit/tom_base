@@ -42,12 +42,12 @@ ALLOWED_HOSTS = ['']
 
 TOM_NAME = 'TOM Toolkit'
 
-INSTALLED_APPS = TOMTOOKIT_INSTALLED_APPS + [  # noqa: F405
+INSTALLED_APPS = TOMTOOLKIT_INSTALLED_APPS + [  # noqa: F405
 ]
 
 SITE_ID = 1
 
-MIDDLEWARE = TOMTOOKIT_MIDDLEWARE + [  # noqa: F405
+MIDDLEWARE = TOMTOOLKIT_MIDDLEWARE + [  # noqa: F405
 ]
 
 ROOT_URLCONF = 'tom_common.urls'
@@ -308,6 +308,11 @@ HINTS_ENABLED = False
 HINT_LEVEL = 20
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',  # for API token authentication
+        'rest_framework.authentication.SessionAuthentication',  # for logged-in browsers (cookie + CSRF protection)
+        'rest_framework.authentication.BasicAuthentication',  # for username/password
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
     ],
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',

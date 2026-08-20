@@ -4,6 +4,9 @@
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+{% if object.type == 'SIDEREAL' %}
+<link rel="stylesheet" href="//aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.css">
+{% endif %}
 {% endblock %}
 {% block content %}
 <script>
@@ -140,4 +143,10 @@
     </div>
   </div>
 </div>
+{% endblock %}
+{% block extra_javascript %}
+{% if object.type == 'SIDEREAL' %}
+<script src="//aladin.cds.unistra.fr/AladinLite/api/v3/3.8.2/aladin.js" charset="utf-8" defer></script>
+<script src="{% static 'tom_targets/js/aladin_finderchart.js' %}" defer></script>
+{% endif %}
 {% endblock %}

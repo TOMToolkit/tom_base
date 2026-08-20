@@ -14,7 +14,6 @@ from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import text, timezone
@@ -564,7 +563,8 @@ class TestCustomFields(TestCase):
             exposure_time=1000.0,
             flux=flux,
             wavelength=wavelength,
-            flux_unit="Å",
+            flux_unit="mJy",
+            wavelength_unit="µm",
         )
         rd.refresh_from_db()  # ensure we round trip to the database
         self.assertEqual(flux, rd.flux)
@@ -578,7 +578,8 @@ class TestCustomFields(TestCase):
             flux=[1.0, 2.0, 3.0, 4.0],
             wavelength=[1, 2, 3, 4],
             error=error,
-            flux_unit="Å",
+            flux_unit="erg / s / cm2 / Å",
+            wavelength_unit="Å",
         )
         rd.refresh_from_db()
         self.assertEqual(error, rd.error)
@@ -591,7 +592,8 @@ class TestCustomFields(TestCase):
                 exposure_time=1000.0,
                 flux=[1.0, 2.0, 3.0, "asd"],
                 wavelength=[1, 2, 3, 4],
-                flux_unit="cm^2",
+                flux_unit="erg / s / cm2 / Å",
+                wavelength_unit="µm",
             )
 
 
@@ -635,7 +637,7 @@ class TestReducedDatumModel(TestCase):
 
     def test_create_reduced_datum_duplicate(self):
         """Test that we cannot add a second PhotometryReducedDatum with the same target,
-        timestamp, and bandpass"""
+        timestamp, brightness, and bandpass"""
         PhotometryReducedDatum.objects.create(
             target=self.target,
             timestamp=self.timestamp,
@@ -643,11 +645,11 @@ class TestReducedDatumModel(TestCase):
             bandpass="r"
         )
 
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             PhotometryReducedDatum.objects.create(
                 target=self.target,
                 timestamp=self.timestamp,
-                brightness=2.0,
+                brightness=1.0,
                 bandpass="r"
             )
 

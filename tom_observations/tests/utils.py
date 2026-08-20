@@ -109,6 +109,11 @@ class FakeRoboticFacility(BaseRoboticObservationFacility):
         }
 
 
+class CustomizedFakeRoboticFacility(FakeRoboticFacility):
+    """A TOM-side subclass of an app's facility (same .name), for the settings-wins-collision test."""
+    pass
+
+
 class FakeManualFacility(BaseManualObservationFacility):
     name = 'FakeManualFacility'
     observation_forms = {
