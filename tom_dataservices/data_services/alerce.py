@@ -55,37 +55,78 @@ def _normalize_ztf_record(record: dict) -> dict:
     return record
 
 
-def _build_tap_object_query(query_parameters: dict, page_size: int = 20) -> str:
+def _append_tap_filters(query: str, query_parameters: dict, column_prefix: str = "") -> str:
     """
-    Builds an ADQL query against `alerce_tap.object` for LSST (sid != 0) general
-    (non-oid) queries, consuming the same query_parameters shape produced by
-    `AlerceDataService.build_query_parameters`. Only numeric parameters (already
-    cleaned by the form) are interpolated, so there is no string-injection surface;
-    `oid` lookups are handled separately and are not built here.
+    Appends the cone-search / mjd-range / ndet-range WHERE clauses shared by all
+    `alerce_tap.object`-based ADQL queries. `column_prefix` (e.g. `"obj."`) is
+    needed when `alerce_tap.object` is joined/aliased, as in
+    `_build_tap_classifier_query`. Only numeric parameters (already cleaned by
+    the form) are interpolated, so there is no string-injection surface.
     """
-    sid = query_parameters.get("sid", 0)
-    query = f"SELECT TOP {page_size} * FROM alerce_tap.object WHERE sid = {sid}"
-
+    p = column_prefix
     if all(query_parameters.get(k) is not None for k in ("ra", "dec", "radius")):
         ra = query_parameters["ra"]
         dec = query_parameters["dec"]
         radius_deg = query_parameters["radius"] / 3600.0
         query += (
-            f" AND 1 = CONTAINS(POINT('ICRS', meanra, meandec), "
+            f" AND 1 = CONTAINS(POINT('ICRS', {p}meanra, {p}meandec), "
             f"CIRCLE('ICRS', {ra}, {dec}, {radius_deg}))"
         )
 
     if firstmjd := query_parameters.get("firstmjd"):
-        query += f" AND firstmjd >= {firstmjd[0]} AND firstmjd <= {firstmjd[1]}"
+        query += f" AND {p}firstmjd >= {firstmjd[0]} AND {p}firstmjd <= {firstmjd[1]}"
 
     if lastmjd := query_parameters.get("lastmjd"):
-        query += f" AND lastmjd >= {lastmjd[0]} AND lastmjd <= {lastmjd[1]}"
+        query += f" AND {p}lastmjd >= {lastmjd[0]} AND {p}lastmjd <= {lastmjd[1]}"
 
     if ndet := query_parameters.get("ndet"):
-        query += f" AND n_det >= {ndet[0]}"
+        query += f" AND {p}n_det >= {ndet[0]}"
         if len(ndet) == 2:
-            query += f" AND n_det <= {ndet[1]}"
+            query += f" AND {p}n_det <= {ndet[1]}"
 
+    return query
+
+
+def _build_tap_object_query(query_parameters: dict, page_size: int = 20) -> str:
+    """
+    Builds an ADQL query against `alerce_tap.object` for LSST (sid != 0) general
+    (non-oid) queries, consuming the same query_parameters shape produced by
+    `AlerceDataService.build_query_parameters`. `oid` lookups are handled
+    separately and are not built here.
+    """
+    sid = query_parameters.get("sid", 0)
+    query = f"SELECT TOP {page_size} * FROM alerce_tap.object WHERE sid = {sid}"
+    return _append_tap_filters(query, query_parameters)
+
+
+def _build_tap_classifier_query(
+    query_parameters: dict, classifier_id: int, class_id: int, probability: float | None = None,
+    page_size: int = 20,
+) -> str:
+    """
+    Builds an ADQL query joining `alerce_tap.object` to `alerce_tap.probability`
+    for LSST diaObject (sid=1) classifier queries -- the TAP equivalent of the
+    ZTF REST classifier loop in `query_service`. `ranking = 1` restricts results
+    to objects whose *top-ranked* classification is the requested class (matching
+    ALeRCE's own usage in notebooks/LSST/ALeRCE_LSST_SSO.ipynb); `probability`,
+    when given, is treated as a minimum threshold. Only sid=1 is meaningful here:
+    known ssObjects (sid=2) are pre-assigned probability 1 "asteroid" rather than
+    classified, so classifier queries are not offered for sid=2 (see
+    `AlerceDataService.query_service`).
+    """
+    sid = query_parameters.get("sid", 1)
+    query = (
+        f"SELECT TOP {page_size} obj.*, prob.probability, prob.ranking "
+        f"FROM alerce_tap.object AS obj "
+        f"JOIN alerce_tap.probability AS prob "
+        f"ON obj.oid = prob.oid AND obj.sid = prob.sid "
+        f"WHERE obj.sid = {sid} AND prob.classifier_id = {classifier_id} "
+        f"AND prob.class_id = {class_id} AND prob.ranking = 1"
+    )
+    if probability is not None:
+        query += f" AND prob.probability >= {probability}"
+    query = _append_tap_filters(query, query_parameters, column_prefix="obj.")
+    query += " ORDER BY prob.probability DESC"
     return query
 
 
@@ -95,8 +136,10 @@ SURVEY_TID = {"ZTF": 0, "LSST": 1}
 def _group_tap_classifier_rows(rows) -> list[dict]:
     """
     Groups `alerce_tap.classifier` JOIN `alerce_tap.taxonomy` rows into the shape
-    the (deprecated) REST `query_classifiers()` used to return:
-    [{classifier_name, classifier_version, classes: [...]}, ...]
+    the (deprecated) REST `query_classifiers()` used to return, plus the numeric
+    `classifier_id`/`class_id` TAP `probability` queries need (absent from rows
+    that don't carry them, e.g. older fixtures):
+    [{classifier_name, classifier_version, classifier_id, classes: [...], class_ids: {name: id}}, ...]
     """
     grouped = {}
     for row in rows:
@@ -105,13 +148,52 @@ def _group_tap_classifier_rows(rows) -> list[dict]:
         grouped.setdefault(
             key,
             {
+                "classifier_id": row.get("classifier_id"),
                 "classifier_name": row["classifier_name"],
                 "classifier_version": row["classifier_version"],
                 "classes": [],
+                "class_ids": {},
             },
         )
         grouped[key]["classes"].append(row["class_name"])
+        if "class_id" in row:
+            grouped[key]["class_ids"][row["class_name"]] = row["class_id"]
     return list(grouped.values())
+
+
+def _fetch_classifiers_for_tid(tid: int) -> list[dict]:
+    """
+    Queries + caches (24h) `alerce_tap.classifier` JOIN `alerce_tap.taxonomy` for a
+    given `tid`, grouped via `_group_tap_classifier_rows`. Shared by
+    `AlerceForm.get_classifiers` (form field generation) and
+    `_resolve_classifier_ids` (TAP classifier-query construction) so both see the
+    same cached data under the same cache key.
+    """
+    cache_key = f"ds_alerce_classifiers_{tid}"
+    classifiers = cache.get(cache_key)
+    if not classifiers:
+        query = '''
+            SELECT c.classifier_id, c.classifier_name, c.classifier_version,
+                   t.class_id, t.class_name
+            FROM alerce_tap.classifier c
+            JOIN alerce_tap.taxonomy t ON t.classifier_id = c.classifier_id
+            WHERE c.tid = %d ORDER BY c.classifier_name, t.taxonomy_order
+            ''' % tid
+        classifiers = _group_tap_classifier_rows(tap_service.search(query))
+        cache.set(cache_key, classifiers, 3600 * 24)  # One day
+    return classifiers
+
+
+def _resolve_classifier_ids(tid: int, classifier_name: str, class_name: str) -> tuple[int, int] | None:
+    """
+    Looks up the numeric (classifier_id, class_id) pair for a classifier/class
+    name pair, as needed to query `alerce_tap.probability`. Returns None if no
+    match is found (e.g. a stale classifier name from a different survey/tid).
+    """
+    for classifier in _fetch_classifiers_for_tid(tid):
+        if classifier["classifier_name"] == classifier_name and class_name in classifier["class_ids"]:
+            return classifier["classifier_id"], classifier["class_ids"][class_name]
+    return None
 
 
 class AlerceForm(BaseQueryForm):
@@ -148,19 +230,7 @@ class AlerceForm(BaseQueryForm):
 
     def get_classifiers(self, survey: str) -> list[dict]:
         tid = SURVEY_TID.get(survey, SURVEY_TID["ZTF"])
-        cache_key = f"ds_alerce_classifiers_{tid}"
-        classifiers = cache.get(cache_key)
-        if not classifiers:
-            query = '''
-                SELECT c.classifier_name, c.classifier_version, t.class_name
-                FROM alerce_tap.classifier c
-                JOIN alerce_tap.taxonomy t ON t.classifier_id = c.classifier_id
-                WHERE c.tid = %d ORDER BY c.classifier_name, t.taxonomy_order
-                ''' % tid
-            classifiers = _group_tap_classifier_rows(tap_service.search(query))
-            cache.set(cache_key, classifiers, 3600 * 24)  # One day
-
-        return classifiers
+        return _fetch_classifiers_for_tid(tid)
 
     def add_classifiers_fields(self) -> list[tuple[str, str]]:
         """
@@ -270,12 +340,31 @@ class AlerceDataService(DataService):
                     return results
 
             elif sid != 0:
-                # LSST (diaObject/ssObject) general queries go through TAP; classifier
-                # queries against LSST objects are not yet supported.
-                if query_parameters.get("classifiers"):
-                    raise QueryServiceError("LSST classifier queries not yet supported")
-                tap_query = _build_tap_object_query(query_parameters)
-                results = [_normalize_tap_record(dict(row)) for row in tap_service.search(tap_query)]
+                # LSST (diaObject/ssObject) general queries go through TAP. Classifier
+                # queries are only meaningful for diaObjects (sid=1): known ssObjects
+                # (sid=2) are pre-assigned probability 1 "asteroid" rather than
+                # classified (see alerce_tap.probability / ALeRCE's own LSST SSO
+                # notebook), so they're not offered here.
+                classifier_params = query_parameters.get("classifiers")
+                if classifier_params:
+                    if sid != 1:
+                        raise QueryServiceError("LSST classifier queries are only supported for diaObjects")
+                    tid = SURVEY_TID["LSST"]
+                    for classifier in classifier_params:
+                        ids = _resolve_classifier_ids(tid, classifier["classifier"], classifier["class"])
+                        if ids is None:
+                            raise QueryServiceError(
+                                f"Unknown ALeRCE LSST classifier/class: "
+                                f"{classifier['classifier']}/{classifier['class']}"
+                            )
+                        classifier_id, class_id = ids
+                        tap_query = _build_tap_classifier_query(
+                            query_parameters, classifier_id, class_id, classifier.get("probability")
+                        )
+                        results.extend(_normalize_tap_record(dict(row)) for row in tap_service.search(tap_query))
+                else:
+                    tap_query = _build_tap_object_query(query_parameters)
+                    results = [_normalize_tap_record(dict(row)) for row in tap_service.search(tap_query)]
 
             else:
                 # "sid" is only used for the TAP-based object ID lookup above; the ALeRCE

@@ -10,6 +10,7 @@ import numpy as np
 from tom_dataservices.data_services.alerce import (
     AlerceDataService,
     AlerceForm,
+    _build_tap_classifier_query,
     _build_tap_object_query,
     _group_tap_classifier_rows,
 )
@@ -18,34 +19,43 @@ from tom_targets.models import Target
 
 MOCK_CLASSIFIERS = [
     {
+        "classifier_id": 10,
         "classifier_name": "lc_classifier",
         "classifier_version": "hierarchical_random_forest_1.0.0",
         "classes": ["SNIa", "SNII", "AGN"],
+        "class_ids": {"SNIa": 0, "SNII": 1, "AGN": 2},
     },
     {
+        "classifier_id": 11,
         "classifier_name": "stamp_classifier",
         "classifier_version": "stamp_classifier_1.0.1",
         "classes": ["AGN", "SN", "bogus"],
+        "class_ids": {"AGN": 0, "SN": 1, "bogus": 2},
     },
 ]
 
 # alerce_tap.classifier JOIN alerce_tap.taxonomy rows (tid=0, ZTF) that group into MOCK_CLASSIFIERS
 MOCK_ZTF_TAP_CLASSIFIER_ROWS = [
-    {"classifier_name": "lc_classifier", "classifier_version": "hierarchical_random_forest_1.0.0",
-     "class_name": "SNIa"},
-    {"classifier_name": "lc_classifier", "classifier_version": "hierarchical_random_forest_1.0.0",
-     "class_name": "SNII"},
-    {"classifier_name": "lc_classifier", "classifier_version": "hierarchical_random_forest_1.0.0",
-     "class_name": "AGN"},
-    {"classifier_name": "stamp_classifier", "classifier_version": "stamp_classifier_1.0.1", "class_name": "AGN"},
-    {"classifier_name": "stamp_classifier", "classifier_version": "stamp_classifier_1.0.1", "class_name": "SN"},
-    {"classifier_name": "stamp_classifier", "classifier_version": "stamp_classifier_1.0.1", "class_name": "bogus"},
+    {"classifier_id": 10, "classifier_name": "lc_classifier",
+     "classifier_version": "hierarchical_random_forest_1.0.0", "class_id": 0, "class_name": "SNIa"},
+    {"classifier_id": 10, "classifier_name": "lc_classifier",
+     "classifier_version": "hierarchical_random_forest_1.0.0", "class_id": 1, "class_name": "SNII"},
+    {"classifier_id": 10, "classifier_name": "lc_classifier",
+     "classifier_version": "hierarchical_random_forest_1.0.0", "class_id": 2, "class_name": "AGN"},
+    {"classifier_id": 11, "classifier_name": "stamp_classifier", "classifier_version": "stamp_classifier_1.0.1",
+     "class_id": 0, "class_name": "AGN"},
+    {"classifier_id": 11, "classifier_name": "stamp_classifier", "classifier_version": "stamp_classifier_1.0.1",
+     "class_id": 1, "class_name": "SN"},
+    {"classifier_id": 11, "classifier_name": "stamp_classifier", "classifier_version": "stamp_classifier_1.0.1",
+     "class_id": 2, "class_name": "bogus"},
 ]
 
 # tid=1 (LSST) rows, exercising the LSST-only stamp classifier
 MOCK_LSST_TAP_CLASSIFIER_ROWS = [
-    {"classifier_name": "stamp_classifier_rubin_beta", "classifier_version": "1.0.0", "class_name": "SN"},
-    {"classifier_name": "stamp_classifier_rubin_beta", "classifier_version": "1.0.0", "class_name": "bogus"},
+    {"classifier_id": 20, "classifier_name": "stamp_classifier_rubin_beta", "classifier_version": "1.0.0",
+     "class_id": 3, "class_name": "SN"},
+    {"classifier_id": 20, "classifier_name": "stamp_classifier_rubin_beta", "classifier_version": "1.0.0",
+     "class_id": 4, "class_name": "bogus"},
 ]
 
 
@@ -271,8 +281,36 @@ class TestBuildTapObjectQuery(TestCase):
         self.assertNotIn("n_det <=", query)
 
 
+class TestBuildTapClassifierQuery(TestCase):
+    def test_joins_object_and_probability_filtered_by_ids_and_ranking(self):
+        query = _build_tap_classifier_query({"sid": 1}, classifier_id=20, class_id=3)
+        self.assertIn("FROM alerce_tap.object AS obj", query)
+        self.assertIn("JOIN alerce_tap.probability AS prob", query)
+        self.assertIn("obj.oid = prob.oid AND obj.sid = prob.sid", query)
+        self.assertIn("obj.sid = 1", query)
+        self.assertIn("prob.classifier_id = 20", query)
+        self.assertIn("prob.class_id = 3", query)
+        self.assertIn("prob.ranking = 1", query)
+        self.assertIn("ORDER BY prob.probability DESC", query)
+        self.assertNotIn("probability >=", query)
+
+    def test_probability_threshold_appended_when_given(self):
+        query = _build_tap_classifier_query({"sid": 1}, classifier_id=20, class_id=3, probability=0.9)
+        self.assertIn("AND prob.probability >= 0.9", query)
+
+    def test_shared_filters_use_obj_column_prefix(self):
+        query = _build_tap_classifier_query(
+            {"sid": 1, "ra": 305.58, "dec": -18.79, "radius": 3600.0, "ndet": [3]},
+            classifier_id=20,
+            class_id=3,
+        )
+        self.assertIn("CONTAINS(POINT('ICRS', obj.meanra, obj.meandec)", query)
+        self.assertIn("AND obj.n_det >= 3", query)
+
+
 class TestQueryService(TestCase):
     def setUp(self):
+        cache.clear()
         self.ds = AlerceDataService()
         alerce_patcher = patch("tom_dataservices.data_services.alerce.alerce")
         self.mock_alerce = alerce_patcher.start()
@@ -365,11 +403,53 @@ class TestQueryService(TestCase):
         self.assertEqual(result[0]["ndet"], 5)
         self.assertNotIn("n_det", result[0])
 
-    def test_lsst_classifier_general_query_raises_query_service_error(self):
-        classifiers = [{"classifier": "lc_classifier", "class": "SNIa", "probability": 0.5}]
+    def test_lsst_diaobject_classifier_query_uses_tap_probability_join(self):
+        """
+        sid=1 (diaObject) classifier queries are wired to a TAP join against
+        alerce_tap.probability: one classifier-taxonomy lookup (cached, resolves
+        names to ids) plus one probability-join query per requested classifier.
+        """
+        classifiers = [{"classifier": "stamp_classifier_rubin_beta", "class": "SN", "probability": 0.9}]
+        row = {"oid": 999, "meanra": np.float64(10.0), "n_det": np.int64(3),
+               "probability": np.float64(0.95), "ranking": np.int64(1)}
+        self.mock_tap_service.search.side_effect = [MOCK_LSST_TAP_CLASSIFIER_ROWS, [row]]
+
+        result = self.ds.query_service({"sid": 1, "survey": "lsst", "classifiers": classifiers})
+
+        self.assertEqual(self.mock_tap_service.search.call_count, 2)
+        probability_query = self.mock_tap_service.search.call_args_list[1].args[0]
+        self.assertIn("alerce_tap.probability", probability_query)
+        self.assertIn("classifier_id = 20", probability_query)
+        self.assertIn("class_id = 3", probability_query)
+        self.assertIn("probability >= 0.9", probability_query)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["ndet"], 3)
+
+    def test_lsst_classifier_query_ranking_default_when_no_probability_threshold(self):
+        classifiers = [{"classifier": "stamp_classifier_rubin_beta", "class": "SN", "probability": None}]
+        self.mock_tap_service.search.side_effect = [MOCK_LSST_TAP_CLASSIFIER_ROWS, []]
+
+        self.ds.query_service({"sid": 1, "survey": "lsst", "classifiers": classifiers})
+
+        probability_query = self.mock_tap_service.search.call_args_list[1].args[0]
+        self.assertNotIn("probability >=", probability_query)
+        self.assertIn("ranking = 1", probability_query)
+
+    def test_lsst_ssobject_classifier_query_raises_query_service_error(self):
+        """
+        Known ssObjects (sid=2) are pre-assigned probability 1 "asteroid" rather
+        than classified, so classifier queries against sid=2 are rejected.
+        """
+        classifiers = [{"classifier": "stamp_classifier_rubin_beta", "class": "SN", "probability": 0.5}]
+        with self.assertRaises(QueryServiceError):
+            self.ds.query_service({"sid": 2, "survey": "lsst", "classifiers": classifiers})
+        self.mock_tap_service.search.assert_not_called()
+
+    def test_lsst_classifier_query_unknown_classifier_raises_query_service_error(self):
+        classifiers = [{"classifier": "nonexistent_classifier", "class": "SN", "probability": 0.5}]
+        self.mock_tap_service.search.return_value = MOCK_LSST_TAP_CLASSIFIER_ROWS
         with self.assertRaises(QueryServiceError):
             self.ds.query_service({"sid": 1, "survey": "lsst", "classifiers": classifiers})
-        self.mock_tap_service.search.assert_not_called()
 
     def test_ztf_general_query_normalizes_deltajd_to_deltamjd(self):
         self.mock_alerce.query_objects.return_value = {
