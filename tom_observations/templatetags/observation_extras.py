@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
+import logging
 from urllib.parse import urlencode
 
 from django import forms, template
 from django.conf import settings
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from guardian.shortcuts import get_objects_for_user
 from plotly import offline
 import plotly.graph_objs as go
@@ -16,7 +17,40 @@ from tom_observations.utils import get_sidereal_visibility
 from tom_targets.models import Target
 
 
+logger = logging.getLogger(__name__)
+
 register = template.Library()
+
+
+@register.inclusion_tag('tom_observations/partials/navbar_facilities_list.html', takes_context=True)
+def observation_facilities_list(context: dict) -> dict:
+    """
+    Returns the facilities linked from the "Facilities" navbar dropdown.
+
+    A facility from ``get_service_classes()`` is listed when its class sets ``detail_url_name``.
+    """
+    navbar_facilities = []
+    for facility_class in get_service_classes().values():
+        detail_url_name = getattr(facility_class, 'detail_url_name', None)
+        if not detail_url_name:
+            continue  # registration-only facility: no detail page, so no menu item
+
+        # make sure we can reverse the URL
+        try:
+            url = reverse(detail_url_name)
+        except NoReverseMatch as e:
+            logger.warning(f'WARNING: Could not resolve detail page URL for facility '
+                           f'{facility_class.name}: {e}')
+            continue
+        navbar_facilities.append(
+            {
+                "name": facility_class.name,
+                "url": url,
+            }
+        )
+
+    context['observation_facilities'] = navbar_facilities
+    return context
 
 
 @register.inclusion_tag('tom_observations/partials/update_status_button.html', takes_context=True)

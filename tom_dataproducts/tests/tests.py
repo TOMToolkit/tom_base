@@ -14,7 +14,6 @@ from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import text, timezone
@@ -638,7 +637,7 @@ class TestReducedDatumModel(TestCase):
 
     def test_create_reduced_datum_duplicate(self):
         """Test that we cannot add a second PhotometryReducedDatum with the same target,
-        timestamp, and bandpass"""
+        timestamp, brightness, and bandpass"""
         PhotometryReducedDatum.objects.create(
             target=self.target,
             timestamp=self.timestamp,
@@ -646,11 +645,11 @@ class TestReducedDatumModel(TestCase):
             bandpass="r"
         )
 
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             PhotometryReducedDatum.objects.create(
                 target=self.target,
                 timestamp=self.timestamp,
-                brightness=2.0,
+                brightness=1.0,
                 bandpass="r"
             )
 
