@@ -1,0 +1,16 @@
+{% extends 'tom_common/base.html' %}
+{% comment %}
+Every django-allauth page renders through this layout (allauth's entrance.html and
+manage.html both extend it), so this one override puts all account pages inside the TOM's
+chrome. allauth pages fill 'head_title' and 'content'; tom_common/base.html provides
+'title' and 'content_container'. Messages are already rendered by tom_common/base.html.
+{% endcomment %}
+{% block title %}{% block head_title %}{% endblock head_title %}{% endblock title %}
+{% block content_container %}
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      {% block content %}
+      {% endblock content %}
+    </div>
+  </div>
+{% endblock content_container %}

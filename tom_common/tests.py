@@ -471,6 +471,39 @@ class TestTomMFAAdapter(TestCase):
             self.assertFalse(adapter.can_delete_authenticator(user_authenticator))
 
 
+class TestAllauthTemplates(TestCase):
+    """The allauth pages render inside the TOM's base template with Bootstrap 5 styling."""
+
+    def setUp(self):
+        cache.clear()  # allauth login rate limits are cache-counted
+        self.user = User.objects.create_user(username='template_user', password='template-pass')
+
+    def test_anonymous_pages_render_in_tom_base_template(self):
+        for url_name in ('account_login', 'account_signup'):
+            with self.subTest(url_name=url_name):
+                response = self.client.get(reverse(url_name))
+                self.assertEqual(response.status_code, HTTPStatus.OK)
+                self.assertContains(response, 'navbar-brand')  # the navbar from tom_common/base.html
+
+    def test_signup_closed_page_suggests_next_action(self):
+        # blocking messages must point at the unblocking action, not just state the block
+        response = self.client.get(reverse('account_signup'))
+        self.assertContains(response, 'contact the administrators')
+
+    def test_login_form_is_bootstrap_styled(self):
+        response = self.client.get(reverse('account_login'))
+        self.assertContains(response, 'form-control')
+        self.assertContains(response, 'btn btn-primary')
+        self.assertNotContains(response, 'Menu:')  # allauth's unstyled default layout
+
+    def test_two_factor_overview_renders_as_cards(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('mfa_index'))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertContains(response, 'navbar-brand')  # the navbar from tom_common/base.html
+        self.assertContains(response, 'card-body')
+
+
 class TestRotateEncryptionKeyAuthenticators(TestCase):
     def test_rotate_reencrypts_totp_secret(self):
         user = User.objects.create_user(username='rotate_mfa_user', password='password')

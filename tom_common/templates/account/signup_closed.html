@@ -1,0 +1,19 @@
+{% extends "account/base_entrance.html" %}
+{% load allauth %}
+{% comment %}
+Overrides allauth's default, which states the block without suggesting a next action.
+Every blocking message should point at the action that unblocks the user's goal — here,
+asking an administrator for an account.
+{% endcomment %}
+{% block head_title %}
+    Sign Up Closed
+{% endblock head_title %}
+{% block content %}
+    {% element h1 %}
+        Sign Up Closed
+    {% endelement %}
+    {% element p %}
+        Self sign-up is not enabled on this TOM.
+        To get an account, please contact the administrators of this TOM — they can create one for you.
+    {% endelement %}
+{% endblock content %}

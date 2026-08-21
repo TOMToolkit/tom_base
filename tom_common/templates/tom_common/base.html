@@ -64,8 +64,14 @@
     <main role="main" class="container">
       {% include 'tom_common/partials/messages.html' %}
       <div class="content">
-        {% block content %}
-        {% endblock %}
+        {% comment %}
+        content_container lets an extending template (e.g. allauth/layouts/base.html) wrap
+        every page's content in extra markup while pages keep overriding 'content' as usual.
+        {% endcomment %}
+        {% block content_container %}
+          {% block content %}
+          {% endblock content %}
+        {% endblock content_container %}
       </div>
 
     </main>
