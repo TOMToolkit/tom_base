@@ -33,6 +33,15 @@ class TomAccountAdapter(DefaultAccountAdapter):
 class TomMFAAdapter(DefaultMFAAdapter):
     """MFA hooks: issuer name, secret encryption, authenticator removal policy."""
 
+    error_messages = {
+        **DefaultMFAAdapter.error_messages,
+        # blocking messages name the action that unblocks the user's goal
+        'cannot_delete_authenticator': (
+            'Two-factor authentication is required for your account, so it cannot be disabled. '
+            'If you need it reset, contact the administrators of this TOM.'
+        ),
+    }
+
     def get_totp_issuer(self) -> str:
         """The issuer label shown in authenticator apps."""
         return getattr(settings, 'TOM_NAME', 'TOM Toolkit')

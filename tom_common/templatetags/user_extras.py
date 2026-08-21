@@ -1,4 +1,8 @@
 import logging
+
+from allauth.mfa.adapter import get_adapter as get_mfa_adapter
+from allauth.mfa.models import Authenticator
+
 from django import template
 from django.contrib.auth.models import Group, User
 from django.forms.models import model_to_dict
@@ -27,7 +31,11 @@ def user_list(context):
     """
     return {
         'request': context['request'],
-        'users': User.objects.all()
+        'users': User.objects.all(),
+        # users with an authenticator app enrolled, for the two-factor column
+        'mfa_user_ids': set(
+            Authenticator.objects.filter(type=Authenticator.Type.TOTP).values_list('user_id', flat=True)
+        ),
     }
 
 
@@ -64,6 +72,17 @@ def include_app_user_lists(context):
 
     context['user_lists_to_display'] = user_lists_to_display
     return context
+
+
+@register.inclusion_tag('tom_common/partials/security_card.html')
+def security_card(user):
+    """Two-factor authentication status and actions for the Security card on the profile page."""
+    totp_authenticator = Authenticator.objects.filter(user=user, type=Authenticator.Type.TOTP).first()
+    return {
+        'user': user,
+        'mfa_enabled': totp_authenticator is not None,
+        'can_disable': get_mfa_adapter().can_delete_authenticator(totp_authenticator) if totp_authenticator else True,
+    }
 
 
 @register.inclusion_tag('tom_common/partials/user_data.html')

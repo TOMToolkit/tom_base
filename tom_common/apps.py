@@ -39,4 +39,6 @@ class TomCommonConfig(AppConfig):
         Typically, this partial will be a bootstrap card displaying some app specific user data.
         """
         return [{'partial': 'tom_common/partials/user_data.html',
-                 'context': 'tom_common.templatetags.user_extras.user_data'}]
+                 'context': 'tom_common.templatetags.user_extras.user_data'},
+                {'partial': 'tom_common/partials/security_card.html',
+                 'context': 'tom_common.templatetags.user_extras.security_card'}]

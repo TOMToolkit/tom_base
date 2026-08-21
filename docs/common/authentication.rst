@@ -179,8 +179,9 @@ For users
    app displays.
 3. Save the recovery codes that are shown **once**. Each code can be used one time in place of an app code.
 
-From then on, login asks for a code after the password. The *Security* card shows whether 2FA is enabled and lets
-you view or regenerate recovery codes or disable the app. Sensitive actions (changing 2FA settings, regenerating an
+From then on, login asks for a code after the password. The *Security* card shows whether 2FA is enabled and links
+to the two-factor management page, where you can regenerate recovery codes (codes are displayed only when they are
+generated) or disable the app. Sensitive actions (changing 2FA settings, regenerating an
 API token when required) ask you to confirm your password or a code again if your last login was more than a few
 minutes ago.
 

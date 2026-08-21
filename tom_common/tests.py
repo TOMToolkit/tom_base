@@ -427,6 +427,44 @@ class TestExternalServiceMiddleware(TestCase):
         self.assertIsNone(middleware.process_exception(None, ValueError('unrelated')))
 
 
+class TestSecurityCardAndUserList(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='card_user', password='password')
+
+    def test_card_offers_enrolment_when_not_enrolled(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('user-profile'))
+        self.assertContains(response, 'Enable two-factor authentication')
+        self.assertContains(response, reverse('mfa_activate_totp'))
+
+    def test_card_links_management_when_enrolled(self):
+        totp_auth.TOTP.activate(self.user, totp_auth.generate_totp_secret())
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('user-profile'))
+        self.assertContains(response, 'Manage two-factor authentication')
+        self.assertContains(response, reverse('mfa_index'))
+
+    @override_settings(TOM_MFA_REQUIRED='all')
+    def test_blocked_disable_names_the_next_action(self):
+        totp_auth.TOTP.activate(self.user, totp_auth.generate_totp_secret())
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('user-profile'))
+        self.assertContains(response, 'contact the administrators')
+
+    def test_adapter_refusal_message_names_the_next_action(self):
+        message = get_mfa_adapter().error_messages['cannot_delete_authenticator']
+        self.assertIn('contact the administrators', message)
+
+    def test_user_list_shows_two_factor_column(self):
+        totp_auth.TOTP.activate(self.user, totp_auth.generate_totp_secret())
+        superuser = User.objects.create_user(username='card_admin', password='password',
+                                             is_staff=True, is_superuser=True)
+        self.client.force_login(superuser)
+        response = self.client.get(reverse('user-list'))
+        self.assertContains(response, '<th>2FA</th>', html=True)
+
+
 class TestHTMXRedirectMiddleware(TestCase):
     def test_redirects_on_htmx_requests_become_full_page_navigations(self):
         # an anonymous HTMX request to a login-protected page: without the middleware, htmx
