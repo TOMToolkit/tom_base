@@ -2,6 +2,7 @@ from http import HTTPStatus
 from io import StringIO
 from types import SimpleNamespace
 import tempfile
+import time
 import logging
 
 from allauth.mfa.adapter import get_adapter as get_mfa_adapter
@@ -424,6 +425,47 @@ class TestExternalServiceMiddleware(TestCase):
         """
         middleware = ExternalServiceMiddleware(lambda request: None)
         self.assertIsNone(middleware.process_exception(None, ValueError('unrelated')))
+
+
+@override_settings(AUTH_STRATEGY='LOCKED', OPEN_URLS=[])
+class TestLockedAllauthExemptions(TestCase):
+    """Anonymous users on a LOCKED TOM can reach every page of the login flow — and nothing else."""
+
+    def test_authentication_pages_are_open(self):
+        for path in (
+            reverse('account_login'),
+            reverse('account_signup'),
+            reverse('account_inactive'),
+            reverse('account_reset_password'),
+            '/accounts/password/reset/key/abc-def/',  # parametrized route: URL-name matching needs no wildcard
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, HTTPStatus.OK)
+
+    def test_second_factor_challenge_is_not_blocked(self):
+        # without a half-finished login to continue, allauth sends the visitor to the login
+        # page; the point is the middleware lets the request through instead of 403ing it
+        response = self.client.get(reverse('mfa_authenticate'))
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertIn(reverse('account_login'), response.headers['Location'])
+
+    def test_full_two_factor_login_works_when_locked(self):
+        cache.clear()
+        user = User.objects.create_user(username='locked_mfa_user', password='password')
+        secret = totp_auth.generate_totp_secret()
+        totp_auth.TOTP.activate(user, secret)
+        response = self.client.post(reverse('login'), {'login': 'locked_mfa_user', 'password': 'password'})
+        self.assertRedirects(response, reverse('mfa_authenticate'), fetch_redirect_response=False)
+        self.assertEqual(self.client.get(reverse('mfa_authenticate')).status_code, HTTPStatus.OK)
+        code = totp_auth.hotp_value(secret, int(time.time() // 30))
+        self.client.post(reverse('mfa_authenticate'), {'code': f'{code:06d}'})
+        self.assertEqual(self.client.get(reverse('tom_targets:list')).status_code, HTTPStatus.OK)
+
+    def test_other_pages_stay_locked(self):
+        response = self.client.get(reverse('tom_targets:list'))
+        # Raise403Middleware turns the middleware's 403 into a redirect to the login page
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertIn(reverse('account_login'), response.headers['Location'])
 
 
 class TestTomAccountAdapter(TestCase):

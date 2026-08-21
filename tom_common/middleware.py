@@ -3,9 +3,31 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
-from django.urls import reverse
+from django.urls import Resolver404, resolve, reverse
 
 from tom_common.exceptions import ImproperCredentialsException
+
+# URL names anonymous visitors may reach on a LOCKED TOM: logging in is a multi-page flow
+# (the second-factor challenge runs BEFORE the user counts as authenticated), and the
+# pending-approval, sign-up, and password-reset pages are only ever visited anonymously.
+# Matching by URL name (not path) covers parametrized routes like the password-reset key
+# link without wildcards. Each page here still enforces its own gate — e.g. sign-up stays
+# closed unless TOM_REGISTRATION_STRATEGY enables it — so being open under LOCKED never
+# overrides a disabled feature. TOMs open additional paths with the OPEN_URLS setting.
+LOCKED_OPEN_URL_NAMES = frozenset((
+    'login',
+    'logout',
+    'account_login',
+    'account_logout',
+    'account_signup',
+    'account_inactive',
+    'mfa_authenticate',
+    'mfa_trust',
+    'account_reset_password',
+    'account_reset_password_done',
+    'account_reset_password_from_key',
+    'account_reset_password_from_key_done',
+))
 
 
 class ExternalServiceMiddleware:
@@ -40,9 +62,19 @@ class AuthStrategyMiddleware:
             for url in self.open_urls:
                 if fnmatch.fnmatch(request.path_info, url):
                     return self.get_response(request)
+            if self._resolves_to_open_url_name(request.path_info):
+                return self.get_response(request)
             return HttpResponseForbidden()
         else:
             return self.get_response(request)
+
+    @staticmethod
+    def _resolves_to_open_url_name(path_info: str) -> bool:
+        """True when the path is one of the authentication pages exempt from LOCKED."""
+        try:
+            return resolve(path_info).url_name in LOCKED_OPEN_URL_NAMES
+        except Resolver404:
+            return False
 
 
 class Raise403Middleware:
