@@ -13,6 +13,12 @@ class TomCommonConfig(AppConfig):
         # https://docs.djangoproject.com/en/5.1/topics/signals/#connecting-receiver-functions
         import tom_common.signals  # noqa
 
+        # So that django.contrib.admin can't avoid django-auth MFA (if configured)
+        from allauth.account.decorators import secure_admin_login  # b/c need models that only exist at runtime
+        from django.contrib import admin
+        admin.autodiscover()
+        admin.site.login = secure_admin_login(admin.site.login)  # route admin logins through the allauth login
+
         # Set default plotly theme on startup
         valid_themes = ['plotly', 'plotly_white', 'plotly_dark', 'ggplot2', 'seaborn', 'simple_white', 'none']
 

@@ -17,6 +17,7 @@ from django.core.paginator import Paginator
 from django.test import TestCase, override_settings
 from django.test.runner import DiscoverRunner
 
+from tom_common.middleware import ExternalServiceMiddleware
 from tom_common.models import Profile
 from tom_common import encryption
 from tom_common.encryption import (
@@ -389,6 +390,36 @@ class TestAllauthURLConf(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
         # the session is gone: a LOCKED-style protected page now redirects
         self.assertNotIn('_auth_user_id', self.client.session)
+
+
+class TestSecureAdminLogin(TestCase):
+    """The Django admin's password-only login page must route through the TOM (allauth) login."""
+
+    def test_admin_login_redirects_to_tom_login(self):
+        response = self.client.get('/admin/login/?next=/admin/')
+        self.assertRedirects(
+            response, reverse('account_login') + '?next=%2Fadmin%2F', fetch_redirect_response=False
+        )
+
+    def test_admin_usable_with_an_authenticated_session(self):
+        admin_user = User.objects.create_user(username='admin_user', password='password',
+                                              is_staff=True, is_superuser=True)
+        self.client.force_login(admin_user)
+        self.assertEqual(self.client.get('/admin/').status_code, HTTPStatus.OK)
+        # an already-authenticated user hitting the admin login page is sent on, not asked again
+        response = self.client.get('/admin/login/?next=/admin/')
+        self.assertRedirects(response, '/admin/', fetch_redirect_response=False)
+
+
+class TestExternalServiceMiddleware(TestCase):
+    def test_unrelated_exceptions_are_left_to_other_middleware(self):
+        """process_exception must return None for exceptions it does not handle.
+
+        Re-raising prevented later exception middleware (allauth's AccountMiddleware) from
+        converting its control-flow exceptions into redirects, producing 500s instead.
+        """
+        middleware = ExternalServiceMiddleware(lambda request: None)
+        self.assertIsNone(middleware.process_exception(None, ValueError('unrelated')))
 
 
 class CommentDeleteViewTest(TestCase):

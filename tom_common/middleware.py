@@ -27,7 +27,7 @@ class ExternalServiceMiddleware:
             )
             messages.error(request, msg)
             return redirect(reverse('home'))
-        raise exception
+        return None  # instead of reraise (500) let following middleware redirect
 
 
 class AuthStrategyMiddleware:
