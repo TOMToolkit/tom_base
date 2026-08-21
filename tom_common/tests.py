@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.exceptions import FieldError, ValidationError
 from django.core.management import call_command
-from django.urls import reverse
+from django.urls import resolve, reverse
 from django_comments.models import Comment
 from django.core.paginator import Paginator
 from django.test import TestCase, override_settings
@@ -354,6 +354,41 @@ class TestAuthStrategyMiddleware(TestCase):
     def test_read_only_unauthenticated_allowed(self):
         response = self.client.get(reverse('tom_targets:list'))
         self.assertEqual(response.status_code, 200)
+
+
+class TestAllauthURLConf(TestCase):
+    """The allauth URL cutover: historical URL names keep working and password-only logins are closed."""
+
+    def test_login_and_logout_names_are_aliases(self):
+        """``login``/``logout`` and ``account_login``/``account_logout`` reverse to the same paths."""
+        self.assertEqual(reverse('login'), reverse('account_login'))
+        self.assertEqual(reverse('logout'), reverse('account_logout'))
+
+    def test_login_path_is_served_by_allauth(self):
+        """allauth is mounted before the plugin loop and the aliases, so its view answers the path."""
+        self.assertEqual(resolve(reverse('login')).url_name, 'account_login')
+
+    def test_login_page_renders_allauth_form(self):
+        response = self.client.get(reverse('login'))
+        self.assertEqual(response.status_code, 200)
+        # allauth's login form posts a 'login' field where Django's posted 'username'
+        self.assertContains(response, 'name="login"')
+        self.assertContains(response, 'name="password"')
+
+    def test_browsable_api_login_redirects_to_tom_login(self):
+        """The REST framework's password-only login page must not bypass two-factor authentication."""
+        response = self.client.get(reverse('rest_framework:login') + '?next=/api/')
+        self.assertRedirects(
+            response, reverse('account_login') + '?next=/api/', fetch_redirect_response=False
+        )
+
+    def test_logout_is_a_post(self):
+        user = User.objects.create_user(username='logout_user', password='password')
+        self.client.force_login(user)
+        response = self.client.post(reverse('logout'))
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        # the session is gone: a LOCKED-style protected page now redirects
+        self.assertNotIn('_auth_user_id', self.client.session)
 
 
 class CommentDeleteViewTest(TestCase):

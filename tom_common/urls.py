@@ -13,11 +13,11 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from allauth.account import views as allauth_views
 from django.contrib import admin
 from django.urls import path
 from django.urls import include
-from django.views.generic import TemplateView
-from django.contrib.auth.views import LoginView, LogoutView
+from django.views.generic import RedirectView, TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.apps import apps
@@ -37,7 +37,18 @@ router.register(r'groups', GroupViewSet, 'groups')
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'),
-         kwargs={'version': __version__}, name='home')]
+         kwargs={'version': __version__}, name='home'),
+    # django-allauth serves every page under /accounts/ (login, logout, two-factor, password,
+    # signup). It is mounted wholesale because allauth internals reverse URL names beyond the
+    # obvious ones (account_inactive, account_reauthenticate, account_signup, ...), and it is
+    # mounted BEFORE the plugin loop below so that no installed app can shadow the
+    # authentication URLs with routes of its own.
+    path('accounts/', include('allauth.urls')),
+    # Historical URL names: tom_base templates and downstream TOMs reverse 'login' and 'logout',
+    # so keep both names working as same-path aliases of the allauth views.
+    path('accounts/login/', allauth_views.login, name='login'),
+    path('accounts/logout/', allauth_views.logout, name='logout'),
+]
 
 # Add the urls from each app that has an include_url_paths method in its AppConfig
 for app in apps.get_app_configs():
@@ -63,11 +74,15 @@ urlpatterns += [
     path('groups/create/', GroupCreateView.as_view(), name='group-create'),
     path('groups/<int:pk>/update/', GroupUpdateView.as_view(), name='group-update'),
     path('groups/<int:pk>/delete/', GroupDeleteView.as_view(), name='group-delete'),
-    path('accounts/login/', LoginView.as_view(), name='login'),
-    path('accounts/logout/', LogoutView.as_view(), name='logout'),
     path('comment/<int:pk>/delete', CommentDeleteView.as_view(), name='comment-delete'),
     path('admin/', admin.site.urls),
-    path('api-auth/', include('rest_framework.urls')),
+    # The REST framework's own login page is password-only and would bypass two-factor
+    # authentication. The 'rest_framework' namespace must still exist (the browsable API's
+    # login/logout links reverse it), so keep the names but send both to the TOM's pages.
+    path('api-auth/', include(([
+        path('login/', RedirectView.as_view(pattern_name='account_login', query_string=True), name='login'),
+        path('logout/', RedirectView.as_view(pattern_name='account_logout', query_string=True), name='logout'),
+    ], 'rest_framework'))),
     path('api/', include((collect_api_urls(), 'api'), namespace='api')),
     path('api/token-auth/', views.obtain_auth_token),
     # The static helper below only works in development see
