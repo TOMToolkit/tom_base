@@ -23,6 +23,9 @@ TOMTOOLKIT_INSTALLED_APPS = [
     'django_tasks.backends.database',
     'guardian',
     'tom_common',
+    'allauth',  # after tom_common so our template overrides take precedence over allauth's.
+    'allauth.account',
+    'allauth.mfa',
     'django_comments',
     'django_bootstrap5',
     'crispy_bootstrap5',
@@ -46,6 +49,7 @@ TOMTOOLKIT_MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # required by allauth; must follow AuthenticationMiddleware
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
@@ -54,7 +58,24 @@ TOMTOOLKIT_MIDDLEWARE = [
     'tom_common.middleware.AuthStrategyMiddleware',
 ]
 
+TOMTOOLKIT_AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',  # show "pending approval" for inactive accounts
+    'guardian.backends.ObjectPermissionBackend',
+)
+AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS
+
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+
+# django-allauth configuration.
+ACCOUNT_LOGIN_METHODS = {'username'}
+ACCOUNT_SIGNUP_FIELDS = ['username*', 'email*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False  # prevent redirect loops; redirect to login with message
+MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']  # passkeys/WebAuthn deliberately not enabled
+MFA_ALLOW_UNVERIFIED_EMAIL = True
+MFA_TOTP_TOLERANCE = 1  # accept codes from the adjacent 30 s window (clock skew)
+MFA_RECOVERY_CODES_SHOW_ONCE = True  # recovery codes are displayed only at generation time
 
 # Backwards typo compatibility
 TOMTOOKIT_INSTALLED_APPS = TOMTOOLKIT_INSTALLED_APPS
