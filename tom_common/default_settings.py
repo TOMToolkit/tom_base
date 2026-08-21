@@ -79,6 +79,9 @@ MFA_ALLOW_UNVERIFIED_EMAIL = True
 MFA_TOTP_TOLERANCE = 1  # accept codes from the adjacent 30 s window (clock skew)
 MFA_RECOVERY_CODES_SHOW_ONCE = True  # recovery codes are displayed only at generation time
 
+# TOM Toolkit account settings (each documented in docs/common/customsettings.rst)
+TOM_PASSWORD_RESET_ENABLED = False  # password reset by email; requires a working EMAIL_BACKEND
+
 # Backwards typo compatibility
 TOMTOOKIT_INSTALLED_APPS = TOMTOOLKIT_INSTALLED_APPS
 TOMTOOKIT_MIDDLEWARE = TOMTOOLKIT_MIDDLEWARE

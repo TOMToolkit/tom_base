@@ -16,7 +16,7 @@ from django.core.cache import cache
 from django.contrib.sites.models import Site
 from django.core.exceptions import FieldError, ValidationError
 from django.core.management import call_command
-from django.urls import resolve, reverse
+from django.urls import NoReverseMatch, clear_url_caches, resolve, reverse
 from django_comments.models import Comment
 from django.core.paginator import Paginator
 from django.test import TestCase, override_settings
@@ -427,17 +427,55 @@ class TestExternalServiceMiddleware(TestCase):
         self.assertIsNone(middleware.process_exception(None, ValueError('unrelated')))
 
 
+class TestPasswordResetOptIn(TestCase):
+    """TOM_PASSWORD_RESET_ENABLED=False (the default) leaves the reset routes unmounted."""
+
+    @staticmethod
+    def _reload_urlconf():
+        """Rebuild the URLconf so a changed TOM_PASSWORD_RESET_ENABLED takes effect."""
+        import importlib
+
+        import tom_common.urls
+        importlib.reload(tom_common.urls)
+        clear_url_caches()
+
+    def test_reset_routes_not_mounted_by_default(self):
+        with self.assertRaises(NoReverseMatch):
+            reverse('account_reset_password')
+        self.assertEqual(self.client.get('/accounts/password/reset/').status_code, HTTPStatus.NOT_FOUND)
+
+    def test_login_page_has_no_reset_link_by_default(self):
+        response = self.client.get(reverse('account_login'))
+        self.assertNotContains(response, 'Forgot your password')
+
+    def test_reset_routes_and_login_link_appear_when_enabled(self):
+        self.addCleanup(self._reload_urlconf)  # runs after the override exits: back to unmounted
+        with override_settings(TOM_PASSWORD_RESET_ENABLED=True):
+            self._reload_urlconf()
+            self.assertEqual(self.client.get('/accounts/password/reset/').status_code, HTTPStatus.OK)
+            self.assertContains(self.client.get('/accounts/login/'), 'Forgot your password')
+
+    def test_reset_pages_open_on_locked_toms_when_enabled(self):
+        self.addCleanup(self._reload_urlconf)
+        with override_settings(TOM_PASSWORD_RESET_ENABLED=True, AUTH_STRATEGY='LOCKED', OPEN_URLS=[]):
+            self._reload_urlconf()
+            for path in ('/accounts/password/reset/',
+                         '/accounts/password/reset/key/abc-def/'):  # parametrized: no wildcard needed
+                with self.subTest(path=path):
+                    self.assertEqual(self.client.get(path).status_code, HTTPStatus.OK)
+
+
 @override_settings(AUTH_STRATEGY='LOCKED', OPEN_URLS=[])
 class TestLockedAllauthExemptions(TestCase):
     """Anonymous users on a LOCKED TOM can reach every page of the login flow — and nothing else."""
 
     def test_authentication_pages_are_open(self):
+        # the password-reset pages join this list when TOM_PASSWORD_RESET_ENABLED mounts them
+        # (covered in TestPasswordResetOptIn)
         for path in (
             reverse('account_login'),
             reverse('account_signup'),
             reverse('account_inactive'),
-            reverse('account_reset_password'),
-            '/accounts/password/reset/key/abc-def/',  # parametrized route: URL-name matching needs no wildcard
         ):
             with self.subTest(path=path):
                 self.assertEqual(self.client.get(path).status_code, HTTPStatus.OK)
