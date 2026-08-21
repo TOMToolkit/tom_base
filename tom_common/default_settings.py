@@ -68,6 +68,8 @@ AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 # django-allauth configuration.
+ACCOUNT_ADAPTER = 'tom_common.adapters.TomAccountAdapter'
+MFA_ADAPTER = 'tom_common.adapters.TomMFAAdapter'
 ACCOUNT_LOGIN_METHODS = {'username'}
 ACCOUNT_SIGNUP_FIELDS = ['username*', 'email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'none'

@@ -4,10 +4,14 @@ from types import SimpleNamespace
 import tempfile
 import logging
 
+from allauth.mfa.adapter import get_adapter as get_mfa_adapter
+from allauth.mfa.models import Authenticator
+from allauth.mfa.totp.internal import auth as totp_auth
 from cryptography.fernet import InvalidToken
 
 from django import forms
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.contrib.sites.models import Site
 from django.core.exceptions import FieldError, ValidationError
 from django.core.management import call_command
@@ -420,6 +424,65 @@ class TestExternalServiceMiddleware(TestCase):
         """
         middleware = ExternalServiceMiddleware(lambda request: None)
         self.assertIsNone(middleware.process_exception(None, ValueError('unrelated')))
+
+
+class TestTomAccountAdapter(TestCase):
+    def test_signup_closed_by_default(self):
+        response = self.client.get(reverse('account_signup'))
+        self.assertTemplateUsed(response, 'account/signup_closed.html')
+
+    @override_settings(TOM_REGISTRATION_STRATEGY='open')
+    def test_signup_open_when_strategy_configured(self):
+        response = self.client.get(reverse('account_signup'))
+        self.assertTemplateUsed(response, 'account/signup.html')
+
+
+class TestTomMFAAdapter(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='mfa_user', password='password')
+        cache.clear()  # allauth login rate limits are cache-counted
+
+    def test_totp_secret_is_stored_encrypted(self):
+        secret = totp_auth.generate_totp_secret()
+        totp_auth.TOTP.activate(self.user, secret)
+        stored = Authenticator.objects.get(user=self.user, type=Authenticator.Type.TOTP).data['secret']
+        self.assertNotEqual(stored, secret)
+        self.assertEqual(get_mfa_adapter().decrypt(stored), secret)
+
+    def test_login_with_totp_enrolled_redirects_to_challenge(self):
+        totp_auth.TOTP.activate(self.user, totp_auth.generate_totp_secret())
+        response = self.client.post(reverse('login'), {'login': 'mfa_user', 'password': 'password'})
+        self.assertRedirects(response, reverse('mfa_authenticate'), fetch_redirect_response=False)
+
+    def test_totp_issuer_is_tom_name(self):
+        with override_settings(TOM_NAME='My Fine TOM'):
+            self.assertEqual(get_mfa_adapter().get_totp_issuer(), 'My Fine TOM')
+
+    def test_can_delete_authenticator_follows_tom_mfa_required(self):
+        superuser = User.objects.create_user(username='mfa_super', password='password', is_superuser=True)
+        user_authenticator = Authenticator(user=self.user, type=Authenticator.Type.TOTP, data={})
+        superuser_authenticator = Authenticator(user=superuser, type=Authenticator.Type.TOTP, data={})
+        adapter = get_mfa_adapter()
+        self.assertTrue(adapter.can_delete_authenticator(user_authenticator))  # TOM_MFA_REQUIRED unset
+        with override_settings(TOM_MFA_REQUIRED='superusers'):
+            self.assertTrue(adapter.can_delete_authenticator(user_authenticator))
+            self.assertFalse(adapter.can_delete_authenticator(superuser_authenticator))
+        with override_settings(TOM_MFA_REQUIRED='all'):
+            self.assertFalse(adapter.can_delete_authenticator(user_authenticator))
+
+
+class TestRotateEncryptionKeyAuthenticators(TestCase):
+    def test_rotate_reencrypts_totp_secret(self):
+        user = User.objects.create_user(username='rotate_mfa_user', password='password')
+        with override_settings(SECRET_KEY='old-key'):
+            secret = totp_auth.generate_totp_secret()
+            totp_auth.TOTP.activate(user, secret)
+        with override_settings(SECRET_KEY='new-key', SECRET_KEY_FALLBACKS=['old-key']):
+            call_command('rotate_encryption_key', stdout=StringIO())
+        # after rotation the fallback is no longer needed
+        with override_settings(SECRET_KEY='new-key', SECRET_KEY_FALLBACKS=[]):
+            stored = Authenticator.objects.get(user=user).data['secret']
+            self.assertEqual(get_mfa_adapter().decrypt(stored), secret)
 
 
 class CommentDeleteViewTest(TestCase):
