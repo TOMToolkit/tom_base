@@ -53,6 +53,7 @@ TOMTOOLKIT_MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
+    'tom_common.middleware.HTMXRedirectMiddleware',  # after HtmxMiddleware; converts 302s on HTMX requests
     'tom_common.middleware.Raise403Middleware',
     'tom_common.middleware.ExternalServiceMiddleware',
     'tom_common.middleware.AuthStrategyMiddleware',

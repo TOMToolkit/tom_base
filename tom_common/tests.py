@@ -427,6 +427,20 @@ class TestExternalServiceMiddleware(TestCase):
         self.assertIsNone(middleware.process_exception(None, ValueError('unrelated')))
 
 
+class TestHTMXRedirectMiddleware(TestCase):
+    def test_redirects_on_htmx_requests_become_full_page_navigations(self):
+        # an anonymous HTMX request to a login-protected page: without the middleware, htmx
+        # would swap the login page into the requesting fragment
+        response = self.client.get(reverse('user-profile'), HTTP_HX_REQUEST='true')
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertIn(reverse('account_login'), response.headers['HX-Redirect'])
+
+    def test_redirects_on_ordinary_requests_are_unchanged(self):
+        response = self.client.get(reverse('user-profile'))
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertNotIn('HX-Redirect', response.headers)
+
+
 class TestPasswordResetOptIn(TestCase):
     """TOM_PASSWORD_RESET_ENABLED=False (the default) leaves the reset routes unmounted."""
 

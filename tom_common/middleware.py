@@ -1,7 +1,7 @@
 import fnmatch
 from django.conf import settings
 from django.contrib import messages
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import Resolver404, resolve, reverse
 
@@ -28,6 +28,26 @@ LOCKED_OPEN_URL_NAMES = frozenset((
     'account_reset_password_from_key',
     'account_reset_password_from_key_done',
 ))
+
+
+class HTMXRedirectMiddleware:
+    """Turns 302 responses to HTMX requests into HX-Redirect full-page navigations.
+
+    When htmx receives a 302 it follows the redirect and swaps the destination page INTO the
+    requesting fragment — so a login redirect (session expired, reauthentication required)
+    would render the login page inside a table cell. The HX-Redirect header instead tells
+    htmx to navigate the whole browser window to the new URL.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if request.headers.get('HX-Request') and isinstance(response, HttpResponseRedirect):
+            response['HX-Redirect'] = response['Location']
+            response.status_code = 200
+        return response
 
 
 class ExternalServiceMiddleware:
