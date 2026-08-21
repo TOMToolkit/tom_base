@@ -21,6 +21,7 @@ from django_comments.models import Comment
 from django.core.paginator import Paginator
 from django.test import TestCase, override_settings
 from django.test.runner import DiscoverRunner
+from django.utils import timezone
 
 from tom_common.middleware import ExternalServiceMiddleware
 from tom_common.models import Profile
@@ -425,6 +426,56 @@ class TestExternalServiceMiddleware(TestCase):
         """
         middleware = ExternalServiceMiddleware(lambda request: None)
         self.assertIsNone(middleware.process_exception(None, ValueError('unrelated')))
+
+
+class TestPasswordChangedStamp(TestCase):
+    """Profile.password_changed_at: dated only when the user chose the password themselves."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='stamp_user', password='old-password-123')
+
+    def _stamp(self):
+        self.user.profile.refresh_from_db()
+        return self.user.profile.password_changed_at
+
+    def test_new_users_have_no_stamp(self):
+        self.assertIsNone(self._stamp())
+
+    def test_self_service_change_stamps(self):
+        self.client.login(username='stamp_user', password='old-password-123')
+        response = self.client.post(reverse('account_change_password'), {
+            'oldpassword': 'old-password-123',
+            'password1': 'new-password-456',
+            'password2': 'new-password-456',
+        })
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertIsNotNone(self._stamp())
+
+    def test_own_profile_edit_password_change_stamps(self):
+        self.client.force_login(self.user)
+        self.client.post(reverse('user-update', kwargs={'pk': self.user.pk}), {
+            'profile-TOTAL_FORMS': '1', 'profile-INITIAL_FORMS': '1',
+            'profile-0-id': str(self.user.profile.pk), 'profile-0-user': str(self.user.pk),
+            'username': 'stamp_user', 'email': 'stamp@example.com',
+            'password1': 'new-password-456', 'password2': 'new-password-456',
+        })
+        self.assertIsNotNone(self._stamp())
+
+    def test_administrator_set_password_clears_the_stamp(self):
+        Profile.objects.filter(user=self.user).update(password_changed_at=timezone.now())
+        superuser = User.objects.create_user(username='stamp_admin', password='password',
+                                             is_staff=True, is_superuser=True)
+        self.client.force_login(superuser)
+        self.client.post(reverse('admin-user-change-password', kwargs={'pk': self.user.pk}),
+                         {'password': 'admin-chosen-789', 'change_password_form': '1'})
+        self.assertIsNone(self._stamp())
+
+    def test_login_does_not_touch_the_stamp(self):
+        stamp = timezone.now()
+        Profile.objects.filter(user=self.user).update(password_changed_at=stamp)
+        self.client.login(username='stamp_user', password='old-password-123')  # saves last_login
+        self.assertEqual(self._stamp(), stamp)
 
 
 class TestSecurityCardAndUserList(TestCase):

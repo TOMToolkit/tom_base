@@ -14,11 +14,13 @@ from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirec
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.contrib.auth import update_session_auth_hash
+from django.utils import timezone
 
 from rest_framework.authtoken.models import Token
 
 from tom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm, GroupForm
 from tom_common.mixins import SuperuserRequiredMixin
+from tom_common.models import Profile
 
 
 logger = logging.getLogger(__name__)
@@ -296,7 +298,11 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         self.object = form.save()
 
         if form.cleaned_data.get("password1"):
+            # oh, the password changed
             update_session_auth_hash(self.request, self.object)
+            if self.object == self.request.user:
+                # only timestamp this password if the user changed it themselves.
+                Profile.objects.filter(user=self.object).update(password_changed_at=timezone.now())
 
         messages.success(self.request, 'Profile updated')
         return HttpResponseRedirect(self.get_success_url())
