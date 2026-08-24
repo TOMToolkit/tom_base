@@ -13,10 +13,9 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-import allauth.urls
 from allauth.account import views as allauth_views
 from django.contrib import admin
-from django.urls import URLPattern, URLResolver, path
+from django.urls import path
 from django.urls import include
 from django.views.generic import RedirectView, TemplateView
 from django.conf import settings
@@ -25,6 +24,7 @@ from django.apps import apps
 from rest_framework.authtoken import views
 
 from tom_base import __version__
+from tom_common.accounts.urlpatterns import allauth_urlpatterns
 from tom_common.api_views import GroupViewSet
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
 from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView, UserProfileView
@@ -36,60 +36,11 @@ from .api_router import collect_api_urls, SharedAPIRootRouter  # DRF routers are
 router = SharedAPIRootRouter()
 router.register(r'groups', GroupViewSet, 'groups')
 
-# list of URL names to remove from allauth, if password reset is not enabled
-PASSWORD_RESET_URL_NAMES = frozenset((
-    'account_reset_password',
-    'account_reset_password_done',
-    'account_reset_password_from_key',
-    'account_reset_password_from_key_done',
-))
-
-
-def _urlpatterns_without_names(patterns: list, excluded_names: frozenset) -> list:
-    """Copy URL patterns, dropping any whose name is excluded; recurses into included URLconfs."""
-    kept = []
-    for pattern in patterns:
-        if isinstance(pattern, URLPattern):
-            if pattern.name not in excluded_names:
-                kept.append(pattern)
-        elif isinstance(pattern, URLResolver):
-            kept.append(URLResolver(
-                pattern.pattern,
-                _urlpatterns_without_names(pattern.url_patterns, excluded_names),
-                pattern.default_kwargs,
-                pattern.app_name,
-                pattern.namespace,
-            ))
-    return kept
-
-
-def _allauth_urlpatterns() -> list:
-    """Construct list of urlpatterns to mount
-
-    Password reset requires email setup. If a TOM sets up email and enables
-    password resetting (by setting TOM_PASSWORD_RESET_ENABLED to True),
-    return the ALL allauth urlpatterns (which include the reset_password URLnames).
-    Otherwise, remove the password reset URL names and return the rest.
-
-    django-allauth forces this urlpattern surgery upon other toolkits because
-    as a toolkit, we don't know if email has been configured in the downstream project.
-    The project knows and tells TOM Toolkit via TOM_PASSWORD_RESET_ENABLED.
-    Here, we use that information to decide whether to include password reset
-    URL names (or remove them) in the urlpattern.
-    """
-    if getattr(settings, 'TOM_PASSWORD_RESET_ENABLED', False):
-        # TOM_PASSWORD_RESET_ENABLED is True, so return *all* the urlpatterns
-        return allauth.urls.urlpatterns
-
-    # return the urlpatterns with the password reset URL names removed
-    return _urlpatterns_without_names(allauth.urls.urlpatterns, PASSWORD_RESET_URL_NAMES)
-
-
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'),
          kwargs={'version': __version__}, name='home'),
     # django-allauth patterns come before the plugin loop so authentication URLs can't be shadowed
-    path('accounts/', include(_allauth_urlpatterns())),
+    path('accounts/', include(allauth_urlpatterns())),
 
     # for backwards compatibility with templates in tom_base and deployed TOMs,
     # (they reverse 'login' and 'logout' URL names) route to django-allauth views.
