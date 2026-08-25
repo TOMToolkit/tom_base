@@ -429,6 +429,43 @@ class TestExternalServiceMiddleware(TestCase):
         self.assertIsNone(middleware.process_exception(None, ValueError('unrelated')))
 
 
+class TestPasswordValidators(TestCase):
+    def test_character_class_validator(self):
+        from tom_common.accounts.password_validation import CharacterClassValidator
+        validator = CharacterClassValidator()
+        validator.validate('Abcdef1!')  # all four classes: no exception
+        for bad, missing in (('abcdef1!', 'upper-case'), ('ABCDEF1!', 'lower-case'),
+                             ('Abcdefg!', 'digit'), ('Abcdefg1', 'special')):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValidationError) as raised:
+                    validator.validate(bad)
+                self.assertIn(missing, str(raised.exception))
+
+    def test_not_same_as_current_password_validator(self):
+        from tom_common.accounts.password_validation import NotSameAsCurrentPasswordValidator
+        validator = NotSameAsCurrentPasswordValidator()
+        user = User.objects.create_user(username='validator_user', password='current-pass-1!')
+        with self.assertRaises(ValidationError):
+            validator.validate('current-pass-1!', user)
+        validator.validate('a-different-pass-2!', user)  # no exception
+        validator.validate('current-pass-1!', None)      # no user to compare: skipped
+        validator.validate('current-pass-1!', User(username='unsaved'))  # unsaved user: skipped
+
+    @override_settings(AUTH_PASSWORD_VALIDATORS=[
+        {'NAME': 'tom_common.accounts.password_validation.NotSameAsCurrentPasswordValidator'},
+    ])
+    def test_change_password_to_itself_is_rejected(self):
+        cache.clear()
+        User.objects.create_user(username='same_pass_user', password='current-pass-1!')
+        self.client.login(username='same_pass_user', password='current-pass-1!')
+        response = self.client.post(reverse('account_change_password'), {
+            'oldpassword': 'current-pass-1!',
+            'password1': 'current-pass-1!',
+            'password2': 'current-pass-1!',
+        })
+        self.assertContains(response, 'same as your current password')
+
+
 class TestAccountRequirements(TestCase):
     """AccountRequirementsMiddleware + the built-in TOM_ACCOUNT_REQUIREMENTS checks."""
 
