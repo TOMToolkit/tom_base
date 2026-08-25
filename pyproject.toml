@@ -53,7 +53,7 @@ dependencies = [
     "django-bootstrap5 <27",
     "beautifulsoup4 <5",
     "django-contrib-comments >=2.0,<3.0",
-    "django-crispy-forms >=2.0,<3.0",
+    "django-crispy-forms >=2.7,<3.0",
     "crispy-bootstrap5 <2027",
     "django-extensions >=3.0.0,<4.0.0",
     "django-filter >=23,<25",
