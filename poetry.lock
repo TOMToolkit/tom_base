@@ -33,14 +33,14 @@ files = [
 
 [[package]]
 name = "alerce"
-version = "2.3.0"
+version = "2.3.1"
 description = "ALeRCE Client"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "alerce-2.3.0-py3-none-any.whl", hash = "sha256:b35bc4136d484bcee9179043aa8dfeaba22f29aba93420798f2ff1451a969cdf"},
-    {file = "alerce-2.3.0.tar.gz", hash = "sha256:8dead5d06a544294f24c6b1213080adc01205c8cc584e03a654178e13cc5dc36"},
+    {file = "alerce-2.3.1-py3-none-any.whl", hash = "sha256:30efbcd42e1a92459816ec068af0d6252ddeaf49697f6d1b62e54455d3fccd3a"},
+    {file = "alerce-2.3.1.tar.gz", hash = "sha256:efacce6ad6a952db31e26ae50cc84302cbd0085fd45265edc55cf9f4dd815af0"},
 ]
 
 [package.dependencies]
@@ -4223,4 +4223,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10.0,<3.14"
-content-hash = "a5a246552fa0a5ce9f51be8e2eac468a7e7b5eb77aaf0d37d903315582a3ec4e"
+content-hash = "b6a2783f9212ca48aafbf05d4084dfec0e12d3483f89eccfb98dd84ee9e980a6"
