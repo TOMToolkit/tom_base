@@ -6,7 +6,7 @@ identically to the class it replaces.
 """
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from allauth.mfa.models import Authenticator
 
@@ -16,6 +16,7 @@ from django.utils import timezone
 from django.utils.module_loading import import_string
 
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import AuthenticationFailed
 
 from tom_common.accounts.requirements import AccountRequirement
@@ -69,3 +70,11 @@ class TomTokenAuthentication(TokenAuthentication):
                 raise AuthenticationFailed(
                     f'Your account has an outstanding requirement ("{requirement.label}"). '
                     'Log in on the web to resolve it, then retry with your token.')
+
+
+def token_expiry_date(token: Token | None) -> datetime | None:
+    """When this token stops being accepted, or None without TOM_API_TOKEN_EXPIRY_DAYS."""
+    expiry_days = getattr(settings, 'TOM_API_TOKEN_EXPIRY_DAYS', None)
+    if not (token and expiry_days):
+        return None
+    return token.created + timedelta(days=expiry_days)

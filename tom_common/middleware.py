@@ -8,13 +8,8 @@ from django.utils.module_loading import import_string
 
 from tom_common.exceptions import ImproperCredentialsException
 
-# URL names anonymous visitors may reach on a LOCKED TOM: logging in is a multi-page flow
-# (the second-factor challenge runs BEFORE the user counts as authenticated), and the
-# pending-approval, sign-up, and password-reset pages are only ever visited anonymously.
-# Matching by URL name (not path) covers parametrized routes like the password-reset key
-# link without wildcards. Each page here still enforces its own gate — e.g. sign-up stays
-# closed unless TOM_REGISTRATION_STRATEGY enables it — so being open under LOCKED never
-# overrides a disabled feature. TOMs open additional paths with the OPEN_URLS setting.
+# this is the list of URL names that an unauthenticated user must be able to access in
+# order to become authenticated.
 LOCKED_OPEN_URL_NAMES = frozenset((
     'login',
     'logout',
@@ -169,7 +164,9 @@ class Raise403Middleware:
     def __call__(self, request):
         response = self.get_response(request)
 
-        if response.status_code == 403:
+        # don't return html to a request to /api/
+        if response.status_code == 403 and not request.path_info.startswith('/api/'):
+            # return html (via redirect) for browser endpoints (i.e. not /api/)
             msg = (
                 'You do not have permission to access this page. Please login as a user '
                 'with the correct permissions or contact your PI.'
@@ -177,4 +174,5 @@ class Raise403Middleware:
             messages.error(request, msg)
             return redirect(reverse('login') + '?next=' + request.path)
 
+        # for request to /api/ enpoints, return a JSON 403 response body that a script can read.
         return response

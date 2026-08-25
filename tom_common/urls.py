@@ -21,9 +21,9 @@ from django.views.generic import RedirectView, TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.apps import apps
-from rest_framework.authtoken import views
 
 from tom_base import __version__
+from tom_common.accounts.api_views import TomObtainAuthToken
 from tom_common.accounts.urlpatterns import allauth_urlpatterns
 from tom_common.accounts.views import TermsAcceptView, TermsOfServiceView
 from tom_common.api_views import GroupViewSet
@@ -85,7 +85,10 @@ urlpatterns += [
         path('logout/', RedirectView.as_view(pattern_name='account_logout', query_string=True), name='logout'),
     ], 'rest_framework'))),
     path('api/', include((collect_api_urls(), 'api'), namespace='api')),
-    path('api/token-auth/', views.obtain_auth_token),
+
+    # instead of rest_framework.authtoken.views.obtain_auth_token, call our MFA-compliant wrapper:
+    path('api/token-auth/', TomObtainAuthToken.as_view()),
+
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
  ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

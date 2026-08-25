@@ -550,6 +550,59 @@ class TestTomTokenAuthentication(TestCase):
             self.assertEqual(warnings[0].id, 'tom_common.W001')
 
 
+class TestTokenEndpointAndRegeneration(TestCase):
+    """api/token-auth/ and token regeneration under TOM_API_TOKEN_REQUIRES_MFA."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='endpoint_user', password='password')
+
+    def test_token_auth_endpoint_works_by_default(self):
+        response = self.client.post('/api/token-auth/',
+                                    {'username': 'endpoint_user', 'password': 'password'})
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertIn('token', response.json())
+
+    @override_settings(TOM_API_TOKEN_REQUIRES_MFA=True)
+    def test_token_auth_endpoint_refuses_under_the_mfa_flag(self):
+        response = self.client.post('/api/token-auth/',
+                                    {'username': 'endpoint_user', 'password': 'password'})
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
+        self.assertIn('copy your token from your profile page', response.json()['detail'])
+
+    @override_settings(TOM_API_TOKEN_REQUIRES_MFA=True)
+    def test_superuser_cannot_regenerate_anothers_token_under_the_flag(self):
+        superuser = User.objects.create_user(username='endpoint_admin', password='password',
+                                             is_staff=True, is_superuser=True)
+        original_key = Token.objects.get(user=self.user).key
+        self.client.force_login(superuser)
+        response = self.client.post(reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertEqual(Token.objects.get(user=self.user).key, original_key)  # unchanged
+
+    @override_settings(TOM_API_TOKEN_REQUIRES_MFA=True)
+    def test_owner_regeneration_requires_recent_reauthentication(self):
+        original_key = Token.objects.get(user=self.user).key
+        # force_login leaves no allauth authentication record: sent to the reauthenticate page
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertIn(reverse('account_reauthenticate'), response.headers['Location'])
+        self.assertEqual(Token.objects.get(user=self.user).key, original_key)
+        # a real login is a recent authentication: regeneration proceeds
+        client = Client()
+        client.post(reverse('login'), {'login': 'endpoint_user', 'password': 'password'})
+        response = client.post(reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertNotEqual(Token.objects.get(user=self.user).key, original_key)
+
+    @override_settings(TOM_API_TOKEN_EXPIRY_DAYS=60)
+    def test_edit_page_shows_token_dates(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('user-update', kwargs={'pk': self.user.pk}))
+        self.assertContains(response, 'expires')
+
+
 class TestSecurityLog(TestCase):
     """Authentication events emit one INFO line each on the tom_common.security logger."""
 
