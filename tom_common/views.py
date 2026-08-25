@@ -24,6 +24,7 @@ from tom_common.models import Profile
 
 
 logger = logging.getLogger(__name__)
+security_logger = logging.getLogger('tom_common.security')
 
 
 class GroupCreateView(SuperuserRequiredMixin, CreateView):
@@ -120,6 +121,7 @@ class RegenerateAPITokenView(LoginRequiredMixin, View):
         # Delete existing token (safe even if none exists) and create a new one
         Token.objects.filter(user=target_user).delete()
         new_token = Token.objects.create(user=target_user)
+        security_logger.info(f'API token regenerated for {target_user.username} by {request.user.username}')
 
         # handle HTMX requests here
         if request.htmx:

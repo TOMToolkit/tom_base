@@ -485,6 +485,52 @@ class TestTermsOfService(TestCase):
         self.assertRedirects(response, reverse('terms-accept'), fetch_redirect_response=False)
 
 
+class TestSecurityLog(TestCase):
+    """Authentication events emit one INFO line each on the tom_common.security logger."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='audit_user', password='password')
+
+    def test_login_success_failure_and_logout(self):
+        with self.assertLogs('tom_common.security', 'INFO') as logs:
+            self.client.post(reverse('login'), {'login': 'audit_user', 'password': 'wrong'})
+            self.client.post(reverse('login'), {'login': 'audit_user', 'password': 'password'})
+            self.client.post(reverse('logout'))
+        joined = '\n'.join(logs.output)
+        self.assertIn('Login failed: username=audit_user', joined)
+        self.assertIn('Login succeeded: audit_user', joined)
+        self.assertIn('Logout: audit_user', joined)
+        self.assertNotIn('wrong', joined)  # passwords are never logged
+
+    def test_password_change_and_authenticator_events(self):
+        # a real login and enrolment: allauth emits authenticator_added from its view flow,
+        # not from the low-level TOTP.activate() used elsewhere in these tests
+        client = Client()
+        client.post(reverse('login'), {'login': 'audit_user', 'password': 'password'})
+        with self.assertLogs('tom_common.security', 'INFO') as logs:
+            response = client.get(reverse('mfa_activate_totp'))
+            secret = response.context['form'].secret
+            code = totp_auth.hotp_value(secret, int(time.time() // 30))
+            client.post(reverse('mfa_activate_totp'), {'code': f'{code:06d}'})
+            # after the enrolment: changing the password would invalidate the session above
+            self.user.set_password('a-new-password-1!')
+            self.user.save()
+        joined = '\n'.join(logs.output)
+        self.assertIn('Two-factor authenticator added: audit_user (totp)', joined)
+        self.assertIn('Password changed: audit_user', joined)
+
+    @override_settings(TOM_TERMS_OF_SERVICE_VERSION='v1')
+    def test_terms_acceptance_and_token_regeneration(self):
+        self.client.force_login(self.user)
+        with self.assertLogs('tom_common.security', 'INFO') as logs:
+            self.client.post(reverse('terms-accept'))
+            self.client.post(reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
+        joined = '\n'.join(logs.output)
+        self.assertIn('Terms of service accepted: audit_user (version v1', joined)
+        self.assertIn('API token regenerated for audit_user by audit_user', joined)
+
+
 class TestRequiredFieldsOnUserForm(TestCase):
     """TOM_REQUIRED_USER_FIELDS marks the listed User/Profile fields required on the edit form."""
 

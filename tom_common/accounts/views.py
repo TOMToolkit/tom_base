@@ -5,6 +5,8 @@ which a TOM overrides in its own ``templates/`` directory.
 """
 from __future__ import annotations
 
+import logging
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -14,6 +16,8 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from tom_common.models import TermsOfServiceAcceptance
+
+security_logger = logging.getLogger('tom_common.security')
 
 
 def _client_ip(request: HttpRequest) -> str | None:
@@ -48,9 +52,12 @@ class TermsAcceptView(LoginRequiredMixin, View):
     def post(self, request: HttpRequest) -> HttpResponse:
         version = getattr(settings, 'TOM_TERMS_OF_SERVICE_VERSION', None)
         if version:
-            TermsOfServiceAcceptance.objects.get_or_create(
+            _, created = TermsOfServiceAcceptance.objects.get_or_create(
                 user=request.user, version=version,
                 defaults={'ip_address': _client_ip(request)},
             )
+            if created:
+                security_logger.info(f'Terms of service accepted: {request.user.username} '
+                                     f'(version {version}, ip {_client_ip(request)})')
             messages.success(request, 'Thank you — your acceptance of the terms of service has been recorded.')
         return redirect(settings.LOGIN_REDIRECT_URL)
