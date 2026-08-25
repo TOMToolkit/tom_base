@@ -1,3 +1,4 @@
+from datetime import timedelta
 from http import HTTPStatus
 from io import StringIO
 from types import SimpleNamespace
@@ -19,7 +20,7 @@ from django.core.management import call_command
 from django.urls import NoReverseMatch, clear_url_caches, resolve, reverse
 from django_comments.models import Comment
 from django.core.paginator import Paginator
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
 from django.test.runner import DiscoverRunner
 from django.utils import timezone
 
@@ -426,6 +427,81 @@ class TestExternalServiceMiddleware(TestCase):
         """
         middleware = ExternalServiceMiddleware(lambda request: None)
         self.assertIsNone(middleware.process_exception(None, ValueError('unrelated')))
+
+
+class TestAccountRequirements(TestCase):
+    """AccountRequirementsMiddleware + the built-in TOM_ACCOUNT_REQUIREMENTS checks."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='req_user', password='password')
+        self.client.force_login(self.user)
+
+    def test_all_checks_inactive_by_default(self):
+        self.assertEqual(self.client.get(reverse('user-profile')).status_code, HTTPStatus.OK)
+
+    @override_settings(TOM_MFA_REQUIRED='all')
+    def test_unenrolled_user_is_sent_to_enrolment(self):
+        response = self.client.get(reverse('user-profile'))
+        self.assertRedirects(response, reverse('mfa_activate_totp'), fetch_redirect_response=False)
+
+    @override_settings(TOM_MFA_REQUIRED='all')
+    def test_enrolment_page_and_logout_stay_reachable(self):
+        # a real login (not force_login) so allauth's reauthentication window is open
+        client = Client()
+        client.post(reverse('login'), {'login': 'req_user', 'password': 'password'})
+        self.assertEqual(client.get(reverse('mfa_activate_totp')).status_code, HTTPStatus.OK)
+        self.assertEqual(client.post(reverse('logout')).status_code, HTTPStatus.FOUND)
+
+    @override_settings(TOM_MFA_REQUIRED='all')
+    def test_enrolled_user_passes(self):
+        totp_auth.TOTP.activate(self.user, totp_auth.generate_totp_secret())
+        self.assertEqual(self.client.get(reverse('user-profile')).status_code, HTTPStatus.OK)
+
+    @override_settings(TOM_MFA_REQUIRED='superusers')
+    def test_superusers_scoping(self):
+        self.assertEqual(self.client.get(reverse('user-profile')).status_code, HTTPStatus.OK)
+        superuser = User.objects.create_user(username='req_super', password='password', is_superuser=True)
+        self.client.force_login(superuser)
+        response = self.client.get(reverse('user-profile'))
+        self.assertRedirects(response, reverse('mfa_activate_totp'), fetch_redirect_response=False)
+
+    @override_settings(TOM_PASSWORD_EXPIRY_DAYS=60)
+    def test_password_expiry(self):
+        # the new user's stamp is None: counts as expired
+        response = self.client.get(reverse('user-profile'))
+        self.assertRedirects(response, reverse('account_change_password'), fetch_redirect_response=False)
+        # a fresh stamp passes
+        Profile.objects.filter(user=self.user).update(password_changed_at=timezone.now())
+        self.assertEqual(self.client.get(reverse('user-profile')).status_code, HTTPStatus.OK)
+        # a stamp beyond the limit redirects again
+        Profile.objects.filter(user=self.user).update(
+            password_changed_at=timezone.now() - timedelta(days=61))
+        self.assertEqual(self.client.get(reverse('user-profile')).status_code, HTTPStatus.FOUND)
+
+    @override_settings(TOM_REQUIRED_USER_FIELDS=['first_name'])
+    def test_required_fields(self):
+        response = self.client.get(reverse('user-profile'))
+        self.assertRedirects(response, reverse('user-update', kwargs={'pk': self.user.pk}),
+                             fetch_redirect_response=False)
+        User.objects.filter(pk=self.user.pk).update(first_name='Willa')
+        self.assertEqual(self.client.get(reverse('user-profile')).status_code, HTTPStatus.OK)
+
+    @override_settings(TOM_MFA_REQUIRED='all', TOM_PASSWORD_EXPIRY_DAYS=60)
+    def test_first_unmet_check_wins(self):
+        # both unmet; the default list runs mfa_enrolled before password_not_expired
+        response = self.client.get(reverse('user-profile'))
+        self.assertRedirects(response, reverse('mfa_activate_totp'), fetch_redirect_response=False)
+
+    @override_settings(TOM_MFA_REQUIRED='all')
+    def test_blocked_htmx_request_becomes_full_page_navigation(self):
+        response = self.client.get(reverse('user-profile'), HTTP_HX_REQUEST='true')
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(response.headers['HX-Redirect'], reverse('mfa_activate_totp'))
+
+    @override_settings(TOM_MFA_REQUIRED='all')
+    def test_anonymous_requests_are_untouched(self):
+        self.assertEqual(Client().get(reverse('account_login')).status_code, HTTPStatus.OK)
 
 
 class TestPasswordChangedStamp(TestCase):

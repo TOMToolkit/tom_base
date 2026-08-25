@@ -119,6 +119,15 @@ AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS
 # Password reset by email: adds the "Forgot your password?" flow. Requires a working EMAIL_BACKEND.
 # TOM_PASSWORD_RESET_ENABLED = True
 
+# Require two-factor authentication: 'all' for every user, 'superusers' for superusers only.
+# TOM_MFA_REQUIRED = 'all'
+
+# Passwords older than this many days must be changed. A password set by an administrator counts as expired.
+# TOM_PASSWORD_EXPIRY_DAYS = 60
+
+# User/Profile fields every account must have filled in.
+# TOM_REQUIRED_USER_FIELDS = ['first_name', 'last_name', 'email']
+
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 

@@ -57,6 +57,7 @@ TOMTOOLKIT_MIDDLEWARE = [
     'tom_common.middleware.Raise403Middleware',
     'tom_common.middleware.ExternalServiceMiddleware',
     'tom_common.middleware.AuthStrategyMiddleware',
+    'tom_common.middleware.AccountRequirementsMiddleware',  # last: runs the TOM_ACCOUNT_REQUIREMENTS checks
 ]
 
 TOMTOOLKIT_AUTHENTICATION_BACKENDS = (
@@ -82,6 +83,16 @@ MFA_RECOVERY_CODES_SHOW_ONCE = True  # recovery codes are displayed only at gene
 
 # TOM Toolkit account settings (each documented in docs/common/customsettings.rst)
 TOM_PASSWORD_RESET_ENABLED = False  # password reset by email; requires a working EMAIL_BACKEND
+TOM_MFA_REQUIRED = None             # None | 'superusers' | 'all' — who must enrol an authenticator app
+TOM_PASSWORD_EXPIRY_DAYS = None     # int — a password older than this must be changed
+TOM_REQUIRED_USER_FIELDS = []       # e.g. ['first_name', 'last_name', 'email', 'affiliation', 'phone_number']
+# Ordered post-login checks; each is inactive until its companion setting above is configured.
+# The terms-of-service check joins this list with the terms-of-service feature.
+TOM_ACCOUNT_REQUIREMENTS = [
+    'tom_common.accounts.requirements.mfa_enrolled',
+    'tom_common.accounts.requirements.password_not_expired',
+    'tom_common.accounts.requirements.required_fields_present',
+]
 
 # Backwards typo compatibility
 TOMTOOKIT_INSTALLED_APPS = TOMTOOLKIT_INSTALLED_APPS
