@@ -87,6 +87,8 @@ TOM_MFA_REQUIRED = None             # None | 'superusers' | 'all' — who must e
 TOM_PASSWORD_EXPIRY_DAYS = None     # int — a password older than this must be changed
 TOM_REQUIRED_USER_FIELDS = []       # e.g. ['first_name', 'last_name', 'email', 'affiliation', 'phone_number']
 TOM_TERMS_OF_SERVICE_VERSION = None  # str — users must accept this version of the terms (any string; bump to re-ask)
+TOM_API_TOKEN_EXPIRY_DAYS = None    # int — API tokens older than this are rejected (TomTokenAuthentication)
+TOM_API_TOKEN_REQUIRES_MFA = False  # tokens honoured only for two-factor-enrolled users; disables api/token-auth/
 # Ordered post-login checks; each is inactive until its companion setting above is configured.
 TOM_ACCOUNT_REQUIREMENTS = [
     'tom_common.accounts.requirements.terms_of_service_accepted',

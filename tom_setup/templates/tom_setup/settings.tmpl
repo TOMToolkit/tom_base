@@ -132,6 +132,13 @@ AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS
 # templates/tom_common/partials/terms_of_service_text.html). Change the value to require re-acceptance.
 # TOM_TERMS_OF_SERVICE_VERSION = '2026-01-01'
 
+# API tokens older than this many days are rejected; users regenerate on their profile edit page.
+# TOM_API_TOKEN_EXPIRY_DAYS = 60
+
+# API tokens are honoured only for two-factor-enrolled users (and only tokens created after
+# enrolment); the password-only api/token-auth/ endpoint is disabled.
+# TOM_API_TOKEN_REQUIRES_MFA = True
+
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -326,7 +333,7 @@ HINT_LEVEL = 20
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',  # for API token authentication
+        'tom_common.accounts.api_auth.TomTokenAuthentication',  # API tokens, honouring the TOM_API_TOKEN_* settings
         'rest_framework.authentication.SessionAuthentication',  # for logged-in browsers (cookie + CSRF protection)
         'rest_framework.authentication.BasicAuthentication',  # for username/password
     ],

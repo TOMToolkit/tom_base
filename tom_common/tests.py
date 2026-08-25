@@ -22,6 +22,7 @@ from django.core.exceptions import FieldError, ValidationError
 from django.core.management import call_command
 from django.urls import NoReverseMatch, clear_url_caches, resolve, reverse
 from django_comments.models import Comment
+from rest_framework.authtoken.models import Token
 from django.core.paginator import Paginator
 from django.test import Client, TestCase, override_settings
 from django.test.runner import DiscoverRunner
@@ -483,6 +484,70 @@ class TestTermsOfService(TestCase):
     def test_terms_check_runs_first(self):
         response = self.client.get(reverse('user-profile'))
         self.assertRedirects(response, reverse('terms-accept'), fetch_redirect_response=False)
+
+
+class TestTomTokenAuthentication(TestCase):
+    """TomTokenAuthentication: expiry and MFA gating for API tokens."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='token_user', password='password')
+        self.token = Token.objects.get(user=self.user)  # auto-created by signal
+
+    def _api_get(self):
+        return self.client.get('/api/', HTTP_AUTHORIZATION=f'Token {self.token.key}')
+
+    def test_plain_token_works_with_nothing_configured(self):
+        self.assertEqual(self._api_get().status_code, HTTPStatus.OK)
+
+    @override_settings(TOM_API_TOKEN_EXPIRY_DAYS=60)
+    def test_expired_token_is_rejected_with_next_action(self):
+        self.assertEqual(self._api_get().status_code, HTTPStatus.OK)  # fresh token passes
+        Token.objects.filter(user=self.user).update(created=timezone.now() - timedelta(days=61))
+        response = self._api_get()
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertIn('Regenerate it on your profile edit page', response.json()['detail'])
+
+    @override_settings(TOM_API_TOKEN_REQUIRES_MFA=True)
+    def test_mfa_gating_lifecycle(self):
+        # not enrolled: rejected, message names the fix
+        response = self._api_get()
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertIn('two-factor', response.json()['detail'])
+        # enrolled, but the token predates enrolment: rejected
+        totp_auth.TOTP.activate(self.user, totp_auth.generate_totp_secret())
+        response = self._api_get()
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertIn('predates', response.json()['detail'])
+        # regenerated after enrolment: accepted
+        Token.objects.filter(user=self.user).delete()
+        self.token = Token.objects.create(user=self.user)
+        self.assertEqual(self._api_get().status_code, HTTPStatus.OK)
+        # turning MFA off invalidates the token immediately (no explicit revocation step)
+        Authenticator.objects.filter(user=self.user).delete()
+        self.assertEqual(self._api_get().status_code, HTTPStatus.UNAUTHORIZED)
+
+    @override_settings(TOM_API_TOKEN_REQUIRES_MFA=True, TOM_TERMS_OF_SERVICE_VERSION='v1')
+    def test_outstanding_requirement_rejects_the_token(self):
+        from tom_common.models import TermsOfServiceAcceptance
+        totp_auth.TOTP.activate(self.user, totp_auth.generate_totp_secret())
+        Token.objects.filter(user=self.user).delete()
+        self.token = Token.objects.create(user=self.user)
+        response = self._api_get()
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
+        self.assertIn('Terms accepted', response.json()['detail'])
+        TermsOfServiceAcceptance.objects.create(user=self.user, version='v1')
+        self.assertEqual(self._api_get().status_code, HTTPStatus.OK)
+
+    @override_settings(TOM_API_TOKEN_REQUIRES_MFA=True)
+    def test_system_check_warns_without_tom_token_authentication(self):
+        from tom_common.checks import api_token_settings_check
+        self.assertEqual(api_token_settings_check(None), [])  # settings.py lists our class
+        with override_settings(REST_FRAMEWORK={'DEFAULT_AUTHENTICATION_CLASSES': [
+                'rest_framework.authentication.TokenAuthentication']}):
+            warnings = api_token_settings_check(None)
+            self.assertEqual(len(warnings), 1)
+            self.assertEqual(warnings[0].id, 'tom_common.W001')
 
 
 class TestSecurityLog(TestCase):

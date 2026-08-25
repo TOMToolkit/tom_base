@@ -13,6 +13,9 @@ class TomCommonConfig(AppConfig):
         # https://docs.djangoproject.com/en/5.1/topics/signals/#connecting-receiver-functions
         import tom_common.signals  # noqa
 
+        # Register system checks (the @register decorators run on import).
+        import tom_common.checks  # noqa
+
         # So that django.contrib.admin can't avoid django-auth MFA (if configured)
         from allauth.account.decorators import secure_admin_login  # b/c need models that only exist at runtime
         from django.contrib import admin

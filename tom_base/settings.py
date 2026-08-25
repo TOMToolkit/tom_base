@@ -306,7 +306,7 @@ HINT_LEVEL = 20
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',  # for API token authentication
+        'tom_common.accounts.api_auth.TomTokenAuthentication',  # API tokens, honouring the TOM_API_TOKEN_* settings
         'rest_framework.authentication.SessionAuthentication',  # for logged-in browsers (cookie + CSRF protection)
         'rest_framework.authentication.BasicAuthentication',  # for username/password
     ],
