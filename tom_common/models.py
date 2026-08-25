@@ -15,3 +15,23 @@ class Profile(models.Model):
 
     def __str__(self) -> str:
         return f'{self.user.username} Profile'
+
+
+class TermsOfServiceAcceptance(models.Model):
+    """A user's acceptance of one version of this TOM's terms of service.
+
+    The current version is the TOM_TERMS_OF_SERVICE_VERSION setting; bumping it makes every
+    user accept again, each acceptance keeping its own row for the audit trail.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='terms_acceptances')
+    version = models.CharField(max_length=100)
+    accepted_at = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'version'], name='unique_terms_acceptance_per_version'),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.user.username} accepted terms version {self.version}'

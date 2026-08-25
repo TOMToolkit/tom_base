@@ -8,6 +8,7 @@ This subpackage collects the account-related pieces of tom_common in one place:
   opt-in via ``TOM_PASSWORD_RESET_ENABLED``).
 - ``requirements``: the ``TOM_ACCOUNT_REQUIREMENTS`` post-login checks.
 - ``password_validation``: validators for ``AUTH_PASSWORD_VALIDATORS``.
+- ``views``: the terms-of-service pages (public /terms/ and the acceptance page).
 - ``api_auth``: DRF token authentication with expiry and MFA gating.
 
 The middleware consuming these stays in ``tom_common.middleware`` (its dotted paths are

@@ -1,5 +1,7 @@
+from copy import deepcopy
 from datetime import timedelta
 from http import HTTPStatus
+from pathlib import Path
 from io import StringIO
 from types import SimpleNamespace
 import tempfile
@@ -12,6 +14,7 @@ from allauth.mfa.totp.internal import auth as totp_auth
 from cryptography.fernet import InvalidToken
 
 from django import forms
+from django.conf import settings as django_settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.contrib.sites.models import Site
@@ -427,6 +430,59 @@ class TestExternalServiceMiddleware(TestCase):
         """
         middleware = ExternalServiceMiddleware(lambda request: None)
         self.assertIsNone(middleware.process_exception(None, ValueError('unrelated')))
+
+
+# The test TOM's terms of service live in tom_common/test_templates/, shadowing the shipped
+# placeholder partial exactly the way a real TOM's templates/ directory would — so these
+# tests also prove the documented override mechanism.
+_TEMPLATES_WITH_TEST_TERMS = deepcopy(django_settings.TEMPLATES)
+_TEMPLATES_WITH_TEST_TERMS[0]['DIRS'] = (
+    [str(Path(__file__).parent / 'test_templates')] + list(_TEMPLATES_WITH_TEST_TERMS[0]['DIRS'])
+)
+MARAUDERS_OATH = 'I solemnly swear that I am up to no good.'
+
+
+@override_settings(TEMPLATES=_TEMPLATES_WITH_TEST_TERMS)
+class TestTermsOfService(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='tos_user', password='password')
+        self.client.force_login(self.user)
+
+    def test_terms_page_is_public_and_shows_the_toms_terms(self):
+        response = Client().get(reverse('terms-of-service'))
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertContains(response, MARAUDERS_OATH)
+
+    def test_inactive_when_no_version_configured(self):
+        self.assertEqual(self.client.get(reverse('user-profile')).status_code, HTTPStatus.OK)
+
+    @override_settings(TOM_TERMS_OF_SERVICE_VERSION='v1')
+    def test_acceptance_flow(self):
+        from tom_common.models import TermsOfServiceAcceptance
+        # unaccepted: redirected to the accept page
+        response = self.client.get(reverse('user-profile'))
+        self.assertRedirects(response, reverse('terms-accept'), fetch_redirect_response=False)
+        # the accept page itself renders (exempt from the check) and shows this TOM's terms
+        accept_page = self.client.get(reverse('terms-accept'))
+        self.assertEqual(accept_page.status_code, HTTPStatus.OK)
+        self.assertContains(accept_page, MARAUDERS_OATH)
+        # accepting records version and IP and unblocks
+        self.client.post(reverse('terms-accept'))
+        acceptance = TermsOfServiceAcceptance.objects.get(user=self.user)
+        self.assertEqual(acceptance.version, 'v1')
+        self.assertIsNotNone(acceptance.ip_address)
+        self.assertEqual(self.client.get(reverse('user-profile')).status_code, HTTPStatus.OK)
+        # bumping the version requires re-acceptance; the old record remains for the audit trail
+        with override_settings(TOM_TERMS_OF_SERVICE_VERSION='v2'):
+            self.assertEqual(self.client.get(reverse('user-profile')).status_code, HTTPStatus.FOUND)
+            self.client.post(reverse('terms-accept'))
+        self.assertEqual(TermsOfServiceAcceptance.objects.filter(user=self.user).count(), 2)
+
+    @override_settings(TOM_TERMS_OF_SERVICE_VERSION='v1', TOM_MFA_REQUIRED='all')
+    def test_terms_check_runs_first(self):
+        response = self.client.get(reverse('user-profile'))
+        self.assertRedirects(response, reverse('terms-accept'), fetch_redirect_response=False)
 
 
 class TestPasswordValidators(TestCase):

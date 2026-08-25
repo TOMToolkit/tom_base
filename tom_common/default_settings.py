@@ -86,9 +86,10 @@ TOM_PASSWORD_RESET_ENABLED = False  # password reset by email; requires a workin
 TOM_MFA_REQUIRED = None             # None | 'superusers' | 'all' — who must enrol an authenticator app
 TOM_PASSWORD_EXPIRY_DAYS = None     # int — a password older than this must be changed
 TOM_REQUIRED_USER_FIELDS = []       # e.g. ['first_name', 'last_name', 'email', 'affiliation', 'phone_number']
+TOM_TERMS_OF_SERVICE_VERSION = None  # str — users must accept this version of the terms (any string; bump to re-ask)
 # Ordered post-login checks; each is inactive until its companion setting above is configured.
-# The terms-of-service check joins this list with the terms-of-service feature.
 TOM_ACCOUNT_REQUIREMENTS = [
+    'tom_common.accounts.requirements.terms_of_service_accepted',
     'tom_common.accounts.requirements.mfa_enrolled',
     'tom_common.accounts.requirements.password_not_expired',
     'tom_common.accounts.requirements.required_fields_present',

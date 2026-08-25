@@ -34,6 +34,20 @@ from django.contrib import messages
 from django.http import HttpRequest
 from django.utils import timezone
 
+from tom_common.models import TermsOfServiceAcceptance
+
+
+def terms_of_service_accepted(request: HttpRequest) -> str | None:
+    """TOM_TERMS_OF_SERVICE_VERSION: the current version of the terms must be accepted."""
+    version = getattr(settings, 'TOM_TERMS_OF_SERVICE_VERSION', None)
+    if not version:
+        return None
+    if TermsOfServiceAcceptance.objects.filter(user=request.user, version=version).exists():
+        return None
+    messages.info(request, 'This TOM requires acceptance of its terms of service. '
+                           'Read and accept them to continue.')
+    return 'terms-accept'
+
 
 def mfa_enrolled(request: HttpRequest) -> str | None:
     """TOM_MFA_REQUIRED: users under the policy must enroll an authenticator app."""

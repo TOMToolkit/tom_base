@@ -1,0 +1,14 @@
+{% extends 'tom_common/base.html' %}
+{% block title %}Accept the Terms of Service{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <h3>Terms of Service</h3>
+    {% include 'tom_common/partials/terms_of_service_text.html' %}
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary">I accept the terms of service</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

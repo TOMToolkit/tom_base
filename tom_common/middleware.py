@@ -48,6 +48,8 @@ ACCOUNT_REQUIREMENT_EXEMPT_URL_NAMES = frozenset((
     'mfa_generate_recovery_codes',
     'mfa_download_recovery_codes',
     'user-update',
+    'terms-of-service',
+    'terms-accept',
 ))
 
 

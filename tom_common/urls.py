@@ -25,6 +25,7 @@ from rest_framework.authtoken import views
 
 from tom_base import __version__
 from tom_common.accounts.urlpatterns import allauth_urlpatterns
+from tom_common.accounts.views import TermsAcceptView, TermsOfServiceView
 from tom_common.api_views import GroupViewSet
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
 from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView, UserProfileView
@@ -62,6 +63,8 @@ urlpatterns += [
     path('comments/', include('django_comments.urls')),
     path('observations/', include('tom_observations.urls', namespace='observations')),
     path('dataproducts/', include('tom_dataproducts.urls', namespace='dataproducts')),
+    path('terms/', TermsOfServiceView.as_view(), name='terms-of-service'),
+    path('terms/accept/', TermsAcceptView.as_view(), name='terms-accept'),
     path('users/', UserListView.as_view(), name='user-list'),
     path('users/<int:pk>/changepassword/', UserPasswordChangeView.as_view(), name='admin-user-change-password'),
     path('users/create/', UserCreateView.as_view(), name='user-create'),
