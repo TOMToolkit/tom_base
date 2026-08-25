@@ -306,6 +306,12 @@ class BaseTarget(models.Model):
 
     :param slope: Asteroid/Comet slope parameter (G or k1)
     :type slope: float
+
+    :param shared_by: If this target was shared to this TOM, the username of the user that shared it.
+    :type shared_by: str
+
+    :param shared_from: If this target was shared to this TOM, the name of the TOM that shared it.
+    :type shared_from: str
     """
 
     SIDEREAL = 'SIDEREAL'
@@ -427,6 +433,12 @@ class BaseTarget(models.Model):
     )
     slope = models.FloatField(
         null=True, blank=True, verbose_name='Slope parameter', help_text='mag'
+    )
+    shared_by = models.CharField(
+        default='', blank=True, verbose_name='Shared by', help_text='Username'
+    )
+    shared_from = models.CharField(
+        default='', blank=True, verbose_name='Shared from', help_text='TOM name'
     )
 
     objects = models.Manager()

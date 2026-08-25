@@ -429,7 +429,7 @@ class TargetShareView(FormView):
         share_destination = form_data['share_destination']
         selected_data = self.request.POST.getlist("share-box")
         # Share Target with Destination TOM
-        response = share_target_with_tom(share_destination, form_data)
+        response = share_target_with_tom(share_destination, form_data, user=self.request.user)
         sharing_feedback_handler(response, self.request)
         if selected_data:
             # Share Data with Destination TOM
@@ -834,7 +834,12 @@ class TargetGroupingShareView(FormView):
         for target in selected_targets:
             # Share each target individually
             form_data['target'] = Target.objects.get(id=target)
-            response = share_target_with_tom(share_destination, form_data, target_lists=[form_data['target_list']])
+            response = share_target_with_tom(
+                share_destination,
+                form_data,
+                target_lists=[form_data["target_list"]],
+                user=self.request.user,
+            )
             sharing_feedback_handler(response, self.request)
             if data_switch:
                 # If Data sharing request, share all data associated with the target
