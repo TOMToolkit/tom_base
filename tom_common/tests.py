@@ -485,6 +485,61 @@ class TestTermsOfService(TestCase):
         self.assertRedirects(response, reverse('terms-accept'), fetch_redirect_response=False)
 
 
+class TestRequirementColumnsOnUserList(TestCase):
+    """Configured requirements appear as columns on the Users page; unconfigured ones do not."""
+
+    def setUp(self):
+        cache.clear()
+        self.superuser = User.objects.create_user(username='col_admin', password='password',
+                                                  is_staff=True, is_superuser=True)
+        self.user = User.objects.create_user(username='col_user', password='password')
+
+    def _user_list(self):
+        # requirements would redirect the (non-compliant) superuser away from the Users
+        # page; what is under test here is the columns, so satisfy or bypass as needed
+        self.client.force_login(self.superuser)
+        return self.client.get(reverse('user-list'))
+
+    def test_no_requirement_columns_by_default(self):
+        response = self._user_list()
+        self.assertNotContains(response, 'Terms accepted')
+        self.assertNotContains(response, 'Password current')
+
+    def test_guardian_anonymous_user_is_not_listed(self):
+        # guardian's permissions sentinel is not a person; requirements are inapplicable to it
+        response = self._user_list()
+        self.assertNotContains(response, 'AnonymousUser')
+
+    @override_settings(TOM_TERMS_OF_SERVICE_VERSION='v1')
+    def test_terms_column_reflects_acceptance_and_version_bumps(self):
+        from tom_common.models import TermsOfServiceAcceptance
+        TermsOfServiceAcceptance.objects.create(user=self.superuser, version='v1')
+        TermsOfServiceAcceptance.objects.create(user=self.user, version='v1')
+        response = self._user_list()
+        self.assertContains(response, 'Terms accepted')
+        self.assertNotContains(response, '<strong>no</strong>', html=True)
+        # bump the version: col_user has not accepted it and flips to no
+        with override_settings(TOM_TERMS_OF_SERVICE_VERSION='v2'):
+            TermsOfServiceAcceptance.objects.create(user=self.superuser, version='v2')  # readmit the admin
+            response = self._user_list()
+            self.assertContains(response, '<strong>no</strong>', count=1, html=True)
+
+    @override_settings(TOM_MFA_REQUIRED='superusers')
+    def test_mfa_requirement_column_respects_scoping(self):
+        totp_auth.TOTP.activate(self.superuser, totp_auth.generate_totp_secret())
+        response = self._user_list()
+        self.assertContains(response, '2FA required')
+        # the regular user is outside the policy: vacuously met, no 'no' rows
+        self.assertNotContains(response, '<strong>no</strong>', html=True)
+
+    @override_settings(TOM_PASSWORD_EXPIRY_DAYS=60)
+    def test_password_and_fields_columns_render(self):
+        Profile.objects.filter(user=self.superuser).update(password_changed_at=timezone.now())
+        response = self._user_list()
+        self.assertContains(response, 'Password current')
+        self.assertContains(response, '<strong>no</strong>', html=True)  # col_user's stamp is None
+
+
 class TestPasswordValidators(TestCase):
     def test_character_class_validator(self):
         from tom_common.accounts.password_validation import CharacterClassValidator

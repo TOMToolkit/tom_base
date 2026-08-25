@@ -387,10 +387,13 @@ Post-login requirements
         ]
 
     Each built-in check is a function whose companion ``TOM_*`` setting is its parameter: unconfigured means the
-    check does nothing. Add your own: a function taking the request and returning ``None`` (requirement met) or
-    the URL name of the page that lets the user meet it; give it its own ``settings.py`` value if it needs one,
-    following the same inactive-unless-configured pattern. The pages you return are exempt from the check
-    automatically, as are logout, the account pages and static files. Requests
+    check does nothing. Every *configured* requirement also appears as a column on the *Users* page, so
+    administrators can see at a glance who has not yet met it. Add your own: a function taking the request and
+    returning ``None`` (requirement met) or the URL name of the page that lets the user meet it — or, to also get
+    a *Users*-page column, an instance of a ``tom_common.accounts.requirements.AccountRequirement`` subclass
+    (define ``label``, ``is_configured()`` and ``is_met(user)``). Give it its own ``settings.py`` value if it
+    needs one, following the same inactive-unless-configured pattern. The pages you return are exempt from the
+    check automatically, as are logout, the account pages and static files. Requests
     from scripts using a token are not subject to these checks (see API access above).
 Social / single sign-on
     django-allauth's ``socialaccount`` app (ORCID, GitHub, Google, OpenID Connect providers …) can be added to a

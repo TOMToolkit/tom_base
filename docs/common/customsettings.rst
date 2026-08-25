@@ -203,9 +203,10 @@ returns ``None`` immediately (no database queries), so the default list is entir
 
 The checks run on every request rather than only at login so that a change — a new terms-of-service version, a
 password crossing its expiry age, an administrator removing a user's authenticator — takes effect during
-long-lived sessions instead of at the next login. Add your own check as a dotted path to a function taking the
-request and returning ``None`` or the URL name of the page where the user can satisfy the requirement; a custom
-check may read its own ``settings.py`` value following the same pattern. See
+long-lived sessions instead of at the next login. Every configured requirement also appears as a column on the
+*Users* page so administrators can see who has not yet met it. Add your own check as a dotted path to a function
+taking the request and returning ``None`` or the URL name of the page where the user can satisfy the requirement;
+a custom check may read its own ``settings.py`` value following the same pattern. See
 :doc:`Accounts and Authentication <authentication>`.
 
 `TOM_API_TOKEN_EXPIRY_DAYS <#tom-api-token-expiry-days>`__

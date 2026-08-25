@@ -2,9 +2,13 @@ import logging
 
 from allauth.mfa.adapter import get_adapter as get_mfa_adapter
 from allauth.mfa.models import Authenticator
+from guardian.conf import settings as guardian_settings
 
 from django import template
+from django.conf import settings
 from django.contrib.auth.models import Group, User
+
+from tom_common.accounts.requirements import AccountRequirement
 from django.forms.models import model_to_dict
 from django.apps import apps
 from django.utils.module_loading import import_string
@@ -28,14 +32,30 @@ def group_list(context):
 def user_list(context):
     """
     Renders the list of users in the TOM along with edit/delete/change password buttons, as well as an Add User button.
+
+    Each configured account requirement contributes a column (label + the set of pks
+    meeting it) so administrators can see who is not yet compliant.
     """
+    # guardian's anonymous user is a permissions sentinel, not a person: requirements are
+    # inapplicable to it (it never logs in), so it belongs in no list of users
+    users = list(User.objects.select_related('profile')
+                 .exclude(username=guardian_settings.ANONYMOUS_USER_NAME))
+    requirement_columns = []
+    for dotted_path in getattr(settings, 'TOM_ACCOUNT_REQUIREMENTS', []):
+        requirement = import_string(dotted_path)
+        if isinstance(requirement, AccountRequirement) and requirement.is_configured():
+            requirement_columns.append({
+                'label': requirement.label,
+                'met_pks': requirement.met_user_pks(users),
+            })
     return {
         'request': context['request'],
-        'users': User.objects.all(),
+        'users': users,
         # users with an authenticator app enrolled, for the two-factor column
         'mfa_user_ids': set(
             Authenticator.objects.filter(type=Authenticator.Type.TOTP).values_list('user_id', flat=True)
         ),
+        'requirement_columns': requirement_columns,
     }
 
 
