@@ -485,6 +485,42 @@ class TestTermsOfService(TestCase):
         self.assertRedirects(response, reverse('terms-accept'), fetch_redirect_response=False)
 
 
+class TestRequiredFieldsOnUserForm(TestCase):
+    """TOM_REQUIRED_USER_FIELDS marks the listed User/Profile fields required on the edit form."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='form_user', password='password')
+        self.client.force_login(self.user)
+
+    def _post_update(self, **extra):
+        data = {
+            'profile-TOTAL_FORMS': '1', 'profile-INITIAL_FORMS': '1',
+            'profile-0-id': str(self.user.profile.pk), 'profile-0-user': str(self.user.pk),
+            'username': 'form_user', 'email': 'form@example.com',
+        }
+        data.update(extra)
+        return self.client.post(reverse('user-update', kwargs={'pk': self.user.pk}), data)
+
+    def test_fields_optional_by_default(self):
+        response = self._post_update()
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)  # saved without the optional fields
+
+    @override_settings(TOM_REQUIRED_USER_FIELDS=['first_name', 'affiliation'])
+    def test_missing_required_fields_are_form_errors(self):
+        response = self._post_update()
+        self.assertEqual(response.status_code, HTTPStatus.OK)  # re-rendered with errors, not saved
+        self.assertContains(response, 'This field is required')
+
+    @override_settings(TOM_REQUIRED_USER_FIELDS=['first_name', 'affiliation'])
+    def test_filled_required_fields_save(self):
+        response = self._post_update(**{'first_name': 'Willa', 'profile-0-affiliation': 'LCO'})
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, 'Willa')
+        self.assertEqual(self.user.profile.affiliation, 'LCO')
+
+
 class TestRequirementColumnsOnUserList(TestCase):
     """Configured requirements appear as columns on the Users page; unconfigured ones do not."""
 
