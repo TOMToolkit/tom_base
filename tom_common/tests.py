@@ -550,6 +550,57 @@ class TestRegistrationStrategies(TestCase):
         self.assertFalse(User.objects.filter(username='new_astronomer').exists())
 
 
+@override_settings(TOM_REGISTRATION_STRATEGY='approval_required')
+class TestApprovalWorkflow(TestCase):
+    """The administrator's side of approval_required: the Pending users table and approval."""
+
+    def setUp(self):
+        cache.clear()
+        self.superuser = User.objects.create_user(username='approver', password='password',
+                                                  is_staff=True, is_superuser=True)
+        self.pending = User.objects.create_user(username='applicant', password='applicant-pass-1!',
+                                                email='applicant@example.com', is_active=False)
+
+    def test_pending_table_shown_to_superusers_only(self):
+        self.client.force_login(self.superuser)
+        response = self.client.get(reverse('user-list'))
+        self.assertContains(response, 'Pending Users')
+        self.assertContains(response, 'applicant')
+        regular = User.objects.create_user(username='regular', password='password')
+        self.client.force_login(regular)
+        self.assertNotContains(self.client.get(reverse('user-list')), 'Pending Users')
+
+    def test_approval_activates_notifies_and_logs(self):
+        from django.core import mail
+        self.client.force_login(self.superuser)
+        with self.assertLogs('tom_common.security', 'INFO') as logs:
+            response = self.client.post(reverse('user-approve', kwargs={'pk': self.pending.pk}))
+        self.assertRedirects(response, reverse('user-list'), fetch_redirect_response=False)
+        self.pending.refresh_from_db()
+        self.assertTrue(self.pending.is_active)
+        self.assertEqual(mail.outbox[-1].to, ['applicant@example.com'])
+        self.assertIn('approved', mail.outbox[-1].subject)
+        self.assertIn('/accounts/login/', mail.outbox[-1].body)
+        self.assertIn('Registration approved: applicant by approver', '\n'.join(logs.output))
+        # the approved user can log in now
+        login = Client().post(reverse('login'),
+                              {'login': 'applicant', 'password': 'applicant-pass-1!'})
+        self.assertEqual(login.status_code, HTTPStatus.FOUND)
+
+    def test_approving_twice_is_a_404(self):
+        self.client.force_login(self.superuser)
+        self.client.post(reverse('user-approve', kwargs={'pk': self.pending.pk}))
+        response = self.client.post(reverse('user-approve', kwargs={'pk': self.pending.pk}))
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+
+    def test_non_superusers_cannot_approve(self):
+        regular = User.objects.create_user(username='not_admin', password='password')
+        self.client.force_login(regular)
+        self.client.post(reverse('user-approve', kwargs={'pk': self.pending.pk}))
+        self.pending.refresh_from_db()
+        self.assertFalse(self.pending.is_active)
+
+
 class TestTomTokenAuthentication(TestCase):
     """TomTokenAuthentication: expiry and MFA gating for API tokens."""
 

@@ -10,13 +10,19 @@ import logging
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
+from django.template.loader import render_to_string
+from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 
+from tom_common.mixins import SuperuserRequiredMixin
 from tom_common.models import TermsOfServiceAcceptance
 
+logger = logging.getLogger(__name__)
 security_logger = logging.getLogger('tom_common.security')
 
 
@@ -61,3 +67,39 @@ class TermsAcceptView(LoginRequiredMixin, View):
                                      f'(version {version}, ip {_client_ip(request)})')
             messages.success(request, 'Thank you — your acceptance of the terms of service has been recorded.')
         return redirect(settings.LOGIN_REDIRECT_URL)
+
+
+class UserApprovalView(SuperuserRequiredMixin, View):
+    """Approves a registration awaiting approval (the Pending users table posts here)."""
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        # is_active=False in the lookup makes approval idempotent: re-posting 404s
+        user = get_object_or_404(User, pk=pk, is_active=False)
+        user.is_active = True
+        user.save()
+        security_logger.info(f'Registration approved: {user.username} by {request.user.username}')
+        self._notify_user_of_approval(request, user)
+        messages.success(request, f'{user.username} approved.')
+        return redirect('user-list')
+
+    @staticmethod
+    def _notify_user_of_approval(request: HttpRequest, user: User) -> None:
+        """Tell the applicant they can log in now; email must not break the approval."""
+        if not user.email:
+            return
+        email_context = {
+            'user': user,
+            'tom_name': getattr(settings, 'TOM_NAME', 'TOM Toolkit'),
+            'login_url': request.build_absolute_uri(reverse('account_login')),
+        }
+        try:
+            send_mail(
+                subject=render_to_string('account/email/registration_approved_subject.txt',
+                                         email_context).strip(),
+                message=render_to_string('account/email/registration_approved_message.txt',
+                                         email_context),
+                from_email=None,  # DEFAULT_FROM_EMAIL
+                recipient_list=[user.email],
+            )
+        except Exception as error:
+            logger.warning(f'Could not send the approval notification to {user.email}: {error}')

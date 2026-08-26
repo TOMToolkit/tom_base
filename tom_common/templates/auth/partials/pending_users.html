@@ -1,0 +1,32 @@
+{% if pending_users %}
+<h4>Pending Users</h4>
+<div class="row">
+  <div class="col-md-12">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Username</th><th>Name</th><th>Email</th><th>Registered</th><th>Approve</th><th>Delete</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pending_user in pending_users %}
+        <tr>
+          <td>{{ pending_user.username }}</td>
+          <td>{{ pending_user.first_name }} {{ pending_user.last_name }}</td>
+          <td>{{ pending_user.email }}</td>
+          <td>{{ pending_user.date_joined|date }}</td>
+          <td>
+            <form method="post" action="{% url 'user-approve' pending_user.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-success btn-sm">Approve</button>
+            </form>
+          </td>
+          <td><a href="{% url 'user-delete' pending_user.id %}" class="btn btn-danger btn-sm">Delete</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<hr/>
+{% endif %}

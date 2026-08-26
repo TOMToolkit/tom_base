@@ -94,6 +94,23 @@ def include_app_user_lists(context):
     return context
 
 
+@register.inclusion_tag('auth/partials/pending_users.html', takes_context=True)
+def pending_users_list(context):
+    """The registrations awaiting approval, for the Pending users table on the Users page.
+
+    "Pending" is literally ``is_active=False`` (tom_registration's convention), so an
+    account an administrator deactivated by hand appears here too.
+    """
+    request = context['request']
+    if not request.user.is_superuser:
+        return {'request': request, 'pending_users': User.objects.none()}
+    return {
+        'request': request,
+        'pending_users': User.objects.filter(is_active=False)
+                                     .exclude(username=guardian_settings.ANONYMOUS_USER_NAME),
+    }
+
+
 @register.inclusion_tag('tom_common/partials/security_card.html')
 def security_card(user):
     """Two-factor authentication status and actions for the Security card on the profile page."""

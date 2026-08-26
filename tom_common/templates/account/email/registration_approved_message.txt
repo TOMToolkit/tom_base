@@ -1,0 +1,3 @@
+Your account on {{ tom_name }} has been approved.
+
+Log in at {{ login_url }} with the username and password you chose when you registered.

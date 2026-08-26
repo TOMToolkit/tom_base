@@ -25,7 +25,7 @@ from django.apps import apps
 from tom_base import __version__
 from tom_common.accounts.api_views import TomObtainAuthToken
 from tom_common.accounts.urlpatterns import allauth_urlpatterns
-from tom_common.accounts.views import TermsAcceptView, TermsOfServiceView
+from tom_common.accounts.views import TermsAcceptView, TermsOfServiceView, UserApprovalView
 from tom_common.api_views import GroupViewSet
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
 from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView, UserProfileView
@@ -68,6 +68,7 @@ urlpatterns += [
     path('users/', UserListView.as_view(), name='user-list'),
     path('users/<int:pk>/changepassword/', UserPasswordChangeView.as_view(), name='admin-user-change-password'),
     path('users/create/', UserCreateView.as_view(), name='user-create'),
+    path('users/<int:pk>/approve/', UserApprovalView.as_view(), name='user-approve'),
     path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user-delete'),
     path('users/<int:pk>/update/', UserUpdateView.as_view(), name='user-update'),
     path('users/<int:pk>/regenerate-token/', RegenerateAPITokenView.as_view(), name='regenerate-api-token'),
