@@ -71,6 +71,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 # django-allauth configuration.
 ACCOUNT_ADAPTER = 'tom_common.accounts.adapters.TomAccountAdapter'
+ACCOUNT_SIGNUP_FORM_CLASS = 'tom_common.accounts.forms.TomSignupForm'
 MFA_ADAPTER = 'tom_common.accounts.adapters.TomMFAAdapter'
 ACCOUNT_LOGIN_METHODS = {'username'}
 ACCOUNT_SIGNUP_FIELDS = ['username*', 'email*', 'password1*', 'password2*']
@@ -89,6 +90,8 @@ TOM_REQUIRED_USER_FIELDS = []       # e.g. ['first_name', 'last_name', 'email', 
 TOM_TERMS_OF_SERVICE_VERSION = None  # str — users must accept this version of the terms (any string; bump to re-ask)
 TOM_API_TOKEN_EXPIRY_DAYS = None    # int — API tokens older than this are rejected (TomTokenAuthentication)
 TOM_API_TOKEN_REQUIRES_MFA = False  # tokens honoured only for two-factor-enrolled users; disables api/token-auth/
+TOM_REGISTRATION_STRATEGY = None    # None | 'open' | 'approval_required' — self-registration
+
 # Ordered post-login checks; each is inactive until its companion setting above is configured.
 TOM_ACCOUNT_REQUIREMENTS = [
     'tom_common.accounts.requirements.terms_of_service_accepted',

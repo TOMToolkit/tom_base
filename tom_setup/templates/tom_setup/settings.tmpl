@@ -122,6 +122,10 @@ AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS
 # Require two-factor authentication: 'all' for every user, 'superusers' for superusers only.
 # TOM_MFA_REQUIRED = 'all'
 
+# Self-registration: 'open' (sign up and log in immediately) or 'approval_required'
+# (a superuser approves each account from the Users page). Default: only administrators create accounts.
+# TOM_REGISTRATION_STRATEGY = 'approval_required'
+
 # Passwords older than this many days must be changed. A password set by an administrator counts as expired.
 # TOM_PASSWORD_EXPIRY_DAYS = 60
 

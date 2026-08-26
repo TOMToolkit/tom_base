@@ -1,0 +1,20 @@
+{% extends "account/base_entrance.html" %}
+{% load allauth %}
+{% comment %}
+Overrides allauth's generic "account is inactive" page: on a TOM, an inactive account is
+almost always a registration awaiting approval, and the message should say what happens
+next rather than dead-end.
+{% endcomment %}
+{% block head_title %}
+    Account Pending Approval
+{% endblock head_title %}
+{% block content %}
+    {% element h1 %}
+        Account Pending Approval
+    {% endelement %}
+    {% element p %}
+        Your account is awaiting approval by this TOM's administrators.
+        You will be able to log in once it has been approved.
+        If this is taking longer than expected, contact the administrators of this TOM.
+    {% endelement %}
+{% endblock content %}

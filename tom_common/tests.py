@@ -486,6 +486,70 @@ class TestTermsOfService(TestCase):
         self.assertRedirects(response, reverse('terms-accept'), fetch_redirect_response=False)
 
 
+class TestRegistrationStrategies(TestCase):
+    """TOM_REGISTRATION_STRATEGY: closed (default), 'open', and 'approval_required'."""
+
+    SIGNUP_DATA = {
+        'username': 'new_astronomer', 'email': 'new@example.com',
+        'password1': 'a-strong-password-1!', 'password2': 'a-strong-password-1!',
+        'first_name': 'Willa', 'affiliation': 'LCO',
+    }
+
+    def setUp(self):
+        cache.clear()
+
+    @override_settings(TOM_REGISTRATION_STRATEGY='open')
+    def test_open_signup_creates_active_logged_in_user_with_fields(self):
+        response = self.client.post(reverse('account_signup'), self.SIGNUP_DATA)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        user = User.objects.get(username='new_astronomer')
+        self.assertTrue(user.is_active)
+        self.assertEqual(user.first_name, 'Willa')
+        self.assertEqual(user.profile.affiliation, 'LCO')
+        self.assertTrue(user.groups.filter(name='Public').exists())
+        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)  # logged in
+
+    @override_settings(TOM_REGISTRATION_STRATEGY='approval_required',
+                       MANAGERS=[('Admin', 'admin@example.com')])
+    def test_approval_required_signup_creates_inactive_user_and_notifies_managers(self):
+        from django.core import mail
+        response = self.client.post(reverse('account_signup'), self.SIGNUP_DATA)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        user = User.objects.get(username='new_astronomer')
+        self.assertFalse(user.is_active)
+        self.assertTrue(user.groups.filter(name='Public').exists())
+        self.assertNotIn('_auth_user_id', self.client.session)  # not logged in
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('awaiting approval', mail.outbox[0].subject)
+        # a login attempt shows the pending-approval page, with the next step named
+        login_response = Client().post(reverse('login'),
+                                       {'login': 'new_astronomer', 'password': 'a-strong-password-1!'},
+                                       follow=True)
+        self.assertContains(login_response, 'awaiting approval')
+
+    @override_settings(TOM_REGISTRATION_STRATEGY='open', TOM_REQUIRED_USER_FIELDS=['phone_number'])
+    def test_signup_enforces_required_fields(self):
+        response = self.client.post(reverse('account_signup'), self.SIGNUP_DATA)
+        self.assertEqual(response.status_code, HTTPStatus.OK)  # re-rendered with errors
+        self.assertFalse(User.objects.filter(username='new_astronomer').exists())
+
+    @override_settings(TOM_REGISTRATION_STRATEGY='open', TOM_TERMS_OF_SERVICE_VERSION='v1')
+    def test_signup_requires_and_records_terms_acceptance(self):
+        from tom_common.models import TermsOfServiceAcceptance
+        response = self.client.post(reverse('account_signup'), self.SIGNUP_DATA)
+        self.assertEqual(response.status_code, HTTPStatus.OK)  # checkbox missing: form error
+        response = self.client.post(reverse('account_signup'),
+                                    {**self.SIGNUP_DATA, 'accept_terms': 'on'})
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        acceptance = TermsOfServiceAcceptance.objects.get(user__username='new_astronomer')
+        self.assertEqual(acceptance.version, 'v1')
+
+    def test_signup_closed_by_default_creates_nothing(self):
+        response = self.client.post(reverse('account_signup'), self.SIGNUP_DATA)
+        self.assertEqual(response.status_code, HTTPStatus.OK)  # the closed page
+        self.assertFalse(User.objects.filter(username='new_astronomer').exists())
+
+
 class TestTomTokenAuthentication(TestCase):
     """TomTokenAuthentication: expiry and MFA gating for API tokens."""
 

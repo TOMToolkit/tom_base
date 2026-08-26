@@ -153,7 +153,7 @@ an adapter method, a template), and a setting names the implementation to use. T
 the default in your TOM's ``custom_code`` app (or drop a template into your TOM's ``templates/`` directory) and
 point the setting at your version in ``settings.py`` — nothing in tom_base changes.
 
-- **Extra sign-up fields**: subclass ``tom_common.forms.TomSignupForm`` in your ``custom_code`` app, add fields, and
+- **Extra sign-up fields**: subclass ``tom_common.accounts.forms.TomSignupForm`` in your ``custom_code`` app, add fields, and
   store them in ``signup(self, request, user)``; point django-allauth at it with
   ``ACCOUNT_SIGNUP_FORM_CLASS = 'custom_code.forms.MySignupForm'``.
 - **Behaviour** (who may sign up, which group new users join, notification emails, redirects): subclass
