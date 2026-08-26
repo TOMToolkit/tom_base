@@ -1,0 +1,70 @@
+{% extends "account/base_entrance.html" %}
+{% comment %}
+Copied from django-allauth's account/login.html for ONE change: the "please sign up first"
+invitation renders only while registration is open — allauth shows it unconditionally, even
+when the link leads to the sign-up-closed page. Compare against allauth's copy when
+upgrading allauth.
+{% endcomment %}
+{% load i18n %}
+{% load allauth account user_extras %}
+{% block head_title %}
+    {% trans "Sign In" %}
+{% endblock head_title %}
+{% block content %}
+    {% element h1 %}
+        {% trans "Sign In" %}
+    {% endelement %}
+    {% registration_is_open as show_signup_invitation %}
+    {% if not SOCIALACCOUNT_ONLY %}
+        {% if show_signup_invitation %}
+        {% setvar link %}
+            <a href="{{ signup_url }}">
+            {% endsetvar %}
+            {% setvar end_link %}
+            </a>
+        {% endsetvar %}
+        {% element p %}
+            {% blocktranslate %}If you have not created an account yet, then please {{ link }}sign up{{ end_link }} first.{% endblocktranslate %}
+        {% endelement %}
+        {% endif %}
+        {% url 'account_login' as login_url %}
+        {% element form form=form method="post" action=login_url tags="entrance,login" %}
+            {% slot body %}
+                {% csrf_token %}
+                {% element fields form=form unlabeled=True %}
+                {% endelement %}
+                {{ redirect_field }}
+            {% endslot %}
+            {% slot actions %}
+                {% element button type="submit" tags="prominent,login" %}
+                    {% trans "Sign In" %}
+                {% endelement %}
+            {% endslot %}
+        {% endelement %}
+    {% endif %}
+    {% if LOGIN_BY_CODE_ENABLED or PASSKEY_LOGIN_ENABLED %}
+        {% element hr %}
+        {% endelement %}
+        {% element button_group vertical=True %}
+            {% if PASSKEY_LOGIN_ENABLED %}
+                {% element button type="submit" form="mfa_login" id="passkey_login" tags="prominent,login,outline,primary" %}
+                    {% trans "Sign in with a passkey" %}
+                {% endelement %}
+            {% endif %}
+            {% if LOGIN_BY_CODE_ENABLED %}
+                {% element button href=request_login_code_url tags="prominent,login,outline,primary" %}
+                    {% trans "Send me a sign-in code" %}
+                {% endelement %}
+            {% endif %}
+        {% endelement %}
+    {% endif %}
+    {% if SOCIALACCOUNT_ENABLED %}
+        {% include "socialaccount/snippets/login.html" with page_layout="entrance" %}
+    {% endif %}
+{% endblock content %}
+{% block extra_body %}
+    {{ block.super }}
+    {% if PASSKEY_LOGIN_ENABLED %}
+        {% include "mfa/webauthn/snippets/login_script.html" with button_id="passkey_login" %}
+    {% endif %}
+{% endblock %}

@@ -1,5 +1,6 @@
 import logging
 
+from allauth.account.adapter import get_adapter as get_account_adapter
 from allauth.mfa.adapter import get_adapter as get_mfa_adapter
 from allauth.mfa.models import Authenticator
 from guardian.conf import settings as guardian_settings
@@ -92,6 +93,16 @@ def include_app_user_lists(context):
 
     context['user_lists_to_display'] = user_lists_to_display
     return context
+
+
+@register.simple_tag(takes_context=True)
+def registration_is_open(context):
+    """Whether self-registration is currently open; the account adapter decides.
+
+    Asking the adapter (rather than reading TOM_REGISTRATION_STRATEGY directly) keeps the
+    Register button honest for TOMs that override is_open_for_signup in a custom adapter.
+    """
+    return get_account_adapter().is_open_for_signup(context['request'])
 
 
 @register.inclusion_tag('auth/partials/pending_users.html', takes_context=True)

@@ -550,6 +550,30 @@ class TestRegistrationStrategies(TestCase):
         self.assertFalse(User.objects.filter(username='new_astronomer').exists())
 
 
+class TestRegistrationDiscoverability(TestCase):
+    """The Register button and the login-page invitation appear only while registration is open."""
+
+    def test_hidden_while_registration_is_closed(self):
+        home = self.client.get(reverse('home'))
+        self.assertNotContains(home, '>Register</a>')
+        login_page = self.client.get(reverse('account_login'))
+        self.assertNotContains(login_page, 'sign up')
+
+    @override_settings(TOM_REGISTRATION_STRATEGY='open')
+    def test_shown_while_registration_is_open(self):
+        home = self.client.get(reverse('home'))
+        self.assertContains(home, '>Register</a>')
+        self.assertContains(home, reverse('account_signup'))
+        login_page = self.client.get(reverse('account_login'))
+        self.assertContains(login_page, 'sign up')
+
+    @override_settings(TOM_REGISTRATION_STRATEGY='open')
+    def test_register_button_not_shown_to_authenticated_users(self):
+        user = User.objects.create_user(username='already_in', password='password')
+        self.client.force_login(user)
+        self.assertNotContains(self.client.get(reverse('home')), '>Register</a>')
+
+
 @override_settings(TOM_REGISTRATION_STRATEGY='approval_required')
 class TestApprovalWorkflow(TestCase):
     """The administrator's side of approval_required: the Pending users table and approval."""
