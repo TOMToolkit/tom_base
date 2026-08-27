@@ -398,6 +398,7 @@ class ReducedDatumCommon(models.Model):
 
     class Meta:
         abstract = True
+        get_latest_by = ("timestamp",)
 
 
 class ReducedDatum(ReducedDatumCommon):
@@ -410,9 +411,6 @@ class ReducedDatum(ReducedDatumCommon):
     """
 
     data_type = models.CharField(max_length=100, default="")
-
-    class Meta:
-        get_latest_by = ("timestamp",)
 
     def validate_unique(self, *args, **kwargs):
         """
@@ -455,7 +453,7 @@ class PhotometryReducedDatum(ReducedDatumCommon):
     bandpass = models.CharField(max_length=32)
     exposure_time = models.FloatField(blank=True, null=True)
 
-    class Meta:
+    class Meta(ReducedDatumCommon.Meta):
         constraints = [
             models.UniqueConstraint(
                 fields=["target", "bandpass", "timestamp", "limit", "brightness", "instrument", "reduction_version"],
@@ -478,7 +476,7 @@ class SpectroscopyReducedDatum(ReducedDatumCommon):
     flux_unit = models.TextField(blank=True, default="")
     wavelength_unit = models.TextField(blank=True, default="")
 
-    class Meta:
+    class Meta(ReducedDatumCommon.Meta):
         constraints = [
             models.UniqueConstraint(
                 fields=["target", "timestamp", "telescope", "instrument", "flux", "reduction_version"],
@@ -500,7 +498,7 @@ class AstrometryReducedDatum(ReducedDatumCommon):
     ra_error_units = models.CharField(max_length=32, blank=True, default="")
     dec_error_units = models.CharField(max_length=32, blank=True, default="")
 
-    class Meta:
+    class Meta(ReducedDatumCommon.Meta):
         constraints = [
             models.UniqueConstraint(
                 fields=["target", "timestamp", "telescope", "instrument", "ra", "dec", "reduction_version"],
