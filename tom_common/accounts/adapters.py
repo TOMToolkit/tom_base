@@ -19,6 +19,7 @@ from allauth.account.adapter import DefaultAccountAdapter
 from allauth.mfa.adapter import DefaultMFAAdapter
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.models import Group
 from django.core.mail import mail_managers
 from django.http import HttpRequest
@@ -46,6 +47,21 @@ class TomAccountAdapter(DefaultAccountAdapter):
     def is_open_for_signup(self, request: HttpRequest) -> bool:
         """Self-registration is opt-in; allauth's default is open."""
         return getattr(settings, 'TOM_REGISTRATION_STRATEGY', None) in ('open', 'approval_required')
+
+    def send_mail(self, template_prefix: str, email: str, context: dict) -> None:
+        """Send allauth's emails without letting a broken relay become a 500.
+
+        allauth raises send failures to the user (most visibly: requesting a password reset
+        on a TOM with a broken EMAIL_HOST 500s). The failure belongs to the operator, so:
+        log it at ERROR and tell the user the send failed and who to contact.
+        """
+        try:
+            super().send_mail(template_prefix, email, context)
+        except Exception as error:
+            logger.error(f'Could not send the "{template_prefix}" email to {email}: {error}')
+            if self.request is not None:
+                messages.error(self.request,
+                               'The email could not be sent. Contact the administrators of this TOM.')
 
     def get_password_change_redirect_url(self, request: HttpRequest) -> str:
         """After a password change, send the user where they were originally going.

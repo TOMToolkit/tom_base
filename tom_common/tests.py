@@ -20,6 +20,7 @@ from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.contrib.sites.models import Site
 from django.core.exceptions import FieldError, ValidationError
+from django.core.mail.backends.base import BaseEmailBackend
 from django.core.management import call_command
 from django.urls import NoReverseMatch, clear_url_caches, resolve, reverse
 from django_comments.models import Comment
@@ -561,6 +562,75 @@ class TestRegistrationStrategies(TestCase):
         response = self.client.post(reverse('account_signup'), self.SIGNUP_DATA)
         self.assertEqual(response.status_code, HTTPStatus.OK)  # the closed page
         self.assertFalse(User.objects.filter(username='new_astronomer').exists())
+
+
+class ExplodingEmailBackend(BaseEmailBackend):
+    """A test email backend whose sends always fail, like an unreachable relay."""
+    def send_messages(self, email_messages):
+        raise ConnectionRefusedError('no relay here')
+
+
+UNCONFIGURED_EMAIL = {'EMAIL_BACKEND': 'django.core.mail.backends.smtp.EmailBackend',
+                      'EMAIL_HOST': 'localhost', 'EMAIL_HOST_USER': ''}
+
+
+class TestEmailDegradation(TestCase):
+    """approval_required and password reset degrade gracefully without working email."""
+
+    def setUp(self):
+        cache.clear()
+        self.superuser = User.objects.create_user(username='mailless_admin', password='password',
+                                                  is_staff=True, is_superuser=True)
+        self.pending = User.objects.create_user(username='mailless_applicant', password='password',
+                                                email='applicant@example.com', is_active=False)
+
+    def test_email_is_configured_heuristic(self):
+        from tom_common.accounts.email import email_is_configured
+        with override_settings(**UNCONFIGURED_EMAIL):
+            self.assertFalse(email_is_configured())
+        with override_settings(EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'):
+            self.assertTrue(email_is_configured())
+        with override_settings(EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend',
+                               EMAIL_HOST='smtp.example.com'):
+            self.assertTrue(email_is_configured())
+
+    @override_settings(EMAIL_BACKEND='tom_common.tests.ExplodingEmailBackend',
+                       TOM_REGISTRATION_STRATEGY='approval_required')
+    def test_failed_approval_email_warns_the_approver(self):
+        self.client.force_login(self.superuser)
+        response = self.client.post(reverse('user-approve', kwargs={'pk': self.pending.pk}),
+                                    follow=True)
+        self.pending.refresh_from_db()
+        self.assertTrue(self.pending.is_active)  # the approval survived the email failure
+        rendered_messages = [str(m) for m in response.context['messages']]
+        self.assertTrue(any('could not be sent' in m for m in rendered_messages))
+        self.assertTrue(any('applicant@example.com' in m for m in rendered_messages))
+
+    @override_settings(TOM_REGISTRATION_STRATEGY='approval_required', **UNCONFIGURED_EMAIL)
+    def test_pending_table_warns_when_email_unconfigured(self):
+        self.client.force_login(self.superuser)
+        response = self.client.get(reverse('user-list'))
+        self.assertContains(response, 'Email is not configured')
+
+    @override_settings(EMAIL_BACKEND='tom_common.tests.ExplodingEmailBackend')
+    def test_password_reset_with_broken_relay_does_not_500(self):
+        self.addCleanup(TestPasswordResetOptIn._reload_urlconf)
+        with override_settings(TOM_PASSWORD_RESET_ENABLED=True):
+            TestPasswordResetOptIn._reload_urlconf()
+            response = self.client.post('/accounts/password/reset/',
+                                        {'email': 'applicant@example.com'}, follow=True)
+            self.assertEqual(response.status_code, HTTPStatus.OK)  # not a 500
+            rendered_messages = [str(m) for m in response.context['messages']]
+            self.assertTrue(any('could not be sent' in m for m in rendered_messages))
+
+    def test_w002_warns_for_email_dependent_features_without_email(self):
+        from tom_common.checks import email_prerequisite_check
+        with override_settings(TOM_REGISTRATION_STRATEGY='approval_required', **UNCONFIGURED_EMAIL):
+            warnings = email_prerequisite_check(None)
+            self.assertEqual(warnings[0].id, 'tom_common.W002')
+        with override_settings(TOM_REGISTRATION_STRATEGY='approval_required',
+                               EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'):
+            self.assertEqual(email_prerequisite_check(None), [])
 
 
 class TestInterruptedDestinationRestored(TestCase):

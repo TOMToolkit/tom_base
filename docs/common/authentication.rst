@@ -132,6 +132,10 @@ themselves, set ``TOM_REGISTRATION_STRATEGY`` in ``settings.py``:
     ``account/email/registration_requested_*.txt`` and ``account/email/registration_approved_*.txt``; sender
     ``DEFAULT_FROM_EMAIL``).
 
+    A working email backend is effectively a prerequisite for a smooth ``'approval_required'`` flow. Without one
+    the flow still works, but nobody is notified of anything: the *Pending users* table says so, the approver is
+    told to inform the user directly, and ``manage.py check`` warns (``tom_common.W002``).
+
 The sign-up form prompts for username, email, password, first and last name, organization/affiliation and
 phone number; only fields listed in ``TOM_REQUIRED_USER_FIELDS`` are required, the others optional.
 When a terms-of-service version is configured the form also requires the

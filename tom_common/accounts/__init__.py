@@ -12,5 +12,8 @@ This subpackage collects the account-related pieces of tom_common in one place:
 - ``api_auth``: DRF token authentication with expiry and MFA gating.
 
 The middleware consuming these stays in ``tom_common.middleware`` (its dotted paths are
-hand-listed in deployed TOMs' settings), and signal receivers stay in ``tom_common.signals``.
+hand-listed in deployed TOMs' settings), signal receivers stay in ``tom_common.signals``,
+and system checks stay in ``tom_common.checks`` — the app-level home Django's own contrib
+apps use. Rule of thumb: settings-addressed behaviour lives here; framework-wired plumbing
+stays at the app root.
 """

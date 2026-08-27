@@ -4,7 +4,28 @@ from __future__ import annotations
 from django.conf import settings
 from django.core.checks import Tags, Warning, register
 
+from tom_common.accounts.email import email_is_configured
+
 TOM_TOKEN_AUTHENTICATION = 'tom_common.accounts.api_auth.TomTokenAuthentication'
+
+
+@register(Tags.security)
+def email_prerequisite_check(app_configs, **kwargs) -> list:
+    """approval_required registration and password reset lean on a working email backend."""
+    email_dependent_features = []
+    if getattr(settings, 'TOM_REGISTRATION_STRATEGY', None) == 'approval_required':
+        email_dependent_features.append("TOM_REGISTRATION_STRATEGY = 'approval_required'")
+    if getattr(settings, 'TOM_PASSWORD_RESET_ENABLED', False):
+        email_dependent_features.append('TOM_PASSWORD_RESET_ENABLED = True')
+    if email_dependent_features and not email_is_configured():
+        return [Warning(
+            f'{" and ".join(email_dependent_features)} configured, but no email backend appears to be: '
+            'approval/reset emails will not be delivered (the UI tells administrators to notify '
+            'users directly).',
+            hint='Configure EMAIL_BACKEND, EMAIL_HOST, and DEFAULT_FROM_EMAIL in settings.py.',
+            id='tom_common.W002',
+        )]
+    return []
 
 
 @register(Tags.security)

@@ -84,15 +84,24 @@ class UserApprovalView(SuperuserRequiredMixin, View):
         user.is_active = True
         user.save()
         security_logger.info(f'Registration approved: {user.username} by {request.user.username}')
-        self._notify_user_of_approval(request, user)
         messages.success(request, f'{user.username} approved.')
+        if not self._notify_user_of_approval(request, user):
+            # the approval stands; the APPROVER is the one who can still deliver the news
+            messages.warning(request,
+                             f'The approval email to {user.username} could not be sent '
+                             f'({user.email or "no email address on the account"}) — '
+                             'let them know directly that they can log in now.')
         return redirect('user-list')
 
     @staticmethod
-    def _notify_user_of_approval(request: HttpRequest, user: User) -> None:
-        """Tell the applicant they can log in now; email must not break the approval."""
+    def _notify_user_of_approval(request: HttpRequest, user: User) -> bool:
+        """Tell the applicant they can log in now; email must not break the approval.
+
+        Returns whether the notification was actually sent, so the view can tell the
+        approver when it was not.
+        """
         if not user.email:
-            return
+            return False
         email_context = {
             'user': user,
             'tom_name': getattr(settings, 'TOM_NAME', 'TOM Toolkit'),
@@ -109,3 +118,5 @@ class UserApprovalView(SuperuserRequiredMixin, View):
             )
         except Exception as error:
             logger.warning(f'Could not send the approval notification to {user.email}: {error}')
+            return False
+        return True

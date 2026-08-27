@@ -1,5 +1,11 @@
 {% if pending_users %}
 <h4>Pending Users</h4>
+{% if not email_configured %}
+<p class="form-text">
+  Email is not configured on this TOM, so approved users will not be notified automatically —
+  let them know directly when you approve them.
+</p>
+{% endif %}
 <div class="row">
   <div class="col-md-12">
     <table class="table table-striped">

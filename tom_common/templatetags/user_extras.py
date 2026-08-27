@@ -9,6 +9,7 @@ from django import template
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 
+from tom_common.accounts.email import email_is_configured
 from tom_common.accounts.requirements import AccountRequirement
 from django.forms.models import model_to_dict
 from django.apps import apps
@@ -127,6 +128,7 @@ def pending_users_list(context):
         'request': request,
         'pending_users': User.objects.filter(is_active=False)
                                      .exclude(username=guardian_settings.ANONYMOUS_USER_NAME),
+        'email_configured': email_is_configured(),
     }
 
 
