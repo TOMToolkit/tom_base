@@ -104,9 +104,10 @@ This creates the django-allauth tables (``account_emailaddress``, ``account_emai
   authentication). ``manage.py check`` reports this.
 - Logout is a ``POST``. A copied ``base.html`` with an old GET logout link now lands on a confirmation page; update
   the link to the POST form from the current ``tom_common/partials/navbar_login.html``.
-- A copied ``tom_common/base.html`` keeps working. To see the new *Security* card on the profile page and the
-  two-factor column on the *Users* page, refresh your copies of ``tom_common/partials/navbar_login.html`` and
-  ``auth/partials/user_list.html``.
+- A copied ``tom_common/base.html`` keeps working. Refresh copied templates to pick up the new surfaces:
+  ``tom_common/partials/navbar_login.html`` (the *Register* button), and ``auth/user_list.html`` with
+  ``auth/partials/user_list.html`` (the two-factor and requirement columns, the *Pending users* table, and the
+  now superuser-only Email column). The *Security* card appears on the profile page without template changes.
 - The REST framework's browsable-API login (``/api-auth/login/``) and the Django admin login (``/admin/login/``)
   now send users to the TOM login page.
 

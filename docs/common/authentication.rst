@@ -423,7 +423,9 @@ Deployment notes
   :doc:`Deployment tips <../deployment/deployment_tips>`.
 - **Email**: self-registration notifications, password reset and any django-allauth email feature need a working
   ``EMAIL_BACKEND``; sender addresses come from ``DEFAULT_FROM_EMAIL`` and ``SERVER_EMAIL``; subjects are prefixed
-  with your ``TOM_NAME``.
+  with your ``TOM_NAME``. ``manage.py check`` warns (``tom_common.W002``) when approval-required registration or
+  password reset is enabled without an email backend; a failed send never breaks a flow — the user or the approver
+  is told instead.
 - **Security log**: login success/failure, logout, password changes, two-factor enrolment/removal, API-token
   regeneration and terms acceptance are logged to the ``tom_common.security`` logger at ``INFO``. Route it to a
   file or your log collector in ``LOGGING``.
