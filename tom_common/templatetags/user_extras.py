@@ -46,7 +46,7 @@ def user_list(context):
         requirement = import_string(dotted_path)
         if isinstance(requirement, AccountRequirement) and requirement.is_configured():
             requirement_columns.append({
-                'label': requirement.label,
+                'label': requirement.column_label(),
                 'met_pks': requirement.met_user_pks(users),
             })
     return {
@@ -93,6 +93,14 @@ def include_app_user_lists(context):
 
     context['user_lists_to_display'] = user_lists_to_display
     return context
+
+
+@register.simple_tag(takes_context=True)
+def mfa_can_be_disabled(context):
+    """Whether the current user may disable their own authenticator app (the MFA adapter decides)."""
+    user = context['request'].user
+    authenticator = Authenticator.objects.filter(user=user, type=Authenticator.Type.TOTP).first()
+    return authenticator is None or get_mfa_adapter().can_delete_authenticator(authenticator)
 
 
 @register.simple_tag(takes_context=True)

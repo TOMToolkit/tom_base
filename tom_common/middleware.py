@@ -1,4 +1,6 @@
 import fnmatch
+from urllib.parse import urlencode
+
 from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponseForbidden, HttpResponseRedirect
@@ -83,11 +85,16 @@ class AccountRequirementsMiddleware:
 
     @staticmethod
     def _target_url(request, url_name: str) -> str:
-        """Reverse a check's target; a parametrized target receives the requesting user's pk."""
+        """Reverse a check's target; a parametrized target receives the requesting user's pk.
+
+        The page the user was headed for rides along as ?next=, so satisfy-pages that honour
+        it (terms acceptance, password change) can send the user on their way afterwards.
+        """
         try:
-            return reverse(url_name)
+            target = reverse(url_name)
         except NoReverseMatch:
-            return reverse(url_name, kwargs={'pk': request.user.pk})
+            target = reverse(url_name, kwargs={'pk': request.user.pk})
+        return f'{target}?{urlencode({"next": request.get_full_path()})}'
 
 
 class HTMXRedirectMiddleware:

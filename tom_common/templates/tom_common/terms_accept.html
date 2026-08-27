@@ -7,6 +7,7 @@
     {% include 'tom_common/partials/terms_of_service_text.html' %}
     <form method="post">
       {% csrf_token %}
+      {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
       <button type="submit" class="btn btn-primary">I accept the terms of service</button>
     </form>
   </div>

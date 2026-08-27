@@ -16,6 +16,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import TemplateView
 
@@ -66,6 +67,11 @@ class TermsAcceptView(LoginRequiredMixin, View):
                 security_logger.info(f'Terms of service accepted: {request.user.username} '
                                      f'(version {version}, ip {_client_ip(request)})')
             messages.success(request, 'Thank you — your acceptance of the terms of service has been recorded.')
+        # send the user where they were originally going (the middleware forwarded it as next)
+        next_url = request.POST.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+            return redirect(next_url)
         return redirect(settings.LOGIN_REDIRECT_URL)
 
 

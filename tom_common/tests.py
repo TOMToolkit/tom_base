@@ -1,4 +1,5 @@
 from copy import deepcopy
+from urllib.parse import urlencode
 from datetime import timedelta
 from http import HTTPStatus
 from pathlib import Path
@@ -443,6 +444,11 @@ _TEMPLATES_WITH_TEST_TERMS[0]['DIRS'] = (
 MARAUDERS_OATH = 'I solemnly swear that I am up to no good.'
 
 
+def with_next(target_url: str, destination_url: str) -> str:
+    """The requirement middleware's redirect: target plus the interrupted destination as ?next=."""
+    return f'{target_url}?{urlencode({"next": destination_url})}'
+
+
 @override_settings(TEMPLATES=_TEMPLATES_WITH_TEST_TERMS)
 class TestTermsOfService(TestCase):
     def setUp(self):
@@ -463,7 +469,8 @@ class TestTermsOfService(TestCase):
         from tom_common.models import TermsOfServiceAcceptance
         # unaccepted: redirected to the accept page
         response = self.client.get(reverse('user-profile'))
-        self.assertRedirects(response, reverse('terms-accept'), fetch_redirect_response=False)
+        self.assertRedirects(response, with_next(reverse('terms-accept'), reverse('user-profile')),
+                             fetch_redirect_response=False)
         # the accept page itself renders (exempt from the check) and shows this TOM's terms
         accept_page = self.client.get(reverse('terms-accept'))
         self.assertEqual(accept_page.status_code, HTTPStatus.OK)
@@ -483,7 +490,8 @@ class TestTermsOfService(TestCase):
     @override_settings(TOM_TERMS_OF_SERVICE_VERSION='v1', TOM_MFA_REQUIRED='all')
     def test_terms_check_runs_first(self):
         response = self.client.get(reverse('user-profile'))
-        self.assertRedirects(response, reverse('terms-accept'), fetch_redirect_response=False)
+        self.assertRedirects(response, with_next(reverse('terms-accept'), reverse('user-profile')),
+                             fetch_redirect_response=False)
 
 
 class TestRegistrationStrategies(TestCase):
@@ -544,10 +552,89 @@ class TestRegistrationStrategies(TestCase):
         acceptance = TermsOfServiceAcceptance.objects.get(user__username='new_astronomer')
         self.assertEqual(acceptance.version, 'v1')
 
+    @override_settings(TOM_REGISTRATION_STRATEGY='open', TOM_TERMS_OF_SERVICE_VERSION='v1')
+    def test_terms_checkbox_label_links_the_terms(self):
+        response = self.client.get(reverse('account_signup'))
+        self.assertContains(response, f'href="{reverse("terms-of-service")}"')
+
     def test_signup_closed_by_default_creates_nothing(self):
         response = self.client.post(reverse('account_signup'), self.SIGNUP_DATA)
         self.assertEqual(response.status_code, HTTPStatus.OK)  # the closed page
         self.assertFalse(User.objects.filter(username='new_astronomer').exists())
+
+
+class TestInterruptedDestinationRestored(TestCase):
+    """A requirement interrupt carries ?next=, and the satisfy-pages send the user onward."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='next_user', password='current-pass-1!')
+        self.client.force_login(self.user)
+
+    @override_settings(TOM_TERMS_OF_SERVICE_VERSION='v1')
+    def test_terms_interrupt_returns_to_destination(self):
+        destination = reverse('tom_targets:list')
+        response = self.client.get(destination)
+        self.assertEqual(response.headers['Location'], with_next(reverse('terms-accept'), destination))
+        response = self.client.post(reverse('terms-accept'), {'next': destination})
+        self.assertRedirects(response, destination, fetch_redirect_response=False)
+
+    @override_settings(TOM_PASSWORD_EXPIRY_DAYS=60)
+    def test_password_expiry_interrupt_returns_to_destination(self):
+        destination = reverse('tom_targets:list')
+        response = self.client.get(destination)
+        self.assertEqual(response.headers['Location'],
+                         with_next(reverse('account_change_password'), destination))
+        response = self.client.post(f'{reverse("account_change_password")}?next={destination}', {
+            'oldpassword': 'current-pass-1!',
+            'password1': 'a-brand-new-pass-2@', 'password2': 'a-brand-new-pass-2@',
+        })
+        self.assertRedirects(response, destination, fetch_redirect_response=False)
+
+    @override_settings(TOM_TERMS_OF_SERVICE_VERSION='v1')
+    def test_unsafe_next_is_ignored(self):
+        response = self.client.post(reverse('terms-accept'), {'next': 'https://evil.example.com/'})
+        self.assertRedirects(response, django_settings.LOGIN_REDIRECT_URL, fetch_redirect_response=False)
+
+
+class TestBlockedActionPagesExplainThemselves(TestCase):
+    """Pages for actions policy forbids explain the block instead of offering a dead control."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='clarity_user', password='current-pass-1!')
+
+    def _enrol_and_log_in(self):
+        """A full password + TOTP-code login (the deactivate page requires recent authentication)."""
+        secret = totp_auth.generate_totp_secret()
+        totp_auth.TOTP.activate(self.user, secret)
+        client = Client()
+        client.post(reverse('login'), {'login': 'clarity_user', 'password': 'current-pass-1!'})
+        code = totp_auth.hotp_value(secret, int(time.time() // 30))
+        client.post(reverse('mfa_authenticate'), {'code': f'{code:06d}'})
+        return client
+
+    @override_settings(TOM_MFA_REQUIRED='all')
+    def test_deactivate_page_offers_no_dead_button_when_disabling_is_forbidden(self):
+        client = self._enrol_and_log_in()
+        response = client.get(reverse('mfa_deactivate_totp'))
+        self.assertContains(response, 'contact the')
+        self.assertContains(response, 'Back to two-factor settings')
+        self.assertNotContains(response, 'Are you sure')
+        self.assertNotContains(response, '>Deactivate</button>', html=False)
+
+    def test_deactivate_page_confirms_normally_when_allowed(self):
+        client = self._enrol_and_log_in()
+        response = client.get(reverse('mfa_deactivate_totp'))
+        self.assertContains(response, 'Are you sure')
+        self.assertContains(response, 'Deactivate')
+
+    def test_wrong_current_password_says_so(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('account_change_password'), {
+            'oldpassword': 'not-my-password', 'password1': 'a-new-pass-2@x', 'password2': 'a-new-pass-2@x',
+        })
+        self.assertContains(response, 'That is not your current password')
 
 
 class TestRegistrationDiscoverability(TestCase):
@@ -930,7 +1017,8 @@ class TestAccountRequirements(TestCase):
     @override_settings(TOM_MFA_REQUIRED='all')
     def test_unenrolled_user_is_sent_to_enrolment(self):
         response = self.client.get(reverse('user-profile'))
-        self.assertRedirects(response, reverse('mfa_activate_totp'), fetch_redirect_response=False)
+        self.assertRedirects(response, with_next(reverse('mfa_activate_totp'), reverse('user-profile')),
+                             fetch_redirect_response=False)
 
     @override_settings(TOM_MFA_REQUIRED='all')
     def test_enrolment_page_and_logout_stay_reachable(self):
@@ -951,13 +1039,15 @@ class TestAccountRequirements(TestCase):
         superuser = User.objects.create_user(username='req_super', password='password', is_superuser=True)
         self.client.force_login(superuser)
         response = self.client.get(reverse('user-profile'))
-        self.assertRedirects(response, reverse('mfa_activate_totp'), fetch_redirect_response=False)
+        self.assertRedirects(response, with_next(reverse('mfa_activate_totp'), reverse('user-profile')),
+                             fetch_redirect_response=False)
 
     @override_settings(TOM_PASSWORD_EXPIRY_DAYS=60)
     def test_password_expiry(self):
         # the new user's stamp is None: counts as expired
         response = self.client.get(reverse('user-profile'))
-        self.assertRedirects(response, reverse('account_change_password'), fetch_redirect_response=False)
+        self.assertRedirects(response, with_next(reverse('account_change_password'), reverse('user-profile')),
+                             fetch_redirect_response=False)
         # a fresh stamp passes
         Profile.objects.filter(user=self.user).update(password_changed_at=timezone.now())
         self.assertEqual(self.client.get(reverse('user-profile')).status_code, HTTPStatus.OK)
@@ -969,7 +1059,9 @@ class TestAccountRequirements(TestCase):
     @override_settings(TOM_REQUIRED_USER_FIELDS=['first_name'])
     def test_required_fields(self):
         response = self.client.get(reverse('user-profile'))
-        self.assertRedirects(response, reverse('user-update', kwargs={'pk': self.user.pk}),
+        self.assertRedirects(response,
+                             with_next(reverse('user-update', kwargs={'pk': self.user.pk}),
+                                       reverse('user-profile')),
                              fetch_redirect_response=False)
         User.objects.filter(pk=self.user.pk).update(first_name='Willa')
         self.assertEqual(self.client.get(reverse('user-profile')).status_code, HTTPStatus.OK)
@@ -978,13 +1070,15 @@ class TestAccountRequirements(TestCase):
     def test_first_unmet_check_wins(self):
         # both unmet; the default list runs mfa_enrolled before password_not_expired
         response = self.client.get(reverse('user-profile'))
-        self.assertRedirects(response, reverse('mfa_activate_totp'), fetch_redirect_response=False)
+        self.assertRedirects(response, with_next(reverse('mfa_activate_totp'), reverse('user-profile')),
+                             fetch_redirect_response=False)
 
     @override_settings(TOM_MFA_REQUIRED='all')
     def test_blocked_htmx_request_becomes_full_page_navigation(self):
         response = self.client.get(reverse('user-profile'), HTTP_HX_REQUEST='true')
         self.assertEqual(response.status_code, HTTPStatus.OK)
-        self.assertEqual(response.headers['HX-Redirect'], reverse('mfa_activate_totp'))
+        self.assertEqual(response.headers['HX-Redirect'],
+                         with_next(reverse('mfa_activate_totp'), reverse('user-profile')))
 
     @override_settings(TOM_MFA_REQUIRED='all')
     def test_anonymous_requests_are_untouched(self):
@@ -1077,6 +1171,17 @@ class TestSecurityCardAndUserList(TestCase):
         self.client.force_login(superuser)
         response = self.client.get(reverse('user-list'))
         self.assertContains(response, '<th>2FA</th>', html=True)
+
+    def test_email_addresses_shown_only_to_superusers(self):
+        User.objects.filter(username='card_user').update(email='private@example.com')
+        superuser = User.objects.create_user(username='card_admin', password='password',
+                                             is_staff=True, is_superuser=True)
+        self.client.force_login(superuser)
+        self.assertContains(self.client.get(reverse('user-list')), 'private@example.com')
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('user-list'))
+        self.assertNotContains(response, 'private@example.com')
+        self.assertNotContains(response, '<th>Email</th>', html=True)
 
 
 class TestHTMXRedirectMiddleware(TestCase):

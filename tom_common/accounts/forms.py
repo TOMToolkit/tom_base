@@ -11,6 +11,8 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.http import HttpRequest
+from django.urls import reverse
+from django.utils.html import format_html
 
 from tom_common.models import TermsOfServiceAcceptance
 
@@ -33,7 +35,8 @@ class TomSignupForm(forms.Form):
         if getattr(settings, 'TOM_TERMS_OF_SERVICE_VERSION', None):
             self.fields['accept_terms'] = forms.BooleanField(
                 required=True,
-                label='I accept the terms of service',
+                label=format_html('I accept the <a href="{}" target="_blank">terms of service</a>',
+                                  reverse('terms-of-service')),
             )
 
     def signup(self, request: HttpRequest, user: User) -> None:

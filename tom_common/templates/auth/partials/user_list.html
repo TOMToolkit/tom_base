@@ -7,7 +7,8 @@
       <table class="table table-striped">
         <thead>
           <tr>
-            <th>Username</th><th>Name</th><th>Email</th><th>Admin</th><th>2FA</th>
+            {% comment %} email addresses are personal data: only superusers see them {% endcomment %}
+            <th>Username</th><th>Name</th>{% if request.user.is_superuser %}<th>Email</th>{% endif %}<th>Admin</th><th>2FA</th>
             {% for column in requirement_columns %}<th>{{ column.label }}</th>{% endfor %}
             {% if request.user.is_superuser %}
             <th>Edit</th><th>Delete</th><th>Change Password</th>
@@ -19,7 +20,7 @@
           <tr>
             <td>{{ user.username }}</td>
             <td>{{ user.first_name }} {{ user.last_name }}</td>
-            <td>{{ user.email }}</td>
+            {% if request.user.is_superuser %}<td>{{ user.email }}</td>{% endif %}
             <td>{% if user.is_superuser %} yes {% endif %}</td>
             <td>{% if user.id in mfa_user_ids %} yes {% endif %}</td>
             {% for column in requirement_columns %}

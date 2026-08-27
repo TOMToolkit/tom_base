@@ -23,6 +23,7 @@ from django.contrib.auth.models import Group
 from django.core.mail import mail_managers
 from django.http import HttpRequest
 from django.template.loader import render_to_string
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from tom_common import encryption
 
@@ -33,9 +34,31 @@ security_logger = logging.getLogger('tom_common.security')
 class TomAccountAdapter(DefaultAccountAdapter):
     """Account flow hooks (registration, redirects, email)."""
 
+    error_messages = {
+        **DefaultAccountAdapter.error_messages,
+        # override allauth's default error messages with more informative and actionable version
+        'enter_current_password': (
+            'That is not your current password, so nothing was changed. If you cannot remember '
+            'your current password, contact the administrators of this TOM.'
+        ),
+    }
+
     def is_open_for_signup(self, request: HttpRequest) -> bool:
         """Self-registration is opt-in; allauth's default is open."""
         return getattr(settings, 'TOM_REGISTRATION_STRATEGY', None) in ('open', 'approval_required')
+
+    def get_password_change_redirect_url(self, request: HttpRequest) -> str:
+        """After a password change, send the user where they were originally going.
+
+        AccountRequirementsMiddleware forwards the interrupted destination as ?next= (the
+        template's redirect_field carries it through the POST); allauth's default leaves the
+        user stranded on the change form.
+        """
+        next_url = request.POST.get('next') or request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+            return next_url
+        return super().get_password_change_redirect_url(request)
 
     def save_user(self, request: HttpRequest, user, form, commit: bool = True):
         """Apply the TOM_REGISTRATION_STRATEGY to a self-registered user.

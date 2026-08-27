@@ -71,6 +71,10 @@ class AccountRequirement:
         """Bulk form of ``is_met`` for the *Users* page; override to answer with one query."""
         return {user.pk for user in users if self.is_met(user)}
 
+    def column_label(self) -> str:
+        """The *Users*-page column heading; override to include the configured parameter."""
+        return self.label
+
     def __call__(self, request: HttpRequest) -> str | None:
         """The middleware's check contract: None (met/inactive) or the satisfy-page URL name."""
         if not self.is_configured():
@@ -99,6 +103,9 @@ class TermsOfServiceAcceptedRequirement(AccountRequirement):
         return set(TermsOfServiceAcceptance.objects.filter(
             user__in=users, version=settings.TOM_TERMS_OF_SERVICE_VERSION,
         ).values_list('user_id', flat=True))
+
+    def column_label(self) -> str:
+        return f'{self.label} ({settings.TOM_TERMS_OF_SERVICE_VERSION})'
 
 
 class MFAEnrolledRequirement(AccountRequirement):
@@ -152,7 +159,7 @@ class PasswordNotExpiredRequirement(AccountRequirement):
 
 class RequiredFieldsPresentRequirement(AccountRequirement):
     """TOM_REQUIRED_USER_FIELDS: listed User/Profile fields must be filled in."""
-    label = 'Details complete'
+    label = 'Profile complete'
     target_url_name = 'user-update'
     message = 'Your account is missing required information. Complete your user details to continue.'
 

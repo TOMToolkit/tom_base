@@ -1,0 +1,50 @@
+{% extends "mfa/totp/base.html" %}
+{% load i18n %}
+{% load allauth user_extras %}
+{% comment %}
+Copied from django-allauth's mfa/totp/deactivate_form.html for ONE change: when policy
+(TOM_MFA_REQUIRED) forbids disabling, the page explains that and offers a way back —
+allauth's copy shows the are-you-sure form and a Deactivate button that can only fail.
+Compare against allauth's copy when upgrading allauth.
+{% endcomment %}
+{% block head_title %}
+    {% trans "Deactivate Authenticator App" %}
+{% endblock head_title %}
+{% block content %}
+    {% mfa_can_be_disabled as user_may_disable %}
+    {% if user_may_disable %}
+        {% element h1 %}
+            {% trans "Deactivate Authenticator App" %}
+        {% endelement %}
+        {% element p %}
+            {% blocktranslate %}You are about to deactivate authenticator app based authentication. Are you sure?{% endblocktranslate %}
+        {% endelement %}
+        {% url 'mfa_deactivate_totp' as action_url %}
+        {% element form form=form method="post" action=action_url no_visible_fields=True %}
+            {% slot body %}
+                {% csrf_token %}
+                {% element fields form=form %}
+                    {{ form.as_p }}
+                {% endelement %}
+            {% endslot %}
+            {% slot actions %}
+                {% element button tags="danger,delete" type="submit" %}
+                    {% trans "Deactivate" %}
+                {% endelement %}
+            {% endslot %}
+        {% endelement %}
+    {% else %}
+        {% element h1 %}
+            Two-Factor Authentication Required
+        {% endelement %}
+        {% element p %}
+            Two-factor authentication is required for your account, so it cannot be disabled.
+            If you need it reset — for example, you lost your authenticator app — contact the
+            administrators of this TOM: they can remove the authenticator so that you can enrol again.
+        {% endelement %}
+        {% url 'mfa_index' as back_url %}
+        {% element button href=back_url tags="outline" %}
+            Back to two-factor settings
+        {% endelement %}
+    {% endif %}
+{% endblock content %}
