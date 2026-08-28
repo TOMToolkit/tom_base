@@ -1417,6 +1417,31 @@ class TestAllauthTemplates(TestCase):
         self.assertContains(response, 'btn btn-primary')
         self.assertNotContains(response, 'Menu:')  # allauth's unstyled default layout
 
+    def test_allauth_page_scripts_survive_the_layout_bridge(self):
+        """allauth pages ship page scripts via extra_body; the layout must render that block.
+
+        The observable symptom of losing it: the recovery-codes "I have saved my recovery
+        codes" checkbox does nothing (its leave-warning script never loads).
+        """
+        from allauth.mfa.recovery_codes.internal.auth import RecoveryCodes
+        user = User.objects.create_user(username='script_user', password='script-pass-1!')
+        totp_auth.TOTP.activate(user, totp_auth.generate_totp_secret())
+        RecoveryCodes.activate(user)
+        client = Client()
+        client.post(reverse('login'), {'login': 'script_user', 'password': 'script-pass-1!'})
+        secret = get_mfa_adapter().decrypt(
+            Authenticator.objects.get(user=user, type=Authenticator.Type.TOTP).data['secret'])
+        code = totp_auth.hotp_value(secret, int(time.time() // 30))
+        client.post(reverse('mfa_authenticate'), {'code': f'{code:06d}'})
+        response = client.get(reverse('mfa_view_recovery_codes'))
+        self.assertContains(response, 'tom_common/js/recovery_codes.js')  # our leave-dialog script
+        self.assertContains(response, 'codes_saved')
+        # the Download button only exists when codes are re-viewable (SHOW_ONCE off); there it
+        # must carry the id the leave-dialog script exempts — downloading IS saving the codes
+        with override_settings(MFA_RECOVERY_CODES_SHOW_ONCE=False):
+            response = client.get(reverse('mfa_view_recovery_codes'))
+            self.assertContains(response, 'id="download_codes"')
+
     def test_two_factor_overview_renders_as_cards(self):
         self.client.force_login(self.user)
         response = self.client.get(reverse('mfa_index'))

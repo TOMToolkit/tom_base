@@ -6,6 +6,13 @@ chrome. allauth pages fill 'head_title' and 'content'; tom_common/base.html prov
 'title' and 'content_container'. Messages are already rendered by tom_common/base.html.
 {% endcomment %}
 {% block title %}{% block head_title %}{% endblock head_title %}{% endblock title %}
+{% comment %}
+allauth pages also fill 'extra_head' and 'extra_body' (page scripts: the recovery-codes
+leave-warning, passkey login, ...). A child block with no matching parent block renders
+nowhere, so map them onto tom_common's equivalents.
+{% endcomment %}
+{% block additional_css %}{% block extra_head %}{% endblock extra_head %}{% endblock additional_css %}
+{% block extra_javascript %}{% block extra_body %}{% endblock extra_body %}{% endblock extra_javascript %}
 {% block content_container %}
   <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">

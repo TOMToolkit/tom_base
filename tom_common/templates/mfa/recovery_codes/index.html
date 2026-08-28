@@ -1,0 +1,51 @@
+{% extends "mfa/recovery_codes/base.html" %}
+{% load i18n allauth static %}
+{% comment %}
+Copied from django-allauth's mfa/recovery_codes/index.html for TWO changes: the page script
+is tom_common's (an in-page leave dialog that can say why it is asking — browsers ignore
+custom beforeunload wording), and the Download button carries id="download_codes" so that
+downloading (which IS saving the codes) is never intercepted. Compare against allauth's copy
+when upgrading allauth.
+{% endcomment %}
+{% block content %}
+    {% element h1 %}
+        {% translate "Recovery Codes" %}
+    {% endelement %}
+    {% element p %}
+        {% blocktranslate count unused_count=unused_codes|length %}There is {{ unused_count }} out of {{ total_count }} recovery codes available.{% plural %}There are {{ unused_count }} out of {{ total_count }} recovery codes available.{% endblocktranslate %}
+    {% endelement %}
+    {% if can_view_codes %}
+        {% element field id="recovery_codes" type="textarea" rows=unused_codes|length readonly=True %}
+            {% slot label %}
+                {% translate "Unused codes" %}
+            {% endslot %}
+            {# djlint:off #}
+{% slot value %}{% for code in unused_codes %}{% if forloop.counter0 %}
+{% endif %}{{ code }}{% endfor %}{% endslot %}
+            {# djlint:on #}
+        {% endelement %}
+    {% endif %}
+    {% if can_download_codes %}
+        {% url 'mfa_download_recovery_codes' as download_url %}
+        {% element button href=download_url id="download_codes" %}
+            {% translate "Download codes" %}
+        {% endelement %}
+    {% endif %}
+    {% if can_generate_codes %}
+        {% url 'mfa_generate_recovery_codes' as generate_url %}
+        {% element button href=generate_url %}
+            {% translate "Generate new codes" %}
+        {% endelement %}
+    {% endif %}
+    {% if MFA_RECOVERY_CODES_SHOW_ONCE and can_view_codes %}
+        {% element field type="checkbox" id="codes_saved" %}
+            {% slot label %}
+                {% translate "I have saved my recovery codes" %}
+            {% endslot %}
+        {% endelement %}
+    {% endif %}
+{% endblock content %}
+{% block extra_body %}
+    {{ block.super }}
+    <script src="{% static 'tom_common/js/recovery_codes.js' %}"></script>
+{% endblock %}
