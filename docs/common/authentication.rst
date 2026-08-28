@@ -20,7 +20,8 @@ expect from any modern web application:
 
 Everything stricter than that is **off by default** and switched on by settings: requiring two-factor
 authentication, password composition rules and expiry, a terms-of-service agreement, mandatory profile fields,
-and API-token expiry. Each control is general; how you combine them is up to your project's policy. Where a
+and API-token expiry. Each control is general; how you combine them is up to your project's policy — worked
+combinations are collected in :doc:`Common accounts scenarios <authentication_scenarios>`. Where a
 setting comes from django-allauth we link to its documentation rather than repeat it.
 
 

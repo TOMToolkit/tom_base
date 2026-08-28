@@ -9,6 +9,7 @@ Configuring a TOM
   Custom settings <customsettings>
   Permissions <permissions>
   Accounts and authentication <authentication>
+  Common accounts scenarios <authentication_scenarios>
 
 TOM Settings
 ------------
