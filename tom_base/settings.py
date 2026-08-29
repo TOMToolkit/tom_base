@@ -242,8 +242,11 @@ DATA_PROCESSORS = {
 
 TOM_CADENCE_STRATEGIES = [
     'tom_observations.cadences.retry_failed_observations.RetryFailedObservationsStrategy',
+    'tom_observations.cadences.retry_failed_observations.RetryUntilDeadlineStrategy',
     'tom_observations.cadences.resume_cadence_after_failure.ResumeCadenceAfterFailureStrategy'
 ]
+
+OBS_WINDOW_MINIMUM = 24
 
 # Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"
 # See https://tomtoolkit.github.io/docs/target_fields for documentation on this feature
