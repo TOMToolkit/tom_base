@@ -1157,18 +1157,18 @@ bcrypt = ["bcrypt"]
 
 [[package]]
 name = "django-bootstrap5"
-version = "26.2"
+version = "26.3"
 description = "Bootstrap 5 for Django"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "django_bootstrap5-26.2-py3-none-any.whl", hash = "sha256:179af37c59f4e9b1070fc650f30961c5d903c2c0ad60280ad5b63ed394f68658"},
-    {file = "django_bootstrap5-26.2.tar.gz", hash = "sha256:12331059c8230ba372ffaad990a706151e1ad8f721a870aa2e862cf6746f0d33"},
+    {file = "django_bootstrap5-26.3-py3-none-any.whl", hash = "sha256:d6da441e2a37ccaa73ad1e2f43094703c8d817061d3e71846145a24586141610"},
+    {file = "django_bootstrap5-26.3.tar.gz", hash = "sha256:340df3a8ff841e591e7e86d41e49412a19d8af7eb1a5df0cfb8ebfa7c4b5ed8d"},
 ]
 
 [package.dependencies]
-django = ">=4.2"
+django = ">=5.2"
 
 [package.extras]
 jinja = ["jinja2 (>=3.0,<4)"]
