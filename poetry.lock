@@ -1029,18 +1029,18 @@ yaml = ["pyyaml (>=3.10,<7.0)"]
 
 [[package]]
 name = "crispy-bootstrap5"
-version = "2026.3"
+version = "2026.9"
 description = "Bootstrap5 template pack for django-crispy-forms"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "crispy_bootstrap5-2026.3-py3-none-any.whl", hash = "sha256:e0fff85c0503e9aed610a0ee31368e2191d340657f813669491c288c1c2e2dfa"},
-    {file = "crispy_bootstrap5-2026.3.tar.gz", hash = "sha256:e7f5adb36acfbb456444c46e82c436931c796c539e9c620be4fa9dc9c9d6679c"},
+    {file = "crispy_bootstrap5-2026.9-py3-none-any.whl", hash = "sha256:b65409c50f5b71383770075e6cbb8335405efa1487f874ff6be6f2f6953b041c"},
+    {file = "crispy_bootstrap5-2026.9.tar.gz", hash = "sha256:e574e6e910e97f5a32f5a18cc632d8bfd71cc4cb0f8fdd531e15f8618af2488b"},
 ]
 
 [package.dependencies]
-django = ">=4.2"
+django = ">=5.2"
 django-crispy-forms = ">=2.3"
 
 [[package]]
