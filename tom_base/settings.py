@@ -121,13 +121,13 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = False
-
 USE_TZ = True
 
-DATETIME_FORMAT = 'Y-m-d H:i:s'
-DATE_FORMAT = 'Y-m-d'
-
+# Non en-US locales require overriding the default date format.
+# See https://docs.djangoproject.com/en/6.1/ref/settings/#std-setting-FORMAT_MODULE_PATH
+FORMAT_MODULE_PATH = [
+    'tom_base.formats',
+]
 
 # Caching
 # https://docs.djangoproject.com/en/dev/topics/cache/#filesystem-caching
