@@ -123,7 +123,11 @@ USE_I18N = True
 
 USE_TZ = True
 
-FORMAT_MODULE_PATH = 'tom_base.formats'
+# Non en-US locales require overriding the default date format.
+# See https://docs.djangoproject.com/en/6.1/ref/settings/#std-setting-FORMAT_MODULE_PATH
+FORMAT_MODULE_PATH = [
+    'tom_base.formats',
+]
 
 # Caching
 # https://docs.djangoproject.com/en/dev/topics/cache/#filesystem-caching
