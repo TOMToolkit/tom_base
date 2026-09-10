@@ -114,7 +114,9 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS
+AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS + [
+    # if you have a custom authentication backend, this is the place to add it
+]
 
 # --- Accounts, registration, and authentication controls -------------------------------------
 # Each is opt-in and documented in the "Accounts and Authentication" and "Custom settings"

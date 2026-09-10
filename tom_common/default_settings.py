@@ -60,11 +60,11 @@ TOMTOOLKIT_MIDDLEWARE = [
     'tom_common.middleware.AccountRequirementsMiddleware',  # last: runs the TOM_ACCOUNT_REQUIREMENTS checks
 ]
 
-TOMTOOLKIT_AUTHENTICATION_BACKENDS = (
+TOMTOOLKIT_AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',  # show "pending approval" for inactive accounts
     'guardian.backends.ObjectPermissionBackend',
-)
+]
 AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
