@@ -1,5 +1,6 @@
 from tom_targets.base_models import get_target_model_app_label
 from http import HTTPStatus
+import csv
 import os
 import tempfile
 from datetime import date, time
@@ -984,3 +985,68 @@ class TestShareDataProducts(TestCase):
             follow=True
         )
         self.assertContains(response, 'No valid data shared. These data may already exist in target TOM.')
+
+    def test_download_without_selected_photometry_reports_error(self):
+        """Downloading a DataProduct reports the problem rather than raising a server error.
+
+        The share form on the DataProduct list offers 'download', but that page renders no
+        share-box checkboxes, so the selection is always empty and there is no photometry to
+        write. Reported as #1631 against a FITS DataProduct.
+        """
+        response = self.client.post(
+            reverse('dataproducts:share', kwargs={'dp_pk': self.data_product.id}),
+            {
+                'target': self.target.id,
+                'submitter': ['test_submitter'],
+                'share_destination': ['download'],
+                'share_title': ['Updated data for thingy.'],
+                'share_message': ['test_message'],
+            },
+            follow=True
+        )
+        self.assertContains(response, 'Download provides a CSV of selected photometry, and none was '
+                                      'selected. Choose photometry with the checkboxes on the target '
+                                      'page and share that instead.')
+
+    def test_download_all_photometry_without_ticking_a_box_reports_error(self):
+        """The target photometry share form reaches the same empty selection when nothing is ticked."""
+        response = self.client.post(
+            reverse('dataproducts:share_all', kwargs={'tg_pk': self.target.id}),
+            {
+                'target': self.target.id,
+                'submitter': ['test_submitter'],
+                'share_destination': ['download'],
+                'share_title': ['Updated data for thingy.'],
+                'share_message': ['test_message'],
+            },
+            follow=True
+        )
+        self.assertContains(response, 'none was selected')
+
+    def test_download_selected_photometry_returns_csv(self):
+        """Selected photometry still downloads as a CSV named for the share title."""
+        response = self.client.post(
+            reverse('dataproducts:share_all', kwargs={'tg_pk': self.target.id}),
+            {
+                'target': self.target.id,
+                'submitter': ['test_submitter'],
+                'share_destination': ['download'],
+                'share_title': ['Updated data for thingy.'],
+                'share_message': ['test_message'],
+                'share-box': [self.rd1.pk, self.rd2.pk],
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Disposition'],
+                         'attachment; filename="updated-data-for-thingy.csv"')
+        content = b''.join(response.streaming_content).decode()
+
+        # The share message is written as a leading comment, so the header is the first
+        # uncommented line. Parse rather than matching substrings: a timestamp such as
+        # 21:47:17.512345 contains a brightness-looking "17.5".
+        self.assertIn('# test_message', content)
+        rows = list(csv.DictReader(
+            line for line in content.splitlines() if not line.startswith('#')))
+        self.assertEqual(len(rows), 2)
+        self.assertEqual({row['brightness'] for row in rows}, {'18.5', '19.5'})
+        self.assertEqual({row['bandpass'] for row in rows}, {'V', 'B'})
