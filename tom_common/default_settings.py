@@ -69,28 +69,33 @@ AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
-# django-allauth configuration.
+# django-allauth account configuration.
+# https://docs.allauth.org/en/latest/account/configuration.html
 ACCOUNT_ADAPTER = 'tom_common.accounts.adapters.TomAccountAdapter'
 ACCOUNT_SIGNUP_FORM_CLASS = 'tom_common.accounts.forms.TomSignupForm'
-MFA_ADAPTER = 'tom_common.accounts.adapters.TomMFAAdapter'
 ACCOUNT_LOGIN_METHODS = {'username'}
 ACCOUNT_SIGNUP_FIELDS = ['username*', 'email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False  # prevent redirect loops; redirect to login with message
-MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']  # passkeys/WebAuthn deliberately not enabled
-MFA_ALLOW_UNVERIFIED_EMAIL = True
-MFA_TOTP_TOLERANCE = 1  # accept codes from the adjacent 30 s window (clock skew)
-MFA_RECOVERY_CODES_SHOW_ONCE = True  # recovery codes are displayed only at generation time
 
-# TOM Toolkit account settings (each documented in docs/common/customsettings.rst)
-TOM_PASSWORD_RESET_ENABLED = False  # password reset by email; requires a working EMAIL_BACKEND
-TOM_MFA_REQUIRED = None             # None | 'superusers' | 'all' — who must enrol an authenticator app
-TOM_PASSWORD_EXPIRY_DAYS = None     # int — a password older than this must be changed
-TOM_REQUIRED_USER_FIELDS = []       # e.g. ['first_name', 'last_name', 'email', 'affiliation', 'phone_number']
-TOM_TERMS_OF_SERVICE_VERSION = None  # str — users must accept this version of the terms (any string; bump to re-ask)
-TOM_API_TOKEN_EXPIRY_DAYS = None    # int — API tokens older than this are rejected (TomTokenAuthentication)
-TOM_API_TOKEN_REQUIRES_MFA = False  # tokens honoured only for two-factor-enrolled users; disables api/token-auth/
-TOM_REGISTRATION_STRATEGY = None    # None | 'open' | 'approval_required' — self-registration
+# django-allauth MFA configuration.
+# https://docs.allauth.org/en/latest/mfa/configuration.html
+MFA_ADAPTER = 'tom_common.accounts.adapters.TomMFAAdapter'
+MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']  # the allauth default; see docs for more options
+MFA_ALLOW_UNVERIFIED_EMAIL = True
+MFA_TOTP_TOLERANCE = 1
+MFA_RECOVERY_CODES_SHOW_ONCE = True
+
+# TOM Toolkit account settings
+# https://tom-toolkit.readthedocs.io/en/latest/common/customsettings.html
+TOM_PASSWORD_RESET_ENABLED = False   # password reset by email. This requires a working EMAIL_BACKEND
+TOM_MFA_REQUIRED = None              # None | 'superusers' | 'all'. Specifies which Users must enable MFA
+TOM_PASSWORD_EXPIRY_DAYS = None      # int. a password older than this must be changed
+TOM_REQUIRED_USER_FIELDS = []        # e.g. ['first_name', 'last_name', 'email', 'affiliation', 'phone_number']
+TOM_TERMS_OF_SERVICE_VERSION = None  # str. Users must accept this version of the terms (any string; bump to re-ask)
+TOM_API_TOKEN_EXPIRY_DAYS = None     # int. API tokens older than this are rejected (TomTokenAuthentication)
+TOM_API_TOKEN_REQUIRES_MFA = False   # tokens honoured only for two-factor-enrolled users; disables api/token-auth/
+TOM_REGISTRATION_STRATEGY = None     # None | 'open' | 'approval_required'. Specifies self-registration mode.
 
 # Ordered post-login checks; each is inactive until its companion setting above is configured.
 TOM_ACCOUNT_REQUIREMENTS = [
