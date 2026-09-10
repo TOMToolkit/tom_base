@@ -1,0 +1,24 @@
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th><input type="checkbox" id="selectAll"/></th>
+        <th>Object ID</th>
+        <th>Survey</th>
+        <th>R.A.</th>
+        <th>Dec.</th>
+        <th>Separation (")</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for result in results %}
+    <tr>
+        <td><input type="checkbox" name="selected_results" value="{{ result.id }}"/></td>
+        <td>{{ result.objectId }}</td>
+        <td>{{ result.survey }}</td>
+        <td title="{{ result.ra }}">{{ result.ra|floatformat:5 }}</td>
+        <td title="{{ result.dec }}">{{ result.dec|floatformat:5 }}</td>
+        <td>{{ result.distance_arcsec|floatformat:1 }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
