@@ -1,4 +1,6 @@
 import json
+import os
+import unittest
 from importlib_resources import files
 
 from django.test import TestCase, override_settings, tag
@@ -297,9 +299,14 @@ class TestBabamulForm(TestCase):
 
 
 @tag('canary')
-@override_settings(DATA_SERVICES={'Babamul': {'api_key': 'set BABAMUL_API_KEY to run this test'}})
+@unittest.skipUnless(os.environ.get('BABAMUL_API_KEY'),
+                     'Set BABAMUL_API_KEY to run the Babamul canary test.')
+@override_settings(DATA_SERVICES={'Babamul': {'api_key': os.environ.get('BABAMUL_API_KEY')}})
 class TestBabamulCanary(TestCase):
-    """Hits the live Babamul API. Excluded from the default test run."""
+    """
+    Hits the live Babamul API. Excluded from the default test run, and skipped unless BABAMUL_API_KEY is
+    set, so that the scheduled canary job does not fail on an installation without Babamul credentials.
+    """
 
     def test_cone_search_returns_objects(self):
         results = BabamulDataService().query_targets({'ra': 150.0, 'dec': 25.0, 'radius': 300.0, 'limit': 3})
