@@ -120,26 +120,33 @@ AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS + [
 
 # --- Accounts, registration, and authentication controls -------------------------------------
 # Each is opt-in and documented in the "Accounts and Authentication" and "Custom settings"
-# pages of the TOM Toolkit documentation.
+# pages of the TOM Toolkit documentation:
+# https://tom-toolkit.readthedocs.io/en/stable/common/authentication.html
+# https://tom-toolkit.readthedocs.io/en/stable/common/customsettings.html
 
-# Password reset by email: adds the "Forgot your password?" flow. Requires a working EMAIL_BACKEND.
+# Password reset by email: adds the "Forgot your password?" flow. Requires a working EMAIL_BACKEND:
+# https://docs.djangoproject.com/en/5.2/topics/email/
 # TOM_PASSWORD_RESET_ENABLED = True
 
 # Require two-factor authentication: 'all' for every user, 'superusers' for superusers only.
 # TOM_MFA_REQUIRED = 'all'
 
-# Self-registration: 'open' (sign up and log in immediately) or 'approval_required'
-# (a superuser approves each account from the Users page). Default: only administrators create accounts.
+# Self-registration:
+#  - unset: only administrators create accounts (default);
+#  - 'open': (sign up and log in immediately);
+#  - 'approval_required': (a superuser approves each account from the Users page).
 # TOM_REGISTRATION_STRATEGY = 'approval_required'
 
-# Passwords older than this many days must be changed. A password set by an administrator counts as expired.
+# Passwords older than this many days must be changed. A password set by an administrator
+# counts as expired so that it must be reset upon login.
 # TOM_PASSWORD_EXPIRY_DAYS = 60
 
 # User/Profile fields every account must have filled in.
 # TOM_REQUIRED_USER_FIELDS = ['first_name', 'last_name', 'email']
 
-# Users must accept this version of the terms of service (write the terms in
-# templates/tom_common/partials/terms_of_service_text.html). Change the value to require re-acceptance.
+# Users must accept this version of the terms of service. Write the terms in
+# templates/tom_common/partials/terms_of_service_text.html (the templates/ directory next to
+# manage.py). Change the version string to require re-acceptance from everyone.
 # TOM_TERMS_OF_SERVICE_VERSION = '2026-01-01'
 
 # API tokens older than this many days are rejected; users regenerate on their profile edit page.
@@ -150,7 +157,7 @@ AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS + [
 # TOM_API_TOKEN_REQUIRES_MFA = True
 
 # Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
+# https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
