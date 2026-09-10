@@ -53,11 +53,11 @@ TOMTOOLKIT_MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
-    'tom_common.middleware.HTMXRedirectMiddleware',  # after HtmxMiddleware; converts 302s on HTMX requests
+    'tom_common.middleware.HTMXRedirectMiddleware',  # must follow HtmxMiddleware; converts 302s on HTMX requests
     'tom_common.middleware.Raise403Middleware',
     'tom_common.middleware.ExternalServiceMiddleware',
     'tom_common.middleware.AuthStrategyMiddleware',
-    'tom_common.middleware.AccountRequirementsMiddleware',  # last: runs the TOM_ACCOUNT_REQUIREMENTS checks
+    'tom_common.middleware.AccountRequirementsMiddleware',  # must follow Authentication- and HTMXRedirectMiddleware
 ]
 
 TOMTOOLKIT_AUTHENTICATION_BACKENDS = [
