@@ -1,11 +1,19 @@
 {% extends "mfa/recovery_codes/base.html" %}
 {% load i18n allauth static %}
 {% comment %}
-Copied from django-allauth's mfa/recovery_codes/index.html for TWO changes: the page script
-is tom_common's (an in-page leave dialog that can say why it is asking — browsers ignore
-custom beforeunload wording), and the Download button carries id="download_codes" so that
-downloading (which IS saving the codes) is never intercepted. Compare against allauth's copy
-when upgrading allauth.
+TL;DR: Overrides django-allauth's mfa/recovery_codes/index.html to warn user
+about leaving the page without saving codes, and make sure codes can be downloaded
+
+Overrides allauth's mfa/recovery_codes/index.html
+So, when upgrading django-allauth, check the their template for changes.
+
+Why the override? Because when RECOVERY_CODES_SHOW_ONCE = True and they try
+to leave the page without clickng the I-have-my-recovery-codes checkbox, then
+the default confirmation comes from the browswer itself and says,
+"Leave site? Changes you made may not be saved."
+
+That's the problem. And this template makes it clear that the confirmation is
+about recovery codes and not "Changes you made".
 {% endcomment %}
 {% block content %}
     {% element h1 %}

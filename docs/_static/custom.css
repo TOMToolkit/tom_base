@@ -25,9 +25,7 @@ a.hs {
     font-weight: bold;
 }
 
-/* Sphinx's basic.css makes inline-literal tokens (span.pre) no-wrap; a long dotted path in a
-   table cell then widens its column past the table's declared :widths:. Let literals wrap
-   inside tables so column hints hold ("anywhere" shrinks min-content width, "break-word" won't). */
+/* Make sure that long strings will wrap inside of table cells rather than extending column widths. */
 table.docutils span.pre {
     white-space: normal;
     overflow-wrap: anywhere;
