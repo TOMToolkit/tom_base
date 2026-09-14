@@ -1,18 +1,21 @@
 {% extends "mfa/totp/base.html" %}
 {% load i18n %}
-{% load allauth user_extras %}
+{% load allauth user_extras %}{# TOM Toolkit: user_extras added to allauth's load #}
 {% comment %}
-Copied from django-allauth's mfa/totp/deactivate_form.html for ONE change: when policy
-(TOM_MFA_REQUIRED) forbids disabling, the page explains that and offers a way back —
-allauth's copy shows the are-you-sure form and a Deactivate button that can only fail.
-Compare against allauth's copy when upgrading allauth.
+Extends django-allauth's mfa/totp/deactivate_form.html to handle the TOM_MFA_REQUIRED
+case (i.e. it is forbidden to disable MFA). This template explains that.
+
+Upgrade Note: Everything outside the "TOM Toolkit" markers is verbatim from allauth,
+indented one level deeper to sit inside the added if. When upgrading django-allauth,
+replace the unmarked content with their new template (re-indented) and re-apply the
+marked lines.
 {% endcomment %}
 {% block head_title %}
     {% trans "Deactivate Authenticator App" %}
 {% endblock head_title %}
 {% block content %}
-    {% mfa_can_be_disabled as user_may_disable %}
-    {% if user_may_disable %}
+    {% mfa_can_be_disabled as user_may_disable %}{# TOM Toolkit addition #}
+    {% if user_may_disable %}{# TOM Toolkit addition: allauth's page below, shown only when disabling is allowed #}
         {% element h1 %}
             {% trans "Deactivate Authenticator App" %}
         {% endelement %}
@@ -33,6 +36,7 @@ Compare against allauth's copy when upgrading allauth.
                 {% endelement %}
             {% endslot %}
         {% endelement %}
+    {# --- TOM Toolkit addition: begin --- #}
     {% else %}
         {% element h1 %}
             Two-Factor Authentication Required
@@ -47,4 +51,5 @@ Compare against allauth's copy when upgrading allauth.
             Back to two-factor settings
         {% endelement %}
     {% endif %}
+    {# --- TOM Toolkit addition: end --- #}
 {% endblock content %}

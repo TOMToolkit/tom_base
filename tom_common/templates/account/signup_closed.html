@@ -1,9 +1,11 @@
 {% extends "account/base_entrance.html" %}
 {% load allauth %}
 {% comment %}
-Overrides allauth's default, which states the block without suggesting a next action.
-Every blocking message should point at the action that unblocks the user's goal — here,
-asking an administrator for an account.
+Overrides allauth's default to suggest a next action of this "blocked" state.
+
+Upgrade Note: This page is a full replacement of allauth's template, so there are no
+"TOM Toolkit" markers. When upgrading django-allauth, only check their copy for
+structural changes (extends/blocks).
 {% endcomment %}
 {% block head_title %}
     Sign Up Closed
