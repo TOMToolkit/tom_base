@@ -4,112 +4,25 @@ Accounts and Authentication
 .. Note::
 
     This page describes the accounts and authentication features introduced in TOM Toolkit 3.1. If you are
-    upgrading an existing TOM, read :doc:`Updating your TOM <../introduction/updating>` first.
+    upgrading an existing TOM, see :doc:`Updating your TOM <../introduction/updating>`.
 
 TOM Toolkit builds its user accounts on Django's ``django.contrib.auth`` and on
 `django-allauth <https://docs.allauth.org/en/latest/>`_, the de-facto standard Django package for login,
-registration, password management and multi-factor authentication. Out of the box your TOM behaves the way users
-expect from any modern web application:
+registration, password management and multi-factor authentication. Out of the box, your TOM behaves the way
+users expect from any modern web application:
 
 - users log in with a username and password and may enable **two-factor authentication** (an authenticator app
   plus recovery codes) from their profile page;
 - administrators create accounts, or you can enable **self-registration** (open, or requiring administrator
   approval);
-- users change their own password; with an email backend configured you can also offer **password reset by email**;
+- users change their own password; when an email backend is configured, you can also offer
+  **password reset by email**;
 - every user has a personal **API token** for scripted access.
 
-Everything stricter than that is **off by default** and switched on by settings: requiring two-factor
+Anything more strict than those defaults is switched on by configuration settings: requiring two-factor
 authentication, password composition rules and expiry, a terms-of-service agreement, mandatory profile fields,
-and API-token expiry. Each control is general; how you combine them is up to your project's policy — worked
-combinations are collected in :doc:`Common accounts scenarios <authentication_scenarios>`. Where a
-setting comes from django-allauth we link to its documentation rather than repeat it.
-
-
-Quick reference
----------------
-
-All account pages live under ``/accounts/`` (served by django-allauth) except where noted. URL *names* are what
-you use in templates (``{% url 'account_login' %}``) and code (``reverse('account_login')``). The historical names
-``login`` and ``logout`` keep working as aliases.
-
-.. list-table::
-    :header-rows: 1
-    :widths: 34 32 34
-
-    * - Page
-      - Path
-      - URL name
-    * - Log in
-      - ``/accounts/login/``
-      - ``account_login`` (alias ``login``)
-    * - Log out (POST)
-      - ``/accounts/logout/``
-      - ``account_logout`` (alias ``logout``)
-    * - Sign up (when registration is on)
-      - ``/accounts/signup/``
-      - ``account_signup``
-    * - Account pending approval
-      - ``/accounts/inactive/``
-      - ``account_inactive``
-    * - Change password
-      - ``/accounts/password/change/``
-      - ``account_change_password``
-    * - Reset password (when enabled)
-      - ``/accounts/password/reset/``
-      - ``account_reset_password``
-    * - Confirm it's you (re-authenticate)
-      - ``/accounts/reauthenticate/``
-      - ``account_reauthenticate``
-    * - Two-factor overview
-      - ``/accounts/2fa/``
-      - ``mfa_index``
-    * - Enable authenticator app
-      - ``/accounts/2fa/totp/activate/``
-      - ``mfa_activate_totp``
-    * - Disable authenticator app
-      - ``/accounts/2fa/totp/deactivate/``
-      - ``mfa_deactivate_totp``
-    * - Recovery codes
-      - ``/accounts/2fa/recovery-codes/``
-      - ``mfa_view_recovery_codes``
-    * - Second-factor prompt at login
-      - ``/accounts/2fa/authenticate/``
-      - ``mfa_authenticate``
-    * - Terms of service
-      - ``/terms/``
-      - ``terms-of-service``
-    * - Accept terms of service
-      - ``/terms/accept/``
-      - ``terms-accept``
-    * - Your profile
-      - ``/users/profile/``
-      - ``user-profile``
-    * - Edit a user (and API token)
-      - ``/users/<id>/update/``
-      - ``user-update``
-    * - Users and groups (pending users)
-      - ``/users/``
-      - ``user-list``
-
-
-Logging in and out
-------------------
-
-The login page asks for a username and password. If the account has two-factor authentication enabled, a second
-page asks for a code from the authenticator app (or a recovery code). Logging out is a ``POST`` (the navbar's
-*Logout* button is a form), which is what Django 5 requires.
-
-Repeated failed logins are rate-limited (by default: 5 failures per username in 5 minutes, and per-IP limits); the
-user is told to wait. The limits are django-allauth's ``ACCOUNT_RATE_LIMITS`` (see
-`Rate limits <https://docs.allauth.org/en/latest/account/rate_limits.html>`_) and are counted in Django's cache —
-see :ref:`auth-deployment-notes` if your TOM runs more than one process.
-
-Already-authenticated users who open the login page see the login form (not a redirect). TOM Toolkit relies on
-this: when a logged-in user is denied access to a page, they are sent to the login page with a message explaining
-that they need an account with more permissions.
-
-The Django admin's own login page (``/admin/login/``) and the REST framework's browsable-API login both redirect
-to the TOM login page, so there is no way to establish a browser session that skips two-factor authentication.
+and API-token expiry. Each control is general; how you combine them is up to your project's policy. Example
+combinations are collected in :doc:`Common accounts scenarios <authentication_scenarios>`.
 
 
 Creating accounts and self-registration
@@ -134,11 +47,12 @@ themselves, set ``TOM_REGISTRATION_STRATEGY`` in ``settings.py``:
     ``DEFAULT_FROM_EMAIL``).
 
     A working email backend is effectively a prerequisite for a smooth ``'approval_required'`` flow. Without one
-    the flow still works, but nobody is notified of anything: the *Pending users* table says so, the approver is
-    told to inform the user directly, and ``manage.py check`` warns (``tom_common.W002``).
+    the flow still works, but nobody is notified of anything: the *Pending users* table makes this explicit and
+    the approver is instructed to inform the user directly. Additionally, ``manage.py check`` warns
+    of this (no email) situation (``tom_common.W002``).
 
 The sign-up form prompts for username, email, password, first and last name, organization/affiliation and
-phone number; only fields listed in ``TOM_REQUIRED_USER_FIELDS`` are required, the others optional.
+phone number; only fields listed in ``TOM_REQUIRED_USER_FIELDS`` are required, any others are optional.
 When a terms-of-service version is configured the form also requires the
 *I accept the terms of service* checkbox (see :ref:`auth-terms`).
 
@@ -153,66 +67,64 @@ A *Register* button appears in the navbar and a link on the login page whenever 
 Customizing registration
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Every piece of registration behaviour follows the same pattern: tom_base ships a default implementation (a form,
-an adapter method, a template), and a setting names the implementation to use. To change a behaviour, subclass
+Every piece of registration behavior follows the same pattern: tom_base ships a default implementation (a form,
+an adapter method, a template), and a setting names the implementation to use. To change a behavior, subclass
 the default in your TOM's ``custom_code`` app (or drop a template into your TOM's ``templates/`` directory) and
-point the setting at your version in ``settings.py`` — nothing in tom_base changes.
+point the setting at your version in ``settings.py``.
 
-- **Extra sign-up fields**: subclass ``tom_common.accounts.forms.TomSignupForm`` in your ``custom_code`` app, add fields, and
-  store them in ``signup(self, request, user)``; point django-allauth at it with
+- **Extra sign-up fields**: subclass ``tom_common.accounts.forms.TomSignupForm`` in your ``custom_code`` app,
+  add fields, and store them in ``signup(self, request, user)``; point django-allauth at it with
   ``ACCOUNT_SIGNUP_FORM_CLASS = 'custom_code.forms.MySignupForm'``.
-- **Behaviour** (who may sign up, which group new users join, notification emails, redirects): subclass
-  ``tom_common.accounts.adapters.TomAccountAdapter`` and set ``ACCOUNT_ADAPTER = 'custom_code.adapters.MyAccountAdapter'``.
+- **Sign-up Behavior** (who may sign up, which group new users join, notification emails, redirects): subclass
+  ``tom_common.accounts.adapters.TomAccountAdapter`` and set, for example,
+  ``ACCOUNT_ADAPTER = 'custom_code.adapters.MyAccountAdapter'``.
   See `Adapter <https://docs.allauth.org/en/latest/account/adapter.html>`_ for the available hooks.
 - **Templates**: ``account/signup.html``, ``account/signup_closed.html``, ``account/account_inactive.html`` and the
-  email templates above can be overridden in your TOM's ``templates/`` directory.
+  email templates above can be overridden in your TOM's ``templates/`` directory. (This is the ``templates/``
+  directory at the top level of your TOM, sibling to your ``manage.py`` module).
 
 
 Two-factor authentication
 -------------------------
 
 Two-factor authentication (2FA, also called multi-factor authentication or MFA) uses a **time-based one-time
-password** (TOTP) from an authenticator app — Microsoft Authenticator, Google Authenticator, Authy, 1Password,
-Bitwarden and similar all work — plus a set of **recovery codes** for when the app is unavailable.
+password** (TOTP) from an authenticator app. Microsoft Authenticator, Google Authenticator, Authy, 1Password,
+Bitwarden and similar all work. A set of **recovery codes** is supplied for when an authenticator app is unavailable.
 
-For users
-~~~~~~~~~
+2FA From the User's Perspective
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Open your profile (your name in the navbar → *Profile*) and click *Enable two-factor authentication* on the
-   *Security* card (or go to ``/accounts/2fa/``).
+1. Open your profile (click on your name in the navbar → *Profile*) and click *Enable two-factor authentication*
+   on the *Security* card (or go to ``/accounts/2fa/``).
 2. Scan the QR code with your authenticator app (or type the key shown below it), then enter the 6-digit code the
-   app displays.
-3. Save the recovery codes — download them or copy them somewhere safe. Each code can be used one time in place
-   of an app code.
+   authenticator app displays.
+3. Save the recovery codes. Each code can be used one time in place of an app code. By default, a new set of
+   recovery codes is available from the *Security* card of your profile page.
 
 From then on, login asks for a code after the password. The *Security* card shows whether 2FA is enabled and links
-to the two-factor management page, where you can view, download, or regenerate your recovery codes (after
-confirming your password) or disable the app. Sensitive actions (changing 2FA settings, regenerating an
-API token when required) ask you to confirm your password or a code again if your last login was more than a few
-minutes ago.
+to the two-factor management page, where you can view, download, or regenerate your recovery codes, or disable the
+app. Sensitive actions (changing 2FA settings, regenerating an API token when required) ask you to confirm your
+password or a code again if your last login was more than a few minutes ago.
 
-If you lose both the app and the recovery codes, an administrator can remove your authenticator in the Django admin
-(*Multi-factor authentication* → *Authenticators*); you then enrol again.
+If you lose both the app and the recovery codes, an administrator can reset your authenticator in the Django admin
+page (*Multi-factor authentication* → *Authenticators*) and you then can enroll again.
 
-For TOM developers
-~~~~~~~~~~~~~~~~~~
+From the TOM developer's Perspective
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-2FA is always available to every user and is by default optional. To require it, set::
+2FA is always available to every user and is optional by default. To require it, set::
 
-    TOM_MFA_REQUIRED = 'all'         # or 'superusers' to require it only for superusers
+    TOM_MFA_REQUIRED = 'all'  # or 'superusers' to require it only for privileged users
 
-After login, users who have not enrolled are taken to the enrolment page and cannot use the rest of the TOM until
-they have. ``'all'`` applies to every user including superusers (and to social/SSO logins if you add them); the
-default, ``None``, enforces nothing.
-While ``TOM_MFA_REQUIRED`` is set, users cannot disable their authenticator app (an administrator can still remove it).
-
-The issuer shown in authenticator apps is your ``TOM_NAME``. TOTP secrets and recovery codes are stored encrypted
-with the key derived from ``SECRET_KEY`` (see :doc:`Encryption and the SECRET_KEY <../deployment/encryption>`; the
-``rotate_encryption_key`` command re-encrypts them when you rotate the key).
+After login, users who have not yet enabled 2FA are taken to the enrollment page and cannot use the rest of
+the TOM until 2FA enabled. When ``TOM_MFA_REQUIRED = 'all'``, ``'all'`` means every user including superusers
+(and to social/SSO logins if you configure them); the default, ``None``, means 2FA is optional.
+When ``TOM_MFA_REQUIRED`` is set, users cannot disable their authenticator app (but an administrator can still
+reset it).
 
 Other django-allauth MFA settings (``MFA_SUPPORTED_TYPES``, ``MFA_TOTP_TOLERANCE``, ``MFA_RECOVERY_CODE_COUNT`` …)
 can be set in ``settings.py``; see `MFA configuration <https://docs.allauth.org/en/latest/mfa/configuration.html>`_.
-TOM Toolkit enables TOTP and recovery codes; passkeys/WebAuthn are not enabled.
+TOM Toolkit enables TOTP and recovery codes; passkeys/WebAuthn are not enabled (contact us if you need this).
 
 
 Passwords
@@ -222,11 +134,11 @@ Users can change their password on their profile edit page (``/users/<id>/update
 ``/accounts/password/change/``. Superusers can set another user's password from the *Users* page; a password set
 this way must be changed by the user at their next login when password expiry is enabled.
 
-Password rules
-~~~~~~~~~~~~~~
+Password constraints
+~~~~~~~~~~~~~~~~~~~~
 
-Password rules are Django's ``AUTH_PASSWORD_VALIDATORS`` and apply everywhere a password is set (sign-up, change,
-reset, admin). TOM Toolkit adds two validators you can include:
+By default, password constraits are Django's ``AUTH_PASSWORD_VALIDATORS``.
+TOM Toolkit adds two validators you can include:
 
 ``tom_common.accounts.password_validation.CharacterClassValidator``
     Requires at least one upper-case letter, one lower-case letter, one digit and one special character.
@@ -238,7 +150,9 @@ For example, a policy of 12+ characters with all four character classes, differe
 
     AUTH_PASSWORD_VALIDATORS = [
         {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-        {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 12}},
+        {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+         'OPTIONS': {'min_length': 12}
+        },
         {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
         {'NAME': 'tom_common.accounts.password_validation.CharacterClassValidator'},
         {'NAME': 'tom_common.accounts.password_validation.NotSameAsCurrentPasswordValidator'},
@@ -287,11 +201,11 @@ Terms of service
 
 When set, every user must accept the current terms before using the TOM: new users tick a checkbox on the sign-up
 form; existing users (and users created by an administrator) are shown the terms right after logging in and must
-accept them. Acceptances are recorded with the version, time and IP address. To update your terms, **change the version string** (any
-string — a date or a number) and everyone will be prompted to accept the updated terms.
+accept them. Acceptances are recorded with the version, time and IP address. To update your terms,
+**change the version string** and users will be prompted to accept the updated terms.
 
 Write your terms in the template ``tom_common/partials/terms_of_service_text.html`` in your TOM's ``templates/``
-directory (plain HTML). They are shown at ``/terms/`` and on the acceptance page.
+directory (plain HTML). They are shown at the ``/terms/`` page and on the acceptance page.
 
 
 .. _auth-profile-fields:
@@ -315,27 +229,25 @@ API access
 ----------
 
 Every user has a personal API token, shown on their profile and regenerable from their profile edit page; see
-:doc:`Accessing data through the REST API <../managing_data/accessing_data_through_REST_API>`. Two settings tighten
-API access::
+:doc:`Accessing data through the REST API <../managing_data/accessing_data_through_REST_API>`. Two settings
+can customize API access::
 
     TOM_API_TOKEN_EXPIRY_DAYS = 60        # default None: tokens do not expire
     TOM_API_TOKEN_REQUIRES_MFA = True     # default False
 
 - With an expiry, requests with a token older than the limit are rejected (HTTP 401 with an explanatory message);
   the user regenerates the token on their edit page, which shows when it was created and when it expires.
-- With ``TOM_API_TOKEN_REQUIRES_MFA``: the password-only ``/api/token-auth/`` endpoint is disabled; a token is only
-  accepted if its user has two-factor authentication enabled and the token was created after enrolment; tokens
-  can only be (re)generated by the user themself, after re-authenticating; and the token is rejected while the
-  account has an outstanding requirement (expired password, terms not accepted).
+- With ``TOM_API_TOKEN_REQUIRES_MFA``: the password-only ``/api/token-auth/`` endpoint is disabled (because this
+  would by-pass the second factor).
 
 Both are enforced by ``tom_common.accounts.api_auth.TomTokenAuthentication``, which replaces the plain REST framework
 ``TokenAuthentication`` in ``REST_FRAMEWORK``::
 
     REST_FRAMEWORK = {
         'DEFAULT_AUTHENTICATION_CLASSES': [
-            'tom_common.accounts.api_auth.TomTokenAuthentication',            # Authorization: Token <key>
+            'tom_common.accounts.api_auth.TomTokenAuthentication',   # Authorization: Token <key>
             'rest_framework.authentication.SessionAuthentication',   # logged-in browsers
-            # 'rest_framework.authentication.BasicAuthentication',   # username/password per request — omit when
+            # 'rest_framework.authentication.BasicAuthentication',   # username/password per request; omit this when
                                                                      # you require two-factor authentication
         ],
         ...
@@ -354,8 +266,8 @@ Access strategy and open URLs
 -----------------------------
 
 With ``AUTH_STRATEGY = 'LOCKED'`` the login, sign-up, second-factor, pending-approval and (when enabled) password
-reset pages are open automatically — you do not need to add them to ``OPEN_URLS``. As before, ``/api/`` paths that
-scripts reach with a token must be listed in ``OPEN_URLS``.
+reset pages are open automatically. They are to ``OPEN_URLS`` to enable the authorization process. As before,
+``/api/`` paths that scripts reach with a token must be listed in ``OPEN_URLS``.
 
 
 Customizing the authentication pages and behaviour
@@ -381,7 +293,7 @@ Adapters
     controls the issuer name, secret encryption and whether users may remove their authenticator. Subclass the
     TOM Toolkit adapter and override the hook you need.
 Password validators
-    ``AUTH_PASSWORD_VALIDATORS`` (above).
+    ``AUTH_PASSWORD_VALIDATORS`` (see above).
 Post-login requirements
     ``TOM_ACCOUNT_REQUIREMENTS`` is the ordered list of checks run for every logged-in request::
 
@@ -394,13 +306,18 @@ Post-login requirements
 
     Each built-in check is a function whose companion ``TOM_*`` setting is its parameter: unconfigured means the
     check does nothing. Every *configured* requirement also appears as a column on the *Users* page, so
-    administrators can see at a glance who has not yet met it. Add your own: a function taking the request and
-    returning ``None`` (requirement met) or the URL name of the page that lets the user meet it — or, to also get
-    a *Users*-page column, an instance of a ``tom_common.accounts.requirements.AccountRequirement`` subclass
-    (define ``label``, ``is_configured()`` and ``is_met(user)``). Give it its own ``settings.py`` value if it
-    needs one, following the same inactive-unless-configured pattern. The pages you return are exempt from the
-    check automatically, as are logout, the account pages and static files. Requests
-    from scripts using a token are not subject to these checks (see API access above).
+    administrators can see it's status at a glace.
+    
+    To add your own: Define a function taking the request and
+    returning ``None`` (meaning the requirement is met) or, if the requirement is not met, the URL name of the
+    page that the user should be directed to in order to meet the requirement.
+    Alternatively, to also get a *Users*-page column, create a subclass
+    ``tom_common.accounts.requirements.AccountRequirement``. Define ``label``, ``is_configured()`` and
+    ``is_met(user)``. To pass configuration values, define it its own ``settings.py`` value
+    following the same inactive-unless-configured pattern. The pages you return are exempt from the
+    check automatically (presumably, they need to be accessed to meet the requirement), as are logout,
+    the account pages and static files. Requests from scripts using a token are not subject to these checks
+    (see API access above).
 Social / single sign-on
     django-allauth's ``socialaccount`` app (ORCID, GitHub, Google, OpenID Connect providers …) can be added to a
     TOM alongside the TOM Toolkit integration; social logins go through the same second-factor and post-login
@@ -426,8 +343,8 @@ Deployment notes
 - **Email**: self-registration notifications, password reset and any django-allauth email feature need a working
   ``EMAIL_BACKEND``; sender addresses come from ``DEFAULT_FROM_EMAIL`` and ``SERVER_EMAIL``; subjects are prefixed
   with your ``TOM_NAME``. ``manage.py check`` warns (``tom_common.W002``) when approval-required registration or
-  password reset is enabled without an email backend; a failed send never breaks a flow — the user or the approver
-  is told instead.
+  password reset is enabled without an email backend; if email cannot be sent, the user or the approver
+  is instead informed of this in the UI.
 - **Security log**: login success/failure, logout, password changes, two-factor enrolment/removal, API-token
   regeneration and terms acceptance are logged to the ``tom_common.security`` logger at ``INFO``. Route it to a
   file or your log collector in ``LOGGING``.

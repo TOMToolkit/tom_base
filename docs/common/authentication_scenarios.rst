@@ -15,14 +15,14 @@ administrator:
 
 .. code-block:: python
 
-    # settings.py: nothing! This is the default behavior.
+    # settings.py: no changes. (This is the default behavior).
 
 What you get: anonymous visitors browse but cannot change anything; administrators create
 accounts from the *Users* page; every user *may* enable two-factor authentication from the
-*Security* card on their profile page, and the *Users* page shows who has. To require MFA on
-privileged accounts while leaving it optional otherwise::
+*Security* card on their profile page. The *Users* page shows who has MFA enabled. To require
+MFA on privileged accounts while leaving it optional otherwise::
 
-    TOM_MFA_REQUIRED = 'superusers'
+    TOM_MFA_REQUIRED = 'superusers'  # MFA required for privileged users; optional otherwise.
 
 A locked TOM with self-registration
 -----------------------------------
@@ -84,8 +84,8 @@ terms-of-service acceptance, and API-token controls.
     }
 
 Write your terms of service in ``templates/tom_common/partials/terms_of_service_text.html``.
-This is the ``templates`` directory at the top level of your TOM and is a sibling to your
-``manage.py`` module.
+(This is the ``templates`` directory at the top level of your TOM, sibling to your
+``manage.py`` module).
 
 What you get: after logging in, every user is walked through accepting the terms,
 enrolling an authenticator app, replacing an expired (or administrator-set) password, and
