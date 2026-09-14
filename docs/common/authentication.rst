@@ -182,11 +182,12 @@ For users
    *Security* card (or go to ``/accounts/2fa/``).
 2. Scan the QR code with your authenticator app (or type the key shown below it), then enter the 6-digit code the
    app displays.
-3. Save the recovery codes that are shown **once**. Each code can be used one time in place of an app code.
+3. Save the recovery codes — download them or copy them somewhere safe. Each code can be used one time in place
+   of an app code.
 
 From then on, login asks for a code after the password. The *Security* card shows whether 2FA is enabled and links
-to the two-factor management page, where you can regenerate recovery codes (codes are displayed only when they are
-generated) or disable the app. Sensitive actions (changing 2FA settings, regenerating an
+to the two-factor management page, where you can view, download, or regenerate your recovery codes (after
+confirming your password) or disable the app. Sensitive actions (changing 2FA settings, regenerating an
 API token when required) ask you to confirm your password or a code again if your last login was more than a few
 minutes ago.
 

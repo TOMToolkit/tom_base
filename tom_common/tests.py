@@ -564,8 +564,13 @@ class TestRegistrationStrategies(TestCase):
         self.assertFalse(User.objects.filter(username='new_astronomer').exists())
 
 
-class ExplodingEmailBackend(BaseEmailBackend):
-    """A test email backend whose sends always fail, like an unreachable relay."""
+class AlwaysFailingEmailBackend(BaseEmailBackend):
+    """Email backend whose every send raises ConnectionRefusedError.
+
+    Set as EMAIL_BACKEND in TestEmailDegradation tests below to verify that
+    approval-notification and password-reset sends degrade gracefully when the
+    SMTP server is unreachable.
+    """
     def send_messages(self, email_messages):
         raise ConnectionRefusedError('no relay here')
 
@@ -594,7 +599,7 @@ class TestEmailDegradation(TestCase):
                                EMAIL_HOST='smtp.example.com'):
             self.assertTrue(email_is_configured())
 
-    @override_settings(EMAIL_BACKEND='tom_common.tests.ExplodingEmailBackend',
+    @override_settings(EMAIL_BACKEND='tom_common.tests.AlwaysFailingEmailBackend',
                        TOM_REGISTRATION_STRATEGY='approval_required')
     def test_failed_approval_email_warns_the_approver(self):
         self.client.force_login(self.superuser)
@@ -612,7 +617,7 @@ class TestEmailDegradation(TestCase):
         response = self.client.get(reverse('user-list'))
         self.assertContains(response, 'Email is not configured')
 
-    @override_settings(EMAIL_BACKEND='tom_common.tests.ExplodingEmailBackend')
+    @override_settings(EMAIL_BACKEND='tom_common.tests.AlwaysFailingEmailBackend')
     def test_password_reset_with_broken_relay_does_not_500(self):
         self.addCleanup(TestPasswordResetOptIn._reload_urlconf)
         with override_settings(TOM_PASSWORD_RESET_ENABLED=True):
@@ -1433,14 +1438,18 @@ class TestAllauthTemplates(TestCase):
             Authenticator.objects.get(user=user, type=Authenticator.Type.TOTP).data['secret'])
         code = totp_auth.hotp_value(secret, int(time.time() // 30))
         client.post(reverse('mfa_authenticate'), {'code': f'{code:06d}'})
-        response = client.get(reverse('mfa_view_recovery_codes'))
-        self.assertContains(response, 'tom_common/js/recovery_codes.js')  # our leave-dialog script
-        self.assertContains(response, 'codes_saved')
-        # the Download button only exists when codes are re-viewable (SHOW_ONCE off); there it
-        # must carry the id the leave-dialog script exempts — downloading IS saving the codes
-        with override_settings(MFA_RECOVERY_CODES_SHOW_ONCE=False):
+        # a TOM that opts into show-once gets allauth's stock save-confirmation checkbox — and it
+        # must work, which is exactly what this layout-bridge test protects. This branch runs
+        # first: any view of the codes marks them viewed, and show-once shows only unviewed codes.
+        with override_settings(MFA_RECOVERY_CODES_SHOW_ONCE=True):
             response = client.get(reverse('mfa_view_recovery_codes'))
-            self.assertContains(response, 'id="download_codes"')
+            self.assertContains(response, 'id="codes_saved"')
+            self.assertContains(response, 'mfa/js/recovery_codes.js')
+        response = client.get(reverse('mfa_view_recovery_codes'))
+        self.assertContains(response, 'mfa/js/recovery_codes.js')  # allauth's stock page script
+        self.assertContains(response, 'Download codes')  # codes stay downloadable (SHOW_ONCE off)
+        self.assertContains(response, 'id="back_button"')  # a way off the page (our one divergence)
+        self.assertNotContains(response, 'id="codes_saved"')  # the save-confirmation checkbox is SHOW_ONCE-only
 
     def test_two_factor_overview_renders_as_cards(self):
         self.client.force_login(self.user)

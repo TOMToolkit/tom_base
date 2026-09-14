@@ -1,19 +1,11 @@
 {% extends "mfa/recovery_codes/base.html" %}
 {% load i18n allauth static %}
 {% comment %}
-TL;DR: Overrides django-allauth's mfa/recovery_codes/index.html to warn user
-about leaving the page without saving codes, and make sure codes can be downloaded
+Overrides django-allauth's mfa/recovery_codes/index.html to add Back button.
 
-Overrides allauth's mfa/recovery_codes/index.html
-So, when upgrading django-allauth, check the their template for changes.
-
-Why the override? Because when RECOVERY_CODES_SHOW_ONCE = True and they try
-to leave the page without clickng the I-have-my-recovery-codes checkbox, then
-the default confirmation comes from the browswer itself and says,
-"Leave site? Changes you made may not be saved."
-
-That's the problem. And this template makes it clear that the confirmation is
-about recovery codes and not "Changes you made".
+NOTE: When upgrading django-allauth, check this template in django-allauth for
+changes. If the django-allauth version of this templates has updates, this template
+should be replaced with theirs with the addition of our changes (clearly marked below).
 {% endcomment %}
 {% block content %}
     {% element h1 %}
@@ -35,7 +27,7 @@ about recovery codes and not "Changes you made".
     {% endif %}
     {% if can_download_codes %}
         {% url 'mfa_download_recovery_codes' as download_url %}
-        {% element button href=download_url id="download_codes" %}
+        {% element button href=download_url %}
             {% translate "Download codes" %}
         {% endelement %}
     {% endif %}
@@ -52,8 +44,22 @@ about recovery codes and not "Changes you made".
             {% endslot %}
         {% endelement %}
     {% endif %}
+    {# --- TOM Toolkit addition: begin --- #}
+    {% url 'mfa_index' as back_url %}
+    {% element button href=back_url id="back_button" tags="secondary" %}
+        {% translate "Back to Two-Factor Authentication" %}
+    {% endelement %}
+    {# --- TOM Toolkit addition: end --- #}
 {% endblock content %}
 {% block extra_body %}
     {{ block.super }}
-    <script src="{% static 'tom_common/js/recovery_codes.js' %}"></script>
-{% endblock %}
+    <script src="{% static 'mfa/js/recovery_codes.js' %}"></script>
+    <script src="{% static 'account/js/onload.js' %}"></script>
+    <script data-allauth-onload="allauth.recoveryCodes.forms.viewForm" type="application/json">{
+    "ids": {
+        "saveConfirmation": "codes_saved",
+        "recoveryCodes": "recovery_codes"
+    }
+}
+    </script>
+{% endblock extra_body %}

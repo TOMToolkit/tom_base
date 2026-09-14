@@ -84,7 +84,7 @@ MFA_ADAPTER = 'tom_common.accounts.adapters.TomMFAAdapter'
 MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']  # the allauth default; see docs for more options
 MFA_ALLOW_UNVERIFIED_EMAIL = True
 MFA_TOTP_TOLERANCE = 1
-MFA_RECOVERY_CODES_SHOW_ONCE = True
+MFA_RECOVERY_CODES_SHOW_ONCE = False
 
 # TOM Toolkit account settings
 # https://tom-toolkit.readthedocs.io/en/latest/common/customsettings.html
