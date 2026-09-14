@@ -12,19 +12,16 @@ Version 3.1 replaces the login/logout views with `django-allauth <https://docs.a
 optional two-factor authentication, self-registration, password policy/expiry, terms-of-service acceptance, profile
 fields and API-token controls. The new features are described in :doc:`Accounts and Authentication
 <../common/authentication>`; this section is about how to upgrade and what changes for an existing TOM.
-**Upgrading does not make registration or authentication more strict** — your TOM logs users in the same way as
-before until you enable the new features.
 
-If your TOM is still on v2, do the :ref:`v2 to v3 steps <upgrade-v2-v3>` first (they are much larger), then come
-back here.
+If your TOM is still on v2, do the :ref:`v2 to v3 steps <upgrade-v2-v3>` first, then come back here.
 
 1.) Update dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Bump ``tomtoolkit`` to ``>=3.1,<4`` and, if you use it, **remove** ``tom_registration`` from your dependencies — its
+Bump ``tomtoolkit`` to ``>=3.1,<4`` and, if you use it, **remove** ``tom_registration`` from your dependencies. Its
 two registration flows are now part of tom_base (step 5). ``django-allauth`` is installed as a dependency of
 tomtoolkit; you do not list it yourself. If your TOM already uses ``django-allauth`` for social login, make sure
-your own pin allows the version tomtoolkit requires (``django-allauth[mfa] >=65.19.1,<66``).
+your own version constraint allows the version tomtoolkit requires (``django-allauth[mfa] >=65.19.1,<66``).
 
 2.) Update ``settings.py``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -36,8 +33,8 @@ with the new default list::
 
     AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS
 
-**If your settings list apps and middleware by hand**, add the following (order matters for the middleware —
-``AccountMiddleware`` after ``AuthenticationMiddleware``, the two tom_common entries at the end):
+**If your settings lists apps and middleware explicitly** (i.e. your do not use the ``default_settings.py`` added in
+Tom Toolkit 3.0, add the following ``INSTALLED_APPS`` and ``MIDDLEWARE``, noting the ordering shown below.
 
 .. code-block:: python
     :caption: settings.py
@@ -45,7 +42,7 @@ with the new default list::
     INSTALLED_APPS = [
         ...
         'tom_common',
-        'allauth',                 # new in 3.1 — after tom_common, so tom_common templates take precedence
+        'allauth',                 # new in 3.1; must come after tom_common, so tom_common templates take precedence
         'allauth.account',
         'allauth.mfa',
         ...
