@@ -14,9 +14,12 @@ django-allauth and is its canonical, documented extension mechanism).
 from __future__ import annotations
 
 import logging
+from io import BytesIO
 
+import qrcode
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.mfa.adapter import DefaultMFAAdapter
+from qrcode.image.svg import SvgPathFillImage
 
 from django.conf import settings
 from django.contrib import messages
@@ -114,7 +117,11 @@ class TomAccountAdapter(DefaultAccountAdapter):
 
 
 class TomMFAAdapter(DefaultMFAAdapter):
-    """MFA hooks: issuer name, secret encryption, authenticator removal policy."""
+    """TOM Toolkit overrides for specific django-allauth DefaultMFAAdapter behavior.
+
+    Overriddend MFA hooks: issuer name, secret encryption, authenticator removal policy,
+    QR code background.
+    """
 
     error_messages = {
         **DefaultMFAAdapter.error_messages,
@@ -128,6 +135,21 @@ class TomMFAAdapter(DefaultMFAAdapter):
     def get_totp_issuer(self) -> str:
         """The issuer label shown in authenticator apps."""
         return getattr(settings, 'TOM_NAME', 'TOM Toolkit')
+
+    def build_totp_svg(self, url: str) -> str:
+        """Enrolment QR code with an explicit white background.
+
+        allauth's default draws black modules on a transparent background, which is
+        invisible against the CSS dark theme's page background. The new image factory,
+        SvgPathFillImage, adds a white background rectangle so that the QR is scannable
+        on any page color.
+        """
+        # generate a QR code image for the given URL with the given image factory
+        img = qrcode.make(url, image_factory=SvgPathFillImage)
+        buf = BytesIO()
+        img.save(buf)
+        qr_code_svg_with_white_background = buf.getvalue().decode('utf8')
+        return qr_code_svg_with_white_background
 
     def encrypt(self, text: str) -> str:
         """Encrypt TOTP secrets / recovery-code seeds at rest with the SECRET_KEY-derived cipher."""

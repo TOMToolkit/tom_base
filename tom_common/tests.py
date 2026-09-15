@@ -5,9 +5,11 @@ from http import HTTPStatus
 from pathlib import Path
 from io import StringIO
 from types import SimpleNamespace
+import base64
 import tempfile
 import time
 import logging
+import re
 
 from allauth.mfa.adapter import get_adapter as get_mfa_adapter
 from allauth.mfa.models import Authenticator
@@ -1383,6 +1385,23 @@ class TestTomMFAAdapter(TestCase):
     def test_totp_issuer_is_tom_name(self):
         with override_settings(TOM_NAME='My Fine TOM'):
             self.assertEqual(get_mfa_adapter().get_totp_issuer(), 'My Fine TOM')
+
+    def test_enrollment_qr_svg_has_a_white_background(self):
+        """The QR must be scannable on the dark theme and a white background ensures this.
+
+        The django-allauth default is transparent background which makes the black QR code
+        "modules" invisible against a black background. We override that default and this
+        test tests our override.
+
+        The test reads the rendered enrolment page and decodes the QR image it embeds.
+        So, this also verifies the adapter override is the one the page actually uses.
+        """
+        self.client.post(reverse('login'), {'login': 'mfa_user', 'password': 'password'})
+        response = self.client.get(reverse('mfa_activate_totp'))
+        match = re.search(r'src="data:image/svg\+xml;base64,([^"]+)"', response.content.decode())
+        self.assertIsNotNone(match, 'no inline SVG QR image on the enrolment page')
+        svg = base64.b64decode(match.group(1)).decode('utf8')
+        self.assertIn('<rect fill="white"', svg)
 
     def test_can_delete_authenticator_follows_tom_mfa_required(self):
         superuser = User.objects.create_user(username='mfa_super', password='password', is_superuser=True)
