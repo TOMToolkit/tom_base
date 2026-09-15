@@ -144,6 +144,11 @@ AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS + [
 # User/Profile fields every account must have filled in.
 # TOM_REQUIRED_USER_FIELDS = ['first_name', 'last_name', 'email']
 
+# When set to True, the Users page shows other users only to holders of the Django
+# "Can view user" permission (auth.view_user, which can be granted per user or per
+# group in the admin). (Superusers always see everyone).
+# TOM_HIDE_OTHER_USERS = True
+
 # Users must accept this version of the terms of service. Write the terms in
 # templates/tom_common/partials/terms_of_service_text.html (the templates/ directory next to
 # manage.py). Change the version string to require re-acceptance from everyone.

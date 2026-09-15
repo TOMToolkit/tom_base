@@ -96,6 +96,7 @@ TOM_TERMS_OF_SERVICE_VERSION = None  # str. Users must accept this version of th
 TOM_API_TOKEN_EXPIRY_DAYS = None     # int. API tokens older than this are rejected (TomTokenAuthentication)
 TOM_API_TOKEN_REQUIRES_MFA = False   # tokens honoured only for two-factor-enrolled users; disables api/token-auth/
 TOM_REGISTRATION_STRATEGY = None     # None | 'open' | 'approval_required'. Specifies self-registration mode.
+TOM_HIDE_OTHER_USERS = False         # True: /users/ shows other users only to holders of auth.view_user
 
 # Ordered post-login checks; each is inactive until its companion setting above is configured.
 TOM_ACCOUNT_REQUIREMENTS = [

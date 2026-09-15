@@ -15,10 +15,12 @@ from allauth.mfa.adapter import get_adapter as get_mfa_adapter
 from allauth.mfa.models import Authenticator
 from allauth.mfa.totp.internal import auth as totp_auth
 from cryptography.fernet import InvalidToken
+from guardian.shortcuts import assign_perm
 
 from django import forms
 from django.conf import settings as django_settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
+from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.contrib.sites.models import Site
 from django.core.exceptions import FieldError, ValidationError
@@ -564,6 +566,64 @@ class TestRegistrationStrategies(TestCase):
         response = self.client.post(reverse('account_signup'), self.SIGNUP_DATA)
         self.assertEqual(response.status_code, HTTPStatus.OK)  # the closed page
         self.assertFalse(User.objects.filter(username='new_astronomer').exists())
+
+
+class TestHideOtherUsers(TestCase):
+    """Test the TOM_HIDE_OTHER_USERS setting.
+
+    When unset or set to `False`: all users are listed on the /users/ page.
+
+    When set to `True`, TOM_HIDE_OTHER_USERS: /users/ shows other users only
+    to holders of `auth.view_user` permission. (Superusers hold all permissions).
+    A user's own row is always shown.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.viewer = User.objects.create_user(username='ordinary_viewer', password='password')
+        cls.colleague = User.objects.create_user(username='visible_colleague', password='password')
+        cls.stranger = User.objects.create_user(username='invisible_stranger', password='password')
+        cls.superuser = User.objects.create_user(username='listing_superuser', password='password',
+                                                 is_superuser=True)
+
+    def user_list_page(self, user):
+        self.client.force_login(user)
+        return self.client.get(reverse('user-list'))
+
+    def test_default_shows_everyone(self):
+        response = self.user_list_page(self.viewer)
+        self.assertContains(response, 'visible_colleague')
+        self.assertContains(response, 'invisible_stranger')
+
+    @override_settings(TOM_HIDE_OTHER_USERS=True)
+    def test_hidden_shows_only_the_viewers_own_row(self):
+        response = self.user_list_page(self.viewer)
+        self.assertContains(response, 'ordinary_viewer')
+        self.assertNotContains(response, 'visible_colleague')
+        self.assertNotContains(response, 'invisible_stranger')
+
+    @override_settings(TOM_HIDE_OTHER_USERS=True)
+    def test_superusers_always_see_everyone(self):
+        response = self.user_list_page(self.superuser)
+        self.assertContains(response, 'ordinary_viewer')
+        self.assertContains(response, 'invisible_stranger')
+
+    @override_settings(TOM_HIDE_OTHER_USERS=True)
+    def test_the_model_level_permission_shows_everyone(self):
+        view_user = Permission.objects.get(codename='view_user',
+                                           content_type=ContentType.objects.get_for_model(User))
+        self.viewer.user_permissions.add(view_user)
+        response = self.user_list_page(self.viewer)
+        self.assertContains(response, 'visible_colleague')
+        self.assertContains(response, 'invisible_stranger')
+
+    @override_settings(TOM_HIDE_OTHER_USERS=True)
+    def test_an_object_level_grant_shows_those_users_only(self):
+        assign_perm('auth.view_user', self.viewer, self.colleague)
+        response = self.user_list_page(self.viewer)
+        self.assertContains(response, 'ordinary_viewer')  # own row always shown
+        self.assertContains(response, 'visible_colleague')
+        self.assertNotContains(response, 'invisible_stranger')
 
 
 class AlwaysFailingEmailBackend(BaseEmailBackend):

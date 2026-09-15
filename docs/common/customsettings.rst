@@ -266,6 +266,18 @@ A dictionary with the keys being TOM models classes and the values being
 the modules that should be used to generate latex tables for those
 models.
 
+`TOM_HIDE_OTHER_USERS <#tom-hide-other-users>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: False
+
+``True`` hides other users' rows on the *Users* page (``/users/``). Each user always sees their own row.
+If a user holds the standard Django *Can view user* permission (``auth.view_user``), they can see all other
+users. Superusers hold every permission, so they always see everyone. This setting affects only the *Users* page.
+Django's standard permission mechanism grants ``auth.view_user`` model-wide; ``django-guardian`` can also grant
+the same permission on specific users (an object-level permission). The viewer then sees their own row and just
+those users.
+
 `TOM_MFA_REQUIRED <#tom-mfa-required>`__
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

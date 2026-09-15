@@ -4,10 +4,12 @@ from allauth.account.adapter import get_adapter as get_account_adapter
 from allauth.mfa.adapter import get_adapter as get_mfa_adapter
 from allauth.mfa.models import Authenticator
 from guardian.conf import settings as guardian_settings
+from guardian.shortcuts import get_objects_for_user
 
 from django import template
 from django.conf import settings
 from django.contrib.auth.models import Group, User
+from django.db.models import Q
 
 from tom_common.accounts.email import email_is_configured
 from tom_common.accounts.requirements import AccountRequirement
@@ -32,16 +34,23 @@ def group_list(context):
 
 @register.inclusion_tag('auth/partials/user_list.html', takes_context=True)
 def user_list(context):
-    """
-    Renders the list of users in the TOM along with edit/delete/change password buttons, as well as an Add User button.
+    """Renders the list of users in the TOM along with
+    edit/delete/change password buttons, as well as an Add User button.
 
-    Each configured account requirement contributes a column (label + the set of pks
-    meeting it) so administrators can see who is not yet compliant.
+    Each configured account requirement contributes a column (label + the set of pks (rows)
+    meeting it) so administrators can readily see in the column who is not yet compliant with
+    its requirement.
     """
     # guardian's anonymous user is a permissions sentinel, not a person: requirements are
     # inapplicable to it (it never logs in), so it belongs in no list of users
-    users = list(User.objects.select_related('profile')
-                 .exclude(username=guardian_settings.ANONYMOUS_USER_NAME))
+    users_queryset = (User.objects.select_related('profile')
+                      .exclude(username=guardian_settings.ANONYMOUS_USER_NAME))
+
+    if getattr(settings, 'TOM_HIDE_OTHER_USERS', False):
+        # users see their own row and users with auth.view_user see other users.
+        visible_users = get_objects_for_user(context['request'].user, 'auth.view_user', klass=User)
+        users_queryset = users_queryset.filter(Q(pk__in=visible_users) | Q(pk=context['request'].user.pk))
+    users = list(users_queryset)
     requirement_columns = []
     for dotted_path in getattr(settings, 'TOM_ACCOUNT_REQUIREMENTS', []):
         requirement = import_string(dotted_path)
