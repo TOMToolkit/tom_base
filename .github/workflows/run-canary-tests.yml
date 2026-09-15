@@ -1,7 +1,11 @@
 name: run-canary-tests
 on:
-  schedule:
-    - cron: '0 8 * * *'
+  # Disabled: canary tests have been failing nightly and there's no active
+  # maintainer currently triaging them. Re-enable by uncommenting the
+  # schedule below once someone is investigating the failures.
+  # schedule:
+  #   - cron: '0 8 * * *'
+  workflow_dispatch: {}
 jobs:
   canary_tests:
     runs-on: ubuntu-latest
