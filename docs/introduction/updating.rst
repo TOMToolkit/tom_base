@@ -80,7 +80,7 @@ unless configured otherwise (see :ref:`profile fields <auth-profile-fields>`).
   would bypass the new login (and two-factor authentication). ``manage.py check`` reports this as::
 
       (tom_common.W003) LOGIN_URL (/accounts/login/) is served by django.contrib.auth.views.LoginView,
-      not by django-allauth — logging in there bypasses the two-factor authentication challenge.
+      not by django-allauth and logging in there bypasses the MFA challenge.
 
 - **Copied tom_common templates**. If your TOM has its own copy of one of these templates, integrate your
   customizations with a copy from the new tom_base version:

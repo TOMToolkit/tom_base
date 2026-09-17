@@ -49,7 +49,7 @@ def login_route_check(app_configs, **kwargs) -> list:
     view_name = getattr(view_for_display, '__name__', str(view_for_display))
     warnings = [Warning(
         f'LOGIN_URL ({settings.LOGIN_URL}) is served by {view_for_display.__module__}.{view_name}, '
-        'not by django-allauth — logging in there bypasses the two-factor authentication challenge.',
+        'not by django-allauth and logging in there bypasses the two-factor authentication challenge.',
         hint='Remove the accounts/login/ route (or the django.contrib.auth.urls include) from your '
              'urls.py. A TOM that deliberately serves login from its own view can silence this '
              "check with SILENCED_SYSTEM_CHECKS = ['tom_common.W003'].",
