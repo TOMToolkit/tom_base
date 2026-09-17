@@ -653,6 +653,27 @@ class TestReducedDatumModel(TestCase):
                 bandpass="r"
             )
 
+    def test_create_reduced_datum_duplicate_none(self):
+        """Test that we cannot add a duplicate ReducedDataum, even when a field is None.
+        exposure_time is null in both cases, but we still expect a ValidationError.
+        This tests nulls_distinct=False behaves correctly."""
+        PhotometryReducedDatum.objects.create(
+            target=self.target,
+            timestamp=self.timestamp,
+            brightness=1.0,
+            bandpass="r",
+            exposure_time=None,
+        )
+
+        with self.assertRaises(ValidationError):
+            PhotometryReducedDatum.objects.create(
+                target=self.target,
+                timestamp=self.timestamp,
+                brightness=1.0,
+                bandpass="r",
+                exposure_time=None,
+            )
+
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
                    TARGET_PERMISSIONS_ONLY=True,
