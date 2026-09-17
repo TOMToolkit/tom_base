@@ -429,10 +429,15 @@ class DataShareView(FormView):
 
             # Check Destination
             if share_destination == 'download':
-                return download_data(form_data, selected_data=selected_data)
+                download_response = download_data(form_data, selected_data=selected_data)
+                if download_response is not None:
+                    return download_response
+                messages.error(request, 'Download provides a CSV of selected photometry, and none was '
+                                        'selected. Choose photometry with the checkboxes on the target '
+                                        'page and share that instead.')
             else:
                 response = share_data_with_tom(share_destination, form_data, product_id, target_id, selected_data)
-            sharing_feedback_handler(response, self.request)
+                sharing_feedback_handler(response, self.request)
         return redirect(reverse('tom_targets:detail', kwargs={'pk': request.POST.get('target')}))
 
 
