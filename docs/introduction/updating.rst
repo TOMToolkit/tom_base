@@ -92,72 +92,56 @@ unless configured otherwise (see :ref:`profile fields <auth-profile-fields>`).
 5.) Replace ``tom_registration``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``tom_registration`` plugin is deprecated: its final release only prints a deprecation warning, and tom_base
-warns at startup while it is installed. Its two flows are built in:
+*If your TOM does not have* ``tom_registration`` *installed, skip this section.*
 
-.. list-table::
-    :header-rows: 1
-    :widths: 50 50
+``django-allauth``'s registration workflows replace those in ``tom_registration``.
+Registration workflows are thus built into tom_base. To replace ``tom_registration``,
+make the following changes:
 
-    * - ``tom_registration``
-      - tom_base 3.1
-    * - ``'tom_registration'`` in ``INSTALLED_APPS``
-      - remove
-    * - ``tom_registration.middleware.RedirectAuthenticatedUsersFromRegisterMiddleware``
-      - remove
-    * - ``TOM_REGISTRATION = {'REGISTRATION_STRATEGY': 'open', ...}``
-      - ``TOM_REGISTRATION_STRATEGY = 'open'``
-    * - ``TOM_REGISTRATION = {'REGISTRATION_STRATEGY': 'approval_required', ...}``
-      - ``TOM_REGISTRATION_STRATEGY = 'approval_required'``
-    * - ``REGISTRATION_AUTHENTICATION_BACKEND``
-      - not needed
-    * - ``REGISTRATION_REDIRECT_PATTERN``
-      - ``LOGIN_REDIRECT_URL`` / ``ACCOUNT_SIGNUP_REDIRECT_URL``
-    * - ``SEND_APPROVAL_EMAILS``, ``APPROVAL_SUBJECT``, ``APPROVAL_MESSAGE``
-      - emails are sent whenever an email backend is configured; customise the
-        ``account/email/registration_*`` templates
-    * - ``AllowAllUsersModelBackend`` in ``AUTHENTICATION_BACKENDS``
-      - replace with the backends in step 2
-    * - ``OPEN_URLS = ['/accounts/register/']`` (``LOCKED`` TOMs)
-      - not needed (sign-up pages are open automatically)
-    * - ``templates/tom_registration/register_user.html``
-      - ``templates/account/signup.html``
-    * - ``templates/tom_registration/partials/pending_users.html``
-      - ``templates/auth/partials/pending_users.html``
-    * - ``{% url 'registration:register' %}`` / ``{% url 'registration:approve' pk %}``
-      - ``{% url 'account_signup' %}`` / ``{% url 'user-approve' pk %}``
-    * - subclasses of its views and forms
-      - ``ACCOUNT_SIGNUP_FORM_CLASS`` / ``ACCOUNT_ADAPTER`` (see :doc:`Accounts and Authentication <../common/authentication>`)
+In ``settings.py``:
 
-Pending (not yet approved) users are still simply inactive users; existing pending accounts appear in the new
-*Pending users* table without any data migration.
+- Remove ``'tom_registration'`` from your additions to ``INSTALLED_APPS``.
+- Remove ``tom_registration.middleware.RedirectAuthenticatedUsersFromRegisterMiddleware``
+  from your additions to ``MIDDLEWARE``.
+- Replace the ``TOM_REGISTRATION`` dictionary with the setting matching your
+  ``REGISTRATION_STRATEGY`` value::
 
-Two copied templates matter to registration specifically. If your TOM has its own copy of
-``tom_common/partials/navbar_login.html``, refresh it from the current tom_base version to get the *Register*
-button (shown while self-registration is open). If it has its own copy of ``auth/user_list.html``, refresh
-that too: the *Pending users* table renders from there.
+      TOM_REGISTRATION_STRATEGY = 'open'  # or 'approval_required'
 
-6.) New default behaviour to be aware of
+- Delete ``REGISTRATION_AUTHENTICATION_BACKEND``, and remove ``AllowAllUsersModelBackend`` from
+  ``AUTHENTICATION_BACKENDS``.
+- If you set ``REGISTRATION_REDIRECT_PATTERN``, set ``ACCOUNT_SIGNUP_REDIRECT_URL`` to the equivalent
+  URL.
+- Delete ``SEND_APPROVAL_EMAILS``, ``APPROVAL_SUBJECT`` and ``APPROVAL_MESSAGE``.
+  ``django-allauth`` sends approval emails whenever an email backend is configured. To customize
+  the wording, override the ``account/email/registration_*`` templates.
+- If ``AUTH_STRATEGY = 'LOCKED'``, remove ``'/accounts/register/'`` from ``OPEN_URLS``. TOM Toolkit
+  maintains its own list of open URLs to facilitate the registration and authentication workflows.
+
+In your templates:
+
+- Move any customizations of ``templates/tom_registration/register_user.html`` into
+  ``templates/account/signup.html``.
+- Move any customizations of ``templates/tom_registration/partials/pending_users.html`` into
+  ``templates/auth/partials/pending_users.html``.
+- Replace ``{% url 'registration:register' %}`` with ``{% url 'account_signup' %}``, and
+  ``{% url 'registration:approve' user.pk %}`` with ``{% url 'user-approve' user.pk %}``.
+- If you have overridden ``tom_common/partials/navbar_login.html`` or ``auth/user_list.html``,
+  integrate your customizations with a copy from the new tom_base version.
+
+In ``custom_code``, if you subclass ``tom_registration`` views or forms, reimplement the
+customization as a signup form (``ACCOUNT_SIGNUP_FORM_CLASS``) or an account adapter
+(``ACCOUNT_ADAPTER``). See the *Customizing registration* section of
+:doc:`Accounts and Authentication <../common/authentication>` for details.
+
+6.) New default behavior to be aware of
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Failed logins are rate-limited (5 per username per 5 minutes, plus per-IP limits) using Django's cache. Multi-host
   deployments should use a shared cache; TOMs behind a proxy should set ``ALLAUTH_TRUSTED_PROXY_COUNT``. See
   :ref:`auth-deployment-notes`.
-- Two-factor authentication is *available* to every user (optional). Security-sensitive pages ask users to confirm
-  their password again if they logged in more than a few minutes ago.
-- With ``AUTH_STRATEGY = 'LOCKED'``, the login, sign-up, second-factor and pending-approval pages are open without
-  listing them in ``OPEN_URLS``; ``/api/`` paths used with tokens still need to be listed, as before.
 - The REST framework's browsable-API login (``/api-auth/login/``) and the Django admin login (``/admin/login/``)
-  now send users to the TOM login page — administrators, too, pass through the two-factor challenge.
-- Authentication events are written to the ``tom_common.security`` logger.
-
-7.) Optional: enable the new controls
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Two-factor enforcement, password rules and expiry, terms of service, required profile fields and API-token controls
-are each one setting away; see :doc:`Accounts and Authentication <../common/authentication>` and
-:doc:`Custom settings <../common/customsettings>`.
-
+  now send users to the TOM login page for the two-factor challenge.
 
 .. _upgrade-v2-v3:
 
