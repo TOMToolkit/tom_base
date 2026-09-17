@@ -24,9 +24,3 @@ a.hs {
     color: #017792 !important;
     font-weight: bold;
 }
-
-/* Make sure that long strings will wrap inside of table cells rather than extending column widths. */
-table.docutils span.pre {
-    white-space: normal;
-    overflow-wrap: anywhere;
-}
