@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.core.checks import Tags, Warning, register
+from django.urls import Resolver404, resolve
 
 from tom_common.accounts.email import email_is_configured
 
@@ -26,6 +27,35 @@ def email_prerequisite_check(app_configs, **kwargs) -> list:
             id='tom_common.W002',
         )]
     return []
+
+
+@register(Tags.security)
+def login_route_check(app_configs, **kwargs) -> list:
+    """Check that the login page routes to django-allauth view.
+
+    If it doesn't, MFA could be circumvented.
+    """
+    try:
+        resolved_view = resolve(getattr(settings, 'LOGIN_URL', '/accounts/login/')).func
+    except Resolver404:
+        return []  # 404?? login mounted elsewhere entirely; out of scope for this check
+
+    if getattr(resolved_view, '__module__', '').startswith('allauth.'):
+        return []  # URL path routes to allauth: successful check and early return
+
+    # find out where we did route and show Warning
+    # a class-based view resolves to a wrapper named 'view'; its class is the readable name
+    view_for_display = getattr(resolved_view, 'view_class', resolved_view)
+    view_name = getattr(view_for_display, '__name__', str(view_for_display))
+    warnings = [Warning(
+        f'LOGIN_URL ({settings.LOGIN_URL}) is served by {view_for_display.__module__}.{view_name}, '
+        'not by django-allauth — logging in there bypasses the two-factor authentication challenge.',
+        hint='Remove the accounts/login/ route (or the django.contrib.auth.urls include) from your '
+             'urls.py. A TOM that deliberately serves login from its own view can silence this '
+             "check with SILENCED_SYSTEM_CHECKS = ['tom_common.W003'].",
+        id='tom_common.W003',
+    )]
+    return warnings
 
 
 @register(Tags.security)

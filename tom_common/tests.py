@@ -4,8 +4,9 @@ from datetime import timedelta
 from http import HTTPStatus
 from pathlib import Path
 from io import StringIO
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 import base64
+import sys
 import tempfile
 import time
 import logging
@@ -698,6 +699,47 @@ class TestEmailDegradation(TestCase):
         with override_settings(TOM_REGISTRATION_STRATEGY='approval_required',
                                EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'):
             self.assertEqual(email_prerequisite_check(None), [])
+
+
+class TestLoginRouteCheck(TestCase):
+    """Test the login bypass warning mechanism (tom_common.W003, see checks.py)
+
+    tom_common.W003: warns that a TOM login route in front of the allauth login
+    bypasses the TOM Toolkit second factor.
+
+    This TestCase tests `tom_common.checks.login_route_check()`.
+    """
+
+    def call_check_with_urlconf(self, urlpatterns):
+        """Run login_route_check against a throwaway root URLconf built from urlpatterns."""
+        from tom_common.checks import login_route_check  # local, like the other check tests
+        shadow_urlconf = ModuleType('shadow_urlconf')
+        shadow_urlconf.urlpatterns = urlpatterns
+        sys.modules['shadow_urlconf'] = shadow_urlconf
+        self.addCleanup(sys.modules.pop, 'shadow_urlconf', None)
+        self.addCleanup(clear_url_caches)
+        with override_settings(ROOT_URLCONF='shadow_urlconf'):
+            clear_url_caches()
+            warnings = login_route_check(None)
+        clear_url_caches()
+        return warnings
+
+    def test_default_mounting_passes(self):
+        from tom_common.checks import login_route_check
+        self.assertEqual(login_route_check(None), [])
+
+    def test_own_login_route_warns(self):
+        from django.contrib.auth import views as django_auth_views
+        from django.urls import path as url_path
+        warnings = self.call_check_with_urlconf(
+            [url_path('accounts/login/', django_auth_views.LoginView.as_view())])
+        self.assertEqual(warnings[0].id, 'tom_common.W003')
+        self.assertIn('django.contrib.auth.views', warnings[0].msg)
+
+    def test_contrib_auth_urls_include_warns(self):
+        from django.urls import include, path as url_path
+        warnings = self.call_check_with_urlconf([url_path('accounts/', include('django.contrib.auth.urls'))])
+        self.assertEqual(warnings[0].id, 'tom_common.W003')
 
 
 class TestInterruptedDestinationRestored(TestCase):
