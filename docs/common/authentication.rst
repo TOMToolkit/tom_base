@@ -216,7 +216,7 @@ Profile fields
 In addition to Django's first name, last name and email, TOM Toolkit adds *organization / affiliation* and *phone number*
 fields to a user's profile. To make any of these mandatory, add them to ``TOM_REQUIRED_USER_FIELDS``::
 
-    TOM_REQUIRED_USER_FIELDS = ['first_name', 'last_name', 'email', 'affiliation', 'phone_number']    # default []
+    TOM_REQUIRED_USER_FIELDS = ['first_name', 'last_name', 'email']    # default []
 
 Required fields are enforced on the sign-up form and the user edit form, and a logged-in user whose profile is
 missing a required field is redirected to their profile edit page until it is complete.

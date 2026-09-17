@@ -5,71 +5,45 @@ Keep your TOM up to date by regularly installing the most recent version of the 
 PyPI. How exactly you do this (`pip`, `uv`, etc) will change based on how you handle dependencies for your project.
 
 
-Upgrade to v3.1 (accounts and authentication)
----------------------------------------------
+Upgrade to TOM Toolkit 3.1 (accounts and authentication)
+--------------------------------------------------------
 
-Version 3.1 replaces the login/logout views with `django-allauth <https://docs.allauth.org/en/latest/>`_ and adds
-optional two-factor authentication, self-registration, password policy/expiry, terms-of-service acceptance, profile
-fields and API-token controls. The new features are described in :doc:`Accounts and Authentication
-<../common/authentication>`; this section is about how to upgrade and what changes for an existing TOM.
+TOM Toolkit version 3.1 adds optional two-factor authentication, self-registration,
+password policy/expiry, terms-of-service acceptance, mandatory profile fields,
+API-token controls, and other features by integrating
+`django-allauth <https://docs.allauth.org/en/latest/>`_.
+**django-allauth** is the de-facto standard Django package for login, registration,
+password management and multi-factor authentication. The new capabilities are turned off
+by default so your TOM's behavior won't change without you configuring it to change.
+The available new features are described in :doc:`Accounts and Authentication <../common/authentication>`.
+This section is about how to upgrade an existing TOM.
 
-If your TOM is still on v2, do the :ref:`v2 to v3 steps <upgrade-v2-v3>` first, then come back here.
+If your TOM is still on TOM Toolkit v2, do the :ref:`v2 to v3 steps <upgrade-v2-v3>` first,
+then come back here.
 
-1.) Update dependencies
-~~~~~~~~~~~~~~~~~~~~~~~
+1.) Updating dependencies (``pyproject.toml``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Bump ``tomtoolkit`` to ``>=3.1,<4`` and, if you use it, **remove** ``tom_registration`` from your dependencies. Its
-two registration flows are now part of tom_base (step 5). ``django-allauth`` is installed as a dependency of
-tomtoolkit; you do not list it yourself. If your TOM already uses ``django-allauth`` for social login, make sure
-your own version constraint allows the version tomtoolkit requires (``django-allauth[mfa] >=65.19.1,<66``).
+Bump ``tomtoolkit`` to ``>=3.1,<4`` and, if you use it, **remove** ``tom_registration`` from your dependencies.
+Its two registration workflows are now part of tom_base (see step 5 below). (``django-allauth`` is installed
+as a dependency of tomtoolkit. So, you don't list it in your dependencies).
+If your TOM already uses ``django-allauth`` (e.g. for social login), make sure your own version constraint
+allows the version tomtoolkit requires (``django-allauth[mfa] >=65.19.1,<66``).
 
-2.) Update ``settings.py``
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+2.) Updating ``settings.py``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**If your settings use** ``from tom_common.default_settings import *`` with ``INSTALLED_APPS = TOMTOOLKIT_INSTALLED_APPS + [...]``
-and ``MIDDLEWARE = TOMTOOLKIT_MIDDLEWARE + [...]`` (the v3 style): the new apps and middleware arrive automatically
-and there is nothing to add; if your ``settings.py`` still defines its own ``AUTHENTICATION_BACKENDS``, replace it
-with the new default list::
+.. Note::
+    This step assumes your ``settings.py`` uses ``from tom_common.default_settings import *``.
+    If yours doesn't, please follow :ref:`step 4 of the v2→v3 upgrade <upgrade-v2-v3-settings>`
+    instructions below. TOM Toolkit 3.1's new apps, middleware, and authentication backends are
+    delivered through this mechanism.
 
-    AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS
+``AUTHENTICATION_BACKENDS`` now follows the same pattern as ``INSTALLED_APPS`` and ``MIDDLEWARE``.
+So, if in your ``settings.py``, you define your own ``AUTHENTICATION_BACKENDS``, replace it
+with the concatenated list below::
 
-**If your settings lists apps and middleware explicitly** (i.e. your do not use the ``default_settings.py`` added in
-Tom Toolkit 3.0, add the following ``INSTALLED_APPS`` and ``MIDDLEWARE``, noting the ordering shown below.
-
-.. code-block:: python
-    :caption: settings.py
-
-    INSTALLED_APPS = [
-        ...
-        'tom_common',
-        'allauth',                 # new in 3.1; must come after tom_common, so tom_common templates take precedence
-        'allauth.account',
-        'allauth.mfa',
-        ...
-    ]
-
-    MIDDLEWARE = [
-        ...
-        'django.contrib.auth.middleware.AuthenticationMiddleware',
-        'allauth.account.middleware.AccountMiddleware',          # new in 3.1
-        ...
-        'django_htmx.middleware.HtmxMiddleware',
-        'tom_common.middleware.HTMXRedirectMiddleware',           # new in 3.1
-        'tom_common.middleware.Raise403Middleware',
-        'tom_common.middleware.ExternalServiceMiddleware',
-        'tom_common.middleware.AuthStrategyMiddleware',
-        'tom_common.middleware.AccountRequirementsMiddleware',    # new in 3.1 (last)
-    ]
-
-    AUTHENTICATION_BACKENDS = (
-        'django.contrib.auth.backends.ModelBackend',
-        'allauth.account.auth_backends.AuthenticationBackend',    # new in 3.1
-        'guardian.backends.ObjectPermissionBackend',
-    )
-
-If you forget the apps, the TOM refuses to start with a message listing exactly these lines. ``django.contrib.sites``
-and ``SITE_ID = 1`` must be present (they are in every generated ``settings.py``).
-
+    AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS + [<your authentication backends here>]
 
 3.) Back up and migrate your database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,29 +58,36 @@ and ``SITE_ID = 1`` must be present (they are in every generated ``settings.py``
    ./manage.py migrate
 
 This creates the django-allauth tables (``account_emailaddress``, ``account_emailconfirmation``,
-``mfa_authenticator``) and adds the new :ref:`profile fields <auth-profile-fields>`.
+``mfa_authenticator``). We've added some new fields to the user profile. They are optional
+unless configured otherwise (see :ref:`profile fields <auth-profile-fields>`).
 
 4.) Check your templates and custom code
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- URL names ``login`` and ``logout`` still exist and point at the new views; ``{% url 'login' %}`` and
-  ``reverse('login')`` keep working. The paths ``/accounts/login/`` and ``/accounts/logout/`` are unchanged, and so
-  is ``LOGIN_URL``. New code should use ``account_login`` / ``account_logout``.
-- A project-level override of ``registration/login.html`` is **no longer rendered**; the login page is now
-  ``account/login.html``. The new page keeps the title *Login* and the *Username* / *Password* placeholders; the
-  form field is named ``login`` rather than ``username`` (only matters if you post to the login form in tests or
-  scripts — ``client.force_login()`` and ``client.login()`` are unaffected).
-- If your ``urls.py`` defines its own ``accounts/login/`` or ``accounts/logout/`` route, or includes
-  ``django.contrib.auth.urls`` at ``accounts/``, remove it — it would bypass the new login (and two-factor
-  authentication). ``manage.py check`` reports this.
-- Logout is a ``POST``. A copied ``base.html`` with an old GET logout link now lands on a confirmation page; update
-  the link to the POST form from the current ``tom_common/partials/navbar_login.html``.
-- A copied ``tom_common/base.html`` keeps working. Refresh copied templates to pick up the new surfaces:
-  ``tom_common/partials/navbar_login.html`` (the *Register* button), and ``auth/user_list.html`` with
-  ``auth/partials/user_list.html`` (the two-factor and requirement columns, the *Pending users* table, and the
-  now superuser-only Email column). The *Security* card appears on the profile page without template changes.
-- The REST framework's browsable-API login (``/api-auth/login/``) and the Django admin login (``/admin/login/``)
-  now send users to the TOM login page.
+- **Login and logout URL names**. The URL names that django-allauth uses for login and logout pages are
+  ``account_login`` / ``account_logout``. The Django URL names (``login`` and ``logout``) and their paths
+  (``/accounts/login/`` and ``/accounts/logout/``, respectively) are retained for backward compatibility only.
+  So, while technically no changes are required, new code should use ``account_login`` / ``account_logout``
+  and existing templates could (perhaps should) be updated to do the same.
+
+- **Login page template**. The login page template is now django-allauth's ``account/login.html``.
+  The old login page template was ``registration/login.html``, which no longer renders. If your TOM
+  overrides the old template (``registration/login.html``), copy django-allauth's ``account/login.html``
+  into your project's ``templates/account/login.html`` and add your customizations there.
+
+- **URL paths in urls.py**. If your ``urls.py`` defines its own ``accounts/login/`` or ``accounts/logout/``
+  route, or includes ``django.contrib.auth.urls`` at ``accounts/``, remove those ``urlpatterns``. They
+  would bypass the new login (and two-factor authentication). ``manage.py check`` reports this as::
+
+      (tom_common.W003) LOGIN_URL (/accounts/login/) is served by django.contrib.auth.views.LoginView,
+      not by django-allauth — logging in there bypasses the two-factor authentication challenge.
+
+- **Copied tom_common templates**. If your TOM has its own copy of one of these templates, integrate your
+  customizations with a copy from the new tom_base version:
+
+  - ``auth/user_list.html`` and ``auth/partials/user_list.html``: these add the two-factor and
+    account-requirement columns to the User list page and make the Email column visible only to superusers.
+  - ``tom_common/base.html``: the new ``content_container`` block centers allauth's account pages.
 
 5.) Replace ``tom_registration``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -151,6 +132,11 @@ warns at startup while it is installed. Its two flows are built in:
 Pending (not yet approved) users are still simply inactive users; existing pending accounts appear in the new
 *Pending users* table without any data migration.
 
+Two copied templates matter to registration specifically. If your TOM has its own copy of
+``tom_common/partials/navbar_login.html``, refresh it from the current tom_base version to get the *Register*
+button (shown while self-registration is open). If it has its own copy of ``auth/user_list.html``, refresh
+that too: the *Pending users* table renders from there.
+
 6.) New default behaviour to be aware of
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -161,6 +147,8 @@ Pending (not yet approved) users are still simply inactive users; existing pendi
   their password again if they logged in more than a few minutes ago.
 - With ``AUTH_STRATEGY = 'LOCKED'``, the login, sign-up, second-factor and pending-approval pages are open without
   listing them in ``OPEN_URLS``; ``/api/`` paths used with tokens still need to be listed, as before.
+- The REST framework's browsable-API login (``/api-auth/login/``) and the Django admin login (``/admin/login/``)
+  now send users to the TOM login page — administrators, too, pass through the two-factor challenge.
 - Authentication events are written to the ``tom_common.security`` logger.
 
 7.) Optional: enable the new controls
@@ -270,6 +258,8 @@ stored for your datums, you should consider copying and editing the management c
 
         ./manage.py migrate_reduced_datums --dry-run
 
+
+.. _upgrade-v2-v3-settings:
 
 4.) Update ``settings.py``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
