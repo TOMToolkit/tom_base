@@ -81,6 +81,10 @@ ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False  # prevent redirect loops; redirec
 # django-allauth MFA configuration.
 # https://docs.allauth.org/en/latest/mfa/configuration.html
 MFA_ADAPTER = 'tom_common.accounts.adapters.TomMFAAdapter'
+MFA_FORMS = {
+    # simple override for custom label and help_text fields
+    'authenticate': 'tom_common.accounts.forms.TomAuthenticateForm'
+}
 MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']  # the allauth default; see docs for more options
 MFA_ALLOW_UNVERIFIED_EMAIL = True
 MFA_TOTP_TOLERANCE = 1

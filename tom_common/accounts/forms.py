@@ -7,6 +7,8 @@ subclassing this and re-pointing ``ACCOUNT_SIGNUP_FORM_CLASS``.
 """
 from __future__ import annotations
 
+from allauth.mfa.base.forms import AuthenticateForm
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -15,6 +17,21 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from tom_common.models import TermsOfServiceAcceptance
+
+
+class TomAuthenticateForm(AuthenticateForm):
+    """The two-factor challenge form, with custom label and help_text.
+
+    We override `allauth.mfa.base.forms.AuthenticatForm` to customize those fields.
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields['code'].label = 'Authenticator or recovery code'
+        self.fields['code'].help_text = (
+            'If you have lost your authenticator app and recovery codes, contact the '
+            'administrators of this TOM to reset your two-factor authentication.'
+        )
 
 
 class TomSignupForm(forms.Form):

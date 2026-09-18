@@ -1572,6 +1572,18 @@ class TestAllauthTemplates(TestCase):
         self.assertContains(response, 'id="back_button"')  # a way off the page (our one divergence)
         self.assertNotContains(response, 'id="codes_saved"')  # the save-confirmation checkbox is SHOW_ONCE-only
 
+    def test_challenge_page_override_present(self):
+        """Test that our override (specified by `default_settings.MFA_FORMS`) delivers
+        our custom fields.
+        """
+        user = User.objects.create_user(username='challenged_user', password='challenge-pass-1!')
+        totp_auth.TOTP.activate(user, totp_auth.generate_totp_secret())
+        client = Client()
+        client.post(reverse('login'), {'login': 'challenged_user', 'password': 'challenge-pass-1!'})
+        response = client.get(reverse('mfa_authenticate'))
+        self.assertContains(response, 'Authenticator or recovery code')  # label field
+        self.assertContains(response, 'contact the administrators of this TOM')  # help_text field
+
     def test_two_factor_overview_renders_as_cards(self):
         self.client.force_login(self.user)
         response = self.client.get(reverse('mfa_index'))
