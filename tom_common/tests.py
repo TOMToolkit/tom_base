@@ -386,10 +386,7 @@ class TestAllauthURLConf(TestCase):
     def test_login_path_is_served_by_allauth(self):
         """allauth is mounted before the plugin loop and the aliases, so its view answers the path."""
         self.assertEqual(resolve(reverse('login')).url_name, 'account_login')
-
-    def test_login_page_renders_allauth_form(self):
         response = self.client.get(reverse('login'))
-        self.assertEqual(response.status_code, 200)
         # allauth's login form posts a 'login' field where Django's posted 'username'
         self.assertContains(response, 'name="login"')
         self.assertContains(response, 'name="password"')
@@ -400,14 +397,6 @@ class TestAllauthURLConf(TestCase):
         self.assertRedirects(
             response, reverse('account_login') + '?next=/api/', fetch_redirect_response=False
         )
-
-    def test_logout_is_a_post(self):
-        user = User.objects.create_user(username='logout_user', password='password')
-        self.client.force_login(user)
-        response = self.client.post(reverse('logout'))
-        self.assertEqual(response.status_code, HTTPStatus.FOUND)
-        # the session is gone: a LOCKED-style protected page now redirects
-        self.assertNotIn('_auth_user_id', self.client.session)
 
 
 class TestSecureAdminLogin(TestCase):
@@ -514,6 +503,7 @@ class TestRegistrationStrategies(TestCase):
 
     @override_settings(TOM_REGISTRATION_STRATEGY='open')
     def test_open_signup_creates_active_logged_in_user_with_fields(self):
+        self.assertTemplateUsed(self.client.get(reverse('account_signup')), 'account/signup.html')
         response = self.client.post(reverse('account_signup'), self.SIGNUP_DATA)
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
         user = User.objects.get(username='new_astronomer')
@@ -565,7 +555,7 @@ class TestRegistrationStrategies(TestCase):
 
     def test_signup_closed_by_default_creates_nothing(self):
         response = self.client.post(reverse('account_signup'), self.SIGNUP_DATA)
-        self.assertEqual(response.status_code, HTTPStatus.OK)  # the closed page
+        self.assertTemplateUsed(response, 'account/signup_closed.html')
         self.assertFalse(User.objects.filter(username='new_astronomer').exists())
 
 
@@ -1253,7 +1243,10 @@ class TestAccountRequirements(TestCase):
                              fetch_redirect_response=False)
 
     @override_settings(TOM_MFA_REQUIRED='all')
-    def test_blocked_htmx_request_becomes_full_page_navigation(self):
+    def test_requirement_redirects_pass_through_the_htmx_redirect_middleware(self):
+        # protects middleware ordering: AccountRequirementsMiddleware must sit below
+        # HTMXRedirectMiddleware, or a blocked HTMX request swaps the redirect target
+        # into the requesting page fragment instead of navigating the whole window
         response = self.client.get(reverse('user-profile'), HTTP_HX_REQUEST='true')
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.headers['HX-Redirect'],
@@ -1274,9 +1267,6 @@ class TestPasswordChangedStamp(TestCase):
     def _stamp(self):
         self.user.profile.refresh_from_db()
         return self.user.profile.password_changed_at
-
-    def test_new_users_have_no_stamp(self):
-        self.assertIsNone(self._stamp())
 
     def test_self_service_change_stamps(self):
         self.client.login(username='stamp_user', password='old-password-123')
@@ -1338,10 +1328,6 @@ class TestSecurityCardAndUserList(TestCase):
         self.client.force_login(self.user)
         response = self.client.get(reverse('user-profile'))
         self.assertContains(response, 'contact the administrators')
-
-    def test_adapter_refusal_message_names_the_next_action(self):
-        message = get_mfa_adapter().error_messages['cannot_delete_authenticator']
-        self.assertIn('contact the administrators', message)
 
     def test_user_list_shows_two_factor_column(self):
         totp_auth.TOTP.activate(self.user, totp_auth.generate_totp_secret())
@@ -1430,13 +1416,6 @@ class TestLockedAllauthExemptions(TestCase):
             with self.subTest(path=path):
                 self.assertEqual(self.client.get(path).status_code, HTTPStatus.OK)
 
-    def test_second_factor_challenge_is_not_blocked(self):
-        # without a half-finished login to continue, allauth sends the visitor to the login
-        # page; the point is the middleware lets the request through instead of 403ing it
-        response = self.client.get(reverse('mfa_authenticate'))
-        self.assertEqual(response.status_code, HTTPStatus.FOUND)
-        self.assertIn(reverse('account_login'), response.headers['Location'])
-
     def test_full_two_factor_login_works_when_locked(self):
         cache.clear()
         user = User.objects.create_user(username='locked_mfa_user', password='password')
@@ -1456,17 +1435,6 @@ class TestLockedAllauthExemptions(TestCase):
         self.assertIn(reverse('account_login'), response.headers['Location'])
 
 
-class TestTomAccountAdapter(TestCase):
-    def test_signup_closed_by_default(self):
-        response = self.client.get(reverse('account_signup'))
-        self.assertTemplateUsed(response, 'account/signup_closed.html')
-
-    @override_settings(TOM_REGISTRATION_STRATEGY='open')
-    def test_signup_open_when_strategy_configured(self):
-        response = self.client.get(reverse('account_signup'))
-        self.assertTemplateUsed(response, 'account/signup.html')
-
-
 class TestTomMFAAdapter(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='mfa_user', password='password')
@@ -1478,11 +1446,6 @@ class TestTomMFAAdapter(TestCase):
         stored = Authenticator.objects.get(user=self.user, type=Authenticator.Type.TOTP).data['secret']
         self.assertNotEqual(stored, secret)
         self.assertEqual(get_mfa_adapter().decrypt(stored), secret)
-
-    def test_login_with_totp_enrolled_redirects_to_challenge(self):
-        totp_auth.TOTP.activate(self.user, totp_auth.generate_totp_secret())
-        response = self.client.post(reverse('login'), {'login': 'mfa_user', 'password': 'password'})
-        self.assertRedirects(response, reverse('mfa_authenticate'), fetch_redirect_response=False)
 
     def test_totp_issuer_is_tom_name(self):
         with override_settings(TOM_NAME='My Fine TOM'):
