@@ -8,6 +8,13 @@ Base DataService Class
 .. automodule:: tom_dataservices.dataservices
     :members:
 
+*******
+Babamul
+*******
+
+.. automodule:: tom_dataservices.data_services.babamul
+    :members:
+
 ***
 TNS
 ***
