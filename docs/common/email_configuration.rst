@@ -118,19 +118,19 @@ in Django's `email settings reference
 Verifying your configuration
 ----------------------------
 
-As seen in the tutorial, Django ships a management command that sends a test message
+As seen in the tutorial, Django includes a management command that sends a test message
 through whatever backend you configured::
 
     ./manage.py sendtestemail you@example.org
 
 To try the SMTP configuration without involving a real relay, you can run a small SMTP server on
 your own machine: the ``aiosmtpd`` package (``pip install aiosmtpd``) accepts SMTP connections and
-prints each received message to its terminal. Run it in one terminal::
+prints each received message to its terminal. To run it, in a terminal type::
 
     python -m aiosmtpd -n -l localhost:8025
 
-point your ``settings.py`` at it (``EMAIL_HOST = 'localhost'``, ``EMAIL_PORT = 8025``), and
-``sendtestemail`` — and every email your TOM sends — appears in that terminal.
+Configure your ``settings.py`` to point at it (``EMAIL_HOST = 'localhost'``, ``EMAIL_PORT = 8025``),
+and ``sendtestemail`` output should appear in the (`aiosmtpd`) terminal.
 
 -------------------------------------------------------------------
 What happens when email is not configured or  when sends fail
