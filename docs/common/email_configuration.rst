@@ -75,6 +75,7 @@ Now, in the *console*, you should see something like this::
 
 .. _email-configuration-in-tom-toolkit:
 
+---------------------------------
 Configuring Email in TOM Toolkit
 ---------------------------------
 
@@ -131,8 +132,9 @@ prints each received message to its terminal. Run it in one terminal::
 point your ``settings.py`` at it (``EMAIL_HOST = 'localhost'``, ``EMAIL_PORT = 8025``), and
 ``sendtestemail`` — and every email your TOM sends — appears in that terminal.
 
+-------------------------------------------------------------------
 What happens when email is not configured or  when sends fail
-----------------------------------------------------------------
+-------------------------------------------------------------------
 
 The email features degrade rather than break:
 
@@ -147,9 +149,9 @@ The email features degrade rather than break:
   *Pending users* table indicates when email is not configured.
 - A failed password-reset send is reported on the page, with the failure logged for the operator.
 
-
+------------------------
 Customizing the emails
-----------------------
+------------------------
 
 Each email renders from a pair of templates (``*_subject.txt`` and ``*_message.txt``). The
 templates can be customized (overridden) by placing your own copy in your TOM's
