@@ -23,6 +23,9 @@ TOMTOOLKIT_INSTALLED_APPS = [
     'django_tasks.backends.database',
     'guardian',
     'tom_common',
+    'allauth',  # after tom_common so our template overrides take precedence over allauth's.
+    'allauth.account',
+    'allauth.mfa',
     'django_comments',
     'django_bootstrap5',
     'crispy_bootstrap5',
@@ -46,15 +49,66 @@ TOMTOOLKIT_MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # required by allauth; must follow AuthenticationMiddleware
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
+    'tom_common.middleware.HTMXRedirectMiddleware',  # must follow HtmxMiddleware; converts 302s on HTMX requests
     'tom_common.middleware.Raise403Middleware',
     'tom_common.middleware.ExternalServiceMiddleware',
     'tom_common.middleware.AuthStrategyMiddleware',
+    'tom_common.middleware.AccountRequirementsMiddleware',  # must follow Authentication- and HTMXRedirectMiddleware
 ]
 
+TOMTOOLKIT_AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',  # show "pending approval" for inactive accounts
+    'guardian.backends.ObjectPermissionBackend',
+]
+AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS
+
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+
+# django-allauth account configuration.
+# https://docs.allauth.org/en/latest/account/configuration.html
+ACCOUNT_ADAPTER = 'tom_common.accounts.adapters.TomAccountAdapter'
+ACCOUNT_SIGNUP_FORM_CLASS = 'tom_common.accounts.forms.TomSignupForm'
+ACCOUNT_LOGIN_METHODS = {'username'}
+ACCOUNT_SIGNUP_FIELDS = ['username*', 'email*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False  # prevent redirect loops; redirect to login with message
+
+# django-allauth MFA configuration.
+# https://docs.allauth.org/en/latest/mfa/configuration.html
+MFA_ADAPTER = 'tom_common.accounts.adapters.TomMFAAdapter'
+MFA_FORMS = {
+    # simple override for custom label and help_text fields
+    'authenticate': 'tom_common.accounts.forms.TomAuthenticateForm'
+}
+MFA_SUPPORTED_TYPES = ['totp', 'recovery_codes']  # the allauth default; see docs for more options
+MFA_ALLOW_UNVERIFIED_EMAIL = True
+MFA_TOTP_TOLERANCE = 1
+MFA_RECOVERY_CODES_SHOW_ONCE = False
+
+# TOM Toolkit account settings
+# https://tom-toolkit.readthedocs.io/en/latest/common/customsettings.html
+TOM_PASSWORD_RESET_ENABLED = False   # password reset by email. This requires a working EMAIL_BACKEND
+TOM_MFA_REQUIRED = None              # None | 'superusers' | 'all'. Specifies which Users must enable MFA
+TOM_PASSWORD_EXPIRY_DAYS = None      # int. a password older than this must be changed
+TOM_REQUIRED_USER_FIELDS = []        # e.g. ['first_name', 'last_name', 'email', 'affiliation', 'phone_number']
+TOM_TERMS_OF_SERVICE_VERSION = None  # str. Users must accept this version of the terms (any string; bump to re-ask)
+TOM_API_TOKEN_EXPIRY_DAYS = None     # int. API tokens older than this are rejected (TomTokenAuthentication)
+TOM_API_TOKEN_REQUIRES_MFA = False   # tokens honoured only for two-factor-enrolled users; disables api/token-auth/
+TOM_REGISTRATION_STRATEGY = None     # None | 'open' | 'approval_required'. Specifies self-registration mode.
+TOM_HIDE_OTHER_USERS = False         # True: /users/ shows other users only to holders of auth.view_user
+
+# Ordered post-login checks; each is inactive until its companion setting above is configured.
+TOM_ACCOUNT_REQUIREMENTS = [
+    'tom_common.accounts.requirements.terms_of_service_accepted',
+    'tom_common.accounts.requirements.mfa_enrolled',
+    'tom_common.accounts.requirements.password_not_expired',
+    'tom_common.accounts.requirements.required_fields_present',
+]
 
 # Backwards typo compatibility
 TOMTOOKIT_INSTALLED_APPS = TOMTOOLKIT_INSTALLED_APPS

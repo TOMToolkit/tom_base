@@ -107,10 +107,7 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',
-    'guardian.backends.ObjectPermissionBackend',
-)
+AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS  # noqa: F405
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
@@ -309,7 +306,7 @@ HINT_LEVEL = 20
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',  # for API token authentication
+        'tom_common.accounts.api_auth.TomTokenAuthentication',  # API tokens, honouring the TOM_API_TOKEN_* settings
         'rest_framework.authentication.SessionAuthentication',  # for logged-in browsers (cookie + CSRF protection)
         'rest_framework.authentication.BasicAuthentication',  # for username/password
     ],

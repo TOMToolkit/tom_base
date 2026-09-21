@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import UsernameField
 from django.contrib.auth.models import User, Group
 from django.db import transaction
@@ -38,7 +39,7 @@ class GroupForm(forms.ModelForm):
 class ProfileModelForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ('affiliation',)
+        fields = ('affiliation', 'phone_number')
 
 
 UserProfileInlineFormSet = forms.inlineformset_factory(
@@ -70,6 +71,17 @@ class CustomUserCreationForm(UserCreationForm):
         self.user_profile_formset = UserProfileInlineFormSet(
             data=kwargs.get('data'), instance=self.instance
         )
+
+        # TOM_REQUIRED_USER_FIELDS: the listed User/Profile fields must be filled in here,
+        # so the account_requirements redirect to this form resolves in one save
+        required_fields = getattr(settings, 'TOM_REQUIRED_USER_FIELDS', [])
+        for field_name in required_fields:
+            if field_name in self.fields:
+                self.fields[field_name].required = True
+        for profile_form in self.user_profile_formset.forms:
+            for field_name in required_fields:
+                if field_name in profile_form.fields:
+                    profile_form.fields[field_name].required = True
 
         self.helper = FormHelper()
         self.form_tag = False
