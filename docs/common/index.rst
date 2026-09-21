@@ -8,6 +8,7 @@ Configuring a TOM
 
   Custom settings <customsettings>
   Permissions <permissions>
+  Email configuration <email_configuration>
 
 TOM Settings
 ------------
