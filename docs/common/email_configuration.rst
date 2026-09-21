@@ -141,7 +141,7 @@ The email features degrade rather than break:
 - TOM Toolkit determines whether email is configured with a heuristic predicate
   (``tom_common.accounts.email.email_is_configured``). Any backend other than Django's SMTP
   default counts as configured. (The SMTP default pointed at ``localhost`` with no credentials is
-  treated as "not configured".
+  treated as "not configured").
 - ``manage.py check`` warns (``tom_common.W002``) when approval-required registration or password
   reset is enabled without a configured email backend.
 - Approving a registration always succeeds even when the notice cannot be sent. Under those
