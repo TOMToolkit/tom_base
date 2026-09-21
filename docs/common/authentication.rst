@@ -49,7 +49,7 @@ themselves, set ``TOM_REGISTRATION_STRATEGY`` in ``settings.py``:
     A working email backend is effectively a prerequisite for a smooth ``'approval_required'`` flow. Without one
     the flow still works, but nobody is notified of anything: the *Pending users* table makes this explicit and
     the approver is instructed to inform the user directly. Additionally, ``manage.py check`` warns
-    of this (no email) situation (``tom_common.W002``).
+    of this (no email) situation (``tom_common.W002``). See :doc:`Email configuration <email_configuration>`.
 
 The sign-up form prompts for username, email, password, first and last name, organization/affiliation and
 phone number; only fields listed in ``TOM_REQUIRED_USER_FIELDS`` are required, any others are optional.
@@ -186,7 +186,7 @@ Password reset by email
     TOM_PASSWORD_RESET_ENABLED = True    # default False
 
 Adds a *Forgot your password?* link to the login page and enables django-allauth's reset-by-email flow. This
-requires a working email configuration (``EMAIL_BACKEND``, ``DEFAULT_FROM_EMAIL`` …). When it is off the reset pages
+requires a working email configuration (see :doc:`Email configuration <email_configuration>`). When it is off the reset pages
 are not served at all, so a TOM without email cannot leak "unknown account" mails or error on them.
 
 

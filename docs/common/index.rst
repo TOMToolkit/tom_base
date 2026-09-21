@@ -10,7 +10,6 @@ Configuring a TOM
   Permissions <permissions>
   Accounts and authentication <authentication>
   Common accounts scenarios <authentication_scenarios>
-  Email configuration <email_configuration>
 
 TOM Settings
 ------------
