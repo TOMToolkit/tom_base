@@ -118,13 +118,13 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = False
-
 USE_TZ = True
 
-DATETIME_FORMAT = 'Y-m-d H:i:s'
-DATE_FORMAT = 'Y-m-d'
-
+# Non en-US locales require overriding the default date format.
+# See https://docs.djangoproject.com/en/6.1/ref/settings/#std-setting-FORMAT_MODULE_PATH
+FORMAT_MODULE_PATH = [
+    'tom_base.formats',
+]
 
 # Caching
 # https://docs.djangoproject.com/en/dev/topics/cache/#filesystem-caching
@@ -316,6 +316,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 100
 }
+
+# Silence system checks that are not applicable to how the TOM Toolkit is designed.
+# These are likely temporary and can be removed in downstream TOMs if desired.
+SILENCED_SYSTEM_CHECKS = ['models.W047']
 
 try:
     from local_settings import *  # noqa
