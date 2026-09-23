@@ -1,3 +1,4 @@
+import json
 import logging
 import math
 import re
@@ -350,6 +351,23 @@ def _tns_internal_names(objname: str) -> list[str]:
     if not isinstance(data, dict) or not data.get("objname"):
         return []
     return [name.strip() for name in (data.get("internal_names") or "").split(",") if name.strip()]
+
+
+def _mpc_designation_data(orbit: dict) -> dict:
+    """
+    Returns the MPC `designation_data` (permid, name, secondary designations, ...) from an
+    `alerce_tap.lsst_mpc_orbits` record's `mpc_orb_jsonb`, which TAP may return as a JSON
+    string, or {} if it is missing or unparseable.
+    """
+    mpc_orb = orbit.get("mpc_orb_jsonb")
+    if isinstance(mpc_orb, str):
+        try:
+            mpc_orb = json.loads(mpc_orb)
+        except ValueError:
+            return {}
+    if not isinstance(mpc_orb, dict):
+        return {}
+    return mpc_orb.get("designation_data") or {}
 
 
 def _non_sidereal_target_from_mpc_orbit(name, orbit: dict) -> Target:
@@ -741,21 +759,34 @@ class AlerceDataService(DataService):
 
     def query_aliases(self, query_parameters=None, target=None, **kwargs) -> list:
         """
-        Returns the MPC designation (e.g. "2020 TE16") of a non-sidereal target named by
-        its LSST ssObjectId, so it can be found by its familiar name. The target keeps the
-        ssObjectId as its name, since `build_query_parameters_from_target` uses the name
-        to look up photometry. Other targets have no ALeRCE aliases. A TAP failure is
-        logged and yields no aliases rather than failing target creation or data update.
+        Returns the MPC names of a non-sidereal target named by its LSST ssObjectId, so it
+        can be found by its familiar names: the provisional designation (e.g. "1988 JC1"),
+        and from the MPC orbit record the permanent number ("6478"), name ("Gault") and
+        secondary designations ("1995 KC1"). The target keeps the ssObjectId as its name.
+        Other targets have no ALeRCE aliases. A TAP failure is logged and yields no aliases
+        rather than failing target creation or data update.
         """
-        if target is None or target.type != Target.NON_SIDEREAL or not str(target.name).isdigit():
+        if target is None or target.type != Target.NON_SIDEREAL or not LSST_OID_PATTERN.match(str(target.name)):
             return []
         try:
             orbit = _fetch_lsst_mpc_orbit(target.name)
         except pyvo.dal.DALAccessError:
             logger.exception(f"Error querying ALeRCE MPC designation for {target.name}")
             return []
-        designation = orbit.get("designation") if orbit else None
-        return [designation] if designation else []
+        if not orbit:
+            return []
+        designation_data = _mpc_designation_data(orbit)
+        names = [
+            orbit.get("designation"),
+            designation_data.get("permid"),
+            designation_data.get("name"),
+            *(designation_data.get("unpacked_secondary_provisional_designations") or []),
+        ]
+        aliases = []
+        for name in names:
+            if name and str(name) != str(target.name) and str(name) not in aliases:
+                aliases.append(str(name))
+        return aliases
 
     def query_photometry(self, query_parameters, **kwargs):
         try:

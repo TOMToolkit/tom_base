@@ -1,3 +1,4 @@
+import json
 import math
 from unittest.mock import patch
 
@@ -895,9 +896,35 @@ class TestSSObjectTargetCreation(TestCase):
     def test_query_aliases_skips_other_targets_without_querying(self):
         for target in (None,
                        Target(name="313853496686280764", type="SIDEREAL"),
-                       Target(name="C/2020 F3", type=Target.NON_SIDEREAL)):
+                       Target(name="C/2020 F3", type=Target.NON_SIDEREAL),
+                       Target(name="6478", type=Target.NON_SIDEREAL)):  # numbered asteroid, not an ssObjectId
             self.assertEqual(self.ds.query_aliases(target=target), [])
         self.mock_tap_service.search.assert_not_called()
+
+    def test_query_aliases_include_mpc_number_name_and_secondary_designations(self):
+        designation_data = {
+            "name": "Gault", "permid": "6478", "iau_name": "", "orbfit_name": "6478",
+            "unpacked_primary_provisional_designation": "1988 JC1",
+            "unpacked_secondary_provisional_designations": ["1995 KC1"],
+        }
+        target = Target(name="20890962690584899", type=Target.NON_SIDEREAL)
+        # TAP may return the jsonb column as a JSON string or already decoded
+        for mpc_orb_jsonb in (json.dumps({"designation_data": designation_data}),
+                              {"designation_data": designation_data}):
+            with self.subTest(jsonb_type=type(mpc_orb_jsonb).__name__):
+                self.mock_tap_service.search.return_value = [
+                    {"ssobjectid": np.int64(20890962690584899), "designation": "1988 JC1",
+                     "mpc_orb_jsonb": mpc_orb_jsonb}
+                ]
+                self.assertEqual(self.ds.query_aliases(target=target), ["1988 JC1", "6478", "Gault", "1995 KC1"])
+
+    def test_query_aliases_unnamed_or_unparseable_orbit_json_gives_designation_only(self):
+        target = Target(name="21165806405629509", type=Target.NON_SIDEREAL)
+        unnamed = {"designation_data": {"name": "", "permid": "", "unpacked_secondary_provisional_designations": []}}
+        for mpc_orb_jsonb in (json.dumps(unnamed), "{not json", None):
+            with self.subTest(mpc_orb_jsonb=mpc_orb_jsonb):
+                self.mock_tap_service.search.return_value = [dict(MPC_ORBIT_2020_TE16, mpc_orb_jsonb=mpc_orb_jsonb)]
+                self.assertEqual(self.ds.query_aliases(target=target), ["2020 TE16"])
 
     def test_query_aliases_empty_when_no_orbit_or_tap_error(self):
         target = Target(name="21165806405629509", type=Target.NON_SIDEREAL)
