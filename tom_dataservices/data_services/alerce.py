@@ -91,21 +91,45 @@ def _append_tap_filters(query: str, query_parameters: dict, column_prefix: str =
     return query
 
 
-def _build_tap_object_query(query_parameters: dict, page_size: int = 20) -> str:
+DEFAULT_PAGE_SIZE = 20
+MAX_PAGE_SIZE = 1000
+# Sort choices offered by AlerceForm, mapped to `alerce_tap.object` columns. The keys are
+# also valid ZTF REST `order_by` values.
+TAP_ORDER_COLUMNS = {"lastmjd": "lastmjd", "firstmjd": "firstmjd", "ndet": "n_det"}
+
+
+def _tap_order_clause(query_parameters: dict, column_prefix: str = "") -> str:
+    """
+    Returns an ` ORDER BY` clause for `query_parameters["order_by"]`/`["order_mode"]`, or
+    "" if no (known) order was requested. Only whitelisted columns and ASC/DESC are
+    interpolated, since query_parameters can come from saved queries and not only from
+    the validated form.
+    """
+    column = TAP_ORDER_COLUMNS.get(query_parameters.get("order_by"))
+    if not column:
+        return ""
+    mode = "ASC" if query_parameters.get("order_mode") == "ASC" else "DESC"
+    return f" ORDER BY {column_prefix}{column} {mode}"
+
+
+def _build_tap_object_query(query_parameters: dict, page_size: int | None = None) -> str:
     """
     Builds an ADQL query against `alerce_tap.object` for LSST (sid != 0) general
     (non-oid) queries, consuming the same query_parameters shape produced by
     `AlerceDataService.build_query_parameters`. `oid` lookups are handled
-    separately and are not built here.
+    separately and are not built here. The row limit comes from `page_size`, then
+    `query_parameters["page_size"]`, then `DEFAULT_PAGE_SIZE`.
     """
     sid = query_parameters.get("sid", 0)
+    page_size = int(page_size or query_parameters.get("page_size") or DEFAULT_PAGE_SIZE)
     query = f"SELECT TOP {page_size} * FROM alerce_tap.object WHERE sid = {sid}"
-    return _append_tap_filters(query, query_parameters)
+    query = _append_tap_filters(query, query_parameters)
+    return query + _tap_order_clause(query_parameters)
 
 
 def _build_tap_classifier_query(
     query_parameters: dict, classifier_id: int, class_id: int, probability: float | None = None,
-    page_size: int = 20,
+    page_size: int | None = None,
 ) -> str:
     """
     Builds an ADQL query joining `alerce_tap.object` to `alerce_tap.probability`
@@ -116,9 +140,11 @@ def _build_tap_classifier_query(
     when given, is treated as a minimum threshold. Only sid=1 is meaningful here:
     known ssObjects (sid=2) are pre-assigned probability 1 "asteroid" rather than
     classified, so classifier queries are not offered for sid=2 (see
-    `AlerceDataService.query_service`).
+    `AlerceDataService.query_service`). Results are ordered by descending
+    probability unless `query_parameters` asks for another order.
     """
     sid = query_parameters.get("sid", 1)
+    page_size = int(page_size or query_parameters.get("page_size") or DEFAULT_PAGE_SIZE)
     query = (
         f"SELECT TOP {page_size} obj.*, prob.probability, prob.ranking "
         f"FROM alerce_tap.object AS obj "
@@ -130,7 +156,7 @@ def _build_tap_classifier_query(
     if probability is not None:
         query += f" AND prob.probability >= {probability}"
     query = _append_tap_filters(query, query_parameters, column_prefix="obj.")
-    query += " ORDER BY prob.probability DESC"
+    query += _tap_order_clause(query_parameters, column_prefix="obj.") or " ORDER BY prob.probability DESC"
     return query
 
 
@@ -298,6 +324,19 @@ class AlerceForm(BaseQueryForm):
     lastmjd_lt = forms.FloatField(required=False, label="Max MJD of last detection")
     ndet_min = forms.IntegerField(required=False, label="Min. Number of Detections")
     ndet_max = forms.IntegerField(required=False, label="Max Number of Detections")
+    max_results = forms.IntegerField(
+        required=False, label="Max. Results", initial=DEFAULT_PAGE_SIZE, min_value=1, max_value=MAX_PAGE_SIZE,
+        help_text="Per classifier, when filtering by classifier.",
+    )
+    order_by = forms.ChoiceField(
+        required=False, label="Sort By",
+        choices=[("", "Default"), ("lastmjd", "Last detection"), ("firstmjd", "First detection"),
+                 ("ndet", "Number of detections")],
+        help_text="Default is by probability for LSST classifier searches.",
+    )
+    order_mode = forms.ChoiceField(
+        required=False, label="Sort Order", choices=[("DESC", "Descending"), ("ASC", "Ascending")], initial="DESC",
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -519,6 +558,12 @@ class AlerceDataService(DataService):
             query_params["ra"] = ra
             query_params["dec"] = dec
             query_params["radius"] = radius
+
+        if max_results := form_parameters.get("max_results"):
+            query_params["page_size"] = max_results
+        if order_by := form_parameters.get("order_by"):
+            query_params["order_by"] = order_by
+            query_params["order_mode"] = form_parameters.get("order_mode") or "DESC"
 
         if form_parameters.get("object_id"):
             query_params["oid"] = form_parameters.get("object_id")

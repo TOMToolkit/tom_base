@@ -241,6 +241,30 @@ class TestBuildQueryParameters(TestCase):
         params = self.ds.build_query_parameters({"survey": "ZTF", "ndet_min": 3})
         self.assertEqual(params["ndet"], [3])
 
+    def test_max_results_and_order_become_page_size_and_order(self):
+        params = self.ds.build_query_parameters(
+            {"survey": "ZTF", "max_results": 50, "order_by": "lastmjd", "order_mode": "ASC"}
+        )
+        self.assertEqual(params["page_size"], 50)
+        self.assertEqual(params["order_by"], "lastmjd")
+        self.assertEqual(params["order_mode"], "ASC")
+
+    def test_order_mode_defaults_to_desc_and_is_omitted_without_order_by(self):
+        params = self.ds.build_query_parameters({"survey": "ZTF", "order_by": "ndet"})
+        self.assertEqual(params["order_mode"], "DESC")
+        params = self.ds.build_query_parameters({"survey": "ZTF", "order_mode": "ASC"})
+        self.assertNotIn("order_by", params)
+        self.assertNotIn("order_mode", params)
+        self.assertNotIn("page_size", params)
+
+    def test_form_rejects_out_of_range_max_results_and_unknown_order(self):
+        with patch("tom_dataservices.data_services.alerce._fetch_classifiers_for_tid", return_value=[]):
+            form = AlerceForm(data={"data_service": "ALeRCE", "survey": "ZTF", "max_results": 0,
+                                    "order_by": "oid; DROP"})
+            self.assertFalse(form.is_valid())
+        self.assertIn("max_results", form.errors)
+        self.assertIn("order_by", form.errors)
+
     def test_ndet_absent_when_neither_given(self):
         params = self.ds.build_query_parameters({"survey": "ZTF"})
         self.assertNotIn("ndet", params)
@@ -274,6 +298,23 @@ class TestBuildTapObjectQuery(TestCase):
     def test_page_size_override(self):
         query = _build_tap_object_query({"sid": 2}, page_size=50)
         self.assertIn("SELECT TOP 50", query)
+
+    def test_page_size_from_query_parameters(self):
+        self.assertIn("SELECT TOP 75 ", _build_tap_object_query({"sid": 1, "page_size": 75}))
+        self.assertIn("SELECT TOP 20 ", _build_tap_object_query({"sid": 1}))
+
+    def test_order_by_maps_ndet_to_n_det(self):
+        query = _build_tap_object_query({"sid": 1, "ndet": [3], "order_by": "ndet", "order_mode": "DESC"})
+        self.assertTrue(query.endswith("AND n_det >= 3 ORDER BY n_det DESC"))
+
+    def test_no_order_clause_by_default(self):
+        self.assertNotIn("ORDER BY", _build_tap_object_query({"sid": 1}))
+
+    def test_unknown_order_column_and_mode_not_interpolated(self):
+        query = _build_tap_object_query({"sid": 1, "order_by": "oid; DROP TABLE x", "order_mode": "ASC"})
+        self.assertNotIn("ORDER BY", query)
+        query = _build_tap_object_query({"sid": 1, "order_by": "lastmjd", "order_mode": "ASC; --"})
+        self.assertTrue(query.endswith("ORDER BY lastmjd DESC"))
 
     def test_cone_search_converts_radius_arcsec_to_degrees(self):
         query = _build_tap_object_query({"sid": 1, "ra": 305.58, "dec": -18.79, "radius": 3600.0})
@@ -332,6 +373,14 @@ class TestBuildTapClassifierQuery(TestCase):
         )
         self.assertIn("CONTAINS(POINT('ICRS', obj.meanra, obj.meandec)", query)
         self.assertIn("AND obj.n_det >= 3", query)
+
+    def test_page_size_and_order_override_probability_default(self):
+        query = _build_tap_classifier_query(
+            {"sid": 1, "page_size": 100, "order_by": "firstmjd", "order_mode": "ASC"}, classifier_id=20, class_id=3,
+        )
+        self.assertTrue(query.startswith("SELECT TOP 100 "))
+        self.assertTrue(query.endswith(" ORDER BY obj.firstmjd ASC"))
+        self.assertNotIn("ORDER BY prob.probability", query)
 
 
 class TestQueryService(TestCase):
