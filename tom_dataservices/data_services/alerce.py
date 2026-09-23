@@ -405,7 +405,7 @@ class AlerceDataService(DataService):
                     query = '''
                         SELECT * FROM alerce_tap.object
                         WHERE oid = %s AND sid = %d
-                        ''' % (query_parameters.get("oid"), sid)
+                        ''' % (int(query_parameters.get("oid")), sid)
                     object_result = tap_service.search(query)
                     object_result = _normalize_tap_record(dict(object_result[0]))
                 if object_result:

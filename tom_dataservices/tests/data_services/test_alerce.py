@@ -371,6 +371,11 @@ class TestQueryService(TestCase):
         self.assertIsInstance(result[0]["ndet"], int)
         self.assertIsInstance(result[0]["meanra"], float)
 
+    def test_lsst_non_numeric_oid_raises_query_service_error_without_querying(self):
+        with self.assertRaises(QueryServiceError):
+            self.ds.query_service({"oid": "1 OR 1=1", "sid": 1, "survey": "lsst"})
+        self.mock_tap_service.search.assert_not_called()
+
     def test_ztf_general_query_unwraps_items_and_annotates_survey(self):
         self.mock_alerce.query_objects.return_value = {
             "items": [{"oid": "ZTF18aaaaaa"}, {"oid": "ZTF18bbbbbb"}]
