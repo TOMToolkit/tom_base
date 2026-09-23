@@ -1016,22 +1016,28 @@ class TestSecurityLog(TestCase):
         self.assertIn('Logout: audit_user', joined)
         self.assertNotIn('wrong', joined)  # passwords are never logged
 
-    def test_password_change_and_authenticator_events(self):
+    def test_mfa_enrollment_is_security_logged(self):
         # a real login and enrolment: allauth emits authenticator_added from its view flow,
         # not from the low-level TOTP.activate() used elsewhere in these tests
         client = Client()
-        client.post(reverse('login'), {'login': 'audit_user', 'password': 'password'})
+        client.post(reverse('login'), {'login': 'audit_user', 'password': 'password'})  # login
         with self.assertLogs('tom_common.security', 'INFO') as logs:
-            response = client.get(reverse('mfa_activate_totp'))
+            response = client.get(reverse('mfa_activate_totp'))  # get MFA enrollment form
             secret = response.context['form'].secret
             code = totp_auth.hotp_value(secret, int(time.time() // 30))
-            client.post(reverse('mfa_activate_totp'), {'code': f'{code:06d}'})
-            # after the enrolment: changing the password would invalidate the session above
+            # django-allauth emits authenticator_added from transaction.on_commit,
+            # but a TestCase doesn't normally commit. execute=True causes the deferred
+            # on_commit callbacks to be executed, emitting the authenticator_added signal
+            # whose receiver logs the message we're asserting.
+            with self.captureOnCommitCallbacks(execute=True):
+                client.post(reverse('mfa_activate_totp'), {'code': f'{code:06d}'})  # complete enrollment
+        self.assertIn('Two-factor authenticator added: audit_user (totp)', '\n'.join(logs.output))
+
+    def test_password_change_is_security_logged(self):
+        with self.assertLogs('tom_common.security', 'INFO') as logs:
             self.user.set_password('a-new-password-1!')
             self.user.save()
-        joined = '\n'.join(logs.output)
-        self.assertIn('Two-factor authenticator added: audit_user (totp)', joined)
-        self.assertIn('Password changed: audit_user', joined)
+        self.assertIn('Password changed: audit_user', '\n'.join(logs.output))
 
     @override_settings(TOM_TERMS_OF_SERVICE_VERSION='v1')
     def test_terms_acceptance_and_token_regeneration(self):
