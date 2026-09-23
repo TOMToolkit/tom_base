@@ -59,3 +59,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 # Backwards typo compatibility
 TOMTOOKIT_INSTALLED_APPS = TOMTOOLKIT_INSTALLED_APPS
 TOMTOOKIT_MIDDLEWARE = TOMTOOLKIT_MIDDLEWARE
+
+# Silence system checks that are not applicable to how the TOM Toolkit is designed.
+# These are likely temporary and can be removed in downstream TOMs if desired.
+SILENCED_SYSTEM_CHECKS = ['models.W047']
