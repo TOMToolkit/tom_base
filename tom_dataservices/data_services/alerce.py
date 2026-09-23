@@ -3,6 +3,7 @@ import math
 
 from alerce.core import Alerce
 from alerce.exceptions import ObjectNotFoundError, APIError
+from astropy.constants import GM_sun, au
 from astropy.time import Time, TimezoneInfo
 from django import forms
 from django.core.cache import cache
@@ -222,6 +223,51 @@ def _lsst_detection_photometry(detection: dict) -> dict | None:
         "telescope": "Rubin",
         "instrument": "LSSTCam",
     }
+
+
+GAUSSIAN_K_DEG_PER_DAY = math.degrees(math.sqrt(GM_sun.value) * au.value ** -1.5 * 86400.0)
+
+
+def _fetch_lsst_mpc_orbit(ss_object_id) -> dict | None:
+    """
+    Returns the latest `alerce_tap.lsst_mpc_orbits` record for an LSST ssObjectId, or None
+    if ALeRCE has none stored.
+    """
+    query = f"SELECT * FROM alerce_tap.lsst_mpc_orbits WHERE ssObjectId = {int(ss_object_id)}"
+    rows = tap_service.search(query)
+    return _to_native_types(dict(rows[0])) if len(rows) else None
+
+
+def _non_sidereal_target_from_mpc_orbit(name, orbit: dict) -> Target:
+    """
+    Builds a NON_SIDEREAL Target from an `alerce_tap.lsst_mpc_orbits` record. The table's
+    `a`/`mean_anomaly`/`mean_motion` can be 0.0 placeholders rather than null, so, as in
+    `MPCExplorerDataService.create_target_from_query`, they are derived from the
+    always-present perihelion elements (`q`, `e`, `peri_time`). Bound orbits (e < 1) use
+    the MPC_MINOR_PLANET scheme; unbound ones use MPC_COMET.
+    """
+    target = Target(
+        name=name,
+        type=Target.NON_SIDEREAL,
+        scheme="MPC_COMET",
+        epoch_of_elements=orbit["epoch_mjd"],
+        inclination=orbit["i"],
+        lng_asc_node=orbit["node"],
+        arg_of_perihelion=orbit["argperi"],
+        eccentricity=orbit["e"],
+        perihdist=orbit["q"],
+        epoch_of_perihelion=orbit["peri_time"],
+        abs_mag=orbit.get("h"),
+        slope=orbit.get("g"),
+    )
+    if target.eccentricity < 1.0:
+        target.scheme = "MPC_MINOR_PLANET"
+        target.semimajor_axis = target.perihdist / (1.0 - target.eccentricity)
+        target.mean_daily_motion = GAUSSIAN_K_DEG_PER_DAY / target.semimajor_axis ** 1.5
+        target.mean_anomaly = (
+            (target.epoch_of_elements - target.epoch_of_perihelion) * target.mean_daily_motion
+        ) % 360.0
+    return target
 
 
 class AlerceForm(BaseQueryForm):
@@ -489,6 +535,17 @@ class AlerceDataService(DataService):
         return query_parameters
 
     def create_target_from_query(self, target_result: dict, **kwrags):
+        """
+        LSST ssObjects (sid=2) become NON_SIDEREAL targets built from their
+        `alerce_tap.lsst_mpc_orbits` elements. If no orbit is stored, the target falls back
+        to SIDEREAL at the object's mean position, since that's better than failing target
+        creation. Everything else is SIDEREAL.
+        """
+        if target_result.get("sid") == 2:
+            orbit = _fetch_lsst_mpc_orbit(target_result["oid"])
+            if orbit:
+                return _non_sidereal_target_from_mpc_orbit(target_result["oid"], orbit)
+            logger.warning(f"No ALeRCE MPC orbit for ssObject {target_result['oid']}; creating a SIDEREAL target")
         target = Target(
             name=target_result["oid"],
             type="SIDEREAL",

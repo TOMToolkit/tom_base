@@ -577,3 +577,92 @@ class TestTargetAndDatumCreation(TestCase):
         reduced_datums = self.ds.create_reduced_datums_from_query(target, data=data)
         self.assertEqual(len(reduced_datums), 1)
         self.assertEqual(reduced_datums[0].bandpass, "g")
+
+
+# alerce_tap.lsst_mpc_orbits rows as returned by TAP (subset of columns). 2020 TE16 has
+# 0.0 placeholders for a/mean_anomaly/mean_motion; 2000 SK234 has them populated.
+MPC_ORBIT_2020_TE16 = {
+    "ssobjectid": np.int64(21165806405629509), "designation": "2020 TE16",
+    "a": np.float64(0.0), "q": np.float64(1.92531105668165), "e": np.float64(0.242376936145473),
+    "i": np.float64(6.3219861793433), "node": np.float64(234.8308671640585),
+    "argperi": np.float64(130.788251505259), "peri_time": np.float64(60558.1804330095),
+    "mean_anomaly": np.float64(0.0), "mean_motion": np.float64(0.0), "epoch_mjd": np.float64(60600.0),
+    "h": np.float64(19.474), "g": np.float64(0.15),
+}
+MPC_ORBIT_2000_SK234 = {
+    "ssobjectid": np.int64(21163607367496779), "designation": "2000 SK234",
+    "a": np.float64(2.7672962522372817), "q": np.float64(2.09903169657479), "e": np.float64(0.241486452750485),
+    "i": np.float64(8.314624536688), "node": np.float64(67.0818177412172),
+    "argperi": np.float64(277.5160290084402), "peri_time": np.float64(60182.875107613),
+    "mean_anomaly": np.float64(174.9480202569077), "mean_motion": np.float64(0.21410193458476848),
+    "epoch_mjd": np.float64(61000.0), "h": np.float64(16.297), "g": np.float64(0.15),
+}
+
+
+class TestSSObjectTargetCreation(TestCase):
+    def setUp(self):
+        self.ds = AlerceDataService()
+        tap_patcher = patch("tom_dataservices.data_services.alerce.tap_service")
+        self.mock_tap_service = tap_patcher.start()
+        self.addCleanup(tap_patcher.stop)
+
+    def _create(self, oid, orbit_rows):
+        self.mock_tap_service.search.return_value = orbit_rows
+        return self.ds.create_target_from_query(
+            {"oid": oid, "sid": 2, "meanra": 151.18, "meandec": 1.91, "survey": "lsst"}
+        )
+
+    def test_ssobject_becomes_non_sidereal_minor_planet(self):
+        target = self._create(21165806405629509, [MPC_ORBIT_2020_TE16])
+        adql = self.mock_tap_service.search.call_args.args[0]
+        self.assertIn("alerce_tap.lsst_mpc_orbits", adql)
+        self.assertIn("ssObjectId = 21165806405629509", adql)
+        self.assertEqual(target.name, 21165806405629509)
+        self.assertEqual(target.type, Target.NON_SIDEREAL)
+        self.assertEqual(target.scheme, "MPC_MINOR_PLANET")
+        self.assertIsNone(target.ra)
+        self.assertEqual(target.epoch_of_elements, 60600.0)
+        self.assertEqual(target.inclination, 6.3219861793433)
+        self.assertEqual(target.lng_asc_node, 234.8308671640585)
+        self.assertEqual(target.arg_of_perihelion, 130.788251505259)
+        self.assertEqual(target.eccentricity, 0.242376936145473)
+        self.assertEqual(target.perihdist, 1.92531105668165)
+        self.assertEqual(target.epoch_of_perihelion, 60558.1804330095)
+        self.assertEqual(target.abs_mag, 19.474)
+        self.assertEqual(target.slope, 0.15)
+        self.assertIsInstance(target.eccentricity, float)
+        # Derived rather than taken from the 0.0 placeholders
+        self.assertAlmostEqual(target.semimajor_axis, 1.92531105668165 / (1 - 0.242376936145473))
+        self.assertGreater(target.mean_anomaly, 0.0)
+
+    def test_derived_elements_match_alerce_values_when_populated(self):
+        target = self._create(21163607367496779, [MPC_ORBIT_2000_SK234])
+        self.assertAlmostEqual(target.semimajor_axis, MPC_ORBIT_2000_SK234["a"], places=6)
+        self.assertAlmostEqual(target.mean_daily_motion, MPC_ORBIT_2000_SK234["mean_motion"], places=6)
+        self.assertAlmostEqual(target.mean_anomaly, MPC_ORBIT_2000_SK234["mean_anomaly"], places=3)
+
+    def test_unbound_orbit_uses_comet_scheme(self):
+        orbit = dict(MPC_ORBIT_2020_TE16, e=np.float64(1.05))
+        target = self._create(21165806405629509, [orbit])
+        self.assertEqual(target.scheme, "MPC_COMET")
+        self.assertEqual(target.perihdist, 1.92531105668165)
+        self.assertEqual(target.epoch_of_perihelion, 60558.1804330095)
+        self.assertIsNone(target.semimajor_axis)
+        self.assertIsNone(target.mean_anomaly)
+
+    def test_ssobject_without_orbit_falls_back_to_sidereal(self):
+        target = self._create(21165806405629509, [])
+        self.assertEqual(target.type, "SIDEREAL")
+        self.assertEqual(target.ra, 151.18)
+        self.assertEqual(target.dec, 1.91)
+
+    def test_diaobject_does_not_query_orbits(self):
+        target = self.ds.create_target_from_query({"oid": 313853496686280764, "sid": 1, "meanra": 9.35,
+                                                   "meandec": -42.46})
+        self.assertEqual(target.type, "SIDEREAL")
+        self.mock_tap_service.search.assert_not_called()
+
+    def test_ssobject_target_saves(self):
+        target = self._create(21165806405629509, [MPC_ORBIT_2020_TE16])
+        target.save()
+        self.assertEqual(Target.objects.get(pk=target.pk).scheme, "MPC_MINOR_PLANET")
