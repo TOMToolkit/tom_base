@@ -421,12 +421,24 @@ class TestQueryService(TestCase):
         self.addCleanup(tap_patcher.stop)
 
     def test_ztf_oid_path_uses_rest_and_strips_sid(self):
-        self.mock_alerce.query_objects.return_value = {"oid": "ZTF18aaaaaa", "meanra": 10.0}
+        # query_objects returns a paginated wrapper, not the object itself
+        self.mock_alerce.query_objects.return_value = {
+            "total": 1, "page": 1, "items": [{"oid": "ZTF18aaaaaa", "meanra": 10.0, "deltajd": 3.0}],
+        }
         result = self.ds.query_service({"oid": "ZTF18aaaaaa", "sid": 0, "survey": "ztf"})
         self.mock_alerce.query_objects.assert_called_once()
         call_kwargs = self.mock_alerce.query_objects.call_args.kwargs
         self.assertNotIn("sid", call_kwargs)
-        self.assertEqual(result, [{"oid": "ZTF18aaaaaa", "meanra": 10.0}])
+        self.assertEqual(result, [{
+            "oid": "ZTF18aaaaaa", "meanra": 10.0, "deltamjd": 3.0, "survey": "ztf",
+            "alerce_url": "https://alerce.online/object/ZTF18aaaaaa",
+        }])
+
+    def test_oid_lookups_with_no_match_return_no_results(self):
+        self.mock_alerce.query_objects.return_value = {"total": 0, "page": 1, "items": []}
+        self.assertEqual(self.ds.query_service({"oid": "ZTF18zzzzzz", "sid": 0, "survey": "ztf"}), [])
+        self.mock_tap_service.search.return_value = []
+        self.assertEqual(self.ds.query_service({"oid": "1", "sid": 1, "survey": "lsst"}), [])
 
     def test_lsst_oid_path_uses_tap_and_renames_ndet(self):
         row = {
@@ -446,6 +458,8 @@ class TestQueryService(TestCase):
         self.assertNotIn("n_det", result[0])
         self.assertIsInstance(result[0]["ndet"], int)
         self.assertIsInstance(result[0]["meanra"], float)
+        self.assertEqual(result[0]["survey"], "lsst")
+        self.assertEqual(result[0]["alerce_url"], "https://lsst.alerce.online/object/12345?survey=lsst")
 
     def test_lsst_non_numeric_oid_raises_query_service_error_without_querying(self):
         with self.assertRaises(QueryServiceError):

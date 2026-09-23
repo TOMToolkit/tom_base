@@ -454,19 +454,14 @@ class AlerceDataService(DataService):
             if query_parameters.get("oid"):
                 if sid == 0:
                     query_parameters.pop("sid", None)
-                    object_result = alerce.query_objects(**query_parameters)
-                    object_result = _normalize_ztf_record(object_result)
+                    items = alerce.query_objects(**query_parameters).get("items", [])
+                    results = [_normalize_ztf_record(item) for item in items]
                 else:
                     query = '''
                         SELECT * FROM alerce_tap.object
                         WHERE oid = %s AND sid = %d
                         ''' % (int(query_parameters.get("oid")), sid)
-                    object_result = tap_service.search(query)
-                    object_result = _normalize_tap_record(dict(object_result[0]))
-                if object_result:
-                    results.append(object_result)
-
-                    return results
+                    results = [_normalize_tap_record(dict(row)) for row in tap_service.search(query)]
 
             elif sid != 0:
                 # LSST (diaObject/ssObject) general queries go through TAP. Classifier
