@@ -636,6 +636,17 @@ class TestReducedDatumModel(TestCase):
 
         self.assertEqual(2, ReducedDatum.objects.count())
 
+    def test_create_reduced_datum_without_legacy_value(self):
+        PhotometryReducedDatum.objects.create(
+            target=self.target,
+            timestamp=self.timestamp,
+            brightness=None,
+            bandpass="r",
+            limit=2.0,
+        )
+
+        self.assertEqual(1, ReducedDatum.objects.count())
+
     def test_create_reduced_datum_duplicate(self):
         """Test that we cannot add a second PhotometryReducedDatum with the same target,
         timestamp, brightness, and bandpass"""
@@ -654,10 +665,9 @@ class TestReducedDatumModel(TestCase):
                 bandpass="r"
             )
 
-    def test_create_reduced_datum_duplicate_none(self):
-        """Test that we cannot add a duplicate ReducedDataum, even when a field is None.
-        exposure_time is null in both cases, but we still expect a ValidationError.
-        This tests nulls_distinct=False behaves correctly."""
+    def test_create_reduced_datum_duplicate_limit_none(self):
+        """Test that we cannot add a duplicate ReducedDataum, even when limit is None.
+        exposure_time is null in both cases, but we still expect a ValidationError."""
         PhotometryReducedDatum.objects.create(
             target=self.target,
             timestamp=self.timestamp,
@@ -677,10 +687,41 @@ class TestReducedDatumModel(TestCase):
                 limit=None,
             )
 
-    def test_create_reduced_datum_duplicate_none_bulk(self):
-        """Test that we cannot add duplicate ReducedDatums, even when a field is None.
+    def test_create_reduced_datum_duplicate_brightness_none(self):
+        """Test that we cannot add a duplicate ReducedDataum, even when brightness is None.
+        exposure_time is null in both cases, but we still expect a ValidationError."""
+        PhotometryReducedDatum.objects.create(
+            target=self.target,
+            timestamp=self.timestamp,
+            brightness=None,
+            bandpass="r",
+            limit=2.0,
+        )
+
+        # This raises a ValidationError because by using create the uniqueness constraint
+        # is enforced in code, and never reaches the database level constraint.
+        with self.assertRaises(ValidationError):
+            PhotometryReducedDatum.objects.create(
+                target=self.target,
+                timestamp=self.timestamp,
+                brightness=None,
+                bandpass="r",
+                limit=2.0,
+            )
+
+    def test_create_reduced_datum_duplicate_none_limit_bulk(self):
+        """Test that we cannot add duplicate ReducedDatums, even when limit is None.
         Tests that this applies to bulk operations.
         """
+        # Ensure we can create one first
+        PhotometryReducedDatum.objects.create(
+            target=self.target,
+            timestamp=self.timestamp,
+            brightness=1.0,
+            bandpass="r",
+            limit=None,
+        )
+        self.assertEqual(1, PhotometryReducedDatum.objects.count())
         datums = [
             PhotometryReducedDatum(
                 target=self.target,
@@ -688,6 +729,34 @@ class TestReducedDatumModel(TestCase):
                 brightness=1.0,
                 bandpass="r",
                 limit=None,
+            )
+            for _ in range(3)
+        ]
+        # This raises an IntegrityError because Python level validation does not occur in
+        # bulk operations, here we rely on the database level constraint to prevent duplicates
+        with self.assertRaises(IntegrityError):
+            PhotometryReducedDatum.objects.bulk_create(datums)
+
+    def test_create_reduced_datum_duplicate_none_brightness_bulk(self):
+        """Test that we cannot add duplicate ReducedDatums, even when brightness is None.
+        Tests that this applies to bulk operations.
+        """
+        # Ensure we can create one first
+        PhotometryReducedDatum.objects.create(
+            target=self.target,
+            timestamp=self.timestamp,
+            brightness=None,
+            bandpass="r",
+            limit=2.0,
+        )
+        self.assertEqual(1, PhotometryReducedDatum.objects.count())
+        datums = [
+            PhotometryReducedDatum(
+                target=self.target,
+                timestamp=self.timestamp,
+                brightness=None,
+                bandpass="r",
+                limit=2.0,
             )
             for _ in range(3)
         ]
