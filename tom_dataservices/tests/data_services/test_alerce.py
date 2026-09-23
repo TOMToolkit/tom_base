@@ -257,6 +257,22 @@ class TestBuildQueryParameters(TestCase):
         self.assertNotIn("order_mode", params)
         self.assertNotIn("page_size", params)
 
+    def test_deltamjd_max_only_passed_for_lsst(self):
+        params = self.ds.build_query_parameters({"survey": "LSST", "deltamjd_max": 0.5})
+        self.assertEqual(params["deltamjd_max"], 0.5)
+        params = self.ds.build_query_parameters({"survey": "LSST", "deltamjd_max": 0.0})
+        self.assertEqual(params["deltamjd_max"], 0.0)
+        params = self.ds.build_query_parameters({"survey": "ZTF", "deltamjd_max": 0.5})
+        self.assertNotIn("deltamjd_max", params)
+
+    def test_form_rejects_deltamjd_max_for_ztf(self):
+        with patch("tom_dataservices.data_services.alerce._fetch_classifiers_for_tid", return_value=[]):
+            ztf = AlerceForm(data={"data_service": "ALeRCE", "survey": "ZTF", "deltamjd_max": 1})
+            lsst = AlerceForm(data={"data_service": "ALeRCE", "survey": "LSST", "deltamjd_max": 1})
+            self.assertFalse(ztf.is_valid())
+            self.assertIn("deltamjd_max", ztf.errors)
+            self.assertTrue(lsst.is_valid(), lsst.errors)
+
     def test_form_rejects_out_of_range_max_results_and_unknown_order(self):
         with patch("tom_dataservices.data_services.alerce._fetch_classifiers_for_tid", return_value=[]):
             form = AlerceForm(data={"data_service": "ALeRCE", "survey": "ZTF", "max_results": 0,
@@ -309,6 +325,11 @@ class TestBuildTapObjectQuery(TestCase):
 
     def test_no_order_clause_by_default(self):
         self.assertNotIn("ORDER BY", _build_tap_object_query({"sid": 1}))
+
+    def test_deltamjd_max(self):
+        self.assertIn("AND deltamjd <= 1.0", _build_tap_object_query({"sid": 1, "deltamjd_max": 1}))
+        self.assertIn("AND deltamjd <= 0.0", _build_tap_object_query({"sid": 1, "deltamjd_max": 0}))
+        self.assertNotIn("deltamjd", _build_tap_object_query({"sid": 1}))
 
     def test_unknown_order_column_and_mode_not_interpolated(self):
         query = _build_tap_object_query({"sid": 1, "order_by": "oid; DROP TABLE x", "order_mode": "ASC"})
@@ -373,6 +394,10 @@ class TestBuildTapClassifierQuery(TestCase):
         )
         self.assertIn("CONTAINS(POINT('ICRS', obj.meanra, obj.meandec)", query)
         self.assertIn("AND obj.n_det >= 3", query)
+
+    def test_asteroid_candidate_query_filters_deltamjd_on_obj(self):
+        query = _build_tap_classifier_query({"sid": 1, "deltamjd_max": 1.0}, classifier_id=3, class_id=3)
+        self.assertIn("AND obj.deltamjd <= 1.0", query)
 
     def test_page_size_and_order_override_probability_default(self):
         query = _build_tap_classifier_query(

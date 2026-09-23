@@ -59,7 +59,7 @@ def _normalize_ztf_record(record: dict) -> dict:
 
 def _append_tap_filters(query: str, query_parameters: dict, column_prefix: str = "") -> str:
     """
-    Appends the cone-search / mjd-range / ndet-range WHERE clauses shared by all
+    Appends the cone-search / mjd-range / ndet-range / max-deltamjd WHERE clauses shared by all
     `alerce_tap.object`-based ADQL queries. `column_prefix` (e.g. `"obj."`) is
     needed when `alerce_tap.object` is joined/aliased, as in
     `_build_tap_classifier_query`. Only numeric parameters (already cleaned by
@@ -87,6 +87,9 @@ def _append_tap_filters(query: str, query_parameters: dict, column_prefix: str =
         query += f" AND {p}n_det >= {ndet[0]}"
         if len(ndet) == 2:
             query += f" AND {p}n_det <= {ndet[1]}"
+
+    if (deltamjd_max := query_parameters.get("deltamjd_max")) is not None:
+        query += f" AND {p}deltamjd <= {float(deltamjd_max)}"
 
     return query
 
@@ -324,6 +327,11 @@ class AlerceForm(BaseQueryForm):
     lastmjd_lt = forms.FloatField(required=False, label="Max MJD of last detection")
     ndet_min = forms.IntegerField(required=False, label="Min. Number of Detections")
     ndet_max = forms.IntegerField(required=False, label="Max Number of Detections")
+    deltamjd_max = forms.FloatField(
+        required=False, label="Max. Detection Time Span (days)", min_value=0,
+        help_text="LSST only. Time between first and last detection. Less than 1 day, combined with the stamp "
+                  "classifier's asteroid class, finds candidate new moving objects.",
+    )
     max_results = forms.IntegerField(
         required=False, label="Max. Results", initial=DEFAULT_PAGE_SIZE, min_value=1, max_value=MAX_PAGE_SIZE,
         help_text="Per classifier, when filtering by classifier.",
@@ -407,6 +415,10 @@ class AlerceForm(BaseQueryForm):
                     }
                 )
         cleaned_data["classifiers"] = classifiers
+
+        # The ZTF REST API has no deltajd filter
+        if cleaned_data.get("deltamjd_max") is not None and selected_survey != "LSST":
+            self.add_error("deltamjd_max", "Only supported for LSST searches.")
 
         return cleaned_data
 
@@ -558,6 +570,9 @@ class AlerceDataService(DataService):
             query_params["ra"] = ra
             query_params["dec"] = dec
             query_params["radius"] = radius
+
+        if survey == "LSST" and form_parameters.get("deltamjd_max") is not None:
+            query_params["deltamjd_max"] = form_parameters["deltamjd_max"]
 
         if max_results := form_parameters.get("max_results"):
             query_params["page_size"] = max_results
