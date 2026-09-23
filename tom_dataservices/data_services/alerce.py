@@ -1,5 +1,6 @@
 import logging
 import math
+import re
 
 from alerce.core import Alerce
 from alerce.exceptions import ObjectNotFoundError, APIError
@@ -271,6 +272,25 @@ def _fetch_lsst_mpc_orbit(ss_object_id) -> dict | None:
     return _to_native_types(dict(rows[0])) if len(rows) else None
 
 
+LSST_DESIGNATION_PATTERN = re.compile(r"^[A-Za-z0-9 /()\-.]+$")
+
+
+def _resolve_lsst_designation(designation: str) -> int | None:
+    """
+    Returns the LSST ssObjectId for an MPC designation as stored by ALeRCE (e.g.
+    "2010 WX64"), or None if there is none. `designation` is not indexed in
+    `alerce_tap.lsst_mpc_orbits`, so this is slower than an ID lookup. Only designation
+    characters are accepted, so the value can be quoted into ADQL safely.
+    """
+    designation = " ".join(designation.split())
+    if not LSST_DESIGNATION_PATTERN.match(designation):
+        raise QueryServiceError(f"{designation!r} is not an LSST object ID or asteroid designation")
+    rows = tap_service.search(
+        f"SELECT ssObjectId FROM alerce_tap.lsst_mpc_orbits WHERE designation = '{designation}'"
+    )
+    return int(rows[0]["ssobjectid"]) if len(rows) else None
+
+
 def _non_sidereal_target_from_mpc_orbit(name, orbit: dict) -> Target:
     """
     Builds a NON_SIDEREAL Target from an `alerce_tap.lsst_mpc_orbits` record. The table's
@@ -317,7 +337,10 @@ class AlerceForm(BaseQueryForm):
         initial="diaObject",
         help_text="Only used when Survey is LSST.",
     )
-    object_id = forms.CharField(required=False, label="Object ID")
+    object_id = forms.CharField(
+        required=False, label="Object ID",
+        help_text="For LSST, a diaObjectId, an ssObjectId, or an asteroid designation such as 2010 WX64.",
+    )
     ra = forms.FloatField(required=False, label="RA (deg)")
     dec = forms.FloatField(required=False, label="Dec (deg)")
     radius = forms.FloatField(required=False, label="Search Radius (arcsec)")
@@ -457,11 +480,15 @@ class AlerceDataService(DataService):
                     items = alerce.query_objects(**query_parameters).get("items", [])
                     results = [_normalize_ztf_record(item) for item in items]
                 else:
-                    query = '''
-                        SELECT * FROM alerce_tap.object
-                        WHERE oid = %s AND sid = %d
-                        ''' % (int(query_parameters.get("oid")), sid)
-                    results = [_normalize_tap_record(dict(row)) for row in tap_service.search(query)]
+                    oid = str(query_parameters["oid"]).strip()
+                    if not oid.isdigit():
+                        oid, sid = _resolve_lsst_designation(oid), 2
+                    if oid is not None:
+                        query = '''
+                            SELECT * FROM alerce_tap.object
+                            WHERE oid = %s AND sid = %d
+                            ''' % (int(oid), sid)
+                        results = [_normalize_tap_record(dict(row)) for row in tap_service.search(query)]
 
             elif sid != 0:
                 # LSST (diaObject/ssObject) general queries go through TAP. Classifier

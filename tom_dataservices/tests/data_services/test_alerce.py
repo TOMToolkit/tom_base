@@ -466,6 +466,28 @@ class TestQueryService(TestCase):
             self.ds.query_service({"oid": "1 OR 1=1", "sid": 1, "survey": "lsst"})
         self.mock_tap_service.search.assert_not_called()
 
+    def test_lsst_designation_resolves_to_ssobject(self):
+        self.mock_tap_service.search.side_effect = [
+            [{"ssobjectid": np.int64(21164706944660568)}],
+            [{"oid": np.int64(21164706944660568), "sid": np.int16(2), "meanra": np.float64(1.0)}],
+        ]
+        # sid=1 (diaObject selected) is overridden: designations are always ssObjects
+        result = self.ds.query_service({"oid": " 2010  WX64 ", "sid": 1, "survey": "lsst"})
+        designation_adql, object_adql = [c.args[0] for c in self.mock_tap_service.search.call_args_list]
+        self.assertIn("FROM alerce_tap.lsst_mpc_orbits WHERE designation = '2010 WX64'", designation_adql)
+        self.assertIn("oid = 21164706944660568 AND sid = 2", object_adql)
+        self.assertEqual(result[0]["oid"], 21164706944660568)
+
+    def test_lsst_unknown_designation_returns_no_results(self):
+        self.mock_tap_service.search.return_value = []
+        self.assertEqual(self.ds.query_service({"oid": "1999 XX999", "sid": 2, "survey": "lsst"}), [])
+        self.mock_tap_service.search.assert_called_once()
+
+    def test_lsst_designation_with_quotes_rejected_without_querying(self):
+        with self.assertRaises(QueryServiceError):
+            self.ds.query_service({"oid": "2010 WX64' OR '1'='1", "sid": 2, "survey": "lsst"})
+        self.mock_tap_service.search.assert_not_called()
+
     def test_ztf_general_query_unwraps_items_and_annotates_survey(self):
         self.mock_alerce.query_objects.return_value = {
             "items": [{"oid": "ZTF18aaaaaa"}, {"oid": "ZTF18bbbbbb"}]
