@@ -9,6 +9,7 @@ from django.test import TestCase
 
 import numpy as np
 import pyvo
+import requests
 
 from tom_dataservices.data_services.alerce import (
     AlerceDataService,
@@ -17,8 +18,8 @@ from tom_dataservices.data_services.alerce import (
     _build_tap_object_query,
     _group_tap_classifier_rows,
 )
-from tom_dataservices.dataservices import QueryServiceError
-from tom_targets.models import Target
+from tom_dataservices.dataservices import NotConfiguredError, QueryServiceError
+from tom_targets.models import Target, TargetName
 
 MOCK_CLASSIFIERS = [
     {
@@ -905,3 +906,75 @@ class TestSSObjectTargetCreation(TestCase):
         self.mock_tap_service.search.side_effect = pyvo.dal.DALServiceError("TAP down")
         with self.assertLogs("tom_dataservices.data_services.alerce", level="ERROR"):
             self.assertEqual(self.ds.query_aliases(target=target), [])
+
+
+class TestBuildQueryParametersFromTarget(TestCase):
+    def setUp(self):
+        self.ds = AlerceDataService()
+        tap_patcher = patch("tom_dataservices.data_services.alerce.tap_service")
+        self.mock_tap_service = tap_patcher.start()
+        self.addCleanup(tap_patcher.stop)
+        tns_patcher = patch("tom_dataservices.data_services.alerce.TNSDataService")
+        self.mock_tns = tns_patcher.start().return_value
+        self.addCleanup(tns_patcher.stop)
+
+    def _target(self, name, aliases=(), **kwargs):
+        target = Target.objects.create(name=name, type=kwargs.pop("type", "SIDEREAL"), ra=1.0, dec=2.0, **kwargs)
+        for alias in aliases:
+            TargetName.objects.create(target=target, name=alias)
+        return target
+
+    def test_alerce_id_names_used_directly_without_remote_lookups(self):
+        for name, survey in (("ZTF24aaiafkl", "ZTF"), ("313853496686280764", "LSST")):
+            with self.subTest(name=name):
+                params = self.ds.build_query_parameters_from_target(self._target(name))
+                self.assertEqual(params, {"object_id": name, "survey": survey})
+        self.mock_tap_service.search.assert_not_called()
+        self.mock_tns.query_service.assert_not_called()
+
+    def test_survey_id_alias_preferred_over_remote_lookup_of_name(self):
+        target = self._target("AT2026ziu", aliases=["ZTF26abpyrfi"])
+        params = self.ds.build_query_parameters_from_target(target)
+        self.assertEqual(params, {"object_id": "ZTF26abpyrfi", "survey": "ZTF"})
+        self.mock_tns.query_service.assert_not_called()
+
+    def test_tns_name_resolved_through_tns_internal_names(self):
+        self.mock_tns.query_service.return_value = {
+            "objname": "2026ziu", "name_prefix": "AT", "internal_names": "ATLAS26xyz, ZTF26abpyrfi",
+        }
+        params = self.ds.build_query_parameters_from_target(self._target("AT2026ziu"))
+        self.assertEqual(params, {"object_id": "ZTF26abpyrfi", "survey": "ZTF"})
+        self.assertEqual(self.mock_tns.build_query_parameters.call_args.args[0], {"objname": "2026ziu"})
+        self.mock_tap_service.search.assert_not_called()
+
+    def test_tns_unconfigured_or_unknown_falls_back_to_name(self):
+        target = self._target("SN2026sqf")
+        for side_effect in (NotConfiguredError("no TNS"), requests.HTTPError("503"),
+                            [{"objname": {"110": {"message": "No results found."}}}]):
+            with self.subTest(side_effect=side_effect):
+                self.mock_tns.query_service.side_effect = side_effect
+                params = self.ds.build_query_parameters_from_target(target)
+                self.assertEqual(params, {"object_id": "SN2026sqf", "survey": "LSST"})
+
+    def test_numbered_asteroid_resolved_through_provisional_designation_alias(self):
+        self.mock_tap_service.search.return_value = [{"ssobjectid": np.int64(20890962690584899)}]
+        target = self._target("6478", aliases=["Gault", "1988 JC1", "1995 KC1"], type=Target.NON_SIDEREAL)
+        params = self.ds.build_query_parameters_from_target(target)
+        self.assertEqual(params, {"object_id": "20890962690584899", "survey": "LSST"})
+        # "6478" and "Gault" aren't looked up; the first designation that resolves is used
+        self.mock_tap_service.search.assert_called_once()
+        self.assertIn("designation = '1988 JC1'", self.mock_tap_service.search.call_args.args[0])
+        self.mock_tns.query_service.assert_not_called()
+
+    def test_unresolved_designation_tries_next_alias(self):
+        self.mock_tap_service.search.side_effect = [[], [{"ssobjectid": np.int64(123456789012345678)}]]
+        target = self._target("6478", aliases=["1988 JC1", "1995 KC1"], type=Target.NON_SIDEREAL)
+        params = self.ds.build_query_parameters_from_target(target)
+        self.assertEqual(params, {"object_id": "123456789012345678", "survey": "LSST"})
+
+    def test_tap_error_during_designation_lookup_falls_back_to_name(self):
+        self.mock_tap_service.search.side_effect = pyvo.dal.DALServiceError("TAP down")
+        target = self._target("6478", aliases=["1988 JC1"], type=Target.NON_SIDEREAL)
+        with self.assertLogs("tom_dataservices.data_services.alerce", level="ERROR"):
+            params = self.ds.build_query_parameters_from_target(target)
+        self.assertEqual(params, {"object_id": "6478", "survey": "LSST"})

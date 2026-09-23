@@ -12,11 +12,13 @@ from django.db.utils import IntegrityError
 
 import numpy as np
 import pyvo
+import requests
 
 from tom_dataproducts.models import PhotometryReducedDatum
-from tom_dataservices.dataservices import DataService, QueryServiceError
+from tom_dataservices.data_services.tns import TNSDataService
+from tom_dataservices.dataservices import DataService, NotConfiguredError, QueryServiceError
 from tom_dataservices.forms import BaseQueryForm
-from tom_targets.models import Target, TargetExtra
+from tom_targets.models import Target
 
 logger = logging.getLogger(__name__)
 
@@ -289,6 +291,65 @@ def _resolve_lsst_designation(designation: str) -> int | None:
         f"SELECT ssObjectId FROM alerce_tap.lsst_mpc_orbits WHERE designation = '{designation}'"
     )
     return int(rows[0]["ssobjectid"]) if len(rows) else None
+
+
+ZTF_OID_PATTERN = re.compile(r"^ZTF\d{2}[a-z]{7}$")
+# LSST diaObjectIds/ssObjectIds are 17-18 digits; shorter numbers are e.g. numbered asteroids like "6478"
+LSST_OID_PATTERN = re.compile(r"^\d{15,}$")
+TNS_NAME_PATTERN = re.compile(r"^(?:AT|SN)\s?(\d{4}[a-z]{1,3})$")
+# Provisional ("1988 JC1"), survey ("2040 P-L") and comet ("C/2025 A6") designations; ALeRCE
+# knows asteroids only by these, not by number or name
+MPC_DESIGNATION_PATTERN = re.compile(r"^(?:[CPDXAI]/)?\d{4} (?:[A-Z]{1,2}\d*(?:-[A-Z])?|[PT]-[L123])$")
+
+
+def _alerce_id_from_name(name: str) -> tuple[str, str] | None:
+    """Returns (survey, oid) if `name` is itself a ZTF or LSST ALeRCE object ID."""
+    if ZTF_OID_PATTERN.match(name):
+        return "ZTF", name
+    if LSST_OID_PATTERN.match(name):
+        return "LSST", name
+    return None
+
+
+def _alerce_id_from_remote_name(name: str) -> tuple[str, str] | None:
+    """
+    Returns (survey, oid) for a TNS name (via the ZTF/LSST IDs in its TNS internal names)
+    or an MPC designation (via `alerce_tap.lsst_mpc_orbits`), or None. Lookup failures,
+    including TNS not being configured, are logged and give None, so a data update falls
+    back to other names rather than failing.
+    """
+    if tns_match := TNS_NAME_PATTERN.match(name):
+        for internal_name in _tns_internal_names(tns_match.group(1)):
+            if found := _alerce_id_from_name(internal_name):
+                return found
+        return None
+    if MPC_DESIGNATION_PATTERN.match(name):
+        try:
+            ss_object_id = _resolve_lsst_designation(name)
+        except (pyvo.dal.DALAccessError, QueryServiceError):
+            logger.exception(f"Error resolving MPC designation {name} with ALeRCE")
+            return None
+        return ("LSST", str(ss_object_id)) if ss_object_id is not None else None
+    return None
+
+
+def _tns_internal_names(objname: str) -> list[str]:
+    """
+    Returns the internal (survey) names TNS lists for an object, given its name without
+    the AT/SN prefix, or [] if TNS isn't configured, has no such object, or fails.
+    """
+    tns = TNSDataService()
+    try:
+        data = tns.query_service(tns.build_query_parameters({"objname": objname}), url=tns.get_urls("object_url"))
+    except NotConfiguredError:
+        logger.info(f"TNS is not configured; cannot resolve {objname} to ALeRCE IDs")
+        return []
+    except (requests.RequestException, ValueError, KeyError):
+        logger.exception(f"Error querying TNS for {objname}")
+        return []
+    if not isinstance(data, dict) or not data.get("objname"):
+        return []
+    return [name.strip() for name in (data.get("internal_names") or "").split(",") if name.strip()]
 
 
 def _non_sidereal_target_from_mpc_orbit(name, orbit: dict) -> Target:
@@ -625,18 +686,21 @@ class AlerceDataService(DataService):
         return query_params
 
     def build_query_parameters_from_target(self, target, **kwargs):
-        query_parameters = {"object_id": target.name}
-        try:
-            query_parameters["classifiers"] = [
-                target.targetextra_set.get(key="classifier").value
-            ]
-            query_parameters["survey"] = target.targetextra_set.get(key="survey").value
-        except TargetExtra.DoesNotExist:
-            if target.name.startswith("ZTF"):
-                query_parameters["survey"] = "ZTF"
-            else:
-                query_parameters["survey"] = "LSST"
-        return query_parameters
+        """
+        Finds the ALeRCE object for a target from its name or aliases, so data can be
+        updated for targets created elsewhere (e.g. named by TNS or the MPC) that carry a
+        ZTF or LSST ID, a TNS name or an MPC designation among their names. Names that are
+        already ALeRCE IDs are tried first, so no remote lookup happens when one exists;
+        then TNS names and MPC designations are resolved remotely, in the same name-then-
+        alias order. If nothing resolves, the target's name is used as before.
+        """
+        names = [str(target.name)] + [str(alias) for alias in target.aliases.values_list("name", flat=True)]
+        for resolve in (_alerce_id_from_name, _alerce_id_from_remote_name):
+            for name in names:
+                if found := resolve(name):
+                    survey, object_id = found
+                    return {"object_id": object_id, "survey": survey}
+        return {"object_id": str(target.name), "survey": "ZTF" if str(target.name).startswith("ZTF") else "LSST"}
 
     def create_target_from_query(self, target_result: dict, **kwrags):
         """
