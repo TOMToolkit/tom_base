@@ -61,10 +61,10 @@ TOMTOOLKIT_MIDDLEWARE = [
 ]
 
 TOMTOOLKIT_AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',  # show "pending approval" for inactive accounts
+    'allauth.account.auth_backends.AuthenticationBackend',  # also shows "pending approval" for inactive accounts
     'guardian.backends.ObjectPermissionBackend',
 ]
+# django.contrib.auth.backends.ModelBackend deliberately removed (see django-allauth 65.19.4 security release)
 AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
