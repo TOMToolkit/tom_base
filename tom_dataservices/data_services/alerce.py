@@ -1,4 +1,5 @@
 import logging
+import math
 
 from alerce.core import Alerce
 from alerce.exceptions import ObjectNotFoundError, APIError
@@ -196,6 +197,31 @@ def _resolve_classifier_ids(tid: int, classifier_name: str, class_name: str) -> 
         if classifier["classifier_name"] == classifier_name and class_name in classifier["class_ids"]:
             return classifier["classifier_id"], classifier["class_ids"][class_name]
     return None
+
+
+# From ALeRCE's `alerce_tap.band` lookup table for tid=1 (identical for sid 1 and 2).
+LSST_BANDS = {1: "g", 2: "r", 3: "i", 4: "z", 5: "y", 6: "u"}
+LSST_AB_ZEROPOINT_NJY = 31.4
+
+
+def _lsst_detection_photometry(detection: dict) -> dict | None:
+    """
+    Converts an LSST detection's difference-image PSF flux (`psfFlux`/`psfFluxErr`,
+    in nJy) to PhotometryReducedDatum field values in AB magnitudes. Returns None
+    when the flux is non-positive (source fainter than the template), which has no
+    magnitude.
+    """
+    flux = detection.get("psfFlux")
+    if flux is None or flux <= 0:
+        return None
+    flux_err = detection.get("psfFluxErr")
+    return {
+        "brightness": LSST_AB_ZEROPOINT_NJY - 2.5 * math.log10(flux),
+        "brightness_error": 2.5 / math.log(10) * flux_err / flux if flux_err is not None else None,
+        "bandpass": detection.get("band_name") or LSST_BANDS[detection["band"]],
+        "telescope": "Rubin",
+        "instrument": "LSSTCam",
+    }
 
 
 class AlerceForm(BaseQueryForm):
@@ -507,19 +533,35 @@ class AlerceDataService(DataService):
             return []
 
     def create_reduced_datums_from_query(self, target, data=None, data_type="photometry", **kwargs):
+        """
+        Creates PhotometryReducedDatums from an ALeRCE light curve. Detections in the
+        LSST shape (`psfFlux` in nJy, integer `band`, TAI `mjd`) are converted to AB
+        magnitudes via `_lsst_detection_photometry`; ZTF detections (`magpsf`, `fid`)
+        and non-detections are stored as-is. LSST detections with non-positive
+        difference flux have no magnitude and are skipped.
+        """
         reduced_datums = []
         if data:
             for detection in data.get("detections", []):
-                mjd = Time(detection["mjd"], format="mjd", scale="utc")
+                if "psfFlux" in detection:
+                    photometry = _lsst_detection_photometry(detection)
+                    if photometry is None:
+                        continue
+                    mjd = Time(detection["mjd"], format="mjd", scale="tai").utc
+                else:
+                    photometry = {
+                        "brightness": detection["magpsf"],
+                        "brightness_error": detection["sigmapsf"],
+                        "bandpass": ALERCE_FILTERS[detection["fid"]],
+                    }
+                    mjd = Time(detection["mjd"], format="mjd", scale="utc")
                 try:
                     reduced_datum, __ = PhotometryReducedDatum.objects.get_or_create(
                         timestamp=mjd.to_datetime(TimezoneInfo()),
                         target=target,
-                        brightness=detection["magpsf"],
-                        brightness_error=detection["sigmapsf"],
                         unit='mag',
-                        bandpass=ALERCE_FILTERS[detection["fid"]],
-                        defaults={'source_name': self.name}
+                        defaults={'source_name': self.name},
+                        **photometry,
                     )
                     reduced_datums.append(reduced_datum)
                 except IntegrityError as e:

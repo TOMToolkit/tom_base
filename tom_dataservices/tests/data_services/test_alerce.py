@@ -1,7 +1,8 @@
-import unittest
+import math
 from unittest.mock import patch
 
 from alerce.exceptions import APIError, ObjectNotFoundError
+from astropy.time import Time, TimezoneInfo
 from django.core.cache import cache
 from django.test import TestCase
 
@@ -519,14 +520,10 @@ class TestTargetAndDatumCreation(TestCase):
         reduced_datums = self.ds.create_reduced_datums_from_query(target, data=data)
         self.assertEqual(len(reduced_datums), 2)
 
-    @unittest.expectedFailure
     def test_lsst_detection_fixture_creates_reduced_datum(self):
         """
-        LSST detections carry flux (`psfFlux`) and an integer `band`, not the
-        ZTF REST shape's `magpsf`/`sigmapsf`/`fid`. create_reduced_datums_from_query
-        assumes the ZTF shape unconditionally, so an LSST detection raises
-        KeyError. Documents the flux-vs-mag gap left out of scope for this
-        migration (see design doc "Out of scope").
+        LSST detections carry difference flux in nJy (`psfFlux`) and an integer
+        `band`, not the ZTF REST shape's `magpsf`/`sigmapsf`/`fid`.
         """
         target = Target.objects.create(name="LSST12345", type="SIDEREAL", ra=10.0, dec=-5.0)
         data = {
@@ -537,3 +534,46 @@ class TestTargetAndDatumCreation(TestCase):
         }
         reduced_datums = self.ds.create_reduced_datums_from_query(target, data=data)
         self.assertEqual(len(reduced_datums), 1)
+        datum = reduced_datums[0]
+        self.assertAlmostEqual(datum.brightness, 31.4 - 2.5 * math.log10(123.4))
+        self.assertIsNone(datum.brightness_error)
+        self.assertEqual(datum.bandpass, "z")
+        self.assertEqual(datum.unit, "mag")
+        self.assertEqual(datum.telescope, "Rubin")
+        self.assertEqual(datum.instrument, "LSSTCam")
+
+    def test_lsst_detection_flux_error_and_band_name(self):
+        target = Target.objects.create(name="LSST12345", type="SIDEREAL", ra=10.0, dec=-5.0)
+        data = {
+            "detections": [
+                {"mjd": 61000.5, "psfFlux": 3631e9 * 1e-8, "psfFluxErr": 3631e9 * 1e-9,
+                 "band": 6, "band_name": "u"},
+            ],
+        }
+        datum = self.ds.create_reduced_datums_from_query(target, data=data)[0]
+        # 1e-8 of the 3631 Jy AB reference -> 20 mag; 10% flux error -> ~0.1086 mag
+        self.assertAlmostEqual(datum.brightness, 20.0, places=2)
+        self.assertAlmostEqual(datum.brightness_error, 2.5 / math.log(10) * 0.1)
+        self.assertEqual(datum.bandpass, "u")
+
+    def test_lsst_detection_mjd_is_tai(self):
+        target = Target.objects.create(name="LSST12345", type="SIDEREAL", ra=10.0, dec=-5.0)
+        data = {"detections": [{"mjd": 61000.0, "psfFlux": 100.0, "band": 1}]}
+        datum = self.ds.create_reduced_datums_from_query(target, data=data)[0]
+        # TAI - UTC = 37 s since 2017
+        expected = Time(61000.0, format="mjd", scale="tai").utc.to_datetime(TimezoneInfo())
+        self.assertEqual(datum.timestamp, expected)
+        self.assertEqual(datum.timestamp.second, 23)
+
+    def test_lsst_non_positive_flux_detections_skipped(self):
+        target = Target.objects.create(name="LSST12345", type="SIDEREAL", ra=10.0, dec=-5.0)
+        data = {
+            "detections": [
+                {"mjd": 61000.0, "psfFlux": -50.0, "band": 1},
+                {"mjd": 61001.0, "psfFlux": 0.0, "band": 1},
+                {"mjd": 61002.0, "psfFlux": 100.0, "band": 1},
+            ],
+        }
+        reduced_datums = self.ds.create_reduced_datums_from_query(target, data=data)
+        self.assertEqual(len(reduced_datums), 1)
+        self.assertEqual(reduced_datums[0].bandpass, "g")
