@@ -615,6 +615,21 @@ class TestQueryService(TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]["ndet"], 3)
 
+    def test_lsst_classifier_results_carry_class_and_classifier_names(self):
+        classifiers = [{"classifier": "stamp_classifier_rubin_beta", "class": "SN", "probability": None},
+                       {"classifier": "stamp_classifier_rubin_beta", "class": "bogus", "probability": None}]
+        row_sn = {"oid": 1, "probability": np.float64(0.95), "ranking": np.int64(1)}
+        row_bogus = {"oid": 2, "probability": np.float64(0.80), "ranking": np.int64(1)}
+        self.mock_tap_service.search.side_effect = [MOCK_LSST_TAP_CLASSIFIER_ROWS, [row_sn], [row_bogus]]
+
+        result = self.ds.query_service({"sid": 1, "survey": "lsst", "classifiers": classifiers})
+
+        self.assertEqual([(r["oid"], r["class"], r["classifier"]) for r in result],
+                         [(1, "SN", "stamp_classifier_rubin_beta"), (2, "bogus", "stamp_classifier_rubin_beta")])
+        html = render_to_string(AlerceDataService.query_results_table, {"results": result})
+        self.assertIn("SN [0.95]", html)
+        self.assertIn("bogus [0.8]", html)
+
     def test_lsst_classifier_query_ranking_default_when_no_probability_threshold(self):
         classifiers = [{"classifier": "stamp_classifier_rubin_beta", "class": "SN", "probability": None}]
         self.mock_tap_service.search.side_effect = [MOCK_LSST_TAP_CLASSIFIER_ROWS, []]

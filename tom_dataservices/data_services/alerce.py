@@ -521,7 +521,12 @@ class AlerceDataService(DataService):
                         tap_query = _build_tap_classifier_query(
                             query_parameters, classifier_id, class_id, classifier.get("probability")
                         )
-                        results.extend(_normalize_tap_record(dict(row)) for row in tap_service.search(tap_query))
+                        # The query filters by class_id; add the names, as ZTF REST results carry them
+                        results.extend(
+                            {**_normalize_tap_record(dict(row)),
+                             "class": classifier["class"], "classifier": classifier["classifier"]}
+                            for row in tap_service.search(tap_query)
+                        )
                 else:
                     tap_query = _build_tap_object_query(query_parameters)
                     results = [_normalize_tap_record(dict(row)) for row in tap_service.search(tap_query)]
