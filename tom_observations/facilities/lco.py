@@ -1,12 +1,19 @@
 from datetime import datetime, timedelta
 import logging
+from urllib.parse import urljoin
 
+from aeonlib.conf import Settings as AeonSettings
+from aeonlib.exceptions import AuthenticationError
+from aeonlib.ocs.lco.facility import LcoFacility as AeonLcoFacility
+from aeonlib.ocs.request_models import RequestGroup
 from crispy_forms.bootstrap import AppendedText, PrependedText, AccordionGroup
 from crispy_forms.layout import Column, Div, HTML, Layout, Row, MultiWidgetField, Fieldset
 from dateutil.parser import parse
 from django import forms
 from django.conf import settings
+from pydantic import ValidationError
 
+from tom_common.exceptions import ImproperCredentialsException
 from tom_observations.cadence import CadenceForm
 from tom_observations.facilities.ocs import (OCSTemplateBaseForm, OCSFullObservationForm, OCSBaseObservationForm,
                                              OCSConfigurationLayout, OCSInstrumentConfigLayout, OCSSettings,
@@ -1139,6 +1146,28 @@ class LCOFacility(OCSFacility):
         super().__init__(facility_settings=facility_settings)
         if name_override:
             self.name = name_override
+
+    def validate_observation(self, observation_payload):
+        try:
+            request_group = RequestGroup.model_validate(observation_payload)
+        except ValidationError as exc:
+            return {'errors': {'non_field_errors': [
+                f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}"
+                for error in exc.errors()
+            ]}}
+
+        facility = AeonLcoFacility(AeonSettings(
+            lco_token=self.facility_settings.get_setting('api_key'),
+            lco_api_root=urljoin(self.facility_settings.get_setting('portal_url'), '/api/'),
+        ))
+        try:
+            result = facility.validate_request_group(request_group)
+        except AuthenticationError as exc:
+            raise ImproperCredentialsException(str(exc)) from exc
+        finally:
+            facility.client.close()
+
+        return {'errors': result.errors, 'request_durations': {'duration': result.duration}}
 
     # TODO: this should be called get_form_class
     def get_form(self, observation_type):
