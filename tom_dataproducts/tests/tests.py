@@ -663,7 +663,7 @@ class TestReducedDatumModel(TestCase):
             timestamp=self.timestamp,
             brightness=1.0,
             bandpass="r",
-            exposure_time=None,
+            limit=None,
         )
 
         # This raises a ValidationError because by using create the uniqueness constraint
@@ -674,7 +674,7 @@ class TestReducedDatumModel(TestCase):
                 timestamp=self.timestamp,
                 brightness=1.0,
                 bandpass="r",
-                exposure_time=None,
+                limit=None,
             )
 
     def test_create_reduced_datum_duplicate_none_bulk(self):
@@ -687,7 +687,7 @@ class TestReducedDatumModel(TestCase):
                 timestamp=self.timestamp,
                 brightness=1.0,
                 bandpass="r",
-                exposure_time=None,
+                limit=None,
             )
             for _ in range(3)
         ]
