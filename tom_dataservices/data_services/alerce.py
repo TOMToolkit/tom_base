@@ -135,6 +135,10 @@ def _build_tap_classifier_query(
 
 
 SURVEY_TID = {"ZTF": 0, "LSST": 1}
+ALERCE_EXPLORER_URLS = {
+    "ztf": "https://alerce.online/object/{oid}",
+    "lsst": "https://lsst.alerce.online/object/{oid}?survey=lsst",
+}
 
 
 def _group_tap_classifier_rows(rows) -> list[dict]:
@@ -463,6 +467,7 @@ class AlerceDataService(DataService):
 
         for result in results:
             result["survey"] = query_parameters["survey"]
+            result["alerce_url"] = ALERCE_EXPLORER_URLS[result["survey"]].format(oid=result["oid"])
 
         return results
 

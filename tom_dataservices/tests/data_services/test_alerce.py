@@ -4,6 +4,7 @@ from unittest.mock import patch
 from alerce.exceptions import APIError, ObjectNotFoundError
 from astropy.time import Time, TimezoneInfo
 from django.core.cache import cache
+from django.template.loader import render_to_string
 from django.test import TestCase
 
 import numpy as np
@@ -432,6 +433,27 @@ class TestQueryService(TestCase):
         self.assertTrue(all(r["survey"] == "lsst" for r in result))
         self.assertEqual(result[0]["ndet"], 5)
         self.assertNotIn("n_det", result[0])
+
+    def test_results_annotated_with_explorer_url(self):
+        self.mock_tap_service.search.return_value = [{"oid": 12345, "meanra": np.float64(10.0)}]
+        lsst = self.ds.query_service({"sid": 1, "survey": "lsst", "classifiers": []})
+        self.assertEqual(lsst[0]["alerce_url"], "https://lsst.alerce.online/object/12345?survey=lsst")
+
+        self.mock_alerce.query_objects.return_value = {"items": [{"oid": "ZTF18aaaaaa"}]}
+        ztf = self.ds.query_service({"survey": "ztf", "classifiers": []})
+        self.assertEqual(ztf[0]["alerce_url"], "https://alerce.online/object/ZTF18aaaaaa")
+
+    def test_results_table_links_oid_to_explorer(self):
+        html = render_to_string(
+            AlerceDataService.query_results_table,
+            {"results": [
+                {"id": 1, "oid": 12345, "alerce_url": "https://lsst.alerce.online/object/12345?survey=lsst"},
+                {"id": 2, "oid": 67890},
+            ]},
+        )
+        self.assertIn('<a href="https://lsst.alerce.online/object/12345?survey=lsst"', html)
+        self.assertIn("67890", html)
+        self.assertEqual(html.count("<a href="), 1)
 
     def test_lsst_diaobject_classifier_query_uses_tap_probability_join(self):
         """
