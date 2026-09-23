@@ -377,8 +377,17 @@ class AlerceForm(BaseQueryForm):
         # self.fields['survey'].widget = forms.HiddenInput()
 
     def get_classifiers(self, survey: str) -> list[dict]:
+        """
+        Returns the survey's classifiers, or none if the TAP query fails, so the form still
+        renders (without classifier fields) during an ALeRCE TAP outage. The failure is not
+        cached, so the next form load retries.
+        """
         tid = SURVEY_TID.get(survey, SURVEY_TID["ZTF"])
-        return _fetch_classifiers_for_tid(tid)
+        try:
+            return _fetch_classifiers_for_tid(tid)
+        except pyvo.dal.DALAccessError:
+            logger.exception(f"Error querying ALeRCE {survey} classifiers")
+            return []
 
     def add_classifiers_fields(self) -> list[tuple[str, str]]:
         """
@@ -537,6 +546,9 @@ class AlerceDataService(DataService):
                 results = [_normalize_ztf_record(result) for result in results]
         except (ObjectNotFoundError, ValueError, APIError) as e:
             raise QueryServiceError(str(e))
+        except pyvo.dal.DALAccessError as e:
+            logger.exception("Error querying the ALeRCE TAP service")
+            raise QueryServiceError(f"ALeRCE TAP query failed: {e}")
 
         for result in results:
             result["survey"] = query_parameters["survey"]
@@ -624,12 +636,16 @@ class AlerceDataService(DataService):
     def create_target_from_query(self, target_result: dict, **kwrags):
         """
         LSST ssObjects (sid=2) become NON_SIDEREAL targets built from their
-        `alerce_tap.lsst_mpc_orbits` elements. If no orbit is stored, the target falls back
-        to SIDEREAL at the object's mean position, since that's better than failing target
-        creation. Everything else is SIDEREAL.
+        `alerce_tap.lsst_mpc_orbits` elements. If no orbit is stored, or the TAP query
+        fails, the target falls back to SIDEREAL at the object's mean position, since
+        that's better than failing target creation. Everything else is SIDEREAL.
         """
         if target_result.get("sid") == 2:
-            orbit = _fetch_lsst_mpc_orbit(target_result["oid"])
+            try:
+                orbit = _fetch_lsst_mpc_orbit(target_result["oid"])
+            except pyvo.dal.DALAccessError:
+                logger.exception(f"Error querying ALeRCE MPC orbit for ssObject {target_result['oid']}")
+                orbit = None
             if orbit:
                 return _non_sidereal_target_from_mpc_orbit(target_result["oid"], orbit)
             logger.warning(f"No ALeRCE MPC orbit for ssObject {target_result['oid']}; creating a SIDEREAL target")

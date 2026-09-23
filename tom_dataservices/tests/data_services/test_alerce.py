@@ -140,6 +140,19 @@ class TestAlerceForm(TestCase):
         AlerceForm(data={"data_service": "ALeRCE"})
         self.mock_alerce.query_classifiers.assert_not_called()
 
+    def test_form_renders_without_classifier_fields_when_tap_fails(self):
+        self.mock_tap_service.search.side_effect = pyvo.dal.DALServiceError("TAP down")
+        with self.assertLogs("tom_dataservices.data_services.alerce", level="ERROR"):
+            form = AlerceForm(data={"data_service": "ALeRCE", "survey": "ZTF"})
+        self.assertFalse(any(name.startswith("cfield_") for name in form.fields))
+        self.assertIn("object_id", form.fields)
+        self.assertIsNone(cache.get("ds_alerce_classifiers_0"))
+
+        # Not cached, so the next form load retries and recovers
+        self.mock_tap_service.search.side_effect = _tap_classifier_side_effect()
+        form = AlerceForm(data={"data_service": "ALeRCE", "survey": "ZTF"})
+        self.assertIn("cfield_ZTF__lc_classifier", form.fields)
+
     def test_clean_bundles_selected_classifiers_for_selected_survey(self):
         form = AlerceForm(
             data={
@@ -488,6 +501,20 @@ class TestQueryService(TestCase):
             self.ds.query_service({"oid": "2010 WX64' OR '1'='1", "sid": 2, "survey": "lsst"})
         self.mock_tap_service.search.assert_not_called()
 
+    def test_tap_errors_raise_query_service_error(self):
+        queries = [
+            {"sid": 1, "survey": "lsst", "classifiers": []},
+            {"oid": "12345", "sid": 1, "survey": "lsst"},
+            {"oid": "2010 WX64", "sid": 2, "survey": "lsst"},
+        ]
+        for error in (pyvo.dal.DALServiceError("TAP down"), pyvo.dal.DALQueryError("bad ADQL")):
+            self.mock_tap_service.search.side_effect = error
+            for query_parameters in queries:
+                with self.subTest(error=type(error).__name__, query=query_parameters):
+                    with self.assertLogs("tom_dataservices.data_services.alerce", level="ERROR"):
+                        with self.assertRaises(QueryServiceError):
+                            self.ds.query_service(dict(query_parameters))
+
     def test_ztf_general_query_unwraps_items_and_annotates_survey(self):
         self.mock_alerce.query_objects.return_value = {
             "items": [{"oid": "ZTF18aaaaaa"}, {"oid": "ZTF18bbbbbb"}]
@@ -793,6 +820,15 @@ class TestSSObjectTargetCreation(TestCase):
         self.assertEqual(target.type, "SIDEREAL")
         self.assertEqual(target.ra, 151.18)
         self.assertEqual(target.dec, 1.91)
+
+    def test_ssobject_orbit_tap_error_falls_back_to_sidereal(self):
+        self.mock_tap_service.search.side_effect = pyvo.dal.DALServiceError("TAP down")
+        with self.assertLogs("tom_dataservices.data_services.alerce", level="ERROR"):
+            target = self.ds.create_target_from_query(
+                {"oid": 21165806405629509, "sid": 2, "meanra": 151.18, "meandec": 1.91}
+            )
+        self.assertEqual(target.type, "SIDEREAL")
+        self.assertEqual(target.ra, 151.18)
 
     def test_diaobject_does_not_query_orbits(self):
         target = self.ds.create_target_from_query({"oid": 313853496686280764, "sid": 1, "meanra": 9.35,
