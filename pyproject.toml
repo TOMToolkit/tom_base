@@ -50,7 +50,7 @@ dependencies = [
     "django >=5.2.17,<6",
     "cryptography <=50.0.0",
     "djangorestframework >=3.18.0,<4",
-    "django-allauth[mfa] >=65.19.1,<66",
+    "django-allauth[mfa] >=65.19.4,<66",
     "django-bootstrap5 <27",
     "beautifulsoup4 <5",
     "django-contrib-comments >=2.0,<3.0",

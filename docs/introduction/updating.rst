@@ -28,7 +28,7 @@ Bump ``tomtoolkit`` to ``>=3.1,<4`` and, if you use it, **remove** ``tom_registr
 Its two registration workflows are now part of tom_base (see step 5 below). (``django-allauth`` is installed
 as a dependency of tomtoolkit. So, you don't list it in your dependencies).
 If your TOM already uses ``django-allauth`` (e.g. for social login), make sure your own version constraint
-allows the version tomtoolkit requires (``django-allauth[mfa] >=65.19.1,<66``).
+allows the version tomtoolkit requires (``django-allauth[mfa] >=65.19.4,<66``).
 
 2.) Updating ``settings.py``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,7 +80,7 @@ unless configured otherwise (see :ref:`profile fields <auth-profile-fields>`).
   would bypass the new login (and two-factor authentication). ``manage.py check`` reports this as::
 
       (tom_common.W003) LOGIN_URL (/accounts/login/) is served by django.contrib.auth.views.LoginView,
-      not by django-allauth and logging in there bypasses the MFA challenge.
+      not by django-allauth and logging in there bypasses the two-factor authentication challenge.
 
 - **Copied tom_common templates**. If your TOM has its own copy of one of these templates, integrate your
   customizations with a copy from the new tom_base version:
@@ -142,6 +142,9 @@ customization as a signup form (``ACCOUNT_SIGNUP_FORM_CLASS``) or an account ada
   :ref:`auth-deployment-notes`.
 - The REST framework's browsable-API login (``/api-auth/login/``) and the Django admin login (``/admin/login/``)
   now send users to the TOM login page for the two-factor challenge.
+- ``django.contrib.auth.backends.ModelBackend`` is no longer in the default authentication backends and
+  allauth's backend replaces it (see django-allauth's 65.19.4 security release).
+  As result, username login is now case-insensitive.
 
 .. _upgrade-v2-v3:
 
