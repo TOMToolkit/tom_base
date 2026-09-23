@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from tom_targets.base_models import get_target_model_app_label
 from http import HTTPStatus
 import os
@@ -665,6 +666,8 @@ class TestReducedDatumModel(TestCase):
             exposure_time=None,
         )
 
+        # This raises a ValidationError because by using create the uniqueness constraint
+        # is enforced in code, and never reaches the database level constraint.
         with self.assertRaises(ValidationError):
             PhotometryReducedDatum.objects.create(
                 target=self.target,
@@ -673,6 +676,25 @@ class TestReducedDatumModel(TestCase):
                 bandpass="r",
                 exposure_time=None,
             )
+
+    def test_create_reduced_datum_duplicate_none_bulk(self):
+        """Test that we cannot add duplicate ReducedDatums, even when a field is None.
+        Tests that this applies to bulk operations.
+        """
+        datums = [
+            PhotometryReducedDatum(
+                target=self.target,
+                timestamp=self.timestamp,
+                brightness=1.0,
+                bandpass="r",
+                exposure_time=None,
+            )
+            for _ in range(3)
+        ]
+        # This raises an IntegrityError because Python level validation does not occur in
+        # bulk operations, here we rely on the database level constraint to prevent duplicates
+        with self.assertRaises(IntegrityError):
+            PhotometryReducedDatum.objects.bulk_create(datums)
 
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
