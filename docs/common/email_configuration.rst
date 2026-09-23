@@ -57,7 +57,7 @@ we've configured doesn't send email. Rather, it outputs to stdout. With those se
 
   ./manage.py sendtestemail --managers
 
-Now, in the *console*, you should see something like this::
+Now, in the console, you should see something like this::
 
   Content-Type: text/plain; charset="utf-8"
   MIME-Version: 1.0
@@ -71,6 +71,16 @@ Now, in the *console*, you should see something like this::
   
   This email was sent to the site managers.
   -------------------------------------------------------------------------------
+
+Try these other possibilities::
+
+  ./manage.py sendtestemail --admins
+  ./manage.py sendtestemail test@example.com
+
+So, at this point we've configured email recipients and a backend that writes to stdout.
+Below, we'll see how to write to stdout through a real SMTP server (:ref:`verifying-your-configuration`).
+To send actual email, you'll need settings from your actual email provider
+(:ref:`configuring-the-backend`).
 
 ------------------------
 
@@ -93,6 +103,8 @@ Your TOM uses email for these optional features:
 When email is not configured, or a send fails, guidance is provided in the UI.
 (See `What happens when email is not configured or  when sends fail`_ below).
 
+.. _configuring-the-backend:
+
 Configuring the backend
 -------------------------
 
@@ -102,7 +114,8 @@ topic guide.
 
 In the tutorial section above, we configured an email backend that prints to stdout, which is useful
 for development. For production, point Django's SMTP backend (the default) at your mail relay, and
-say who your TOM's mail comes from and who its administrators are::
+say who your TOM's mail comes from (`DEFAULT_FROM_EMAIL`) and who receives registration
+requests (`MANAGERS`)::
 
     # from your email provider
     EMAIL_HOST = 'smtp.example.org'  # your institution's or provider's SMTP relay
@@ -112,11 +125,13 @@ say who your TOM's mail comes from and who its administrators are::
     EMAIL_USE_TLS = True
     #
     DEFAULT_FROM_EMAIL = 'tom@example.org'  # the From: address on everything the TOM sends
-    MANAGERS = [('TOM admins', 'admins@example.org')]  # registration requests go here
+    MANAGERS = [('TOM managers', 'admins@example.org')]  # registration requests go here
 
-The host, port, credentials and TLS mode come from your email provider; what each setting means is
-in Django's `email settings reference
-<https://docs.djangoproject.com/en/5.2/ref/settings/#email-backend>`_.
+The host, port, credentials and TLS mode come from your email provider. See Django's
+`email settings reference <https://docs.djangoproject.com/en/5.2/ref/settings/#email-backend>`_
+for details on individual setttings.
+
+.. _verifying-your-configuration:
 
 Verifying your configuration
 ----------------------------
@@ -153,7 +168,7 @@ When sending email fails, feedback is given in the UI and logs:
 - Approving a registration always succeeds even when the notice cannot be sent. Under those
   circumstances, the approver is told in the UI to notify the user directly. Additionally, the
   *Pending users* table indicates when email is not configured.
-- A failed password-reset send is reported on the page, with the failure logged for the operator.
+- A failed password-reset send is reported on the page, with the failure logged.
 
 ------------------------
 Customizing the emails
