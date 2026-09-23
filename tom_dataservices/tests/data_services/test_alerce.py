@@ -8,6 +8,7 @@ from django.template.loader import render_to_string
 from django.test import TestCase
 
 import numpy as np
+import pyvo
 
 from tom_dataservices.data_services.alerce import (
     AlerceDataService,
@@ -767,3 +768,31 @@ class TestSSObjectTargetCreation(TestCase):
         target = self._create(21165806405629509, [MPC_ORBIT_2020_TE16])
         target.save()
         self.assertEqual(Target.objects.get(pk=target.pk).scheme, "MPC_MINOR_PLANET")
+
+    def test_to_target_adds_designation_alias(self):
+        self.mock_tap_service.search.return_value = [MPC_ORBIT_2020_TE16]
+        target = self.ds.to_target({"oid": 21165806405629509, "sid": 2, "meanra": 151.18, "meandec": 1.91})
+        target.refresh_from_db()
+        self.assertEqual(target.name, "21165806405629509")
+        self.assertEqual(list(target.aliases.values_list("name", flat=True)), ["2020 TE16"])
+
+    def test_query_aliases_returns_designation_for_ssobject_target(self):
+        self.mock_tap_service.search.return_value = [MPC_ORBIT_2020_TE16]
+        target = Target(name="21165806405629509", type=Target.NON_SIDEREAL)
+        self.assertEqual(self.ds.query_aliases(target=target), ["2020 TE16"])
+        self.assertIn("ssObjectId = 21165806405629509", self.mock_tap_service.search.call_args.args[0])
+
+    def test_query_aliases_skips_other_targets_without_querying(self):
+        for target in (None,
+                       Target(name="313853496686280764", type="SIDEREAL"),
+                       Target(name="C/2020 F3", type=Target.NON_SIDEREAL)):
+            self.assertEqual(self.ds.query_aliases(target=target), [])
+        self.mock_tap_service.search.assert_not_called()
+
+    def test_query_aliases_empty_when_no_orbit_or_tap_error(self):
+        target = Target(name="21165806405629509", type=Target.NON_SIDEREAL)
+        self.mock_tap_service.search.return_value = []
+        self.assertEqual(self.ds.query_aliases(target=target), [])
+        self.mock_tap_service.search.side_effect = pyvo.dal.DALServiceError("TAP down")
+        with self.assertLogs("tom_dataservices.data_services.alerce", level="ERROR"):
+            self.assertEqual(self.ds.query_aliases(target=target), [])

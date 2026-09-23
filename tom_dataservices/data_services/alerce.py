@@ -629,6 +629,24 @@ class AlerceDataService(DataService):
             if k not in ["oid", "meanra", "meandec"]
         }
 
+    def query_aliases(self, query_parameters=None, target=None, **kwargs) -> list:
+        """
+        Returns the MPC designation (e.g. "2020 TE16") of a non-sidereal target named by
+        its LSST ssObjectId, so it can be found by its familiar name. The target keeps the
+        ssObjectId as its name, since `build_query_parameters_from_target` uses the name
+        to look up photometry. Other targets have no ALeRCE aliases. A TAP failure is
+        logged and yields no aliases rather than failing target creation or data update.
+        """
+        if target is None or target.type != Target.NON_SIDEREAL or not str(target.name).isdigit():
+            return []
+        try:
+            orbit = _fetch_lsst_mpc_orbit(target.name)
+        except pyvo.dal.DALAccessError:
+            logger.exception(f"Error querying ALeRCE MPC designation for {target.name}")
+            return []
+        designation = orbit.get("designation") if orbit else None
+        return [designation] if designation else []
+
     def query_photometry(self, query_parameters, **kwargs):
         try:
             return alerce.query_lightcurve(
