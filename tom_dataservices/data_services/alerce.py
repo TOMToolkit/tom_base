@@ -645,17 +645,20 @@ class AlerceDataService(DataService):
         fails, the target falls back to SIDEREAL at the object's mean position, since
         that's better than failing target creation. Everything else is SIDEREAL.
         """
+        # LSST oids come back from TAP as integers; the Target must hold the string the DB will
+        # store, since code after to_target() uses the unsaved-then-saved instance directly.
+        name = str(target_result["oid"])
         if target_result.get("sid") == 2:
             try:
                 orbit = _fetch_lsst_mpc_orbit(target_result["oid"])
             except pyvo.dal.DALAccessError:
-                logger.exception(f"Error querying ALeRCE MPC orbit for ssObject {target_result['oid']}")
+                logger.exception(f"Error querying ALeRCE MPC orbit for ssObject {name}")
                 orbit = None
             if orbit:
-                return _non_sidereal_target_from_mpc_orbit(target_result["oid"], orbit)
-            logger.warning(f"No ALeRCE MPC orbit for ssObject {target_result['oid']}; creating a SIDEREAL target")
+                return _non_sidereal_target_from_mpc_orbit(name, orbit)
+            logger.warning(f"No ALeRCE MPC orbit for ssObject {name}; creating a SIDEREAL target")
         target = Target(
-            name=target_result["oid"],
+            name=name,
             type="SIDEREAL",
             ra=target_result["meanra"],
             dec=target_result["meandec"],

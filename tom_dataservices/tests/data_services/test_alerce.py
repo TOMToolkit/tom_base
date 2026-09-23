@@ -797,7 +797,7 @@ class TestSSObjectTargetCreation(TestCase):
         adql = self.mock_tap_service.search.call_args.args[0]
         self.assertIn("alerce_tap.lsst_mpc_orbits", adql)
         self.assertIn("ssObjectId = 21165806405629509", adql)
-        self.assertEqual(target.name, 21165806405629509)
+        self.assertEqual(target.name, "21165806405629509")
         self.assertEqual(target.type, Target.NON_SIDEREAL)
         self.assertEqual(target.scheme, "MPC_MINOR_PLANET")
         self.assertIsNone(target.ra)
@@ -859,9 +859,31 @@ class TestSSObjectTargetCreation(TestCase):
     def test_to_target_adds_designation_alias(self):
         self.mock_tap_service.search.return_value = [MPC_ORBIT_2020_TE16]
         target = self.ds.to_target({"oid": 21165806405629509, "sid": 2, "meanra": 151.18, "meandec": 1.91})
-        target.refresh_from_db()
         self.assertEqual(target.name, "21165806405629509")
         self.assertEqual(list(target.aliases.values_list("name", flat=True)), ["2020 TE16"])
+
+    def test_lsst_targets_ingest_photometry_right_after_creation(self):
+        """
+        Mirrors CreateTargetFromQueryView: the instance returned by to_target() goes straight
+        to query_reduced_data(). TAP returns integer oids; an int Target.name made
+        build_query_parameters_from_target raise AttributeError (a 500 in the view).
+        """
+        lightcurve = {"detections": [{"mjd": 61000.0, "psfFlux": 100.0, "band": 1}], "non_detections": []}
+        results = [
+            ({"oid": 313853496686280764, "sid": 1, "meanra": 9.35, "meandec": -42.46}, []),
+            ({"oid": 21165806405629509, "sid": 2, "meanra": 151.18, "meandec": 1.91}, [MPC_ORBIT_2020_TE16]),
+        ]
+        with patch("tom_dataservices.data_services.alerce.alerce") as mock_alerce:
+            mock_alerce.query_lightcurve.return_value = lightcurve
+            for result, orbit_rows in results:
+                with self.subTest(sid=result["sid"]):
+                    self.mock_tap_service.search.return_value = orbit_rows
+                    target = self.ds.to_target(result)
+                    self.assertEqual(target.name, str(result["oid"]))
+                    datums = self.ds.to_reduced_datums(target, self.ds.query_reduced_data(target))
+                    self.assertEqual(len(datums), 1)
+                    self.assertEqual(mock_alerce.query_lightcurve.call_args.kwargs["oid"], str(result["oid"]))
+                    self.assertEqual(mock_alerce.query_lightcurve.call_args.kwargs["survey"], "lsst")
 
     def test_query_aliases_returns_designation_for_ssobject_target(self):
         self.mock_tap_service.search.return_value = [MPC_ORBIT_2020_TE16]
