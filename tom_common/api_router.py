@@ -10,7 +10,7 @@ class SharedAPIRootRouter(SimpleRouter):
     shared_router = DefaultRouter()
 
     def register(self, *args, **kwargs):
-        logger.info(f'registering new views: args: {args}, kwargs: {kwargs}')
+        logger.debug(f'registering new views: args: {args}, kwargs: {kwargs}')
         viewset = kwargs.get('viewset') or args[1]
         basename = kwargs.get('basename') or (args[2] if len(args) > 2 else None)
         if not basename:

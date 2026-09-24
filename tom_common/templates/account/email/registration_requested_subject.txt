@@ -1,0 +1,1 @@
+New account registration awaiting approval: {{ user.username }}
