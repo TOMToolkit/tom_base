@@ -156,10 +156,8 @@ What happens when email is not configured or  when sends fail
 
 Your TOM's Email configuration can be verifiied in code and at the command line:
 
-- TOM Toolkit determines whether email is configured with a heuristic predicate
-  (``tom_common.accounts.email.email_is_configured``). Any backend other than Django's SMTP
-  default counts as configured. (The SMTP default pointed at ``localhost`` with no credentials is
-  treated as "not configured").
+- TOM Toolkit determines whether email is configured using
+  ``tom_common.accounts.email.email_is_configured``
 - ``manage.py check`` warns (``tom_common.W002``) when approval-required registration or password
   reset is enabled without a configured email backend.
 
