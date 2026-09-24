@@ -18,6 +18,7 @@ from tom_observations.cadence import CadenceForm
 from tom_observations.facilities.ocs import (OCSTemplateBaseForm, OCSFullObservationForm, OCSBaseObservationForm,
                                              OCSConfigurationLayout, OCSInstrumentConfigLayout, OCSSettings,
                                              OCSFacility)
+from tom_observations.facilities.aeon_utils import omit_none
 from tom_observations.widgets import FilterField
 
 logger = logging.getLogger(__name__)
@@ -1149,7 +1150,7 @@ class LCOFacility(OCSFacility):
 
     def validate_observation(self, observation_payload):
         try:
-            request_group = RequestGroup.model_validate(observation_payload)
+            request_group = RequestGroup(**omit_none(observation_payload))
         except ValidationError as exc:
             return {'errors': {'non_field_errors': [
                 f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}"
