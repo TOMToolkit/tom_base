@@ -320,10 +320,6 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 100
 }
 
-# Silence system checks that are not applicable to how the TOM Toolkit is designed.
-# These are likely temporary and can be removed in downstream TOMs if desired.
-SILENCED_SYSTEM_CHECKS = ['models.W047']
-
 try:
     from local_settings import *  # noqa
 except ImportError:
