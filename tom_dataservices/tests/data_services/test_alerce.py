@@ -5,6 +5,7 @@ from unittest.mock import patch
 from alerce.exceptions import APIError, ObjectNotFoundError
 from astropy.time import Time, TimezoneInfo
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.test import TestCase
 
@@ -19,6 +20,7 @@ from tom_dataservices.data_services.alerce import (
     _build_tap_object_query,
     _group_tap_classifier_rows,
 )
+from tom_dataproducts.models import PhotometryReducedDatum
 from tom_dataservices.dataservices import NotConfiguredError, QueryServiceError
 from tom_targets.models import Target, TargetName
 
@@ -701,6 +703,41 @@ class TestTargetAndDatumCreation(TestCase):
         }
         reduced_datums = self.ds.create_reduced_datums_from_query(target, data=data)
         self.assertEqual(len(reduced_datums), 2)
+
+    def test_requery_with_revised_uncertainties_keeps_existing_datums(self):
+        """
+        A re-queried light curve whose uncertainties have changed is the same measurement:
+        it must match the stored datums rather than fail the uniqueness constraints (#1669).
+        """
+        target = Target.objects.create(name="ZTF18aaaaaa", type="SIDEREAL", ra=10.0, dec=-5.0)
+        ztf = {"mjd": 59000.0, "magpsf": 18.5, "sigmapsf": 0.1, "fid": 1}
+        lsst = {"mjd": 61000.0, "psfFlux": 123.4, "psfFluxErr": 5.0, "band": 1}
+        non_detection = {"mjd": 58999.0, "diffmaglim": 20.0, "fid": 2}
+
+        first = self.ds.create_reduced_datums_from_query(
+            target, data={"detections": [ztf, lsst], "non_detections": [non_detection]}
+        )
+        revised = {"detections": [{**ztf, "sigmapsf": 0.2}, {**lsst, "psfFluxErr": 9.0}],
+                   "non_detections": [non_detection]}
+        second = self.ds.create_reduced_datums_from_query(target, data=revised)
+
+        self.assertEqual([datum.pk for datum in second], [datum.pk for datum in first])
+        self.assertEqual(PhotometryReducedDatum.objects.filter(target=target).count(), 3)
+        self.assertEqual(second[0].brightness_error, 0.1)
+        self.assertAlmostEqual(second[1].brightness_error, 2.5 / math.log(10) * 5.0 / 123.4)
+
+    def test_rejected_datums_raise_query_service_error(self):
+        target = Target.objects.create(name="ZTF18aaaaaa", type="SIDEREAL", ra=10.0, dec=-5.0)
+        cases = {
+            "detection": {"detections": [{"mjd": 59000.0, "magpsf": 18.5, "sigmapsf": 0.1, "fid": 1}]},
+            "non_detection": {"non_detections": [{"mjd": 58999.0, "diffmaglim": 20.0, "fid": 2}]},
+        }
+        for label, data in cases.items():
+            with self.subTest(label), \
+                    patch.object(PhotometryReducedDatum.objects, "get_or_create",
+                                 side_effect=ValidationError("duplicate")):
+                with self.assertRaises(QueryServiceError):
+                    self.ds.create_reduced_datums_from_query(target, data=data)
 
     def test_lsst_detection_fixture_creates_reduced_datum(self):
         """

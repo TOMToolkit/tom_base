@@ -9,6 +9,7 @@ from astropy.constants import GM_sun, au
 from astropy.time import Time, TimezoneInfo
 from django import forms
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 
 import numpy as np
@@ -820,8 +821,22 @@ class AlerceDataService(DataService):
         magnitudes via `_lsst_detection_photometry`; ZTF detections (`magpsf`, `fid`)
         and non-detections are stored as-is. LSST detections with non-positive
         difference flux have no magnitude and are skipped.
+
+        Existing datums are matched on the fields of the `PhotometryReducedDatum`
+        uniqueness constraints only, so re-querying a light curve whose uncertainties
+        have since been revised leaves the stored datums unchanged rather than failing.
         """
         reduced_datums = []
+
+        def get_or_create_datum(record, lookup, defaults):
+            try:
+                reduced_datum, __ = PhotometryReducedDatum.objects.get_or_create(
+                    target=target, defaults={"unit": "mag", "source_name": self.name, **defaults}, **lookup
+                )
+            except (IntegrityError, ValidationError) as e:
+                raise QueryServiceError(f"Error importing ReducedDatum (target:{target} data:{record}) -- {e}")
+            reduced_datums.append(reduced_datum)
+
         if data:
             for detection in data.get("detections", []):
                 if "psfFlux" in detection:
@@ -836,27 +851,19 @@ class AlerceDataService(DataService):
                         "bandpass": ALERCE_FILTERS[detection["fid"]],
                     }
                     mjd = Time(detection["mjd"], format="mjd", scale="utc")
-                try:
-                    reduced_datum, __ = PhotometryReducedDatum.objects.get_or_create(
-                        timestamp=mjd.to_datetime(TimezoneInfo()),
-                        target=target,
-                        unit='mag',
-                        defaults={'source_name': self.name},
-                        **photometry,
-                    )
-                    reduced_datums.append(reduced_datum)
-                except IntegrityError as e:
-                    raise QueryServiceError(f"Error importing ReducedDatum (target:{target} data:{detection}) -- {e}")
+                defaults = {
+                    field: photometry.pop(field) for field in ("brightness_error", "telescope") if field in photometry
+                }
+                get_or_create_datum(
+                    detection, {"timestamp": mjd.to_datetime(TimezoneInfo()), **photometry}, defaults
+                )
 
             for non_detection in data.get("non_detections", []):
                 mjd = Time(non_detection["mjd"], format="mjd", scale="utc")
-                reduced_datum, __ = PhotometryReducedDatum.objects.get_or_create(
-                    timestamp=mjd.to_datetime(TimezoneInfo()),
-                    target=target,
-                    limit=non_detection["diffmaglim"],
-                    unit='mag',
-                    bandpass=ALERCE_FILTERS[non_detection["fid"]],
-                    defaults={'source_name': self.name}
-                )
-                reduced_datums.append(reduced_datum)
+                lookup = {
+                    "timestamp": mjd.to_datetime(TimezoneInfo()),
+                    "limit": non_detection["diffmaglim"],
+                    "bandpass": ALERCE_FILTERS[non_detection["fid"]],
+                }
+                get_or_create_datum(non_detection, lookup, {})
         return reduced_datums
