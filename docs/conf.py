@@ -37,6 +37,10 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "requirements.txt"]
 todo_include_todos = False
 today_fmt = "%Y-%m-%d %H:%M"
 
+# this repeats a default in the breeze theme, but it fixes a Sphinx bug
+# that breaks incremental builds
+python_maximum_signature_line_length = 60
+
 # -- Options for HTML output -------------------------------------------
 html_theme = "breeze"
 html_show_sphinx = True

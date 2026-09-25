@@ -1,0 +1,19 @@
+{% load allauth %}
+{% comment %} Bootstrap 5 card (used by the two-factor overview page's sections). {% endcomment %}
+<section class="card mb-3">
+    {% if slots.title %}
+        <h5 class="card-header">
+            {% slot title %}
+            {% endslot %}
+        </h5>
+    {% endif %}
+    <div class="card-body">
+        {% slot body %}
+        {% endslot %}
+        {% if slots.actions %}
+            <div class="d-flex gap-2 flex-wrap mt-2">
+                {% for action in slots.actions %}{{ action }}{% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</section>

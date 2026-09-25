@@ -107,10 +107,7 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',
-    'guardian.backends.ObjectPermissionBackend',
-)
+AUTHENTICATION_BACKENDS = TOMTOOLKIT_AUTHENTICATION_BACKENDS  # noqa: F405
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
@@ -309,7 +306,7 @@ HINT_LEVEL = 20
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',  # for API token authentication
+        'tom_common.accounts.api_auth.TomTokenAuthentication',  # API tokens, honouring the TOM_API_TOKEN_* settings
         'rest_framework.authentication.SessionAuthentication',  # for logged-in browsers (cookie + CSRF protection)
         'rest_framework.authentication.BasicAuthentication',  # for username/password
     ],
@@ -319,10 +316,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 100
 }
-
-# Silence system checks that are not applicable to how the TOM Toolkit is designed.
-# These are likely temporary and can be removed in downstream TOMs if desired.
-SILENCED_SYSTEM_CHECKS = ['models.W047']
 
 try:
     from local_settings import *  # noqa
