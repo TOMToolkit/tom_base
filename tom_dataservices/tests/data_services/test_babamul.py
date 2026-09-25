@@ -83,13 +83,6 @@ class TestBabamulDataService(TestCase):
         self.assertEqual(len(targets), 5)
         self.assertEqual(targets[0]['objectId'], 'ZTF20aawqwzt')
         self.assertEqual(mock_get.call_args.args[0], 'https://babamul.caltech.edu/api/babamul/objects')
-
-    @patch('requests.get')
-    def test_query_sends_bearer_token_and_a_timeout(self, mock_get):
-        mock_get.return_value = self.mock_response(self.cone_search_response)
-
-        self.ds.query_targets({'object_id': 'ZTF18aahflzc'})
-
         self.assertEqual(mock_get.call_args.kwargs['headers'], {'Authorization': 'Bearer test-api-key'})
         self.assertEqual(mock_get.call_args.kwargs['timeout'], 30)
 
@@ -176,6 +169,9 @@ class TestBabamulDataService(TestCase):
     # Photometry
 
     def test_create_reduced_datums_from_query(self):
+        """`candidate` also appears in `prv_candidates`, so the detection count proves it is not ingested twice."""
+        candidate = self.object_result['candidate']
+        self.assertIn(candidate['candid'], [c['candid'] for c in self.object_result['prv_candidates']])
         target = SiderealTargetFactory.create(name='ZTF18aahflzc')
 
         reduced_datums = self.ds.create_reduced_datums_from_query(target, self.object_result)
@@ -186,14 +182,20 @@ class TestBabamulDataService(TestCase):
         self.assertEqual(len([d for d in reduced_datums if d.limit is not None]), 48)
         self.assertEqual(PhotometryReducedDatum.objects.filter(target=target).count(), 50)
 
-    def test_the_latest_detection_is_not_ingested_twice(self):
-        """`candidate` also appears in `prv_candidates`, so detections are deduplicated by candid."""
-        candidate = self.object_result['candidate']
-        self.assertIn(candidate['candid'], [c['candid'] for c in self.object_result['prv_candidates']])
+        first = reduced_datums[0]
+        self.assertEqual(first.target, target)
+        self.assertEqual(first.unit, 'mag')
+        self.assertEqual(first.bandpass, 'r')
+        self.assertEqual(first.source_name, 'Babamul')
+        self.assertAlmostEqual(first.brightness, 18.46976089477539, places=6)
+        self.assertAlmostEqual(first.brightness_error, 0.10326997935771942, places=6)
+        # Babamul reports Julian Date, not Modified Julian Date: JD 2459859.0226157 is 2022-10-06 12:32 UTC.
+        self.assertEqual(first.timestamp.strftime('%Y-%m-%d %H:%M'), '2022-10-06 12:32')
 
-        detections = BabamulDataService.detections(self.object_result)
-
-        self.assertEqual([d['candid'] for d in detections].count(candidate['candid']), 1)
+        limit = [datum for datum in reduced_datums if datum.limit is not None][0]
+        self.assertIsNone(limit.brightness)
+        self.assertAlmostEqual(limit.limit, 17.555099487304688, places=6)
+        self.assertEqual(limit.bandpass, 'r')
 
     def test_reingesting_the_same_object_creates_no_duplicates(self):
         """A second sync must be idempotent, including when the reported uncertainty has changed."""
@@ -206,20 +208,6 @@ class TestBabamulDataService(TestCase):
 
         self.assertEqual(PhotometryReducedDatum.objects.filter(target=target).count(), 50)
 
-    def test_detections_carry_brightness_and_band(self):
-        target = SiderealTargetFactory.create(name='ZTF18aahflzc')
-
-        first = self.ds.create_reduced_datums_from_query(target, self.object_result)[0]
-
-        self.assertEqual(first.target, target)
-        self.assertEqual(first.unit, 'mag')
-        self.assertEqual(first.bandpass, 'r')
-        self.assertEqual(first.source_name, 'Babamul')
-        self.assertAlmostEqual(first.brightness, 18.46976089477539, places=6)
-        self.assertAlmostEqual(first.brightness_error, 0.10326997935771942, places=6)
-        # Babamul reports Julian Date, not Modified Julian Date: JD 2459859.0226157 is 2022-10-06 12:32 UTC.
-        self.assertEqual(first.timestamp.strftime('%Y-%m-%d %H:%M'), '2022-10-06 12:32')
-
     def test_bandpass_follows_the_reported_band(self):
         """Every measurement in the fixture is r, so vary it to prove the band is actually read."""
         target = SiderealTargetFactory.create(name='ZTF18aahflzc')
@@ -231,16 +219,6 @@ class TestBabamulDataService(TestCase):
         reduced_datum = self.ds.create_reduced_datums_from_query(target, object_result)[0]
 
         self.assertEqual(reduced_datum.bandpass, 'g')
-
-    def test_non_detections_are_stored_as_limits(self):
-        target = SiderealTargetFactory.create(name='ZTF18aahflzc')
-
-        reduced_datums = self.ds.create_reduced_datums_from_query(target, self.object_result)
-        limit = [datum for datum in reduced_datums if datum.limit is not None][0]
-
-        self.assertIsNone(limit.brightness)
-        self.assertAlmostEqual(limit.limit, 17.555099487304688, places=6)
-        self.assertEqual(limit.bandpass, 'r')
 
     def test_measurements_without_a_magnitude_are_skipped(self):
         target = SiderealTargetFactory.create(name='ZTF18aahflzc')
