@@ -1,0 +1,40 @@
+{
+  "message": "Found 5 objects",
+  "data": [
+    {
+      "objectId": "ZTF20aawqwzt",
+      "survey": "ZTF",
+      "ra": 149.9989633,
+      "dec": 25.0053292,
+      "distance_arcsec": 19.4809983631853
+    },
+    {
+      "objectId": "ZTF20abiiaah",
+      "survey": "ZTF",
+      "ra": 149.9936601,
+      "dec": 24.9979637,
+      "distance_arcsec": 21.945961451226434
+    },
+    {
+      "objectId": "ZTF18aahflzc",
+      "survey": "ZTF",
+      "ra": 149.9994023,
+      "dec": 24.9914826,
+      "distance_arcsec": 30.724594800968674
+    },
+    {
+      "objectId": "ZTF23aadomxb",
+      "survey": "ZTF",
+      "ra": 149.9852481,
+      "dec": 25.0003352,
+      "distance_arcsec": 48.14620174566318
+    },
+    {
+      "objectId": "ZTF26aaseumt",
+      "survey": "ZTF",
+      "ra": 150.0148054,
+      "dec": 25.007315,
+      "distance_arcsec": 55.0161888428398
+    }
+  ]
+}
