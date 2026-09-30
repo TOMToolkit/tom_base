@@ -1147,26 +1147,45 @@ class LCOFacility(OCSFacility):
         super().__init__(facility_settings=facility_settings)
         if name_override:
             self.name = name_override
+        self.facility = AeonLcoFacility(AeonSettings(
+            lco_token=self.facility_settings.get_setting('api_key'),
+            lco_api_root=urljoin(self.facility_settings.get_setting('portal_url'), '/api/'),
+        ))
+
+    def extract_non_field_errors(self, exc):
+        # TODO: Map these errors to the actual model fields so validation errors are
+        # located with the fields
+        return {'errors': {'non_field_errors': [
+            f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}"
+            for error in exc.errors()
+        ]}}
+
+    def submit_observation(self, observation_payload):
+        try:
+            request_group = RequestGroup(**omit_none(observation_payload))
+        except ValidationError as exc:
+            return self.extract_non_field_errors(exc)
+
+        try:
+            result = self.facility.submit_request_group(request_group)
+        except AuthenticationError as exc:
+            raise ImproperCredentialsException(str(exc)) from exc
+        finally:
+            self.facility.client.close()
+
+        return [r.id for r in result.requests]
 
     def validate_observation(self, observation_payload):
         try:
             request_group = RequestGroup(**omit_none(observation_payload))
         except ValidationError as exc:
-            return {'errors': {'non_field_errors': [
-                f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}"
-                for error in exc.errors()
-            ]}}
-
-        facility = AeonLcoFacility(AeonSettings(
-            lco_token=self.facility_settings.get_setting('api_key'),
-            lco_api_root=urljoin(self.facility_settings.get_setting('portal_url'), '/api/'),
-        ))
+            return self.extract_non_field_errors(exc)
         try:
-            result = facility.validate_request_group(request_group)
+            result = self.facility.validate_request_group(request_group)
         except AuthenticationError as exc:
             raise ImproperCredentialsException(str(exc)) from exc
         finally:
-            facility.client.close()
+            self.facility.client.close()
 
         return {'errors': result.errors, 'request_durations': {'duration': result.duration}}
 
