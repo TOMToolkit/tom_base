@@ -6,6 +6,7 @@ from aeonlib.conf import Settings as AeonSettings
 from aeonlib.exceptions import AuthenticationError
 from aeonlib.ocs.lco.facility import LcoFacility as AeonLcoFacility
 from aeonlib.ocs.request_models import RequestGroup
+from aeonlib.utils.django import omit_none
 from crispy_forms.bootstrap import AppendedText, PrependedText, AccordionGroup
 from crispy_forms.layout import Column, Div, HTML, Layout, Row, MultiWidgetField, Fieldset
 from dateutil.parser import parse
@@ -18,7 +19,6 @@ from tom_observations.cadence import CadenceForm
 from tom_observations.facilities.ocs import (OCSTemplateBaseForm, OCSFullObservationForm, OCSBaseObservationForm,
                                              OCSConfigurationLayout, OCSInstrumentConfigLayout, OCSSettings,
                                              OCSFacility)
-from tom_observations.facilities.aeon_utils import omit_none
 from tom_observations.widgets import FilterField
 
 logger = logging.getLogger(__name__)
