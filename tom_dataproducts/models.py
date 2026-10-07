@@ -482,7 +482,7 @@ class SpectroscopyReducedDatum(ReducedDatumCommon):
     class Meta(ReducedDatumCommon.Meta):
         constraints = [
             models.UniqueConstraint(
-                fields=["target", "timestamp", "telescope", "instrument", "flux", "reduction_version"],
+                fields=["target", "timestamp", "telescope", "instrument", "reduction_version"],
                 name="unique_spectroscopy",
             )
         ]
