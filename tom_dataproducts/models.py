@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
+from django.db.models.functions import MD5, Cast
 from django.utils import text, timezone
 from fits2image.conversions import fits_to_jpg
 from PIL import Image
@@ -482,7 +483,12 @@ class SpectroscopyReducedDatum(ReducedDatumCommon):
     class Meta(ReducedDatumCommon.Meta):
         constraints = [
             models.UniqueConstraint(
-                fields=["target", "timestamp", "telescope", "instrument", "flux", "reduction_version"],
+                "target",
+                "timestamp",
+                "telescope",
+                "instrument",
+                MD5(Cast("flux", output_field=models.TextField())),
+                "reduction_version",
                 name="unique_spectroscopy",
             )
         ]
