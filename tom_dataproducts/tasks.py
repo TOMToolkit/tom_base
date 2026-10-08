@@ -64,6 +64,9 @@ def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type, use_re
 
             if resp.status_code == 200:
                 if resp.json()["finishtimestamp"]:
+                    if resp.json()["error_msg"] == "No data returned":
+                        logger.debug(f"No data returned for task {task_url}")
+                        return True
                     result_url = resp.json()["result_url"]  # PART WHEN QUERY IS COMPLETE
                     logger.debug(f"Task is complete with results available at {result_url}")
                 elif resp.json()["starttimestamp"]:
