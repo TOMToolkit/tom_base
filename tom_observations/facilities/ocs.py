@@ -792,7 +792,8 @@ class OCSBaseObservationForm(BaseRoboticObservationForm, OCSBaseForm):
             self.add_error(None, self._flatten_error_dict(response['errors']))
 
     def is_valid(self):
-        super().is_valid()
+        if not super().is_valid():
+            return False
         self.validate_at_facility()
         if self._errors:
             logger.warning(f'Facility submission has errors {self._errors}')

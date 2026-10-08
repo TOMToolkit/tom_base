@@ -241,6 +241,10 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
         initial = self.get_initial()
         observation_form_classes = self.facility_instance.get_form_classes_for_display(**kwargs)
         for observation_type, observation_form_class in observation_form_classes.items():
+            if observation_type == self.request.POST.get('observation_type') and kwargs.get('form') is not None:
+                # Preserve field errors
+                observation_type_choices.append((observation_type, kwargs['form']))
+                continue
             form_data = {**initial, **{'observation_type': observation_type}}
             # Repopulate the appropriate form with form data if the original submission was invalid
             if observation_type == self.request.POST.get('observation_type'):
