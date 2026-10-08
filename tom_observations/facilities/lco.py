@@ -1,12 +1,15 @@
 from datetime import datetime, timedelta
 import logging
+from typing import get_args
 from urllib.parse import urljoin
 
 from aeonlib.conf import Settings as AeonSettings
 from aeonlib.exceptions import AuthenticationError
 from aeonlib.ocs.lco.facility import LcoFacility as AeonLcoFacility
-from aeonlib.ocs.request_models import RequestGroup
-from aeonlib.utils.django import omit_none
+from aeonlib.ocs.lco.instruments import LCO_INSTRUMENTS
+from aeonlib.ocs.request_models import Request, RequestGroup
+from aeonlib.ocs.target_models import Constraints
+from aeonlib.utils.django import omit_none, PydanticValidationMixin
 from crispy_forms.bootstrap import AppendedText, PrependedText, AccordionGroup
 from crispy_forms.layout import Column, Div, HTML, Layout, Row, MultiWidgetField, Fieldset
 from dateutil.parser import parse
@@ -332,7 +335,31 @@ class SpectralInstrumentConfigLayout(OCSInstrumentConfigLayout):
         )
 
 
-class LCOOldStyleObservationForm(OCSBaseObservationForm):
+LCO_INSTRUMENT_MODELS = {
+    code: model for model in get_args(LCO_INSTRUMENTS)
+    for code in get_args(model.model_fields['instrument_type'].annotation)
+}
+
+
+class LCOObservationValidationMixin(PydanticValidationMixin):
+    def validate_pydantic_fields(self):
+        self.bind_model_fields(RequestGroup, aliases={'observation_type': 'observation_mode'})
+        self.bind_model_fields(Request)
+        self.bind_selected_instrument_models()
+        super().validate_pydantic_fields()
+
+    def bind_model_fields(self, model, prefix='', aliases=None):
+        if model is None:
+            return
+        aliases = aliases or {}
+        for model_field in model.model_fields:
+            name = prefix + aliases.get(model_field, model_field)
+            if name in self.fields:
+                self.fields[name].pydantic_model = model
+                self.fields[name].pydantic_field = model_field
+
+
+class LCOOldStyleObservationForm(LCOObservationValidationMixin, OCSBaseObservationForm):
     """
     The LCOOldStyleObservationForm provides the backwards compatibility for the Imaging and Spectral Sequence
     forms to remain the same as they were previously despite the upgrades to the other LCO forms.
@@ -363,6 +390,13 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
 
         if isinstance(self, CadenceForm):
             self.helper.layout.insert(2, self.cadence_layout())
+
+    def bind_selected_instrument_models(self):
+        instrument = LCO_INSTRUMENT_MODELS.get(self.cleaned_data.get('instrument_type'))
+        if instrument is not None:
+            self.bind_model_fields(instrument.config_class)
+            self.bind_model_fields(instrument.optical_elements_class)
+        self.bind_model_fields(Constraints)
 
     def layout(self):
         return Div(
@@ -483,7 +517,7 @@ class LCOOldStyleObservationForm(OCSBaseObservationForm):
         return instrument_configs
 
 
-class LCOFullObservationForm(OCSFullObservationForm):
+class LCOFullObservationForm(LCOObservationValidationMixin, OCSFullObservationForm):
     def __init__(self, *args, **kwargs):
         if 'facility_settings' not in kwargs:
             kwargs['facility_settings'] = LCOSettings("LCO")
@@ -505,6 +539,27 @@ class LCOFullObservationForm(OCSFullObservationForm):
         # )
         # if isinstance(self, CadenceForm):
         #     self.helper.layout.insert(2, self.cadence_layout())
+
+    def bind_selected_instrument_models(self):
+        for j in range(self.facility_settings.get_setting('max_configurations')):
+            prefix = f'c_{j+1}_'
+            active_rows = [
+                f'{prefix}ic_{i+1}_' for i in range(self.facility_settings.get_setting('max_instrument_configs'))
+                if any(self.cleaned_data.get(f'{prefix}ic_{i+1}_exposure_time{suffix}')
+                       for suffix in ('', '_g', '_r', '_i', '_z'))
+            ]
+            if not active_rows:
+                continue
+            self.bind_model_fields(Constraints, prefix)
+            instrument = LCO_INSTRUMENT_MODELS.get(self.cleaned_data.get(prefix + 'instrument_type'))
+            if instrument is None:
+                continue
+            self.bind_model_fields(instrument, prefix, {'type': 'configuration_type'})
+            self.bind_model_fields(instrument.guiding_config_class, prefix, {'mode': 'guide_mode'})
+            self.bind_model_fields(instrument.acquisition_config_class, prefix, {'mode': 'acquisition_mode'})
+            for ic_prefix in active_rows:
+                self.bind_model_fields(instrument.config_class, ic_prefix, {'mode': 'readout_mode'})
+                self.bind_model_fields(instrument.optical_elements_class, ic_prefix)
 
     def convert_old_observation_payload_to_fields(self, data):
         """ This is a backwards compatibility function to allow us to load old-format observation parameters
@@ -1153,8 +1208,6 @@ class LCOFacility(OCSFacility):
         ))
 
     def extract_non_field_errors(self, exc):
-        # TODO: Map these errors to the actual model fields so validation errors are
-        # located with the fields
         return {'errors': {'non_field_errors': [
             f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}"
             for error in exc.errors()

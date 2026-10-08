@@ -307,7 +307,7 @@ class TestLCOMuscatImagingObservationForm(TestCase):
             'c_1_ic_1_exposure_time_r': 40, 'c_1_ic_1_exposure_time_i': 50, 'c_1_ic_1_exposure_time_z': 60,
             'c_1_ic_1_diffuser_g_position': 'out', 'c_1_ic_1_diffuser_r_position': 'out',
             'c_1_ic_1_diffuser_i_position': 'in', 'c_1_ic_1_diffuser_z_position': 'in', 'observation_mode': 'NORMAL',
-            'c_1_guide_mode': 'MUSCAT_G', 'c_1_ic_1_exposure_mode': 'SYNCHRONOUS', 'proposal': 'sampleproposal',
+            'c_1_guide_mode': 'ON', 'c_1_ic_1_exposure_mode': 'SYNCHRONOUS', 'proposal': 'sampleproposal',
             'c_1_instrument_type': '2M0-SCICAM-MUSCAT', 'c_1_max_airmass': 3.0
         }
 
@@ -384,7 +384,7 @@ class TestLCOMuscatImagingObservationForm(TestCase):
         form = LCOMuscatImagingObservationForm(self.valid_form_data)
         self.assertTrue(form.is_valid())
         guiding_config = form._build_guiding_config(1)
-        self.assertDictEqual({'mode': 'MUSCAT_G', 'optional': True}, guiding_config)
+        self.assertDictEqual({'mode': 'ON', 'optional': True}, guiding_config)
 
 
 class TestLCOSpectroscopyObservationForm(TestCase):
