@@ -327,7 +327,7 @@ class ReducedDatumQuerySet(models.query.QuerySet):
             default_fields = ['source_name', 'source_location', 'message']
             for field in default_fields:
                 if kwargs.get(field):
-                    defaults.update({'field': kwargs.pop(field)})
+                    defaults.update({field: kwargs.pop(field)})
             return super().get_or_create(defaults, **kwargs)
 
 
