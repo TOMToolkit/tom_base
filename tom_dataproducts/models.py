@@ -327,7 +327,7 @@ class ReducedDatumQuerySet(models.query.QuerySet):
             default_fields = ['source_name', 'source_location', 'message']
             for field in default_fields:
                 if kwargs.get(field):
-                    defaults.update({'field': kwargs.pop(field)})
+                    defaults.update({field: kwargs.pop(field)})
             return super().get_or_create(defaults, **kwargs)
 
 
@@ -482,7 +482,7 @@ class SpectroscopyReducedDatum(ReducedDatumCommon):
     class Meta(ReducedDatumCommon.Meta):
         constraints = [
             models.UniqueConstraint(
-                fields=["target", "timestamp", "telescope", "instrument", "flux", "reduction_version"],
+                fields=["target", "timestamp", "telescope", "instrument", "reduction_version"],
                 name="unique_spectroscopy",
             )
         ]

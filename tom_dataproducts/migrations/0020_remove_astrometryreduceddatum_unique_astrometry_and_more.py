@@ -37,6 +37,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='spectroscopyreduceddatum',
-            constraint=models.UniqueConstraint(fields=('target', 'timestamp', 'telescope', 'instrument', 'flux', 'reduction_version'), name='unique_spectroscopy'),
+            constraint=models.UniqueConstraint(fields=('target', 'timestamp', 'telescope', 'instrument', 'reduction_version'), name='unique_spectroscopy'),
         ),
     ]
