@@ -36,6 +36,10 @@ class Command(BaseCommand):
                     continue
                 if not new_observations:
                     logger.log(msg=f'No changes from dynamic cadence {cg}', level=logging.INFO)
+                elif new_observations == 'COMPLETED':
+                    logger.log(msg=f'''Single observation obtained for {cg},
+                                       no new observation submitted.''',
+                               level=logging.INFO)
                 else:
                     logger.log(msg=f'''Cadence update completed for dynamic cadence {cg},
                                        {len(new_observations)} new observations created.''',
