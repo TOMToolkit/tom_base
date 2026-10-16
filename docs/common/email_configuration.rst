@@ -201,7 +201,7 @@ This time the output should appear in the (`aiosmtpd`) terminal.
 What happens when email is not configured or  when sends fail
 -------------------------------------------------------------------
 
-Your TOM's Email configuration can be verifiied in code and at the command line:
+Your TOM's Email configuration can be verified in code and at the command line:
 
 - TOM Toolkit determines whether email is configured using
   ``tom_common.accounts.email.email_is_configured``
