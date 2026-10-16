@@ -13,17 +13,19 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from allauth.account import views as allauth_views
 from django.contrib import admin
 from django.urls import path
 from django.urls import include
-from django.views.generic import TemplateView
-from django.contrib.auth.views import LoginView, LogoutView
+from django.views.generic import RedirectView, TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.apps import apps
-from rest_framework.authtoken import views
 
 from tom_base import __version__
+from tom_common.accounts.api_views import TomObtainAuthToken
+from tom_common.accounts.urlpatterns import allauth_urlpatterns
+from tom_common.accounts.views import TermsAcceptView, TermsOfServiceView, UserApprovalView
 from tom_common.api_views import GroupViewSet
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
 from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView, UserProfileView
@@ -37,7 +39,15 @@ router.register(r'groups', GroupViewSet, 'groups')
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='tom_common/index.html'),
-         kwargs={'version': __version__}, name='home')]
+         kwargs={'version': __version__}, name='home'),
+    # django-allauth patterns come before the plugin loop so authentication URLs can't be shadowed
+    path('accounts/', include(allauth_urlpatterns())),
+
+    # for backwards compatibility with templates in tom_base and deployed TOMs,
+    # (they reverse 'login' and 'logout' URL names) route to django-allauth views.
+    path('accounts/login/', allauth_views.login, name='login'),
+    path('accounts/logout/', allauth_views.logout, name='logout'),
+]
 
 # Add the urls from each app that has an include_url_paths method in its AppConfig
 for app in apps.get_app_configs():
@@ -53,9 +63,12 @@ urlpatterns += [
     path('comments/', include('django_comments.urls')),
     path('observations/', include('tom_observations.urls', namespace='observations')),
     path('dataproducts/', include('tom_dataproducts.urls', namespace='dataproducts')),
+    path('terms/', TermsOfServiceView.as_view(), name='terms-of-service'),
+    path('terms/accept/', TermsAcceptView.as_view(), name='terms-accept'),
     path('users/', UserListView.as_view(), name='user-list'),
     path('users/<int:pk>/changepassword/', UserPasswordChangeView.as_view(), name='admin-user-change-password'),
     path('users/create/', UserCreateView.as_view(), name='user-create'),
+    path('users/<int:pk>/approve/', UserApprovalView.as_view(), name='user-approve'),
     path('users/<int:pk>/delete/', UserDeleteView.as_view(), name='user-delete'),
     path('users/<int:pk>/update/', UserUpdateView.as_view(), name='user-update'),
     path('users/<int:pk>/regenerate-token/', RegenerateAPITokenView.as_view(), name='regenerate-api-token'),
@@ -63,13 +76,20 @@ urlpatterns += [
     path('groups/create/', GroupCreateView.as_view(), name='group-create'),
     path('groups/<int:pk>/update/', GroupUpdateView.as_view(), name='group-update'),
     path('groups/<int:pk>/delete/', GroupDeleteView.as_view(), name='group-delete'),
-    path('accounts/login/', LoginView.as_view(), name='login'),
-    path('accounts/logout/', LogoutView.as_view(), name='logout'),
     path('comment/<int:pk>/delete', CommentDeleteView.as_view(), name='comment-delete'),
     path('admin/', admin.site.urls),
-    path('api-auth/', include('rest_framework.urls')),
+    # The REST framework's own login page is password-only and would bypass two-factor
+    # authentication. The 'rest_framework' namespace must still exist (the browsable API's
+    # login/logout links reverse it), so keep the names but send both to the TOM's pages.
+    path('api-auth/', include(([
+        path('login/', RedirectView.as_view(pattern_name='account_login', query_string=True), name='login'),
+        path('logout/', RedirectView.as_view(pattern_name='account_logout', query_string=True), name='logout'),
+    ], 'rest_framework'))),
     path('api/', include((collect_api_urls(), 'api'), namespace='api')),
-    path('api/token-auth/', views.obtain_auth_token),
+
+    # instead of rest_framework.authtoken.views.obtain_auth_token, call our MFA-compliant wrapper:
+    path('api/token-auth/', TomObtainAuthToken.as_view()),
+
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
  ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

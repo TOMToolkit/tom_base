@@ -63,7 +63,6 @@ attributes used by virtually all data types:
 * source_location: a CharField (max length=200) giving the location of the source of the Datum
 * reduction_version: a CharField (max length=50) used to record the version of the reduction of the Datum
 
-
 Ingesting data into the TOM
 ---------------------------
 Data products for a given target can be uploaded through the ``Manage Data`` tab on the target's detail page, or

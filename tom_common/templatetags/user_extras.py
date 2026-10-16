@@ -1,6 +1,18 @@
 import logging
+
+from allauth.account.adapter import get_adapter as get_account_adapter
+from allauth.mfa.adapter import get_adapter as get_mfa_adapter
+from allauth.mfa.models import Authenticator
+from guardian.conf import settings as guardian_settings
+from guardian.shortcuts import get_objects_for_user
+
 from django import template
+from django.conf import settings
 from django.contrib.auth.models import Group, User
+from django.db.models import Q
+
+from tom_common.accounts.email import email_is_configured
+from tom_common.accounts.requirements import AccountRequirement
 from django.forms.models import model_to_dict
 from django.apps import apps
 from django.utils.module_loading import import_string
@@ -22,12 +34,39 @@ def group_list(context):
 
 @register.inclusion_tag('auth/partials/user_list.html', takes_context=True)
 def user_list(context):
+    """Renders the list of users in the TOM along with
+    edit/delete/change password buttons, as well as an Add User button.
+
+    Each configured account requirement contributes a column (label + the set of pks (rows)
+    meeting it) so administrators can readily see in the column who is not yet compliant with
+    its requirement.
     """
-    Renders the list of users in the TOM along with edit/delete/change password buttons, as well as an Add User button.
-    """
+    # guardian's anonymous user is a permissions sentinel, not a person: requirements are
+    # inapplicable to it (it never logs in), so it belongs in no list of users
+    users_queryset = (User.objects.select_related('profile')
+                      .exclude(username=guardian_settings.ANONYMOUS_USER_NAME))
+
+    if getattr(settings, 'TOM_HIDE_OTHER_USERS', False):
+        # users see their own row and users with auth.view_user see other users.
+        visible_users = get_objects_for_user(context['request'].user, 'auth.view_user', klass=User)
+        users_queryset = users_queryset.filter(Q(pk__in=visible_users) | Q(pk=context['request'].user.pk))
+    users = list(users_queryset)
+    requirement_columns = []
+    for dotted_path in getattr(settings, 'TOM_ACCOUNT_REQUIREMENTS', []):
+        requirement = import_string(dotted_path)
+        if isinstance(requirement, AccountRequirement) and requirement.is_configured():
+            requirement_columns.append({
+                'label': requirement.column_label(),
+                'met_pks': requirement.met_user_pks(users),
+            })
     return {
         'request': context['request'],
-        'users': User.objects.all()
+        'users': users,
+        # users with an authenticator app enrolled, for the two-factor column
+        'mfa_user_ids': set(
+            Authenticator.objects.filter(type=Authenticator.Type.TOTP).values_list('user_id', flat=True)
+        ),
+        'requirement_columns': requirement_columns,
     }
 
 
@@ -64,6 +103,53 @@ def include_app_user_lists(context):
 
     context['user_lists_to_display'] = user_lists_to_display
     return context
+
+
+@register.simple_tag(takes_context=True)
+def mfa_can_be_disabled(context):
+    """Whether the current user may disable their own authenticator app (the MFA adapter decides)."""
+    user = context['request'].user
+    authenticator = Authenticator.objects.filter(user=user, type=Authenticator.Type.TOTP).first()
+    return authenticator is None or get_mfa_adapter().can_delete_authenticator(authenticator)
+
+
+@register.simple_tag(takes_context=True)
+def registration_is_open(context):
+    """Whether self-registration is currently open; the account adapter decides.
+
+    Asking the adapter (rather than reading TOM_REGISTRATION_STRATEGY directly) keeps the
+    Register button honest for TOMs that override is_open_for_signup in a custom adapter.
+    """
+    return get_account_adapter().is_open_for_signup(context['request'])
+
+
+@register.inclusion_tag('auth/partials/pending_users.html', takes_context=True)
+def pending_users_list(context):
+    """The registrations awaiting approval, for the Pending users table on the Users page.
+
+    "Pending" is literally ``is_active=False`` (tom_registration's convention), so an
+    account an administrator deactivated by hand appears here too.
+    """
+    request = context['request']
+    if not request.user.is_superuser:
+        return {'request': request, 'pending_users': User.objects.none()}
+    return {
+        'request': request,
+        'pending_users': User.objects.filter(is_active=False)
+                                     .exclude(username=guardian_settings.ANONYMOUS_USER_NAME),
+        'email_configured': email_is_configured(),
+    }
+
+
+@register.inclusion_tag('tom_common/partials/security_card.html')
+def security_card(user):
+    """Two-factor authentication status and actions for the Security card on the profile page."""
+    totp_authenticator = Authenticator.objects.filter(user=user, type=Authenticator.Type.TOTP).first()
+    return {
+        'user': user,
+        'mfa_enabled': totp_authenticator is not None,
+        'can_disable': get_mfa_adapter().can_delete_authenticator(totp_authenticator) if totp_authenticator else True,
+    }
 
 
 @register.inclusion_tag('tom_common/partials/user_data.html')

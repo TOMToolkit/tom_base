@@ -1,4 +1,4 @@
-{% load tom_common_extras %}
+{% load tom_common_extras user_extras %}
 {% navbar_app_addons 'right' %}
 {% if user.is_authenticated %}
 <li class="nav-item">
@@ -15,6 +15,12 @@
     </form>
 </li>
 {% else %}
+{% registration_is_open as show_register_button %}
+{% if show_register_button %}
+<li class="nav-item me-2">
+    <a class="btn btn-outline-primary" title="Register" href="{% url 'account_signup' %}">Register</a>
+</li>
+{% endif %}
 <li class="nav-item">
     <a class="btn btn-outline-success" title="Login" href="{% url 'login' %}">Login</a>
 </li>

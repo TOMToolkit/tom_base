@@ -14,7 +14,7 @@ This allows you to access the data in your TOM's database through a REST API.
 
         REST_FRAMEWORK = {
             'DEFAULT_AUTHENTICATION_CLASSES': [
-                'rest_framework.authentication.TokenAuthentication',
+                'tom_common.accounts.api_auth.TomTokenAuthentication',
                 'rest_framework.authentication.SessionAuthentication',
                 'rest_framework.authentication.BasicAuthentication',
             ],
@@ -23,7 +23,10 @@ This allows you to access the data in your TOM's database through a REST API.
 
     - ``BasicAuthentication`` is used when you send username/password credentials in the ``AuthorizationHeader`` of an HTTP request.
     - ``SessionAuthentication`` uses a cookie and CSRF protection to access the API from your TOM in a browser while logged in.
-    - ``TokenAuthentication`` uses your ``API Token`` available from the User Info of your User Profile of your TOM.
+    - ``TomTokenAuthentication`` uses your ``API Token`` available from the User Info of your User Profile of your
+      TOM. It is TOM Toolkit's wrapping of the REST framework's ``TokenAuthentication`` so that it additionally honors the
+      ``TOM_API_TOKEN_EXPIRY_DAYS`` and ``TOM_API_TOKEN_REQUIRES_MFA`` settings (see
+      :doc:`Accounts and Authentication <../common/authentication>`).
 
     To see ``SessionAuthentication`` in action, while logged into your TOM, point your browser to the ``/api/`` endpoint.
     This is the DRF API root. We'll show ``BasicAuthentication`` and ``TokenAuthentication`` in use below.
@@ -55,6 +58,10 @@ Token Authentication
 Every user has a personal API token, shown as **API Token** on their
 **User Profile** page. A token suits scripts and cron jobs because it
 needs no interactive prompt. Secure your API token as you would a password.
+
+Depending on this TOM's settings, tokens may expire after a number of days (regenerate yours
+on your profile edit page, which shows the dates) and may only be honoured while your account
+uses two-factor authentication — see :doc:`Accounts and Authentication <../common/authentication>`.
 
 Rather than pass in a username and be prompted for a password, we'll authenticate
 by sending the token in an ``Authorization`` header:

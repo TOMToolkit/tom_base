@@ -1,0 +1,1 @@
+Your {{ tom_name }} registration has been approved

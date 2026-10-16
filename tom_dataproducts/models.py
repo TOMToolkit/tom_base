@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
+from django.db.models.functions import MD5, Cast
 from django.utils import text, timezone
 from fits2image.conversions import fits_to_jpg
 from PIL import Image
@@ -312,30 +313,6 @@ class DataProduct(models.Model):
         return
 
 
-class ReducedDatumQuerySet(models.query.QuerySet):
-    """
-    This is a custom queryset that allows us to extend the get_or_create to coincide with our custom validate_unique
-    for ReducedDatum objects so that getting a ReducedDatum with get_or_create will return identical datums from
-    different sources.
-    """
-    def get_or_create(self, defaults=None, **kwargs):
-        try:
-            return super().get_or_create(defaults, **kwargs)
-        except ValidationError as e:
-            logger.warning(f'{e}')
-            defaults = {}
-            default_fields = ['source_name', 'source_location', 'message']
-            for field in default_fields:
-                if kwargs.get(field):
-                    defaults.update({'field': kwargs.pop(field)})
-            return super().get_or_create(defaults, **kwargs)
-
-
-class ReducedDatumManager(models.Manager):
-    def get_queryset(self):
-        return ReducedDatumQuerySet(self.model)
-
-
 class ReducedDatumCommon(models.Model):
     """
     Abstract base class for all reduced datum models.
@@ -393,8 +370,6 @@ class ReducedDatumCommon(models.Model):
     source_name = models.CharField(max_length=100, default="", blank=True)
     source_location = models.CharField(max_length=200, default="", blank=True)
     reduction_version = models.CharField(max_length=50, blank=True, default="")
-
-    objects = ReducedDatumManager()
 
     class Meta:
         abstract = True
@@ -456,9 +431,12 @@ class PhotometryReducedDatum(ReducedDatumCommon):
     class Meta(ReducedDatumCommon.Meta):
         constraints = [
             models.UniqueConstraint(
-                fields=["target", "bandpass", "timestamp", "limit", "brightness", "instrument", "reduction_version"],
-                name="unique_photometry",
-                nulls_distinct=False
+                fields=["target", "bandpass", "timestamp", "brightness", "instrument", "reduction_version"],
+                name="unique_photometry_brightness",
+            ),
+            models.UniqueConstraint(
+                fields=["target", "bandpass", "timestamp", "limit", "instrument", "reduction_version"],
+                name="unique_photometry_limit",
             )
         ]
 
@@ -479,9 +457,13 @@ class SpectroscopyReducedDatum(ReducedDatumCommon):
     class Meta(ReducedDatumCommon.Meta):
         constraints = [
             models.UniqueConstraint(
-                fields=["target", "timestamp", "telescope", "instrument", "flux", "reduction_version"],
+                "target",
+                "timestamp",
+                "telescope",
+                "instrument",
+                MD5(Cast("flux", output_field=models.TextField())),
+                "reduction_version",
                 name="unique_spectroscopy",
-                nulls_distinct=False
             )
         ]
 
@@ -503,7 +485,6 @@ class AstrometryReducedDatum(ReducedDatumCommon):
             models.UniqueConstraint(
                 fields=["target", "timestamp", "telescope", "instrument", "ra", "dec", "reduction_version"],
                 name="unique_astrometry",
-                nulls_distinct=False
             )
         ]
 

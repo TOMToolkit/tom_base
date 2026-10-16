@@ -1,10 +1,15 @@
 <div id="api-token-container" class="mt-3">
   <h5>API Token</h5>
+
   {% if drf_api_token %}
     <code>{{ drf_api_token }}</code>
+    <div class="form-text">
+      Created {{ drf_api_token.created|date }}{% if drf_api_token_expires %} — expires {{ drf_api_token_expires|date }}{% endif %}
+    </div>
   {% else %}
     <span class="text-muted">No token generated.</span>
   {% endif %}
+
   <form hx-post="{% url 'regenerate-api-token' pk=user_pk %}"
         hx-target="#api-token-container"
         hx-swap="outerHTML"
