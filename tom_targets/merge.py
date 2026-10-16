@@ -37,17 +37,19 @@ def target_merge(primary_target, secondary_target):
             setattr(primary_target, field.name, getattr(secondary_target, field.name, None))
             primary_target.save()
 
-    new_name = TargetName(target=primary_target, name=secondary_target.name)
-    new_name.save()
+    if secondary_target.name not in primary_target.names:
+        new_name = TargetName(target=primary_target, name=secondary_target.name)
+        new_name.save()
 
     merge_aliases = secondary_target.aliases.all()
     # Secondary target name and aliases all become aliases in the Primary target.
 
     for alias in merge_aliases:
-        alias_hold = alias.name
-        alias.delete()
-        new_name = TargetName(target=primary_target, name=alias_hold)
-        new_name.save()
+        alias.target = primary_target
+        try:
+            alias.save()
+        except ValidationError:
+            alias.delete()  # delete what would become a duplicate alias
 
     # Call all TargetLists associated with the secondary_target
     st_lists = secondary_target.targetlist_set.all()
@@ -65,11 +67,9 @@ def target_merge(primary_target, secondary_target):
         for reduceddatum in model.objects.filter(target=secondary_target):
             reduceddatum.target = primary_target
             try:
-                reduceddatum.validate_unique()
-            except ValidationError:
-                reduceddatum.delete()  # delete what would become a duplicate reducedatum
-            else:
                 reduceddatum.save()
+            except ValidationError:
+                reduceddatum.delete()  # delete what would become a duplicate reduceddatum
 
     # take secondary target extras without repeated keys and save them as primary target extras
     pt_targetextra_keys = list(TargetExtra.objects.filter(target=primary_target).values_list("key", flat=True))
@@ -78,6 +78,8 @@ def target_merge(primary_target, secondary_target):
         if targetextra.key not in pt_targetextra_keys:
             targetextra.target = primary_target
             targetextra.save()
+        else:
+            targetextra.delete()
 
     # take secondary_target observationrecords and save them as primary_target observationrecords
     st_observationrecords = ObservationRecord.objects.filter(target=secondary_target)
