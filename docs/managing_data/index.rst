@@ -47,6 +47,23 @@ record the origin of the data.
 older TOMs supported just the generic ReducedDatum.  If you are upgrading an older TOM, please see
 :doc:`these instructions <../introduction/updating>`.
 
+Adding a Custom Data Model
+--------------------------
+All of the TOM's reduced datum models inherit from a base class ``ReducedDatumCommon``.  If you want to add your
+own custom data models to a TOM, ``ReducedDatumCommon`` is the place to start, since it provides a set of
+attributes used by virtually all data types:
+
+* target: a Foreign Key linking to the corresponding Target
+* data_product: a Foreign Key linking the Datum to a DataProduct object
+* timestamp: a DateTimeField recording the timestamp of acquisition of the Datum
+* value: a JSONField which can accept a flexible dictionary of parameters
+* telescope: a CharField (max length=255) indicating the name of the telescope that acquired the data
+* instrument: a CharField (max length=255) indicating the name of the instrument that acquired the data
+* source_name: a CharField (max length=100) to record the origin of the Datum
+* source_location: a CharField (max length=200) giving the location of the source of the Datum
+* reduction_version: a CharField (max length=50) used to record the version of the reduction of the Datum
+
+
 Ingesting data into the TOM
 ---------------------------
 Data products for a given target can be uploaded through the ``Manage Data`` tab on the target's detail page, or
