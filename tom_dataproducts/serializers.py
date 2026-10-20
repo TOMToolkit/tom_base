@@ -185,3 +185,10 @@ class DataProductSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Not a valid data_product_type. Valid data_product_types are {0}.'
                                               .format(', '.join(k for k in settings.DATA_PRODUCT_TYPES.keys())))
         return value
+
+
+class IncomingDataSerializer(serializers.Serializer):
+    """Payload POSTed by the ATLAS forced photometry server to the callback URL."""
+    task_url = serializers.URLField()
+    success = serializers.BooleanField()
+    error_msg = serializers.CharField(required=False, allow_blank=True, allow_null=True)
