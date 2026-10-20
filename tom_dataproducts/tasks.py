@@ -6,30 +6,43 @@ from astropy.time import Time
 from urllib.parse import urlparse
 from django.conf import settings
 from django.utils import timezone
-from django.core.files.base import ContentFile
 from django_tasks import task
 
 from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.data_processor import run_data_processor
+from tom_dataproducts.api_views import ATLASProcessorView
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-
 @task
-def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type, use_reduced=False):
+def atlas_query(*args, **kwargs):
+    # just a wrapper on _atlas_query to enable non-async calling of the functionality during development and testing
+    return _atlas_query(*args, **kwargs)
+
+def _atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type, use_reduced=False, use_callback=True):
     logger.debug('Calling atlas query!')
     target = Target.objects.get(pk=target_id)
     headers = {"Authorization": f"Token {settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('api_key')}",
                "Accept": "application/json"}
     base_url = settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('url')
+
     task_url = None
     while not task_url:
         with requests.Session() as s:
             task_data = {"ra": target.ra, "dec": target.dec, "mjd_min": min_date_mjd, "send_email": False,
                          "use_reduced": use_reduced}
+
+            ran_with_callback = False
+            if use_callback:
+                if "ATLAS_CALLBACK_URL" not in settings.__dict__:
+                    logger.error("ATLAS_CALLBACK_URL is not set in settings, defaulting to waiting for ATLAS FP job to finish!")
+                else:    
+                    task_data["callback_url"] = settings.ATLAS_CALLBACK_URL
+                    ran_with_callback = True
+                    
             if max_date_mjd:
                 task_data['mjd_max'] = max_date_mjd
             resp = s.post(
@@ -56,51 +69,8 @@ def atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type, use_re
                 logger.error(f"Failed to queue Atlas task: HTTP Error {resp.status_code} - {resp.text}")
                 return False
 
-    result_url = None
-    taskstarted_printed = False
-    while not result_url:
-        with requests.Session() as s:
-            resp = s.get(task_url, headers=headers)
+    if ran_with_callback:
+        return True
 
-            if resp.status_code == 200:
-                if resp.json()["finishtimestamp"]:
-                    if resp.json()["error_msg"] == "No data returned":
-                        logger.debug(f"No data returned for task {task_url}")
-                        return False
-                    result_url = resp.json()["result_url"]  # PART WHEN QUERY IS COMPLETE
-                    logger.debug(f"Task is complete with results available at {result_url}")
-                elif resp.json()["starttimestamp"]:
-                    if not taskstarted_printed:
-                        logger.debug(f"Task is running (started at {resp.json()['starttimestamp']})")
-                        taskstarted_printed = True
-                    time.sleep(2)
-                else:
-                    logger.debug(f"Waiting for job to start (queued at {resp.json()['timestamp']})")
-                    time.sleep(4)
-            else:
-                logger.error(f"Failed to retrieve Atlas task status: HTTP Error {resp.status_code} - {resp.text}")
-                return False
+    return ATLASProcessorView.process_atlas_fp_results(task_url, target, data_product_type)
 
-    results = requests.get(result_url, headers=headers)
-    dp_name = f"atlas_{Time(min_date_mjd, format='mjd').strftime('%Y_%m_%d')}"
-    if max_date_mjd:
-        dp_name += f"-{Time(max_date_mjd, format='mjd').strftime('%Y_%m_%d')}"
-    dp_name += f"_{urlparse(result_url)[2].rpartition('/')[2]}"
-    file = ContentFile(results.content, name=dp_name)
-
-    dp = DataProduct.objects.create(
-        product_id=dp_name,
-        target=target,
-        data=file,
-        data_product_type=data_product_type,
-        extra_data=f'Queried from Atlas within the TOM on {timezone.now().isoformat()}'
-    )
-    logger.info(f"Created dataproduct {dp_name} from atlas query")
-
-    try:
-        run_data_processor(dp)
-    except InvalidFileFormatException as e:
-        logger.error(f"Error processing returned Atlas data into ReducedDatums: {repr(e)}")
-        return False
-
-    return True
