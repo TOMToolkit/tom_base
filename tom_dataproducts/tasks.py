@@ -19,10 +19,10 @@ logger.setLevel(logging.DEBUG)
 
 @task
 def atlas_query(*args, **kwargs):
-    # just a wrapper on _atlas_query to enable non-async calling of the functionality during development and testing
-    return _atlas_query(*args, **kwargs)
+    """just a wrapper on trigger_atlas_fp for backwards compatability"""
+    return trigger_atlas_fp(*args, **kwargs)
 
-def _atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type, use_reduced=False, use_callback=True):
+def trigger_atlas_fp(min_date_mjd, max_date_mjd, target_id, data_product_type, use_reduced=False, use_callback=True):
     logger.debug('Calling atlas query!')
     target = Target.objects.get(pk=target_id)
     headers = {"Authorization": f"Token {settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('api_key')}",
@@ -70,6 +70,7 @@ def _atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type, use_r
                 return False
 
     if ran_with_callback:
+        logger.info("Queued ATLAS FP job, ATLAS will report back when job finishes, exiting")
         return True
 
     return ATLASProcessorView.process_atlas_fp_results(task_url, target, data_product_type)
