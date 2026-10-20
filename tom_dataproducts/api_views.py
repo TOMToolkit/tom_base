@@ -4,11 +4,12 @@ import requests
 from copy import deepcopy
 from urllib.parse import urlparse
 
+import astropy.io.ascii
+
 from django.conf import settings
 from django.utils import timezone
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.http import Http404
 from django_filters import rest_framework as drf_filters
 from django.db import IntegrityError
@@ -24,11 +25,12 @@ from rest_framework.views import APIView
 
 from tom_common.hooks import run_hook
 from tom_dataproducts.data_processor import run_data_processor
+from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.filters import DataProductFilter, ReducedDatumFilter
 from tom_dataproducts.models import (DataProduct, ReducedDatum, PhotometryReducedDatum,
                                      SpectroscopyReducedDatum, AstrometryReducedDatum,
                                      REDUCED_DATUM_MODELS, try_parse_reduced_datum)
-from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer
+from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer, IncomingDataSerializer
 from tom_targets.models import Target
 from tom_targets.utils import cone_search_filter
 
@@ -264,18 +266,20 @@ class ATLASProcessorView(APIView):
 
         data = serializer.validated_data
         if not data["success"]:
-            raise ValueError(f"ATLAS FP failed with {data['error_msg']}")
-        
-        self.process_atlas_fp_results(data["task_url"], None, "atlas_photometry")
-        
+            logger.error(f"ATLAS FP failed with {data.get('error_msg')}")
+            return Response({"status": "error", "detail": data.get("error_msg")}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not self.process_atlas_fp_results(data["task_url"], None, "atlas_photometry"):
+            return Response({"status": "error", "detail": "Failed to process ATLAS FP results"},
+                            status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
         return Response({"status": "ok"})
 
     @staticmethod
     def process_atlas_fp_results(task_url, target, data_product_type, radius=2/3600):
-        
         headers = {"Authorization": f"Token {settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('api_key')}",
                    "Accept": "application/json"}
-        
+
         result_url = None
         taskstarted_printed = False
         while not result_url:
@@ -301,14 +305,13 @@ class ATLASProcessorView(APIView):
                     logger.error(f"Failed to retrieve Atlas task status: HTTP Error {resp.status_code} - {resp.text}")
                     return False
 
-        import pdb; pdb.set_trace()
         results = requests.get(result_url, headers=headers)
         dp_name = f"atlas_{urlparse(result_url)[2].rpartition('/')[2]}"
         file = ContentFile(results.content, name=dp_name)
 
         if target is None:
             # then we need to infer the target via a cone search on the target database
-            data = astropy.io.ascii.read(default_storage.open(dp_name, "r"))
+            data = astropy.io.ascii.read(results.text)
             if len(data) < 1:
                 raise InvalidFileFormatException('Empty table or invalid file type')
             datum = data[0]
