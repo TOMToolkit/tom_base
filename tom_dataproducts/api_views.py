@@ -30,7 +30,7 @@ from tom_dataproducts.filters import DataProductFilter, ReducedDatumFilter
 from tom_dataproducts.models import (DataProduct, ReducedDatum, PhotometryReducedDatum,
                                      SpectroscopyReducedDatum, AstrometryReducedDatum,
                                      REDUCED_DATUM_MODELS, try_parse_reduced_datum)
-from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer, IncomingDataSerializer
+from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer, IncomingAtlasDataSerializer
 from tom_targets.models import Target
 from tom_targets.utils import cone_search_filter
 
@@ -261,7 +261,7 @@ class ATLASProcessorView(APIView):
     permission_classes = []
 
     def post(self, request):
-        serializer = IncomingDataSerializer(data=request.data)
+        serializer = IncomingAtlasDataSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         data = serializer.validated_data

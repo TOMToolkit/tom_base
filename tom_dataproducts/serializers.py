@@ -187,7 +187,7 @@ class DataProductSerializer(serializers.ModelSerializer):
         return value
 
 
-class IncomingDataSerializer(serializers.Serializer):
+class IncomingAtlasDataSerializer(serializers.Serializer):
     """Payload POSTed by the ATLAS forced photometry server to the callback URL."""
     task_url = serializers.URLField()
     success = serializers.BooleanField()
