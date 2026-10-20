@@ -37,7 +37,7 @@ def _atlas_query(min_date_mjd, max_date_mjd, target_id, data_product_type, use_r
 
             ran_with_callback = False
             if use_callback:
-                if "ATLAS_CALLBACK_URL" not in settings.__dict__:
+                if not getattr(settings, "ATLAS_CALLBACK_URL", None):
                     logger.error("ATLAS_CALLBACK_URL is not set in settings, defaulting to waiting for ATLAS FP job to finish!")
                 else:    
                     task_data["callback_url"] = settings.ATLAS_CALLBACK_URL
