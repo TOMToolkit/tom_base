@@ -155,8 +155,8 @@ class TestMPCExplorerDataServiceCanary(TestCase):
 
     def test_query_neo(self):
         query_parameters = {'desig': '433'}
-        self.ds.query_service(query_parameters)
-        self.ds.query_targets(query_parameters)
+        targets = self.ds.query_targets(query_parameters)
+        self.target_result = targets[0]
         target = self.ds.to_target(self.target_result)
         # Only test things that are not likely to change (much) with time
         self.assertEqual(target.name, '433')
@@ -173,8 +173,8 @@ class TestMPCExplorerDataServiceCanary(TestCase):
 
     def test_query_comet(self):
         query_parameters = {'desig': 'C/1995 O1'}
-        self.ds.query_service(query_parameters)
-        self.ds.query_targets(query_parameters)
+        targets = self.ds.query_targets(query_parameters)
+        self.target_result = targets[0]
         target = self.ds.to_target(self.target_result)
         target.save(names=getattr(target, 'extra_names', []))
         # Only test things that are not likely to change (much) with time
