@@ -7,7 +7,7 @@ from tom_dataproducts.views import DataProductUploadView, DataProductFeatureView
 from tom_dataproducts.views import DataShareView, SingleTargetDataServiceQueryView
 
 from tom_common.api_router import SharedAPIRootRouter
-from tom_dataproducts.api_views import DataProductViewSet, ReducedDatumViewSet
+from tom_dataproducts.api_views import DataProductViewSet, ReducedDatumViewSet, ATLASProcessorView
 
 router = SharedAPIRootRouter()
 router.register(r'dataproducts', DataProductViewSet, 'dataproducts')
@@ -31,4 +31,5 @@ urlpatterns = [
     path('data/<int:dp_pk>/share/', DataShareView.as_view(), name='share'),
     path('target/<int:tg_pk>/share/', DataShareView.as_view(), name='share_all'),
     path('<int:pk>/save/', DataProductSaveView.as_view(), name='save'),
+    path('api/atlas_processor/', ATLASProcessorView.as_view(), name='atlas-processor'),
 ]
