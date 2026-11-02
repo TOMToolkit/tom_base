@@ -1,5 +1,6 @@
 import logging
 from typing import Any, Dict, List
+import functools
 
 from django import forms
 
@@ -8,7 +9,9 @@ from tom_dataservices.forms import BaseQueryForm as QueryForm
 from tom_targets.models import Target, TargetName
 
 from astroquery.simbad import Simbad
+from astroquery.simbad import conf as simbad_conf
 from astropy.table import Table
+from pyvo.dal.exceptions import DALServiceError
 
 logger = logging.getLogger(__name__)
 # logger.setLevel(logging.DEBUG)
@@ -21,10 +24,23 @@ class SimbadDataService(DataService):
     https://astroquery.readthedocs.io/en/latest/simbad/simbad.html.
     """
     name = 'Simbad'
+    # SIMBAD Servers are mirrors of each other, so if a server is working, we want to keep using it.
+    current_server = simbad_conf.server
+    # When we get a working instance, we want to store it to be used again rather than making a new one.
+    simbad_instances = {}
 
-    def __init__(self, *args, **kwargs):
-        self.simbad = Simbad()
-        self.simbad.add_votable_fields('pmra', 'pmdec', 'ra', 'dec', 'main_id', 'parallax', 'distance')
+    def _get_simbad_instance(self, server, *args, **kwargs):
+        """Initialize the SIMBAD instance
+            Only return a SIMBAD instance for a working server that responds within 5 seconds.
+        """
+        if server not in SimbadDataService.simbad_instances:
+            self.simbad = Simbad()
+            self.simbad.server = server
+            # Prevent long hangs if a server is down.
+            self.simbad._session.request = functools.partial(self.simbad._session.request, timeout=(5, None))
+            self.simbad.add_votable_fields('pmra', 'pmdec', 'ra', 'dec', 'main_id', 'parallax', 'distance')
+            SimbadDataService.simbad_instances[server] = self.simbad
+        return SimbadDataService.simbad_instances[server]
 
     @classmethod
     def get_form_class(cls):
@@ -49,15 +65,26 @@ class SimbadDataService(DataService):
         logger.debug(f'SIMBAD.query_service.query_parameters {query_parameters}')
         # Get search term from query parameters
         search_term: str = query_parameters.get('search_term', '')  # TODO: what default???
+        catalog_data = None
 
-        # Simbad returns an astropy.table.Table
-        catalog_data: Table = self.simbad.query_object(search_term)  # type: ignore
-        logger.debug(f'SIMBAD.query_service.catalog_data{catalog_data}')
+        # Start with the current server, then cycle through listed servers until we find a working one.
+        servers = simbad_conf.servers_list
+        start = servers.index(SimbadDataService.current_server)
+        for server in servers[start:] + servers[:start]:
+            try:
+                # Simbad returns an astropy.table.Table
+                catalog_data: Table = self._get_simbad_instance(server).query_object(search_term)  # type: ignore
+                logger.debug(f'SIMBAD.query_service.catalog_data{catalog_data}')
+            except (DALServiceError) as e:
+                logger.warning(f'SIMBAD server {server} is unavailable: {e}')
+                continue
+            SimbadDataService.current_server = server
+            break
 
         # astroquery <0.4.10, > 0.4.7 has issues joining the distance field, failing to find any results.
         # This workaround checks if the query result is an empty table and then tries the query a 2nd time without the
         # distance field.
-        if not catalog_data:
+        if not catalog_data and catalog_data is not None:
             self.simbad.reset_votable_fields()
             self.simbad.add_votable_fields('pmra', 'pmdec', 'ra', 'dec', 'main_id', 'parallax')
             catalog_data = self.simbad.query_object(search_term)  # type: ignore
