@@ -27,7 +27,7 @@ class SimbadDataService(DataService):
     # SIMBAD Servers are mirrors of each other, so if a server is working, we want to keep using it.
     current_server = simbad_conf.server
     # When we get a working instance, we want to store it to be used again rather than making a new one.
-    simbad_instances = {}
+    simbad_instances = {}  # e.g. {'simbad.harvard.edu': <astroquery.simbad.core.SimbadClass object at 0x7f92a1941f70>}
 
     def _get_simbad_instance(self, server, *args, **kwargs):
         """Initialize the SIMBAD instance
