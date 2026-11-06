@@ -2,25 +2,21 @@ import requests
 import time
 import logging
 import re
-from astropy.time import Time
-from urllib.parse import urlparse
 from django.conf import settings
-from django.utils import timezone
 from django_tasks import task
 
 from tom_targets.models import Target
-from tom_dataproducts.models import DataProduct
-from tom_dataproducts.exceptions import InvalidFileFormatException
-from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.api_views import ATLASProcessorView
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+
 @task
 def atlas_query(*args, **kwargs):
     """just a wrapper on trigger_atlas_fp for backwards compatability"""
     return trigger_atlas_fp(*args, **kwargs)
+
 
 def trigger_atlas_fp(min_date_mjd, max_date_mjd, target_id, data_product_type, use_reduced=False, use_callback=True):
     logger.debug('Calling atlas query!')
@@ -38,11 +34,12 @@ def trigger_atlas_fp(min_date_mjd, max_date_mjd, target_id, data_product_type, u
             ran_with_callback = False
             if use_callback:
                 if not getattr(settings, "ATLAS_CALLBACK_URL", None):
-                    logger.error("ATLAS_CALLBACK_URL is not set in settings, defaulting to waiting for ATLAS FP job to finish!")
-                else:    
+                    logger.error("ATLAS_CALLBACK_URL is not set in settings, defaulting to waiting for ATLAS FP"
+                                  "job to finish!")
+                else:
                     task_data["callback_url"] = settings.ATLAS_CALLBACK_URL
                     ran_with_callback = True
-                    
+
             if max_date_mjd:
                 task_data['mjd_max'] = max_date_mjd
             resp = s.post(
@@ -74,4 +71,3 @@ def trigger_atlas_fp(min_date_mjd, max_date_mjd, target_id, data_product_type, u
         return True
 
     return ATLASProcessorView.process_atlas_fp_results(task_url, target, data_product_type)
-
