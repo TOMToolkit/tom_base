@@ -240,7 +240,7 @@ class TargetShareForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['share_destination'].choices = get_sharing_destination_options()
+        self.fields['share_destination'].choices = get_sharing_destination_options(include_download=False)
 
 
 class TargetListShareForm(forms.Form):
@@ -258,7 +258,7 @@ class TargetListShareForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['share_destination'].choices = get_sharing_destination_options()
+        self.fields['share_destination'].choices = get_sharing_destination_options(include_download=False)
 
 
 class TargetMergeForm(forms.Form):
