@@ -34,8 +34,8 @@ def trigger_atlas_fp(min_date_mjd, max_date_mjd, target_id, data_product_type, u
             ran_with_callback = False
             if use_callback:
                 if not getattr(settings, "ATLAS_CALLBACK_URL", None):
-                    logger.error("ATLAS_CALLBACK_URL is not set in settings, defaulting to waiting for ATLAS FP"
-                                  "job to finish!")
+                    logger.error("ATLAS_CALLBACK_URL is not set in settings, "
+                                 "defaulting to waiting for ATLAS FP job to finish!")
                 else:
                     task_data["callback_url"] = settings.ATLAS_CALLBACK_URL
                     ran_with_callback = True
