@@ -17,6 +17,8 @@ from __future__ import annotations
 
 from typing import Iterator
 
+from allauth.mfa.adapter import get_adapter
+from allauth.mfa.models import Authenticator
 from cryptography.fernet import InvalidToken
 
 from django.apps import apps
@@ -67,6 +69,30 @@ class Command(BaseCommand):
                 instance.save(update_fields=[field.name])
                 success_count += 1
             self.stdout.write(f'  scanned {label}')
+
+        # allauth Authenticator rows hold adapter-encrypted values inside their JSON data:
+        # 'secret' (TOTP), 'seed' and each entry of 'migrated_codes' (recovery codes).
+        adapter = get_adapter()
+        for authenticator in Authenticator.objects.all():
+            try:
+                for key in ('secret', 'seed'):
+                    if key in authenticator.data:
+                        authenticator.data[key] = adapter.encrypt(adapter.decrypt(authenticator.data[key]))
+                if 'migrated_codes' in authenticator.data:
+                    authenticator.data['migrated_codes'] = [
+                        adapter.encrypt(adapter.decrypt(code)) for code in authenticator.data['migrated_codes']
+                    ]
+            except InvalidToken:
+                failures.append((
+                    'mfa.Authenticator',
+                    authenticator.pk,
+                    'data',
+                    'not decryptable with current SECRET_KEY or any SECRET_KEY_FALLBACKS entry',
+                ))
+                continue
+            authenticator.save(update_fields=['data'])
+            success_count += 1
+        self.stdout.write('  scanned mfa.Authenticator.data')
 
         self.stdout.write('')
         self.stdout.write(self.style.SUCCESS(

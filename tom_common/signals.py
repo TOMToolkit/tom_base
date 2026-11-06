@@ -1,9 +1,14 @@
 import logging
 
+from allauth.account.signals import password_changed, password_reset, password_set, user_signed_up
+from allauth.mfa.signals import authenticator_added, authenticator_removed, authenticator_reset
+
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
+from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 from rest_framework.authtoken.models import Token
 
@@ -11,6 +16,10 @@ from tom_common.models import Profile
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+# Authentication events land here; a TOM routes 'tom_common.security' to a file or its log
+# collector in LOGGING (see the deployment notes in docs/common/authentication.rst).
+security_logger = logging.getLogger('tom_common.security')
 
 
 # NOTE: there are two ways to reference the User model: settings.AUTH_USER_MODEL and get_user_model()
@@ -63,3 +72,69 @@ def create_auth_token_on_user_post_save(sender, instance=None, created=False, **
     """
     if created:
         Token.objects.create(user=instance)
+
+
+# Signal: password-age bookkeeping for TOM_PASSWORD_EXPIRY_DAYS.
+# Invariant shared by the two receivers below:
+# - any password-hash change clears Profile.password_changed_at (None counts as expired);
+# - only self-service paths re-stamp it.
+# See docs/common/authentication.rst ("Password expiry") for the resulting behaviour.
+@receiver(pre_save, sender=User)
+def clear_password_stamp_on_password_change(sender, instance, update_fields=None, **kwargs) -> None:
+    """Clear the password stamp whenever the stored password hash changes."""
+    if instance.pk is None:
+        return  # creation: password_changed_at is already None
+    if update_fields is not None and 'password' not in update_fields:
+        return  # e.g. the last_login-only save on every login
+    old_password = User.objects.filter(pk=instance.pk).values_list('password', flat=True).first()
+    if old_password is not None and old_password != instance.password:
+        Profile.objects.filter(user=instance).update(password_changed_at=None)
+        # every password change passes through here, whichever view or shell set it
+        security_logger.info(f'Password changed: {instance.username}')
+
+
+@receiver(password_changed)
+@receiver(password_set)
+@receiver(password_reset)
+@receiver(user_signed_up)
+def stamp_password_changed_on_self_service(sender, request, user, **kwargs) -> None:
+    """Set the password changed at date to now.
+
+    According to the signal receivers, the user chose this password themselves
+    (allauth change/set/reset, or sign-up): So, mark it as changed now().
+    """
+    Profile.objects.filter(user=user).update(password_changed_at=timezone.now())
+
+
+# Signal: the security log. One INFO line per authentication event, so an operator can
+# answer "who logged in / failed to / changed what, and when" from LOGGING alone.
+@receiver(user_logged_in)
+def log_login(sender, request, user, **kwargs) -> None:
+    security_logger.info(f'Login succeeded: {user.username}')
+
+
+@receiver(user_login_failed)
+def log_login_failed(sender, credentials, request=None, **kwargs) -> None:
+    # the attempted username is data an operator needs; the password is never logged
+    security_logger.info(f'Login failed: username={credentials.get("username", "(not given)")}')
+
+
+@receiver(user_logged_out)
+def log_logout(sender, request, user, **kwargs) -> None:
+    if user is not None:
+        security_logger.info(f'Logout: {user.username}')
+
+
+@receiver(authenticator_added)
+def log_authenticator_added(sender, request, user, authenticator, **kwargs) -> None:
+    security_logger.info(f'Two-factor authenticator added: {user.username} ({authenticator.type})')
+
+
+@receiver(authenticator_removed)
+def log_authenticator_removed(sender, request, user, authenticator, **kwargs) -> None:
+    security_logger.info(f'Two-factor authenticator removed: {user.username} ({authenticator.type})')
+
+
+@receiver(authenticator_reset)
+def log_authenticator_reset(sender, request, user, authenticator, **kwargs) -> None:
+    security_logger.info(f'Two-factor authenticator reset: {user.username} ({authenticator.type})')

@@ -1,0 +1,21 @@
+{% extends "account/base_entrance.html" %}
+{% load allauth %}
+{% comment %}
+Overrides allauth's default to suggest a next action of this "blocked" state.
+
+Upgrade Note: This page is a full replacement of allauth's template, so there are no
+"TOM Toolkit" markers. When upgrading django-allauth, only check their copy for
+structural changes (extends/blocks).
+{% endcomment %}
+{% block head_title %}
+    Sign Up Closed
+{% endblock head_title %}
+{% block content %}
+    {% element h1 %}
+        Sign Up Closed
+    {% endelement %}
+    {% element p %}
+        Self sign-up is not enabled on this TOM.
+        To get an account, please contact the administrators of this TOM — they can create one for you.
+    {% endelement %}
+{% endblock content %}

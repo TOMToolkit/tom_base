@@ -1,0 +1,3 @@
+{{ user.username }}{% if user.get_full_name %} ({{ user.get_full_name }}){% endif %} has registered and is awaiting approval.
+
+Approve or delete the account from the Pending users table on the Users page of your TOM.

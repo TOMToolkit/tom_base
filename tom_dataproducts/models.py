@@ -456,9 +456,12 @@ class PhotometryReducedDatum(ReducedDatumCommon):
     class Meta(ReducedDatumCommon.Meta):
         constraints = [
             models.UniqueConstraint(
-                fields=["target", "bandpass", "timestamp", "limit", "brightness", "instrument", "reduction_version"],
-                name="unique_photometry",
-                nulls_distinct=False
+                fields=["target", "bandpass", "timestamp", "brightness", "instrument", "reduction_version"],
+                name="unique_photometry_brightness",
+            ),
+            models.UniqueConstraint(
+                fields=["target", "bandpass", "timestamp", "limit", "instrument", "reduction_version"],
+                name="unique_photometry_limit",
             )
         ]
 
@@ -481,7 +484,6 @@ class SpectroscopyReducedDatum(ReducedDatumCommon):
             models.UniqueConstraint(
                 fields=["target", "timestamp", "telescope", "instrument", "flux", "reduction_version"],
                 name="unique_spectroscopy",
-                nulls_distinct=False
             )
         ]
 
@@ -503,7 +505,6 @@ class AstrometryReducedDatum(ReducedDatumCommon):
             models.UniqueConstraint(
                 fields=["target", "timestamp", "telescope", "instrument", "ra", "dec", "reduction_version"],
                 name="unique_astrometry",
-                nulls_distinct=False
             )
         ]
 

@@ -1,0 +1,26 @@
+<div class="card mb-3">
+  <h5 class="card-header">Security</h5>
+  <div class="card-body">
+    <h6 class="card-title">Two-factor authentication</h6>
+    {% if mfa_enabled %}
+      <p>
+        <span class="badge bg-success">Enabled</span>
+        Logging in asks for a code from your authenticator app.
+      </p>
+      <a href="{% url 'mfa_index' %}" class="btn btn-outline-primary btn-sm">Manage two-factor authentication</a>
+      {% if not can_disable %}
+        <p class="form-text mt-2">
+          Two-factor authentication is required for your account, so it cannot be disabled here.
+          If you lose your authenticator app and recovery codes, contact the administrators of this
+          TOM — they can remove the authenticator so that you can enrol again.
+        </p>
+      {% endif %}
+    {% else %}
+      <p>
+        <span class="badge bg-warning text-dark">Not enabled</span>
+        Add a second factor to protect your account.
+      </p>
+      <a href="{% url 'mfa_activate_totp' %}" class="btn btn-primary btn-sm">Enable two-factor authentication</a>
+    {% endif %}
+  </div>
+</div>
