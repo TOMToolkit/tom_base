@@ -148,12 +148,14 @@ class AtlasForcedPhotometryService(stds.BaseSingleTargetDataService):
         if default_task_backend.supports_get_result:
             return True
         else:
-            query_succeeded = result.status == ResultStatus.SUCCEEDED
-            if not query_succeeded:
+            if not result.status == ResultStatus.SUCCEEDED:
                 raise stds.SingleTargetDataServiceException(
                     "Atlas query failed, check the server logs for more information"
                 )
-            self.success_message = "Atlas query completed. View its data product in the 'Manage Data' tab"
+            elif not result._return_value:
+                self.success_message = "Atlas query completed with no results."
+            else:
+                self.success_message = "Atlas query completed. View its data product in the 'Manage Data' tab."
 
         return True
 
