@@ -765,6 +765,53 @@ class TestReducedDatumModel(TestCase):
         with self.assertRaises(IntegrityError):
             PhotometryReducedDatum.objects.bulk_create(datums)
 
+    def test_reduced_datum_get_or_create(self):
+        PhotometryReducedDatum.objects.create(
+            target=self.target,
+            timestamp=self.timestamp,
+            brightness=None,
+            bandpass="r",
+            limit=2.0,
+        )
+
+        _, created = PhotometryReducedDatum.objects.get_or_create(
+            target=self.target,
+            timestamp=self.timestamp,
+            brightness=None,
+            bandpass="r",
+            limit=2.0,
+        )
+        self.assertFalse(created)
+
+    def test_reduced_datum_get_or_create_duplicate(self):
+        _, created = PhotometryReducedDatum.objects.get_or_create(
+            target=self.target,
+            bandpass="r",
+            timestamp=self.timestamp,
+            defaults={
+                'brightness': 2.0,
+                'brightness_error': 1.0,
+                'telescope': 'ZTF',
+                'source_name': "test_source",
+                'source_location': "test_source_location",
+            }
+        )
+        self.assertTrue(created)
+
+        _, created = PhotometryReducedDatum.objects.get_or_create(
+            target=self.target,
+            bandpass="r",
+            timestamp=self.timestamp,
+            defaults={
+                'brightness': 2.0,
+                'brightness_error': 1.0,
+                'telescope': 'ZTF',
+                'source_name': "test_source",
+                'source_location': "test_source_location",
+            }
+        )
+        self.assertFalse(created)
+
 
 @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
                    TARGET_PERMISSIONS_ONLY=True,
