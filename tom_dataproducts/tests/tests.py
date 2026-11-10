@@ -82,7 +82,7 @@ class Views(TestCase):
 
     def test_dataproduct_list_on_target(self, dp_mock):
         response = self.client.get(reverse('tom_targets:detail', kwargs={'pk': self.target.id}))
-        self.assertContains(response, 'afile.fits')
+        self.assertContains(response, self.data_product.get_file_name())
 
     def test_get_dataproducts(self, dp_mock):
         response = self.client.get(reverse('tom_observations:detail', kwargs={'pk': self.observation_record.id}))
@@ -97,7 +97,7 @@ class Views(TestCase):
                 follow=True
             )
             self.assertTrue(mock.called)
-            self.assertContains(response, 'Successfully saved: afile.fits')
+            self.assertContains(response, 'Successfully saved: ' + self.data_product.get_file_name())
 
     # Non-FITS file
     def test_is_fits_image_file_invalid_fits(self, dp_mock):
@@ -227,22 +227,22 @@ class TestViewsWithPermissions(TestCase):
 
     def test_dataproduct_list_on_target(self, dp_mock):
         response = self.client.get(reverse('tom_targets:detail', kwargs={'pk': self.target.id}))
-        self.assertContains(response, 'afile.fits')
+        self.assertContains(response, self.data_product.get_file_name())
         self.client.force_login(self.user2)
 
     def test_dataproduct_list_on_target_unauthorized(self, dp_mock):
         self.client.force_login(self.user2)
         response = self.client.get(reverse('tom_targets:detail', kwargs={'pk': self.target.id}))
-        self.assertNotContains(response, 'afile.fits')
+        self.assertNotContains(response, self.data_product.get_file_name())
 
     def test_dataproduct_list(self, dp_mock):
         response = self.client.get(reverse('tom_dataproducts:list'))
-        self.assertContains(response, 'afile.fits')
+        self.assertContains(response, self.data_product.get_file_name())
 
     def test_dataproduct_list_unauthorized(self, dp_mock):
         self.client.force_login(self.user2)
         response = self.client.get(reverse('tom_dataproducts:list'))
-        self.assertNotContains(response, 'afile.fits')
+        self.assertNotContains(response, self.data_product.get_file_name())
 
     @override_settings(TOM_FACILITY_CLASSES=['tom_observations.tests.utils.FakeRoboticFacility'],
                        TARGET_PERMISSIONS_ONLY=False)
@@ -263,10 +263,10 @@ class TestViewsWithPermissions(TestCase):
             },
             follow=True
         )
-        self.assertContains(response, 'afile.fits')
+        self.assertContains(response, self.data_product.get_file_name())
         self.client.force_login(self.user2)
         response = self.client.get(reverse('targets:detail', kwargs={'pk': self.target.id}))
-        self.assertNotContains(response, 'afile.fits')
+        self.assertNotContains(response, self.data_product.get_file_name())
 
 
 class TestDataProductListView(TestCase):
@@ -286,7 +286,7 @@ class TestDataProductListView(TestCase):
     def test_dataproduct_list(self, dp_mock):
         """Test that the data product list view renders correctly."""
         response = self.client.get(reverse('tom_dataproducts:list'))
-        self.assertContains(response, 'afile.fits')
+        self.assertContains(response, self.data_product.get_file_name())
 
     @patch('tom_dataproducts.models.is_fits_image_file')
     def test_dataproduct_list_no_thumbnail(self, mock_is_fits_image_file):
@@ -332,9 +332,8 @@ class TestUploadDataProducts(TestCase):
             },
             follow=True
         )
-        self.assertContains(response, 'Successfully uploaded: {0}/none/afile.fits'.format(
-            text.slugify(self.target.name)
-        ))
+        uploaded_product = DataProduct.objects.get(target=self.target, observation_record__isnull=True)
+        self.assertContains(response, f'Successfully uploaded: {uploaded_product.data.name}')
 
     def test_upload_data_for_observation(self, run_data_processor_mock):
         response = self.client.post(
