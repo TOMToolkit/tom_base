@@ -85,8 +85,14 @@ It's also possible for users to add their own custom data formats and correspond
 Data Validation
 ---------------
 Before any ``*ReducedDatum`` is stored in the TOM it is validated to avoid duplicating data entries.
-A ``ValidationError`` will be raised if the new datum has the same ``data_type``, ``timestamp`` and ``value``,
-as an existing datum and is associated with the same ``target``.
+The set of fields which must be unique depends on the data type:
+
+- ``ReducedDatum``: ``target``, ``timestamp``, ``data_type``, ``value``
+- ``PhotometryReducedDatum``: ``target``, ``bandpass``, ``timestamp``, ``brightness`` or ``limit``, ``instrument``, ``reduction_version``
+- ``SpectroscopyReducedDatum``: ``target``, ``timestamp``, ``telescope``, ``instrument``, ``flux``, ``reduction_version``
+- ``AstrometryReducedDatum``: ``target``, ``timestamp``, ``telescope``, ``instrument``, ``ra``, ``dec``, ``reduction_version``
+
+A ``ValidationError`` will be raised if the new datum violates any of the unique field constraints.
 
 When performing a ``bulk_create`` of multiple ``*ReducedDatums ``, a ``ValidationError`` can cause the
 whole batch to be aborted.  If you just wish to skip duplicate rows and ingest only new entries, you can
