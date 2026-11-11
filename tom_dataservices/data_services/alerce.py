@@ -274,9 +274,8 @@ class AlerceDataService(DataService):
                         target=target,
                         brightness=detection["magpsf"],
                         brightness_error=detection["sigmapsf"],
-                        unit='mag',
                         bandpass=ALERCE_FILTERS[detection["fid"]],
-                        defaults={'source_name': self.name}
+                        defaults={'source_name': self.name, 'unit': 'mag'}
                     )
                     reduced_datums.append(reduced_datum)
                 except IntegrityError as e:
