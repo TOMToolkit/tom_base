@@ -23,7 +23,7 @@ class TestAlerceDataService(TestCase):
                                  'magpsf': 19.344053,
                                  'sigmapsf': 0.06851808
                                  },]
-                }
+                 }
         # Create new Photometry Datum
         self.ds.create_reduced_datums_from_query(self.target, data)
         self.assertEqual(PhotometryReducedDatum.objects.all().count(), 1)
