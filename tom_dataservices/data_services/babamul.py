@@ -259,7 +259,7 @@ class BabamulDataService(DataService):
             raise QueryServiceError(f'Error importing ReducedDatum (target:{target} data:{measurement}) -- {e}')
         except ValidationError as e:
             raise QueryServiceError(f"Error: Duplicate Data. Increment the Reduction Version if you still want"
-                                            f"to ingest this datum. (target:{target} data:{measurement}) -- {e}")
+                                    f"to ingest this datum. (target:{target} data:{measurement}) -- {e}")
         return reduced_datum
 
     @classmethod
