@@ -76,6 +76,8 @@ class TomToolkitTestRunner(DiscoverRunner):
         with (
             patch.dict(targets_extras.register.tags, {'moon_distance': test_tags.tags['moon_distance']}),
             patch.dict(observation_extras.register.tags, {'observation_plan': test_tags.tags['observation_plan']}),
+            # Don't render HTML/JS for plots in tests.
+            patch('plotly.offline.plot', return_value=''),
         ):
             return super().run_tests(*args, **kwargs)
 
