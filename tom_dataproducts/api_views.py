@@ -4,8 +4,6 @@ import requests
 from copy import deepcopy
 from urllib.parse import urlparse
 
-import astropy.io.ascii
-
 from django.conf import settings
 from django.utils import timezone
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -32,7 +30,6 @@ from tom_dataproducts.models import (DataProduct, ReducedDatum, PhotometryReduce
                                      REDUCED_DATUM_MODELS, try_parse_reduced_datum)
 from tom_dataproducts.serializers import DataProductSerializer, ReducedDatumSerializer, IncomingAtlasDataSerializer
 from tom_targets.models import Target
-from tom_targets.utils import cone_search_filter
 
 logger = logging.getLogger(__name__)
 
@@ -269,14 +266,25 @@ class ATLASProcessorView(APIView):
             logger.error(f"ATLAS FP failed with {data.get('error_msg')}")
             return Response({"status": "error", "detail": data.get("error_msg")}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not self.process_atlas_fp_results(data["task_url"], None, "atlas_photometry"):
+        # the target pk is added to the callback url as a query string when the job is queued (see tasks.py)
+        try:
+            target = Target.objects.get(pk=int(request.query_params.get("target_id")))
+        except (TypeError, ValueError):
+            logger.error("ATLAS callback is missing a valid target_id query parameter")
+            return Response({"status": "error", "detail": "Missing or invalid target_id query parameter"},
+                            status=status.HTTP_400_BAD_REQUEST)
+        except Target.DoesNotExist:
+            logger.error(f"ATLAS callback target_id {request.query_params.get('target_id')} does not exist")
+            return Response({"status": "error", "detail": "Target not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if not self.process_atlas_fp_results(data["task_url"], target, "atlas_photometry"):
             return Response({"status": "error", "detail": "Failed to process ATLAS FP results"},
                             status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         return Response({"status": "ok"})
 
     @staticmethod
-    def process_atlas_fp_results(task_url, target, data_product_type, radius=2/3600):
+    def process_atlas_fp_results(task_url, target, data_product_type):
         headers = {"Authorization": f"Token {settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('api_key')}",
                    "Accept": "application/json"}
 
@@ -308,18 +316,6 @@ class ATLASProcessorView(APIView):
         results = requests.get(result_url, headers=headers)
         dp_name = f"atlas_{urlparse(result_url)[2].rpartition('/')[2]}"
         file = ContentFile(results.content, name=dp_name)
-
-        if target is None:
-            # then we need to infer the target via a cone search on the target database
-            data = astropy.io.ascii.read(results.text)
-            if len(data) < 1:
-                raise InvalidFileFormatException('Empty table or invalid file type')
-            datum = data[0]
-            ra, dec = datum["RA"], datum["Dec"]
-            target = cone_search_filter(Target.objects.all(), ra, dec, radius).first()
-            if not target:
-                logger.error("Error: Target not found matching this ATLAS FP!")
-                return False
 
         dp = DataProduct.objects.create(
             product_id=dp_name,

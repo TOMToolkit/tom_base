@@ -2,6 +2,7 @@ import requests
 import time
 import logging
 import re
+from urllib.parse import urlparse, urlencode, parse_qsl, urlunparse
 from django.conf import settings
 from django_tasks import task
 
@@ -33,18 +34,16 @@ def trigger_atlas_fp(min_date_mjd, max_date_mjd, target_id, data_product_type, u
 
             ran_with_callback = False
             if use_callback:
-                single_target_dataservices = getattr(
-                    settings,
-                    "SINGLE_TARGET_DATASERVICES",
-                    None
-                )
-                atlas_dataservice_config = single_target_dataservices.get("ATLAS", None)
-                callback_url = atlas_dataservice_config.get("callback_url", None)
+                callback_url = settings.SINGLE_TARGET_DATA_SERVICES.get('ATLAS', {}).get('callback_url')
                 if not callback_url:
-                    logger.error("ATLAS_CALLBACK_URL is not set in settings, "
+                    logger.error("ATLAS callback_url is not set in settings, "
                                  "defaulting to waiting for ATLAS FP job to finish!")
                 else:
-                    task_data["callback_url"] = callback_url
+                    # include the target pk so the callback knows which target the results belong to
+                    parts = urlparse(callback_url)
+                    query = dict(parse_qsl(parts.query))
+                    query["target_id"] = target.pk
+                    task_data["callback_url"] = urlunparse(parts._replace(query=urlencode(query)))
                     ran_with_callback = True
 
             if max_date_mjd:
