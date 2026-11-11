@@ -3,6 +3,7 @@ from django.test import tag, TestCase
 from tom_dataservices.data_services.alerce import AlerceDataService
 from tom_targets.tests.factories import SiderealTargetFactory
 from tom_dataproducts.models import PhotometryReducedDatum
+from tom_dataservices.dataservices import QueryServiceError
 
 
 class TestAlerceDataService(TestCase):
@@ -44,8 +45,5 @@ class TestAlerceDataService(TestCase):
         datum.save()
 
         # Try to create repeated Photometry Datum with different brightness_error
-        new_datums = self.ds.create_reduced_datums_from_query(self.target, data)
-        # Assert that source name was unchanged.
-        self.assertEqual(new_datums[0].brightness_error, "2")
-
-
+        with self.assertRaises(QueryServiceError):
+            new_datums = self.ds.create_reduced_datums_from_query(self.target, data)
