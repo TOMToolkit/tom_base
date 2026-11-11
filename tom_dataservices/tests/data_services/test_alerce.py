@@ -15,14 +15,14 @@ class TestAlerceDataService(TestCase):
         data = {'detections': [{'mjd': 58582,
                                 'fid': 2,
                                 'magpsf': 18.344053,
-                                'sigmapsf': 0.05851808},
-                                ]
+                                'sigmapsf': 0.05851808
+                                },]
                 }
         data2 = {'detections': [{'mjd': 58583,
-                                'fid': 2,
-                                'magpsf': 19.344053,
-                                'sigmapsf': 0.06851808},
-                                ]
+                                 'fid': 2,
+                                 'magpsf': 19.344053,
+                                 'sigmapsf': 0.06851808
+                                 },]
                 }
         # Create new Photometry Datum
         self.ds.create_reduced_datums_from_query(self.target, data)
