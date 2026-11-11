@@ -33,11 +33,18 @@ def trigger_atlas_fp(min_date_mjd, max_date_mjd, target_id, data_product_type, u
 
             ran_with_callback = False
             if use_callback:
-                if not getattr(settings, "ATLAS_CALLBACK_URL", None):
+                single_target_dataservices = getattr(
+                    settings,
+                    "SINGLE_TARGET_DATASERVICES",
+                    None
+                )
+                atlas_dataservice_config = single_target_dataservices.get("ATLAS", None)
+                callback_url = atlas_dataservice_config.get("callback_url", None)
+                if not callback_url:
                     logger.error("ATLAS_CALLBACK_URL is not set in settings, "
                                  "defaulting to waiting for ATLAS FP job to finish!")
                 else:
-                    task_data["callback_url"] = settings.ATLAS_CALLBACK_URL
+                    task_data["callback_url"] = callback_url
                     ran_with_callback = True
 
             if max_date_mjd:
