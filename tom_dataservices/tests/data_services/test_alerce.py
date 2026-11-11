@@ -1,4 +1,4 @@
-from django.test import tag, TestCase
+from django.test import TestCase
 
 from tom_dataservices.data_services.alerce import AlerceDataService
 from tom_targets.tests.factories import SiderealTargetFactory
@@ -16,12 +16,14 @@ class TestAlerceDataService(TestCase):
                                 'fid': 2,
                                 'magpsf': 18.344053,
                                 'sigmapsf': 0.05851808},
-                                ]}
+                                ]
+                }
         data2 = {'detections': [{'mjd': 58583,
                                 'fid': 2,
                                 'magpsf': 19.344053,
                                 'sigmapsf': 0.06851808},
-                                ]}
+                                ]
+                }
         # Create new Photometry Datum
         self.ds.create_reduced_datums_from_query(self.target, data)
         self.assertEqual(PhotometryReducedDatum.objects.all().count(), 1)
