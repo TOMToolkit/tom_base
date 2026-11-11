@@ -193,7 +193,7 @@ various external services. These services, usually brokers or catalogs, provide
 lists of targets and/or data that can be queried via an API.
 
 Several data services are built into the default TOMToolkit, including `ALeRCE <https://science.alerce.online/>`_,
-`MPC <https://data.minorplanetcenter.net/explorer/>`_, `Simbad <https://simbad.u-strasbg.fr/simbad/>`_, and `NED <https://ned.ipac.caltech.edu/>`_. These
+`Babamul <https://babamul.caltech.edu/>`_, `MPC <https://data.minorplanetcenter.net/explorer/>`_, `Simbad <https://simbad.u-strasbg.fr/simbad/>`_, and `NED <https://ned.ipac.caltech.edu/>`_. These
 external services can be used by any TOM to search for and import new targets.
 
 The
