@@ -11,6 +11,7 @@ import responses
 from astropy import units
 from astropy.io import fits
 from astropy.table import Table
+from astropy.wcs import FITSFixedWarning
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -498,7 +499,8 @@ class TestDataProcessor(TestCase):
     def test_process_spectrum_from_fits(self):
         with open('tom_dataproducts/tests/test_data/test_spectrum.fits', 'rb') as spectrum_file:
             self.data_product.data.save('spectrum.fits', spectrum_file)
-            spectrum, _, _ = self.spectrum_data_processor._process_spectrum_from_fits(self.data_product)
+            with self.assertWarns(FITSFixedWarning):
+                spectrum, _, _ = self.spectrum_data_processor._process_spectrum_from_fits(self.data_product)
             self.assertTrue(isinstance(spectrum, Spectrum))
             self.assertAlmostEqual(spectrum.flux.mean().value, 2.295068e-14, places=19)
             self.assertAlmostEqual(spectrum.wavelength.mean().value, 6600.478789, places=5)
