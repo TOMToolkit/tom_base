@@ -534,7 +534,7 @@ class ObservationCallbackView(LoginRequiredMixin, View):
                 )
                 obs_group.observation_records.add(observation)
         except Exception as e:
-            messages.error(self.request, f"Error createing observation records: {e}")
+            messages.error(self.request, f"Error creating observation records: {e}")
             return redirect(reverse('targets:detail', kwargs={'pk': target_id}))
 
         for observation in obs_group.observation_records.all():
