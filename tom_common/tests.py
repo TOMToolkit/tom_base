@@ -5,6 +5,7 @@ from http import HTTPStatus
 from pathlib import Path
 from io import StringIO
 from types import ModuleType, SimpleNamespace
+from unittest.mock import patch
 import base64
 import sys
 import tempfile
@@ -18,7 +19,7 @@ from allauth.mfa.totp.internal import auth as totp_auth
 from cryptography.fernet import InvalidToken
 from guardian.shortcuts import assign_perm
 
-from django import forms
+from django import forms, template
 from django.conf import settings as django_settings
 from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
@@ -45,6 +46,8 @@ from tom_common.encryption import (
     _CLEAR_EXISTING_VALUE,
     _KEEP_EXISTING_VALUE,
 )
+from tom_observations.templatetags import observation_extras
+from tom_targets.templatetags import targets_extras
 from tom_targets.tests.factories import SiderealTargetFactory
 from tom_common.templatetags.tom_common_extras import verbose_name, multiplyby, truncate_value_for_display
 from tom_common.templatetags.bootstrap5_overrides import bootstrap_pagination
@@ -53,11 +56,28 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class SilenceLogsTestRunner(DiscoverRunner):
+class TomToolkitTestRunner(DiscoverRunner):
     def run_tests(self, *args, **kwargs):
         # Silence log output in tests.
         logging.root.handlers = [logging.NullHandler()]
-        return super().run_tests(*args, **kwargs)
+        test_tags = template.Library()
+
+        # These tags do astronomical calculations and are expensive to run in tests.
+        # We globally patch them to reduce test run time significantly.
+
+        @test_tags.inclusion_tag('tom_targets/partials/moon_distance.html')
+        def moon_distance(target, day_range=30, width=600, height=400, background=None, label_color=None, grid=True):
+            return {'plot': ''}
+
+        @test_tags.inclusion_tag('tom_observations/partials/observation_plan.html')
+        def observation_plan(target, facility=None, length=2, interval=60, airmass_limit=None):
+            return {'visibility_graph': ''}
+
+        with (
+            patch.dict(targets_extras.register.tags, {'moon_distance': test_tags.tags['moon_distance']}),
+            patch.dict(observation_extras.register.tags, {'observation_plan': test_tags.tags['observation_plan']}),
+        ):
+            return super().run_tests(*args, **kwargs)
 
 
 class TestCommonViews(TestCase):
