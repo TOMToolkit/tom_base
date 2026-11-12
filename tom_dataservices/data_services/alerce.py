@@ -6,6 +6,7 @@ from astropy.time import Time, TimezoneInfo
 from django import forms
 from django.core.cache import cache
 from django.db.utils import IntegrityError
+from django.core.exceptions import ValidationError
 
 from tom_dataproducts.models import PhotometryReducedDatum
 from tom_dataservices.dataservices import DataService, QueryServiceError
@@ -273,13 +274,15 @@ class AlerceDataService(DataService):
                         target=target,
                         brightness=detection["magpsf"],
                         brightness_error=detection["sigmapsf"],
-                        unit='mag',
                         bandpass=ALERCE_FILTERS[detection["fid"]],
-                        defaults={'source_name': self.name}
+                        defaults={'source_name': self.name, 'unit': 'mag'}
                     )
                     reduced_datums.append(reduced_datum)
                 except IntegrityError as e:
                     raise QueryServiceError(f"Error importing ReducedDatum (target:{target} data:{detection}) -- {e}")
+                except ValidationError as e:
+                    raise QueryServiceError(f"Error: Duplicate Data. Increment the Reduction Version if you still want"
+                                            f"to ingest this datum. (target:{target} data:{detection}) -- {e}")
 
             for non_detection in data.get("non_detections", []):
                 mjd = Time(non_detection["mjd"], format="mjd", scale="utc")
@@ -287,9 +290,8 @@ class AlerceDataService(DataService):
                     timestamp=mjd.to_datetime(TimezoneInfo()),
                     target=target,
                     limit=non_detection["diffmaglim"],
-                    unit='mag',
                     bandpass=ALERCE_FILTERS[non_detection["fid"]],
-                    defaults={'source_name': self.name}
+                    defaults={'source_name': self.name, 'unit': 'mag'}
                 )
                 reduced_datums.append(reduced_datum)
         return reduced_datums
