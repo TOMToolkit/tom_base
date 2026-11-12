@@ -144,7 +144,7 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/data/'
 
-TEST_RUNNER = 'tom_common.tests.SilenceLogsTestRunner'
+TEST_RUNNER = 'tom_common.tests.TomToolkitTestRunner'
 
 TASKS = {
     "default": {

@@ -16,4 +16,4 @@ jobs:
         python -m pip install "poetry>=2.0,<3.0"
         poetry install --with test
     - name: Run Canary Tests
-      run: poetry run python manage.py test --tag=canary
+      run: poetry run python manage.py test --settings=test_settings --tag=canary --parallel --verbosity=0
