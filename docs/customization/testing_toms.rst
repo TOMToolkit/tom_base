@@ -199,6 +199,20 @@ $ python runtests.py tests.test_mytom
 $ python runtests.py tests.test_mytom.TestCase
 $ python runtests.py tests.test_mytom.TestCase.test_my_function
 
+Speeding up test execution
+++++++++++++++++++++++++++
+
+There are a few options that can be passed to the Django runner to speed up test execution.
+
+* ``--parallel``: Runs tests in parallel, using multiple processes.
+* ``--settings=test_settings``: Uses a custom settings module for the test run.
+
+These settings can be passed to the test runner as follows:
+
+::
+
+$  ./manage.py test --exclude-tag=canary --parallel --settings=test_settings
+
 Writing Unittests
 ~~~~~~~~~~~~~~~~~
 
