@@ -20,10 +20,10 @@ The TOM's Data Models
 The TOM Toolkit's' ``tom_dataproducts`` module recognizes a distinction between a *data product* and a *datum*:
 
 * ``DataProduct``: Corresponds to any file containing data, from a FITS, to a PNG, to a CSV. It can optionally be
-    associated with a specific observation, and is required to be associated with a target. A ``DataProduct`` can have a
-    specified type which can be used to trigger post-save hooks to perform automated process upon ingest.
+  associated with a specific observation, and is required to be associated with a target. A ``DataProduct`` can have a
+  specified type which can be used to trigger post-save hooks to perform automated process upon ingest.
 * ``*ReducedDatum`` (multiple types): Refers to a single piece of data - e.g., a spectrum, a single measurement or a set of timeseries
-    photometry measurements. It is associated with a target, and optionally with the data product it came from.
+  photometry measurements. It is associated with a target, and optionally with the data product it came from.
 
 The TOM also allows a ``DataProductGroup`` to be defined.  This allows TOM administrators control over which user
 groups can access which data products.
@@ -53,15 +53,15 @@ All of the TOM's reduced datum models inherit from a base class ``ReducedDatumCo
 own custom data models to a TOM, ``ReducedDatumCommon`` is the place to start, since it provides a set of
 attributes used by virtually all data types:
 
-* target: a Foreign Key linking to the corresponding Target
-* data_product: a Foreign Key linking the Datum to a DataProduct object
-* timestamp: a DateTimeField recording the timestamp of acquisition of the Datum
-* value: a JSONField which can accept a flexible dictionary of parameters
-* telescope: a CharField (max length=255) indicating the name of the telescope that acquired the data
-* instrument: a CharField (max length=255) indicating the name of the instrument that acquired the data
-* source_name: a CharField (max length=100) to record the origin of the Datum
-* source_location: a CharField (max length=200) giving the location of the source of the Datum
-* reduction_version: a CharField (max length=50) used to record the version of the reduction of the Datum
+* `target`: a Foreign Key linking to the corresponding Target
+* `data_product`: a Foreign Key linking the Datum to a DataProduct object
+* `timestamp`: a DateTimeField recording the timestamp of acquisition of the Datum
+* `value`: a JSONField which can accept a flexible dictionary of parameters
+* `telescope`: a CharField (max length=255) indicating the name of the telescope that acquired the data
+* `instrument`: a CharField (max length=255) indicating the name of the instrument that acquired the data
+* `source_name`: a CharField (max length=100) to record the origin of the Datum
+* `source_location`: a CharField (max length=200) giving the location of the source of the Datum
+* `reduction_version`: a CharField (max length=50) used to record the version of the reduction of the Datum
 
 Ingesting data into the TOM
 ---------------------------
@@ -75,9 +75,9 @@ programmatically.
 
    DataProduct upload form in the TOM's target detail page
 
-If a data product type is specified, then the TOM calls uses post-save hooks to call the corresponding built-in
+If a data product type is specified, then the TOM uses post-save hooks to call the corresponding built-in
 processing functions found in ``tom_dataproducts/processors``.  The TOM's ``photometry_processor.py`` for example,
-reads a photometry data file and ingests the timeseries measurements as ``ReducedDatum``.
+reads a photometry data file and ingests the timeseries measurements as ``ReducedDatums``.
 
 It's also possible for users to add their own custom data formats and corresponding specialized processors - see
 :doc:`Adding Custom Data Processing <customizing_data_processing>` for more details.
@@ -94,7 +94,7 @@ The set of fields which must be unique depends on the data type:
 
 A ``ValidationError`` will be raised if the new datum violates any of the unique field constraints.
 
-When performing a ``bulk_create`` of multiple ``*ReducedDatums ``, a ``ValidationError`` can cause the
+When performing a ``bulk_create`` of multiple ``*ReducedDatums``, a ``ValidationError`` can cause the
 whole batch to be aborted.  If you just wish to skip duplicate rows and ingest only new entries, you can
 use ``ignore_conflicts`` with most database types:
 
