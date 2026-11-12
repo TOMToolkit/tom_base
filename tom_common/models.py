@@ -9,6 +9,7 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     affiliation = models.CharField(max_length=100, null=True, blank=True)
     phone_number = models.CharField(max_length=32, null=True, blank=True)
+    target_list_columns = models.JSONField(null=True, blank=True, default=None)
 
     # When the user last set their password. None means "not known to be current".
     password_changed_at = models.DateTimeField(null=True, blank=True)
