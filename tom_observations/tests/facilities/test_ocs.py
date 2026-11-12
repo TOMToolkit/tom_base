@@ -32,8 +32,8 @@ instrument_response = {
         'optical_elements': {},
         'default_configuration_type': 'NRES_SPECTRUM'
     },
-    '0M4-SCICAM-SBIG': {
-        'type': 'IMAGE', 'class': '0m4', 'name': '0.4 meter SBIG', 'optical_elements': {
+    '1M0-SCICAM-SINISTRO': {
+        'type': 'IMAGE', 'class': '1m0', 'name': '1.0 meter Sinistro', 'optical_elements': {
             'filters': [
                 {"name": "Bessell-U", "code": "U", "schedulable": True, "default": False},
                 {"name": "Bessell-B", "code": "B", "schedulable": True, "default": False},
@@ -58,10 +58,16 @@ instrument_response = {
                     {'name': 'Off', 'overhead': 0.0, 'code': 'OFF'},
                 ],
                 'default': 'ON'
+            },
+            'readout': {
+                'type': 'readout',
+                'modes': [{'name': 'Full Frame', 'code': 'full_frame'}],
+                'default': 'full_frame'
             }
         },
         'default_configuration_type': 'EXPOSE'
     },
+
     'SOAR_GHTS_REDCAM': {
         'type': 'SPECTRA', 'class': '4m0', 'name': 'Goodman Spectrograph RedCam', 'optical_elements': {
             'gratings': [
@@ -159,7 +165,7 @@ class TestOCSBaseForm(TestCase):
 
             instruments = form._get_instruments()
             self.assertEqual(instruments, instruments | test_instruments)
-            self.assertNotIn('0M4-SCICAM-SBIG', instruments)
+            self.assertNotIn('1M0-SCICAM-SINISTRO', instruments)
 
         # Test that empty cache results in mock_instruments, and cache.set is called
         with self.subTest():
@@ -167,9 +173,9 @@ class TestOCSBaseForm(TestCase):
             form = OCSTemplateBaseForm()
 
             instruments = form._get_instruments()
-            self.assertIn('0M4-SCICAM-SBIG', instruments)
+            self.assertIn('1M0-SCICAM-SINISTRO', instruments)
             self.assertIn('SOAR_GHTS_REDCAM', instruments)
-            self.assertEqual(instruments['0M4-SCICAM-SBIG'], instruments['0M4-SCICAM-SBIG'] | {'type': 'IMAGE'})
+            self.assertEqual(instruments['1M0-SCICAM-SINISTRO'], instruments['1M0-SCICAM-SINISTRO'] | {'type': 'IMAGE'})
             mock_cache.set.assert_called()
 
     @patch('tom_observations.facilities.ocs.OCSBaseForm._get_instruments')
@@ -179,7 +185,7 @@ class TestOCSBaseForm(TestCase):
         form = OCSBaseForm()
         self.assertEqual('SPECTRUM', form.instrument_to_default_configuration_type('2M0-FLOYDS-SCICAM'))
         self.assertEqual('NRES_SPECTRUM', form.instrument_to_default_configuration_type('1M0-NRES-SCICAM'))
-        self.assertEqual('EXPOSE', form.instrument_to_default_configuration_type('0M4-SCICAM-SBIG'))
+        self.assertEqual('EXPOSE', form.instrument_to_default_configuration_type('1M0-SCICAM-SINISTRO'))
 
     @patch('tom_observations.facilities.ocs.OCSBaseForm._get_instruments')
     def test_instrument_choices(self, mock_get_instruments):
@@ -188,7 +194,7 @@ class TestOCSBaseForm(TestCase):
 
         inst_choices = form.instrument_choices()
         self.assertIn(('2M0-FLOYDS-SCICAM', '2.0 meter FLOYDS'), inst_choices)
-        self.assertIn(('0M4-SCICAM-SBIG', '0.4 meter SBIG'), inst_choices)
+        self.assertIn(('1M0-SCICAM-SINISTRO', '1.0 meter Sinistro'), inst_choices)
         self.assertIn(('2M0-SCICAM-MUSCAT', '2.0 meter Muscat'), inst_choices)
         self.assertEqual(len(inst_choices), 5)
 

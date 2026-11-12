@@ -32,8 +32,8 @@ class TestLCOOldStyleObservationForm(TestCase):
         self.valid_form_data = {
             'name': 'test', 'facility': 'LCO', 'target_id': self.st.id, 'ipp_value': 0.5, 'start': '2020-11-03',
             'end': '2020-11-04', 'exposure_count': 1, 'exposure_time': 30, 'max_airmass': 3,
-            'min_lunar_distance': 20, 'observation_mode': 'NORMAL', 'mode': '1x1 binning',
-            'proposal': 'sampleproposal', 'filter': 'opaque', 'instrument_type': '0M4-SCICAM-SBIG'
+            'min_lunar_distance': 20, 'observation_mode': 'NORMAL', 'mode': 'full_frame',
+            'proposal': 'sampleproposal', 'filter': 'R', 'instrument_type': '1M0-SCICAM-SINISTRO'
         }
         self.instrument_choices = [(k, v['name']) for k, v in instrument_response.items() if 'SOAR' not in k]
         self.filter_choices = set([
@@ -175,7 +175,7 @@ class TestLCOOldStyleObservationForm(TestCase):
         self.assertTrue(form.is_valid())
         configuration = form._build_configuration()
         expected_configuration = {
-            'type': 'EXPOSE', 'instrument_type': '0M4-SCICAM-SBIG',
+            'type': 'EXPOSE', 'instrument_type': '1M0-SCICAM-SINISTRO',
             'constraints': {'max_airmass': 3, 'min_lunar_distance': 20}
         }
         self.assertEqual(configuration, configuration | expected_configuration)
@@ -193,7 +193,7 @@ class TestLCOOldStyleObservationForm(TestCase):
 
         form = LCOOldStyleObservationForm(self.valid_form_data)
         self.assertTrue(form.is_valid())
-        self.assertDictEqual({'telescope_class': '0m4'}, form._build_location())
+        self.assertDictEqual({'telescope_class': '1m0'}, form._build_location())
 
     def test_expand_cadence_request(self, mock_validate, mock_insts, mock_filters, mock_proposals):
         pass
@@ -266,7 +266,7 @@ class TestLCOImagingObservationForm(TestCase):
             'name': 'test', 'facility': 'LCO', 'target_id': self.st.id, 'ipp_value': 0.5, 'start': '2020-11-03',
             'end': '2020-11-04', 'c_1_ic_1_exposure_count': 1, 'c_1_ic_1_exposure_time': 30.0, 'c_1_max_airmass': 3.0,
             'c_1_min_lunar_distance': 20, 'observation_mode': 'NORMAL', 'proposal': 'sampleproposal',
-            'c_1_ic_1_filter': 'gp', 'c_1_instrument_type': '0M4-SCICAM-SBIG'
+            'c_1_ic_1_filter': 'gp', 'c_1_instrument_type': '1M0-SCICAM-SINISTRO'
         }
 
     def test_instrument_choices(self, mock_get_instruments, mock_get_proposals):
@@ -274,7 +274,7 @@ class TestLCOImagingObservationForm(TestCase):
         mock_get_instruments.return_value = generate_lco_instrument_choices()
         form = LCOImagingObservationForm(self.valid_form_data)
         inst_choices = form.instrument_choices()
-        self.assertIn(('0M4-SCICAM-SBIG', '0.4 meter SBIG'), inst_choices)
+        self.assertIn(('1M0-SCICAM-SINISTRO', '1.0 meter Sinistro'), inst_choices)
         self.assertNotIn(('2M0-FLOYDS-SCICAM', '2.0 meter FLOYDS'), inst_choices)
         self.assertNotIn(('2M0-SCICAM-MUSCAT', '2.0 meter Muscat'), inst_choices)
         self.assertEqual(len(inst_choices), 1)
@@ -410,7 +410,7 @@ class TestLCOSpectroscopyObservationForm(TestCase):
         inst_choices = form.instrument_choices()
         self.assertIn(('2M0-FLOYDS-SCICAM', '2.0 meter FLOYDS'), inst_choices)
         self.assertIn(('1M0-NRES-SCICAM', '1.0 meter NRES'), inst_choices)
-        self.assertNotIn(('0M4-SCICAM-SBIG', '0.4 meter SBIG'), inst_choices)
+        self.assertNotIn(('1M0-SCICAM-SINISTRO', '1.0 meter Sinistro'), inst_choices)
         self.assertEqual(len(inst_choices), 2)
 
     @patch('tom_observations.facilities.ocs.OCSBaseForm.proposal_choices')
@@ -481,7 +481,7 @@ class TestLCOPhotometricSequenceForm(TestCase):
         self.valid_form_data = {
             'name': 'test', 'facility': 'LCO', 'target_id': self.st.id, 'ipp_value': 0.5, 'max_airmass': 3,
             'min_lunar_distance': 20, 'observation_mode': 'NORMAL', 'proposal': 'sampleproposal',
-            'instrument_type': '0M4-SCICAM-SBIG', 'cadence_frequency': 24,
+            'instrument_type': '1M0-SCICAM-SINISTRO', 'cadence_frequency': 24,
             'U_0': 30.0, 'U_1': 1, 'U_2': 1, 'B_0': 60.0, 'B_1': 2, 'B_2': 1,
         }
         self.instrument_choices = [(k, v['name']) for k, v in instrument_response.items() if 'SOAR' not in k]
@@ -500,7 +500,7 @@ class TestLCOPhotometricSequenceForm(TestCase):
         form = LCOPhotometricSequenceForm()
 
         inst_choices = form.instrument_choices()
-        self.assertIn(('0M4-SCICAM-SBIG', '0.4 meter SBIG'), inst_choices)
+        self.assertIn(('1M0-SCICAM-SINISTRO', '1.0 meter Sinistro'), inst_choices)
         self.assertNotIn(('2M0-FLOYDS-SCICAM', '2.0 meter FLOYDS'), inst_choices)
         self.assertEqual(len(inst_choices), 1)
 
@@ -555,7 +555,7 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
             'name': 'test', 'facility': 'LCO', 'target_id': self.st.id, 'exposure_count': 1, 'exposure_time': 30,
             'max_airmass': 3, 'min_lunar_distance': 20, 'site': 'any', 'ipp_value': 0.5, 'filter': 'slit_1.2as',
             'observation_mode': 'NORMAL', 'proposal': 'sampleproposal', 'acquisition_radius': 1,
-            'guider_mode': 'on', 'guider_exposure_time': 30, 'instrument_type': '0M4-SCICAM-SBIG',
+            'guider_mode': 'on', 'guider_exposure_time': 30, 'instrument_type': '1M0-SCICAM-SINISTRO',
             'cadence_frequency': 24
         }
         self.instrument_choices = [(k, v['name']) for k, v in instrument_response.items() if 'SOAR' not in k]
@@ -574,7 +574,7 @@ class TestLCOSpectroscopicSequenceForm(TestCase):
 
         inst_choices = form.instrument_choices()
         self.assertIn(('2M0-FLOYDS-SCICAM', '2.0 meter FLOYDS'), inst_choices)
-        self.assertNotIn(('0M4-SCICAM-SBIG', '0.4 meter SBIG'), inst_choices)
+        self.assertNotIn(('1M0-SCICAM-SINISTRO', '1.0 meter Sinistro'), inst_choices)
         self.assertEqual(len(inst_choices), 1)
 
     @patch('tom_observations.facilities.ocs.OCSBaseForm.proposal_choices')
