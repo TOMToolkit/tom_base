@@ -20,9 +20,9 @@ from django.utils import timezone
 from rest_framework.authtoken.models import Token
 
 from tom_common.accounts.api_auth import token_expiry_date
-from tom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm, GroupForm
+from tom_common.forms import ChangeUserPasswordForm, CustomUserCreationForm, GroupForm, PreferencesModelForm
 from tom_common.mixins import SuperuserRequiredMixin
-from tom_common.models import Profile
+from tom_common.models import Preferences, Profile
 
 
 logger = logging.getLogger(__name__)
@@ -169,6 +169,20 @@ class UserProfileView(LoginRequiredMixin, TemplateView):
     security reasons.
     """
     template_name = 'tom_common/user_profile.html'
+
+
+class UserPreferencesUpdateView(LoginRequiredMixin, UpdateView):
+    """View for editing the logged-in user's preferences."""
+    model = Preferences
+    form_class = PreferencesModelForm
+    template_name = 'tom_common/preferences_form.html'
+
+    def get_object(self, queryset=None):
+        preferences, _ = Preferences.objects.get_or_create(user=self.request.user)
+        return preferences
+
+    def get_success_url(self):
+        return reverse_lazy('user-profile')
 
 
 class UserPasswordChangeView(SuperuserRequiredMixin, FormView):
