@@ -28,8 +28,10 @@ from tom_common.accounts.urlpatterns import allauth_urlpatterns
 from tom_common.accounts.views import TermsAcceptView, TermsOfServiceView, UserApprovalView
 from tom_common.api_views import GroupViewSet
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
-from tom_common.views import (CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView,
-                               UserProfileView, UserPreferencesUpdateView)
+from tom_common.views import (
+    CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView,
+    UserProfileView, UserPreferencesUpdateView,
+)
 from tom_common.views import RegenerateAPITokenView
 from tom_common.views import robots_txt
 

@@ -52,12 +52,14 @@ UserProfileInlineFormSet = forms.inlineformset_factory(
     can_order=False,
     )
 
+
 class PreferencesModelForm(forms.ModelForm):
     target_list_columns = forms.MultipleChoiceField(
         choices=(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
     )
+
     class Meta:
         model = Preferences
         fields = ('target_list_columns',)
@@ -67,6 +69,7 @@ class PreferencesModelForm(forms.ModelForm):
         self.fields['target_list_columns'].choices = target_column_options()
         if self.instance.pk and self.instance.target_list_columns is None:
             self.initial['target_list_columns'] = get_target_list_columns(self.instance.user)
+
 
 class CustomUserCreationForm(UserCreationForm):
     """

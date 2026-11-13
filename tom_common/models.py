@@ -16,6 +16,7 @@ class Profile(models.Model):
     def __str__(self) -> str:
         return f'{self.user.username} Profile'
 
+
 class Preferences(models.Model):
     """User-specific preferences for the TOMToolkit."""
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -23,6 +24,7 @@ class Preferences(models.Model):
 
     def __str__(self) -> str:
         return f'{self.user.username} Preferences'
+
 
 class TermsOfServiceAcceptance(models.Model):
     """A user's acceptance of one version of this TOM's terms of service.

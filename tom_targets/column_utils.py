@@ -2,7 +2,7 @@ from django.conf import settings
 
 from tom_targets.models import Target
 
-# SPECIAL_COLUMNS are not part of the target model but have to be appended to the list of target 
+# SPECIAL_COLUMNS are not part of the target model but have to be appended to the list of target
 # columns when generating column options
 SPECIAL_COLUMNS = ('observations', 'saved_data')
 EXCLUDED_COLUMNS = {'id', 'created', 'modified', 'permissions', 'shared_by', 'shared_from'}
@@ -31,7 +31,7 @@ def get_target_list_columns(user=None):
 
 def target_column_options():
     """Return a list of available target column options, including special columns.
-    
+
     Used to populate the target column selection options in the target list view.
     """
     fields = {field.name: field.verbose_name for field in Target._meta.fields}
