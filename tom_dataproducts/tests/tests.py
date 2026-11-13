@@ -98,7 +98,7 @@ class Views(TestCase):
                 follow=True
             )
             self.assertTrue(mock.called)
-            self.assertContains(response, 'Successfully saved: ' + self.data_product.get_file_name())
+            self.assertContains(response, f'Successfully saved: {mock_return[0]}')
 
     # Non-FITS file
     def test_is_fits_image_file_invalid_fits(self, dp_mock):
