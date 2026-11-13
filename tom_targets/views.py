@@ -60,6 +60,7 @@ from tom_targets.utils import import_targets, export_targets
 from tom_observations.utils import get_sidereal_visibility
 from tom_targets.seed import seed_messier_targets
 from tom_targets.tables import TargetTable, TargetGroupTable
+from tom_targets.column_utils import get_target_list_columns, target_column_options, target_columns
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -78,6 +79,45 @@ class TargetListView(HTMXTableViewMixin, FilterView):
 
     ordering = ['-created']
 
+    def get_table(self, **kwargs):
+        kwargs['visible_columns'] = get_target_list_columns(self.request.user)
+        return super().get_table(**kwargs)
+
+    def get_active_target_type(self):
+        """Return the target type selected by the tabs or configured as the default."""
+        target_types = {target_type for target_type, _ in Target.TARGET_TYPES}
+        target_type = self.request.GET.get('type') or Target.SIDEREAL
+        return target_type if target_type in target_types else Target.SIDEREAL
+
+    def get_page_session_key(self):
+        """Return the session-key name used to remember pagination for the active target type."""
+        return f'targets_page_{self.get_active_target_type().lower()}'
+
+    def get(self, request, *args, **kwargs):
+        """Restore or save the current pagination page for the active target type."""
+        request.GET = request.GET.copy()
+        page = request.GET.get('page')
+        page_session_key = self.get_page_session_key()
+        if page:
+            request.session[page_session_key] = page
+        elif request.session.get(page_session_key):
+            request.GET['page'] = request.session[page_session_key]
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        """Save the user's selected table columns and reload the target list."""
+        if not request.user.is_authenticated:
+            raise PermissionDenied
+        request.user.profile.target_list_columns = [
+            column for column in request.POST.getlist('columns')
+            if column in [*target_columns(), 'observations', 'saved_data']
+        ]
+        request.user.profile.save(update_fields=['target_list_columns'])
+        request.GET = request.POST.copy()
+        request.GET.pop('columns', None)
+        request.GET.pop('csrfmiddlewaretoken', None)
+        return self.get(request, *args, **kwargs)
+
     def get_context_data(self, *args, **kwargs):
         """
         Adds the number of targets visible, the available ``TargetList`` objects if the user is authenticated, and
@@ -93,6 +133,9 @@ class TargetListView(HTMXTableViewMixin, FilterView):
                                 if self.request.user.is_authenticated
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
+        context['target_column_options'] = target_column_options()
+        context['selected_target_columns'] = get_target_list_columns(self.request.user)
+        context['active_target_type'] = self.get_active_target_type()
 
         # Prepare list of targets for Aladin skymap (avoiding BoundRow wrappers)
         table = context['table']
@@ -105,6 +148,7 @@ class TargetListView(HTMXTableViewMixin, FilterView):
 
     def get_queryset(self, *args, **kwargs):
         qs = super().get_queryset(*args, **kwargs)
+        qs = qs.filter(type=self.get_active_target_type())
         return targets_for_user(self.request.user, qs, 'view_target')
 
 
