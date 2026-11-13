@@ -9,7 +9,6 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     affiliation = models.CharField(max_length=100, null=True, blank=True)
     phone_number = models.CharField(max_length=32, null=True, blank=True)
-    target_list_columns = models.JSONField(null=True, blank=True, default=None)
 
     # When the user last set their password. None means "not known to be current".
     password_changed_at = models.DateTimeField(null=True, blank=True)
@@ -17,6 +16,13 @@ class Profile(models.Model):
     def __str__(self) -> str:
         return f'{self.user.username} Profile'
 
+class Preferences(models.Model):
+    """User-specific preferences for the TOMToolkit."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    target_list_columns = models.JSONField(null=True, blank=True, default=None)
+
+    def __str__(self) -> str:
+        return f'{self.user.username} Preferences'
 
 class TermsOfServiceAcceptance(models.Model):
     """A user's acceptance of one version of this TOM's terms of service.
