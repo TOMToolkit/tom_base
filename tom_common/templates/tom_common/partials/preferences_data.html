@@ -1,0 +1,23 @@
+<div class="card">
+    <div class="card-header">
+        <div style="display: flex; justify-content: space-between">
+            <h4 class="card-title">Display Preferences</h4>
+            <a title="Edit" href="{% url 'user-preferences-update' %}"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+        </div>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-6">Target list columns</dt>
+            <dd class="col-sm-6">
+                {% for value, label in target_column_options %}
+                    {% if value in selected_target_columns %}
+                        <div>{{ label }}</div>
+                    {% endif %}
+                {% endfor %}
+                {% if not selected_target_columns %}
+                    <div>No preferences selected.</div>
+                {% endif %}
+            </dd>
+        </dl>
+    </div>
+</div>
