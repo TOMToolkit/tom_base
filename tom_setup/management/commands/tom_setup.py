@@ -48,8 +48,8 @@ class Command(BaseCommand):
         self.status('Checking Python version... ')
         major = sys.version_info.major
         minor = sys.version_info.minor
-        if major < 3 or minor < 8:
-            self.exit('Incompatible Python version found. Please install Python >= 3.8')
+        if major < 3 or minor < 11:
+            self.exit('Incompatible Python version found. Please install Python >= 3.11')
         self.ok()
 
     def create_custom_code_app(self):
