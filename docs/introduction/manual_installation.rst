@@ -9,9 +9,6 @@ Manually Installing the TOM Toolkit and Django
 
 If you prefer to build your system manually, here's how.
 
-Firstly, the TOM toolkit requires you to have Python >= 3.8.1, < 3.12 installed
-on your machine.
-
 We recommend using a `virtual
 environment <https://docs.python.org/3/tutorial/venv.html>`__ for your
 project. This will keep your TOM python packages separate from your
