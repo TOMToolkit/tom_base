@@ -23,8 +23,10 @@ def default_target_columns():
 
 def get_target_list_columns(user=None):
     if user and user.is_authenticated and user.preferences.target_list_columns is not None:
-        return user.preferences.target_list_columns
-    return default_target_columns()
+        columns = user.preferences.target_list_columns
+    else:
+        columns = default_target_columns()
+    return ['name', *[column for column in columns if column != 'name']]
 
 
 def target_column_options():
@@ -36,4 +38,5 @@ def target_column_options():
     return [
         (column, fields.get(column, column.replace('_', ' ').title()))
         for column in [*target_columns(), *SPECIAL_COLUMNS]
+        if column != 'name'
     ]
