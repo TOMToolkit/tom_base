@@ -1,6 +1,61 @@
 {# tom_targets/partials/target_table_partial.html #}
 {% load render_table from django_tables2 %}
 
+<div class="table-container">
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link{% if active_target_type == 'SIDEREAL' %} active{% endif %}"
+                    type="button" role="tab" aria-selected="{% if active_target_type == 'SIDEREAL' %}true{% else %}false{% endif %}"
+                    data-target-type="SIDEREAL"
+                    hx-get="{% url 'tom_targets:list' %}" hx-include="#filter-form [name]:not([name='type'])"
+                    hx-vals='{"type": "SIDEREAL"}' hx-target="div.table-container"
+                    hx-swap="outerHTML" hx-indicator=".progress">
+                Sidereal
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link{% if active_target_type == 'NON_SIDEREAL' %} active{% endif %}"
+                    type="button" role="tab" aria-selected="{% if active_target_type == 'NON_SIDEREAL' %}true{% else %}false{% endif %}"
+                    data-target-type="NON_SIDEREAL"
+                    hx-get="{% url 'tom_targets:list' %}" hx-include="#filter-form [name]:not([name='type'])"
+                    hx-vals='{"type": "NON_SIDEREAL"}' hx-target="div.table-container"
+                    hx-swap="outerHTML" hx-indicator=".progress">
+                Nonsidereal
+            </button>
+        </li>
+    </ul>
+
+    {% if request.user.is_authenticated %}
+    <details>
+        <summary class="btn btn-outline-secondary">
+            <i class="fa fa-cog" aria-hidden="true"></i> Table Settings
+        </summary>
+        <div class="card mt-2 position-absolute end-0" style="z-index: 2; min-width: 32rem;">
+            <form method="post" hx-post="{% url 'tom_targets:list' %}" hx-target="div.table-container"
+                  hx-swap="outerHTML" hx-include="#filter-form" hx-indicator=".progress" class="card-body">
+                {% csrf_token %}
+                <div class="row">
+                    {% for value, label in target_column_options %}
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="columns" value="{{ value }}"
+                                   id="target-column-{{ value }}"
+                                   {% if value in selected_target_columns %}checked{% endif %}>
+                            <label class="form-check-label" for="target-column-{{ value }}">{{ label }}</label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </details>
+    {% endif %}
+</div>
+
 {# 1. Render the table (even if it's empty) #}
 {% render_table table %}
 
@@ -32,4 +87,5 @@
 {# 3. Update the skymap targets (data only, no viewer rebuild) #}
 {% load targets_extras %}
 {% aladin_skymap_targets_oob skymap_objects %}
+</div>
 

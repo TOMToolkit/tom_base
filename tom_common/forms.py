@@ -5,7 +5,8 @@ from django.contrib.auth.models import User, Group
 from django.db import transaction
 from crispy_forms.helper import FormHelper
 
-from tom_common.models import Profile
+from tom_common.models import Profile, Preferences
+from tom_targets.column_utils import get_target_list_columns, target_column_options
 
 # UserCreationForm was changed for django 4.2 to not allow new users to have case-sensitive variations in
 # existing usernames. This check breaks our username update process because we use the UserCreationForm rather
@@ -50,6 +51,24 @@ UserProfileInlineFormSet = forms.inlineformset_factory(
     can_delete=False,
     can_order=False,
     )
+
+
+class PreferencesModelForm(forms.ModelForm):
+    target_list_columns = forms.MultipleChoiceField(
+        choices=(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = Preferences
+        fields = ('target_list_columns',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['target_list_columns'].choices = target_column_options()
+        if self.instance.pk and self.instance.target_list_columns is None:
+            self.initial['target_list_columns'] = get_target_list_columns(self.instance.user)
 
 
 class CustomUserCreationForm(UserCreationForm):

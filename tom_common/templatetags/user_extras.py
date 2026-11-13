@@ -13,6 +13,7 @@ from django.db.models import Q
 
 from tom_common.accounts.email import email_is_configured
 from tom_common.accounts.requirements import AccountRequirement
+from tom_targets.column_utils import target_column_options
 from django.forms.models import model_to_dict
 from django.apps import apps
 from django.utils.module_loading import import_string
@@ -175,6 +176,18 @@ def user_data(user):
         'drf_api_token': drf_api_token,
     }
     return user_data
+
+
+@register.inclusion_tag('tom_common/partials/preferences_data.html')
+def preferences_data(user):
+    """Returns the user's saved preferences for display on the profile page."""
+    preferences = getattr(user, 'preferences', None)
+    return {
+        'user': user,
+        'preferences': preferences,
+        'selected_target_columns': preferences.target_list_columns if preferences else [],
+        'target_column_options': target_column_options(),
+    }
 
 
 @register.inclusion_tag('tom_common/partials/app_profiles.html', takes_context=True)

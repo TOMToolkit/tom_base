@@ -1,0 +1,22 @@
+{% extends 'tom_common/base.html' %}
+{% load django_bootstrap5 %}
+{% block title %}Preferences{% endblock %}
+{% block content %}
+<h3>Preferences</h3>
+<form method="POST">
+    {% csrf_token %}
+    <label class="form-label">{{ form.target_list_columns.label }}</label>
+    {{ form.target_list_columns.errors }}
+    <div class="row">
+        {% for checkbox in form.target_list_columns %}
+        <div class="col-md-6">
+            <div class="form-check">{{ checkbox }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="mt-3">
+        {% bootstrap_button "Save" button_type="submit" button_class="btn btn-primary" %}
+        <a href="{% url 'user-profile' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}
