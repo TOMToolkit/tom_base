@@ -24,6 +24,7 @@ from tom_targets.base_models import BaseTarget
 from tom_targets.models import Target, TargetExtra, TargetList, PersistentShare
 from tom_targets.forms import TargetVisibilityForm, PersistentShareForm
 from tom_targets.permissions import targets_for_user
+from tom_targets.column_utils import get_target_list_columns
 
 register = template.Library()
 
@@ -387,16 +388,9 @@ def target_distribution(targets):
     return aladin_skymap(targets)
 
 
-def get_target_list_columns() -> list[str]:
-    try:
-        return settings.TARGET_LIST_COLUMNS
-    except Exception:
-        return ["name", "type", "observations", "saved_data"]
-
-
-def target_table_headers(model: type[BaseTarget]) -> list[str]:
+def target_table_headers(model: type[BaseTarget], columns=None) -> list[str]:
     headers = []
-    for column in get_target_list_columns():
+    for column in get_target_list_columns() if columns is None else columns:
         # Special fields
         if column == "observations":
             headers.append("Observations")
@@ -412,9 +406,9 @@ def target_table_headers(model: type[BaseTarget]) -> list[str]:
 
 
 @register.simple_tag
-def target_table_row(target: BaseTarget) -> list[Any]:
+def target_table_row(target: BaseTarget, columns=None) -> list[Any]:
     row = []
-    for column in get_target_list_columns():
+    for column in get_target_list_columns() if columns is None else columns:
         # Special Fields
         if column == "name":
             row.append(", ".join(target.names))
@@ -455,11 +449,13 @@ def target_table(context, targets, all_checked=False):
     by default
     """
 
-    headers = target_table_headers(BaseTarget)
+    columns = get_target_list_columns(context['request'].user)
+    headers = target_table_headers(BaseTarget, columns)
 
     return {
         'targets': targets,
         'headers': headers,
+        'columns': columns,
         'all_checked': all_checked,
         'empty_database': context['empty_database'],
         'authenticated': context['request'].user.is_authenticated,
