@@ -108,11 +108,11 @@ class TargetListView(HTMXTableViewMixin, FilterView):
         """Save the user's selected table columns and reload the target list."""
         if not request.user.is_authenticated:
             raise PermissionDenied
-        request.user.profile.target_list_columns = [
+        request.user.preferences.target_list_columns = [
             column for column in request.POST.getlist('columns')
             if column in [*target_columns(), 'observations', 'saved_data']
         ]
-        request.user.profile.save(update_fields=['target_list_columns'])
+        request.user.preferences.save(update_fields=['target_list_columns'])
         request.GET = request.POST.copy()
         request.GET.pop('columns', None)
         request.GET.pop('csrfmiddlewaretoken', None)
