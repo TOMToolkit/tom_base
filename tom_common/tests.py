@@ -56,6 +56,17 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
+def reauthenticate_by_password(client: Client, password: str) -> None:
+    """Complete django-allauth's explicit reauthentication step for a logged-in test client.
+
+    Some security-related pages require re-authentication and this helper function is
+    used for that.
+    """
+    response = client.post(reverse('account_reauthenticate'), {'password': password})
+    if response.status_code != HTTPStatus.FOUND:
+        raise AssertionError(f'reauthentication by password failed: HTTP {response.status_code}')
+
+
 class TomToolkitTestRunner(DiscoverRunner):
     def run_tests(self, *args, **kwargs):
         # Silence log output in tests.
@@ -796,13 +807,14 @@ class TestBlockedActionPagesExplainThemselves(TestCase):
         self.user = User.objects.create_user(username='clarity_user', password='current-pass-1!')
 
     def _enrol_and_log_in(self):
-        """A full password + TOTP-code login (the deactivate page requires recent authentication)."""
+        """A full password + TOTP-code login, then the explicit reauthentication the deactivate page requires."""
         secret = totp_auth.generate_totp_secret()
         totp_auth.TOTP.activate(self.user, secret)
         client = Client()
         client.post(reverse('login'), {'login': 'clarity_user', 'password': 'current-pass-1!'})
         code = totp_auth.hotp_value(secret, int(time.time() // 30))
         client.post(reverse('mfa_authenticate'), {'code': f'{code:06d}'})
+        reauthenticate_by_password(client, 'current-pass-1!')
         return client
 
     @override_settings(TOM_MFA_REQUIRED='all')
@@ -1006,9 +1018,10 @@ class TestTokenEndpointAndRegeneration(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertIn(reverse('account_reauthenticate'), response.headers['Location'])
         self.assertEqual(Token.objects.get(user=self.user).key, original_key)
-        # a real login is a recent authentication: regeneration proceeds
+        # after a login and the explicit reauthentication step, regeneration proceeds
         client = Client()
         client.post(reverse('login'), {'login': 'endpoint_user', 'password': 'password'})
+        reauthenticate_by_password(client, 'password')
         response = client.post(reverse('regenerate-api-token', kwargs={'pk': self.user.pk}))
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertNotEqual(Token.objects.get(user=self.user).key, original_key)
@@ -1043,6 +1056,7 @@ class TestSecurityLog(TestCase):
         # not from the low-level TOTP.activate() used elsewhere in these tests
         client = Client()
         client.post(reverse('login'), {'login': 'audit_user', 'password': 'password'})  # login
+        reauthenticate_by_password(client, 'password')  # the enrolment page requires it
         with self.assertLogs('tom_common.security', 'INFO') as logs:
             response = client.get(reverse('mfa_activate_totp'))  # get MFA enrollment form
             secret = response.context['form'].secret
@@ -1219,9 +1233,12 @@ class TestAccountRequirements(TestCase):
 
     @override_settings(TOM_MFA_REQUIRED='all')
     def test_enrolment_page_and_logout_stay_reachable(self):
-        # a real login (not force_login) so allauth's reauthentication window is open
+        # a real login (not force_login): the enrolment page requires allauth's explicit reauthentication
+        # step, so the reauthenticate page itself must stay reachable for an unenrolled user as well
         client = Client()
         client.post(reverse('login'), {'login': 'req_user', 'password': 'password'})
+        self.assertEqual(client.get(reverse('account_reauthenticate')).status_code, HTTPStatus.OK)
+        reauthenticate_by_password(client, 'password')
         self.assertEqual(client.get(reverse('mfa_activate_totp')).status_code, HTTPStatus.OK)
         self.assertEqual(client.post(reverse('logout')).status_code, HTTPStatus.FOUND)
 
@@ -1490,6 +1507,7 @@ class TestTomMFAAdapter(TestCase):
         So, this also verifies the adapter override is the one the page actually uses.
         """
         self.client.post(reverse('login'), {'login': 'mfa_user', 'password': 'password'})
+        reauthenticate_by_password(self.client, 'password')  # the enrolment page requires it
         response = self.client.get(reverse('mfa_activate_totp'))
         match = re.search(r'src="data:image/svg\+xml;base64,([^"]+)"', response.content.decode())
         self.assertIsNotNone(match, 'no inline SVG QR image on the enrolment page')
@@ -1550,6 +1568,7 @@ class TestAllauthTemplates(TestCase):
             Authenticator.objects.get(user=user, type=Authenticator.Type.TOTP).data['secret'])
         code = totp_auth.hotp_value(secret, int(time.time() // 30))
         client.post(reverse('mfa_authenticate'), {'code': f'{code:06d}'})
+        reauthenticate_by_password(client, 'script-pass-1!')  # viewing recovery codes requires it
         # a TOM that opts into show-once gets allauth's stock save-confirmation checkbox — and it
         # must work, which is exactly what this layout-bridge test protects. This branch runs
         # first: any view of the codes marks them viewed, and show-once shows only unviewed codes.
