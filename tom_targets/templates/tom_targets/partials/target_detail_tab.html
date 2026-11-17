@@ -1,0 +1,50 @@
+{% load comments django_bootstrap5 tom_common_extras targets_extras observation_extras dataproduct_extras %}
+{% load dataservices_extras %}
+
+{% if tab == 'observe' %}
+  <h4>Observe</h4>
+  {% observing_buttons object %}
+  <hr/>
+  {% observationtemplate_run object %}
+  <hr/>
+  <h4>Plan</h4>
+  {% if object.type == 'SIDEREAL' %}
+    {% target_plan %}
+    {% moon_distance object %}
+  {% elif target.type == 'NON_SIDEREAL' %}
+    <p>Airmass plotting for non-sidereal targets is not currently supported. If you would like to add this functionality, please check out the <a href="https://github.com/TOMToolkit/tom_nonsidereal_airmass" target="_blank">non-sidereal airmass plugin.</a></p>
+  {% endif %}
+{% elif tab == 'observations' %}
+  {% existing_observation_form object %}
+  <h4>Observations</h4>
+  <button hx-get="{% url 'targets:render-observation-table' pk=target.id %}"
+          hx-target="#observation-table"
+          hx-indicator=".progress"
+          hx-disabled-elt="this"
+          class="btn btn-secondary mb-3">Refresh Observation Statuses
+  </button>
+  <div id="observation-table">
+    {% include 'tom_targets/partials/observation_table.html' %}
+  </div>
+{% elif tab == 'manage-data' %}
+  {% if user.is_authenticated %}
+    {% upload_dataproduct object %}
+  {% endif %}
+  {% if user.is_authenticated %}
+    <hr>
+    {% query_single_target_data_service object %}
+    <hr>
+    {% update_data_from_dataservice %}
+    <hr>
+  {% endif %}
+  {% dataproduct_list_for_target object %}
+{% elif tab == 'manage-groups' %}
+  {% target_groups target %}
+{% elif tab == 'photometry' %}
+  {% photometry_for_target target %}
+  {% get_photometry_data object %}
+{% elif tab == 'spectroscopy' %}
+  {% spectroscopy_for_target target %}
+{% elif app_tab %}
+  {% show_individual_app_partial app_tab %}
+{% endif %}

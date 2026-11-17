@@ -1,0 +1,20 @@
+{% load static targets_extras dataproduct_extras %}
+
+{% target_feature object %}
+{% with future_observations=object.future_observations %}
+{% if future_observations %}
+<div class="alert alert-success">
+  {{ future_observations|length }} upcoming observation{{ future_observations|pluralize }}
+</div>
+{% endif %}
+{% endwith %}
+{% target_unknown_statuses object %}
+{% target_buttons object %}
+{% target_data object %}
+{% recent_photometry object limit=3 %}
+{% if object.type == 'SIDEREAL' %}
+{% aladin_finderchart object %}
+<link rel="stylesheet" href="//aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.css">
+<script src="//aladin.cds.unistra.fr/AladinLite/api/v3/3.8.2/aladin.js" charset="utf-8"></script>
+<script src="{% static 'tom_targets/js/aladin_finderchart.js' %}"></script>
+{% endif %}
