@@ -1,6 +1,8 @@
 {% load targets_extras tom_common_extras%}
 {% for target_tab in target_tabs_to_display %}
-    <div class="tab-pane" id="{{target_tab.label|slugify}}">
-        {% show_individual_app_partial target_tab %}
+    <div class="tab-pane{% if active_tab == target_tab.slug %} active{% endif %}" id="{{target_tab.slug}}"
+         hx-get="{% url 'targets:detail-tab' pk=target.id tab=target_tab.slug %}"
+         hx-trigger="revealed once" hx-swap="innerHTML">
+        <div class="progress"><div class="indeterminate"></div></div>
     </div>
 {% endfor %}
